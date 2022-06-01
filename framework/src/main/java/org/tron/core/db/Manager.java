@@ -1057,6 +1057,11 @@ public class Manager {
       ReceiptCheckErrException, VMIllegalException, ZksnarkException, EventBloomException {
     Metrics.histogramObserve(blockedTimer.get());
     blockedTimer.remove();
+    long headerNumber = getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+    if (block.getNum() <= headerNumber && khaosDb.containBlockInMiniStore(block.getBlockId())) {
+      logger.info("Block {} is already exist.", block.getBlockId().getString());
+      return;
+    }
     final Histogram.Timer timer = Metrics.histogramStartTimer(
         MetricKeys.Histogram.BLOCK_PUSH_LATENCY);
     long start = System.currentTimeMillis();
@@ -1110,7 +1115,7 @@ public class Manager {
           return;
         }
       } else {
-        if (newBlock.getNum() <= getDynamicPropertiesStore().getLatestBlockHeaderNumber()) {
+        if (newBlock.getNum() <= headerNumber) {
           return;
         }
 
