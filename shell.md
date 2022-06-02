@@ -44,7 +44,7 @@ The script is available in the java-tron project at [github](https://github.com/
   sh start.sh -cb --run
   ```
 
-* Select a supported network,default network `main_net`, optional network `test_net`,`private`
+* Select a supported network,default network `main`, optional network `test`,`private`
   ```
   sh start.sh --net test
   ```
