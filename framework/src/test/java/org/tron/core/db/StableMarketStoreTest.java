@@ -3,10 +3,9 @@ package org.tron.core.db;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.entity.Dec;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
@@ -36,11 +35,11 @@ public class StableMarketStoreTest {
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
   }
 
-  Manager dbManager;
-  StableMarketStore stableMarketStore;
+  private static Manager dbManager;
+  private static StableMarketStore stableMarketStore;
 
-  @Before
-  public void init() {
+  @BeforeClass
+  public static void init() {
     dbManager = context.getBean(Manager.class);
     stableMarketStore = context.getBean(StableMarketStore.class);
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
@@ -54,8 +53,8 @@ public class StableMarketStoreTest {
         .put(fromAccountCapsule.getAddress().toByteArray(), fromAccountCapsule);
   }
 
-  @After
-  public void destroy() {
+  @AfterClass
+  public static void destroy() {
     Args.clearParam();
     context.destroy();
     FileUtil.deleteDir(new File(dbPath));
@@ -100,5 +99,12 @@ public class StableMarketStoreTest {
 
     stableMarketStore.getStableCoinList();
     System.out.println(stableMarketStore.getStableCoinList());
+  }
+
+  @Test
+  public void testBasePool() {
+    Dec basePool = Dec.newDec(1000000);
+    stableMarketStore.setBasePool(basePool);
+    Assert.assertTrue(basePool.eq(stableMarketStore.getBasePool()));
   }
 }

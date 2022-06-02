@@ -20,12 +20,9 @@ import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 
-import java.math.BigInteger;
 import java.util.*;
 
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.units.qual.A;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.entity.Dec;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
@@ -40,10 +37,9 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.StableMarketStore;
 import org.tron.core.utils.StableMarketUtil;
-import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol;
-import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.StableMarketContractOuterClass;
@@ -152,6 +148,7 @@ public class StableMarketActuator extends AbstractActuator {
     stableMarketUtil.init(chainBaseManager);
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     AccountStore accountStore = chainBaseManager.getAccountStore();
+    StableMarketStore stableMarketStore = chainBaseManager.getStableMarketStore();
     if (!this.any.is(StableMarketContract.class)) {
       throw new ContractValidateException(
           "contract type error,expected type [StableMarketContract],real type[" + any
@@ -176,6 +173,9 @@ public class StableMarketActuator extends AbstractActuator {
     byte[] sourceAsset = stableMarketContract.getSourceTokenId().getBytes();
     byte[] destAsset = stableMarketContract.getDestTokenId().getBytes();
     long amount = stableMarketContract.getAmount();
+    Dec exchangeRate = stableMarketStore.getOracleExchangeRate(sourceAsset);
+    long baseAmount = Dec.newDec(amount).mul(exchangeRate).roundLong();
+    long maxExchangeAmount = stableMarketStore.getBasePool().quo(2).truncateLong();
 
     if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress");
@@ -186,6 +186,9 @@ public class StableMarketActuator extends AbstractActuator {
 
     if (amount <= 0) {
       throw new ContractValidateException("Amount must be greater than 0.");
+    }
+    if (baseAmount >= maxExchangeAmount) {
+      throw new ContractValidateException("Exchange amount is too large.");
     }
 
     AccountCapsule ownerAccount = accountStore.get(ownerAddress);
@@ -206,12 +209,16 @@ public class StableMarketActuator extends AbstractActuator {
     }
 
     // only worked on assetV2
-    Map<String, Long> asset = ownerAccount.getAssetMapV2();
-    if (asset.isEmpty()) {
-      throw new ContractValidateException("Owner has no asset!");
+    Long assetBalance;
+    if (Arrays.equals(TRX_SYMBOL_BYTES, sourceAsset)) {
+      assetBalance = ownerAccount.getBalance();
+    } else {
+      Map<String, Long> asset = ownerAccount.getAssetMapV2();
+      if (asset.isEmpty()) {
+        throw new ContractValidateException("Owner has no asset!");
+      }
+      assetBalance = asset.get(ByteArray.toStr(sourceAsset));
     }
-
-    Long assetBalance = asset.get(ByteArray.toStr(sourceAsset));
     if (null == assetBalance || assetBalance <= 0) {
       throw new ContractValidateException("sourceAssetBalance must be greater than 0.");
     }

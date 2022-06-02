@@ -16,10 +16,14 @@
 package org.tron.core.actuator;
 
 import static org.tron.common.utils.Commons.adjustBalance;
+import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL;
+import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
+import java.util.Arrays;
+
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -40,12 +44,15 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.store.AssetIssueStore;
+import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.StableMarketStore;
+import org.tron.core.utils.StableMarketUtil;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
-import org.tron.protos.contract.StableMarketContractOuterClass;
+import org.tron.protos.contract.StableMarketContractOuterClass.ExchangeResult;
+import org.tron.protos.contract.StableMarketContractOuterClass.StableMarketContract;
 
 
 @Slf4j
@@ -63,11 +70,16 @@ public class StableMarketActuatorTest {
   private static final int VOTE_SCORE = 2;
   private static final String DESCRIPTION = "stable-test";
   private static final String URL = "https://tron.network";
+  private static final String SOURCE_TOKEN = "source_token";
+  private static final String DEST_TOKEN = "dest_token";
   private static TronApplicationContext context;
   private static Manager dbManager;
   private static DynamicPropertiesStore dynamicPropertiesStore;
-  private static AssetIssueStore assetIssueStore;
+  private static AssetIssueV2Store assetIssueV2Store;
+  private static StableMarketStore stableMarketStore;
   private static Any contract;
+
+  private static StableMarketUtil stableMarketUtil;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
@@ -82,9 +94,11 @@ public class StableMarketActuatorTest {
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
+    stableMarketUtil = context.getBean(StableMarketUtil.class);
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
-    assetIssueStore = dbManager.getAssetIssueStore();
+    assetIssueV2Store = dbManager.getAssetIssueV2Store();
+    stableMarketStore = dbManager.getStableMarketStore();
     // using asset v2
     dynamicPropertiesStore.saveAllowSameTokenName(1);
 
@@ -102,6 +116,8 @@ public class StableMarketActuatorTest {
         .put(fromAccountCapsule.getAddress().toByteArray(), fromAccountCapsule);
     dbManager.getAccountStore()
         .put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
+    dbManager.getStableMarketStore().setOracleExchangeRate(
+        ByteArray.fromString(TRX_SYMBOL), Dec.oneDec());
   }
 
   /**
@@ -187,7 +203,7 @@ public class StableMarketActuatorTest {
     }
 
     return Any.pack(
-        StableMarketContractOuterClass.StableMarketContract.newBuilder()
+        StableMarketContract.newBuilder()
             .setSourceTokenId(sourceToken)
             .setDestTokenId(desttoken)
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
@@ -196,95 +212,271 @@ public class StableMarketActuatorTest {
             .build());
   }
 
-  @Test
-  public void testDec() {
-    Dec minSpread = Dec.newDecWithPrec(5, 3);
-    long feeAmount = Dec.newDec(1000).mul(minSpread).truncateLong();
-    long feeAmount1 = Dec.newDec(1000).mul(minSpread).roundLong();
-    System.out.println(feeAmount);
-    System.out.println(feeAmount1);
-    System.out.println(minSpread);
-  }
-
-  @Test
-  public void exchangeStableWithStable() {
-    // prepare param
-    long sourceBalance = 10000000;
-    long destBalance = 10000000;
-    long sourceTotalSupply = 10000000;
-    long destTotalSupply = 10000000;
-    Dec sourceExchangeRate = Dec.newDec(1);
-    Dec destExchangeRate = Dec.newDec(1);
-    Dec basePool = Dec.newDec(1000000000);
-    Dec minSpread = Dec.newDecWithPrec(5, 3);
-    Dec delta = Dec.newDec(10000000);
-    long amount = 1000L;
-
-    // set trx balance
-    try {
-      setTrxBalance(OWNER_ADDRESS, sourceBalance);
-      setTrxBalance(TO_ADDRESS, destBalance);
-    } catch (BalanceInsufficientException e) {
-      Assert.fail();
+  private void exchangeStableWithStableBase(
+      Dec basePool,
+      Dec delta,
+      Dec minSpread,
+      String owner,
+      String to,
+      String sourceTokenId,
+      String destTokenId,
+      long amount
+  ) throws ContractValidateException, ContractExeException {
+    AccountCapsule fromAccount =
+        dbManager.getAccountStore().get(ByteArray.fromHexString(owner));
+    AccountCapsule toAccount =
+        dbManager.getAccountStore().get(ByteArray.fromHexString(to));
+    long fromTrxBalance = fromAccount.getBalance();
+    long toTrxBalance = toAccount.getBalance();
+    long sourceFromBalancePre = 0;
+    long destToBalancePre = 0;
+    long sourceTotalSupply = 0;
+    long destTotalSupply = 0;
+    if (!TRX_SYMBOL.equals(sourceTokenId)) {
+      sourceFromBalancePre = fromAccount.getAssetMapV2().get(sourceTokenId);
+      sourceTotalSupply = assetIssueV2Store.get(sourceTokenId.getBytes()).getTotalSupply();
     }
-
+    if (!TRX_SYMBOL.equals(destTokenId)) {
+      destToBalancePre = toAccount.getAssetMapV2().get(destTokenId);
+      destTotalSupply = assetIssueV2Store.get(destTokenId.getBytes()).getTotalSupply();
+    }
     // init param
     setMarketParam(basePool, minSpread, delta);
-    String sourceTokenId = String.valueOf(
-        initToken(OWNER_ADDRESS, "Source", sourceTotalSupply, sourceExchangeRate));
-    System.out.println(sourceTokenId);
-    String destTokenId = String.valueOf(
-        initToken(TO_ADDRESS, "Dest", destTotalSupply, destExchangeRate));
-    System.out.println(destTokenId);
     dbManager.getStableMarketStore().updateTobinTax(null);
 
     StableMarketActuator actuator = new StableMarketActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(
         getContract(sourceTokenId, destTokenId, amount));
 
-    AccountCapsule fromAccount =
-        dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-    AccountCapsule toAccount =
-        dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
-    // check V2
-    System.out.println("before");
-    System.out.println("from source:"
-        + fromAccount.getAssetMapV2().get(sourceTokenId));
-    System.out.println("from dest:"
-        + fromAccount.getAssetMapV2().get(destTokenId));
-    System.out.println("to source:"
-        + toAccount.getAssetMapV2().get(sourceTokenId));
-    System.out.println("to dest:"
-        + toAccount.getAssetMapV2().get(destTokenId));
-
+    long exchangeTrxAmount = stableMarketStore.getTrxExchangeAmount(); // todo check null
     TransactionResultCapsule ret = new TransactionResultCapsule();
-    try {
-      actuator.validate();
-      actuator.execute(ret);
-      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      fromAccount =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      toAccount =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
-      // check V2
-      System.out.println("after");
-      System.out.println("from source:"
-          + fromAccount.getAssetMapV2().get(sourceTokenId));
-      System.out.println("from dest:"
-          + fromAccount.getAssetMapV2().get(destTokenId));
-      System.out.println("to source:"
-          + toAccount.getAssetMapV2().get(sourceTokenId));
-      System.out.println("to dest:"
-          + toAccount.getAssetMapV2().get(destTokenId));
 
+    actuator.validate();
+    actuator.execute(ret);
+    Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+    fromAccount =
+        dbManager.getAccountStore().get(ByteArray.fromHexString(owner));
+    toAccount =
+        dbManager.getAccountStore().get(ByteArray.fromHexString(to));
+
+    // reset param
+    setMarketParam(basePool, minSpread, delta);
+    ExchangeResult exchangeResult =
+        stableMarketUtil.computeSwap(sourceTokenId.getBytes(), destTokenId.getBytes(), amount);
+    long askAmount = exchangeResult.getAskAmount();
+    long feeAmount = Dec.newDec(askAmount)
+        .mul(Dec.newDec(exchangeResult.getSpread())).roundLong();
+    long askAmountSubFee = askAmount - feeAmount;
+
+    // get latest asset info
+    AssetIssueCapsule sourceAssetIssue = assetIssueV2Store.get(sourceTokenId.getBytes());
+    AssetIssueCapsule destAssetIssue = assetIssueV2Store.get(destTokenId.getBytes());
+
+    if (Arrays.equals(TRX_SYMBOL_BYTES, sourceTokenId.getBytes())) {
+      // check fee
+      Assert.assertEquals(fromTrxBalance - (amount + ret.getFee()),
+          fromAccount.getBalance());
+      // check trx mint/burn amount
+      Assert.assertEquals(exchangeTrxAmount - amount,
+          stableMarketStore.getTrxExchangeAmount());
+    } else {
+      // check tx fee
+      Assert.assertEquals(fromTrxBalance - ret.getFee(),
+          fromAccount.getBalance());
+      // check source token balance
+      Assert.assertEquals(sourceFromBalancePre - amount,
+          fromAccount.getAssetMapV2().get(sourceTokenId).longValue());
+      // check source token total supply
+      Assert.assertEquals(sourceTotalSupply - amount,
+          sourceAssetIssue.getTotalSupply());
+    }
+
+    if (Arrays.equals(TRX_SYMBOL_BYTES, destTokenId.getBytes())) {
+      // check toAddr trx balance
+      Assert.assertEquals(toTrxBalance + askAmountSubFee,
+          toAccount.getBalance());
+      // check trx mint/burn amount
+      Assert.assertEquals(exchangeTrxAmount + askAmount,
+          stableMarketStore.getTrxExchangeAmount());
+    } else {
+      // check toAddr trx balance
+      Assert.assertEquals(destToBalancePre + askAmountSubFee,
+          toAccount.getAssetMapV2().get(destTokenId).longValue());
+      // check dest token total supply
+      Assert.assertEquals(destTotalSupply + askAmount,
+          destAssetIssue.getTotalSupply());
+    }
+  }
+
+  @Test
+  public void exchangeStableWithStableCommon() {
+    // prepare param
+    long sourceTotalSupply = 10_000_000;
+    long destTotalSupply = 10_000_000;
+    long fromTrxBalance = 10_000_000;
+    long toTrxBalance = 10_000_000;
+    Dec sourceExchangeRate = Dec.newDec(1);
+    Dec destExchangeRate = Dec.newDec(1);
+    Dec basePool = Dec.newDec(1_000_000_000);
+    Dec minSpread = Dec.newDecWithPrec(5, 3);
+    Dec delta = Dec.newDec(10_000_000);
+    long amount = 1_000L;
+
+    // set trx balance
+    try {
+      setTrxBalance(OWNER_ADDRESS, fromTrxBalance);
+      setTrxBalance(TO_ADDRESS, toTrxBalance);
+    } catch (BalanceInsufficientException e) {
+      Assert.fail();
+    }
+    String sourceTokenId = String.valueOf(
+        initToken(OWNER_ADDRESS, SOURCE_TOKEN, sourceTotalSupply, sourceExchangeRate));
+    String destTokenId = String.valueOf(
+        initToken(TO_ADDRESS, DEST_TOKEN, destTotalSupply, destExchangeRate));
+
+    try {
+      exchangeStableWithStableBase(basePool, delta, minSpread,
+          OWNER_ADDRESS, TO_ADDRESS, sourceTokenId, destTokenId, amount);
     } catch (ContractValidateException e) {
-      System.out.println(e);
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
-      System.out.println(e);
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
 
+  @Test
+  public void exchangeStableWithTRX() {
+    // prepare param
+    long fromTrxBalance = 10_000_000_000L;
+    long toTrxBalance = 10_000_000;
+    long sourceTotalSupply = 100_000_000_000L;
+    //long destTotalSupply = 10_000_000;
+    Dec sourceExchangeRate = Dec.newDec("0.1");
+    //Dec destExchangeRate = Dec.newDec("1.6");
+    Dec basePool = Dec.newDec(1_000_000_000);
+    Dec minSpread = Dec.newDecWithPrec(5, 3);
+    Dec delta = Dec.newDec(100_000_000L);
+    long amount = 100_000_000L;
+
+    // set trx balance
+    try {
+      setTrxBalance(OWNER_ADDRESS, fromTrxBalance);
+      setTrxBalance(TO_ADDRESS, toTrxBalance);
+    } catch (BalanceInsufficientException e) {
+      Assert.fail();
+    }
+    String sourceTokenId = String.valueOf(
+        initToken(OWNER_ADDRESS, SOURCE_TOKEN, sourceTotalSupply, sourceExchangeRate));
+    try {
+      exchangeStableWithStableBase(basePool, delta, minSpread,
+          OWNER_ADDRESS, TO_ADDRESS, sourceTokenId, TRX_SYMBOL, amount);
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  @Test
+  public void exchangeTRXWithStable() {
+    // prepare param
+    long fromTrxBalance = 10_000_000_000L;
+    long toTrxBalance = 10_000_000;
+    long sourceTotalSupply = 10_000_000;
+    long destTotalSupply = 10_000_000;
+    Dec sourceExchangeRate = Dec.newDec("3.6");
+    Dec destExchangeRate = Dec.newDec("5.8");
+    Dec basePool = Dec.newDec(1_000_000_001);
+    Dec minSpread = Dec.newDecWithPrec(5, 3);
+    Dec delta = Dec.newDec(10_000_011);
+    long amount = 100_000_000L;
+
+    // set trx balance
+    try {
+      setTrxBalance(OWNER_ADDRESS, fromTrxBalance);
+      setTrxBalance(TO_ADDRESS, toTrxBalance);
+    } catch (BalanceInsufficientException e) {
+      Assert.fail();
+    }
+    String sourceTokenId = String.valueOf(
+        initToken(OWNER_ADDRESS, SOURCE_TOKEN, sourceTotalSupply, sourceExchangeRate));
+    String destTokenId = String.valueOf(
+        initToken(TO_ADDRESS, DEST_TOKEN, destTotalSupply, destExchangeRate));
+    try {
+      exchangeStableWithStableBase(basePool, delta, minSpread,
+          OWNER_ADDRESS, TO_ADDRESS, TRX_SYMBOL, destTokenId, amount);
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+
+  @Test
+  public void testExchangeTrxNotSufficient() {
+    // prepare param
+    long fromTrxBalance = 100000L;
+    long toTrxBalance = 10000000;
+    //long sourceTotalSupply = 10000000;
+    long destTotalSupply = 10000000;
+    //Dec sourceExchangeRate = Dec.newDec(1);
+    Dec destExchangeRate = Dec.newDec("1.3");
+    Dec basePool = Dec.newDec(1000000001);
+    Dec minSpread = Dec.newDecWithPrec(5, 3);
+    Dec delta = Dec.newDec(10000011);
+    long amount = 100000000L;
+
+    // set trx balance
+    try {
+      setTrxBalance(OWNER_ADDRESS, fromTrxBalance);
+      setTrxBalance(TO_ADDRESS, toTrxBalance);
+    } catch (BalanceInsufficientException e) {
+      Assert.fail();
+    }
+    String destTokenId = String.valueOf(
+        initToken(TO_ADDRESS, DEST_TOKEN, destTotalSupply, destExchangeRate));
+    try {
+      exchangeStableWithStableBase(basePool, delta, minSpread,
+          OWNER_ADDRESS, TO_ADDRESS, TRX_SYMBOL, destTokenId, amount);
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("sourceAssetBalance is not sufficient.", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.fail();
+    }
+  }
+
+  @Test
+  public void testExchangeAmountTooLarge() {
+    // prepare param
+    long fromTrxBalance = 100000L;
+    long toTrxBalance = 10000000;
+    //long sourceTotalSupply = 10000000;
+    long destTotalSupply = 10000000;
+    //Dec sourceExchangeRate = Dec.newDec(1);
+    Dec destExchangeRate = Dec.newDec(1);
+    Dec basePool = Dec.newDec(1000000000);
+    Dec minSpread = Dec.newDecWithPrec(5, 3);
+    Dec delta = Dec.newDec(10000011);
+    long amount = 1000000000;
+
+    // set trx balance
+    try {
+      setTrxBalance(OWNER_ADDRESS, fromTrxBalance);
+      setTrxBalance(TO_ADDRESS, toTrxBalance);
+    } catch (BalanceInsufficientException e) {
+      Assert.fail();
+    }
+    String destTokenId = String.valueOf(
+        initToken(TO_ADDRESS, DEST_TOKEN, destTotalSupply, destExchangeRate));
+    try {
+      exchangeStableWithStableBase(basePool, delta, minSpread,
+          OWNER_ADDRESS, TO_ADDRESS, TRX_SYMBOL, destTokenId, amount);
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Exchange amount is too large.", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.fail();
+    }
+  }
 
 }
