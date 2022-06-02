@@ -90,7 +90,7 @@ enum AccountType {
 
   `allowance`: the allowance of this account.
 
-  `latest_withdrew_time`: the latest operation time of this account.
+  `latest_withdraw_time`: the latest operation time of this account.
 
   `code`: reserved
 
