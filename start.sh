@@ -19,11 +19,21 @@
 
 # Build FullNode config
 FULL_NODE_DIR="FullNode"
-FULL_NODE_CONFIG="main_net_config.conf"
+FULL_NODE_CONFIG_DIR="config"
+# config file
+FULL_NODE_CONFIG_MAIN_NET="main_net_config.conf"
+FULL_NODE_CONFIG_TEST_NET="test_net_config.conf.conf"
+FULL_NODE_CONFIG_PRIVATE_NET="private_net_config.conf"
 DEFAULT_FULL_NODE_CONFIG='config.conf'
 JAR_NAME="FullNode.jar"
 FULL_START_OPT=''
+
+# Github
 GITHUB_BRANCH='master'
+GITHUB_CLONE_TYPE='HTTPS'
+GITHUB_REPOSITORY=''
+GITHUB_REPOSITORY_HTTPS_URL='https://github.com/tronprotocol/java-tron.git'
+GITHUB_REPOSITORY_SSH_URL='git@github.com:tronprotocol/java-tron.git'
 
 # Shell option
 ALL_OPT_LENGTH=$#
@@ -52,6 +62,12 @@ DOWNLOAD=false
 RELEASE_URL='https://github.com/tronprotocol/java-tron/releases'
 QUICK_START=false
 CLONE_BUILD=false
+
+if [[ $GITHUB_CLONE_TYPE == 'HTTPS' ]]; then
+  GITHUB_REPOSITORY=$GITHUB_REPOSITORY_HTTPS_URL
+else
+  GITHUB_REPOSITORY=$GITHUB_REPOSITORY_SSH_URL
+fi
 
 # Determine the Java command to use to start the JVM.
 if [ -z "$JAVA_HOME" ]; then
@@ -99,7 +115,7 @@ fi
 
 
 getLatestReleaseVersion() {
-  full_node_version=`git ls-remote --tags git@github.com:tronprotocol/java-tron.git |grep GreatVoyage- | awk -F '/' 'END{print $3}'`
+  full_node_version=`git ls-remote --tags $GITHUB_REPOSITORY |grep GreatVoyage- | awk -F '/' 'END{print $3}'`
   if [[ -n $full_node_version ]]; then
    echo $full_node_version
   else
@@ -166,8 +182,8 @@ quickStart() {
     mkdirFullNode
     echo "info: check latest version: $full_node_version"
     echo 'info: download config'
-    download https://raw.githubusercontent.com/tronprotocol/tron-deployment/$GITHUB_BRANCH/$FULL_NODE_CONFIG $FULL_NODE_CONFIG
-    mv $FULL_NODE_CONFIG 'config.conf'
+    download https://raw.githubusercontent.com/tronprotocol/tron-deployment/$GITHUB_BRANCH/$FULL_NODE_CONFIG_MAIN_NET $FULL_NODE_CONFIG_MAIN_NET
+    mv $FULL_NODE_CONFIG_MAIN_NET 'config.conf'
 
     echo "info: download $full_node_version"
     download $RELEASE_URL/download/$full_node_version/$JAR_NAME $JAR_NAME
@@ -180,7 +196,7 @@ quickStart() {
 
 cloneCode() {
   if type git >/dev/null 2>&1; then
-    git_clone=$(git clone -b $GITHUB_BRANCH git@github.com:tronprotocol/java-tron.git)
+    git_clone=$(git clone -b $GITHUB_BRANCH $GITHUB_REPOSITORY)
     if [[ git_clone == 0 ]]; then
       echo 'info: git clone java-tron success'
     fi
@@ -353,6 +369,35 @@ rebuildManifest() {
   fi
 }
 
+specifyConfig(){
+  echo "info: specify the net: $1"
+  local netType=$1
+  local configName;
+  if [[ "$netType" = 'test' ]]; then
+    configName=$FULL_NODE_CONFIG_TEST_NET
+  elif [[ "$netType" = 'private' ]]; then
+    configName=$FULL_NODE_CONFIG_PRIVATE_NET
+  else
+    echo "warn: no support config $nodeType"
+    exit
+  fi
+
+  if [[ ! -d $FULL_NODE_CONFIG_DIR ]]; then
+    mkdir -p $FULL_NODE_CONFIG_DIR
+  fi
+
+  if [[ -d $FULL_NODE_CONFIG_DIR/$configName ]]; then
+    DEFAULT_FULL_NODE_CONFIG=$FULL_NODE_CONFIG_DIR/$configName
+    break
+  fi
+
+  if [[ ! -f $FULL_NODE_CONFIG_DIR/$configName ]]; then
+    download https://raw.githubusercontent.com/tronprotocol/tron-deployment/$GITHUB_BRANCH/$configName $configName
+    mv  $configName $FULL_NODE_CONFIG_DIR/$configName
+    DEFAULT_FULL_NODE_CONFIG=$FULL_NODE_CONFIG_DIR/$configName
+  fi
+}
+
 checkSign() {
   echo 'info: verify signature'
   local latest_version=$(`echo getLatestReleaseVersion`)
@@ -391,7 +436,6 @@ while [ -n "$1" ]; do
   case "$1" in
   -c)
     DEFAULT_FULL_NODE_CONFIG=$2
-    FULL_START_OPT="$FULL_START_OPT $1 $2"
     shift 2
     ;;
   -d)
@@ -401,6 +445,22 @@ while [ -n "$1" ]; do
     ;;
   -j)
     JAR_NAME=$2
+    shift 2
+    ;;
+  -p)
+    FULL_START_OPT="$FULL_START_OPT $1 $2"
+    shift 2
+    ;;
+  -w)
+    FULL_START_OPT="$FULL_START_OPT $1"
+    shift 1
+    ;;
+  --witness)
+    FULL_START_OPT="$FULL_START_OPT $1"
+    shift 1
+    ;;
+  --net)
+    specifyConfig $2
     shift 2
     ;;
   -m)
@@ -487,8 +547,8 @@ while [ -n "$1" ]; do
         exit
       fi
     fi
-    echo "warn: option $1 does not exist"
-    exit
+    FULL_START_OPT="$FULL_START_OPT $@"
+    break
     ;;
   esac
 done
