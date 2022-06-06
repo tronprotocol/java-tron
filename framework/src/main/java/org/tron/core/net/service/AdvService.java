@@ -41,7 +41,7 @@ import org.tron.protos.Protocol.Inventory.InventoryType;
 @Slf4j(topic = "net")
 @Component
 public class AdvService {
-  
+
   private final int MAX_INV_TO_FETCH_CACHE_SIZE = 100_000;
   private final int MAX_TRX_CACHE_SIZE = 50_000;
   private final int MAX_BLOCK_CACHE_SIZE = 10;
@@ -84,7 +84,7 @@ public class AdvService {
       try {
         consumerInvToSpread();
       } catch (Exception exception) {
-        logger.error("Spread thread error. {}", exception.getMessage());
+        logger.error("Spread thread error. {}", exception.getMessage(), exception);
       }
     }, 100, 30, TimeUnit.MILLISECONDS);
 
@@ -92,7 +92,7 @@ public class AdvService {
       try {
         consumerInvToFetch();
       } catch (Exception exception) {
-        logger.error("Fetch thread error. {}", exception.getMessage());
+        logger.error("Fetch thread error. {}", exception.getMessage(), exception);
       }
     }, 100, 30, TimeUnit.MILLISECONDS);
   }
