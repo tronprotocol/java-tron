@@ -251,8 +251,8 @@ message Account {
   Permission owner_permission = 31;
   Permission witness_permission = 32;
   repeated Permission active_permission = 33;
-  OracleReward oracle_allowance = 34;
-  int64 slashed_votes = 60;
+  OracleReward oracle_allowance = 60;
+  int64 slashed_votes = 61;
 }
 
 message Key {
