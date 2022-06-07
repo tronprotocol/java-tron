@@ -23,6 +23,7 @@ import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.VotesCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -933,6 +934,55 @@ public class UnfreezeBalanceActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
 
+  }
+
+  @Test
+  public void testSlashVote() {
+    byte[] ownerAddressBytes = ByteArray.fromHexString(OWNER_ADDRESS);
+    ByteString ownerAddress = ByteString.copyFrom(ownerAddressBytes);
+    long now = System.currentTimeMillis();
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
+    dbManager.getDynamicPropertiesStore().saveAllowSlashVote(1);
+
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddressBytes);
+    accountCapsule.setFrozen(1_000_000_000L, now);
+    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+
+    WitnessCapsule ownerCapsule = new WitnessCapsule(
+            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), 10_000_000L, "URL");
+    ownerCapsule.setVoteCount(900);
+    ownerCapsule.setTotalShares(1000);
+    dbManager.getWitnessStore().put(ByteArray.fromHexString(OWNER_ADDRESS), ownerCapsule);
+
+    UnfreezeBalanceActuator actuator = new UnfreezeBalanceActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+            .setAny(getContractForBandwidth(OWNER_ADDRESS));
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    dbManager.getVotesStore().reset();
+    Assert.assertNull(dbManager.getVotesStore().get(ownerAddressBytes));
+
+    // had votes
+    List<Vote> oldVotes = new ArrayList<Vote>();
+    VotesCapsule votesCapsule = new VotesCapsule(
+            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), oldVotes);
+    votesCapsule.addNewVotes(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+            100, 100);
+    dbManager.getVotesStore().put(ByteArray.fromHexString(OWNER_ADDRESS), votesCapsule);
+    accountCapsule.setFrozen(1_000_000_000L, now);
+    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      votesCapsule = dbManager.getVotesStore().get(ownerAddressBytes);
+      Assert.assertNotNull(votesCapsule);
+      Assert.assertEquals(0, votesCapsule.getNewVotes().size());
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+    dbManager.getDynamicPropertiesStore().saveAllowSlashVote(0);
   }
 
   /*@Test

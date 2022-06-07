@@ -523,6 +523,7 @@ public class VoteWitnessActuatorTest {
   public void voteWitnessTwice() {
     long frozenBalance = 7_000_000_000_000L;
     long duration = 3;
+    dbManager.getDynamicPropertiesStore().saveAllowSlashVote(1);
     FreezeBalanceActuator freezeBalanceActuator = new FreezeBalanceActuator();
     freezeBalanceActuator.setChainBaseManager(dbManager.getChainBaseManager())
         .setAny(getContract(OWNER_ADDRESS, frozenBalance, duration));
@@ -557,6 +558,7 @@ public class VoteWitnessActuatorTest {
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
+    dbManager.getDynamicPropertiesStore().saveAllowSlashVote(0);
   }
 
   @Test

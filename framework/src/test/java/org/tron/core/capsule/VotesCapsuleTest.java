@@ -61,4 +61,24 @@ public class VotesCapsuleTest {
     Assert.assertTrue(votesCapsule.getOldVotes().isEmpty());
 
   }
+
+  @Test
+  public void votesCapsuleWithShareTest() {
+    ByteString address = StringUtil.hexString2ByteString(OWNER_ADDRESS);
+    VotesCapsule votesCapsule = new VotesCapsule(address, oldVotes);
+
+    votesCapsule.addOldVotes(ByteString.copyFrom(TransactionStoreTest.randomBytes(32)), 10, 10);
+    votesCapsule.addOldVotes(ByteString.copyFrom(TransactionStoreTest.randomBytes(32)), 5, 5);
+    Assert.assertEquals(votesCapsule.getOldVotes().size(), 2);
+
+    votesCapsule.addNewVotes(ByteString.copyFrom(TransactionStoreTest.randomBytes(32)), 6, 6);
+    Assert.assertEquals(votesCapsule.getNewVotes().size(), 1);
+
+    votesCapsule.clearNewVotes();
+    Assert.assertTrue(votesCapsule.getNewVotes().isEmpty());
+
+    votesCapsule.clearOldVotes();
+    Assert.assertTrue(votesCapsule.getOldVotes().isEmpty());
+
+  }
 }

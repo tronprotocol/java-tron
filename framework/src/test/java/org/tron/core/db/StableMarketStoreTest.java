@@ -30,12 +30,14 @@ public class StableMarketStoreTest {
 
   private static final String OWNER_ADDRESS;
   private static final byte[] USDD_SYMBOL = "usdd".getBytes();
+  private static final String WITNESS_ADDRESS;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath},
         Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
+    WITNESS_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
   }
 
   private static Manager dbManager;
@@ -109,5 +111,18 @@ public class StableMarketStoreTest {
     Dec basePool = Dec.newDec(1000000);
     stableMarketStore.setBasePool(basePool);
     Assert.assertTrue(basePool.eq(stableMarketStore.getBasePool()));
+  }
+
+  @Test
+  public void testMissCount() {
+    byte[] address = ByteArray.fromHexString(WITNESS_ADDRESS);
+    byte[] address2 = ByteArray.fromHexString(OWNER_ADDRESS);
+    Assert.assertEquals(0, stableMarketStore.getWitnessMissCount(address));
+    stableMarketStore.setWitnessMissCount(address, 1);
+    Assert.assertEquals(1, stableMarketStore.getWitnessMissCount(address));
+    stableMarketStore.setWitnessMissCount(address2, 1);
+    Assert.assertEquals(2, stableMarketStore.getAllWitnessMissCount().size());
+    stableMarketStore.clearAllWitnessMissCount();
+    Assert.assertEquals(0, stableMarketStore.getAllWitnessMissCount().size());
   }
 }
