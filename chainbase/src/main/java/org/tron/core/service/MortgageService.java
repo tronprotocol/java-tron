@@ -338,28 +338,6 @@ public class MortgageService {
     accountStore.put(account.createDbKey(), account);
   }
 
-
-  private OracleRewardCapsule computeOracleReward(long cycle, AccountCapsule accountCapsule) {
-    Dec balance = Dec.zeroDec();
-    Map<String, Dec> asset = new HashMap<>();
-    for (Vote vote : accountCapsule.getVotesList()) {
-      byte[] srAddress = vote.getVoteAddress().toByteArray();
-      DecOracleRewardCapsule totalReward = delegationStore.getOracleReward(cycle, srAddress);
-      long totalVote = delegationStore.getWitnessVote(cycle, srAddress);
-      if (totalVote == DelegationStore.REMARK || totalVote == 0) {
-        continue;
-      }
-      long userVote = vote.getVoteCount();
-      DecOracleRewardCapsule userReward = totalReward.mul(userVote).quo(totalVote);
-      balance = balance.add(userReward.getBalance());
-      userReward.getAsset().forEach((k, v) -> asset.merge(k, v, Dec::add));
-      logger.debug("computeOracleReward {} {} {} {},{},{},{}", cycle,
-          Hex.toHexString(accountCapsule.getAddress().toByteArray()), Hex.toHexString(srAddress),
-          userVote, totalVote, totalReward, userReward);
-    }
-    return new DecOracleRewardCapsule(balance, asset).truncateDecimal();
-  }
-
   private OracleRewardCapsule computeOracleReward(long beginCycle, long endCycle,
                                                   AccountCapsule accountCapsule) {
     OracleRewardCapsule oracleReward = new OracleRewardCapsule();
@@ -373,32 +351,21 @@ public class MortgageService {
 
     long balance = 0;
     Map<String, Long> asset = new HashMap<>();
-//    long newAlgorithmCycle = dynamicPropertiesStore.getNewRewardAlgorithmEffectiveCycle();
-//    if (beginCycle < newAlgorithmCycle) {
-//      long oldEndCycle = Math.min(endCycle, newAlgorithmCycle);
-//      for (long cycle = beginCycle; cycle < oldEndCycle; cycle++) {
-//        OracleRewardCapsule reward = computeOracleReward(cycle, accountCapsule);
-//        balance = LongMath.checkedAdd(balance, reward.getBalance());
-//        reward.getAsset().forEach((k, v) -> asset.merge(k, v, LongMath::checkedAdd));
-//      }
-//      beginCycle = oldEndCycle;
-//    }
-//    if (beginCycle < endCycle) {
-      for (Vote vote : accountCapsule.getVotesList()) {
-        byte[] srAddress = vote.getVoteAddress().toByteArray();
-        DecOracleRewardCapsule beginVi =
-            delegationStore.getWitnessOracleVi(beginCycle - 1, srAddress);
-        DecOracleRewardCapsule endVi = delegationStore.getWitnessOracleVi(endCycle - 1, srAddress);
-        DecOracleRewardCapsule deltaVi = endVi.sub(beginVi);
-        if (deltaVi.isZero()) {
-          continue;
-        }
-        long userVote = vote.getShares();// vote.getVoteCount();
-        OracleRewardCapsule userReward = deltaVi.mul(userVote).truncateDecimal();
-        balance = LongMath.checkedAdd(balance, userReward.getBalance());
-        userReward.getAsset().forEach((k, v) -> asset.merge(k, v, LongMath::checkedAdd));
+
+    for (Vote vote : accountCapsule.getVotesList()) {
+      byte[] srAddress = vote.getVoteAddress().toByteArray();
+      DecOracleRewardCapsule beginVi =
+          delegationStore.getWitnessOracleVi(beginCycle - 1, srAddress);
+      DecOracleRewardCapsule endVi = delegationStore.getWitnessOracleVi(endCycle - 1, srAddress);
+      DecOracleRewardCapsule deltaVi = endVi.sub(beginVi);
+      if (deltaVi.isZero()) {
+        continue;
       }
-//    }
+      long userVote = vote.getShares();// vote.getVoteCount();
+      OracleRewardCapsule userReward = deltaVi.mul(userVote).truncateDecimal();
+      balance = LongMath.checkedAdd(balance, userReward.getBalance());
+      userReward.getAsset().forEach((k, v) -> asset.merge(k, v, LongMath::checkedAdd));
+    }
     return new OracleRewardCapsule(balance, asset);
 
   }
@@ -454,7 +421,7 @@ public class MortgageService {
     adjustOracleAllowance(witnessAddress, witnessReward.truncateDecimal());
   }
 
-  public boolean allowStableMarketOff () {
+  public boolean allowStableMarketOff() {
     return !dynamicPropertiesStore.allowChangeDelegation()
         || !dynamicPropertiesStore.allowStableMarketOn();
   }
