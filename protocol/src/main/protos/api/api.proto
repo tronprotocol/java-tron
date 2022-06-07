@@ -821,6 +821,9 @@ service Wallet {
     };
   }
 
+  rpc CreateStableMarketContract (StableMarketContract) returns (TransactionExtention) {
+  }
+
   rpc GetStableCoinById (BytesMessage) returns (StableCoinInfo) {
   }
 

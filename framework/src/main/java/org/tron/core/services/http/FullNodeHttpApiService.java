@@ -302,6 +302,8 @@ public class FullNodeHttpApiService implements Service {
   private OracleExchangeRateVoteServlet oracleExchangeRateVoteServlet;
 
   @Autowired
+  private CreateStableMarketContractServlet createStableMarketContractServlet;
+  @Autowired
   private GetBasePoolServlet getBasePoolServlet;
   @Autowired
   private GetMinSpreadServlet getMinSpreadServlet;
@@ -571,6 +573,8 @@ public class FullNodeHttpApiService implements Service {
               "/wallet/oracleexchangeratevote");
 
       // stable market
+      context.addServlet(new ServletHolder(createStableMarketContractServlet),
+          "/wallet/createstablemarketcontract");
       context.addServlet(new ServletHolder(getBasePoolServlet), "/wallet/getbasepool");
       context.addServlet(new ServletHolder(getMinSpreadServlet), "/wallet/getminspread");
       context.addServlet(new ServletHolder(getSimulateSwapServlet), "/wallet/getsimulateswap");

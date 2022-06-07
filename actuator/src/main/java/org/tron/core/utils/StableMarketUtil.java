@@ -37,6 +37,9 @@ public class StableMarketUtil {
 
   public ExchangeResult computeSwap(byte[] sourceToken, byte[] destToken, long offerAmount)
       throws ContractExeException {
+    if (dynamicPropertiesStore.getAllowStableMarketOn() == 0) {
+      throw new ContractExeException("Stable Market not open");
+    }
     Dec offerRate = stableMarketStore.getOracleExchangeRate(sourceToken);
     Dec baseOfferAmount = Dec.newDec(offerAmount).mul(offerRate);
     if (offerRate == null || offerRate.eq(Dec.zeroDec())) {
@@ -47,7 +50,7 @@ public class StableMarketUtil {
       throw new ContractExeException("get ask rate failed, tokenid:" + ByteArray.toStr(destToken));
     }
     // get exchange rate
-    Dec exchangeRate = askRate.quo(offerRate);
+    Dec exchangeRate = offerRate.quo(askRate);
     Dec askAmount = Dec.newDec(offerAmount).mul(exchangeRate);
 
     ExchangeResult.Builder builder = ExchangeResult.newBuilder();
@@ -68,10 +71,10 @@ public class StableMarketUtil {
 
     Dec basePool = stableMarketStore.getBasePool();
     Dec delta = stableMarketStore.getPoolDelta();
+
     Dec cp = basePool.mul(basePool);
     Dec stablePool = basePool.add(delta);
     Dec trxPool = cp.quo(stablePool);
-
     Dec offerPool;
     Dec askPool;
 
@@ -94,7 +97,8 @@ public class StableMarketUtil {
     return builder.build();
   }
 
-  public void applySwapPool(byte[] sourceToken, byte[] destToken, long offerAmount, long askAmount) {
+  public void applySwapPool(byte[] sourceToken, byte[] destToken, long offerAmount, long askAmount)
+      throws ContractExeException {
     if (!Arrays.equals(sourceToken, TRX_SYMBOL_BYTES) && !Arrays.equals(destToken, TRX_SYMBOL_BYTES)) {
       return;
     }
@@ -113,6 +117,10 @@ public class StableMarketUtil {
       // todo check over flow
       delta = delta.sub(baseAskAmount);
     }
+    Dec basePool = stableMarketStore.getBasePool();
+    if (delta.gte(basePool)) {
+      throw new ContractExeException("delta is greater than basePool");
+    }
     stableMarketStore.setPoolDelta(delta);
   }
 
@@ -122,10 +130,10 @@ public class StableMarketUtil {
   }
 
   public boolean validateStable(byte[] tokenId) {
-    if (!Commons.getAssetIssueStoreFinal(dynamicPropertiesStore, assetIssueStore, assetIssueV2Store)
-        .has(tokenId) && !Arrays.equals(tokenId, TRX_SYMBOL_BYTES)) {
-      return false;
+    if (Commons.getAssetIssueStoreFinal(dynamicPropertiesStore, assetIssueStore, assetIssueV2Store)
+        .has(tokenId) && stableMarketStore.getStableCoinInfoById(tokenId) != null) {
+      return true;
     }
-    return stableMarketStore.getStableCoinInfoById(tokenId) != null;
+    return Arrays.equals(tokenId, TRX_SYMBOL_BYTES);
   }
 }

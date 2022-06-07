@@ -14,7 +14,7 @@ import org.tron.protos.contract.StableMarketContractOuterClass.StableMarketContr
 
 @Component
 @Slf4j(topic = "API")
-public class StableMarketServlet extends RateLimiterServlet {
+public class CreateStableMarketContractServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;

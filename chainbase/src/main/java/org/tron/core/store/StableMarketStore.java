@@ -203,12 +203,12 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
     this.put(MIN_SPREAD, new BytesCapsule(spread.toByteArray()));
   }
 
-  public Long getTrxExchangeAmount() {
+  public long getTrxExchangeAmount() {
     BytesCapsule data = getUnchecked(TRX_EXCHANGE_AMOUNT);
     if (data != null && !ByteUtil.isNullOrZeroArray(data.getData())) {
       return ByteArray.toLong(data.getData());
     } else {
-      return null;
+      return 0;
     }
   }
 

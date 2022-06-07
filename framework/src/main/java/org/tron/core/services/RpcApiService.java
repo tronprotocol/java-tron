@@ -2760,6 +2760,12 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void createStableMarketContract(StableMarketContract request,
+                                           StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.StableMarketContract, responseObserver);
+    }
+
+    @Override
     public void getStableCoinById(BytesMessage request,
                                   StreamObserver<StableCoinInfo> responseObserver) {
       getStableCoinByIdCommon(request, responseObserver);
