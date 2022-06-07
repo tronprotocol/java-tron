@@ -37,6 +37,9 @@ public class StableMarketUtil {
 
   public ExchangeResult computeSwap(byte[] sourceToken, byte[] destToken, long offerAmount)
       throws ContractExeException {
+    if (dynamicPropertiesStore.getAllowStableMarketOn() == 0) {
+      throw new ContractExeException("Stable Market not open");
+    }
     Dec offerRate = stableMarketStore.getOracleExchangeRate(sourceToken);
     Dec baseOfferAmount = Dec.newDec(offerAmount).mul(offerRate);
     if (offerRate == null || offerRate.eq(Dec.zeroDec())) {

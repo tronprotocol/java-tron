@@ -19,9 +19,9 @@ import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-
-import java.util.*;
-
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.entity.Dec;
 import org.tron.common.utils.ByteArray;
@@ -159,6 +159,10 @@ public class StableMarketActuator extends AbstractActuator {
       throw new ContractValidateException("Stable coin exchange must be allowed after same token name opened");
     }
 
+    if (dynamicStore.getAllowStableMarketOn() == 0) {
+      throw new ContractValidateException("Stable Market not open.");
+    }
+
     final StableMarketContract stableMarketContract;
     try {
       stableMarketContract = this.any.unpack(StableMarketContract.class);
@@ -170,12 +174,6 @@ public class StableMarketActuator extends AbstractActuator {
     long fee = calcFee();
     byte[] ownerAddress = stableMarketContract.getOwnerAddress().toByteArray();
     byte[] toAddress = stableMarketContract.getToAddress().toByteArray();
-    byte[] sourceAsset = stableMarketContract.getSourceTokenId().getBytes();
-    byte[] destAsset = stableMarketContract.getDestTokenId().getBytes();
-    long amount = stableMarketContract.getAmount();
-    Dec exchangeRate = stableMarketStore.getOracleExchangeRate(sourceAsset);
-    long baseAmount = Dec.newDec(amount).mul(exchangeRate).roundLong();
-    long maxExchangeAmount = stableMarketStore.getBasePool().quo(2).truncateLong();
 
     if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress");
@@ -183,17 +181,30 @@ public class StableMarketActuator extends AbstractActuator {
     if (!DecodeUtil.addressValid(toAddress)) {
       throw new ContractValidateException("Invalid toAddress");
     }
+    AccountCapsule ownerAccount = accountStore.get(ownerAddress);
+    if (ownerAccount == null) {
+      throw new ContractValidateException("No owner account!");
+    }
+
+    byte[] sourceAsset = stableMarketContract.getSourceTokenId().getBytes();
+    byte[] destAsset = stableMarketContract.getDestTokenId().getBytes();
+    long amount = stableMarketContract.getAmount();
+    Dec sourceExchangeRate = stableMarketStore.getOracleExchangeRate(sourceAsset);
+    Dec destExchangeRate = stableMarketStore.getOracleExchangeRate(destAsset);
+    if (sourceExchangeRate == null) {
+      throw new ContractValidateException("source asset exchange rate not exist");
+    }
+    if (destExchangeRate == null) {
+      throw new ContractValidateException("dest asset exchange rate not exist");
+    }
+    long baseAmount = Dec.newDec(amount).mul(sourceExchangeRate).roundLong();
+    long maxExchangeAmount = stableMarketStore.getBasePool().quo(2).truncateLong();
 
     if (amount <= 0) {
       throw new ContractValidateException("Amount must be greater than 0.");
     }
     if (baseAmount >= maxExchangeAmount) {
       throw new ContractValidateException("Exchange amount is too large.");
-    }
-
-    AccountCapsule ownerAccount = accountStore.get(ownerAddress);
-    if (ownerAccount == null) {
-      throw new ContractValidateException("No owner account!");
     }
 
     if (Arrays.equals(sourceAsset, destAsset)) {

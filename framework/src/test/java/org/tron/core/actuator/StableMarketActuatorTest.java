@@ -23,7 +23,6 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import java.util.Arrays;
-
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -145,6 +144,10 @@ public class StableMarketActuatorTest {
     dbManager.getStableMarketStore().setBasePool(basePool);
     dbManager.getStableMarketStore().setMinSpread(minSpread);
     dbManager.getStableMarketStore().setPoolDelta(delta);
+  }
+
+  public void openStableMarket() {
+    dbManager.getDynamicPropertiesStore().saveAllowStableMarketOn(1);
   }
 
   public long initToken(String owner, String tokenName, long totalSupply, Dec exchangeRate) {
@@ -346,6 +349,7 @@ public class StableMarketActuatorTest {
 
   @Test
   public void exchangeStableWithTRX() {
+    openStableMarket();
     // prepare param
     long fromTrxBalance = 10_000_000_000L;
     long toTrxBalance = 10_000_000;
@@ -379,6 +383,7 @@ public class StableMarketActuatorTest {
 
   @Test
   public void exchangeTRXWithStable() {
+    openStableMarket();
     // prepare param
     long fromTrxBalance = 10_000_000_000L;
     long toTrxBalance = 10_000_000;
@@ -415,17 +420,18 @@ public class StableMarketActuatorTest {
 
   @Test
   public void testExchangeTrxNotSufficient() {
+    openStableMarket();
     // prepare param
-    long fromTrxBalance = 100000L;
-    long toTrxBalance = 10000000;
+    long fromTrxBalance = 100_000L;
+    long toTrxBalance = 10_000_000;
     //long sourceTotalSupply = 10000000;
-    long destTotalSupply = 10000000;
+    long destTotalSupply = 10_000_000;
     //Dec sourceExchangeRate = Dec.newDec(1);
     Dec destExchangeRate = Dec.newDec("1.3");
-    Dec basePool = Dec.newDec(1000000001);
+    Dec basePool = Dec.newDec(1_000_000_001);
     Dec minSpread = Dec.newDecWithPrec(5, 3);
-    Dec delta = Dec.newDec(10000011);
-    long amount = 100000000L;
+    Dec delta = Dec.newDec(10_000_011);
+    long amount = 100_000_000L;
 
     // set trx balance
     try {
@@ -448,17 +454,18 @@ public class StableMarketActuatorTest {
 
   @Test
   public void testExchangeAmountTooLarge() {
+    openStableMarket();
     // prepare param
-    long fromTrxBalance = 100000L;
-    long toTrxBalance = 10000000;
+    long fromTrxBalance = 100_000L;
+    long toTrxBalance = 10_000_000;
     //long sourceTotalSupply = 10000000;
-    long destTotalSupply = 10000000;
+    long destTotalSupply = 10_000_000;
     //Dec sourceExchangeRate = Dec.newDec(1);
     Dec destExchangeRate = Dec.newDec(1);
-    Dec basePool = Dec.newDec(1000000000);
+    Dec basePool = Dec.newDec(1_000_000_000);
     Dec minSpread = Dec.newDecWithPrec(5, 3);
-    Dec delta = Dec.newDec(10000011);
-    long amount = 1000000000;
+    Dec delta = Dec.newDec(10_000_011);
+    long amount = 1_000_000_000;
 
     // set trx balance
     try {
@@ -474,6 +481,39 @@ public class StableMarketActuatorTest {
           OWNER_ADDRESS, TO_ADDRESS, TRX_SYMBOL, destTokenId, amount);
     } catch (ContractValidateException e) {
       Assert.assertEquals("Exchange amount is too large.", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.fail();
+    }
+  }
+
+  @Test
+  public void testExchangeNotAllow() {
+    // prepare param
+    long fromTrxBalance = 100_000L;
+    long toTrxBalance = 10_000_000;
+    //long sourceTotalSupply = 10000000;
+    long destTotalSupply = 10_000_000;
+    //Dec sourceExchangeRate = Dec.newDec(1);
+    Dec destExchangeRate = Dec.newDec(1);
+    Dec basePool = Dec.newDec(1_000_000_000);
+    Dec minSpread = Dec.newDecWithPrec(5, 3);
+    Dec delta = Dec.newDec(10_000_011);
+    long amount = 1000;
+
+    // set trx balance
+    try {
+      setTrxBalance(OWNER_ADDRESS, fromTrxBalance);
+      setTrxBalance(TO_ADDRESS, toTrxBalance);
+    } catch (BalanceInsufficientException e) {
+      Assert.fail();
+    }
+    String destTokenId = String.valueOf(
+        initToken(TO_ADDRESS, DEST_TOKEN, destTotalSupply, destExchangeRate));
+    try {
+      exchangeStableWithStableBase(basePool, delta, minSpread,
+          OWNER_ADDRESS, TO_ADDRESS, TRX_SYMBOL, destTokenId, amount);
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Stable Market not open.", e.getMessage());
     } catch (ContractExeException e) {
       Assert.fail();
     }
