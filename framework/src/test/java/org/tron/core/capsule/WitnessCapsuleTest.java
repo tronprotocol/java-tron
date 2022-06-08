@@ -1,6 +1,7 @@
 package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
+import java.io.File;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -11,7 +12,6 @@ import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
 
-import java.io.File;
 
 public class WitnessCapsuleTest {
 
@@ -57,6 +57,7 @@ public class WitnessCapsuleTest {
     Assert.assertEquals(100_000_000L, witnessCapsule.sharesFromVoteCount(100));
     Assert.assertEquals(100, witnessCapsule.voteCountFromShares(100_000_000L));
     witnessCapsule.setVoteCount(99);
+    witnessCapsule.setTotalShares(100_000_000L);
     Assert.assertEquals(1_010_101L, witnessCapsule.sharesFromVoteCount(1));
     Assert.assertEquals(1, witnessCapsule.voteCountFromShares(1_010_101L));
     Assert.assertEquals(1_010_101_010L, witnessCapsule.sharesFromVoteCount(1000));
