@@ -156,7 +156,7 @@ public class WitnessCapsule implements ProtoCapsule<Witness>, Comparable<Witness
   }
 
   public long sharesFromVoteCount(long voteCount) {
-    if (getTotalShares() <= 0) {
+    if (getTotalShares() <= 0 || getVoteCount() <= 0) {
       return voteCount * TRX_PRECISION;
     } else {
       return voteCount * getTotalShares() / getVoteCount();
@@ -167,7 +167,13 @@ public class WitnessCapsule implements ProtoCapsule<Witness>, Comparable<Witness
     if (getTotalShares() <= 0) {
       return shares / TRX_PRECISION;
     } else {
-      return shares * getVoteCount() / getTotalShares();
+      long voteExtension = 999999;
+      double votes = shares * ((double) getVoteCount() / getTotalShares());
+      long votesLong = (long) votes;
+      if (votes * TRX_PRECISION >= votesLong * TRX_PRECISION + voteExtension) {
+        votesLong += 1;
+      }
+      return votesLong;
     }
   }
 

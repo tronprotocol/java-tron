@@ -150,7 +150,7 @@ public class OracleManager {
           });
         }
         // 5. Do miss counting & slashing
-        int supportAssetsSize = supportAssets.size();
+        int supportAssetsSize = assetVotes.size();
         srMap.forEach((sr, claim) -> {
           if (claim.winCount < supportAssetsSize) {
             // Increase miss counter

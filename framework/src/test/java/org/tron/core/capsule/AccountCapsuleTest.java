@@ -103,6 +103,20 @@ public class AccountCapsuleTest {
   }
 
   @Test
+  public void addVotesNewTest() {
+    //test addVote and getVotesList function
+    ByteString voteAddress = ByteString.copyFrom(AccountCapsuleTest.randomBytes(32));
+    long voteAdd = 10L;
+    accountCapsule.addVotes(voteAddress, voteAdd, voteAdd);
+    List<Vote> votesList = accountCapsule.getVotesList();
+    for (Vote vote : votesList) {
+      Assert.assertEquals(voteAddress, vote.getVoteAddress());
+      Assert.assertEquals(voteAdd, vote.getVoteCount());
+      Assert.assertEquals(voteAdd, vote.getShares());
+    }
+  }
+
+  @Test
   public void AssetAmountTest() {
     //test AssetAmount ,addAsset and reduceAssetAmount function
 
