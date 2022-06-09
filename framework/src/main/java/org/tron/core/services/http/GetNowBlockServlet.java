@@ -1,6 +1,5 @@
 package org.tron.core.services.http;
 
-import com.google.common.base.Strings;
 import java.io.IOException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -31,8 +30,7 @@ public class GetNowBlockServlet extends RateLimiterServlet {
     try {
       PostParams params = PostParams.getPostParams(request);
       GrpcAPI.EmptyMessage.Builder build = GrpcAPI.EmptyMessage.newBuilder();
-      JsonFormat.merge(Strings.isNullOrEmpty(params.getParams()) ? "{}" : params.getParams(),
-          build, params.isVisible());
+      JsonFormat.merge(params.getParams(), build, params.isVisible());
       fillResponse(params.isVisible(), build.getType(), response);
     } catch (Exception e) {
       Util.processError(e, response);

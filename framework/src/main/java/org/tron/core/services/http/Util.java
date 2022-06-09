@@ -317,20 +317,8 @@ public class Util {
 
   public static boolean getVisible(final HttpServletRequest request) {
     boolean visible = false;
-    String v = request.getParameter(VISIBLE);
-    if (StringUtil.isBlank(v)) {
-      try {
-        String input = request.getReader().lines()
-            .collect(Collectors.joining(System.lineSeparator()));
-        Util.checkBodySize(input);
-        if (StringUtil.isNotBlank(input)) {
-          visible = getVisiblePost(input);
-        }
-      } catch (Exception e) {
-        logger.debug("GetVisibleError: {}", e.getMessage());
-      }
-    } else {
-      visible = Boolean.parseBoolean(v);
+    if (StringUtil.isNotBlank(request.getParameter(VISIBLE))) {
+      visible = Boolean.valueOf(request.getParameter(VISIBLE));
     }
     return visible;
   }
