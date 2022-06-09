@@ -1,12 +1,12 @@
 package org.tron.core.actuator;
 
-import com.google.common.primitives.Bytes;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.entity.Dec;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.DecodeUtil;
@@ -62,7 +62,8 @@ public class OracleExchangeRateVoteActuator extends AbstractActuator {
       );
     }
 
-    if (oracleExchangeRateVoteContract.hasVote()) {
+    if (oracleExchangeRateVoteContract.hasVote()
+        && !oracleExchangeRateVoteContract.getVote().getExchangeRates().isEmpty()) {
       // save vote
       stableMarketStore.setVote(srAddress, oracleExchangeRateVoteContract.getVote());
     }
@@ -119,53 +120,50 @@ public class OracleExchangeRateVoteActuator extends AbstractActuator {
     }
 
 
+    String exchangeRateStr = "";
     // check vote with prevote hash of store
     if (oracleExchangeRateVoteContract.hasVote()) {
-      String exchangeRateStr =
-          oracleExchangeRateVoteContract.getVote().getExchangeRates();
+      exchangeRateStr = oracleExchangeRateVoteContract.getVote().getExchangeRates();
+    }
+    // check vote exchange rates
+    if (!exchangeRateStr.isEmpty()) {
+      Map<String, Dec> exchangeRateMap;
+      try {
+        exchangeRateMap = StableMarketStore.parseExchangeRateTuples(exchangeRateStr);
+      } catch (RuntimeException e) {
+        logger.debug(e.getMessage(), e);
+        throw new ContractValidateException(
+            "parse exchange rate string error: " + e.getMessage());
+      }
 
-      // check vote exchange rates
-      if (!exchangeRateStr.isEmpty()) {
-        Map<String, Dec> exchangeRateMap;
-        try {
-          exchangeRateMap = StableMarketStore.parseExchangeRateTuples(exchangeRateStr);
-        } catch (RuntimeException e) {
-          logger.debug(e.getMessage(), e);
-          throw new ContractValidateException(
-              "parse exchange rate string error: " + e.getMessage());
-        }
-
-        Map<String, Dec> supportAssets = stableMarketStore.getAllTobinTax();
-        if (supportAssets == null) {
-          throw new ContractValidateException("asset whitelist is empty");
-        }
-        // check all assets are in the vote whitelist
-        for (Map.Entry<String, Dec> exchangeRate : exchangeRateMap.entrySet()) {
-          if (!supportAssets.containsKey(exchangeRate.getKey())) {
-            throw new ContractValidateException("unknown vote asset");
-          }
+      Map<String, Dec> supportAssets = stableMarketStore.getAllTobinTax();
+      if (supportAssets == null) {
+        throw new ContractValidateException("asset whitelist is empty");
+      }
+      // check all assets are in the vote whitelist
+      for (Map.Entry<String, Dec> exchangeRate : exchangeRateMap.entrySet()) {
+        if (!supportAssets.containsKey(exchangeRate.getKey())) {
+          throw new ContractValidateException("unknown vote asset");
         }
       }
 
-      OraclePrevoteCapsule prevote = stableMarketStore.getPrevote(ownerAddress);
+      OraclePrevoteCapsule prevote = stableMarketStore.getPrevote(srAddress);
       if (prevote == null) {
-        throw new ContractValidateException("cannot find prevote");
+        throw new ContractValidateException("cannot find pre vote");
       }
 
       long latestBlockNum = dynamicStore.getLatestBlockHeaderNumber();
       // Check prevote is submitted proper period
       if (latestBlockNum / votePeriod - prevote.getInstance().getBlockNum() / votePeriod != 1) {
-        throw new ContractValidateException("vote info and prevote mismatch");
+        throw new ContractValidateException("pre vote period is not current - 1");
       }
 
       // verify vote with prevote hash
       String salt = oracleExchangeRateVoteContract.getVote().getSalt();
-      byte[] voteData = (salt + exchangeRateStr).getBytes();
-      voteData = Bytes.concat(voteData, srAddress);
+      byte[] voteData = (salt + exchangeRateStr + Hex.toHexString(srAddress)).getBytes();
       byte[] hash = Sha256Hash.hash(CommonParameter.getInstance().isECKeyCryptoEngine(), voteData);
-      if (Arrays.equals(prevote.getInstance().getHash().toByteArray(), hash)) {
-        throw new ContractValidateException("prevote hash verification failed");
-
+      if (!Arrays.equals(prevote.getInstance().getHash().toByteArray(), hash)) {
+        throw new ContractValidateException("pre vote hash verification failed");
       }
     }
     return true;
