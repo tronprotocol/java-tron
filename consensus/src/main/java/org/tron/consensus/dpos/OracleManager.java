@@ -7,6 +7,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -77,13 +78,11 @@ public class OracleManager {
 
   // Claim is an interface that directs its rewards to sr account.
   static class Claim {
-    private long vote;
+    private final long vote;
     private long weight;
     private long winCount;
-    private final ByteString srAddress;
 
-    public Claim(ByteString srAddress, long vote) {
-      this.srAddress = srAddress;
+    public Claim(long vote) {
       this.weight = 0;
       this.vote = vote;
       this.winCount = 0;
@@ -107,7 +106,7 @@ public class OracleManager {
       long totalVote = 0;
       for (WitnessCapsule witness : consensusDelegate.getAllWitnesses()) {
         ByteString sr = witness.getAddress();
-        srMap.put(sr, new Claim(sr, witness.getVoteCount()));
+        srMap.put(sr, new Claim(witness.getVoteCount()));
         totalVote += witness.getVoteCount();
       }
 
@@ -123,10 +122,10 @@ public class OracleManager {
         // 3. pick reference Asset
         final long thresholdVotes = totalVote / 100
             * consensusDelegate.getDynamicPropertiesStore().getOracleVoteThreshold();
-        String referenceAsset = pickReferenceAsset(assetVotes, thresholdVotes,assetVotes);
-
+        String referenceAsset = pickReferenceAsset(assetVotes, thresholdVotes, supportAssets);
+        logger.info("pick reference asset [{}]", referenceAsset);
         // 4. calculate cross exchange rates
-        if (referenceAsset != null) {
+        if (!referenceAsset.isEmpty()) {
           // make voteMap of Reference Asset to calculate cross exchange rates
           List<ExchangeRateData> voteReferenceList = assetVotes.get(referenceAsset);
           // save reference asset exchange rate
@@ -166,7 +165,7 @@ public class OracleManager {
 
       // 7. post-processing, clear vote info, update tobin tax
       stableMarketStore.clearPrevoteAndVotes(blockNum, votePeriod);
-      stableMarketStore.updateTobinTax(supportAssets); // TODO support remove sth in pre step
+      stableMarketStore.updateTobinTax(supportAssets);
     }
   }
 
@@ -206,21 +205,25 @@ public class OracleManager {
 
   private String pickReferenceAsset(
       Map<String, List<ExchangeRateData>> assetVotes, long thresholdVotes,
-      Map<String, List<ExchangeRateData>> supportAssets) {
+      Map<String, Dec> supportAssets) {
     long largestVote = 0;
     String referenceAsset = "";
 
-    for (Map.Entry<String, List<ExchangeRateData>> assetVote : assetVotes.entrySet()) {
+    Iterator<Map.Entry<String, List<ExchangeRateData>>> it = assetVotes.entrySet().iterator();
+    while (it.hasNext()) {
+      Map.Entry<String, List<ExchangeRateData>> assetVote = it.next();
       long tokenVoteCounts = assetVote.getValue().stream().mapToLong(vote -> vote.vote).sum();
       String asset = assetVote.getKey();
 
       // check token vote count
       if (tokenVoteCounts < thresholdVotes) {
-        assetVotes.remove(asset);
+        it.remove();
         supportAssets.remove(asset);
+        logger.info("remove asset {} with insufficient votes ", asset);
+        continue;
       }
 
-      if (tokenVoteCounts > largestVote || largestVote == 0) {
+      if (tokenVoteCounts > largestVote) {
         referenceAsset = asset;
         largestVote = tokenVoteCounts;
       } else if (largestVote == tokenVoteCounts && referenceAsset.compareTo(asset) > 0) {
@@ -299,14 +302,10 @@ public class OracleManager {
                                    Map<ByteString, Claim> ballotWinners) {
     List<String> rewardDenoms = new ArrayList<>();
     rewardDenoms.add(TRX_SYMBOL);
-    voteTargets.forEach((name, dec) -> {
-      rewardDenoms.add(name);
-    });
+    voteTargets.forEach((name, dec) -> rewardDenoms.add(name));
 
     AtomicLong ballotPowerSum = new AtomicLong(0L);
-    ballotWinners.forEach((srAddress, claim) -> {
-      ballotPowerSum.addAndGet(claim.weight);
-    });
+    ballotWinners.forEach((srAddress, claim) -> ballotPowerSum.addAndGet(claim.weight));
 
     if (0L == ballotPowerSum.get()) {
       return;

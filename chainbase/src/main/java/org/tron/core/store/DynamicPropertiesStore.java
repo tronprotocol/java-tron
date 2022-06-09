@@ -892,6 +892,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveMinValidPerWindow(5);
     }
+
+    try {
+      this.getOracleRewardDistributionWindow();
+    } catch (IllegalArgumentException e) {
+      this.saveOracleRewardDistributionWindow(10512000);
+    }
+
+    try {
+      this.getOracleRewardBand();
+    } catch (IllegalArgumentException e) {
+      this.saveOracleRewardBand(70000);
+    }
   }
 
   public String intArrayToString(int[] a) {
@@ -2538,9 +2550,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public long getOracleVotePeriod() {
     return Optional.ofNullable(getUnchecked(ORACLE_VOTE_PERIOD))
-            .map(BytesCapsule::getData)
-            .map(ByteArray::toLong)
-            .orElseThrow(() -> new IllegalArgumentException("not found ORACLE_VOTE_PERIOD"));
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(() -> new IllegalArgumentException("not found ORACLE_VOTE_PERIOD"));
   }
 
   public void setOracleVotePeriod(long value) {
@@ -2549,9 +2561,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public long getOracleVoteThreshold() {
     return Optional.ofNullable(getUnchecked(ORACLE_VOTE_THRESHOLD))
-            .map(BytesCapsule::getData)
-            .map(ByteArray::toLong)
-            .orElseThrow(() -> new IllegalArgumentException("not found ORACLE_VOTE_THRESHOLD"));
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(() -> new IllegalArgumentException("not found ORACLE_VOTE_THRESHOLD"));
   }
 
   public void setOracleVoteThreshold(long value) {
@@ -2620,6 +2632,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElse(Long.MAX_VALUE);
   }
+
   public boolean allowSlashVote() {
     return getAllowSlashVote() == 1;
   }
@@ -2637,6 +2650,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .orElseThrow(
             () -> new IllegalArgumentException(msg));
   }
+
   public void saveAllowStableMarketOn(long number) {
     this.put(ALLOW_STABLE_MARKET_ON,
         new BytesCapsule(ByteArray.fromLong(number)));

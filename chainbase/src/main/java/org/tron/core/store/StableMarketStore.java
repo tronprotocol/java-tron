@@ -95,7 +95,7 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
     BytesCapsule data = getUnchecked(buildKey(STABLE_COIN_PREFIX, tokenId));
     if (data != null && !ByteUtil.isNullOrZeroArray(data.getData())) {
       AssetIssueCapsule assetIssueContract = assetIssueV2Store.get(tokenId);
-      if(assetIssueContract == null || assetIssueContract.getData() == null
+      if (assetIssueContract == null || assetIssueContract.getData() == null
           || assetIssueContract.getData().length == 0) {
         throw new RuntimeException("fatal: stable asset not exist");
       }
@@ -243,7 +243,7 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
 
   public OracleVote getVote(byte[] srAddress) {
     BytesCapsule vote = getUnchecked(buildKey(ORACLE_VOTE, srAddress));
-    if (vote == null) {
+    if (vote.getData() == null) {
       return null;
     }
     OracleVote oracleVote;
@@ -320,8 +320,8 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
         }
       }
     }
-
     if (needUpdate) {
+      logger.info("tobin tax need to update");
       clearAllTobinTax();
       for (StableCoinInfo stableCoinInfo : stableCoinList.getStableCoinInfoList()) {
         Dec tobinTax = Dec.newDec(stableCoinInfo.getTobinFee());
@@ -356,7 +356,7 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
 
   public OraclePrevoteCapsule getPrevote(byte[] srAddress) {
     BytesCapsule prevote = getUnchecked(buildKey(ORACLE_PREVOTE, srAddress));
-    if (prevote != null) {
+    if (prevote.getData() != null) {
       return new OraclePrevoteCapsule(prevote.getData());
     }
     return null;
