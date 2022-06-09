@@ -5,6 +5,8 @@ import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERV
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.NoSuchElementException;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,9 +65,16 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
     synchronized (tronNetDelegate.getBlockLock()) {
       while (!peer.getSyncBlockToFetch().isEmpty() && tronNetDelegate
           .containBlock(peer.getSyncBlockToFetch().peek())) {
-        BlockId blockId = peer.getSyncBlockToFetch().pop();
-        peer.setBlockBothHave(blockId);
-        logger.info("Block {} from {} is processed", blockId.getString(), peer.getNode().getHost());
+        try {
+          BlockId blockId = peer.getSyncBlockToFetch().pop();
+          peer.setBlockBothHave(blockId);
+          logger.info("Block {} from {} is processed",
+                  blockId.getString(), peer.getNode().getHost());
+        } catch (NoSuchElementException e) {
+          logger.warn("Process ChainInventoryMessage failed, peer {}, isDisconnect:{}",
+                  peer.getNode().getHost(), peer.isDisconnect());
+          return;
+        }
       }
     }
 
