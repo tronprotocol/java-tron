@@ -120,7 +120,7 @@ public abstract class RateLimiterServlet extends HttpServlet {
     } catch (ServletException | IOException e) {
       throw e;
     } catch (Exception unexpected) {
-      logger.error("Http Api Error: {}", unexpected.getMessage());
+      logger.error("Http Api Error: {}", unexpected.getMessage(), unexpected);
     } finally {
       if (rateLimiter instanceof IPreemptibleRateLimiter && acquireResource) {
         ((IPreemptibleRateLimiter) rateLimiter).release();
