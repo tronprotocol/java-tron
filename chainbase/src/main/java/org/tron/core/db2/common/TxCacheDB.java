@@ -6,12 +6,9 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.primitives.Longs;
 import java.nio.file.Paths;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.WeakHashMap;
+
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.WriteOptions;
 import org.tron.common.parameter.CommonParameter;
@@ -26,7 +23,7 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   // > 65_536(= 2^16) blocks, that is the number of the reference block
   private final int BLOCK_COUNT = 70_000;
 
-  private Map<Key, Long> db = new WeakHashMap<>();
+  private Map<Key, Long> db = new HashMap<>();
   private Multimap<Long, Key> blockNumMap = ArrayListMultimap.create();
   private String name;
 
@@ -114,7 +111,12 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
             Collection<Key> trxHashs = blockNumMap.get(k);
             // remove transaction from persistentStore,
             // if foreach is inefficient, change remove-foreach to remove-batch
-            trxHashs.forEach(key -> persistentStore.remove(key.getBytes()));
+            trxHashs.forEach(
+                    key -> {
+                      persistentStore.remove(key.getBytes());
+                      db.remove(key);
+                    }
+            );
             blockNumMap.removeAll(k);
             logger.debug("******removeEldest block number:{}, block count:{}", k, keys.size());
           });
