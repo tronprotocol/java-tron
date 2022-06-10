@@ -99,13 +99,12 @@ public abstract class RateLimiterServlet extends HttpServlet {
     if (rateLimiter != null) {
       acquireResource = rateLimiter.acquire(new RuntimeData(req));
     }
-
+    String url = Strings.isNullOrEmpty(req.getRequestURI())
+        ? MetricLabels.UNDEFINED : req.getRequestURI();
     try {
       resp.setContentType("application/json; charset=utf-8");
 
       if (acquireResource) {
-        String url = Strings.isNullOrEmpty(req.getRequestURI())
-            ? MetricLabels.UNDEFINED : req.getRequestURI();
         Histogram.Timer requestTimer = Metrics.histogramStartTimer(
             MetricKeys.Histogram.HTTP_SERVICE_LATENCY, url);
         super.service(req, resp);
@@ -120,7 +119,7 @@ public abstract class RateLimiterServlet extends HttpServlet {
     } catch (ServletException | IOException e) {
       throw e;
     } catch (Exception unexpected) {
-      logger.error("Http Api Error: {}", unexpected.getMessage(), unexpected);
+      logger.error("Http Api {} Error：", url, unexpected);
     } finally {
       if (rateLimiter instanceof IPreemptibleRateLimiter && acquireResource) {
         ((IPreemptibleRateLimiter) rateLimiter).release();
