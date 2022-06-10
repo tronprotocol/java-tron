@@ -276,6 +276,7 @@ public class ChainBaseManager {
     closeOneStore(commonDataBase);
     closeOneStore(pbftSignDataStore);
     closeOneStore(sectionBloomStore);
+    closeOneStore(accountAssetStore);
   }
 
   // for test only
