@@ -47,8 +47,14 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
         remove(key);
         return;
       }
+      AccountAssetStore assetStore =
+              ChainBaseManager.getInstance().getAccountAssetStore();
       AccountCapsule item = new AccountCapsule(value);
-      ChainBaseManager.getInstance().getAccountAssetStore().putAccount(item.getInstance());
+      if (!item.getExistInDb()) {
+        assetStore.deleteAccount(item.createDbKey());
+        item.setExistInDb(true);
+      }
+      assetStore.putAccount(item.getInstance());
       item.clearAsset();
       db.put(key, item.getData());
     } else {
@@ -97,20 +103,26 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   private void processAccount(Map<WrappedByteArray, WrappedByteArray> batch) {
     AccountAssetStore assetStore = ChainBaseManager.getInstance().getAccountAssetStore();
     Map<WrappedByteArray, WrappedByteArray> accounts = new HashMap<>();
-    Map<byte[], byte[]> assets = new HashMap<>();
+    Map<WrappedByteArray, WrappedByteArray> assets = new HashMap<>();
     batch.forEach((k, v) -> {
       if (ByteArray.isEmpty(v.getBytes())) {
         accounts.put(k, v);
         assets.putAll(assetStore.getDeletedAssets(k.getBytes()));
       } else {
         AccountCapsule item = new AccountCapsule(v.getBytes());
+        if (!item.getExistInDb()) {
+          assets.putAll(assetStore.getDeletedAssets(k.getBytes()));
+          item.setExistInDb(true);
+        }
         assets.putAll(assetStore.getAssets(item.getInstance()));
         item.clearAsset();
         accounts.put(k, WrappedByteArray.of(item.getData()));
       }
     });
     ((Flusher) db).flush(accounts);
-    assetStore.updateByBatch(assets);
+    if (assets.size() > 0) {
+      assetStore.updateByBatch(AccountAssetStore.convert(assets));
+    }
   }
 
   @Override

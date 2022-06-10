@@ -43,39 +43,49 @@ public class AccountAssetStore extends TronDatabase<byte[]> {
   }
 
   public void putAccount(Protocol.Account account) {
-    Map<byte[], byte[]> assets = getAssets(account);
+    Map<byte[], byte[]> assets = convert(getAssets(account));
     if (!assets.isEmpty()) {
       updateByBatch(assets);
     }
   }
 
   public void deleteAccount(byte[] key) {
-    Map<byte[], byte[]> assets = getDeletedAssets(key);
+    Map<byte[], byte[]> assets = convert(getDeletedAssets(key));
     if (!assets.isEmpty()) {
       updateByBatch(assets);
     }
   }
 
-  public Map<byte[], byte[]> getAssets(Protocol.Account account) {
-    Map<byte[], byte[]> assets = new HashMap<>();
+  public Map<WrappedByteArray, WrappedByteArray> getAssets(Protocol.Account account) {
+    Map<WrappedByteArray, WrappedByteArray> assets = new HashMap<>();
     account.getAssetV2Map().forEach((k, v) -> {
       byte[] key = Bytes.concat(account.getAddress().toByteArray(), k.getBytes());
       if (v == 0) {
-        assets.put(key, null);
+        assets.put(WrappedByteArray.of(key), WrappedByteArray.of(null));
       } else {
-        assets.put(key, Longs.toByteArray(v));
+        assets.put(WrappedByteArray.of(key), WrappedByteArray.of(Longs.toByteArray(v)));
       }
     });
     return assets;
   }
 
-  public Map<byte[], byte[]> getDeletedAssets(byte[] key) {
+  public Map<WrappedByteArray, WrappedByteArray> getDeletedAssets(byte[] key) {
+    Map<WrappedByteArray, WrappedByteArray> assets = new HashMap<>();
+    prefixQuery(key).forEach((k, v) ->
+            assets.put(WrappedByteArray.of(k.getBytes()), WrappedByteArray.of(null)));
+    return assets;
+  }
+
+  public static Map<byte[], byte[]> convert(Map<WrappedByteArray, WrappedByteArray> map) {
     Map<byte[], byte[]> assets = new HashMap<>();
-    prefixQuery(key).forEach((k, v) -> assets.put(k.getBytes(), null));
+    map.forEach((k, v) -> assets.put(k.getBytes(), v.getBytes()));
     return assets;
   }
 
   public long getBalance(Protocol.Account account, byte[] key) {
+    if (!account.getExistInDb()) {
+      return 0;
+    }
     byte[] k = Bytes.concat(account.getAddress().toByteArray(), key);
     byte[] value = get(k);
     if (ArrayUtils.isEmpty(value)) {
@@ -85,15 +95,16 @@ public class AccountAssetStore extends TronDatabase<byte[]> {
   }
 
   public Map<String, Long> getAllAssets(Protocol.Account account) {
-    Map<WrappedByteArray, byte[]> map = prefixQuery(account.getAddress().toByteArray());
     Map<String, Long> assets = new HashMap<>();
-    map.forEach((k, v) -> {
-      byte[] assetID = ByteArray.subArray(k.getBytes(),
-              account.getAddress().toByteArray().length, k.getBytes().length);
-      assets.put(ByteArray.toStr(assetID), Longs.fromByteArray(v));
-    });
+    if (account.getExistInDb()) {
+      Map<WrappedByteArray, byte[]> map = prefixQuery(account.getAddress().toByteArray());
+      map.forEach((k, v) -> {
+        byte[] assetID = ByteArray.subArray(k.getBytes(),
+                account.getAddress().toByteArray().length, k.getBytes().length);
+        assets.put(ByteArray.toStr(assetID), Longs.fromByteArray(v));
+      });
+    }
     account.getAssetV2Map().forEach((k, v) -> assets.put(k, v));
     return assets;
   }
-
 }
