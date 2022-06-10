@@ -161,7 +161,7 @@ message Account {
   int64 old_tron_power = 46;
   Frozen tron_power = 47;
 
-  bool exist_in_db = 60;
+  bool asset_optimized = 60;
 
   // this account create time
   int64 create_time = 0x09;

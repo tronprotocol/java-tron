@@ -510,12 +510,12 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
 
   /*************************** start asset ****************************************/
 
-  public boolean getExistInDb() {
-    return this.account.getExistInDb();
+  public boolean getAssetOptimized() {
+    return this.account.getAssetOptimized();
   }
 
-  public void setExistInDb(boolean flag) {
-    this.account = this.account.toBuilder().setExistInDb(flag).build();
+  public void setAssetOptimized(boolean flag) {
+    this.account = this.account.toBuilder().setAssetOptimized(flag).build();
   }
 
   public boolean assetBalanceEnoughV2(byte[] key, long amount,

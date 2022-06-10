@@ -50,9 +50,9 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
       AccountAssetStore assetStore =
               ChainBaseManager.getInstance().getAccountAssetStore();
       AccountCapsule item = new AccountCapsule(value);
-      if (!item.getExistInDb()) {
+      if (!item.getAssetOptimized()) {
         assetStore.deleteAccount(item.createDbKey());
-        item.setExistInDb(true);
+        item.setAssetOptimized(true);
       }
       assetStore.putAccount(item.getInstance());
       item.clearAsset();
@@ -110,9 +110,9 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
         assets.putAll(assetStore.getDeletedAssets(k.getBytes()));
       } else {
         AccountCapsule item = new AccountCapsule(v.getBytes());
-        if (!item.getExistInDb()) {
+        if (!item.getAssetOptimized()) {
           assets.putAll(assetStore.getDeletedAssets(k.getBytes()));
-          item.setExistInDb(true);
+          item.setAssetOptimized(true);
         }
         assets.putAll(assetStore.getAssets(item.getInstance()));
         item.clearAsset();

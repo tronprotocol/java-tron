@@ -83,7 +83,7 @@ public class AccountAssetStore extends TronDatabase<byte[]> {
   }
 
   public long getBalance(Protocol.Account account, byte[] key) {
-    if (!account.getExistInDb()) {
+    if (!account.getAssetOptimized()) {
       return 0;
     }
     byte[] k = Bytes.concat(account.getAddress().toByteArray(), key);
@@ -96,7 +96,7 @@ public class AccountAssetStore extends TronDatabase<byte[]> {
 
   public Map<String, Long> getAllAssets(Protocol.Account account) {
     Map<String, Long> assets = new HashMap<>();
-    if (account.getExistInDb()) {
+    if (account.getAssetOptimized()) {
       Map<WrappedByteArray, byte[]> map = prefixQuery(account.getAddress().toByteArray());
       map.forEach((k, v) -> {
         byte[] assetID = ByteArray.subArray(k.getBytes(),
