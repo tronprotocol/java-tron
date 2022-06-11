@@ -58,7 +58,7 @@ public class CharResponseWrapper extends HttpServletResponseWrapper {
   }
 
   public int getByteSize() {
-    return streamCopy.getStreamByteSize();
+    return streamCopy == null ? 0 : streamCopy.getStreamByteSize();
   }
 
 }
