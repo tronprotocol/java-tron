@@ -32,7 +32,6 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.entity.Dec;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -76,12 +75,11 @@ public class StableMarketActuatorTest {
   private static DynamicPropertiesStore dynamicPropertiesStore;
   private static AssetIssueV2Store assetIssueV2Store;
   private static StableMarketStore stableMarketStore;
-  private static Any contract;
 
   private static StableMarketUtil stableMarketUtil;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath}, "config-localtest.conf");
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
     TO_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a146a";
@@ -313,6 +311,7 @@ public class StableMarketActuatorTest {
 
   @Test
   public void exchangeStableWithStableCommon() {
+    openStableMarket();
     // prepare param
     long sourceTotalSupply = 10_000_000;
     long destTotalSupply = 10_000_000;
