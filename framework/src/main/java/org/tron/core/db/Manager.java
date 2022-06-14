@@ -1428,6 +1428,12 @@ public class Manager {
             MetricLabels.Gauge.QUEUE_REPUSH);
       }
 
+      if (trx == null) {
+        //  transaction may be removed by rePushLoop.
+        logger.warn("Trx is null,fromPending:{},pending:{},repush:{}.",
+                fromPending, pendingTransactions.size(), rePushTransactions.size());
+        continue;
+      }
       if (System.currentTimeMillis() > timeout) {
         logger.warn("Processing transaction time exceeds the producing time.");
         break;
