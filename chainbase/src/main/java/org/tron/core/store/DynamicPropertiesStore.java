@@ -860,7 +860,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getOracleVotePeriod();
     } catch (IllegalArgumentException e) {
-      this.setOracleVotePeriod(0);
+      this.setOracleVotePeriod(CommonParameter.getInstance().getOracleVotePeriod());
     }
 
     try {
@@ -896,13 +896,14 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getOracleRewardDistributionWindow();
     } catch (IllegalArgumentException e) {
-      this.saveOracleRewardDistributionWindow(10512000);
+      this.saveOracleRewardDistributionWindow(
+          CommonParameter.getInstance().getRewardDistributionWindow());
     }
 
     try {
       this.getOracleRewardBand();
     } catch (IllegalArgumentException e) {
-      this.saveOracleRewardBand(70000);
+      this.saveOracleRewardBand(CommonParameter.getInstance().getRewardBand());
     }
   }
 

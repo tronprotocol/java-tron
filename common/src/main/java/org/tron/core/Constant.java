@@ -311,6 +311,7 @@ public class Constant {
   public static final String  ORACLE_REWARD_DISTRIBUTION_WINDOW =
       "committee.oracle.rewardDistributionWindow";
   public static final String COMMITTEE_ALLOW_SLASH_VOTE = "committee.allowSlashVote";
+  public static final String COMMITTEE_ORACLE_VOTE_PERIOD = "committee.oracleVotePeriod";
 
   public static final String LOCAL_HOST = "127.0.0.1";
 
