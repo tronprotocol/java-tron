@@ -291,7 +291,6 @@ public class ProposalService extends ProposalUtil {
             manager.getDynamicPropertiesStore().saveAllowSlashVote(1);
             manager.getDynamicPropertiesStore().saveShareRewardAlgorithmEffectiveCycle();
           }
-          // todo: init other genesis params
           break;
         }
         case BASE_POOL: {
@@ -307,12 +306,12 @@ public class ProposalService extends ProposalUtil {
           break;
         }
         case STABLE_USDD: {
-          manager.getStableMarketStore().setStableCoin(ByteArray.fromLong(entry.getValue()), 0);
+          manager.getStableMarketStore().setStableCoin(ByteArray.fromLong(entry.getValue()), 5);
           break;
         }
         case USDD_TOBIN_FEE: {
           // todo: replace usdd to the real token id
-          byte[] tokenId = "usdd".getBytes();
+          byte[] tokenId = "1000001".getBytes();
           if (manager.getStableMarketStore().getStableCoinInfoById(tokenId) != null) {
             manager.getStableMarketStore().setProposalTobinFee(tokenId, entry.getValue());
           }

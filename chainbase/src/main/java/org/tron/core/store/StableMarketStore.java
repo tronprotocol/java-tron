@@ -30,6 +30,9 @@ import org.tron.protos.contract.StableMarketContractOuterClass.StableCoinInfoLis
 public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
 
   private static final int TOBIN_FEE_DECIMAL = 3;
+  private static final Dec DEFAULT_BASE_POOL = Dec.newDec("25000000000000");
+  private static final long DEFAULT_POOL_RECOVERY_PERIOD = 10;
+  private static final Dec DEFAULT_MIN_SPREAD = Dec.newDecWithPrec(5, 3);
 
   private static final String TOBIN_FEE_SET_FAILED = "set tobin fee failed, ";
 
@@ -156,7 +159,7 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
     if (data != null && !ByteUtil.isNullOrZeroArray(data.getData())) {
       return Dec.newDec(data.getData());
     } else {
-      return null;
+      return DEFAULT_BASE_POOL;
     }
   }
 
@@ -169,7 +172,7 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
     if (data != null && !ByteUtil.isNullOrZeroArray(data.getData())) {
       return ByteArray.toLong(data.getData());
     } else {
-      return null;
+      return DEFAULT_POOL_RECOVERY_PERIOD;
     }
   }
 
@@ -182,7 +185,8 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
     if (data != null && !ByteUtil.isNullOrZeroArray(data.getData())) {
       return Dec.newDec(data.getData());
     } else {
-      return null;
+      // todo: whether should return NULL?
+      return Dec.zeroDec();
     }
   }
 
@@ -195,7 +199,7 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
     if (data != null && !ByteUtil.isNullOrZeroArray(data.getData())) {
       return Dec.newDec(data.getData());
     } else {
-      return null;
+      return DEFAULT_MIN_SPREAD;
     }
   }
 
