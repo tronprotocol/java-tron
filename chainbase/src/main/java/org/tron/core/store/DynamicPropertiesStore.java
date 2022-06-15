@@ -860,7 +860,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getOracleVotePeriod();
     } catch (IllegalArgumentException e) {
-      this.setOracleVotePeriod(0);
+      this.setOracleVotePeriod(10);
     }
 
     try {
