@@ -209,6 +209,7 @@ public class Args extends CommonParameter {
     PARAMETER.shutdownBlockCount = -1;
     PARAMETER.allowSlashVote = 0;
     PARAMETER.allowStableMarketOn = 0;
+    PARAMETER.oracleVotePeriod = 0;
 
   }
 
@@ -905,6 +906,10 @@ public class Args extends CommonParameter {
     PARAMETER.allowSlashVote =
         config.hasPath(Constant.COMMITTEE_ALLOW_SLASH_VOTE) ? config
             .getInt(Constant.COMMITTEE_ALLOW_SLASH_VOTE) : 0;
+
+    PARAMETER.oracleVotePeriod = config
+        .hasPath(Constant.COMMITTEE_ORACLE_VOTE_PERIOD) ? config
+        .getInt(Constant.COMMITTEE_ORACLE_VOTE_PERIOD) : 0;
 
     logConfig();
   }
