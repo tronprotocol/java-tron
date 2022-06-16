@@ -26,8 +26,8 @@ public class StableInit {
   private static final int VOTE_SCORE = 2;
   private static final String DESCRIPTION = "stable-test";
   private static final String URL = "https://tron.network";
-  private static final String SOURCE_TOKEN = "source_token";
-  private static final String DEST_TOKEN = "dest_token";
+  private static final String SOURCE_TOKEN = "SDR";
+  private static final String DEST_TOKEN = "EUR";
 
   private ChainBaseManager chainBaseManager;
 
