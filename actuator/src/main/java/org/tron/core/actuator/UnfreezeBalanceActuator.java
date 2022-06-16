@@ -79,7 +79,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     long oldBalance = accountCapsule.getBalance();
 
     long unfreezeBalance = 0L;
-    long addBalance;
+    long addBalance = 0L;
 
     if (dynamicStore.supportAllowNewResourceModel()
         && accountCapsule.oldTronPowerIsNotInitialized()) {
@@ -296,6 +296,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     accountStore.put(ownerAddress, accountCapsule);
 
     ret.setUnfreezeAmount(unfreezeBalance);
+    ret.setSlashAmount(unfreezeBalance - addBalance);
     ret.setStatus(fee, code.SUCESS);
 
     return true;
@@ -501,12 +502,13 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
 
   private long deductSlashedVotes(AccountCapsule accountCapsule, long unfreezeBalance) {
     if (accountCapsule.getSlashedVotes() > 0) {
-      if (unfreezeBalance > accountCapsule.getSlashedVotes()) {
-        unfreezeBalance = unfreezeBalance - accountCapsule.getSlashedVotes();
+      long slashBalance = accountCapsule.getSlashedVotes() * TRX_PRECISION;
+      if (unfreezeBalance >= slashBalance) {
+        unfreezeBalance = unfreezeBalance - slashBalance;
         accountCapsule.setSlashedVotes(0);
       } else {
-        accountCapsule.setSlashedVotes(accountCapsule.getSlashedVotes() - unfreezeBalance);
-        unfreezeBalance = 0;
+        accountCapsule.setSlashedVotes(accountCapsule.getSlashedVotes() - unfreezeBalance / TRX_PRECISION);
+        unfreezeBalance = unfreezeBalance % TRX_PRECISION;
       }
     }
     return unfreezeBalance;

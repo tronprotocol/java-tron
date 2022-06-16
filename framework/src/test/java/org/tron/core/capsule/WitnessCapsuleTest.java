@@ -63,4 +63,14 @@ public class WitnessCapsuleTest {
     Assert.assertEquals(1_010_101_010L, witnessCapsule.sharesFromVoteCount(1000));
     Assert.assertEquals(1000, witnessCapsule.voteCountFromShares(1_010_101_010L));
   }
+
+  @Test
+  public void witnessShareTest3() {
+    WitnessCapsule witnessCapsule = new WitnessCapsule(
+            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), 100, "");
+    witnessCapsule.setVoteCount(99999);
+    witnessCapsule.setTotalShares(100_000_000_000L);
+    Assert.assertEquals(1_000_010L, witnessCapsule.sharesFromVoteCount(1));
+    Assert.assertEquals(1, witnessCapsule.voteCountFromShares(1_000_010L));
+  }
 }

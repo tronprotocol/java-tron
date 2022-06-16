@@ -164,6 +164,14 @@ public class TransactionResultCapsule implements ProtoCapsule<Result> {
         .build();
   }
 
+  public long getSlashAmount() {
+    return transactionResult.getSlashAmount();
+  }
+
+  public void setSlashAmount(long amount) {
+    this.transactionResult = this.transactionResult.toBuilder().setSlashAmount(amount).build();
+  }
+
 
   @Override
   public byte[] getData() {

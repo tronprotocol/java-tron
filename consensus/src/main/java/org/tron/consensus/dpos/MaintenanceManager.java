@@ -5,10 +5,8 @@ import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+
+import java.util.*;
 import java.util.Map.Entry;
 import lombok.Getter;
 import lombok.Setter;
@@ -23,10 +21,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.store.DelegationStore;
-import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.StableMarketStore;
-import org.tron.core.store.VotesStore;
+import org.tron.core.store.*;
 import org.tron.protos.Protocol.Vote;
 
 @Slf4j(topic = "consensus")
@@ -186,11 +181,13 @@ public class MaintenanceManager {
                                           boolean allowStableMarketOn) {
     final Map<ByteString, Vote> countWitness = Maps.newHashMap();
     final Map<ByteString, Long> oldCountWitness = Maps.newHashMap();
+    final Map<ByteString, List<ByteString>> witnessNewVote = Maps.newHashMap();
     Iterator<Entry<byte[], VotesCapsule>> dbIterator = votesStore.iterator();
     long sizeCount = 0;
     while (dbIterator.hasNext()) {
       Entry<byte[], VotesCapsule> next = dbIterator.next();
       VotesCapsule votes = next.getValue();
+      ByteString accountAddress = ByteString.copyFrom(next.getKey());
       votes.getOldVotes().forEach(vote -> {
         ByteString voteAddress = vote.getVoteAddress();
         long voteCount = vote.getVoteCount();
@@ -230,6 +227,14 @@ public class MaintenanceManager {
                   .setShares(shareCount).build();
           countWitness.put(voteAddress, witnessVote);
         }
+
+        if (witnessNewVote.containsKey(voteAddress)) {
+          witnessNewVote.get(voteAddress).add(accountAddress);
+        } else {
+          ArrayList<ByteString> accountAddressList = new ArrayList<>();
+          accountAddressList.add(accountAddress);
+          witnessNewVote.put(voteAddress, accountAddressList);
+        }
       });
       sizeCount++;
       votesStore.delete(next.getKey());
@@ -237,7 +242,7 @@ public class MaintenanceManager {
     logger.info("There is {} new votes in this epoch", sizeCount);
 
     if (allowStableMarketOn) {
-      slashAndResetMissCounters(oldCountWitness);
+      slashAndResetMissCounters(oldCountWitness, witnessNewVote, countWitness);
     }
 
     return countWitness;
@@ -255,9 +260,12 @@ public class MaintenanceManager {
     consensusDelegate.saveRemoveThePowerOfTheGr(-1);
   }
 
-  private void slashAndResetMissCounters(Map<ByteString, Long> oldCountWitness) {
+  private void slashAndResetMissCounters(Map<ByteString, Long> oldCountWitness,
+                                         Map<ByteString, List<ByteString>> witnessNewVote,
+                                         Map<ByteString, Vote> countWitness) {
     DynamicPropertiesStore dynamicPropertiesStore = consensusDelegate.getDynamicPropertiesStore();
     StableMarketStore stableMarketStore = consensusDelegate.getStableMarketStore();
+    Map<ByteString, List<ByteString>> needUpdateAccounts = Maps.newHashMap();
     long SlashWindow = dynamicPropertiesStore.getSlashWindow();
     if ((dynamicPropertiesStore.getCurrentCycleNumber() + 1) % SlashWindow == 0) {
       long minValidPerWindow = dynamicPropertiesStore.getMinValidPerWindow();
@@ -274,9 +282,51 @@ public class MaintenanceManager {
             voteCount = voteCount * slashFraction / SLASH_FRACTION_BASE;
           }
           consensusDelegate.getSlashService().slashWitness(address, voteCount, true);
+          // get need update accounts
+          ByteString witnessAddress = ByteString.copyFrom(address);
+          if (witnessNewVote.containsKey(witnessAddress)) {
+            witnessNewVote.get(witnessAddress).forEach(accountAddress -> {
+              if (needUpdateAccounts.containsKey(accountAddress)) {
+                needUpdateAccounts.get(accountAddress).add(witnessAddress);
+              } else {
+                List<ByteString> voteAddressList = new ArrayList<>();
+                voteAddressList.add(witnessAddress);
+                needUpdateAccounts.put(accountAddress, voteAddressList);
+              }
+            });
+          }
         }
       });
       stableMarketStore.clearAllWitnessMissCount();
+
+      // update account votes
+      needUpdateAccounts.forEach((accountAddress, witnessList) -> {
+        AccountCapsule accountCapsule =
+                consensusDelegate.getAccount(accountAddress.toByteArray());
+        List<Vote> voteList = new LinkedList<>(accountCapsule.getVotesList());
+        accountCapsule.clearVotes();
+        voteList.forEach(vote -> {
+          ByteString witnessAddress = vote.getVoteAddress();
+          long shares = vote.getShares();
+          if (witnessList.contains(witnessAddress)) {
+            WitnessCapsule witnessCapsule =
+                    consensusDelegate.getWitness(witnessAddress.toByteArray());
+            long newShares = witnessCapsule.sharesFromVoteCount(vote.getVoteCount());
+
+            // update witness shares
+            if (countWitness.containsKey(witnessAddress)) {
+              Vote witnessVote = countWitness.get(witnessAddress);
+              witnessVote = witnessVote.toBuilder()
+                      .setShares(witnessVote.getShares() + newShares - shares).build();
+              countWitness.put(witnessAddress, witnessVote);
+            }
+
+            shares = newShares;
+          }
+          accountCapsule.addVotes(witnessAddress, vote.getVoteCount(), shares);
+        });
+        consensusDelegate.saveAccount(accountCapsule);
+      });
     }
   }
 
