@@ -7,6 +7,9 @@ import java.util.List;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.server.Channel;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.MetricLabels;
+import org.tron.common.prometheus.Metrics;
 import org.tron.core.exception.P2pException;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
@@ -33,6 +36,8 @@ public class MessageCodec extends ByteToMessageDecoder {
       Message msg = createMessage(encoded);
       channel.getNodeStatistics().tcpFlow.add(length);
       MetricsUtil.meterMark(MetricsKey.NET_TCP_IN_TRAFFIC, length);
+      Metrics.histogramObserve(MetricKeys.Histogram.TCP_BYTES, length,
+          MetricLabels.Histogram.TRAFFIC_IN);
       out.add(msg);
     } catch (Exception e) {
       channel.processException(e);

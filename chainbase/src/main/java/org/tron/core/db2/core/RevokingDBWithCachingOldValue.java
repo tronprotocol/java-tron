@@ -16,6 +16,7 @@ import org.tron.common.utils.StorageUtils;
 import org.tron.core.db.AbstractRevokingStore;
 import org.tron.core.db.RevokingStore;
 import org.tron.core.db2.common.IRevokingDB;
+import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.db2.core.Chainbase.Cursor;
 import org.tron.core.exception.ItemNotFoundException;
 
@@ -90,6 +91,11 @@ public class RevokingDBWithCachingOldValue implements IRevokingDB {
       throw new ItemNotFoundException();
     }
     return value;
+  }
+
+  @Override
+  public byte[] getFromRoot(byte[] key) throws ItemNotFoundException {
+    return get(key);
   }
 
   @Override
@@ -171,4 +177,10 @@ public class RevokingDBWithCachingOldValue implements IRevokingDB {
   public List<byte[]> getKeysNext(byte[] key, long limit) {
     return dbSource.getKeysNext(key, limit);
   }
+
+  @Override
+  public Map<WrappedByteArray, byte[]> prefixQuery(byte[] key) {
+    return dbSource.prefixQuery(key);
+  }
+
 }

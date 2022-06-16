@@ -1,5 +1,9 @@
 package org.tron.core.exception;
 
+import java.util.Locale;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.Metrics;
+
 public class P2pException extends Exception {
 
   private TypeEnum type;
@@ -7,16 +11,24 @@ public class P2pException extends Exception {
   public P2pException(TypeEnum type, String errMsg) {
     super(errMsg);
     this.type = type;
+    report();
   }
 
   public P2pException(TypeEnum type, Throwable throwable) {
     super(throwable);
     this.type = type;
+    report();
   }
 
   public P2pException(TypeEnum type, String errMsg, Throwable throwable) {
     super(errMsg, throwable);
     this.type = type;
+    report();
+  }
+
+  private void report () {
+    Metrics.counterInc(MetricKeys.Counter.P2P_ERROR, 1,
+        type.name().toLowerCase(Locale.ROOT));
   }
 
   public TypeEnum getType() {

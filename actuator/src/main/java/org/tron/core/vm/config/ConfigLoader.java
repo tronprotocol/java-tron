@@ -29,6 +29,8 @@ public class ConfigLoader {
         VMConfig.initAllowTvmVote(ds.getAllowTvmVote());
         VMConfig.initAllowTvmLondon(ds.getAllowTvmLondon());
         VMConfig.initAllowTvmCompatibleEvm(ds.getAllowTvmCompatibleEvm());
+        VMConfig.initAllowHigherLimitForMaxCpuTimeOfOneTx(
+            ds.getAllowHigherLimitForMaxCpuTimeOfOneTx());
       }
     }
   }

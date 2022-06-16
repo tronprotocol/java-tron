@@ -462,13 +462,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
   }
 
   private long getZenBalance(AccountCapsule account) {
-    if (account.getAssetMapV2().get(CommonParameter
-        .getInstance().getZenTokenId()) == null) {
-      return 0L;
-    } else {
-      return account.getAssetMapV2().get(CommonParameter
-          .getInstance().getZenTokenId());
-    }
+    return account.getAssetV2(CommonParameter.getInstance().getZenTokenId());
   }
 
   @Override

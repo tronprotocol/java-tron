@@ -1,15 +1,19 @@
 apply plugin: 'com.google.protobuf'
 
+def protobufVersion = "3.19.2"
+
+def grpcVersion = "1.14.0"
+
 dependencies {
-    compile group: 'com.google.protobuf', name: 'protobuf-java', version: '3.4.0'
-    compile group: 'com.google.protobuf', name: 'protobuf-java-util', version: '3.4.0'
+    compile group: 'com.google.protobuf', name: 'protobuf-java', version: protobufVersion
+    compile group: 'com.google.protobuf', name: 'protobuf-java-util', version: protobufVersion
     compile group: 'net.jcip', name: 'jcip-annotations', version: '1.0'
 
 //    checkstyleConfig "com.puppycrawl.tools:checkstyle:${versions.checkstyle}"
     // google grpc
-    compile group: 'io.grpc', name: 'grpc-netty', version: '1.14.0'
-    compile group: 'io.grpc', name: 'grpc-protobuf', version: '1.14.0'
-    compile group: 'io.grpc', name: 'grpc-stub', version: '1.14.0'
+    compile group: 'io.grpc', name: 'grpc-netty', version: grpcVersion
+    compile group: 'io.grpc', name: 'grpc-protobuf', version: grpcVersion
+    compile group: 'io.grpc', name: 'grpc-stub', version: grpcVersion
     // end google grpc
 
     compile group: 'com.google.api.grpc', name: 'googleapis-common-protos', version: '0.0.3'
