@@ -73,7 +73,7 @@ public class AllowTvmCompatibleEvmTest extends VMTestBase {
         contractName, address, abi, factoryCode, value, feeLimit, consumeUserResourcePercent,
         null);
     byte[] factoryAddress = WalletUtil.generateContractAddress(trx);
-    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
+    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootRepository, null);
     Assert.assertNull(runtime.getRuntimeError());
 
     // Trigger contract method: getRipemd160()
@@ -198,7 +198,7 @@ public class AllowTvmCompatibleEvmTest extends VMTestBase {
         contractName, address, abi, factoryCode, value, feeLimit, consumeUserResourcePercent,
         null);
     byte[] factoryAddress = WalletUtil.generateContractAddress(trx);
-    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
+    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootRepository, null);
     Assert.assertNull(runtime.getRuntimeError());
 
     // Trigger contract method: callF()
@@ -244,7 +244,7 @@ public class AllowTvmCompatibleEvmTest extends VMTestBase {
         contractName, address, abi, factoryCode, value, feeLimit, consumeUserResourcePercent,
         null);
     byte[] factoryAddress = WalletUtil.generateContractAddress(trx);
-    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
+    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootRepository, null);
     Assert.assertNull(runtime.getRuntimeError());
 
     // Trigger contract method: getprice()
@@ -279,7 +279,7 @@ public class AllowTvmCompatibleEvmTest extends VMTestBase {
     Protocol.Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         contractName, address, "[]", contractCode, 0, feeLimit, 0, null);
     byte[] factoryAddress = WalletUtil.generateContractAddress(trx);
-    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
+    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootRepository, null);
     Assert.assertNull(runtime.getRuntimeError());
 
     // Trigger contract method: getChainId()

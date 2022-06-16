@@ -23,6 +23,7 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.JsonUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
@@ -124,6 +125,28 @@ public class ManagerTest extends BlockGenerate {
     Args.clearParam();
     context.destroy();
     FileUtil.deleteDir(new File(dbPath));
+  }
+
+  @Test
+  public void updateRecentTransaction() throws Exception {
+    TransferContract tc =
+            TransferContract.newBuilder()
+                    .setAmount(10)
+                    .setOwnerAddress(ByteString.copyFromUtf8("aaa"))
+                    .setToAddress(ByteString.copyFromUtf8("bbb"))
+                    .build();
+    TransactionCapsule trx = new TransactionCapsule(tc, ContractType.TransferContract);
+    BlockCapsule b = new BlockCapsule(1, chainManager.getGenesisBlockId(),
+            0, ByteString.copyFrom(new byte[64]));
+    b.addTransaction(trx);
+    dbManager.updateRecentTransaction(b);
+    Assert.assertEquals(1, chainManager.getRecentTransactionStore().size());
+    byte[] key = ByteArray.subArray(ByteArray.fromLong(1), 6, 8);
+    byte[] value = chainManager.getRecentTransactionStore().get(key).getData();
+    RecentTransactionItem item = JsonUtil.json2Obj(new String(value), RecentTransactionItem.class);
+    Assert.assertEquals(1, item.getNum());
+    Assert.assertEquals(1, item.getTransactionIds().size());
+    Assert.assertEquals(trx.getTransactionId().toString(), item.getTransactionIds().get(0));
   }
 
   @Test
@@ -342,8 +365,8 @@ public class ManagerTest extends BlockGenerate {
           chainManager.getAccountStore(), chainManager.getAssetIssueStore(),
           chainManager.getDynamicPropertiesStore());
       AccountCapsule copyAccount = chainManager.getAccountStore().get(ownerAddress);
-      Assert.assertEquals(copyAccount.getAssetMap().size(), 1);
-      copyAccount.getAssetMap().forEach((k, v) -> {
+      Assert.assertEquals(copyAccount.getAssetMapForTest().size(), 1);
+      copyAccount.getAssetMapForTest().forEach((k, v) -> {
         Assert.assertEquals(k, assetID);
         Assert.assertEquals(v.compareTo(10L), 0);
       });

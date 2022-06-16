@@ -26,8 +26,6 @@ import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
-import org.tron.common.storage.Deposit;
-import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StringUtil;
@@ -46,6 +44,8 @@ import org.tron.core.service.MortgageService;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
+import org.tron.core.vm.repository.Repository;
+import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol;
 import stest.tron.wallet.common.client.utils.AbiUtil;
 import stest.tron.wallet.common.client.utils.DataWord;
@@ -271,7 +271,7 @@ public class VoteTest {
   private static ConsensusService consensusService;
   private static MortgageService mortgageService;
   private static byte[] owner;
-  private static Deposit rootDeposit;
+  private static Repository rootRepository;
 
   @Before
   public void init() throws Exception {
@@ -286,10 +286,10 @@ public class VoteTest {
     mortgageService = context.getBean(MortgageService.class);
     owner = Hex.decode(Wallet.getAddressPreFixString()
         + "abd4b9367799eaa3197fecb144eb71de1e049abc");
-    rootDeposit = DepositImpl.createRoot(manager);
-    rootDeposit.createAccount(owner, Protocol.AccountType.Normal);
-    rootDeposit.addBalance(owner, 900_000_000_000_000_000L);
-    rootDeposit.commit();
+    rootRepository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    rootRepository.createAccount(owner, Protocol.AccountType.Normal);
+    rootRepository.addBalance(owner, 900_000_000_000_000_000L);
+    rootRepository.commit();
 
     ConfigLoader.disable = true;
     VMConfig.initVmHardFork(true);

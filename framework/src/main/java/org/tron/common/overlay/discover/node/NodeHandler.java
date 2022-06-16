@@ -22,6 +22,9 @@ import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.net.udp.handler.UdpEvent;
 import org.tron.common.net.udp.message.Message;
@@ -30,6 +33,8 @@ import org.tron.common.net.udp.message.discover.NeighborsMessage;
 import org.tron.common.net.udp.message.discover.PingMessage;
 import org.tron.common.net.udp.message.discover.PongMessage;
 import org.tron.common.overlay.discover.node.statistics.NodeStatistics;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.Metrics;
 import org.tron.core.config.args.Args;
 
 @Slf4j(topic = "discover")
@@ -47,6 +52,10 @@ public class NodeHandler {
   private volatile boolean waitForPong = false;
   private volatile boolean waitForNeighbors = false;
   private volatile long pingSent;
+  @Getter
+  @Setter
+  private int reputation;
+
 
   public NodeHandler(Node node, NodeManager nodeManager) {
     this.node = node;
@@ -160,6 +169,8 @@ public class NodeHandler {
     if (waitForPong) {
       waitForPong = false;
       getNodeStatistics().discoverMessageLatency.add(System.currentTimeMillis() - pingSent);
+      Metrics.histogramObserve(MetricKeys.Histogram.PING_PONG_LATENCY,
+          (System.currentTimeMillis() - pingSent) / Metrics.MILLISECONDS_PER_SECOND);
       getNodeStatistics().lastPongReplyTime.set(System.currentTimeMillis());
       node.setId(msg.getFrom().getId());
       node.setP2pVersion(msg.getVersion());

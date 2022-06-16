@@ -17,7 +17,6 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -33,6 +32,8 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.StoreFactory;
+import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
@@ -49,7 +50,7 @@ public class ProgramResultTest {
   private static Manager dbManager;
   private static TronApplicationContext context;
   private static Application appT;
-  private static DepositImpl deposit;
+  private static RepositoryImpl repository;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug", "--support-constant"},
@@ -66,12 +67,12 @@ public class ProgramResultTest {
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
-    deposit = DepositImpl.createRoot(dbManager);
-    deposit.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
-    deposit.addBalance(Hex.decode(OWNER_ADDRESS), 100000000);
-    deposit.createAccount(Hex.decode(TRANSFER_TO), AccountType.Normal);
-    deposit.addBalance(Hex.decode(TRANSFER_TO), 0);
-    deposit.commit();
+    repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    repository.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
+    repository.addBalance(Hex.decode(OWNER_ADDRESS), 100000000);
+    repository.createAccount(Hex.decode(TRANSFER_TO), AccountType.Normal);
+    repository.addBalance(Hex.decode(TRANSFER_TO), 0);
+    repository.commit();
   }
 
   /**
@@ -116,7 +117,7 @@ public class ProgramResultTest {
     byte[] triggerData1 = TvmTestUtils.parseAbi("create()", "");
     runtime = TvmTestUtils
         .triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),
-            contractAAddress, triggerData1, 0, 100000000, deposit, null);
+            contractAAddress, triggerData1, 0, 100000000, repository, null);
     List<InternalTransaction> internalTransactionsList = runtime.getResult()
         .getInternalTransactions();
     // 15 internalTransactions in total
@@ -153,7 +154,7 @@ public class ProgramResultTest {
 
     return TvmTestUtils
         .deployContractWholeProcessReturnContractAddress(contractName, address, ABI, code, value,
-            feeLimit, consumeUserResourcePercent, null, deposit, null);
+            feeLimit, consumeUserResourcePercent, null, repository, null);
   }
 
   private byte[] deployContractAAndGetItsAddress(byte[] calledContractAddress)
@@ -262,7 +263,7 @@ public class ProgramResultTest {
 
     return TvmTestUtils
         .deployContractWholeProcessReturnContractAddress(contractName, address, ABI, code, value,
-            feeLimit, consumeUserResourcePercent, null, deposit, null);
+            feeLimit, consumeUserResourcePercent, null, repository, null);
   }
 
   /**
@@ -295,7 +296,7 @@ public class ProgramResultTest {
         .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), aContract,
             triggerData1, 0, 100000000);
     TransactionTrace traceSuccess = TvmTestUtils
-        .processTransactionAndReturnTrace(trx1, deposit, null);
+        .processTransactionAndReturnTrace(trx1, repository, null);
     runtime = traceSuccess.getRuntime();
     byte[] bContract = runtime.getResult().getHReturn();
     List<InternalTransaction> internalTransactionsList = runtime.getResult()
@@ -338,7 +339,7 @@ public class ProgramResultTest {
         .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), aContract,
             triggerData2, 0, 100000000);
     TransactionTrace traceFailed = TvmTestUtils
-        .processTransactionAndReturnTrace(trx2, deposit, null);
+        .processTransactionAndReturnTrace(trx2, repository, null);
     runtime = traceFailed.getRuntime();
 
     byte[] bContract2 =
@@ -393,7 +394,7 @@ public class ProgramResultTest {
         .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), aContract,
             triggerData1, 0, 100000000);
     TransactionTrace traceSuccess = TvmTestUtils
-        .processTransactionAndReturnTrace(trx1, deposit, null);
+        .processTransactionAndReturnTrace(trx1, repository, null);
 
     Assert.assertEquals(traceSuccess.getReceipt().getEnergyFee(), 12705900L);
 
@@ -438,7 +439,7 @@ public class ProgramResultTest {
 
     return TvmTestUtils
         .deployContractWholeProcessReturnContractAddress(contractName, address, ABI, code, value,
-            feeLimit, consumeUserResourcePercent, null, deposit, null);
+            feeLimit, consumeUserResourcePercent, null, repository, null);
   }
 
   private byte[] deployA(String contractName)
@@ -490,7 +491,7 @@ public class ProgramResultTest {
 
     return TvmTestUtils
         .deployContractWholeProcessReturnContractAddress(contractName, address, ABI, code, value,
-            feeLimit, consumeUserResourcePercent, null, deposit, null);
+            feeLimit, consumeUserResourcePercent, null, repository, null);
   }
 
   /**
@@ -504,7 +505,7 @@ public class ProgramResultTest {
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException,
       ContractValidateException {
     byte[] suicideContract = deploySuicide();
-    Assert.assertEquals(deposit.getAccount(suicideContract).getBalance(), 1000);
+    Assert.assertEquals(repository.getAccount(suicideContract).getBalance(), 1000);
     String params = Hex
         .toHexString(new DataWord(new DataWord(TRANSFER_TO).getLast20Bytes()).getData());
 
@@ -513,7 +514,7 @@ public class ProgramResultTest {
     Transaction trx = TvmTestUtils
         .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), suicideContract,
             triggerData1, 0, 100000000);
-    TransactionTrace trace = TvmTestUtils.processTransactionAndReturnTrace(trx, deposit, null);
+    TransactionTrace trace = TvmTestUtils.processTransactionAndReturnTrace(trx, repository, null);
     runtime = trace.getRuntime();
     List<InternalTransaction> internalTransactionsList = runtime.getResult()
         .getInternalTransactions();
@@ -554,7 +555,7 @@ public class ProgramResultTest {
 
     return TvmTestUtils
         .deployContractWholeProcessReturnContractAddress(contractName, address, ABI, code, value,
-            feeLimit, consumeUserResourcePercent, null, deposit, null);
+            feeLimit, consumeUserResourcePercent, null, repository, null);
   }
 
   public void checkTransactionInfo(TransactionTrace trace, Transaction trx, BlockCapsule block,

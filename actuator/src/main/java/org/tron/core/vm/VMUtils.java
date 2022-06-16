@@ -210,17 +210,8 @@ public final class VMUtils {
       throw new ContractValidateException("No asset !");
     }
 
-    Map<String, Long> asset;
-    if (deposit.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-      asset = ownerAccount.getAssetMap();
-    } else {
-      asset = ownerAccount.getAssetMapV2();
-    }
-    if (asset.isEmpty()) {
-      throw new ContractValidateException("Owner no asset!");
-    }
-
-    Long assetBalance = asset.get(ByteArray.toStr(tokenIdWithoutLeadingZero));
+    Long assetBalance = ownerAccount.getAsset(deposit.getDynamicPropertiesStore(),
+            ByteArray.toStr(tokenIdWithoutLeadingZero));
     if (null == assetBalance || assetBalance <= 0) {
       throw new ContractValidateException("assetBalance must greater than 0.");
     }
@@ -230,11 +221,8 @@ public final class VMUtils {
 
     AccountCapsule toAccount = deposit.getAccount(toAddress);
     if (toAccount != null) {
-      if (deposit.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-        assetBalance = toAccount.getAssetMap().get(ByteArray.toStr(tokenIdWithoutLeadingZero));
-      } else {
-        assetBalance = toAccount.getAssetMapV2().get(ByteArray.toStr(tokenIdWithoutLeadingZero));
-      }
+      assetBalance = toAccount.getAsset(deposit.getDynamicPropertiesStore(),
+              ByteArray.toStr(tokenIdWithoutLeadingZero));
       if (assetBalance != null) {
         try {
           assetBalance = Math.addExact(assetBalance, amount); //check if overflow

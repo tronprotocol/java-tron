@@ -14,7 +14,6 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
-import org.tron.core.capsule.AccountAssetCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -155,9 +154,6 @@ public class BandwidthProcessorTest {
         .put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
     chainBaseManager.getAccountStore().put(assetCapsule.getAddress().toByteArray(), assetCapsule);
     chainBaseManager.getAccountStore().put(assetCapsule2.getAddress().toByteArray(), assetCapsule2);
-
-    chainBaseManager.getAccountAssetStore().put(ownerCapsule.getAddress().toByteArray(),
-            new AccountAssetCapsule(ownerCapsule.getAddress()));
   }
 
   private TransferAssetContract getTransferAssetContract() {
@@ -485,9 +481,6 @@ public class BandwidthProcessorTest {
     AccountCapsule ownerCapsule = chainBaseManager.getAccountStore()
         .get(ByteArray.fromHexString(OWNER_ADDRESS));
     ownerCapsule.setFrozen(10_000_000L, 0L);
-
-    AccountAssetCapsule ownerAssetCapsule = chainBaseManager.getAccountAssetStore()
-            .get(ByteArray.fromHexString(OWNER_ADDRESS));
 
     chainBaseManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
 

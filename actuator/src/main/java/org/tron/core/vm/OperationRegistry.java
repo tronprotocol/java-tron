@@ -3,13 +3,13 @@ package org.tron.core.vm;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BooleanSupplier;
-
 import org.tron.core.vm.config.VMConfig;
 
 public class OperationRegistry {
 
   public enum Version {
-    TRON_V1,
+    TRON_V1_0,
+    TRON_V1_1,
     // add more
     // TRON_V2,
     // ETH
@@ -18,10 +18,11 @@ public class OperationRegistry {
   private static final Map<Version, JumpTable> tableMap = new HashMap<>();
 
   static {
-    tableMap.put(Version.TRON_V1, newTronV1OperationSet());
+    tableMap.put(Version.TRON_V1_0, newTronV10OperationSet());
+    tableMap.put(Version.TRON_V1_1, newTronV11OperationSet());
   }
 
-  public static JumpTable newTronV1OperationSet() {
+  public static JumpTable newTronV10OperationSet() {
     JumpTable table = newBaseOperationSet();
     appendTransferTrc10Operations(table);
     appendConstantinopleOperations(table);
@@ -33,14 +34,24 @@ public class OperationRegistry {
     return table;
   }
 
-  // Just for warming up class to avoid out_of_time
-  public static void init() {}
+  public static JumpTable newTronV11OperationSet() {
+    JumpTable table = newTronV10OperationSet();
+    adjustMemOperations(table);
+    return table;
+  }
 
-  public static JumpTable getTable(Version ver) {
+  // Just for warming up class to avoid out_of_time
+  public static void init() {
+  }
+
+  public static JumpTable getTable() {
     // implement as needed
     // switch (tx.getType()) {
     // }
-    return tableMap.get(ver);
+    if (VMConfig.allowHigherLimitForMaxCpuTimeOfOneTx()) {
+      return tableMap.get(Version.TRON_V1_1);
+    }
+    return tableMap.get(Version.TRON_V1_0);
   }
 
   public static JumpTable newBaseOperationSet() {
@@ -538,4 +549,20 @@ public class OperationRegistry {
         proposal));
   }
 
+  public static void adjustMemOperations(JumpTable table) {
+    table.set(new Operation(
+        Op.MLOAD, 1, 1,
+        EnergyCost::getMloadCost2,
+        OperationActions::mLoadAction));
+
+    table.set(new Operation(
+        Op.MSTORE, 2, 0,
+        EnergyCost::getMStoreCost2,
+        OperationActions::mStoreAction));
+
+    table.set(new Operation(
+        Op.MSTORE8, 2, 0,
+        EnergyCost::getMStore8Cost2,
+        OperationActions::mStore8Action));
+  }
 }
