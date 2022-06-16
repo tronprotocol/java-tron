@@ -14,8 +14,6 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
-import org.tron.common.storage.Deposit;
-import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.WalletUtil;
 import org.tron.core.Constant;
@@ -28,17 +26,20 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.store.StoreFactory;
+import org.tron.core.vm.repository.Repository;
+import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 
 @Slf4j
-public class DepositTest {
+public class RepositoryTest {
 
   private Manager manager;
   private TronApplicationContext context;
   private String dbPath = "output_DepostitTest";
   private String OWNER_ADDRESS;
-  private Deposit rootDeposit;
+  private Repository rootRepository;
 
   @Before
   public void init() {
@@ -46,10 +47,10 @@ public class DepositTest {
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     manager = context.getBean(Manager.class);
-    rootDeposit = DepositImpl.createRoot(manager);
-    rootDeposit.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
-    rootDeposit.addBalance(Hex.decode(OWNER_ADDRESS), 30000000000000L);
-    rootDeposit.commit();
+    rootRepository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    rootRepository.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
+    rootRepository.addBalance(Hex.decode(OWNER_ADDRESS), 30000000000000L);
+    rootRepository.commit();
   }
 
   /*  pragma solidity ^0.4.0;
@@ -178,16 +179,15 @@ public class DepositTest {
     Transaction aTrx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         contractA, address, aABI, aCode, value, fee, consumeUserResourcePercent,
         null, engeryLiimt);
-    Runtime runtime = TvmTestUtils
-        .processTransactionAndReturnRuntime(aTrx, DepositImpl.createRoot(manager),
-            null);
+    Runtime runtime = TvmTestUtils.processTransactionAndReturnRuntime(aTrx,
+        RepositoryImpl.createRoot(StoreFactory.getInstance()), null);
     Assert.assertNull(runtime.getRuntimeError());
 
     Transaction bTrx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         contractB, address, bABI, bCode, value, fee, consumeUserResourcePercent,
         null, engeryLiimt);
-    runtime = TvmTestUtils
-        .processTransactionAndReturnRuntime(bTrx, DepositImpl.createRoot(manager), null);
+    runtime = TvmTestUtils.processTransactionAndReturnRuntime(bTrx,
+        RepositoryImpl.createRoot(StoreFactory.getInstance()), null);
     Assert.assertNull(runtime.getRuntimeError());
 
     byte[] aAddress = WalletUtil.generateContractAddress(aTrx);
@@ -334,16 +334,15 @@ public class DepositTest {
     Transaction aTrx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         contractA, address, aABI, aCode, value, fee, consumeUserResourcePercent,
         null);
-    Deposit rootDeposit = DepositImpl.createRoot(manager);
-    Runtime runtime = TvmTestUtils.processTransactionAndReturnRuntime(aTrx, rootDeposit,
-        null);
+    Repository rootRepository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    Runtime runtime = TvmTestUtils.processTransactionAndReturnRuntime(aTrx, rootRepository, null);
     Assert.assertNull(runtime.getRuntimeError());
 
     Transaction bTrx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         contractB, address, bABI, bCode, value, fee, consumeUserResourcePercent,
         null);
-    rootDeposit = DepositImpl.createRoot(manager);
-    runtime = TvmTestUtils.processTransactionAndReturnRuntime(bTrx, rootDeposit, null);
+    rootRepository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    runtime = TvmTestUtils.processTransactionAndReturnRuntime(bTrx, rootRepository, null);
     Assert.assertNull(runtime.getRuntimeError());
 
     byte[] aAddress = WalletUtil.generateContractAddress(aTrx);
