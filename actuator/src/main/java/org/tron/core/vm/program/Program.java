@@ -1062,11 +1062,6 @@ public class Program {
     return codeHash;
   }
 
-  private Key getCodeHashKey() {
-    byte[] codeHash = getCodeHash();
-    return Key.create(codeHash);
-  }
-
   private Key getJumpDestAnalysisCacheKey() {
     return Key.create(ByteUtil.merge(codeAddress, getCodeHash()));
   }
