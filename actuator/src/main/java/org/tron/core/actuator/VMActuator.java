@@ -303,9 +303,6 @@ public class VMActuator implements Actuator2 {
     } else {
       newSmartContract = contract.getNewContract().toBuilder().clearVersion().build();
     }
-    if (VMConfig.allowHigherLimitForMaxCpuTimeOfOneTx()) {
-      newSmartContract = newSmartContract.toBuilder().clearCodeHash().build();
-    }
     if (!contract.getOwnerAddress().equals(newSmartContract.getOriginAddress())) {
       logger.info("OwnerAddress not equals OriginAddress");
       throw new ContractValidateException("OwnerAddress is not equals OriginAddress");
