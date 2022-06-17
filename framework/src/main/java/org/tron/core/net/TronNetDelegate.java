@@ -2,11 +2,12 @@ package org.tron.core.net;
 
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import io.prometheus.client.Histogram;
 import java.util.Collection;
 import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import javax.annotation.PostConstruct;
 import lombok.Getter;
@@ -104,6 +105,10 @@ public class TronNetDelegate {
   @Setter
   private volatile boolean  test = false;
 
+  private Cache<BlockId, Long> freshBlockId = CacheBuilder.newBuilder()
+          .maximumSize(blockIdCacheSize).expireAfterWrite(1, TimeUnit.HOURS)
+          .recordStats().build();
+
   @PostConstruct
   public void init() {
     hitThread =  new Thread(() -> {
@@ -116,18 +121,6 @@ public class TronNetDelegate {
     hitThread.setName("hit-thread");
     hitThread.start();
   }
-
-
-
-  private Queue<BlockId> freshBlockId = new ConcurrentLinkedQueue<BlockId>() {
-    @Override
-    public boolean offer(BlockId blockId) {
-      if (size() > blockIdCacheSize) {
-        super.poll();
-      }
-      return super.offer(blockId);
-    }
-  };
 
   public Collection<PeerConnection> getActivePeer() {
     return syncPool.getActivePeers();
@@ -241,7 +234,7 @@ public class TronNetDelegate {
     BlockId blockId = block.getBlockId();
     synchronized (blockLock) {
       try {
-        if (!freshBlockId.contains(blockId)) {
+        if (freshBlockId.getIfPresent(blockId) == null) {
           if (block.getNum() <= getHeadBlockId().getNum()) {
             logger.warn("Receive a fork block {} witness {}, head {}",
                 block.getBlockId().getString(),
@@ -258,7 +251,7 @@ public class TronNetDelegate {
               MetricKeys.Histogram.BLOCK_PROCESS_LATENCY, String.valueOf(isSync));
           dbManager.pushBlock(block);
           Metrics.histogramObserve(timer);
-          freshBlockId.add(blockId);
+          freshBlockId.put(blockId, System.currentTimeMillis());
           logger.info("Success process block {}.", blockId.getString());
           if (!backupServerStartFlag
               && System.currentTimeMillis() - block.getTimeStamp() < BLOCK_PRODUCED_INTERVAL) {
@@ -344,4 +337,5 @@ public class TronNetDelegate {
   public boolean allowPBFT() {
     return chainBaseManager.getDynamicPropertiesStore().allowPBFT();
   }
+
 }

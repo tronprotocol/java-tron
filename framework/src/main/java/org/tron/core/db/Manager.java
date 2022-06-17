@@ -1068,6 +1068,11 @@ public class Manager {
       ReceiptCheckErrException, VMIllegalException, ZksnarkException, EventBloomException {
     Metrics.histogramObserve(blockedTimer.get());
     blockedTimer.remove();
+    long headerNumber = getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+    if (block.getNum() <= headerNumber && khaosDb.containBlockInMiniStore(block.getBlockId())) {
+      logger.info("Block {} is already exist.", block.getBlockId().getString());
+      return;
+    }
     final Histogram.Timer timer = Metrics.histogramStartTimer(
         MetricKeys.Histogram.BLOCK_PUSH_LATENCY);
     long start = System.currentTimeMillis();
@@ -1121,7 +1126,7 @@ public class Manager {
           return;
         }
       } else {
-        if (newBlock.getNum() <= getDynamicPropertiesStore().getLatestBlockHeaderNumber()) {
+        if (newBlock.getNum() <= headerNumber) {
           return;
         }
 
@@ -1434,6 +1439,12 @@ public class Manager {
             MetricLabels.Gauge.QUEUE_REPUSH);
       }
 
+      if (trx == null) {
+        //  transaction may be removed by rePushLoop.
+        logger.warn("Trx is null,fromPending:{},pending:{},repush:{}.",
+                fromPending, pendingTransactions.size(), rePushTransactions.size());
+        continue;
+      }
       if (System.currentTimeMillis() > timeout) {
         logger.warn("Processing transaction time exceeds the producing time.");
         break;
