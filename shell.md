@@ -44,6 +44,10 @@ The script is available in the java-tron project at [github](https://github.com/
   sh start.sh -cb --run
   ```
 
+* Select a supported network,default network `main`, optional network `test`,`private`
+  ```
+  sh start.sh --net test
+  ```
 
 
 ## Options
@@ -73,6 +77,9 @@ The script is available in the java-tron project at [github](https://github.com/
 * `-mem`
 
   Specify the maximum memory of the `FullNode.jar` service in`MB`, jvm's startup maximum memory will be adjusted according to this parameter.
+  
+* `--net`
+    Select test and private networks.
 
 ### build project
 
