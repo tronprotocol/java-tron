@@ -24,11 +24,14 @@ public class SlashService {
   public void slashWitness(byte[] witnessAddress, long slashCount, boolean toJailed) {
     if (dynamicPropertiesStore.allowSlashVote()) {
       WitnessCapsule witnessCapsule = witnessStore.get(witnessAddress);
-      if (witnessCapsule.getVoteCount() > slashCount) {
-        witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() - slashCount);
-      } else {
-        witnessCapsule.setVoteCount(0);
+      if (slashCount > 0) {
+        if (witnessCapsule.getVoteCount() > slashCount) {
+          witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() - slashCount);
+        } else {
+          witnessCapsule.setVoteCount(0);
+        }
       }
+
       if (toJailed) {
         witnessCapsule.setJailedHeight(dynamicPropertiesStore.getLatestBlockHeaderNumber());
       }

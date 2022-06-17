@@ -16,6 +16,7 @@ import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -35,6 +36,7 @@ import org.tron.protos.Protocol.Vote;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
 import org.tron.protos.contract.Common.ResourceCode;
+import org.tron.protos.contract.WitnessContract;
 
 @Slf4j
 public class UnfreezeBalanceActuatorTest {
@@ -135,6 +137,16 @@ public class UnfreezeBalanceActuatorTest {
     return Any.pack(UnfreezeBalanceContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
         .setResource(resourceCode).build());
+  }
+
+  private Any getVoteWitnessContract(String address, String voteaddress, Long value) {
+    return Any.pack(
+            WitnessContract.VoteWitnessContract.newBuilder()
+                    .setOwnerAddress(StringUtil.hexString2ByteString(address))
+                    .addVotes(WitnessContract.VoteWitnessContract.Vote.newBuilder()
+                            .setVoteAddress(StringUtil.hexString2ByteString(voteaddress))
+                            .setVoteCount(value).build())
+                    .build());
   }
 
 
@@ -945,36 +957,34 @@ public class UnfreezeBalanceActuatorTest {
     dbManager.getDynamicPropertiesStore().saveAllowSlashVote(1);
 
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddressBytes);
-    accountCapsule.setFrozen(1_000_000_000L, now);
+    accountCapsule.setFrozen(10_000_000_000L, now);
+    accountCapsule.addVotes(ownerAddress, 100);
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
     WitnessCapsule ownerCapsule = new WitnessCapsule(
-            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), 10_000_000L, "URL");
-    ownerCapsule.setVoteCount(900);
-    ownerCapsule.setTotalShares(1000);
+            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), 10_000L, "URL");
+    ownerCapsule.setVoteCount(9999);
+    ownerCapsule.setTotalShares(10_000_000_000L);
     dbManager.getWitnessStore().put(ByteArray.fromHexString(OWNER_ADDRESS), ownerCapsule);
+
+    VoteWitnessActuator voteWitnessActuator = new VoteWitnessActuator();
+    voteWitnessActuator.setChainBaseManager(dbManager.getChainBaseManager())
+            .setAny(getVoteWitnessContract(OWNER_ADDRESS, OWNER_ADDRESS, 1000L));
 
     UnfreezeBalanceActuator actuator = new UnfreezeBalanceActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
             .setAny(getContractForBandwidth(OWNER_ADDRESS));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
-    dbManager.getVotesStore().reset();
-    Assert.assertNull(dbManager.getVotesStore().get(ownerAddressBytes));
+    //dbManager.getVotesStore().reset();
+    //Assert.assertNull(dbManager.getVotesStore().get(ownerAddressBytes));
 
-    // had votes
-    List<Vote> oldVotes = new ArrayList<Vote>();
-    VotesCapsule votesCapsule = new VotesCapsule(
-            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), oldVotes);
-    votesCapsule.addNewVotes(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
-            100, 100);
-    dbManager.getVotesStore().put(ByteArray.fromHexString(OWNER_ADDRESS), votesCapsule);
-    accountCapsule.setFrozen(1_000_000_000L, now);
-    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     try {
+      voteWitnessActuator.validate();
+      voteWitnessActuator.execute(ret);
       actuator.validate();
       actuator.execute(ret);
-      votesCapsule = dbManager.getVotesStore().get(ownerAddressBytes);
+      VotesCapsule votesCapsule = dbManager.getVotesStore().get(ownerAddressBytes);
       Assert.assertNotNull(votesCapsule);
       Assert.assertEquals(0, votesCapsule.getNewVotes().size());
     } catch (ContractValidateException e) {

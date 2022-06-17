@@ -5,6 +5,8 @@ import static junit.framework.TestCase.fail;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
+import java.math.BigInteger;
+
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -553,6 +555,80 @@ public class VoteWitnessActuatorTest {
       WitnessCapsule witnessCapsule = dbManager.getWitnessStore()
           .get(StringUtil.hexString2ByteString(WITNESS_ADDRESS).toByteArray());
       Assert.assertEquals(13, witnessCapsule.getVoteCount());
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+    dbManager.getDynamicPropertiesStore().saveAllowSlashVote(0);
+  }
+
+  @Test
+  public void voteWitnessShare() {
+    long frozenBalance = 7_000_000_000_000L;
+    long duration = 3;
+    dbManager.getDynamicPropertiesStore().saveChangeDelegation(1);
+    dbManager.getDynamicPropertiesStore().saveAllowSlashVote(1);
+    dbManager.getDynamicPropertiesStore().saveAllowTvmVote(1);
+    dbManager.getDynamicPropertiesStore().saveCurrentCycleNumber(15);
+    dbManager.getDynamicPropertiesStore().saveNewRewardAlgorithmEffectiveCycle();
+    dbManager.getDelegationStore().setWitnessVi(20,
+            ByteArray.fromHexString(WITNESS_ADDRESS), BigInteger.valueOf(10_000_000_000_000L));
+    dbManager.getDynamicPropertiesStore().saveCurrentCycleNumber(20);
+    dbManager.getDynamicPropertiesStore().saveShareRewardAlgorithmEffectiveCycle();
+    dbManager.getDelegationStore().setWitnessNewVi(26,
+            ByteArray.fromHexString(WITNESS_ADDRESS), BigInteger.valueOf(1_000_000_000L));
+    dbManager.getDynamicPropertiesStore().saveCurrentCycleNumber(27);
+    dbManager.getDynamicPropertiesStore().setOracleVotePeriod(10);
+    dbManager.getDelegationStore().addReward(3, ByteArray.fromHexString(WITNESS_ADDRESS), 1);
+    dbManager.getDynamicPropertiesStore().saveAllowStableMarketOn(1);
+    FreezeBalanceActuator freezeBalanceActuator = new FreezeBalanceActuator();
+    freezeBalanceActuator.setChainBaseManager(dbManager.getChainBaseManager())
+            .setAny(getContract(OWNER_ADDRESS, frozenBalance, duration));
+    VoteWitnessActuator actuator = new VoteWitnessActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+            .setAny(getContract(OWNER_ADDRESS, WITNESS_ADDRESS, 300000L));
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    AccountCapsule accountCapsule =
+            dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    accountCapsule.addVotes(StringUtil.hexString2ByteString(WITNESS_ADDRESS),
+            200000, 200_000_000_000L);
+    dbManager.getAccountStore().put(ByteArray.fromHexString(OWNER_ADDRESS), accountCapsule);
+
+    WitnessCapsule witnessCapsule = dbManager.getWitnessStore()
+            .get(StringUtil.hexString2ByteString(WITNESS_ADDRESS).toByteArray());
+    witnessCapsule.setTotalShares(10_200_000_000_000L);
+    witnessCapsule.setVoteCount(10_200_000L);
+    dbManager.getWitnessStore()
+            .put(StringUtil.hexString2ByteString(WITNESS_ADDRESS).toByteArray(), witnessCapsule);
+
+    dbManager.getStableMarketStore().setWitnessMissCount(
+            StringUtil.hexString2ByteString(WITNESS_ADDRESS).toByteArray(), 10000);
+    try {
+      freezeBalanceActuator.validate();
+      freezeBalanceActuator.execute(ret);
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertEquals(300000,
+              dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS)).getVotesList()
+                      .get(0).getVoteCount());
+      Assert.assertArrayEquals(ByteArray.fromHexString(WITNESS_ADDRESS),
+              dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS)).getVotesList()
+                      .get(0).getVoteAddress().toByteArray());
+
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+      maintenanceManager.doMaintenance();
+      witnessCapsule = dbManager.getWitnessStore()
+              .get(StringUtil.hexString2ByteString(WITNESS_ADDRESS).toByteArray());
+      Assert.assertEquals(10_299_000, witnessCapsule.getVoteCount());
+      Assert.assertEquals(10_300_029_414_648L, witnessCapsule.getTotalShares());
+
+      accountCapsule = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      Assert.assertEquals(0, accountCapsule.getSlashedVotes());
+      Assert.assertEquals(0,
+              dbManager.getStableMarketStore().getWitnessMissCount(
+                      StringUtil.hexString2ByteString(WITNESS_ADDRESS).toByteArray()));
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {

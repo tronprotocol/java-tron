@@ -106,6 +106,7 @@ public class TransactionUtil {
     builder.setShieldedTransactionFee(programResult.getRet().getShieldedTransactionFee());
     builder.setOrderId(programResult.getRet().getOrderId());
     builder.addAllOrderDetails(programResult.getRet().getOrderDetailsList());
+    builder.setSlashAmount(programResult.getRet().getSlashAmount());
 
     List<Log> logList = new ArrayList<>();
     programResult.getLogInfoList().forEach(
