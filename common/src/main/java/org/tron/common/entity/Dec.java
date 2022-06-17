@@ -6,13 +6,21 @@ import java.util.Objects;
 public final class Dec implements Comparable<Dec> {
   // number of decimal places
   public static final int precision = 18;
-  // bytes required to represent the above precision
-  // Ceiling[Log2[999 999 999 999 999 999]]
+
+  // bits required to represent the above precision
+  // Ceiling[Log2[10^Precision - 1]]
   public static final int decimalPrecisionBits = 60;
+
+  // bits required to represent the above precision
+  // Ceiling[Log2[10^Precision - 1]]
+  private static final int decimalTruncateBits = decimalPrecisionBits - 1;
+
   private static final int maxBitLen = 256;
-  private static final int maxDecBitLen = maxBitLen + decimalPrecisionBits;
+  // https://github.com/cosmos/cosmos-sdk/pull/11805
+  private static final int maxDecBitLen = maxBitLen + decimalTruncateBits;
   // max number of iterations in ApproxRoot function
-  private static final int maxApproxRootIterations = 100;
+  // https://github.com/cosmos/cosmos-sdk/pull/12229
+  private static final int maxApproxRootIterations = 300;
   private static final BigInteger precisionReuse = BigInteger.TEN.pow(precision);
   private static final BigInteger fivePrecision = precisionReuse.divide(BigInteger.valueOf(2));
   private static final BigInteger zeroInt = BigInteger.ZERO;
@@ -137,10 +145,10 @@ public final class Dec implements Comparable<Dec> {
       combinedStr.append('0');
     }
     BigInteger combined = new BigInteger(combinedStr.toString(), 10); // base 10
-
-    if (combined.bitLength() > maxBitLen) {
+    // https://github.com/cosmos/cosmos-sdk/pull/11332
+    if (combined.bitLength() > maxDecBitLen) {
       throw new RuntimeException(String.format("decimal out of range; bitLen: got %d, max %d",
-          combined.bitLength(), maxBitLen));
+          combined.bitLength(), maxDecBitLen));
     }
     if (neg) {
       combined = combined.negate();
