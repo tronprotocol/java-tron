@@ -16,7 +16,6 @@ import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.MetricLabels;
 import org.tron.common.prometheus.Metrics;
 import org.tron.core.config.args.Args;
-import org.tron.core.services.filter.CharResponseWrapper;
 import org.tron.core.services.ratelimiter.RateLimiterContainer;
 import org.tron.core.services.ratelimiter.RuntimeData;
 import org.tron.core.services.ratelimiter.adapter.DefaultBaseQqsAdapter;
@@ -99,20 +98,16 @@ public abstract class RateLimiterServlet extends HttpServlet {
     if (rateLimiter != null) {
       acquireResource = rateLimiter.acquire(new RuntimeData(req));
     }
-
+    String url = Strings.isNullOrEmpty(req.getRequestURI())
+        ? MetricLabels.UNDEFINED : req.getRequestURI();
     try {
       resp.setContentType("application/json; charset=utf-8");
 
       if (acquireResource) {
-        String url = Strings.isNullOrEmpty(req.getRequestURI())
-            ? MetricLabels.UNDEFINED : req.getRequestURI();
         Histogram.Timer requestTimer = Metrics.histogramStartTimer(
             MetricKeys.Histogram.HTTP_SERVICE_LATENCY, url);
         super.service(req, resp);
         Metrics.histogramObserve(requestTimer);
-        Metrics.histogramObserve(MetricKeys.Histogram.HTTP_BYTES,
-            ((CharResponseWrapper) resp).getByteSize(),
-            url, String.valueOf(resp.getStatus()));
       } else {
         resp.getWriter()
             .println(Util.printErrorMsg(new IllegalAccessException("lack of computing resources")));
@@ -120,7 +115,7 @@ public abstract class RateLimiterServlet extends HttpServlet {
     } catch (ServletException | IOException e) {
       throw e;
     } catch (Exception unexpected) {
-      logger.error("Http Api Error: {}", unexpected.getMessage());
+      logger.error("Http Api {}, Method:{}. Error：", url, req.getMethod(), unexpected);
     } finally {
       if (rateLimiter instanceof IPreemptibleRateLimiter && acquireResource) {
         ((IPreemptibleRateLimiter) rateLimiter).release();

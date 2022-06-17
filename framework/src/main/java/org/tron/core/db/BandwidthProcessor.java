@@ -5,7 +5,6 @@ import static org.tron.protos.Protocol.Transaction.Contract.ContractType.Shielde
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
 
 import com.google.protobuf.ByteString;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,6 +71,21 @@ public class BandwidthProcessor extends ResourceProcessor {
           increase(oldFreeAssetNetUsage, 0, latestAssetOperationTime, now));
     });
   }
+
+  // update usage for asset issue
+  public void updateUsage(AssetIssueCapsule assetIssueCapsule) {
+    long now = chainBaseManager.getHeadSlot();
+    updateUsage(assetIssueCapsule, now);
+  }
+
+  public void updateUsage(AssetIssueCapsule assetIssueCapsule, long now) {
+    long publicFreeAssetNetUsage = assetIssueCapsule.getPublicFreeAssetNetUsage();
+    long publicLatestFreeNetTime = assetIssueCapsule.getPublicLatestFreeNetTime();
+
+    assetIssueCapsule.setPublicFreeAssetNetUsage(increase(publicFreeAssetNetUsage, 0,
+        publicLatestFreeNetTime, now));
+  }
+
 
   @Override
   public void consume(TransactionCapsule trx, TransactionTrace trace)
