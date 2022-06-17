@@ -303,6 +303,9 @@ public class VMActuator implements Actuator2 {
     } else {
       newSmartContract = contract.getNewContract().toBuilder().clearVersion().build();
     }
+    if (VMConfig.allowHigherLimitForMaxCpuTimeOfOneTx()) {
+      newSmartContract = newSmartContract.toBuilder().clearCodeHash().build();
+    }
     if (!contract.getOwnerAddress().equals(newSmartContract.getOriginAddress())) {
       logger.info("OwnerAddress not equals OriginAddress");
       throw new ContractValidateException("OwnerAddress is not equals OriginAddress");
@@ -384,6 +387,9 @@ public class VMActuator implements Actuator2 {
           .createProgramInvoke(TrxType.TRX_CONTRACT_CREATION_TYPE, executorType, trx,
               tokenValue, tokenId, blockCap.getInstance(), rootRepository, vmStartInUs,
               vmShouldEndInUs, energyLimit);
+      if (isConstantCall) {
+        programInvoke.setConstantCall();
+      }
       this.program = new Program(ops, contractAddress, programInvoke, rootInternalTx);
       if (VMConfig.allowTvmCompatibleEvm()) {
         this.program.setContractVersion(1);
