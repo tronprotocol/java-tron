@@ -384,6 +384,9 @@ public class VMActuator implements Actuator2 {
           .createProgramInvoke(TrxType.TRX_CONTRACT_CREATION_TYPE, executorType, trx,
               tokenValue, tokenId, blockCap.getInstance(), rootRepository, vmStartInUs,
               vmShouldEndInUs, energyLimit);
+      if (isConstantCall) {
+        programInvoke.setConstantCall();
+      }
       this.program = new Program(ops, contractAddress, programInvoke, rootInternalTx);
       if (VMConfig.allowTvmCompatibleEvm()) {
         this.program.setContractVersion(1);

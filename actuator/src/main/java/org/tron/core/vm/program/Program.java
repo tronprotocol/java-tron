@@ -170,8 +170,14 @@ public class Program {
   }
 
   public ProgramPrecompile getProgramPrecompile() {
+    if (isConstantCall()) {
+      if (programPrecompile == null) {
+        programPrecompile = ProgramPrecompile.compile(ops);
+      }
+      return programPrecompile;
+    }
     if (programPrecompile == null) {
-      Key key = getCodeHashKey();
+      Key key = getJumpDestAnalysisCacheKey();
       if (programPrecompileLRUMap.containsKey(key)) {
         programPrecompile = programPrecompileLRUMap.get(key);
       } else {
@@ -1056,9 +1062,8 @@ public class Program {
     return codeHash;
   }
 
-  private Key getCodeHashKey() {
-    byte[] codeHash = getCodeHash();
-    return Key.create(codeHash);
+  private Key getJumpDestAnalysisCacheKey() {
+    return Key.create(ByteUtil.merge(codeAddress, getCodeHash()));
   }
 
   public byte[] getContextAddress() {
