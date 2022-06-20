@@ -43,6 +43,15 @@ public class DecOracleRewardCapsuleTest {
   }
 
   @Test
+  public void testData() {
+
+    DecOracleRewardCapsule reward3 = new DecOracleRewardCapsule();
+
+    Assert.assertNotNull(reward3.getData());
+
+  }
+
+  @Test
   public void testAdd() {
     Dec balance = Dec.newDec(1000);
     Map<String, Dec> asset = new HashMap<>();
