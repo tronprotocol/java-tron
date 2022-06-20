@@ -2735,6 +2735,7 @@ public class RpcApiService implements Service {
     public void createStableMarketContract(StableMarketContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.StableMarketContract, responseObserver);
+    }
 
     public void getOracleRewardInfo(BytesMessage request,
         StreamObserver<OracleReward> responseObserver) {
