@@ -404,7 +404,7 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
 
   public void addOracleRewardPool(DecOracleRewardCapsule reward) {
     BytesCapsule bytesCapsule = getUnchecked(REWARD_POOL);
-    if (bytesCapsule == null) {
+    if (bytesCapsule == null || bytesCapsule.getData() == null) {
       put(REWARD_POOL, new BytesCapsule(reward.getData()));
     } else {
       put(REWARD_POOL, new BytesCapsule(new DecOracleRewardCapsule(bytesCapsule.getData())
@@ -414,7 +414,7 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
 
   public void addToOracleRewardTotal(DecOracleRewardCapsule reward) {
     BytesCapsule bytesCapsule = getUnchecked(REWARD_TOTAL);
-    if (bytesCapsule == null) {
+    if (bytesCapsule == null || bytesCapsule.getData() == null) {
       put(REWARD_TOTAL, new BytesCapsule(reward.getData()));
     } else {
       put(REWARD_TOTAL, new BytesCapsule(new DecOracleRewardCapsule(bytesCapsule.getData())
@@ -424,7 +424,7 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
 
   public DecOracleRewardCapsule getOracleRewardPool() {
     BytesCapsule bytesCapsule = getUnchecked(REWARD_POOL);
-    if (bytesCapsule == null) {
+    if (bytesCapsule == null || bytesCapsule.getData() == null) {
       return new DecOracleRewardCapsule();
     }
     return new DecOracleRewardCapsule(bytesCapsule.getData());
@@ -432,7 +432,7 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
 
   public DecOracleRewardCapsule getOracleRewardTotal() {
     BytesCapsule bytesCapsule = getUnchecked(REWARD_TOTAL);
-    if (bytesCapsule == null) {
+    if (bytesCapsule == null || bytesCapsule.getData() == null) {
       return new DecOracleRewardCapsule();
     }
     return new DecOracleRewardCapsule(bytesCapsule.getData());
