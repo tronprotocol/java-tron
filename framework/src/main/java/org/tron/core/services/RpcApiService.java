@@ -2768,6 +2768,12 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getPoolDelta(EmptyMessage request,
+                                StreamObserver<BytesMessage> responseObserver) {
+      getPoolDeltaCommon(request, responseObserver);
+    }
+
+    @Override
     public void getPoolRecoveryPeriod(EmptyMessage request,
          StreamObserver<BytesMessage> responseObserver) {
       getPoolRecoveryPeriodCommon(request, responseObserver);
@@ -2964,6 +2970,19 @@ public class RpcApiService implements Service {
       BytesMessage.Builder builder = BytesMessage.newBuilder();
       String basePool = wallet.getBasePoolSize();
       builder.setValue(ByteString.copyFrom(basePool.getBytes()));
+      responseObserver.onNext(builder.build());
+    } catch (Exception e) {
+      responseObserver.onError(e);
+    }
+    responseObserver.onCompleted();
+  }
+
+  public void getPoolDeltaCommon(EmptyMessage request,
+                                    StreamObserver<BytesMessage> responseObserver) {
+    try {
+      BytesMessage.Builder builder = BytesMessage.newBuilder();
+      String poolDelta = wallet.getPoolDelta();
+      builder.setValue(ByteString.copyFrom(poolDelta.getBytes()));
       responseObserver.onNext(builder.build());
     } catch (Exception e) {
       responseObserver.onError(e);
