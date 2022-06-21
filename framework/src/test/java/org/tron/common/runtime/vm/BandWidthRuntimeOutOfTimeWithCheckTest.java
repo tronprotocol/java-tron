@@ -26,7 +26,6 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.TvmTestUtils;
-import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
@@ -222,7 +221,6 @@ public class BandWidthRuntimeOutOfTimeWithCheckTest {
         new RuntimeImpl());
     dbManager.consumeBandwidth(trxCap, trace);
     BlockCapsule blockCapsule = null;
-    DepositImpl deposit = DepositImpl.createRoot(dbManager);
     trace.init(blockCapsule);
     trace.exec();
     trace.finalization();

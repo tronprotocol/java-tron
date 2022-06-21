@@ -12,7 +12,6 @@ import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
-import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -23,6 +22,8 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.store.StoreFactory;
+import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
@@ -30,7 +31,7 @@ public class EnergyWhenSendAndTransferTest {
 
   private Manager dbManager;
   private TronApplicationContext context;
-  private DepositImpl deposit;
+  private RepositoryImpl repository;
   private String dbPath = "output_EnergyWhenSendAndTransferTest";
   private String OWNER_ADDRESS;
   private Application AppT;
@@ -46,10 +47,10 @@ public class EnergyWhenSendAndTransferTest {
     AppT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     dbManager = context.getBean(Manager.class);
-    deposit = DepositImpl.createRoot(dbManager);
-    deposit.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
-    deposit.addBalance(Hex.decode(OWNER_ADDRESS), totalBalance);
-    deposit.commit();
+    repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    repository.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
+    repository.addBalance(Hex.decode(OWNER_ADDRESS), totalBalance);
+    repository.commit();
   }
 
   // solidity for callValueTest
@@ -100,7 +101,7 @@ public class EnergyWhenSendAndTransferTest {
     long expectEnergyUsageTotal = 174639;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
     byte[] contractAddress = result.getContractAddress();
-    Assert.assertEquals(deposit.getAccount(contractAddress).getBalance(), value);
+    Assert.assertEquals(repository.getAccount(contractAddress).getBalance(), value);
     Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
         totalBalance - value - expectEnergyUsageTotal * 100);
 
@@ -167,7 +168,7 @@ public class EnergyWhenSendAndTransferTest {
       VMIllegalException {
 
     long value = 1000L;
-    long feeLimit = 1000_000_000L; // sun
+    long feeLimit = 100_000_000L; // sun
     long consumeUserResourcePercent = 100;
     byte[] address = Hex.decode(OWNER_ADDRESS);
     TVMTestResult result = deploySendAndTransferTestContract(value, feeLimit,
@@ -176,7 +177,7 @@ public class EnergyWhenSendAndTransferTest {
     long expectEnergyUsageTotal = 140194;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
     byte[] contractAddress = result.getContractAddress();
-    Assert.assertEquals(deposit.getAccount(contractAddress).getBalance(), value);
+    Assert.assertEquals(repository.getAccount(contractAddress).getBalance(), value);
     Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
         totalBalance - value - expectEnergyUsageTotal * 100);
 
@@ -190,7 +191,7 @@ public class EnergyWhenSendAndTransferTest {
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
     Assert.assertEquals(result.getRuntime().getResult().getException(), null);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), false);
-    Assert.assertEquals(deposit.getAccount(contractAddress).getBalance(), value);
+    Assert.assertEquals(repository.getAccount(contractAddress).getBalance(), value);
     Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
         totalBalance - value - (expectEnergyUsageTotal + expectEnergyUsageTotal2) * 100);
   }
@@ -211,7 +212,7 @@ public class EnergyWhenSendAndTransferTest {
     long expectEnergyUsageTotal = 140194;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
     byte[] contractAddress = result.getContractAddress();
-    Assert.assertEquals(deposit.getAccount(contractAddress).getBalance(), value);
+    Assert.assertEquals(repository.getAccount(contractAddress).getBalance(), value);
     Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
         totalBalance - value - expectEnergyUsageTotal * 100);
 
@@ -225,7 +226,7 @@ public class EnergyWhenSendAndTransferTest {
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
     Assert.assertEquals(result.getRuntime().getResult().getException(), null);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), true);
-    Assert.assertEquals(deposit.getAccount(contractAddress).getBalance(), value);
+    Assert.assertEquals(repository.getAccount(contractAddress).getBalance(), value);
     Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
         totalBalance - value - (expectEnergyUsageTotal + expectEnergyUsageTotal2) * 100);
   }

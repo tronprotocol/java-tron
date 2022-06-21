@@ -41,7 +41,7 @@ import org.tron.protos.Protocol.Inventory.InventoryType;
 @Slf4j(topic = "net")
 @Component
 public class AdvService {
-  
+
   private final int MAX_INV_TO_FETCH_CACHE_SIZE = 100_000;
   private final int MAX_TRX_CACHE_SIZE = 50_000;
   private final int MAX_BLOCK_CACHE_SIZE = 10;
@@ -49,6 +49,9 @@ public class AdvService {
 
   @Autowired
   private TronNetDelegate tronNetDelegate;
+
+  @Autowired
+  private FetchBlockService fetchBlockService;
 
   private ConcurrentHashMap<Item, Long> invToFetch = new ConcurrentHashMap<>();
 
@@ -81,7 +84,7 @@ public class AdvService {
       try {
         consumerInvToSpread();
       } catch (Exception exception) {
-        logger.error("Spread thread error. {}", exception.getMessage());
+        logger.error("Spread thread error. {}", exception.getMessage(), exception);
       }
     }, 100, 30, TimeUnit.MILLISECONDS);
 
@@ -89,7 +92,7 @@ public class AdvService {
       try {
         consumerInvToFetch();
       } catch (Exception exception) {
-        logger.error("Fetch thread error. {}", exception.getMessage());
+        logger.error("Fetch thread error. {}", exception.getMessage(), exception);
       }
     }, 100, 30, TimeUnit.MILLISECONDS);
   }
@@ -175,6 +178,10 @@ public class AdvService {
 
   public void broadcast(Message msg) {
 
+    if (fastForward) {
+      return;
+    }
+
     if (invToSpread.size() > MAX_SPREAD_SIZE) {
       logger.warn("Drop message, type: {}, ID: {}.", msg.getType(), msg.getMessageId());
       return;
@@ -193,9 +200,6 @@ public class AdvService {
       });
       blockCache.put(item, msg);
     } else if (msg instanceof TransactionMessage) {
-      if (fastForward) {
-        return;
-      }
       TransactionMessage trxMsg = (TransactionMessage) msg;
       item = new Item(trxMsg.getMessageId(), InventoryType.TRX);
       trxCount.add();
@@ -364,6 +368,7 @@ public class AdvService {
         if (key.equals(InventoryType.BLOCK)) {
           value.sort(Comparator.comparingLong(value1 -> new BlockId(value1).getNum()));
           peer.fastSend(new FetchInvDataMessage(value, key));
+          fetchBlockService.fetchBlock(value, peer);
         } else {
           peer.sendMessage(new FetchInvDataMessage(value, key));
         }
