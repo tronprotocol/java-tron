@@ -836,6 +836,9 @@ service Wallet {
   rpc GetBasePoolSize (EmptyMessage) returns (BytesMessage) {
   }
 
+  rpc GetPoolDelta (EmptyMessage) returns (BytesMessage) {
+  }
+
   rpc GetPoolRecoveryPeriod (EmptyMessage) returns (BytesMessage) {
   }
 

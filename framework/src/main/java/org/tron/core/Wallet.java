@@ -4040,6 +4040,10 @@ public class Wallet {
     return dbManager.getStableMarketStore().getBasePool().toString();
   }
 
+  public String getPoolDelta() {
+    return dbManager.getStableMarketStore().getPoolDelta().toString();
+  }
+
   public long getPoolRecoveryPeriod() {
     return dbManager.getStableMarketStore().getPoolRecoveryPeriod();
   }

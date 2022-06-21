@@ -306,6 +306,8 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetBasePoolServlet getBasePoolServlet;
   @Autowired
+  private GetPoolDeltaServlet getPoolDeltaServlet;
+  @Autowired
   private GetMinSpreadServlet getMinSpreadServlet;
   @Autowired
   private GetSimulateSwapServlet getSimulateSwapServlet;
@@ -576,6 +578,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(createStableMarketContractServlet),
           "/wallet/createstablemarketcontract");
       context.addServlet(new ServletHolder(getBasePoolServlet), "/wallet/getbasepool");
+      context.addServlet(new ServletHolder(getPoolDeltaServlet), "/wallet/getpooldelta");
       context.addServlet(new ServletHolder(getMinSpreadServlet), "/wallet/getminspread");
       context.addServlet(new ServletHolder(getSimulateSwapServlet), "/wallet/getsimulateswap");
       context.addServlet(new ServletHolder(getStableCoinInfoListServlet),
