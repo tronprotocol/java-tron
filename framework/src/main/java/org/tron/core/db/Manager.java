@@ -1428,6 +1428,12 @@ public class Manager {
             MetricLabels.Gauge.QUEUE_REPUSH);
       }
 
+      if (fromPending) {
+        pendingTransactions.poll();
+        Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, -1,
+                MetricLabels.Gauge.QUEUE_PENDING);
+      }
+
       if (trx == null) {
         //  transaction may be removed by rePushLoop.
         logger.warn("Trx is null,fromPending:{},pending:{},repush:{}.",
@@ -1473,11 +1479,6 @@ public class Manager {
         blockCapsule.addTransaction(trx);
         if (Objects.nonNull(result)) {
           transactionRetCapsule.addTransactionInfo(result);
-        }
-        if (fromPending) {
-          pendingTransactions.poll();
-          Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, -1,
-              MetricLabels.Gauge.QUEUE_PENDING);
         }
       } catch (Exception e) {
         logger.error("Process trx {} failed when generating block: {}", trx.getTransactionId(),
