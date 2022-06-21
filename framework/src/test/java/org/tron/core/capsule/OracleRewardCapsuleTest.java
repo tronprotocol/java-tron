@@ -51,4 +51,20 @@ public class OracleRewardCapsuleTest {
 
     Assert.assertEquals(new OracleRewardCapsule(), reward.sub(reward1));
   }
+
+  @Test
+  public void testValid() {
+    long balance = 1000;
+    Map<String, Long> asset = new HashMap<>();
+    asset.put("stable-01", 100L);
+    asset.put("stable-02", 100L);
+    OracleRewardCapsule reward = new OracleRewardCapsule(balance, asset);
+    OracleRewardCapsule reward1 = new OracleRewardCapsule(reward.getInstance());
+
+    try {
+      reward.sub(reward1).sub(reward1);
+    } catch (IllegalArgumentException e) {
+      Assert.assertEquals(e.getMessage(),"balance:-1000");
+    }
+  }
 }

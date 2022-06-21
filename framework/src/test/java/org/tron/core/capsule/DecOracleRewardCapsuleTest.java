@@ -159,4 +159,19 @@ public class DecOracleRewardCapsuleTest {
     Assert.assertEquals(reward3, reward2.intersect(reward));
   }
 
+  @Test
+  public void testValid() {
+    Dec balance = Dec.newDec(1000);
+    Map<String, Dec> asset = new HashMap<>();
+    asset.put("stable-01", Dec.newDec(100));
+    asset.put("stable-02", Dec.newDec(100));
+    DecOracleRewardCapsule reward = new DecOracleRewardCapsule(balance, asset);
+    DecOracleRewardCapsule reward1 = new DecOracleRewardCapsule(reward.getData());
+    try {
+      reward.sub(reward1).sub(reward1);
+    } catch (IllegalArgumentException e) {
+      Assert.assertEquals(e.getMessage(),"balance:-1000");
+    }
+  }
+
 }
