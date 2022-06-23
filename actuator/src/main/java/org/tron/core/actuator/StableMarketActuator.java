@@ -33,6 +33,7 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
@@ -191,13 +192,20 @@ public class StableMarketActuator extends AbstractActuator {
     long amount = stableMarketContract.getAmount();
     Dec sourceExchangeRate = stableMarketStore.getOracleExchangeRate(sourceAsset);
     Dec destExchangeRate = stableMarketStore.getOracleExchangeRate(destAsset);
-    if (sourceExchangeRate == null) {
+    if (!Arrays.equals(TRX_SYMBOL_BYTES, sourceAsset) && sourceExchangeRate == null) {
       throw new ContractValidateException("source asset exchange rate not exist");
     }
-    if (destExchangeRate == null) {
+    if (!Arrays.equals(TRX_SYMBOL_BYTES, destAsset) && destExchangeRate == null) {
       throw new ContractValidateException("dest asset exchange rate not exist");
     }
-    long baseAmount = Dec.newDec(amount).mul(sourceExchangeRate).roundLong();
+    long baseAmount = 0;
+    try {
+      baseAmount = stableMarketUtil.computeInternalSwap(
+          sourceAsset, stableMarketUtil.getSDRTokenId(), amount).truncateLong();
+    } catch (ItemNotFoundException e) {
+      throw new ContractValidateException("baseAmount computeInternalSwap failed");
+    }
+
     long maxExchangeAmount = stableMarketStore.getBasePool().quo(2).truncateLong();
 
     if (amount <= 0) {
@@ -238,6 +246,12 @@ public class StableMarketActuator extends AbstractActuator {
     }
 
     AccountCapsule toAccount = accountStore.get(toAddress);
+    long offerAmount = 0;
+    try {
+      offerAmount = stableMarketUtil.computeInternalSwap(sourceAsset, destAsset, amount).truncateLong();
+    } catch (ItemNotFoundException e) {
+      throw new ContractValidateException("offerAmount computeInternalSwap failed.");
+    }
     if (toAccount != null) {
       //after ForbidTransferToContract proposal, send trx to smartContract by actuator is not allowed.
       if (dynamicStore.getForbidTransferToContract() == 1
@@ -245,10 +259,13 @@ public class StableMarketActuator extends AbstractActuator {
         throw new ContractValidateException("Cannot exchange asset to smartContract.");
       }
 
-      assetBalance = toAccount.getAssetMapV2().get(ByteArray.toStr(destAsset));
-
-      if (assetBalance != null && Long.MAX_VALUE - assetBalance < amount) {
-        // todo: calculate exchange amount
+      // todo: add unit test
+      if(Arrays.equals(TRX_SYMBOL_BYTES, destAsset)) {
+        assetBalance = toAccount.getBalance();
+      } else {
+        assetBalance = toAccount.getAssetMapV2().get(ByteArray.toStr(destAsset));
+      }
+      if (assetBalance != null && Long.MAX_VALUE - assetBalance < offerAmount) {
         throw new ContractValidateException("exchange amount overflow");
       }
     } else {

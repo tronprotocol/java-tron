@@ -1,5 +1,7 @@
 package org.tron.core.store;
 
+import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
+
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -24,7 +26,6 @@ import org.tron.protos.contract.StableMarketContractOuterClass.StableCoinContrac
 import org.tron.protos.contract.StableMarketContractOuterClass.StableCoinInfo;
 import org.tron.protos.contract.StableMarketContractOuterClass.StableCoinInfoList;
 
-
 @Slf4j(topic = "DB")
 @Component
 public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
@@ -42,6 +43,7 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
   private static final byte[] POOL_DELTA = "delta".getBytes();
   private static final byte[] MIN_SPREAD = "min_spread".getBytes();
   private static final byte[] TRX_EXCHANGE_AMOUNT = "trx_exchange_amount".getBytes();
+  private static final byte[] SDR_TOKEN_ID = "sdr_token_id".getBytes();
 
   // for oracle module begin
   private static final byte[] EXCHANGE_RATE = "exchange_rate".getBytes();
@@ -111,6 +113,20 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
     } else {
       return null;
     }
+  }
+
+  public byte[] getSDRTokenId() {
+    // todo: replace
+//    BytesCapsule data = getUnchecked(SDR_TOKEN_ID);
+//    if (data == null || ByteUtil.isNullOrZeroArray(data.getData())) {
+//      return null;
+//    }
+//    return data.getData();
+    return "1000001".getBytes();
+  }
+
+  public void setSDRTokenId(byte[] tokenId) {
+    this.put(SDR_TOKEN_ID, new BytesCapsule(tokenId));
   }
 
   public void setStableCoin(byte[] tokenId, long tobinFee) {
@@ -221,6 +237,9 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
   }
 
   public Dec getOracleExchangeRate(byte[] tokenId) {
+    if (Arrays.equals(TRX_SYMBOL_BYTES, tokenId)) {
+      return Dec.oneDec();
+    }
     BytesCapsule data = getUnchecked(buildKey(EXCHANGE_RATE, tokenId));
     if (data != null && !ByteUtil.isNullOrZeroArray(data.getData())) {
       return Dec.newDec(data.getData());

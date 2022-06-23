@@ -291,6 +291,8 @@ public class ProposalService extends ProposalUtil {
             manager.getDynamicPropertiesStore().saveAllowSlashVote(1);
             manager.getDynamicPropertiesStore().saveShareRewardAlgorithmEffectiveCycle();
           }
+          // todo: set SDR tokenId
+          manager.getStableMarketStore().setSDRTokenId("1000001".getBytes());
           break;
         }
         case BASE_POOL: {
