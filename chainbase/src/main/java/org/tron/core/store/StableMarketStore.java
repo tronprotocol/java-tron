@@ -249,6 +249,9 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
   }
 
   public void setOracleExchangeRate(byte[] tokenId, Dec rate) {
+    // todo: change to debug?
+    logger.info(String.format(
+        "update exchange rate, tokenid: %s, rate: %s", ByteArray.toStr(tokenId), rate.toString()));
     this.put(buildKey(EXCHANGE_RATE, tokenId), new BytesCapsule(rate.toByteArray()));
   }
 
