@@ -111,15 +111,23 @@ public class StableMarketUtil {
 
     Dec delta = stableMarketStore.getPoolDelta();
     if (!Arrays.equals(sourceToken, TRX_SYMBOL_BYTES) && Arrays.equals(destToken, TRX_SYMBOL_BYTES)) {
-      Dec offerRate = stableMarketStore.getOracleExchangeRate(sourceToken);
-      Dec baseOfferAmount = Dec.newDec(offerAmount).mul(offerRate);
+      Dec baseOfferAmount = null;
+      try {
+        baseOfferAmount = computeInternalSwap(sourceToken, getSDRTokenId(), offerAmount);
+      } catch (ItemNotFoundException e) {
+        throw new ContractExeException("applySwapPool: source token computeInternalSwap failed");
+      }
       // todo check over flow
       delta = delta.add(baseOfferAmount);
     }
 
     if (Arrays.equals(sourceToken, TRX_SYMBOL_BYTES) && !Arrays.equals(destToken, TRX_SYMBOL_BYTES)) {
-      Dec askRate = stableMarketStore.getOracleExchangeRate(destToken);
-      Dec baseAskAmount = Dec.newDec(askAmount).mul(askRate);
+      Dec baseAskAmount = null;
+      try {
+        baseAskAmount = computeInternalSwap(destToken, getSDRTokenId(), askAmount);
+      } catch (ItemNotFoundException e) {
+        throw new ContractExeException("applySwapPool: dest token computeInternalSwap failed");
+      }
       // todo check over flow
       delta = delta.sub(baseAskAmount);
     }

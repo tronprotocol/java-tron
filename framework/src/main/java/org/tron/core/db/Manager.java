@@ -543,7 +543,8 @@ public class Manager {
     latestSolidityNumShutDown = CommonParameter.getInstance().getShutdownBlockHeight();
 
     // todo: just for stable-coin test, remove on pro env
-    if (chainBaseManager.getDynamicPropertiesStore().getAllowStableMarketOn() == 1) {
+    if (chainBaseManager.getDynamicPropertiesStore().getAllowStableMarketOn() == 1
+        && chainBaseManager.getDynamicPropertiesStore().getTokenIdNum() <= 1000001) {
       StableInit stableInit = new StableInit(chainBaseManager);
       stableInit.init();
     }
