@@ -10,6 +10,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.DynamicPropertiesStore;
@@ -40,18 +41,23 @@ public class StableMarketUtil {
     if (dynamicPropertiesStore.getAllowStableMarketOn() == 0) {
       throw new ContractExeException("Stable Market not open");
     }
+    Dec baseOfferAmount = null;
     Dec offerRate = stableMarketStore.getOracleExchangeRate(sourceToken);
-    Dec baseOfferAmount = Dec.newDec(offerAmount).mul(offerRate);
-    if (offerRate == null || offerRate.eq(Dec.zeroDec())) {
-      throw new ContractExeException("get exchange rate failed, tokenid:" + ByteArray.toStr(sourceToken));
+    try {
+      baseOfferAmount = computeInternalSwap(sourceToken, getSDRTokenId(), offerAmount);
+    } catch (ItemNotFoundException e) {
+      throw new ContractExeException("computeInternalSwap source token failed, tokenid:" + ByteArray.toStr(sourceToken));
     }
+    Dec askAmount = null;
     Dec askRate = stableMarketStore.getOracleExchangeRate(destToken);
-    if (askRate == null || askRate.eq(Dec.zeroDec())) {
-      throw new ContractExeException("get ask rate failed, tokenid:" + ByteArray.toStr(destToken));
+    try {
+      askAmount = computeInternalSwap(getSDRTokenId(), destToken, baseOfferAmount.truncateLong());
+    } catch (ItemNotFoundException e) {
+      throw new ContractExeException("computeInternalSwap dest token failed, tokenid:" + ByteArray.toStr(destToken));
+
     }
     // get exchange rate
-    Dec exchangeRate = offerRate.quo(askRate);
-    Dec askAmount = Dec.newDec(offerAmount).mul(exchangeRate);
+    Dec exchangeRate = askRate.quo(offerRate);
 
     ExchangeResult.Builder builder = ExchangeResult.newBuilder();
     builder.setSourceToken(ByteArray.toStr(sourceToken));
@@ -122,6 +128,25 @@ public class StableMarketUtil {
       throw new ContractExeException("delta is greater than basePool");
     }
     stableMarketStore.setPoolDelta(delta);
+  }
+
+  public Dec computeInternalSwap(byte[] sourceToken, byte[] destToken, long amount) throws ItemNotFoundException {
+    if(Arrays.equals(sourceToken, destToken)) {
+      return Dec.newDec(amount);
+    }
+    Dec offerRate = stableMarketStore.getOracleExchangeRate(sourceToken);
+    if (offerRate == null) {
+      throw new ItemNotFoundException("get offer exchange rate failed, tokenid: " + ByteArray.toStr(sourceToken));
+    }
+    Dec askRate = stableMarketStore.getOracleExchangeRate(destToken);
+    if (askRate == null) {
+      throw new ItemNotFoundException("get ask exchange rate failed, tokenid: " + ByteArray.toStr(destToken));
+    }
+    return Dec.newDec(amount).mul(askRate).quo(offerRate);
+  }
+
+  public byte[] getSDRTokenId() {
+    return stableMarketStore.getSDRTokenId();
   }
 
   public void adjustTrxExchangeTotalAmount(long amount) {

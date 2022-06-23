@@ -40,7 +40,7 @@ public class StableInit {
     // prepare param
     long sourceTotalSupply = 100_000_000;
     long destTotalSupply = 500_000_000;
-    Dec sourceExchangeRate = Dec.newDec("1.3");
+    Dec sourceExchangeRate = Dec.newDec("1");
     Dec destExchangeRate = Dec.newDec("1.5");
     // set trx balance
     initToken(OWNER_ADDRESS, SOURCE_TOKEN, sourceTotalSupply, sourceExchangeRate);

@@ -354,7 +354,7 @@ public class StableMarketActuatorTest {
     long toTrxBalance = 10_000_000;
     long sourceTotalSupply = 100_000_000_000L;
     //long destTotalSupply = 10_000_000;
-    Dec sourceExchangeRate = Dec.newDec("0.1");
+    Dec sourceExchangeRate = Dec.newDec("5");
     //Dec destExchangeRate = Dec.newDec("1.6");
     Dec basePool = Dec.newDec(1_000_000_000);
     Dec minSpread = Dec.newDecWithPrec(5, 3);
