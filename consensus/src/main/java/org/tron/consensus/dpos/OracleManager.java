@@ -3,6 +3,7 @@ package org.tron.consensus.dpos;
 import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL;
 
 import com.google.protobuf.ByteString;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -273,9 +274,6 @@ public class OracleManager {
     }
 
     Dec standardDeviation = getStandardDeviation(voteList, weightedMedian);
-    if (standardDeviation.eq(Dec.zeroDec())) {
-      return weightedMedian;
-    }
     Dec rewardSpread = weightedMedian.mul(rewardBand.quo(2));
 
     if (standardDeviation.gt(rewardSpread)) {
@@ -407,8 +405,8 @@ public class OracleManager {
     Dec variance = sum.quo(sortedVoteList.size());
 
     double floatNum = variance.parseDouble();
-    double sqrtNum = Math.sqrt(floatNum);
-    return Dec.newDec(String.valueOf(sqrtNum));
+    double sqrtNum = StrictMath.sqrt(floatNum);
+    return Dec.newDec(BigDecimal.valueOf(sqrtNum).toPlainString());
   }
 
   private static class DecCoin {
