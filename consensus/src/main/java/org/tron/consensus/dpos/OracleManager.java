@@ -273,9 +273,6 @@ public class OracleManager {
     }
 
     Dec standardDeviation = getStandardDeviation(voteList, weightedMedian);
-    if (standardDeviation.eq(Dec.zeroDec())) {
-      return weightedMedian;
-    }
     Dec rewardSpread = weightedMedian.mul(rewardBand.quo(2));
 
     if (standardDeviation.gt(rewardSpread)) {
