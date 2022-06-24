@@ -37,6 +37,7 @@ public class DecOracleRewardCapsule implements ProtoCapsule<DecOracleReward> {
       this.balance = Dec.newDec(this.decReward.getBalance().getData().toByteArray());
       this.decReward.getAssetMap().forEach((k, v) ->
           this.asset.put(k, Dec.newDec(v.getData().toByteArray())));
+      valid();
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage());
     }
@@ -70,6 +71,7 @@ public class DecOracleRewardCapsule implements ProtoCapsule<DecOracleReward> {
         .setBalance(buildFromDec(this.balance))
         .putAllAsset(this.asset.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
             e -> buildFromDec(e.getValue())))).build();
+    valid();
   }
 
 
@@ -177,11 +179,25 @@ public class DecOracleRewardCapsule implements ProtoCapsule<DecOracleReward> {
       return false;
     }
     for (Dec v : this.getAsset().values()) {
-      if (!this.getBalance().isZero()) {
+      if (!v.isZero()) {
         return false;
       }
     }
     return true;
+  }
+
+  /**
+   * check whether all coins are greater than or equal zero
+   */
+  public void valid() {
+    if (this.getBalance().isNegative()) {
+      throw new IllegalArgumentException("balance:" + this.getBalance());
+    }
+    for (Map.Entry<String, Dec> v : this.getAsset().entrySet()) {
+      if (v.getValue().isNegative()) {
+        throw new IllegalArgumentException(v.getKey() + ":" + v.getValue());
+      }
+    }
   }
 
   private Map<String, Dec> removeZeroAsset(Map<String, Dec> asset) {

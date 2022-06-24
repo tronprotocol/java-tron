@@ -25,6 +25,7 @@ public class OracleRewardCapsule implements ProtoCapsule<OracleReward> {
   public OracleRewardCapsule(byte[] data) {
     try {
       this.reward = OracleReward.parseFrom(data);
+      valid();
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage());
     }
@@ -42,6 +43,7 @@ public class OracleRewardCapsule implements ProtoCapsule<OracleReward> {
         .setBalance(balance)
         .putAllAsset(removeZeroAsset(asset))
         .build();
+    valid();
   }
 
   public OracleRewardCapsule add(OracleRewardCapsule plus) {
@@ -110,6 +112,20 @@ public class OracleRewardCapsule implements ProtoCapsule<OracleReward> {
       }
     }
     return true;
+  }
+
+  /**
+   * check whether all coins are greater than or equal zero
+   */
+  public void valid() {
+    if (this.getBalance() < 0) {
+      throw new IllegalArgumentException("balance:" + this.getBalance());
+    }
+    for (Map.Entry<String, Long> v : this.getAsset().entrySet()) {
+      if (v.getValue() < 0) {
+        throw new IllegalArgumentException(v.getKey() + ":" + v.getValue());
+      }
+    }
   }
 
 }

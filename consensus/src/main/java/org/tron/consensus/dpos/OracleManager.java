@@ -130,7 +130,7 @@ public class OracleManager {
           // make voteMap of Reference Asset to calculate cross exchange rates
           List<ExchangeRateData> voteReferenceList = assetVotes.get(referenceAsset);
           // save reference asset exchange rate
-          Dec exchangeRateReference = getWeightedMedian(voteReferenceList);
+          Dec exchangeRateReference = tally(voteReferenceList, srMap);
           stableMarketStore.setOracleExchangeRate(
               ByteArray.fromString(referenceAsset), exchangeRateReference);
 
