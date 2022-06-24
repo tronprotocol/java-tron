@@ -269,9 +269,6 @@ public class OracleManager {
     Dec rewardBand = Dec.newDecWithPrec(dynamicPropertiesStore.getOracleRewardBand(), 6);
 
     Dec weightedMedian = getWeightedMedian(voteList);
-    if (weightedMedian.eq(Dec.zeroDec())) {
-      return weightedMedian;
-    }
 
     Dec standardDeviation = getStandardDeviation(voteList, weightedMedian);
     Dec rewardSpread = weightedMedian.mul(rewardBand.quo(2));
