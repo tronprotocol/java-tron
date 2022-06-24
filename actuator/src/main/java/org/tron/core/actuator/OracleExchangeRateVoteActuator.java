@@ -1,5 +1,7 @@
 package org.tron.core.actuator;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
@@ -160,7 +162,8 @@ public class OracleExchangeRateVoteActuator extends AbstractActuator {
 
       // verify vote with prevote hash
       String salt = oracleExchangeRateVoteContract.getVote().getSalt();
-      byte[] voteData = (salt + exchangeRateStr + Hex.toHexString(srAddress)).getBytes();
+      byte[] voteData =
+          (salt + exchangeRateStr + Hex.toHexString(srAddress)).getBytes(UTF_8);
       byte[] hash = Sha256Hash.hash(CommonParameter.getInstance().isECKeyCryptoEngine(), voteData);
       if (!Arrays.equals(prevote.getInstance().getHash().toByteArray(), hash)) {
         throw new ContractValidateException("pre vote hash verification failed");
