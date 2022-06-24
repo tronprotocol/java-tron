@@ -403,7 +403,7 @@ public class OracleManager {
 
     double floatNum = variance.parseDouble();
     double sqrtNum = StrictMath.sqrt(floatNum);
-    return Dec.newDec(BigDecimal.valueOf(sqrtNum).toPlainString());
+    return Dec.newDec(BigDecimal.valueOf(sqrtNum).setScale(Dec.precision, BigDecimal.ROUND_UP).toPlainString());
   }
 
   private static class DecCoin {
