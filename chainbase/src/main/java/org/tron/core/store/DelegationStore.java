@@ -8,12 +8,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.DecOracleRewardCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 
-@Slf4j
+@Slf4j(topic = "DB")
 @Component
 public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
 
@@ -144,6 +145,8 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
   public void setWitnessOracleVi(long cycle, byte[] address,
                                  DecOracleRewardCapsule cumulativeRewardRatio) {
     put(buildOracleViKey(cycle, address), new BytesCapsule(cumulativeRewardRatio.getData()));
+    logger.info("setWitnessOracleVi: address {}, cycle {}, cumulativeRewardRatio {}.",
+        StringUtil.encode58Check(address), cycle, cumulativeRewardRatio);
   }
 
   public BigInteger getWitnessVi(long cycle, byte[] address) {

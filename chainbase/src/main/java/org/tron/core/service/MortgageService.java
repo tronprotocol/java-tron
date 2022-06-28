@@ -419,6 +419,10 @@ public class MortgageService {
     DecOracleRewardCapsule delegatedReward = reward.sub(witnessReward);
     delegationStore.addOracleReward(cycle, witnessAddress, delegatedReward);
     adjustOracleAllowance(witnessAddress, witnessReward.truncateDecimal());
+    logger.info("payOracleReward: address {}, cycle {}, brokerage {}, reward {}, witness {},"
+            + " delegated {}. ",
+        StringUtil.encode58Check(witnessAddress), cycle, brokerage, reward,
+        witnessReward.truncateDecimal(), delegatedReward);
   }
 
   public boolean allowStableMarketOff() {
