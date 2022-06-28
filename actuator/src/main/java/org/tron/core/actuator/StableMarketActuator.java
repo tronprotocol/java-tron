@@ -84,6 +84,9 @@ public class StableMarketActuator extends AbstractActuator {
       // apply swap pool
       stableMarketUtil.applySwapPool(sourceTokenId, destTokenId, offerAmount, askAmountSubFee);
 
+      // distribute reward
+      chainBaseManager.getStableMarketStore().addOracleRewardPool(ByteArray.toStr(destTokenId), Dec.newDec(askAmountSubFee));
+
       AccountCapsule ownerAccountCapsule = accountStore.get(fromAddress);
       AccountCapsule toAccountCapsule = accountStore.get(toAddress);
       if (toAccountCapsule == null) {
