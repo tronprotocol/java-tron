@@ -1,8 +1,10 @@
 package org.tron.core.store;
 
+import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL;
 import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -424,7 +426,16 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
     delete(buildKey(ORACLE_MISS, address));
   }
 
-  public void addOracleRewardPool(DecOracleRewardCapsule reward) {
+  public void addOracleRewardPool(String denom, Dec amount) {
+    Dec balance = Dec.zeroDec();
+    Map<String, Dec> asset = new HashMap<>();
+    if (TRX_SYMBOL.equals(denom)) {
+      balance = balance.add(amount);
+    }else{
+      asset.put(denom, amount);
+    }
+    DecOracleRewardCapsule reward = new DecOracleRewardCapsule(balance, asset);
+
     BytesCapsule bytesCapsule = getUnchecked(REWARD_POOL);
     if (bytesCapsule == null || bytesCapsule.getData() == null) {
       put(REWARD_POOL, new BytesCapsule(reward.getData()));
@@ -434,7 +445,7 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
     }
   }
 
-  public void addToOracleRewardTotal(DecOracleRewardCapsule reward) {
+  public void addDistributedReward(DecOracleRewardCapsule reward) {
     BytesCapsule bytesCapsule = getUnchecked(REWARD_TOTAL);
     if (bytesCapsule == null || bytesCapsule.getData() == null) {
       put(REWARD_TOTAL, new BytesCapsule(reward.getData()));
@@ -452,7 +463,7 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
     return new DecOracleRewardCapsule(bytesCapsule.getData());
   }
 
-  public DecOracleRewardCapsule getOracleRewardTotal() {
+  public DecOracleRewardCapsule getDistributedReward() {
     BytesCapsule bytesCapsule = getUnchecked(REWARD_TOTAL);
     if (bytesCapsule == null || bytesCapsule.getData() == null) {
       return new DecOracleRewardCapsule();
