@@ -27,7 +27,7 @@ public class StableInit {
   private static final String DESCRIPTION = "stable-test";
   private static final String URL = "https://tron.network";
   private static final String SOURCE_TOKEN = "SDR";
-  private static final String DEST_TOKEN = "EUR";
+  private static final String DEST_TOKEN = "DecentralizedUSD";
 
   private ChainBaseManager chainBaseManager;
 
