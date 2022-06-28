@@ -2255,6 +2255,8 @@ public class Manager {
     Dec poolRegressionAmt = poolDelta.quo(poolRecoveryPeriod);
     poolDelta = poolDelta.sub(poolRegressionAmt);
     chainBaseManager.getStableMarketStore().setPoolDelta(poolDelta);
+    // todo: change log level to debug
+    logger.info("replenishPools finished, poolDelta: " + poolDelta);
   }
 
   private static class ValidateSignTask implements Callable<Boolean> {
