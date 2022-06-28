@@ -3,6 +3,8 @@ package org.tron.core.utils;
 import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
 
 import java.util.Arrays;
+
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.entity.Dec;
@@ -17,6 +19,7 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.StableMarketStore;
 import org.tron.protos.contract.StableMarketContractOuterClass.ExchangeResult;
 
+@Slf4j
 @Component
 public class StableMarketUtil {
 
@@ -117,7 +120,8 @@ public class StableMarketUtil {
       } catch (ItemNotFoundException e) {
         throw new ContractExeException("applySwapPool: source token computeInternalSwap failed");
       }
-      // todo check over flow
+      // todo check over flow, remove log
+      logger.info("update pool delta, delta: " + delta + ", baseOfferAmount: " + baseOfferAmount);
       delta = delta.add(baseOfferAmount);
     }
 
@@ -128,7 +132,8 @@ public class StableMarketUtil {
       } catch (ItemNotFoundException e) {
         throw new ContractExeException("applySwapPool: dest token computeInternalSwap failed");
       }
-      // todo check over flow
+      // todo check over flow, remove log
+      logger.info("update pool delta, delta: " + delta + ", baseAskAmount: " + baseAskAmount);
       delta = delta.sub(baseAskAmount);
     }
     Dec basePool = stableMarketStore.getBasePool();
