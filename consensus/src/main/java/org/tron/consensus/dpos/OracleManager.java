@@ -319,7 +319,7 @@ public class OracleManager {
     });
 
     ballotWinners.forEach((srAddress, claim) -> {
-      //check validator status TODO
+      //check validator status
       byte[] receiverVal = srAddress.toByteArray();
 
       // Reflects contribution
@@ -333,7 +333,7 @@ public class OracleManager {
       if (null != receiverVal && !rewardCoins.isEmpty()) {
         DecOracleRewardCapsule srOracleReward = oracleRewardFromCoins(rewardCoins);
         mortgageService.payOracleReward(receiverVal, srOracleReward);
-        stableMarketStore.addOracleRewardPool(srOracleReward);
+        stableMarketStore.addDistributedReward(srOracleReward);
       }
     });
   }
