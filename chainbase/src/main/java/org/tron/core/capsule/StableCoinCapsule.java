@@ -18,7 +18,7 @@ package org.tron.core.capsule;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
-import org.tron.protos.contract.StableMarketContractOuterClass.StableCoinContract;
+import org.tron.protos.contract.StableMarketContract.StableCoinContract;
 
 @Slf4j(topic = "capsule")
 public class StableCoinCapsule implements ProtoCapsule<StableCoinContract> {
@@ -42,7 +42,7 @@ public class StableCoinCapsule implements ProtoCapsule<StableCoinContract> {
 
   public StableCoinCapsule(byte[] tokenId, long tobinFee) {
     this.stableCoinContract = StableCoinContract.newBuilder()
-            .setAssetIssueId(ByteArray.toStr(tokenId)).setTobinFee(String.valueOf(tobinFee)).build();
+            .setAssetId(ByteArray.toStr(tokenId)).setTobinFee(String.valueOf(tobinFee)).build();
   }
 
   public byte[] getData() {
@@ -60,7 +60,7 @@ public class StableCoinCapsule implements ProtoCapsule<StableCoinContract> {
   }
 
   public String getId() {
-    return this.stableCoinContract.getAssetIssueId();
+    return this.stableCoinContract.getAssetId();
   }
 
 }

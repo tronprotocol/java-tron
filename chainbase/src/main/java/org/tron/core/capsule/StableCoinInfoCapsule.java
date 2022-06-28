@@ -18,7 +18,7 @@ package org.tron.core.capsule;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
-import org.tron.protos.contract.StableMarketContractOuterClass.StableCoinInfo;
+import org.tron.protos.contract.StableMarketContract.StableCoinInfo;
 
 @Slf4j(topic = "capsule")
 public class StableCoinInfoCapsule implements ProtoCapsule<StableCoinInfo> {
