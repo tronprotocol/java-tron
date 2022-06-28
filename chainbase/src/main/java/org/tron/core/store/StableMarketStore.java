@@ -22,9 +22,9 @@ import org.tron.core.capsule.OraclePrevoteCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.protos.Protocol.OracleVote;
-import org.tron.protos.contract.StableMarketContractOuterClass.StableCoinContract;
-import org.tron.protos.contract.StableMarketContractOuterClass.StableCoinInfo;
-import org.tron.protos.contract.StableMarketContractOuterClass.StableCoinInfoList;
+import org.tron.protos.contract.StableMarketContract.StableCoinContract;
+import org.tron.protos.contract.StableMarketContract.StableCoinInfo;
+import org.tron.protos.contract.StableMarketContract.StableCoinInfoList;
 
 @Slf4j(topic = "DB")
 @Component
@@ -132,7 +132,7 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
   public void setStableCoin(byte[] tokenId, long tobinFee) {
     Dec fee = Dec.newDecWithPrec(tobinFee, TOBIN_FEE_DECIMAL);
     StableCoinContract stableCoin = StableCoinContract.newBuilder()
-        .setAssetIssueId(ByteArray.toStr(tokenId))
+        .setAssetId(ByteArray.toStr(tokenId))
         .setTobinFee(fee.toString())
         .build();
     this.put(buildKey(STABLE_COIN_PREFIX, tokenId), new BytesCapsule(stableCoin.toByteArray()));

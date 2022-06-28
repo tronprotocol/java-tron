@@ -821,7 +821,7 @@ service Wallet {
     };
   }
 
-  rpc CreateStableMarketContract (StableMarketContract) returns (TransactionExtention) {
+  rpc CreateStableMarketExchange (StableMarketExchangeContract) returns (TransactionExtention) {
   }
 
   rpc GetStableCoinById (BytesMessage) returns (StableCoinInfo) {
@@ -842,7 +842,7 @@ service Wallet {
   rpc GetPoolRecoveryPeriod (EmptyMessage) returns (BytesMessage) {
   }
 
-  rpc GetSimulateSwap (StableMarketContract) returns (ExchangeResult) {
+  rpc GetSimulateSwap (StableMarketExchangeContract) returns (ExchangeResult) {
   }
 };
 
@@ -1048,7 +1048,7 @@ service WalletSolidity {
   rpc GetPoolRecoveryPeriod (EmptyMessage) returns (BytesMessage) {
   }
 
-  rpc GetSimulateSwap (StableMarketContract) returns (ExchangeResult) {
+  rpc GetSimulateSwap (StableMarketExchangeContract) returns (ExchangeResult) {
   }
 };
 

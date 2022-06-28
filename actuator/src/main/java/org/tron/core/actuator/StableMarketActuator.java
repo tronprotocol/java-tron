@@ -43,8 +43,8 @@ import org.tron.core.utils.StableMarketUtil;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
-import org.tron.protos.contract.StableMarketContractOuterClass;
-import org.tron.protos.contract.StableMarketContractOuterClass.StableMarketContract;
+import org.tron.protos.contract.StableMarketContract;
+import org.tron.protos.contract.StableMarketContract.StableMarketExchangeContract;
 
 @Slf4j(topic = "actuator")
 public class StableMarketActuator extends AbstractActuator {
@@ -52,7 +52,7 @@ public class StableMarketActuator extends AbstractActuator {
   private StableMarketUtil stableMarketUtil = new StableMarketUtil();
 
   public StableMarketActuator() {
-    super(ContractType.StableMarketContract, StableMarketContract.class);
+    super(ContractType.StableMarketExchangeContract, StableMarketExchangeContract.class);
   }
 
   @Override
@@ -68,16 +68,16 @@ public class StableMarketActuator extends AbstractActuator {
     AssetIssueV2Store assetIssueV2Store = chainBaseManager.getAssetIssueV2Store();
     AccountStore accountStore = chainBaseManager.getAccountStore();
     try {
-      StableMarketContract stableMarketContract = any.unpack(StableMarketContract.class);
+      StableMarketExchangeContract stableMarketContract = any.unpack(StableMarketExchangeContract.class);
       // get assetIssue
       byte[] fromAddress = stableMarketContract.getOwnerAddress().toByteArray();
       byte[] toAddress = stableMarketContract.getToAddress().toByteArray();
-      byte[] sourceTokenId = stableMarketContract.getSourceTokenId().getBytes();
-      byte[] destTokenId = stableMarketContract.getDestTokenId().getBytes();
+      byte[] sourceTokenId = stableMarketContract.getSourceAssetId().getBytes();
+      byte[] destTokenId = stableMarketContract.getDestAssetId().getBytes();
 
       long offerAmount = stableMarketContract.getAmount();
 
-      StableMarketContractOuterClass.ExchangeResult exchangeResult = stableMarketUtil.computeSwap(sourceTokenId, destTokenId, offerAmount);
+      StableMarketContract.ExchangeResult exchangeResult = stableMarketUtil.computeSwap(sourceTokenId, destTokenId, offerAmount);
       long askAmount = exchangeResult.getAskAmount();
       long feeAmount = Dec.newDec(askAmount).mul(Dec.newDec(exchangeResult.getSpread())).roundLong();
       long askAmountSubFee = askAmount - feeAmount;
@@ -150,7 +150,7 @@ public class StableMarketActuator extends AbstractActuator {
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     AccountStore accountStore = chainBaseManager.getAccountStore();
     StableMarketStore stableMarketStore = chainBaseManager.getStableMarketStore();
-    if (!this.any.is(StableMarketContract.class)) {
+    if (!this.any.is(StableMarketExchangeContract.class)) {
       throw new ContractValidateException(
           "contract type error,expected type [StableMarketContract],real type[" + any
               .getClass() + "]");
@@ -164,17 +164,17 @@ public class StableMarketActuator extends AbstractActuator {
       throw new ContractValidateException("Stable Market not open.");
     }
 
-    final StableMarketContract stableMarketContract;
+    final StableMarketExchangeContract stableMarketExchangeContract;
     try {
-      stableMarketContract = this.any.unpack(StableMarketContract.class);
+      stableMarketExchangeContract = this.any.unpack(StableMarketExchangeContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
 
     long fee = calcFee();
-    byte[] ownerAddress = stableMarketContract.getOwnerAddress().toByteArray();
-    byte[] toAddress = stableMarketContract.getToAddress().toByteArray();
+    byte[] ownerAddress = stableMarketExchangeContract.getOwnerAddress().toByteArray();
+    byte[] toAddress = stableMarketExchangeContract.getToAddress().toByteArray();
 
     if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress");
@@ -187,9 +187,9 @@ public class StableMarketActuator extends AbstractActuator {
       throw new ContractValidateException("No owner account!");
     }
 
-    byte[] sourceAsset = stableMarketContract.getSourceTokenId().getBytes();
-    byte[] destAsset = stableMarketContract.getDestTokenId().getBytes();
-    long amount = stableMarketContract.getAmount();
+    byte[] sourceAsset = stableMarketExchangeContract.getSourceAssetId().getBytes();
+    byte[] destAsset = stableMarketExchangeContract.getDestAssetId().getBytes();
+    long amount = stableMarketExchangeContract.getAmount();
     Dec sourceExchangeRate = stableMarketStore.getOracleExchangeRate(sourceAsset);
     Dec destExchangeRate = stableMarketStore.getOracleExchangeRate(destAsset);
     if (!Arrays.equals(TRX_SYMBOL_BYTES, sourceAsset) && sourceExchangeRate == null) {
@@ -281,7 +281,7 @@ public class StableMarketActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return any.unpack(StableMarketContract.class).getOwnerAddress();
+    return any.unpack(StableMarketExchangeContract.class).getOwnerAddress();
   }
 
   @Override

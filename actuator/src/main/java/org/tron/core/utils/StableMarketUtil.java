@@ -17,7 +17,7 @@ import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.StableMarketStore;
-import org.tron.protos.contract.StableMarketContractOuterClass.ExchangeResult;
+import org.tron.protos.contract.StableMarketContract.ExchangeResult;
 
 @Slf4j
 @Component

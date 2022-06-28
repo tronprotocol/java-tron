@@ -231,7 +231,7 @@ import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContractDataWrapper;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
-import org.tron.protos.contract.StableMarketContractOuterClass;
+import org.tron.protos.contract.StableMarketContract;
 
 @Slf4j
 @Component
@@ -4062,11 +4062,11 @@ public class Wallet {
     return false;
   }
 
-  public StableMarketContractOuterClass.StableCoinInfo getStableCoinById(byte[] tokenId) {
+  public StableMarketContract.StableCoinInfo getStableCoinById(byte[] tokenId) {
     return dbManager.getStableMarketStore().getStableCoinInfoById(tokenId);
   }
 
-  public StableMarketContractOuterClass.StableCoinInfoList getStableCoinList() {
+  public StableMarketContract.StableCoinInfoList getStableCoinList() {
     return dbManager.getStableMarketStore().getStableCoinList();
 
   }
@@ -4087,9 +4087,9 @@ public class Wallet {
     return dbManager.getStableMarketStore().getPoolRecoveryPeriod();
   }
 
-  public StableMarketContractOuterClass.ExchangeResult getSimulateSwap(
-      byte[] sourceToken, byte[] destToken, long amount) throws ContractExeException {
-    return stableMarketUtil.computeSwap(sourceToken, destToken, amount);
+  public StableMarketContract.ExchangeResult getSimulateSwap(
+      byte[] sourceAsset, byte[] destAsset, long amount) throws ContractExeException {
+    return stableMarketUtil.computeSwap(sourceAsset, destAsset, amount);
   }
 
   public NumberMessage getWitnessMissCount(byte[] witnessAddress) {

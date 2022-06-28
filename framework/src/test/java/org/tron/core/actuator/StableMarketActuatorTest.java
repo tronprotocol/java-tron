@@ -49,8 +49,8 @@ import org.tron.core.utils.StableMarketUtil;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
-import org.tron.protos.contract.StableMarketContractOuterClass.ExchangeResult;
-import org.tron.protos.contract.StableMarketContractOuterClass.StableMarketContract;
+import org.tron.protos.contract.StableMarketContract.ExchangeResult;
+import org.tron.protos.contract.StableMarketContract.StableMarketExchangeContract;
 
 
 @Slf4j
@@ -204,9 +204,9 @@ public class StableMarketActuatorTest {
     }
 
     return Any.pack(
-        StableMarketContract.newBuilder()
-            .setSourceTokenId(sourceToken)
-            .setDestTokenId(desttoken)
+        StableMarketExchangeContract.newBuilder()
+            .setSourceAssetId(sourceToken)
+            .setDestAssetId(desttoken)
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
             .setAmount(amount)

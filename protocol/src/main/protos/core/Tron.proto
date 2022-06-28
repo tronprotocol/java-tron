@@ -392,7 +392,7 @@ message Transaction {
       DelegateFeedConsentContract = 54;
       OracleExchangeRateVoteContract = 55;
       UnjailWitnessContract = 56;
-      StableMarketContract = 57;
+      StableMarketExchangeContract = 57;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;

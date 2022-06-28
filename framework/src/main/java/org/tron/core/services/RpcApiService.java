@@ -171,10 +171,10 @@ import org.tron.protos.contract.SmartContractOuterClass.SmartContractDataWrapper
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.UpdateEnergyLimitContract;
 import org.tron.protos.contract.SmartContractOuterClass.UpdateSettingContract;
-import org.tron.protos.contract.StableMarketContractOuterClass.ExchangeResult;
-import org.tron.protos.contract.StableMarketContractOuterClass.StableCoinInfo;
-import org.tron.protos.contract.StableMarketContractOuterClass.StableCoinInfoList;
-import org.tron.protos.contract.StableMarketContractOuterClass.StableMarketContract;
+import org.tron.protos.contract.StableMarketContract.ExchangeResult;
+import org.tron.protos.contract.StableMarketContract.StableCoinInfo;
+import org.tron.protos.contract.StableMarketContract.StableCoinInfoList;
+import org.tron.protos.contract.StableMarketContract.StableMarketExchangeContract;
 import org.tron.protos.contract.StorageContract.UpdateBrokerageContract;
 import org.tron.protos.contract.WitnessContract.UnjailWitnessContract;
 import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
@@ -957,7 +957,7 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void getSimulateSwap(StableMarketContract request,
+    public void getSimulateSwap(StableMarketExchangeContract request,
         StreamObserver<ExchangeResult> responseObserver) {
       getSimulateSwapCommon(request, responseObserver);
     }
@@ -2732,9 +2732,10 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void createStableMarketContract(StableMarketContract request,
+    public void createStableMarketExchange(StableMarketExchangeContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.StableMarketContract, responseObserver);
+      createTransactionExtention(
+          request, ContractType.StableMarketExchangeContract, responseObserver);
     }
 
     public void getOracleRewardInfo(BytesMessage request,
@@ -2780,7 +2781,7 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void getSimulateSwap(StableMarketContract request,
+    public void getSimulateSwap(StableMarketExchangeContract request,
         StreamObserver<ExchangeResult> responseObserver) {
       getSimulateSwapCommon(request, responseObserver);
     }
@@ -3003,11 +3004,11 @@ public class RpcApiService implements Service {
     responseObserver.onCompleted();
   }
 
-  public void getSimulateSwapCommon(StableMarketContract request,
+  public void getSimulateSwapCommon(StableMarketExchangeContract request,
       StreamObserver<ExchangeResult> responseObserver) {
     try {
-      byte[] sourceToken = request.getSourceTokenId().getBytes();
-      byte[] destToken = request.getSourceTokenId().getBytes();
+      byte[] sourceToken = request.getSourceAssetId().getBytes();
+      byte[] destToken = request.getSourceAssetId().getBytes();
       long amount = request.getAmount();
       ExchangeResult result = wallet.getSimulateSwap(sourceToken, destToken, amount);
       responseObserver.onNext(result);

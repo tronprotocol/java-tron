@@ -45,7 +45,7 @@ import org.tron.core.services.interfaceOnPBFT.http.PBFT.HttpApiOnPBFTService;
 import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidityService;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
-import org.tron.protos.contract.StableMarketContractOuterClass.StableMarketContract;
+import org.tron.protos.contract.StableMarketContract.StableMarketExchangeContract;
 
 public class CreateStableMarketContractTest {
 
@@ -159,13 +159,13 @@ public class CreateStableMarketContractTest {
   @Test
   public void testHttpCreateContract() throws IOException {
     fullHttpPort = Args.getInstance().getFullNodeHttpPort();
-    String urlPath = "/wallet/createstablemarketcontract";
+    String urlPath = "/wallet/createstablemarketexchange";
     String url = String.format("http://%s:%d%s", ip, fullHttpPort, urlPath);
     Map<String, Object> param = Maps.newHashMap();
     param.put("owner_address", OWNER_ADDRESS);
     param.put("to_address", TO_ADDRESS);
-    param.put("source_token_id", TRX_SYMBOL);
-    param.put("dest_token_id", DEST_TOKEN_ID);
+    param.put("source_asset_id", TRX_SYMBOL);
+    param.put("dest_asset_id", DEST_TOKEN_ID);
     param.put("amount", AMOUNT);
     String response = sendPostRequest(url, JsonUtil.obj2Json(param));
     Map<String, Object> result = JsonUtil.json2Obj(response, Map.class);
@@ -174,15 +174,15 @@ public class CreateStableMarketContractTest {
 
   @Test
   public void testRpcCreateContract() {
-    StableMarketContract stableMarketContract = StableMarketContract.newBuilder()
+    StableMarketExchangeContract stableMarketContract = StableMarketExchangeContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
-        .setSourceTokenId(TRX_SYMBOL)
-        .setDestTokenId(DEST_TOKEN_ID)
+        .setSourceAssetId(TRX_SYMBOL)
+        .setDestAssetId(DEST_TOKEN_ID)
         .setAmount(AMOUNT)
         .build();
     GrpcAPI.TransactionExtention tx =
-        blockingStubFull.createStableMarketContract(stableMarketContract);
+        blockingStubFull.createStableMarketExchange(stableMarketContract);
     Assert.assertNotNull(tx);
   }
 

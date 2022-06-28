@@ -8,7 +8,7 @@ option go_package = "github.com/tronprotocol/grpc-gateway/core";
 import "core/contract/asset_issue_contract.proto";
 
 message StableCoinContract {
-    string assetIssueId = 1;
+    string asset_id = 1;
     string tobin_fee = 2;
 }
 
@@ -21,11 +21,11 @@ message StableCoinInfoList {
     repeated StableCoinInfo stable_coin_info = 1;
 }
 
-message StableMarketContract {
+message StableMarketExchangeContract {
     bytes owner_address = 1;
     bytes to_address = 2;
-    string source_token_id = 3;
-    string dest_token_id = 4;
+    string source_asset_id = 3;
+    string dest_asset_id = 4;
     int64 amount = 5;
 }
 

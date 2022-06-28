@@ -10,11 +10,11 @@ import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
-import org.tron.protos.contract.StableMarketContractOuterClass.StableMarketContract;
+import org.tron.protos.contract.StableMarketContract.StableMarketExchangeContract;
 
 @Component
 @Slf4j(topic = "API")
-public class CreateStableMarketContractServlet extends RateLimiterServlet {
+public class CreateStableMarketExchangeContractServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;
@@ -29,10 +29,10 @@ public class CreateStableMarketContractServlet extends RateLimiterServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
       boolean visible = Util.getVisiblePost(contract);
-      StableMarketContract.Builder build = StableMarketContract.newBuilder();
+      StableMarketExchangeContract.Builder build = StableMarketExchangeContract.newBuilder();
       JsonFormat.merge(contract, build, visible);
       Transaction tx = wallet
-          .createTransactionCapsule(build.build(), ContractType.StableMarketContract)
+          .createTransactionCapsule(build.build(), ContractType.StableMarketExchangeContract)
           .getInstance();
       JSONObject jsonObject = JSONObject.parseObject(contract);
       tx = Util.setTransactionPermissionId(jsonObject, tx);

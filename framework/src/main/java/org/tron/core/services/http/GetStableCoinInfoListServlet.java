@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
-import org.tron.protos.contract.StableMarketContractOuterClass;
+import org.tron.protos.contract.StableMarketContract;
 
 @Component
 @Slf4j(topic = "API")
@@ -36,7 +36,7 @@ public class GetStableCoinInfoListServlet extends RateLimiterServlet {
 
   private void fillResponse(boolean visible, HttpServletResponse response)
       throws IOException {
-    StableMarketContractOuterClass.StableCoinInfoList stableCoinInfoList =
+    StableMarketContract.StableCoinInfoList stableCoinInfoList =
         wallet.getStableCoinList();
     if (stableCoinInfoList != null) {
       response.getWriter().println(JsonFormat.printToString(stableCoinInfoList, visible));
