@@ -105,7 +105,8 @@ public class OracleManager {
       // Build claim map over all srs in active set
       Map<ByteString, Claim> srMap = new HashMap<>();
       long totalVote = 0;
-      for (WitnessCapsule witness : consensusDelegate.getAllWitnesses()) {
+      for (ByteString witnessAddress : consensusDelegate.getActiveWitnessesForOracle()) {
+        WitnessCapsule witness = consensusDelegate.getWitness(witnessAddress.toByteArray());
         ByteString sr = witness.getAddress();
         srMap.put(sr, new Claim(witness.getVoteCount()));
         totalVote += witness.getVoteCount();

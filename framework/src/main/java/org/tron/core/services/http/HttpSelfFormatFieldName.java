@@ -268,6 +268,10 @@ public class HttpSelfFormatFieldName {
     // MarketPriceList
     NameFieldNameMap.put("protocol.MarketPriceList.sell_token_id", 1);
     NameFieldNameMap.put("protocol.MarketPriceList.buy_token_id", 1);
+
+    // UnjailWitnessContract
+    AddressFieldNameMap.put("protocol.UnjailWitnessContract.owner_address", 1);
+    AddressFieldNameMap.put("protocol.UnjailWitnessContract.witness_address", 1);
   }
 
   public static boolean isAddressFormat(final String name) {

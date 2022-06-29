@@ -110,8 +110,12 @@ public class MaintenanceManager {
       });
     }
 
-    Map<ByteString, Vote> countWitness =
-            countVote(votesStore, dynamicPropertiesStore.allowStableMarketOn());
+    boolean allowStableMarketOn = dynamicPropertiesStore.allowStableMarketOn();
+    if (allowStableMarketOn) {
+      consensusDelegate.savePreviousActiveWitnesses(consensusDelegate.getActiveWitnesses());
+    }
+
+    Map<ByteString, Vote> countWitness = countVote(votesStore, allowStableMarketOn);
     if (!countWitness.isEmpty()) {
       List<ByteString> currentWits = consensusDelegate.getActiveWitnesses();
 

@@ -18,19 +18,23 @@ public class GetWitnessMissCountServlet extends RateLimiterServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
-      boolean visible = Util.getVisible(request);
-      String input = request.getParameter("value");
-      if (visible) {
-        input = Util.getHexString(input);
-      }
-      GrpcAPI.NumberMessage reply = wallet.getWitnessMissCount(ByteArray.fromHexString(input));
-      if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply, visible));
+      byte[] address = Util.getAddress(request);
+      if (address != null) {
+        GrpcAPI.NumberMessage reply = wallet.getWitnessMissCount(address);
+        if (reply != null) {
+          response.getWriter().println(JsonFormat.printToString(reply, false));
+        } else {
+          response.getWriter().println("{}");
+        }
       } else {
         response.getWriter().println("{}");
       }
     } catch (Exception e) {
-      Util.processError(e, response);
+      try {
+        response.getWriter().println("{}");
+      } catch (Exception e1) {
+        Util.processError(e1, response);
+      }
     }
   }
 
