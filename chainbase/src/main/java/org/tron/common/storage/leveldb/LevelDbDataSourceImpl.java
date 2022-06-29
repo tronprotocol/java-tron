@@ -352,6 +352,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     }
   }
 
+  @Override
   public Map<WrappedByteArray, byte[]> prefixQuery(byte[] key) {
     resetDbLock.readLock().lock();
     try (DBIterator iterator = getDBIterator()) {
