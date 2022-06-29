@@ -55,4 +55,9 @@ public class ConcurrentHashDB implements DB<byte[], BytesCapsule> {
   public DB<byte[], BytesCapsule> newInstance() {
     return null;
   }
+
+  @Override
+  public void stat() {
+
+  }
 }

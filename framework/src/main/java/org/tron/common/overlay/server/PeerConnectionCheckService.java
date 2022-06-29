@@ -77,7 +77,7 @@ public class PeerConnectionCheckService {
           > Args.getInstance().getNodeMaxActiveNodes() * maxConnectNumberFactor) {
         Collections.shuffle(willDisconnectPeerList);
         for (int i = 0; i < willDisconnectPeerList.size() * disconnectNumberFactor; i++) {
-          logger.error("{} does not have data transfer, disconnect the peer",
+          logger.warn("{} does not have data transfer, disconnect the peer",
               willDisconnectPeerList.get(i).getInetAddress());
           willDisconnectPeerList.get(i).disconnect(ReasonCode.TOO_MANY_PEERS);
         }

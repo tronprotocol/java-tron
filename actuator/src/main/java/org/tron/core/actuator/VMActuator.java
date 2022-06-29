@@ -21,6 +21,7 @@ import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.InternalTransaction.ExecutorType;
 import org.tron.common.runtime.InternalTransaction.TrxType;
 import org.tron.common.runtime.ProgramResult;
+import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.StorageUtils;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
@@ -172,7 +173,7 @@ public class VMActuator implements Actuator2 {
           throw e;
         }
 
-        VM.play(program, OperationRegistry.getTable(OperationRegistry.Version.TRON_V1));
+        VM.play(program, OperationRegistry.getTable());
         result = program.getResult();
 
         if (TrxType.TRX_CONTRACT_CREATION_TYPE == trxType && !result.isRevert()) {
@@ -234,6 +235,9 @@ public class VMActuator implements Actuator2 {
         }
       } else {
         rootRepository.commit();
+      }
+      for (DataWord account : result.getDeleteAccounts()) {
+        RepositoryImpl.removeLruCache(account.toTronAddress());
       }
     } catch (JVMStackOverFlowException e) {
       program.spendAllEnergy();
@@ -380,7 +384,10 @@ public class VMActuator implements Actuator2 {
           .createProgramInvoke(TrxType.TRX_CONTRACT_CREATION_TYPE, executorType, trx,
               tokenValue, tokenId, blockCap.getInstance(), rootRepository, vmStartInUs,
               vmShouldEndInUs, energyLimit);
-      this.program = new Program(ops, programInvoke, rootInternalTx);
+      if (isConstantCall) {
+        programInvoke.setConstantCall();
+      }
+      this.program = new Program(ops, contractAddress, programInvoke, rootInternalTx);
       if (VMConfig.allowTvmCompatibleEvm()) {
         this.program.setContractVersion(1);
       }
@@ -496,7 +503,7 @@ public class VMActuator implements Actuator2 {
         programInvoke.setConstantCall();
       }
       rootInternalTx = new InternalTransaction(trx, trxType);
-      this.program = new Program(code, programInvoke, rootInternalTx);
+      this.program = new Program(code, contractAddress, programInvoke, rootInternalTx);
       if (VMConfig.allowTvmCompatibleEvm()) {
         this.program.setContractVersion(deployedContract.getContractVersion());
       }
@@ -714,6 +721,5 @@ public class VMActuator implements Actuator2 {
     return this.blockCap != null && !this.blockCap.getInstance().getBlockHeader()
         .getWitnessSignature().isEmpty();
   }
-
 
 }
