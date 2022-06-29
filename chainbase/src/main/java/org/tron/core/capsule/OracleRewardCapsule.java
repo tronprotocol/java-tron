@@ -87,6 +87,11 @@ public class OracleRewardCapsule implements ProtoCapsule<OracleReward> {
     return Objects.hashCode(reward);
   }
 
+  @Override
+  public String toString() {
+    return "OracleRewardCapsule{" + "balance:" + getBalance() + ", asset:" + getAsset() + '}';
+  }
+
   public long getBalance() {
     return this.reward.getBalance();
   }
