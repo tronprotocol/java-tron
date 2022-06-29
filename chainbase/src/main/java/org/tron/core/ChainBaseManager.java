@@ -421,15 +421,19 @@ public class ChainBaseManager {
 
   public List<ByteString> getActiveWitnessesForOracle() {
     List<ByteString> activeWitnessesForOracle = new ArrayList<>();
-    // todo 10 to vote period
     long currentBlockNum = dynamicPropertiesStore.getLatestBlockHeaderNumber();
-    long startBlockNum = currentBlockNum - currentBlockNum % 10;
+    long votePeriod = dynamicPropertiesStore.getOracleVotePeriod();
+    long startBlockNum = currentBlockNum - currentBlockNum % votePeriod;
     try {
       long startBlockTimestamp = getBlockByNum(startBlockNum).getTimeStamp();
       List<ByteString> activeWitness;
       if (startBlockTimestamp + dynamicPropertiesStore.getMaintenanceTimeInterval()
           < dynamicPropertiesStore.getNextMaintenanceTime()) {
-        activeWitness = witnessScheduleStore.getPreviousActiveWitnesses();
+        try {
+          activeWitness = witnessScheduleStore.getPreviousActiveWitnesses();
+        } catch (Exception e) {
+          activeWitness = witnessScheduleStore.getActiveWitnesses();
+        }
       } else {
         activeWitness = witnessScheduleStore.getActiveWitnesses();
       }
@@ -441,7 +445,8 @@ public class ChainBaseManager {
         }
       }
     } catch (Exception e) {
-      logger.error("Failed get active witnesses for oracle, current block number:{}", currentBlockNum);
+      logger.warn("Failed get active witnesses for oracle, current block number:{}", currentBlockNum);
+      return witnessScheduleStore.getActiveWitnesses();
     }
 
     return activeWitnessesForOracle;

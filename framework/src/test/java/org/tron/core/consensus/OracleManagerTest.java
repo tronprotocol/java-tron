@@ -3,6 +3,7 @@ package org.tron.core.consensus;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
@@ -128,6 +129,12 @@ public class OracleManagerTest {
         witnessCapsule2);
     dbManager.getWitnessStore().put(sr3AccountSrCapsule.getAddress().toByteArray(),
         witnessCapsule3);
+
+    List<ByteString> list = new ArrayList<>();
+    list.add(ByteString.copyFrom(ByteArray.fromHexString(ACCOUNT_ADDRESS_SR1)));
+    list.add(ByteString.copyFrom(ByteArray.fromHexString(ACCOUNT_ADDRESS_SR2)));
+    list.add(ByteString.copyFrom(ByteArray.fromHexString(ACCOUNT_ADDRESS_SR3)));
+    dbManager.getWitnessScheduleStore().saveActiveWitnesses(list);
 
 
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1000000);

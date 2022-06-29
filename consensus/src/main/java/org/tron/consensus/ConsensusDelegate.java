@@ -5,6 +5,7 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.service.SlashService;
@@ -43,6 +44,9 @@ public class ConsensusDelegate {
 
   @Autowired
   private StableMarketStore stableMarketStore;
+
+  @Autowired
+  private ChainBaseManager chainBaseManager;
 
   public DynamicPropertiesStore getDynamicPropertiesStore() {
     return dynamicPropertiesStore;
@@ -154,5 +158,9 @@ public class ConsensusDelegate {
 
   public void savePreviousActiveWitnesses(List<ByteString> addresses) {
     witnessScheduleStore.savePreviousActiveWitnesses(addresses);
+  }
+
+  public List<ByteString> getActiveWitnessesForOracle() {
+    return chainBaseManager.getActiveWitnessesForOracle();
   }
 }
