@@ -431,6 +431,7 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     }
   }
 
+  @Override
   public Map<WrappedByteArray, byte[]> prefixQuery(byte[] key) {
     if (quitIfNotAlive()) {
       return null;

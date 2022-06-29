@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import com.google.common.primitives.Bytes;
@@ -363,22 +364,24 @@ public class Chainbase implements IRevokingDB {
     } else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
       result = ((RocksDB) ((SnapshotRoot) head.getRoot()).db).getDb().prefixQuery(key);
     }
-    return result;
+    return new TreeMap<>(result);
   }
 
   private Map<WrappedByteArray, byte[]> prefixQuerySnapshot(byte[] key) {
-    Map<WrappedByteArray, byte[]> result = new HashMap<>();
+    Map<WrappedByteArray, byte[]> result = new TreeMap<>();
     Snapshot snapshot = head();
-    while (!snapshot.equals(head.getRoot())) {
-      Iterator<Map.Entry<byte[], byte[]>> iterator = snapshot.iterator();
-      while (iterator.hasNext()) {
-        Map.Entry<byte[], byte[]> entry = iterator.next();
-        WrappedByteArray ks = WrappedByteArray.of(entry.getKey());
-        if (Bytes.indexOf(entry.getKey(), key) == 0 && !result.containsKey(ks)) {
-          result.put(ks, entry.getValue());
-        }
+    if (snapshot.equals(head.getRoot())) {
+      return result;
+    }
+    Map<WrappedByteArray, WrappedByteArray> all = new TreeMap<>();
+    ((SnapshotImpl) snapshot).collect(all);
+
+    for (Map.Entry<WrappedByteArray, WrappedByteArray> entry : all.entrySet()) {
+      if (Bytes.indexOf(entry.getKey().getBytes(), key) == 0) {
+        result.put(entry.getKey(), entry.getValue().getBytes());
+      } else {
+        return result;
       }
-      snapshot = snapshot.getPrevious();
     }
     return result;
   }
