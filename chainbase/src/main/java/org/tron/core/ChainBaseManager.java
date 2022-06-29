@@ -445,7 +445,8 @@ public class ChainBaseManager {
         }
       }
     } catch (Exception e) {
-      logger.error("Failed get active witnesses for oracle, current block number:{}", currentBlockNum);
+      logger.warn("Failed get active witnesses for oracle, current block number:{}", currentBlockNum);
+      return witnessScheduleStore.getActiveWitnesses();
     }
 
     return activeWitnessesForOracle;
