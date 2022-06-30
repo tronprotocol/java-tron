@@ -27,6 +27,7 @@ public class ChainbaseTest {
   private static final String dbPath = "output-chainbase-test";
   private Chainbase chainbase = null;
 
+  private final byte[] value0 = "00000".getBytes();
   private final byte[] value1 = "10000".getBytes();
   private final byte[] value2 = "20000".getBytes();
   private final byte[] value3 = "30000".getBytes();
@@ -39,17 +40,18 @@ public class ChainbaseTest {
   private final byte[] valueRoot8 = "root80000".getBytes();
   private final byte[] value9 = "90000".getBytes();
 
-  private final byte[] key1 = "00000001aa".getBytes();
-  private final byte[] key2 = "00000002aa".getBytes();
-  private final byte[] key3 = "00000003aa".getBytes();
-  private final byte[] key4 = "00000004aa".getBytes();
-  private final byte[] key5 = "00000005aa".getBytes();
-  private final byte[] key6 = "00000006aa".getBytes();
-  private final byte[] key7 = "00000006ac".getBytes();
-  private final byte[] key8 = "00000006ab".getBytes();
-  private final byte[] key9 = "00000006dd".getBytes();
+  private final byte[] key0 = "0aa".getBytes();
+  private final byte[] key1 = "10000001aa".getBytes();
+  private final byte[] key2 = "10000002aa".getBytes();
+  private final byte[] key3 = "10000003aa".getBytes();
+  private final byte[] key4 = "10000004aa".getBytes();
+  private final byte[] key5 = "10000005aa".getBytes();
+  private final byte[] key6 = "10000006aa".getBytes();
+  private final byte[] key7 = "10000006ac".getBytes();
+  private final byte[] key8 = "10000006ab".getBytes();
+  private final byte[] key9 = "10000006dd".getBytes();
 
-  private final byte[] prefix = "0000000".getBytes();
+  private final byte[] prefix = "1000000".getBytes();
 
   /**
    * Release resources.
@@ -120,6 +122,7 @@ public class ChainbaseTest {
     Snapshot head = chainbase.getHead();
     Snapshot root = head.getRoot();
     // put some data in head
+    head.put(key0, value0);
     head.put(key1, value1);
     head.put(key7, value7);
     head.put(key3, value3);

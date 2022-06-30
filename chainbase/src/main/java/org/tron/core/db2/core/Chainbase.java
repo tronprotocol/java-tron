@@ -390,8 +390,6 @@ public class Chainbase implements IRevokingDB {
     for (Map.Entry<WrappedByteArray, WrappedByteArray> entry : all.entrySet()) {
       if (Bytes.indexOf(entry.getKey().getBytes(), key) == 0) {
         result.put(entry.getKey(), entry.getValue().getBytes());
-      } else {
-        return new Pair<>(keys, result);
       }
     }
     return new Pair<>(keys, result);
