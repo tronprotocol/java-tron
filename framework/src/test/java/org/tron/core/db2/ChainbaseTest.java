@@ -1,9 +1,8 @@
 package org.tron.core.db2;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -16,8 +15,8 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.common.DbSourceInter;
 import org.tron.core.db2.common.LevelDB;
-import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.db2.core.Chainbase;
 import org.tron.core.db2.core.Snapshot;
 import org.tron.core.db2.core.SnapshotRoot;
@@ -34,6 +33,11 @@ public class ChainbaseTest {
   private final byte[] value4 = "40000".getBytes();
   private final byte[] value5 = "50000".getBytes();
   private final byte[] value6 = "60000".getBytes();
+  private final byte[] value7 = "70000".getBytes();
+  private final byte[] value8 = "80000".getBytes();
+  private final byte[] valueRoot7 = "root70000".getBytes();
+  private final byte[] valueRoot8 = "root80000".getBytes();
+  private final byte[] value9 = "90000".getBytes();
 
   private final byte[] key1 = "00000001aa".getBytes();
   private final byte[] key2 = "00000002aa".getBytes();
@@ -41,6 +45,11 @@ public class ChainbaseTest {
   private final byte[] key4 = "00000004aa".getBytes();
   private final byte[] key5 = "00000005aa".getBytes();
   private final byte[] key6 = "00000006aa".getBytes();
+  private final byte[] key7 = "00000006ac".getBytes();
+  private final byte[] key8 = "00000006ab".getBytes();
+  private final byte[] key9 = "00000006dd".getBytes();
+
+  private final byte[] prefix = "0000000".getBytes();
 
   /**
    * Release resources.
@@ -63,67 +72,45 @@ public class ChainbaseTest {
 
   @Test
   public void testPrefixQueryForLeveldb() {
-    byte[] prefix = "0000000".getBytes();
-
     LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
         Args.getInstance().getOutputDirectory(), "testPrefixQueryForLeveldb");
     dataSource.initDB();
     this.chainbase = new Chainbase(new SnapshotRoot(
         new LevelDB(dataSource)));
-
-    putAndAssert(chainbase, prefix);
-
-    // test leveldb
-    List<String> resultInDb = dataSource.prefixQuery(prefix)
-        .keySet()
-        .stream()
-        .map(WrappedByteArray::getBytes)
-        .map(ByteArray::toStr)
-        .collect(Collectors.toList());
-    List<String> listforDb = Arrays.asList(
-        ByteArray.toStr(key2),
-        ByteArray.toStr(key3),
-        ByteArray.toStr(key6));
-
-    Assert.assertEquals(listforDb.size(), resultInDb.size());
-    listforDb.forEach(entry -> Assert.assertTrue(resultInDb.contains(entry)));
-
+    testDb(chainbase);
+    testRoot(dataSource);
     chainbase.reset();
     chainbase.close();
   }
 
   @Test
   public void testPrefixQueryForRocksdb() {
-    byte[] prefix = "0000000".getBytes();
-
     RocksDbDataSourceImpl dataSource = new RocksDbDataSourceImpl(
         Args.getInstance().getOutputDirectory(), "testPrefixQueryForRocksdb");
     dataSource.initDB();
     this.chainbase = new Chainbase(new SnapshotRoot(
         new org.tron.core.db2.common.RocksDB(dataSource)));
-
-    putAndAssert(chainbase, prefix);
-
-    // test leveldb
-    List<String> resultInDb = dataSource.prefixQuery(prefix)
-        .keySet()
-        .stream()
-        .map(WrappedByteArray::getBytes)
-        .map(ByteArray::toStr)
-        .collect(Collectors.toList());
-    List<String> listforDb = Arrays.asList(
-        ByteArray.toStr(key2),
-        ByteArray.toStr(key3),
-        ByteArray.toStr(key6));
-
-    Assert.assertEquals(listforDb.size(), resultInDb.size());
-    listforDb.forEach(entry -> Assert.assertTrue(resultInDb.contains(entry)));
-
+    testDb(chainbase);
+    testRoot(dataSource);
     chainbase.reset();
     chainbase.close();
   }
 
-  private void putAndAssert(Chainbase chainbase, byte[] prefix) {
+
+  private void testRoot(DbSourceInter<byte[]> dbSource) {
+    Map<String,String> result = new HashMap<>();
+    dbSource.prefixQuery(prefix).forEach((k, v) ->
+        result.put(ByteArray.toStr(k.getBytes()), ByteArray.toStr(v)));
+
+    Map<String,String> expect = new HashMap<>();
+    expect.put(ByteArray.toStr(key2),ByteArray.toStr(value2));
+    expect.put(ByteArray.toStr(key6),ByteArray.toStr(value6));
+    expect.put(ByteArray.toStr(key7),ByteArray.toStr(valueRoot7));
+    expect.put(ByteArray.toStr(key8),ByteArray.toStr(valueRoot8));
+    Assert.assertEquals(expect, result);
+  }
+
+  private void testDb(Chainbase chainbase) {
     byte[] keyNotQuery1 = "123".getBytes();
     byte[] keyNotQuery2 = "0000001".getBytes();
     byte[] valueNotQuery1 = "v123".getBytes();
@@ -134,33 +121,42 @@ public class ChainbaseTest {
     Snapshot root = head.getRoot();
     // put some data in head
     head.put(key1, value1);
+    head.put(key7, value7);
+    head.put(key3, value3);
+    head.put(key8, value8);
+    head.remove(key7);
     // put some data in root
     root.put(key2, value2);
     root.put(key6, value6);
     root.put(key3, value3);
+    root.put(key7, valueRoot7);
+    root.put(key8, valueRoot8);
     root.put(keyNotQuery1, valueNotQuery1);
     // advance head and put some data again
     head = head.advance();
     head.put(key4, value4);
     head.put(key5, value5);
+    head.put(key9,value9);
+    head.remove(key8);
     head.put(keyNotQuery2, valueNotQuery2);
 
-    // test for all, both in snapshotImpl and leveldb
-    List<String> result = chainbase.prefixQuery(prefix).keySet()
-        .stream()
-        .map(WrappedByteArray::getBytes)
-        .map(ByteArray::toStr)
-        .collect(Collectors.toList());
-    List<String> list = Arrays.asList(
-        ByteArray.toStr(key1),
-        ByteArray.toStr(key2),
-        ByteArray.toStr(key3),
-        ByteArray.toStr(key4),
-        ByteArray.toStr(key5),
-        ByteArray.toStr(key6));
+    head = head.advance();
+    head.remove(key9);
+    root.remove(key3);
 
-    Assert.assertEquals(list.size(), result.size());
-    list.forEach(entry -> Assert.assertTrue(result.contains(entry)));
+    // test for all, both in snapshotImpl and leveldb
+    Map<String,String> result = new HashMap<>();
+    chainbase.prefixQuery(prefix).forEach((k, v) ->
+        result.put(ByteArray.toStr(k.getBytes()), ByteArray.toStr(v)));
+
+    Map<String,String> expect = new HashMap<>();
+    expect.put(ByteArray.toStr(key1),ByteArray.toStr(value1));
+    expect.put(ByteArray.toStr(key2),ByteArray.toStr(value2));
+    expect.put(ByteArray.toStr(key3),ByteArray.toStr(value3));
+    expect.put(ByteArray.toStr(key4),ByteArray.toStr(value4));
+    expect.put(ByteArray.toStr(key5),ByteArray.toStr(value5));
+    expect.put(ByteArray.toStr(key6),ByteArray.toStr(value6));
+    Assert.assertEquals(expect, result);
   }
 
 }
