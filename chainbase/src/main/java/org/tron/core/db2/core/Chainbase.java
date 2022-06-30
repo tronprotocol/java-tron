@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 import com.google.common.primitives.Bytes;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.Pair;
 import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.LevelDB;
@@ -351,39 +352,49 @@ public class Chainbase implements IRevokingDB {
   }
 
   public Map<WrappedByteArray, byte[]> prefixQuery(byte[] key) {
-    Map<WrappedByteArray, byte[]> resultSnapshot = prefixQuerySnapshot(key);
-    Map<WrappedByteArray, byte[]> resultDB = prefixQueryDB(key);
-    resultDB.putAll(resultSnapshot);
-    return resultDB;
+    Map<WrappedByteArray, byte[]> result = prefixQueryRoot(key);
+    Pair<Set<WrappedByteArray>, Map<WrappedByteArray, byte[]>> snapshot = prefixQuerySnapshot(key);
+    if (snapshot != null) {
+      result.entrySet().removeIf(e -> snapshot.getKey().contains(e.getKey()));
+      result.putAll(snapshot.getValue());
+    }
+    return result;
   }
 
-  private Map<WrappedByteArray, byte[]> prefixQueryDB(byte[] key) {
+  private Map<WrappedByteArray, byte[]> prefixQueryRoot(byte[] key) {
     Map<WrappedByteArray, byte[]> result = new HashMap<>();
     if (((SnapshotRoot) head.getRoot()).db.getClass() == LevelDB.class) {
       result = ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb().prefixQuery(key);
     } else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
       result = ((RocksDB) ((SnapshotRoot) head.getRoot()).db).getDb().prefixQuery(key);
     }
+    if (result == null) {
+      return new TreeMap<>();
+    }
     return new TreeMap<>(result);
   }
 
-  private Map<WrappedByteArray, byte[]> prefixQuerySnapshot(byte[] key) {
+  private Pair<Set<WrappedByteArray>, Map<WrappedByteArray, byte[]>> prefixQuerySnapshot(
+      byte[] key) {
     Map<WrappedByteArray, byte[]> result = new TreeMap<>();
     Snapshot snapshot = head();
     if (snapshot.equals(head.getRoot())) {
-      return result;
+      return null;
     }
     Map<WrappedByteArray, WrappedByteArray> all = new TreeMap<>();
     ((SnapshotImpl) snapshot).collect(all);
+    Set<WrappedByteArray> keys = new HashSet<>(all.keySet());
+    all.entrySet()
+        .removeIf(entry -> entry.getValue() == null || entry.getValue().getBytes() == null);
 
     for (Map.Entry<WrappedByteArray, WrappedByteArray> entry : all.entrySet()) {
       if (Bytes.indexOf(entry.getKey().getBytes(), key) == 0) {
         result.put(entry.getKey(), entry.getValue().getBytes());
       } else {
-        return result;
+        return new Pair<>(keys, result);
       }
     }
-    return result;
+    return new Pair<>(keys, result);
   }
 
 }
