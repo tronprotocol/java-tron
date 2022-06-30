@@ -872,25 +872,25 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getJailDuration();
     } catch (IllegalArgumentException e) {
-      this.saveJailDuration(200);
+      this.saveJailDuration(CommonParameter.getInstance().getJailDuration());
     }
 
     try {
       this.getSlashWindow();
     } catch (IllegalArgumentException e) {
-      this.saveSlashWindow(28);
+      this.saveSlashWindow(CommonParameter.getInstance().getSlashWindow());
     }
 
     try {
       this.getSlashFraction();
     } catch (IllegalArgumentException e) {
-      this.saveSlashFraction(10);
+      this.saveSlashFraction(CommonParameter.getInstance().getSlashFraction());
     }
 
     try {
       this.getMinValidPerWindow();
     } catch (IllegalArgumentException e) {
-      this.saveMinValidPerWindow(5);
+      this.saveMinValidPerWindow(CommonParameter.getInstance().getMinValidPerWindow());
     }
 
     try {
