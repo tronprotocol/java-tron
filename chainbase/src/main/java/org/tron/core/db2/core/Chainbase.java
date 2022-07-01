@@ -10,10 +10,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-import com.google.common.primitives.Bytes;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Pair;
 import org.tron.core.capsule.utils.MarketUtils;
@@ -369,29 +367,24 @@ public class Chainbase implements IRevokingDB {
       result = ((RocksDB) ((SnapshotRoot) head.getRoot()).db).getDb().prefixQuery(key);
     }
     if (result == null) {
-      return new TreeMap<>();
+      return new HashMap<>();
     }
-    return new TreeMap<>(result);
+    return result;
   }
 
   private Pair<Set<WrappedByteArray>, Map<WrappedByteArray, byte[]>> prefixQuerySnapshot(
       byte[] key) {
-    Map<WrappedByteArray, byte[]> result = new TreeMap<>();
     Snapshot snapshot = head();
     if (snapshot.equals(head.getRoot())) {
       return null;
     }
-    Map<WrappedByteArray, WrappedByteArray> all = new TreeMap<>();
-    ((SnapshotImpl) snapshot).collect(all);
+    Map<WrappedByteArray, WrappedByteArray> all = new HashMap<>();
+    ((SnapshotImpl) snapshot).collect(all, key);
     Set<WrappedByteArray> keys = new HashSet<>(all.keySet());
+    Map<WrappedByteArray, byte[]> result = new HashMap<>();
     all.entrySet()
         .removeIf(entry -> entry.getValue() == null || entry.getValue().getBytes() == null);
-
-    for (Map.Entry<WrappedByteArray, WrappedByteArray> entry : all.entrySet()) {
-      if (Bytes.indexOf(entry.getKey().getBytes(), key) == 0) {
-        result.put(entry.getKey(), entry.getValue().getBytes());
-      }
-    }
+    all.forEach((k, v) -> result.put(k, v.getBytes()));
     return new Pair<>(keys, result);
   }
 
