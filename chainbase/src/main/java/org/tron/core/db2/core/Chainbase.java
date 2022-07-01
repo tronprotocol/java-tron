@@ -376,22 +376,17 @@ public class Chainbase implements IRevokingDB {
 
   private Pair<Set<WrappedByteArray>, Map<WrappedByteArray, byte[]>> prefixQuerySnapshot(
       byte[] key) {
-    Map<WrappedByteArray, byte[]> result = new TreeMap<>();
     Snapshot snapshot = head();
     if (snapshot.equals(head.getRoot())) {
       return null;
     }
     Map<WrappedByteArray, WrappedByteArray> all = new TreeMap<>();
-    ((SnapshotImpl) snapshot).collect(all);
+    ((SnapshotImpl) snapshot).collect(all, key);
     Set<WrappedByteArray> keys = new HashSet<>(all.keySet());
+    Map<WrappedByteArray, byte[]> result = new TreeMap<>();
     all.entrySet()
         .removeIf(entry -> entry.getValue() == null || entry.getValue().getBytes() == null);
-
-    for (Map.Entry<WrappedByteArray, WrappedByteArray> entry : all.entrySet()) {
-      if (Bytes.indexOf(entry.getKey().getBytes(), key) == 0) {
-        result.put(entry.getKey(), entry.getValue().getBytes());
-      }
-    }
+    all.forEach((k, v) -> result.put(k, v.getBytes()));
     return new Pair<>(keys, result);
   }
 

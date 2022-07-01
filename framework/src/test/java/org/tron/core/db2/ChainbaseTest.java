@@ -52,6 +52,8 @@ public class ChainbaseTest {
   private final byte[] key9 = "10000006dd".getBytes();
 
   private final byte[] prefix = "1000000".getBytes();
+  private final byte[] prefix2 = "2000000".getBytes();
+  private final byte[] prefix3 = "0000000".getBytes();
 
   /**
    * Release resources.
@@ -110,6 +112,8 @@ public class ChainbaseTest {
     expect.put(ByteArray.toStr(key7),ByteArray.toStr(valueRoot7));
     expect.put(ByteArray.toStr(key8),ByteArray.toStr(valueRoot8));
     Assert.assertEquals(expect, result);
+    Assert.assertTrue(dbSource.prefixQuery(prefix2).isEmpty());
+    Assert.assertTrue(dbSource.prefixQuery(prefix3).isEmpty());
   }
 
   private void testDb(Chainbase chainbase) {
@@ -160,6 +164,8 @@ public class ChainbaseTest {
     expect.put(ByteArray.toStr(key5),ByteArray.toStr(value5));
     expect.put(ByteArray.toStr(key6),ByteArray.toStr(value6));
     Assert.assertEquals(expect, result);
+    Assert.assertTrue(chainbase.prefixQuery(prefix2).isEmpty());
+    Assert.assertTrue(chainbase.prefixQuery(prefix3).isEmpty());
   }
 
 }
