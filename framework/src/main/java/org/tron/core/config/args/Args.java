@@ -208,6 +208,10 @@ public class Args extends CommonParameter {
     PARAMETER.shutdownBlockHeight = -1;
     PARAMETER.shutdownBlockCount = -1;
     PARAMETER.allowSlashVote = 0;
+    PARAMETER.slashWindow = 0;
+    PARAMETER.jailDuration = 0;
+    PARAMETER.minValidPerWindow = 0;
+    PARAMETER.slashFraction = 0;
     PARAMETER.allowStableMarketOn = 0;
     PARAMETER.oracleVotePeriod = 0;
 
@@ -906,6 +910,22 @@ public class Args extends CommonParameter {
     PARAMETER.allowSlashVote =
         config.hasPath(Constant.COMMITTEE_ALLOW_SLASH_VOTE) ? config
             .getInt(Constant.COMMITTEE_ALLOW_SLASH_VOTE) : 0;
+
+    PARAMETER.jailDuration =
+            config.hasPath(Constant.COMMITTEE_SLASH_JAIL_DURATION) ? config
+                    .getInt(Constant.COMMITTEE_SLASH_JAIL_DURATION) : 200;
+
+    PARAMETER.slashWindow =
+            config.hasPath(Constant.COMMITTEE_SLASH_WINDOW) ? config
+                    .getInt(Constant.COMMITTEE_SLASH_WINDOW) : 28;
+
+    PARAMETER.minValidPerWindow =
+            config.hasPath(Constant.COMMITTEE_MIN_VALID_PER_WINDOW) ? config
+                    .getInt(Constant.COMMITTEE_MIN_VALID_PER_WINDOW) : 5;
+
+    PARAMETER.slashFraction =
+            config.hasPath(Constant.COMMITTEE_SLASH_FRACTION) ? config
+                    .getInt(Constant.COMMITTEE_SLASH_FRACTION) : 10;
 
     PARAMETER.oracleVotePeriod = config
         .hasPath(Constant.COMMITTEE_ORACLE_VOTE_PERIOD) ? config

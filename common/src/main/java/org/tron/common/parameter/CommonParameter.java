@@ -556,6 +556,22 @@ public class CommonParameter {
 
   @Getter
   @Setter
+  public long slashWindow;
+
+  @Getter
+  @Setter
+  public long jailDuration;
+
+  @Getter
+  @Setter
+  public long minValidPerWindow;
+
+  @Getter
+  @Setter
+  public long slashFraction;
+
+  @Getter
+  @Setter
   public long allowStableMarketOn;
 
   @Getter
