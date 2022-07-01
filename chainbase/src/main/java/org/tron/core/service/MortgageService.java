@@ -408,21 +408,28 @@ public class MortgageService {
     return oracleReward.add(new OracleRewardCapsule(accountCapsule.getOracleAllowance()));
   }
 
-  public void payOracleReward(byte[] witnessAddress, DecOracleRewardCapsule reward) {
+  public DecOracleRewardCapsule payOracleReward(byte[] witnessAddress,
+                                                DecOracleRewardCapsule reward) {
 
     if (allowStableMarketOff()) {
-      return;
+      return new DecOracleRewardCapsule();
     }
     long cycle = dynamicPropertiesStore.getCurrentCycleNumber();
     int brokerage = delegationStore.getBrokerage(cycle, witnessAddress);
     DecOracleRewardCapsule witnessReward = reward.mul(Dec.newDecWithPrec(brokerage, 2));
     DecOracleRewardCapsule delegatedReward = reward.sub(witnessReward);
     delegationStore.addOracleReward(cycle, witnessAddress, delegatedReward);
-    adjustOracleAllowance(witnessAddress, witnessReward.truncateDecimal());
-    logger.info("payOracleReward: address {}, cycle {}, brokerage {}, reward {}, witness {},"
-            + " delegated {}. ",
+    OracleRewardCapsule truncateWitnessReward = witnessReward.truncateDecimal();
+    adjustOracleAllowance(witnessAddress, truncateWitnessReward);
+
+    DecOracleRewardCapsule distribution = delegatedReward
+        .add(new DecOracleRewardCapsule(truncateWitnessReward));
+
+    logger.info("PayOracleReward: address {}, cycle {}, brokerage {}, reward {}, witness {},"
+            + " delegated {}, distribution {}. ",
         StringUtil.encode58Check(witnessAddress), cycle, brokerage, reward,
-        witnessReward.truncateDecimal(), delegatedReward);
+        truncateWitnessReward, delegatedReward, distribution);
+    return distribution;
   }
 
   public boolean allowStableMarketOff() {
