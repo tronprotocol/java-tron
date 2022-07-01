@@ -37,3 +37,8 @@ message ExchangeResult {
     string spread = 5;
     string exchangeRate = 6;
 }
+
+message OracleRewardPoolContract {
+    int64 balance = 1;
+    map<string, int64> asset = 2;
+}

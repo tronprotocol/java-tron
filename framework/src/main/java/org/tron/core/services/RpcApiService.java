@@ -57,6 +57,7 @@ import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NoteParameters;
 import org.tron.api.GrpcAPI.NumberMessage;
+import org.tron.api.GrpcAPI.OracleRewardPoolMessage;
 import org.tron.api.GrpcAPI.OvkDecryptTRC20Parameters;
 import org.tron.api.GrpcAPI.PaginatedMessage;
 import org.tron.api.GrpcAPI.PaymentAddressMessage;
@@ -2615,6 +2616,13 @@ public class RpcApiService implements Service {
     public void getWitnessMissCount(BytesMessage request,
         StreamObserver<NumberMessage> responseObserver) {
       responseObserver.onNext(wallet.getWitnessMissCount(request.getValue().toByteArray()));
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getOracleRewardPool(EmptyMessage request,
+                                    StreamObserver<OracleRewardPoolMessage> responseObserver) {
+      responseObserver.onNext(wallet.getOracleRewardPool());
       responseObserver.onCompleted();
     }
 

@@ -78,6 +78,7 @@ import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NoteParameters;
 import org.tron.api.GrpcAPI.NumberMessage;
+import org.tron.api.GrpcAPI.OracleRewardPoolMessage;
 import org.tron.api.GrpcAPI.PaymentAddressMessage;
 import org.tron.api.GrpcAPI.PrivateParameters;
 import org.tron.api.GrpcAPI.PrivateParametersWithoutAsk;
@@ -4095,6 +4096,13 @@ public class Wallet {
   public NumberMessage getWitnessMissCount(byte[] witnessAddress) {
     NumberMessage.Builder builder = NumberMessage.newBuilder()
             .setNum(chainBaseManager.getStableMarketStore().getWitnessMissCount(witnessAddress));
+    return builder.build();
+  }
+
+  public OracleRewardPoolMessage getOracleRewardPool() {
+    StableMarketContract.OracleRewardPoolContract oracleRewardPool = stableMarketUtil.getOracleRewardPool();
+    OracleRewardPoolMessage.Builder builder = OracleRewardPoolMessage.newBuilder()
+        .setBalance(oracleRewardPool.getBalance()).putAllAsset(oracleRewardPool.getAsset());
     return builder.build();
   }
 

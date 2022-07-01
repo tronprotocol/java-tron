@@ -334,6 +334,7 @@ public class OracleManager {
       if (null != receiverVal && !rewardCoins.isEmpty()) {
         DecOracleRewardCapsule srOracleReward = oracleRewardFromCoins(rewardCoins);
         mortgageService.payOracleReward(receiverVal, srOracleReward);
+        stableMarketStore.subOracleRewardPool(srOracleReward);
         stableMarketStore.addDistributedReward(srOracleReward);
       }
     });
