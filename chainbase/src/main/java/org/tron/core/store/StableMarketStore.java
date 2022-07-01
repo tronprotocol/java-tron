@@ -445,6 +445,16 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
     }
   }
 
+  public void subOracleRewardPool(DecOracleRewardCapsule reward) {
+    BytesCapsule bytesCapsule = getUnchecked(REWARD_POOL);
+    if (bytesCapsule == null || bytesCapsule.getData() == null) {
+      put(REWARD_POOL, new BytesCapsule(new DecOracleRewardCapsule().sub(reward).getData()));
+    } else {
+      put(REWARD_POOL, new BytesCapsule(new DecOracleRewardCapsule(bytesCapsule.getData())
+          .sub(reward).getData()));
+    }
+  }
+
   public void addDistributedReward(DecOracleRewardCapsule reward) {
     BytesCapsule bytesCapsule = getUnchecked(REWARD_TOTAL);
     if (bytesCapsule == null || bytesCapsule.getData() == null) {

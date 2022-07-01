@@ -786,6 +786,9 @@ service Wallet {
   rpc GetWitnessMissCount (BytesMessage) returns (NumberMessage) {
   };
 
+  rpc GetOracleRewardPool (EmptyMessage) returns (OracleRewardPoolMessage) {
+  };
+
   rpc GetTransactionInfoByBlockNum (NumberMessage) returns (TransactionInfoList) {
   }
 
@@ -1191,6 +1194,10 @@ message EmptyMessage {
 }
 message NumberMessage {
   int64 num = 1;
+}
+message OracleRewardPoolMessage {
+  int64 balance = 1;
+  map<string, int64> asset = 2;
 }
 message BytesMessage {
   bytes value = 1;

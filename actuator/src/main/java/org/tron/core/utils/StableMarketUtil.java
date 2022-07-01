@@ -3,6 +3,8 @@ package org.tron.core.utils;
 import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,12 +13,14 @@ import org.tron.common.entity.Dec;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.core.ChainBaseManager;
+import org.tron.core.capsule.DecOracleRewardCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.StableMarketStore;
+import org.tron.protos.contract.StableMarketContract.OracleRewardPoolContract;
 import org.tron.protos.contract.StableMarketContract.ExchangeResult;
 
 @Slf4j
@@ -173,5 +177,16 @@ public class StableMarketUtil {
       return true;
     }
     return Arrays.equals(tokenId, TRX_SYMBOL_BYTES);
+  }
+
+  public OracleRewardPoolContract getOracleRewardPool(){
+    OracleRewardPoolContract.Builder builder = OracleRewardPoolContract.newBuilder();
+    DecOracleRewardCapsule oracleRewardPool = stableMarketStore.getOracleRewardPool();
+    long balance = oracleRewardPool.getBalance().truncateLong();
+    Map<String, Long> asset = new HashMap<>(oracleRewardPool.getAsset().size());
+    oracleRewardPool.getAsset().forEach((k, v) -> {
+      asset.put(k, v.truncateLong());
+    });
+    return builder.setBalance(balance).putAllAsset(asset).build();
   }
 }

@@ -285,6 +285,9 @@ public class FullNodeHttpApiService implements Service {
   private GetWitnessMissCountServlet getWitnessMissCountServlet;
 
   @Autowired
+  private GetOracleRewardPoolServlet getOracleRewardPoolServlet;
+
+  @Autowired
   private LiteFnQueryHttpFilter liteFnQueryHttpFilter;
   @Autowired
   private HttpApiAccessFilter httpApiAccessFilter;
@@ -557,6 +560,9 @@ public class FullNodeHttpApiService implements Service {
               "/wallet/unjailwitness");
       context.addServlet(new ServletHolder(getWitnessMissCountServlet),
               "/wallet/getwitnessmisscount");
+
+      context.addServlet(new ServletHolder(getOracleRewardPoolServlet),
+              "/wallet/getoraclerewardpool");
 
       context.addServlet(new ServletHolder(getAccountBalanceServlet),
           "/wallet/getaccountbalance");
