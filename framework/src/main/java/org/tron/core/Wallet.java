@@ -4100,7 +4100,8 @@ public class Wallet {
   }
 
   public OracleRewardPoolMessage getOracleRewardPool() {
-    StableMarketContract.OracleRewardPoolContract oracleRewardPool = stableMarketUtil.getOracleRewardPool();
+    StableMarketContract.OracleRewardPoolContract oracleRewardPool = stableMarketUtil
+            .getOracleRewardPool();
     OracleRewardPoolMessage.Builder builder = OracleRewardPoolMessage.newBuilder()
         .setBalance(oracleRewardPool.getBalance()).putAllAsset(oracleRewardPool.getAsset());
     return builder.build();
