@@ -1,6 +1,7 @@
 package org.tron.consensus.dpos;
 
 import static org.tron.common.utils.WalletUtil.getAddressStringList;
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.common.collect.Maps;
@@ -29,7 +30,6 @@ import org.tron.protos.Protocol.Vote;
 public class MaintenanceManager {
 
   private static final long SLASH_FRACTION_BASE = 100_000L;
-  private static final long BLOCK_COUNT = 7200;
 
   @Autowired
   private ConsensusDelegate consensusDelegate;
@@ -274,7 +274,9 @@ public class MaintenanceManager {
     if ((dynamicPropertiesStore.getCurrentCycleNumber() + 1) % SlashWindow == 0) {
       long minValidPerWindow = dynamicPropertiesStore.getMinValidPerWindow();
       long votePeriod = dynamicPropertiesStore.getOracleVotePeriod();
-      long slashMissCount = BLOCK_COUNT * SlashWindow * minValidPerWindow / votePeriod / 100;
+      long blockCount =
+              dynamicPropertiesStore.getMaintenanceTimeInterval() / BLOCK_PRODUCED_INTERVAL;
+      long slashMissCount = blockCount * SlashWindow * minValidPerWindow / votePeriod / 100;
       final long slashFraction = dynamicPropertiesStore.getSlashFraction();
       stableMarketStore.getAllWitnessMissCount().forEach((address, missCount) -> {
         if (missCount >= slashMissCount) {
