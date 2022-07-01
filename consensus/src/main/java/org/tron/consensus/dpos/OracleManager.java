@@ -333,9 +333,9 @@ public class OracleManager {
       // In case absence of the validator, we just skip distribution
       if (null != receiverVal && !rewardCoins.isEmpty()) {
         DecOracleRewardCapsule srOracleReward = oracleRewardFromCoins(rewardCoins);
-        mortgageService.payOracleReward(receiverVal, srOracleReward);
-        stableMarketStore.subOracleRewardPool(srOracleReward);
-        stableMarketStore.addDistributedReward(srOracleReward);
+        DecOracleRewardCapsule rewardCapsule = mortgageService.payOracleReward(receiverVal, srOracleReward);
+        stableMarketStore.subOracleRewardPool(rewardCapsule);
+        stableMarketStore.addDistributedReward(rewardCapsule);
       }
     });
   }
