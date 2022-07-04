@@ -604,7 +604,7 @@ public class VoteWitnessActuatorTest {
             .put(StringUtil.hexString2ByteString(WITNESS_ADDRESS).toByteArray(), witnessCapsule);
 
     dbManager.getStableMarketStore().setWitnessMissCount(
-            StringUtil.hexString2ByteString(WITNESS_ADDRESS).toByteArray(), 10000);
+            StringUtil.hexString2ByteString(WITNESS_ADDRESS).toByteArray(), 20000);
     try {
       freezeBalanceActuator.validate();
       freezeBalanceActuator.execute(ret);
