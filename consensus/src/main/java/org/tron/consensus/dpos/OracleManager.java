@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.entity.Dec;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.StringUtil;
 import org.tron.consensus.ConsensusDelegate;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.DecOracleRewardCapsule;
@@ -334,6 +335,8 @@ public class OracleManager {
       if (null != receiverVal && !rewardCoins.isEmpty()) {
         DecOracleRewardCapsule srOracleReward = oracleRewardFromCoins(rewardCoins);
         DecOracleRewardCapsule rewardCapsule = mortgageService.payOracleReward(receiverVal, srOracleReward);
+        logger.info("MortgageService payOracleReward : {} === {} , result : {}", StringUtil.encode58Check(receiverVal),
+            srOracleReward, rewardCapsule);
         stableMarketStore.subOracleRewardPool(rewardCapsule);
         stableMarketStore.addDistributedReward(rewardCapsule);
       }

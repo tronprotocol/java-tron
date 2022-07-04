@@ -427,6 +427,9 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
   }
 
   public void addOracleRewardPool(String denom, Dec amount) {
+    DecOracleRewardCapsule decOracle = getOracleRewardPool();
+    logger.info("StableMarketStore addOracleRewardPool before : {} === {}", decOracle.getBalance(), decOracle.getAsset());
+    logger.info("StableMarketStore addOracleRewardPool value : {} === {}", denom, amount);
     Dec balance = Dec.zeroDec();
     Map<String, Dec> asset = new HashMap<>();
     if (TRX_SYMBOL.equals(denom)) {
@@ -443,9 +446,16 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
       put(REWARD_POOL, new BytesCapsule(new DecOracleRewardCapsule(bytesCapsule.getData())
           .add(reward).getData()));
     }
+    DecOracleRewardCapsule decOracleRewardCapsule = getOracleRewardPool();
+    logger.info("StableMarketStore addOracleRewardPool after : {} === {}", decOracleRewardCapsule.getBalance(),
+        decOracleRewardCapsule.getAsset());
   }
 
   public void subOracleRewardPool(DecOracleRewardCapsule reward) {
+    DecOracleRewardCapsule decOracle = getOracleRewardPool();
+    logger.info("StableMarketStore subOracleRewardPool before : {} === {}", decOracle.getBalance(),
+        decOracle.getAsset());
+    logger.info("StableMarketStore subOracleRewardPool value : {} ", reward);
     BytesCapsule bytesCapsule = getUnchecked(REWARD_POOL);
     if (bytesCapsule == null || bytesCapsule.getData() == null) {
       put(REWARD_POOL, new BytesCapsule(new DecOracleRewardCapsule().sub(reward).getData()));
@@ -453,6 +463,9 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
       put(REWARD_POOL, new BytesCapsule(new DecOracleRewardCapsule(bytesCapsule.getData())
           .sub(reward).getData()));
     }
+    DecOracleRewardCapsule decOracleRewardCapsule = getOracleRewardPool();
+    logger.info("StableMarketStore subOracleRewardPool after : {} === {}", decOracleRewardCapsule.getBalance(),
+        decOracleRewardCapsule.getAsset());
   }
 
   public void addDistributedReward(DecOracleRewardCapsule reward) {
