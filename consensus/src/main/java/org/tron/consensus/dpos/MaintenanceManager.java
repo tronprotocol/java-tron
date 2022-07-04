@@ -273,13 +273,14 @@ public class MaintenanceManager {
     long SlashWindow = dynamicPropertiesStore.getSlashWindow();
     if ((dynamicPropertiesStore.getCurrentCycleNumber() + 1) % SlashWindow == 0) {
       long minValidPerWindow = dynamicPropertiesStore.getMinValidPerWindow();
+      long maxMissPerWindow = 100 - minValidPerWindow;
       long votePeriod = dynamicPropertiesStore.getOracleVotePeriod();
       long blockCount =
               dynamicPropertiesStore.getMaintenanceTimeInterval() / BLOCK_PRODUCED_INTERVAL;
-      long slashMissCount = blockCount * SlashWindow * minValidPerWindow / votePeriod / 100;
+      long slashMissCount = blockCount * SlashWindow * maxMissPerWindow / votePeriod / 100;
       final long slashFraction = dynamicPropertiesStore.getSlashFraction();
       stableMarketStore.getAllWitnessMissCount().forEach((address, missCount) -> {
-        if (missCount >= slashMissCount) {
+        if (missCount > slashMissCount) {
           WitnessCapsule witnessCapsule = consensusDelegate.getWitness(address);
           long voteCount = witnessCapsule.getVoteCount() * slashFraction / SLASH_FRACTION_BASE;
           if (oldCountWitness.containsKey(witnessCapsule.getAddress())) {
