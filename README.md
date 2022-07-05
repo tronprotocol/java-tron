@@ -63,7 +63,7 @@ TRON is a project dedicated to building the infrastructure for a truly decentral
 TRON enables large-scale development and engagement. With over 2000 transactions per second (TPS), high concurrency, low latency, and massive data transmission. It is ideal for building decentralized entertainment applications. Free features and incentive systems allow developers to create premium app experiences for users.
 
 # Building the source
-Building java-tron requires `git` and `Oracle JDK 1.8` to be installed, other JDK versions are not supported yet. It is recommended to operate on `Linux` and `OSX` operating systems.
+Building java-tron requires `git` and `Oracle JDK 1.8` to be installed, other JDK versions are not supported yet. Make sure you operate on `Linux` and `MacOS` operating systems.
 
 ## Getting the Source Code
 
@@ -85,13 +85,33 @@ The `FullNode.jar` file can be found in `java-tron/build/libs/FullNode.jar` afte
 
 Get the mainnet configurate file: [main_net_config.conf](https://github.com/tronprotocol/tron-deployment/blob/master/main_net_config.conf), other network configuration files can be find [here](https://github.com/tronprotocol/tron-deployment).
 
+Running java-tron requires `Oracle JDK 1.8` to be installed, other JDK versions are not supported yet. Make sure you operate on `Linux` and `MacOS` operating systems.
 
-* **Running a full node for mainnet**  
+## Hardware Requirements
+* Minimum:
+  * CPU with 8 cores
+  * 16GB RAM
+  * 1TB free storage space to sync the Mainnet
+* Recommended:
+  * CPU with 16+ cores(32+ cores for a super representative)
+  * 32+ GB RAM(64+ GB for a super representative)
+  * High Performance SSD with at least 1.5TB free space
+  * 100+ MB/s download Internet service
+
+
+## Running a full node for mainnet
   Full node has full historical data, it is the entry point into the TRON network , it can be used by other processes as a gateway into the TRON network via HTTP and GRPC endpoints. You can interact with the TRON network through full node：transfer assets, deploy contracts, interact with contracts and so on. `-c ` parameter specifies a configuration file to run a full node:
    ```bash
-   $ java -jar FullNode.jar -c main_net_config.conf
+   $ nohup java -Xms9G -Xmx9G -XX:ReservedCodeCacheSize=256m \
+    -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m -XX:MaxDirectMemorySize=1G \
+    -XX:+PrintGCDetails -XX:+PrintGCDateStamps  -Xloggc:gc.log \
+    -XX:+UseConcMarkSweepGC -XX:NewRatio=2 \
+    -XX:+CMSScavengeBeforeRemark -XX:+ParallelRefProcEnabled \
+    -XX:+HeapDumpOnOutOfMemoryError \
+    -XX:+UseCMSInitiatingOccupancyOnly  -XX:CMSInitiatingOccupancyFraction=70 \
+    -jar FullNode.jar -c main_net_config.conf >> start.log 2>&1 &
    ```
-* **Running a super representative node for mainnet**  
+## Running a super representative node for mainnet  
   Adding the `--witness` parameter to the startup command, full node will run as a super representative node. The super representative node supports all the functions of the full node and also supports block production. Before running, make sure you have a super representative account and get votes from others，once the number of obtained votes ranks in the top 27, your super representative node will participate in block production.
 
   Fill in the private key of super representative address into the `localwitness` list in the `main_net_config.conf`, here is an example:
@@ -102,9 +122,16 @@ Get the mainnet configurate file: [main_net_config.conf](https://github.com/tron
    ```
 
   then run the following command to start the node:
-    ```bash
-    $ java -jar FullNode.jar --witness -c main_net_config.conf
-    ```
+  ```bash
+  $ nohup java -Xms9G -Xmx9G -XX:ReservedCodeCacheSize=256m \
+  -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m -XX:MaxDirectMemorySize=1G \
+  -XX:+PrintGCDetails -XX:+PrintGCDateStamps  -Xloggc:gc.log \
+  -XX:+UseConcMarkSweepGC -XX:NewRatio=2 \
+  -XX:+CMSScavengeBeforeRemark -XX:+ParallelRefProcEnabled \
+  -XX:+HeapDumpOnOutOfMemoryError \
+  -XX:+UseCMSInitiatingOccupancyOnly  -XX:CMSInitiatingOccupancyFraction=70 \
+  -jar FullNode.jar --witness -c main_net_config.conf >> start.log 2>&1 &
+   ```
 
 ## Quick Start Tool
 An easier way to build and run java-tron is to use `start.sh`, `start.sh` is a quick start script written in shell language, you can use it to build and run java-tron quickly and easily.
