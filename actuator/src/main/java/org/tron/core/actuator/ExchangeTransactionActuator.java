@@ -6,12 +6,19 @@ import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
+import org.tron.common.utils.JsonUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
@@ -24,7 +31,7 @@ import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ExchangeStore;
 import org.tron.core.store.ExchangeV2Store;
-import org.tron.core.utils.TransactionUtil;
+import org.tron.core.utils.UpgradeDiff;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
@@ -34,6 +41,38 @@ public class ExchangeTransactionActuator extends AbstractActuator {
 
   public ExchangeTransactionActuator() {
     super(ContractType.ExchangeTransactionContract, ExchangeTransactionContract.class);
+  }
+
+  /**
+   * key for strict math
+   * value for math
+   */
+  protected static final Map<String, String> map = new HashMap<>();
+
+  static {
+    // BufferedReader reader = null;
+    // try {
+    //   String str;
+    //   reader = new BufferedReader(new FileReader("/data1/JDK11/jdk11.log"));
+    //   while ((str = reader.readLine()) != null) {
+    //     str = str.replace("'", "\"").replace("math", "\"math\"").replace("strict", "\"strict\"");
+    //     UpgradeDiff upgradeDiff = JsonUtil.json2Obj("{" + str + "}", UpgradeDiff.class);
+    //     if (Objects.nonNull(upgradeDiff)) {
+    //       map.put(upgradeDiff.getTx(), upgradeDiff.getMath());
+    //     }
+    //   }
+    // } catch (IOException e) {
+    //   logger.error("read file error", e);
+    // } finally {
+    //   try {
+    //     if (reader != null) {
+    //       reader.close();
+    //     }
+    //   } catch (IOException e) {
+    //     logger.error("read close error", e);
+    //   }
+    // }
+    logger.info("read file success, map {}", map);
   }
 
   @Override
@@ -67,7 +106,11 @@ public class ExchangeTransactionActuator extends AbstractActuator {
 
       byte[] anotherTokenID;
       long anotherTokenQuant = exchangeCapsule.transaction(tokenID, tokenQuant);
-
+      String txId = Hex.toHexString(tx.getTransactionId().getBytes());
+      if (map.containsKey(txId)) {
+        anotherTokenQuant = Long.parseLong(map.get(txId));
+        logger.info("replace txId-> {} ,anotherTokenQuant-> {}", txId, anotherTokenQuant);
+      }
       if (Arrays.equals(tokenID, firstTokenID)) {
         anotherTokenID = secondTokenID;
       } else {

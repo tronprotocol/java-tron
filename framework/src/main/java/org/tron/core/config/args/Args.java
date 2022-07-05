@@ -1248,6 +1248,10 @@ public class Args extends CommonParameter {
   public static void logConfig() {
     CommonParameter parameter = CommonParameter.getInstance();
     logger.info("\n");
+    logger.info("************************ JVM config ************************");
+    logger.info("JVM vendor: {}", System.getProperty("java.vendor"));
+    logger.info("JVM Version: {}", System.getProperty("java.version"));
+    logger.info("JVM Arch: {}", System.getProperty("os.arch"));
     logger.info("************************ Net config ************************");
     logger.info("P2P version: {}", parameter.getNodeP2pVersion());
     logger.info("Bind IP: {}", parameter.getNodeDiscoveryBindIp());

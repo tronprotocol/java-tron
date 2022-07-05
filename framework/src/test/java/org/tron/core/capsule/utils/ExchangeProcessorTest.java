@@ -62,13 +62,8 @@ public class ExchangeProcessorTest {
 
   @Test
   public void testExchange() {
-    long sellBalance = 100_000_000_000000L;
-    long buyBalance = 128L * 1024 * 1024 * 1024;
-    long sellQuant = 2_000_000_000_000L; // 2 million trx
-
-    long result = processor.exchange(sellBalance, buyBalance, sellQuant);
-
-    Assert.assertEquals(2694881440L, result);
+    long result = processor.exchange(4732214, 2202692725330L, 29218);
+    Assert.assertEquals(13516579896L, result);
   }
 
   @Test
