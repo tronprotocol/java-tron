@@ -44,7 +44,7 @@ The script is available in the java-tron project at [github](https://github.com/
   sh start.sh -cb --run
   ```
 
-* Select a supported network,default network `main_net`, optional network `test_net`,`private`
+* Select a supported network,default network `main`, optional network `test`,`private`
   ```
   sh start.sh --net test
   ```
@@ -234,4 +234,3 @@ sh start.sh --release --run -d /tmp/db/database -m 128 -b 64000
 ```
 
 For more design details, please refer to: [TIP298](https://github.com/tronprotocol/tips/issues/298) | [Leveldb Startup Optimization Plugins](https://github.com/tronprotocol/documentation-en/blob/master/docs/developers/archive-manifest.md)
-

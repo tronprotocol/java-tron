@@ -1,6 +1,8 @@
 package org.tron.core.net.services;
 
 import com.google.common.collect.Lists;
+
+import java.io.File;
 import java.util.List;
 import org.junit.After;
 import org.junit.Assert;
@@ -9,6 +11,7 @@ import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
@@ -30,13 +33,14 @@ public class AdvServiceTest {
   private AdvService service;
   private PeerConnection peer;
   private SyncPool syncPool;
+  private String dbPath = "output-adv-service-test";
 
   /**
    * init context.
    */
   @Before
   public void init() {
-    Args.setParam(new String[]{"--output-directory", "output-directory", "--debug"},
+    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"},
         Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     service = context.getBean(AdvService.class);
@@ -49,6 +53,7 @@ public class AdvServiceTest {
   public void destroy() {
     Args.clearParam();
     context.destroy();
+    FileUtil.deleteDir(new File(dbPath));
   }
 
   @Test
