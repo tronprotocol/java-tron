@@ -9,7 +9,7 @@ assignees: ''
 
 #### System information
 
-Geth version: `geth version`
+java-tron version: `java-tron release version`
 OS & Version: Windows/Linux/OSX
 Commit hash : (if `develop`)
 
