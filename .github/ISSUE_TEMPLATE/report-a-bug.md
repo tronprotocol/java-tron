@@ -9,7 +9,7 @@ assignees: ''
 
 #### System information
 
-java-tron version: `java-tron release version`
+java-tron version: `java -jar FullNode.jar -v`
 OS & Version: Windows/Linux/OSX
 Commit hash : (if `develop`)
 
