@@ -907,6 +907,12 @@ public class RpcApiService implements Service {
 
       responseObserver.onCompleted();
     }
+
+    @Override
+    public void getBlock(GrpcAPI.BlockMessage  request,
+        StreamObserver<BlockExtention> responseObserver) {
+      getBlockCommon(request, responseObserver);
+    }
   }
 
   /**
@@ -2657,6 +2663,13 @@ public class RpcApiService implements Service {
         StreamObserver<NumberMessage> responseObserver) {
       getPendingSizeCommon(request, responseObserver);
     }
+
+
+    @Override
+    public void getBlock(GrpcAPI.BlockMessage  request,
+        StreamObserver<BlockExtention> responseObserver) {
+      getBlockCommon(request, responseObserver);
+    }
   }
 
   public class MonitorApi extends MonitorGrpc.MonitorImplBase {
@@ -2774,4 +2787,20 @@ public class RpcApiService implements Service {
     }
     responseObserver.onCompleted();
   }
+
+  public void getBlockCommon(GrpcAPI.BlockMessage request,
+      StreamObserver<BlockExtention> responseObserver) {
+    try {
+      responseObserver.onNext(block2Extention(wallet.getBlock(request)));
+    } catch (Exception e) {
+      if (e instanceof IllegalArgumentException) {
+        responseObserver.onError(Status.INVALID_ARGUMENT.withDescription(e.getMessage())
+            .withCause(e).asRuntimeException());
+      } else {
+        responseObserver.onError(getRunTimeException(e));
+      }
+    }
+    responseObserver.onCompleted();
+  }
+
 }
