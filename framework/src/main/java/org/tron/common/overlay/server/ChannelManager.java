@@ -34,7 +34,7 @@ import org.tron.protos.Protocol.ReasonCode;
 @Component
 public class ChannelManager {
 
-  private final Map<ByteArrayWrapper, Channel> activePeers = new ConcurrentHashMap<>();
+  private final Map<ByteArrayWrapper, Channel> activeChannels = new ConcurrentHashMap<>();
   @Autowired
   private PeerServer peerServer;
   @Autowired
@@ -121,7 +121,7 @@ public class ChannelManager {
 
   public void notifyDisconnect(Channel channel) {
     syncPool.onDisconnect(channel);
-    activePeers.values().remove(channel);
+    activeChannels.values().remove(channel);
     if (channel != null) {
       if (channel.getNodeStatistics() != null) {
         channel.getNodeStatistics().notifyDisconnect();
@@ -146,7 +146,7 @@ public class ChannelManager {
         return false;
       }
 
-      if (!peer.isActive() && activePeers.size() >= maxActivePeers) {
+      if (!peer.isActive() && activeChannels.size() >= maxActivePeers) {
         peer.disconnect(TOO_MANY_PEERS);
         return false;
       }
@@ -157,7 +157,7 @@ public class ChannelManager {
       }
     }
 
-    Channel channel = activePeers.get(peer.getNodeIdWrapper());
+    Channel channel = activeChannels.get(peer.getNodeIdWrapper());
     if (channel != null) {
       if (channel.getStartTime() > peer.getStartTime()) {
         logger.info("Disconnect connection established later, {}", channel.getNode());
@@ -167,14 +167,14 @@ public class ChannelManager {
         return false;
       }
     }
-    activePeers.put(peer.getNodeIdWrapper(), peer);
-    logger.info("Add active peer {}, total active peers: {}", peer, activePeers.size());
+    activeChannels.put(peer.getNodeIdWrapper(), peer);
+    logger.info("Add active peer {}, total active peers: {}", peer, activeChannels.size());
     return true;
   }
 
   public int getConnectionNum(InetAddress inetAddress) {
     int cnt = 0;
-    for (Channel channel : activePeers.values()) {
+    for (Channel channel : activeChannels.values()) {
       if (channel.getInetAddress().equals(inetAddress)) {
         cnt++;
       }
@@ -183,7 +183,7 @@ public class ChannelManager {
   }
 
   public Collection<Channel> getActivePeers() {
-    return activePeers.values();
+    return activeChannels.values();
   }
 
   public Cache<InetAddress, ReasonCode> getRecentlyDisconnected() {
