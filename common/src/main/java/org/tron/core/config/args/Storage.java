@@ -48,6 +48,8 @@ public class Storage {
   private static final String INDEX_DIRECTORY_CONFIG_KEY = "storage.index.directory";
   private static final String INDEX_SWITCH_CONFIG_KEY = "storage.index.switch";
   private static final String TRANSACTIONHISTORY_SWITCH_CONFIG_KEY = "storage.transHistory.switch";
+  private static final String ESTIMATED_TRANSACTIONS_CONFIG_KEY =
+      "storage.txCache.estimatedTransactions";
   private static final String PROPERTIES_CONFIG_KEY = "storage.properties";
   private static final String PROPERTIES_CONFIG_DB_KEY = "storage";
   private static final String PROPERTIES_CONFIG_DEFAULT_KEY = "default";
@@ -77,6 +79,7 @@ public class Storage {
   private static final String DEFAULT_DB_DIRECTORY = "database";
   private static final String DEFAULT_INDEX_DIRECTORY = "index";
   private static final String DEFAULT_INDEX_SWITCH = "on";
+  private static final int DEFAULT_ESTIMATED_TRANSACTIONS = 500;
   private Config storage;
 
   /**
@@ -118,6 +121,10 @@ public class Storage {
   private String transactionHistorySwitch;
 
   private Options defaultDbOptions;
+
+  @Getter
+  @Setter
+  private int estimatedBlockTransactions;
 
   /**
    * Key: dbName, Value: Property object of that database
@@ -166,6 +173,12 @@ public class Storage {
     return config.hasPath(TRANSACTIONHISTORY_SWITCH_CONFIG_KEY)
         ? config.getString(TRANSACTIONHISTORY_SWITCH_CONFIG_KEY)
         : DEFAULT_TRANSACTIONHISTORY_SWITCH;
+  }
+
+  public static int getEstimatedTransactionsFromConfig(final Config config) {
+    return config.hasPath(ESTIMATED_TRANSACTIONS_CONFIG_KEY)
+        ? config.getInt(ESTIMATED_TRANSACTIONS_CONFIG_KEY)
+        : DEFAULT_ESTIMATED_TRANSACTIONS;
   }
 
   private  Property createProperty(final ConfigObject conf) {

@@ -740,8 +740,9 @@ public class Manager {
 
 
   private boolean containsTransaction(byte[] transactionId) {
-    if (transactionCache != null) {
-      return transactionCache.has(transactionId);
+    if (transactionCache != null && !transactionCache.has(transactionId)) {
+      // using the bloom filter only determines non-existent transaction
+      return false;
     }
 
     return chainBaseManager.getTransactionStore()
