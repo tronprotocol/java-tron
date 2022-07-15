@@ -72,6 +72,7 @@ public class MessageQueue {
           if (channel.isDisconnect()) {
             logger.warn("Failed to send to {} as channel has closed, {}",
                 ctx.channel().remoteAddress(), msg);
+            msgQueue.clear();
             return;
           }
           ctx.writeAndFlush(msg.getSendData()).addListener((ChannelFutureListener) future -> {
