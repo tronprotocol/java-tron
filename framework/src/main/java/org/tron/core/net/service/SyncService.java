@@ -234,8 +234,8 @@ public class SyncService {
 
       isProcessed[0] = false;
 
-      blockWaitToProcess.forEach((msg, peerConnection) -> {
-        synchronized (tronNetDelegate.getBlockLock()) {
+      synchronized (tronNetDelegate.getBlockLock()) {
+        blockWaitToProcess.forEach((msg, peerConnection) -> {
           if (peerConnection.isDisconnect()) {
             blockWaitToProcess.remove(msg);
             invalid(msg.getBlockId());
@@ -254,8 +254,8 @@ public class SyncService {
             isProcessed[0] = true;
             processSyncBlock(msg.getBlockCapsule());
           }
-        }
-      });
+        });
+      }
     }
   }
 
