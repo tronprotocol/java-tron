@@ -14,6 +14,7 @@ import io.grpc.netty.NettyServerBuilder;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -26,6 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -211,14 +213,32 @@ public class Args extends CommonParameter {
   }
 
   /**
+   * print Version.
+   */
+  private static void printVersion() {
+    Properties properties = new Properties();
+    try {
+      InputStream in = Thread.currentThread()
+          .getContextClassLoader().getResourceAsStream("git.properties");
+      properties.load(in);
+    } catch (IOException e) {
+      logger.error(e.getMessage());
+    }
+    JCommander.getConsole().println("OS : " + System.getProperty("os.name"));
+    JCommander.getConsole().println("JVM : " + System.getProperty("java.vendor") + " "
+        + System.getProperty("java.version") + " " + System.getProperty("os.arch"));
+    JCommander.getConsole().println("Git : " + properties.getProperty("git.commit.id"));
+    JCommander.getConsole().println("Version : " + Version.getVersion());
+    JCommander.getConsole().println("Code : " + Version.VERSION_CODE);
+  }
+
+  /**
    * set parameters.
    */
   public static void setParam(final String[] args, final String confFileName) {
     JCommander.newBuilder().addObject(PARAMETER).build().parse(args);
     if (PARAMETER.version) {
-      JCommander.getConsole()
-          .println(Version.getVersion()
-              + "\n" + Version.VERSION_NAME + "\n" + Version.VERSION_CODE);
+      printVersion();
       exit(0);
     }
 
