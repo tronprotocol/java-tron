@@ -92,13 +92,19 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
       throw new P2pException(TypeEnum.SYNC_FAILED, "unForkId is null");
     }
 
-    long len = Math.min(tronNetDelegate.getHeadBlockId().getNum(),
-        unForkId.getNum() + NetConstants.SYNC_FETCH_BATCH_NUM);
+    BlockId headID = tronNetDelegate.getHeadBlockId();
+    long headNum = headID.getNum();
+
+    long len = Math.min(headNum, unForkId.getNum() + NetConstants.SYNC_FETCH_BATCH_NUM);
 
     LinkedList<BlockId> ids = new LinkedList<>();
     for (long i = unForkId.getNum(); i <= len; i++) {
-      BlockId id = tronNetDelegate.getBlockIdByNum(i);
-      ids.add(id);
+      if (i == headNum) {
+        ids.add(headID);
+      } else {
+        BlockId id = tronNetDelegate.getBlockIdByNum(i);
+        ids.add(id);
+      }
     }
     return ids;
   }
