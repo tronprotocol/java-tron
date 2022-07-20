@@ -12,8 +12,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.google.common.primitives.Bytes;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.Pair;
 import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.LevelDB;
@@ -350,13 +350,14 @@ public class Chainbase implements IRevokingDB {
   }
 
   public Map<WrappedByteArray, byte[]> prefixQuery(byte[] key) {
-    Map<WrappedByteArray, byte[]> resultSnapshot = prefixQuerySnapshot(key);
-    Map<WrappedByteArray, byte[]> resultDB = prefixQueryDB(key);
-    resultDB.putAll(resultSnapshot);
-    return resultDB;
+    Map<WrappedByteArray, byte[]> result = prefixQueryRoot(key);
+    Map<WrappedByteArray, byte[]>  snapshot = prefixQuerySnapshot(key);
+    result.putAll(snapshot);
+    result.entrySet().removeIf(e -> e.getValue() == null);
+    return result;
   }
 
-  private Map<WrappedByteArray, byte[]> prefixQueryDB(byte[] key) {
+  private Map<WrappedByteArray, byte[]> prefixQueryRoot(byte[] key) {
     Map<WrappedByteArray, byte[]> result = new HashMap<>();
     if (((SnapshotRoot) head.getRoot()).db.getClass() == LevelDB.class) {
       result = ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb().prefixQuery(key);
@@ -369,16 +370,10 @@ public class Chainbase implements IRevokingDB {
   private Map<WrappedByteArray, byte[]> prefixQuerySnapshot(byte[] key) {
     Map<WrappedByteArray, byte[]> result = new HashMap<>();
     Snapshot snapshot = head();
-    while (!snapshot.equals(head.getRoot())) {
-      Iterator<Map.Entry<byte[], byte[]>> iterator = snapshot.iterator();
-      while (iterator.hasNext()) {
-        Map.Entry<byte[], byte[]> entry = iterator.next();
-        WrappedByteArray ks = WrappedByteArray.of(entry.getKey());
-        if (Bytes.indexOf(entry.getKey(), key) == 0 && !result.containsKey(ks)) {
-          result.put(ks, entry.getValue());
-        }
-      }
-      snapshot = snapshot.getPrevious();
+    if (!snapshot.equals(head.getRoot())) {
+      Map<WrappedByteArray, WrappedByteArray> all = new HashMap<>();
+      ((SnapshotImpl) snapshot).collect(all, key);
+      all.forEach((k, v) -> result.put(k, v.getBytes()));
     }
     return result;
   }
