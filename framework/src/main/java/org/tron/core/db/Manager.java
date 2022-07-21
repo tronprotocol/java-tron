@@ -19,6 +19,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -500,6 +501,9 @@ public class Manager {
 
     //for test only
     chainBaseManager.getDynamicPropertiesStore().updateDynamicStoreByConfig();
+
+    // init liteFullNode
+    initLiteNode();
 
     long headNum = chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     logger.info("current headNum is: {}", headNum);
@@ -2271,6 +2275,42 @@ public class Manager {
         + getPoppedTransactions().size();
     return value;
   }
+
+  private void initLiteNode() {
+    // When using bloom filter for transaction de-duplication,
+    // it is possible to use trans for secondary confirmation.
+    // Init trans db for liteNode,
+    long headNum = chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+    long recentBlockCount = chainBaseManager.getRecentBlockStore().size();
+    long recentBlockStart = headNum - recentBlockCount + 1;
+    try {
+      chainBaseManager.getBlockByNum(recentBlockStart);
+    } catch (ItemNotFoundException | BadItemException e) {
+      // copy transaction from recent-transaction to trans
+      logger.info("load trans for lite node. from={},to={}", recentBlockStart, headNum);
+
+      TransactionCapsule item = new TransactionCapsule(Transaction.newBuilder().build());
+      // add a fake number, tx Cache check if transaction exist
+      item.setBlockNum(0);
+
+      long transactionCount = 0;
+      for (Map.Entry<byte[], BytesCapsule> entry :
+          chainBaseManager.getRecentTransactionStore()) {
+        byte[] data = entry.getValue().getData();
+        RecentTransactionItem trx =
+            JsonUtil.json2Obj(new String(data), RecentTransactionItem.class);
+        if (trx == null) {
+          continue;
+        }
+        transactionCount += trx.getTransactionIds().size();
+
+        trx.getTransactionIds().forEach(
+            tid -> chainBaseManager.getTransactionStore().put(Hex.decode(tid), item));
+      }
+      logger.info("load trans complete, trans:{}.", transactionCount);
+    }
+  }
+
 
   public void setBlockWaitLock(boolean waitFlag) {
     if (waitFlag) {
