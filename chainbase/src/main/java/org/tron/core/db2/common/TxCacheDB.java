@@ -32,6 +32,8 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   // estimated number transactions in one block
   private final int TRANSACTION_COUNT;
 
+  private static final long INVALID_BLOCK = -1;
+
   // Since the filter cannot query for specific record information,
   // FAKE_TRANSACTION represent the record presence.
   private final byte[] FAKE_TRANSACTION = ByteArray.fromLong(0);
@@ -39,7 +41,7 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   // a pair of bloom filters record the recent transactions
   private BloomFilter<byte[]>[] bloomFilters = new BloomFilter[2];
   // filterStartBlock record the start block of the active filter
-  private long filterStartBlock = 0;
+  private long filterStartBlock = INVALID_BLOCK;
   // currentFilterIndex records the index of the active filter
   private int currentFilterIndex = 0;
 
@@ -154,15 +156,17 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
     }
 
     long blockNum = Longs.fromByteArray(value);
-    if (filterStartBlock == 0) {
+    if (filterStartBlock == INVALID_BLOCK) {
       // init active filter start block
       filterStartBlock = blockNum;
       currentFilterIndex = 0;
+      logger.info("init tx cache bloomFilters at {}",blockNum);
     } else if (blockNum - filterStartBlock > MAX_BLOCK_SIZE) {
       // active filter is full
-      logger.info("active bloomFilters is full (size={} fpp={}), create a new one",
+      logger.info("active bloomFilters is full (size={} fpp={}), create a new one (start={})",
           bloomFilters[currentFilterIndex].approximateElementCount(),
-          bloomFilters[currentFilterIndex].expectedFpp());
+          bloomFilters[currentFilterIndex].expectedFpp(),
+          blockNum);
       currentFilterIndex ^= 1;
       filterStartBlock = blockNum;
       bloomFilters[currentFilterIndex] =
@@ -228,8 +232,6 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   }
 
   @Override
-  public void stat() {
-    this.persistentStore.stat();
-  }
+  public void stat() {}
 }
 
