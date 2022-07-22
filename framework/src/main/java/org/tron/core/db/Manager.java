@@ -769,6 +769,7 @@ public class Manager {
               break;
             }
           } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             logger.debug("the wait has been interrupted");
           }
         }
