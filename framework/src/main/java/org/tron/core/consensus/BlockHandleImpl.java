@@ -60,6 +60,10 @@ public class BlockHandleImpl implements BlockHandle {
   }
 
   public void setBlockWaitLock(boolean flag) {
-    manager.setBlockWaitLock(flag);
+    if (flag) {
+      manager.getBlockWaitLock().incrementAndGet();
+    } else {
+      manager.getBlockWaitLock().decrementAndGet();
+    }
   }
 }

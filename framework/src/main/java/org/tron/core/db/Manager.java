@@ -239,8 +239,8 @@ public class Manager {
   @Getter
   private final ThreadLocal<Histogram.Timer> blockedTimer = new ThreadLocal<>();
 
-  @Setter
-  private volatile boolean blockWaitLock = false;
+  @Getter
+  private AtomicInteger blockWaitLock = new AtomicInteger(0);
   private Object transactionLock = new Object();
 
   /**
@@ -762,7 +762,7 @@ public class Manager {
       synchronized (transactionLock) {
         while (true) {
           try {
-            if (blockWaitLock) {
+            if (blockWaitLock.get() > 0) {
               TimeUnit.MILLISECONDS.sleep(50);
               logger.info("waiting for the block processing to complete");
             } else {
@@ -845,27 +845,20 @@ public class Manager {
    * when switch fork need erase blocks on fork branch.
    */
   public void eraseBlock() {
-    blockWaitLock = true;
+    session.reset();
     try {
-      synchronized (this) {
-        session.reset();
-        try {
-          BlockCapsule oldHeadBlock = chainBaseManager.getBlockById(
-                  getDynamicPropertiesStore().getLatestBlockHeaderHash());
-          logger.info("start to erase block:" + oldHeadBlock);
-          khaosDb.pop();
-          revokingStore.fastPop();
-          logger.info("end to erase block:" + oldHeadBlock);
-          poppedTransactions.addAll(oldHeadBlock.getTransactions());
-          Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, oldHeadBlock.getTransactions().size(),
-                  MetricLabels.Gauge.QUEUE_POPPED);
+      BlockCapsule oldHeadBlock = chainBaseManager.getBlockById(
+              getDynamicPropertiesStore().getLatestBlockHeaderHash());
+      logger.info("start to erase block:" + oldHeadBlock);
+      khaosDb.pop();
+      revokingStore.fastPop();
+      logger.info("end to erase block:" + oldHeadBlock);
+      poppedTransactions.addAll(oldHeadBlock.getTransactions());
+      Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, oldHeadBlock.getTransactions().size(),
+              MetricLabels.Gauge.QUEUE_POPPED);
 
-        } catch (ItemNotFoundException | BadItemException e) {
-          logger.warn(e.getMessage(), e);
-        }
-      }
-    } finally {
-      blockWaitLock = false;
+    } catch (ItemNotFoundException | BadItemException e) {
+      logger.warn(e.getMessage(), e);
     }
   }
 
@@ -1081,7 +1074,7 @@ public class Manager {
       DupTransactionException, TransactionExpirationException,
       BadNumberBlockException, BadBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, ZksnarkException, EventBloomException {
-    blockWaitLock = true;
+    blockWaitLock.incrementAndGet();
     try {
       synchronized (this) {
         Metrics.histogramObserve(blockedTimer.get());
@@ -1248,7 +1241,7 @@ public class Manager {
         Metrics.histogramObserve(timer);
       }
     } finally {
-      blockWaitLock = false;
+      blockWaitLock.decrementAndGet();
     }
   }
 
@@ -1415,142 +1408,135 @@ public class Manager {
    * Generate a block.
    */
   public BlockCapsule generateBlock(Miner miner, long blockTime, long timeout) {
-    blockWaitLock = true;
-    try {
-      synchronized (this) {
-        String address =  StringUtil.encode58Check(miner.getWitnessAddress().toByteArray());
-        final Histogram.Timer timer = Metrics.histogramStartTimer(
-                MetricKeys.Histogram.BLOCK_GENERATE_LATENCY, address);
-        Metrics.histogramObserve(MetricKeys.Histogram.MINER_LATENCY,
-                (System.currentTimeMillis() - blockTime) / Metrics.MILLISECONDS_PER_SECOND,
-                address);
-        long postponedTrxCount = 0;
-        logger.info("Generate block {} begin", chainBaseManager.getHeadBlockNum() + 1);
+    String address =  StringUtil.encode58Check(miner.getWitnessAddress().toByteArray());
+    final Histogram.Timer timer = Metrics.histogramStartTimer(
+            MetricKeys.Histogram.BLOCK_GENERATE_LATENCY, address);
+    Metrics.histogramObserve(MetricKeys.Histogram.MINER_LATENCY,
+            (System.currentTimeMillis() - blockTime) / Metrics.MILLISECONDS_PER_SECOND,
+            address);
+    long postponedTrxCount = 0;
+    logger.info("Generate block {} begin", chainBaseManager.getHeadBlockNum() + 1);
 
-        BlockCapsule blockCapsule = new BlockCapsule(chainBaseManager.getHeadBlockNum() + 1,
-                chainBaseManager.getHeadBlockId(),
-                blockTime, miner.getWitnessAddress());
-        blockCapsule.generatedByMyself = true;
-        session.reset();
-        session.setValue(revokingStore.buildSession());
+    BlockCapsule blockCapsule = new BlockCapsule(chainBaseManager.getHeadBlockNum() + 1,
+            chainBaseManager.getHeadBlockId(),
+            blockTime, miner.getWitnessAddress());
+    blockCapsule.generatedByMyself = true;
+    session.reset();
+    session.setValue(revokingStore.buildSession());
 
-        accountStateCallBack.preExecute(blockCapsule);
+    accountStateCallBack.preExecute(blockCapsule);
 
-        if (getDynamicPropertiesStore().getAllowMultiSign() == 1) {
-          byte[] privateKeyAddress = miner.getPrivateKeyAddress().toByteArray();
-          AccountCapsule witnessAccount = getAccountStore()
-                  .get(miner.getWitnessAddress().toByteArray());
-          if (!Arrays.equals(privateKeyAddress, witnessAccount.getWitnessPermissionAddress())) {
-            logger.warn("Witness permission is wrong");
-            return null;
-          }
-        }
+    if (getDynamicPropertiesStore().getAllowMultiSign() == 1) {
+      byte[] privateKeyAddress = miner.getPrivateKeyAddress().toByteArray();
+      AccountCapsule witnessAccount = getAccountStore()
+              .get(miner.getWitnessAddress().toByteArray());
+      if (!Arrays.equals(privateKeyAddress, witnessAccount.getWitnessPermissionAddress())) {
+        logger.warn("Witness permission is wrong");
+        return null;
+      }
+    }
 
-        TransactionRetCapsule transactionRetCapsule = new TransactionRetCapsule(blockCapsule);
+    TransactionRetCapsule transactionRetCapsule = new TransactionRetCapsule(blockCapsule);
 
-        Set<String> accountSet = new HashSet<>();
-        AtomicInteger shieldedTransCounts = new AtomicInteger(0);
-        while (pendingTransactions.size() > 0 || rePushTransactions.size() > 0) {
-          boolean fromPending = false;
-          TransactionCapsule trx;
-          if (pendingTransactions.size() > 0) {
-            trx = pendingTransactions.peek();
-            if (Args.getInstance().isOpenTransactionSort()) {
-              TransactionCapsule trxRepush = rePushTransactions.peek();
-              if (trxRepush == null || trx.getOrder() >= trxRepush.getOrder()) {
-                fromPending = true;
-              } else {
-                trx = rePushTransactions.poll();
-                Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, -1,
-                        MetricLabels.Gauge.QUEUE_REPUSH);
-              }
-            } else {
-              fromPending = true;
-            }
+    Set<String> accountSet = new HashSet<>();
+    AtomicInteger shieldedTransCounts = new AtomicInteger(0);
+    while (pendingTransactions.size() > 0 || rePushTransactions.size() > 0) {
+      boolean fromPending = false;
+      TransactionCapsule trx;
+      if (pendingTransactions.size() > 0) {
+        trx = pendingTransactions.peek();
+        if (Args.getInstance().isOpenTransactionSort()) {
+          TransactionCapsule trxRepush = rePushTransactions.peek();
+          if (trxRepush == null || trx.getOrder() >= trxRepush.getOrder()) {
+            fromPending = true;
           } else {
             trx = rePushTransactions.poll();
             Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, -1,
                     MetricLabels.Gauge.QUEUE_REPUSH);
           }
-
-          if (fromPending) {
-            pendingTransactions.poll();
-            Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, -1,
-                    MetricLabels.Gauge.QUEUE_PENDING);
-          }
-
-          if (trx == null) {
-            //  transaction may be removed by rePushLoop.
-            logger.warn("Trx is null,fromPending:{},pending:{},repush:{}.",
-                    fromPending, pendingTransactions.size(), rePushTransactions.size());
-            continue;
-          }
-          if (System.currentTimeMillis() > timeout) {
-            logger.warn("Processing transaction time exceeds the producing time.");
-            break;
-          }
-
-          // check the block size
-          if ((blockCapsule.getInstance().getSerializedSize() + trx.getSerializedSize() + 3)
-                  > ChainConstant.BLOCK_SIZE) {
-            postponedTrxCount++;
-            continue;
-          }
-          //shielded transaction
-          if (isShieldedTransaction(trx.getInstance())
-                  && shieldedTransCounts.incrementAndGet() > SHIELDED_TRANS_IN_BLOCK_COUNTS) {
-            continue;
-          }
-          //multi sign transaction
-          Contract contract = trx.getInstance().getRawData().getContract(0);
-          byte[] owner = TransactionCapsule.getOwner(contract);
-          String ownerAddress = ByteArray.toHexString(owner);
-          if (accountSet.contains(ownerAddress)) {
-            continue;
-          } else {
-            if (isMultiSignTransaction(trx.getInstance())) {
-              accountSet.add(ownerAddress);
-            }
-          }
-          if (ownerAddressSet.contains(ownerAddress)) {
-            trx.setVerified(false);
-          }
-          // apply transaction
-          try (ISession tmpSession = revokingStore.buildSession()) {
-            accountStateCallBack.preExeTrans();
-            TransactionInfo result = processTransaction(trx, blockCapsule);
-            accountStateCallBack.exeTransFinish();
-            tmpSession.merge();
-            blockCapsule.addTransaction(trx);
-            if (Objects.nonNull(result)) {
-              transactionRetCapsule.addTransactionInfo(result);
-            }
-          } catch (Exception e) {
-            logger.error("Process trx {} failed when generating block: {}", trx.getTransactionId(),
-                    e.getMessage());
-          }
+        } else {
+          fromPending = true;
         }
-
-        accountStateCallBack.executeGenerateFinish();
-
-        session.reset();
-
-        logger.info("Generate block {} success, trxs:{}, pendingCount: {}, rePushCount: {},"
-                        + " postponedCount: {}",
-                blockCapsule.getNum(), blockCapsule.getTransactions().size(),
-                pendingTransactions.size(), rePushTransactions.size(), postponedTrxCount);
-
-        blockCapsule.setMerkleRoot();
-        blockCapsule.sign(miner.getPrivateKey());
-
-        BlockCapsule capsule = new BlockCapsule(blockCapsule.getInstance());
-        capsule.generatedByMyself = true;
-        Metrics.histogramObserve(timer);
-        return capsule;
+      } else {
+        trx = rePushTransactions.poll();
+        Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, -1,
+                MetricLabels.Gauge.QUEUE_REPUSH);
       }
-    } finally {
-      blockWaitLock = false;
+
+      if (fromPending) {
+        pendingTransactions.poll();
+        Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, -1,
+                MetricLabels.Gauge.QUEUE_PENDING);
+      }
+
+      if (trx == null) {
+        //  transaction may be removed by rePushLoop.
+        logger.warn("Trx is null,fromPending:{},pending:{},repush:{}.",
+                fromPending, pendingTransactions.size(), rePushTransactions.size());
+        continue;
+      }
+      if (System.currentTimeMillis() > timeout) {
+        logger.warn("Processing transaction time exceeds the producing time.");
+        break;
+      }
+
+      // check the block size
+      if ((blockCapsule.getInstance().getSerializedSize() + trx.getSerializedSize() + 3)
+              > ChainConstant.BLOCK_SIZE) {
+        postponedTrxCount++;
+        continue;
+      }
+      //shielded transaction
+      if (isShieldedTransaction(trx.getInstance())
+              && shieldedTransCounts.incrementAndGet() > SHIELDED_TRANS_IN_BLOCK_COUNTS) {
+        continue;
+      }
+      //multi sign transaction
+      Contract contract = trx.getInstance().getRawData().getContract(0);
+      byte[] owner = TransactionCapsule.getOwner(contract);
+      String ownerAddress = ByteArray.toHexString(owner);
+      if (accountSet.contains(ownerAddress)) {
+        continue;
+      } else {
+        if (isMultiSignTransaction(trx.getInstance())) {
+          accountSet.add(ownerAddress);
+        }
+      }
+      if (ownerAddressSet.contains(ownerAddress)) {
+        trx.setVerified(false);
+      }
+      // apply transaction
+      try (ISession tmpSession = revokingStore.buildSession()) {
+        accountStateCallBack.preExeTrans();
+        TransactionInfo result = processTransaction(trx, blockCapsule);
+        accountStateCallBack.exeTransFinish();
+        tmpSession.merge();
+        blockCapsule.addTransaction(trx);
+        if (Objects.nonNull(result)) {
+          transactionRetCapsule.addTransactionInfo(result);
+        }
+      } catch (Exception e) {
+        logger.error("Process trx {} failed when generating block: {}", trx.getTransactionId(),
+                e.getMessage());
+      }
     }
+
+    accountStateCallBack.executeGenerateFinish();
+
+    session.reset();
+
+    logger.info("Generate block {} success, trxs:{}, pendingCount: {}, rePushCount: {},"
+                    + " postponedCount: {}",
+            blockCapsule.getNum(), blockCapsule.getTransactions().size(),
+            pendingTransactions.size(), rePushTransactions.size(), postponedTrxCount);
+
+    blockCapsule.setMerkleRoot();
+    blockCapsule.sign(miner.getPrivateKey());
+
+    BlockCapsule capsule = new BlockCapsule(blockCapsule.getInstance());
+    capsule.generatedByMyself = true;
+    Metrics.histogramObserve(timer);
+    return capsule;
   }
 
   private void filterOwnerAddress(TransactionCapsule transactionCapsule, Set<String> result) {
