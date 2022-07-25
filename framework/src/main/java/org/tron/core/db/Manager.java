@@ -489,6 +489,8 @@ public class Manager {
 
     long headNum = chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     logger.info("current headNum is: {}", headNum);
+    int nodeType = chainBaseManager.getCommonStore().getNodeType();
+    logger.info("node type is: {}", Constant.NODE_TYPE_LIGHT_NODE == nodeType ? "lite" : "full");
     revokingStore.enable();
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
