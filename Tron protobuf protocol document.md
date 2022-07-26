@@ -2019,7 +2019,7 @@ message `SmartContract` has mutiple attributes and nested message `ABI`
       TOO_MANY_PEERS = 0x04;
       DUPLICATE_PEER = 0x05;
       INCOMPATIBLE_PROTOCOL = 0x06;
-      NULL_IDENTITY = 0x07;
+      RANDOM_ELIMINATION = 0x07;
       PEER_QUITING = 0x08;
       UNEXPECTED_IDENTITY = 0x09;
       LOCAL_IDENTITY = 0x0A;
