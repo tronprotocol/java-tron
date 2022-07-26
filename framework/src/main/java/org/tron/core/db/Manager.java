@@ -763,8 +763,7 @@ public class Manager {
         while (true) {
           try {
             if (blockWaitLock.get() > 0) {
-              TimeUnit.MILLISECONDS.sleep(50);
-              logger.info("waiting for the block processing to complete");
+              TimeUnit.MILLISECONDS.sleep(10);
             } else {
               break;
             }
