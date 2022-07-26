@@ -909,7 +909,7 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void getBlock(GrpcAPI.BlockMessage  request,
+    public void getBlock(GrpcAPI.BlockReq  request,
         StreamObserver<BlockExtention> responseObserver) {
       getBlockCommon(request, responseObserver);
     }
@@ -2666,7 +2666,7 @@ public class RpcApiService implements Service {
 
 
     @Override
-    public void getBlock(GrpcAPI.BlockMessage  request,
+    public void getBlock(GrpcAPI.BlockReq  request,
         StreamObserver<BlockExtention> responseObserver) {
       getBlockCommon(request, responseObserver);
     }
@@ -2788,7 +2788,7 @@ public class RpcApiService implements Service {
     responseObserver.onCompleted();
   }
 
-  public void getBlockCommon(GrpcAPI.BlockMessage request,
+  public void getBlockCommon(GrpcAPI.BlockReq request,
       StreamObserver<BlockExtention> responseObserver) {
     try {
       responseObserver.onNext(block2Extention(wallet.getBlock(request)));
