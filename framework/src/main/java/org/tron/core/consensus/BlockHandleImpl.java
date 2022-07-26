@@ -58,4 +58,12 @@ public class BlockHandleImpl implements BlockHandle {
     }
     return blockCapsule;
   }
+
+  public void setBlockWaitLock(boolean flag) {
+    if (flag) {
+      manager.getBlockWaitLock().incrementAndGet();
+    } else {
+      manager.getBlockWaitLock().decrementAndGet();
+    }
+  }
 }
