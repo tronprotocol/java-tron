@@ -141,8 +141,6 @@ public class BandwidthPriceHistoryLoaderTest {
 
   @Test
   public void testLoaderWork() {
-    Assert.assertEquals(0L,
-        chainBaseManager.getDynamicPropertiesStore().getBandwidthPriceHistoryDone());
 
     initDB();
 
@@ -163,11 +161,11 @@ public class BandwidthPriceHistoryLoaderTest {
 
   @Test
   public void testProposalEmpty() {
-    Assert.assertEquals(0L,
-        chainBaseManager.getDynamicPropertiesStore().getBandwidthPriceHistoryDone());
     String preBandwidthPriceHistory =
         chainBaseManager.getDynamicPropertiesStore().getBandwidthPriceHistory();
     Assert.assertEquals(DEFAULT_BANDWIDTH_PRICE_HISTORY, preBandwidthPriceHistory);
+
+    chainBaseManager.getDynamicPropertiesStore().saveBandwidthPriceHistoryDone(0);
 
     // loader work
     BandwidthPriceHistoryLoader loader = new BandwidthPriceHistoryLoader(chainBaseManager);
@@ -186,6 +184,8 @@ public class BandwidthPriceHistoryLoaderTest {
     String preBandwidthPriceHistory =
         chainBaseManager.getDynamicPropertiesStore().getBandwidthPriceHistory();
     Assert.assertEquals(DEFAULT_BANDWIDTH_PRICE_HISTORY, preBandwidthPriceHistory);
+
+    chainBaseManager.getDynamicPropertiesStore().saveBandwidthPriceHistoryDone(0);
 
     // init proposals
     initDB();
