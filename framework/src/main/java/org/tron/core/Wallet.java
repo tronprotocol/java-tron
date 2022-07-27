@@ -3954,6 +3954,16 @@ public class Wallet {
     return null;
   }
 
+  public String getBandwidthPrices() {
+    try {
+      return chainBaseManager.getDynamicPropertiesStore().getBandwidthPriceHistory();
+    } catch (Exception e) {
+      logger.error("getBandwidthPrices failed, error is {}", e.getMessage());
+    }
+
+    return null;
+  }
+
   public String getCoinbase() {
     if (!CommonParameter.getInstance().isWitness()) {
       return null;
