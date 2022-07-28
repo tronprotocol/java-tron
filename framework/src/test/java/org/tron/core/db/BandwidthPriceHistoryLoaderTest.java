@@ -155,8 +155,6 @@ public class BandwidthPriceHistoryLoaderTest {
     String historyStr = loader.parseProposalsToStr();
 
     Assert.assertEquals(expectedRes, historyStr);
-    Assert.assertEquals(0L,
-        chainBaseManager.getDynamicPropertiesStore().getBandwidthPriceHistoryDone());
   }
 
   @Test
