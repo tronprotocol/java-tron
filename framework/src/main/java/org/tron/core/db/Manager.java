@@ -96,6 +96,7 @@ import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.db.accountstate.TrieService;
 import org.tron.core.db.accountstate.callback.AccountStateCallBack;
 import org.tron.core.db.api.AssetUpdateHelper;
+import org.tron.core.db.api.BandwidthPriceHistoryLoader;
 import org.tron.core.db.api.EnergyPriceHistoryLoader;
 import org.tron.core.db.api.MoveAbiHelper;
 import org.tron.core.db2.ISession;
@@ -323,6 +324,10 @@ public class Manager {
     return getDynamicPropertiesStore().getEnergyPriceHistoryDone() == 0L;
   }
 
+  private boolean needToLoadBandwidthPriceHistory() {
+    return getDynamicPropertiesStore().getBandwidthPriceHistoryDone() == 0L;
+  }
+
   public boolean needToSetBlackholePermission() {
     return getDynamicPropertiesStore().getSetBlackholeAccountPermission() == 0L;
   }
@@ -478,6 +483,10 @@ public class Manager {
 
     if (needToLoadEnergyPriceHistory()) {
       new EnergyPriceHistoryLoader(chainBaseManager).doWork();
+    }
+
+    if (needToLoadBandwidthPriceHistory()) {
+      new BandwidthPriceHistoryLoader(chainBaseManager).doWork();
     }
 
     if (needToSetBlackholePermission()) {

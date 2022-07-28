@@ -1595,6 +1595,8 @@ public class JsonFormat {
         return result;
       } catch (InvalidEscapeSequence e) {
         throw parseException(e.getMessage());
+      } catch (IllegalArgumentException e) {
+        throw parseException("INVALID base58 String, " + e.getMessage());
       }
     }
 

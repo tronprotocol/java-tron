@@ -252,7 +252,7 @@ public class Util {
 
   /**
    * Note: the contracts of the returned transaction may be empty
-   * */
+   */
   public static Transaction packTransaction(String strTransaction, boolean selfType) {
     JSONObject jsonTransaction = JSON.parseObject(strTransaction);
     JSONObject rawData = jsonTransaction.getJSONObject("raw_data");
@@ -290,6 +290,8 @@ public class Util {
         logger.debug("invalid contractType: {}", contractType);
       } catch (ParseException e) {
         logger.debug("ParseException: {}", e.getMessage());
+      } catch (ClassCastException e) {
+        logger.debug("ClassCastException: {}", e.getMessage());
       } catch (Exception e) {
         logger.error("", e);
       }
