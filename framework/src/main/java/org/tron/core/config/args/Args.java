@@ -116,14 +116,16 @@ public class Args extends CommonParameter {
     PARAMETER.needSyncCheck = false;
     PARAMETER.nodeDiscoveryEnable = false;
     PARAMETER.nodeDiscoveryPersist = false;
-    PARAMETER.nodeConnectionTimeout = 0;
+    PARAMETER.nodeConnectionTimeout = 2000;
     PARAMETER.activeNodes = Collections.emptyList();
     PARAMETER.passiveNodes = Collections.emptyList();
     PARAMETER.fastForwardNodes = Collections.emptyList();
     PARAMETER.maxFastForwardNum = 3;
     PARAMETER.nodeChannelReadTimeout = 0;
-    PARAMETER.nodeMaxActiveNodes = 30;
-    PARAMETER.nodeMaxActiveNodesWithSameIp = 2;
+    PARAMETER.maxConnections = 30;
+    PARAMETER.minConnections = 8;
+    PARAMETER.minActiveConnections = 3;
+    PARAMETER.maxConnectionsWithSameIp = 2;
     PARAMETER.minParticipationRate = 0;
     PARAMETER.nodeListenPort = 0;
     PARAMETER.nodeDiscoveryBindIp = "";
@@ -158,10 +160,6 @@ public class Args extends CommonParameter {
     PARAMETER.solidityNode = false;
     PARAMETER.trustNodeAddr = "";
     PARAMETER.walletExtensionApi = false;
-    PARAMETER.connectFactor = 0.3;
-    PARAMETER.activeConnectFactor = 0.1;
-    PARAMETER.disconnectNumberFactor = 0.4;
-    PARAMETER.maxConnectNumberFactor = 0.8;
     PARAMETER.receiveTcpMinDataLength = 2048;
     PARAMETER.isOpenFullTcpDisconnect = false;
     PARAMETER.supportConstant = false;
@@ -448,7 +446,7 @@ public class Args extends CommonParameter {
     PARAMETER.nodeConnectionTimeout =
         config.hasPath(Constant.NODE_CONNECTION_TIMEOUT)
             ? config.getInt(Constant.NODE_CONNECTION_TIMEOUT) * 1000
-            : 0;
+            : 2000;
 
     if (!config.hasPath(Constant.NODE_FETCH_BLOCK_TIMEOUT)) {
       PARAMETER.fetchBlockTimeout = 200;
@@ -465,11 +463,19 @@ public class Args extends CommonParameter {
             ? config.getInt(Constant.NODE_CHANNEL_READ_TIMEOUT)
             : 0;
 
-    PARAMETER.nodeMaxActiveNodes =
-        config.hasPath(Constant.NODE_MAX_ACTIVE_NODES)
-            ? config.getInt(Constant.NODE_MAX_ACTIVE_NODES) : 30;
+    PARAMETER.maxConnections =
+        config.hasPath(Constant.NODE_MAX_CONNECTIONS)
+            ? config.getInt(Constant.NODE_MAX_CONNECTIONS) : 30;
 
-    PARAMETER.nodeMaxActiveNodesWithSameIp =
+    PARAMETER.minConnections =
+            config.hasPath(Constant.NODE_MIN_CONNECTIONS)
+                    ? config.getInt(Constant.NODE_MIN_CONNECTIONS) : 8;
+
+    PARAMETER.minActiveConnections =
+            config.hasPath(Constant.NODE_MIN_ACTIVE_CONNECTIONS)
+                    ? config.getInt(Constant.NODE_MIN_ACTIVE_CONNECTIONS) : 3;
+
+    PARAMETER.maxConnectionsWithSameIp =
         config.hasPath(Constant.NODE_MAX_ACTIVE_NODES_WITH_SAMEIP) ? config
             .getInt(Constant.NODE_MAX_ACTIVE_NODES_WITH_SAMEIP) : 2;
 
@@ -659,17 +665,6 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.NODE_WALLET_EXTENSION_API)
             && config.getBoolean(Constant.NODE_WALLET_EXTENSION_API);
 
-    PARAMETER.connectFactor =
-        config.hasPath(Constant.NODE_CONNECT_FACTOR)
-            ? config.getDouble(Constant.NODE_CONNECT_FACTOR) : 0.3;
-
-    PARAMETER.activeConnectFactor = config.hasPath(Constant.NODE_ACTIVE_CONNECT_FACTOR)
-        ? config.getDouble(Constant.NODE_ACTIVE_CONNECT_FACTOR) : 0.1;
-
-    PARAMETER.disconnectNumberFactor = config.hasPath(Constant.NODE_DISCONNECT_NUMBER_FACTOR)
-        ? config.getDouble(Constant.NODE_DISCONNECT_NUMBER_FACTOR) : 0.4;
-    PARAMETER.maxConnectNumberFactor = config.hasPath(Constant.NODE_MAX_CONNECT_NUMBER_FACTOR)
-        ? config.getDouble(Constant.NODE_MAX_CONNECT_NUMBER_FACTOR) : 0.8;
     PARAMETER.receiveTcpMinDataLength = config.hasPath(Constant.NODE_RECEIVE_TCP_MIN_DATA_LENGTH)
         ? config.getLong(Constant.NODE_RECEIVE_TCP_MIN_DATA_LENGTH) : 2048;
     PARAMETER.isOpenFullTcpDisconnect = config.hasPath(Constant.NODE_IS_OPEN_FULL_TCP_DISCONNECT)
@@ -1236,8 +1231,8 @@ public class Args extends CommonParameter {
     logger.info("FastForward node size: {}", parameter.getFastForwardNodes().size());
     logger.info("FastForward node number: {}", parameter.getMaxFastForwardNum());
     logger.info("Seed node size: {}", parameter.getSeedNode().getIpList().size());
-    logger.info("Max connection: {}", parameter.getNodeMaxActiveNodes());
-    logger.info("Max connection with same IP: {}", parameter.getNodeMaxActiveNodesWithSameIp());
+    logger.info("Max connection: {}", parameter.getMaxConnections());
+    logger.info("Max connection with same IP: {}", parameter.getMaxConnectionsWithSameIp());
     logger.info("Solidity threads: {}", parameter.getSolidityThreads());
     logger.info("Trx reference block: {}", parameter.getTrxReferenceBlock());
     logger.info("************************ Backup config ************************");
