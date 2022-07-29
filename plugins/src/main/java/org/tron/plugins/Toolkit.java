@@ -3,13 +3,18 @@ package org.tron.plugins;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
 
-@CommandLine.Command(name = "tron", subcommands = { CommandLine.HelpCommand.class, Db.class})
+@CommandLine.Command(subcommands = { CommandLine.HelpCommand.class, Db.class})
 public class Toolkit implements Callable<Integer> {
 
 
   public static void main(String[] args) {
-    int exitCode = new CommandLine(new Toolkit()).execute(args);
-    System.exit(exitCode);
+    CommandLine cli = new CommandLine(new Toolkit());
+    if (args == null || args.length == 0) {
+      cli.usage(System.out);
+    } else {
+      int exitCode = cli.execute(args);
+      System.exit(exitCode);
+    }
   }
 
   @Override

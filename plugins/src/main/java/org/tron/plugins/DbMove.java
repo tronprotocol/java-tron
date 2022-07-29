@@ -25,15 +25,16 @@ public class DbMove implements Callable<Integer> {
   private static final String DEFAULT_DB_DIRECTORY = "database";
   private static final String NAME_CONFIG_KEY = "name";
   private static final String PATH_CONFIG_KEY = "path";
-  private static final String NOT_FIND = "The database to be moved cannot be found.";
+  private static final String NOT_FIND = "There is no database to be moved, exist.";
 
   @CommandLine.Spec
   CommandLine.Model.CommandSpec spec;
 
   @CommandLine.Option(names = {"-d", "--database-directory"},
       defaultValue = "output-directory",
+      converter = Db.PathConverter.class,
       description = "database directory path. Default: ${DEFAULT-VALUE}")
-  String database;
+  Path database;
 
   @CommandLine.Option(names = {"-c", "--config"},
       defaultValue = "config.conf",
@@ -50,10 +51,11 @@ public class DbMove implements Callable<Integer> {
       spec.commandLine().usage(System.out);
       return 0;
     }
+
     if (config.hasPath(PROPERTIES_CONFIG_KEY)) {
       List<? extends Config> dbs = config.getConfigList(PROPERTIES_CONFIG_KEY);
       if (dbs.isEmpty()) {
-        spec.commandLine().getOut().println(NOT_FIND);
+        printNotExist();
         return 0;
       }
       String dbPath = config.hasPath(DB_DIRECTORY_CONFIG_KEY)
@@ -64,14 +66,14 @@ public class DbMove implements Callable<Integer> {
           .collect(Collectors.toList());
 
       if (dbs.isEmpty()) {
-        spec.commandLine().getOut().println(NOT_FIND);
+        printNotExist();
         return 0;
       }
       List<Property> toBeMove = dbs.stream()
           .map(c -> {
             try {
               return new Property(c.getString(NAME_CONFIG_KEY),
-                  Paths.get(database, dbPath, c.getString(NAME_CONFIG_KEY)),
+                  Paths.get(database.toString(), dbPath, c.getString(NAME_CONFIG_KEY)),
                   Paths.get(c.getString(PATH_CONFIG_KEY), dbPath, c.getString(NAME_CONFIG_KEY)));
             } catch (IOException e) {
               spec.commandLine().getErr().println(e);
@@ -81,7 +83,7 @@ public class DbMove implements Callable<Integer> {
           .filter(p -> !p.destination.equals(p.original)).collect(Collectors.toList());
 
       if (toBeMove.isEmpty()) {
-        spec.commandLine().getOut().println(NOT_FIND);
+        printNotExist();
         return 0;
       }
       toBeMove = toBeMove.stream()
@@ -96,14 +98,15 @@ public class DbMove implements Callable<Integer> {
           }).collect(Collectors.toList());
 
       if (toBeMove.isEmpty()) {
-        spec.commandLine().getOut().println(NOT_FIND);
+        printNotExist();
         return 0;
       }
       ProgressBar.wrap(toBeMove.stream(), "mv task").forEach(this::run);
       spec.commandLine().getOut().println("move db done.");
 
     } else {
-      spec.commandLine().getOut().println(NOT_FIND);
+      printNotExist();
+      return 0;
     }
     return 0;
   }
@@ -133,6 +136,10 @@ public class DbMove implements Callable<Integer> {
     }
   }
 
+  private void printNotExist() {
+    spec.commandLine().getErr().println(NOT_FIND);
+  }
+
   /**
    * delete directory.
    */
@@ -157,6 +164,12 @@ public class DbMove implements Callable<Integer> {
     public Property(String name, Path original, Path destination) throws IOException {
       this.name = name;
       this.original = original.toFile().getCanonicalFile().toPath();
+      if (!this.original.toFile().exists()) {
+        throw new IOException(this.original + " not exist!");
+      }
+      if (this.original.toFile().isFile()) {
+        throw new IOException(this.original + " is a file!");
+      }
       this.destination = destination.toFile().getCanonicalFile().toPath();
     }
   }
