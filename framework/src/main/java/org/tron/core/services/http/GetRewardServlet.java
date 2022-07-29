@@ -28,7 +28,7 @@ public class GetRewardServlet extends RateLimiterServlet {
     } catch (DecoderException e) {
       try {
         response.getWriter()
-            .println("{\"Error\": " + "\"INVALID base58 String, " + e.getMessage() + "\"}");
+            .println("{\"Error\": " + "\"INVALID address, " + e.getMessage() + "\"}");
       } catch (IOException ioe) {
         logger.debug("IOException: {}", ioe.getMessage());
       }
