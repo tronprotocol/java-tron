@@ -169,6 +169,8 @@ public class Manager {
   private static final String SAVE_BLOCK = "save block: ";
   private static final int SLEEP_TIME_OUT = 50;
   private static final int TX_ID_CACHE_SIZE = 100_000;
+  private static final int SLEEP_FOR_WAIT_LOCK = 10;
+  private static final int NO_BLOCK_WAITING_LOCK = 0;
   private final int shieldedTransInPendingMaxCounts =
       Args.getInstance().getShieldedTransInPendingMaxCounts();
   @Getter
@@ -240,7 +242,6 @@ public class Manager {
   @Getter
   private final ThreadLocal<Histogram.Timer> blockedTimer = new ThreadLocal<>();
 
-  @Getter
   private AtomicInteger blockWaitLock = new AtomicInteger(0);
   private Object transactionLock = new Object();
 
@@ -773,8 +774,8 @@ public class Manager {
       synchronized (transactionLock) {
         while (true) {
           try {
-            if (blockWaitLock.get() > 0) {
-              TimeUnit.MILLISECONDS.sleep(10);
+            if (isBlockWaitingLock()) {
+              TimeUnit.MILLISECONDS.sleep(SLEEP_FOR_WAIT_LOCK);
             } else {
               break;
             }
@@ -1084,7 +1085,7 @@ public class Manager {
       DupTransactionException, TransactionExpirationException,
       BadNumberBlockException, BadBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, ZksnarkException, EventBloomException {
-    blockWaitLock.incrementAndGet();
+    setBlockWaitLock(true);
     try {
       synchronized (this) {
         Metrics.histogramObserve(blockedTimer.get());
@@ -1251,7 +1252,7 @@ public class Manager {
         Metrics.histogramObserve(timer);
       }
     } finally {
-      blockWaitLock.decrementAndGet();
+      setBlockWaitLock(false);
     }
   }
 
@@ -2268,6 +2269,18 @@ public class Manager {
     long value = getPendingTransactions().size() + getRePushTransactions().size()
         + getPoppedTransactions().size();
     return value;
+  }
+
+  public void setBlockWaitLock(boolean waitFlag) {
+    if (waitFlag) {
+      blockWaitLock.incrementAndGet();
+    } else {
+      blockWaitLock.decrementAndGet();
+    }
+  }
+
+  private boolean isBlockWaitingLock() {
+    return blockWaitLock.get() > NO_BLOCK_WAITING_LOCK;
   }
 
   private static class ValidateSignTask implements Callable<Boolean> {
