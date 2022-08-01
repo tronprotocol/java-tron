@@ -41,9 +41,9 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   // a pair of bloom filters record the recent transactions
   private BloomFilter<byte[]>[] bloomFilters = new BloomFilter[2];
   // filterStartBlock record the start block of the active filter
-  private long filterStartBlock = INVALID_BLOCK;
+  private volatile long filterStartBlock = INVALID_BLOCK;
   // currentFilterIndex records the index of the active filter
-  private int currentFilterIndex = 0;
+  private volatile int currentFilterIndex = 0;
 
   // record the last metric block to avoid duplication
   private long lastMetricBlock = 0;
@@ -86,7 +86,6 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
     } else {
       throw new RuntimeException("db version is not supported.");
     }
-
     this.bloomFilters[0] = BloomFilter.create(Funnels.byteArrayFunnel(),
         MAX_BLOCK_SIZE * TRANSACTION_COUNT);
     this.bloomFilters[1] = BloomFilter.create(Funnels.byteArrayFunnel(),
@@ -160,14 +159,20 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
       // init active filter start block
       filterStartBlock = blockNum;
       currentFilterIndex = 0;
-      logger.info("init tx cache bloomFilters at {}",blockNum);
+      logger.info("init tx cache bloomFilters at {}", blockNum);
     } else if (blockNum - filterStartBlock > MAX_BLOCK_SIZE) {
       // active filter is full
       logger.info("active bloomFilters is full (size={} fpp={}), create a new one (start={})",
           bloomFilters[currentFilterIndex].approximateElementCount(),
           bloomFilters[currentFilterIndex].expectedFpp(),
           blockNum);
-      currentFilterIndex ^= 1;
+
+      if (currentFilterIndex == 0) {
+        currentFilterIndex = 1;
+      } else {
+        currentFilterIndex = 0;
+      }
+
       filterStartBlock = blockNum;
       bloomFilters[currentFilterIndex] =
           BloomFilter.create(Funnels.byteArrayFunnel(),
@@ -232,6 +237,7 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   }
 
   @Override
-  public void stat() {}
+  public void stat() {
+  }
 }
 

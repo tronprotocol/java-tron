@@ -54,7 +54,7 @@ public class TxCacheDBTest {
       hash[i] = Wallet.generateRandomBytes(64);
       db.put(hash[i], new BytesCapsule(ByteArray.fromLong(i)));
     }
-    // [1,63357] are expired
+    // [1,65537] are expired
     for (int i = 1; i < 65538; i++) {
       try {
         Assert.assertFalse("index = " + i, db.has(hash[i]));
@@ -62,7 +62,7 @@ public class TxCacheDBTest {
         Assert.fail("transaction should be expired index = " + i);
       }
     }
-    // [63358,140000] are in cache
+    // [65538,140000] are in cache
     for (int i = 65538; i < 140000; i++) {
       try {
         Assert.assertTrue("index = " + i, db.has(hash[i]));
