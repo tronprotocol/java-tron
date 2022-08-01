@@ -215,10 +215,10 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     matcher.matches();
 
     return String.join("/", Arrays.asList(
-        "TRON", "v" + Version.getVersion(),
+        "TRON",
+        "v" + Version.getVersion(),
         System.getProperty("os.name"),
-        "Java" + matcher.group(1),
-        Version.VERSION_NAME));
+        "Java" + matcher.group(1)));
   }
 
   @Override

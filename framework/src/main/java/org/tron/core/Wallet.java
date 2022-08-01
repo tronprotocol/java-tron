@@ -3954,6 +3954,16 @@ public class Wallet {
     return null;
   }
 
+  public String getBandwidthPrices() {
+    try {
+      return chainBaseManager.getDynamicPropertiesStore().getBandwidthPriceHistory();
+    } catch (Exception e) {
+      logger.error("getBandwidthPrices failed, error is {}", e.getMessage());
+    }
+
+    return null;
+  }
+
   public String getCoinbase() {
     if (!CommonParameter.getInstance().isWitness()) {
       return null;
@@ -4020,7 +4030,7 @@ public class Wallet {
     return chainBaseManager.getBlockStore().getRevokingDB().getCursor();
   }
 
-  public Block getBlock(GrpcAPI.BlockMessage request) {
+  public Block getBlock(GrpcAPI.BlockReq request) {
     Block block;
     long head = chainBaseManager.getHeadBlockNum();
     if (!request.getIdOrNum().isEmpty()) {
@@ -4036,6 +4046,9 @@ public class Wallet {
         block = getBlockByNum(num);
       } else {
         RuntimeException e = new IllegalArgumentException("id must be legal block hash.");
+        if (request.getIdOrNum().length() != Sha256Hash.LENGTH * 2) {
+          throw  e;
+        }
         try {
           ByteString id = ByteString.copyFrom(ByteArray.fromHexString(request.getIdOrNum()));
           if (id.size() == Sha256Hash.LENGTH) {

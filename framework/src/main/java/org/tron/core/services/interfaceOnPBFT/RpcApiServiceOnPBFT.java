@@ -504,7 +504,7 @@ public class RpcApiServiceOnPBFT implements Service {
     }
 
     @Override
-    public void getBlock(GrpcAPI.BlockMessage  request,
+    public void getBlock(GrpcAPI.BlockReq  request,
                          StreamObserver<BlockExtention> responseObserver) {
       walletOnPBFT.futureGet(
           () -> rpcApiService.getWalletSolidityApi().getBlock(request, responseObserver));
