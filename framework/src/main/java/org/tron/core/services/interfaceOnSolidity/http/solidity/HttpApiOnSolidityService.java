@@ -26,6 +26,7 @@ import org.tron.core.services.interfaceOnSolidity.http.GetBlockByIdOnSoliditySer
 import org.tron.core.services.interfaceOnSolidity.http.GetBlockByLatestNumOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetBlockByLimitNextOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetBlockByNumOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetBlockOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetBrokerageOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetBurnTrxOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetDelegatedResourceAccountIndexOnSolidityServlet;
@@ -156,6 +157,9 @@ public class HttpApiOnSolidityService implements Service {
   @Autowired
   private HttpApiAccessFilter httpApiAccessFilter;
 
+  @Autowired
+  private GetBlockOnSolidityServlet getBlockOnSolidityServlet;
+
   @Override
   public void init() {
 
@@ -257,6 +261,9 @@ public class HttpApiOnSolidityService implements Service {
           .addServlet(new ServletHolder(getBurnTrxOnSolidityServlet), "/walletsolidity/getburntrx");
       context.addServlet(new ServletHolder(getEnergyPricesOnSolidityServlet),
           "/walletsolidity/getenergyprices");
+
+      context.addServlet(new ServletHolder(getBlockOnSolidityServlet),
+          "/walletsolidity/getblock");
 
       // filters the specified APIs
       // when node is lite fullnode and openHistoryQueryWhenLiteFN is false

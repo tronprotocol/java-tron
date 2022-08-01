@@ -69,12 +69,6 @@ public class MessageQueue {
             continue;
           }
           Message msg = msgQueue.take();
-          if (channel.isDisconnect()) {
-            logger.warn("Failed to send to {} as channel has closed, {}",
-                ctx.channel().remoteAddress(), msg);
-            msgQueue.clear();
-            return;
-          }
           ctx.writeAndFlush(msg.getSendData()).addListener((ChannelFutureListener) future -> {
             if (!future.isSuccess() && !channel.isDisconnect()) {
               logger.warn("Failed to send to {}, {}", ctx.channel().remoteAddress(), msg);
@@ -98,11 +92,6 @@ public class MessageQueue {
   }
 
   public void fastSend(Message msg) {
-    if (channel.isDisconnect()) {
-      logger.warn("Fast send to {} failed as channel has closed, {} ",
-          ctx.channel().remoteAddress(), msg);
-      return;
-    }
     logger.info("Fast send to {}, {} ", ctx.channel().remoteAddress(), msg);
     ctx.writeAndFlush(msg.getSendData()).addListener((ChannelFutureListener) future -> {
       if (!future.isSuccess() && !channel.isDisconnect()) {

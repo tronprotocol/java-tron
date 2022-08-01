@@ -110,13 +110,7 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
   }
 
   public Map<WrappedByteArray, byte[]> prefixQuery(byte[] key) {
-    Map<WrappedByteArray, byte[]> result = new HashMap<>();
-    if (dbSource.getClass() == LevelDbDataSourceImpl.class) {
-      result = ((LevelDbDataSourceImpl) dbSource).prefixQuery(key);
-    } else if (dbSource.getClass() == RocksDbDataSourceImpl.class) {
-      result = ((RocksDbDataSourceImpl) dbSource).prefixQuery(key);
-    }
-    return result;
+    return dbSource.prefixQuery(key);
   }
 
   public abstract boolean has(byte[] key);

@@ -42,6 +42,8 @@ public class ChannelManager {
   @Autowired
   private SyncPool syncPool;
   @Autowired
+  private PeerConnectionCheckService peerConnectionCheckService;
+  @Autowired
   private FastForward fastForward;
   private CommonParameter parameter = CommonParameter.getInstance();
   private Cache<InetAddress, ReasonCode> badPeers = CacheBuilder.newBuilder().maximumSize(10000)
@@ -63,9 +65,9 @@ public class ChannelManager {
   @Getter
   private Map<InetAddress, Node> fastForwardNodes = new ConcurrentHashMap();
 
-  private int maxActivePeers = parameter.getNodeMaxActiveNodes();
+  private int maxConnections = parameter.getMaxConnections();
 
-  private int getMaxActivePeersWithSameIp = parameter.getNodeMaxActiveNodesWithSameIp();
+  private int maxConnectionsWithSameIp = parameter.getMaxConnectionsWithSameIp();
 
   public void init() {
     if (this.parameter.getNodeListenPort() > 0) {
@@ -94,6 +96,7 @@ public class ChannelManager {
     logger.info("Node config, trust {}, active {}, forward {}.",
         trustNodes.size(), activeNodes.size(), fastForwardNodes.size());
 
+    peerConnectionCheckService.init();
     syncPool.init();
     fastForward.init();
   }
@@ -146,12 +149,12 @@ public class ChannelManager {
         return false;
       }
 
-      if (!peer.isActive() && activePeers.size() >= maxActivePeers) {
+      if (!peer.isActive() && activePeers.size() >= maxConnections) {
         peer.disconnect(TOO_MANY_PEERS);
         return false;
       }
 
-      if (getConnectionNum(peer.getInetAddress()) >= getMaxActivePeersWithSameIp) {
+      if (getConnectionNum(peer.getInetAddress()) >= maxConnectionsWithSameIp) {
         peer.disconnect(TOO_MANY_PEERS_WITH_SAME_IP);
         return false;
       }
@@ -195,6 +198,7 @@ public class ChannelManager {
   }
 
   public void close() {
+    peerConnectionCheckService.close();
     syncPool.close();
     peerServer.close();
     peerClient.close();

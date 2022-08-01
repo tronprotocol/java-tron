@@ -30,8 +30,10 @@ dependencies {
     testCompile group: 'org.mockito', name: 'mockito-core', version: '2.13.0'
     testCompile group: 'org.hamcrest', name: 'hamcrest-junit', version: '1.0.0.1'
     testCompile group: 'org.testng', name: 'testng', version: '6.14.3'
-    // https://mvnrepository.com/artifact/com.beust/jcommander
-    compile group: 'com.beust', name: 'jcommander', version: '1.78'
+    compile group: 'info.picocli', name: 'picocli', version: '4.6.3'
+    compile group: 'com.typesafe', name: 'config', version: '1.3.2'
+    compile group: 'me.tongfei', name: 'progressbar', version: '0.9.3'
+
 
     compile 'com.github.halibobo1205.leveldb-java:leveldb:v0.12.5'
     compile 'com.github.halibobo1205.leveldb-java:leveldb-api:v0.12.5'
@@ -127,11 +129,14 @@ applicationDistribution.from("../gradle/java-tron.vmoptions") {
     into "bin"
 }
 createScript(project, 'org.tron.plugins.ArchiveManifest', 'ArchiveManifest')
+createScript(project, 'org.tron.plugins.Toolkit', 'Toolkit')
 
 def releaseBinary = hasProperty('binaryRelease') ? getProperty('binaryRelease') : 'true'
 if (releaseBinary == 'true') {
     artifacts {
-        archives(binaryRelease('buildArchiveManifestJar', 'ArchiveManifest', 'org.tron.plugins.ArchiveManifest'))
+        archives(
+                binaryRelease('buildArchiveManifestJar', 'ArchiveManifest', 'org.tron.plugins.ArchiveManifest'),
+                binaryRelease('buildToolkitJar', 'Toolkit', 'org.tron.plugins.Toolkit'))
     }
 }
 

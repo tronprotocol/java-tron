@@ -53,6 +53,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.bouncycastle.util.encoders.DecoderException;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -3953,6 +3954,16 @@ public class Wallet {
     return null;
   }
 
+  public String getBandwidthPrices() {
+    try {
+      return chainBaseManager.getDynamicPropertiesStore().getBandwidthPriceHistory();
+    } catch (Exception e) {
+      logger.error("getBandwidthPrices failed, error is {}", e.getMessage());
+    }
+
+    return null;
+  }
+
   public String getCoinbase() {
     if (!CommonParameter.getInstance().isWitness()) {
       return null;
@@ -4018,5 +4029,51 @@ public class Wallet {
   public Chainbase.Cursor getCursor() {
     return chainBaseManager.getBlockStore().getRevokingDB().getCursor();
   }
+
+  public Block getBlock(GrpcAPI.BlockReq request) {
+    Block block;
+    long head = chainBaseManager.getHeadBlockNum();
+    if (!request.getIdOrNum().isEmpty()) {
+      Long num = WalletUtil.isLong(request.getIdOrNum());
+      if (num != null) {
+        // quickly check
+        if (num > head) {
+          return null;
+        }
+        if (num < 0) {
+          throw  new IllegalArgumentException("num must be non-positive number.");
+        }
+        block = getBlockByNum(num);
+      } else {
+        RuntimeException e = new IllegalArgumentException("id must be legal block hash.");
+        if (request.getIdOrNum().length() != Sha256Hash.LENGTH * 2) {
+          throw  e;
+        }
+        try {
+          ByteString id = ByteString.copyFrom(ByteArray.fromHexString(request.getIdOrNum()));
+          if (id.size() == Sha256Hash.LENGTH) {
+            num = new BlockId(Sha256Hash.wrap(id)).getNum();
+            // quickly check
+            if (num > head || num < 0) {
+              throw  e;
+            }
+            block = getBlockById(id);
+          } else {
+            throw  e;
+          }
+        } catch (DecoderException ignored) {
+          throw  e;
+        }
+      }
+    } else {
+      block = getNowBlock();
+    }
+    if (Objects.isNull(block) || block.getTransactionsList().isEmpty()
+        || request.getDetail()) {
+      return block;
+    }
+    return block.toBuilder().clearTransactions().build();
+  }
+
 }
 

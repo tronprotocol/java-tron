@@ -92,6 +92,10 @@ public class SyncService {
   }
 
   public void startSync(PeerConnection peer) {
+    if (peer.getTronState().equals(TronState.SYNCING)) {
+      logger.warn("Start sync failed, peer {} is in sync.", peer.getNode().getHost());
+      return;
+    }
     peer.setTronState(TronState.SYNCING);
     peer.setNeedSyncFromPeer(true);
     peer.getSyncBlockToFetch().clear();
