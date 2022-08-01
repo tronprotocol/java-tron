@@ -207,6 +207,7 @@ public class Args extends CommonParameter {
     PARAMETER.shutdownBlockTime = null;
     PARAMETER.shutdownBlockHeight = -1;
     PARAMETER.shutdownBlockCount = -1;
+    PARAMETER.defaultMaxFlushCount = 500;
 
   }
 
@@ -901,6 +902,10 @@ public class Args extends CommonParameter {
       PARAMETER.shutdownBlockCount = config.getLong(Constant.NODE_SHUTDOWN_BLOCK_COUNT);
     }
 
+    if (config.hasPath(Constant.DEFAULT_MAX_FLUSH_COUNT)) {
+      PARAMETER.defaultMaxFlushCount = config.getInt(Constant.DEFAULT_MAX_FLUSH_COUNT);
+    }
+
     logConfig();
   }
 
@@ -1246,6 +1251,7 @@ public class Args extends CommonParameter {
     logger.info("************************ DB config *************************");
     logger.info("DB version : {}", parameter.getStorage().getDbVersion());
     logger.info("DB engine : {}", parameter.getStorage().getDbEngine());
+    logger.info("Checkpoint max flush  count : {}", parameter.getDefaultMaxFlushCount());
     logger.info("***************************************************************");
     logger.info("************************ shutDown config *************************");
     logger.info("ShutDown blockTime  : {}", parameter.getShutdownBlockTime());

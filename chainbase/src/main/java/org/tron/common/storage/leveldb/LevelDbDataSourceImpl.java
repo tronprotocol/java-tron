@@ -18,6 +18,7 @@ package org.tron.common.storage.leveldb;
 import static org.fusesource.leveldbjni.JniDBFactory.factory;
 
 import com.google.common.collect.Sets;
+import io.prometheus.client.Histogram;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -49,6 +50,9 @@ import org.iq80.leveldb.ReadOptions;
 import org.iq80.leveldb.WriteBatch;
 import org.iq80.leveldb.WriteOptions;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.MetricLabels;
+import org.tron.common.prometheus.Metrics;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.storage.metric.DbStat;
 import org.tron.common.utils.FileUtil;
@@ -169,7 +173,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
    */
   public void resetDb() {
     closeDB();
-    FileUtil.recursiveDelete(getDbPath().toString());
+    destroyDb();
     initDB();
   }
 
@@ -181,9 +185,10 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   /**
    * destroy database.
    */
-  public void destroyDb(File fileLocation) {
+  public void destroyDb() {
     resetDbLock.writeLock().lock();
     try {
+      File fileLocation = getDbPath().toFile();
       logger.debug("Destroying existing database: " + fileLocation);
       Options options = new Options();
       try {
@@ -209,30 +214,42 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   @Override
   public byte[] getData(byte[] key) {
     resetDbLock.readLock().lock();
+    Histogram.Timer requestTimer = Metrics.histogramStartTimer(
+        MetricKeys.Histogram.DB_SERVICE_LATENCY,
+        getEngine(), getDBName(), MetricLabels.Histogram.DB_GET);
     try {
       return database.get(key);
     } finally {
       resetDbLock.readLock().unlock();
+      Metrics.histogramObserve(requestTimer);
     }
   }
 
   @Override
   public void putData(byte[] key, byte[] value) {
     resetDbLock.readLock().lock();
+    Histogram.Timer requestTimer = Metrics.histogramStartTimer(
+        MetricKeys.Histogram.DB_SERVICE_LATENCY,
+        getEngine(), getDBName(), MetricLabels.Histogram.DB_PUT);
     try {
       database.put(key, value, writeOptions);
     } finally {
       resetDbLock.readLock().unlock();
+      Metrics.histogramObserve(requestTimer);
     }
   }
 
   @Override
   public void deleteData(byte[] key) {
     resetDbLock.readLock().lock();
+    Histogram.Timer requestTimer = Metrics.histogramStartTimer(
+        MetricKeys.Histogram.DB_SERVICE_LATENCY,
+        getEngine(), getDBName(), MetricLabels.Histogram.DB_DEL);
     try {
       database.delete(key, writeOptions);
     } finally {
       resetDbLock.readLock().unlock();
+      Metrics.histogramObserve(requestTimer);
     }
   }
 
@@ -336,6 +353,9 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     if (limit <= 0) {
       return Collections.emptyMap();
     }
+    Histogram.Timer requestTimer = Metrics.histogramStartTimer(
+        MetricKeys.Histogram.DB_SERVICE_LATENCY,
+        getEngine(), getDBName(), MetricLabels.Histogram.DB_NEXT);
     resetDbLock.readLock().lock();
     try (DBIterator iterator = getDBIterator()) {
       Map<byte[], byte[]> result = new HashMap<>();
@@ -348,6 +368,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     } catch (IOException e) {
       throw new RuntimeException(e);
     } finally {
+      Metrics.histogramObserve(requestTimer);
       resetDbLock.readLock().unlock();
     }
   }
@@ -355,6 +376,9 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   @Override
   public Map<WrappedByteArray, byte[]> prefixQuery(byte[] key) {
     resetDbLock.readLock().lock();
+    Histogram.Timer requestTimer = Metrics.histogramStartTimer(
+        MetricKeys.Histogram.DB_SERVICE_LATENCY,
+        getEngine(), getDBName(), MetricLabels.Histogram.DB_PREFIX);
     try (DBIterator iterator = getDBIterator()) {
       Map<WrappedByteArray, byte[]> result = new HashMap<>();
       for (iterator.seek(key); iterator.hasNext(); iterator.next()) {
@@ -369,6 +393,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     } catch (IOException e) {
       throw new RuntimeException(e);
     } finally {
+      Metrics.histogramObserve(requestTimer);
       resetDbLock.readLock().unlock();
     }
   }
@@ -415,15 +440,23 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
 
   private void updateByBatchInner(Map<byte[], byte[]> rows) throws Exception {
     try (WriteBatch batch = database.createWriteBatch()) {
-      innerBatchUpdate(rows,batch);
+      innerBatchUpdate(rows, batch);
+      Histogram.Timer requestTimer = Metrics.histogramStartTimer(
+          MetricKeys.Histogram.DB_SERVICE_LATENCY,
+          getEngine(), getDBName(), MetricLabels.Histogram.DB_BATCH);
       database.write(batch, writeOptions);
+      Metrics.histogramObserve(requestTimer);
     }
   }
 
   private void updateByBatchInner(Map<byte[], byte[]> rows, WriteOptions options) throws Exception {
     try (WriteBatch batch = database.createWriteBatch()) {
-      innerBatchUpdate(rows,batch);
+      innerBatchUpdate(rows, batch);
+      Histogram.Timer requestTimer = Metrics.histogramStartTimer(
+          MetricKeys.Histogram.DB_SERVICE_LATENCY,
+          getEngine(), getDBName(), MetricLabels.Histogram.DB_BATCH);
       database.write(batch, options);
+      Metrics.histogramObserve(requestTimer);
     }
   }
 
@@ -524,9 +557,18 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
    */
   @Override
   public List<String> getStats() throws Exception {
-    String stat = database.getProperty("leveldb.stats");
-    String[] stats = stat.split("\n");
-    return Arrays.stream(stats).skip(3).collect(Collectors.toList());
+    resetDbLock.readLock().lock();
+    try {
+      if (isAlive()) {
+        String stat = database.getProperty("leveldb.stats");
+        String[] stats = stat.split("\n");
+        return Arrays.stream(stats).skip(3).collect(Collectors.toList());
+      }
+      return Collections.emptyList();
+
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
   }
 
   @Override

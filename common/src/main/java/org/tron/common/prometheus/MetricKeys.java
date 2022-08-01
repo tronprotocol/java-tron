@@ -57,6 +57,8 @@ public class MetricKeys {
     public static final String TCP_BYTES = "tron:tcp_bytes";
     public static final String HTTP_BYTES = "tron:http_bytes";
     public static final String INTERNAL_SERVICE_LATENCY = "tron:internal_service_latency_seconds";
+    public static final String DB_SERVICE_LATENCY = "tron:db_service_latency_seconds";
+    public static final String CHECKPOINT_LATENCY = "tron:checkpoint_latency_seconds";
 
     private Histogram() {
       throw new IllegalStateException("Histogram");

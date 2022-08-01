@@ -216,6 +216,12 @@ public class TronNetDelegate {
   }
 
   public void processBlock(BlockCapsule block, boolean isSync) throws P2pException {
+    //TODO delete
+    logger.info("currentBlockNum:{}, DbBlockNum:{} ,solidifiedBlockNum:{}.",
+        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
+        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumberFromDB(),
+        dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+    //TODO delete
     if (!hitDown && dbManager.getLatestSolidityNumShutDown() > 0
         && dbManager.getLatestSolidityNumShutDown() == dbManager.getDynamicPropertiesStore()
         .getLatestBlockHeaderNumberFromDB()) {

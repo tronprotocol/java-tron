@@ -7,6 +7,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import io.prometheus.client.Histogram;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -25,6 +26,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.error.TronDBException;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.MetricLabels;
+import org.tron.common.prometheus.Metrics;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db2.ISession;
@@ -39,7 +43,6 @@ import org.tron.core.store.CheckTmpStore;
 @Slf4j(topic = "DB")
 public class SnapshotManager implements RevokingDatabase {
 
-  public static final int DEFAULT_MAX_FLUSH_COUNT = 500;
   public static final int DEFAULT_MIN_FLUSH_COUNT = 1;
   private static final int DEFAULT_STACK_MAX_SIZE = 256;
   @Getter
@@ -107,14 +110,6 @@ public class SnapshotManager implements RevokingDatabase {
     if (forceEnable) {
       disabled = false;
     }
-
-    if (size > maxSize.get() && !hitDown) {
-      flushCount = flushCount + (size - maxSize.get());
-      updateSolidity(size - maxSize.get());
-      size = maxSize.get();
-      flush();
-    }
-
     advance();
     ++activeSession;
     return new Session(this, disableOnExit);
@@ -189,7 +184,12 @@ public class SnapshotManager implements RevokingDatabase {
     if (activeSession <= 0) {
       throw new RevokingStoreIllegalStateException("activeSession has to be greater than 0");
     }
-
+    if (size > maxSize.get() && !hitDown) {
+      flushCount = flushCount + (size - maxSize.get());
+      updateSolidity(size - maxSize.get());
+      size = maxSize.get();
+      flush();
+    }
     --activeSession;
   }
 
@@ -306,11 +306,27 @@ public class SnapshotManager implements RevokingDatabase {
 
     if (shouldBeRefreshed()) {
       try {
-        long start = System.currentTimeMillis();
+        final long start = System.currentTimeMillis();
+        final Histogram.Timer allTimer = Metrics.histogramStartTimer(
+            MetricKeys.Histogram.CHECKPOINT_LATENCY,
+            MetricLabels.Histogram.CHECKPOINT_TOTAL);
+        Histogram.Timer deleteTimer = Metrics.histogramStartTimer(
+            MetricKeys.Histogram.CHECKPOINT_LATENCY,
+            MetricLabels.Histogram.CHECKPOINT_DELETE);
         deleteCheckpoint();
+        Metrics.histogramObserve(deleteTimer);
+        Histogram.Timer createTimer = Metrics.histogramStartTimer(
+            MetricKeys.Histogram.CHECKPOINT_LATENCY,
+            MetricLabels.Histogram.CHECKPOINT_CREATE);
         createCheckpoint();
-        long checkPointEnd = System.currentTimeMillis();
+        Metrics.histogramObserve(createTimer);
+        final long checkPointEnd = System.currentTimeMillis();
+        Histogram.Timer flushTimer = Metrics.histogramStartTimer(
+            MetricKeys.Histogram.CHECKPOINT_LATENCY,
+            MetricLabels.Histogram.CHECKPOINT_FLUSH);
         refresh();
+        Metrics.histogramObserve(flushTimer);
+        Metrics.histogramObserve(allTimer);
         flushCount = 0;
         logger.info("flush cost:{}, create checkpoint cost:{}, refresh cost:{}",
             System.currentTimeMillis() - start,
@@ -362,14 +378,7 @@ public class SnapshotManager implements RevokingDatabase {
 
   private void deleteCheckpoint() {
     try {
-      Map<byte[], byte[]> hmap = new HashMap<>();
-      if (!checkTmpStore.getDbSource().allKeys().isEmpty()) {
-        for (Map.Entry<byte[], byte[]> e : checkTmpStore.getDbSource()) {
-          hmap.put(e.getKey(), null);
-        }
-      }
-
-      checkTmpStore.getDbSource().updateByBatch(hmap);
+      checkTmpStore.getDbSource().resetDb();
     } catch (Exception e) {
       throw new TronDBException(e);
     }

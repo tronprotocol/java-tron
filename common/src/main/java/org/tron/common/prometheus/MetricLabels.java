@@ -69,6 +69,18 @@ public class MetricLabels {
     public static final String TRAFFIC_IN = "in";
     public static final String TRAFFIC_OUT = "out";
 
+    public static final String DB_GET = "get";
+    public static final String DB_PUT = "put";
+    public static final String DB_DEL = "del";
+    public static final String DB_NEXT = "next";
+    public static final String DB_BATCH = "batch";
+    public static final String DB_PREFIX = "prefix";
+
+    public static final String CHECKPOINT_CREATE = "create";
+    public static final String CHECKPOINT_DELETE = "delete";
+    public static final String CHECKPOINT_FLUSH = "flush";
+    public static final String CHECKPOINT_TOTAL = "total";
+
     private Histogram() {
       throw new IllegalStateException("Histogram");
     }
