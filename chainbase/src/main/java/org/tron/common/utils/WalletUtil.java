@@ -131,4 +131,12 @@ public class WalletUtil {
     return ret;
   }
 
+  public static Long isLong(String s) {
+    try {
+      return Long.parseLong(s);
+    } catch (NumberFormatException ignored) {
+      return null;
+    }
+  }
+
 }
