@@ -176,9 +176,16 @@ public class Storage {
   }
 
   public static int getEstimatedTransactionsFromConfig(final Config config) {
-    return config.hasPath(ESTIMATED_TRANSACTIONS_CONFIG_KEY)
-        ? config.getInt(ESTIMATED_TRANSACTIONS_CONFIG_KEY)
-        : DEFAULT_ESTIMATED_TRANSACTIONS;
+    if (!config.hasPath(ESTIMATED_TRANSACTIONS_CONFIG_KEY)) {
+      return DEFAULT_ESTIMATED_TRANSACTIONS;
+    }
+    int estimatedTransactions = config.getInt(ESTIMATED_TRANSACTIONS_CONFIG_KEY);
+    if (estimatedTransactions > 10000) {
+      estimatedTransactions = 10000;
+    } else if (estimatedTransactions < 100) {
+      estimatedTransactions = 100;
+    }
+    return estimatedTransactions;
   }
 
   private  Property createProperty(final ConfigObject conf) {

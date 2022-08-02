@@ -2287,13 +2287,13 @@ public class Manager {
       chainBaseManager.getBlockByNum(recentBlockStart);
     } catch (ItemNotFoundException | BadItemException e) {
       // copy transaction from recent-transaction to trans
-      logger.info("load trans for lite node. from={},to={}", recentBlockStart, headNum);
+      logger.info("load trans for lite node.");
 
       TransactionCapsule item = new TransactionCapsule(Transaction.newBuilder().build());
-      // add a fake number, tx Cache check if transaction exist
-      item.setBlockNum(0);
 
       long transactionCount = 0;
+      long minBlock = Long.MAX_VALUE;
+      long maxBlock = Long.MIN_VALUE;
       for (Map.Entry<byte[], BytesCapsule> entry :
           chainBaseManager.getRecentTransactionStore()) {
         byte[] data = entry.getValue().getData();
@@ -2303,11 +2303,15 @@ public class Manager {
           continue;
         }
         transactionCount += trx.getTransactionIds().size();
-
+        long blockNum = trx.getNum();
+        maxBlock = Math.max(maxBlock, blockNum);
+        minBlock = Math.min(minBlock, blockNum);
+        item.setBlockNum(blockNum);
         trx.getTransactionIds().forEach(
             tid -> chainBaseManager.getTransactionStore().put(Hex.decode(tid), item));
       }
-      logger.info("load trans complete, trans:{}.", transactionCount);
+      logger.info("load trans complete, trans:{},from={},to={}",
+          transactionCount, minBlock, maxBlock);
     }
   }
 
