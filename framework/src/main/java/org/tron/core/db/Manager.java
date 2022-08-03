@@ -19,6 +19,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -501,6 +502,9 @@ public class Manager {
     //for test only
     chainBaseManager.getDynamicPropertiesStore().updateDynamicStoreByConfig();
 
+    // init liteFullNode
+    initLiteNode();
+
     long headNum = chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     logger.info("current headNum is: {}", headNum);
     int nodeType = chainBaseManager.getCommonStore().getNodeType();
@@ -740,8 +744,9 @@ public class Manager {
 
 
   private boolean containsTransaction(byte[] transactionId) {
-    if (transactionCache != null) {
-      return transactionCache.has(transactionId);
+    if (transactionCache != null && !transactionCache.has(transactionId)) {
+      // using the bloom filter only determines non-existent transaction
+      return false;
     }
 
     return chainBaseManager.getTransactionStore()
@@ -2270,6 +2275,46 @@ public class Manager {
         + getPoppedTransactions().size();
     return value;
   }
+
+  private void initLiteNode() {
+    // When using bloom filter for transaction de-duplication,
+    // it is possible to use trans for secondary confirmation.
+    // Init trans db for liteNode,
+    long headNum = chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+    long recentBlockCount = chainBaseManager.getRecentBlockStore().size();
+    long recentBlockStart = headNum - recentBlockCount + 1;
+    try {
+      chainBaseManager.getBlockByNum(recentBlockStart);
+    } catch (ItemNotFoundException | BadItemException e) {
+      // copy transaction from recent-transaction to trans
+      logger.info("load trans for lite node.");
+
+      TransactionCapsule item = new TransactionCapsule(Transaction.newBuilder().build());
+
+      long transactionCount = 0;
+      long minBlock = Long.MAX_VALUE;
+      long maxBlock = Long.MIN_VALUE;
+      for (Map.Entry<byte[], BytesCapsule> entry :
+          chainBaseManager.getRecentTransactionStore()) {
+        byte[] data = entry.getValue().getData();
+        RecentTransactionItem trx =
+            JsonUtil.json2Obj(new String(data), RecentTransactionItem.class);
+        if (trx == null) {
+          continue;
+        }
+        transactionCount += trx.getTransactionIds().size();
+        long blockNum = trx.getNum();
+        maxBlock = Math.max(maxBlock, blockNum);
+        minBlock = Math.min(minBlock, blockNum);
+        item.setBlockNum(blockNum);
+        trx.getTransactionIds().forEach(
+            tid -> chainBaseManager.getTransactionStore().put(Hex.decode(tid), item));
+      }
+      logger.info("load trans complete, trans:{},from={},to={}",
+          transactionCount, minBlock, maxBlock);
+    }
+  }
+
 
   public void setBlockWaitLock(boolean waitFlag) {
     if (waitFlag) {
