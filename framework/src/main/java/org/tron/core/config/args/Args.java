@@ -463,21 +463,42 @@ public class Args extends CommonParameter {
             ? config.getInt(Constant.NODE_CHANNEL_READ_TIMEOUT)
             : 0;
 
-    PARAMETER.maxConnections =
-        config.hasPath(Constant.NODE_MAX_CONNECTIONS)
-            ? config.getInt(Constant.NODE_MAX_CONNECTIONS) : 30;
+    if (config.hasPath(Constant.NODE_MAX_ACTIVE_NODES)) {
+      PARAMETER.maxConnections = config.getInt(Constant.NODE_MAX_ACTIVE_NODES);
+    } else {
+      PARAMETER.maxConnections =
+              config.hasPath(Constant.NODE_MAX_CONNECTIONS)
+                      ? config.getInt(Constant.NODE_MAX_CONNECTIONS) : 30;
+    }
 
-    PARAMETER.minConnections =
-            config.hasPath(Constant.NODE_MIN_CONNECTIONS)
-                    ? config.getInt(Constant.NODE_MIN_CONNECTIONS) : 8;
+    if (config.hasPath(Constant.NODE_MAX_ACTIVE_NODES)
+            && config.hasPath(Constant.NODE_CONNECT_FACTOR)) {
+      PARAMETER.minConnections = (int) (PARAMETER.maxConnections
+              * config.getDouble(Constant.NODE_CONNECT_FACTOR));
+    } else {
+      PARAMETER.minConnections =
+              config.hasPath(Constant.NODE_MIN_CONNECTIONS)
+                      ? config.getInt(Constant.NODE_MIN_CONNECTIONS) : 8;
+    }
 
-    PARAMETER.minActiveConnections =
-            config.hasPath(Constant.NODE_MIN_ACTIVE_CONNECTIONS)
-                    ? config.getInt(Constant.NODE_MIN_ACTIVE_CONNECTIONS) : 3;
+    if (config.hasPath(Constant.NODE_MAX_ACTIVE_NODES)
+            && config.hasPath(Constant.NODE_ACTIVE_CONNECT_FACTOR)) {
+      PARAMETER.minActiveConnections = (int) (PARAMETER.maxConnections
+              * config.getDouble(Constant.NODE_ACTIVE_CONNECT_FACTOR));
+    } else {
+      PARAMETER.minActiveConnections =
+              config.hasPath(Constant.NODE_MIN_ACTIVE_CONNECTIONS)
+                      ? config.getInt(Constant.NODE_MIN_ACTIVE_CONNECTIONS) : 3;
+    }
 
-    PARAMETER.maxConnectionsWithSameIp =
-        config.hasPath(Constant.NODE_MAX_ACTIVE_NODES_WITH_SAMEIP) ? config
-            .getInt(Constant.NODE_MAX_ACTIVE_NODES_WITH_SAMEIP) : 2;
+    if (config.hasPath(Constant.NODE_MAX_ACTIVE_NODES_WITH_SAME_IP)) {
+      PARAMETER.maxConnectionsWithSameIp =
+              config.getInt(Constant.NODE_MAX_ACTIVE_NODES_WITH_SAME_IP);
+    } else {
+      PARAMETER.maxConnectionsWithSameIp =
+              config.hasPath(Constant.NODE_MAX_CONNECTIONS_WITH_SAME_IP) ? config
+                      .getInt(Constant.NODE_MAX_CONNECTIONS_WITH_SAME_IP) : 2;
+    }
 
     PARAMETER.minParticipationRate =
         config.hasPath(Constant.NODE_MIN_PARTICIPATION_RATE)

@@ -87,7 +87,12 @@ public class Constant {
   public static final String NODE_MIN_CONNECTIONS = "node.minConnections";
   public static final String NODE_MIN_ACTIVE_CONNECTIONS = "node.minActiveConnections";
 
-  public static final String NODE_MAX_ACTIVE_NODES_WITH_SAMEIP = "node.maxConnectionsWithSameIp";
+  public static final String NODE_MAX_ACTIVE_NODES = "node.maxActiveNodes";
+  public static final String NODE_MAX_ACTIVE_NODES_WITH_SAME_IP = "node.maxActiveNodesWithSameIp";
+  public static final String NODE_CONNECT_FACTOR = "node.connectFactor";
+  public static final String NODE_ACTIVE_CONNECT_FACTOR = "node.activeConnectFactor";
+
+  public static final String NODE_MAX_CONNECTIONS_WITH_SAME_IP = "node.maxConnectionsWithSameIp";
   public static final String NODE_MIN_PARTICIPATION_RATE = "node.minParticipationRate";
   public static final String NODE_LISTEN_PORT = "node.listen.port";
   public static final String NODE_DISCOVERY_PUBLIC_HOME_NODE = "node.discovery.public.home.node";
