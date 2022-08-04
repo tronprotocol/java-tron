@@ -45,6 +45,7 @@ public class UsddManager {
   String preIssuerContract = "TCqGdrHJP3WkrYdEbUgKo9jamHCexudL5X";
   String lockContract = "TQ9GmYgF5rDYx5CoNuS26Etr3CV4VFEPna";
   String MultiSigFundRaiser = "TQyGdTsd7qPZDx35s9915qwDwJR1EhQdgy";
+  String PSMMultiSigWallet = "TVLxcjofc5i24CFtXkVZQBd4b3LqiNBM7u";
 
 
 
@@ -206,6 +207,38 @@ public class UsddManager {
       String txid = "";
       String param = "10";
       txid = PublicMethed.triggerContract(PublicMethed.decode58Check(MultiSigFundRaiser),
+          "confirmTransaction(uint256)", param, false,
+          0, maxFeeLimit, PublicMethed.getFinalAddress(ownerPks[i]), ownerPks[i], blockingStubFull);
+      Optional<Protocol.TransactionInfo> infoById = null;
+      /*PublicMethed.waitProduceNextBlock(blockingStubFull);
+      infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+      logger.info(infoById.toString());
+      Assert.assertEquals(0, infoById.get().getResultValue());*/
+    }
+  }
+
+  @Test(enabled = true, description = "Open experimental check address ")
+  public void test04Psm() {
+    String ownerPk1="cb8e2613d30b303f3240919550ff8d8aacc05885183cc33c52ec665c424731c5";
+    String ownerPk2="f499d705ca4d4bb2330bc56baef0713b452b1ec07c66418dd85ed3ec439c7b87";
+    String ownerPk3="93e6237942cbbf2a1d15cb623b1ffce94a45a2493b6e7766ed5db75d1769fbd5";
+    String ownerPk4="3e49807cef7c1280ae1242823d1d151d3b0b8343e5854c359a5d786e51f25fbd";
+    String ownerPk5="71b9ee1b0d1bfb64fac06d502d7075b86c9bd983b52f9a174c332670470ec4c4";
+    String ownerPk6="cef2da8b0807f79daccf0576cbe4069bfac85ad92f08365e52df010cf7696a1e";
+    String ownerPk7="378898297a704879b45158671f755978f38b1589df22de3ca368fa5ad11eb27d";
+    String[] ownerPks = new String[7];
+
+    ownerPks[0] = ownerPk1;
+    ownerPks[1] = ownerPk2;
+    ownerPks[2] = ownerPk3;
+    ownerPks[3] = ownerPk4;
+    ownerPks[4] = ownerPk5;
+    ownerPks[5] = ownerPk6;
+    ownerPks[6] = ownerPk7;
+    for (int i = 0; i < 7; i++) {
+      String txid = "";
+      String param = "28";
+      txid = PublicMethed.triggerContract(PublicMethed.decode58Check(PSMMultiSigWallet),
           "confirmTransaction(uint256)", param, false,
           0, maxFeeLimit, PublicMethed.getFinalAddress(ownerPks[i]), ownerPks[i], blockingStubFull);
       Optional<Protocol.TransactionInfo> infoById = null;
