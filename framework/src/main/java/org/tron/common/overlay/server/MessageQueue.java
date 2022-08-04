@@ -106,7 +106,7 @@ public class MessageQueue {
     logger.info("Fast send to {}, {} ", ctx.channel().remoteAddress(), msg);
     ctx.writeAndFlush(msg.getSendData()).addListener((ChannelFutureListener) future -> {
       if (!future.isSuccess() && !channel.isDisconnect()) {
-        logger.error("Fast send to {} failed, {}", ctx.channel().remoteAddress(), msg);
+        logger.warn("Fast send to {} failed, {}", ctx.channel().remoteAddress(), msg);
       }
     });
   }
