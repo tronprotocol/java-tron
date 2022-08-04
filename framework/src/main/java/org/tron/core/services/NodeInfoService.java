@@ -24,6 +24,7 @@ import org.tron.common.entity.PeerInfo;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.prometheus.MetricTime;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.db.Manager;
 import org.tron.core.net.peer.PeerConnection;
@@ -56,6 +57,7 @@ public class NodeInfoService {
   @Autowired
   private WitnessProductBlockService witnessProductBlockService;
 
+  @MetricTime
   public NodeInfo getNodeInfo() {
     NodeInfo nodeInfo = new NodeInfo();
     setConnectInfo(nodeInfo);

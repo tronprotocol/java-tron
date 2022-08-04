@@ -1,5 +1,6 @@
 package org.tron.core.services.filter;
 
+import com.google.common.base.Strings;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -8,6 +9,9 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.MetricLabels;
+import org.tron.common.prometheus.Metrics;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
 
@@ -54,7 +58,10 @@ public class HttpInterceptor implements Filter {
           MetricsUtil.meterMark(MetricsKey.NET_API_QPS);
           MetricsUtil.meterMark(MetricsKey.NET_API_FAIL_QPS);
         }
-
+        Metrics.histogramObserve(MetricKeys.Histogram.HTTP_BYTES,
+            responseWrapper.getByteSize(),
+            Strings.isNullOrEmpty(endpoint) ? MetricLabels.UNDEFINED : endpoint,
+            String.valueOf(responseWrapper.getStatus()));
       } else {
         chain.doFilter(request, response);
       }

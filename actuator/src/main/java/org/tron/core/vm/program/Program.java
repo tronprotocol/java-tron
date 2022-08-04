@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.map.LRUMap;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.bouncycastle.util.encoders.Hex;
@@ -62,6 +63,7 @@ import org.tron.core.vm.program.invoke.ProgramInvokeFactory;
 import org.tron.core.vm.program.listener.CompositeProgramListener;
 import org.tron.core.vm.program.listener.ProgramListenerAware;
 import org.tron.core.vm.program.listener.ProgramStorageChangeListener;
+import org.tron.core.vm.repository.Key;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.trace.ProgramTrace;
 import org.tron.core.vm.trace.ProgramTraceListener;
@@ -84,6 +86,9 @@ public class Program {
   private static final String INVALID_TOKEN_ID_MSG = "not valid token id";
   private static final String REFUND_ENERGY_FROM_MESSAGE_CALL = "refund energy from message call";
   private static final String CALL_PRE_COMPILED = "call pre-compiled";
+  private static final int lruCacheSize = CommonParameter.getInstance().getSafeLruCacheSize();
+  private static final LRUMap<Key, ProgramPrecompile> programPrecompileLRUMap
+      = new LRUMap<>(lruCacheSize);
   private long nonce;
   private byte[] rootTransactionId;
   private InternalTransaction internalTransaction;
@@ -99,6 +104,7 @@ public class Program {
   private ProgramResult result = new ProgramResult();
   private ProgramTrace trace = new ProgramTrace();
   private byte[] ops;
+  private byte[] codeAddress;
   private int pc;
   private byte lastOp;
   private byte previouslyExecutedOp;
@@ -107,14 +113,12 @@ public class Program {
   private int contractVersion;
   private DataWord adjustedCallEnergy;
 
-  public Program(byte[] ops, ProgramInvoke programInvoke) {
-    this(ops, programInvoke, null);
-  }
-
-  public Program(byte[] ops, ProgramInvoke programInvoke, InternalTransaction internalTransaction) {
+  public Program(byte[] ops, byte[] codeAddress, ProgramInvoke programInvoke,
+                 InternalTransaction internalTransaction) {
     this.invoke = programInvoke;
     this.internalTransaction = internalTransaction;
     this.ops = nullToEmpty(ops);
+    this.codeAddress = codeAddress;
 
     traceListener = new ProgramTraceListener(VMConfig.vmTrace());
     this.memory = setupProgramListener(new Memory());
@@ -166,8 +170,20 @@ public class Program {
   }
 
   public ProgramPrecompile getProgramPrecompile() {
+    if (isConstantCall()) {
+      if (programPrecompile == null) {
+        programPrecompile = ProgramPrecompile.compile(ops);
+      }
+      return programPrecompile;
+    }
     if (programPrecompile == null) {
-      programPrecompile = ProgramPrecompile.compile(ops);
+      Key key = getJumpDestAnalysisCacheKey();
+      if (programPrecompileLRUMap.containsKey(key)) {
+        programPrecompile = programPrecompileLRUMap.get(key);
+      } else {
+        programPrecompile = ProgramPrecompile.compile(ops);
+        programPrecompileLRUMap.put(key, programPrecompile);
+      }
     }
     return programPrecompile;
   }
@@ -635,12 +651,12 @@ public class Program {
           "Trying to create a contract with existing contract address: 0x" + Hex
               .toHexString(newAddress)));
     } else if (isNotEmpty(programCode)) {
-      Program program = new Program(programCode, programInvoke, internalTx);
+      Program program = new Program(programCode, newAddress, programInvoke, internalTx);
       program.setRootTransactionId(this.rootTransactionId);
       if (VMConfig.allowTvmCompatibleEvm()) {
         program.setContractVersion(getContractVersion());
       }
-      VM.play(program, OperationRegistry.getTable(OperationRegistry.Version.TRON_V1));
+      VM.play(program, OperationRegistry.getTable());
       createResult = program.getResult();
       getTrace().merge(program.getTrace());
       // always commit nonce
@@ -866,13 +882,13 @@ public class Program {
       if (isConstantCall()) {
         programInvoke.setConstantCall();
       }
-      Program program = new Program(programCode, programInvoke, internalTx);
+      Program program = new Program(programCode, codeAddress, programInvoke, internalTx);
       program.setRootTransactionId(this.rootTransactionId);
       if (VMConfig.allowTvmCompatibleEvm()) {
         program.setContractVersion(invoke.getDeposit()
             .getContract(codeAddress).getContractVersion());
       }
-      VM.play(program, OperationRegistry.getTable(OperationRegistry.Version.TRON_V1));
+      VM.play(program, OperationRegistry.getTable());
       callResult = program.getResult();
 
       getTrace().merge(program.getTrace());
@@ -1030,6 +1046,24 @@ public class Program {
     } else {
       return EMPTY_BYTE_ARRAY;
     }
+  }
+
+  public byte[] getCodeHash() {
+    ContractCapsule contract = getContractState().getContract(codeAddress);
+    byte[] codeHash;
+    if (contract == null) {
+      codeHash = Hash.sha3(ops);
+    } else {
+      codeHash = contract.getCodeHash();
+      if (ByteUtil.isNullOrZeroArray(codeHash)) {
+        codeHash = Hash.sha3(ops);
+      }
+    }
+    return codeHash;
+  }
+
+  private Key getJumpDestAnalysisCacheKey() {
+    return Key.create(ByteUtil.merge(codeAddress, getCodeHash()));
   }
 
   public byte[] getContextAddress() {

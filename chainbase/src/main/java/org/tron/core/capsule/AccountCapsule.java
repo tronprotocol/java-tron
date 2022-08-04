@@ -21,8 +21,6 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import java.util.Map;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.utils.AssetUtil;
@@ -44,10 +42,7 @@ import org.tron.protos.contract.AccountContract.AccountUpdateContract;
 public class AccountCapsule implements ProtoCapsule<Account>, Comparable<AccountCapsule> {
 
   private Account account;
-
-  @Getter
-  @Setter
-  private Boolean isAssetImport = false;
+  private boolean flag = false;
 
   /**
    * get account from bytes data.
@@ -453,22 +448,13 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build();
   }
 
-  public void clearAssetV2() {
-    importAsset();
-    this.account = this.account.toBuilder()
-        .clearAssetV2()
-        .build();
-  }
-
   public void clearLatestAssetOperationTimeV2() {
-    importAsset();
     this.account = this.account.toBuilder()
         .clearLatestAssetOperationTimeV2()
         .build();
   }
 
   public void clearFreeAssetNetUsageV2() {
-    importAsset();
     this.account = this.account.toBuilder()
         .clearFreeAssetNetUsageV2()
         .build();
@@ -522,21 +508,19 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     }
   }
 
-  /**
-   * asset balance enough
-   */
-  public boolean assetBalanceEnough(byte[] key, long amount) {
-    importAsset();
-    Map<String, Long> assetMap = this.account.getAssetMap();
-    String nameKey = ByteArray.toStr(key);
-    Long currentAmount = assetMap.get(nameKey);
+  /*************************** start asset ****************************************/
 
-    return amount > 0 && null != currentAmount && amount <= currentAmount;
+  public boolean getAssetOptimized() {
+    return this.account.getAssetOptimized();
+  }
+
+  public void setAssetOptimized(boolean flag) {
+    this.account = this.account.toBuilder().setAssetOptimized(flag).build();
   }
 
   public boolean assetBalanceEnoughV2(byte[] key, long amount,
       DynamicPropertiesStore dynamicPropertiesStore) {
-    importAsset();
+    importAsset(key);
     Map<String, Long> assetMap;
     String nameKey;
     Long currentAmount;
@@ -553,65 +537,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return amount > 0 && null != currentAmount && amount <= currentAmount;
   }
 
-  /**
-   * reduce asset amount.
-   */
-  public boolean reduceAssetAmount(byte[] key, long amount) {
-    importAsset();
-    Map<String, Long> assetMap = this.account.getAssetMap();
-    String nameKey = ByteArray.toStr(key);
-    Long currentAmount = assetMap.get(nameKey);
-    if (amount > 0 && null != currentAmount && amount <= currentAmount) {
-      this.account = this.account.toBuilder()
-          .putAsset(nameKey, Math.subtractExact(currentAmount, amount)).build();
-      return true;
-    }
-
-    return false;
-  }
-
-  /**
-   * reduce asset amount.
-   */
-  public boolean reduceAssetAmountV2(byte[] key, long amount,
-      DynamicPropertiesStore dynamicPropertiesStore, AssetIssueStore assetIssueStore) {
-    //key is token name
-    importAsset();
-    if (dynamicPropertiesStore.getAllowSameTokenName() == 0) {
-      Map<String, Long> assetMap = this.account.getAssetMap();
-      AssetIssueCapsule assetIssueCapsule = assetIssueStore.get(key);
-      String tokenID = assetIssueCapsule.getId();
-      String nameKey = ByteArray.toStr(key);
-      Long currentAmount = assetMap.get(nameKey);
-      if (amount > 0 && null != currentAmount && amount <= currentAmount) {
-        this.account = this.account.toBuilder()
-            .putAsset(nameKey, Math.subtractExact(currentAmount, amount))
-            .putAssetV2(tokenID, Math.subtractExact(currentAmount, amount))
-            .build();
-        return true;
-      }
-    }
-    //key is token id
-    if (dynamicPropertiesStore.getAllowSameTokenName() == 1) {
-      String tokenID = ByteArray.toStr(key);
-      Map<String, Long> assetMapV2 = this.account.getAssetV2Map();
-      Long currentAmount = assetMapV2.get(tokenID);
-      if (amount > 0 && null != currentAmount && amount <= currentAmount) {
-        this.account = this.account.toBuilder()
-            .putAssetV2(tokenID, Math.subtractExact(currentAmount, amount))
-            .build();
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  /**
-   * add asset amount.
-   */
   public boolean addAssetAmount(byte[] key, long amount) {
-    importAsset();
     Map<String, Long> assetMap = this.account.getAssetMap();
     String nameKey = ByteArray.toStr(key);
     Long currentAmount = assetMap.get(nameKey);
@@ -623,12 +549,9 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return true;
   }
 
-  /**
-   * add asset amount.
-   */
   public boolean addAssetAmountV2(byte[] key, long amount,
       DynamicPropertiesStore dynamicPropertiesStore, AssetIssueStore assetIssueStore) {
-    importAsset();
+    importAsset(key);
     //key is token name
     if (dynamicPropertiesStore.getAllowSameTokenName() == 0) {
       Map<String, Long> assetMap = this.account.getAssetMap();
@@ -659,11 +582,67 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return true;
   }
 
-  /**
-   * add asset.
-   */
+  public boolean reduceAssetAmount(byte[] key, long amount) {
+    Map<String, Long> assetMap = this.account.getAssetMap();
+    String nameKey = ByteArray.toStr(key);
+    Long currentAmount = assetMap.get(nameKey);
+    if (amount > 0 && null != currentAmount && amount <= currentAmount) {
+      this.account = this.account.toBuilder()
+              .putAsset(nameKey, Math.subtractExact(currentAmount, amount)).build();
+      return true;
+    }
+
+    return false;
+  }
+
+  public boolean reduceAssetAmountV2(byte[] key, long amount,
+                                     DynamicPropertiesStore dynamicPropertiesStore, AssetIssueStore assetIssueStore) {
+    importAsset(key);
+    //key is token name
+    if (dynamicPropertiesStore.getAllowSameTokenName() == 0) {
+      Map<String, Long> assetMap = this.account.getAssetMap();
+      AssetIssueCapsule assetIssueCapsule = assetIssueStore.get(key);
+      String tokenID = assetIssueCapsule.getId();
+      String nameKey = ByteArray.toStr(key);
+      Long currentAmount = assetMap.get(nameKey);
+      if (amount > 0 && null != currentAmount && amount <= currentAmount) {
+        this.account = this.account.toBuilder()
+                .putAsset(nameKey, Math.subtractExact(currentAmount, amount))
+                .putAssetV2(tokenID, Math.subtractExact(currentAmount, amount))
+                .build();
+        return true;
+      }
+    }
+    //key is token id
+    if (dynamicPropertiesStore.getAllowSameTokenName() == 1) {
+      String tokenID = ByteArray.toStr(key);
+      Map<String, Long> assetMapV2 = this.account.getAssetV2Map();
+      Long currentAmount = assetMapV2.get(tokenID);
+      if (amount > 0 && null != currentAmount && amount <= currentAmount) {
+        this.account = this.account.toBuilder()
+                .putAssetV2(tokenID, Math.subtractExact(currentAmount, amount))
+                .build();
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  public void clearAssetV2() {
+    this.account = this.account.toBuilder()
+            .clearAssetV2()
+            .build();
+  }
+
+  public void clearAsset() {
+    this.account = this.account.toBuilder()
+            .clearAsset()
+            .clearAssetV2()
+            .build();
+  }
+
   public boolean addAsset(byte[] key, long value) {
-    importAsset();
     Map<String, Long> assetMap = this.account.getAssetMap();
     String nameKey = ByteArray.toStr(key);
     if (!assetMap.isEmpty() && assetMap.containsKey(nameKey)) {
@@ -674,81 +653,91 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public boolean addAssetV2(byte[] key, long value) {
-    importAsset();
-    String tokenID = ByteArray.toStr(key);
-    Map<String, Long> assetV2Map = this.account.getAssetV2Map();
-    if (!assetV2Map.isEmpty() && assetV2Map.containsKey(tokenID)) {
+    if (AssetUtil.hasAssetV2(this.account, key)) {
       return false;
     }
 
     this.account = this.account.toBuilder()
-        .putAssetV2(tokenID, value)
+        .putAssetV2(ByteArray.toStr(key), value)
         .build();
     return true;
   }
 
-  /**
-   * add asset.
-   */
   public boolean addAssetMapV2(Map<String, Long> assetMap) {
-    importAsset();
     this.account = this.account.toBuilder().putAllAssetV2(assetMap).build();
     return true;
   }
 
+  public Long getAsset(DynamicPropertiesStore dynamicStore, String key) {
+    Long balance;
+    if (dynamicStore.getAllowSameTokenName() == 0) {
+      balance = this.account.getAssetMap().get(key);
+    } else {
+      importAsset(key.getBytes());
+      balance = this.account.getAssetV2Map().get(key);
+    }
+    return balance;
+  }
+
+  public long getAssetV2(String key) {
+    importAsset(key.getBytes());
+    Long balance = this.account.getAssetV2Map().get(key);
+    return balance == null ? 0 : balance;
+  }
+
   public Map<String, Long> getAssetMap() {
-    importAsset();
     Map<String, Long> assetMap = this.account.getAssetMap();
     if (assetMap.isEmpty()) {
       assetMap = Maps.newHashMap();
     }
-
     return assetMap;
   }
 
   public Map<String, Long> getAssetMapV2() {
-    importAsset();
+    importAllAsset();
     Map<String, Long> assetMap = this.account.getAssetV2Map();
     if (assetMap.isEmpty()) {
       assetMap = Maps.newHashMap();
     }
-
     return assetMap;
   }
 
+  public Map<String, Long> getAssetMapForTest() {
+    return getAssetMap();
+  }
+
+  public Map<String, Long> getAssetV2MapForTest() {
+    return getAssetMapV2();
+  }
+
+  /*************************** end asset ****************************************/
+
   public boolean addAllLatestAssetOperationTimeV2(Map<String, Long> map) {
-    importAsset();
     this.account = this.account.toBuilder().putAllLatestAssetOperationTimeV2(map).build();
     return true;
   }
 
   public Map<String, Long> getLatestAssetOperationTimeMap() {
-    importAsset();
     return this.account.getLatestAssetOperationTimeMap();
   }
 
   public Map<String, Long> getLatestAssetOperationTimeMapV2() {
-    importAsset();
     return this.account.getLatestAssetOperationTimeV2Map();
   }
 
   public long getLatestAssetOperationTime(String assetName) {
-    importAsset();
     return this.account.getLatestAssetOperationTimeOrDefault(assetName, 0);
   }
 
   public long getLatestAssetOperationTimeV2(String assetName) {
-    importAsset();
     return this.account.getLatestAssetOperationTimeV2OrDefault(assetName, 0);
   }
 
   public void putLatestAssetOperationTimeMap(String key, Long value) {
-    importAsset();
     this.account = this.account.toBuilder().putLatestAssetOperationTime(key, value).build();
   }
 
   public void putLatestAssetOperationTimeMapV2(String key, Long value) {
-    importAsset();
     this.account = this.account.toBuilder().putLatestAssetOperationTimeV2(key, value).build();
   }
 
@@ -773,12 +762,10 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public int getFrozenSupplyCount() {
-    importAsset();
     return getInstance().getFrozenSupplyCount();
   }
 
   public List<Frozen> getFrozenSupplyList() {
-    importAsset();
     return getInstance().getFrozenSupplyList();
   }
 
@@ -791,23 +778,19 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public ByteString getAssetIssuedName() {
-    importAsset();
     return getInstance().getAssetIssuedName();
   }
 
   public void setAssetIssuedName(byte[] nameKey) {
-    importAsset();
     ByteString assetIssuedName = ByteString.copyFrom(nameKey);
     this.account = this.account.toBuilder().setAssetIssuedName(assetIssuedName).build();
   }
 
   public ByteString getAssetIssuedID() {
-    importAsset();
     return getInstance().getAssetIssuedID();
   }
 
   public void setAssetIssuedID(byte[] id) {
-    importAsset();
     ByteString assetIssuedID = ByteString.copyFrom(id);
     this.account = this.account.toBuilder().setAssetIssuedID(assetIssuedID).build();
   }
@@ -992,39 +975,32 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public boolean addAllFreeAssetNetUsageV2(Map<String, Long> map) {
-    importAsset();
     this.account = this.account.toBuilder().putAllFreeAssetNetUsageV2(map).build();
     return true;
   }
 
   public long getFreeAssetNetUsage(String assetName) {
-    importAsset();
     return this.account.getFreeAssetNetUsageOrDefault(assetName, 0);
   }
 
   public long getFreeAssetNetUsageV2(String assetName) {
-    importAsset();
     return this.account.getFreeAssetNetUsageV2OrDefault(assetName, 0);
   }
 
   public Map<String, Long> getAllFreeAssetNetUsage() {
-    importAsset();
     return this.account.getFreeAssetNetUsageMap();
   }
 
   public Map<String, Long> getAllFreeAssetNetUsageV2() {
-    importAsset();
     return this.account.getFreeAssetNetUsageV2Map();
   }
 
   public void putFreeAssetNetUsage(String s, long freeAssetNetUsage) {
-    importAsset();
     this.account = this.account.toBuilder()
         .putFreeAssetNetUsage(s, freeAssetNetUsage).build();
   }
 
   public void putFreeAssetNetUsageV2(String s, long freeAssetNetUsage) {
-    importAsset();
     this.account = this.account.toBuilder()
         .putFreeAssetNetUsageV2(s, freeAssetNetUsage).build();
   }
@@ -1141,16 +1117,14 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     this.account = builder.build();
   }
 
-  public void importAsset() {
-    if (!AssetUtil.isAllowAssetOptimization()) {
-      return;
-    }
-    if (!this.isAssetImport) {
-      Account account = AssetUtil.importAsset(this.account);
-      if (null != account) {
-        this.account = account;
-      }
-      this.isAssetImport = true;
+  public void importAsset(byte[] key) {
+    this.account = AssetUtil.importAsset(this.account, key);
+  }
+
+  public void importAllAsset() {
+    if (!flag) {
+      this.account = AssetUtil.importAllAsset(this.account);
+      flag = true;
     }
   }
 

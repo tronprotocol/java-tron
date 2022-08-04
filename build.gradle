@@ -63,6 +63,12 @@ subprojects {
         preserveFileTimestamps = false
         reproducibleFileOrder = true
     }
+
+    configurations.all {
+        resolutionStrategy {
+            force group: 'com.google.guava', name: 'guava', version: '30.1-jre'
+        }
+    }
 }
 
 task copyToParent(type: Copy) {

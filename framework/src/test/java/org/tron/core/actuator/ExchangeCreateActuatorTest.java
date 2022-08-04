@@ -18,7 +18,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
-import org.tron.core.capsule.AccountAssetCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
@@ -91,18 +90,6 @@ public class ExchangeCreateActuatorTest {
    */
   @Before
   public void initTest() {
-
-    AccountAssetCapsule ownerAddressFirstAsset =
-            new AccountAssetCapsule(ByteString.copyFrom(
-                    ByteArray.fromHexString(OWNER_ADDRESS_FIRST)));
-    AccountAssetCapsule ownerAddressSecondAsset =
-            new AccountAssetCapsule(ByteString.copyFrom(
-                    ByteArray.fromHexString(OWNER_ADDRESS_SECOND)));
-    dbManager.getAccountAssetStore().put(ownerAddressFirstAsset.getAddress().toByteArray(),
-            ownerAddressFirstAsset);
-    dbManager.getAccountAssetStore().put(ownerAddressSecondAsset.getAddress().toByteArray(),
-            ownerAddressSecondAsset);
-
 
     AccountCapsule ownerAccountFirstCapsule =
         new AccountCapsule(
@@ -206,7 +193,7 @@ public class ExchangeCreateActuatorTest {
       Assert.assertEquals(secondTokenBalance, exchangeCapsule.getSecondTokenBalance());
 
       accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-      Map<String, Long> assetMap = accountCapsule.getAssetMap();
+      Map<String, Long> assetMap = accountCapsule.getAssetMapForTest();
       Assert.assertEquals(10000_000000L - 1024_000000L, accountCapsule.getBalance());
       Assert.assertEquals(0L, assetMap.get(firstTokenId).longValue());
       Assert.assertEquals(0L, assetMap.get(secondTokenId).longValue());
@@ -229,7 +216,7 @@ public class ExchangeCreateActuatorTest {
       Assert.assertEquals(secondTokenBalance, exchangeCapsuleV2.getSecondTokenBalance());
 
       accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-      Map<String, Long> getAssetV2Map = accountCapsule.getAssetMapV2();
+      Map<String, Long> getAssetV2Map = accountCapsule.getAssetV2MapForTest();
       Assert.assertEquals(10000_000000L - 1024_000000L, accountCapsule.getBalance());
       Assert.assertEquals(0L, getAssetV2Map.get(firstTokenId).longValue());
       Assert.assertEquals(0L, getAssetV2Map.get(secondTokenId).longValue());
@@ -292,7 +279,7 @@ public class ExchangeCreateActuatorTest {
       Assert.assertEquals(secondTokenBalance, exchangeCapsule.getSecondTokenBalance());
 
       accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-      Map<String, Long> assetMap = accountCapsule.getAssetMap();
+      Map<String, Long> assetMap = accountCapsule.getAssetMapForTest();
       Assert.assertEquals(200_000_000_000000L - 1024_000000L - firstTokenBalance,
           accountCapsule.getBalance());
       Assert.assertEquals(100_000_000L, assetMap.get(secondTokenId).longValue());
@@ -313,7 +300,7 @@ public class ExchangeCreateActuatorTest {
       Assert.assertEquals(secondTokenBalance, exchangeCapsuleV2.getSecondTokenBalance());
 
       accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-      Map<String, Long> getAssetV2Map = accountCapsule.getAssetMapV2();
+      Map<String, Long> getAssetV2Map = accountCapsule.getAssetV2MapForTest();
       Assert.assertEquals(200_000_000_000000L - 1024_000000L - firstTokenBalance,
           accountCapsule.getBalance());
       Assert.assertEquals(100_000_000L, getAssetV2Map.get(secondTokenId).longValue());
@@ -383,7 +370,7 @@ public class ExchangeCreateActuatorTest {
       Assert.assertEquals(secondTokenBalance, exchangeCapsuleV2.getSecondTokenBalance());
 
       accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-      Map<String, Long> getAssetV2Map = accountCapsule.getAssetMapV2();
+      Map<String, Long> getAssetV2Map = accountCapsule.getAssetV2MapForTest();
       Assert.assertEquals(200_000_000_000000L - 1024_000000L - firstTokenBalance,
           accountCapsule.getBalance());
       Assert.assertEquals(100_000_000L, getAssetV2Map.get(secondTokenId).longValue());
@@ -467,7 +454,7 @@ public class ExchangeCreateActuatorTest {
       Assert.assertEquals(secondTokenBalance, exchangeCapsuleV2.getSecondTokenBalance());
 
       accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-      Map<String, Long> getAssetV2Map = accountCapsule.getAssetMapV2();
+      Map<String, Long> getAssetV2Map = accountCapsule.getAssetV2MapForTest();
       Assert.assertEquals(10000_000000L - 1024_000000L, accountCapsule.getBalance());
       Assert.assertEquals(0L, getAssetV2Map.get(firstTokenId).longValue());
       Assert.assertEquals(0L, getAssetV2Map.get(secondTokenId).longValue());
@@ -537,7 +524,7 @@ public class ExchangeCreateActuatorTest {
       Assert.assertEquals(secondTokenBalance, exchangeCapsuleV2.getSecondTokenBalance());
 
       accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-      Map<String, Long> getAssetV2Map = accountCapsule.getAssetMapV2();
+      Map<String, Long> getAssetV2Map = accountCapsule.getAssetV2MapForTest();
       Assert.assertEquals(200_000_000_000000L - 1024_000000L - firstTokenBalance,
           accountCapsule.getBalance());
       Assert.assertEquals(100_000_000L, getAssetV2Map.get(secondTokenId).longValue());

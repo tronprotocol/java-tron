@@ -70,7 +70,6 @@ import org.tron.core.services.jsonrpc.types.CallArguments;
 import org.tron.core.services.jsonrpc.types.TransactionReceipt;
 import org.tron.core.services.jsonrpc.types.TransactionResult;
 import org.tron.core.store.StorageRowStore;
-import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Storage;
 import org.tron.program.Version;
 import org.tron.protos.Protocol.Account;
@@ -454,10 +453,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
       StorageRowStore store = manager.getStorageRowStore();
       Storage storage = new Storage(addressByte, store);
-
-      // init Tvm config
       storage.setContractVersion(smartContract.getVersion());
-      VMConfig.initAllowTvmCompatibleEvm(1);
 
       DataWord value = storage.getValue(new DataWord(ByteArray.fromHexString(storageIdx)));
       return ByteArray.toJsonHex(value == null ? new byte[32] : value.getData());

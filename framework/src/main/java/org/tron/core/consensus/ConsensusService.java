@@ -85,7 +85,9 @@ public class ConsensusService {
   }
 
   public void stop() {
+    logger.info("consensus service closed start.");
     consensus.stop();
+    logger.info("consensus service closed successfully.");
   }
 
 }
