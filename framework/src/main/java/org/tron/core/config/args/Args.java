@@ -1256,6 +1256,8 @@ public class Args extends CommonParameter {
     logger.info("FastForward node number: {}", parameter.getMaxFastForwardNum());
     logger.info("Seed node size: {}", parameter.getSeedNode().getIpList().size());
     logger.info("Max connection: {}", parameter.getMaxConnections());
+    logger.info("Min connection: {}", parameter.getMinConnections());
+    logger.info("Min active connection: {}", parameter.getMinActiveConnections());
     logger.info("Max connection with same IP: {}", parameter.getMaxConnectionsWithSameIp());
     logger.info("Solidity threads: {}", parameter.getSolidityThreads());
     logger.info("Trx reference block: {}", parameter.getTrxReferenceBlock());
