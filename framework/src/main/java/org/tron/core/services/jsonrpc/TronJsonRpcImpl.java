@@ -29,11 +29,13 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.bouncycastle.util.encoders.Hex;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.common.crypto.Hash;
+import org.tron.common.logsfilter.ContractEventParser;
 import org.tron.common.logsfilter.capsule.BlockFilterCapsule;
 import org.tron.common.logsfilter.capsule.LogsFilterCapsule;
 import org.tron.common.runtime.vm.DataWord;
@@ -76,6 +78,7 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
@@ -389,7 +392,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
    * getMethodSign(methodName(uint256,uint256)) || data1 || data2
    */
   private String call(byte[] ownerAddressByte, byte[] contractAddressByte, long value,
-      byte[] data) {
+      byte[] data) throws JsonRpcInternalException {
 
     TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
     Return.Builder retBuilder = Return.newBuilder();
@@ -418,9 +421,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       trxExt = trxExtBuilder.build();
     }
 
-    String result = "0x";
-    String code = trxExt.getResult().getCode().toString();
-    if ("SUCCESS".equals(code)) {
+    String result;
+    if (trxExtBuilder.getTransaction().getRet(0).getRet().equals(code.SUCESS)) {
       List<ByteString> list = trxExt.getConstantResultList();
       byte[] listBytes = new byte[0];
       for (ByteString bs : list) {
@@ -429,6 +431,16 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       result = ByteArray.toJsonHex(listBytes);
     } else {
       logger.error("trigger contract failed.");
+      String errMsg = retBuilder.getMessage().toStringUtf8();
+      byte[] resData = trxExtBuilder.getConstantResult(0).toByteArray();
+      if (resData.length > 4 && Hex.toHexString(resData).startsWith("08c379a0")) { // Error(string)
+        String msg = ContractEventParser
+            .parseDataBytes(org.bouncycastle.util.Arrays.copyOfRange(resData, 4, resData.length),
+                "string", 0);
+        errMsg += ": " + msg;
+      }
+
+      throw new JsonRpcInternalException(errMsg);
     }
 
     return result;
@@ -545,7 +557,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
           trxExtBuilder,
           retBuilder);
 
-      return ByteArray.toJsonHex(trxExtBuilder.getEnergyUsed());
+
     } catch (ContractValidateException e) {
       String errString = "invalid contract";
       if (e.getMessage() != null) {
@@ -560,6 +572,22 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       }
 
       throw new JsonRpcInternalException(errString);
+    }
+
+    if (trxExtBuilder.getTransaction().getRet(0).getRet().equals(code.FAILED)) {
+      String errMsg = retBuilder.getMessage().toStringUtf8();
+
+      byte[] data = trxExtBuilder.getConstantResult(0).toByteArray();
+      if (data.length > 4 && Hex.toHexString(data).startsWith("08c379a0")) { // Error(string)
+        String msg = ContractEventParser
+            .parseDataBytes(org.bouncycastle.util.Arrays.copyOfRange(data, 4, data.length),
+                "string", 0);
+        errMsg += ": " + msg;
+      }
+
+      throw new JsonRpcInternalException(errMsg);
+    } else {
+      return ByteArray.toJsonHex(trxExtBuilder.getEnergyUsed());
     }
   }
 
@@ -689,7 +717,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
   @Override
   public String getCall(CallArguments transactionCall, String blockNumOrTag)
-      throws JsonRpcInvalidParamsException {
+      throws JsonRpcInvalidParamsException, JsonRpcInternalException {
     if (EARLIEST_STR.equalsIgnoreCase(blockNumOrTag)
         || PENDING_STR.equalsIgnoreCase(blockNumOrTag)) {
       throw new JsonRpcInvalidParamsException(TAG_NOT_SUPPORT_ERROR);
