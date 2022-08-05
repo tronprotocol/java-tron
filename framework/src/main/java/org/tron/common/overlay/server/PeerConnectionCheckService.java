@@ -18,9 +18,7 @@ import org.tron.protos.Protocol;
 @Slf4j(topic = "net")
 @Service
 public class PeerConnectionCheckService {
-  private int p2pVersion = Args.getInstance().getNodeP2pVersion();
   private int maxConnections = Args.getInstance().getMaxConnections();
-  private int minActiveConnections = Args.getInstance().getMinActiveConnections();
   private boolean isFastForward = Args.getInstance().isFastForward();
   private boolean isOpenFullTcpDisconnect = Args.getInstance().isOpenFullTcpDisconnect();
   private ScheduledExecutorService poolLoopExecutor = Executors.newSingleThreadScheduledExecutor();
@@ -51,12 +49,10 @@ public class PeerConnectionCheckService {
     if (syncPool.getActivePeers().size() < maxConnections) {
       return;
     }
-    boolean flag = syncPool.getActivePeersCount().get() > minActiveConnections * 2;
     Collection<PeerConnection> peers = syncPool.getActivePeers().stream()
             .filter(peer -> peer.isIdle())
             .filter(peer -> !peer.isTrustPeer())
-            .filter(peer -> !peer.getNode().isConnectible(p2pVersion))
-            .filter(peer -> peer.isActive() == flag)
+            .filter(peer -> !peer.isActive())
             .collect(Collectors.toList());
     if (peers.size() == 0) {
       return;
