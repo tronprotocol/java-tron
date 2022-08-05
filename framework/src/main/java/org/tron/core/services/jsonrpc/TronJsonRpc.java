@@ -148,11 +148,13 @@ public interface TronJsonRpc {
 
   @JsonRpcMethod("eth_call")
   @JsonRpcErrors({
+      @JsonRpcError(exception = JsonRpcInvalidRequestException.class, code = -32600, data = "{}"),
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
       @JsonRpcError(exception = JsonRpcInternalException.class, code = -32000, data = "{}"),
   })
   String getCall(CallArguments transactionCall, String blockNumOrTag)
-      throws JsonRpcInvalidParamsException, JsonRpcInternalException;
+      throws JsonRpcInvalidParamsException, JsonRpcInvalidRequestException,
+      JsonRpcInternalException;
 
   @JsonRpcMethod("net_peerCount")
   String getPeerCount();
