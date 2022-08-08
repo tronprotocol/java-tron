@@ -50,6 +50,13 @@
     <appender-ref ref="ASYNC"/>
   </root>
 
+
+  <appender name="METRICS" class="org.tron.common.prometheus.InstrumentedAppender" />
+
+  <root level="INFO">
+    <appender-ref ref="METRICS" />
+  </root>
+
   <logger level="INFO" name="app"/>
   <logger level="INFO" name="net"/>
   <logger level="INFO" name="backup"/>

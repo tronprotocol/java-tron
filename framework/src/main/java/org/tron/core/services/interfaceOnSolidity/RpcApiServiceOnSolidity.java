@@ -499,5 +499,12 @@ public class RpcApiServiceOnSolidity implements Service {
       );
     }
 
+    @Override
+    public void getBlock(GrpcAPI.BlockMessage  request,
+                         StreamObserver<BlockExtention> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi().getBlock(request, responseObserver));
+    }
+
   }
 }

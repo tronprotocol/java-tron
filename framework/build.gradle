@@ -1,5 +1,6 @@
 plugins {
     id "org.sonarqube" version "2.6"
+    id "com.gorylenko.gradle-git-properties" version "2.4.1"
 }
 
 apply plugin: 'application'
@@ -65,16 +66,13 @@ dependencies {
 
     compile group: 'com.carrotsearch', name: 'java-sizeof', version: '0.0.5'
 
-    compile 'org.aspectj:aspectjrt:1.8.13'
-    compile 'org.aspectj:aspectjweaver:1.8.13'
-    compile 'org.aspectj:aspectjtools:1.8.13'
     compile 'com.googlecode.cqengine:cqengine:2.12.4'
     compile group: 'com.google.api.grpc', name: 'googleapis-common-protos', version: '0.0.3'
 
     // http
     compile 'org.eclipse.jetty:jetty-server:9.4.11.v20180605'
     compile 'org.eclipse.jetty:jetty-servlet:9.4.11.v20180605'
-    compile 'com.alibaba:fastjson:1.2.70'
+    compile 'com.alibaba:fastjson:1.2.83'
     compile group: 'org.apache.httpcomponents', name: 'httpasyncclient', version: '4.1.1'
     // end http
 
@@ -152,6 +150,7 @@ test {
         exclude 'org/tron/core/ShieldedTRC20BuilderTest.class'
         exclude 'org/tron/common/runtime/vm/WithdrawRewardTest.class'
     }
+    maxHeapSize = "1024m"
 }
 
 task stest(type: Test) {

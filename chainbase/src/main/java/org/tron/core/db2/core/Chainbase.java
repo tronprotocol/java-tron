@@ -11,7 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.Pair;
 import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.LevelDB;
@@ -134,6 +136,15 @@ public class Chainbase implements IRevokingDB {
       throw new ItemNotFoundException();
     }
 
+    return value;
+  }
+
+  @Override
+  public byte[] getFromRoot(byte[] key) throws ItemNotFoundException {
+    byte[] value = head().getRoot().get(key);
+    if (value == null) {
+      throw new ItemNotFoundException();
+    }
     return value;
   }
 
@@ -337,4 +348,34 @@ public class Chainbase implements IRevokingDB {
         .limit(limit)
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
+
+  public Map<WrappedByteArray, byte[]> prefixQuery(byte[] key) {
+    Map<WrappedByteArray, byte[]> result = prefixQueryRoot(key);
+    Map<WrappedByteArray, byte[]>  snapshot = prefixQuerySnapshot(key);
+    result.putAll(snapshot);
+    result.entrySet().removeIf(e -> e.getValue() == null);
+    return result;
+  }
+
+  private Map<WrappedByteArray, byte[]> prefixQueryRoot(byte[] key) {
+    Map<WrappedByteArray, byte[]> result = new HashMap<>();
+    if (((SnapshotRoot) head.getRoot()).db.getClass() == LevelDB.class) {
+      result = ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb().prefixQuery(key);
+    } else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
+      result = ((RocksDB) ((SnapshotRoot) head.getRoot()).db).getDb().prefixQuery(key);
+    }
+    return result;
+  }
+
+  private Map<WrappedByteArray, byte[]> prefixQuerySnapshot(byte[] key) {
+    Map<WrappedByteArray, byte[]> result = new HashMap<>();
+    Snapshot snapshot = head();
+    if (!snapshot.equals(head.getRoot())) {
+      Map<WrappedByteArray, WrappedByteArray> all = new HashMap<>();
+      ((SnapshotImpl) snapshot).collect(all, key);
+      all.forEach((k, v) -> result.put(k, v.getBytes()));
+    }
+    return result;
+  }
+
 }

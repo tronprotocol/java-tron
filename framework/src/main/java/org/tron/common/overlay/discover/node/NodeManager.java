@@ -28,6 +28,9 @@ import org.tron.common.overlay.discover.node.NodeHandler.State;
 import org.tron.common.overlay.discover.node.statistics.NodeStatistics;
 import org.tron.common.overlay.discover.table.NodeTable;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.MetricLabels;
+import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.CollectionUtils;
 import org.tron.common.utils.JsonUtil;
@@ -233,8 +236,10 @@ public class NodeManager implements EventHandler {
 
     NodeHandler nodeHandler = getNodeHandler(n);
     nodeHandler.getNodeStatistics().messageStatistics.addUdpInMessage(m.getType());
-    MetricsUtil.meterMark(MetricsKey.NET_UDP_IN_TRAFFIC,
-        udpEvent.getMessage().getData().length + 1);
+    int length = udpEvent.getMessage().getData().length + 1;
+    MetricsUtil.meterMark(MetricsKey.NET_UDP_IN_TRAFFIC, length);
+    Metrics.histogramObserve(MetricKeys.Histogram.UDP_BYTES, length,
+        MetricLabels.Histogram.TRAFFIC_IN);
 
     switch (m.getType()) {
       case DISCOVER_PING:
@@ -257,8 +262,11 @@ public class NodeManager implements EventHandler {
   public void sendOutbound(UdpEvent udpEvent) {
     if (discoveryEnabled && messageSender != null) {
       messageSender.accept(udpEvent);
-      MetricsUtil.meterMark(MetricsKey.NET_UDP_OUT_TRAFFIC,
-          udpEvent.getMessage().getSendData().length);
+      int length = udpEvent.getMessage().getSendData().length;
+      MetricsUtil.meterMark(MetricsKey.NET_UDP_OUT_TRAFFIC, length);
+      Metrics.histogramObserve(MetricKeys.Histogram.UDP_BYTES, length,
+          MetricLabels.Histogram.TRAFFIC_OUT);
+
     }
   }
 
@@ -267,10 +275,11 @@ public class NodeManager implements EventHandler {
     for (NodeHandler handler : nodeHandlerMap.values()) {
       if (handler.getNode().isConnectible(Args.getInstance().getNodeP2pVersion())
           && predicate.test(handler)) {
+        handler.setReputation(handler.getNodeStatistics().getReputation());
         filtered.add(handler);
       }
     }
-    filtered.sort(Comparator.comparingInt(handler -> -handler.getNodeStatistics().getReputation()));
+    filtered.sort(Comparator.comparingInt(handler -> -handler.getReputation()));
     return CollectionUtils.truncate(filtered, limit);
   }
 

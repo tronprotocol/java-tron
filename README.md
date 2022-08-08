@@ -63,48 +63,73 @@ TRON is a project dedicated to building the infrastructure for a truly decentral
 TRON enables large-scale development and engagement. With over 2000 transactions per second (TPS), high concurrency, low latency, and massive data transmission. It is ideal for building decentralized entertainment applications. Free features and incentive systems allow developers to create premium app experiences for users.
 
 # Building the source
-Building java-tron requires `git` and `Oracle JDK 1.8` to be installed, other JDK versions are not supported yet. It is recommended to operate on `Linux` and `OSX` operating systems.
+Building java-tron requires `git` and `Oracle JDK 1.8` to be installed, other JDK versions are not supported yet. Make sure you operate on `Linux` and `MacOS` operating systems.
 
-## Getting the Source Code
+Clone the repo and switch to the `master` branch
 
   ```bash
   $ git clone https://github.com/tronprotocol/java-tron.git
+  $ cd java-tron
   $ git checkout -t origin/master
   ```
-
-## Build
-
+then run the following command to build java-tron, the `FullNode.jar` file can be found in `java-tron/build/libs/` after build successful.
 ```bash
-$ cd java-tron
 $ ./gradlew clean build -x test
 ```
 
-The `FullNode.jar` file can be found in `java-tron/build/libs/FullNode.jar` after build successful.
 
 # Running java-tron
+Running java-tron requires `Oracle JDK 1.8` to be installed, other JDK versions are not supported yet. Make sure you operate on `Linux` and `MacOS` operating systems.
 
 Get the mainnet configurate file: [main_net_config.conf](https://github.com/tronprotocol/tron-deployment/blob/master/main_net_config.conf), other network configuration files can be find [here](https://github.com/tronprotocol/tron-deployment).
+## Hardware Requirements
+Minimum:
+* CPU with 8 cores
+* 16GB RAM
+* 1TB free storage space to sync the Mainnet
+
+Recommended:
+* CPU with 16+ cores(32+ cores for a super representative)
+* 32GB+ RAM(64GB+ for a super representative)
+* High Performance SSD with at least 1.5TB free space
+* 100+ MB/s download Internet service
 
 
-* **Running a full node for mainnet**  
-  Full node has full historical data, it is the entry point into the TRON network , it can be used by other processes as a gateway into the TRON network via HTTP and GRPC endpoints. You can interact with the TRON network through full node：transfer assets, deploy contracts, interact with contracts and so on. `-c ` parameter specifies a configuration file to run a full node:
+## Running a full node for mainnet
+Full node has full historical data, it is the entry point into the TRON network , it can be used by other processes as a gateway into the TRON network via HTTP and GRPC endpoints. You can interact with the TRON network through full node：transfer assets, deploy contracts, interact with contracts and so on. `-c ` parameter specifies a configuration file to run a full node:
    ```bash
-   $ java -jar FullNode.jar -c main_net_config.conf
+   $ nohup java -Xms9G -Xmx9G -XX:ReservedCodeCacheSize=256m \
+                -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m \
+                -XX:MaxDirectMemorySize=1G -XX:+PrintGCDetails \
+                -XX:+PrintGCDateStamps  -Xloggc:gc.log \
+                -XX:+UseConcMarkSweepGC -XX:NewRatio=2 \
+                -XX:+CMSScavengeBeforeRemark -XX:+ParallelRefProcEnabled \
+                -XX:+HeapDumpOnOutOfMemoryError \
+                -XX:+UseCMSInitiatingOccupancyOnly  -XX:CMSInitiatingOccupancyFraction=70 \
+                -jar FullNode.jar -c main_net_config.conf >> start.log 2>&1 &
    ```
-* **Running a super representative node for mainnet**  
-  Adding the `--witness` parameter to the startup command, full node will run as a super representative node. The super representative node supports all the functions of the full node and also supports block production. Before running, make sure you have a super representative account and get votes from others，once the number of obtained votes ranks in the top 27, your super representative node will participate in block production.
+## Running a super representative node for mainnet
+Adding the `--witness` parameter to the startup command, full node will run as a super representative node. The super representative node supports all the functions of the full node and also supports block production. Before running, make sure you have a super representative account and get votes from others，once the number of obtained votes ranks in the top 27, your super representative node will participate in block production.
 
-  Fill in the private key of super representative address into the `localwitness` list in the `main_net_config.conf`, here is an example:
+Fill in the private key of super representative address into the `localwitness` list in the `main_net_config.conf`, here is an example:
    ```
     localwitness = [
         650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812
     ]
    ```
 
-  then run the following command to start the node:
-    ```bash
-    $ java -jar FullNode.jar --witness -c main_net_config.conf
-    ```
+then run the following command to start the node:
+  ```bash
+  $ nohup java -Xms9G -Xmx9G -XX:ReservedCodeCacheSize=256m \
+               -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m \
+               -XX:MaxDirectMemorySize=1G -XX:+PrintGCDetails \
+               -XX:+PrintGCDateStamps  -Xloggc:gc.log \
+               -XX:+UseConcMarkSweepGC -XX:NewRatio=2 \
+               -XX:+CMSScavengeBeforeRemark -XX:+ParallelRefProcEnabled \
+               -XX:+HeapDumpOnOutOfMemoryError \
+               -XX:+UseCMSInitiatingOccupancyOnly  -XX:CMSInitiatingOccupancyFraction=70 \
+               -jar FullNode.jar --witness -c main_net_config.conf >> start.log 2>&1 &
+   ```
 
 ## Quick Start Tool
 An easier way to build and run java-tron is to use `start.sh`, `start.sh` is a quick start script written in shell language, you can use it to build and run java-tron quickly and easily.
@@ -116,6 +141,19 @@ Here are some common use cases of the scripting tool
 
 For more details, please refer to the tool [guide](./shell.md).
 
+## Run inside Docker container
+
+One of the quickest ways to get `java-tron` up and running on your machine is by using Docker:
+```shell
+$ docker run -d --name="java-tron" \
+             -v /your_path/output-directory:/java-tron/output-directory \
+             -v /your_path/logs:/java-tron/logs \
+             -p 8090:8090 -p 18888:18888 -p 50051:50051 \
+             tronprotocol/java-tron \
+             -c /java-tron/config/main_net_config.conf
+```
+
+This will mount the `output-directory` and `logs` directories on the host, the docker.sh tool can also be used to simplify the use of docker, see more [here](docker/docker.md).
 
 # Community
 [Tron Developers & SRs](https://discord.gg/hqKvyAM) is Tron's official Discord channel. Feel free to join this channel if you have any questions.
@@ -125,9 +163,8 @@ For more details, please refer to the tool [guide](./shell.md).
 [tronprotocol/allcoredev](https://gitter.im/tronprotocol/allcoredev) is the official Gitter channel for developers.
 
 # Contribution
-If you'd like to contribute to java-tron, please read the following instructions.
+Thank you for considering to help out with the source code! If you'd like to contribute to java-tron, please see the [Contribution Guide](./CONTRIBUTING.md) for more details.
 
-- [Contribution](./CONTRIBUTING.md)
 
 # Resources
 * [Medium](https://medium.com/@coredevs) java-tron's official technical articles are published there.
@@ -140,3 +177,11 @@ If you'd like to contribute to java-tron, please read the following instructions
 
 # License
 java-tron is released under the [LGPLv3 license](https://github.com/tronprotocol/java-tron/blob/master/LICENSE).
+
+
+
+The minimum hardware requirements are `CPU with 8 cores`,`16GB RAM` and `1TB free storage space` to sync the Mainnet, the recommended hardware requirements:
+* CPU with 16+ cores(32+ cores for a super representative)
+* 32+ GB RAM(64+ GB for a super representative)
+* High Performance SSD with at least 1.5TB free space
+* 100+ MB/s download Internet service

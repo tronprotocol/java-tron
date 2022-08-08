@@ -1,5 +1,6 @@
 package org.tron.common.overlay.server;
 
+import com.google.protobuf.ByteString;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
@@ -12,6 +13,7 @@ import java.net.SocketAddress;
 import java.util.concurrent.TimeUnit;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -59,8 +61,12 @@ public class Channel {
   private InetSocketAddress inetSocketAddress;
   private Node node;
   private long startTime;
+  @Getter
   private TronState tronState = TronState.INIT;
   private boolean isActive;
+  @Getter
+  @Setter
+  private ByteString address;
 
   private volatile boolean isDisconnect;
 

@@ -6,6 +6,7 @@ import static org.tron.protos.Protocol.ReasonCode.DUPLICATE_PEER;
 import static org.tron.protos.Protocol.ReasonCode.FORKED;
 import static org.tron.protos.Protocol.ReasonCode.INCOMPATIBLE_CHAIN;
 import static org.tron.protos.Protocol.ReasonCode.INCOMPATIBLE_VERSION;
+import static org.tron.protos.Protocol.ReasonCode.LIGHT_NODE_SYNC_FAIL;
 
 import com.google.common.cache.CacheBuilder;
 import io.netty.buffer.ByteBuf;
@@ -22,6 +23,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Assert;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.overlay.discover.node.Node;
+import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.DisconnectMessage;
 import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.message.Message;
@@ -29,14 +31,17 @@ import org.tron.common.overlay.message.P2pMessage;
 import org.tron.common.overlay.message.P2pMessageFactory;
 import org.tron.common.overlay.server.ChannelManager;
 import org.tron.common.overlay.server.SyncPool;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.peer.PeerConnection;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Block;
 
 @Slf4j
@@ -62,18 +67,20 @@ public class TcpTest {
 
   public void normalTest() throws InterruptedException {
     Channel channel = BaseNet.connect(new HandshakeHandler(TestType.normal));
-    HelloMessage message = new HelloMessage(node, System.currentTimeMillis(),
-        chainBaseManager.getGenesisBlockId(), chainBaseManager.getSolidBlockId(),
-        chainBaseManager.getHeadBlockId());
+    HelloMessage message = new HelloMessage(node, System.currentTimeMillis(), chainBaseManager);
     sendMessage(channel, message);
     validResultCloseConnect(channel);
   }
 
   public void errorGenesisBlockIdTest() throws InterruptedException {
     Channel channel = BaseNet.connect(new HandshakeHandler(TestType.errorGenesisBlock));
-    BlockId genesisBlockId = new BlockId();
-    HelloMessage message = new HelloMessage(node, System.currentTimeMillis(), genesisBlockId,
-        chainBaseManager.getSolidBlockId(), chainBaseManager.getHeadBlockId());
+    HelloMessage message = new HelloMessage(node, System.currentTimeMillis(), chainBaseManager);
+    Protocol.HelloMessage.BlockId genesisBlockId = Protocol.HelloMessage.BlockId.newBuilder()
+            .setHash(new BlockId().getByteString())
+            .setNumber(new BlockId().getNum())
+            .build();
+    message.setHelloMessage(
+            message.getHelloMessage().toBuilder().setGenesisBlockId(genesisBlockId).build());
     sendMessage(channel, message);
     validResultCloseConnect(channel);
   }
@@ -81,9 +88,7 @@ public class TcpTest {
   public void errorVersionTest() throws InterruptedException {
     Channel channel = BaseNet.connect(new HandshakeHandler(TestType.errorVersion));
     Args.getInstance().setNodeP2pVersion(1);
-    HelloMessage message = new HelloMessage(node, System.currentTimeMillis(),
-        chainBaseManager.getGenesisBlockId(), chainBaseManager.getSolidBlockId(),
-        chainBaseManager.getHeadBlockId());
+    HelloMessage message = new HelloMessage(node, System.currentTimeMillis(), chainBaseManager);
     Args.getInstance().setNodeP2pVersion(2);
     sendMessage(channel, message);
     validResultCloseConnect(channel);
@@ -91,17 +96,20 @@ public class TcpTest {
 
   public void errorSolidBlockIdTest() throws InterruptedException {
     Channel channel = BaseNet.connect(new HandshakeHandler(TestType.errorSolid));
-    HelloMessage message = new HelloMessage(node, System.currentTimeMillis(),
-        chainBaseManager.getGenesisBlockId(), new BlockId(), chainBaseManager.getHeadBlockId());
+    HelloMessage message = new HelloMessage(node, System.currentTimeMillis(), chainBaseManager);
+    Protocol.HelloMessage.BlockId sBlockId = Protocol.HelloMessage.BlockId.newBuilder()
+            .setHash(new BlockId().getByteString())
+            .setNumber(new BlockId().getNum())
+            .build();
+    message.setHelloMessage(
+            message.getHelloMessage().toBuilder().setSolidBlockId(sBlockId).build());
     sendMessage(channel, message);
     validResultCloseConnect(channel);
   }
 
   public void repeatConnectTest() throws InterruptedException {
     Channel channel = BaseNet.connect(new HandshakeHandler(TestType.normal));
-    HelloMessage message = new HelloMessage(node, System.currentTimeMillis(),
-        chainBaseManager.getGenesisBlockId(), chainBaseManager.getSolidBlockId(),
-        chainBaseManager.getHeadBlockId());
+    HelloMessage message = new HelloMessage(node, System.currentTimeMillis(), chainBaseManager);
     sendMessage(channel, message);
     validResultUnCloseConnect();
     Channel repeatChannel = BaseNet.connect(new HandshakeHandler(TestType.repeatConnect));
@@ -126,9 +134,7 @@ public class TcpTest {
 
   public void errorMsgTest() throws InterruptedException {
     Channel channel = BaseNet.connect(new HandshakeHandler(TestType.normal));
-    HelloMessage message = new HelloMessage(node, System.currentTimeMillis(),
-        chainBaseManager.getGenesisBlockId(), chainBaseManager.getSolidBlockId(),
-        chainBaseManager.getHeadBlockId());
+    HelloMessage message = new HelloMessage(node, System.currentTimeMillis(), chainBaseManager);
     sendMessage(channel, message);
     validResultUnCloseConnect();
     List<PeerConnection> beforeActivePeers =
@@ -151,6 +157,15 @@ public class TcpTest {
     logger.info("afterSize : {}", afterSize);
     Assert.assertEquals(beforeSize, afterSize + 1);
     clearConnect(channel);
+  }
+
+  public void errorLowestBlockNumTest() throws InterruptedException {
+    Channel channel = BaseNet.connect(new HandshakeHandler(TestType.errorLowestBlockNum));
+    HelloMessage message = new HelloMessage(node, System.currentTimeMillis(), chainBaseManager);
+    message.setHelloMessage(
+            message.getHelloMessage().toBuilder().setNodeType(1).setLowestBlockNum(100).build());
+    sendMessage(channel, message);
+    validResultCloseConnect(channel);
   }
 
   private void sendMessage(Channel channel, Message message) {
@@ -219,11 +234,14 @@ public class TcpTest {
     logger.info("begin unHandshake test");
     unHandshakeTest();
     logger.info("begin errorMsg test");
+    errorLowestBlockNumTest();
+    logger.info("begin errorLowestBlockNum test");
     errorMsgTest();
   }
 
   private enum TestType {
-    normal, errorGenesisBlock, errorVersion, errorSolid, repeatConnect
+    normal, errorGenesisBlock, errorVersion, errorSolid,
+    repeatConnect, errorLowestBlockNum
   }
 
   private class HandshakeHandler extends ByteToMessageDecoder {
@@ -261,6 +279,10 @@ public class TcpTest {
         case repeatConnect:
           Assert.assertEquals(msg.getType(), P2P_DISCONNECT);
           Assert.assertEquals(((DisconnectMessage) msg).getReasonCode(), DUPLICATE_PEER);
+          break;
+        case errorLowestBlockNum:
+          Assert.assertEquals(msg.getType(), P2P_DISCONNECT);
+          Assert.assertEquals(((DisconnectMessage) msg).getReasonCode(), LIGHT_NODE_SYNC_FAIL);
           break;
         default:
           break;
