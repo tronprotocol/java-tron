@@ -129,10 +129,16 @@ public class CommonParameter {
   public int nodeChannelReadTimeout;
   @Getter
   @Setter
-  public int nodeMaxActiveNodes;
+  public int maxConnections;
   @Getter
   @Setter
-  public int nodeMaxActiveNodesWithSameIp;
+  public int minConnections;
+  @Getter
+  @Setter
+  public int minActiveConnections;
+  @Getter
+  @Setter
+  public int maxConnectionsWithSameIp;
   @Getter
   @Setter
   public int minParticipationRate;
@@ -284,18 +290,6 @@ public class CommonParameter {
   @Getter
   @Setter
   public List<String> backupMembers;
-  @Getter
-  @Setter
-  public double connectFactor;
-  @Getter
-  @Setter
-  public double activeConnectFactor;
-  @Getter
-  @Setter
-  public double disconnectNumberFactor;
-  @Getter
-  @Setter
-  public double maxConnectNumberFactor;
   @Getter
   @Setter
   public long receiveTcpMinDataLength;

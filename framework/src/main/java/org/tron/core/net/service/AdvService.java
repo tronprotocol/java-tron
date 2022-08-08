@@ -333,13 +333,19 @@ public class AdvService {
     }
 
     public void add(Item id, PeerConnection peer) {
-      if (send.containsKey(peer) && !send.get(peer).containsKey(id.getType())) {
-        send.get(peer).put(id.getType(), new LinkedList<>());
-      } else if (!send.containsKey(peer)) {
-        send.put(peer, new HashMap<>());
-        send.get(peer).put(id.getType(), new LinkedList<>());
+      HashMap<InventoryType, LinkedList<Sha256Hash>> map = send.get(peer);
+      if (map == null) {
+        map = new HashMap<>();
+        send.put(peer, map);
       }
-      send.get(peer).get(id.getType()).offer(id.getHash());
+
+      LinkedList<Sha256Hash> list = map.get(id.getType());
+      if (list == null) {
+        list = new LinkedList<>();
+        map.put(id.getType(), list);
+      }
+
+      list.offer(id.getHash());
     }
 
     public int getSize(PeerConnection peer) {

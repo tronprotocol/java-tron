@@ -151,6 +151,9 @@ public class HttpApiOnPBFTService implements Service {
   @Autowired
   private GetEnergyPricesOnPBFTServlet getEnergyPricesOnPBFTServlet;
 
+  @Autowired
+  private GetBlockOnPBFTServlet getBlockOnPBFTServlet;
+
   @Override
   public void init() {
 
@@ -237,6 +240,8 @@ public class HttpApiOnPBFTService implements Service {
           "/getburntrx");
       context.addServlet(new ServletHolder(getEnergyPricesOnPBFTServlet),
           "/getenergyprices");
+      context.addServlet(new ServletHolder(getBlockOnPBFTServlet),
+          "/getblock");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {

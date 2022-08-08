@@ -17,7 +17,7 @@ public class ContractEventParser {
 
   private static final int DATAWORD_UNIT_SIZE = 32;
 
-  protected static String parseDataBytes(byte[] data, String typeStr, int index) {
+  public static String parseDataBytes(byte[] data, String typeStr, int index) {
     try {
       byte[] startBytes = subBytes(data, index * DATAWORD_UNIT_SIZE, DATAWORD_UNIT_SIZE);
       Type type = basicType(typeStr);

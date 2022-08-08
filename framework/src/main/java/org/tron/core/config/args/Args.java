@@ -14,6 +14,7 @@ import io.grpc.netty.NettyServerBuilder;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -26,6 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -114,14 +116,16 @@ public class Args extends CommonParameter {
     PARAMETER.needSyncCheck = false;
     PARAMETER.nodeDiscoveryEnable = false;
     PARAMETER.nodeDiscoveryPersist = false;
-    PARAMETER.nodeConnectionTimeout = 0;
+    PARAMETER.nodeConnectionTimeout = 2000;
     PARAMETER.activeNodes = Collections.emptyList();
     PARAMETER.passiveNodes = Collections.emptyList();
     PARAMETER.fastForwardNodes = Collections.emptyList();
     PARAMETER.maxFastForwardNum = 3;
     PARAMETER.nodeChannelReadTimeout = 0;
-    PARAMETER.nodeMaxActiveNodes = 30;
-    PARAMETER.nodeMaxActiveNodesWithSameIp = 2;
+    PARAMETER.maxConnections = 30;
+    PARAMETER.minConnections = 8;
+    PARAMETER.minActiveConnections = 3;
+    PARAMETER.maxConnectionsWithSameIp = 2;
     PARAMETER.minParticipationRate = 0;
     PARAMETER.nodeListenPort = 0;
     PARAMETER.nodeDiscoveryBindIp = "";
@@ -156,10 +160,6 @@ public class Args extends CommonParameter {
     PARAMETER.solidityNode = false;
     PARAMETER.trustNodeAddr = "";
     PARAMETER.walletExtensionApi = false;
-    PARAMETER.connectFactor = 0.3;
-    PARAMETER.activeConnectFactor = 0.1;
-    PARAMETER.disconnectNumberFactor = 0.4;
-    PARAMETER.maxConnectNumberFactor = 0.8;
     PARAMETER.receiveTcpMinDataLength = 2048;
     PARAMETER.isOpenFullTcpDisconnect = false;
     PARAMETER.supportConstant = false;
@@ -211,14 +211,32 @@ public class Args extends CommonParameter {
   }
 
   /**
+   * print Version.
+   */
+  private static void printVersion() {
+    Properties properties = new Properties();
+    try {
+      InputStream in = Thread.currentThread()
+          .getContextClassLoader().getResourceAsStream("git.properties");
+      properties.load(in);
+    } catch (IOException e) {
+      logger.error(e.getMessage());
+    }
+    JCommander.getConsole().println("OS : " + System.getProperty("os.name"));
+    JCommander.getConsole().println("JVM : " + System.getProperty("java.vendor") + " "
+        + System.getProperty("java.version") + " " + System.getProperty("os.arch"));
+    JCommander.getConsole().println("Git : " + properties.getProperty("git.commit.id"));
+    JCommander.getConsole().println("Version : " + Version.getVersion());
+    JCommander.getConsole().println("Code : " + Version.VERSION_CODE);
+  }
+
+  /**
    * set parameters.
    */
   public static void setParam(final String[] args, final String confFileName) {
     JCommander.newBuilder().addObject(PARAMETER).build().parse(args);
     if (PARAMETER.version) {
-      JCommander.getConsole()
-          .println(Version.getVersion()
-              + "\n" + Version.VERSION_NAME + "\n" + Version.VERSION_CODE);
+      printVersion();
       exit(0);
     }
 
@@ -388,6 +406,9 @@ public class Args extends CommonParameter {
                 .filter(StringUtils::isNotEmpty)
                 .orElse(Storage.getTransactionHistorySwitchFromConfig(config)));
 
+    PARAMETER.storage.setEstimatedBlockTransactions(
+        Storage.getEstimatedTransactionsFromConfig(config));
+
     PARAMETER.storage.setDefaultDbOptions(config);
     PARAMETER.storage.setPropertyMapFromConfig(config);
 
@@ -428,7 +449,7 @@ public class Args extends CommonParameter {
     PARAMETER.nodeConnectionTimeout =
         config.hasPath(Constant.NODE_CONNECTION_TIMEOUT)
             ? config.getInt(Constant.NODE_CONNECTION_TIMEOUT) * 1000
-            : 0;
+            : 2000;
 
     if (!config.hasPath(Constant.NODE_FETCH_BLOCK_TIMEOUT)) {
       PARAMETER.fetchBlockTimeout = 200;
@@ -445,13 +466,42 @@ public class Args extends CommonParameter {
             ? config.getInt(Constant.NODE_CHANNEL_READ_TIMEOUT)
             : 0;
 
-    PARAMETER.nodeMaxActiveNodes =
-        config.hasPath(Constant.NODE_MAX_ACTIVE_NODES)
-            ? config.getInt(Constant.NODE_MAX_ACTIVE_NODES) : 30;
+    if (config.hasPath(Constant.NODE_MAX_ACTIVE_NODES)) {
+      PARAMETER.maxConnections = config.getInt(Constant.NODE_MAX_ACTIVE_NODES);
+    } else {
+      PARAMETER.maxConnections =
+              config.hasPath(Constant.NODE_MAX_CONNECTIONS)
+                      ? config.getInt(Constant.NODE_MAX_CONNECTIONS) : 30;
+    }
 
-    PARAMETER.nodeMaxActiveNodesWithSameIp =
-        config.hasPath(Constant.NODE_MAX_ACTIVE_NODES_WITH_SAMEIP) ? config
-            .getInt(Constant.NODE_MAX_ACTIVE_NODES_WITH_SAMEIP) : 2;
+    if (config.hasPath(Constant.NODE_MAX_ACTIVE_NODES)
+            && config.hasPath(Constant.NODE_CONNECT_FACTOR)) {
+      PARAMETER.minConnections = (int) (PARAMETER.maxConnections
+              * config.getDouble(Constant.NODE_CONNECT_FACTOR));
+    } else {
+      PARAMETER.minConnections =
+              config.hasPath(Constant.NODE_MIN_CONNECTIONS)
+                      ? config.getInt(Constant.NODE_MIN_CONNECTIONS) : 8;
+    }
+
+    if (config.hasPath(Constant.NODE_MAX_ACTIVE_NODES)
+            && config.hasPath(Constant.NODE_ACTIVE_CONNECT_FACTOR)) {
+      PARAMETER.minActiveConnections = (int) (PARAMETER.maxConnections
+              * config.getDouble(Constant.NODE_ACTIVE_CONNECT_FACTOR));
+    } else {
+      PARAMETER.minActiveConnections =
+              config.hasPath(Constant.NODE_MIN_ACTIVE_CONNECTIONS)
+                      ? config.getInt(Constant.NODE_MIN_ACTIVE_CONNECTIONS) : 3;
+    }
+
+    if (config.hasPath(Constant.NODE_MAX_ACTIVE_NODES_WITH_SAME_IP)) {
+      PARAMETER.maxConnectionsWithSameIp =
+              config.getInt(Constant.NODE_MAX_ACTIVE_NODES_WITH_SAME_IP);
+    } else {
+      PARAMETER.maxConnectionsWithSameIp =
+              config.hasPath(Constant.NODE_MAX_CONNECTIONS_WITH_SAME_IP) ? config
+                      .getInt(Constant.NODE_MAX_CONNECTIONS_WITH_SAME_IP) : 2;
+    }
 
     PARAMETER.minParticipationRate =
         config.hasPath(Constant.NODE_MIN_PARTICIPATION_RATE)
@@ -639,17 +689,6 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.NODE_WALLET_EXTENSION_API)
             && config.getBoolean(Constant.NODE_WALLET_EXTENSION_API);
 
-    PARAMETER.connectFactor =
-        config.hasPath(Constant.NODE_CONNECT_FACTOR)
-            ? config.getDouble(Constant.NODE_CONNECT_FACTOR) : 0.3;
-
-    PARAMETER.activeConnectFactor = config.hasPath(Constant.NODE_ACTIVE_CONNECT_FACTOR)
-        ? config.getDouble(Constant.NODE_ACTIVE_CONNECT_FACTOR) : 0.1;
-
-    PARAMETER.disconnectNumberFactor = config.hasPath(Constant.NODE_DISCONNECT_NUMBER_FACTOR)
-        ? config.getDouble(Constant.NODE_DISCONNECT_NUMBER_FACTOR) : 0.4;
-    PARAMETER.maxConnectNumberFactor = config.hasPath(Constant.NODE_MAX_CONNECT_NUMBER_FACTOR)
-        ? config.getDouble(Constant.NODE_MAX_CONNECT_NUMBER_FACTOR) : 0.8;
     PARAMETER.receiveTcpMinDataLength = config.hasPath(Constant.NODE_RECEIVE_TCP_MIN_DATA_LENGTH)
         ? config.getLong(Constant.NODE_RECEIVE_TCP_MIN_DATA_LENGTH) : 2048;
     PARAMETER.isOpenFullTcpDisconnect = config.hasPath(Constant.NODE_IS_OPEN_FULL_TCP_DISCONNECT)
@@ -1216,8 +1255,10 @@ public class Args extends CommonParameter {
     logger.info("FastForward node size: {}", parameter.getFastForwardNodes().size());
     logger.info("FastForward node number: {}", parameter.getMaxFastForwardNum());
     logger.info("Seed node size: {}", parameter.getSeedNode().getIpList().size());
-    logger.info("Max connection: {}", parameter.getNodeMaxActiveNodes());
-    logger.info("Max connection with same IP: {}", parameter.getNodeMaxActiveNodesWithSameIp());
+    logger.info("Max connection: {}", parameter.getMaxConnections());
+    logger.info("Min connection: {}", parameter.getMinConnections());
+    logger.info("Min active connection: {}", parameter.getMinActiveConnections());
+    logger.info("Max connection with same IP: {}", parameter.getMaxConnectionsWithSameIp());
     logger.info("Solidity threads: {}", parameter.getSolidityThreads());
     logger.info("Trx reference block: {}", parameter.getTrxReferenceBlock());
     logger.info("************************ Backup config ************************");

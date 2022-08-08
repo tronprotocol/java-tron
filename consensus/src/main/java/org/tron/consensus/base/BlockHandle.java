@@ -11,4 +11,6 @@ public interface BlockHandle {
 
   BlockCapsule produce(Miner miner, long blockTime, long timeout);
 
+  void setBlockWaitLock(boolean flag);
+
 }

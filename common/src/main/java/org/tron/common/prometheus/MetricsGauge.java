@@ -18,6 +18,7 @@ class MetricsGauge {
     init(MetricKeys.Gauge.PEERS, "tron peers.size .", "type");
     init(MetricKeys.Gauge.DB_SIZE_BYTES, "tron  db  size .", "type", "db", "level");
     init(MetricKeys.Gauge.DB_SST_LEVEL, "tron  db  files .", "type", "db", "level");
+    init(MetricKeys.Gauge.TX_CACHE, "tron tx cache info.", "type");
   }
 
   private MetricsGauge() {
