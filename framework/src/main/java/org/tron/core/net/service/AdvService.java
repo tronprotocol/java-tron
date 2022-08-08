@@ -57,8 +57,10 @@ public class AdvService {
 
   private ConcurrentHashMap<Item, Long> invToSpread = new ConcurrentHashMap<>();
 
+  private long blockCacheTimeout = Args.getInstance().getBlockCacheTimeout();
   private Cache<Item, Long> invToFetchCache = CacheBuilder.newBuilder()
-      .maximumSize(MAX_INV_TO_FETCH_CACHE_SIZE).expireAfterWrite(1, TimeUnit.HOURS)
+      .maximumSize(MAX_INV_TO_FETCH_CACHE_SIZE)
+      .expireAfterWrite(blockCacheTimeout, TimeUnit.MINUTES)
       .recordStats().build();
 
   private Cache<Item, Message> trxCache = CacheBuilder.newBuilder()
