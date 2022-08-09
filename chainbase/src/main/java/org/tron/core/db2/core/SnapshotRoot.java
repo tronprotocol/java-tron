@@ -101,7 +101,7 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
     }
     if (isBlockDB) {
       long[] tmp = {0l};
-      batch.keySet().stream().sorted().forEach(key -> {
+      batch.keySet().forEach(key -> {
         BlockCapsule.BlockId blockId
                 = new BlockCapsule.BlockId(Sha256Hash.wrap(key.getBytes()));
         logger.info("### flush block:{}", blockId.getString());
