@@ -1,8 +1,12 @@
 package org.tron.core.store;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.protobuf.ByteString;
 import com.typesafe.config.ConfigObject;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -20,11 +24,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
 
+@Slf4j(topic = "DB")
 @Component
 public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
   private static Map<String, byte[]> assertsAddress = new HashMap<>(); // key = name , value = address
 
+  private Cache<String, Long> cache = CacheBuilder.newBuilder()
+          .maximumSize(1000).initialCapacity(1000).build();
+  
   @Autowired
   private AccountStateCallBackUtils accountStateCallBackUtils;
 
@@ -78,6 +86,26 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
         }
       }
     }
+
+
+    String sKey = Hex.toHexString(key);
+    Long vv = cache.getIfPresent(sKey);
+    if (vv == null || vv != item.getBalance()) {
+      logger.info("### account address:{}, balance:{}", sKey, item.getBalance());
+      cache.put(sKey, item.getBalance());
+    }
+
+    String asKey = Hex.toHexString(key) + "z";
+    Long[] b = {0l};
+    item.getInstance().getAssetV2Map().values().forEach(v -> b[0] += v);
+    Long assetValue = cache.getIfPresent(asKey);
+    if (assetValue == null || assetValue != b[0]) {
+      logger.info("### account asset address:{}, total:{}, assets:{}",
+              sKey, b[0], item.getAssetMapV2());
+      cache.put(asKey, b[0]);
+    }
+
+
     super.put(key, item);
     accountStateCallBackUtils.accountCallBack(key, item);
   }

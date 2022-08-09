@@ -1092,6 +1092,7 @@ public class Manager {
       ReceiptCheckErrException, VMIllegalException, ZksnarkException, EventBloomException {
     setBlockWaitLock(true);
     try {
+      logger.info("### block begin:{}", block.getBlockId().getString());
       synchronized (this) {
         Metrics.histogramObserve(blockedTimer.get());
         blockedTimer.remove();
@@ -1257,6 +1258,7 @@ public class Manager {
         Metrics.histogramObserve(timer);
       }
     } finally {
+      logger.info("### block end:{}", block.getBlockId().getString());
       setBlockWaitLock(false);
     }
   }
@@ -1319,6 +1321,7 @@ public class Manager {
     if (trxCap == null) {
       return null;
     }
+    logger.info("### trx:{}", Hex.toHexString(trxCap.getTransactionId().getBytes()));
     Contract contract = trxCap.getInstance().getRawData().getContract(0);
 
     final Histogram.Timer requestTimer = Metrics.histogramStartTimer(
