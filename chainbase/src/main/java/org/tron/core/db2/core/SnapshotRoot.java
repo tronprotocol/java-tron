@@ -9,25 +9,30 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db2.common.DB;
 import org.tron.core.db2.common.Flusher;
 import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.store.AccountAssetStore;
 
+@Slf4j(topic = "DB")
 public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
 
   @Getter
   private Snapshot solidity;
   private boolean isAccountDB;
-
+  private boolean isBlockDB;
   public SnapshotRoot(DB<byte[], byte[]> db) {
     this.db = db;
     solidity = this;
     isOptimized = "properties".equalsIgnoreCase(db.getDbName());
     isAccountDB = "account".equalsIgnoreCase(db.getDbName());
+    isBlockDB = "block".equalsIgnoreCase(db.getDbName());
   }
 
   private boolean needOptAsset() {
@@ -84,6 +89,7 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
     }
   }
 
+  private long[] maxNum = {0l};
   public void merge(List<Snapshot> snapshots) {
     Map<WrappedByteArray, WrappedByteArray> batch = new HashMap<>();
     for (Snapshot snapshot : snapshots) {
@@ -92,6 +98,21 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
           .map(e -> Maps.immutableEntry(WrappedByteArray.of(e.getKey().getBytes()),
               WrappedByteArray.of(e.getValue().getBytes())))
           .forEach(e -> batch.put(e.getKey(), e.getValue()));
+    }
+    if (isBlockDB) {
+      long[] tmp = {0l};
+      batch.keySet().stream().sorted().forEach(key -> {
+        BlockCapsule.BlockId blockId
+                = new BlockCapsule.BlockId(Sha256Hash.wrap(key.getBytes()));
+        logger.info("### flush block:{}", blockId.getString());
+        if (tmp[0] < blockId.getNum()) {
+          tmp[0] = blockId.getNum();
+        }
+      });
+      if (maxNum[0] != 0 && maxNum[0] + batch.size() != tmp[0]) {
+        logger.info("### error");
+      }
+      maxNum[0] = tmp[0];
     }
     if (needOptAsset()) {
       processAccount(batch);
