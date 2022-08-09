@@ -70,7 +70,7 @@ public class ChannelManager {
   private int maxConnectionsWithSameIp = parameter.getMaxConnectionsWithSameIp();
 
   public void init() {
-    if (this.parameter.getNodeListenPort() > 0) {
+    if (this.parameter.getNodeListenPort() > 0 && !this.parameter.isSolidityNode()) {
       new Thread(() -> peerServer.start(Args.getInstance().getNodeListenPort()),
           "PeerServerThread").start();
     }
