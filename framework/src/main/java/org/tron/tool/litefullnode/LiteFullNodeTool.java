@@ -489,12 +489,15 @@ public class LiteFullNodeTool {
   private void deleteSnapshotFlag(String databaseDir) throws IOException, RocksDBException {
     logger.info("-- delete the info file to identify this node is a real fullnode.");
     Files.delete(Paths.get(databaseDir, INFO_FILE_NAME));
+    DBInterface destBlockIndexDb = DbTool.getDB(databaseDir, BLOCK_INDEX_DB_NAME);
+    if (destBlockIndexDb.get(ByteArray.fromLong(1)) != null) {
+      DBInterface destCommonDb = DbTool.getDB(databaseDir, COMMON_DB_NAME);
+      destCommonDb.delete(DB_KEY_NODE_TYPE);
+      destCommonDb.delete(DB_KEY_LOWEST_BLOCK_NUM);
+      logger.info("-- deleted node_type and lowest_block_num  from  "
+          + "common to identify this node is a real fullnode.");
+    }
 
-    DBInterface destCommonDb = DbTool.getDB(databaseDir, COMMON_DB_NAME);
-    destCommonDb.delete(DB_KEY_NODE_TYPE);
-    destCommonDb.delete(DB_KEY_LOWEST_BLOCK_NUM);
-    logger.info("-- deleted node_type and lowest_block_num  from  "
-        + "common to identify this node is a real fullnode.");
   }
 
   private void run(Args argv) {
