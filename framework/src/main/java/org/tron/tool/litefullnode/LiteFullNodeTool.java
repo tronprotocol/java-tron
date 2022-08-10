@@ -487,7 +487,7 @@ public class LiteFullNodeTool {
   }
 
   private void deleteSnapshotFlag(String databaseDir) throws IOException, RocksDBException {
-    logger.info("-- delete the info file to identify this node is a real fullnode.");
+    logger.info("-- delete the info file.");
     Files.delete(Paths.get(databaseDir, INFO_FILE_NAME));
     DBInterface destBlockIndexDb = DbTool.getDB(databaseDir, BLOCK_INDEX_DB_NAME);
     if (destBlockIndexDb.get(ByteArray.fromLong(1)) != null) {
