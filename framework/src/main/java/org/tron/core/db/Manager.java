@@ -1360,23 +1360,23 @@ public class Manager {
 
     if (Objects.nonNull(blockCap)) {
       trace.setResult();
-      if (trace.checkNeedRetry()) {
-        String txId = Hex.toHexString(trxCap.getTransactionId().getBytes());
-        logger.info("Retry for tx id: {}", txId);
-        trace.init(blockCap, eventPluginLoaded);
-        trace.checkIsConstant();
-        trace.exec();
-        trace.setResult();
-        logger.info("Retry result when push:{}, for tx id: {}, tx resultCode in receipt: {}",
-            blockCap.hasWitnessSignature(), txId, trace.getReceipt().getResult());
-      }
       if (blockCap.hasWitnessSignature()) {
+        if (trace.checkNeedRetry()) {
+          String txId = Hex.toHexString(trxCap.getTransactionId().getBytes());
+          logger.info("Retry for tx id: {}", txId);
+          trace.init(blockCap, eventPluginLoaded);
+          trace.checkIsConstant();
+          trace.exec();
+          trace.setResult();
+          logger.info("Retry result for tx id: {}, tx resultCode in receipt: {}",
+              txId, trace.getReceipt().getResult());
+        }
         trace.check();
       }
     }
 
     trace.finalization();
-    if (getDynamicPropertiesStore().supportVM()) {
+    if (Objects.nonNull(blockCap) && getDynamicPropertiesStore().supportVM()) {
       trxCap.setResult(trace.getTransactionContext());
     }
     chainBaseManager.getTransactionStore().put(trxCap.getTransactionId().getBytes(), trxCap);
