@@ -311,4 +311,6 @@ public class Constant {
   public static final String NODE_SHUTDOWN_BLOCK_TIME = "node.shutdown.BlockTime";
   public static final String NODE_SHUTDOWN_BLOCK_HEIGHT = "node.shutdown.BlockHeight";
   public static final String NODE_SHUTDOWN_BLOCK_COUNT = "node.shutdown.BlockCount";
+
+  public static final String BLOCK_CACHE_TIMEOUT = "node.blockCacheTimeout";
 }
