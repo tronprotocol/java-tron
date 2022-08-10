@@ -260,8 +260,8 @@ public class TransactionTrace {
     if (!needVM()) {
       return false;
     }
-    return trx.getContractRet() != contractResult.OUT_OF_TIME && receipt.getResult()
-        == contractResult.OUT_OF_TIME;
+    return (trx.getPendingResult()!= contractResult.OUT_OF_TIME || trx.getContractRet() != contractResult.OUT_OF_TIME)
+            && receipt.getResult() == contractResult.OUT_OF_TIME;
   }
 
   public void check() throws ReceiptCheckErrException {

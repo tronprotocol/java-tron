@@ -106,6 +106,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   @Setter
   private long order;
 
+  @Getter
+  @Setter
+  private contractResult pendingResult = contractResult.DEFAULT;
+
   /**
    * constructor TransactionCapsule.
    */
@@ -780,5 +784,11 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     } catch (InvalidProtocolBufferException e) {
       return null;
     }
+  }
+
+  public TransactionCapsule clone() {
+    TransactionCapsule capsule = new TransactionCapsule(this.transaction);
+    capsule.resetResult();
+    return capsule;
   }
 }

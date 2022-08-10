@@ -869,7 +869,9 @@ public class Manager {
       khaosDb.pop();
       revokingStore.fastPop();
       logger.info("end to erase block:" + oldHeadBlock);
-      poppedTransactions.addAll(oldHeadBlock.getTransactions());
+      poppedTransactions.addAll(oldHeadBlock.getTransactions().stream()
+              .map(TransactionCapsule::clone)
+              .collect(Collectors.toList()));
       Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, oldHeadBlock.getTransactions().size(),
           MetricLabels.Gauge.QUEUE_POPPED);
 
@@ -1377,7 +1379,11 @@ public class Manager {
 
     trace.finalization();
     if (getDynamicPropertiesStore().supportVM()) {
-      trxCap.setResult(trace.getTransactionContext());
+     if (Objects.nonNull(blockCap))  {
+       trxCap.setResult(trace.getTransactionContext());
+     } else {
+       trxCap.setPendingResult(trace.getTransactionContext().getProgramResult().getResultCode());
+     }
     }
     chainBaseManager.getTransactionStore().put(trxCap.getTransactionId().getBytes(), trxCap);
 
