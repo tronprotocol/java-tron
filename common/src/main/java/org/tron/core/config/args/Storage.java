@@ -79,7 +79,7 @@ public class Storage {
   private static final String DEFAULT_DB_DIRECTORY = "database";
   private static final String DEFAULT_INDEX_DIRECTORY = "index";
   private static final String DEFAULT_INDEX_SWITCH = "on";
-  private static final int DEFAULT_ESTIMATED_TRANSACTIONS = 500;
+  private static final int DEFAULT_ESTIMATED_TRANSACTIONS = 1000;
   private Config storage;
 
   /**
