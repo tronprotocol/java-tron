@@ -869,7 +869,8 @@ public class Manager {
       khaosDb.pop();
       revokingStore.fastPop();
       logger.info("end to erase block:" + oldHeadBlock);
-      poppedTransactions.addAll(oldHeadBlock.getTransactions());
+      oldHeadBlock.getTransactions().forEach(tc ->
+          poppedTransactions.add(new TransactionCapsule(tc.getInstance())));
       Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, oldHeadBlock.getTransactions().size(),
           MetricLabels.Gauge.QUEUE_POPPED);
 
