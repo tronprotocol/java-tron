@@ -694,7 +694,7 @@ public class Wallet {
   }
 
   public Block getByJsonBlockId(String id) throws JsonRpcInvalidParamsException {
-    if (EARLIEST_STR.equalsIgnoreCase(id)) {
+    if (EARLIEST_STR.equalsIgnoreCase(id) || id.equals("0x0")) {
       return getBlockByNum(0);
     } else if ("latest".equalsIgnoreCase(id)) {
       return getNowBlock();
