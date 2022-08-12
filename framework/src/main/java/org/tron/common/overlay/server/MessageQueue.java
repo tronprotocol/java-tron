@@ -155,7 +155,7 @@ public class MessageQueue {
   public void close() {
     sendMsgFlag = false;
     if (sendTask != null && !sendTask.isCancelled()) {
-      sendTask.cancel(false);
+      sendTask.cancel(true);
       sendTask = null;
     }
     if (sendMsgThread != null) {
