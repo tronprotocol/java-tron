@@ -217,6 +217,11 @@ public class SyncPool {
 
   public void close() {
     try {
+      activePeers.forEach(p -> {
+        if (!p.isDisconnect()) {
+          p.close();
+        }
+      });
       poolLoopExecutor.shutdownNow();
       logExecutor.shutdownNow();
     } catch (Exception e) {
