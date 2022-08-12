@@ -23,6 +23,7 @@ import org.tron.common.utils.Pair;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.NetConstants;
+import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.net.TronNetDelegate;
@@ -48,8 +49,9 @@ public class SyncService {
 
   private Map<BlockMessage, PeerConnection> blockJustReceived = new ConcurrentHashMap<>();
 
+  private long blockCacheTimeout = Args.getInstance().getBlockCacheTimeout();
   private Cache<BlockId, Long> requestBlockIds = CacheBuilder.newBuilder().maximumSize(10_000)
-      .expireAfterWrite(1, TimeUnit.HOURS).initialCapacity(10_000)
+      .expireAfterWrite(blockCacheTimeout, TimeUnit.MINUTES).initialCapacity(10_000)
       .recordStats().build();
 
   private ScheduledExecutorService fetchExecutor = Executors.newSingleThreadScheduledExecutor();

@@ -207,7 +207,7 @@ public class Args extends CommonParameter {
     PARAMETER.shutdownBlockTime = null;
     PARAMETER.shutdownBlockHeight = -1;
     PARAMETER.shutdownBlockCount = -1;
-
+    PARAMETER.blockCacheTimeout = 60;
   }
 
   /**
@@ -923,6 +923,10 @@ public class Args extends CommonParameter {
 
     if (config.hasPath(Constant.NODE_SHUTDOWN_BLOCK_COUNT)) {
       PARAMETER.shutdownBlockCount = config.getLong(Constant.NODE_SHUTDOWN_BLOCK_COUNT);
+    }
+
+    if (config.hasPath(Constant.BLOCK_CACHE_TIMEOUT)) {
+      PARAMETER.blockCacheTimeout = config.getLong(Constant.BLOCK_CACHE_TIMEOUT);
     }
 
     logConfig();

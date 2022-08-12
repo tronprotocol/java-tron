@@ -59,7 +59,8 @@ public class DiscoverServer {
   @Autowired
   public DiscoverServer(final NodeManager nodeManager) {
     this.nodeManager = nodeManager;
-    if (parameter.isNodeDiscoveryEnable() && !parameter.isFastForward()) {
+    if (parameter.isNodeDiscoveryEnable() && !parameter.isFastForward()
+            && !parameter.isSolidityNode()) {
       if (port == 0) {
         logger.error("Discovery can't be started while listen port == 0");
       } else {

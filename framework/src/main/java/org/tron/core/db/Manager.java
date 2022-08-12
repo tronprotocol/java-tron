@@ -869,7 +869,8 @@ public class Manager {
       khaosDb.pop();
       revokingStore.fastPop();
       logger.info("end to erase block:" + oldHeadBlock);
-      poppedTransactions.addAll(oldHeadBlock.getTransactions());
+      oldHeadBlock.getTransactions().forEach(tc ->
+          poppedTransactions.add(new TransactionCapsule(tc.getInstance())));
       Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, oldHeadBlock.getTransactions().size(),
           MetricLabels.Gauge.QUEUE_POPPED);
 
@@ -2279,13 +2280,22 @@ public class Manager {
   private void initLiteNode() {
     // When using bloom filter for transaction de-duplication,
     // it is possible to use trans for secondary confirmation.
-    // Init trans db for liteNode,
+    // Init trans db for liteNode if needed.
     long headNum = chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     long recentBlockCount = chainBaseManager.getRecentBlockStore().size();
     long recentBlockStart = headNum - recentBlockCount + 1;
-    try {
-      chainBaseManager.getBlockByNum(recentBlockStart);
-    } catch (ItemNotFoundException | BadItemException e) {
+    boolean needInit = false;
+    if (recentBlockStart == 0) {
+      needInit = true;
+    } else {
+      try {
+        chainBaseManager.getBlockByNum(recentBlockStart);
+      } catch (ItemNotFoundException | BadItemException e) {
+        needInit = true;
+      }
+    }
+
+    if (needInit) {
       // copy transaction from recent-transaction to trans
       logger.info("load trans for lite node.");
 
