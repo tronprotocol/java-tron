@@ -45,11 +45,7 @@ public class EventQuery002 {
   byte[] event001Address = ecKey1.getAddress();
   String event001Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.

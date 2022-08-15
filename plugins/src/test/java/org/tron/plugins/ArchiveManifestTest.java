@@ -16,8 +16,8 @@ import java.util.Properties;
 import java.util.UUID;
 
 import lombok.extern.slf4j.Slf4j;
-import org.iq80.leveldb.DB;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -58,27 +58,27 @@ public class ArchiveManifestTest {
   }
 
   @Test
-  public void testMain() {
+  public void testRun() {
     String[] args = new String[] { "-d", OUTPUT_DIRECTORY };
-    ArchiveManifest.main(args);
+    Assert.assertEquals(0, ArchiveManifest.run(args));
   }
 
   @Test
   public void testHelp() {
     String[] args = new String[] {"-h"};
-    ArchiveManifest.main(args);
+    Assert.assertEquals(0, ArchiveManifest.run(args));
   }
 
   @Test
   public void testMaxManifest() {
     String[] args = new String[] {"-d", OUTPUT_DIRECTORY, "-m", "128"};
-    ArchiveManifest.main(args);
+    Assert.assertEquals(0, ArchiveManifest.run(args));
   }
 
   @Test
   public void testNotExist() {
     String[] args = new String[] {"-d", OUTPUT_DIRECTORY + File.separator + UUID.randomUUID()};
-    ArchiveManifest.main(args);
+    Assert.assertEquals(404, ArchiveManifest.run(args));
   }
 
   @Test
@@ -87,7 +87,7 @@ public class ArchiveManifestTest {
     file.mkdirs();
     file.deleteOnExit();
     String[] args = new String[] {"-d", file.toString()};
-    ArchiveManifest.main(args);
+    Assert.assertEquals(0, ArchiveManifest.run(args));
   }
 
   private static void writeProperty(String filename, String key, String value) throws IOException {

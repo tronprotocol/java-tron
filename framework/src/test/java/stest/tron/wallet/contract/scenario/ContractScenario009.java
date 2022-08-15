@@ -40,11 +40,7 @@ public class ContractScenario009 {
   private String compilerVersion = Configuration.getByPath("testng.conf")
       .getString("defaultParameter.solidityCompilerVersion");
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.

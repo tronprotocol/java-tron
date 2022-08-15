@@ -3,8 +3,6 @@ package org.tron.plugins;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.iq80.leveldb.impl.Iq80DBFactory.factory;
 
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -37,6 +35,8 @@ import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.Options;
 import org.iq80.leveldb.impl.Filename;
+import picocli.CommandLine;
+import picocli.CommandLine.Option;
 
 @Slf4j(topic = "archive")
 /*
@@ -55,15 +55,6 @@ public class ArchiveManifest implements Callable<Boolean> {
 
 
   private static final int CPUS  = Runtime.getRuntime().availableProcessors();
-
-  private static final ThreadPoolExecutor EXECUTOR = new ThreadPoolExecutor(
-      CPUS, 16 * CPUS, 1, TimeUnit.MINUTES,
-      new ArrayBlockingQueue<>(CPUS, true), Executors.defaultThreadFactory(),
-      new ThreadPoolExecutor.CallerRunsPolicy());
-
-  static {
-    EXECUTOR.allowCoreThreadTimeOut(true);
-  }
 
   public ArchiveManifest(String src, String name, int maxManifestSize, int maxBatchSize) {
     this.name = name;
@@ -96,20 +87,25 @@ public class ArchiveManifest implements Callable<Boolean> {
   }
 
   public static void main(String[] args) {
+    int code = run(args);
+    logger.info("exit code {}.", code);
+    System.out.printf("exit code %d.\n", code);
+    System.exit(code);
+  }
+
+  public static int run(String[] args) {
     Args parameters = new Args();
-    JCommander jc = JCommander.newBuilder()
-        .addObject(parameters)
-        .build();
-    jc.parse(args);
+    CommandLine commandLine = new CommandLine(parameters);
+    commandLine.parseArgs(args);
     if (parameters.help) {
-      jc.usage();
-      return;
+      commandLine.usage(System.out);
+      return 0;
     }
 
     File dbDirectory = new File(parameters.databaseDirectory);
     if (!dbDirectory.exists()) {
       logger.info("Directory {} does not exist.", parameters.databaseDirectory);
-      return;
+      return 404;
     }
 
     List<File> files = Arrays.stream(Objects.requireNonNull(dbDirectory.listFiles()))
@@ -118,12 +114,19 @@ public class ArchiveManifest implements Callable<Boolean> {
 
     if (files.isEmpty()) {
       logger.info("Directory {} does not contain any database.", parameters.databaseDirectory);
-      return;
+      return 0;
     }
     final long time = System.currentTimeMillis();
     final List<Future<Boolean>> res = new ArrayList<>();
+    final ThreadPoolExecutor executor = new ThreadPoolExecutor(
+        CPUS, 16 * CPUS, 1, TimeUnit.MINUTES,
+        new ArrayBlockingQueue<>(CPUS, true), Executors.defaultThreadFactory(),
+        new ThreadPoolExecutor.CallerRunsPolicy());
+
+    executor.allowCoreThreadTimeOut(true);
+
     files.forEach(f -> res.add(
-        EXECUTOR.submit(new ArchiveManifest(parameters.databaseDirectory, f.getName(),
+        executor.submit(new ArchiveManifest(parameters.databaseDirectory, f.getName(),
             parameters.maxManifestSize, parameters.maxBatchSize))));
     int fails = res.size();
 
@@ -140,7 +143,7 @@ public class ArchiveManifest implements Callable<Boolean> {
       }
     }
 
-    EXECUTOR.shutdown();
+    executor.shutdown();
     logger.info("DatabaseDirectory:{}, maxManifestSize:{}, maxBatchSize:{},"
             + "database reopen use {} seconds total.",
         parameters.databaseDirectory, parameters.maxManifestSize, parameters.maxBatchSize,
@@ -148,7 +151,7 @@ public class ArchiveManifest implements Callable<Boolean> {
     if (fails > 0) {
       logger.error("Failed!!!!!!!!!!!!!!!!!!!!!!!! size:{}", fails);
     }
-    System.exit(fails);
+    return fails;
   }
 
   public void open() throws IOException {
@@ -242,19 +245,23 @@ public class ArchiveManifest implements Callable<Boolean> {
   }
 
   public static class Args {
-    @Parameter
-    private List<String> parameters = new ArrayList<>();
 
-    @Parameter(names = {"-d", "--database-directory"}, description = "java-tron database directory")
-    private  String databaseDirectory = "output-directory/database";
+    @Option(names = {"-d", "--database-directory"},
+        defaultValue = "output-directory/database",
+        description = "java-tron database directory. Default: ${DEFAULT-VALUE}")
+    private  String databaseDirectory;
 
-    @Parameter(names = {"-b", "--batch-size" }, description = "deal manifest batch size")
-    private  int maxBatchSize = 80_000;
+    @Option(names = {"-b", "--batch-size" },
+        defaultValue = "80000",
+        description = "deal manifest batch size. Default: ${DEFAULT-VALUE}")
+    private  int maxBatchSize;
 
-    @Parameter(names = {"-m", "--manifest-size" }, description = "manifest  min size(M) to archive")
-    private  int maxManifestSize = 0;
+    @Option(names = {"-m", "--manifest-size" },
+        defaultValue = "0",
+        description = "manifest  min size(M) to archive. Default: ${DEFAULT-VALUE}")
+    private  int maxManifestSize;
 
-    @Parameter(names = {"-h", "--help"}, help = true)
+    @Option(names = {"-h", "--help"}, help = true)
     private  boolean help;
   }
 }

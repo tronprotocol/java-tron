@@ -15,6 +15,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.ContractStore;
+import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.SmartContractOuterClass.UpdateEnergyLimitContract;
@@ -44,6 +45,7 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
       contractStore.put(contractAddress, new ContractCapsule(
           deployedContract.getInstance().toBuilder().setOriginEnergyLimit(newOriginEnergyLimit)
               .build()));
+      RepositoryImpl.removeLruCache(contractAddress);
 
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {

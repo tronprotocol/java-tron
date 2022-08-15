@@ -2,7 +2,6 @@ package org.tron.core.vm.utils;
 
 import java.math.BigInteger;
 import org.apache.commons.collections4.CollectionUtils;
-import org.bouncycastle.util.encoders.Hex;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.vm.config.VMConfig;

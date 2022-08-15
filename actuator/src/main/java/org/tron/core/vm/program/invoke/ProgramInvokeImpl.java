@@ -1,20 +1,3 @@
-/*
- * Copyright (c) [2016] [ <ether.camp> ]
- * This file is part of the ethereumJ library.
- *
- * The ethereumJ library is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * The ethereumJ library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
- */
 package org.tron.core.vm.program.invoke;
 
 import java.math.BigInteger;
@@ -27,8 +10,8 @@ import org.tron.core.vm.repository.Repository;
 @Slf4j
 public class ProgramInvokeImpl implements ProgramInvoke {
 
-  /*****************/
-  /* NOTE: In the protocol there is no restriction on the maximum message data,
+  /*
+   * NOTE: In the protocol there is no restriction on the maximum message data,
    * However msgData here is a byte[] and this can't hold more than 2^32-1
    */
   private static final BigInteger MAX_MSG_DATA = BigInteger.valueOf(Integer.MAX_VALUE);
@@ -242,7 +225,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
 
   /*     DIFFICULTY op    */
   public DataWord getDifficulty() {
-    return new DataWord(0);
+    return DataWord.ZERO();
   }
 
   public long getVmShouldEndInUs() {

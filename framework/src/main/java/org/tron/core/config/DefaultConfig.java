@@ -1,5 +1,6 @@
 package org.tron.core.config;
 
+import com.alibaba.fastjson.parser.ParserConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.rocksdb.RocksDB;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.tron.common.utils.StorageUtils;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.RecentTransactionStore;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db.RevokingStore;
 import org.tron.core.db.TransactionCache;
@@ -28,6 +30,7 @@ public class DefaultConfig {
 
   static {
     RocksDB.loadLibrary();
+    ParserConfig.getGlobalInstance().setSafeMode(true);
   }
 
   @Autowired
@@ -108,9 +111,8 @@ public class DefaultConfig {
   public TransactionCache transactionCache() {
     int dbVersion = Args.getInstance().getStorage().getDbVersion();
     if (dbVersion == 2) {
-      return new TransactionCache("trans-cache");
+      return new TransactionCache("trans-cache", appCtx.getBean(RecentTransactionStore.class));
     }
-
     return null;
   }
 

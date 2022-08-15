@@ -61,11 +61,7 @@ public class TransferFailed003 {
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+  
 
   /**
    * constructor.
@@ -390,7 +386,7 @@ public class TransferFailed003 {
     Assert.assertEquals(contractAccountCountBefore - 2, contractAccountCountAfter.longValue());
 
     Assert.assertEquals(energyUsageTotal,
-        energyUsageTotal2 + EnergyCost.getInstance().getNEW_ACCT_CALL());
+        energyUsageTotal2 + EnergyCost.getNewAcctCall());
 
     nonexistentAddressAccount = PublicMethed
         .getAssetIssueValue(nonexistentAddress, assetAccountId, blockingStubFull1);
@@ -792,7 +788,7 @@ public class TransferFailed003 {
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
-    Assert.assertTrue(energyUsageTotal > EnergyCost.getInstance().getNEW_ACCT_CALL());
+    Assert.assertTrue(energyUsageTotal > EnergyCost.getNewAcctCall());
 
     Long nonexistentAddressAccount = PublicMethed
         .getAssetIssueValue(nonexistentAddress, assetAccountId, blockingStubFull1);

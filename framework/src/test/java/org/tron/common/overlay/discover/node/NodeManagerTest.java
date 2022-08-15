@@ -6,14 +6,13 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.FileUtil;
@@ -27,37 +26,47 @@ import org.tron.core.db.Manager;
 public class NodeManagerTest {
 
   private static final Logger logger = LoggerFactory.getLogger("Test");
-  private Manager manager;
-  private NodeManager nodeManager;
-  private TronApplicationContext context;
-  private CommonParameter argsTest;
-  private Application appTest;
-  private Class nodeManagerClazz;
+  private static Manager manager;
+  private static NodeManager nodeManager;
+  private static TronApplicationContext context;
+  private static CommonParameter argsTest;
+  private static Application appTest;
+  private static Class nodeManagerClazz;
+  private static String dbPath = "NodeManagerTest";
 
+  static {
+    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
+    context = new TronApplicationContext(DefaultConfig.class);
+  }
 
   /**
    * start the application.
    */
-  @Before
-  public void init() {
-    argsTest = Args.getInstance();
-    Args.setParam(new String[]{"--output-directory", "output-directory", "--debug"},
-        Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-    appTest = ApplicationFactory.create(context);
-    appTest.initServices(argsTest);
-    appTest.startServices();
-    appTest.startup();
+  @BeforeClass
+  public static void init() {
+    // argsTest = Args.getInstance();
+    // Args.setParam(new String[]{"--output-directory", dbPath},
+    //     Constant.TEST_CONF);
+    // context = new TronApplicationContext(DefaultConfig.class);
+    // appTest = ApplicationFactory.create(context);
+    // appTest.initServices(argsTest);
+    // appTest.startServices();
+    // appTest.startup();
+    try {
+      initManager();
+    } catch (Exception e) {
+      logger.error("init failed {}", e.getMessage());
+    }
   }
 
   /**
    * destroy the context.
    */
-  @After
-  public void destroy() {
+  @AfterClass
+  public static void destroy() {
     Args.clearParam();
     context.destroy();
-    if (FileUtil.deleteDir(new File("output-directory"))) {
+    if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
     } else {
       logger.info("Release resources failure.");
@@ -67,18 +76,19 @@ public class NodeManagerTest {
   /**
    * init the managers.
    */
-  @Before
-  public void initManager() throws Exception {
+  // @Before
+  public static void initManager() throws Exception {
     nodeManagerClazz = NodeManager.class;
-    Constructor<NodeManager> handlerConstructor
-        = nodeManagerClazz.getConstructor(ChainBaseManager.class);
+    // Constructor<NodeManager> handlerConstructor
+    //     = nodeManagerClazz.getConstructor(ChainBaseManager.class);
     manager = context.getBean(Manager.class);
-    nodeManager = handlerConstructor.newInstance(context.getBean(ChainBaseManager.class));
+    // nodeManager = handlerConstructor.newInstance(context.getBean(ChainBaseManager.class));
+    nodeManager = new NodeManager(context.getBean(ChainBaseManager.class));
   }
 
   @Test
   public void isNodeAliveTest() {
-    Node node = new Node(new byte[64], "128.0.0.1", 18888, 18888);
+    Node node = new Node(new byte[64], "128.0.0.1", 18889, 18889);
     nodeManager.getTable().addNode(node);
     NodeHandler nodeHandler = new NodeHandler(node, nodeManager);
     nodeHandler.changeState(NodeHandler.State.ACTIVE);
@@ -94,6 +104,8 @@ public class NodeManagerTest {
     //insert 3001 nodes(isConnectible = true) with threshold = 3000
     final int totalNodes = insertValues(3002);
     Assert.assertEquals(calculateTrimNodes(totalNodes, 0), getHandlerMapSize());
+
+    clearNodeManager();
   }
 
   @Test
@@ -104,6 +116,12 @@ public class NodeManagerTest {
     method.setAccessible(true);
     method.invoke(nodeManager);
     Assert.assertEquals(calculateTrimNodes(totalNodes, 2), getHandlerMapSize());
+
+    clearNodeManager();
+  }
+
+  private void clearNodeManager() {
+    nodeManager.clearNodeHandlerMap();
   }
 
   /**
@@ -150,7 +168,7 @@ public class NodeManagerTest {
       Class nodeClazz = Node.class;
       Constructor<Node> nodeConstructor
           = nodeClazz.getConstructor(byte[].class, String.class, int.class, int.class);
-      Node node = nodeConstructor.newInstance(bytes, stringBuilder.toString(), 18888, 18888);
+      Node node = nodeConstructor.newInstance(bytes, stringBuilder.toString(), 18889, 18889);
       Field isConnectableField = nodeClazz.getDeclaredField("p2pVersion");
       isConnectableField.setAccessible(true);
       isConnectableField.set(node, Args.getInstance().getNodeP2pVersion());
@@ -166,10 +184,10 @@ public class NodeManagerTest {
     Class nodeClazz = Node.class;
     Constructor<Node> nodeConstructor
         = nodeClazz.getConstructor(byte[].class, String.class, int.class, int.class);
-    Node wrongNode1 = nodeConstructor.newInstance(new byte[64], "128.0.0.1", 1111, 18888);
+    Node wrongNode1 = nodeConstructor.newInstance(new byte[64], "128.0.0.1", 1111, 18889);
     byte[] id = new byte[64];
     id[63] = 1;
-    Node wrongNode2 = nodeConstructor.newInstance(id, "128.0.0.2", 1111, 18888);
+    Node wrongNode2 = nodeConstructor.newInstance(id, "128.0.0.2", 1111, 18889);
     Field isConnectableField = nodeClazz.getDeclaredField("p2pVersion");
     isConnectableField.setAccessible(true);
     isConnectableField.set(wrongNode1, 999);
@@ -193,9 +211,9 @@ public class NodeManagerTest {
 
   @Test
   public void dumpActiveNodesTest() {
-    Node node1 = new Node(new byte[64], "128.0.0.1", 18888, 18888);
-    Node node2 = new Node(new byte[64], "128.0.0.2", 18888, 18888);
-    Node node3 = new Node(new byte[64], "128.0.0.3", 18888, 18888);
+    Node node1 = new Node(new byte[64], "128.0.0.1", 18889, 18889);
+    Node node2 = new Node(new byte[64], "128.0.0.2", 18889, 18889);
+    Node node3 = new Node(new byte[64], "128.0.0.3", 18889, 18889);
     NodeHandler nodeHandler1 = nodeManager.getNodeHandler(node1);
     NodeHandler nodeHandler2 = nodeManager.getNodeHandler(node2);
     NodeHandler nodeHandler3 = nodeManager.getNodeHandler(node3);

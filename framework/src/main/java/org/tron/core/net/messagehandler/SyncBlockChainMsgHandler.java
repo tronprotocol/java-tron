@@ -15,6 +15,7 @@ import org.tron.core.net.message.ChainInventoryMessage;
 import org.tron.core.net.message.SyncBlockChainMessage;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.peer.PeerConnection;
+import org.tron.protos.Protocol;
 
 @Slf4j(topic = "net")
 @Component
@@ -36,7 +37,11 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
 
     LinkedList<BlockId> blockIds = getLostBlockIds(summaryChainIds);
 
-    if (blockIds.size() == 1) {
+    if (blockIds.size() == 0) {
+      logger.error("Can't get lost block Ids.");
+      peer.disconnect(Protocol.ReasonCode.INCOMPATIBLE_CHAIN);
+      return;
+    } else if (blockIds.size() == 1) {
       peer.setNeedSyncFromUs(false);
     } else {
       peer.setNeedSyncFromUs(true);
@@ -87,13 +92,19 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
       throw new P2pException(TypeEnum.SYNC_FAILED, "unForkId is null");
     }
 
-    long len = Math.min(tronNetDelegate.getHeadBlockId().getNum(),
-        unForkId.getNum() + NetConstants.SYNC_FETCH_BATCH_NUM);
+    BlockId headID = tronNetDelegate.getHeadBlockId();
+    long headNum = headID.getNum();
+
+    long len = Math.min(headNum, unForkId.getNum() + NetConstants.SYNC_FETCH_BATCH_NUM);
 
     LinkedList<BlockId> ids = new LinkedList<>();
     for (long i = unForkId.getNum(); i <= len; i++) {
-      BlockId id = tronNetDelegate.getBlockIdByNum(i);
-      ids.add(id);
+      if (i == headNum) {
+        ids.add(headID);
+      } else {
+        BlockId id = tronNetDelegate.getBlockIdByNum(i);
+        ids.add(id);
+      }
     }
     return ids;
   }

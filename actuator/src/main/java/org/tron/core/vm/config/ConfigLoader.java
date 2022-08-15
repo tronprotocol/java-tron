@@ -1,6 +1,5 @@
 package org.tron.core.vm.config;
 
-
 import static org.tron.core.capsule.ReceiptCapsule.checkForEnergyLimit;
 
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +27,10 @@ public class ConfigLoader {
         VMConfig.initAllowTvmIstanbul(ds.getAllowTvmIstanbul());
         VMConfig.initAllowTvmFreeze(ds.getAllowTvmFreeze());
         VMConfig.initAllowTvmVote(ds.getAllowTvmVote());
+        VMConfig.initAllowTvmLondon(ds.getAllowTvmLondon());
+        VMConfig.initAllowTvmCompatibleEvm(ds.getAllowTvmCompatibleEvm());
+        VMConfig.initAllowHigherLimitForMaxCpuTimeOfOneTx(
+            ds.getAllowHigherLimitForMaxCpuTimeOfOneTx());
       }
     }
   }

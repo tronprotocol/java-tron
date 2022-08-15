@@ -1,5 +1,6 @@
 package org.tron.common.overlay.server;
 
+import com.google.protobuf.ByteString;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
@@ -10,6 +11,9 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.concurrent.TimeUnit;
+
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -57,10 +61,17 @@ public class Channel {
   private InetSocketAddress inetSocketAddress;
   private Node node;
   private long startTime;
+  @Getter
   private TronState tronState = TronState.INIT;
   private boolean isActive;
+  @Getter
+  @Setter
+  private ByteString address;
 
   private volatile boolean isDisconnect;
+
+  @Getter
+  private volatile long disconnectTime;
 
   private boolean isTrustPeer;
 
@@ -124,6 +135,7 @@ public class Channel {
 
   public void disconnect(ReasonCode reason) {
     this.isDisconnect = true;
+    this.disconnectTime = System.currentTimeMillis();
     channelManager.processDisconnect(this, reason);
     DisconnectMessage msg = new DisconnectMessage(reason);
     logger.info("Send to {} online-time {}s, {}",
@@ -154,6 +166,7 @@ public class Channel {
 
   public void close() {
     this.isDisconnect = true;
+    this.disconnectTime = System.currentTimeMillis();
     p2pHandler.close();
     msgQueue.close();
     ctx.close();

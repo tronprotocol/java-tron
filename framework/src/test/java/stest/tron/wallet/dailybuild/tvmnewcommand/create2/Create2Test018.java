@@ -53,11 +53,7 @@ public class Create2Test018 {
       .getString("witness.key2");
   private byte[] witnessAddress001 = PublicMethed.getFinalAddress(witnessKey001);
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.

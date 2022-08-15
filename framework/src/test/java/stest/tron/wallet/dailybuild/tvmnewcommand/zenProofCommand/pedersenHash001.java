@@ -86,12 +86,14 @@ public class pedersenHash001 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
-    Assert.assertEquals(1, infoById.get().getResultValue());
-    Assert.assertEquals("FAILED", infoById.get().getResult().toString());
-    Assert.assertEquals("OUT_OF_ENERGY", infoById.get().getReceipt().getResult().toString());
-    Assert.assertEquals(1000000000, infoById.get().getFee());
-    Assert.assertTrue(infoById.get().getResMessage().toStringUtf8()
-        .contains("Not enough energy for 'SWAP2' operation executing: curInvokeEnergyLimit"));
+    Assert.assertEquals(0, infoById.get().getResultValue());
+    Assert.assertEquals("SUCESS", infoById.get().getResult().toString());
+    byte[] result = infoById.get().getContractResult(0).toByteArray();
+    String boolResult = ByteArray.toHexString(ByteArray.subArray(result, 0, 32));
+    System.out.println("boolResult: " + boolResult);
+    Assert.assertEquals("0000000000000000000000000000000000000000000000000000000000000000",
+        boolResult);
+
   }
 
   @Test(enabled = true, description = "data length limit")
@@ -106,12 +108,11 @@ public class pedersenHash001 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
-    Assert.assertEquals(1, infoById.get().getResultValue());
-    Assert.assertEquals("FAILED", infoById.get().getResult().toString());
-    Assert.assertEquals("OUT_OF_ENERGY", infoById.get().getReceipt().getResult().toString());
-    Assert.assertEquals(1000000000, infoById.get().getFee());
-    Assert.assertTrue(infoById.get().getResMessage().toStringUtf8()
-        .contains("Not enough energy for 'SWAP2' operation executing: curInvokeEnergyLimit"));
+    Assert.assertEquals(0, infoById.get().getResultValue());
+    Assert.assertEquals("SUCESS", infoById.get().getResult().toString());
+    int boolResult = ByteArray.toInt(infoById.get().getContractResult(0).toByteArray());
+    Assert.assertFalse(Boolean.valueOf(String.valueOf(boolResult)));
+    Assert.assertTrue(maxFeeLimit > infoById.get().getFee());
 
     // length:128
     String argsStr2 = "\"0000000000000000000000000000000000000000000000000000000000000001"

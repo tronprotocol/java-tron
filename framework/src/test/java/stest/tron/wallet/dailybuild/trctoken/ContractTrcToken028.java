@@ -57,11 +57,7 @@ public class ContractTrcToken028 {
     return (int) Math.round(Math.random() * (maxInt - minInt) + minInt);
   }
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.

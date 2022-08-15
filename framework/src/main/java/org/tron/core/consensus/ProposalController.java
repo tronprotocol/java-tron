@@ -40,6 +40,7 @@ public class ProposalController {
             .get(ProposalCapsule.calculateDbKey(proposalNum));
       } catch (Exception ex) {
         logger.error("", ex);
+        proposalNum--;
         continue;
       }
 

@@ -8,6 +8,7 @@ import org.tron.common.overlay.server.ChannelManager;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.net.message.BlockMessage;
+import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.messagehandler.BlockMsgHandler;
 import org.tron.core.net.messagehandler.ChainInventoryMsgHandler;
@@ -19,6 +20,7 @@ import org.tron.core.net.messagehandler.TransactionsMsgHandler;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerStatusCheck;
 import org.tron.core.net.service.AdvService;
+import org.tron.core.net.service.FetchBlockService;
 import org.tron.core.net.service.SyncService;
 import org.tron.protos.Protocol.ReasonCode;
 
@@ -60,30 +62,36 @@ public class TronNetService {
   @Autowired
   private PbftDataSyncHandler pbftDataSyncHandler;
 
+  @Autowired
+  private FetchBlockService fetchBlockService;
+
   public void start() {
     channelManager.init();
     advService.init();
     syncService.init();
     peerStatusCheck.init();
     transactionsMsgHandler.init();
+    fetchBlockService.init();
     logger.info("TronNetService start successfully.");
   }
 
   public void stop() {
+    logger.info("TronNetService closed start.");
     channelManager.close();
     advService.close();
     syncService.close();
     peerStatusCheck.close();
     transactionsMsgHandler.close();
+    fetchBlockService.close();
     logger.info("TronNetService closed successfully.");
+  }
+
+  public int fastBroadcastTransaction(TransactionMessage msg) {
+    return advService.fastBroadcastTransaction(msg);
   }
 
   public void broadcast(Message msg) {
     advService.broadcast(msg);
-  }
-
-  public void fastForward(BlockMessage msg) {
-    advService.fastForward(msg);
   }
 
   protected void onMessage(PeerConnection peer, TronMessage msg) {
@@ -145,11 +153,11 @@ public class TronNetService {
           code = ReasonCode.UNKNOWN;
           break;
       }
-      logger.error("Message from {} process failed, {} \n type: {}, detail: {}.",
+      logger.warn("Message from {} process failed, {} \n type: {}, detail: {}.",
           peer.getInetAddress(), msg, type, ex.getMessage());
     } else {
       code = ReasonCode.UNKNOWN;
-      logger.error("Message from {} process failed, {}",
+      logger.warn("Message from {} process failed, {}",
           peer.getInetAddress(), msg, ex);
     }
 

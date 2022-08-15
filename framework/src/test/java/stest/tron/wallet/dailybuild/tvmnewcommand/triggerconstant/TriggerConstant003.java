@@ -51,11 +51,7 @@ public class TriggerConstant003 {
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
@@ -209,7 +205,7 @@ public class TriggerConstant003 {
             "testPayable()", "#", false,
             1L, 1000000000, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     transaction = transactionExtention.getTransaction();
-
+    System.out.println(transactionExtention.toString());
     result = transactionExtention.getConstantResult(0).toByteArray();
     System.out.println("message:" + transaction.getRet(0).getRet());
     System.out.println(":" + ByteArray
@@ -219,11 +215,7 @@ public class TriggerConstant003 {
     Assert.assertEquals(1, ByteArray.toLong(ByteArray
         .fromHexString(Hex
             .toHexString(result))));
-    Assert.assertEquals("constant cannot set call value or call token value.",
-        ByteArray
-            .toStr(transactionExtention.getResult().getMessage().toByteArray()));
-    Assert.assertEquals("FAILED", transaction.getRet(0).getRet().toString());
-
+    Assert.assertEquals("SUCESS", transaction.getRet(0).getRet().toString());
 
   }
 

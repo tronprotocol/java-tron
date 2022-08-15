@@ -6,6 +6,8 @@ import static org.tron.core.config.Parameter.NetConstants.MSG_CACHE_DURATION_IN_
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -39,7 +41,7 @@ import org.tron.protos.Protocol.Inventory.InventoryType;
 @Slf4j(topic = "net")
 @Component
 public class AdvService {
-  
+
   private final int MAX_INV_TO_FETCH_CACHE_SIZE = 100_000;
   private final int MAX_TRX_CACHE_SIZE = 50_000;
   private final int MAX_BLOCK_CACHE_SIZE = 10;
@@ -48,12 +50,17 @@ public class AdvService {
   @Autowired
   private TronNetDelegate tronNetDelegate;
 
+  @Autowired
+  private FetchBlockService fetchBlockService;
+
   private ConcurrentHashMap<Item, Long> invToFetch = new ConcurrentHashMap<>();
 
   private ConcurrentHashMap<Item, Long> invToSpread = new ConcurrentHashMap<>();
 
+  private long blockCacheTimeout = Args.getInstance().getBlockCacheTimeout();
   private Cache<Item, Long> invToFetchCache = CacheBuilder.newBuilder()
-      .maximumSize(MAX_INV_TO_FETCH_CACHE_SIZE).expireAfterWrite(1, TimeUnit.HOURS)
+      .maximumSize(MAX_INV_TO_FETCH_CACHE_SIZE)
+      .expireAfterWrite(blockCacheTimeout, TimeUnit.MINUTES)
       .recordStats().build();
 
   private Cache<Item, Message> trxCache = CacheBuilder.newBuilder()
@@ -75,15 +82,11 @@ public class AdvService {
 
   public void init() {
 
-    if (fastForward) {
-      return;
-    }
-
     spreadExecutor.scheduleWithFixedDelay(() -> {
       try {
         consumerInvToSpread();
       } catch (Exception exception) {
-        logger.error("Spread thread error. {}", exception.getMessage());
+        logger.error("Spread thread error. {}", exception.getMessage(), exception);
       }
     }, 100, 30, TimeUnit.MILLISECONDS);
 
@@ -91,7 +94,7 @@ public class AdvService {
       try {
         consumerInvToFetch();
       } catch (Exception exception) {
-        logger.error("Fetch thread error. {}", exception.getMessage());
+        logger.error("Fetch thread error. {}", exception.getMessage(), exception);
       }
     }, 100, 30, TimeUnit.MILLISECONDS);
   }
@@ -141,6 +144,40 @@ public class AdvService {
     }
   }
 
+  public int fastBroadcastTransaction(TransactionMessage msg) {
+
+    List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
+            .filter(peer -> !peer.isNeedSyncFromPeer() && !peer.isNeedSyncFromUs())
+            .collect(Collectors.toList());
+
+    if (peers.size() == 0) {
+      logger.warn("Broadcast transaction {} failed, no connection.", msg.getMessageId());
+      return 0;
+    }
+
+    Item item = new Item(msg.getMessageId(), InventoryType.TRX);
+    trxCount.add();
+    trxCache.put(item, new TransactionMessage(msg.getTransactionCapsule().getInstance()));
+
+    List<Sha256Hash> list = new ArrayList<>();
+    list.add(msg.getMessageId());
+    InventoryMessage inventoryMessage = new InventoryMessage(list, InventoryType.TRX);
+
+    int peersCount = 0;
+    for (PeerConnection peer: peers) {
+      if (peer.getAdvInvReceive().getIfPresent(item) == null
+              && peer.getAdvInvSpread().getIfPresent(item) == null) {
+        peersCount++;
+        peer.getAdvInvSpread().put(item, Time.getCurrentMillis());
+        peer.fastSend(inventoryMessage);
+      }
+    }
+    if (peersCount == 0) {
+      logger.warn("Broadcast transaction {} failed, no peers.", msg.getMessageId());
+    }
+    return peersCount;
+  }
+
   public void broadcast(Message msg) {
 
     if (fastForward) {
@@ -181,6 +218,7 @@ public class AdvService {
     }
   }
 
+  /*
   public void fastForward(BlockMessage msg) {
     Item item = new Item(msg.getBlockId(), InventoryType.BLOCK);
     List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
@@ -199,7 +237,7 @@ public class AdvService {
       peer.setFastForwardBlock(msg.getBlockId());
     });
   }
-
+  */
 
   public void onDisconnect(PeerConnection peer) {
     if (!peer.getAdvInvRequest().isEmpty()) {
@@ -297,13 +335,19 @@ public class AdvService {
     }
 
     public void add(Item id, PeerConnection peer) {
-      if (send.containsKey(peer) && !send.get(peer).containsKey(id.getType())) {
-        send.get(peer).put(id.getType(), new LinkedList<>());
-      } else if (!send.containsKey(peer)) {
-        send.put(peer, new HashMap<>());
-        send.get(peer).put(id.getType(), new LinkedList<>());
+      HashMap<InventoryType, LinkedList<Sha256Hash>> map = send.get(peer);
+      if (map == null) {
+        map = new HashMap<>();
+        send.put(peer, map);
       }
-      send.get(peer).get(id.getType()).offer(id.getHash());
+
+      LinkedList<Sha256Hash> list = map.get(id.getType());
+      if (list == null) {
+        list = new LinkedList<>();
+        map.put(id.getType(), list);
+      }
+
+      list.offer(id.getHash());
     }
 
     public int getSize(PeerConnection peer) {
@@ -332,6 +376,7 @@ public class AdvService {
         if (key.equals(InventoryType.BLOCK)) {
           value.sort(Comparator.comparingLong(value1 -> new BlockId(value1).getNum()));
           peer.fastSend(new FetchInvDataMessage(value, key));
+          fetchBlockService.fetchBlock(value, peer);
         } else {
           peer.sendMessage(new FetchInvDataMessage(value, key));
         }

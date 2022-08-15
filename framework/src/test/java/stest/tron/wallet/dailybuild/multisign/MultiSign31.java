@@ -255,8 +255,8 @@ public class MultiSign31 {
     Assert
         .assertThat(returnResult1.getCode().toString(), containsString("SIGERROR"));
     Assert
-        .assertThat(returnResult1.getMessage().toStringUtf8(),
-            containsString("validate signature error Permission denied"));
+        .assertThat(returnResult1.getMessage().toStringUtf8().toLowerCase(),
+            containsString("validate signature error: permission denied".toLowerCase()));
     Transaction transaction2 = PublicMethed
         .addTransactionSign(transaction1, sendAccountKey3, blockingStubFull);
     TransactionSignWeight transactionSignWeight1 = PublicMethedForMutiSign
@@ -275,7 +275,7 @@ public class MultiSign31 {
         .broadcastTransaction1(transaction2, blockingStubFull);
     logger.info("returnResult2:" + returnResult2);
     Assert
-        .assertThat(returnResult2.getCode().toString(), containsString("DUP_TRANSACTION_ERROR"));
+        .assertThat(returnResult2.getCode().toString(), containsString("SIGERROR"));
     Account test001AddressAccount3 = PublicMethed.queryAccount(test001Address, blockingStubFull);
     long balance3 = test001AddressAccount3.getBalance();
     logger.info("balance3:" + balance3);
@@ -466,7 +466,7 @@ public class MultiSign31 {
         .broadcastTransaction1(transaction2, blockingStubFull);
     logger.info("returnResult2:" + returnResult2);
     Assert
-        .assertThat(returnResult2.getCode().toString(), containsString("DUP_TRANSACTION_ERROR"));
+        .assertThat(returnResult2.getCode().toString(), containsString("SIGERROR"));
     Account test001AddressAccount3 = PublicMethed.queryAccount(test001Address, blockingStubFull);
     long balance3 = test001AddressAccount3.getBalance();
     Assert.assertEquals(balance2, balance3);
@@ -558,7 +558,7 @@ public class MultiSign31 {
         .broadcastTransaction1(transaction2, blockingStubFull);
     logger.info("returnResult2:" + returnResult2);
     Assert
-        .assertThat(returnResult2.getCode().toString(), containsString("DUP_TRANSACTION_ERROR"));
+        .assertThat(returnResult2.getCode().toString(), containsString("SIGERROR"));
     Account test001AddressAccount3 = PublicMethed.queryAccount(test001Address, blockingStubFull);
     long balance3 = test001AddressAccount3.getBalance();
     Assert.assertEquals(balance3, balance2);

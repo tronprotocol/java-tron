@@ -2,11 +2,16 @@ package org.tron.core.net;
 
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import io.prometheus.client.Histogram;
 import java.util.Collection;
 import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
+import javax.annotation.PostConstruct;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +20,9 @@ import org.tron.common.backup.BackupServer;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.ChannelManager;
 import org.tron.common.overlay.server.SyncPool;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.MetricLabels;
+import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
@@ -30,6 +38,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
+import org.tron.core.exception.EventBloomException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.P2pException;
@@ -85,18 +94,32 @@ public class TronNetDelegate {
 
   private int blockIdCacheSize = 100;
 
-  private Queue<BlockId> freshBlockId = new ConcurrentLinkedQueue<BlockId>() {
-    @Override
-    public boolean offer(BlockId blockId) {
-      if (size() > blockIdCacheSize) {
-        super.poll();
-      }
-      return super.offer(blockId);
-    }
-  };
+  private long timeout = 1000;
 
-  public void trustNode(PeerConnection peer) {
-    channelManager.getTrustNodes().put(peer.getInetAddress(), peer.getNode());
+  @Getter // for test
+  private volatile boolean  hitDown = false;
+
+  private Thread hitThread;
+
+  // for Test
+  @Setter
+  private volatile boolean  test = false;
+
+  private Cache<BlockId, Long> freshBlockId = CacheBuilder.newBuilder()
+          .maximumSize(blockIdCacheSize).expireAfterWrite(1, TimeUnit.HOURS)
+          .recordStats().build();
+
+  @PostConstruct
+  public void init() {
+    hitThread =  new Thread(() -> {
+      LockSupport.park();
+      // to Guarantee Some other thread invokes unpark with the current thread as the target
+      if (hitDown && !test) {
+        System.exit(0);
+      }
+    });
+    hitThread.setName("hit-thread");
+    hitThread.start();
   }
 
   public Collection<PeerConnection> getActivePeer() {
@@ -193,10 +216,25 @@ public class TronNetDelegate {
   }
 
   public void processBlock(BlockCapsule block, boolean isSync) throws P2pException {
+    if (!hitDown && dbManager.getLatestSolidityNumShutDown() > 0
+        && dbManager.getLatestSolidityNumShutDown() == dbManager.getDynamicPropertiesStore()
+        .getLatestBlockHeaderNumberFromDB()) {
+
+      logger.info("begin shutdown, currentBlockNum:{}, DbBlockNum:{} ,solidifiedBlockNum:{}.",
+          dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
+          dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumberFromDB(),
+          dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+      hitDown = true;
+      LockSupport.unpark(hitThread);
+      return;
+    }
+    if (hitDown) {
+      return;
+    }
     BlockId blockId = block.getBlockId();
     synchronized (blockLock) {
       try {
-        if (!freshBlockId.contains(blockId)) {
+        if (freshBlockId.getIfPresent(blockId) == null) {
           if (block.getNum() <= getHeadBlockId().getNum()) {
             logger.warn("Receive a fork block {} witness {}, head {}",
                 block.getBlockId().getString(),
@@ -207,8 +245,13 @@ public class TronNetDelegate {
             //record metrics
             metricsService.applyBlock(block);
           }
+          dbManager.getBlockedTimer().set(Metrics.histogramStartTimer(
+              MetricKeys.Histogram.LOCK_ACQUIRE_LATENCY, MetricLabels.BLOCK));
+          Histogram.Timer timer = Metrics.histogramStartTimer(
+              MetricKeys.Histogram.BLOCK_PROCESS_LATENCY, String.valueOf(isSync));
           dbManager.pushBlock(block);
-          freshBlockId.add(blockId);
+          Metrics.histogramObserve(timer);
+          freshBlockId.put(blockId, System.currentTimeMillis());
           logger.info("Success process block {}.", blockId.getString());
           if (!backupServerStartFlag
               && System.currentTimeMillis() - block.getTimeStamp() < BLOCK_PRODUCED_INTERVAL) {
@@ -232,7 +275,8 @@ public class TronNetDelegate {
           | NonCommonBlockException
           | ReceiptCheckErrException
           | VMIllegalException
-          | ZksnarkException e) {
+          | ZksnarkException
+          | EventBloomException e) {
         metricsService.failProcessBlock(block.getNum(), e.getMessage());
         logger.error("Process block failed, {}, reason: {}.", blockId.getString(), e.getMessage());
         throw new P2pException(TypeEnum.BAD_BLOCK, e);
@@ -261,14 +305,25 @@ public class TronNetDelegate {
     }
   }
 
-  public boolean validBlock(BlockCapsule block) throws P2pException {
+  public void validSignature(BlockCapsule block) throws P2pException {
     try {
-      return witnessScheduleStore.getActiveWitnesses().contains(block.getWitnessAddress())
-          && block
-          .validateSignature(dbManager.getDynamicPropertiesStore(), dbManager.getAccountStore());
+      if (!block.validateSignature(dbManager.getDynamicPropertiesStore(),
+              dbManager.getAccountStore())) {
+        throw new P2pException(TypeEnum.BAD_BLOCK, "valid signature failed.");
+      }
     } catch (ValidateSignatureException e) {
       throw new P2pException(TypeEnum.BAD_BLOCK, e);
     }
+  }
+
+  public boolean validBlock(BlockCapsule block) throws P2pException {
+    long time = System.currentTimeMillis();
+    if (block.getTimeStamp() - time > timeout) {
+      throw new P2pException(TypeEnum.BAD_BLOCK,
+              "time:" + time + ",block time:" + block.getTimeStamp());
+    }
+    validSignature(block);
+    return witnessScheduleStore.getActiveWitnesses().contains(block.getWitnessAddress());
   }
 
   public PbftSignCapsule getBlockPbftCommitData(long blockNum) {
@@ -282,4 +337,5 @@ public class TronNetDelegate {
   public boolean allowPBFT() {
     return chainBaseManager.getDynamicPropertiesStore().allowPBFT();
   }
+
 }

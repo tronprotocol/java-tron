@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
+import org.quartz.CronExpression;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.config.DbBackupConfig;
 import org.tron.common.logsfilter.EventPluginConfig;
@@ -43,6 +44,14 @@ public class CommonParameter {
   @Setter
   @Parameter(names = {"--support-constant"})
   public boolean supportConstant = false;
+  @Getter
+  @Setter
+  @Parameter(names = {"--max-energy-limit-for-constant"})
+  public long maxEnergyLimitForConstant = 100_000_000L;
+  @Getter
+  @Setter
+  @Parameter(names = {"--lru-cache-size"})
+  public int lruCacheSize = 500;
   @Getter
   @Setter
   @Parameter(names = {"--debug"})
@@ -114,13 +123,22 @@ public class CommonParameter {
   public int nodeConnectionTimeout;
   @Getter
   @Setter
+  public int fetchBlockTimeout;
+  @Getter
+  @Setter
   public int nodeChannelReadTimeout;
   @Getter
   @Setter
-  public int nodeMaxActiveNodes;
+  public int maxConnections;
   @Getter
   @Setter
-  public int nodeMaxActiveNodesWithSameIp;
+  public int minConnections;
+  @Getter
+  @Setter
+  public int minActiveConnections;
+  @Getter
+  @Setter
+  public int maxConnectionsWithSameIp;
   @Getter
   @Setter
   public int minParticipationRate;
@@ -168,6 +186,15 @@ public class CommonParameter {
   @Getter
   @Setter
   public int solidityHttpPort;
+  @Getter
+  @Setter
+  public int jsonRpcHttpFullNodePort;
+  @Getter
+  @Setter
+  public int jsonRpcHttpSolidityPort;
+  @Getter
+  @Setter
+  public int jsonRpcHttpPBFTPort;
   @Getter
   @Setter
   @Parameter(names = {"--rpc-thread"}, description = "Num of gRPC thread")
@@ -265,18 +292,6 @@ public class CommonParameter {
   public List<String> backupMembers;
   @Getter
   @Setter
-  public double connectFactor;
-  @Getter
-  @Setter
-  public double activeConnectFactor;
-  @Getter
-  @Setter
-  public double disconnectNumberFactor;
-  @Getter
-  @Setter
-  public double maxConnectNumberFactor;
-  @Getter
-  @Setter
   public long receiveTcpMinDataLength;
   @Getter
   @Setter
@@ -296,7 +311,9 @@ public class CommonParameter {
   @Getter
   @Setter
   public int minEffectiveConnection;
-
+  @Getter
+  @Setter
+  public boolean trxCacheEnable;
   @Getter
   @Setter
   public long allowMarketTransaction; //committee parameter
@@ -343,7 +360,7 @@ public class CommonParameter {
   public long allowAccountStateRoot;
   @Getter
   @Setter
-  public int validContractProtoThreadNum;
+  public int validContractProtoThreadNum = 1;
   @Getter
   @Setter
   public int shieldedTransInPendingMaxCounts;
@@ -371,6 +388,8 @@ public class CommonParameter {
   @Getter
   public List<Node> fastForwardNodes;
   @Getter
+  public int maxFastForwardNum;
+  @Getter
   public Storage storage;
   @Getter
   public Overlay overlay;
@@ -389,6 +408,15 @@ public class CommonParameter {
   @Getter
   @Setter
   public boolean solidityNodeHttpEnable = true;
+  @Getter
+  @Setter
+  public boolean jsonRpcHttpFullNodeEnable = false;
+  @Getter
+  @Setter
+  public boolean jsonRpcHttpSolidityNodeEnable = false;
+  @Getter
+  @Setter
+  public boolean jsonRpcHttpPBFTNodeEnable = false;
   @Getter
   @Setter
   public int maxTransactionPendingSize;
@@ -418,6 +446,14 @@ public class CommonParameter {
   @Getter
   @Setter
   public int metricsReportInterval = 10;
+
+  @Getter
+  @Setter
+  public boolean metricsPrometheusEnable = false;
+
+  @Getter
+  @Setter
+  public int metricsPrometheusPort;
 
   @Getter
   @Setter
@@ -454,6 +490,18 @@ public class CommonParameter {
 
   @Getter
   @Setter
+  public long allowTvmLondon;
+
+  @Getter
+  @Setter
+  public long allowTvmCompatibleEvm;
+
+  @Getter
+  @Setter
+  public long allowHigherLimitForMaxCpuTimeOfOneTx;
+
+  @Getter
+  @Setter
   public boolean openHistoryQueryWhenLiteFN = false;
 
   @Getter
@@ -476,6 +524,30 @@ public class CommonParameter {
   @Setter
   public long allowAccountAssetOptimization;
 
+  @Getter
+  @Setter
+  public long allowAssetOptimization;
+
+  @Getter
+  @Setter
+  public List<String> disabledApiList;
+
+  @Getter
+  @Setter
+  public CronExpression shutdownBlockTime = null;
+
+  @Getter
+  @Setter
+  public long shutdownBlockHeight = -1;
+
+  @Getter
+  @Setter
+  public long shutdownBlockCount = -1;
+
+  @Getter
+  @Setter
+  public long blockCacheTimeout = 60;
+
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));
     return 5.0;
@@ -488,5 +560,13 @@ public class CommonParameter {
   public boolean isECKeyCryptoEngine() {
 
     return cryptoEngine.equalsIgnoreCase(Constant.ECKey_ENGINE);
+  }
+
+  public boolean isJsonRpcFilterEnabled() {
+    return jsonRpcHttpFullNodeEnable || jsonRpcHttpSolidityNodeEnable;
+  }
+
+  public int getSafeLruCacheSize() {
+    return lruCacheSize < 1 ? 500 : lruCacheSize;
   }
 }

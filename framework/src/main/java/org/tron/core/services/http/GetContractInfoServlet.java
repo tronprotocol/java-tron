@@ -35,9 +35,14 @@ public class GetContractInfoServlet extends RateLimiterServlet {
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(jsonObject.toJSONString(), build, visible);
       SmartContractDataWrapper smartContract = wallet.getContractInfo(build.build());
-      JSONObject jsonSmartContract = JSONObject
-          .parseObject(JsonFormat.printToString(smartContract, visible));
-      response.getWriter().println(jsonSmartContract.toJSONString());
+
+      if (smartContract == null) {
+        response.getWriter().println("{}");
+      } else {
+        JSONObject jsonSmartContract = JSONObject
+            .parseObject(JsonFormat.printToString(smartContract, visible));
+        response.getWriter().println(jsonSmartContract.toJSONString());
+      }
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -58,9 +63,14 @@ public class GetContractInfoServlet extends RateLimiterServlet {
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(input, build, visible);
       SmartContractDataWrapper smartContract = wallet.getContractInfo(build.build());
-      JSONObject jsonSmartContract = JSONObject
-          .parseObject(JsonFormat.printToString(smartContract, visible));
-      response.getWriter().println(jsonSmartContract.toJSONString());
+
+      if (smartContract == null) {
+        response.getWriter().println("{}");
+      } else {
+        JSONObject jsonSmartContract = JSONObject
+            .parseObject(JsonFormat.printToString(smartContract, visible));
+        response.getWriter().println(jsonSmartContract.toJSONString());
+      }
     } catch (Exception e) {
       Util.processError(e, response);
     }

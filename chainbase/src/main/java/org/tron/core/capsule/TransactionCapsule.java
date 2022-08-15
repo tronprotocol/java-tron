@@ -535,8 +535,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   public void sign(byte[] privateKey) {
     SignInterface cryptoEngine = SignUtils
         .fromPrivate(privateKey, CommonParameter.getInstance().isECKeyCryptoEngine());
-    //    String signature = cryptoEngine.signHash(getRawHash().getBytes());
-    //    ByteString sig = ByteString.copyFrom(signature.getBytes());
     ByteString sig = ByteString.copyFrom(cryptoEngine.Base64toBytes(cryptoEngine
         .signHash(getRawHash().getBytes())));
     this.transaction = this.transaction.toBuilder().addSignature(sig).build();
@@ -574,7 +572,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           ByteArray.toHexString(privateKey) + "'s address is " + encode58Check(address)
               + " but it is not contained of permission.");
     }
-    //    String signature = cryptoEngine.signHash(getRawHash().getBytes());
     ByteString sig = ByteString.copyFrom(cryptoEngine.Base64toBytes(cryptoEngine
         .signHash(getRawHash().getBytes())));
     this.transaction = this.transaction.toBuilder().addSignature(sig).build();

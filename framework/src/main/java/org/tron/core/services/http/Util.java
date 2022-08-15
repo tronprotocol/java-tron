@@ -250,17 +250,26 @@ public class Util {
     return jsonTransaction;
   }
 
+  /**
+   * Note: the contracts of the returned transaction may be empty
+   */
   public static Transaction packTransaction(String strTransaction, boolean selfType) {
-    JSONObject jsonTransaction = JSONObject.parseObject(strTransaction);
+    JSONObject jsonTransaction = JSON.parseObject(strTransaction);
     JSONObject rawData = jsonTransaction.getJSONObject("raw_data");
     JSONArray contracts = new JSONArray();
     JSONArray rawContractArray = rawData.getJSONArray("contract");
 
+    String contractType = null;
     for (int i = 0; i < rawContractArray.size(); i++) {
       try {
         JSONObject contract = rawContractArray.getJSONObject(i);
         JSONObject parameter = contract.getJSONObject(PARAMETER);
-        String contractType = contract.getString("type");
+        contractType = contract.getString("type");
+        if (StringUtils.isEmpty(contractType)) {
+          logger.debug("no type in the transaction, ignore");
+          continue;
+        }
+
         Any any = null;
         Class clazz = TransactionFactory.getContract(ContractType.valueOf(contractType));
         if (clazz != null) {
@@ -277,8 +286,12 @@ public class Util {
           contract.put(PARAMETER, parameter);
           contracts.add(contract);
         }
+      } catch (IllegalArgumentException e) {
+        logger.debug("invalid contractType: {}", contractType);
       } catch (ParseException e) {
         logger.debug("ParseException: {}", e.getMessage());
+      } catch (ClassCastException e) {
+        logger.debug("ClassCastException: {}", e.getMessage());
       } catch (Exception e) {
         logger.error("", e);
       }
@@ -348,15 +361,22 @@ public class Util {
       Transaction transaction) {
     if (jsonObject.containsKey(PERMISSION_ID)) {
       int permissionId = jsonObject.getInteger(PERMISSION_ID);
-      if (permissionId > 0) {
-        Transaction.raw.Builder raw = transaction.getRawData().toBuilder();
-        Transaction.Contract.Builder contract = raw.getContract(0).toBuilder()
-            .setPermissionId(permissionId);
-        raw.clearContract();
-        raw.addContract(contract);
-        return transaction.toBuilder().setRawData(raw).build();
-      }
+      return setTransactionPermissionId(permissionId, transaction);
     }
+
+    return transaction;
+  }
+
+  public static Transaction setTransactionPermissionId(int permissionId, Transaction transaction) {
+    if (permissionId > 0) {
+      Transaction.raw.Builder raw = transaction.getRawData().toBuilder();
+      Transaction.Contract.Builder contract = raw.getContract(0).toBuilder()
+          .setPermissionId(permissionId);
+      raw.clearContract();
+      raw.addContract(contract);
+      return transaction.toBuilder().setRawData(raw).build();
+    }
+
     return transaction;
   }
 
@@ -364,16 +384,24 @@ public class Util {
       Transaction transaction, boolean visible) {
     if (jsonObject.containsKey(EXTRA_DATA)) {
       String data = jsonObject.getString(EXTRA_DATA);
-      if (data.length() > 0) {
-        Transaction.raw.Builder raw = transaction.getRawData().toBuilder();
-        if (visible) {
-          raw.setData(ByteString.copyFrom(data.getBytes()));
-        } else {
-          raw.setData(ByteString.copyFrom(ByteArray.fromHexString(data)));
-        }
-        return transaction.toBuilder().setRawData(raw).build();
-      }
+      return setTransactionExtraData(data, transaction, visible);
     }
+
+    return transaction;
+  }
+
+  public static Transaction setTransactionExtraData(String data, Transaction transaction,
+      boolean visible) {
+    if (data.length() > 0) {
+      Transaction.raw.Builder raw = transaction.getRawData().toBuilder();
+      if (visible) {
+        raw.setData(ByteString.copyFrom(data.getBytes()));
+      } else {
+        raw.setData(ByteString.copyFrom(ByteArray.fromHexString(data)));
+      }
+      return transaction.toBuilder().setRawData(raw).build();
+    }
+
     return transaction;
   }
 

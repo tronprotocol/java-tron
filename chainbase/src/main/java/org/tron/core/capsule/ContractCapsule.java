@@ -129,4 +129,8 @@ public class ContractCapsule implements ProtoCapsule<SmartContract> {
   public byte[] getTrxHash() {
     return this.smartContract.getTrxHash().toByteArray();
   }
+
+  public int getContractVersion() {
+    return this.smartContract.getVersion();
+  }
 }

@@ -17,6 +17,8 @@ import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.TronStoreWithRevoking;
+import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ItemNotFoundException;
 
 @Slf4j(topic = "DB")
 @Component
@@ -64,6 +66,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] WITNESS_STANDBY_ALLOWANCE = "WITNESS_STANDBY_ALLOWANCE".getBytes();
   private static final byte[] ENERGY_FEE = "ENERGY_FEE".getBytes();
+  private static final long DEFAULT_ENERGY_FEE = 100L;
+  public static final String DEFAULT_ENERGY_PRICE_HISTORY = "0:" + DEFAULT_ENERGY_FEE;
   private static final byte[] MAX_CPU_TIME_OF_ONE_TX = "MAX_CPU_TIME_OF_ONE_TX".getBytes();
   //abandon
   private static final byte[] CREATE_ACCOUNT_FEE = "CREATE_ACCOUNT_FEE".getBytes();
@@ -73,6 +77,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       "CREATE_NEW_ACCOUNT_BANDWIDTH_RATE"
           .getBytes();
   private static final byte[] TRANSACTION_FEE = "TRANSACTION_FEE".getBytes(); // 1 byte
+  private static final long DEFAULT_TRANSACTION_FEE = 10L;
+  public static final String DEFAULT_BANDWIDTH_PRICE_HISTORY = "0:" + DEFAULT_TRANSACTION_FEE;
+
   private static final byte[] ASSET_ISSUE_FEE = "ASSET_ISSUE_FEE".getBytes();
   private static final byte[] UPDATE_ACCOUNT_PERMISSION_FEE = "UPDATE_ACCOUNT_PERMISSION_FEE"
       .getBytes();
@@ -152,14 +159,33 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] MAX_FEE_LIMIT = "MAX_FEE_LIMIT".getBytes();
   private static final byte[] BURN_TRX_AMOUNT = "BURN_TRX_AMOUNT".getBytes();
-  private static final byte[] ALLOW_BLACKHOLE_OPTIMIZATION = "ALLOW_BLACKHOLE_OPTIMIZATION".getBytes();
+  private static final byte[] ALLOW_BLACKHOLE_OPTIMIZATION =
+      "ALLOW_BLACKHOLE_OPTIMIZATION".getBytes();
   private static final byte[] ALLOW_NEW_RESOURCE_MODEL = "ALLOW_NEW_RESOURCE_MODEL".getBytes();
   private static final byte[] ALLOW_TVM_FREEZE = "ALLOW_TVM_FREEZE".getBytes();
   private static final byte[] ALLOW_TVM_VOTE = "ALLOW_TVM_VOTE".getBytes();
+  private static final byte[] ALLOW_TVM_LONDON = "ALLOW_TVM_LONDON".getBytes();
+  private static final byte[] ALLOW_TVM_COMPATIBLE_EVM = "ALLOW_TVM_COMPATIBLE_EVM".getBytes();
   private static final byte[] NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE =
       "NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE".getBytes();
   //This value is only allowed to be 1
-  private static final byte[] ALLOW_ACCOUNT_ASSET_OPTIMIZATION = "ALLOW_ACCOUNT_ASSET_OPTIMIZATION".getBytes();
+  private static final byte[] ALLOW_ACCOUNT_ASSET_OPTIMIZATION =
+      "ALLOW_ACCOUNT_ASSET_OPTIMIZATION".getBytes();
+
+  private static final byte[] ALLOW_ASSET_OPTIMIZATION =
+      "ALLOW_ASSET_OPTIMIZATION".getBytes();
+
+
+  private static final byte[] ENERGY_PRICE_HISTORY = "ENERGY_PRICE_HISTORY".getBytes();
+  private static final byte[] ENERGY_PRICE_HISTORY_DONE = "ENERGY_PRICE_HISTORY_DONE".getBytes();
+  private static final byte[] BANDWIDTH_PRICE_HISTORY = "BANDWIDTH_PRICE_HISTORY".getBytes();
+  private static final byte[] BANDWIDTH_PRICE_HISTORY_DONE =
+      "BANDWIDTH_PRICE_HISTORY_DONE".getBytes();
+
+  private static final byte[] SET_BLACKHOLE_ACCOUNT_PERMISSION =
+      "SET_BLACKHOLE_ACCOUNT_PERMISSION".getBytes();
+  private static final byte[] ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX =
+      "ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX".getBytes();
 
 
   @Autowired
@@ -360,7 +386,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.saveTotalTronPowerWeight(0L);
     }
 
-
     try {
       this.getAllowAdaptiveEnergy();
     } catch (IllegalArgumentException e) {
@@ -383,7 +408,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getEnergyFee();
     } catch (IllegalArgumentException e) {
-      this.saveEnergyFee(100L);// 100 sun per energy
+      this.saveEnergyFee(DEFAULT_ENERGY_FEE); // 100 sun per energy
     }
 
     try {
@@ -431,7 +456,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getTransactionFee();
     } catch (IllegalArgumentException e) {
-      this.saveTransactionFee(10L); // 10sun/byte
+      this.saveTransactionFee(DEFAULT_TRANSACTION_FEE); // 10sun/byte
     }
 
     try {
@@ -733,7 +758,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowBlackHoleOptimization();
     } catch (IllegalArgumentException e) {
-      this.saveAllowBlackHoleOptimization(CommonParameter.getInstance().getAllowBlackHoleOptimization());
+      this.saveAllowBlackHoleOptimization(
+          CommonParameter.getInstance().getAllowBlackHoleOptimization());
     }
 
     try {
@@ -759,10 +785,66 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
+      this.getAllowTvmLondon();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowTvmLondon(CommonParameter.getInstance().getAllowTvmLondon());
+    }
+
+    try {
+      this.getAllowTvmCompatibleEvm();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowTvmCompatibleEvm(CommonParameter.getInstance().getAllowTvmCompatibleEvm());
+    }
+
+    try {
+      this.getAllowAssetOptimization();
+    } catch (IllegalArgumentException e) {
+      this.setAllowAssetOptimization(CommonParameter
+          .getInstance().getAllowAssetOptimization());
+    }
+
+    try {
       this.getAllowAccountAssetOptimization();
     } catch (IllegalArgumentException e) {
       this.setAllowAccountAssetOptimization(CommonParameter
-              .getInstance().getAllowAccountAssetOptimization());
+          .getInstance().getAllowAccountAssetOptimization());
+    }
+
+    try {
+      this.getEnergyPriceHistoryDone();
+    } catch (IllegalArgumentException e) {
+      this.saveEnergyPriceHistoryDone(0);
+    }
+
+    try {
+      this.getEnergyPriceHistory();
+    } catch (IllegalArgumentException e) {
+      this.saveEnergyPriceHistory(DEFAULT_ENERGY_PRICE_HISTORY);
+    }
+
+    try {
+      this.getBandwidthPriceHistoryDone();
+    } catch (IllegalArgumentException e) {
+      this.saveBandwidthPriceHistoryDone(0);
+    }
+
+    try {
+      this.getBandwidthPriceHistory();
+    } catch (IllegalArgumentException e) {
+      this.saveBandwidthPriceHistory(DEFAULT_BANDWIDTH_PRICE_HISTORY);
+    }
+
+    try {
+      this.getSetBlackholeAccountPermission();
+    } catch (IllegalArgumentException e) {
+      this.saveSetBlackholePermission(0);
+    }
+
+    try {
+      this.getAllowHigherLimitForMaxCpuTimeOfOneTx();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowHigherLimitForMaxCpuTimeOfOneTx(
+          CommonParameter.getInstance().getAllowHigherLimitForMaxCpuTimeOfOneTx());
     }
   }
 
@@ -1944,6 +2026,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found latest block header number"));
   }
 
+  public long getLatestBlockHeaderNumberFromDB() {
+    try {
+      return Optional.ofNullable(getFromRoot(LATEST_BLOCK_HEADER_NUMBER))
+          .map(BytesCapsule::getData)
+          .map(ByteArray::toLong)
+          .orElseThrow(
+              () -> new IllegalArgumentException("not found latest block header number"));
+    } catch (ItemNotFoundException | BadItemException e) {
+      logger.error("{}", e);
+    }
+    return -1;
+  }
+
   public int getStateFlag() {
     return Optional.ofNullable(getUnchecked(STATE_FLAG))
         .map(BytesCapsule::getData)
@@ -2215,6 +2310,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return getAllowAccountAssetOptimization() == 1L;
   }
 
+  public boolean supportAllowAssetOptimization() {
+    return getAllowAssetOptimization() == 1L;
+  }
+
   public void saveAllowNewResourceModel(long value) {
     this.put(ALLOW_NEW_RESOURCE_MODEL, new BytesCapsule(ByteArray.fromLong(value)));
   }
@@ -2255,6 +2354,34 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException(msg));
   }
 
+  public void saveAllowTvmLondon(long allowTvmLondon) {
+    this.put(DynamicPropertiesStore.ALLOW_TVM_LONDON,
+        new BytesCapsule(ByteArray.fromLong(allowTvmLondon)));
+  }
+
+  public long getAllowTvmLondon() {
+    String msg = "not found ALLOW_TVM_LONDON";
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_LONDON))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException(msg));
+  }
+
+  public void saveAllowTvmCompatibleEvm(long allowTvmCompatibleEvm) {
+    this.put(DynamicPropertiesStore.ALLOW_TVM_COMPATIBLE_EVM,
+        new BytesCapsule(ByteArray.fromLong(allowTvmCompatibleEvm)));
+  }
+
+  public long getAllowTvmCompatibleEvm() {
+    String msg = "not found ALLOW_TVM_COMPATIBLE_EVM";
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_COMPATIBLE_EVM))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException(msg));
+  }
+
   public boolean useNewRewardAlgorithm() {
     return getAllowTvmVote() == 1;
   }
@@ -2274,16 +2401,119 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .orElse(Long.MAX_VALUE);
   }
 
+  public long getAllowAccountAssetOptimizationFromRoot() {
+    try {
+      return Optional.ofNullable(getFromRoot(ALLOW_ASSET_OPTIMIZATION))
+          .map(BytesCapsule::getData)
+          .map(ByteArray::toLong)
+          .orElseThrow(
+              () -> new IllegalArgumentException("not found ALLOW_ASSET_OPTIMIZATION"));
+    } catch (Exception e) {
+      logger.debug("{}", e.getMessage());
+      return CommonParameter.getInstance().getAllowAssetOptimization();
+    }
+  }
+
   // 1: enable
   public long getAllowAccountAssetOptimization() {
     return Optional.ofNullable(getUnchecked(ALLOW_ACCOUNT_ASSET_OPTIMIZATION))
-            .map(BytesCapsule::getData)
-            .map(ByteArray::toLong)
-            .orElseThrow(() -> new IllegalArgumentException("not found ALLOW_ACCOUNT_ASSET_OPTIMIZATION"));
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_ACCOUNT_ASSET_OPTIMIZATION"));
   }
 
   public void setAllowAccountAssetOptimization(long value) {
     this.put(ALLOW_ACCOUNT_ASSET_OPTIMIZATION, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  // 1: enable
+  public long getAllowAssetOptimization() {
+    return Optional.ofNullable(getUnchecked(ALLOW_ASSET_OPTIMIZATION))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_ASSET_OPTIMIZATION"));
+  }
+
+  public void setAllowAssetOptimization(long value) {
+    this.put(ALLOW_ASSET_OPTIMIZATION, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  // for energy price history
+  public void saveEnergyPriceHistoryDone(long value) {
+    this.put(ENERGY_PRICE_HISTORY_DONE,
+        new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getEnergyPriceHistoryDone() {
+    return Optional.ofNullable(getUnchecked(ENERGY_PRICE_HISTORY_DONE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ENERGY_PRICE_HISTORY_DONE"));
+  }
+
+  public String getEnergyPriceHistory() {
+    return Optional.ofNullable(getUnchecked(ENERGY_PRICE_HISTORY))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toStr)
+        .orElseThrow(() -> new IllegalArgumentException("not found ENERGY_PRICE_HISTORY"));
+  }
+
+  public void saveEnergyPriceHistory(String value) {
+    this.put(ENERGY_PRICE_HISTORY, new BytesCapsule(ByteArray.fromString(value)));
+  }
+
+  // for bandwidth price history
+  public void saveBandwidthPriceHistoryDone(long value) {
+    this.put(BANDWIDTH_PRICE_HISTORY_DONE,
+        new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getBandwidthPriceHistoryDone() {
+    return Optional.ofNullable(getUnchecked(BANDWIDTH_PRICE_HISTORY_DONE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found BANDWIDTH_PRICE_HISTORY_DONE"));
+  }
+
+  public String getBandwidthPriceHistory() {
+    return Optional.ofNullable(getUnchecked(BANDWIDTH_PRICE_HISTORY))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toStr)
+        .orElseThrow(() -> new IllegalArgumentException("not found BANDWIDTH_PRICE_HISTORY"));
+  }
+
+  public void saveBandwidthPriceHistory(String value) {
+    this.put(BANDWIDTH_PRICE_HISTORY, new BytesCapsule(ByteArray.fromString(value)));
+  }
+
+  public long getSetBlackholeAccountPermission() {
+    return Optional.of(getUnchecked(SET_BLACKHOLE_ACCOUNT_PERMISSION))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SET_BLACKHOLE_ACCOUNT_PERMISSION"));
+  }
+
+  public void saveSetBlackholePermission(long value) {
+    this.put(SET_BLACKHOLE_ACCOUNT_PERMISSION, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public void saveAllowHigherLimitForMaxCpuTimeOfOneTx(long value) {
+    this.put(ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX,
+        new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getAllowHigherLimitForMaxCpuTimeOfOneTx() {
+    String msg = "not found ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX";
+    return Optional.ofNullable(getUnchecked(ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException(msg));
   }
 
   private static class DynamicResourceProperties {
@@ -2314,6 +2544,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     private static final byte[] ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO =
         "ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO"
             .getBytes();
+
   }
 
 }
