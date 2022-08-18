@@ -789,6 +789,9 @@ service Wallet {
 
   rpc GetPendingSize (EmptyMessage) returns (NumberMessage) {
   }
+
+  rpc GetBlock (BlockReq) returns (BlockExtention) {
+  }
 };
 
 service WalletSolidity {
@@ -974,6 +977,8 @@ service WalletSolidity {
 
   rpc GetBurnTrx (EmptyMessage) returns (NumberMessage) {
   }
+  rpc GetBlock (BlockReq) returns (BlockExtention) {
+  }
 };
 
 service WalletExtension {
@@ -1122,6 +1127,10 @@ message BytesMessage {
 message TimeMessage {
   int64 beginInMilliseconds = 1;
   int64 endInMilliseconds = 2;
+}
+message BlockReq {
+  string id_or_num = 1;
+  bool   detail = 2;
 }
 message BlockLimit {
   int64 startNum = 1;

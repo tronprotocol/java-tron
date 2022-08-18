@@ -61,6 +61,7 @@ public class Channel {
   private InetSocketAddress inetSocketAddress;
   private Node node;
   private long startTime;
+  @Getter
   private TronState tronState = TronState.INIT;
   private boolean isActive;
   @Getter

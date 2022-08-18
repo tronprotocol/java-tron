@@ -77,6 +77,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       "CREATE_NEW_ACCOUNT_BANDWIDTH_RATE"
           .getBytes();
   private static final byte[] TRANSACTION_FEE = "TRANSACTION_FEE".getBytes(); // 1 byte
+  private static final long DEFAULT_TRANSACTION_FEE = 10L;
+  public static final String DEFAULT_BANDWIDTH_PRICE_HISTORY = "0:" + DEFAULT_TRANSACTION_FEE;
+
   private static final byte[] ASSET_ISSUE_FEE = "ASSET_ISSUE_FEE".getBytes();
   private static final byte[] UPDATE_ACCOUNT_PERMISSION_FEE = "UPDATE_ACCOUNT_PERMISSION_FEE"
       .getBytes();
@@ -156,7 +159,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] MAX_FEE_LIMIT = "MAX_FEE_LIMIT".getBytes();
   private static final byte[] BURN_TRX_AMOUNT = "BURN_TRX_AMOUNT".getBytes();
-  private static final byte[] ALLOW_BLACKHOLE_OPTIMIZATION = "ALLOW_BLACKHOLE_OPTIMIZATION".getBytes();
+  private static final byte[] ALLOW_BLACKHOLE_OPTIMIZATION =
+      "ALLOW_BLACKHOLE_OPTIMIZATION".getBytes();
   private static final byte[] ALLOW_NEW_RESOURCE_MODEL = "ALLOW_NEW_RESOURCE_MODEL".getBytes();
   private static final byte[] ALLOW_TVM_FREEZE = "ALLOW_TVM_FREEZE".getBytes();
   private static final byte[] ALLOW_TVM_VOTE = "ALLOW_TVM_VOTE".getBytes();
@@ -169,11 +173,15 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       "ALLOW_ACCOUNT_ASSET_OPTIMIZATION".getBytes();
 
   private static final byte[] ALLOW_ASSET_OPTIMIZATION =
-          "ALLOW_ASSET_OPTIMIZATION".getBytes();
+      "ALLOW_ASSET_OPTIMIZATION".getBytes();
 
 
   private static final byte[] ENERGY_PRICE_HISTORY = "ENERGY_PRICE_HISTORY".getBytes();
   private static final byte[] ENERGY_PRICE_HISTORY_DONE = "ENERGY_PRICE_HISTORY_DONE".getBytes();
+  private static final byte[] BANDWIDTH_PRICE_HISTORY = "BANDWIDTH_PRICE_HISTORY".getBytes();
+  private static final byte[] BANDWIDTH_PRICE_HISTORY_DONE =
+      "BANDWIDTH_PRICE_HISTORY_DONE".getBytes();
+
   private static final byte[] SET_BLACKHOLE_ACCOUNT_PERMISSION =
       "SET_BLACKHOLE_ACCOUNT_PERMISSION".getBytes();
   private static final byte[] ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX =
@@ -378,7 +386,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.saveTotalTronPowerWeight(0L);
     }
 
-
     try {
       this.getAllowAdaptiveEnergy();
     } catch (IllegalArgumentException e) {
@@ -449,7 +456,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getTransactionFee();
     } catch (IllegalArgumentException e) {
-      this.saveTransactionFee(10L); // 10sun/byte
+      this.saveTransactionFee(DEFAULT_TRANSACTION_FEE); // 10sun/byte
     }
 
     try {
@@ -793,7 +800,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getAllowAssetOptimization();
     } catch (IllegalArgumentException e) {
       this.setAllowAssetOptimization(CommonParameter
-              .getInstance().getAllowAssetOptimization());
+          .getInstance().getAllowAssetOptimization());
     }
 
     try {
@@ -813,6 +820,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getEnergyPriceHistory();
     } catch (IllegalArgumentException e) {
       this.saveEnergyPriceHistory(DEFAULT_ENERGY_PRICE_HISTORY);
+    }
+
+    try {
+      this.getBandwidthPriceHistoryDone();
+    } catch (IllegalArgumentException e) {
+      this.saveBandwidthPriceHistoryDone(0);
+    }
+
+    try {
+      this.getBandwidthPriceHistory();
+    } catch (IllegalArgumentException e) {
+      this.saveBandwidthPriceHistory(DEFAULT_BANDWIDTH_PRICE_HISTORY);
     }
 
     try {
@@ -2015,7 +2034,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
           .orElseThrow(
               () -> new IllegalArgumentException("not found latest block header number"));
     } catch (ItemNotFoundException | BadItemException e) {
-     logger.error("{}", e);
+      logger.error("{}", e);
     }
     return -1;
   }
@@ -2385,10 +2404,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public long getAllowAccountAssetOptimizationFromRoot() {
     try {
       return Optional.ofNullable(getFromRoot(ALLOW_ASSET_OPTIMIZATION))
-              .map(BytesCapsule::getData)
-              .map(ByteArray::toLong)
-              .orElseThrow(
-                      () -> new IllegalArgumentException("not found ALLOW_ASSET_OPTIMIZATION"));
+          .map(BytesCapsule::getData)
+          .map(ByteArray::toLong)
+          .orElseThrow(
+              () -> new IllegalArgumentException("not found ALLOW_ASSET_OPTIMIZATION"));
     } catch (Exception e) {
       logger.debug("{}", e.getMessage());
       return CommonParameter.getInstance().getAllowAssetOptimization();
@@ -2411,16 +2430,17 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   // 1: enable
   public long getAllowAssetOptimization() {
     return Optional.ofNullable(getUnchecked(ALLOW_ASSET_OPTIMIZATION))
-          .map(BytesCapsule::getData)
-          .map(ByteArray::toLong)
-          .orElseThrow(
-                  () -> new IllegalArgumentException("not found ALLOW_ASSET_OPTIMIZATION"));
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_ASSET_OPTIMIZATION"));
   }
 
   public void setAllowAssetOptimization(long value) {
     this.put(ALLOW_ASSET_OPTIMIZATION, new BytesCapsule(ByteArray.fromLong(value)));
   }
 
+  // for energy price history
   public void saveEnergyPriceHistoryDone(long value) {
     this.put(ENERGY_PRICE_HISTORY_DONE,
         new BytesCapsule(ByteArray.fromLong(value)));
@@ -2443,6 +2463,31 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public void saveEnergyPriceHistory(String value) {
     this.put(ENERGY_PRICE_HISTORY, new BytesCapsule(ByteArray.fromString(value)));
+  }
+
+  // for bandwidth price history
+  public void saveBandwidthPriceHistoryDone(long value) {
+    this.put(BANDWIDTH_PRICE_HISTORY_DONE,
+        new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getBandwidthPriceHistoryDone() {
+    return Optional.ofNullable(getUnchecked(BANDWIDTH_PRICE_HISTORY_DONE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found BANDWIDTH_PRICE_HISTORY_DONE"));
+  }
+
+  public String getBandwidthPriceHistory() {
+    return Optional.ofNullable(getUnchecked(BANDWIDTH_PRICE_HISTORY))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toStr)
+        .orElseThrow(() -> new IllegalArgumentException("not found BANDWIDTH_PRICE_HISTORY"));
+  }
+
+  public void saveBandwidthPriceHistory(String value) {
+    this.put(BANDWIDTH_PRICE_HISTORY, new BytesCapsule(ByteArray.fromString(value)));
   }
 
   public long getSetBlackholeAccountPermission() {
