@@ -40,6 +40,10 @@ public class ProposalService extends ProposalUtil {
         }
         case TRANSACTION_FEE: {
           manager.getDynamicPropertiesStore().saveTransactionFee(entry.getValue());
+          // update bandwidth price history
+          manager.getDynamicPropertiesStore().saveBandwidthPriceHistory(
+              manager.getDynamicPropertiesStore().getBandwidthPriceHistory()
+                  + "," + proposalCapsule.getExpirationTime() + ":" + entry.getValue());
           break;
         }
         case ASSET_ISSUE_FEE: {

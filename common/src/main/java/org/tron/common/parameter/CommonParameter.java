@@ -129,10 +129,16 @@ public class CommonParameter {
   public int nodeChannelReadTimeout;
   @Getter
   @Setter
-  public int nodeMaxActiveNodes;
+  public int maxConnections;
   @Getter
   @Setter
-  public int nodeMaxActiveNodesWithSameIp;
+  public int minConnections;
+  @Getter
+  @Setter
+  public int minActiveConnections;
+  @Getter
+  @Setter
+  public int maxConnectionsWithSameIp;
   @Getter
   @Setter
   public int minParticipationRate;
@@ -284,18 +290,6 @@ public class CommonParameter {
   @Getter
   @Setter
   public List<String> backupMembers;
-  @Getter
-  @Setter
-  public double connectFactor;
-  @Getter
-  @Setter
-  public double activeConnectFactor;
-  @Getter
-  @Setter
-  public double disconnectNumberFactor;
-  @Getter
-  @Setter
-  public double maxConnectNumberFactor;
   @Getter
   @Setter
   public long receiveTcpMinDataLength;
@@ -549,6 +543,10 @@ public class CommonParameter {
   @Getter
   @Setter
   public long shutdownBlockCount = -1;
+
+  @Getter
+  @Setter
+  public long blockCacheTimeout = 60;
 
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));

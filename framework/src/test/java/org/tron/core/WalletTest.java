@@ -21,6 +21,7 @@ package org.tron.core;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static stest.tron.wallet.common.client.utils.PublicMethed.decode58Check;
 
 import com.google.protobuf.Any;
@@ -36,6 +37,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.ExchangeList;
@@ -501,6 +503,32 @@ public class WalletTest {
         exchangeList.getExchangesList().get(0).getCreatorAddress().toStringUtf8());
     assertEquals("Address2",
         exchangeList.getExchangesList().get(1).getCreatorAddress().toStringUtf8());
+  }
+
+  @Test
+  public void getBlock() {
+    GrpcAPI.BlockReq req = GrpcAPI.BlockReq.getDefaultInstance();
+    Block block = wallet.getBlock(req);
+    assertNotNull(block);
+    try {
+      req = req.toBuilder().setIdOrNum("-1").build();
+      wallet.getBlock(req);
+    } catch (Exception e) {
+      Assert.assertTrue(e instanceof IllegalArgumentException);
+    }
+    try {
+      req = req.toBuilder().setIdOrNum("hash000001").build();
+      wallet.getBlock(req);
+    } catch (Exception e) {
+      Assert.assertTrue(e instanceof IllegalArgumentException);
+    }
+    req = GrpcAPI.BlockReq.newBuilder().setIdOrNum("0").build();
+    block = wallet.getBlock(req);
+    req = req.toBuilder().setDetail(true).build();
+    assertEquals(block, wallet.getBlock(req).toBuilder().clearTransactions().build());
+    req = req.toBuilder().clearDetail()
+        .setIdOrNum(new BlockCapsule(block).getBlockId().toString()).build();
+    assertEquals(block, wallet.getBlock(req));
   }
 
   //@Test
