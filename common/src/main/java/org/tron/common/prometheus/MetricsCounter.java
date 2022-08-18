@@ -18,6 +18,8 @@ class MetricsCounter {
     init(MetricKeys.Counter.P2P_DISCONNECT, "tron p2p disconnect .", "type");
     init(MetricKeys.Counter.INTERNAL_SERVICE_FAIL, "internal Service fail.",
         "class", "method");
+    init(MetricKeys.Counter.DB_GET, "tron db get data.", "type", "db", "result");
+
   }
 
   private MetricsCounter() {

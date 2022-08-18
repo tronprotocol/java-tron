@@ -27,6 +27,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
@@ -511,6 +512,13 @@ public class ByteUtil {
     byte[] output = outputStream.toByteArray();
 
     return output;
+  }
+
+  public static int getSize(byte[] data){
+    if(Objects.isNull(data)){
+      return 0;
+    }
+    return data.length;
   }
 
 }

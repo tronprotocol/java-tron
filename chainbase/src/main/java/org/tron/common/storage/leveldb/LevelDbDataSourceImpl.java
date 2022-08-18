@@ -23,15 +23,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
@@ -39,6 +32,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import com.google.common.primitives.Bytes;
+import io.prometheus.client.Histogram;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.CompressionType;
@@ -49,8 +43,12 @@ import org.iq80.leveldb.ReadOptions;
 import org.iq80.leveldb.WriteBatch;
 import org.iq80.leveldb.WriteOptions;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.MetricLabels;
+import org.tron.common.prometheus.Metrics;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.storage.metric.DbStat;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StorageUtils;
 import org.tron.core.db.common.DbSourceInter;
@@ -208,31 +206,48 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
 
   @Override
   public byte[] getData(byte[] key) {
+    Histogram.Timer requestTimer = Metrics.histogramStartTimer(
+            MetricKeys.Histogram.DB_SERVICE_LATENCY,
+            getEngine(), getDBName(), MetricLabels.Histogram.DB_GET);
     resetDbLock.readLock().lock();
     try {
-      return database.get(key);
+      byte[] result = database.get(key);
+      Metrics.counterInc(MetricKeys.Counter.DB_GET, 1, getEngine(),getDBName(),
+              Objects.isNull(result)?MetricLabels.Counter.DB_GET_MISS:MetricLabels.Counter.DB_GET_SUCCESS);
+      return result;
     } finally {
       resetDbLock.readLock().unlock();
+      Metrics.histogramObserve(requestTimer);
     }
   }
 
   @Override
   public void putData(byte[] key, byte[] value) {
+    Histogram.Timer requestTimer = Metrics.histogramStartTimer(
+            MetricKeys.Histogram.DB_SERVICE_LATENCY,
+            getEngine(), getDBName(), MetricLabels.Histogram.DB_PUT);
     resetDbLock.readLock().lock();
     try {
       database.put(key, value, writeOptions);
     } finally {
       resetDbLock.readLock().unlock();
+      Metrics.histogramObserve(requestTimer);
+      Metrics.histogramObserve(MetricKeys.Histogram.DB_SERVICE_VALUE_BYTES, ByteUtil.getSize(value),
+              getEngine(),getDBName());
     }
   }
 
   @Override
   public void deleteData(byte[] key) {
+    Histogram.Timer requestTimer = Metrics.histogramStartTimer(
+            MetricKeys.Histogram.DB_SERVICE_LATENCY,
+            getEngine(), getDBName(), MetricLabels.Histogram.DB_DEL);
     resetDbLock.readLock().lock();
     try {
       database.delete(key, writeOptions);
     } finally {
       resetDbLock.readLock().unlock();
+      Metrics.histogramObserve(requestTimer);
     }
   }
 
@@ -274,6 +289,9 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     if (limit <= 0) {
       return Sets.newHashSet();
     }
+    Histogram.Timer requestTimer = Metrics.histogramStartTimer(
+            MetricKeys.Histogram.DB_SERVICE_LATENCY,
+            getEngine(), getDBName(), MetricLabels.Histogram.DB_GET_LATEST_VALUES);
     resetDbLock.readLock().lock();
     try (DBIterator iterator = getDBIterator()) {
       Set<byte[]> result = Sets.newHashSet();
@@ -291,6 +309,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
       throw new RuntimeException(e);
     } finally {
       resetDbLock.readLock().unlock();
+      Metrics.histogramObserve(requestTimer);
     }
   }
 
@@ -298,6 +317,9 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     if (limit <= 0) {
       return Sets.newHashSet();
     }
+    Histogram.Timer requestTimer = Metrics.histogramStartTimer(
+            MetricKeys.Histogram.DB_SERVICE_LATENCY,
+            getEngine(), getDBName(), MetricLabels.Histogram.DB_GET_VALUES_NEXT);
     resetDbLock.readLock().lock();
     try (DBIterator iterator = getDBIterator()) {
       Set<byte[]> result = Sets.newHashSet();
@@ -310,6 +332,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
       throw new RuntimeException(e);
     } finally {
       resetDbLock.readLock().unlock();
+      Metrics.histogramObserve(requestTimer);
     }
   }
 
@@ -317,6 +340,9 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     if (limit <= 0) {
       return new ArrayList<>();
     }
+    Histogram.Timer requestTimer = Metrics.histogramStartTimer(
+            MetricKeys.Histogram.DB_SERVICE_LATENCY,
+            getEngine(), getDBName(), MetricLabels.Histogram.DB_GET_KEYS_NEXT);
     resetDbLock.readLock().lock();
     try (DBIterator iterator = getDBIterator()) {
       List<byte[]> result = new ArrayList<>();
@@ -329,6 +355,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
       throw new RuntimeException(e);
     } finally {
       resetDbLock.readLock().unlock();
+      Metrics.histogramObserve(requestTimer);
     }
   }
 
@@ -336,6 +363,9 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     if (limit <= 0) {
       return Collections.emptyMap();
     }
+    Histogram.Timer requestTimer = Metrics.histogramStartTimer(
+            MetricKeys.Histogram.DB_SERVICE_LATENCY,
+            getEngine(), getDBName(), MetricLabels.Histogram.DB_NEXT);
     resetDbLock.readLock().lock();
     try (DBIterator iterator = getDBIterator()) {
       Map<byte[], byte[]> result = new HashMap<>();
@@ -349,11 +379,15 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
       throw new RuntimeException(e);
     } finally {
       resetDbLock.readLock().unlock();
+      Metrics.histogramObserve(requestTimer);
     }
   }
 
   @Override
   public Map<WrappedByteArray, byte[]> prefixQuery(byte[] key) {
+    Histogram.Timer requestTimer = Metrics.histogramStartTimer(
+            MetricKeys.Histogram.DB_SERVICE_LATENCY,
+            getEngine(), getDBName(), MetricLabels.Histogram.DB_PREFIX);
     resetDbLock.readLock().lock();
     try (DBIterator iterator = getDBIterator()) {
       Map<WrappedByteArray, byte[]> result = new HashMap<>();
@@ -370,6 +404,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
       throw new RuntimeException(e);
     } finally {
       resetDbLock.readLock().unlock();
+      Metrics.histogramObserve(requestTimer);
     }
   }
 
@@ -377,6 +412,9 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     if (limit <= 0) {
       return Sets.newHashSet();
     }
+    Histogram.Timer requestTimer = Metrics.histogramStartTimer(
+            MetricKeys.Histogram.DB_SERVICE_LATENCY,
+            getEngine(), getDBName(), MetricLabels.Histogram.DB_GET_VALUES_PREV);
     resetDbLock.readLock().lock();
     try (DBIterator iterator = getDBIterator()) {
       Set<byte[]> result = Sets.newHashSet();
@@ -394,11 +432,15 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
       throw new RuntimeException(e);
     } finally {
       resetDbLock.readLock().unlock();
+      Metrics.histogramObserve(requestTimer);
     }
   }
 
   @Override
   public long getTotal() throws RuntimeException {
+    Histogram.Timer requestTimer = Metrics.histogramStartTimer(
+            MetricKeys.Histogram.DB_SERVICE_LATENCY,
+            getEngine(), getDBName(), MetricLabels.Histogram.DB_GET_TOTAL);
     resetDbLock.readLock().lock();
     try (DBIterator iterator = getDBIterator()) {
       long total = 0;
@@ -410,6 +452,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
       throw new RuntimeException(e);
     } finally {
       resetDbLock.readLock().unlock();
+      Metrics.histogramObserve(requestTimer);
     }
   }
 
@@ -433,12 +476,17 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
         batch.delete(key);
       } else {
         batch.put(key, value);
+        Metrics.histogramObserve(MetricKeys.Histogram.DB_SERVICE_VALUE_BYTES, ByteUtil.getSize(value),
+                getEngine(),getDBName());
       }
     });
   }
 
   @Override
   public void updateByBatch(Map<byte[], byte[]> rows, WriteOptionsWrapper options) {
+    Histogram.Timer requestTimer = Metrics.histogramStartTimer(
+            MetricKeys.Histogram.DB_SERVICE_LATENCY,
+            getEngine(), getDBName(), MetricLabels.Histogram.DB_UPDATE_BY_BATCH_WITH_OPTIONS);
     resetDbLock.readLock().lock();
     try {
       updateByBatchInner(rows, options.level);
@@ -450,11 +498,15 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
       }
     } finally {
       resetDbLock.readLock().unlock();
+      Metrics.histogramObserve(requestTimer);
     }
   }
 
   @Override
   public void updateByBatch(Map<byte[], byte[]> rows) {
+    Histogram.Timer requestTimer = Metrics.histogramStartTimer(
+            MetricKeys.Histogram.DB_SERVICE_LATENCY,
+            getEngine(), getDBName(), MetricLabels.Histogram.DB_UPDATE_BY_BATCH);
     resetDbLock.readLock().lock();
     try {
       updateByBatchInner(rows);
@@ -466,6 +518,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
       }
     } finally {
       resetDbLock.readLock().unlock();
+      Metrics.histogramObserve(requestTimer);
     }
   }
 

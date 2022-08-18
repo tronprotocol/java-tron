@@ -11,7 +11,12 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+
+import io.prometheus.client.Histogram;
 import lombok.Getter;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.MetricLabels;
+import org.tron.common.prometheus.Metrics;
 import org.tron.core.db2.common.HashDB;
 import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.Value;
@@ -48,21 +53,36 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   }
 
   private byte[] get(Snapshot head, byte[] key) {
+    Histogram.Timer requestTimer = Metrics.histogramStartTimer(
+            MetricKeys.Histogram.SNAPSHOT_SERVICE_LATENCY, root.getDbName(), MetricLabels.Histogram.SNAPSHOT_GET);
     Snapshot snapshot = head;
     Value value;
     if (isOptimized) {
       value = db.get(Key.of(key));
+      if(Objects.nonNull(value)){
+        Metrics.histogramObserve(requestTimer);
+      }
+      Metrics.counterInc(MetricKeys.Counter.SNAPSHOT_GET,1,root.getDbName(),
+              Objects.isNull(value) ? MetricLabels.Counter.SNAPSHOT_GET_MISS : MetricLabels.Counter.SNAPSHOT_GET_SUCCESS,
+              MetricLabels.Counter.SNAPSHOT_GET_NOT_REACH_ROOT);
       return value == null ? null: value.getBytes();
     }
     while (Snapshot.isImpl(snapshot)) {
       if ((value = ((SnapshotImpl) snapshot).db.get(Key.of(key))) != null) {
+        Metrics.histogramObserve(requestTimer);
+        Metrics.counterInc(MetricKeys.Counter.SNAPSHOT_GET,1,root.getDbName(),MetricLabels.Counter.SNAPSHOT_GET_SUCCESS,
+                MetricLabels.Counter.SNAPSHOT_GET_NOT_REACH_ROOT);
         return value.getBytes();
       }
 
       snapshot = snapshot.getPrevious();
     }
 
-    return snapshot == null ? null : snapshot.get(key);
+    byte[] result = snapshot == null ? null : snapshot.get(key);
+    Metrics.counterInc(MetricKeys.Counter.SNAPSHOT_GET,1,root.getDbName(),
+            Objects.isNull(result)?MetricLabels.Counter.SNAPSHOT_GET_MISS:MetricLabels.Counter.SNAPSHOT_GET_SUCCESS,
+            MetricLabels.Counter.SNAPSHOT_GET_REACH_ROOT);
+    return result;
   }
 
   @Override
