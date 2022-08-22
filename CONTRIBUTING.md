@@ -186,7 +186,7 @@ Message body use the imperative, present tense: "change" not "changed" nor "chan
 
 Here is an example:
 ```
-feat(block): Optimize the block-producing logic
+feat(block): optimize the block-producing logic
 
 1. increase the priority that block producing thread acquires synchronization lock
 2. add the interruption exception handling in block-producing thread
