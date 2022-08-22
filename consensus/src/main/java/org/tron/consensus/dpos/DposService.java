@@ -78,6 +78,7 @@ public class DposService implements ConsensusInterface {
     this.blockHandle = param.getBlockHandle();
     this.genesisBlock = param.getGenesisBlock();
     this.genesisBlockTime = Long.parseLong(param.getGenesisBlock().getTimestamp());
+    this.isStressTest = param.isStressTest();
     param.getMiners().forEach(miner -> miners.put(miner.getWitnessAddress(), miner));
 
     dposTask.setDposService(this);
