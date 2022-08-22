@@ -260,25 +260,6 @@ public class LevelDbDataSourceImplTest {
   }
 
   @Test
-  public void getValuesPrev() {
-    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
-        Args.getInstance().getOutputDirectory(), "test_getValuesPrev_key");
-    dataSource.initDB();
-    dataSource.resetDb();
-
-    putSomeKeyValue(dataSource);
-    Set<byte[]> seekKeyLimitNext = dataSource.getValuesPrev("0000000300".getBytes(), 2);
-    HashSet<String> hashSet = Sets.newHashSet(ByteArray.toStr(value1), ByteArray.toStr(value2));
-    seekKeyLimitNext.forEach(valeu -> {
-      Assert.assertTrue("getValuesPrev1", hashSet.contains(ByteArray.toStr(valeu)));
-    });
-    seekKeyLimitNext = dataSource.getValuesPrev("0000000100".getBytes(), 2);
-    Assert.assertEquals("getValuesPrev2", 0, seekKeyLimitNext.size());
-    dataSource.resetDb();
-    dataSource.closeDB();
-  }
-
-  @Test
   public void testGetTotal() {
     LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
         Args.getInstance().getOutputDirectory(), "test_getTotal_key");
