@@ -209,6 +209,7 @@ public class Args extends CommonParameter {
     PARAMETER.shutdownBlockTime = null;
     PARAMETER.shutdownBlockHeight = -1;
     PARAMETER.shutdownBlockCount = -1;
+    PARAMETER.isStressTest = true;
 
   }
 
@@ -720,7 +721,6 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.COMMITTEE_ALLOW_MARKET_TRANSACTION) ? config
             .getInt(Constant.COMMITTEE_ALLOW_MARKET_TRANSACTION) : 0;
 
-
     PARAMETER.allowTransactionFeePool =
         config.hasPath(Constant.COMMITTEE_ALLOW_TRANSACTION_FEE_POOL) ? config
             .getInt(Constant.COMMITTEE_ALLOW_TRANSACTION_FEE_POOL) : 0;
@@ -771,7 +771,7 @@ public class Args extends CommonParameter {
     PARAMETER.fastForwardNodes = getNodes(config, Constant.NODE_FAST_FORWARD);
 
     PARAMETER.maxFastForwardNum = config.hasPath(Constant.NODE_MAX_FAST_FORWARD_NUM) ? config
-            .getInt(Constant.NODE_MAX_FAST_FORWARD_NUM) : 3;
+        .getInt(Constant.NODE_MAX_FAST_FORWARD_NUM) : 3;
     if (PARAMETER.maxFastForwardNum > MAX_ACTIVE_WITNESS_NUM) {
       PARAMETER.maxFastForwardNum = MAX_ACTIVE_WITNESS_NUM;
     }
@@ -882,6 +882,9 @@ public class Args extends CommonParameter {
     PARAMETER.allowAssetOptimization = config
         .hasPath(Constant.ALLOW_ASSET_OPTIMIZATION) ? config
         .getInt(Constant.ALLOW_ASSET_OPTIMIZATION) : 0;
+
+    PARAMETER.isStressTest = config.hasPath(Constant.IS_STRESS_TEST) ? config
+        .getBoolean(Constant.IS_STRESS_TEST) : true;
 
     PARAMETER.disabledApiList =
         config.hasPath(Constant.NODE_DISABLED_API_LIST)

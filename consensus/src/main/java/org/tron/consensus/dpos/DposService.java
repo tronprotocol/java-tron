@@ -61,6 +61,8 @@ public class DposService implements ConsensusInterface {
   @Getter
   private long genesisBlockTime;
   @Getter
+  private boolean isStressTest;
+  @Getter
   private BlockHandle blockHandle;
   @Getter
   private GenesisBlock genesisBlock;

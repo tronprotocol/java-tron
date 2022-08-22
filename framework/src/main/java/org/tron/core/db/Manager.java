@@ -515,7 +515,6 @@ public class Manager {
     ActuatorCreator.init();
     TransactionRegister.registerActuator();
 
-
     long exitHeight = CommonParameter.getInstance().getShutdownBlockHeight();
     long exitCount = CommonParameter.getInstance().getShutdownBlockCount();
 
@@ -542,11 +541,18 @@ public class Manager {
     if (chainBaseManager.containBlock(genesisBlock.getBlockId())) {
       Args.getInstance().setChainId(genesisBlock.getBlockId().toString());
     } else {
-      if (chainBaseManager.hasBlocks()) {
+      if (chainBaseManager.hasBlocks() && !Args.getInstance().isStressTest) {
         logger.error(
             "genesis block modify, please delete database directory({}) and restart",
             Args.getInstance().getOutputDirectory());
         System.exit(1);
+      } else if (Args.getInstance().isStressTest) {
+        this.initAccount();
+        this.initWitness();
+        List<ByteString> srList = new ArrayList<>();
+        Args.getInstance().getGenesisBlock().getWitnesses().forEach(
+            witnessCapsule -> srList.add(ByteString.copyFrom(witnessCapsule.getAddress())));
+        consensus.updateWitness(srList);
       } else {
         logger.info("create genesis block");
         Args.getInstance().setChainId(genesisBlock.getBlockId().toString());
@@ -888,7 +894,7 @@ public class Manager {
       revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MAX_FLUSH_COUNT);
       if (Args.getInstance().getShutdownBlockTime() != null
           && Args.getInstance().getShutdownBlockTime().getNextValidTimeAfter(
-          new Date(block.getTimeStamp() - SnapshotManager.DEFAULT_MAX_FLUSH_COUNT * 1000 * 3))
+              new Date(block.getTimeStamp() - SnapshotManager.DEFAULT_MAX_FLUSH_COUNT * 1000 * 3))
           .compareTo(new Date(block.getTimeStamp())) <= 0) {
         revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MIN_FLUSH_COUNT);
       }
@@ -1206,7 +1212,7 @@ public class Manager {
     MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_BLOCK_PROCESS_TIME, cost);
 
     logger.info("pushBlock block number:{}, cost/txs:{}/{} {}",
-            block.getNum(), cost, block.getTransactions().size(), cost > 1000);
+        block.getNum(), cost, block.getTransactions().size(), cost > 1000);
 
     Metrics.histogramObserve(timer);
   }
@@ -1282,8 +1288,10 @@ public class Manager {
       chainBaseManager.getBalanceTraceStore().initCurrentTransactionBalanceTrace(trxCap);
     }
 
-    validateTapos(trxCap);
-    validateCommon(trxCap);
+    if (Args.getInstance().isStressTest) {
+      validateTapos(trxCap);
+      validateCommon(trxCap);
+    }
 
     if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
       throw new ContractSizeNotEqualToOneException(
@@ -1345,7 +1353,6 @@ public class Manager {
       postContractTrigger(trace, false, blockHash);
     }
 
-
     if (isMultiSignTransaction(trxCap.getInstance())) {
       ownerAddressSet.add(ByteArray.toHexString(TransactionCapsule.getOwner(contract)));
     }
@@ -1364,7 +1371,7 @@ public class Manager {
     long cost = System.currentTimeMillis() - start;
     if (cost > 100) {
       logger.info("Process transaction {} cost {}.",
-             Hex.toHexString(transactionInfo.getId()), cost);
+          Hex.toHexString(transactionInfo.getId()), cost);
     }
     Metrics.histogramObserve(requestTimer);
     return transactionInfo.getInstance();
@@ -1374,7 +1381,7 @@ public class Manager {
    * Generate a block.
    */
   public synchronized BlockCapsule generateBlock(Miner miner, long blockTime, long timeout) {
-    String address =  StringUtil.encode58Check(miner.getWitnessAddress().toByteArray());
+    String address = StringUtil.encode58Check(miner.getWitnessAddress().toByteArray());
     final Histogram.Timer timer = Metrics.histogramStartTimer(
         MetricKeys.Histogram.BLOCK_GENERATE_LATENCY, address);
     Metrics.histogramObserve(MetricKeys.Histogram.MINER_LATENCY,
@@ -1431,13 +1438,13 @@ public class Manager {
       if (fromPending) {
         pendingTransactions.poll();
         Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, -1,
-                MetricLabels.Gauge.QUEUE_PENDING);
+            MetricLabels.Gauge.QUEUE_PENDING);
       }
 
       if (trx == null) {
         //  transaction may be removed by rePushLoop.
         logger.warn("Trx is null,fromPending:{},pending:{},repush:{}.",
-                fromPending, pendingTransactions.size(), rePushTransactions.size());
+            fromPending, pendingTransactions.size(), rePushTransactions.size());
         continue;
       }
       if (System.currentTimeMillis() > timeout) {
@@ -1729,7 +1736,7 @@ public class Manager {
 
   public void updateRecentBlock(BlockCapsule block) {
     chainBaseManager.getRecentBlockStore().put(ByteArray.subArray(
-        ByteArray.fromLong(block.getNum()), 6, 8),
+            ByteArray.fromLong(block.getNum()), 6, 8),
         new BytesCapsule(ByteArray.subArray(block.getBlockId().getBytes(), 8, 16)));
   }
 
@@ -1740,8 +1747,8 @@ public class Manager {
     });
     RecentTransactionItem item = new RecentTransactionItem(block.getNum(), list);
     chainBaseManager.getRecentTransactionStore().put(
-            ByteArray.subArray(ByteArray.fromLong(block.getNum()), 6, 8),
-            new BytesCapsule(JsonUtil.obj2Json(item).getBytes()));
+        ByteArray.subArray(ByteArray.fromLong(block.getNum()), 6, 8),
+        new BytesCapsule(JsonUtil.obj2Json(item).getBytes()));
   }
 
   public void updateFork(BlockCapsule block) {

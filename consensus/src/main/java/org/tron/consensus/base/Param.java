@@ -37,6 +37,9 @@ public class Param {
   @Getter
   @Setter
   private PbftInterface pbftInterface;
+  @Getter
+  @Setter
+  private boolean isStressTest;
 
   private Param() {
 

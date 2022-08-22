@@ -1,5 +1,7 @@
 package org.tron.consensus;
 
+import com.google.protobuf.ByteString;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -37,6 +39,10 @@ public class Consensus {
 
   public boolean applyBlock(BlockCapsule blockCapsule) {
     return consensusInterface.applyBlock(blockCapsule);
+  }
+
+  public void updateWitness(List<ByteString> list) {
+    dposService.updateWitness(list);
   }
 
 }
