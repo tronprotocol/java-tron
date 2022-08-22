@@ -82,7 +82,6 @@ public class ArchiveManifest implements Callable<Boolean> {
     dbOptions.maxOpenFiles(1000);
     dbOptions.maxBatchSize(64_000);
     dbOptions.maxManifestSize(128);
-    dbOptions.fast(false);
     return dbOptions;
   }
 
@@ -205,8 +204,12 @@ public class ArchiveManifest implements Callable<Boolean> {
       logger.info("Db {},no need, ignored.", levelDbFile.toString());
       return true;
     }
-    open();
-    logger.info("Db {} archive use {} ms.", this.name, (System.currentTimeMillis() - startTime));
+    try {
+      open();
+      logger.info("Db {} archive use {} ms.", this.name, (System.currentTimeMillis() - startTime));
+    } catch (Exception e) {
+      throw new RuntimeException("Db " + this.name + " archive failed.", e);
+    }
     return true;
   }
 

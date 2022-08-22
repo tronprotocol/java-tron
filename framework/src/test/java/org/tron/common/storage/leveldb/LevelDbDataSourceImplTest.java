@@ -260,6 +260,85 @@ public class LevelDbDataSourceImplTest {
   }
 
   @Test
+  public void testGetlatestValues() {
+    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
+        Args.getInstance().getOutputDirectory(), "test_getlatestValues_key");
+    dataSource.initDB();
+    dataSource.resetDb();
+
+    putSomeKeyValue(dataSource);
+    // case: normal
+    Set<String> seekKeyLimitNext = dataSource.getlatestValues(2).stream()
+        .map(ByteArray::toStr).collect(Collectors.toSet());
+    assertEquals(Sets.newHashSet(ByteArray.toStr(value5), ByteArray.toStr(value6)),
+        seekKeyLimitNext);
+    // case: limit<=0
+    seekKeyLimitNext = dataSource.getlatestValues(0).stream()
+        .map(ByteArray::toStr).collect(Collectors.toSet());
+    assertEquals(Sets.newHashSet(), seekKeyLimitNext);
+
+    dataSource.resetDb();
+    seekKeyLimitNext = dataSource.getlatestValues(0).stream()
+        .map(ByteArray::toStr).collect(Collectors.toSet());
+    assertEquals(Sets.newHashSet(), seekKeyLimitNext);
+    seekKeyLimitNext = dataSource.getlatestValues(1).stream()
+        .map(ByteArray::toStr).collect(Collectors.toSet());
+    assertEquals(Sets.newHashSet(), seekKeyLimitNext);
+    seekKeyLimitNext = dataSource.getlatestValues(2).stream()
+        .map(ByteArray::toStr).collect(Collectors.toSet());
+    assertEquals(Sets.newHashSet(), seekKeyLimitNext);
+
+    dataSource.putData(key1, value1);
+    seekKeyLimitNext = dataSource.getlatestValues(0).stream()
+        .map(ByteArray::toStr).collect(Collectors.toSet());
+    assertEquals(Sets.newHashSet(), seekKeyLimitNext);
+    seekKeyLimitNext = dataSource.getlatestValues(1).stream()
+        .map(ByteArray::toStr).collect(Collectors.toSet());
+    assertEquals(Sets.newHashSet(ByteArray.toStr(value1)), seekKeyLimitNext);
+    seekKeyLimitNext = dataSource.getlatestValues(2).stream()
+        .map(ByteArray::toStr).collect(Collectors.toSet());
+    assertEquals(Sets.newHashSet(ByteArray.toStr(value1)), seekKeyLimitNext);
+
+    dataSource.putData(key2, value2);
+    seekKeyLimitNext = dataSource.getlatestValues(0).stream()
+        .map(ByteArray::toStr).collect(Collectors.toSet());
+    assertEquals(Sets.newHashSet(), seekKeyLimitNext);
+    seekKeyLimitNext = dataSource.getlatestValues(1).stream()
+        .map(ByteArray::toStr).collect(Collectors.toSet());
+    assertEquals(Sets.newHashSet(ByteArray.toStr(value2)), seekKeyLimitNext);
+    seekKeyLimitNext = dataSource.getlatestValues(2).stream()
+        .map(ByteArray::toStr).collect(Collectors.toSet());
+    assertEquals(Sets.newHashSet(ByteArray.toStr(value1),ByteArray.toStr(value2)),
+        seekKeyLimitNext);
+    seekKeyLimitNext = dataSource.getlatestValues(3).stream()
+        .map(ByteArray::toStr).collect(Collectors.toSet());
+    assertEquals(Sets.newHashSet(ByteArray.toStr(value1),ByteArray.toStr(value2)),
+        seekKeyLimitNext);
+
+    dataSource.putData(key3, value3);
+    seekKeyLimitNext = dataSource.getlatestValues(0).stream()
+        .map(ByteArray::toStr).collect(Collectors.toSet());
+    assertEquals(Sets.newHashSet(), seekKeyLimitNext);
+    seekKeyLimitNext = dataSource.getlatestValues(1).stream()
+        .map(ByteArray::toStr).collect(Collectors.toSet());
+    assertEquals(Sets.newHashSet(ByteArray.toStr(value3)), seekKeyLimitNext);
+    seekKeyLimitNext = dataSource.getlatestValues(2).stream()
+        .map(ByteArray::toStr).collect(Collectors.toSet());
+    assertEquals(Sets.newHashSet(ByteArray.toStr(value2), ByteArray.toStr(value3)),
+        seekKeyLimitNext);
+    seekKeyLimitNext = dataSource.getlatestValues(3).stream()
+        .map(ByteArray::toStr).collect(Collectors.toSet());
+    assertEquals(Sets.newHashSet(ByteArray.toStr(value1), ByteArray.toStr(value2),
+        ByteArray.toStr(value3)), seekKeyLimitNext);
+    seekKeyLimitNext = dataSource.getlatestValues(4).stream()
+        .map(ByteArray::toStr).collect(Collectors.toSet());
+    assertEquals(Sets.newHashSet(ByteArray.toStr(value1), ByteArray.toStr(value2),
+        ByteArray.toStr(value3)), seekKeyLimitNext);
+    dataSource.resetDb();
+    dataSource.closeDB();
+  }
+
+  @Test
   public void testGetTotal() {
     LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
         Args.getInstance().getOutputDirectory(), "test_getTotal_key");

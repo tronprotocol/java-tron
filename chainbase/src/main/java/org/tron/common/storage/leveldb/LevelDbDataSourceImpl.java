@@ -281,16 +281,11 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
       return Sets.newHashSet();
     }
     resetDbLock.readLock().lock();
-    try (DBIterator iterator = getDBIterator()) {
+    try (DBIterator iter = getDBIterator()) {
       Set<byte[]> result = Sets.newHashSet();
       long i = 0;
-      iterator.seekToLast();
-      if (iterator.hasNext()) {
-        result.add(iterator.peekNext().getValue());
-        i++;
-      }
-      for (; iterator.hasPrev() && i++ < limit; iterator.prev()) {
-        result.add(iterator.peekPrev().getValue());
+      for (iter.seekToLast(); iter.Valid() && i < limit; iter.prev(), i++) {
+        result.add(iter.value());
       }
       return result;
     } catch (IOException e) {
