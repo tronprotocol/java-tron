@@ -108,6 +108,11 @@ public class ArchiveManifest implements Callable<Boolean> {
       return 404;
     }
 
+    if (!dbDirectory.isDirectory()) {
+      logger.info("{} is not directory.", parameters.databaseDirectory);
+      return 405;
+    }
+
     List<File> files = Arrays.stream(Objects.requireNonNull(dbDirectory.listFiles()))
         .filter(File::isDirectory).collect(
             Collectors.toList());

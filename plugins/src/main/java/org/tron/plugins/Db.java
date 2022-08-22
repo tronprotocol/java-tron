@@ -12,7 +12,7 @@ import picocli.CommandLine;
     mixinStandardHelpOptions = true,
     version = "db command 1.0",
     description = "An rich command set that provides high-level operations  for dbs.",
-    subcommands = {CommandLine.HelpCommand.class, DbMove.class},
+    subcommands = {CommandLine.HelpCommand.class, DbMove.class, DbArchive.class},
     commandListHeading = "%nCommands:%n%nThe most commonly used git commands are:%n"
 )
 public class Db {
