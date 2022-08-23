@@ -1288,7 +1288,7 @@ public class Manager {
       chainBaseManager.getBalanceTraceStore().initCurrentTransactionBalanceTrace(trxCap);
     }
 
-    if (Args.getInstance().isStressTest) {
+    if (!Args.getInstance().isStressTest) {
       validateTapos(trxCap);
       validateCommon(trxCap);
     }
