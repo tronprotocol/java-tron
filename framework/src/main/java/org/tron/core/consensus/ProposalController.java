@@ -65,6 +65,8 @@ public class ProposalController {
         continue;
       }
 
+      proposalCapsule.metrics(this.manager.getWitnessScheduleStore().getActiveWitnesses());
+
       proposalNum--;
       logger.info("Proposal has not expired, id:[{}], skip it", proposalCapsule.getID());
     }

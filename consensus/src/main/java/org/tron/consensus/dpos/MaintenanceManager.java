@@ -16,6 +16,10 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.MetricLabels;
+import org.tron.common.prometheus.Metrics;
+import org.tron.common.utils.StringUtil;
 import org.tron.consensus.ConsensusDelegate;
 import org.tron.consensus.pbft.PbftManager;
 import org.tron.core.capsule.AccountCapsule;
@@ -64,6 +68,24 @@ public class MaintenanceManager {
         beforeMaintenanceTime = nextMaintenanceTime;
         doMaintenance();
         updateWitnessValue(currentWitness);
+
+        // metrics for new Witness
+        for (ByteString witness : currentWitness) {
+          if (!beforeWitness.contains(witness)) {
+            Metrics.counterInc(MetricKeys.Counter.MINER, 1,
+                StringUtil.createReadableString(witness), MetricLabels.Counter.MINE_NEW);
+          }
+          Metrics.gaugeSet(MetricKeys.Gauge.MINER,
+              consensusDelegate.getWitness(witness.toByteArray()).getVoteCount(),
+              StringUtil.createReadableString(witness), "vote");
+        }
+        // metrics for delete  Witness
+        for (ByteString witness : beforeWitness) {
+          if (!currentWitness.contains(witness)) {
+            Metrics.counterInc(MetricKeys.Counter.MINER, 1,
+                StringUtil.createReadableString(witness), MetricLabels.Counter.MINE_DEL);
+          }
+        }
       }
       consensusDelegate.updateNextMaintenanceTime(blockTime);
       if (blockNum != 1) {

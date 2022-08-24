@@ -33,6 +33,8 @@ public class MetricKeys {
     public static final String DB_SST_LEVEL = "tron:db_sst_level";
     public static final String MANAGER_QUEUE = "tron:manager_queue_size";
     public static final String TX_CACHE = "tron:tx_cache";
+    public static final String MINER = "tron:miner_g";
+    public static final String PROPOSAL = "tron:proposal_g";
 
     private Gauge() {
       throw new IllegalStateException("Gauge");

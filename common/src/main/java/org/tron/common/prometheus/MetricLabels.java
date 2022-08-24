@@ -22,6 +22,8 @@ public class MetricLabels {
     public static final String MINE_SUCCESS = SUCCESS;
     public static final String MINE_MISS = "miss";
     public static final String MINE_DUP = "dup";
+    public static final String MINE_NEW = "new";
+    public static final String MINE_DEL = "del";
     public static final String TXS_SUCCESS = SUCCESS;
     public static final String TXS_FAIL = FAIL;
     public static final String TXS_FAIL_ERROR = "error";

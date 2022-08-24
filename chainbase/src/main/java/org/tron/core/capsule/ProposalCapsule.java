@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.ByteArray;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Proposal.State;
@@ -165,5 +167,16 @@ public class ProposalCapsule implements ProtoCapsule<Proposal> {
       logger.info("activeWitnesses size = {}", activeWitnesses.size());
     }
     return count >= activeWitnesses.size() * 7 / 10;
+  }
+
+  public void metrics(List<ByteString> activeWitnesses) {
+    long count = this.proposal.getApprovalsList().stream()
+        .filter(activeWitnesses::contains).count();
+
+    // metric for new proposal
+    proposal.getParametersMap().forEach((param, value) -> {
+      Metrics.gaugeSet(MetricKeys.Gauge.PROPOSAL, count,
+          Long.toString(param), "vote");
+    });
   }
 }
