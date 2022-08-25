@@ -58,8 +58,8 @@ public class FetchBlockService {
     fetchBlockWorkerExecutor.scheduleWithFixedDelay(() -> {
       try {
         fetchBlockProcess(fetchBlockInfo);
-      } catch (Exception exception) {
-        logger.error("FetchBlockWorkerSchedule thread error. {}", exception.getMessage());
+      } catch (Exception e) {
+        logger.error("FetchBlockWorkerSchedule thread error. {}", e.getMessage(), e);
       }
     }, 0L, 50L, TimeUnit.MILLISECONDS);
   }
@@ -80,6 +80,10 @@ public class FetchBlockService {
             fetchBlockInfo = new FetchBlockInfo(sha256Hash, peer, System.currentTimeMillis());
           }
         });
+    if (null != fetchBlockInfo) {
+      logger.info("Set fetchBlockInfo, block: {}, peer: {}, time: {}", fetchBlockInfo.getHash(),
+              fetchBlockInfo.getPeer().getInetAddress(), fetchBlockInfo.getTime());
+    }
   }
 
 
@@ -98,6 +102,8 @@ public class FetchBlockService {
     if (System.currentTimeMillis() - chainBaseManager.getHeadBlockTimeStamp()
         >= BLOCK_FETCH_TIME_OUT_LIMIT) {
       this.fetchBlockInfo = null;
+      logger.info("Clear fetchBlockInfo due to {} ms past head block time",
+              BLOCK_FETCH_TIME_OUT_LIMIT);
       return;
     }
     Item item = new Item(fetchBlock.getHash(), InventoryType.BLOCK);
@@ -120,6 +126,8 @@ public class FetchBlockService {
       });
     } else {
       if (System.currentTimeMillis() - fetchBlock.getTime() >= fetchTimeOut) {
+        logger.info("Clear fetchBlockInfo due to fetch block {} timeout {}ms",
+                fetchBlock.getHash(), fetchTimeOut);
         this.fetchBlockInfo = null;
       }
     }

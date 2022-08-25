@@ -27,7 +27,7 @@ public class PeerStatusCheck {
       try {
         statusCheck();
       } catch (Exception e) {
-        logger.error("", e);
+        logger.error("Check peers status processing failed", e);
       }
     }, 5, 2, TimeUnit.SECONDS);
   }

@@ -127,7 +127,7 @@ public class DiscoverServer {
       try {
         channel.close().await(10, TimeUnit.SECONDS);
       } catch (Exception e) {
-        logger.info("Closing discovery server failed.", e);
+        logger.warn("Closing discovery server failed.", e);
       }
     }
 
@@ -135,7 +135,7 @@ public class DiscoverServer {
       try {
         discoveryExecutor.close();
       } catch (Exception e) {
-        logger.info("Closing discovery executor failed.", e);
+        logger.warn("Closing discovery executor failed.", e);
       }
     }
   }

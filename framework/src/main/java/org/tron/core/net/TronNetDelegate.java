@@ -220,7 +220,7 @@ public class TronNetDelegate {
         && dbManager.getLatestSolidityNumShutDown() == dbManager.getDynamicPropertiesStore()
         .getLatestBlockHeaderNumberFromDB()) {
 
-      logger.info("begin shutdown, currentBlockNum:{}, DbBlockNum:{} ,solidifiedBlockNum:{}.",
+      logger.info("Begin shutdown, currentBlockNum:{}, DbBlockNum:{} ,solidifiedBlockNum:{}.",
           dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
           dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumberFromDB(),
           dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
@@ -278,7 +278,6 @@ public class TronNetDelegate {
           | ZksnarkException
           | EventBloomException e) {
         metricsService.failProcessBlock(block.getNum(), e.getMessage());
-        logger.error("Process block failed, {}, reason: {}.", blockId.getString(), e.getMessage());
         throw new P2pException(TypeEnum.BAD_BLOCK, e);
       }
     }
