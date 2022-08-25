@@ -1,25 +1,19 @@
 package org.tron.core.db2.common;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Iterators;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
+import com.google.common.hash.BloomFilter;
+import com.google.common.hash.Funnels;
 import com.google.common.primitives.Longs;
-
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.WeakHashMap;
-
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.iq80.leveldb.WriteOptions;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.Metrics;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
@@ -34,44 +28,69 @@ import org.tron.core.db.common.iterator.DBIterator;
 public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
 
   // > 65_536(= 2^16) blocks, that is the number of the reference block
-  private final int BLOCK_COUNT = 70_000;
-  private final long MAX_SIZE = 65536;
-  private Map<Key, Long> db = new WeakHashMap<>();
-  private Multimap<Long, Key> blockNumMap = ArrayListMultimap.create();
-  private String name;
-  private RecentTransactionStore recentTransactionStore;
+  private static final long MAX_BLOCK_SIZE = 65536;
+  // estimated number transactions in one block
+  private final int TRANSACTION_COUNT;
+
+  private static final long INVALID_BLOCK = -1;
+
+  // Since the filter cannot query for specific record information,
+  // FAKE_TRANSACTION represent the record presence.
+  private final byte[] FAKE_TRANSACTION = ByteArray.fromLong(0);
+
+  // a pair of bloom filters record the recent transactions
+  private BloomFilter<byte[]>[] bloomFilters = new BloomFilter[2];
+  // filterStartBlock record the start block of the active filter
+  private volatile long filterStartBlock = INVALID_BLOCK;
+  // currentFilterIndex records the index of the active filter
+  private volatile int currentFilterIndex = 0;
+
+  // record the last metric block to avoid duplication
+  private long lastMetricBlock = 0;
+
+  private final String name;
 
   // add a persistent storage, the store name is: trans-cache
   // when fullnode startup, transactionCache initializes transactions from this store
   private DB<byte[], byte[]> persistentStore;
 
+  // replace persistentStore and optimizes startup performance
+  private RecentTransactionStore recentTransactionStore;
+
   public TxCacheDB(String name, RecentTransactionStore recentTransactionStore) {
     this.name = name;
+    this.TRANSACTION_COUNT =
+        CommonParameter.getInstance().getStorage().getEstimatedBlockTransactions();
     this.recentTransactionStore = recentTransactionStore;
     int dbVersion = CommonParameter.getInstance().getStorage().getDbVersion();
     String dbEngine = CommonParameter.getInstance().getStorage().getDbEngine();
     if (dbVersion == 2) {
       if ("LEVELDB".equals(dbEngine.toUpperCase())) {
         this.persistentStore = new LevelDB(
-                new LevelDbDataSourceImpl(StorageUtils.getOutputDirectoryByDbName(name),
-                        name, StorageUtils.getOptionsByDbName(name),
-                        new WriteOptions().sync(CommonParameter.getInstance()
-                                .getStorage().isDbSync())));
+            new LevelDbDataSourceImpl(StorageUtils.getOutputDirectoryByDbName(name),
+                name, StorageUtils.getOptionsByDbName(name),
+                new WriteOptions().sync(CommonParameter.getInstance()
+                    .getStorage().isDbSync())));
       } else if ("ROCKSDB".equals(dbEngine.toUpperCase())) {
         String parentPath = Paths
-                .get(StorageUtils.getOutputDirectoryByDbName(name), CommonParameter
-                        .getInstance().getStorage().getDbDirectory()).toString();
+            .get(StorageUtils.getOutputDirectoryByDbName(name), CommonParameter
+                .getInstance().getStorage().getDbDirectory()).toString();
 
         this.persistentStore = new RocksDB(
-                new RocksDbDataSourceImpl(parentPath,
-                        name, CommonParameter.getInstance()
-                        .getRocksDBCustomSettings()));
+            new RocksDbDataSourceImpl(parentPath,
+                name, CommonParameter.getInstance()
+                .getRocksDBCustomSettings()));
       } else {
         throw new RuntimeException("db type is not supported.");
       }
     } else {
       throw new RuntimeException("db version is not supported.");
     }
+    this.bloomFilters[0] = BloomFilter.create(Funnels.byteArrayFunnel(),
+        MAX_BLOCK_SIZE * TRANSACTION_COUNT);
+    this.bloomFilters[1] = BloomFilter.create(Funnels.byteArrayFunnel(),
+        MAX_BLOCK_SIZE * TRANSACTION_COUNT);
+
     init();
   }
 
@@ -81,57 +100,52 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   private void initCache() {
     long start = System.currentTimeMillis();
     DBIterator iterator = (DBIterator) persistentStore.iterator();
+    long persistentSize = 0;
     while (iterator.hasNext()) {
       Entry<byte[], byte[]> entry = iterator.next();
-      byte[] key = entry.getKey();
-      byte[] value = entry.getValue();
-      if (key == null || value == null) {
+      if (ArrayUtils.isEmpty(entry.getKey()) || ArrayUtils.isEmpty(entry.getValue())) {
         return;
       }
-      Key k = Key.copyOf(key);
-      Long v = Longs.fromByteArray(value);
-      blockNumMap.put(v, k);
-      db.put(k, v);
+      bloomFilters[1].put(entry.getKey());
+      persistentSize++;
     }
-    logger.info("Transaction cache init-1 db-size:{}, blockNumMap-size:{}, cost:{}ms",
-            db.size(), blockNumMap.size(), System.currentTimeMillis() - start);
+    logger.info("load transaction cache from persistentStore "
+            + "db-size:{}, filter-size:{}, filter-fpp:{}, cost:{}ms",
+        persistentSize,
+        bloomFilters[1].approximateElementCount(), bloomFilters[1].expectedFpp(),
+        System.currentTimeMillis() - start);
   }
 
   private void init() {
     long size = recentTransactionStore.size();
-    if (size != MAX_SIZE) {
+    if (size != MAX_BLOCK_SIZE) {
+      // 0. load from persistentStore
       initCache();
-      return;
     }
 
+    // 1. load from recentTransactionStore
     long start = System.currentTimeMillis();
-    List<byte[]> l1 = new ArrayList<>();
-    List<RecentTransactionItem> l2 = new ArrayList<>();
-    Iterator<Entry<byte[], BytesCapsule>> iterator = recentTransactionStore.iterator();
-    while (iterator.hasNext()) {
-      l1.add(iterator.next().getValue().getData());
+    for (Entry<byte[], BytesCapsule> bytesCapsuleEntry : recentTransactionStore) {
+      byte[] data = bytesCapsuleEntry.getValue().getData();
+      RecentTransactionItem trx =
+          JsonUtil.json2Obj(new String(data), RecentTransactionItem.class);
+
+      trx.getTransactionIds().forEach(tid -> bloomFilters[1].put(Hex.decode(tid)));
     }
 
-    l1.forEach(v -> l2.add(JsonUtil.json2Obj(new String(v), RecentTransactionItem.class)));
-
-    l2.forEach(v -> v.getTransactionIds().forEach(tid -> putTransaction(tid, v.getNum())));
-
-    logger.info("Transaction cache init-2 db-size:{}, blockNumMap-size:{}, cost:{}ms",
-            db.size(), blockNumMap.size(), System.currentTimeMillis() - start);
+    logger.info("load transaction cache from recentTransactionStore"
+            + " filter-size:{}, filter-fpp:{}, cost:{}ms",
+        bloomFilters[1].approximateElementCount(), bloomFilters[1].expectedFpp(),
+        System.currentTimeMillis() - start);
   }
-
-  private void putTransaction(String key, long value) {
-    Key k = Key.copyOf(Hex.decode(key));
-    Long v = Longs.fromByteArray(ByteArray.fromLong(value));
-    blockNumMap.put(v, k);
-    db.put(k, v);
-  }
-
 
   @Override
   public byte[] get(byte[] key) {
-    Long v = db.get(Key.of(key));
-    return v == null ? null : Longs.toByteArray(v);
+    if (!bloomFilters[0].mightContain(key) && !bloomFilters[1].mightContain(key)) {
+      return null;
+    }
+    // this means exist
+    return FAKE_TRANSACTION;
   }
 
   @Override
@@ -140,46 +154,54 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
       return;
     }
 
-    Key k = Key.copyOf(key);
-    Long v = Longs.fromByteArray(value);
-    blockNumMap.put(v, k);
-    db.put(k, v);
-    // put the data into persistent storage
-    persistentStore.put(key, value);
-    removeEldest();
-  }
+    long blockNum = Longs.fromByteArray(value);
+    if (filterStartBlock == INVALID_BLOCK) {
+      // init active filter start block
+      filterStartBlock = blockNum;
+      currentFilterIndex = 0;
+      logger.info("init tx cache bloomFilters at {}", blockNum);
+    } else if (blockNum - filterStartBlock > MAX_BLOCK_SIZE) {
+      // active filter is full
+      logger.info("active bloomFilters is full (size={} fpp={}), create a new one (start={})",
+          bloomFilters[currentFilterIndex].approximateElementCount(),
+          bloomFilters[currentFilterIndex].expectedFpp(),
+          blockNum);
 
-  private void removeEldest() {
-    Set<Long> keys = blockNumMap.keySet();
-    if (keys.size() > BLOCK_COUNT) {
-      keys.stream()
-              .min(Long::compareTo)
-              .ifPresent(k -> {
-                Collection<Key> trxHashs = blockNumMap.get(k);
-                // remove transaction from persistentStore,
-                // if foreach is inefficient, change remove-foreach to remove-batch
-                trxHashs.forEach(key -> persistentStore.remove(key.getBytes()));
-                blockNumMap.removeAll(k);
-                logger.debug("******removeEldest block number:{}, block count:{}", k, keys.size());
-              });
+      if (currentFilterIndex == 0) {
+        currentFilterIndex = 1;
+      } else {
+        currentFilterIndex = 0;
+      }
+
+      filterStartBlock = blockNum;
+      bloomFilters[currentFilterIndex] =
+          BloomFilter.create(Funnels.byteArrayFunnel(),
+              MAX_BLOCK_SIZE * TRANSACTION_COUNT);
+    }
+    bloomFilters[currentFilterIndex].put(key);
+
+    if (lastMetricBlock != blockNum) {
+      lastMetricBlock = blockNum;
+      Metrics.gaugeSet(MetricKeys.Gauge.TX_CACHE,
+          bloomFilters[currentFilterIndex].approximateElementCount(), "count");
+      Metrics.gaugeSet(MetricKeys.Gauge.TX_CACHE,
+          bloomFilters[currentFilterIndex].expectedFpp(), "fpp");
     }
   }
 
   @Override
   public long size() {
-    return db.size();
+    throw new UnsupportedOperationException("TxCacheDB size");
   }
 
   @Override
   public boolean isEmpty() {
-    return db.isEmpty();
+    throw new UnsupportedOperationException("TxCacheDB isEmpty");
   }
 
   @Override
   public void remove(byte[] key) {
-    if (key != null) {
-      db.remove(Key.of(key));
-    }
+    throw new UnsupportedOperationException("TxCacheDB remove");
   }
 
   @Override
@@ -189,8 +211,7 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
 
   @Override
   public Iterator<Entry<byte[], byte[]>> iterator() {
-    return Iterators.transform(db.entrySet().iterator(),
-            e -> Maps.immutableEntry(e.getKey().getBytes(), Longs.toByteArray(e.getValue())));
+    throw new UnsupportedOperationException("TxCacheDB iterator");
   }
 
   @Override
@@ -201,15 +222,13 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   @Override
   public void close() {
     reset();
-    db = null;
-    blockNumMap = null;
+    bloomFilters[0] = null;
+    bloomFilters[1] = null;
     persistentStore.close();
   }
 
   @Override
   public void reset() {
-    db.clear();
-    blockNumMap.clear();
   }
 
   @Override
@@ -219,7 +238,6 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
 
   @Override
   public void stat() {
-    this.persistentStore.stat();
   }
 }
 

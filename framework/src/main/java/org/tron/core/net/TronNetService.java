@@ -153,11 +153,11 @@ public class TronNetService {
           code = ReasonCode.UNKNOWN;
           break;
       }
-      logger.error("Message from {} process failed, {} \n type: {}, detail: {}.",
+      logger.warn("Message from {} process failed, {} \n type: {}, detail: {}.",
           peer.getInetAddress(), msg, type, ex.getMessage());
     } else {
       code = ReasonCode.UNKNOWN;
-      logger.error("Message from {} process failed, {}",
+      logger.warn("Message from {} process failed, {}",
           peer.getInetAddress(), msg, ex);
     }
 

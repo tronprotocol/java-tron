@@ -209,7 +209,7 @@ public class LiteFullNodeTool {
     if (new File(destDir).exists()) {
       throw new RuntimeException("destDir is already exist, please remove it first");
     }
-    if (!destPath.mkdir()) {
+    if (!destPath.mkdirs()) {
       throw new RuntimeException("destDir create failed, please check");
     }
     Util.copyDatabases(Paths.get(sourceDir), Paths.get(destDir), dbs);
@@ -486,9 +486,18 @@ public class LiteFullNodeTool {
     return true;
   }
 
-  private void deleteSnapshotFlag(String databaseDir) throws IOException {
-    logger.info("-- delete the info file to identify this node is a real fullnode.");
+  private void deleteSnapshotFlag(String databaseDir) throws IOException, RocksDBException {
+    logger.info("-- delete the info file.");
     Files.delete(Paths.get(databaseDir, INFO_FILE_NAME));
+    DBInterface destBlockIndexDb = DbTool.getDB(databaseDir, BLOCK_INDEX_DB_NAME);
+    if (destBlockIndexDb.get(ByteArray.fromLong(1)) != null) {
+      DBInterface destCommonDb = DbTool.getDB(databaseDir, COMMON_DB_NAME);
+      destCommonDb.delete(DB_KEY_NODE_TYPE);
+      destCommonDb.delete(DB_KEY_LOWEST_BLOCK_NUM);
+      logger.info("-- deleted node_type and lowest_block_num  from  "
+          + "common to identify this node is a real fullnode.");
+    }
+
   }
 
   private void run(Args argv) {

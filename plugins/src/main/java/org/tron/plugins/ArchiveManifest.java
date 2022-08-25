@@ -3,8 +3,6 @@ package org.tron.plugins;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.iq80.leveldb.impl.Iq80DBFactory.factory;
 
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -37,6 +35,8 @@ import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.Options;
 import org.iq80.leveldb.impl.Filename;
+import picocli.CommandLine;
+import picocli.CommandLine.Option;
 
 @Slf4j(topic = "archive")
 /*
@@ -95,12 +95,10 @@ public class ArchiveManifest implements Callable<Boolean> {
 
   public static int run(String[] args) {
     Args parameters = new Args();
-    JCommander jc = JCommander.newBuilder()
-        .addObject(parameters)
-        .build();
-    jc.parse(args);
+    CommandLine commandLine = new CommandLine(parameters);
+    commandLine.parseArgs(args);
     if (parameters.help) {
-      jc.usage();
+      commandLine.usage(System.out);
       return 0;
     }
 
@@ -247,19 +245,23 @@ public class ArchiveManifest implements Callable<Boolean> {
   }
 
   public static class Args {
-    @Parameter
-    private List<String> parameters = new ArrayList<>();
 
-    @Parameter(names = {"-d", "--database-directory"}, description = "java-tron database directory")
-    private  String databaseDirectory = "output-directory/database";
+    @Option(names = {"-d", "--database-directory"},
+        defaultValue = "output-directory/database",
+        description = "java-tron database directory. Default: ${DEFAULT-VALUE}")
+    private  String databaseDirectory;
 
-    @Parameter(names = {"-b", "--batch-size" }, description = "deal manifest batch size")
-    private  int maxBatchSize = 80_000;
+    @Option(names = {"-b", "--batch-size" },
+        defaultValue = "80000",
+        description = "deal manifest batch size. Default: ${DEFAULT-VALUE}")
+    private  int maxBatchSize;
 
-    @Parameter(names = {"-m", "--manifest-size" }, description = "manifest  min size(M) to archive")
-    private  int maxManifestSize = 0;
+    @Option(names = {"-m", "--manifest-size" },
+        defaultValue = "0",
+        description = "manifest  min size(M) to archive. Default: ${DEFAULT-VALUE}")
+    private  int maxManifestSize;
 
-    @Parameter(names = {"-h", "--help"}, help = true)
+    @Option(names = {"-h", "--help"}, help = true)
     private  boolean help;
   }
 }

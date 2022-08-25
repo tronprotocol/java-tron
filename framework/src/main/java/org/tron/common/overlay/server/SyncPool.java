@@ -16,6 +16,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -37,15 +38,12 @@ import org.tron.protos.Protocol;
 @Slf4j(topic = "net")
 @Component
 public class SyncPool {
-
   private final List<PeerConnection> activePeers = Collections
       .synchronizedList(new ArrayList<>());
-  private final AtomicInteger passivePeersCount = new AtomicInteger(0);
-  private final AtomicInteger activePeersCount = new AtomicInteger(0);
-  private double factor = Args.getInstance().getConnectFactor();
-  private double activeFactor = Args.getInstance().getActiveConnectFactor();
   private Cache<NodeHandler, Long> nodeHandlerCache = CacheBuilder.newBuilder()
       .maximumSize(1000).expireAfterWrite(180, TimeUnit.SECONDS).recordStats().build();
+  private final AtomicInteger passivePeersCount = new AtomicInteger(0);
+  private final AtomicInteger activePeersCount = new AtomicInteger(0);
 
   @Autowired
   private NodeManager nodeManager;
@@ -60,9 +58,7 @@ public class SyncPool {
 
   private CommonParameter commonParameter = CommonParameter.getInstance();
 
-  private int maxActiveNodes = commonParameter.getNodeMaxActiveNodes();
-
-  private int maxActivePeersWithSameIp = commonParameter.getNodeMaxActiveNodesWithSameIp();
+  private int maxConnectionsWithSameIp = commonParameter.getMaxConnectionsWithSameIp();
 
   private ScheduledExecutorService poolLoopExecutor = Executors.newSingleThreadScheduledExecutor();
 
@@ -71,6 +67,10 @@ public class SyncPool {
   private PeerClient peerClient;
 
   private int disconnectTimeout = 60_000;
+
+  private int maxConnections = Args.getInstance().getMaxConnections();
+  private int minConnections = Args.getInstance().getMinConnections();
+  private int minActiveConnections = Args.getInstance().getMinActiveConnections();
 
   public void init() {
 
@@ -123,8 +123,8 @@ public class SyncPool {
       }
     });
 
-    int size = Math.max((int) (maxActiveNodes * factor) - activePeers.size(),
-        (int) (maxActiveNodes * activeFactor - activePeersCount.get()));
+    int size = Math.max(minConnections - activePeers.size(),
+        minActiveConnections - activePeersCount.get());
     int lackSize = size - connectNodes.size();
     if (lackSize > 0) {
       nodesInUse.add(nodeManager.getPublicHomeNode().getHexId());
@@ -212,11 +212,16 @@ public class SyncPool {
   }
 
   public boolean isCanConnect() {
-    return passivePeersCount.get() < maxActiveNodes * (1 - activeFactor);
+    return passivePeersCount.get() < maxConnections - minActiveConnections;
   }
 
   public void close() {
     try {
+      activePeers.forEach(p -> {
+        if (!p.isDisconnect()) {
+          p.close();
+        }
+      });
       poolLoopExecutor.shutdownNow();
       logExecutor.shutdownNow();
     } catch (Exception e) {
@@ -250,7 +255,7 @@ public class SyncPool {
               && handler.getNode().getPort() == nodeManager.getPublicHomeNode().getPort())
           || (channelManager.getRecentlyDisconnected().getIfPresent(inetAddress) != null)
           || (channelManager.getBadPeers().getIfPresent(inetAddress) != null)
-          || (channelManager.getConnectionNum(inetAddress) >= maxActivePeersWithSameIp)
+          || (channelManager.getConnectionNum(inetAddress) >= maxConnectionsWithSameIp)
           || (nodesInUse.contains(handler.getNode().getHexId()))
           || (nodeHandlerCache.getIfPresent(handler) != null)
           || (message != null && headNum < message.getLowestBlockNum()));
