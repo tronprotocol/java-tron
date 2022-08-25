@@ -1070,8 +1070,7 @@ public class Manager {
     pendingTransactions.forEach(capsule -> {
       String txId = Hex.toHexString(capsule.getTransactionId().getBytes());
       if (isMultiSignTransaction(capsule.getInstance())) {
-        Contract contract = capsule.getInstance().getRawData().getContract(0);
-        String address = Hex.toHexString(TransactionCapsule.getOwner(contract));
+        String address = Hex.toHexString(capsule.getOwnerAddress());
         multiAddresses.add(address);
       } else {
         txIds.add(txId);
@@ -1410,7 +1409,7 @@ public class Manager {
     }
 
     if (isMultiSignTransaction(trxCap.getInstance())) {
-      ownerAddressSet.add(ByteArray.toHexString(TransactionCapsule.getOwner(contract)));
+      ownerAddressSet.add(ByteArray.toHexString(trxCap.getOwnerAddress()));
     }
 
     if (Objects.nonNull(blockCap)) {
@@ -1521,7 +1520,7 @@ public class Manager {
       }
       //multi sign transaction
       Contract contract = trx.getInstance().getRawData().getContract(0);
-      byte[] owner = TransactionCapsule.getOwner(contract);
+      byte[] owner = trx.getOwnerAddress();
       String ownerAddress = ByteArray.toHexString(owner);
       if (accountSet.contains(ownerAddress)) {
         continue;
@@ -1568,8 +1567,7 @@ public class Manager {
   }
 
   private void filterOwnerAddress(TransactionCapsule transactionCapsule, Set<String> result) {
-    Contract contract = transactionCapsule.getInstance().getRawData().getContract(0);
-    byte[] owner = TransactionCapsule.getOwner(contract);
+    byte[] owner = transactionCapsule.getOwnerAddress();
     String ownerAddress = ByteArray.toHexString(owner);
     if (ownerAddressSet.contains(ownerAddress)) {
       result.add(ownerAddress);
