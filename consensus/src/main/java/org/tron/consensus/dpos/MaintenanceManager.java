@@ -73,17 +73,17 @@ public class MaintenanceManager {
         for (ByteString witness : currentWitness) {
           if (!beforeWitness.contains(witness)) {
             Metrics.counterInc(MetricKeys.Counter.MINER, 1,
-                StringUtil.createReadableString(witness), MetricLabels.Counter.MINE_NEW);
+                StringUtil.encode58Check(witness.toByteArray()), MetricLabels.Counter.MINE_NEW);
           }
           Metrics.gaugeSet(MetricKeys.Gauge.MINER,
               consensusDelegate.getWitness(witness.toByteArray()).getVoteCount(),
-              StringUtil.createReadableString(witness), "vote");
+              StringUtil.encode58Check(witness.toByteArray()), "vote");
         }
         // metrics for delete  Witness
         for (ByteString witness : beforeWitness) {
           if (!currentWitness.contains(witness)) {
             Metrics.counterInc(MetricKeys.Counter.MINER, 1,
-                StringUtil.createReadableString(witness), MetricLabels.Counter.MINE_DEL);
+                StringUtil.encode58Check(witness.toByteArray()), MetricLabels.Counter.MINE_DEL);
           }
         }
       }
