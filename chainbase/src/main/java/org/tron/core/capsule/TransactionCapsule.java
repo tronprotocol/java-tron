@@ -109,7 +109,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   public byte[] getOwnerAddress() {
     if (this.ownerAddress == null) {
-      this.ownerAddress = getOwnerAddress();
+      this.ownerAddress = getOwner(this.transaction.getRawData().getContract(0));
     }
     return this.ownerAddress;
   }
