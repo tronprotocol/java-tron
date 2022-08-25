@@ -223,7 +223,7 @@ public class TransactionTrace {
     long originEnergyLimit = 0;
     switch (trxType) {
       case TRX_CONTRACT_CREATION_TYPE:
-        callerAccount = TransactionCapsule.getOwner(trx.getInstance().getRawData().getContract(0));
+        callerAccount = trx.getOwnerAddress();
         originAccount = callerAccount;
         break;
       case TRX_CONTRACT_CALL_TYPE:
