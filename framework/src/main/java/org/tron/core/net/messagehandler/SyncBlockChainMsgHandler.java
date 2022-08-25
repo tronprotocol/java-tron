@@ -38,7 +38,7 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
     LinkedList<BlockId> blockIds = getLostBlockIds(summaryChainIds);
 
     if (blockIds.size() == 0) {
-      logger.error("Can't get lost block Ids.");
+      logger.warn("Can't get lost block Ids.");
       peer.disconnect(Protocol.ReasonCode.INCOMPATIBLE_CHAIN);
       return;
     } else if (blockIds.size() == 1) {

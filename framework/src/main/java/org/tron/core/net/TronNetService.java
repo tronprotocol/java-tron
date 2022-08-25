@@ -95,6 +95,7 @@ public class TronNetService {
   }
 
   protected void onMessage(PeerConnection peer, TronMessage msg) {
+    long startTime = System.currentTimeMillis();
     try {
       switch (msg.getType()) {
         case SYNC_BLOCK_CHAIN:
@@ -123,6 +124,8 @@ public class TronNetService {
       }
     } catch (Exception e) {
       processException(peer, msg, e);
+    } finally {
+      logger.info("Message processing costs {} ms", System.currentTimeMillis() - startTime);
     }
   }
 
@@ -148,6 +151,9 @@ public class TronNetService {
           break;
         case UNLINK_BLOCK:
           code = ReasonCode.UNLINKABLE;
+          break;
+        case DB_ITEM_NOT_FOUND:
+          code = ReasonCode.FETCH_FAIL;
           break;
         default:
           code = ReasonCode.UNKNOWN;

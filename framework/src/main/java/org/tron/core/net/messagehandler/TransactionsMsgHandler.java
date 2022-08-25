@@ -64,17 +64,24 @@ public class TransactionsMsgHandler implements TronMsgHandler {
   public void processMessage(PeerConnection peer, TronMessage msg) throws P2pException {
     TransactionsMessage transactionsMessage = (TransactionsMessage) msg;
     check(peer, transactionsMessage);
+    int smartContractQueueSize = 0;
+    int trxHandlePoolQueueSize = 0;
     for (Transaction trx : transactionsMessage.getTransactions().getTransactionsList()) {
       int type = trx.getRawData().getContract(0).getType().getNumber();
       if (type == ContractType.TriggerSmartContract_VALUE
           || type == ContractType.CreateSmartContract_VALUE) {
         if (!smartContractQueue.offer(new TrxEvent(peer, new TransactionMessage(trx)))) {
-          logger.warn("Add smart contract failed, queueSize {}:{}", smartContractQueue.size(),
-              queue.size());
+          smartContractQueueSize = smartContractQueue.size();
+          trxHandlePoolQueueSize = queue.size();
         }
       } else {
         trxHandlePool.submit(() -> handleTransaction(peer, new TransactionMessage(trx)));
       }
+    }
+
+    if (smartContractQueueSize != 0 || trxHandlePoolQueueSize != 0) {
+      logger.warn("Add smart contract failed, queueSize {}:{}", smartContractQueueSize,
+              trxHandlePoolQueueSize);
     }
   }
 

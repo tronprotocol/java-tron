@@ -115,8 +115,11 @@ public class SyncService {
       LinkedList<BlockId> chainSummary = getBlockChainSummary(peer);
       peer.setSyncChainRequested(new Pair<>(chainSummary, System.currentTimeMillis()));
       peer.sendMessage(new SyncBlockChainMessage(chainSummary));
+    } catch (P2pException p) {
+      logger.warn("Peer {} sync failed, reason: {}", peer.getInetAddress(), p.getMessage());
+      peer.disconnect(ReasonCode.SYNC_FAIL);
     } catch (Exception e) {
-      logger.error("Peer {} sync failed, reason: {}", peer.getInetAddress(), e.getMessage());
+      logger.error("Peer {} sync failed, reason: {}", peer.getInetAddress(), e.getMessage(), e);
       peer.disconnect(ReasonCode.SYNC_FAIL);
     }
   }

@@ -78,7 +78,7 @@ public class NodeManager implements EventHandler {
       bootNodes.add(Node.instanceOf(boot));
     }
 
-    logger.info("homeNode : {}", homeNode);
+    logger.info("Home node is {}", homeNode);
 
     table = new NodeTable(homeNode);
 
@@ -307,7 +307,7 @@ public class NodeManager implements EventHandler {
       nodeManagerTasksTimer.cancel();
       pongTimer.shutdownNow();
     } catch (Exception e) {
-      logger.warn("close failed.", e);
+      logger.warn("Close failed.", e);
     }
   }
 

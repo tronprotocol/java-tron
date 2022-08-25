@@ -55,7 +55,7 @@ public class PeerClient {
     return connectAsync(node.getHost(), node.getPort(), node.getHexId(), discoveryMode)
         .addListener((ChannelFutureListener) future -> {
           if (!future.isSuccess()) {
-            logger.warn("connect to {}:{} fail,cause:{}", node.getHost(), node.getPort(),
+            logger.warn("Connect to {}:{} fail,cause:{}", node.getHost(), node.getPort(),
                 future.cause().getMessage());
             nodeHandler.getNodeStatistics().nodeDisconnectedLocal(ReasonCode.CONNECT_FAIL);
             nodeHandler.getNodeStatistics().notifyDisconnect();
@@ -67,7 +67,7 @@ public class PeerClient {
   private ChannelFuture connectAsync(String host, int port, String remoteId,
       boolean discoveryMode) {
 
-    logger.info("connect peer {} {} {}", host, port, remoteId);
+    logger.info("Connect peer {} {} {}", host, port, remoteId);
 
     TronChannelInitializer tronChannelInitializer = ctx
         .getBean(TronChannelInitializer.class, remoteId);

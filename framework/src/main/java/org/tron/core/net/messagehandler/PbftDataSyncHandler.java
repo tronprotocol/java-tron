@@ -92,11 +92,11 @@ public class PbftDataSyncHandler implements TronMsgHandler {
       if (raw.getDataType() == DataType.BLOCK
           && pbftSignDataStore.getBlockSignData(raw.getViewN()) == null) {
         pbftSignDataStore.putBlockSignData(raw.getViewN(), pbftCommitMessage.getPbftSignCapsule());
-        logger.info("save the block {} pbft commit data", raw.getViewN());
+        logger.info("Save the block {} pbft commit data", raw.getViewN());
       } else if (raw.getDataType() == DataType.SRL
           && pbftSignDataStore.getSrSignData(raw.getEpoch()) == null) {
         pbftSignDataStore.putSrSignData(raw.getEpoch(), pbftCommitMessage.getPbftSignCapsule());
-        logger.info("save the srl {} pbft commit data", raw.getEpoch());
+        logger.info("Save the srl {} pbft commit data", raw.getEpoch());
       }
     } catch (InvalidProtocolBufferException e) {
       logger.error("", e);
