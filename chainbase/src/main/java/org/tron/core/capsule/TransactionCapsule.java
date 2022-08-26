@@ -105,6 +105,15 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   @Getter
   @Setter
   private long order;
+  private byte[] ownerAddress;
+
+  public byte[] getOwnerAddress() {
+    if (this.ownerAddress == null) {
+      this.ownerAddress = getOwner(this.transaction.getRawData().getContract(0));
+    }
+    return this.ownerAddress;
+  }
+
 
   /**
    * constructor TransactionCapsule.
@@ -544,7 +553,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       throws PermissionException, SignatureException, SignatureFormatException {
     Transaction.Contract contract = this.transaction.getRawData().getContract(0);
     int permissionId = contract.getPermissionId();
-    byte[] owner = getOwner(contract);
+    byte[] owner = getOwnerAddress();
     AccountCapsule account = accountStore.get(owner);
     if (account == null) {
       throw new PermissionException("Account is not exist!");
