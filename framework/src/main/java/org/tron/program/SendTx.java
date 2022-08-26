@@ -61,35 +61,33 @@ public class SendTx {
 
   private static void readTx(String path) {
     File file = new File(path);
-    System.out.println("[Begin] send tx");
+    logger.info("[Begin] send tx");
     try (BufferedReader reader = new BufferedReader(
         new InputStreamReader(new FileInputStream(file)))) {
       String line = reader.readLine();
       List<Transaction> lineList = new ArrayList<>();
-      int count = 1;
+      int count = 0;
       while (line != null) {
         try {
           lineList.add(Transaction.parseFrom(Hex.decode(line)));
+          count += 1;
           if (count % onceSendTxNum == 0) {
             sendTx(lineList);
             lineList.clear();
-            System.out.println("Send tx num = " + count);
+            logger.info("Send tx num = " + count);
           }
         } catch (Exception e) {
         }
         line = reader.readLine();
-        ++count;
       }
       if (!lineList.isEmpty()) {
         sendTx(lineList);
         lineList.clear();
+        logger.info("Send total tx num = " + count);
       }
-      System.out.println("Send tx num = " + count);
     } catch (Exception e) {
       e.printStackTrace();
     }
-    System.out.println("[Final] send tx end ");
+    logger.info("[Final] send tx end");
   }
-
-
 }
