@@ -56,9 +56,9 @@ public class TransactionResult {
   private void parseSignature(Transaction tx) {
 
     if (tx.getSignatureCount() == 0) {
-      v = null;
-      r = null;
-      s = null;
+      v = ByteArray.toJsonHex(new byte[1]);
+      r = ByteArray.toJsonHex(new byte[32]);
+      s = ByteArray.toJsonHex(new byte[32]);
       return;
     }
 
@@ -79,7 +79,7 @@ public class TransactionResult {
       long energyUsageTotal, long energyFee, Wallet wallet) {
     byte[] txId = new TransactionCapsule(tx).getTransactionId().getBytes();
     hash = ByteArray.toJsonHex(txId);
-    nonce = null; // no value
+    nonce = ByteArray.toJsonHex(new byte[8]); // no value
     blockHash = ByteArray.toJsonHex(blockCapsule.getBlockId().getBytes());
     blockNumber = ByteArray.toJsonHex(blockCapsule.getNum());
     transactionIndex = ByteArray.toJsonHex(index);
@@ -88,13 +88,19 @@ public class TransactionResult {
       Contract contract = tx.getRawData().getContract(0);
       byte[] fromByte = TransactionCapsule.getOwner(contract);
       byte[] toByte = getToAddress(tx);
-      from = ByteArray.toJsonHexAddress(fromByte);
+
+      if (blockCapsule.getNum() == 0) {
+        from = ByteArray.toJsonHex(new byte[20]);
+      } else {
+        from = ByteArray.toJsonHexAddress(fromByte);
+      }
+
       to = ByteArray.toJsonHexAddress(toByte);
       value = ByteArray.toJsonHex(getTransactionAmount(contract, hash, wallet));
     } else {
-      from = null;
-      to = null;
-      value = null;
+      from = ByteArray.toJsonHex(new byte[20]);
+      to = ByteArray.toJsonHex(new byte[20]);
+      value = "0x0";
     }
 
     gas = ByteArray.toJsonHex(energyUsageTotal);
@@ -107,7 +113,7 @@ public class TransactionResult {
   public TransactionResult(Transaction tx, Wallet wallet) {
     byte[] txid = new TransactionCapsule(tx).getTransactionId().getBytes();
     hash = ByteArray.toJsonHex(txid);
-    nonce = null; // no value
+    nonce = ByteArray.toJsonHex(new byte[8]); // no value
     blockHash = "0x";
     blockNumber = "0x";
     transactionIndex = "0x";
@@ -120,9 +126,9 @@ public class TransactionResult {
       to = ByteArray.toJsonHexAddress(toByte);
       value = ByteArray.toJsonHex(getTransactionAmount(contract, hash, wallet));
     } else {
-      from = null;
-      to = null;
-      value = null;
+      from = ByteArray.toJsonHex(new byte[20]);
+      to = ByteArray.toJsonHex(new byte[20]);
+      value = "0x0";
     }
 
     gas = "0x0";
