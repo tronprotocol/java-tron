@@ -17,6 +17,7 @@ import lombok.Getter;
 import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.MetricLabels;
 import org.tron.common.prometheus.Metrics;
+import org.tron.common.utils.ByteUtil;
 import org.tron.core.db2.common.HashDB;
 import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.Value;
@@ -91,6 +92,8 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
     Preconditions.checkNotNull(value, "value in db is not null.");
 
     db.put(Key.copyOf(key), Value.copyOf(Value.Operator.PUT, value));
+    Metrics.histogramObserve(MetricKeys.Histogram.SNAPSHOT_SERVICE_VALUE_BYTES, ByteUtil.getSize(value),
+            db.getDbName());
   }
 
   @Override

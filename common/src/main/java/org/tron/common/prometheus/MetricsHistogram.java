@@ -47,7 +47,8 @@ public class MetricsHistogram {
             "type");
     init(MetricKeys.Histogram.DB_SERVICE_VALUE_BYTES, "db service value bytes.",
             "type","db");
-    init(MetricKeys.Histogram.SNAPSHOT_SERVICE_LATENCY,"snapshot service latency","db");
+    init(MetricKeys.Histogram.SNAPSHOT_SERVICE_VALUE_BYTES, "snapshot value bytes.","db");
+    init(MetricKeys.Histogram.SNAPSHOT_SERVICE_LATENCY,"snapshot service latency","db","op");
   }
 
   private MetricsHistogram() {

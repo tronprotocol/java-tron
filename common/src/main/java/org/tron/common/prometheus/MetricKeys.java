@@ -62,6 +62,7 @@ public class MetricKeys {
     public static final String TCP_BYTES = "tron:tcp_bytes";
     public static final String HTTP_BYTES = "tron:http_bytes";
     public static final String DB_SERVICE_VALUE_BYTES = "tron:db_service_value_bytes";
+    public static final String SNAPSHOT_SERVICE_VALUE_BYTES = "tron:snapshot_service_value_bytes";
     public static final String SNAPSHOT_SERVICE_LATENCY = "tron:snapshot_service_latency_seconds";
     public static final String INTERNAL_SERVICE_LATENCY = "tron:internal_service_latency_seconds";
     public static final String DB_SERVICE_LATENCY = "tron:db_service_latency_seconds";
