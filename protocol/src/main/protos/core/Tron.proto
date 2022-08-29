@@ -214,6 +214,26 @@ message Account {
   Permission owner_permission = 31;
   Permission witness_permission = 32;
   repeated Permission active_permission = 33;
+
+  // FREEZE_TYPE is extended ResourceCode of the common package.
+  enum FREEZE_TYPE {
+    BANDWIDTH = 0;
+    ENERGY = 1;
+    POWER = 2;
+    DELEGATED_BANDWIDTH = 3;
+    DELEGATED_ENERGY = 4;
+  }
+  message FreezeV2 {
+    FREEZE_TYPE type = 1;
+    int64 amount = 2;
+  }
+  message UnFreezeV2 {
+    FREEZE_TYPE type = 1;
+    int64 unfreeze_amount = 3;
+    int64 unfreeze_expire_time = 4;
+  }
+  repeated FreezeV2 frozenV2 = 34;
+  repeated UnFreezeV2 unfrozenV2 = 35;
 }
 
 message Key {
@@ -346,6 +366,9 @@ message Transaction {
       ShieldedTransferContract = 51;
       MarketSellAssetContract = 52;
       MarketCancelOrderContract = 53;
+      FreezeBalanceV2Contract = 54;
+      UnfreezeBalanceV2Contract = 55;
+      WithdrawBalanceV2Contract = 56;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;
