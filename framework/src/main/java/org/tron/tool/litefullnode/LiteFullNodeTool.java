@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.rocksdb.RocksDBException;
@@ -43,19 +44,21 @@ public class LiteFullNodeTool {
 
   private static final long START_TIME = System.currentTimeMillis() / 1000;
 
+  private static long RECENT_BLKS = 65536;
+
   private static final String SNAPSHOT_DIR_NAME = "snapshot";
   private static final String HISTORY_DIR_NAME = "history";
   private static final String INFO_FILE_NAME = "info.properties";
   private static final String BACKUP_DIR_PREFIX = ".bak_";
   private static final String CHECKPOINT_DB = "tmp";
-  private static long RECENT_BLKS = 65536;
-
+  private static final String CHECKPOINT_DB_V2 = "checkpoint";
   private static final String BLOCK_DB_NAME = "block";
   private static final String BLOCK_INDEX_DB_NAME = "block-index";
   private static final String TRANS_DB_NAME = "trans";
   private static final String COMMON_DB_NAME = "common";
   private static final String TRANSACTION_RET_DB_NAME = "transactionRetStore";
   private static final String TRANSACTION_HISTORY_DB_NAME = "transactionHistoryStore";
+  private static final String PROPERTIES_DB_NAME = "properties";
 
   private static final String DIR_FORMAT_STRING = "%s%s%s";
 
@@ -198,26 +201,40 @@ public class LiteFullNodeTool {
   private void mergeCheckpoint(String sourceDir, String destDir, List<String> destDbs) {
     logger.info("Begin to merge checkpoint to dataset.");
     try {
-      DBInterface tmpDb = DbTool.getDB(sourceDir, CHECKPOINT_DB);
-      try (DBIterator iterator = tmpDb.iterator()) {
-        for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
-          byte[] key = iterator.getKey();
-          byte[] value = iterator.getValue();
-          String dbName = SnapshotManager.simpleDecode(key);
-          byte[] realKey = Arrays.copyOfRange(key, dbName.getBytes().length + 4, key.length);
-          byte[] realValue = value.length == 1 ? null : Arrays.copyOfRange(value, 1, value.length);
-          if (destDbs != null && destDbs.contains(dbName)) {
-            DBInterface destDb = DbTool.getDB(destDir, dbName);
-            if (realValue != null) {
-              destDb.put(realKey, realValue);
-            } else {
-              destDb.delete(realKey);
-            }
-          }
+      List<String> cpList = getCheckpointV2List(sourceDir);
+      if (cpList.size() > 0) {
+        for (String cp: cpList) {
+          DBInterface checkpointDb = DbTool.getDB(sourceDir + "/" + CHECKPOINT_DB_V2, cp);
+          recover(checkpointDb, destDir, destDbs);
         }
+      } else {
+        DBInterface tmpDb = DbTool.getDB(sourceDir, CHECKPOINT_DB);
+        recover(tmpDb, destDir, destDbs);
       }
     } catch (IOException | RocksDBException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  private void recover(DBInterface db, String destDir, List<String> destDbs)
+      throws IOException, RocksDBException {
+    try (DBIterator iterator = db.iterator()) {
+      for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
+        byte[] key = iterator.getKey();
+        byte[] value = iterator.getValue();
+        String dbName = SnapshotManager.simpleDecode(key);
+        byte[] realKey = Arrays.copyOfRange(key, dbName.getBytes().length + 4, key.length);
+        byte[] realValue =
+            value.length == 1 ? null : Arrays.copyOfRange(value, 1, value.length);
+        if (destDbs != null && destDbs.contains(dbName)) {
+          DBInterface destDb = DbTool.getDB(destDir, dbName);
+          if (realValue != null) {
+            destDb.put(realKey, realValue);
+          } else {
+            destDb.delete(realKey);
+          }
+        }
+      }
     }
   }
 
@@ -236,17 +253,33 @@ public class LiteFullNodeTool {
   private long getLatestBlockHeaderNum(String databaseDir) throws IOException, RocksDBException {
     // query latest_block_header_number from checkpoint first
     final String latestBlockHeaderNumber = "latest_block_header_number";
-    byte[] value = DbTool.getDB(databaseDir, CHECKPOINT_DB).get(
-            Bytes.concat(simpleEncode(CHECKPOINT_DB), latestBlockHeaderNumber.getBytes()));
-    if (value != null && value.length > 1) {
-      return ByteArray.toLong(Arrays.copyOfRange(value, 1, value.length));
+    List<String> cpList = getCheckpointV2List(databaseDir);
+    DBInterface checkpointDb = null;
+    if (cpList.size() > 0) {
+      String lastestCp = cpList.get(cpList.size() - 1);
+      checkpointDb = DbTool.getDB(databaseDir + "/" + CHECKPOINT_DB_V2, lastestCp);
+    } else {
+      checkpointDb = DbTool.getDB(databaseDir, CHECKPOINT_DB);
+    }
+    Long blockNumber = getLatestBlockHeaderNumFromCP(checkpointDb,
+        latestBlockHeaderNumber.getBytes());
+    if (blockNumber != null) {
+      return blockNumber;
     }
     // query from propertiesDb if checkpoint not contains latest_block_header_number
-    DBInterface propertiesDb = DbTool.getDB(databaseDir, "properties");
+    DBInterface propertiesDb = DbTool.getDB(databaseDir, PROPERTIES_DB_NAME);
     return Optional.ofNullable(propertiesDb.get(ByteArray.fromString(latestBlockHeaderNumber)))
             .map(ByteArray::toLong)
             .orElseThrow(
                 () -> new IllegalArgumentException("not found latest block header number"));
+  }
+
+  private Long getLatestBlockHeaderNumFromCP(DBInterface db, byte[] key) {
+    byte[] value = db.get(Bytes.concat(simpleEncode(PROPERTIES_DB_NAME), key));
+    if (value != null && value.length > 1) {
+      return ByteArray.toLong(Arrays.copyOfRange(value, 1, value.length));
+    }
+    return null;
   }
 
   /**
@@ -491,6 +524,14 @@ public class LiteFullNodeTool {
   @VisibleForTesting
   public static void reSetRecentBlks() {
     RECENT_BLKS = 65536;
+  }
+
+  private List<String> getCheckpointV2List(String sourceDir) {
+    File file = new File(Paths.get(sourceDir, CHECKPOINT_DB_V2).toString());
+    if (file.exists() && file.isDirectory() && file.list() != null) {
+      return Arrays.stream(file.list()).sorted().collect(Collectors.toList());
+    }
+    return Lists.newArrayList();
   }
 
   private void run(Args argv) {
