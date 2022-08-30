@@ -145,25 +145,25 @@ public class SendTx {
   }
 
   public static void main(String[] args) {
-    try {
-      split();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+//    try {
+//      split();
+//    } catch (IOException e) {
+//      throw new RuntimeException(e);
+//    }
+    //read the parameter
+    String[] fullNodes = args[0].split(";");
+    int broadcastThreadNum = Integer.parseInt(args[1]);
+    String filePath = args[2];
+    int maxRows = -1;
+    if (args.length > 3) {
+      maxRows = Integer.parseInt(args[3]);
     }
-//    //read the parameter
-//    String[] fullNodes = args[0].split(";");
-//    int broadcastThreadNum = Integer.parseInt(args[1]);
-//    String filePath = args[2];
-//    int maxRows = -1;
-//    if (args.length > 3) {
-//      maxRows = Integer.parseInt(args[3]);
-//    }
-//    if (maxRows < 0) {
-//      maxRows = Integer.MAX_VALUE;
-//    }
-//    SendTx sendTx = new SendTx(fullNodes, broadcastThreadNum, maxRows);
-//    //send tx
-//    sendTx.readTxAndSend(filePath);
-//    System.exit(0);
+    if (maxRows < 0) {
+      maxRows = Integer.MAX_VALUE;
+    }
+    SendTx sendTx = new SendTx(fullNodes, broadcastThreadNum, maxRows);
+    //send tx
+    sendTx.readTxAndSend(filePath);
+    System.exit(0);
   }
 }
