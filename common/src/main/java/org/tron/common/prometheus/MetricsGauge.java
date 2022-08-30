@@ -20,6 +20,9 @@ class MetricsGauge {
     init(MetricKeys.Gauge.DB_SST_LEVEL, "tron  db  files .", "type", "db", "level");
     init(MetricKeys.Gauge.DB_SNAPSHOT_IMPL_LEVEL, "tron  db snapshotImpl level depth.");
 
+    init(MetricKeys.Gauge.TX_CACHE, "tron tx cache info.", "type");
+    init(MetricKeys.Gauge.MINER, "tron miner.", "miner", "type");
+    init(MetricKeys.Gauge.PROPOSAL, "tron proposal.",  "param", "type");
   }
 
   private MetricsGauge() {
