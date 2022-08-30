@@ -5,6 +5,8 @@ import io.grpc.ManagedChannelBuilder;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +18,10 @@ import java.util.concurrent.Future;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.tron.api.WalletGrpc;
+import org.tron.common.utils.ByteArray;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 @Slf4j
 public class SendTx {
@@ -93,21 +98,71 @@ public class SendTx {
     logger.info("[Final] send tx end");
   }
 
+  public static void split() throws IOException {
+    String dir = "/data/workspace/replay_workspace/data/2022-08-17_43180631/";
+    File file = new File(dir + "getTransactions.txt_43382231_201600");
+    FileWriter fw1 = new FileWriter(dir + "trx_transfer.txt");
+    FileWriter fw2 = new FileWriter(dir + "token10_transfer.txt");
+    FileWriter fw3 = new FileWriter(dir + "usdt_transfer.txt");
+
+    int count = 0;
+    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+    String line;
+    while ((line = reader.readLine()) != null) {
+      Transaction tx = Transaction.parseFrom(Hex.decode(line));
+      ContractType contractType = tx.getRawData().getContract(0).getType();
+      switch (contractType) {
+        case TransferContract:
+          fw1.write(line + "\n");
+          break;
+        case TransferAssetContract:
+          fw2.write(line + "\n");
+          break;
+        case TriggerSmartContract:
+          TriggerSmartContract triggerSmartContract = tx.getRawData().getContract(0).getParameter()
+              .unpack(TriggerSmartContract.class);
+          if (ByteArray.toHexString(triggerSmartContract.getContractAddress().toByteArray())
+              .equalsIgnoreCase("A614F803B6FD780986A42C78EC9C7F77E6DED13C")) {
+            fw3.write(line + "\n");
+          }
+          break;
+        default:
+          break;
+      }
+      count += 1;
+      if (count % 10000 == 0) {
+        logger.info("count: {}", count);
+      }
+    }
+    reader.close();
+    fw1.flush();
+    fw2.flush();
+    fw3.flush();
+    fw1.close();
+    fw2.close();
+    fw3.close();
+  }
+
   public static void main(String[] args) {
-    //read the parameter
-    String[] fullNodes = args[0].split(";");
-    int broadcastThreadNum = Integer.parseInt(args[1]);
-    String filePath = args[2];
-    int maxRows = -1;
-    if (args.length > 3) {
-      maxRows = Integer.parseInt(args[3]);
+    try {
+      split();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
-    if (maxRows < 0) {
-      maxRows = Integer.MAX_VALUE;
-    }
-    SendTx sendTx = new SendTx(fullNodes, broadcastThreadNum, maxRows);
-    //send tx
-    sendTx.readTxAndSend(filePath);
-    System.exit(0);
+//    //read the parameter
+//    String[] fullNodes = args[0].split(";");
+//    int broadcastThreadNum = Integer.parseInt(args[1]);
+//    String filePath = args[2];
+//    int maxRows = -1;
+//    if (args.length > 3) {
+//      maxRows = Integer.parseInt(args[3]);
+//    }
+//    if (maxRows < 0) {
+//      maxRows = Integer.MAX_VALUE;
+//    }
+//    SendTx sendTx = new SendTx(fullNodes, broadcastThreadNum, maxRows);
+//    //send tx
+//    sendTx.readTxAndSend(filePath);
+//    System.exit(0);
   }
 }
