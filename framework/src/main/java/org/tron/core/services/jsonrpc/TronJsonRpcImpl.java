@@ -14,6 +14,7 @@ import com.alibaba.fastjson.JSON;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessageV3;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -134,6 +135,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   private static final String TAG_NOT_SUPPORT_ERROR = "TAG [earliest | pending] not supported";
   private static final String QUANTITY_NOT_SUPPORT_ERROR =
       "QUANTITY not supported, just support TAG as latest";
+  private static final String NO_BLOCK_HEADER = "header not found";
+  private static final String NO_BLOCK_HEADER_BY_HASH = "header for hash not found";
 
   private static final String ERROR_SELECTOR = "08c379a0"; // Function selector for Error(string)
   /**
@@ -716,9 +719,54 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public String getCall(CallArguments transactionCall, String blockNumOrTag)
+  public String getCall(CallArguments transactionCall, Object blockParamObj)
       throws JsonRpcInvalidParamsException, JsonRpcInvalidRequestException,
       JsonRpcInternalException {
+
+    String blockNumOrTag;
+    if (blockParamObj instanceof HashMap) {
+      HashMap<String, String> paramMap;
+      paramMap = (HashMap<String, String>) blockParamObj;
+
+      if (paramMap.containsKey("blockNumber")) {
+        try {
+          blockNumOrTag = paramMap.get("blockNumber");
+        } catch (Exception e) {
+          throw new JsonRpcInvalidRequestException(JSON_ERROR);
+        }
+
+        long blockNumber;
+        try {
+          blockNumber = ByteArray.hexToBigInteger(blockNumOrTag).longValue();
+        } catch (Exception e) {
+          throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
+        }
+
+        if (wallet.getBlockByNum(blockNumber) == null) {
+          throw new JsonRpcInternalException(NO_BLOCK_HEADER);
+        }
+
+      } else if (paramMap.containsKey("blockHash")) {
+        try {
+          blockNumOrTag = paramMap.get("blockHash");
+        } catch (Exception e) {
+          throw new JsonRpcInvalidRequestException(JSON_ERROR);
+        }
+
+        if (getBlockByJsonHash(blockNumOrTag) == null) {
+          throw new JsonRpcInternalException(NO_BLOCK_HEADER_BY_HASH);
+        }
+      } else {
+        throw new JsonRpcInvalidRequestException(JSON_ERROR);
+      }
+
+      blockNumOrTag = LATEST_STR;
+    } else if (blockParamObj instanceof String) {
+      blockNumOrTag = (String) blockParamObj;
+    } else {
+      throw new JsonRpcInvalidRequestException(JSON_ERROR);
+    }
+
     if (EARLIEST_STR.equalsIgnoreCase(blockNumOrTag)
         || PENDING_STR.equalsIgnoreCase(blockNumOrTag)) {
       throw new JsonRpcInvalidParamsException(TAG_NOT_SUPPORT_ERROR);
