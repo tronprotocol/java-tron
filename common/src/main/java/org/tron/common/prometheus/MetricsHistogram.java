@@ -41,6 +41,14 @@ public class MetricsHistogram {
         "type");
     init(MetricKeys.Histogram.HTTP_BYTES, "http_bytes traffic.",
         "url", "status");
+    init(MetricKeys.Histogram.DB_SERVICE_LATENCY, "db service latency.",
+            "type", "db", "op");
+    init(MetricKeys.Histogram.CHECKPOINT_LATENCY, "checkpoint flush latency.",
+            "type");
+    init(MetricKeys.Histogram.DB_SERVICE_VALUE_BYTES, "db service value bytes.",
+            "type","db");
+    init(MetricKeys.Histogram.SNAPSHOT_SERVICE_VALUE_BYTES, "snapshot value bytes.","db");
+    init(MetricKeys.Histogram.SNAPSHOT_SERVICE_LATENCY,"snapshot service latency","db","op");
   }
 
   private MetricsHistogram() {
