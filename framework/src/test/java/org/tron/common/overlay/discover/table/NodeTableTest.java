@@ -133,6 +133,9 @@ public class NodeTableTest {
     Assert.assertTrue(nodeTable.contains(node));
     nodeTable.dropNode(node);
     Assert.assertTrue(!nodeTable.contains(node));
+    nodeTable.addNode(node);
+    nodeTable.dropNode(new Node(ids.get(1), ips[0], 10000, 10000));
+    Assert.assertTrue(!nodeTable.contains(node));
   }
 
   @Test
