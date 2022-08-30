@@ -59,7 +59,7 @@ public class FetchBlockService {
       try {
         fetchBlockProcess(fetchBlockInfo);
       } catch (Exception e) {
-        logger.error("FetchBlockWorkerSchedule thread error. {}", e.getMessage(), e);
+        logger.error("FetchBlockWorkerSchedule thread error.", e);
       }
     }, 0L, 50L, TimeUnit.MILLISECONDS);
   }

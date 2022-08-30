@@ -1809,6 +1809,14 @@ public class Manager {
   }
 
   public long getSyncBeginNumber() {
+    logger.info("headNumber:"
+        + chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber());
+    logger.info(
+        "syncBeginNumber:"
+            + (chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
+            - revokingStore.size()));
+    logger.info("solidBlockNumber:"
+        + chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
     return chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
         - revokingStore.size();
   }

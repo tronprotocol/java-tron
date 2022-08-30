@@ -93,7 +93,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     buffer.readBytes(encoded);
     P2pMessage msg = messageFactory.create(encoded);
 
-    logger.info("Handshake receive from {}", ctx.channel().remoteAddress());
+    logger.info("Handshake receive from {}, {}", ctx.channel().remoteAddress(), msg);
 
     switch (msg.getType()) {
       case P2P_HELLO:
@@ -134,7 +134,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     Metrics.histogramObserve(MetricKeys.Histogram.TCP_BYTES, length,
         MetricLabels.Histogram.TRAFFIC_OUT);
 
-    logger.info("Handshake send to {}", ctx.channel().remoteAddress());
+    logger.info("Handshake send to {}, {} ", ctx.channel().remoteAddress(), message);
   }
 
   private void handleHelloMsg(ChannelHandlerContext ctx, HelloMessage msg) {

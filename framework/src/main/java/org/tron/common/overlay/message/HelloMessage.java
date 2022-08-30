@@ -124,7 +124,11 @@ public class HelloMessage extends P2pMessage {
 
   @Override
   public String toString() {
-    return new StringBuilder().append(super.toString()).append(helloMessage.toString()).toString();
+    return new StringBuilder().append(super.toString()).append(", ")
+            .append("from: ").append(getFrom()).append(", ")
+            .append("timestamp: ").append(getTimestamp()).append(", ")
+            .append("headBlockId: {").append(getHeadBlockId().getString()).append("}")
+            .toString();
   }
 
   public Protocol.HelloMessage getInstance() {

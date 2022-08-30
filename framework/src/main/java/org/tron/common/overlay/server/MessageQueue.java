@@ -84,8 +84,7 @@ public class MessageQueue {
           logger.warn("Send message server interrupted.");
           Thread.currentThread().interrupt();
         } catch (Exception e) {
-          logger.error("Failed to send to {}, error info: {}", ctx.channel().remoteAddress(),
-              e.getMessage(), e);
+          logger.error("Failed to send to {}.", ctx.channel().remoteAddress(), e);
         }
       }
     });
