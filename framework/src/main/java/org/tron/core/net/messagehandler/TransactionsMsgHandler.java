@@ -66,6 +66,7 @@ public class TransactionsMsgHandler implements TronMsgHandler {
     check(peer, transactionsMessage);
     int smartContractQueueSize = 0;
     int trxHandlePoolQueueSize = 0;
+    int dropSmartContractCount = 0;
     for (Transaction trx : transactionsMessage.getTransactions().getTransactionsList()) {
       int type = trx.getRawData().getContract(0).getType().getNumber();
       if (type == ContractType.TriggerSmartContract_VALUE
@@ -73,15 +74,16 @@ public class TransactionsMsgHandler implements TronMsgHandler {
         if (!smartContractQueue.offer(new TrxEvent(peer, new TransactionMessage(trx)))) {
           smartContractQueueSize = smartContractQueue.size();
           trxHandlePoolQueueSize = queue.size();
+          dropSmartContractCount++;
         }
       } else {
         trxHandlePool.submit(() -> handleTransaction(peer, new TransactionMessage(trx)));
       }
     }
 
-    if (smartContractQueueSize != 0 || trxHandlePoolQueueSize != 0) {
-      logger.warn("Add smart contract failed, queueSize {}:{}", smartContractQueueSize,
-              trxHandlePoolQueueSize);
+    if (dropSmartContractCount > 0) {
+      logger.warn("Add smart contract failed, drop count: {}, queueSize {}:{}",
+          dropSmartContractCount, smartContractQueueSize, trxHandlePoolQueueSize);
     }
   }
 

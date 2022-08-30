@@ -65,6 +65,9 @@ public class TronNetService {
   @Autowired
   private FetchBlockService fetchBlockService;
 
+  private static final String TAG = "~";
+  private static final int DURATION_STEP = 50;
+
   public void start() {
     channelManager.init();
     advService.init();
@@ -125,7 +128,9 @@ public class TronNetService {
     } catch (Exception e) {
       processException(peer, msg, e);
     } finally {
-      logger.info("Message processing costs {} ms", System.currentTimeMillis() - startTime);
+      long costs = System.currentTimeMillis() - startTime;
+      logger.info("Message processing costs {} ms, peer: {}, type: {}, time tag: {}",
+          costs, peer.getInetAddress(), msg.getType(), getTimeTag(costs));
     }
   }
 
@@ -168,5 +173,14 @@ public class TronNetService {
     }
 
     peer.disconnect(code);
+  }
+
+  private String getTimeTag(long duration) {
+    StringBuilder tag = new StringBuilder(TAG);
+    long tagCount = duration / DURATION_STEP;
+    for (; tagCount > 0; tagCount--) {
+      tag.append(TAG);
+    }
+    return tag.toString();
   }
 }
