@@ -31,14 +31,6 @@ public class NodeEntry {
   private int distance;
   private long modified;
 
-  public NodeEntry(Node n) {
-    this.node = n;
-    this.ownerId = n.getId();
-    entryId = n.getHost();
-    distance = distance(ownerId, n.getId());
-    touch();
-  }
-
   public NodeEntry(byte[] ownerId, Node n) {
     this.node = n;
     this.ownerId = ownerId;
@@ -115,6 +107,6 @@ public class NodeEntry {
 
   @Override
   public int hashCode() {
-    return this.node.hashCode();
+    return this.entryId.hashCode();
   }
 }
