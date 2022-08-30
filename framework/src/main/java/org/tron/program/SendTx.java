@@ -121,8 +121,9 @@ public class SendTx {
         case TriggerSmartContract:
           TriggerSmartContract triggerSmartContract = tx.getRawData().getContract(0).getParameter()
               .unpack(TriggerSmartContract.class);
-          if (ByteArray.toHexString(triggerSmartContract.getContractAddress().toByteArray())
-              .equalsIgnoreCase("A614F803B6FD780986A42C78EC9C7F77E6DED13C")) {
+          byte[] contractAddressBytes = triggerSmartContract.getContractAddress().toByteArray();
+          if (ByteArray.toHexString(contractAddressBytes)
+              .equalsIgnoreCase("41A614F803B6FD780986A42C78EC9C7F77E6DED13C")) {
             fw3.write(line + "\n");
           }
           break;
