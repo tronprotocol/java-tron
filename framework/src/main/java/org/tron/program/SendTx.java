@@ -8,6 +8,7 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -20,33 +21,31 @@ import org.tron.protos.Protocol.Transaction;
 @Slf4j
 public class SendTx {
 
-  private static ExecutorService executorService;
-  private static WalletGrpc.WalletBlockingStub blockingStubFull;
-  private static int onceSendTxNum = 10000;
+  private ExecutorService broadcastExecutorService;
+  private List<WalletGrpc.WalletBlockingStub> blockingStubFullList = new ArrayList<>();
+  private int maxRows; //max read rows
+  private int onceSendTxNum = 10000;
 
-  public static void main(String[] args) {
-    //read the parameter
-    String fullnode = args[0];
-    int threadNum = Integer.parseInt(args[1]);
-    String filePath = args[2];
-    if (args.length > 3) {
-      onceSendTxNum = Integer.parseInt(args[3]);
+  public SendTx(String[] fullNodes, int broadcastThreadNum, int maxRows) {
+    broadcastExecutorService = Executors.newFixedThreadPool(broadcastThreadNum);
+
+    for (String fullNode : fullNodes) {
+      //construct grpc stub
+      ManagedChannel channelFull = ManagedChannelBuilder.forTarget(fullNode)
+          .usePlaintext(true).build();
+      WalletGrpc.WalletBlockingStub blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+      blockingStubFullList.add(blockingStubFull);
+      this.maxRows = maxRows;
     }
-    executorService = Executors.newFixedThreadPool(threadNum);
-    //construct grpc stub
-    ManagedChannel channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true).build();
-    blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    //send tx
-    readTx(filePath);
-    System.exit(0);
   }
 
-  private static void sendTx(List<Transaction> list) {
+  private void sendTx(List<Transaction> list) {
+    Random random = new Random();
     List<Future<Boolean>> futureList = new ArrayList<>(list.size());
     list.forEach(transaction -> {
-      futureList.add(executorService.submit(() -> {
-        blockingStubFull.broadcastTransaction(transaction);
+      futureList.add(broadcastExecutorService.submit(() -> {
+        int index = random.nextInt(blockingStubFullList.size());
+        blockingStubFullList.get(index).broadcastTransaction(transaction);
         return true;
       }));
     });
@@ -59,7 +58,7 @@ public class SendTx {
     });
   }
 
-  private static void readTx(String path) {
+  private void readTxAndSend(String path) {
     File file = new File(path);
     logger.info("[Begin] send tx");
     try (BufferedReader reader = new BufferedReader(
@@ -71,6 +70,9 @@ public class SendTx {
         try {
           lineList.add(Transaction.parseFrom(Hex.decode(line)));
           count += 1;
+          if (count > maxRows) {
+            break;
+          }
           if (count % onceSendTxNum == 0) {
             sendTx(lineList);
             lineList.clear();
@@ -89,5 +91,23 @@ public class SendTx {
       e.printStackTrace();
     }
     logger.info("[Final] send tx end");
+  }
+
+  public static void main(String[] args) {
+    //read the parameter
+    String[] fullNodes = args[0].split(";");
+    int broadcastThreadNum = Integer.parseInt(args[1]);
+    String filePath = args[2];
+    int maxRows = -1;
+    if (args.length > 3) {
+      maxRows = Integer.parseInt(args[3]);
+    }
+    if (maxRows < 0) {
+      maxRows = Integer.MAX_VALUE;
+    }
+    SendTx sendTx = new SendTx(fullNodes, broadcastThreadNum, maxRows);
+    //send tx
+    sendTx.readTxAndSend(filePath);
+    System.exit(0);
   }
 }
