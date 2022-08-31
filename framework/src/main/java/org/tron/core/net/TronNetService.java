@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.ChannelManager;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.Metrics;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.net.message.BlockMessage;
@@ -131,6 +133,10 @@ public class TronNetService {
       long costs = System.currentTimeMillis() - startTime;
       logger.info("Message processing costs {} ms, peer: {}, type: {}, time tag: {}",
           costs, peer.getInetAddress(), msg.getType(), getTimeTag(costs));
+      if (costs > DURATION_STEP) {
+        Metrics.histogramObserve(MetricKeys.Histogram.MESSAGE_PROCESS_LATENCY,
+            costs / Metrics.MILLISECONDS_PER_SECOND, msg.getType().name());
+      }
     }
   }
 
