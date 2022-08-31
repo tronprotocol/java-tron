@@ -17,6 +17,9 @@ public class MetricKeys {
     public static final String P2P_ERROR = "tron:p2p_error";
     public static final String P2P_DISCONNECT = "tron:p2p_disconnect";
     public static final String INTERNAL_SERVICE_FAIL = "tron:internal_service_fail";
+    public static final String DB_GET = "tron:db_get";
+    public static final String SNAPSHOT_GET = "tron:snapshot_get";
+
 
     private Counter() {
       throw new IllegalStateException("Counter");
@@ -32,6 +35,7 @@ public class MetricKeys {
     public static final String DB_SIZE_BYTES = "tron:db_size_bytes";
     public static final String DB_SST_LEVEL = "tron:db_sst_level";
     public static final String MANAGER_QUEUE = "tron:manager_queue_size";
+    public static final String DB_SNAPSHOT_IMPL_LEVEL = "tron:db_snapshot_impl_level";
     public static final String TX_CACHE = "tron:tx_cache";
     public static final String MINER = "tron:miner_g";
     public static final String PROPOSAL = "tron:proposal_g";
@@ -59,7 +63,12 @@ public class MetricKeys {
     public static final String UDP_BYTES = "tron:udp_bytes";
     public static final String TCP_BYTES = "tron:tcp_bytes";
     public static final String HTTP_BYTES = "tron:http_bytes";
+    public static final String DB_SERVICE_VALUE_BYTES = "tron:db_service_value_bytes";
+    public static final String SNAPSHOT_SERVICE_VALUE_BYTES = "tron:snapshot_service_value_bytes";
+    public static final String SNAPSHOT_SERVICE_LATENCY = "tron:snapshot_service_latency_seconds";
     public static final String INTERNAL_SERVICE_LATENCY = "tron:internal_service_latency_seconds";
+    public static final String DB_SERVICE_LATENCY = "tron:db_service_latency_seconds";
+    public static final String CHECKPOINT_LATENCY = "tron:checkpoint_latency_seconds";
 
     private Histogram() {
       throw new IllegalStateException("Histogram");

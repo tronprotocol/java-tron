@@ -19,12 +19,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
+import io.prometheus.client.Histogram;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.error.TronDBException;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.MetricLabels;
+import org.tron.common.prometheus.Metrics;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db2.ISession;
@@ -112,6 +116,7 @@ public class SnapshotManager implements RevokingDatabase {
       flushCount = flushCount + (size - maxSize.get());
       updateSolidity(size - maxSize.get());
       size = maxSize.get();
+      Metrics.gaugeSet(MetricKeys.Gauge.DB_SNAPSHOT_IMPL_LEVEL, size);
       flush();
     }
 
@@ -141,11 +146,13 @@ public class SnapshotManager implements RevokingDatabase {
   private void advance() {
     dbs.forEach(db -> db.setHead(db.getHead().advance()));
     ++size;
+    Metrics.gaugeSet(MetricKeys.Gauge.DB_SNAPSHOT_IMPL_LEVEL, size);
   }
 
   private void retreat() {
     dbs.forEach(db -> db.setHead(db.getHead().retreat()));
     --size;
+    Metrics.gaugeSet(MetricKeys.Gauge.DB_SNAPSHOT_IMPL_LEVEL, size);
   }
 
   public void merge() {
@@ -282,6 +289,8 @@ public class SnapshotManager implements RevokingDatabase {
     List<Snapshot> snapshots = new ArrayList<>();
 
     SnapshotRoot root = (SnapshotRoot) db.getHead().getRoot();
+    final Histogram.Timer flushTimer = Metrics.histogramStartTimer(
+            MetricKeys.Histogram.CHECKPOINT_LATENCY, root.getDbName());
     Snapshot next = root;
     for (int i = 0; i < flushCount; ++i) {
       next = next.getNext();
@@ -297,6 +306,7 @@ public class SnapshotManager implements RevokingDatabase {
       next.getNext().setPrevious(root);
       root.setNext(next.getNext());
     }
+    Metrics.histogramObserve(flushTimer);
   }
 
   public void flush() {
@@ -307,10 +317,26 @@ public class SnapshotManager implements RevokingDatabase {
     if (shouldBeRefreshed()) {
       try {
         long start = System.currentTimeMillis();
+        final Histogram.Timer allTimer = Metrics.histogramStartTimer(
+                MetricKeys.Histogram.CHECKPOINT_LATENCY,
+                MetricLabels.Histogram.CHECKPOINT_TOTAL);
+        Histogram.Timer deleteTimer = Metrics.histogramStartTimer(
+                MetricKeys.Histogram.CHECKPOINT_LATENCY,
+                MetricLabels.Histogram.CHECKPOINT_DELETE);
         deleteCheckpoint();
+        Metrics.histogramObserve(deleteTimer);
+        Histogram.Timer createTimer = Metrics.histogramStartTimer(
+                MetricKeys.Histogram.CHECKPOINT_LATENCY,
+                MetricLabels.Histogram.CHECKPOINT_CREATE);
         createCheckpoint();
+        Metrics.histogramObserve(createTimer);
         long checkPointEnd = System.currentTimeMillis();
+        Histogram.Timer flushTimer = Metrics.histogramStartTimer(
+                MetricKeys.Histogram.CHECKPOINT_LATENCY,
+                MetricLabels.Histogram.CHECKPOINT_FLUSH);
         refresh();
+        Metrics.histogramObserve(flushTimer);
+        Metrics.histogramObserve(allTimer);
         flushCount = 0;
         logger.info("flush cost:{}, create checkpoint cost:{}, refresh cost:{}",
             System.currentTimeMillis() - start,
