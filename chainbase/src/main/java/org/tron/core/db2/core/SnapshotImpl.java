@@ -60,10 +60,10 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
     Value value;
     if (isOptimized) {
       value = db.get(Key.of(key));
-      if(Objects.nonNull(value)){
+      if(Objects.nonNull(value)) {
         Metrics.histogramObserve(requestTimer);
       }
-      Metrics.counterInc(MetricKeys.Counter.SNAPSHOT_GET,1,root.getDbName(),
+      Metrics.counterInc(MetricKeys.Counter.SNAPSHOT_GET, 1, root.getDbName(),
               Objects.isNull(value) ? MetricLabels.Counter.SNAPSHOT_GET_MISS : MetricLabels.Counter.SNAPSHOT_GET_SUCCESS,
               MetricLabels.Counter.SNAPSHOT_GET_NOT_REACH_ROOT);
       return value == null ? null: value.getBytes();

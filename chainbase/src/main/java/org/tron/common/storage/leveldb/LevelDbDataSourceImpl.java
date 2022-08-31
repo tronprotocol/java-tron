@@ -23,8 +23,15 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
@@ -212,8 +219,9 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     resetDbLock.readLock().lock();
     try {
       byte[] result = database.get(key);
-      Metrics.counterInc(MetricKeys.Counter.DB_GET, 1, getEngine(),getDBName(),
-              Objects.isNull(result)?MetricLabels.Counter.DB_GET_MISS:MetricLabels.Counter.DB_GET_SUCCESS);
+      Metrics.counterInc(MetricKeys.Counter.DB_GET, 1, getEngine(), getDBName(),
+              Objects.isNull(result) ? MetricLabels.Counter.DB_GET_MISS
+                      : MetricLabels.Counter.DB_GET_SUCCESS);
       return result;
     } finally {
       resetDbLock.readLock().unlock();
@@ -233,7 +241,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
       resetDbLock.readLock().unlock();
       Metrics.histogramObserve(requestTimer);
       Metrics.histogramObserve(MetricKeys.Histogram.DB_SERVICE_VALUE_BYTES, ByteUtil.getSize(value),
-              getEngine(),getDBName());
+              getEngine(), getDBName());
     }
   }
 
@@ -477,7 +485,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
       } else {
         batch.put(key, value);
         Metrics.histogramObserve(MetricKeys.Histogram.DB_SERVICE_VALUE_BYTES, ByteUtil.getSize(value),
-                getEngine(),getDBName());
+                getEngine(), getDBName());
       }
     });
   }

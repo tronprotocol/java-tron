@@ -19,7 +19,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
-
 import io.prometheus.client.Histogram;
 import lombok.Getter;
 import lombok.Setter;
@@ -290,8 +289,8 @@ public class SnapshotManager implements RevokingDatabase {
     List<Snapshot> snapshots = new ArrayList<>();
 
     SnapshotRoot root = (SnapshotRoot) db.getHead().getRoot();
-    Histogram.Timer flushTimer = Metrics.histogramStartTimer(
-            MetricKeys.Histogram.CHECKPOINT_LATENCY,root.getDbName());
+    final Histogram.Timer flushTimer = Metrics.histogramStartTimer(
+            MetricKeys.Histogram.CHECKPOINT_LATENCY, root.getDbName());
     Snapshot next = root;
     for (int i = 0; i < flushCount; ++i) {
       next = next.getNext();
