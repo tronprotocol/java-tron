@@ -109,7 +109,7 @@ public class BlockResult {
     totalDifficulty = "0x0"; // no value
     extraData = "0x"; // no value
     size = ByteArray.toJsonHex(block.getSerializedSize());
-    timestamp = ByteArray.toJsonHex(blockCapsule.getTimeStamp());
+    timestamp = ByteArray.toJsonHex(blockCapsule.getTimeStamp() / 1000);
 
     long gasUsedInBlock = 0;
     long gasLimitInBlock = 0;
