@@ -21,7 +21,7 @@ public class ExchangeProcessor {
     long newBalance = balance + quant;
     logger.debug("balance + quant: " + newBalance);
 
-    double issuedSupply = -supply * (1.0 - TronMath.power(1.0 + (double) quant / newBalance, 0.0005));
+    double issuedSupply = -supply * (1.0 - TronMath.pow(1.0 + (double) quant / newBalance, 0.0005));
     logger.debug("issuedSupply: " + issuedSupply);
     long out = (long) issuedSupply;
     supply += out;
@@ -33,7 +33,7 @@ public class ExchangeProcessor {
     supply -= supplyQuant;
 
     double exchangeBalance =
-        balance * (TronMath.power(1.0 + (double) supplyQuant / supply, 2000.0) - 1.0);
+        balance * (TronMath.pow(1.0 + (double) supplyQuant / supply, 2000.0) - 1.0);
     logger.debug("exchangeBalance: " + exchangeBalance);
 
     return (long) exchangeBalance;

@@ -47,7 +47,7 @@ dependencies {
     compile project(":crypto")
     compile 'org.reflections:reflections:0.9.11'
 
-    compile 'com.github.zhang0125:tron-math:914dfaf454'
+    compile 'com.github.zhang0125:tron-math:79b00fd78f'
 }
 
 
