@@ -163,9 +163,12 @@ public class SendTx {
     if (maxRows < 0) {
       maxRows = Integer.MAX_VALUE;
     }
+    if (onceSendTxNum > maxRows) {
+      System.out.println("maxRows must >= onceSendTxNum !");
+      System.exit(0);
+    }
     SendTx sendTx = new SendTx(fullNodes, broadcastThreadNum, onceSendTxNum, maxRows);
     //send tx
     sendTx.readTxAndSend(filePath);
-    System.exit(0);
   }
 }
