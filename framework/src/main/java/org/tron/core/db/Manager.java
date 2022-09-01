@@ -1071,8 +1071,7 @@ public class Manager {
     });
 
     block.getTransactions().forEach(capsule -> {
-      Contract contract = capsule.getInstance().getRawData().getContract(0);
-      String address = Hex.toHexString(TransactionCapsule.getOwner(contract));
+      String address = Hex.toHexString(capsule.getOwnerAddress());
       String txId = Hex.toHexString(capsule.getTransactionId().getBytes());
       if (multiAddresses.contains(address) || !txIds.contains(txId)) {
         txs.add(capsule);

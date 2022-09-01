@@ -6,15 +6,15 @@ import io.grpc.ManagedChannelBuilder;
 import java.io.File;
 import java.math.BigInteger;
 import java.nio.file.Paths;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.api.DatabaseGrpc;
 import org.tron.api.GrpcAPI;
 import org.tron.api.WalletGrpc;
-import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
@@ -37,12 +37,7 @@ public class LiteFullNodeToolTest {
   private static final Logger logger = LoggerFactory.getLogger("Test");
 
   private TronApplicationContext context;
-  private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
-  private DatabaseGrpc.DatabaseBlockingStub databaseBlockingStub = null;
-  private RpcApiService rpcApiService;
-  private RpcApiServiceOnSolidity rpcApiServiceOnSolidity;
   private Application appTest;
 
   private String databaseDir;
@@ -50,38 +45,40 @@ public class LiteFullNodeToolTest {
   @Rule
   public ExpectedException thrown = ExpectedException.none();
 
+
+  private static final String DB_PATH = "output_lite_fn";
+
   /**
    * init logic.
    */
   public void startApp() {
     context = new TronApplicationContext(DefaultConfig.class);
     appTest = ApplicationFactory.create(context);
-    rpcApiService = context.getBean(RpcApiService.class);
-    rpcApiServiceOnSolidity = context.getBean(RpcApiServiceOnSolidity.class);
-    appTest.addService(rpcApiService);
-    appTest.addService(rpcApiServiceOnSolidity);
+    appTest.addService(context.getBean(RpcApiService.class));
+    appTest.addService(context.getBean(RpcApiServiceOnSolidity.class));
     appTest.initServices(Args.getInstance());
     appTest.startServices();
     appTest.startup();
 
     String fullnode = String.format("%s:%d", "127.0.0.1",
             Args.getInstance().getRpcPort());
-    channelFull = ManagedChannelBuilder.forTarget(fullnode)
+    ManagedChannel channelFull = ManagedChannelBuilder.forTarget(fullnode)
             .usePlaintext(true)
             .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelFull);
-    databaseBlockingStub = DatabaseGrpc.newBlockingStub(channelFull);
   }
 
   /**
    *  Delete the database when exit.
    */
-  public static void destory(String dbPath) {
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
+  public static void destroy(String dbPath) {
+    File f = new File(dbPath);
+    if (f.exists()) {
+      if (FileUtil.deleteDir(f)) {
+        logger.info("Release resources successful.");
+      } else {
+        logger.info("Release resources failure.");
+      }
     }
   }
 
@@ -94,84 +91,94 @@ public class LiteFullNodeToolTest {
     context.destroy();
   }
 
-  @Test
-  public void testToolsWithLevelDB() {
-    String dbPath = "output_lite_fn_leveldb_test";
-    Args.setParam(new String[]{"-d", dbPath, "-w"}, "config-localtest.conf");
-    // allow account root
-    Args.getInstance().setAllowAccountStateRoot(1);
-    databaseDir = Args.getInstance().getStorage().getDbDirectory();
-    testTools("LEVELDB", dbPath);
-    destory(dbPath);
-  }
-
-  @Test
-  public void testToolsWithRocksDB() {
-    String dbPath = "output_lite_fn_rocksdb_test";
-    Args.setParam(new String[]{"-d", dbPath, "-w"}, "config-localtest.conf");
+  @Before
+  public void init() {
+    destroy(DB_PATH); // delete if prev failed
+    Args.setParam(new String[]{"-d", DB_PATH, "-w"}, "config-localtest.conf");
     // allow account root
     Args.getInstance().setAllowAccountStateRoot(1);
     databaseDir = Args.getInstance().getStorage().getDbDirectory();
     // init dbBackupConfig to avoid NPE
     Args.getInstance().dbBackupConfig = DbBackupConfig.getInstance();
-    testTools("ROCKSDB", dbPath);
-    destory(dbPath);
   }
 
-  private void testTools(String dbType, String dbPath) {
+  @After
+  public void clear() {
+    destroy(DB_PATH);
+    Args.clearParam();
+  }
+
+  @Test
+  public void testToolsWithLevelDB() {
+    logger.info("testToolsWithLevelDB start");
+    testTools("LEVELDB");
+
+  }
+
+  @Test
+  public void testToolsWithRocksDB() {
+    logger.info("testToolsWithRocksDB start");
+    testTools("ROCKSDB");
+  }
+
+  private void testTools(String dbType) {
     final String[] argsForSnapshot =
         new String[]{"-o", "split", "-t", "snapshot", "--fn-data-path",
-            dbPath + File.separator + databaseDir, "--dataset-path", dbPath};
+            DB_PATH + File.separator + databaseDir, "--dataset-path",
+            DB_PATH};
     final String[] argsForHistory =
         new String[]{"-o", "split", "-t", "history", "--fn-data-path",
-            dbPath + File.separator + databaseDir, "--dataset-path", dbPath};
+            DB_PATH + File.separator + databaseDir, "--dataset-path",
+            DB_PATH};
     final String[] argsForMerge =
-        new String[]{"-o", "merge", "--fn-data-path", dbPath + File.separator + databaseDir,
-            "--dataset-path", dbPath + File.separator + "history"};
+        new String[]{"-o", "merge", "--fn-data-path", DB_PATH + File.separator + databaseDir,
+            "--dataset-path", DB_PATH + File.separator + "history"};
     Args.getInstance().getStorage().setDbEngine(dbType);
+    LiteFullNodeTool.setRecentBlks(3);
     // start fullnode
     startApp();
-    // produce transactions for 10 seconds
-    generateSomeTransactions(10);
+    // produce transactions for 18 seconds
+    generateSomeTransactions(18);
     // stop the node
     shutdown();
     // delete tran-cache
-    FileUtil.deleteDir(Paths.get(dbPath, databaseDir, "trans-cache").toFile());
+    FileUtil.deleteDir(Paths.get(DB_PATH, databaseDir, "trans-cache").toFile());
     // generate snapshot
     LiteFullNodeTool.main(argsForSnapshot);
     // start fullnode
     startApp();
-    // produce transactions for 10 seconds
-    generateSomeTransactions(4);
+    // produce transactions for 6 seconds
+    generateSomeTransactions(6);
     // stop the node
     shutdown();
     // generate history
     LiteFullNodeTool.main(argsForHistory);
     // backup original database to database_bak
-    File database = new File(Paths.get(dbPath, databaseDir).toString());
-    if (!database.renameTo(new File(Paths.get(dbPath, databaseDir + "_bak").toString()))) {
+    File database = new File(Paths.get(DB_PATH, databaseDir).toString());
+    if (!database.renameTo(new File(Paths.get(DB_PATH, databaseDir + "_bak").toString()))) {
       throw new RuntimeException(
               String.format("rename %s to %s failed", database.getPath(),
-                      Paths.get(dbPath, databaseDir).toString()));
+                      Paths.get(DB_PATH, databaseDir).toString()));
     }
     // change snapshot to the new database
-    File snapshot = new File(Paths.get(dbPath, "snapshot").toString());
-    if (!snapshot.renameTo(new File(Paths.get(dbPath, databaseDir).toString()))) {
+    File snapshot = new File(Paths.get(DB_PATH, "snapshot").toString());
+    if (!snapshot.renameTo(new File(Paths.get(DB_PATH, databaseDir).toString()))) {
       throw new RuntimeException(
               String.format("rename snapshot to %s failed",
-                      Paths.get(dbPath, databaseDir).toString()));
+                      Paths.get(DB_PATH, databaseDir).toString()));
     }
     // start and validate the snapshot
     startApp();
-    generateSomeTransactions(4);
+    generateSomeTransactions(6);
     // stop the node
     shutdown();
     // merge history
     LiteFullNodeTool.main(argsForMerge);
     // start and validate
     startApp();
-    generateSomeTransactions(4);
+    generateSomeTransactions(6);
     shutdown();
+    LiteFullNodeTool.reSetRecentBlks();
   }
 
   private void generateSomeTransactions(int during) {
