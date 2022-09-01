@@ -69,7 +69,7 @@ public class FetchBlockService {
   }
 
   public void fetchBlock(List<Sha256Hash> sha256HashList, PeerConnection peer) {
-    if (sha256HashList != null && sha256HashList.size() > 0) {
+    if (sha256HashList.size() > 0) {
       logger.info("Begin fetch block {} from {}",
           new BlockCapsule.BlockId(sha256HashList.get(0)).getString(),
           peer.getInetAddress());
