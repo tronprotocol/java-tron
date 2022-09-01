@@ -15,6 +15,8 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 @JsonPropertyOrder(alphabetic = true)
 @ToString
@@ -75,6 +77,28 @@ public class TransactionResult {
     s = ByteArray.toJsonHex(sByte);
   }
 
+  private String parseInput(Transaction tx) {
+    String data;
+    if (tx.getRawData().getContractCount() == 0) {
+      data = "0x";
+    } else {
+      Contract contract = tx.getRawData().getContract(0);
+      if (contract.getType() == ContractType.TriggerSmartContract) {
+        try {
+          TriggerSmartContract triggerSmartContract = contract.getParameter()
+              .unpack(TriggerSmartContract.class);
+          data = ByteArray.toJsonHex(triggerSmartContract.getData().toByteArray());
+        } catch (Exception e) {
+          data = "0x";
+        }
+      } else {
+        data = "0x";
+      }
+    }
+
+    return data;
+  }
+
   public TransactionResult(BlockCapsule blockCapsule, int index, Protocol.Transaction tx,
       long energyUsageTotal, long energyFee, Wallet wallet) {
     byte[] txId = new TransactionCapsule(tx).getTransactionId().getBytes();
@@ -105,7 +129,7 @@ public class TransactionResult {
 
     gas = ByteArray.toJsonHex(energyUsageTotal);
     gasPrice = ByteArray.toJsonHex(energyFee);
-    input = ByteArray.toJsonHex(tx.getRawData().getData().toByteArray());
+    input = parseInput(tx);
 
     parseSignature(tx);
   }
@@ -133,7 +157,7 @@ public class TransactionResult {
 
     gas = "0x0";
     gasPrice = "0x";
-    input = ByteArray.toJsonHex(tx.getRawData().getData().toByteArray());
+    input = parseInput(tx);
 
     parseSignature(tx);
   }
