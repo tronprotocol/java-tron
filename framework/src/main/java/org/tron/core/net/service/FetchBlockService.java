@@ -69,6 +69,11 @@ public class FetchBlockService {
   }
 
   public void fetchBlock(List<Sha256Hash> sha256HashList, PeerConnection peer) {
+    if (sha256HashList != null && sha256HashList.size() > 0) {
+      logger.info("Begin fetch block {} from {}",
+          new BlockCapsule.BlockId(sha256HashList.get(0)).getString(),
+          peer.getInetAddress());
+    }
     if (null != fetchBlockInfo) {
       return;
     }
@@ -86,6 +91,7 @@ public class FetchBlockService {
 
 
   public void blockFetchSuccess(Sha256Hash sha256Hash) {
+    logger.info("Fetch block success, {}", new BlockCapsule.BlockId(sha256Hash).getString());
     FetchBlockInfo fetchBlockInfoTemp = this.fetchBlockInfo;
     if (null == fetchBlockInfoTemp || !fetchBlockInfoTemp.getHash().equals(sha256Hash)) {
       return;
