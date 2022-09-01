@@ -78,12 +78,10 @@ public class FetchBlockService {
           if (System.currentTimeMillis() - chainBaseManager.getHeadBlockTimeStamp()
               < BLOCK_FETCH_TIME_OUT_LIMIT) {
             fetchBlockInfo = new FetchBlockInfo(sha256Hash, peer, System.currentTimeMillis());
+            logger.info("Set fetchBlockInfo, block: {}, peer: {}, time: {}", sha256Hash,
+                fetchBlockInfo.getPeer().getInetAddress(), fetchBlockInfo.getTime());
           }
         });
-    if (null != fetchBlockInfo) {
-      logger.info("Set fetchBlockInfo, block: {}, peer: {}, time: {}", fetchBlockInfo.getHash(),
-              fetchBlockInfo.getPeer().getInetAddress(), fetchBlockInfo.getTime());
-    }
   }
 
 
