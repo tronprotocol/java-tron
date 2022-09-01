@@ -28,10 +28,10 @@ public class SendTx {
 
   private ExecutorService broadcastExecutorService;
   private List<WalletGrpc.WalletBlockingStub> blockingStubFullList = new ArrayList<>();
-  private int maxRows; //max read rows
-  private int onceSendTxNum = 10000;
+  private int onceSendTxNum; //batch send num once
+  private int maxRows; //max read rows from file
 
-  public SendTx(String[] fullNodes, int broadcastThreadNum, int maxRows) {
+  public SendTx(String[] fullNodes, int broadcastThreadNum, int onceSendTxNum, int maxRows) {
     broadcastExecutorService = Executors.newFixedThreadPool(broadcastThreadNum);
 
     for (String fullNode : fullNodes) {
@@ -40,6 +40,7 @@ public class SendTx {
           .usePlaintext(true).build();
       WalletGrpc.WalletBlockingStub blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
       blockingStubFullList.add(blockingStubFull);
+      this.onceSendTxNum = onceSendTxNum;
       this.maxRows = maxRows;
     }
   }
@@ -154,14 +155,15 @@ public class SendTx {
     String[] fullNodes = args[0].split(";");
     int broadcastThreadNum = Integer.parseInt(args[1]);
     String filePath = args[2];
+    int onceSendTxNum = Integer.parseInt(args[3]);
     int maxRows = -1;
-    if (args.length > 3) {
-      maxRows = Integer.parseInt(args[3]);
+    if (args.length > 4) {
+      maxRows = Integer.parseInt(args[4]);
     }
     if (maxRows < 0) {
       maxRows = Integer.MAX_VALUE;
     }
-    SendTx sendTx = new SendTx(fullNodes, broadcastThreadNum, maxRows);
+    SendTx sendTx = new SendTx(fullNodes, broadcastThreadNum, onceSendTxNum, maxRows);
     //send tx
     sendTx.readTxAndSend(filePath);
     System.exit(0);
