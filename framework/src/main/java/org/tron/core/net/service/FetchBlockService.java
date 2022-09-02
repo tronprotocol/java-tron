@@ -69,6 +69,11 @@ public class FetchBlockService {
   }
 
   public void fetchBlock(List<Sha256Hash> sha256HashList, PeerConnection peer) {
+    if (sha256HashList.size() > 0) {
+      logger.info("Begin fetch block {} from {}",
+          new BlockCapsule.BlockId(sha256HashList.get(0)).getString(),
+          peer.getInetAddress());
+    }
     if (null != fetchBlockInfo) {
       return;
     }
@@ -78,16 +83,15 @@ public class FetchBlockService {
           if (System.currentTimeMillis() - chainBaseManager.getHeadBlockTimeStamp()
               < BLOCK_FETCH_TIME_OUT_LIMIT) {
             fetchBlockInfo = new FetchBlockInfo(sha256Hash, peer, System.currentTimeMillis());
+            logger.info("Set fetchBlockInfo, block: {}, peer: {}, time: {}", sha256Hash,
+                fetchBlockInfo.getPeer().getInetAddress(), fetchBlockInfo.getTime());
           }
         });
-    if (null != fetchBlockInfo) {
-      logger.info("Set fetchBlockInfo, block: {}, peer: {}, time: {}", fetchBlockInfo.getHash(),
-              fetchBlockInfo.getPeer().getInetAddress(), fetchBlockInfo.getTime());
-    }
   }
 
 
   public void blockFetchSuccess(Sha256Hash sha256Hash) {
+    logger.info("Fetch block success, {}", new BlockCapsule.BlockId(sha256Hash).getString());
     FetchBlockInfo fetchBlockInfoTemp = this.fetchBlockInfo;
     if (null == fetchBlockInfoTemp || !fetchBlockInfoTemp.getHash().equals(sha256Hash)) {
       return;

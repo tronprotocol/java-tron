@@ -373,30 +373,6 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     }
   }
 
-  public Set<byte[]> getValuesPrev(byte[] key, long limit) {
-    if (limit <= 0) {
-      return Sets.newHashSet();
-    }
-    resetDbLock.readLock().lock();
-    try (DBIterator iterator = getDBIterator()) {
-      Set<byte[]> result = Sets.newHashSet();
-      long i = 0;
-      byte[] data = getData(key);
-      if (Objects.nonNull(data)) {
-        result.add(data);
-        i++;
-      }
-      for (iterator.seek(key); iterator.hasPrev() && i++ < limit; iterator.prev()) {
-        result.add(iterator.peekPrev().getValue());
-      }
-      return result;
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    } finally {
-      resetDbLock.readLock().unlock();
-    }
-  }
-
   @Override
   public long getTotal() throws RuntimeException {
     resetDbLock.readLock().lock();
