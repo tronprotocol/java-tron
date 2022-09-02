@@ -1444,6 +1444,8 @@ public class Manager {
     long postponedTrxCount = 0;
     logger.info("Generate block {} begin", chainBaseManager.getHeadBlockNum() + 1);
 
+    long total_1 = 0, total_2 = 0, total_3 = 0, total_4 = 0, total_5 = 0, total_6 = 0, total_7 = 0, total_8 = 0;
+    long t1 = System.nanoTime();
     BlockCapsule blockCapsule = new BlockCapsule(chainBaseManager.getHeadBlockNum() + 1,
         chainBaseManager.getHeadBlockId(),
         blockTime, miner.getWitnessAddress());
@@ -1467,7 +1469,10 @@ public class Manager {
 
     Set<String> accountSet = new HashSet<>();
     AtomicInteger shieldedTransCounts = new AtomicInteger(0);
+    long t2 = System.nanoTime();
+    total_1 = t2 - t1;
     while (pendingTransactions.size() > 0 || rePushTransactions.size() > 0) {
+      long t3 = System.nanoTime();
       boolean fromPending = false;
       TransactionCapsule trx;
       if (pendingTransactions.size() > 0) {
@@ -1532,30 +1537,50 @@ public class Manager {
       if (ownerAddressSet.contains(ownerAddress)) {
         trx.setVerified(false);
       }
+      long t4 = System.nanoTime();
+      total_2 += (t4 - t3);
+      long t8 = System.nanoTime();
       // apply transaction
       try (ISession tmpSession = revokingStore.buildSession()) {
+        long t5 = System.nanoTime();
+        total_3 += (t5 - t4);
         accountStateCallBack.preExeTrans();
         TransactionInfo result = processTransaction(trx, blockCapsule);
+        long t6 = System.nanoTime();
+        total_4 += (t6 - t5);
         accountStateCallBack.exeTransFinish();
         tmpSession.merge();
+        long t7 = System.nanoTime();
+        total_5 += (t7 - t6);
         blockCapsule.addTransaction(trx);
         if (Objects.nonNull(result)) {
           transactionRetCapsule.addTransactionInfo(result);
         }
+        t8 = System.nanoTime();
+        total_6 += (t8 - t7);
       } catch (Exception e) {
         logger.error("Process trx {} failed when generating block: {}", trx.getTransactionId(),
             e.getMessage());
       }
+      long t9 = System.nanoTime();
+      total_7 += (t9 - t8);
     }
-
+    long t10 = System.nanoTime();
     accountStateCallBack.executeGenerateFinish();
 
     session.reset();
+    long t11 = System.nanoTime();
+    total_8 = t11 - t10;
 
     logger.info("Generate block {} success, trxs:{}, pendingCount: {}, rePushCount: {},"
             + " postponedCount: {}",
         blockCapsule.getNum(), blockCapsule.getTransactions().size(),
         pendingTransactions.size(), rePushTransactions.size(), postponedTrxCount);
+
+    logger.info(
+        "total_1:{}, total_2:{}, total_3:{}, total_4:{}, total_5:{}, total_6:{}, total_7:{}, total_8:{}",
+        total_1 / 1000, total_2 / 1000, total_3 / 1000, total_4 / 1000, total_5 / 1000,
+        total_6 / 1000, total_7 / 1000, total_8 / 1000);
 
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(miner.getPrivateKey());
