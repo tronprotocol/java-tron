@@ -105,7 +105,7 @@ public class BackupManager implements EventHandler {
             .accept(new UdpEvent(new KeepAliveMessage(status.equals(MASTER), priority),
                 new InetSocketAddress(member, port))));
       } catch (Throwable t) {
-        logger.error("Exception in send keep alive message:{}", t.getMessage());
+        logger.error("Exception in send keep alive.", t);
       }
     }, 1000, keepAliveInterval, TimeUnit.MILLISECONDS);
   }

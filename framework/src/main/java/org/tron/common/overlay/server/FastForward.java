@@ -113,7 +113,7 @@ public class FastForward {
     }
 
     if (!witnessScheduleStore.getActiveWitnesses().contains(msg.getAddress())) {
-      logger.error("HelloMessage from {}, {} is not a schedule witness.",
+      logger.warn("HelloMessage from {}, {} is not a schedule witness.",
           channel.getInetAddress(),
           ByteArray.toHexString(msg.getAddress().toByteArray()));
       return false;
@@ -139,7 +139,7 @@ public class FastForward {
       }
       return flag;
     } catch (Exception e) {
-      logger.error("Check hello message failed, msg: {}, {}", message, e);
+      logger.warn("Check hello message failed, msg: {}, {}", message, channel.getInetAddress(), e);
       return false;
     }
   }

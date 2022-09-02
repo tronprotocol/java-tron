@@ -40,7 +40,7 @@ public class DiscoverTask implements Runnable {
             tried.add(n);
             wait(50);
           } catch (Exception ex) {
-            logger.error("Unexpected Exception " + ex, ex);
+            logger.error("Unexpected Exception", ex);
           }
         }
         if (tried.size() == KademliaOptions.ALPHA) {
