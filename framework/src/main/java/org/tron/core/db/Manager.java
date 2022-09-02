@@ -1578,9 +1578,9 @@ public class Manager {
         pendingTransactions.size(), rePushTransactions.size(), postponedTrxCount);
 
     logger.info(
-        "total_1:{}, total_2:{}, total_3:{}, total_4:{}, total_5:{}, total_6:{}, total_7:{}, total_8:{}",
-        total_1 / 1000, total_2 / 1000, total_3 / 1000, total_4 / 1000, total_5 / 1000,
-        total_6 / 1000, total_7 / 1000, total_8 / 1000);
+        "total:{}, total_1:{}, total_2:{}, total_3:{}, total_4:{}, total_5:{}, total_6:{}, total_7:{}, total_8:{}",
+        (t11 - t1)/1000, total_1 / 1000, total_2 / 1000, total_3 / 1000, total_4 / 1000,
+        total_5 / 1000, total_6 / 1000, total_7 / 1000, total_8 / 1000);
 
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(miner.getPrivateKey());
