@@ -1445,14 +1445,14 @@ public class Manager {
     long t10 = System.nanoTime();
     if (null != phase2cost) {
       phase2cost.put("p1", phase2cost.getOrDefault("p1", 0L) + (t2 - t1));
-      phase2cost.put("p2", phase2cost.getOrDefault("p1", 0L) + (t3 - t2));
-      phase2cost.put("p3", phase2cost.getOrDefault("p1", 0L) + (t4 - t3));
-      phase2cost.put("p4", phase2cost.getOrDefault("p1", 0L) + (t5 - t4));
-      phase2cost.put("p5", phase2cost.getOrDefault("p1", 0L) + (t6 - t5));
-      phase2cost.put("p6", phase2cost.getOrDefault("p1", 0L) + (t7 - t6));
-      phase2cost.put("p7", phase2cost.getOrDefault("p1", 0L) + (t8 - t7));
-      phase2cost.put("p8", phase2cost.getOrDefault("p1", 0L) + (t9 - t8));
-      phase2cost.put("p9", phase2cost.getOrDefault("p1", 0L) + (t10 - t9));
+      phase2cost.put("p2", phase2cost.getOrDefault("p2", 0L) + (t3 - t2));
+      phase2cost.put("p3", phase2cost.getOrDefault("p3", 0L) + (t4 - t3));
+      phase2cost.put("p4", phase2cost.getOrDefault("p4", 0L) + (t5 - t4));
+      phase2cost.put("p5", phase2cost.getOrDefault("p5", 0L) + (t6 - t5));
+      phase2cost.put("p6", phase2cost.getOrDefault("p6", 0L) + (t7 - t6));
+      phase2cost.put("p7", phase2cost.getOrDefault("p7", 0L) + (t8 - t7));
+      phase2cost.put("p8", phase2cost.getOrDefault("p8", 0L) + (t9 - t8));
+      phase2cost.put("p9", phase2cost.getOrDefault("p9", 0L) + (t10 - t9));
     }
 
     return transactionInfo.getInstance();
