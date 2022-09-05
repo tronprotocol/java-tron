@@ -1492,7 +1492,6 @@ public class Manager {
         continue;
       }
       //multi sign transaction
-      Contract contract = trx.getInstance().getRawData().getContract(0);
       byte[] owner = trx.getOwnerAddress();
       String ownerAddress = ByteArray.toHexString(owner);
       if (accountSet.contains(ownerAddress)) {
