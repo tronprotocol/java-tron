@@ -131,9 +131,9 @@ public class TronNetService {
       processException(peer, msg, e);
     } finally {
       long costs = System.currentTimeMillis() - startTime;
-      logger.info("Message processing costs {} ms, peer: {}, type: {}, time tag: {}",
-          costs, peer.getInetAddress(), msg.getType(), getTimeTag(costs));
       if (costs > DURATION_STEP) {
+        logger.info("Message processing costs {} ms, peer: {}, type: {}, time tag: {}",
+            costs, peer.getInetAddress(), msg.getType(), getTimeTag(costs));
         Metrics.histogramObserve(MetricKeys.Histogram.MESSAGE_PROCESS_LATENCY,
             costs / Metrics.MILLISECONDS_PER_SECOND, msg.getType().name());
       }
