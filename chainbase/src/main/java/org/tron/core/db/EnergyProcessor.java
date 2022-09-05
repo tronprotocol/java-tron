@@ -83,9 +83,8 @@ public class EnergyProcessor extends ResourceProcessor {
     );
 
     dynamicPropertiesStore.saveTotalEnergyCurrentLimit(result);
-    logger.debug(
-        "adjust totalEnergyCurrentLimit, old[" + totalEnergyCurrentLimit + "], new[" + result
-            + "]");
+    logger.debug("Adjust totalEnergyCurrentLimit, old: {}, new: {}.",
+        totalEnergyCurrentLimit, result);
   }
 
   @Override

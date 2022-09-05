@@ -88,8 +88,8 @@ public class LocalWitnesses {
     if (StringUtils.isNotBlank(privateKey)
         && privateKey.length() != ChainConstant.PRIVATE_KEY_LENGTH) {
       throw new IllegalArgumentException(
-          "Private key(" + privateKey + ") must be " + ChainConstant.PRIVATE_KEY_LENGTH
-              + "-bits hex string.");
+          String.format("private key must be %d-bits hex string, actual: %d",
+              ChainConstant.PRIVATE_KEY_LENGTH, privateKey.length()));
     }
   }
 
@@ -101,7 +101,7 @@ public class LocalWitnesses {
   //get the first one recently
   public String getPrivateKey() {
     if (CollectionUtils.isEmpty(privateKeys)) {
-      logger.warn("privateKey is null");
+      logger.warn("PrivateKey is null.");
       return null;
     }
     return privateKeys.get(0);
@@ -109,7 +109,7 @@ public class LocalWitnesses {
 
   public byte[] getPublicKey() {
     if (CollectionUtils.isEmpty(privateKeys)) {
-      logger.warn("privateKey is null");
+      logger.warn("PrivateKey is null.");
       return null;
     }
     byte[] privateKey = ByteArray.fromHexString(getPrivateKey());
