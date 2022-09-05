@@ -74,7 +74,7 @@ public class LiteFullNodeTool {
    * @param snapshotDir the path that stores the snapshot dataset
    */
   public void generateSnapshot(String sourceDir, String snapshotDir) {
-    logger.info("start create snapshot.");
+    logger.info("Start create snapshot.");
     long start = System.currentTimeMillis();
     snapshotDir = Paths.get(snapshotDir, SNAPSHOT_DIR_NAME).toString();
     try {
@@ -86,11 +86,11 @@ public class LiteFullNodeTool {
       fillSnapshotBlockAndTransDb(sourceDir, snapshotDir);
       generateInfoProperties(Paths.get(snapshotDir, INFO_FILE_NAME).toString(), sourceDir);
     } catch (IOException | RocksDBException e) {
-      logger.error("create snapshot failed, " + e.getMessage());
+      logger.error("Create snapshot failed, {}.", e.getMessage());
       return;
     }
     long end = System.currentTimeMillis();
-    logger.info("create snapshot finished, take {}s.", (end - start) / 1000);
+    logger.info("Create snapshot finished, take {} s.\n", (end - start) / 1000);
   }
 
   /**
@@ -101,7 +101,7 @@ public class LiteFullNodeTool {
    * @param historyDir the path that stores the history dataset
    */
   public void generateHistory(String sourceDir, String historyDir) {
-    logger.info("start create history.");
+    logger.info("Start create history.");
     long start = System.currentTimeMillis();
     historyDir = Paths.get(historyDir, HISTORY_DIR_NAME).toString();
     try {
@@ -114,11 +114,11 @@ public class LiteFullNodeTool {
       mergeCheckpoint2History(sourceDir, historyDir);
       generateInfoProperties(Paths.get(historyDir, INFO_FILE_NAME).toString(), sourceDir);
     } catch (IOException | RocksDBException e) {
-      logger.error("create history failed, " + e.getMessage());
+      logger.error("Create history failed, {}.", e.getMessage());
       return;
     }
     long end = System.currentTimeMillis();
-    logger.info("create history finished, take {}s.\n", (end - start) / 1000);
+    logger.info("Create history finished, take {} s.\n", (end - start) / 1000);
   }
 
   /**
@@ -129,7 +129,7 @@ public class LiteFullNodeTool {
    * @param databaseDir lite fullnode database path
    */
   public void completeHistoryData(String historyDir, String databaseDir) {
-    logger.info("start merge history to lite fullnode.");
+    logger.info("Start merge history to lite node.");
     long start = System.currentTimeMillis();
     BlockNumInfo blockNumInfo = null;
     try {
@@ -153,11 +153,11 @@ public class LiteFullNodeTool {
       // 6. delete snapshot flag
       deleteSnapshotFlag(databaseDir);
     } catch (IOException | RocksDBException | BadItemException e) {
-      logger.error("merge history data to database failed, " + e.getMessage());
+      logger.error("Merge history data to database failed, {}.", e.getMessage());
       return;
     }
     long end = System.currentTimeMillis();
-    logger.info("merge history finished, take {}s \n", (end - start) / 1000);
+    logger.info("Merge history finished, take {} s. \n", (end - start) / 1000);
   }
 
   private List<String> getSnapshotDbs(String sourceDir) {
@@ -180,22 +180,23 @@ public class LiteFullNodeTool {
   }
 
   private void split(String sourceDir, String destDir, List<String> dbs) throws IOException {
-    logger.info("-- begin to split the dbs.");
+    logger.info("Begin to split the dbs.");
     if (!new File(sourceDir).isDirectory()) {
-      throw new RuntimeException("sourceDir must be a directory, sourceDir: " + sourceDir);
+      throw new RuntimeException(String.format("sourceDir: %s must be a directory ", sourceDir));
     }
     File destPath = new File(destDir);
     if (new File(destDir).exists()) {
-      throw new RuntimeException("destDir is already exist, please remove it first");
+      throw new RuntimeException(String.format(
+          "destDir: %s is already exist, please remove it first", destDir));
     }
     if (!destPath.mkdirs()) {
-      throw new RuntimeException("destDir create failed, please check");
+      throw new RuntimeException(String.format("destDir: %s create failed, please check", destDir));
     }
     Util.copyDatabases(Paths.get(sourceDir), Paths.get(destDir), dbs);
   }
 
   private void mergeCheckpoint(String sourceDir, String destDir, List<String> destDbs) {
-    logger.info("-- begin to merge checkpoint to dataset");
+    logger.info("Begin to merge checkpoint to dataset.");
     try {
       DBInterface tmpDb = DbTool.getDB(sourceDir, CHECKPOINT_DB);
       try (DBIterator iterator = tmpDb.iterator()) {
@@ -222,13 +223,13 @@ public class LiteFullNodeTool {
 
   private void generateInfoProperties(String propertyfile, String databaseDir)
           throws IOException, RocksDBException {
-    logger.info("-- create {} for dataset", INFO_FILE_NAME);
+    logger.info("Create {} for dataset.", INFO_FILE_NAME);
     if (!FileUtil.createFileIfNotExists(propertyfile)) {
-      throw new RuntimeException("create properties file failed...");
+      throw new RuntimeException("Create properties file failed.");
     }
     if (!PropUtil.writeProperty(propertyfile, Constant.SPLIT_BLOCK_NUM,
             Long.toString(getLatestBlockHeaderNum(databaseDir)))) {
-      throw new RuntimeException("write properties file failed...");
+      throw new RuntimeException("Write properties file failed.");
     }
   }
 
@@ -253,7 +254,7 @@ public class LiteFullNodeTool {
    */
   private void fillSnapshotBlockAndTransDb(String sourceDir, String snapshotDir)
           throws IOException, RocksDBException {
-    logger.info("-- begin to fill {} block , genesis block and trans to snapshot", RECENT_BLKS);
+    logger.info("Begin to fill {} block, genesis block and trans to snapshot.", RECENT_BLKS);
     DBInterface sourceBlockIndexDb = DbTool.getDB(sourceDir, BLOCK_INDEX_DB_NAME);
     DBInterface sourceBlockDb = DbTool.getDB(sourceDir, BLOCK_DB_NAME);
     DBInterface destBlockDb = DbTool.getDB(snapshotDir, BLOCK_DB_NAME);
@@ -314,14 +315,14 @@ public class LiteFullNodeTool {
 
   private BlockNumInfo checkAndGetBlockNumInfo(String historyDir, String databaseDir)
           throws IOException, RocksDBException {
-    logger.info("-- check the compatibility of this history");
+    logger.info("Check the compatibility of this history.");
     String snapshotInfo = String.format(
             DIR_FORMAT_STRING, databaseDir, File.separator, INFO_FILE_NAME);
     String historyInfo = String.format(
             DIR_FORMAT_STRING, historyDir, File.separator, INFO_FILE_NAME);
     if (!FileUtil.isExists(snapshotInfo)) {
       throw new FileNotFoundException(
-              "snapshot property file is not found. maybe this is a complete fullnode?");
+              "Snapshot property file is not found. maybe this is a complete fullnode?");
     }
     if (!FileUtil.isExists(historyInfo)) {
       throw new FileNotFoundException("history property file is not found.");
@@ -331,15 +332,17 @@ public class LiteFullNodeTool {
     long historyBlkNum = Long.parseLong(PropUtil.readProperty(historyInfo, Constant
             .SPLIT_BLOCK_NUM));
     if (historyBlkNum < snapshotBlkNum) {
-      logger.error("history latest block number is lower than snapshot, history: {}, snapshot: {}",
-              historyBlkNum, snapshotBlkNum);
-      throw new RuntimeException("history latest block number is lower than snapshot.");
+      throw new RuntimeException(
+          String.format(
+              "History latest block number is lower than snapshot, history: %d, snapshot: %d",
+          historyBlkNum, snapshotBlkNum));
     }
     // check genesis block is equal
     if (!Arrays.equals(getGenesisBlockHash(databaseDir), getGenesisBlockHash(historyDir))) {
-      logger.error("genesis block hash is not equal, history: {}, database: {}",
-              getGenesisBlockHash(historyDir), getGenesisBlockHash(databaseDir));
-      throw new RuntimeException("genesis block is not equal.");
+      throw new RuntimeException(String.format(
+          "Genesis block hash is not equal, history: %s, database: %s",
+          Arrays.toString(getGenesisBlockHash(historyDir)),
+          Arrays.toString(getGenesisBlockHash(databaseDir))));
     }
     return new BlockNumInfo(snapshotBlkNum, historyBlkNum);
   }
@@ -347,22 +350,22 @@ public class LiteFullNodeTool {
   private void backupArchiveDbs(String databaseDir) throws IOException {
     String bakDir = String.format("%s%s%s%d",
             databaseDir, File.separator, BACKUP_DIR_PREFIX, START_TIME);
-    logger.info("-- backup the archive dbs to {}", bakDir);
+    logger.info("Backup the archive dbs to {}.", bakDir);
     if (!FileUtil.createDirIfNotExists(bakDir)) {
-      throw new RuntimeException("create bak dir failed");
+      throw new RuntimeException(String.format("create bak dir %s failed", bakDir));
     }
     Util.copyDatabases(Paths.get(databaseDir), Paths.get(bakDir), archiveDbs);
     archiveDbs.forEach(db -> FileUtil.deleteDir(new File(databaseDir, db)));
   }
 
   private void copyHistory2Database(String historyDir, String databaseDir) throws IOException {
-    logger.info("-- begin to copy history to database");
+    logger.info("Begin to copy history to database.");
     Util.copyDatabases(Paths.get(historyDir), Paths.get(databaseDir), archiveDbs);
   }
 
   private void trimHistory(String databaseDir, BlockNumInfo blockNumInfo)
           throws BadItemException, IOException, RocksDBException {
-    logger.info("-- begin to trim the history data.");
+    logger.info("Begin to trim the history data.");
     DBInterface blockIndexDb = DbTool.getDB(databaseDir, BLOCK_INDEX_DB_NAME);
     DBInterface blockDb = DbTool.getDB(databaseDir, BLOCK_DB_NAME);
     DBInterface transDb = DbTool.getDB(databaseDir, TRANS_DB_NAME);
@@ -386,7 +389,7 @@ public class LiteFullNodeTool {
   private void mergeBak2Database(String databaseDir) throws IOException, RocksDBException {
     String bakDir = String.format("%s%s%s%d",
             databaseDir, File.separator, BACKUP_DIR_PREFIX, START_TIME);
-    logger.info("-- begin to merge {} to database", bakDir);
+    logger.info("Begin to merge {} to database.", bakDir);
     for (String dbName : archiveDbs) {
       DBInterface bakDb = DbTool.getDB(bakDir, dbName);
       DBInterface destDb = DbTool.getDB(databaseDir, dbName);
@@ -431,14 +434,14 @@ public class LiteFullNodeTool {
   }
 
   private void deleteSnapshotFlag(String databaseDir) throws IOException, RocksDBException {
-    logger.info("-- delete the info file.");
+    logger.info("Delete the info file from {}.", databaseDir);
     Files.delete(Paths.get(databaseDir, INFO_FILE_NAME));
     if (!isLite(databaseDir)) {
       DBInterface destCommonDb = DbTool.getDB(databaseDir, COMMON_DB_NAME);
       destCommonDb.delete(DB_KEY_NODE_TYPE);
       destCommonDb.delete(DB_KEY_LOWEST_BLOCK_NUM);
-      logger.info("-- deleted node_type and lowest_block_num  from  "
-          + "common to identify this node is a real fullnode.");
+      logger.info("Deleted {} and {} from {} to identify this node is a real fullnode.",
+          "node_type", "lowest_block_num", COMMON_DB_NAME);
     }
 
   }

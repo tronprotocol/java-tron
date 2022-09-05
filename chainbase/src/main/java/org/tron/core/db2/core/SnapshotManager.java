@@ -150,7 +150,7 @@ public class SnapshotManager implements RevokingDatabase {
 
   public void merge() {
     if (activeSession <= 0) {
-      throw new RevokingStoreIllegalStateException("activeDialog has to be greater than 0");
+      throw new RevokingStoreIllegalStateException(activeSession);
     }
 
     if (size < 2) {
@@ -168,7 +168,7 @@ public class SnapshotManager implements RevokingDatabase {
     }
 
     if (activeSession <= 0) {
-      throw new RevokingStoreIllegalStateException("activeSession has to be greater than 0");
+      throw new RevokingStoreIllegalStateException(activeSession);
     }
 
     if (size <= 0) {
@@ -187,7 +187,7 @@ public class SnapshotManager implements RevokingDatabase {
 
   public synchronized void commit() {
     if (activeSession <= 0) {
-      throw new RevokingStoreIllegalStateException("activeSession has to be greater than 0");
+      throw new RevokingStoreIllegalStateException(activeSession);
     }
 
     --activeSession;
@@ -195,11 +195,13 @@ public class SnapshotManager implements RevokingDatabase {
 
   public synchronized void pop() {
     if (activeSession != 0) {
-      throw new RevokingStoreIllegalStateException("activeSession has to be equal 0");
+      throw new RevokingStoreIllegalStateException(
+          String.format("activeSession has to be equal 0, current %d", activeSession));
     }
 
     if (size <= 0) {
-      throw new RevokingStoreIllegalStateException("there is not snapshot to be popped");
+      throw new RevokingStoreIllegalStateException(
+          String.format("there is not snapshot to be popped, current: %d", size));
     }
 
     disabled = true;
@@ -240,10 +242,10 @@ public class SnapshotManager implements RevokingDatabase {
 
   @Override
   public void shutdown() {
-    System.err.println("******** begin to pop revokingDb ********");
-    System.err.println("******** before revokingDb size:" + size);
+    logger.info("******** Begin to pop revokingDb. ********");
+    logger.info("******** Before revokingDb size: {}.", size);
     checkTmpStore.close();
-    System.err.println("******** end to pop revokingDb ********");
+    logger.info("******** End to pop revokingDb. ********");
   }
 
   public void updateSolidity(int hops) {
@@ -312,13 +314,13 @@ public class SnapshotManager implements RevokingDatabase {
         long checkPointEnd = System.currentTimeMillis();
         refresh();
         flushCount = 0;
-        logger.info("flush cost:{}, create checkpoint cost:{}, refresh cost:{}",
+        logger.info("Flush cost: {} ms, create checkpoint cost: {} ms, refresh cost: {} ms.",
             System.currentTimeMillis() - start,
             checkPointEnd - start,
             System.currentTimeMillis() - checkPointEnd
         );
       } catch (TronDBException e) {
-        logger.error(" Find fatal error , program will be exited soon", e);
+        logger.error(" Find fatal error, program will be exited soon.", e);
         hitDown = true;
         LockSupport.unpark(exitThread);
       }
@@ -380,7 +382,7 @@ public class SnapshotManager implements RevokingDatabase {
   public void check() {
     for (Chainbase db : dbs) {
       if (!Snapshot.isRoot(db.getHead())) {
-        throw new IllegalStateException("first check.");
+        throw new IllegalStateException("First check.");
       }
     }
 
@@ -471,7 +473,7 @@ public class SnapshotManager implements RevokingDatabase {
           snapshotManager.revoke();
         }
       } catch (Exception e) {
-        logger.error("revoke database error.", e);
+        throw new RevokingStoreIllegalStateException(e);
       }
       if (disableOnExit) {
         snapshotManager.disable();
@@ -480,17 +482,7 @@ public class SnapshotManager implements RevokingDatabase {
 
     @Override
     public void close() {
-      try {
-        if (applySnapshot) {
-          snapshotManager.revoke();
-        }
-      } catch (Exception e) {
-        logger.error("revoke database error.", e);
-        throw new RevokingStoreIllegalStateException(e);
-      }
-      if (disableOnExit) {
-        snapshotManager.disable();
-      }
+     destroy();
     }
   }
 
