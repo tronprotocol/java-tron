@@ -1,12 +1,14 @@
 package org.tron.core.db2.core;
 
-import ch.qos.logback.core.encoder.ByteArrayUtil;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import org.tron.common.utils.ByteArray;
@@ -14,6 +16,7 @@ import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.db2.common.DB;
 import org.tron.core.db2.common.Flusher;
+import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.store.AccountAssetStore;
 
@@ -23,8 +26,14 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   private Snapshot solidity;
   private boolean isAccountDB;
 
+  protected Cache<Key, byte[]> level2Cache;
+
   public SnapshotRoot(DB<byte[], byte[]> db) {
     this.db = db;
+    if (!db.getDbName().equals("market_pair_price_to_order")) {
+      this.level2Cache = CacheBuilder.newBuilder().initialCapacity(100000)
+          .expireAfterAccess(1, TimeUnit.MINUTES).build();
+    }
     solidity = this;
     isOptimized = "properties".equalsIgnoreCase(db.getDbName());
     isAccountDB = "account".equalsIgnoreCase(db.getDbName());
@@ -32,23 +41,53 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
 
   private boolean needOptAsset() {
     return isAccountDB && ChainBaseManager.getInstance().getDynamicPropertiesStore()
-            .getAllowAccountAssetOptimizationFromRoot() == 1;
+        .getAllowAccountAssetOptimizationFromRoot() == 1;
+  }
+
+  private void putCache(byte[] key, byte[] value) {
+    if (key == null || value == null || level2Cache == null) {
+      return;
+    }
+    level2Cache.put(Key.copyOf(key), value);
+  }
+
+  private byte[] getFromCache(byte[] key) {
+    if (level2Cache == null) {
+      return null;
+    }
+    return level2Cache.getIfPresent(Key.copyOf(key));
+  }
+
+  private void removeFromCache(byte[] key) {
+    level2Cache.invalidate(Key.copyOf(key));
+  }
+
+  private void updateCache(Map<WrappedByteArray, WrappedByteArray> batch) {
+    batch.forEach((k, v) -> {
+      putCache(k.getBytes(), v.getBytes());
+    });
   }
 
   @Override
   public byte[] get(byte[] key) {
-    return db.get(key);
+    byte[] value = getFromCache(key);
+    if (value == null) {
+      value = db.get(key);
+      putCache(key, value);
+    }
+    return value;
   }
 
   @Override
   public void put(byte[] key, byte[] value) {
+    byte[] insertValue = value;
     if (needOptAsset()) {
       if (ByteArray.isEmpty(value)) {
         remove(key);
         return;
       }
       AccountAssetStore assetStore =
-              ChainBaseManager.getInstance().getAccountAssetStore();
+          ChainBaseManager.getInstance().getAccountAssetStore();
       AccountCapsule item = new AccountCapsule(value);
       if (!item.getAssetOptimized()) {
         assetStore.deleteAccount(item.createDbKey());
@@ -56,10 +95,10 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
       }
       assetStore.putAccount(item.getInstance());
       item.clearAsset();
-      db.put(key, item.getData());
-    } else {
-      db.put(key, value);
+      insertValue = item.getData();
     }
+    db.put(key, insertValue);
+    putCache(key, insertValue);
   }
 
   @Override
@@ -68,6 +107,7 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
       ChainBaseManager.getInstance().getAccountAssetStore().deleteAccount(key);
     }
     db.remove(key);
+    removeFromCache(key);
   }
 
   @Override
@@ -82,6 +122,7 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
     } else {
       ((Flusher) db).flush(batch);
     }
+    updateCache(batch);
   }
 
   public void merge(List<Snapshot> snapshots) {
@@ -97,6 +138,7 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
       processAccount(batch);
     } else {
       ((Flusher) db).flush(batch);
+      updateCache(batch);
     }
   }
 
@@ -120,6 +162,7 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
       }
     });
     ((Flusher) db).flush(accounts);
+    updateCache(accounts);
     if (assets.size() > 0) {
       assetStore.updateByBatch(AccountAssetStore.convert(assets));
     }
