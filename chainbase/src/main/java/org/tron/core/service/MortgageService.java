@@ -74,19 +74,19 @@ public class MortgageService {
       for (ByteString b : witnessAddressList) {
         double eachVotePay = (double) totalPay / voteSum;
         long pay = (long) (witnessCapsuleMap.get(b).getVoteCount() * eachVotePay);
-        logger.debug("pay {} stand reward {}", Hex.toHexString(b.toByteArray()), pay);
+        logger.debug("Pay {} stand reward {}.", Hex.toHexString(b.toByteArray()), pay);
         payReward(b.toByteArray(), pay);
       }
     }
   }
 
   public void payBlockReward(byte[] witnessAddress, long value) {
-    logger.debug("pay {} block reward {}", Hex.toHexString(witnessAddress), value);
+    logger.debug("Pay {} block reward {}.", Hex.toHexString(witnessAddress), value);
     payReward(witnessAddress, value);
   }
 
   public void payTransactionFeeReward(byte[] witnessAddress, long value) {
-    logger.debug("pay {} transaction fee reward {}", Hex.toHexString(witnessAddress), value);
+    logger.debug("Pay {} transaction fee reward {}.", Hex.toHexString(witnessAddress), value);
     payReward(witnessAddress, value);
   }
 
@@ -125,7 +125,7 @@ public class MortgageService {
         reward = computeReward(beginCycle, endCycle, account);
         adjustAllowance(address, reward);
         reward = 0;
-        logger.info("latest cycle reward {},{}", beginCycle, account.getVotesList());
+        logger.info("Latest cycle reward {}, {}.", beginCycle, account.getVotesList());
       }
       beginCycle += 1;
     }
@@ -142,8 +142,8 @@ public class MortgageService {
     delegationStore.setBeginCycle(address, endCycle);
     delegationStore.setEndCycle(address, endCycle + 1);
     delegationStore.setAccountVote(endCycle, address, accountCapsule);
-    logger.info("adjust {} allowance {}, now currentCycle {}, beginCycle {}, endCycle {}, "
-            + "account vote {},", Hex.toHexString(address), reward, currentCycle,
+    logger.info("Adjust {} allowance {}, now currentCycle {}, beginCycle {}, endCycle {}, "
+            + "account vote {}.", Hex.toHexString(address), reward, currentCycle,
         beginCycle, endCycle, accountCapsule.getVotesList());
   }
 
@@ -194,7 +194,7 @@ public class MortgageService {
       long userVote = vote.getVoteCount();
       double voteRate = (double) userVote / totalVote;
       reward += voteRate * totalReward;
-      logger.debug("computeReward {} {} {} {},{},{},{}", cycle,
+      logger.debug("ComputeReward {}, {}, {}, {}, {}, {}, {}.", cycle,
           Hex.toHexString(accountCapsule.getAddress().toByteArray()), Hex.toHexString(srAddress),
           userVote, totalVote, totalReward, reward);
     }
@@ -252,7 +252,7 @@ public class MortgageService {
       }
       adjustAllowance(accountStore, address, amount);
     } catch (BalanceInsufficientException e) {
-      logger.error("withdrawReward error: {},{}", Hex.toHexString(address), address, e);
+      logger.error("WithdrawReward error: {}.", e.getMessage());
     }
   }
 
@@ -266,7 +266,8 @@ public class MortgageService {
 
     if (amount < 0 && allowance < -amount) {
       throw new BalanceInsufficientException(
-          StringUtil.createReadableString(accountAddress) + " insufficient balance");
+          String.format("%s insufficient balance, amount: %d, allowance: %d",
+              StringUtil.createReadableString(accountAddress), amount, allowance));
     }
     account.setAllowance(allowance + amount);
     accountStore.put(account.createDbKey(), account);

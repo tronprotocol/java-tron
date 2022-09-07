@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Map.Entry;
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.DBIterator;
+import org.tron.common.error.TronDBException;
 
 @Slf4j(topic = "DB")
 public final class StoreIterator implements org.tron.core.db.common.iterator.DBIterator {
@@ -34,7 +35,7 @@ public final class StoreIterator implements org.tron.core.db.common.iterator.DBI
         dbIterator.close();
       }
     } catch (Exception e) {
-      logger.debug(e.getMessage(), e);
+      throw new TronDBException(e);
     }
 
     return hasNext;

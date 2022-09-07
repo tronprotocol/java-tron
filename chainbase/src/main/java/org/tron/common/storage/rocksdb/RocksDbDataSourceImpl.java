@@ -43,13 +43,12 @@ import org.tron.core.db2.common.Instance;
 import org.tron.core.db2.common.WrappedByteArray;
 
 
-@Slf4j
+@Slf4j(topic = "DB")
 @NoArgsConstructor
 public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[]>,
     Iterable<Map.Entry<byte[], byte[]>>, Instance<RocksDbDataSourceImpl> {
 
   ReadOptions readOpts;
-  private static final String FAIL_TO_INIT_DATABASE = "Failed to initialize database";
   private String dataBaseName;
   private RocksDB database;
   private boolean alive;
@@ -102,6 +101,7 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
       database.close();
       alive = false;
     } catch (Exception e) {
+      logger.error("Failed to find the dbStore file on the closeDB: {}.", dataBaseName, e);
     } finally {
       resetDbLock.writeLock().unlock();
     }
@@ -116,7 +116,7 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
 
   private boolean quitIfNotAlive() {
     if (!isAlive()) {
-      logger.warn("db is not alive");
+      logger.warn("DB {} is not alive.", dataBaseName);
     }
     return !isAlive();
   }
@@ -181,8 +181,8 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
 
   public void initDB() {
     if (!checkOrInitEngine()) {
-      logger.error("database engine do not match");
-      throw new RuntimeException(FAIL_TO_INIT_DATABASE);
+      throw new RuntimeException(
+          String.format("failed to check database: %s, engine do not match", dataBaseName));
     }
     initDB(RocksDbSettings.getSettings());
   }
@@ -194,7 +194,7 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
         return;
       }
       if (dataBaseName == null) {
-        throw new NullPointerException("no name set to the dbStore");
+        throw new IllegalArgumentException("No name set to the dbStore");
       }
 
       try (Options options = new Options()) {
@@ -238,7 +238,7 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
             .setVerifyChecksums(false);
 
         try {
-          logger.debug("Opening database");
+          logger.debug("Opening database {}.", dataBaseName);
           final Path dbPath = getDbPath();
 
           if (!Files.isSymbolicLink(dbPath.getParent())) {
@@ -248,17 +248,17 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
           try {
             database = RocksDB.open(options, dbPath.toString());
           } catch (RocksDBException e) {
-            logger.error(e.getMessage(), e);
-            throw new RuntimeException(FAIL_TO_INIT_DATABASE, e);
+            throw new RuntimeException(
+                String.format("failed to open database: %s", dataBaseName), e);
           }
 
           alive = true;
         } catch (IOException ioe) {
-          logger.error(ioe.getMessage(), ioe);
-          throw new RuntimeException(FAIL_TO_INIT_DATABASE, ioe);
+          throw new RuntimeException(
+          String.format("failed to init database: %s", dataBaseName), ioe);
         }
 
-        logger.debug("<~ RocksDbDataSource.initDB(): " + dataBaseName);
+        logger.debug("Init DB {} done.", dataBaseName);
       }
     } finally {
       resetDbLock.writeLock().unlock();
@@ -274,7 +274,7 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     try {
       database.put(key, value);
     } catch (RocksDBException e) {
-      throw new RuntimeException(e);
+      throw new RuntimeException(dataBaseName, e);
     } finally {
       resetDbLock.readLock().unlock();
     }
@@ -289,7 +289,7 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     try {
       return database.get(key);
     } catch (RocksDBException e) {
-      throw new RuntimeException(e);
+      throw new RuntimeException(dataBaseName, e);
     } finally {
       resetDbLock.readLock().unlock();
     }
@@ -304,7 +304,7 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     try {
       database.delete(key);
     } catch (RocksDBException e) {
-      throw new RuntimeException(e);
+      throw new RuntimeException(dataBaseName, e);
     } finally {
       resetDbLock.readLock().unlock();
     }
@@ -365,7 +365,7 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
       try {
         updateByBatchInner(rows);
       } catch (Exception e1) {
-        throw new RuntimeException(e);
+        throw new RuntimeException(dataBaseName, e1);
       }
     } finally {
       resetDbLock.readLock().unlock();
@@ -384,7 +384,7 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
       try {
         updateByBatchInner(rows);
       } catch (Exception e1) {
-        throw new RuntimeException(e);
+        throw new RuntimeException(dataBaseName, e1);
       }
     } finally {
       resetDbLock.readLock().unlock();

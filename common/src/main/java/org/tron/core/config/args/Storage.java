@@ -205,12 +205,12 @@ public class Storage {
       File file = new File(path);
       if (!file.exists() && !file.mkdirs()) {
         throw new IllegalArgumentException(
-            "[storage.properties] can not create storage path: " + path);
+            String.format("[storage.properties] can not create storage path: %s", path));
       }
 
       if (!file.canWrite()) {
         throw new IllegalArgumentException(
-            "[storage.properties] permission denied to write to: " + path);
+            String.format("[storage.properties] permission denied to write to: %s ", path));
       }
 
       property.setPath(path);
@@ -251,69 +251,56 @@ public class Storage {
     }
 
     if (conf.containsKey(COMPRESSION_TYPE_CONFIG_KEY)) {
+      String param = conf.get(COMPRESSION_TYPE_CONFIG_KEY).unwrapped().toString();
       try {
         dbOptions.compressionType(
-            CompressionType.getCompressionTypeByPersistentId(
-                Integer.parseInt(
-                    conf.get(COMPRESSION_TYPE_CONFIG_KEY).unwrapped().toString()
-                )
-            )
-        );
+            CompressionType.getCompressionTypeByPersistentId(Integer.parseInt(param)));
       } catch (NumberFormatException e) {
-        throw new IllegalArgumentException(
-            "[storage.properties] compressionType must be Integer type.");
+        throwIllegalArgumentException(COMPRESSION_TYPE_CONFIG_KEY, Integer.class, param);
       }
     }
 
     if (conf.containsKey(BLOCK_SIZE_CONFIG_KEY)) {
+      String param = conf.get(BLOCK_SIZE_CONFIG_KEY).unwrapped().toString();
       try {
-        dbOptions.blockSize(
-            Integer.parseInt(
-                conf.get(BLOCK_SIZE_CONFIG_KEY).unwrapped().toString()
-            )
-        );
+        dbOptions.blockSize(Integer.parseInt(param));
       } catch (NumberFormatException e) {
-        throw new IllegalArgumentException("[storage.properties] blockSize must be Integer type.");
+        throwIllegalArgumentException(BLOCK_SIZE_CONFIG_KEY, Integer.class, param);
       }
     }
 
     if (conf.containsKey(WRITE_BUFFER_SIZE_CONFIG_KEY)) {
+      String param = conf.get(WRITE_BUFFER_SIZE_CONFIG_KEY).unwrapped().toString();
       try {
-        dbOptions.writeBufferSize(
-            Integer.parseInt(
-                conf.get(WRITE_BUFFER_SIZE_CONFIG_KEY).unwrapped().toString()
-            )
-        );
+        dbOptions.writeBufferSize(Integer.parseInt(param));
       } catch (NumberFormatException e) {
-        throw new IllegalArgumentException(
-            "[storage.properties] writeBufferSize must be Integer type.");
+        throwIllegalArgumentException(WRITE_BUFFER_SIZE_CONFIG_KEY, Integer.class, param);
       }
     }
 
     if (conf.containsKey(CACHE_SIZE_CONFIG_KEY)) {
+      String param = conf.get(CACHE_SIZE_CONFIG_KEY).unwrapped().toString();
       try {
-        dbOptions.cacheSize(
-            Long.parseLong(
-                conf.get(CACHE_SIZE_CONFIG_KEY).unwrapped().toString()
-            )
-        );
+        dbOptions.cacheSize(Long.parseLong(param));
       } catch (NumberFormatException e) {
-        throw new IllegalArgumentException("[storage.properties] cacheSize must be Long type.");
+        throwIllegalArgumentException(CACHE_SIZE_CONFIG_KEY, Long.class, param);
       }
     }
 
     if (conf.containsKey(MAX_OPEN_FILES_CONFIG_KEY)) {
+      String param = conf.get(MAX_OPEN_FILES_CONFIG_KEY).unwrapped().toString();
       try {
-        dbOptions.maxOpenFiles(
-            Integer.parseInt(
-                conf.get(MAX_OPEN_FILES_CONFIG_KEY).unwrapped().toString()
-            )
-        );
+        dbOptions.maxOpenFiles(Integer.parseInt(param));
       } catch (NumberFormatException e) {
-        throw new IllegalArgumentException(
-            "[storage.properties] maxOpenFiles must be Integer type.");
+        throwIllegalArgumentException(MAX_OPEN_FILES_CONFIG_KEY, Integer.class, param);
       }
     }
+  }
+
+  private static void throwIllegalArgumentException(String param, Class type, String actual) {
+    throw new IllegalArgumentException(
+        String.format("[storage.properties] %s must be %s type, actual: %s.",
+            param, type.getSimpleName(), actual));
   }
 
   /**
