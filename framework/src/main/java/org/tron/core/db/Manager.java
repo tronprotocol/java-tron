@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -810,7 +811,7 @@ public class Manager {
           }
 
           try (ISession tmpSession = revokingStore.buildSession()) {
-            processTransaction(trx, null);
+            processTransaction(trx, null, null);
             trx.setTrxTrace(null);
             pendingTransactions.add(trx);
             Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, 1,
@@ -1322,7 +1323,8 @@ public class Manager {
   /**
    * Process transaction.
    */
-  public TransactionInfo processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap)
+  public TransactionInfo processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap,
+      Map<String, Long> phase2cost)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TransactionExpirationException,
       TooBigTransactionException, TooBigTransactionResultException,
@@ -1330,6 +1332,7 @@ public class Manager {
     if (trxCap == null) {
       return null;
     }
+    long t1 = System.nanoTime();
     Contract contract = trxCap.getInstance().getRawData().getContract(0);
 
     final Histogram.Timer requestTimer = Metrics.histogramStartTimer(
@@ -1342,11 +1345,13 @@ public class Manager {
     if (Objects.nonNull(blockCap)) {
       chainBaseManager.getBalanceTraceStore().initCurrentTransactionBalanceTrace(trxCap);
     }
+    long t2 = System.nanoTime();
 
     if (!Args.getInstance().isStressTest) {
       validateTapos(trxCap);
       validateCommon(trxCap);
     }
+    long t3 = System.nanoTime();
 
     if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
       throw new ContractSizeNotEqualToOneException(
@@ -1354,6 +1359,7 @@ public class Manager {
     }
 
     validateDup(trxCap);
+    long t4 = System.nanoTime();
 
     if (!trxCap.validateSignature(chainBaseManager.getAccountStore(),
         chainBaseManager.getDynamicPropertiesStore())) {
@@ -1366,10 +1372,14 @@ public class Manager {
 
     consumeBandwidth(trxCap, trace);
     consumeMultiSignFee(trxCap, trace);
+    long t5 = System.nanoTime();
 
     trace.init(blockCap, eventPluginLoaded);
     trace.checkIsConstant();
+
+    long t6 = System.nanoTime();
     trace.exec();
+    long t7 = System.nanoTime();
 
     if (Objects.nonNull(blockCap)) {
       trace.setResult();
@@ -1389,6 +1399,8 @@ public class Manager {
     }
 
     trace.finalization();
+    long t8 = System.nanoTime();
+
     if (getDynamicPropertiesStore().supportVM()) {
       trxCap.setResult(trace.getTransactionContext());
     }
@@ -1400,6 +1412,7 @@ public class Manager {
 
     TransactionInfoCapsule transactionInfo = TransactionUtil
         .buildTransactionInfoInstance(trxCap, blockCap, trace);
+    long t9 = System.nanoTime();
 
     // if event subscribe is enabled, post contract triggers to queue
     // only trigger when process block
@@ -1429,6 +1442,19 @@ public class Manager {
           Hex.toHexString(transactionInfo.getId()), cost);
     }
     Metrics.histogramObserve(requestTimer);
+    long t10 = System.nanoTime();
+    if (null != phase2cost) {
+      phase2cost.put("p1", phase2cost.getOrDefault("p1", 0L) + (t2 - t1));
+      phase2cost.put("p2", phase2cost.getOrDefault("p2", 0L) + (t3 - t2));
+      phase2cost.put("p3", phase2cost.getOrDefault("p3", 0L) + (t4 - t3));
+      phase2cost.put("p4", phase2cost.getOrDefault("p4", 0L) + (t5 - t4));
+      phase2cost.put("p5", phase2cost.getOrDefault("p5", 0L) + (t6 - t5));
+      phase2cost.put("p6", phase2cost.getOrDefault("p6", 0L) + (t7 - t6));
+      phase2cost.put("p7", phase2cost.getOrDefault("p7", 0L) + (t8 - t7));
+      phase2cost.put("p8", phase2cost.getOrDefault("p8", 0L) + (t9 - t8));
+      phase2cost.put("p9", phase2cost.getOrDefault("p9", 0L) + (t10 - t9));
+    }
+
     return transactionInfo.getInstance();
   }
 
@@ -1444,6 +1470,8 @@ public class Manager {
     long postponedTrxCount = 0;
     logger.info("Generate block {} begin", chainBaseManager.getHeadBlockNum() + 1);
 
+    long total_1 = 0, total_2 = 0, total_3 = 0, total_4 = 0, total_5 = 0, total_6 = 0, total_7 = 0, total_8 = 0;
+    long t1 = System.nanoTime();
     BlockCapsule blockCapsule = new BlockCapsule(chainBaseManager.getHeadBlockNum() + 1,
         chainBaseManager.getHeadBlockId(),
         blockTime, miner.getWitnessAddress());
@@ -1467,7 +1495,11 @@ public class Manager {
 
     Set<String> accountSet = new HashSet<>();
     AtomicInteger shieldedTransCounts = new AtomicInteger(0);
+    long t2 = System.nanoTime();
+    total_1 = t2 - t1;
+    Map<String, Long> phase2cost = new HashMap<>();
     while (pendingTransactions.size() > 0 || rePushTransactions.size() > 0) {
+      long t3 = System.nanoTime();
       boolean fromPending = false;
       TransactionCapsule trx;
       if (pendingTransactions.size() > 0) {
@@ -1532,30 +1564,56 @@ public class Manager {
       if (ownerAddressSet.contains(ownerAddress)) {
         trx.setVerified(false);
       }
+      long t4 = System.nanoTime();
+      total_2 += (t4 - t3);
+      long t8 = System.nanoTime();
       // apply transaction
       try (ISession tmpSession = revokingStore.buildSession()) {
+        long t5 = System.nanoTime();
+        total_3 += (t5 - t4);
         accountStateCallBack.preExeTrans();
-        TransactionInfo result = processTransaction(trx, blockCapsule);
+        TransactionInfo result = processTransaction(trx, blockCapsule, phase2cost);
+        long t6 = System.nanoTime();
+        total_4 += (t6 - t5);
         accountStateCallBack.exeTransFinish();
         tmpSession.merge();
+        long t7 = System.nanoTime();
+        total_5 += (t7 - t6);
         blockCapsule.addTransaction(trx);
         if (Objects.nonNull(result)) {
           transactionRetCapsule.addTransactionInfo(result);
         }
+        t8 = System.nanoTime();
+        total_6 += (t8 - t7);
       } catch (Exception e) {
         logger.error("Process trx {} failed when generating block: {}", trx.getTransactionId(),
             e.getMessage());
       }
+      long t9 = System.nanoTime();
+      total_7 += (t9 - t8);
     }
-
+    long t10 = System.nanoTime();
     accountStateCallBack.executeGenerateFinish();
 
     session.reset();
+    long t11 = System.nanoTime();
+    total_8 = t11 - t10;
 
     logger.info("Generate block {} success, trxs:{}, pendingCount: {}, rePushCount: {},"
             + " postponedCount: {}",
         blockCapsule.getNum(), blockCapsule.getTransactions().size(),
         pendingTransactions.size(), rePushTransactions.size(), postponedTrxCount);
+
+    logger.info(
+        "total:{}, total_1:{}, total_2:{}, total_3:{}, total_4:{}, total_5:{}, total_6:{}, total_7:{}, total_8:{}",
+        (t11 - t1)/1000, total_1 / 1000, total_2 / 1000, total_3 / 1000, total_4 / 1000,
+        total_5 / 1000, total_6 / 1000, total_7 / 1000, total_8 / 1000);
+    logger.info("p1:{}, p2:{}, p3:{}, p4:{}, p5:{}, p6:{}, p7:{}, p8:{}, p9:{}",
+        phase2cost.getOrDefault("p1", 0L) / 1000, phase2cost.getOrDefault("p2", 0L) / 1000,
+        phase2cost.getOrDefault("p3", 0L) / 1000, phase2cost.getOrDefault("p4", 0L) / 1000,
+        phase2cost.getOrDefault("p5", 0L) / 1000, phase2cost.getOrDefault("p6", 0L) / 1000,
+        phase2cost.getOrDefault("p7", 0L) / 1000, phase2cost.getOrDefault("p8", 0L) / 1000,
+        phase2cost.getOrDefault("p9", 0L) / 1000);
 
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(miner.getPrivateKey());
@@ -1647,13 +1705,14 @@ public class Manager {
     try {
       merkleContainer.resetCurrentMerkleTree();
       accountStateCallBack.preExecute(block);
+      Map<String, Long> phase2cost = new HashMap<>();
       for (TransactionCapsule transactionCapsule : block.getTransactions()) {
         transactionCapsule.setBlockNum(block.getNum());
         if (block.generatedByMyself) {
           transactionCapsule.setVerified(true);
         }
         accountStateCallBack.preExeTrans();
-        TransactionInfo result = processTransaction(transactionCapsule, block);
+        TransactionInfo result = processTransaction(transactionCapsule, block, phase2cost);
         accountStateCallBack.exeTransFinish();
         if (Objects.nonNull(result)) {
           transactionRetCapsule.addTransactionInfo(result);
