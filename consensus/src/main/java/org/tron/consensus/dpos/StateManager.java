@@ -90,13 +90,11 @@ public class StateManager {
       return;
     }
 
-    //multi master occurs. If currentBlockId is bigger, we continue to produce block at next cycle.
     if (null != currentBlockId
         && currentBlockId.toString().compareTo(blockCapsule.getBlockId().toString()) > 0) {
       return;
     }
 
-    //currentBlockId is smaller, we may pause one cycle
     dupBlockCount.set(1);
     dupBlockTime.set(System.currentTimeMillis());
 
