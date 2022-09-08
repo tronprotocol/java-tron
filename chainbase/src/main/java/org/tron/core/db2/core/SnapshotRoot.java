@@ -5,9 +5,11 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -28,10 +30,30 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
 
   protected Cache<Key, byte[]> level2Cache;
 
+  private static Set<String> notUpdateLevel2CacheBbNameSet = new HashSet<>();
+  private static Set<String> notContainLevel2CacheBbNameSet = new HashSet<>();
+  private static Map<String, Integer> level2CacheSizeMap = new HashMap<>();
+
+  static {
+    notUpdateLevel2CacheBbNameSet.add("block-index");
+    notUpdateLevel2CacheBbNameSet.add("block");
+    notUpdateLevel2CacheBbNameSet.add("recent-block");
+
+    notContainLevel2CacheBbNameSet.add("market_pair_price_to_order");
+    notContainLevel2CacheBbNameSet.add("transactionHistoryStore");
+    notContainLevel2CacheBbNameSet.add("transactionRetStore");
+    notContainLevel2CacheBbNameSet.add("trans");
+    notContainLevel2CacheBbNameSet.add("recent-transaction");
+
+    level2CacheSizeMap.put("block", 100);
+    level2CacheSizeMap.put("recent-block", 100);
+    level2CacheSizeMap.put("block-index", 100);
+  }
+
   public SnapshotRoot(DB<byte[], byte[]> db) {
     this.db = db;
-    if (!db.getDbName().equals("market_pair_price_to_order")) {
-      this.level2Cache = CacheBuilder.newBuilder().initialCapacity(100000)
+    if (!isNotInitLevel2Cache()) {
+      this.level2Cache = CacheBuilder.newBuilder().initialCapacity(100).maximumSize(getMaxSize())
           .expireAfterAccess(1, TimeUnit.MINUTES).build();
     }
     solidity = this;
@@ -44,11 +66,31 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
         .getAllowAccountAssetOptimizationFromRoot() == 1;
   }
 
+  private boolean isNotUpdate() {
+    return notUpdateLevel2CacheBbNameSet.contains(db.getDbName());
+  }
+
+  private boolean isNotInitLevel2Cache() {
+    return notContainLevel2CacheBbNameSet.contains(db.getDbName());
+  }
+
+  private int getMaxSize() {
+    return level2CacheSizeMap.getOrDefault(db.getDbName(), 100000);
+  }
+
+  private void clearCache() {
+    level2Cache.invalidateAll();
+  }
+
   private void putCache(byte[] key, byte[] value) {
-    if (key == null || value == null || level2Cache == null) {
+    if (key == null || level2Cache == null || isNotUpdate()) {
       return;
     }
-    level2Cache.put(Key.copyOf(key), value);
+    if (value == null) {
+      level2Cache.invalidate(Key.copyOf(key));
+    } else {
+      level2Cache.put(Key.copyOf(key), value);
+    }
   }
 
   private byte[] getFromCache(byte[] key) {
@@ -59,6 +101,9 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   }
 
   private void removeFromCache(byte[] key) {
+    if (level2Cache == null) {
+      return;
+    }
     level2Cache.invalidate(Key.copyOf(key));
   }
 
@@ -191,6 +236,7 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   @Override
   public void reset() {
     ((Flusher) db).reset();
+    clearCache();
   }
 
   @Override
