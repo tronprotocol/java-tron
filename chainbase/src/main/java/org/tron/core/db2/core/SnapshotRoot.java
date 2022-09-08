@@ -4,6 +4,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -13,6 +14,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.Getter;
+import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
@@ -44,6 +46,7 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
     notContainLevel2CacheBbNameSet.add("transactionRetStore");
     notContainLevel2CacheBbNameSet.add("trans");
     notContainLevel2CacheBbNameSet.add("recent-transaction");
+    notContainLevel2CacheBbNameSet.add("trans-cache");
 
     level2CacheSizeMap.put("block", 100);
     level2CacheSizeMap.put("recent-block", 100);
