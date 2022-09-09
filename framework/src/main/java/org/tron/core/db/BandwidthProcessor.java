@@ -172,7 +172,10 @@ public class BandwidthProcessor extends ResourceProcessor {
     if (!ret) {
       ret = consumeFeeForCreateNewAccount(accountCapsule, trace);
       if (!ret) {
-        throw new AccountResourceInsufficientException();
+        throw new AccountResourceInsufficientException(String.format(
+            "account [%s] has insufficient bandwidth[%d] and balance[%d] to create new account",
+            StringUtil.encode58Check(accountCapsule.createDbKey()), bytes,
+            chainBaseManager.getDynamicPropertiesStore().getCreateAccountFee()));
       }
     }
   }
