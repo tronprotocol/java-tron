@@ -77,7 +77,8 @@ public class TransactionResult {
 
   public TransactionResult(BlockCapsule blockCapsule, int index, Protocol.Transaction tx,
       long energyUsageTotal, long energyFee, Wallet wallet) {
-    byte[] txId = new TransactionCapsule(tx).getTransactionId().getBytes();
+    TransactionCapsule capsule = new TransactionCapsule(tx);
+    byte[] txId = capsule.getTransactionId().getBytes();
     hash = ByteArray.toJsonHex(txId);
     nonce = null; // no value
     blockHash = ByteArray.toJsonHex(blockCapsule.getBlockId().getBytes());
@@ -86,7 +87,7 @@ public class TransactionResult {
 
     if (!tx.getRawData().getContractList().isEmpty()) {
       Contract contract = tx.getRawData().getContract(0);
-      byte[] fromByte = TransactionCapsule.getOwner(contract);
+      byte[] fromByte = capsule.getOwnerAddress();
       byte[] toByte = getToAddress(tx);
       from = ByteArray.toJsonHexAddress(fromByte);
       to = ByteArray.toJsonHexAddress(toByte);
@@ -105,7 +106,8 @@ public class TransactionResult {
   }
 
   public TransactionResult(Transaction tx, Wallet wallet) {
-    byte[] txid = new TransactionCapsule(tx).getTransactionId().getBytes();
+    TransactionCapsule capsule = new TransactionCapsule(tx);
+    byte[] txid = capsule.getTransactionId().getBytes();
     hash = ByteArray.toJsonHex(txid);
     nonce = null; // no value
     blockHash = "0x";
@@ -114,7 +116,7 @@ public class TransactionResult {
 
     if (!tx.getRawData().getContractList().isEmpty()) {
       Contract contract = tx.getRawData().getContract(0);
-      byte[] fromByte = TransactionCapsule.getOwner(contract);
+      byte[] fromByte = capsule.getOwnerAddress();
       byte[] toByte = getToAddress(tx);
       from = ByteArray.toJsonHexAddress(fromByte);
       to = ByteArray.toJsonHexAddress(toByte);
