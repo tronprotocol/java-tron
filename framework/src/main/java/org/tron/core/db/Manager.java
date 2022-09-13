@@ -1410,7 +1410,7 @@ public class Manager {
     String address =  StringUtil.encode58Check(miner.getWitnessAddress().toByteArray());
     final Histogram.Timer timer = Metrics.histogramStartTimer(
         MetricKeys.Histogram.BLOCK_GENERATE_LATENCY, address);
-    Metrics.histogramObserve(MetricKeys.Histogram.MINER_LATENCY,
+    Metrics.histogramObserve(MetricKeys.Histogram.MINER_DELAY,
         (System.currentTimeMillis() - blockTime) / Metrics.MILLISECONDS_PER_SECOND, address);
     long postponedTrxCount = 0;
     logger.info("Generate block {} begin.", chainBaseManager.getHeadBlockNum() + 1);
