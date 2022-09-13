@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 
 @Slf4j
 public class GetBandwidthPricesServletTest {
-  private static String dbPath = "solidity-service-test";
+  private static String dbPath = "service-test";
   private static TronApplicationContext context;
   private GetBandwidthPricesServlet getBandwidthPricesServlet;
   private HttpServletRequest request;
@@ -34,12 +34,6 @@ public class GetBandwidthPricesServletTest {
     Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
     // 启服务，具体的端口号啥的在DefaultConfig.class里写死的
     context = new TronApplicationContext(DefaultConfig.class);
-  }
-
-  @BeforeClass
-  public static void init() {
-    Manager dbManager = context.getBean(Manager.class);
-    Wallet wallet = context.getBean(Wallet.class);
   }
 
   @AfterClass
@@ -56,8 +50,6 @@ public class GetBandwidthPricesServletTest {
   /** Init. */
   @Before
   public void setUp() throws InterruptedException {
-    /*    getBandwidthPricesServlet =
-    (GetBandwidthPricesServlet) context.getBean("getBandwidthPricesServlet");*/
     getBandwidthPricesServlet = context.getBean(GetBandwidthPricesServlet.class);
     this.request = mock(HttpServletRequest.class);
     this.response = mock(HttpServletResponse.class);

@@ -33,12 +33,6 @@ public class ListWitnessesOnPBFTServletTest {
     context = new TronApplicationContext(DefaultConfig.class);
   }
 
-  @BeforeClass
-  public static void init() {
-    Manager dbManager = context.getBean(Manager.class);
-    Wallet wallet = context.getBean(Wallet.class);
-  }
-
   @AfterClass
   public static void removeDb() {
     Args.clearParam();

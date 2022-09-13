@@ -1,6 +1,5 @@
-package org.tron.core.services.interfaceOnSolidity.http;
+package org.tron.core.services.http;
 
-import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.*;
 
@@ -13,7 +12,6 @@ import org.tron.core.Wallet;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.core.services.http.ListWitnessesServlet;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -23,10 +21,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @Slf4j
-public class ListWitnessesOnSolidityServletTest {
-  private static String dbPath = "solidity-service-test";
+public class ListNodesServletTest {
+  private static String dbPath = "service-test";
   private static TronApplicationContext context;
-  private ListWitnessesOnSolidityServlet listWitnessesOnSolidityServlet;
+  private ListNodesServlet listNodesServlet;
   private HttpServletRequest request;
   private HttpServletResponse response;
 
@@ -34,12 +32,6 @@ public class ListWitnessesOnSolidityServletTest {
     Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
     // 启服务，具体的端口号啥的在DefaultConfig.class里写死的
     context = new TronApplicationContext(DefaultConfig.class);
-  }
-
-  @BeforeClass
-  public static void init() {
-    Manager dbManager = context.getBean(Manager.class);
-    Wallet wallet = context.getBean(Wallet.class);
   }
 
   @AfterClass
@@ -56,8 +48,7 @@ public class ListWitnessesOnSolidityServletTest {
   /** Init. */
   @Before
   public void setUp() throws InterruptedException {
-    listWitnessesOnSolidityServlet =
-        (ListWitnessesOnSolidityServlet) context.getBean("listWitnessesOnSolidityServlet");
+    listNodesServlet = context.getBean(ListNodesServlet.class);
     this.request = mock(HttpServletRequest.class);
     this.response = mock(HttpServletResponse.class);
   }
@@ -77,7 +68,7 @@ public class ListWitnessesOnSolidityServletTest {
     try {
       PrintWriter writer = new PrintWriter("temp.txt");
       when(response.getWriter()).thenReturn(writer);
-      listWitnessesOnSolidityServlet.doGet(request, response);
+      listNodesServlet.doGet(request, response);
       writer.close();
       FileInputStream fileInputStream = new FileInputStream("temp.txt");
       InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream);
@@ -91,7 +82,7 @@ public class ListWitnessesOnSolidityServletTest {
       fileInputStream.close();
       inputStreamReader.close();
       bufferedReader.close();
-      Assert.assertTrue(sb.toString().contains("a00a9309758508413039e4bc5a3d113f3ecc55031d"));
+      Assert.assertTrue(sb.toString().contains("{}"));
     } catch (Exception e) {
       Assert.fail();
     }
@@ -103,7 +94,7 @@ public class ListWitnessesOnSolidityServletTest {
     try {
       PrintWriter writer = new PrintWriter("temp.txt");
       when(response.getWriter()).thenReturn(writer);
-      listWitnessesOnSolidityServlet.doPost(request, response);
+      listNodesServlet.doPost(request, response);
       writer.close();
       FileInputStream fileInputStream = new FileInputStream("temp.txt");
       InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream);
@@ -117,7 +108,7 @@ public class ListWitnessesOnSolidityServletTest {
       fileInputStream.close();
       inputStreamReader.close();
       bufferedReader.close();
-      Assert.assertTrue(sb.toString().contains("a00a9309758508413039e4bc5a3d113f3ecc55031d"));
+      Assert.assertTrue(sb.toString().contains("{}"));
     } catch (Exception e) {
       Assert.fail();
     }

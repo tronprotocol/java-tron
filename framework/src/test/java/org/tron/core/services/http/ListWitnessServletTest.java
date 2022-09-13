@@ -35,12 +35,6 @@ public class ListWitnessServletTest {
     context = new TronApplicationContext(DefaultConfig.class);
   }
 
-  @BeforeClass
-  public static void init() {
-    Manager dbManager = context.getBean(Manager.class);
-    Wallet wallet = context.getBean(Wallet.class);
-  }
-
   @AfterClass
   public static void removeDb() {
     Args.clearParam();
@@ -95,30 +89,29 @@ public class ListWitnessServletTest {
     }
   }
 
-    @Test
-    public void testDoPost() {
-        String result = "";
-        try {
-            PrintWriter writer = new PrintWriter("temp.txt");
-            when(response.getWriter()).thenReturn(writer);
-            listWitnessesServlet.doPost(request, response);
-            writer.close();
-            FileInputStream fileInputStream = new FileInputStream("temp.txt");
-            InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream);
-            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+  @Test
+  public void testDoPost() {
+    String result = "";
+    try {
+      PrintWriter writer = new PrintWriter("temp.txt");
+      when(response.getWriter()).thenReturn(writer);
+      listWitnessesServlet.doPost(request, response);
+      writer.close();
+      FileInputStream fileInputStream = new FileInputStream("temp.txt");
+      InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream);
+      BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
 
-            StringBuffer sb = new StringBuffer();
-            String text = null;
-            while ((text = bufferedReader.readLine()) != null) {
-                sb.append(text);
-            }
-            fileInputStream.close();
-            inputStreamReader.close();
-            bufferedReader.close();
-            Assert.assertTrue(sb.toString().contains("a00a9309758508413039e4bc5a3d113f3ecc55031d"));
-        } catch (Exception e) {
-            Assert.fail();
-        }
+      StringBuffer sb = new StringBuffer();
+      String text = null;
+      while ((text = bufferedReader.readLine()) != null) {
+        sb.append(text);
+      }
+      fileInputStream.close();
+      inputStreamReader.close();
+      bufferedReader.close();
+      Assert.assertTrue(sb.toString().contains("a00a9309758508413039e4bc5a3d113f3ecc55031d"));
+    } catch (Exception e) {
+      Assert.fail();
     }
-
+  }
 }
