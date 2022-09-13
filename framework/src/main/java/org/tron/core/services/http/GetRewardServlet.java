@@ -25,7 +25,7 @@ public class GetRewardServlet extends RateLimiterServlet {
         value = manager.getMortgageService().queryReward(address);
       }
       response.getWriter().println("{\"reward\": " + value + "}");
-    } catch (DecoderException e) {
+    } catch (DecoderException | IllegalArgumentException e) {
       try {
         response.getWriter()
             .println("{\"Error\": " + "\"INVALID address, " + e.getMessage() + "\"}");
