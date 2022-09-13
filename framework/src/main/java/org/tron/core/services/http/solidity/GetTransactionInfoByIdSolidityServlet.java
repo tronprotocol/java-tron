@@ -17,6 +17,7 @@ import org.tron.core.services.http.Util;
 import org.tron.protos.Protocol.TransactionInfo;
 
 
+
 @Component
 @Slf4j(topic = "API")
 public class GetTransactionInfoByIdSolidityServlet extends RateLimiterServlet {
