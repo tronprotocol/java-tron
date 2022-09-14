@@ -11,6 +11,7 @@ import java.io.PrintWriter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -22,11 +23,9 @@ import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 
-
-
 @Slf4j
 public class GetBandwidthPricesServletTest {
-  private static String dbPath = "service-test";
+  private static String dbPath = "service_test_" + RandomStringUtils.randomAlphanumeric(10);
   private static TronApplicationContext context;
   private GetBandwidthPricesServlet getBandwidthPricesServlet;
   private HttpServletRequest request;
@@ -34,7 +33,6 @@ public class GetBandwidthPricesServletTest {
 
   static {
     Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
-    // 启服务，具体的端口号啥的在DefaultConfig.class里写死的
     context = new TronApplicationContext(DefaultConfig.class);
   }
 

@@ -11,6 +11,7 @@ import java.io.PrintWriter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -24,7 +25,7 @@ import org.tron.core.config.args.Args;
 
 @Slf4j
 public class ListWitnessesOnPBFTServletTest {
-  private static String dbPath = "solidity-service-test";
+  private static String dbPath = "service_test_" + RandomStringUtils.randomAlphanumeric(10);
   private static TronApplicationContext context;
   private ListWitnessesOnPBFTServlet listWitnessesOnPBFTServlet;
   private HttpServletRequest request;

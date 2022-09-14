@@ -48,17 +48,17 @@ public class JsonrpcServiceTest {
 
   static {
     Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
-    //启服务，具体的端口号啥的在DefaultConfig.class里写死的
+    // 启服务，具体的端口号啥的在DefaultConfig.class里写死的
     context = new TronApplicationContext(DefaultConfig.class);
 
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     nodeInfoService = context.getBean("nodeInfoService", NodeInfoService.class);
   }
 
+  /** . */
   @BeforeClass
   public static void init() {
     Manager dbManager = context.getBean(Manager.class);
-    Wallet wallet = context.getBean(Wallet.class);
 
     AccountCapsule accountCapsule =
         new AccountCapsule(
@@ -67,7 +67,6 @@ public class JsonrpcServiceTest {
             Protocol.AccountType.Normal,
             10000_000_000L);
     dbManager.getAccountStore().put(accountCapsule.getAddress().toByteArray(), accountCapsule);
-
 
     blockCapsule =
         new BlockCapsule(
@@ -118,9 +117,11 @@ public class JsonrpcServiceTest {
         .getTransactionStore()
         .put(transactionCapsule2.getTransactionId().getBytes(), transactionCapsule2);
 
+    Wallet wallet = context.getBean(Wallet.class);
     tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet, dbManager);
   }
 
+  /** . */
   @AfterClass
   public static void removeDb() {
     Args.clearParam();
@@ -151,36 +152,30 @@ public class JsonrpcServiceTest {
     }
   }
 
-
-    @Test
-    public void testWeb3ClientVersion() {
-        String result = "";
-        try {
-            result = tronJsonRpc.web3ClientVersion();
-        } catch (Exception e) {
-            Assert.fail();
-        }
-        Assert.assertNotNull(result);
-
+  @Test
+  public void testWeb3ClientVersion() {
+    String result = "";
+    try {
+      result = tronJsonRpc.web3ClientVersion();
+    } catch (Exception e) {
+      Assert.fail();
     }
+    Assert.assertNotNull(result);
+  }
 
+  @Test
+  public void testGetNetVersion() throws JsonRpcInternalException {
 
-
-
-
-
-
-    @Test
-    public void testGetNetVersion() throws JsonRpcInternalException {
-
-        String result = "";
-        try {
-            result = tronJsonRpc.getNetVersion();;
-        } catch (Exception e) {
-            Assert.fail();
-        }
-        Assert.assertEquals("0x28c12d1e", result);
+    String result = "";
+    try {
+      result = tronJsonRpc.getNetVersion();
+      ;
+    } catch (Exception e) {
+      Assert.fail();
     }
+    Assert.assertEquals("0x28c12d1e", result);
+  }
+
   @Test
   public void testGetTrxBalance() {
     String result = "";
@@ -199,28 +194,28 @@ public class JsonrpcServiceTest {
     }
   }
 
- /* @Test
-  public void testGetStorageAt() {
-    String result = "";
-    try {
-      result =
-          tronJsonRpc.getStorageAt(
-              "0x41E94EAD5F4CA072A25B2E5500934709F1AEE3C64B",
-              "0x29313b34b1b4beab0d3bad2b8824e9e6317c8625dd4d9e9e0f8f61d7b69d1f26",
-              "latest");
-    } catch (Exception e) {
-      Assert.fail();
-    }
+  /* @Test
+    public void testGetStorageAt() {
+      String result = "";
+      try {
+        result =
+            tronJsonRpc.getStorageAt(
+                "0x41E94EAD5F4CA072A25B2E5500934709F1AEE3C64B",
+                "0x29313b34b1b4beab0d3bad2b8824e9e6317c8625dd4d9e9e0f8f61d7b69d1f26",
+                "latest");
+      } catch (Exception e) {
+        Assert.fail();
+      }
 
-    Assert.assertEquals("0x2540be400", result);
+      Assert.assertEquals("0x2540be400", result);
 
-    try {
-      tronJsonRpc.getTrxBalance(OWNER_ADDRESS, "eeee");
-    } catch (Exception e) {
-      Assert.assertEquals("invalid block number", e.getMessage());
+      try {
+        tronJsonRpc.getTrxBalance(OWNER_ADDRESS, "eeee");
+      } catch (Exception e) {
+        Assert.assertEquals("invalid block number", e.getMessage());
+      }
     }
-  }
-*/
+  */
   @Test
   public void testGetBlockTransactionCountByHash() {
     try {
