@@ -36,7 +36,12 @@ public final class RockStoreIterator implements DBIterator {
         dbIterator.close();
       }
     } catch (Exception e) {
-      throw new TronDBException(e);
+      logger.error(e.getMessage(), e);
+      try {
+        dbIterator.close();
+      } catch (Exception e1) {
+        logger.error(e.getMessage(), e);
+      }
     }
     return hasNext;
   }
