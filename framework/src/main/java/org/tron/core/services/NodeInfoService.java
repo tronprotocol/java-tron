@@ -178,8 +178,8 @@ public class NodeInfoService {
     configNodeInfo.setActiveNodeSize(parameter.getActiveNodes().size());
     configNodeInfo.setPassiveNodeSize(parameter.getPassiveNodes().size());
     configNodeInfo.setSendNodeSize(parameter.getSeedNodes().size());
-    configNodeInfo.setMaxConnectCount(parameter.getNodeMaxActiveNodes());
-    configNodeInfo.setSameIpMaxConnectCount(parameter.getNodeMaxActiveNodesWithSameIp());
+    configNodeInfo.setMaxConnectCount(parameter.getMaxConnections());
+    configNodeInfo.setSameIpMaxConnectCount(parameter.getMaxConnectionsWithSameIp());
     configNodeInfo.setBackupListenPort(parameter.getBackupPort());
     configNodeInfo.setBackupMemberSize(parameter.getBackupMembers().size());
     configNodeInfo.setBackupPriority(parameter.getBackupPriority());

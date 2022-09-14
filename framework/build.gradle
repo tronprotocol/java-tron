@@ -1,5 +1,6 @@
 plugins {
     id "org.sonarqube" version "2.6"
+    id "com.gorylenko.gradle-git-properties" version "2.4.1"
 }
 
 apply plugin: 'application'
