@@ -446,38 +446,28 @@ public class LiteFullNodeTool {
   private void hasEnoughBlock(String sourceDir) throws RocksDBException, IOException {
     // check latest
     long latest = getLatestBlockHeaderNum(sourceDir);
-    // check first, not 0;
-    long first = 0;
-    DBInterface sourceBlockIndexDb = DbTool.getDB(sourceDir, BLOCK_INDEX_DB_NAME);
-    DBIterator iterator = sourceBlockIndexDb.iterator();
-    iterator.seekToFirst();
-    if (iterator.hasNext()) {
-      iterator.next();
-      if (iterator.hasNext()) {
-        first = Longs.fromByteArray(iterator.getKey());
-      }
-    }
-
-    if (latest - first + 1 < RECENT_BLKS) {
+    // check second ,skip 0;
+    long second = getSecondBlock(sourceDir);
+    if (latest - second + 1 < RECENT_BLKS) {
       throw new NoSuchElementException(
           String.format("At least %d blocks in block store, actual latestBlock:%d, firstBlock:%d.",
-          RECENT_BLKS, latest, first));
+          RECENT_BLKS, latest, second));
     }
   }
 
   private boolean isLite(String databaseDir) throws RocksDBException, IOException {
-    DBInterface sourceDb = DbTool.getDB(databaseDir, BLOCK_INDEX_DB_NAME);
-    DBInterface checkpointDb = DbTool.getDB(databaseDir, CHECKPOINT_DB);
-    byte[] key = ByteArray.fromLong(1);
-    byte[] valueFromTmp = checkpointDb.get(Bytes.concat(simpleEncode(BLOCK_INDEX_DB_NAME), key));
-    byte[] value;
-    if (isEmptyBytes(valueFromTmp)) {
-      value = sourceDb.get(key);
-    } else {
-      value = valueFromTmp.length == 1
-          ? null : Arrays.copyOfRange(valueFromTmp, 1, valueFromTmp.length);
+    return getSecondBlock(databaseDir) > 1;
+  }
+
+  private long getSecondBlock(String databaseDir) throws RocksDBException, IOException {
+    long num = 0;
+    DBInterface sourceBlockIndexDb = DbTool.getDB(databaseDir, BLOCK_INDEX_DB_NAME);
+    DBIterator iterator = sourceBlockIndexDb.iterator();
+    iterator.seek(ByteArray.fromLong(1));
+    if (iterator.hasNext()) {
+      num =  Longs.fromByteArray(iterator.getKey());
     }
-    return isEmptyBytes(value);
+    return num;
   }
 
   @VisibleForTesting
@@ -534,8 +524,8 @@ public class LiteFullNodeTool {
       } else {
         tool.run(argv);
       }
-    } catch (ParameterException parameterException) {
-      logger.error(parameterException.toString());
+    } catch (Exception e) {
+      logger.error(e.getMessage());
       jct.usage();
     }
   }
