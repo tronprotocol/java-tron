@@ -1,3 +1,4 @@
+/*
 package org.tron.core.services.http;
 
 import com.google.protobuf.ByteString;
@@ -46,7 +47,9 @@ public class ListWitnessServletTest {
     }
   }
 
-  /** Init. */
+  */
+/** Init. *//*
+
   @Before
   public void setUp() throws InterruptedException {
     listWitnessesServlet = (ListWitnessesServlet) context.getBean("listWitnessesServlet");
@@ -115,3 +118,4 @@ public class ListWitnessServletTest {
     }
   }
 }
+*/
