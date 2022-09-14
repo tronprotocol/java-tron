@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.AfterClass;
@@ -61,7 +62,9 @@ import stest.tron.wallet.common.client.WalletClient;
 @Slf4j
 public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
-  private static String dbPath = "output_Shielded_TRC20_Api_test";
+  private static String dbPath =
+      "output_Shielded_TRC20_Api_test" + RandomStringUtils.randomAlphanumeric(10);
+  ;
   private static AnnotationConfigApplicationContext context;
   private static Manager dbManager;
   private static Wallet wallet;
@@ -74,11 +77,11 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
   private static final byte[] PUBLIC_TO_ADDRESS;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, "config-test-mainnet.conf");
+    Args.setParam(new String[] {"--output-directory", dbPath}, "config-test-mainnet.conf");
     context = new TronApplicationContext(DefaultConfig.class);
     SHIELDED_CONTRACT_ADDRESS = WalletClient.decodeFromBase58Check(SHIELDED_CONTRACT_ADDRESS_STR);
-    DEFAULT_OVK = ByteArray
-        .fromHexString("030c8c2bc59fb3eb8afb047a8ea4b028743d23e7d38c6fa30908358431e2314d");
+    DEFAULT_OVK =
+        ByteArray.fromHexString("030c8c2bc59fb3eb8afb047a8ea4b028743d23e7d38c6fa30908358431e2314d");
     FullNodeHttpApiService.librustzcashInitZksnarkParams();
     PUBLIC_TO_ADDRESS = WalletClient.decodeFromBase58Check(PUBLIC_TO_ADDRESS_STR);
   }
@@ -107,8 +110,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
   }
 
   @Before
-  public void before() {
-  }
+  public void before() {}
 
   @Ignore
   @Test
@@ -120,10 +122,10 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
     byte[] frontier = new byte[32 * 33];
 
     for (int countNum = 0; countNum < totalCountNum; countNum++) {
-      GrpcAPI.PrivateShieldedTRC20Parameters mintPrivateParam1 = mintParams(
-          privateKey, value, SHIELDED_CONTRACT_ADDRESS_STR, null);
-      GrpcAPI.ShieldedTRC20Parameters trc20MintParams = wallet
-          .createShieldedContractParameters(mintPrivateParam1);
+      GrpcAPI.PrivateShieldedTRC20Parameters mintPrivateParam1 =
+          mintParams(privateKey, value, SHIELDED_CONTRACT_ADDRESS_STR, null);
+      GrpcAPI.ShieldedTRC20Parameters trc20MintParams =
+          wallet.createShieldedContractParameters(mintPrivateParam1);
 
       byte[] inputData = abiEncodeForMint(trc20MintParams, value, frontier, leafCount);
       Pair<Boolean, byte[]> contractResult = mintContract.execute(inputData);
@@ -131,8 +133,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
       Assert.assertEquals(1, result[31]);
 
-      //update frontier and leafCount
-      
+      // update frontier and leafCount
+
       int slot = result[63];
       if (slot == 0) {
         System.arraycopy(inputData, 0, frontier, 0, 32);
@@ -146,8 +148,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
   }
 
   /*
-  * With 1 mint, 1 spendNote, 1 receiveNote
-  * */
+   * With 1 mint, 1 spendNote, 1 receiveNote
+   * */
   @Ignore
   @Test
   public void createShieldedContractParametersForTransfer1to1()
@@ -156,8 +158,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
     long leafCount = 0;
     byte[] frontier = new byte[32 * 33];
 
-    IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
-        new IncrementalMerkleTreeCapsule());
+    IncrementalMerkleTreeContainer tree =
+        new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
     for (int countNum = 0; countNum < totalCountNum; countNum++) {
       SpendingKey senderSk = SpendingKey.decode(privateKey);
       FullViewingKey senderFvk = senderSk.fullViewingKey();
@@ -167,17 +169,17 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
       String senderPaymentAddressStr = KeyIo.encodePaymentAddress(senderPaymentAddress1);
 
-      { //for mint1
+      { // for mint1
         GrpcAPI.Note note = getNote(100, senderPaymentAddressStr, rcm1, new byte[512]);
         GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
-        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
-            .PrivateShieldedTRC20Parameters.newBuilder();
+        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder =
+            GrpcAPI.PrivateShieldedTRC20Parameters.newBuilder();
         revNoteBuilder.setNote(note);
         paramBuilder.setOvk(ByteString.copyFrom(senderFvk.getOvk()));
         paramBuilder.setFromAmount(BigInteger.valueOf(100).toString());
         paramBuilder.addShieldedReceives(revNoteBuilder.build());
-        paramBuilder
-            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
+        paramBuilder.setShieldedTRC20ContractAddress(
+            ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
         PrivateShieldedTRC20Parameters privMintParams = paramBuilder.build();
 
         ShieldedTRC20Parameters minParam = wallet.createShieldedContractParameters(privMintParams);
@@ -186,8 +188,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         byte[] mintResult1 = mintContractResult1.getRight();
         Assert.assertEquals(1, mintResult1[31]);
 
-        //update frontier and leafCount
-        //if slot == 0, frontier[0:31]=noteCommitment
+        // update frontier and leafCount
+        // if slot == 0, frontier[0:31]=noteCommitment
         int slot = mintResult1[63];
         if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
@@ -199,15 +201,20 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         leafCount++;
       }
 
-      { //for transfer
-        GrpcAPI.PrivateShieldedTRC20Parameters.Builder privateTRC20Builder = GrpcAPI
-            .PrivateShieldedTRC20Parameters.newBuilder();
+      { // for transfer
+        GrpcAPI.PrivateShieldedTRC20Parameters.Builder privateTRC20Builder =
+            GrpcAPI.PrivateShieldedTRC20Parameters.newBuilder();
         GrpcAPI.SpendNoteTRC20.Builder spendNoteBuilder = GrpcAPI.SpendNoteTRC20.newBuilder();
         GrpcAPI.Note note = getNote(100, senderPaymentAddressStr, rcm1, new byte[512]);
         byte[][] cm1 = new byte[1][32];
-        //spendNote1
-        Note senderNote1 = new Note(senderPaymentAddress1.getD(), senderPaymentAddress1.getPkD(),
-            100, rcm1, new byte[512]);
+        // spendNote1
+        Note senderNote1 =
+            new Note(
+                senderPaymentAddress1.getD(),
+                senderPaymentAddress1.getPkD(),
+                100,
+                rcm1,
+                new byte[512]);
         System.arraycopy(senderNote1.cm(), 0, cm1[0], 0, 32);
         IncrementalMerkleVoucherContainer voucher1 = addSimpleMerkleVoucherContainer(tree, cm1);
         byte[] path1 = decodePath(voucher1.path().encode());
@@ -220,7 +227,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         spendNoteBuilder.setNote(note);
         privateTRC20Builder.addShieldedSpends(spendNoteBuilder.build());
 
-        //receiveNote1
+        // receiveNote1
         GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
         SpendingKey receiveSk1 = SpendingKey.random();
         FullViewingKey receiveFvk1 = receiveSk1.fullViewingKey();
@@ -237,23 +244,23 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         privateTRC20Builder.setAsk(ByteString.copyFrom(expsk.getAsk()));
         privateTRC20Builder.setNsk(ByteString.copyFrom(expsk.getNsk()));
         privateTRC20Builder.setOvk(ByteString.copyFrom(expsk.getOvk()));
-        privateTRC20Builder
-            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
-        GrpcAPI.ShieldedTRC20Parameters transferParam = wallet
-            .createShieldedContractParameters(privateTRC20Builder.build());
+        privateTRC20Builder.setShieldedTRC20ContractAddress(
+            ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
+        GrpcAPI.ShieldedTRC20Parameters transferParam =
+            wallet.createShieldedContractParameters(privateTRC20Builder.build());
 
         byte[] inputData = abiEncodeForTransfer(transferParam, frontier, leafCount);
         Pair<Boolean, byte[]> contractResult = verifyTransfer(inputData);
         byte[] result = contractResult.getRight();
         Assert.assertEquals(1, result[31]);
 
-        //update frontier and leafCount
-        //if slot == 0, frontier[0:31]=noteCommitment
+        // update frontier and leafCount
+        // if slot == 0, frontier[0:31]=noteCommitment
         int idx = 63;
         int slot = result[idx];
         if (slot == 0) {
-          byte[] noteCommitment = transferParam.getReceiveDescription(0).getNoteCommitment()
-              .toByteArray();
+          byte[] noteCommitment =
+              transferParam.getReceiveDescription(0).getNoteCommitment().toByteArray();
           System.arraycopy(noteCommitment, 0, frontier, 0, 32);
         } else {
           int destPos = slot * 32;
@@ -265,8 +272,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
         byte[][] cm = new byte[1][32];
         for (int i = 0; i < 1; i++) {
-          byte[] noteCommitment = transferParam.getReceiveDescription(i).getNoteCommitment()
-              .toByteArray();
+          byte[] noteCommitment =
+              transferParam.getReceiveDescription(i).getNoteCommitment().toByteArray();
           System.arraycopy(noteCommitment, 0, cm[i], 0, 32);
         }
         IncrementalMerkleVoucherContainer voucher = addSimpleMerkleVoucherContainer(tree, cm);
@@ -287,8 +294,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
     long leafCount = 0;
     byte[] frontier = new byte[32 * 33];
 
-    IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
-        new IncrementalMerkleTreeCapsule());
+    IncrementalMerkleTreeContainer tree =
+        new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
     for (int countNum = 0; countNum < totalCountNum; countNum++) {
       SpendingKey senderSk = SpendingKey.random();
       ExpandedSpendingKey senderExpsk = senderSk.expandedSpendingKey();
@@ -300,17 +307,17 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
       String senderPaymentAddressStr = KeyIo.encodePaymentAddress(senderPaymentAddress1);
 
-      { //for mint1
+      { // for mint1
         GrpcAPI.Note note = getNote(100, senderPaymentAddressStr, rcm1, new byte[512]);
         GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
-        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
-            .PrivateShieldedTRC20Parameters.newBuilder();
+        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder =
+            GrpcAPI.PrivateShieldedTRC20Parameters.newBuilder();
         revNoteBuilder.setNote(note);
         paramBuilder.setOvk(ByteString.copyFrom(senderFvk.getOvk()));
         paramBuilder.setFromAmount(BigInteger.valueOf(100).toString());
         paramBuilder.addShieldedReceives(revNoteBuilder.build());
-        paramBuilder
-            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
+        paramBuilder.setShieldedTRC20ContractAddress(
+            ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
         PrivateShieldedTRC20Parameters privMintParams = paramBuilder.build();
         ShieldedTRC20Parameters mintParam = wallet.createShieldedContractParameters(privMintParams);
 
@@ -319,8 +326,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         byte[] mintResult1 = mintContractResult1.getRight();
         Assert.assertEquals(1, mintResult1[31]);
 
-        //update frontier and leafCount
-        //if slot == 0, frontier[0:31]=noteCommitment
+        // update frontier and leafCount
+        // if slot == 0, frontier[0:31]=noteCommitment
         int slot = mintResult1[63];
         if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
@@ -332,15 +339,20 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         leafCount++;
       }
 
-      { //for transfer
-        GrpcAPI.PrivateShieldedTRC20Parameters.Builder privateTRC20Builder = GrpcAPI
-            .PrivateShieldedTRC20Parameters.newBuilder();
+      { // for transfer
+        GrpcAPI.PrivateShieldedTRC20Parameters.Builder privateTRC20Builder =
+            GrpcAPI.PrivateShieldedTRC20Parameters.newBuilder();
         GrpcAPI.SpendNoteTRC20.Builder spendNoteBuilder = GrpcAPI.SpendNoteTRC20.newBuilder();
         GrpcAPI.Note note = getNote(100, senderPaymentAddressStr, rcm1, new byte[512]);
         byte[][] cm1 = new byte[1][32];
-        //spendNote1
-        Note senderNote1 = new Note(senderPaymentAddress1.getD(), senderPaymentAddress1.getPkD(),
-            100, rcm1, new byte[512]);
+        // spendNote1
+        Note senderNote1 =
+            new Note(
+                senderPaymentAddress1.getD(),
+                senderPaymentAddress1.getPkD(),
+                100,
+                rcm1,
+                new byte[512]);
         System.arraycopy(senderNote1.cm(), 0, cm1[0], 0, 32);
         IncrementalMerkleVoucherContainer voucher1 = addSimpleMerkleVoucherContainer(tree, cm1);
         byte[] path1 = decodePath(voucher1.path().encode());
@@ -353,7 +365,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         spendNoteBuilder.setNote(note);
         privateTRC20Builder.addShieldedSpends(spendNoteBuilder.build());
 
-        //receiveNote1
+        // receiveNote1
         GrpcAPI.ReceiveNote.Builder revNoteBuilder1 = GrpcAPI.ReceiveNote.newBuilder();
         SpendingKey receiveSk1 = SpendingKey.random();
         FullViewingKey receiveFvk1 = receiveSk1.fullViewingKey();
@@ -366,7 +378,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         revNoteBuilder1.setNote(revNote);
         privateTRC20Builder.addShieldedReceives(revNoteBuilder1.build());
 
-        //receiveNote2
+        // receiveNote2
         GrpcAPI.ReceiveNote.Builder revNoteBuilder2 = GrpcAPI.ReceiveNote.newBuilder();
         SpendingKey receiveSk2 = SpendingKey.random();
         FullViewingKey receiveFvk2 = receiveSk2.fullViewingKey();
@@ -382,26 +394,26 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         privateTRC20Builder.setAsk(ByteString.copyFrom(expsk.getAsk()));
         privateTRC20Builder.setNsk(ByteString.copyFrom(expsk.getNsk()));
         privateTRC20Builder.setOvk(ByteString.copyFrom(expsk.getOvk()));
-        privateTRC20Builder
-            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
-        GrpcAPI.ShieldedTRC20Parameters transferParam = wallet
-            .createShieldedContractParameters(privateTRC20Builder.build());
+        privateTRC20Builder.setShieldedTRC20ContractAddress(
+            ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
+        GrpcAPI.ShieldedTRC20Parameters transferParam =
+            wallet.createShieldedContractParameters(privateTRC20Builder.build());
 
         byte[] inputData = abiEncodeForTransfer(transferParam, frontier, leafCount);
         Pair<Boolean, byte[]> contractResult = verifyTransfer(inputData);
         byte[] result = contractResult.getRight();
         Assert.assertEquals(1, result[31]);
 
-        //update frontier and leafCount
-        //if slot == 0, frontier[0:31]=noteCommitment
+        // update frontier and leafCount
+        // if slot == 0, frontier[0:31]=noteCommitment
         int idx = 32;
         for (int i = 0; i < 2; i++) {
           idx += 31;
           int slot = result[idx];
           idx += 1;
           if (slot == 0) {
-            byte[] noteCommitment = transferParam.getReceiveDescription(i).getNoteCommitment()
-                .toByteArray();
+            byte[] noteCommitment =
+                transferParam.getReceiveDescription(i).getNoteCommitment().toByteArray();
             System.arraycopy(noteCommitment, 0, frontier, 0, 32);
           } else {
             int destPos = slot * 32;
@@ -414,8 +426,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
         byte[][] cm = new byte[2][32];
         for (int i = 0; i < 2; i++) {
-          byte[] noteCommitment = transferParam.getReceiveDescription(i).getNoteCommitment()
-              .toByteArray();
+          byte[] noteCommitment =
+              transferParam.getReceiveDescription(i).getNoteCommitment().toByteArray();
           System.arraycopy(noteCommitment, 0, cm[i], 0, 32);
         }
         IncrementalMerkleVoucherContainer voucher = addSimpleMerkleVoucherContainer(tree, cm);
@@ -437,8 +449,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
     long leafCount = 0;
     byte[] frontier = new byte[32 * 33];
 
-    IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
-        new IncrementalMerkleTreeCapsule());
+    IncrementalMerkleTreeContainer tree =
+        new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
     for (int countNum = 0; countNum < totalCountNum; countNum++) {
       SpendingKey senderSk = SpendingKey.random();
       ExpandedSpendingKey senderExpsk = senderSk.expandedSpendingKey();
@@ -454,17 +466,17 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       String senderPaymentAddressStr1 = KeyIo.encodePaymentAddress(senderPaymentAddress1);
       String senderPaymentAddressStr2 = KeyIo.encodePaymentAddress(senderPaymentAddress2);
 
-      { //for mint1
+      { // for mint1
         GrpcAPI.Note note = getNote(30, senderPaymentAddressStr1, rcm1, new byte[512]);
         GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
-        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
-            .PrivateShieldedTRC20Parameters.newBuilder();
+        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder =
+            GrpcAPI.PrivateShieldedTRC20Parameters.newBuilder();
         revNoteBuilder.setNote(note);
         paramBuilder.setOvk(ByteString.copyFrom(DEFAULT_OVK));
         paramBuilder.setFromAmount(BigInteger.valueOf(30).toString());
         paramBuilder.addShieldedReceives(revNoteBuilder.build());
-        paramBuilder
-            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
+        paramBuilder.setShieldedTRC20ContractAddress(
+            ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
         PrivateShieldedTRC20Parameters privMintParams = paramBuilder.build();
         ShieldedTRC20Parameters mintParam = wallet.createShieldedContractParameters(privMintParams);
 
@@ -473,8 +485,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         byte[] mintResult1 = mintContractResult1.getRight();
         Assert.assertEquals(1, mintResult1[31]);
 
-        //update frontier and leafCount
-        //if slot == 0, frontier[0:31]=noteCommitment
+        // update frontier and leafCount
+        // if slot == 0, frontier[0:31]=noteCommitment
         int slot = mintResult1[63];
         if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
@@ -486,17 +498,17 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         leafCount++;
       }
 
-      { //for mint2
+      { // for mint2
         GrpcAPI.Note note = getNote(70, senderPaymentAddressStr2, rcm2, new byte[512]);
         GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
-        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
-            .PrivateShieldedTRC20Parameters.newBuilder();
+        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder =
+            GrpcAPI.PrivateShieldedTRC20Parameters.newBuilder();
         revNoteBuilder.setNote(note);
         paramBuilder.setOvk(ByteString.copyFrom(DEFAULT_OVK));
         paramBuilder.setFromAmount(BigInteger.valueOf(70).toString());
         paramBuilder.addShieldedReceives(revNoteBuilder.build());
-        paramBuilder
-            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
+        paramBuilder.setShieldedTRC20ContractAddress(
+            ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
         PrivateShieldedTRC20Parameters privMintParams = paramBuilder.build();
         ShieldedTRC20Parameters mintParam = wallet.createShieldedContractParameters(privMintParams);
 
@@ -505,8 +517,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         byte[] mintResult1 = mintContractResult1.getRight();
         Assert.assertEquals(1, mintResult1[31]);
 
-        //update frontier and leafCount
-        //if slot == 0, frontier[0:31]=noteCommitment
+        // update frontier and leafCount
+        // if slot == 0, frontier[0:31]=noteCommitment
         int slot = mintResult1[63];
         if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
@@ -518,15 +530,20 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         leafCount++;
       }
 
-      { //for transfer
-        GrpcAPI.PrivateShieldedTRC20Parameters.Builder privateTRC20Builder = GrpcAPI
-            .PrivateShieldedTRC20Parameters.newBuilder();
+      { // for transfer
+        GrpcAPI.PrivateShieldedTRC20Parameters.Builder privateTRC20Builder =
+            GrpcAPI.PrivateShieldedTRC20Parameters.newBuilder();
         GrpcAPI.SpendNoteTRC20.Builder spendNoteBuilder1 = GrpcAPI.SpendNoteTRC20.newBuilder();
         GrpcAPI.Note note1 = getNote(30, senderPaymentAddressStr1, rcm1, new byte[512]);
         byte[][] cm1 = new byte[1][32];
-        //spendNote1
-        Note senderNote1 = new Note(senderPaymentAddress1.getD(), senderPaymentAddress1.getPkD(),
-            30, rcm1, new byte[512]);
+        // spendNote1
+        Note senderNote1 =
+            new Note(
+                senderPaymentAddress1.getD(),
+                senderPaymentAddress1.getPkD(),
+                30,
+                rcm1,
+                new byte[512]);
         System.arraycopy(senderNote1.cm(), 0, cm1[0], 0, 32);
         IncrementalMerkleVoucherContainer voucher1 = addSimpleMerkleVoucherContainer(tree, cm1);
         byte[] path1 = decodePath(voucher1.path().encode());
@@ -539,10 +556,15 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         spendNoteBuilder1.setNote(note1);
         privateTRC20Builder.addShieldedSpends(spendNoteBuilder1.build());
 
-        //spendNote2
+        // spendNote2
         GrpcAPI.SpendNoteTRC20.Builder spendNoteBuilder2 = GrpcAPI.SpendNoteTRC20.newBuilder();
-        Note senderNote2 = new Note(senderPaymentAddress2.getD(), senderPaymentAddress2.getPkD(),
-            70, rcm2, new byte[512]);
+        Note senderNote2 =
+            new Note(
+                senderPaymentAddress2.getD(),
+                senderPaymentAddress2.getPkD(),
+                70,
+                rcm2,
+                new byte[512]);
         GrpcAPI.Note note2 = getNote(70, senderPaymentAddressStr2, rcm2, new byte[512]);
         byte[][] cm2 = new byte[1][32];
         System.arraycopy(senderNote2.cm(), 0, cm2[0], 0, 32);
@@ -557,7 +579,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         spendNoteBuilder2.setNote(note2);
         privateTRC20Builder.addShieldedSpends(spendNoteBuilder2.build());
 
-        //receiveNote1
+        // receiveNote1
         GrpcAPI.ReceiveNote.Builder revNoteBuilder1 = GrpcAPI.ReceiveNote.newBuilder();
         SpendingKey receiveSk1 = SpendingKey.random();
         FullViewingKey receiveFvk1 = receiveSk1.fullViewingKey();
@@ -574,23 +596,23 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         privateTRC20Builder.setAsk(ByteString.copyFrom(expsk.getAsk()));
         privateTRC20Builder.setNsk(ByteString.copyFrom(expsk.getNsk()));
         privateTRC20Builder.setOvk(ByteString.copyFrom(expsk.getOvk()));
-        privateTRC20Builder
-            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
-        GrpcAPI.ShieldedTRC20Parameters transferParam = wallet
-            .createShieldedContractParameters(privateTRC20Builder.build());
+        privateTRC20Builder.setShieldedTRC20ContractAddress(
+            ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
+        GrpcAPI.ShieldedTRC20Parameters transferParam =
+            wallet.createShieldedContractParameters(privateTRC20Builder.build());
 
         byte[] inputData = abiEncodeForTransfer(transferParam, frontier, leafCount);
         Pair<Boolean, byte[]> contractResult = verifyTransfer(inputData);
         byte[] result = contractResult.getRight();
         Assert.assertEquals(1, result[31]);
 
-        //update frontier and leafCount
-        //if slot == 0, frontier[0:31]=noteCommitment
+        // update frontier and leafCount
+        // if slot == 0, frontier[0:31]=noteCommitment
         int idx = 63;
         int slot = result[idx];
         if (slot == 0) {
-          byte[] noteCommitment = transferParam.getReceiveDescription(0).getNoteCommitment()
-              .toByteArray();
+          byte[] noteCommitment =
+              transferParam.getReceiveDescription(0).getNoteCommitment().toByteArray();
           System.arraycopy(noteCommitment, 0, frontier, 0, 32);
         } else {
           int destPos = slot * 32;
@@ -602,8 +624,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
         byte[][] cm = new byte[1][32];
         for (int i = 0; i < 1; i++) {
-          byte[] noteCommitment = transferParam.getReceiveDescription(i).getNoteCommitment()
-              .toByteArray();
+          byte[] noteCommitment =
+              transferParam.getReceiveDescription(i).getNoteCommitment().toByteArray();
           System.arraycopy(noteCommitment, 0, cm[i], 0, 32);
         }
         IncrementalMerkleVoucherContainer voucher = addSimpleMerkleVoucherContainer(tree, cm);
@@ -625,8 +647,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
     long leafCount = 0;
     byte[] frontier = new byte[32 * 33];
 
-    IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
-        new IncrementalMerkleTreeCapsule());
+    IncrementalMerkleTreeContainer tree =
+        new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
     for (int countNum = 0; countNum < totalCountNum; countNum++) {
       SpendingKey senderSk = SpendingKey.random();
       ExpandedSpendingKey senderExpsk = senderSk.expandedSpendingKey();
@@ -642,17 +664,17 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       String senderPaymentAddressStr1 = KeyIo.encodePaymentAddress(senderPaymentAddress1);
       String senderPaymentAddressStr2 = KeyIo.encodePaymentAddress(senderPaymentAddress2);
 
-      { //for mint1
+      { // for mint1
         GrpcAPI.Note note = getNote(30, senderPaymentAddressStr1, rcm1, new byte[512]);
         GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
-        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
-            .PrivateShieldedTRC20Parameters.newBuilder();
+        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder =
+            GrpcAPI.PrivateShieldedTRC20Parameters.newBuilder();
         revNoteBuilder.setNote(note);
         paramBuilder.setOvk(ByteString.copyFrom(DEFAULT_OVK));
         paramBuilder.setFromAmount(BigInteger.valueOf(30).toString());
         paramBuilder.addShieldedReceives(revNoteBuilder.build());
-        paramBuilder
-            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
+        paramBuilder.setShieldedTRC20ContractAddress(
+            ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
         PrivateShieldedTRC20Parameters privMintParams = paramBuilder.build();
         ShieldedTRC20Parameters mintParam = wallet.createShieldedContractParameters(privMintParams);
 
@@ -661,8 +683,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         byte[] mintResult1 = mintContractResult1.getRight();
         Assert.assertEquals(1, mintResult1[31]);
 
-        //update frontier and leafCount
-        //if slot == 0, frontier[0:31]=noteCommitment
+        // update frontier and leafCount
+        // if slot == 0, frontier[0:31]=noteCommitment
         int slot = mintResult1[63];
         if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
@@ -674,17 +696,17 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         leafCount++;
       }
 
-      { //for mint2
+      { // for mint2
         GrpcAPI.Note note = getNote(70, senderPaymentAddressStr2, rcm2, new byte[512]);
         GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
-        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
-            .PrivateShieldedTRC20Parameters.newBuilder();
+        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder =
+            GrpcAPI.PrivateShieldedTRC20Parameters.newBuilder();
         revNoteBuilder.setNote(note);
         paramBuilder.setOvk(ByteString.copyFrom(DEFAULT_OVK));
         paramBuilder.setFromAmount(BigInteger.valueOf(70).toString());
         paramBuilder.addShieldedReceives(revNoteBuilder.build());
-        paramBuilder
-            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
+        paramBuilder.setShieldedTRC20ContractAddress(
+            ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
         PrivateShieldedTRC20Parameters privMintParams = paramBuilder.build();
         ShieldedTRC20Parameters mintParam = wallet.createShieldedContractParameters(privMintParams);
 
@@ -693,8 +715,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         byte[] mintResult1 = mintContractResult1.getRight();
         Assert.assertEquals(1, mintResult1[31]);
 
-        //update frontier and leafCount
-        //if slot == 0, frontier[0:31]=noteCommitment
+        // update frontier and leafCount
+        // if slot == 0, frontier[0:31]=noteCommitment
         int slot = mintResult1[63];
         if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
@@ -706,15 +728,20 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         leafCount++;
       }
 
-      { //for transfer
-        GrpcAPI.PrivateShieldedTRC20Parameters.Builder privateTRC20Builder = GrpcAPI
-            .PrivateShieldedTRC20Parameters.newBuilder();
+      { // for transfer
+        GrpcAPI.PrivateShieldedTRC20Parameters.Builder privateTRC20Builder =
+            GrpcAPI.PrivateShieldedTRC20Parameters.newBuilder();
         GrpcAPI.SpendNoteTRC20.Builder spendNoteBuilder1 = GrpcAPI.SpendNoteTRC20.newBuilder();
         GrpcAPI.Note note1 = getNote(30, senderPaymentAddressStr1, rcm1, new byte[512]);
         byte[][] cm1 = new byte[1][32];
-        //spendNote1
-        Note senderNote1 = new Note(senderPaymentAddress1.getD(), senderPaymentAddress1.getPkD(),
-            30, rcm1, new byte[512]);
+        // spendNote1
+        Note senderNote1 =
+            new Note(
+                senderPaymentAddress1.getD(),
+                senderPaymentAddress1.getPkD(),
+                30,
+                rcm1,
+                new byte[512]);
         System.arraycopy(senderNote1.cm(), 0, cm1[0], 0, 32);
         IncrementalMerkleVoucherContainer voucher1 = addSimpleMerkleVoucherContainer(tree, cm1);
         byte[] path1 = decodePath(voucher1.path().encode());
@@ -727,10 +754,15 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         spendNoteBuilder1.setNote(note1);
         privateTRC20Builder.addShieldedSpends(spendNoteBuilder1.build());
 
-        //spendNote2
+        // spendNote2
         GrpcAPI.SpendNoteTRC20.Builder spendNoteBuilder2 = GrpcAPI.SpendNoteTRC20.newBuilder();
-        Note senderNote2 = new Note(senderPaymentAddress2.getD(), senderPaymentAddress2.getPkD(),
-            70, rcm2, new byte[512]);
+        Note senderNote2 =
+            new Note(
+                senderPaymentAddress2.getD(),
+                senderPaymentAddress2.getPkD(),
+                70,
+                rcm2,
+                new byte[512]);
         GrpcAPI.Note note2 = getNote(70, senderPaymentAddressStr2, rcm2, new byte[512]);
         byte[][] cm2 = new byte[1][32];
         System.arraycopy(senderNote2.cm(), 0, cm2[0], 0, 32);
@@ -745,7 +777,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         spendNoteBuilder2.setNote(note2);
         privateTRC20Builder.addShieldedSpends(spendNoteBuilder2.build());
 
-        //receiveNote1
+        // receiveNote1
         GrpcAPI.ReceiveNote.Builder revNoteBuilder1 = GrpcAPI.ReceiveNote.newBuilder();
         SpendingKey receiveSk1 = SpendingKey.random();
         FullViewingKey receiveFvk1 = receiveSk1.fullViewingKey();
@@ -758,7 +790,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         revNoteBuilder1.setNote(revNote);
         privateTRC20Builder.addShieldedReceives(revNoteBuilder1.build());
 
-        //receiveNote2
+        // receiveNote2
         GrpcAPI.ReceiveNote.Builder revNoteBuilder2 = GrpcAPI.ReceiveNote.newBuilder();
         SpendingKey receiveSk2 = SpendingKey.random();
         FullViewingKey receiveFvk2 = receiveSk2.fullViewingKey();
@@ -774,26 +806,26 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         privateTRC20Builder.setAsk(ByteString.copyFrom(expsk.getAsk()));
         privateTRC20Builder.setNsk(ByteString.copyFrom(expsk.getNsk()));
         privateTRC20Builder.setOvk(ByteString.copyFrom(expsk.getOvk()));
-        privateTRC20Builder
-            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
-        GrpcAPI.ShieldedTRC20Parameters transferParam = wallet
-            .createShieldedContractParameters(privateTRC20Builder.build());
+        privateTRC20Builder.setShieldedTRC20ContractAddress(
+            ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
+        GrpcAPI.ShieldedTRC20Parameters transferParam =
+            wallet.createShieldedContractParameters(privateTRC20Builder.build());
 
         byte[] inputData = abiEncodeForTransfer(transferParam, frontier, leafCount);
         Pair<Boolean, byte[]> contractResult = verifyTransfer(inputData);
         byte[] result = contractResult.getRight();
         Assert.assertEquals(1, result[31]);
 
-        //update frontier and leafCount
-        //if slot == 0, frontier[0:31]=noteCommitment
+        // update frontier and leafCount
+        // if slot == 0, frontier[0:31]=noteCommitment
         int idx = 32;
         for (int i = 0; i < 2; i++) {
           idx += 31;
           int slot = result[idx];
           idx += 1;
           if (slot == 0) {
-            byte[] noteCommitment = transferParam.getReceiveDescription(i).getNoteCommitment()
-                .toByteArray();
+            byte[] noteCommitment =
+                transferParam.getReceiveDescription(i).getNoteCommitment().toByteArray();
             System.arraycopy(noteCommitment, 0, frontier, 0, 32);
           } else {
             int destPos = slot * 32;
@@ -806,8 +838,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
         byte[][] cm = new byte[2][32];
         for (int i = 0; i < 2; i++) {
-          byte[] noteCommitment = transferParam.getReceiveDescription(i).getNoteCommitment()
-              .toByteArray();
+          byte[] noteCommitment =
+              transferParam.getReceiveDescription(i).getNoteCommitment().toByteArray();
           System.arraycopy(noteCommitment, 0, cm[i], 0, 32);
         }
         IncrementalMerkleVoucherContainer voucher = addSimpleMerkleVoucherContainer(tree, cm);
@@ -830,8 +862,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
     long value = 100L;
     byte[] frontier = new byte[32 * 33];
 
-    IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
-        new IncrementalMerkleTreeCapsule());
+    IncrementalMerkleTreeContainer tree =
+        new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
     for (int countNum = 0; countNum < totalCountNum; countNum++) {
       SpendingKey senderSk = SpendingKey.random();
       ExpandedSpendingKey senderExpsk = senderSk.expandedSpendingKey();
@@ -843,17 +875,17 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).get();
       String senderPaymentAddressStr = KeyIo.encodePaymentAddress(senderPaymentAddress);
 
-      { //for mint1
+      { // for mint1
         GrpcAPI.Note note = getNote(value, senderPaymentAddressStr, rcm, new byte[512]);
         GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
-        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
-            .PrivateShieldedTRC20Parameters.newBuilder();
+        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder =
+            GrpcAPI.PrivateShieldedTRC20Parameters.newBuilder();
         revNoteBuilder.setNote(note);
         paramBuilder.setOvk(ByteString.copyFrom(senderFvk.getOvk()));
         paramBuilder.setFromAmount(BigInteger.valueOf(value).toString());
         paramBuilder.addShieldedReceives(revNoteBuilder.build());
-        paramBuilder
-            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
+        paramBuilder.setShieldedTRC20ContractAddress(
+            ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
         PrivateShieldedTRC20Parameters privMintParams = paramBuilder.build();
 
         ShieldedTRC20Parameters minParam = wallet.createShieldedContractParameters(privMintParams);
@@ -862,8 +894,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         byte[] mintResult1 = mintContractResult1.getRight();
         Assert.assertEquals(1, mintResult1[31]);
 
-        //update frontier and leafCount
-        //if slot == 0, frontier[0:31]=noteCommitment
+        // update frontier and leafCount
+        // if slot == 0, frontier[0:31]=noteCommitment
         int slot = mintResult1[63];
         if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
@@ -875,15 +907,20 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         leafCount++;
       }
 
-      { //for burn
-        GrpcAPI.PrivateShieldedTRC20Parameters.Builder privateTRC20Builder = GrpcAPI
-            .PrivateShieldedTRC20Parameters.newBuilder();
+      { // for burn
+        GrpcAPI.PrivateShieldedTRC20Parameters.Builder privateTRC20Builder =
+            GrpcAPI.PrivateShieldedTRC20Parameters.newBuilder();
         GrpcAPI.SpendNoteTRC20.Builder spendNoteBuilder = GrpcAPI.SpendNoteTRC20.newBuilder();
         GrpcAPI.Note note = getNote(value, senderPaymentAddressStr, rcm, new byte[512]);
         byte[][] cm1 = new byte[1][32];
-        //spendNote1
-        Note senderNote1 = new Note(senderPaymentAddress.getD(), senderPaymentAddress.getPkD(),
-            value, rcm, new byte[512]);
+        // spendNote1
+        Note senderNote1 =
+            new Note(
+                senderPaymentAddress.getD(),
+                senderPaymentAddress.getPkD(),
+                value,
+                rcm,
+                new byte[512]);
         System.arraycopy(senderNote1.cm(), 0, cm1[0], 0, 32);
         IncrementalMerkleVoucherContainer voucher1 = addSimpleMerkleVoucherContainer(tree, cm1);
         byte[] path1 = decodePath(voucher1.path().encode());
@@ -901,10 +938,10 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         privateTRC20Builder.setNsk(ByteString.copyFrom(expsk.getNsk()));
         privateTRC20Builder.setToAmount(BigInteger.valueOf(value).toString());
         privateTRC20Builder.setTransparentToAddress(ByteString.copyFrom(PUBLIC_TO_ADDRESS));
-        privateTRC20Builder
-            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
-        GrpcAPI.ShieldedTRC20Parameters burnParam = wallet
-            .createShieldedContractParameters(privateTRC20Builder.build());
+        privateTRC20Builder.setShieldedTRC20ContractAddress(
+            ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
+        GrpcAPI.ShieldedTRC20Parameters burnParam =
+            wallet.createShieldedContractParameters(privateTRC20Builder.build());
 
         byte[] inputData = abiEncodeForBurn(burnParam, value);
         Pair<Boolean, byte[]> contractResult = burnContract.execute(inputData);
@@ -926,8 +963,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
     long value = 100L;
     byte[] frontier = new byte[32 * 33];
 
-    IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
-        new IncrementalMerkleTreeCapsule());
+    IncrementalMerkleTreeContainer tree =
+        new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
     for (int countNum = 0; countNum < totalCountNum; countNum++) {
       SpendingKey senderSk = SpendingKey.random();
       ExpandedSpendingKey senderExpsk = senderSk.expandedSpendingKey();
@@ -939,17 +976,17 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).get();
       String senderPaymentAddressStr = KeyIo.encodePaymentAddress(senderPaymentAddress);
 
-      { //for mint1
+      { // for mint1
         GrpcAPI.Note note = getNote(value, senderPaymentAddressStr, rcm, new byte[512]);
         GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
-        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
-            .PrivateShieldedTRC20Parameters.newBuilder();
+        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder =
+            GrpcAPI.PrivateShieldedTRC20Parameters.newBuilder();
         revNoteBuilder.setNote(note);
         paramBuilder.setOvk(ByteString.copyFrom(senderFvk.getOvk()));
         paramBuilder.setFromAmount(BigInteger.valueOf(value).toString());
         paramBuilder.addShieldedReceives(revNoteBuilder.build());
-        paramBuilder
-            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
+        paramBuilder.setShieldedTRC20ContractAddress(
+            ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
         PrivateShieldedTRC20Parameters privMintParams = paramBuilder.build();
 
         ShieldedTRC20Parameters minParam = wallet.createShieldedContractParameters(privMintParams);
@@ -958,8 +995,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         byte[] mintResult1 = mintContractResult1.getRight();
         Assert.assertEquals(1, mintResult1[31]);
 
-        //update frontier and leafCount
-        //if slot == 0, frontier[0:31]=noteCommitment
+        // update frontier and leafCount
+        // if slot == 0, frontier[0:31]=noteCommitment
         int slot = mintResult1[63];
         if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
@@ -971,15 +1008,20 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         leafCount++;
       }
 
-      { //for burn
-        GrpcAPI.PrivateShieldedTRC20Parameters.Builder privateTRC20Builder = GrpcAPI
-            .PrivateShieldedTRC20Parameters.newBuilder();
+      { // for burn
+        GrpcAPI.PrivateShieldedTRC20Parameters.Builder privateTRC20Builder =
+            GrpcAPI.PrivateShieldedTRC20Parameters.newBuilder();
         GrpcAPI.SpendNoteTRC20.Builder spendNoteBuilder = GrpcAPI.SpendNoteTRC20.newBuilder();
         GrpcAPI.Note note = getNote(value, senderPaymentAddressStr, rcm, new byte[512]);
         byte[][] cm1 = new byte[1][32];
-        //spendNote1
-        Note senderNote1 = new Note(senderPaymentAddress.getD(), senderPaymentAddress.getPkD(),
-            value, rcm, new byte[512]);
+        // spendNote1
+        Note senderNote1 =
+            new Note(
+                senderPaymentAddress.getD(),
+                senderPaymentAddress.getPkD(),
+                value,
+                rcm,
+                new byte[512]);
         System.arraycopy(senderNote1.cm(), 0, cm1[0], 0, 32);
         IncrementalMerkleVoucherContainer voucher1 = addSimpleMerkleVoucherContainer(tree, cm1);
         byte[] path1 = decodePath(voucher1.path().encode());
@@ -997,10 +1039,10 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         privateTRC20Builder.setNsk(ByteString.copyFrom(expsk.getNsk()));
         privateTRC20Builder.setToAmount(BigInteger.valueOf(60).toString());
         privateTRC20Builder.setTransparentToAddress(ByteString.copyFrom(PUBLIC_TO_ADDRESS));
-        privateTRC20Builder
-            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
+        privateTRC20Builder.setShieldedTRC20ContractAddress(
+            ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
 
-        //receiveNote
+        // receiveNote
         GrpcAPI.ReceiveNote.Builder revNoteBuilder2 = GrpcAPI.ReceiveNote.newBuilder();
         SpendingKey receiveSk2 = SpendingKey.random();
         FullViewingKey receiveFvk2 = receiveSk2.fullViewingKey();
@@ -1013,16 +1055,16 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         revNoteBuilder2.setNote(revNote2);
         privateTRC20Builder.addShieldedReceives(revNoteBuilder2.build());
 
-        GrpcAPI.ShieldedTRC20Parameters burnParam = wallet
-            .createShieldedContractParameters(privateTRC20Builder.build());
+        GrpcAPI.ShieldedTRC20Parameters burnParam =
+            wallet.createShieldedContractParameters(privateTRC20Builder.build());
 
         byte[] inputData = abiEncodeForBurn(burnParam, value);
         Pair<Boolean, byte[]> contractResult = burnContract.execute(inputData);
         byte[] result = contractResult.getRight();
         Assert.assertEquals(1, result[31]);
 
-        //update frontier and leafCount
-        //if slot == 0, frontier[0:31]=noteCommitment
+        // update frontier and leafCount
+        // if slot == 0, frontier[0:31]=noteCommitment
         int slot = result[63];
         if (slot == 0) {
           System.arraycopy(result, 0, frontier, 0, 32);
@@ -1041,14 +1083,13 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
    */
   @Ignore
   @Test
-  public void createShieldedContractParametersWithoutAskForTransfer1to1()
-      throws Exception {
+  public void createShieldedContractParametersWithoutAskForTransfer1to1() throws Exception {
     int totalCountNum = 2;
     long leafCount = 0;
     byte[] frontier = new byte[32 * 33];
 
-    IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
-        new IncrementalMerkleTreeCapsule());
+    IncrementalMerkleTreeContainer tree =
+        new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
     for (int countNum = 0; countNum < totalCountNum; countNum++) {
       SpendingKey senderSk = SpendingKey.random();
       ExpandedSpendingKey senderExpsk = senderSk.expandedSpendingKey();
@@ -1060,17 +1101,17 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
       String senderPaymentAddressStr1 = KeyIo.encodePaymentAddress(senderPaymentAddress1);
 
-      { //for mint1
+      { // for mint1
         GrpcAPI.Note note = getNote(30, senderPaymentAddressStr1, rcm1, new byte[512]);
         GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
-        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
-            .PrivateShieldedTRC20Parameters.newBuilder();
+        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder =
+            GrpcAPI.PrivateShieldedTRC20Parameters.newBuilder();
         revNoteBuilder.setNote(note);
         paramBuilder.setOvk(ByteString.copyFrom(DEFAULT_OVK));
         paramBuilder.setFromAmount(BigInteger.valueOf(30).toString());
         paramBuilder.addShieldedReceives(revNoteBuilder.build());
-        paramBuilder
-            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
+        paramBuilder.setShieldedTRC20ContractAddress(
+            ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
         PrivateShieldedTRC20Parameters privMintParams = paramBuilder.build();
         ShieldedTRC20Parameters mintParam = wallet.createShieldedContractParameters(privMintParams);
 
@@ -1079,8 +1120,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         byte[] mintResult1 = mintContractResult1.getRight();
         Assert.assertEquals(1, mintResult1[31]);
 
-        //update frontier and leafCount
-        //if slot == 0, frontier[0:31]=noteCommitment
+        // update frontier and leafCount
+        // if slot == 0, frontier[0:31]=noteCommitment
         int slot = mintResult1[63];
         if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
@@ -1092,15 +1133,20 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         leafCount++;
       }
 
-      { //for transfer
-        GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.Builder privateTRC20Builder = GrpcAPI
-            .PrivateShieldedTRC20ParametersWithoutAsk.newBuilder();
+      { // for transfer
+        GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.Builder privateTRC20Builder =
+            GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.newBuilder();
         GrpcAPI.SpendNoteTRC20.Builder spendNoteBuilder1 = GrpcAPI.SpendNoteTRC20.newBuilder();
         GrpcAPI.Note note1 = getNote(30, senderPaymentAddressStr1, rcm1, new byte[512]);
         byte[][] cm1 = new byte[1][32];
-        //spendNote1
-        Note senderNote1 = new Note(senderPaymentAddress1.getD(), senderPaymentAddress1.getPkD(),
-            30, rcm1, new byte[512]);
+        // spendNote1
+        Note senderNote1 =
+            new Note(
+                senderPaymentAddress1.getD(),
+                senderPaymentAddress1.getPkD(),
+                30,
+                rcm1,
+                new byte[512]);
         System.arraycopy(senderNote1.cm(), 0, cm1[0], 0, 32);
         IncrementalMerkleVoucherContainer voucher1 = addSimpleMerkleVoucherContainer(tree, cm1);
         byte[] path1 = decodePath(voucher1.path().encode());
@@ -1113,7 +1159,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         spendNoteBuilder1.setNote(note1);
         privateTRC20Builder.addShieldedSpends(spendNoteBuilder1.build());
 
-        //receiveNote1
+        // receiveNote1
         GrpcAPI.ReceiveNote.Builder revNoteBuilder1 = GrpcAPI.ReceiveNote.newBuilder();
         SpendingKey receiveSk1 = SpendingKey.random();
         FullViewingKey receiveFvk1 = receiveSk1.fullViewingKey();
@@ -1130,29 +1176,27 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         privateTRC20Builder.setAk(ByteString.copyFrom(senderFvk.getAk()));
         privateTRC20Builder.setNsk(ByteString.copyFrom(expsk.getNsk()));
         privateTRC20Builder.setOvk(ByteString.copyFrom(expsk.getOvk()));
-        privateTRC20Builder
-            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
-        GrpcAPI.ShieldedTRC20Parameters transferParam = wallet
-            .createShieldedContractParametersWithoutAsk(privateTRC20Builder.build());
+        privateTRC20Builder.setShieldedTRC20ContractAddress(
+            ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
+        GrpcAPI.ShieldedTRC20Parameters transferParam =
+            wallet.createShieldedContractParametersWithoutAsk(privateTRC20Builder.build());
 
-        //get the binding signature
+        // get the binding signature
         PrivateShieldedTRC20ParametersWithoutAsk shieldedTRC20ParametersWithoutAsk =
-            privateTRC20Builder
-                .build();
+            privateTRC20Builder.build();
         SpendAuthSigParameters.Builder signParamerters1 = SpendAuthSigParameters.newBuilder();
-        signParamerters1
-            .setAlpha(shieldedTRC20ParametersWithoutAsk.getShieldedSpends(0).getAlpha());
+        signParamerters1.setAlpha(
+            shieldedTRC20ParametersWithoutAsk.getShieldedSpends(0).getAlpha());
         signParamerters1.setAsk(ByteString.copyFrom(expsk.getAsk()));
         signParamerters1.setTxHash(transferParam.getMessageHash());
         BytesMessage signMsg1 = wallet.createSpendAuthSig(signParamerters1.build());
 
         ShieldedTRC20TriggerContractParameters.Builder triggerParam =
-            ShieldedTRC20TriggerContractParameters
-                .newBuilder();
+            ShieldedTRC20TriggerContractParameters.newBuilder();
         triggerParam.setShieldedTRC20Parameters(transferParam);
         triggerParam.addSpendAuthoritySignature(signMsg1);
-        BytesMessage triggerInput = wallet
-            .getTriggerInputForShieldedTRC20Contract(triggerParam.build());
+        BytesMessage triggerInput =
+            wallet.getTriggerInputForShieldedTRC20Contract(triggerParam.build());
         logger.info(
             "trigger contract input: " + Hex.toHexString(triggerInput.getValue().toByteArray()));
 
@@ -1160,8 +1204,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         spendDesBuilder1.setSpendAuthoritySignature(signMsg1.getValue());
         spendDesBuilder1.setAnchor(transferParam.getSpendDescription(0).getAnchor());
         spendDesBuilder1.setRk(transferParam.getSpendDescription(0).getRk());
-        spendDesBuilder1
-            .setValueCommitment(transferParam.getSpendDescription(0).getValueCommitment());
+        spendDesBuilder1.setValueCommitment(
+            transferParam.getSpendDescription(0).getValueCommitment());
         spendDesBuilder1.setZkproof(transferParam.getSpendDescription(0).getZkproof());
         spendDesBuilder1.setNullifier(transferParam.getSpendDescription(0).getNullifier());
 
@@ -1178,13 +1222,13 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         byte[] result = contractResult.getRight();
         Assert.assertEquals(1, result[31]);
 
-        //update frontier and leafCount
-        //if slot == 0, frontier[0:31]=noteCommitment
+        // update frontier and leafCount
+        // if slot == 0, frontier[0:31]=noteCommitment
         int idx = 63;
         int slot = result[idx];
         if (slot == 0) {
-          byte[] noteCommitment = transferParam.getReceiveDescription(0).getNoteCommitment()
-              .toByteArray();
+          byte[] noteCommitment =
+              transferParam.getReceiveDescription(0).getNoteCommitment().toByteArray();
           System.arraycopy(noteCommitment, 0, frontier, 0, 32);
         } else {
           int destPos = slot * 32;
@@ -1196,15 +1240,14 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
         byte[][] cm = new byte[1][32];
         for (int i = 0; i < 1; i++) {
-          byte[] noteCommitment = transferParam.getReceiveDescription(i).getNoteCommitment()
-              .toByteArray();
+          byte[] noteCommitment =
+              transferParam.getReceiveDescription(i).getNoteCommitment().toByteArray();
           System.arraycopy(noteCommitment, 0, cm[i], 0, 32);
         }
         IncrementalMerkleVoucherContainer voucher = addSimpleMerkleVoucherContainer(tree, cm);
         byte[] root = voucher.root().getContent().toByteArray();
 
         Assert.assertArrayEquals(root, Arrays.copyOfRange(result, idx, idx + 32));
-
       }
     }
   }
@@ -1214,14 +1257,13 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
    */
   @Ignore
   @Test
-  public void createShieldedContractParametersWithoutAskForTransfer1to2()
-      throws Exception {
+  public void createShieldedContractParametersWithoutAskForTransfer1to2() throws Exception {
     int totalCountNum = 2;
     long leafCount = 0;
     byte[] frontier = new byte[32 * 33];
 
-    IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
-        new IncrementalMerkleTreeCapsule());
+    IncrementalMerkleTreeContainer tree =
+        new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
     for (int countNum = 0; countNum < totalCountNum; countNum++) {
       SpendingKey senderSk = SpendingKey.random();
       ExpandedSpendingKey senderExpsk = senderSk.expandedSpendingKey();
@@ -1233,17 +1275,17 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
       String senderPaymentAddressStr1 = KeyIo.encodePaymentAddress(senderPaymentAddress1);
 
-      { //for mint1
+      { // for mint1
         GrpcAPI.Note note = getNote(100, senderPaymentAddressStr1, rcm1, new byte[512]);
         GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
-        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
-            .PrivateShieldedTRC20Parameters.newBuilder();
+        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder =
+            GrpcAPI.PrivateShieldedTRC20Parameters.newBuilder();
         revNoteBuilder.setNote(note);
         paramBuilder.setOvk(ByteString.copyFrom(DEFAULT_OVK));
         paramBuilder.setFromAmount(BigInteger.valueOf(100).toString());
         paramBuilder.addShieldedReceives(revNoteBuilder.build());
-        paramBuilder
-            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
+        paramBuilder.setShieldedTRC20ContractAddress(
+            ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
         PrivateShieldedTRC20Parameters privMintParams = paramBuilder.build();
         ShieldedTRC20Parameters mintParam = wallet.createShieldedContractParameters(privMintParams);
 
@@ -1252,8 +1294,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         byte[] mintResult1 = mintContractResult1.getRight();
         Assert.assertEquals(1, mintResult1[31]);
 
-        //update frontier and leafCount
-        //if slot == 0, frontier[0:31]=noteCommitment
+        // update frontier and leafCount
+        // if slot == 0, frontier[0:31]=noteCommitment
         int slot = mintResult1[63];
         if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
@@ -1265,15 +1307,20 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         leafCount++;
       }
 
-      { //for transfer
-        GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.Builder privateTRC20Builder = GrpcAPI
-            .PrivateShieldedTRC20ParametersWithoutAsk.newBuilder();
+      { // for transfer
+        GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.Builder privateTRC20Builder =
+            GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.newBuilder();
         GrpcAPI.SpendNoteTRC20.Builder spendNoteBuilder1 = GrpcAPI.SpendNoteTRC20.newBuilder();
         GrpcAPI.Note note1 = getNote(100, senderPaymentAddressStr1, rcm1, new byte[512]);
         byte[][] cm1 = new byte[1][32];
-        //spendNote1
-        Note senderNote1 = new Note(senderPaymentAddress1.getD(), senderPaymentAddress1.getPkD(),
-            100, rcm1, new byte[512]);
+        // spendNote1
+        Note senderNote1 =
+            new Note(
+                senderPaymentAddress1.getD(),
+                senderPaymentAddress1.getPkD(),
+                100,
+                rcm1,
+                new byte[512]);
         System.arraycopy(senderNote1.cm(), 0, cm1[0], 0, 32);
         IncrementalMerkleVoucherContainer voucher1 = addSimpleMerkleVoucherContainer(tree, cm1);
         byte[] path1 = decodePath(voucher1.path().encode());
@@ -1286,7 +1333,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         spendNoteBuilder1.setNote(note1);
         privateTRC20Builder.addShieldedSpends(spendNoteBuilder1.build());
 
-        //receiveNote1
+        // receiveNote1
         GrpcAPI.ReceiveNote.Builder revNoteBuilder1 = GrpcAPI.ReceiveNote.newBuilder();
         SpendingKey receiveSk1 = SpendingKey.random();
         FullViewingKey receiveFvk1 = receiveSk1.fullViewingKey();
@@ -1299,7 +1346,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         revNoteBuilder1.setNote(revNote);
         privateTRC20Builder.addShieldedReceives(revNoteBuilder1.build());
 
-        //receiveNote2
+        // receiveNote2
         GrpcAPI.ReceiveNote.Builder revNoteBuilder2 = GrpcAPI.ReceiveNote.newBuilder();
         SpendingKey receiveSk2 = SpendingKey.random();
         FullViewingKey receiveFvk2 = receiveSk2.fullViewingKey();
@@ -1315,29 +1362,27 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         privateTRC20Builder.setAk(ByteString.copyFrom(senderFvk.getAk()));
         privateTRC20Builder.setNsk(ByteString.copyFrom(expsk.getNsk()));
         privateTRC20Builder.setOvk(ByteString.copyFrom(expsk.getOvk()));
-        privateTRC20Builder
-            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
-        GrpcAPI.ShieldedTRC20Parameters transferParam = wallet
-            .createShieldedContractParametersWithoutAsk(privateTRC20Builder.build());
+        privateTRC20Builder.setShieldedTRC20ContractAddress(
+            ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
+        GrpcAPI.ShieldedTRC20Parameters transferParam =
+            wallet.createShieldedContractParametersWithoutAsk(privateTRC20Builder.build());
 
-        //get the binding signature
+        // get the binding signature
         PrivateShieldedTRC20ParametersWithoutAsk shieldedTRC20ParametersWithoutAsk =
-            privateTRC20Builder
-                .build();
+            privateTRC20Builder.build();
         SpendAuthSigParameters.Builder signParamerters1 = SpendAuthSigParameters.newBuilder();
-        signParamerters1
-            .setAlpha(shieldedTRC20ParametersWithoutAsk.getShieldedSpends(0).getAlpha());
+        signParamerters1.setAlpha(
+            shieldedTRC20ParametersWithoutAsk.getShieldedSpends(0).getAlpha());
         signParamerters1.setAsk(ByteString.copyFrom(expsk.getAsk()));
         signParamerters1.setTxHash(transferParam.getMessageHash());
         BytesMessage signMsg1 = wallet.createSpendAuthSig(signParamerters1.build());
 
         ShieldedTRC20TriggerContractParameters.Builder triggerParam =
-            ShieldedTRC20TriggerContractParameters
-                .newBuilder();
+            ShieldedTRC20TriggerContractParameters.newBuilder();
         triggerParam.setShieldedTRC20Parameters(transferParam);
         triggerParam.addSpendAuthoritySignature(signMsg1);
-        BytesMessage triggerInput = wallet
-            .getTriggerInputForShieldedTRC20Contract(triggerParam.build());
+        BytesMessage triggerInput =
+            wallet.getTriggerInputForShieldedTRC20Contract(triggerParam.build());
         logger.info(
             "trigger contract input: " + Hex.toHexString(triggerInput.getValue().toByteArray()));
 
@@ -1345,8 +1390,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         spendDesBuilder1.setSpendAuthoritySignature(signMsg1.getValue());
         spendDesBuilder1.setAnchor(transferParam.getSpendDescription(0).getAnchor());
         spendDesBuilder1.setRk(transferParam.getSpendDescription(0).getRk());
-        spendDesBuilder1
-            .setValueCommitment(transferParam.getSpendDescription(0).getValueCommitment());
+        spendDesBuilder1.setValueCommitment(
+            transferParam.getSpendDescription(0).getValueCommitment());
         spendDesBuilder1.setZkproof(transferParam.getSpendDescription(0).getZkproof());
         spendDesBuilder1.setNullifier(transferParam.getSpendDescription(0).getNullifier());
 
@@ -1364,16 +1409,16 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         byte[] result = contractResult.getRight();
         Assert.assertEquals(1, result[31]);
 
-        //update frontier and leafCount
-        //if slot == 0, frontier[0:31]=noteCommitment
+        // update frontier and leafCount
+        // if slot == 0, frontier[0:31]=noteCommitment
         int idx = 32;
         for (int i = 0; i < 2; i++) {
           idx += 31;
           int slot = result[idx];
           idx += 1;
           if (slot == 0) {
-            byte[] noteCommitment = transferParam.getReceiveDescription(i).getNoteCommitment()
-                .toByteArray();
+            byte[] noteCommitment =
+                transferParam.getReceiveDescription(i).getNoteCommitment().toByteArray();
             System.arraycopy(noteCommitment, 0, frontier, 0, 32);
           } else {
             int destPos = slot * 32;
@@ -1386,8 +1431,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
         byte[][] cm = new byte[2][32];
         for (int i = 0; i < 2; i++) {
-          byte[] noteCommitment = transferParam.getReceiveDescription(i).getNoteCommitment()
-              .toByteArray();
+          byte[] noteCommitment =
+              transferParam.getReceiveDescription(i).getNoteCommitment().toByteArray();
           System.arraycopy(noteCommitment, 0, cm[i], 0, 32);
         }
         IncrementalMerkleVoucherContainer voucher = addSimpleMerkleVoucherContainer(tree, cm);
@@ -1403,14 +1448,13 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
    */
   @Ignore
   @Test
-  public void createShieldedContractParametersWithoutAskForTransfer2to1()
-      throws Exception {
+  public void createShieldedContractParametersWithoutAskForTransfer2to1() throws Exception {
     int totalCountNum = 2;
     long leafCount = 0;
     byte[] frontier = new byte[32 * 33];
 
-    IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
-        new IncrementalMerkleTreeCapsule());
+    IncrementalMerkleTreeContainer tree =
+        new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
     for (int countNum = 0; countNum < totalCountNum; countNum++) {
       SpendingKey senderSk = SpendingKey.random();
       ExpandedSpendingKey senderExpsk = senderSk.expandedSpendingKey();
@@ -1426,17 +1470,17 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       String senderPaymentAddressStr1 = KeyIo.encodePaymentAddress(senderPaymentAddress1);
       String senderPaymentAddressStr2 = KeyIo.encodePaymentAddress(senderPaymentAddress2);
 
-      { //for mint1
+      { // for mint1
         GrpcAPI.Note note = getNote(30, senderPaymentAddressStr1, rcm1, new byte[512]);
         GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
-        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
-            .PrivateShieldedTRC20Parameters.newBuilder();
+        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder =
+            GrpcAPI.PrivateShieldedTRC20Parameters.newBuilder();
         revNoteBuilder.setNote(note);
         paramBuilder.setOvk(ByteString.copyFrom(DEFAULT_OVK));
         paramBuilder.setFromAmount(BigInteger.valueOf(30).toString());
         paramBuilder.addShieldedReceives(revNoteBuilder.build());
-        paramBuilder
-            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
+        paramBuilder.setShieldedTRC20ContractAddress(
+            ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
         PrivateShieldedTRC20Parameters privMintParams = paramBuilder.build();
         ShieldedTRC20Parameters mintParam = wallet.createShieldedContractParameters(privMintParams);
 
@@ -1445,8 +1489,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         byte[] mintResult1 = mintContractResult1.getRight();
         Assert.assertEquals(1, mintResult1[31]);
 
-        //update frontier and leafCount
-        //if slot == 0, frontier[0:31]=noteCommitment
+        // update frontier and leafCount
+        // if slot == 0, frontier[0:31]=noteCommitment
         int slot = mintResult1[63];
         if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
@@ -1458,17 +1502,17 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         leafCount++;
       }
 
-      { //for mint2
+      { // for mint2
         GrpcAPI.Note note = getNote(70, senderPaymentAddressStr2, rcm2, new byte[512]);
         GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
-        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
-            .PrivateShieldedTRC20Parameters.newBuilder();
+        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder =
+            GrpcAPI.PrivateShieldedTRC20Parameters.newBuilder();
         revNoteBuilder.setNote(note);
         paramBuilder.setOvk(ByteString.copyFrom(DEFAULT_OVK));
         paramBuilder.setFromAmount(BigInteger.valueOf(70).toString());
         paramBuilder.addShieldedReceives(revNoteBuilder.build());
-        paramBuilder
-            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
+        paramBuilder.setShieldedTRC20ContractAddress(
+            ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
         PrivateShieldedTRC20Parameters privMintParams = paramBuilder.build();
         ShieldedTRC20Parameters mintParam = wallet.createShieldedContractParameters(privMintParams);
 
@@ -1477,8 +1521,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         byte[] mintResult1 = mintContractResult1.getRight();
         Assert.assertEquals(1, mintResult1[31]);
 
-        //update frontier and leafCount
-        //if slot == 0, frontier[0:31]=noteCommitment
+        // update frontier and leafCount
+        // if slot == 0, frontier[0:31]=noteCommitment
         int slot = mintResult1[63];
         if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
@@ -1490,15 +1534,20 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         leafCount++;
       }
 
-      { //for transfer
-        GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.Builder privateTRC20Builder = GrpcAPI
-            .PrivateShieldedTRC20ParametersWithoutAsk.newBuilder();
+      { // for transfer
+        GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.Builder privateTRC20Builder =
+            GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.newBuilder();
         GrpcAPI.SpendNoteTRC20.Builder spendNoteBuilder1 = GrpcAPI.SpendNoteTRC20.newBuilder();
         GrpcAPI.Note note1 = getNote(30, senderPaymentAddressStr1, rcm1, new byte[512]);
         byte[][] cm1 = new byte[1][32];
-        //spendNote1
-        Note senderNote1 = new Note(senderPaymentAddress1.getD(), senderPaymentAddress1.getPkD(),
-            30, rcm1, new byte[512]);
+        // spendNote1
+        Note senderNote1 =
+            new Note(
+                senderPaymentAddress1.getD(),
+                senderPaymentAddress1.getPkD(),
+                30,
+                rcm1,
+                new byte[512]);
         System.arraycopy(senderNote1.cm(), 0, cm1[0], 0, 32);
         IncrementalMerkleVoucherContainer voucher1 = addSimpleMerkleVoucherContainer(tree, cm1);
         byte[] path1 = decodePath(voucher1.path().encode());
@@ -1511,10 +1560,15 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         spendNoteBuilder1.setNote(note1);
         privateTRC20Builder.addShieldedSpends(spendNoteBuilder1.build());
 
-        //spendNote2
+        // spendNote2
         GrpcAPI.SpendNoteTRC20.Builder spendNoteBuilder2 = GrpcAPI.SpendNoteTRC20.newBuilder();
-        Note senderNote2 = new Note(senderPaymentAddress2.getD(), senderPaymentAddress2.getPkD(),
-            70, rcm2, new byte[512]);
+        Note senderNote2 =
+            new Note(
+                senderPaymentAddress2.getD(),
+                senderPaymentAddress2.getPkD(),
+                70,
+                rcm2,
+                new byte[512]);
         GrpcAPI.Note note2 = getNote(70, senderPaymentAddressStr2, rcm2, new byte[512]);
         byte[][] cm2 = new byte[1][32];
         System.arraycopy(senderNote2.cm(), 0, cm2[0], 0, 32);
@@ -1529,7 +1583,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         spendNoteBuilder2.setNote(note2);
         privateTRC20Builder.addShieldedSpends(spendNoteBuilder2.build());
 
-        //receiveNote1
+        // receiveNote1
         GrpcAPI.ReceiveNote.Builder revNoteBuilder1 = GrpcAPI.ReceiveNote.newBuilder();
         SpendingKey receiveSk1 = SpendingKey.random();
         FullViewingKey receiveFvk1 = receiveSk1.fullViewingKey();
@@ -1546,18 +1600,17 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         privateTRC20Builder.setAk(ByteString.copyFrom(senderFvk.getAk()));
         privateTRC20Builder.setNsk(ByteString.copyFrom(expsk.getNsk()));
         privateTRC20Builder.setOvk(ByteString.copyFrom(expsk.getOvk()));
-        privateTRC20Builder
-            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
-        GrpcAPI.ShieldedTRC20Parameters transferParam = wallet
-            .createShieldedContractParametersWithoutAsk(privateTRC20Builder.build());
+        privateTRC20Builder.setShieldedTRC20ContractAddress(
+            ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
+        GrpcAPI.ShieldedTRC20Parameters transferParam =
+            wallet.createShieldedContractParametersWithoutAsk(privateTRC20Builder.build());
 
-        //get the binding signature
+        // get the binding signature
         PrivateShieldedTRC20ParametersWithoutAsk shieldedTRC20ParametersWithoutAsk =
-            privateTRC20Builder
-                .build();
+            privateTRC20Builder.build();
         SpendAuthSigParameters.Builder signParamerters1 = SpendAuthSigParameters.newBuilder();
-        signParamerters1
-            .setAlpha(shieldedTRC20ParametersWithoutAsk.getShieldedSpends(0).getAlpha());
+        signParamerters1.setAlpha(
+            shieldedTRC20ParametersWithoutAsk.getShieldedSpends(0).getAlpha());
         signParamerters1.setAsk(ByteString.copyFrom(expsk.getAsk()));
         signParamerters1.setTxHash(transferParam.getMessageHash());
         BytesMessage signMsg1 = wallet.createSpendAuthSig(signParamerters1.build());
@@ -1565,26 +1618,25 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         spendDesBuilder1.setSpendAuthoritySignature(signMsg1.getValue());
         spendDesBuilder1.setAnchor(transferParam.getSpendDescription(0).getAnchor());
         spendDesBuilder1.setRk(transferParam.getSpendDescription(0).getRk());
-        spendDesBuilder1
-            .setValueCommitment(transferParam.getSpendDescription(0).getValueCommitment());
+        spendDesBuilder1.setValueCommitment(
+            transferParam.getSpendDescription(0).getValueCommitment());
         spendDesBuilder1.setZkproof(transferParam.getSpendDescription(0).getZkproof());
         spendDesBuilder1.setNullifier(transferParam.getSpendDescription(0).getNullifier());
 
         SpendAuthSigParameters.Builder signParamerters2 = SpendAuthSigParameters.newBuilder();
-        signParamerters2
-            .setAlpha(shieldedTRC20ParametersWithoutAsk.getShieldedSpends(1).getAlpha());
+        signParamerters2.setAlpha(
+            shieldedTRC20ParametersWithoutAsk.getShieldedSpends(1).getAlpha());
         signParamerters2.setAsk(ByteString.copyFrom(expsk.getAsk()));
         signParamerters2.setTxHash(transferParam.getMessageHash());
         BytesMessage signMsg2 = wallet.createSpendAuthSig(signParamerters2.build());
 
         ShieldedTRC20TriggerContractParameters.Builder triggerParam =
-            ShieldedTRC20TriggerContractParameters
-                .newBuilder();
+            ShieldedTRC20TriggerContractParameters.newBuilder();
         triggerParam.setShieldedTRC20Parameters(transferParam);
         triggerParam.addSpendAuthoritySignature(signMsg1);
         triggerParam.addSpendAuthoritySignature(signMsg2);
-        BytesMessage triggerInput = wallet
-            .getTriggerInputForShieldedTRC20Contract(triggerParam.build());
+        BytesMessage triggerInput =
+            wallet.getTriggerInputForShieldedTRC20Contract(triggerParam.build());
         logger.info(
             "trigger contract input: " + Hex.toHexString(triggerInput.getValue().toByteArray()));
 
@@ -1592,8 +1644,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         spendDesBuilder2.setSpendAuthoritySignature(signMsg2.getValue());
         spendDesBuilder2.setAnchor(transferParam.getSpendDescription(1).getAnchor());
         spendDesBuilder2.setRk(transferParam.getSpendDescription(1).getRk());
-        spendDesBuilder2
-            .setValueCommitment(transferParam.getSpendDescription(1).getValueCommitment());
+        spendDesBuilder2.setValueCommitment(
+            transferParam.getSpendDescription(1).getValueCommitment());
         spendDesBuilder2.setZkproof(transferParam.getSpendDescription(1).getZkproof());
         spendDesBuilder2.setNullifier(transferParam.getSpendDescription(1).getNullifier());
 
@@ -1611,13 +1663,13 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         byte[] result = contractResult.getRight();
         Assert.assertEquals(1, result[31]);
 
-        //update frontier and leafCount
-        //if slot == 0, frontier[0:31]=noteCommitment
+        // update frontier and leafCount
+        // if slot == 0, frontier[0:31]=noteCommitment
         int idx = 63;
         int slot = result[idx];
         if (slot == 0) {
-          byte[] noteCommitment = transferParam.getReceiveDescription(0).getNoteCommitment()
-              .toByteArray();
+          byte[] noteCommitment =
+              transferParam.getReceiveDescription(0).getNoteCommitment().toByteArray();
           System.arraycopy(noteCommitment, 0, frontier, 0, 32);
         } else {
           int destPos = slot * 32;
@@ -1629,8 +1681,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
         byte[][] cm = new byte[1][32];
         for (int i = 0; i < 1; i++) {
-          byte[] noteCommitment = transferParam.getReceiveDescription(i).getNoteCommitment()
-              .toByteArray();
+          byte[] noteCommitment =
+              transferParam.getReceiveDescription(i).getNoteCommitment().toByteArray();
           System.arraycopy(noteCommitment, 0, cm[i], 0, 32);
         }
         IncrementalMerkleVoucherContainer voucher = addSimpleMerkleVoucherContainer(tree, cm);
@@ -1646,14 +1698,13 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
    */
   @Ignore
   @Test
-  public void createShieldedContractParametersWithoutAskForTransfer2to2()
-      throws Exception {
+  public void createShieldedContractParametersWithoutAskForTransfer2to2() throws Exception {
     int totalCountNum = 2;
     long leafCount = 0;
     byte[] frontier = new byte[32 * 33];
 
-    IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
-        new IncrementalMerkleTreeCapsule());
+    IncrementalMerkleTreeContainer tree =
+        new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
     for (int countNum = 0; countNum < totalCountNum; countNum++) {
       SpendingKey senderSk = SpendingKey.random();
       ExpandedSpendingKey senderExpsk = senderSk.expandedSpendingKey();
@@ -1669,17 +1720,17 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       String senderPaymentAddressStr1 = KeyIo.encodePaymentAddress(senderPaymentAddress1);
       String senderPaymentAddressStr2 = KeyIo.encodePaymentAddress(senderPaymentAddress2);
 
-      { //for mint1
+      { // for mint1
         GrpcAPI.Note note = getNote(30, senderPaymentAddressStr1, rcm1, new byte[512]);
         GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
-        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
-            .PrivateShieldedTRC20Parameters.newBuilder();
+        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder =
+            GrpcAPI.PrivateShieldedTRC20Parameters.newBuilder();
         revNoteBuilder.setNote(note);
         paramBuilder.setOvk(ByteString.copyFrom(DEFAULT_OVK));
         paramBuilder.setFromAmount(BigInteger.valueOf(30).toString());
         paramBuilder.addShieldedReceives(revNoteBuilder.build());
-        paramBuilder
-            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
+        paramBuilder.setShieldedTRC20ContractAddress(
+            ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
         PrivateShieldedTRC20Parameters privMintParams = paramBuilder.build();
         ShieldedTRC20Parameters mintParam = wallet.createShieldedContractParameters(privMintParams);
 
@@ -1688,8 +1739,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         byte[] mintResult1 = mintContractResult1.getRight();
         Assert.assertEquals(1, mintResult1[31]);
 
-        //update frontier and leafCount
-        //if slot == 0, frontier[0:31]=noteCommitment
+        // update frontier and leafCount
+        // if slot == 0, frontier[0:31]=noteCommitment
         int slot = mintResult1[63];
         if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
@@ -1701,17 +1752,17 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         leafCount++;
       }
 
-      { //for mint2
+      { // for mint2
         GrpcAPI.Note note = getNote(70, senderPaymentAddressStr2, rcm2, new byte[512]);
         GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
-        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
-            .PrivateShieldedTRC20Parameters.newBuilder();
+        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder =
+            GrpcAPI.PrivateShieldedTRC20Parameters.newBuilder();
         revNoteBuilder.setNote(note);
         paramBuilder.setOvk(ByteString.copyFrom(DEFAULT_OVK));
         paramBuilder.setFromAmount(BigInteger.valueOf(70).toString());
         paramBuilder.addShieldedReceives(revNoteBuilder.build());
-        paramBuilder
-            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
+        paramBuilder.setShieldedTRC20ContractAddress(
+            ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
         PrivateShieldedTRC20Parameters privMintParams = paramBuilder.build();
         ShieldedTRC20Parameters mintParam = wallet.createShieldedContractParameters(privMintParams);
 
@@ -1720,8 +1771,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         byte[] mintResult1 = mintContractResult1.getRight();
         Assert.assertEquals(1, mintResult1[31]);
 
-        //update frontier and leafCount
-        //if slot == 0, frontier[0:31]=noteCommitment
+        // update frontier and leafCount
+        // if slot == 0, frontier[0:31]=noteCommitment
         int slot = mintResult1[63];
         if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
@@ -1733,15 +1784,20 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         leafCount++;
       }
 
-      { //for transfer
-        GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.Builder privateTRC20Builder = GrpcAPI
-            .PrivateShieldedTRC20ParametersWithoutAsk.newBuilder();
+      { // for transfer
+        GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.Builder privateTRC20Builder =
+            GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.newBuilder();
         GrpcAPI.SpendNoteTRC20.Builder spendNoteBuilder1 = GrpcAPI.SpendNoteTRC20.newBuilder();
         GrpcAPI.Note note1 = getNote(30, senderPaymentAddressStr1, rcm1, new byte[512]);
         byte[][] cm1 = new byte[1][32];
-        //spendNote1
-        Note senderNote1 = new Note(senderPaymentAddress1.getD(), senderPaymentAddress1.getPkD(),
-            30, rcm1, new byte[512]);
+        // spendNote1
+        Note senderNote1 =
+            new Note(
+                senderPaymentAddress1.getD(),
+                senderPaymentAddress1.getPkD(),
+                30,
+                rcm1,
+                new byte[512]);
         System.arraycopy(senderNote1.cm(), 0, cm1[0], 0, 32);
         IncrementalMerkleVoucherContainer voucher1 = addSimpleMerkleVoucherContainer(tree, cm1);
         byte[] path1 = decodePath(voucher1.path().encode());
@@ -1754,10 +1810,15 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         spendNoteBuilder1.setNote(note1);
         privateTRC20Builder.addShieldedSpends(spendNoteBuilder1.build());
 
-        //spendNote2
+        // spendNote2
         GrpcAPI.SpendNoteTRC20.Builder spendNoteBuilder2 = GrpcAPI.SpendNoteTRC20.newBuilder();
-        Note senderNote2 = new Note(senderPaymentAddress2.getD(), senderPaymentAddress2.getPkD(),
-            70, rcm2, new byte[512]);
+        Note senderNote2 =
+            new Note(
+                senderPaymentAddress2.getD(),
+                senderPaymentAddress2.getPkD(),
+                70,
+                rcm2,
+                new byte[512]);
         GrpcAPI.Note note2 = getNote(70, senderPaymentAddressStr2, rcm2, new byte[512]);
         byte[][] cm2 = new byte[1][32];
         System.arraycopy(senderNote2.cm(), 0, cm2[0], 0, 32);
@@ -1772,7 +1833,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         spendNoteBuilder2.setNote(note2);
         privateTRC20Builder.addShieldedSpends(spendNoteBuilder2.build());
 
-        //receiveNote1
+        // receiveNote1
         GrpcAPI.ReceiveNote.Builder revNoteBuilder1 = GrpcAPI.ReceiveNote.newBuilder();
         SpendingKey receiveSk1 = SpendingKey.random();
         FullViewingKey receiveFvk1 = receiveSk1.fullViewingKey();
@@ -1785,7 +1846,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         revNoteBuilder1.setNote(revNote);
         privateTRC20Builder.addShieldedReceives(revNoteBuilder1.build());
 
-        //receiveNote2
+        // receiveNote2
         GrpcAPI.ReceiveNote.Builder revNoteBuilder2 = GrpcAPI.ReceiveNote.newBuilder();
         SpendingKey receiveSk2 = SpendingKey.random();
         FullViewingKey receiveFvk2 = receiveSk2.fullViewingKey();
@@ -1801,18 +1862,17 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         privateTRC20Builder.setAk(ByteString.copyFrom(senderFvk.getAk()));
         privateTRC20Builder.setNsk(ByteString.copyFrom(expsk.getNsk()));
         privateTRC20Builder.setOvk(ByteString.copyFrom(expsk.getOvk()));
-        privateTRC20Builder
-            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
-        GrpcAPI.ShieldedTRC20Parameters transferParam = wallet
-            .createShieldedContractParametersWithoutAsk(privateTRC20Builder.build());
+        privateTRC20Builder.setShieldedTRC20ContractAddress(
+            ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
+        GrpcAPI.ShieldedTRC20Parameters transferParam =
+            wallet.createShieldedContractParametersWithoutAsk(privateTRC20Builder.build());
 
-        //get the binding signature
+        // get the binding signature
         PrivateShieldedTRC20ParametersWithoutAsk shieldedTRC20ParametersWithoutAsk =
-            privateTRC20Builder
-                .build();
+            privateTRC20Builder.build();
         SpendAuthSigParameters.Builder signParamerters1 = SpendAuthSigParameters.newBuilder();
-        signParamerters1
-            .setAlpha(shieldedTRC20ParametersWithoutAsk.getShieldedSpends(0).getAlpha());
+        signParamerters1.setAlpha(
+            shieldedTRC20ParametersWithoutAsk.getShieldedSpends(0).getAlpha());
         signParamerters1.setAsk(ByteString.copyFrom(expsk.getAsk()));
         signParamerters1.setTxHash(transferParam.getMessageHash());
         BytesMessage signMsg1 = wallet.createSpendAuthSig(signParamerters1.build());
@@ -1820,26 +1880,25 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         spendDesBuilder1.setSpendAuthoritySignature(signMsg1.getValue());
         spendDesBuilder1.setAnchor(transferParam.getSpendDescription(0).getAnchor());
         spendDesBuilder1.setRk(transferParam.getSpendDescription(0).getRk());
-        spendDesBuilder1
-            .setValueCommitment(transferParam.getSpendDescription(0).getValueCommitment());
+        spendDesBuilder1.setValueCommitment(
+            transferParam.getSpendDescription(0).getValueCommitment());
         spendDesBuilder1.setZkproof(transferParam.getSpendDescription(0).getZkproof());
         spendDesBuilder1.setNullifier(transferParam.getSpendDescription(0).getNullifier());
 
         SpendAuthSigParameters.Builder signParamerters2 = SpendAuthSigParameters.newBuilder();
-        signParamerters2
-            .setAlpha(shieldedTRC20ParametersWithoutAsk.getShieldedSpends(1).getAlpha());
+        signParamerters2.setAlpha(
+            shieldedTRC20ParametersWithoutAsk.getShieldedSpends(1).getAlpha());
         signParamerters2.setAsk(ByteString.copyFrom(expsk.getAsk()));
         signParamerters2.setTxHash(transferParam.getMessageHash());
         BytesMessage signMsg2 = wallet.createSpendAuthSig(signParamerters2.build());
 
         ShieldedTRC20TriggerContractParameters.Builder triggerParam =
-            ShieldedTRC20TriggerContractParameters
-                .newBuilder();
+            ShieldedTRC20TriggerContractParameters.newBuilder();
         triggerParam.setShieldedTRC20Parameters(transferParam);
         triggerParam.addSpendAuthoritySignature(signMsg1);
         triggerParam.addSpendAuthoritySignature(signMsg2);
-        BytesMessage triggerInput = wallet
-            .getTriggerInputForShieldedTRC20Contract(triggerParam.build());
+        BytesMessage triggerInput =
+            wallet.getTriggerInputForShieldedTRC20Contract(triggerParam.build());
         logger.info(
             "trigger contract input: " + Hex.toHexString(triggerInput.getValue().toByteArray()));
 
@@ -1847,8 +1906,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         spendDesBuilder2.setSpendAuthoritySignature(signMsg2.getValue());
         spendDesBuilder2.setAnchor(transferParam.getSpendDescription(1).getAnchor());
         spendDesBuilder2.setRk(transferParam.getSpendDescription(1).getRk());
-        spendDesBuilder2
-            .setValueCommitment(transferParam.getSpendDescription(1).getValueCommitment());
+        spendDesBuilder2.setValueCommitment(
+            transferParam.getSpendDescription(1).getValueCommitment());
         spendDesBuilder2.setZkproof(transferParam.getSpendDescription(1).getZkproof());
         spendDesBuilder2.setNullifier(transferParam.getSpendDescription(1).getNullifier());
 
@@ -1867,16 +1926,16 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         byte[] result = contractResult.getRight();
         Assert.assertEquals(1, result[31]);
 
-        //update frontier and leafCount
-        //if slot == 0, frontier[0:31]=noteCommitment
+        // update frontier and leafCount
+        // if slot == 0, frontier[0:31]=noteCommitment
         int idx = 32;
         for (int i = 0; i < 2; i++) {
           idx += 31;
           int slot = result[idx];
           idx += 1;
           if (slot == 0) {
-            byte[] noteCommitment = transferParam.getReceiveDescription(i).getNoteCommitment()
-                .toByteArray();
+            byte[] noteCommitment =
+                transferParam.getReceiveDescription(i).getNoteCommitment().toByteArray();
             System.arraycopy(noteCommitment, 0, frontier, 0, 32);
           } else {
             int destPos = slot * 32;
@@ -1889,8 +1948,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
         byte[][] cm = new byte[2][32];
         for (int i = 0; i < 2; i++) {
-          byte[] noteCommitment = transferParam.getReceiveDescription(i).getNoteCommitment()
-              .toByteArray();
+          byte[] noteCommitment =
+              transferParam.getReceiveDescription(i).getNoteCommitment().toByteArray();
           System.arraycopy(noteCommitment, 0, cm[i], 0, 32);
         }
         IncrementalMerkleVoucherContainer voucher = addSimpleMerkleVoucherContainer(tree, cm);
@@ -1907,15 +1966,14 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
    */
   @Ignore
   @Test
-  public void createShieldedContractParametersWithoutAskForBurn1to1()
-      throws Exception {
+  public void createShieldedContractParametersWithoutAskForBurn1to1() throws Exception {
     int totalCountNum = 2;
     long leafCount = 0;
     long value = 100L;
     byte[] frontier = new byte[32 * 33];
 
-    IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
-        new IncrementalMerkleTreeCapsule());
+    IncrementalMerkleTreeContainer tree =
+        new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
     for (int countNum = 0; countNum < totalCountNum; countNum++) {
       SpendingKey senderSk = SpendingKey.random();
       ExpandedSpendingKey senderExpsk = senderSk.expandedSpendingKey();
@@ -1927,17 +1985,17 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).get();
       String senderPaymentAddressStr = KeyIo.encodePaymentAddress(senderPaymentAddress);
 
-      { //for mint1
+      { // for mint1
         GrpcAPI.Note note = getNote(value, senderPaymentAddressStr, rcm, new byte[512]);
         GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
-        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
-            .PrivateShieldedTRC20Parameters.newBuilder();
+        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder =
+            GrpcAPI.PrivateShieldedTRC20Parameters.newBuilder();
         revNoteBuilder.setNote(note);
         paramBuilder.setOvk(ByteString.copyFrom(senderFvk.getOvk()));
         paramBuilder.setFromAmount(BigInteger.valueOf(value).toString());
         paramBuilder.addShieldedReceives(revNoteBuilder.build());
-        paramBuilder
-            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
+        paramBuilder.setShieldedTRC20ContractAddress(
+            ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
         PrivateShieldedTRC20Parameters privMintParams = paramBuilder.build();
 
         ShieldedTRC20Parameters minParam = wallet.createShieldedContractParameters(privMintParams);
@@ -1946,8 +2004,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         byte[] mintResult1 = mintContractResult1.getRight();
         Assert.assertEquals(1, mintResult1[31]);
 
-        //update frontier and leafCount
-        //if slot == 0, frontier[0:31]=noteCommitment
+        // update frontier and leafCount
+        // if slot == 0, frontier[0:31]=noteCommitment
         int slot = mintResult1[63];
         if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
@@ -1959,15 +2017,20 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         leafCount++;
       }
 
-      { //for burn
-        GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.Builder privateTRC20Builder = GrpcAPI
-            .PrivateShieldedTRC20ParametersWithoutAsk.newBuilder();
+      { // for burn
+        GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.Builder privateTRC20Builder =
+            GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.newBuilder();
         GrpcAPI.SpendNoteTRC20.Builder spendNoteBuilder = GrpcAPI.SpendNoteTRC20.newBuilder();
         GrpcAPI.Note note = getNote(value, senderPaymentAddressStr, rcm, new byte[512]);
         byte[][] cm1 = new byte[1][32];
-        //spendNote1
-        Note senderNote1 = new Note(senderPaymentAddress.getD(), senderPaymentAddress.getPkD(),
-            value, rcm, new byte[512]);
+        // spendNote1
+        Note senderNote1 =
+            new Note(
+                senderPaymentAddress.getD(),
+                senderPaymentAddress.getPkD(),
+                value,
+                rcm,
+                new byte[512]);
         System.arraycopy(senderNote1.cm(), 0, cm1[0], 0, 32);
         IncrementalMerkleVoucherContainer voucher1 = addSimpleMerkleVoucherContainer(tree, cm1);
         byte[] path1 = decodePath(voucher1.path().encode());
@@ -1985,31 +2048,29 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         privateTRC20Builder.setNsk(ByteString.copyFrom(expsk.getNsk()));
         privateTRC20Builder.setToAmount(BigInteger.valueOf(value).toString());
         privateTRC20Builder.setTransparentToAddress(ByteString.copyFrom(PUBLIC_TO_ADDRESS));
-        privateTRC20Builder
-            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
-        GrpcAPI.ShieldedTRC20Parameters burnParam = wallet
-            .createShieldedContractParametersWithoutAsk(privateTRC20Builder.build());
+        privateTRC20Builder.setShieldedTRC20ContractAddress(
+            ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
+        GrpcAPI.ShieldedTRC20Parameters burnParam =
+            wallet.createShieldedContractParametersWithoutAsk(privateTRC20Builder.build());
 
-        //get the binding signature
+        // get the binding signature
         PrivateShieldedTRC20ParametersWithoutAsk shieldedTRC20ParametersWithoutAsk =
-            privateTRC20Builder
-                .build();
+            privateTRC20Builder.build();
         SpendAuthSigParameters.Builder signParamerters1 = SpendAuthSigParameters.newBuilder();
-        signParamerters1
-            .setAlpha(shieldedTRC20ParametersWithoutAsk.getShieldedSpends(0).getAlpha());
+        signParamerters1.setAlpha(
+            shieldedTRC20ParametersWithoutAsk.getShieldedSpends(0).getAlpha());
         signParamerters1.setAsk(ByteString.copyFrom(expsk.getAsk()));
         signParamerters1.setTxHash(burnParam.getMessageHash());
         BytesMessage signMsg1 = wallet.createSpendAuthSig(signParamerters1.build());
 
         ShieldedTRC20TriggerContractParameters.Builder triggerParam =
-            ShieldedTRC20TriggerContractParameters
-                .newBuilder();
+            ShieldedTRC20TriggerContractParameters.newBuilder();
         triggerParam.setShieldedTRC20Parameters(burnParam);
         triggerParam.addSpendAuthoritySignature(signMsg1);
         triggerParam.setAmount(BigInteger.valueOf(value).toString());
         triggerParam.setTransparentToAddress(ByteString.copyFrom(PUBLIC_TO_ADDRESS));
-        BytesMessage triggerInput = wallet
-            .getTriggerInputForShieldedTRC20Contract(triggerParam.build());
+        BytesMessage triggerInput =
+            wallet.getTriggerInputForShieldedTRC20Contract(triggerParam.build());
         logger.info(
             "trigger contract input: " + Hex.toHexString(triggerInput.getValue().toByteArray()));
 
@@ -2017,8 +2078,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         spendDesBuilder1.setSpendAuthoritySignature(signMsg1.getValue());
         spendDesBuilder1.setAnchor(burnParam.getSpendDescription(0).getAnchor());
         spendDesBuilder1.setRk(burnParam.getSpendDescription(0).getRk());
-        spendDesBuilder1
-            .setValueCommitment(burnParam.getSpendDescription(0).getValueCommitment());
+        spendDesBuilder1.setValueCommitment(burnParam.getSpendDescription(0).getValueCommitment());
         spendDesBuilder1.setZkproof(burnParam.getSpendDescription(0).getZkproof());
         spendDesBuilder1.setNullifier(burnParam.getSpendDescription(0).getNullifier());
 
@@ -2043,15 +2103,14 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
    */
   @Ignore
   @Test
-  public void createShieldedContractParametersWithoutAskForBurn1to2()
-      throws Exception {
+  public void createShieldedContractParametersWithoutAskForBurn1to2() throws Exception {
     int totalCountNum = 2;
     long leafCount = 0;
     long value = 100L;
     byte[] frontier = new byte[32 * 33];
 
-    IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
-        new IncrementalMerkleTreeCapsule());
+    IncrementalMerkleTreeContainer tree =
+        new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
     for (int countNum = 0; countNum < totalCountNum; countNum++) {
       SpendingKey senderSk = SpendingKey.random();
       ExpandedSpendingKey senderExpsk = senderSk.expandedSpendingKey();
@@ -2063,17 +2122,17 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).get();
       String senderPaymentAddressStr = KeyIo.encodePaymentAddress(senderPaymentAddress);
 
-      { //for mint1
+      { // for mint1
         GrpcAPI.Note note = getNote(value, senderPaymentAddressStr, rcm, new byte[512]);
         GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
-        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
-            .PrivateShieldedTRC20Parameters.newBuilder();
+        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder =
+            GrpcAPI.PrivateShieldedTRC20Parameters.newBuilder();
         revNoteBuilder.setNote(note);
         paramBuilder.setOvk(ByteString.copyFrom(senderFvk.getOvk()));
         paramBuilder.setFromAmount(BigInteger.valueOf(value).toString());
         paramBuilder.addShieldedReceives(revNoteBuilder.build());
-        paramBuilder
-            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
+        paramBuilder.setShieldedTRC20ContractAddress(
+            ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
         PrivateShieldedTRC20Parameters privMintParams = paramBuilder.build();
 
         ShieldedTRC20Parameters minParam = wallet.createShieldedContractParameters(privMintParams);
@@ -2082,8 +2141,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         byte[] mintResult1 = mintContractResult1.getRight();
         Assert.assertEquals(1, mintResult1[31]);
 
-        //update frontier and leafCount
-        //if slot == 0, frontier[0:31]=noteCommitment
+        // update frontier and leafCount
+        // if slot == 0, frontier[0:31]=noteCommitment
         int slot = mintResult1[63];
         if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
@@ -2095,15 +2154,20 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         leafCount++;
       }
 
-      { //for burn
-        GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.Builder privateTRC20Builder = GrpcAPI
-            .PrivateShieldedTRC20ParametersWithoutAsk.newBuilder();
+      { // for burn
+        GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.Builder privateTRC20Builder =
+            GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.newBuilder();
         GrpcAPI.SpendNoteTRC20.Builder spendNoteBuilder = GrpcAPI.SpendNoteTRC20.newBuilder();
         GrpcAPI.Note note = getNote(value, senderPaymentAddressStr, rcm, new byte[512]);
         byte[][] cm1 = new byte[1][32];
-        //spendNote1
-        Note senderNote1 = new Note(senderPaymentAddress.getD(), senderPaymentAddress.getPkD(),
-            value, rcm, new byte[512]);
+        // spendNote1
+        Note senderNote1 =
+            new Note(
+                senderPaymentAddress.getD(),
+                senderPaymentAddress.getPkD(),
+                value,
+                rcm,
+                new byte[512]);
         System.arraycopy(senderNote1.cm(), 0, cm1[0], 0, 32);
         IncrementalMerkleVoucherContainer voucher1 = addSimpleMerkleVoucherContainer(tree, cm1);
         byte[] path1 = decodePath(voucher1.path().encode());
@@ -2121,10 +2185,10 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         privateTRC20Builder.setNsk(ByteString.copyFrom(expsk.getNsk()));
         privateTRC20Builder.setToAmount(BigInteger.valueOf(60).toString());
         privateTRC20Builder.setTransparentToAddress(ByteString.copyFrom(PUBLIC_TO_ADDRESS));
-        privateTRC20Builder
-            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
+        privateTRC20Builder.setShieldedTRC20ContractAddress(
+            ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
 
-        //receiveNote
+        // receiveNote
         GrpcAPI.ReceiveNote.Builder revNoteBuilder2 = GrpcAPI.ReceiveNote.newBuilder();
         SpendingKey receiveSk2 = SpendingKey.random();
         FullViewingKey receiveFvk2 = receiveSk2.fullViewingKey();
@@ -2137,29 +2201,27 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         revNoteBuilder2.setNote(revNote2);
         privateTRC20Builder.addShieldedReceives(revNoteBuilder2.build());
 
-        GrpcAPI.ShieldedTRC20Parameters burnParam = wallet
-            .createShieldedContractParametersWithoutAsk(privateTRC20Builder.build());
+        GrpcAPI.ShieldedTRC20Parameters burnParam =
+            wallet.createShieldedContractParametersWithoutAsk(privateTRC20Builder.build());
 
-        //get the binding signature
+        // get the binding signature
         PrivateShieldedTRC20ParametersWithoutAsk shieldedTRC20ParametersWithoutAsk =
-            privateTRC20Builder
-                .build();
+            privateTRC20Builder.build();
         SpendAuthSigParameters.Builder signParamerters1 = SpendAuthSigParameters.newBuilder();
-        signParamerters1
-            .setAlpha(shieldedTRC20ParametersWithoutAsk.getShieldedSpends(0).getAlpha());
+        signParamerters1.setAlpha(
+            shieldedTRC20ParametersWithoutAsk.getShieldedSpends(0).getAlpha());
         signParamerters1.setAsk(ByteString.copyFrom(expsk.getAsk()));
         signParamerters1.setTxHash(burnParam.getMessageHash());
         BytesMessage signMsg1 = wallet.createSpendAuthSig(signParamerters1.build());
 
         ShieldedTRC20TriggerContractParameters.Builder triggerParam =
-            ShieldedTRC20TriggerContractParameters
-                .newBuilder();
+            ShieldedTRC20TriggerContractParameters.newBuilder();
         triggerParam.setShieldedTRC20Parameters(burnParam);
         triggerParam.addSpendAuthoritySignature(signMsg1);
         triggerParam.setAmount(BigInteger.valueOf(value).toString());
         triggerParam.setTransparentToAddress(ByteString.copyFrom(PUBLIC_TO_ADDRESS));
-        BytesMessage triggerInput = wallet
-            .getTriggerInputForShieldedTRC20Contract(triggerParam.build());
+        BytesMessage triggerInput =
+            wallet.getTriggerInputForShieldedTRC20Contract(triggerParam.build());
         logger.info(
             "trigger contract input: " + Hex.toHexString(triggerInput.getValue().toByteArray()));
 
@@ -2167,8 +2229,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         spendDesBuilder1.setSpendAuthoritySignature(signMsg1.getValue());
         spendDesBuilder1.setAnchor(burnParam.getSpendDescription(0).getAnchor());
         spendDesBuilder1.setRk(burnParam.getSpendDescription(0).getRk());
-        spendDesBuilder1
-            .setValueCommitment(burnParam.getSpendDescription(0).getValueCommitment());
+        spendDesBuilder1.setValueCommitment(burnParam.getSpendDescription(0).getValueCommitment());
         spendDesBuilder1.setZkproof(burnParam.getSpendDescription(0).getZkproof());
         spendDesBuilder1.setNullifier(burnParam.getSpendDescription(0).getNullifier());
 
@@ -2184,8 +2245,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         byte[] result = contractResult.getRight();
         Assert.assertEquals(1, result[31]);
 
-        //update frontier and leafCount
-        //if slot == 0, frontier[0:31]=noteCommitment
+        // update frontier and leafCount
+        // if slot == 0, frontier[0:31]=noteCommitment
         int slot = result[63];
         if (slot == 0) {
           System.arraycopy(result, 0, frontier, 0, 32);
@@ -2207,7 +2268,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
     SpendingKey sk = SpendingKey.random();
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     byte[] ovk = expsk.getOvk();
-    //ReceiveNote
+    // ReceiveNote
     GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
     SpendingKey spendingKey = SpendingKey.random();
     FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
@@ -2220,36 +2281,38 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
     GrpcAPI.Note revNote = getNote(revValue, paymentAddressStr, rcm, memo);
     revNoteBuilder.setNote(revNote);
 
-    GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.Builder paramBuilder = GrpcAPI
-        .PrivateShieldedTRC20ParametersWithoutAsk.newBuilder();
+    GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.Builder paramBuilder =
+        GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.newBuilder();
     paramBuilder.setOvk(ByteString.copyFrom(ovk));
     paramBuilder.setFromAmount(BigInteger.valueOf(revValue).toString());
     paramBuilder.addShieldedReceives(revNoteBuilder.build());
     paramBuilder.setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
-    GrpcAPI.ShieldedTRC20Parameters trc20MintParams = wallet
-        .createShieldedContractParametersWithoutAsk(paramBuilder.build());
+    GrpcAPI.ShieldedTRC20Parameters trc20MintParams =
+        wallet.createShieldedContractParametersWithoutAsk(paramBuilder.build());
 
     GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk privateParams = paramBuilder.build();
 
-    //verify receiveProof && bindingSignature
+    // verify receiveProof && bindingSignature
     boolean result;
     long ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
     ShieldContract.ReceiveDescription revDesc = trc20MintParams.getReceiveDescription(0);
     try {
-      result = JLibrustzcash.librustzcashSaplingCheckOutput(
-          new LibrustzcashParam.CheckOutputParams(
-              ctx,
-              revDesc.getValueCommitment().toByteArray(),
-              revDesc.getNoteCommitment().toByteArray(),
-              revDesc.getEpk().toByteArray(),
-              revDesc.getZkproof().toByteArray()));
+      result =
+          JLibrustzcash.librustzcashSaplingCheckOutput(
+              new LibrustzcashParam.CheckOutputParams(
+                  ctx,
+                  revDesc.getValueCommitment().toByteArray(),
+                  revDesc.getNoteCommitment().toByteArray(),
+                  revDesc.getEpk().toByteArray(),
+                  revDesc.getZkproof().toByteArray()));
       long valueBalance = -revValue;
-      result &= JLibrustzcash.librustzcashSaplingFinalCheck(
-          new LibrustzcashParam.FinalCheckParams(
-              ctx,
-              valueBalance,
-              trc20MintParams.getBindingSignature().toByteArray(),
-              trc20MintParams.getMessageHash().toByteArray()));
+      result &=
+          JLibrustzcash.librustzcashSaplingFinalCheck(
+              new LibrustzcashParam.FinalCheckParams(
+                  ctx,
+                  valueBalance,
+                  trc20MintParams.getBindingSignature().toByteArray(),
+                  trc20MintParams.getMessageHash().toByteArray()));
     } catch (Throwable any) {
       result = false;
     } finally {
@@ -2258,13 +2321,13 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
     Assert.assertTrue(result);
 
     ShieldedTRC20TriggerContractParameters.Builder triggerParam =
-        ShieldedTRC20TriggerContractParameters
-            .newBuilder();
+        ShieldedTRC20TriggerContractParameters.newBuilder();
     triggerParam.setShieldedTRC20Parameters(trc20MintParams);
     triggerParam.setAmount(BigInteger.valueOf(revValue).toString());
-    BytesMessage triggerInput = wallet
-        .getTriggerInputForShieldedTRC20Contract(triggerParam.build());
-    Assert.assertArrayEquals(triggerInput.getValue().toByteArray(),
+    BytesMessage triggerInput =
+        wallet.getTriggerInputForShieldedTRC20Contract(triggerParam.build());
+    Assert.assertArrayEquals(
+        triggerInput.getValue().toByteArray(),
         Hex.decode(trc20MintParams.getTriggerContractInput()));
   }
 
@@ -2277,8 +2340,9 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
     FullViewingKey fvk = sk.fullViewingKey();
     byte[] ivk = fvk.inViewingKey().value;
 
-    GrpcAPI.DecryptNotesTRC20 scannedNotes = wallet.scanShieldedTRC20NotesByIvk(
-        statNum, endNum, SHIELDED_CONTRACT_ADDRESS, ivk, fvk.getAk(), fvk.getNk(), null);
+    GrpcAPI.DecryptNotesTRC20 scannedNotes =
+        wallet.scanShieldedTRC20NotesByIvk(
+            statNum, endNum, SHIELDED_CONTRACT_ADDRESS, ivk, fvk.getAk(), fvk.getNk(), null);
 
     for (GrpcAPI.DecryptNotesTRC20.NoteTx noteTx : scannedNotes.getNoteTxsList()) {
       logger.info(noteTx.toString());
@@ -2292,8 +2356,9 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
     SpendingKey sk = SpendingKey.decode(privateKey);
     FullViewingKey fvk = sk.fullViewingKey();
 
-    GrpcAPI.DecryptNotesTRC20 scannedNotes = wallet.scanShieldedTRC20NotesByOvk(
-        statNum, endNum, fvk.getOvk(), SHIELDED_CONTRACT_ADDRESS, null);
+    GrpcAPI.DecryptNotesTRC20 scannedNotes =
+        wallet.scanShieldedTRC20NotesByOvk(
+            statNum, endNum, fvk.getOvk(), SHIELDED_CONTRACT_ADDRESS, null);
 
     for (GrpcAPI.DecryptNotesTRC20.NoteTx noteTx : scannedNotes.getNoteTxsList()) {
       logger.info(noteTx.toString());
@@ -2309,8 +2374,9 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
     FullViewingKey fvk = sk.fullViewingKey();
     byte[] ivk = fvk.inViewingKey().value;
 
-    GrpcAPI.DecryptNotesTRC20 scannedNotes = wallet.scanShieldedTRC20NotesByIvk(
-        statNum, endNum, SHIELDED_CONTRACT_ADDRESS, ivk, fvk.getAk(), fvk.getNk(), null);
+    GrpcAPI.DecryptNotesTRC20 scannedNotes =
+        wallet.scanShieldedTRC20NotesByIvk(
+            statNum, endNum, SHIELDED_CONTRACT_ADDRESS, ivk, fvk.getAk(), fvk.getNk(), null);
 
     for (GrpcAPI.DecryptNotesTRC20.NoteTx noteTx : scannedNotes.getNoteTxsList()) {
       logger.info(noteTx.toString());
@@ -2326,26 +2392,24 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       NfBuilfer.setNote(scannedNotes.getNoteTxs(0).getNote());
     }
 
-    GrpcAPI.NullifierResult result = wallet
-        .isShieldedTRC20ContractNoteSpent(NfBuilfer.build());
+    GrpcAPI.NullifierResult result = wallet.isShieldedTRC20ContractNoteSpent(NfBuilfer.build());
     Assert.assertTrue(result.getIsSpent());
   }
-
 
   private byte[] abiEncodeForBurn(ShieldedTRC20Parameters params, long value) {
     byte[] mergedBytes;
     ShieldContract.SpendDescription spendDesc = params.getSpendDescription(0);
-    mergedBytes = ByteUtil.merge(
-        spendDesc.getNullifier().toByteArray(),
-        spendDesc.getAnchor().toByteArray(),
-        spendDesc.getValueCommitment().toByteArray(),
-        spendDesc.getRk().toByteArray(),
-        spendDesc.getZkproof().toByteArray(),
-        spendDesc.getSpendAuthoritySignature().toByteArray(),
-        longTo32Bytes(value),
-        params.getBindingSignature().toByteArray(),
-        params.getMessageHash().toByteArray()
-    );
+    mergedBytes =
+        ByteUtil.merge(
+            spendDesc.getNullifier().toByteArray(),
+            spendDesc.getAnchor().toByteArray(),
+            spendDesc.getValueCommitment().toByteArray(),
+            spendDesc.getRk().toByteArray(),
+            spendDesc.getZkproof().toByteArray(),
+            spendDesc.getSpendAuthoritySignature().toByteArray(),
+            longTo32Bytes(value),
+            params.getBindingSignature().toByteArray(),
+            params.getMessageHash().toByteArray());
     return mergedBytes;
   }
 
@@ -2357,8 +2421,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
   }
 
   private IncrementalMerkleVoucherContainer addSimpleMerkleVoucherContainer(
-      IncrementalMerkleTreeContainer tree, byte[][] cm)
-      throws ZksnarkException {
+      IncrementalMerkleTreeContainer tree, byte[][] cm) throws ZksnarkException {
     for (int i = 0; i < cm.length; i++) {
       PedersenHashCapsule compressCapsule = new PedersenHashCapsule();
       compressCapsule.setContent(ByteString.copyFrom(cm[i]));
@@ -2378,8 +2441,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
     return path;
   }
 
-  private GrpcAPI.PrivateShieldedTRC20Parameters mintParams(String privKey,
-      long value, String contractAddr, byte[] rcm)
+  private GrpcAPI.PrivateShieldedTRC20Parameters mintParams(
+      String privKey, long value, String contractAddr, byte[] rcm)
       throws ZksnarkException, ContractValidateException {
     librustzcashInitZksnarkParams();
     long fromAmount = value;
@@ -2404,8 +2467,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
     revNoteBuilder.setNote(revNote);
     byte[] contractAddress = WalletClient.decodeFromBase58Check(contractAddr);
 
-    GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
-        .PrivateShieldedTRC20Parameters.newBuilder();
+    GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder =
+        GrpcAPI.PrivateShieldedTRC20Parameters.newBuilder();
     paramBuilder.setAsk(ByteString.copyFrom(ask));
     paramBuilder.setNsk(ByteString.copyFrom(nsk));
     paramBuilder.setOvk(ByteString.copyFrom(ovk));
@@ -2415,21 +2478,21 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
     return paramBuilder.build();
   }
 
-  private byte[] abiEncodeForMint(ShieldedTRC20Parameters params, long value,
-      byte[] frontier, long leafCount) {
+  private byte[] abiEncodeForMint(
+      ShieldedTRC20Parameters params, long value, byte[] frontier, long leafCount) {
     byte[] mergedBytes;
     ShieldContract.ReceiveDescription revDesc = params.getReceiveDescription(0);
-    mergedBytes = ByteUtil.merge(
-        revDesc.getNoteCommitment().toByteArray(),
-        revDesc.getValueCommitment().toByteArray(),
-        revDesc.getEpk().toByteArray(),
-        revDesc.getZkproof().toByteArray(),
-        params.getBindingSignature().toByteArray(),
-        ByteUtil.longTo32Bytes(value),
-        params.getMessageHash().toByteArray(),
-        frontier,
-        ByteUtil.longTo32Bytes(leafCount)
-    );
+    mergedBytes =
+        ByteUtil.merge(
+            revDesc.getNoteCommitment().toByteArray(),
+            revDesc.getValueCommitment().toByteArray(),
+            revDesc.getEpk().toByteArray(),
+            revDesc.getZkproof().toByteArray(),
+            params.getBindingSignature().toByteArray(),
+            ByteUtil.longTo32Bytes(value),
+            params.getMessageHash().toByteArray(),
+            frontier,
+            ByteUtil.longTo32Bytes(leafCount));
     return mergedBytes;
   }
 
@@ -2442,23 +2505,24 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
     return noteBuilder.build();
   }
 
-  private byte[] abiEncodeForTransfer(ShieldedTRC20Parameters params, byte[] frontier,
-      long leafCount) {
+  private byte[] abiEncodeForTransfer(
+      ShieldedTRC20Parameters params, byte[] frontier, long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
     byte[] mergedBytes;
     List<SpendDescription> spendDescs = params.getSpendDescriptionList();
     for (ShieldContract.SpendDescription spendDesc : spendDescs) {
-      input = ByteUtil.merge(input,
-          spendDesc.getNullifier().toByteArray(),
-          spendDesc.getAnchor().toByteArray(),
-          spendDesc.getValueCommitment().toByteArray(),
-          spendDesc.getRk().toByteArray(),
-          spendDesc.getZkproof().toByteArray()
-      );
-      spendAuthSig = ByteUtil.merge(
-          spendAuthSig, spendDesc.getSpendAuthoritySignature().toByteArray());
+      input =
+          ByteUtil.merge(
+              input,
+              spendDesc.getNullifier().toByteArray(),
+              spendDesc.getAnchor().toByteArray(),
+              spendDesc.getValueCommitment().toByteArray(),
+              spendDesc.getRk().toByteArray(),
+              spendDesc.getZkproof().toByteArray());
+      spendAuthSig =
+          ByteUtil.merge(spendAuthSig, spendDesc.getSpendAuthoritySignature().toByteArray());
     }
     byte[] inputOffsetbytes = longTo32Bytes(1280);
     long spendCount = spendDescs.size();
@@ -2466,30 +2530,32 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
     byte[] authOffsetBytes = longTo32Bytes(1280 + 32 + 320 * spendCount);
     List<ShieldContract.ReceiveDescription> recvDescs = params.getReceiveDescriptionList();
     for (ShieldContract.ReceiveDescription recvDesc : recvDescs) {
-      output = ByteUtil.merge(output,
-          recvDesc.getNoteCommitment().toByteArray(),
-          recvDesc.getValueCommitment().toByteArray(),
-          recvDesc.getEpk().toByteArray(),
-          recvDesc.getZkproof().toByteArray()
-      );
+      output =
+          ByteUtil.merge(
+              output,
+              recvDesc.getNoteCommitment().toByteArray(),
+              recvDesc.getValueCommitment().toByteArray(),
+              recvDesc.getEpk().toByteArray(),
+              recvDesc.getZkproof().toByteArray());
     }
     long recvCount = recvDescs.size();
     byte[] recvCountBytes = longTo32Bytes(recvCount);
     byte[] outputOffsetbytes = longTo32Bytes(1280 + 32 + 320 * spendCount + 32 + 64 * spendCount);
-    mergedBytes = ByteUtil.merge(inputOffsetbytes,
-        authOffsetBytes,
-        outputOffsetbytes,
-        params.getBindingSignature().toByteArray(),
-        params.getMessageHash().toByteArray(),
-        frontier,
-        longTo32Bytes(leafCount),
-        spendCountBytes,
-        input,
-        spendCountBytes,
-        spendAuthSig,
-        recvCountBytes,
-        output
-    );
+    mergedBytes =
+        ByteUtil.merge(
+            inputOffsetbytes,
+            authOffsetBytes,
+            outputOffsetbytes,
+            params.getBindingSignature().toByteArray(),
+            params.getMessageHash().toByteArray(),
+            frontier,
+            longTo32Bytes(leafCount),
+            spendCountBytes,
+            input,
+            spendCountBytes,
+            spendAuthSig,
+            recvCountBytes,
+            output);
     return mergedBytes;
   }
 
@@ -2498,6 +2564,4 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
     byte[] zeroBytes = new byte[24];
     return ByteUtil.merge(zeroBytes, longBytes);
   }
-
-
 }
