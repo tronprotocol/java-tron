@@ -473,7 +473,7 @@ public class SnapshotManager implements RevokingDatabase {
           snapshotManager.revoke();
         }
       } catch (Exception e) {
-        throw new RevokingStoreIllegalStateException(e);
+        logger.error("Revoke database error.", e);
       }
       if (disableOnExit) {
         snapshotManager.disable();
@@ -482,7 +482,17 @@ public class SnapshotManager implements RevokingDatabase {
 
     @Override
     public void close() {
-     destroy();
+      try {
+        if (applySnapshot) {
+          snapshotManager.revoke();
+        }
+      } catch (Exception e) {
+        logger.error("Revoke database error.", e);
+        throw new RevokingStoreIllegalStateException(e);
+      }
+      if (disableOnExit) {
+        snapshotManager.disable();
+      }
     }
   }
 
