@@ -49,26 +49,6 @@ public class AccountTransactionCreator extends AbstractTransactionCreator implem
   }
 
   @Override
-//  public List<String> createTransactions(int count) {
-//    List<String> transactions = new ArrayList<>(count * 2);
-//    List<Future<?>> futures = new ArrayList<>();
-//    for (int i = 0; i < count; i++) {
-//      Future<?> tran = generatePool.submit(() -> {
-//        // test account
-//        Transaction transaction = create();
-//        transactions.add(Hex.toHexString(transaction.toByteArray()));
-//      });
-//      futures.add(tran);
-//    }
-//    for (Future<?> future : futures) {
-//      try {
-//        future.get();
-//      } catch (InterruptedException | ExecutionException e) {
-//        e.printStackTrace();
-//      }
-//    }
-//    return transactions;
-//  }
   public List<String> createTransactions(int count) {
     CountDownLatch countDownLatch = new CountDownLatch(count);
     List<String> transactions = new ArrayList<>(count * 2);
@@ -82,6 +62,7 @@ public class AccountTransactionCreator extends AbstractTransactionCreator implem
     }
     try {
       countDownLatch.await();
+      generatePool.shutdown();
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
