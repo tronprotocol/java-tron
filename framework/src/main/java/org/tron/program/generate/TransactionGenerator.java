@@ -7,7 +7,6 @@ import org.tron.protos.Protocol;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -33,6 +32,7 @@ public class TransactionGenerator {
     if (null == generator) {
       throw new IllegalArgumentException("generator not exists.");
     }
+    logger.info("generator type: {}", generator.getClass().getTypeName());
     CountDownLatch countDownLatch = new CountDownLatch(count);
     List<String> transactions = new ArrayList<>(count * 2);
     for (int i = 0; i < count; i++) {

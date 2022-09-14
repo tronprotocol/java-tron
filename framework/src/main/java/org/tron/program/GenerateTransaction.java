@@ -29,12 +29,15 @@ public class GenerateTransaction {
   private static String defaultType = "transfer";
   private static String type;
   private static String[] transactionTypes = null;
+  public static String assetName;
 
   private static int totalTransaction = 100;
   private static Long generateBatch = 10000L;
   private static Long stressCount = 0L;
   // generate transaction
-  private static String writePath = "/data/generate_transaction.txt";
+//  private static String writePath = "/data/generate_transaction.txt";
+  // for test
+  private static String writePath = "/Users/liukai/workspaces/temp/test.txt";
 
   public static void main(String[] args) {
     initParam();
@@ -74,6 +77,12 @@ public class GenerateTransaction {
     }
     logger.info("writePath: {}", writePath);
 
+    String asset = System.getProperty("asset");
+    if (StringUtils.isNoneEmpty(asset)) {
+      assetName = asset;
+      logger.info("assetName: {}", asset);
+    }
+
     String types = System.getProperty("types");
     if (StringUtils.isNoneEmpty(types)) {
       transactionTypes = types.split("|");
@@ -95,8 +104,6 @@ public class GenerateTransaction {
     // 生成交易
     List<String> transactions = generateTransaction();
     try {
-      // for test
-      writePath = "/Users/liukai/workspaces/temp/test.txt";
       FileUtils.writeLines(new File(writePath), transactions);
     } catch (IOException e) {
       e.printStackTrace();
