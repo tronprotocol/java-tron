@@ -16,7 +16,7 @@ public class AssetTransactionCreator extends AbstractTransactionCreator implemen
   }
 
   @Override
-  public List<String> createTransactions() {
+  public List<String> createTransactions(int count) {
     return null;
   }
 }

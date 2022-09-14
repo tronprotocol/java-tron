@@ -11,6 +11,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -25,56 +26,60 @@ public class GenerateTransaction {
   public static ConcurrentLinkedQueue<String> accountQueue = new ConcurrentLinkedQueue<>();
   private static String accountFilePath = "/Users/liukai/workspaces/java/tron/java-tron/framework/src/main/resources/stress_account_sample.csv";
 
-  private static String transactionType = "trx";
-  private static String[] types = null;
+  private static String defaultType = "transfer";
+  private static String[] transactionTypes = null;
 
-  private static Long transactionTotal = 100000L;
+  private static int totalTransaction = 100;
   private static Long generateBatch = 10000L;
   private static Long stressCount = 0L;
   // generate transaction
   private static String writePath = "/data/generate_transaction.txt";
 
-  /**
-   *
-   * @param args
-   */
   public static void main(String[] args) {
     initParam();
     initTask();
   }
 
   private static void initAccountByFile() {
+    logger.info("load pre-prepared accounts");
     try (BufferedReader bufferedReader =
                  new BufferedReader(new InputStreamReader(new FileInputStream(accountFilePath), StandardCharsets.UTF_8))) {
       String line;
       while ((line = bufferedReader.readLine()) != null) {
         accountQueue.offer(line);
       }
+      logger.info("load completed: {}", accountQueue.size());
     } catch (IOException e) {
       e.printStackTrace();
     }
   }
 
   public static void initParam() {
+    logger.info("init params");
     String total = System.getProperty("total");
     if (StringUtils.isNoneEmpty(total)) {
-      transactionTotal = Long.parseLong(total);
+      totalTransaction = Integer.parseInt(total);
     }
+    logger.info("totalTransaction: {}", totalTransaction);
 
     String stress = System.getProperty("stressCount");
     if (StringUtils.isNoneEmpty(stress)) {
       stressCount = Long.parseLong(stress);
     }
+    logger.info("stressCount: {}", stressCount);
 
     String path = System.getProperty("path");
     if (StringUtils.isNoneEmpty(path)) {
       writePath = path;
     }
+    logger.info("writePath: {}", writePath);
 
-    String type = System.getProperty("type");
-    if (StringUtils.isNoneEmpty(type)) {
-      types = type.split("|");
+    String types = System.getProperty("types");
+    if (StringUtils.isNoneEmpty(types)) {
+      transactionTypes = types.split("|");
     }
+    logger.info("transactionTypes: {}", Arrays.toString(transactionTypes));
+
   }
 
   public static void initTask() {
@@ -92,11 +97,12 @@ public class GenerateTransaction {
   }
 
   private static List<String> generateTransaction() {
-    // types
-    String type = types[0];
-
-
-    return new TransactionGenerator(10000).create();
+    logger.info("generate transaction");
+    // for test
+    String type = "transfer";
+//    String type = "trc10";
+//    String type = "trc20";
+    return new TransactionGenerator(totalTransaction, type).create();
   }
 
 }

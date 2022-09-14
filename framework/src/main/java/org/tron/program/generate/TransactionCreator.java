@@ -12,5 +12,5 @@ public interface TransactionCreator {
 
   Protocol.Transaction create();
 
-  List<String> createTransactions();
+  List<String> createTransactions(int count);
 }

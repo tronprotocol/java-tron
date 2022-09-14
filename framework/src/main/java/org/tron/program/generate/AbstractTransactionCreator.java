@@ -19,8 +19,8 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class AbstractTransactionCreator {
 
-  private long time = System.currentTimeMillis();
-  private AtomicLong count = new AtomicLong();
+  private final long time = System.currentTimeMillis();
+  private final AtomicLong count = new AtomicLong();
 
   public static Protocol.Transaction sign(Protocol.Transaction transaction, ECKey myKey) {
     Protocol.Transaction.Builder transactionBuilderSigned = transaction.toBuilder();

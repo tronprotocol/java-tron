@@ -1,6 +1,7 @@
 package org.tron.program.generate;
 
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
@@ -11,26 +12,26 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.contract.AccountContract.AccountCreateContract;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * @author liukai
  * @since 2022/9/9.
  */
 @Setter
-@Creator(type = "account")
+@Creator(type = "transfer")
+@Slf4j
 public class AccountTransactionCreator extends AbstractTransactionCreator implements TransactionCreator {
 
-  private String ownerAddress;
-  private String privateKey;
-  private CountDownLatch countDownLatch;
-
-  public AccountTransactionCreator(String ownerAddress, String privateKey, CountDownLatch countDownLatch) {
-    this.ownerAddress = ownerAddress;
-    this.privateKey = privateKey;
-    this.countDownLatch = countDownLatch;
-  }
+  private static String ownerAddress = "TXtrbmfwZ2LxtoCveEhZT86fTss1w8rwJE";
+  private static String privateKey = "0528dc17428585fc4dece68b79fa7912270a1fe8e85f244372f59eb7e8925e04";
+  private ExecutorService generatePool = Executors.newFixedThreadPool(4, r -> new Thread(r, "create-transaction"));
 
   @Override
   public Protocol.Transaction create() {
@@ -39,9 +40,7 @@ public class AccountTransactionCreator extends AbstractTransactionCreator implem
     byte[] newAccountAddressBytes = newAccountKey.getAddress();
     AccountCreateContract contract = createAccountCreateContract(ownerAddressBytes, newAccountAddressBytes);
     Transaction transaction = createTransaction(contract, Contract.ContractType.AccountCreateContract);
-
     transaction = sign(transaction, ECKey.fromPrivate(ByteArray.fromHexString(privateKey)));
-    countDownLatch.countDown();
     return transaction;
   }
 
@@ -50,7 +49,42 @@ public class AccountTransactionCreator extends AbstractTransactionCreator implem
   }
 
   @Override
-  public List<String> createTransactions() {
-    return null;
+//  public List<String> createTransactions(int count) {
+//    List<String> transactions = new ArrayList<>(count * 2);
+//    List<Future<?>> futures = new ArrayList<>();
+//    for (int i = 0; i < count; i++) {
+//      Future<?> tran = generatePool.submit(() -> {
+//        // test account
+//        Transaction transaction = create();
+//        transactions.add(Hex.toHexString(transaction.toByteArray()));
+//      });
+//      futures.add(tran);
+//    }
+//    for (Future<?> future : futures) {
+//      try {
+//        future.get();
+//      } catch (InterruptedException | ExecutionException e) {
+//        e.printStackTrace();
+//      }
+//    }
+//    return transactions;
+//  }
+  public List<String> createTransactions(int count) {
+    CountDownLatch countDownLatch = new CountDownLatch(count);
+    List<String> transactions = new ArrayList<>(count * 2);
+    for (int i = 0; i < count; i++) {
+      generatePool.execute(() -> {
+        // test account
+        Transaction transaction = create();
+        transactions.add(Hex.toHexString(transaction.toByteArray()));
+        countDownLatch.countDown();
+      });
+    }
+    try {
+      countDownLatch.await();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+    return transactions;
   }
 }
