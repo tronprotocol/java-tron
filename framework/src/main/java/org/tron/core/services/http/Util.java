@@ -4,6 +4,7 @@ import static org.tron.common.utils.Commons.decodeFromBase58Check;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -292,6 +293,8 @@ public class Util {
         logger.debug("ParseException: {}", e.getMessage());
       } catch (ClassCastException e) {
         logger.debug("ClassCastException: {}", e.getMessage());
+      } catch (JSONException e) {
+        logger.debug("JSONException: {}", e.getMessage());
       } catch (Exception e) {
         logger.error("", e);
       }
