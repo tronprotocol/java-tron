@@ -4,7 +4,20 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.io.*;
+import com.google.protobuf.ByteString;
+
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLStreamHandlerFactory;
@@ -12,17 +25,12 @@ import java.nio.charset.StandardCharsets;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.google.protobuf.Any;
-import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
-import org.bouncycastle.util.encoders.Hex;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.tron.api.GrpcAPI;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -37,7 +45,6 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.services.NodeInfoService;
-import org.tron.core.services.http.JsonFormat;
 import org.tron.core.services.http.solidity.mockito.HttpUrlStreamHandler;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.BalanceContract;
@@ -71,7 +78,6 @@ public class GetTransactionByIdSolidityServletTest {
     // Allows for mocking URL connections
     URLStreamHandlerFactory urlStreamHandlerFactory = mock(URLStreamHandlerFactory.class);
     URL.setURLStreamHandlerFactory(urlStreamHandlerFactory);
-    ChainBaseManager dbManager = context.getBean(ChainBaseManager.class);
 
     blockCapsule =
         new BlockCapsule(
@@ -98,7 +104,7 @@ public class GetTransactionByIdSolidityServletTest {
     transactionCapsule.setBlockNum(blockCapsule.getNum());
 
     blockCapsule.addTransaction(transactionCapsule);
-
+    ChainBaseManager dbManager = context.getBean(ChainBaseManager.class);
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(1L);
     dbManager.getBlockIndexStore().put(blockCapsule.getBlockId());
     dbManager.getBlockStore().put(blockCapsule.getBlockId().getBytes(), blockCapsule);

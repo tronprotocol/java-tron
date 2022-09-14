@@ -1,24 +1,26 @@
 package org.tron.core.services.http;
 
-import lombok.extern.slf4j.Slf4j;
-import org.junit.*;
-
-import org.tron.common.application.TronApplicationContext;
-
-import org.tron.common.utils.FileUtil;
-import org.tron.core.Constant;
-import org.tron.core.Wallet;
-
-import org.tron.core.config.DefaultConfig;
-import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.*;
-
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.tron.common.application.TronApplicationContext;
+import org.tron.common.utils.FileUtil;
+import org.tron.core.Constant;
+import org.tron.core.config.DefaultConfig;
+import org.tron.core.config.args.Args;
 
 @Slf4j
 public class ListNodesServletTest {
@@ -34,6 +36,7 @@ public class ListNodesServletTest {
     context = new TronApplicationContext(DefaultConfig.class);
   }
 
+  /** . */
   @AfterClass
   public static void removeDb() {
     Args.clearParam();
@@ -53,6 +56,7 @@ public class ListNodesServletTest {
     this.response = mock(HttpServletResponse.class);
   }
 
+  /** . */
   @After
   public void tearDown() {
     if (FileUtil.deleteDir(new File("temp.txt"))) {
