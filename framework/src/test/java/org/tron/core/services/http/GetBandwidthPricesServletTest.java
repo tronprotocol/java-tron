@@ -32,7 +32,7 @@ public class GetBandwidthPricesServletTest {
   private HttpServletResponse response;
 
   static {
-    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
   }
 

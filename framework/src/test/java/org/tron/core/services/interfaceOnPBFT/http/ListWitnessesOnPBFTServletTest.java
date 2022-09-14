@@ -32,8 +32,7 @@ public class ListWitnessesOnPBFTServletTest {
   private HttpServletResponse response;
 
   static {
-    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
-    // 启服务，具体的端口号啥的在DefaultConfig.class里写死的
+    Args.setParam(new String[] {"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
   }
 

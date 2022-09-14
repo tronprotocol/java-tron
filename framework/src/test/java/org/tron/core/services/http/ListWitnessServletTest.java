@@ -13,7 +13,6 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,7 +31,7 @@ public class ListWitnessServletTest {
   private HttpServletResponse response;
 
   static {
-    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
   }
 
