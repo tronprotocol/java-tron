@@ -46,6 +46,7 @@ public class UsddManager {
   String lockContract = "TAYv1gLrNijtu2cCnx8YW6q9cfNDzZPzLg";
   String MultiSigFundRaiser = "TQyGdTsd7qPZDx35s9915qwDwJR1EhQdgy";
   String PSMMultiSigWallet = "TVLxcjofc5i24CFtXkVZQBd4b3LqiNBM7u";
+  String WhiteGurMultiSigWallet = "TMZCLGyxJavipJp7JLJKNMh6aqHs7KN1Zh";
 
 
 
@@ -93,7 +94,7 @@ public class UsddManager {
     ownerPks[6] = ownerPk7;
     for (int i = 1; i < 7; i++) {
       String txid = "";
-      String param = "5";
+      String param = "7";
       txid = PublicMethed.triggerContract(PublicMethed.decode58Check(MultiSigAuthorizer),
           "confirmTransaction(uint256)", param, false,
           0, maxFeeLimit, PublicMethed.getFinalAddress(ownerPks[i]), ownerPks[i], blockingStubFull);
@@ -138,7 +139,7 @@ public class UsddManager {
     ownerPks[6] = ownerPk7;
     for (int i = 0; i < 7; i++) {
       String txid = "";
-      String param = "0";
+      String param = "3";
       txid = PublicMethed.triggerContract(PublicMethed.decode58Check(lockContract),
           "confirmTransaction(uint256)", param, false,
           0, maxFeeLimit, PublicMethed.getFinalAddress(ownerPks[i]), ownerPks[i], blockingStubFull);
@@ -223,8 +224,40 @@ public class UsddManager {
     ownerPks[6] = ownerPk7;
     for (int i = 0; i < 7; i++) {
       String txid = "";
-      String param = "29";
+      String param = "147";
       txid = PublicMethed.triggerContract(PublicMethed.decode58Check(PSMMultiSigWallet),
+          "confirmTransaction(uint256)", param, false,
+          0, maxFeeLimit, PublicMethed.getFinalAddress(ownerPks[i]), ownerPks[i], blockingStubFull);
+      Optional<Protocol.TransactionInfo> infoById = null;
+      /*PublicMethed.waitProduceNextBlock(blockingStubFull);
+      infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+      logger.info(infoById.toString());
+      Assert.assertEquals(0, infoById.get().getResultValue());*/
+    }
+  }
+
+  @Test(enabled = true, description = "Open experimental check address ")
+  public void test05WhiteGur() {
+    String ownerPk1="3f4dcf921d17abe33f007bf7cc31f367cba94f1b80ae36bfa62fd30f00410b9b";
+    String ownerPk2="f51dd12e73a409b0b8d2ab74c5b56edfcca3bbcd4cb24aea6ff69ae2c1eaabd4";
+    String ownerPk3="2af5a6dc7ce3e228f17072d4812d20e573049626cce7be18aa7e53f99138c2a7";
+    String ownerPk4="543100aa549f51869df454e5aecf3640b3fa215bb5f04db68af3603d39b1df74";
+    String ownerPk5="4C4ABAAE0A55E5917A6C38487C364765E75D3B6EB80B1DF5CB408F46D3A0F3E4";
+    String ownerPk6="a26feab23f5ec682e1c44600f6ae91a343969a7ff8d3cfae71ecc980507af592";
+    String ownerPk7="9e5f59f4ec89b8b7fe985f2ebda7a815e670a7d2461ff883381021028c6e243e";
+    String[] ownerPks = new String[7];
+
+    ownerPks[0] = ownerPk1;
+    ownerPks[1] = ownerPk2;
+    ownerPks[2] = ownerPk3;
+    ownerPks[3] = ownerPk4;
+    ownerPks[4] = ownerPk5;
+    ownerPks[5] = ownerPk6;
+    ownerPks[6] = ownerPk7;
+    for (int i = 0; i < 7; i++) {
+      String txid = "";
+      String param = "22";
+      txid = PublicMethed.triggerContract(PublicMethed.decode58Check(WhiteGurMultiSigWallet),
           "confirmTransaction(uint256)", param, false,
           0, maxFeeLimit, PublicMethed.getFinalAddress(ownerPks[i]), ownerPks[i], blockingStubFull);
       Optional<Protocol.TransactionInfo> infoById = null;
