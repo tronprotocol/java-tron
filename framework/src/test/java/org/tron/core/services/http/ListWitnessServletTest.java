@@ -33,7 +33,6 @@ public class ListWitnessServletTest {
 
   static {
     Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
-    // 启服务，具体的端口号啥的在DefaultConfig.class里写死的
     context = new TronApplicationContext(DefaultConfig.class);
   }
 
