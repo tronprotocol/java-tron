@@ -49,8 +49,11 @@ public class AbstractTransactionCreator {
   public Transaction createTransaction(com.google.protobuf.Message message,
                                        ContractType contractType) {
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().addContract(
-            Transaction.Contract.newBuilder().setType(contractType).setParameter(
-                    Any.pack(message)).build());
+            Transaction.Contract.newBuilder()
+                    .setType(contractType)
+                    .setParameter(Any.pack(message))
+                    .build()
+    );
 
     Transaction transaction = Protocol.Transaction.newBuilder().setRawData(transactionBuilder.build())
             .build();

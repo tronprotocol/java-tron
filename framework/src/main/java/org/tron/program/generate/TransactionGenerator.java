@@ -1,27 +1,56 @@
 package org.tron.program.generate;
 
+import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.util.encoders.Hex;
 import org.tron.program.design.factory.GeneratorFactory;
+import org.tron.protos.Protocol;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * @author liukai
  * @since 2022/9/9.
  */
+@Slf4j
 public class TransactionGenerator {
 
-  private int count;
-  private String type;
+  private ExecutorService generatePool = Executors.newFixedThreadPool(4, r -> new Thread(r, "TransactionGenerator"));
 
-  public TransactionGenerator(int count, String type) {
-    this.count = count;
-    this.type = type;
-  }
-
-  public List<String> create() {
-    //types
+  /**
+   *
+   * @param count
+   * @param type
+   * @return
+   */
+  public List<String> createTransactions(int count, String type) {
     TransactionCreator generator = GeneratorFactory.getGenerator(type);
-    return generator.createTransactions(count);
+
+    if (null == generator) {
+      throw new IllegalArgumentException("generator not exists.");
+    }
+    CountDownLatch countDownLatch = new CountDownLatch(count);
+    List<String> transactions = new ArrayList<>(count * 2);
+    for (int i = 0; i < count; i++) {
+      generatePool.execute(() -> {
+        // test account
+        Protocol.Transaction transaction = generator.create();
+        transactions.add(Hex.toHexString(transaction.toByteArray()));
+        countDownLatch.countDown();
+      });
+    }
+    try {
+      countDownLatch.await();
+      generatePool.shutdown();
+      logger.info("generate completed, transaction count: {}", transactions.size());
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+    return transactions;
   }
 
 }

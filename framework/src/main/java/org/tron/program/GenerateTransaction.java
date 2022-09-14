@@ -27,6 +27,7 @@ public class GenerateTransaction {
   private static String accountFilePath = "/Users/liukai/workspaces/java/tron/java-tron/framework/src/main/resources/stress_account_sample.csv";
 
   private static String defaultType = "transfer";
+  private static String type;
   private static String[] transactionTypes = null;
 
   private static int totalTransaction = 100;
@@ -41,14 +42,13 @@ public class GenerateTransaction {
   }
 
   private static void initAccountByFile() {
-    logger.info("load pre-prepared accounts");
     try (BufferedReader bufferedReader =
                  new BufferedReader(new InputStreamReader(new FileInputStream(accountFilePath), StandardCharsets.UTF_8))) {
       String line;
       while ((line = bufferedReader.readLine()) != null) {
         accountQueue.offer(line);
       }
-      logger.info("load completed: {}", accountQueue.size());
+      logger.info("load pre-prepared accounts: {}", accountQueue.size());
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -77,9 +77,16 @@ public class GenerateTransaction {
     String types = System.getProperty("types");
     if (StringUtils.isNoneEmpty(types)) {
       transactionTypes = types.split("|");
+      logger.info("transactionTypes: {}", Arrays.toString(transactionTypes));
     }
-    logger.info("transactionTypes: {}", Arrays.toString(transactionTypes));
 
+    String typeParam = System.getProperty("type");
+    if (StringUtils.isNoneEmpty(typeParam)) {
+      type = typeParam;
+    } else {
+      type = defaultType;
+    }
+    logger.info("type: {}", type);
   }
 
   public static void initTask() {
@@ -97,12 +104,13 @@ public class GenerateTransaction {
   }
 
   private static List<String> generateTransaction() {
-    logger.info("generate transaction");
+    logger.info("generate transaction start");
     // for test
-    String type = "transfer";
-//    String type = "trc10";
-//    String type = "trc20";
-    return new TransactionGenerator(totalTransaction, type).create();
+//    type = "transfer";
+//    type = "create";
+    type = "asset";
+//    type = "trc20";
+    return new TransactionGenerator().createTransactions(totalTransaction, type);
   }
 
 }

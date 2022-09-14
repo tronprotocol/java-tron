@@ -14,24 +14,22 @@ import org.tron.protos.contract.AccountContract.AccountCreateContract;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 /**
  * @author liukai
  * @since 2022/9/9.
  */
-@Setter
-@Creator(type = "transfer")
+@Creator(type = "account")
 @Slf4j
-public class AccountTransactionCreator extends AbstractTransactionCreator implements TransactionCreator {
-
+public class AccountCreateCreator extends AbstractTransactionCreator implements TransactionCreator {
+  // 有钱的账户
   private static String ownerAddress = "TXtrbmfwZ2LxtoCveEhZT86fTss1w8rwJE";
   private static String privateKey = "0528dc17428585fc4dece68b79fa7912270a1fe8e85f244372f59eb7e8925e04";
-  private ExecutorService generatePool = Executors.newFixedThreadPool(4, r -> new Thread(r, "create-transaction"));
+  private ExecutorService generatePool = Executors.newFixedThreadPool(4, r -> new Thread(r, "create-account"));
 
   @Override
   public Protocol.Transaction create() {
@@ -40,32 +38,7 @@ public class AccountTransactionCreator extends AbstractTransactionCreator implem
     byte[] newAccountAddressBytes = newAccountKey.getAddress();
     AccountCreateContract contract = createAccountCreateContract(ownerAddressBytes, newAccountAddressBytes);
     Transaction transaction = createTransaction(contract, Contract.ContractType.AccountCreateContract);
-    transaction = sign(transaction, ECKey.fromPrivate(ByteArray.fromHexString(privateKey)));
-    return transaction;
+    return sign(transaction, ECKey.fromPrivate(ByteArray.fromHexString(privateKey)));
   }
 
-  public String create(Protocol.Transaction transaction) {
-    return Hex.toHexString(transaction.toByteArray());
-  }
-
-  @Override
-  public List<String> createTransactions(int count) {
-    CountDownLatch countDownLatch = new CountDownLatch(count);
-    List<String> transactions = new ArrayList<>(count * 2);
-    for (int i = 0; i < count; i++) {
-      generatePool.execute(() -> {
-        // test account
-        Transaction transaction = create();
-        transactions.add(Hex.toHexString(transaction.toByteArray()));
-        countDownLatch.countDown();
-      });
-    }
-    try {
-      countDownLatch.await();
-      generatePool.shutdown();
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-    return transactions;
-  }
 }
