@@ -31,6 +31,8 @@ public class GenerateTransaction {
   private static Long transactionTotal = 100000L;
   private static Long generateBatch = 10000L;
   private static Long stressCount = 0L;
+  // generate transaction
+  private static String writePath = "/data/generate_transaction.txt";
 
   /**
    *
@@ -64,6 +66,11 @@ public class GenerateTransaction {
       stressCount = Long.parseLong(stress);
     }
 
+    String path = System.getProperty("path");
+    if (StringUtils.isNoneEmpty(path)) {
+      writePath = path;
+    }
+
     String type = System.getProperty("type");
     if (StringUtils.isNoneEmpty(type)) {
       types = type.split("|");
@@ -76,7 +83,9 @@ public class GenerateTransaction {
     // 生成交易
     List<String> transactions = generateTransaction();
     try {
-      FileUtils.writeLines(new File("/Users/liukai/workspaces/temp/test.txt"),transactions);
+      // for test
+      writePath = "/Users/liukai/workspaces/temp/test.txt";
+      FileUtils.writeLines(new File(writePath), transactions);
     } catch (IOException e) {
       e.printStackTrace();
     }
