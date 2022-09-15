@@ -496,8 +496,10 @@ public class Util {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
-      JSONObject jsonObject = JSONObject.parseObject(input);
-      addressStr = jsonObject.getString(addressParam);
+      JSONObject jsonObject = JSON.parseObject(input);
+      if (jsonObject != null) {
+        addressStr = jsonObject.getString(addressParam);
+      }
     }
     if (StringUtils.isNotBlank(addressStr)) {
       if (StringUtils.startsWith(addressStr, Constant.ADD_PRE_FIX_STRING_MAINNET)) {
