@@ -4,6 +4,7 @@ import static org.tron.common.utils.Commons.decodeFromBase58Check;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -292,6 +293,8 @@ public class Util {
         logger.debug("ParseException: {}", e.getMessage());
       } catch (ClassCastException e) {
         logger.debug("ClassCastException: {}", e.getMessage());
+      } catch (JSONException e) {
+        logger.debug("JSONException: {}", e.getMessage());
       } catch (Exception e) {
         logger.error("", e);
       }
@@ -493,8 +496,10 @@ public class Util {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
-      JSONObject jsonObject = JSONObject.parseObject(input);
-      addressStr = jsonObject.getString(addressParam);
+      JSONObject jsonObject = JSON.parseObject(input);
+      if (jsonObject != null) {
+        addressStr = jsonObject.getString(addressParam);
+      }
     }
     if (StringUtils.isNotBlank(addressStr)) {
       if (StringUtils.startsWith(addressStr, Constant.ADD_PRE_FIX_STRING_MAINNET)) {
