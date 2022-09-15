@@ -31,7 +31,7 @@ public class GenerateTransaction {
   private static String[] transactionTypes = null;
   public static String assetName;
 
-  private static int totalTransaction = 100;
+  private static int totalTransaction = 100000;
   private static Long generateBatch = 10000L;
   private static Long stressCount = 0L;
   // generate transaction
@@ -115,8 +115,8 @@ public class GenerateTransaction {
     // for test
 //    type = "transfer";
 //    type = "create";
-    type = "asset";
-//    type = "trc20";
+//    type = "asset";
+    type = "trc20";
     return new TransactionGenerator().createTransactions(totalTransaction, type);
   }
 
