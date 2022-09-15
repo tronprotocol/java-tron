@@ -89,7 +89,8 @@ public class BandWidthRuntimeOutOfTimeWithCheckTest {
           "--output-directory", dbPath,
           "--storage-db-directory", dbDirectory,
           "--storage-index-directory", indexDirectory,
-          "-w"
+            "-w",
+            "--debug"
         },
         "config-test-mainnet.conf");
     context = new TronApplicationContext(DefaultConfig.class);

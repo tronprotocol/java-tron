@@ -91,6 +91,11 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
   @BeforeClass
   public static void init() {
+    try {
+      Thread.sleep(3000);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
     dbManager = context.getBean(Manager.class);
     wallet = context.getBean(Wallet.class);
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTRC20Transaction(1);
