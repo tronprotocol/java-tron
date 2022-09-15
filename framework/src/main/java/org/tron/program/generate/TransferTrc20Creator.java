@@ -33,7 +33,6 @@ public class TransferTrc20Creator extends AbstractTransactionCreator implements 
   @Override
   public Protocol.Transaction create() {
     byte[] ownerAddressBytes = Commons.decodeFromBase58Check(ownerAddress);
-
     String curAccount = GenerateTransaction.accountQueue.poll();
     String param = "\"" + curAccount + "\",1";
     GenerateTransaction.accountQueue.offer(curAccount);
@@ -73,15 +72,15 @@ public class TransferTrc20Creator extends AbstractTransactionCreator implements 
   private TriggerSmartContract triggerCallContract(byte[] address,
                                                    byte[] contractAddress,
                                                    long callValue, byte[] data) {
-    TriggerSmartContract.Builder builder = TriggerSmartContract
-            .newBuilder();
-    builder.setOwnerAddress(ByteString.copyFrom(address));
-    builder.setContractAddress(ByteString.copyFrom(contractAddress));
-    builder.setData(ByteString.copyFrom(data));
-    builder.setCallValue(callValue);
-    builder.setTokenId(Long.parseLong("0"));
-    builder.setCallTokenValue(0L);
-    return builder.build();
+    return TriggerSmartContract
+            .newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(address))
+            .setContractAddress(ByteString.copyFrom(contractAddress))
+            .setData(ByteString.copyFrom(data))
+            .setCallValue(callValue)
+            .setTokenId(Long.parseLong("0"))
+            .setCallTokenValue(0L)
+            .build();
   }
 
   public static String parseSelector(String methodSign) {
