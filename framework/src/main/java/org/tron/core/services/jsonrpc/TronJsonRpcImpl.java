@@ -731,7 +731,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       if (paramMap.containsKey("blockNumber")) {
         try {
           blockNumOrTag = paramMap.get("blockNumber");
-        } catch (Exception e) {
+        } catch (ClassCastException e) {
           throw new JsonRpcInvalidRequestException(JSON_ERROR);
         }
 
@@ -749,7 +749,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       } else if (paramMap.containsKey("blockHash")) {
         try {
           blockNumOrTag = paramMap.get("blockHash");
-        } catch (Exception e) {
+        } catch (ClassCastException e) {
           throw new JsonRpcInvalidRequestException(JSON_ERROR);
         }
 
