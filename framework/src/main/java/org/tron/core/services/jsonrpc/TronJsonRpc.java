@@ -152,7 +152,7 @@ public interface TronJsonRpc {
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
       @JsonRpcError(exception = JsonRpcInternalException.class, code = -32000, data = "{}"),
   })
-  String getCall(CallArguments transactionCall, String blockNumOrTag)
+  String getCall(CallArguments transactionCall, Object blockNumOrTag)
       throws JsonRpcInvalidParamsException, JsonRpcInvalidRequestException,
       JsonRpcInternalException;
 
