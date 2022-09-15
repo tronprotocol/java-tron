@@ -167,7 +167,7 @@ public class ForkController {
     stats[slot] = VERSION_UPGRADE;
     manager.getDynamicPropertiesStore().statsByVersion(version, stats);
     logger.info(
-        "******* Update hard fork: {}, witness size: {}, solt: {}, witness: {}, version: {}.",
+        "Update hard fork: {}, witness size: {}, solt: {}, witness: {}, version: {}.",
         Streams.zip(witnesses.stream(), Stream.of(ArrayUtils.toObject(stats)), Maps::immutableEntry)
             .map(e -> Maps
                 .immutableEntry(encode58Check(e.getKey().toByteArray()), e.getValue()))

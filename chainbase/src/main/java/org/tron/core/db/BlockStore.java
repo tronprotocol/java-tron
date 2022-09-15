@@ -53,7 +53,8 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
       try {
         blocks.add(new BlockCapsule(bytes));
       } catch (BadItemException e) {
-        throw new TronDBException(e);
+        logger.error("Find bad item: {}", e.getMessage());
+        // throw new TronDBException(e);
       }
     }
     blocks.sort(Comparator.comparing(BlockCapsule::getNum));

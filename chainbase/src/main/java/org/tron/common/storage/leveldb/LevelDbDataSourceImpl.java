@@ -128,7 +128,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   private void openDatabase(Options dbOptions) throws IOException {
     final Path dbPath = getDbPath();
     if (dbPath == null || dbPath.getParent() == null) {
-      throw new IOException(String.format("db path is illegal, %s/%s", parentPath, dataBaseName));
+      return;
     }
     if (!Files.isSymbolicLink(dbPath.getParent())) {
       Files.createDirectories(dbPath.getParent());
