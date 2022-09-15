@@ -64,7 +64,6 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
   private static String dbPath =
       "output_Shielded_TRC20_Api_test" + RandomStringUtils.randomAlphanumeric(10);
-  ;
   private static AnnotationConfigApplicationContext context;
   private static Manager dbManager;
   private static Wallet wallet;

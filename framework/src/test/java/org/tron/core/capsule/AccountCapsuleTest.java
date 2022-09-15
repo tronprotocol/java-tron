@@ -55,6 +55,12 @@ public class AccountCapsuleTest {
 
   @BeforeClass
   public static void init() {
+    try {
+      Thread.sleep(3000);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
     ByteString accountName = ByteString.copyFrom(AccountCapsuleTest.randomBytes(16));
     ByteString address = ByteString.copyFrom(AccountCapsuleTest.randomBytes(32));
     AccountType accountType = AccountType.forNumber(1);
