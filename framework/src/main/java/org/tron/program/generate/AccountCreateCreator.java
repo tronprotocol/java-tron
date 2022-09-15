@@ -1,8 +1,6 @@
 package org.tron.program.generate;
 
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
@@ -11,13 +9,6 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.contract.AccountContract.AccountCreateContract;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * @author liukai
@@ -29,7 +20,6 @@ public class AccountCreateCreator extends AbstractTransactionCreator implements 
   // 有钱的账户
   private static String ownerAddress = "TXtrbmfwZ2LxtoCveEhZT86fTss1w8rwJE";
   private static String privateKey = "0528dc17428585fc4dece68b79fa7912270a1fe8e85f244372f59eb7e8925e04";
-  private ExecutorService generatePool = Executors.newFixedThreadPool(4, r -> new Thread(r, "create-account"));
 
   @Override
   public Protocol.Transaction create() {
