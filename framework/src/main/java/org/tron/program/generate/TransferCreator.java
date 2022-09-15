@@ -10,8 +10,6 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 
-import java.util.concurrent.ConcurrentLinkedQueue;
-
 
 /**
  * @author liukai
