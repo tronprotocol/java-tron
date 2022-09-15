@@ -18,10 +18,14 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.overlay.discover.node.Node;
+import org.tron.common.overlay.discover.node.NodeHandler;
+import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.services.jsonrpc.TronJsonRpcImpl;
 
 @Slf4j
 public class ListNodesServletTest {
@@ -55,6 +59,21 @@ public class ListNodesServletTest {
     listNodesServlet = context.getBean(ListNodesServlet.class);
     this.request = mock(HttpServletRequest.class);
     this.response = mock(HttpServletResponse.class);
+
+    Node node1 = new Node(new byte[64], "128.0.0.1", 18889, 18889);
+    Node node2 = new Node(new byte[64], "128.0.0.2", 18889, 18889);
+    NodeManager nodeManager = context.getBean(NodeManager.class);
+    NodeHandler nodeHandler1 = nodeManager.getNodeHandler(node1);
+    NodeHandler nodeHandler2 = nodeManager.getNodeHandler(node2);
+
+    nodeHandler1.changeState(NodeHandler.State.ALIVE);
+    nodeHandler2.changeState(NodeHandler.State.ACTIVE);
+
+    context.getBean(NodeManager.class).dumpActiveNodes().set(0, nodeHandler1);
+    context.getBean(NodeManager.class).dumpActiveNodes().set(1, nodeHandler2);
+
+    nodeManager.dumpActiveNodes().set(0, nodeHandler1);
+    nodeManager.dumpActiveNodes().set(1, nodeHandler2);
   }
 
   /** . */
@@ -87,7 +106,7 @@ public class ListNodesServletTest {
       fileInputStream.close();
       inputStreamReader.close();
       bufferedReader.close();
-      Assert.assertTrue(sb.toString().contains("{}"));
+      Assert.assertTrue(sb.toString().contains("3132382e302e302e31"));
     } catch (Exception e) {
       Assert.fail();
     }
@@ -113,7 +132,7 @@ public class ListNodesServletTest {
       fileInputStream.close();
       inputStreamReader.close();
       bufferedReader.close();
-      Assert.assertTrue(sb.toString().contains("{}"));
+      Assert.assertTrue(sb.toString().contains("3132382e302e302e32"));
     } catch (Exception e) {
       Assert.fail();
     }
