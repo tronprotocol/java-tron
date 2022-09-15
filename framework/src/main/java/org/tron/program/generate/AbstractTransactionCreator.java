@@ -38,7 +38,7 @@ public class AbstractTransactionCreator {
   }
 
   public org.tron.protos.contract.AccountContract.AccountCreateContract createAccountCreateContract(byte[] owner,
-                                                                                    byte[] address) {
+                                                                                                    byte[] address) {
     AccountContract.AccountCreateContract.Builder builder = AccountContract.AccountCreateContract
             .newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
