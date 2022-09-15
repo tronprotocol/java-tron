@@ -2,6 +2,7 @@ syntax = "proto3";
 
 import "google/protobuf/any.proto";
 import "core/Discover.proto";
+import "core/contract/common.proto";
 
 package protocol;
 
@@ -215,20 +216,12 @@ message Account {
   Permission witness_permission = 32;
   repeated Permission active_permission = 33;
 
-  // FREEZE_TYPE is extended ResourceCode of the common package.
-  enum FREEZE_TYPE {
-    BANDWIDTH = 0;
-    ENERGY = 1;
-    POWER = 2;
-    DELEGATED_BANDWIDTH = 3;
-    DELEGATED_ENERGY = 4;
-  }
   message FreezeV2 {
-    FREEZE_TYPE type = 1;
+    ResourceCode type = 1;
     int64 amount = 2;
   }
   message UnFreezeV2 {
-    FREEZE_TYPE type = 1;
+    ResourceCode type = 1;
     int64 unfreeze_amount = 3;
     int64 unfreeze_expire_time = 4;
   }
@@ -369,6 +362,8 @@ message Transaction {
       FreezeBalanceV2Contract = 54;
       UnfreezeBalanceV2Contract = 55;
       WithdrawBalanceV2Contract = 56;
+      DelegateResourceContract = 57;
+      UnDelegateResourceContract = 58;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;
