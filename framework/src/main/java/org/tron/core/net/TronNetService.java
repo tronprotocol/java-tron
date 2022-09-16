@@ -77,18 +77,18 @@ public class TronNetService {
     peerStatusCheck.init();
     transactionsMsgHandler.init();
     fetchBlockService.init();
-    logger.info("TronNetService start successfully.");
+    logger.info("TronNetService start successfully");
   }
 
   public void stop() {
-    logger.info("TronNetService closed start.");
+    logger.info("TronNetService closed start");
     channelManager.close();
     advService.close();
     syncService.close();
     peerStatusCheck.close();
     transactionsMsgHandler.close();
     fetchBlockService.close();
-    logger.info("TronNetService closed successfully.");
+    logger.info("TronNetService closed successfully");
   }
 
   public int fastBroadcastTransaction(TransactionMessage msg) {
@@ -170,7 +170,7 @@ public class TronNetService {
           code = ReasonCode.UNKNOWN;
           break;
       }
-      logger.warn("Message from {} process failed, {} \n type: {}, detail: {}.",
+      logger.warn("Message from {} process failed, {} \n type: {}, detail: {}",
           peer.getInetAddress(), msg, type, ex.getMessage());
     } else {
       code = ReasonCode.UNKNOWN;
