@@ -85,7 +85,6 @@ import org.tron.core.capsule.BlockBalanceTraceCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
@@ -155,7 +154,7 @@ import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.utils.TransactionRegister;
-import org.tron.core.vm.config.VMConfig;
+import org.tron.core.vm.config.ConfigLoader;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Transaction;
@@ -537,9 +536,8 @@ public class Manager {
     //initActuatorCreator
     ActuatorCreator.init();
     TransactionRegister.registerActuator();
-    //initEnergyLimitHardFork
-    VMConfig.initVmHardFork(ReceiptCapsule.checkForEnergyLimit(
-        chainBaseManager.getDynamicPropertiesStore()));
+    //initVMConfig
+    ConfigLoader.load(StoreFactory.getInstance());
 
     long exitHeight = CommonParameter.getInstance().getShutdownBlockHeight();
     long exitCount = CommonParameter.getInstance().getShutdownBlockCount();
