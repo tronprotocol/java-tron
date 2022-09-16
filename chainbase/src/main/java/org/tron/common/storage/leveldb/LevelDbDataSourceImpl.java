@@ -142,7 +142,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
       }
     } catch (IOException e) {
       if (e.getMessage().contains("Corruption:")) {
-        logger.warn("DB {} corruption detected, try to repair it.", this.getDBName());
+        logger.warn("DB {} corruption detected, try to repair it.", this.getDBName(), e);
         factory.repair(dbPath.toFile(), dbOptions);
         logger.warn("DB {} corruption detected, repair done.", this.getDBName());
         database = factory.open(dbPath.toFile(), dbOptions);
