@@ -86,7 +86,7 @@ public class AdvService {
       try {
         consumerInvToSpread();
       } catch (Exception exception) {
-        logger.error("Spread thread error. {}", exception.getMessage(), exception);
+        logger.error("Spread thread error", exception);
       }
     }, 100, 30, TimeUnit.MILLISECONDS);
 
@@ -94,7 +94,7 @@ public class AdvService {
       try {
         consumerInvToFetch();
       } catch (Exception exception) {
-        logger.error("Fetch thread error. {}", exception.getMessage(), exception);
+        logger.error("Fetch thread error", exception);
       }
     }, 100, 30, TimeUnit.MILLISECONDS);
   }
@@ -151,7 +151,7 @@ public class AdvService {
             .collect(Collectors.toList());
 
     if (peers.size() == 0) {
-      logger.warn("Broadcast transaction {} failed, no connection.", msg.getMessageId());
+      logger.warn("Broadcast transaction {} failed, no connection", msg.getMessageId());
       return 0;
     }
 
@@ -173,7 +173,7 @@ public class AdvService {
       }
     }
     if (peersCount == 0) {
-      logger.warn("Broadcast transaction {} failed, no peers.", msg.getMessageId());
+      logger.warn("Broadcast transaction {} failed, no peers", msg.getMessageId());
     }
     return peersCount;
   }
@@ -185,7 +185,7 @@ public class AdvService {
     }
 
     if (invToSpread.size() > MAX_SPREAD_SIZE) {
-      logger.warn("Drop message, type: {}, ID: {}.", msg.getType(), msg.getMessageId());
+      logger.warn("Drop message, type: {}, ID: {}", msg.getType(), msg.getMessageId());
       return;
     }
 
@@ -269,7 +269,7 @@ public class AdvService {
       }
       invToFetch.forEach((item, time) -> {
         if (time < now - MSG_CACHE_DURATION_IN_BLOCKS * BLOCK_PRODUCED_INTERVAL) {
-          logger.info("This obj is too late to fetch, type: {} hash: {}.", item.getType(),
+          logger.info("This obj is too late to fetch, type: {} hash: {}", item.getType(),
                   item.getHash());
           invToFetch.remove(item);
           invToFetchCache.invalidate(item);

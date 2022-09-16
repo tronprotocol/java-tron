@@ -139,7 +139,7 @@ public class FastForward {
       }
       return flag;
     } catch (Exception e) {
-      logger.warn("Check hello message failed, msg: {}, {}", message, channel.getInetAddress(), e);
+      logger.error("Check hello message failed, msg: {}, {}", message, channel.getInetAddress(), e);
       return false;
     }
   }

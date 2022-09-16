@@ -127,7 +127,9 @@ public class HelloMessage extends P2pMessage {
     return new StringBuilder().append(super.toString()).append(", ")
             .append("from: ").append(getFrom()).append(", ")
             .append("timestamp: ").append(getTimestamp()).append(", ")
-            .append("headBlockId: {").append(getHeadBlockId().getString()).append("}")
+            .append("headBlockId: {").append(getHeadBlockId().getString()).append("}, ")
+            .append("nodeType: ").append(helloMessage.getNodeType()).append(", ")
+            .append("lowestBlockNum: ").append(helloMessage.getLowestBlockNum())
             .toString();
   }
 
