@@ -66,6 +66,12 @@ public class InternalTransaction {
   private String note;
   private byte[] protoEncoded;
 
+  @Getter
+  private long energy;
+  @Getter
+  private long energyUsed;
+  private byte[] output;
+
   /*
    * extra data field for recording parameters of vote witness opcode
    */
@@ -118,6 +124,7 @@ public class InternalTransaction {
    * Construct a child InternalTransaction
    */
 
+  // TODO add energy?
   public InternalTransaction(byte[] parentHash, int deep, int index,
       byte[] sendAddress, byte[] transferToAddress, long value, byte[] data, String note,
       long nonce, Map<String, Long> tokenInfo) {
@@ -260,6 +267,25 @@ public class InternalTransaction {
         valueByte.length);
     this.protoEncoded = raw;
     return protoEncoded.clone();
+  }
+
+  public byte[] getOutput() {
+    if (output == null) {
+      return EMPTY_BYTE_ARRAY;
+    }
+    return output.clone();
+  }
+
+  public void setOutput(byte[] data) {
+    this.output = data.clone();
+  }
+
+  public void setEnergy(long energy) {
+    this.energy = energy;
+  }
+
+  public void setEnergyUsed(long energyUsed) {
+    this.energyUsed = energyUsed;
   }
 
   public enum TrxType {

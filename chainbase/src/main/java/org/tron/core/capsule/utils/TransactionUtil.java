@@ -130,6 +130,7 @@ public class TransactionUtil {
     return new TransactionInfoCapsule(builder.build());
   }
 
+  // TODO
   public static Protocol.InternalTransaction buildInternalTransaction(InternalTransaction it) {
     Protocol.InternalTransaction.Builder itBuilder = Protocol.InternalTransaction
         .newBuilder();
@@ -157,6 +158,13 @@ public class TransactionUtil {
     itBuilder.setNote(ByteString.copyFrom(it.getNote().getBytes()));
     itBuilder.setRejected(it.isRejected());
     itBuilder.setExtra(it.getExtra());
+
+    // to test added fields
+    itBuilder.setInput(ByteString.copyFrom(it.getData()));
+    itBuilder.setOutput(ByteString.copyFrom(it.getOutput()));
+    itBuilder.setEnergy(it.getEnergy());
+    itBuilder.setEnergyUsed(it.getEnergyUsed());
+
     return itBuilder.build();
   }
 

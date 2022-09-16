@@ -748,6 +748,9 @@ public class Program {
       return;
     }
 
+    // TODO
+    msg.getEnergy().longValueSafe();
+
     byte[] data = memoryChunk(msg.getInDataOffs().intValue(), msg.getInDataSize().intValue());
 
     // FETCH THE SAVED STORAGE
@@ -861,6 +864,8 @@ public class Program {
     InternalTransaction internalTx = addInternalTx(null, senderAddress, contextAddress,
         !isTokenTransfer ? endowment : 0, data, "call", nonce,
         !isTokenTransfer ? null : tokenInfo);
+    internalTx.setEnergy(msg.getEnergy().longValueSafe());
+
     ProgramResult callResult = null;
     if (isNotEmpty(programCode)) {
       long vmStartInUs = System.nanoTime() / 1000;
@@ -932,7 +937,11 @@ public class Program {
 
       memorySaveLimited(offset, buffer, size);
 
+      // TODO
       returnDataBuffer = buffer;
+
+      internalTx.setOutput(buffer);
+      internalTx.setEnergyUsed(callResult.getEnergyUsed());
     }
 
     // 5. REFUND THE REMAIN ENERGY
