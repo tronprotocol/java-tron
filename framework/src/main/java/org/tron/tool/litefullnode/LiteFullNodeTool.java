@@ -6,7 +6,6 @@ import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.internal.Lists;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
-import com.google.common.collect.Maps;
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
@@ -16,11 +15,15 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.rocksdb.RocksDBException;
@@ -301,30 +304,39 @@ public class LiteFullNodeTool {
 
     long latestBlockNum = getLatestBlockHeaderNum(sourceDir);
     long startIndex = latestBlockNum - RECENT_BLKS + 1;
-    // put the recent blocks and trans in snapshot
-    for (long blockNum = startIndex; blockNum <= latestBlockNum; blockNum++) {
-      try {
-        byte[] blockId = getDataFromSourceDB(sourceDir, BLOCK_INDEX_DB_NAME,
-            Longs.toByteArray(blockNum));
-        byte[] block = getDataFromSourceDB(sourceDir, BLOCK_DB_NAME, blockId);
-        // put block
-        destBlockDb.put(blockId, block);
-        // put block index
-        destBlockIndexDb.put(ByteArray.fromLong(blockNum), blockId);
-        // put trans
-        long finalBlockNum = blockNum;
-        new BlockCapsule(block).getTransactions().stream().map(
-            tc -> tc.getTransactionId().getBytes())
-            .map(bytes -> Maps.immutableEntry(bytes, Longs.toByteArray(finalBlockNum)))
-            .forEach(e -> destTransDb.put(e.getKey(), e.getValue()));
-      } catch (IOException | RocksDBException  | BadItemException e) {
-        throw new RuntimeException(e.getMessage());
-      }
+    // check again
+    if (startIndex < 0) {
+      throw new IllegalArgumentException(String.format("block %d illegal", startIndex));
     }
+    // put the recent blocks and trans in snapshot
+    AtomicLong trxCount = new AtomicLong(0);
+    LongStream.rangeClosed(startIndex, latestBlockNum).mapToObj(Longs::toByteArray).parallel()
+        .forEachOrdered(blockNum -> {
+          try {
+            byte[] blockId = getDataFromSourceDB(sourceDir, BLOCK_INDEX_DB_NAME,
+                blockNum);
+            byte[] block = getDataFromSourceDB(sourceDir, BLOCK_DB_NAME, blockId);
+            // put block
+            destBlockDb.put(blockId, block);
+            // put block index
+            destBlockIndexDb.put(blockNum, blockId);
+            // put trans
+            Map<byte[], byte[]> trans = new HashMap<>();
+            new BlockCapsule(block).getTransactions().stream().map(
+                tc -> tc.getTransactionId().getBytes()).forEach(tid ->
+                trans.put(tid, blockNum));
+            destTransDb.batch(trans);
+            trxCount.addAndGet(trans.size());
+          } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+          }
+        });
 
     DBInterface destCommonDb = DbTool.getDB(snapshotDir, COMMON_DB_NAME);
     destCommonDb.put(DB_KEY_NODE_TYPE, ByteArray.fromInt(Constant.NODE_TYPE_LIGHT_NODE));
     destCommonDb.put(DB_KEY_LOWEST_BLOCK_NUM, ByteArray.fromLong(startIndex));
+    logger.info("End to fill block from {} to {}, {} trans to snapshot",
+        startIndex, latestBlockNum, trxCount.get());
   }
 
   private byte[] getGenesisBlockHash(String parentDir) throws IOException, RocksDBException {

@@ -2,6 +2,7 @@ package org.tron.tool.litefullnode.db;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Map;
 import org.tron.tool.litefullnode.iterator.DBIterator;
 
 public interface DBInterface extends Closeable {
@@ -17,5 +18,7 @@ public interface DBInterface extends Closeable {
   long size();
 
   void close() throws IOException;
+
+  void batch(Map<byte[], byte[]> rows) throws Exception;
 
 }

@@ -1,9 +1,11 @@
 package org.tron.tool.litefullnode.db;
 
-import com.google.common.collect.Streams;
 import java.io.IOException;
+import java.util.Map;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
+import org.rocksdb.WriteBatch;
+import org.rocksdb.WriteOptions;
 import org.tron.tool.litefullnode.iterator.DBIterator;
 import org.tron.tool.litefullnode.iterator.RockDBIterator;
 
@@ -62,5 +64,22 @@ public class RocksDBImpl implements DBInterface {
   @Override
   public void close() throws IOException {
     rocksDB.close();
+  }
+
+  @Override
+  public void batch(Map<byte[], byte[]> rows) throws RocksDBException {
+    if (rows == null || rows.isEmpty()) {
+      return;
+    }
+    try (WriteBatch batch = new WriteBatch()) {
+      for (Map.Entry<byte[], byte[]> entry : rows.entrySet()) {
+        if (entry.getValue() == null) {
+          batch.delete(entry.getKey());
+        } else {
+          batch.put(entry.getKey(), entry.getValue());
+        }
+      }
+      rocksDB.write(new WriteOptions(), batch);
+    }
   }
 }
