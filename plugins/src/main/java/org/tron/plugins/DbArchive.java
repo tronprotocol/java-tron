@@ -187,12 +187,12 @@ public class DbArchive implements Callable<Integer> {
         logger.info("File {},does not exist, ignored.", srcDbPath);
         return;
       }
-      if (!checkEngine()) {
-        logger.info("Db {},not leveldb, ignored.", this.name);
-        return;
-      }
       try {
         if (checkManifest(levelDbFile.toString())) {
+          if (!checkEngine()) {
+            logger.info("Db {},not leveldb, ignored.", this.name);
+            return;
+          }
           open();
           logger.info("Db {} archive use {} ms.", this.name,
               (System.currentTimeMillis() - startTime));
