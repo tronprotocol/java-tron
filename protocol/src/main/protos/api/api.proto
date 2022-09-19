@@ -263,6 +263,10 @@ service Wallet {
   //Use this function instead of WithdrawBalance.
   rpc WithdrawBalance2 (WithdrawBalanceContract) returns (TransactionExtention) {
   }
+
+  rpc WithdrawExpireUnfreeze (WithdrawExpireUnfreezeContract) returns (TransactionExtention) {
+  }
+
   //Please use UpdateAsset2 instead of this function.
   rpc UpdateAsset (UpdateAssetContract) returns (Transaction) {
     option (google.api.http) = {
