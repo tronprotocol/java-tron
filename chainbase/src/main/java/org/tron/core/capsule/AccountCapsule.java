@@ -37,6 +37,7 @@ import org.tron.protos.Protocol.Permission.PermissionType;
 import org.tron.protos.Protocol.Vote;
 import org.tron.protos.contract.AccountContract.AccountCreateContract;
 import org.tron.protos.contract.AccountContract.AccountUpdateContract;
+import org.tron.protos.contract.Common;
 
 @Slf4j(topic = "capsule")
 public class AccountCapsule implements ProtoCapsule<Account>, Comparable<AccountCapsule> {
@@ -350,6 +351,11 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return this.account.getAcquiredDelegatedFrozenBalanceForBandwidth();
   }
 
+  public void addFrozenBalanceForBandwidthV2(long balance) {
+    Common.ResourceCode type = Common.ResourceCode.BANDWIDTH;
+    this.addFrozenBalanceForResource(type, balance);
+  }
+
   public void setAcquiredDelegatedFrozenBalanceForBandwidth(long balance) {
     this.account = this.account.toBuilder().setAcquiredDelegatedFrozenBalanceForBandwidth(balance)
         .build();
@@ -434,6 +440,35 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build();
   }
 
+  public void addFrozenBalanceForEnergyV2(long balance) {
+    Common.ResourceCode type = Common.ResourceCode.ENERGY;
+    this.addFrozenBalanceForResource(type, balance);
+  }
+
+  private void addFrozenBalanceForResource(Common.ResourceCode type, long balance) {
+    boolean doUpdate = false;
+    for (int i = 0; i < this.account.getFrozenV2List().size(); i++) {
+      if (this.account.getFrozenV2List().get(i).getType().equals(type)) {
+        long newAmount = this.account.getFrozenV2(i).getAmount() + balance;
+        Account.FreezeV2 freezeV2 = Account.FreezeV2.newBuilder()
+                .setType(type)
+                .setAmount(newAmount)
+                .build();
+        this.updateFrozenV2List(i, freezeV2);
+        doUpdate = true;
+        break;
+      }
+    }
+
+    if (!doUpdate) {
+      Account.FreezeV2 freezeV2 = Account.FreezeV2.newBuilder()
+              .setType(type)
+              .setAmount(balance)
+              .build();
+      this.addFrozenV2List(freezeV2);
+    }
+  }
+
   @Override
   public String toString() {
     return this.account.toString();
@@ -495,18 +530,81 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     tp += account.getAccountResource().getFrozenBalanceForEnergy().getFrozenBalance();
     tp += account.getDelegatedFrozenBalanceForBandwidth();
     tp += account.getAccountResource().getDelegatedFrozenBalanceForEnergy();
+
+    // add v2 tron power
+    for (Account.FreezeV2 freezeV2 : account.getFrozenV2List()) {
+      // type: BANDWIDTH,ENERGY
+      if (freezeV2.getType() != Common.ResourceCode.TRON_POWER) {
+        tp += freezeV2.getAmount();
+      }
+    }
+
     return tp;
   }
 
   public long getAllTronPower() {
     if (account.getOldTronPower() == -1) {
-      return getTronPowerFrozenBalance();
+      return getTronPowerFrozenBalance() + getTronPowerFrozenBalanceV2();
     } else if (account.getOldTronPower() == 0) {
-      return getTronPower() + getTronPowerFrozenBalance();
+      return getTronPower() + getTronPowerFrozenBalance() + getTronPowerFrozenBalanceV2();
     } else {
-      return account.getOldTronPower() + getTronPowerFrozenBalance();
+      return account.getOldTronPower() + getTronPowerFrozenBalance() + getTronPowerFrozenBalanceV2();
     }
   }
+
+
+
+  public List<Account.FreezeV2> getFrozenV2List() {
+    return account.getFrozenV2List();
+  }
+
+  public List<Account.UnFreezeV2> getUnfrozenV2List() {
+    return account.getUnfrozenV2List();
+  }
+
+  public void updateFrozenV2List(int i, Account.FreezeV2 frozenV2) {
+    this.account = this.account.toBuilder()
+            .setFrozenV2(i, frozenV2)
+            .build();
+  }
+
+  public void addFrozenV2List(Account.FreezeV2 frozenV2) {
+    this.account = this.account.toBuilder().addFrozenV2(frozenV2).build();
+  }
+
+  /**
+   *
+   * @param type
+   * @param unfreezeAmount
+   * @param expireTime
+   * @return
+   */
+  public void addUnfrozenV2List(Common.ResourceCode type, long unfreezeAmount, long expireTime) {
+
+    Account.UnFreezeV2 unFreezeV2 = Account.UnFreezeV2.newBuilder()
+            .setType(type)
+            .setUnfreezeAmount(unfreezeAmount)
+            .setUnfreezeExpireTime(expireTime)
+            .build();
+    this.account = this.account.toBuilder()
+            .addUnfrozenV2(unFreezeV2)
+            .build();
+  }
+
+
+  public int getUnfreezingV2Count(long now) {
+    int count = 0;
+
+    List<Account.UnFreezeV2> unFreezeV2List = account.getUnfrozenV2List();
+    for (Account.UnFreezeV2 item : unFreezeV2List) {
+      if (item.getUnfreezeExpireTime() > now) {
+        count++;
+      }
+    }
+
+    return count;
+  }
+
 
   /*************************** start asset ****************************************/
 
@@ -757,8 +855,21 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return frozenBalance[0];
   }
 
+  /**
+   * only for test
+   * @return
+   */
+  public long getFrozenBalanceV2() {
+    List<Account.FreezeV2> freezeV2List = getFrozenV2List();
+    long amount = 0L;
+    for (Account.FreezeV2 freezeV2 : freezeV2List) {
+      amount += freezeV2.getAmount();
+    }
+    return amount;
+  }
+
   public long getAllFrozenBalanceForBandwidth() {
-    return getFrozenBalance() + getAcquiredDelegatedFrozenBalanceForBandwidth();
+    return getFrozenBalance() + getAcquiredDelegatedFrozenBalanceForBandwidth() + getBandWidthFrozenBalanceV2();
   }
 
   public int getFrozenSupplyCount() {
@@ -893,6 +1004,28 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return this.account.getAccountResource().getFrozenBalanceForEnergy().getFrozenBalance();
   }
 
+
+  private long getBandWidthFrozenBalanceV2() {
+    List<Account.FreezeV2> freezeV2List = this.account.getFrozenV2List();
+    for (Account.FreezeV2 freezeV2 : freezeV2List) {
+      if(freezeV2.getType().equals(Common.ResourceCode.BANDWIDTH)) {
+        return freezeV2.getAmount();
+      }
+    }
+    return 0L;
+  }
+
+  private long getEnergyFrozenBalanceV2() {
+    List<Account.FreezeV2> freezeV2List = this.account.getFrozenV2List();
+    for (Account.FreezeV2 freezeV2 : freezeV2List) {
+      if(freezeV2.getType().equals(Common.ResourceCode.ENERGY)) {
+        return freezeV2.getAmount();
+      }
+    }
+    return 0L;
+  }
+
+
   public boolean oldTronPowerIsNotInitialized() {
     return this.account.getOldTronPower() == 0;
   }
@@ -935,9 +1068,25 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build());
   }
 
+  public void addFrozenForTronPowerV2(long balance) {
+    Common.ResourceCode type = Common.ResourceCode.TRON_POWER;
+    this.addFrozenBalanceForResource(type, balance);
+  }
+
   public long getTronPowerFrozenBalance() {
     return this.account.getTronPower().getFrozenBalance();
   }
+
+  public long getTronPowerFrozenBalanceV2() {
+    List<Account.FreezeV2> freezeV2List = this.account.getFrozenV2List();
+    for (Account.FreezeV2 freezeV2 : freezeV2List) {
+      if(freezeV2.getType().equals(Common.ResourceCode.TRON_POWER)) {
+        return freezeV2.getAmount();
+      }
+    }
+    return 0L;
+  }
+
 
   public long getEnergyUsage() {
     return this.account.getAccountResource().getEnergyUsage();
@@ -951,7 +1100,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public long getAllFrozenBalanceForEnergy() {
-    return getEnergyFrozenBalance() + getAcquiredDelegatedFrozenBalanceForEnergy();
+    return getEnergyFrozenBalance() + getAcquiredDelegatedFrozenBalanceForEnergy() + getEnergyFrozenBalanceV2();
   }
 
   public long getLatestConsumeTimeForEnergy() {

@@ -1098,6 +1098,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowAssetOptimization())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getUnfreezeDelayDays")
+            .setValue(dbManager.getDynamicPropertiesStore().getUnfreezeDelayDays())
+            .build());
+
     return builder.build();
   }
 
