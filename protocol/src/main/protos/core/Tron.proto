@@ -361,7 +361,7 @@ message Transaction {
       MarketCancelOrderContract = 53;
       FreezeBalanceV2Contract = 54;
       UnfreezeBalanceV2Contract = 55;
-      WithdrawBalanceV2Contract = 56;
+      WithdrawExpireUnfreezeContract = 56;
       DelegateResourceContract = 57;
       UnDelegateResourceContract = 58;
     }
