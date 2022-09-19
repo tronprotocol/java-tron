@@ -575,6 +575,18 @@ public class ProposalUtil {
         }
         break;
       }
+      case UNFREEZE_DELAY_DAYS: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_6)) {
+          throw new ContractValidateException(
+                  "Bad chain parameter id [UNFREEZE_DELAY_DAYS]");
+        }
+        if (value < 1 || value > 365) {
+          throw new ContractValidateException(
+                  "This value[UNFREEZE_DELAY_DAYS] is only allowed to be in the range 1-365");
+        }
+        break;
+      }
+
       default:
         break;
     }
@@ -639,7 +651,8 @@ public class ProposalUtil {
     ALLOW_TVM_LONDON(63), // 0, 1
     ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX(65), // 0, 1
     ALLOW_ASSET_OPTIMIZATION(66), // 0, 1
-    ALLOW_NEW_REWARD_ALGO(67); // 0, 1
+    ALLOW_NEW_REWARD_ALGO(67), // 0, 1
+    UNFREEZE_DELAY_DAYS(68); // 0, [1, 365]
 
     private long code;
 
