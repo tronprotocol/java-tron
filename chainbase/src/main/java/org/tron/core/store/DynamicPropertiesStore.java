@@ -187,6 +187,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX =
       "ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX".getBytes();
 
+  private static final byte[] UNFREEZE_DELAY_DAYS = "UNFREEZE_DELAY_DAYS".getBytes();
+
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -845,6 +847,14 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveAllowHigherLimitForMaxCpuTimeOfOneTx(
           CommonParameter.getInstance().getAllowHigherLimitForMaxCpuTimeOfOneTx());
+    }
+
+    try {
+      this.getUnfreezeDelayDays();
+    } catch (IllegalArgumentException e) {
+      this.saveUnfreezeDelayDays(
+              CommonParameter.getInstance().getUnfreezeDelayDays()
+      );
     }
   }
 
@@ -2514,6 +2524,17 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException(msg));
+  }
+
+  public long getUnfreezeDelayDays() {
+    return Optional.ofNullable(getUnchecked(UNFREEZE_DELAY_DAYS))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(() -> new IllegalArgumentException("not found UNFREEZE_DELAY_DAYS"));
+  }
+
+  public void saveUnfreezeDelayDays(long value) {
+    this.put(UNFREEZE_DELAY_DAYS, new BytesCapsule(ByteArray.fromLong(value)));
   }
 
   private static class DynamicResourceProperties {
