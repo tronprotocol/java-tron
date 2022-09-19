@@ -249,6 +249,12 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
     }
 
+    //if freeze v2 is open, this close
+    if (this.checkFreezeV2Open()) {
+      throw new ContractValidateException(
+              "freeze v2 is open, old freeze is closed");
+    }
+
     return true;
   }
 
@@ -332,6 +338,22 @@ public class FreezeBalanceActuator extends AbstractActuator {
     }
 
     accountStore.put(receiverCapsule.createDbKey(), receiverCapsule);
+  }
+
+  /**
+   * 0:     false
+   * 1,365: true
+   * @return
+   */
+  private boolean checkFreezeV2Open() {
+    boolean checkOk = false;
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    long unfreezeDelayDays = dynamicStore.getUnfreezeDelayDays();
+    if (unfreezeDelayDays > 0) {
+      checkOk = true;
+    }
+
+    return checkOk;
   }
 
 }

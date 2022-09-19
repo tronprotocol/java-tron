@@ -142,6 +142,7 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIss
 import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract;
+import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.BalanceContract.AccountBalanceRequest;
 import org.tron.protos.contract.BalanceContract.AccountBalanceResponse;
 import org.tron.protos.contract.BalanceContract.BlockBalanceTrace;
@@ -1481,6 +1482,12 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void freezeBalanceV2(BalanceContract.FreezeBalanceV2Contract request,
+                                StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.FreezeBalanceV2Contract, responseObserver);
+    }
+
+    @Override
     public void unfreezeBalance(UnfreezeBalanceContract request,
         StreamObserver<Transaction> responseObserver) {
       try {
@@ -1499,6 +1506,12 @@ public class RpcApiService implements Service {
     public void unfreezeBalance2(UnfreezeBalanceContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.UnfreezeBalanceContract, responseObserver);
+    }
+
+    @Override
+    public void unfreezeBalanceV2(BalanceContract.UnfreezeBalanceV2Contract request,
+                                  StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.UnfreezeBalanceV2Contract, responseObserver);
     }
 
     @Override
