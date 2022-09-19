@@ -74,7 +74,7 @@ public class NodeTable {
   public synchronized void dropNode(Node n) {
     NodeEntry entry = nodes.get(n.getHost());
     if (entry != null) {
-      nodes.remove(entry);
+      nodes.remove(n.getHost());
       buckets[getBucketId(entry)].dropNode(entry);
     }
   }
