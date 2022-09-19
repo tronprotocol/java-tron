@@ -284,6 +284,13 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().setAllowAssetOptimization(entry.getValue());
           break;
         }
+
+        case UNFREEZE_DELAY_DAYS: {
+          manager.getDynamicPropertiesStore().saveUnfreezeDelayDays(entry.getValue());
+          manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(54);
+          manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(55);
+          break;
+        }
         default:
           find = false;
           break;
