@@ -293,6 +293,8 @@ public class FullNodeHttpApiService implements Service {
   private GetBandwidthPricesServlet getBandwidthPricesServlet;
   @Autowired
   private GetBlockServlet getBlockServlet;
+  @Autowired
+  private WithdrawExpireUnfreezeServlet withdrawExpireUnfreezeServlet;
 
   private static String getParamsFile(String fileName) {
     InputStream in = Thread.currentThread().getContextClassLoader()
@@ -542,6 +544,9 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getBandwidthPricesServlet),
           "/wallet/getbandwidthprices");
       context.addServlet(new ServletHolder(getBlockServlet), "/wallet/getblock");
+
+      context.addServlet(new ServletHolder(withdrawExpireUnfreezeServlet),
+              "/wallet/withdrawExpireUnfreeze");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {

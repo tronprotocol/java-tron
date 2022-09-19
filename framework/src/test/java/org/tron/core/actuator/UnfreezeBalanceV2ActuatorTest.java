@@ -168,7 +168,7 @@ public class UnfreezeBalanceV2ActuatorTest {
     accountCapsule.addFrozenBalanceForBandwidthV2(frozenBalance);
     long unfreezeBalance = frozenBalance - 100;
 
-    Assert.assertEquals(accountCapsule.getFrozenBalanceV2(), frozenBalance);
+    Assert.assertEquals(accountCapsule.getFrozenV2BalanceForBandwidth(), frozenBalance);
     Assert.assertEquals(accountCapsule.getTronPower(), frozenBalance);
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
@@ -187,7 +187,7 @@ public class UnfreezeBalanceV2ActuatorTest {
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
 
       //Assert.assertEquals(owner.getBalance(), initBalance + frozenBalance);
-      Assert.assertEquals(owner.getFrozenBalanceV2(), 100);
+      Assert.assertEquals(owner.getFrozenV2BalanceForBandwidth(), 100);
       Assert.assertEquals(owner.getTronPower(), 100L);
 
       long totalNetWeightAfter = dbManager.getDynamicPropertiesStore().getTotalNetWeight();

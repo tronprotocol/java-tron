@@ -93,7 +93,7 @@ message UnfreezeBalanceV2Contract {
   ResourceCode resource = 3;
 }
 
-message WithdrawBalanceV2Contract {
+message WithdrawExpireUnfreezeContract {
   bytes owner_address = 1;
 }
 

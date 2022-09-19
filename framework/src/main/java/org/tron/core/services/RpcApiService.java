@@ -150,6 +150,7 @@ import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
 import org.tron.protos.contract.BalanceContract.WithdrawBalanceContract;
+import org.tron.protos.contract.BalanceContract.WithdrawExpireUnfreezeContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeCreateContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeInjectContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
@@ -1536,6 +1537,13 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void withdrawExpireUnfreeze(WithdrawExpireUnfreezeContract request,
+                                       StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.WithdrawExpireUnfreezeContract,
+              responseObserver);
+    }
+
+    @Override
     public void proposalCreate(ProposalCreateContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.ProposalCreateContract, responseObserver);
@@ -1871,7 +1879,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void deployContract(CreateSmartContract request,
-        io.grpc.stub.StreamObserver<TransactionExtention> responseObserver) {
+        StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.CreateSmartContract, responseObserver);
     }
 
@@ -2520,7 +2528,7 @@ public class RpcApiService implements Service {
     @Override
     public void getTriggerInputForShieldedTRC20Contract(
         ShieldedTRC20TriggerContractParameters request,
-        io.grpc.stub.StreamObserver<org.tron.api.GrpcAPI.BytesMessage> responseObserver) {
+        StreamObserver<org.tron.api.GrpcAPI.BytesMessage> responseObserver) {
       try {
         checkSupportShieldedTRC20Transaction();
 

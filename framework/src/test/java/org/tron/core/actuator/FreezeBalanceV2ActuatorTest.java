@@ -169,7 +169,7 @@ public class FreezeBalanceV2ActuatorTest {
 
       Assert.assertEquals(owner.getBalance(), initBalance - frozenBalance
           - TRANSFER_FEE);
-      Assert.assertEquals(owner.getFrozenBalanceV2(), frozenBalance);
+      Assert.assertEquals(owner.getFrozenV2BalanceForBandwidth(), frozenBalance);
       Assert.assertEquals(frozenBalance, owner.getTronPower());
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);

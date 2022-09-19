@@ -1,5 +1,6 @@
 package org.tron.core.services.http;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
@@ -10,16 +11,18 @@ import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
-import org.tron.protos.contract.BalanceContract.WithdrawBalanceV2Contract;
+import org.tron.protos.contract.BalanceContract.WithdrawExpireUnfreezeContract;
+
 
 @Component
 @Slf4j(topic = "API")
-public class WithdrawBalanceV2Servlet extends RateLimiterServlet {
+public class WithdrawExpireUnfreezeServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
+
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
@@ -28,12 +31,12 @@ public class WithdrawBalanceV2Servlet extends RateLimiterServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
       boolean visible = Util.getVisiblePost(contract);
-      WithdrawBalanceV2Contract.Builder build = WithdrawBalanceV2Contract.newBuilder();
+      WithdrawExpireUnfreezeContract.Builder build = WithdrawExpireUnfreezeContract.newBuilder();
       JsonFormat.merge(contract, build, visible);
       Transaction tx = wallet
-          .createTransactionCapsule(build.build(), ContractType.WithdrawBalanceV2Contract)
+          .createTransactionCapsule(build.build(), ContractType.WithdrawExpireUnfreezeContract)
           .getInstance();
-      JSONObject jsonObject = JSONObject.parseObject(contract);
+      JSONObject jsonObject = JSON.parseObject(contract);
       tx = Util.setTransactionPermissionId(jsonObject, tx);
       response.getWriter().println(Util.printCreateTransaction(tx, visible));
     } catch (Exception e) {
