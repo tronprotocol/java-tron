@@ -96,7 +96,8 @@ public class BlockResult {
     logsBloom = ByteArray.toJsonHex(new byte[256]); // no value
     transactionsRoot = ByteArray
         .toJsonHex(block.getBlockHeader().getRawData().getTxTrieRoot().toByteArray());
-    stateRoot = ByteArray.toJsonHex(new byte[32]);
+    stateRoot = ByteArray
+        .toJsonHex(block.getBlockHeader().getRawData().getAccountStateRoot().toByteArray());
     receiptsRoot = ByteArray.toJsonHex(new byte[32]); // no value
 
     if (blockCapsule.getNum() == 0) {
