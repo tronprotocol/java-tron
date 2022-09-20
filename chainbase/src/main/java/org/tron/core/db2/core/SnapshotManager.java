@@ -454,7 +454,7 @@ public class SnapshotManager implements RevokingDatabase {
         logger.error("checkpoint prune failed, timestamp: {}", timestamp);
         return;
       }
-      logger.debug("checkpoint prune success, timestamp: {}", timestamp);
+      logger.info("checkpoint prune success, timestamp: {}", timestamp);
     }
   }
 
@@ -526,6 +526,7 @@ public class SnapshotManager implements RevokingDatabase {
 
     dbs.forEach(db -> db.getHead().getRoot().merge(db.getHead()));
     retreat();
+    logger.info("checkpoint v2 recover: {}", tronDatabase.getDbName());
   }
 
   private boolean isV2Open() {
