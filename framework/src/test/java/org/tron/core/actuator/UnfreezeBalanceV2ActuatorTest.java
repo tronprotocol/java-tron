@@ -21,8 +21,6 @@ import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
-import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.config.DefaultConfig;

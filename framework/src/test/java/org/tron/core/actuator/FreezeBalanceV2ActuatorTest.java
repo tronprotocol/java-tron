@@ -19,8 +19,6 @@ import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
-import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.Parameter.ChainConstant;
@@ -207,91 +205,6 @@ public class FreezeBalanceV2ActuatorTest {
     }
   }
 
-
-  @Test
-  public void testFreezeDelegatedBalanceForBandwidthWithContractAddress() {
-    AccountCapsule receiverCapsule =
-        new AccountCapsule(
-            ByteString.copyFromUtf8("receiver"),
-            ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS)),
-            AccountType.Contract,
-            initBalance);
-    dbManager.getAccountStore().put(receiverCapsule.getAddress().toByteArray(), receiverCapsule);
-
-    dbManager.getDynamicPropertiesStore().saveAllowTvmConstantinople(1);
-
-    dbManager.getDynamicPropertiesStore().saveAllowDelegateResource(1);
-    long frozenBalance = 1_000_000_000L;
-    FreezeBalanceV2Actuator actuator = new FreezeBalanceV2Actuator();
-    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(
-            getDelegatedContractForBandwidthV2(OWNER_ADDRESS, frozenBalance));
-
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-
-    try {
-      actuator.validate();
-      actuator.execute(ret);
-
-      AccountCapsule owner =
-              dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-
-      Assert.assertEquals(owner.getBalance(), initBalance - frozenBalance
-              - TRANSFER_FEE);
-      Assert.assertEquals(0L, owner.getAllFrozenBalanceForBandwidth());
-      Assert.assertEquals(0L, owner.getAllFrozenBalanceForEnergy());
-      Assert.assertEquals(frozenBalance, owner.getDelegatedFrozenBalanceForBandwidth());
-      Assert.assertEquals(frozenBalance, owner.getTronPower());
-
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(e.getMessage(), "Do not allow delegate resources to contract addresses");
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
-    }
-
-
-  }
-
-
-  @Test
-  public void testFreezeDelegatedBalanceForCpuSameNameTokenClose() {
-    dbManager.getDynamicPropertiesStore().saveAllowDelegateResource(0);
-    long frozenBalance = 1_000_000_000L;
-    FreezeBalanceV2Actuator actuator = new FreezeBalanceV2Actuator();
-    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(
-        getDelegatedContractForCpuV2(OWNER_ADDRESS, frozenBalance));
-
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-    long totalEnergyWeightBefore = dbManager.getDynamicPropertiesStore().getTotalEnergyWeight();
-    try {
-      actuator.validate();
-      actuator.execute(ret);
-      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      AccountCapsule owner = dbManager.getAccountStore()
-          .get(ByteArray.fromHexString(OWNER_ADDRESS));
-      Assert.assertEquals(owner.getBalance(), initBalance - frozenBalance
-          - TRANSFER_FEE);
-      Assert.assertEquals(0L, owner.getAllFrozenBalanceForBandwidth());
-      Assert.assertEquals(frozenBalance, owner.getAllFrozenBalanceForEnergy());
-      Assert.assertEquals(0L, owner.getDelegatedFrozenBalanceForBandwidth());
-      Assert.assertEquals(0L, owner.getDelegatedFrozenBalanceForEnergy());
-
-
-      AccountCapsule receiver =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(RECEIVER_ADDRESS));
-      Assert.assertEquals(0L, receiver.getAcquiredDelegatedFrozenBalanceForBandwidth());
-      Assert.assertEquals(0L, receiver.getAcquiredDelegatedFrozenBalanceForEnergy());
-      Assert.assertEquals(0L, receiver.getTronPower());
-
-      long totalEnergyWeightAfter = dbManager.getDynamicPropertiesStore().getTotalEnergyWeight();
-      Assert.assertEquals(totalEnergyWeightBefore + frozenBalance / 1000_000L,
-          totalEnergyWeightAfter);
-
-    } catch (ContractValidateException e) {
-      Assert.assertFalse(e instanceof ContractValidateException);
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
-    }
-  }
 
   @Test
   public void freezeLessThanZero() {
