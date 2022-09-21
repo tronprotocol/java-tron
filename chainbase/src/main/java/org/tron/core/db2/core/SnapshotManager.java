@@ -533,13 +533,14 @@ public class SnapshotManager implements RevokingDatabase {
         minBlockNum = Math.min(minBlockNum, blockNumber);
         maxBlockNum = Math.max(maxBlockNum, blockNumber);
       } catch (ItemNotFoundException e) {
-        logger.error("check failed, dbs meta data corrupt, can not get current block number");
+        logger.error("check failed, dbs meta data corrupt, can not get current block number，" +
+            " db: {}", db.getDbName());
         System.exit(-1);
       }
     }
 
     if (minBlockNum == Long.MAX_VALUE || maxBlockNum == -1) {
-      logger.error("check failed, dbs current block number illegal");
+      logger.error("check failed, dbs current block number illegal, minblockNum:{}, maxBlockNum: {}", minBlockNum, maxBlockNum);
       System.exit(-1);
     }
 
