@@ -142,8 +142,8 @@ public class DBConvert implements Callable<Boolean> {
     // convert v2
     if (cpList != null) {
       cpList.forEach(f -> res.add(esDb.submit(
-          new DBConvert(dbSrc+"/"+CHECKPOINT_V2_DIR_NAME,
-              dbDst+"/"+CHECKPOINT_V2_DIR_NAME, f.getName()))));
+          new DBConvert(dbSrc + "/" + CHECKPOINT_V2_DIR_NAME,
+              dbDst + "/" + CHECKPOINT_V2_DIR_NAME, f.getName()))));
     }
 
     int fails = res.size();
