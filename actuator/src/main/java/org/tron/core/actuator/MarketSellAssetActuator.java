@@ -28,6 +28,7 @@ import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.core.capsule.AccountCapsule;
@@ -236,7 +237,9 @@ public class MarketSellAssetActuator extends AbstractActuator {
     if (marketAccountOrderCapsule != null
         && marketAccountOrderCapsule.getCount() >= MAX_ACTIVE_ORDER_NUM) {
       throw new ContractValidateException(
-          "Maximum number of orders exceeded，" + MAX_ACTIVE_ORDER_NUM);
+          "Maximum number of orders exceeded，" + MAX_ACTIVE_ORDER_NUM +
+              ", account:" + Hex.toHexString(ownerAddress) +
+          ", count: " + marketAccountOrderCapsule.getCount());
     }
 
     try {

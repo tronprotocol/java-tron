@@ -3,6 +3,7 @@ package org.tron.core.db2.core;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Ints;
+import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -34,6 +35,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StorageUtils;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db.TronDatabase;
 import org.tron.core.db2.ISession;
@@ -42,6 +44,7 @@ import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.Value;
 import org.tron.core.db2.common.WrappedByteArray;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 import org.tron.core.store.CheckPointV2Store;
 import org.tron.core.store.CheckTmpStore;
@@ -86,6 +89,8 @@ public class SnapshotManager implements RevokingDatabase {
   private volatile int maxFlushCount = DEFAULT_MIN_FLUSH_COUNT;
 
   private int checkpointVersion = 1;   // default v1
+
+  private long currentBlockNum = -1;
 
   public SnapshotManager(String checkpointPath) {
   }
@@ -322,6 +327,14 @@ public class SnapshotManager implements RevokingDatabase {
       next = next.getNext();
       snapshots.add(next);
     }
+    if (!db.getDbName().equals("market_pair_price_to_order")
+        && !db.getDbName().equals("witness")
+        && !db.getDbName().equals("votes")
+        && !db.getDbName().equals("recent-transaction")
+        && !db.getDbName().equals("trans-cache")
+        && !db.getDbName().equals("witness_schedule")) {
+         next.put("block_number".getBytes(), Longs.toByteArray(currentBlockNum));
+    }
 
     root.merge(snapshots);
 
@@ -385,11 +398,17 @@ public class SnapshotManager implements RevokingDatabase {
             Value v = e.getValue();
             batch.put(WrappedByteArray.of(Bytes.concat(simpleEncode(dbName), k.getBytes())),
                 WrappedByteArray.of(v.encode()));
+            if (db.getDbName().equals("block")) {
+              currentBlockNum = new BlockCapsule(v.getBytes()).getNum();
+            }
           }
         }
       }
+      if (currentBlockNum == -1) {
+        throw new TronDBException("create checkpoint failed, block num should not be -1");
+      }
       if (isV2Open()) {
-        String dbName = String.valueOf(System.currentTimeMillis());
+        String dbName = System.currentTimeMillis()+"_"+currentBlockNum;
         checkPointStore = getCheckpointDB(dbName);
         syncFlag = CommonParameter.getInstance().getStorage().isCheckpointSync();
       } else {
@@ -444,17 +463,18 @@ public class SnapshotManager implements RevokingDatabase {
       return;
     }
     for (String cp: cpList.subList(0, cpList.size()-3)) {
-      long timestamp = Long.parseLong(cp);
+      long timestamp = Long.parseLong(cp.split("_")[0]);
+      long blockNum = Long.parseLong(cp.split("_")[1]);
       if (System.currentTimeMillis() - timestamp < ONE_MINUTE_MILLS*2) {
         break;
       }
       String checkpointPath = Paths.get(StorageUtils.getOutputDirectoryByDbName(CHECKPOINT_V2_DIR),
           CommonParameter.getInstance().getStorage().getDbDirectory(), CHECKPOINT_V2_DIR).toString();
       if (!FileUtil.recursiveDelete(Paths.get(checkpointPath, cp).toString())) {
-        logger.error("checkpoint prune failed, timestamp: {}", timestamp);
+        logger.error("checkpoint prune failed, blockNum: {}", blockNum);
         return;
       }
-      logger.debug("checkpoint prune success, timestamp: {}", timestamp);
+      logger.info("checkpoint prune success, blockNum: {}", blockNum);
     }
   }
 
@@ -494,6 +514,45 @@ public class SnapshotManager implements RevokingDatabase {
       return;
     }
 
+    long minBlockNum = Long.MAX_VALUE, maxBlockNum = -1;
+    for (Chainbase db : dbs) {
+      if (!Snapshot.isRoot(db.getHead())) {
+        throw new IllegalStateException("first check.");
+      }
+      if (db.getDbName().equals("market_pair_price_to_order")
+          || db.getDbName().equals("witness")
+          || db.getDbName().equals("votes")
+          || db.getDbName().equals("recent-transaction")
+          || db.getDbName().equals("trans-cache")
+          || db.getDbName().equals("witness_schedule")) {
+        continue;
+      }
+      try {
+        long blockNumber = Longs.fromByteArray(db.get("block_number".getBytes()));
+        logger.info("store: {}, block numer: {}", db.getDbName(), blockNumber);
+        minBlockNum = Math.min(minBlockNum, blockNumber);
+        maxBlockNum = Math.max(maxBlockNum, blockNumber);
+      } catch (ItemNotFoundException e) {
+        logger.error("check failed, dbs meta data corrupt, can not get current block number，" +
+            " db: {}", db.getDbName());
+        System.exit(-1);
+      }
+    }
+
+    if (minBlockNum == Long.MAX_VALUE || maxBlockNum == -1) {
+      logger.error("check failed, dbs current block number illegal, minblockNum:{}, maxBlockNum: {}", minBlockNum, maxBlockNum);
+      System.exit(-1);
+    }
+
+    List<Long> sortedAllKeys = cpList.stream().map(entry -> Long.parseLong(entry.split("_")[1]))
+        .sorted().collect(Collectors.toList());
+    if (minBlockNum < sortedAllKeys.get(0) || maxBlockNum > sortedAllKeys.get(sortedAllKeys.size()-1)) {
+      logger.error("check failed, checkpoint incomplete，checkpoint start number: {}, end number: {}, " +
+              "dbs start number: {}, end number: {}",
+          sortedAllKeys.get(0), sortedAllKeys.get(sortedAllKeys.size()-1), minBlockNum, maxBlockNum);
+      System.exit(-1);
+    }
+
     for (String cp: cpList) {
       TronDatabase<byte[]> checkPointV2Store = getCheckpointDB(cp);
       recover(checkPointV2Store);
@@ -526,6 +585,7 @@ public class SnapshotManager implements RevokingDatabase {
 
     dbs.forEach(db -> db.getHead().getRoot().merge(db.getHead()));
     retreat();
+    logger.info("checkpoint v2 recover: {}", tronDatabase.getDbName());
   }
 
   private boolean isV2Open() {
