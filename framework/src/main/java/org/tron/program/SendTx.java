@@ -5,6 +5,7 @@ import io.grpc.ManagedChannelBuilder;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -16,6 +17,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.tron.api.WalletGrpc;
 import org.tron.common.utils.ByteArray;
@@ -146,12 +148,16 @@ public class SendTx {
   }
 
   public static void main(String[] args) {
-//    try {
-//      split();
-//    } catch (IOException e) {
-//      throw new RuntimeException(e);
-//    }
-    //read the parameter
+    String typeParam = System.getProperty("type");
+    if (StringUtils.isNoneEmpty(typeParam)) {
+      if (typeParam.equals("collection")) {
+        CollectionsTransaction.start();
+      } else if (typeParam.equals("generate")) {
+        GenerateTransaction.start();
+      }
+      return;
+    }
+
     String[] fullNodes = args[0].split(";");
     int broadcastThreadNum = Integer.parseInt(args[1]);
     String filePath = args[2];

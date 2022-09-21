@@ -44,6 +44,12 @@ public class GenerateTransaction {
     initTask();
   }
 
+  public static void start() {
+    initParam();
+    initTask();
+  }
+
+
   private static void initAccountByFile() {
     try (BufferedReader bufferedReader =
                  new BufferedReader(new InputStreamReader(new FileInputStream(accountFilePath), StandardCharsets.UTF_8))) {

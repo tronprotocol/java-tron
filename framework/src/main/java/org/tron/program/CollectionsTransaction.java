@@ -36,20 +36,28 @@ public class CollectionsTransaction {
   private static BufferedWriter writer = null;
 
   // https://developers.tron.network/docs/trongrid
-  public static String fullNode = "grpc.trongrid.io:50051";
+  // public static String fullNode = "grpc.trongrid.io:50051";
+  public static String fullNode = "47.252.35.194:50051";
   public static String solidityNode = "grpc.trongrid.io:50052";
 
   public static String fileName = null;
-  public static int startBlockNum = 0;
-  public static int endBlockNum = 10000;
+  public static int startBlockNum = 434377520;
+  public static int endBlockNum = startBlockNum + 1000;
 
-  public static void main(String[] args) throws FileNotFoundException {
+  public static void main(String[] args) {
     init();
-    GrpcClient client = init(fullNode, solidityNode);
+    GrpcClient client = initGRPC(fullNode, solidityNode);
     fetchTransaction(client, fileName, startBlockNum, endBlockNum);
   }
 
-  public static void init() throws FileNotFoundException {
+  public static void start() {
+    init();
+    GrpcClient client = initGRPC(fullNode, solidityNode);
+    fetchTransaction(client, fileName, startBlockNum, endBlockNum);
+  }
+
+
+  public static void init() {
 
     String startBlock = System.getProperty("startBlockNum");
     if (StringUtils.isNoneEmpty(startBlock)) {
@@ -63,7 +71,7 @@ public class CollectionsTransaction {
 
     String file = System.getProperty("fileName");
 //    for test
-//    file = "/Users/liukai/workspaces/temp/fullnode/transaction.txt";
+    file = "/Users/liukai/workspaces/temp/fullnode/transaction.txt";
     if (StringUtils.isNoneEmpty(file)) {
       if (!file.contains(".")) {
         file = File.separator + defaultFileName;
@@ -78,9 +86,13 @@ public class CollectionsTransaction {
       CollectionsTransaction.fullNode = fullNode;
     }
 
-    fileOutputStream = new FileOutputStream(new File(fileName), true);
-    outputStreamWriter = new OutputStreamWriter(fileOutputStream);
-    writer = new BufferedWriter(outputStreamWriter);
+    try {
+      fileOutputStream = new FileOutputStream(new File(fileName), true);
+      outputStreamWriter = new OutputStreamWriter(fileOutputStream);
+      writer = new BufferedWriter(outputStreamWriter);
+    } catch (FileNotFoundException e) {
+      e.printStackTrace();
+    }
   }
 
   private static void fetchTransaction(GrpcClient client, String fileName, int startBlockNum, int endBlockNum) {
@@ -103,7 +115,7 @@ public class CollectionsTransaction {
         filterCount = filterCount + transactions.size();
         writeToFile(fileName, transactions);
       }
-      logger.info("已提取块：{} -- {} 块的交易!", i, i + step);
+      logger.info("已提取块：{} -- {} 块的交易!, 笔数: {}", i, i + step, transactions.size());
     }
 
     if (transactions.size() < 100000) {
@@ -111,8 +123,8 @@ public class CollectionsTransaction {
       transactions = filterTransaction(transactions);
       count = count + transactions.size();
       writeToFile(fileName, transactions);
+      logger.info("总共获取交易笔数：{}, 过滤有效交易笔数: {}", count, filterCount);
     }
-    logger.info("总共获取交易笔数：{}, 过滤有效交易笔数: {}", count, filterCount);
     closeIO();
   }
 
@@ -126,7 +138,7 @@ public class CollectionsTransaction {
     }
   }
 
-  private static GrpcClient init(String fullNode, String solidityNode) {
+  private static GrpcClient initGRPC(String fullNode, String solidityNode) {
     return new GrpcClient(fullNode, solidityNode);
   }
 
@@ -236,6 +248,7 @@ public class CollectionsTransaction {
     transactions.parallelStream().forEachOrdered(trx -> {
       try {
         writer.write(transactionToHexString(trx) + System.lineSeparator());
+        writer.flush();
       } catch (IOException e) {
         e.printStackTrace();
       }
