@@ -104,6 +104,7 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
     Map<WrappedByteArray, WrappedByteArray> assets = new HashMap<>();
     batch.forEach((k, v) -> {
       if (Arrays.equals("block_number".getBytes(), k.getBytes())) {
+        accounts.put(k, v);
         return;
       }
       if (ByteArray.isEmpty(v.getBytes())) {
