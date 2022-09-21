@@ -13,7 +13,7 @@ import org.tron.core.db.TronStoreWithRevoking;
 
 import java.math.BigInteger;
 
-@Slf4j
+@Slf4j(topic = "DB")
 @Component
 public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
 

@@ -641,7 +641,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       if (contract.getType() != ContractType.ShieldedTransferContract) {
         validatePubSignature(accountStore, dynamicPropertiesStore);
       } else {  //ShieldedTransfer
-        byte[] owner = getOwner(contract);
+        byte[] owner = getOwnerAddress();
         if (!ArrayUtils.isEmpty(owner)) { //transfer from transparent address
           validatePubSignature(accountStore, dynamicPropertiesStore);
         } else { //transfer from shielded address

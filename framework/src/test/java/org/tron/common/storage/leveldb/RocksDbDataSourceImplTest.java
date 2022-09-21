@@ -271,7 +271,9 @@ public class RocksDbDataSourceImplTest {
     try {
       dataSource.initDB();
     } catch (Exception e) {
-      Assert.assertTrue(e.getMessage().contains("Failed to"));
+      Assert.assertEquals(String.format("failed to check database: %s, engine do not match",
+              "test_engine"),
+              e.getMessage());
     }
     Assert.assertNull(dataSource.getDatabase());
     PropUtil.writeProperty(enginePath, "ENGINE", "ROCKSDB");

@@ -66,12 +66,15 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
 
     synchronized (tronNetDelegate.getBlockLock()) {
       try {
+        BlockId blockId = null;
         while (!peer.getSyncBlockToFetch().isEmpty() && tronNetDelegate
                 .containBlock(peer.getSyncBlockToFetch().peek())) {
-          BlockId blockId = peer.getSyncBlockToFetch().pop();
+          blockId = peer.getSyncBlockToFetch().pop();
           peer.setBlockBothHave(blockId);
+        }
+        if (blockId != null) {
           logger.info("Block {} from {} is processed",
-                  blockId.getString(), peer.getNode().getHost());
+              blockId.getString(), peer.getNode().getHost());
         }
       } catch (NoSuchElementException e) {
         logger.warn("Process ChainInventoryMessage failed, peer {}, isDisconnect:{}",

@@ -90,12 +90,12 @@ public class StateManager {
       return;
     }
 
-    if (dupBlockCount.get() == 0) {
-      dupBlockCount.set(new Random().nextInt(10));
-    } else {
-      dupBlockCount.set(10);
+    if (null != currentBlockId
+        && currentBlockId.toString().compareTo(blockCapsule.getBlockId().toString()) > 0) {
+      return;
     }
 
+    dupBlockCount.set(1);
     dupBlockTime.set(System.currentTimeMillis());
 
     logger.warn("Dup block produced: {}", blockCapsule);
