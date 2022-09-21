@@ -49,48 +49,37 @@ public class NodeTable {
   }
 
   public synchronized Node addNode(Node n) {
-    NodeEntry e = new NodeEntry(node.getId(), n);
-    if (nodes.contains(e)) {
-      nodes.forEach(nodeEntry -> {
-        if (nodeEntry.equals(e)) {
-          nodeEntry.touch();
-        }
-      });
+    NodeEntry entry = getNodeEntry(n);
+    if (entry != null) {
+      entry.touch();
       return null;
     }
+
+    NodeEntry e = new NodeEntry(node.getId(), n);
     NodeEntry lastSeen = buckets[getBucketId(e)].addNode(e);
     if (lastSeen != null) {
       return lastSeen.getNode();
     }
-    if (!nodes.contains(e)) {
-      nodes.add(e);
-    }
+    nodes.add(e);
     return null;
   }
 
   public synchronized void dropNode(Node n) {
-    NodeEntry e = new NodeEntry(node.getId(), n);
-    buckets[getBucketId(e)].dropNode(e);
-    nodes.remove(e);
+    NodeEntry entry = getNodeEntry(n);
+    if (entry != null) {
+      nodes.remove(entry);
+      buckets[getBucketId(entry)].dropNode(entry);
+    }
   }
 
   public synchronized boolean contains(Node n) {
-    NodeEntry e = new NodeEntry(node.getId(), n);
-    for (NodeBucket b : buckets) {
-      if (b.getNodes().contains(e)) {
-        return true;
-      }
-    }
-    return false;
+    return getNodeEntry(n) != null;
   }
 
   public synchronized void touchNode(Node n) {
-    NodeEntry e = new NodeEntry(node.getId(), n);
-    for (NodeBucket b : buckets) {
-      if (b.getNodes().contains(e)) {
-        b.getNodes().get(b.getNodes().indexOf(e)).touch();
-        break;
-      }
+    NodeEntry entry = getNodeEntry(n);
+    if (entry != null) {
+      entry.touch();
     }
   }
 
@@ -104,10 +93,6 @@ public class NodeTable {
     return i;
   }
 
-  public synchronized NodeBucket[] getBuckets() {
-    return buckets;
-  }
-
   public int getBucketId(NodeEntry e) {
     int id = e.getDistance() - 1;
     return id < 0 ? 0 : id;
@@ -118,17 +103,9 @@ public class NodeTable {
   }
 
   public synchronized List<NodeEntry> getAllNodes() {
-    List<NodeEntry> nodes = new ArrayList<>();
-
-    for (NodeBucket b : buckets) {
-      for (NodeEntry e : b.getNodes()) {
-        if (!e.getNode().equals(node)) {
-          nodes.add(e);
-        }
-      }
-    }
-
-    return nodes;
+    List<NodeEntry> list = new ArrayList<>(nodes);
+    list.remove(new NodeEntry(node.getId(), node));
+    return list;
   }
 
   public synchronized List<Node> getClosestNodes(byte[] targetId) {
@@ -144,5 +121,16 @@ public class NodeTable {
       }
     }
     return closestNodes;
+  }
+
+  private NodeEntry getNodeEntry(Node n) {
+    NodeEntry entry = null;
+    for (NodeEntry e: nodes) {
+      if (e.getNode().getHost().equals(n.getHost())) {
+        entry = e;
+        break;
+      }
+    }
+    return entry;
   }
 }
