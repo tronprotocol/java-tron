@@ -1,6 +1,5 @@
 package org.tron.core.store;
 
-import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
 import java.util.Objects;
@@ -2532,16 +2531,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException(msg));
   }
 
-  @Override
-  public void put(byte[] key, BytesCapsule item) {
-    if (Objects.isNull(key) || Objects.isNull(item)) {
-      return;
-    }
-    if(Arrays.equals("block_number".getBytes(), key)) {
-      logger.info("checkpoint update properties blocknumber, {}", Longs.fromByteArray(item.getData()));
-    }
-    revokingDB.put(key, item.getData());
-  }
 
   private static class DynamicResourceProperties {
 
