@@ -109,9 +109,14 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
 
   @Override
   public void resetDb() {
-    closeDB();
-    FileUtil.recursiveDelete(getDbPath().toString());
-    initDB();
+    resetDbLock.writeLock().lock();
+    try {
+      closeDB();
+      FileUtil.recursiveDelete(getDbPath().toString());
+      initDB();
+    } finally {
+      resetDbLock.writeLock().unlock();
+    }
   }
 
   private boolean quitIfNotAlive() {
@@ -528,9 +533,17 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
    */
   @Override
   public List<String> getStats() throws Exception {
-    String stat = database.getProperty("rocksdb.levelstats");
-    String[] stats = stat.split("\n");
-    return Arrays.stream(stats).skip(2).collect(Collectors.toList());
+    resetDbLock.readLock().lock();
+    try {
+      if (!isAlive()) {
+        return Collections.emptyList();
+      }
+      String stat = database.getProperty("rocksdb.levelstats");
+      String[] stats = stat.split("\n");
+      return Arrays.stream(stats).skip(2).collect(Collectors.toList());
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
   }
 
   @Override
