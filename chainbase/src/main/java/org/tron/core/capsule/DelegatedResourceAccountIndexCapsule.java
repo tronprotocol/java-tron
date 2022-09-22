@@ -98,6 +98,15 @@ public class DelegatedResourceAccountIndexCapsule implements
     return getAccount().toByteArray();
   }
 
+  public static byte[] createDbKeyV2(byte[] account) {
+    byte[] v2Prefix = "v2_".getBytes();
+    byte[] key = new byte[v2Prefix.length + account.length];
+    System.arraycopy(v2Prefix, 0, key, 0, v2Prefix.length);
+    System.arraycopy(account, 0, key, v2Prefix.length, account.length);
+    return key;
+  }
+
+
   public String createReadableString() {
     return ByteArray.toHexString(getAccount().toByteArray());
   }
