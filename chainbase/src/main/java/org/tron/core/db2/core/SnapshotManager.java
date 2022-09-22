@@ -394,7 +394,7 @@ public class SnapshotManager implements RevokingDatabase {
         syncFlag = CommonParameter.getInstance().getStorage().isCheckpointSync();
       } else {
         checkPointStore = checkTmpStore;
-        syncFlag = CommonParameter.getInstance().getStorage().isDbSync();
+        syncFlag = CommonParameter.getInstance().getStorage().isCheckpointSync();
       }
 
       checkPointStore.getDbSource().updateByBatch(batch.entrySet().stream()
@@ -440,10 +440,10 @@ public class SnapshotManager implements RevokingDatabase {
     if (cpList == null) {
       return;
     }
-    if (cpList.size() < 3) {
+    if (cpList.size() <= 3) {
       return;
     }
-    for (String cp: cpList.subList(0, cpList.size()-3)) {
+    for (String cp: cpList.subList(0, cpList.size() - 3)) {
       long timestamp = Long.parseLong(cp);
       if (System.currentTimeMillis() - timestamp < ONE_MINUTE_MILLS*2) {
         break;
@@ -454,7 +454,7 @@ public class SnapshotManager implements RevokingDatabase {
         logger.error("checkpoint prune failed, timestamp: {}", timestamp);
         return;
       }
-      logger.debug("checkpoint prune success, timestamp: {}", timestamp);
+      logger.info("checkpoint prune success, timestamp: {}", timestamp);
     }
   }
 
@@ -494,11 +494,12 @@ public class SnapshotManager implements RevokingDatabase {
       return;
     }
 
-    for (String cp: cpList) {
-      TronDatabase<byte[]> checkPointV2Store = getCheckpointDB(cp);
+    //for (String cp: cpList) {
+      logger.info("CheckpointList: {}. use {} to recover", cpList, cpList.get(cpList.size() - 1));
+      TronDatabase<byte[]> checkPointV2Store = getCheckpointDB(cpList.get(cpList.size() - 1));
       recover(checkPointV2Store);
       checkPointV2Store.close();
-    }
+    //}
     logger.info("checkpoint v2 recover success");
     unChecked = false;
   }
