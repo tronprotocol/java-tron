@@ -293,8 +293,17 @@ public class FullNodeHttpApiService implements Service {
   private GetBandwidthPricesServlet getBandwidthPricesServlet;
   @Autowired
   private GetBlockServlet getBlockServlet;
+
+  @Autowired
+  private FreezeBalanceV2Servlet freezeBalanceV2Servlet;
+  @Autowired
+  private UnFreezeBalanceV2Servlet unFreezeBalanceV2Servlet;
   @Autowired
   private WithdrawExpireUnfreezeServlet withdrawExpireUnfreezeServlet;
+  @Autowired
+  private DelegateResourceServlet delegateResourceServlet;
+  @Autowired
+  private UnDelegateResourceServlet unDelegateResourceServlet;
 
   private static String getParamsFile(String fileName) {
     InputStream in = Thread.currentThread().getContextClassLoader()
@@ -545,8 +554,16 @@ public class FullNodeHttpApiService implements Service {
           "/wallet/getbandwidthprices");
       context.addServlet(new ServletHolder(getBlockServlet), "/wallet/getblock");
 
+      context.addServlet(new ServletHolder(freezeBalanceV2Servlet),
+          "/wallet/freezebalancev2");
+      context.addServlet(new ServletHolder(unFreezeBalanceV2Servlet),
+          "/wallet/unfreezebalancev2");
       context.addServlet(new ServletHolder(withdrawExpireUnfreezeServlet),
               "/wallet/withdrawExpireUnfreeze");
+      context.addServlet(new ServletHolder(delegateResourceServlet),
+          "/wallet/delegateresource");
+      context.addServlet(new ServletHolder(unDelegateResourceServlet),
+          "/wallet/undelegateresource");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
