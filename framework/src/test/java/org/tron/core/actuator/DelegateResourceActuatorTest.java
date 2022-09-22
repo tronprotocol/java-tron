@@ -1,5 +1,7 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
@@ -23,6 +25,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
@@ -110,6 +113,7 @@ public class DelegateResourceActuatorTest {
     AccountCapsule ownerCapsule =
         dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
     ownerCapsule.addFrozenBalanceForBandwidthV2(initBalance);
+    dbManager.getDynamicPropertiesStore().addTotalNetWeight(initBalance / TRX_PRECISION);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
   }
 
@@ -117,6 +121,7 @@ public class DelegateResourceActuatorTest {
     AccountCapsule ownerCapsule =
         dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
     ownerCapsule.addFrozenBalanceForEnergyV2(initBalance);
+    dbManager.getDynamicPropertiesStore().addTotalEnergyWeight(initBalance / TRX_PRECISION);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
   }
 
@@ -167,8 +172,9 @@ public class DelegateResourceActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
+      Assert.fail("cannot run here.");
     } catch (ContractValidateException e) {
-      Assert.assertEquals("delegateBalance must be less than accountFreezeBandwidthBalance",
+      Assert.assertEquals("delegateBalance must be less than available FreezeBandwidthV2 balance",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.fail();
@@ -179,13 +185,76 @@ public class DelegateResourceActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
+      Assert.fail("cannot run here.");
     } catch (ContractValidateException e) {
-      Assert.assertEquals("delegateBalance must be less than accountFreezeEnergyBalance",
+      Assert.assertEquals(
+          "delegateBalance must be less than available FreezeEnergyV2Balance balance",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.fail(e.getMessage());
     }
   }
+
+  @Test
+  public void testDelegateBandwidthWithUsage() {
+    freezeBandwidthForOwner();
+    long now = System.currentTimeMillis();
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
+    byte[] owner = ByteArray.fromHexString(OWNER_ADDRESS);
+    AccountCapsule ownerCapsule = dbManager.getAccountStore().get(owner);
+    DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
+    ownerCapsule.setNetUsage(dynamicPropertiesStore.getTotalNetLimit() / 4);
+    ownerCapsule.setLatestConsumeTime(dbManager.getChainBaseManager().getHeadSlot());
+    dbManager.getAccountStore().put(owner, ownerCapsule);
+
+    DelegateResourceActuator actuator = new DelegateResourceActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(
+        getDelegateContractForBandwidth(OWNER_ADDRESS, RECEIVER_ADDRESS, initBalance));
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.fail("cannot run here.");
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("delegateBalance must be less than available FreezeBandwidthV2 balance",
+          e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.fail(e.getMessage());
+    }
+  }
+
+
+  @Test
+  public void testDelegateCpuWithUsage() {
+    freezeCpuForOwner();
+    long now = System.currentTimeMillis();
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
+    byte[] owner = ByteArray.fromHexString(OWNER_ADDRESS);
+    AccountCapsule ownerCapsule = dbManager.getAccountStore().get(owner);
+    DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
+    ownerCapsule.setEnergyUsage(dynamicPropertiesStore.getTotalEnergyCurrentLimit() / 4);
+    ownerCapsule.setLatestConsumeTimeForEnergy(dbManager.getChainBaseManager().getHeadSlot());
+    dbManager.getAccountStore().put(owner, ownerCapsule);
+
+    DelegateResourceActuator actuator = new DelegateResourceActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(
+        getDelegateContractForCpu(OWNER_ADDRESS, RECEIVER_ADDRESS, initBalance));
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.fail("cannot run here.");
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "delegateBalance must be less than available FreezeEnergyV2Balance balance",
+          e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.fail(e.getMessage());
+    }
+  }
+
 
   @Test
   public void testDelegateResourceWithContractAddress() {
@@ -414,7 +483,7 @@ public class DelegateResourceActuatorTest {
       actuator.execute(ret);
       Assert.fail("cannot run here.");
     } catch (ContractValidateException e) {
-      Assert.assertEquals("delegateBalance must be less than accountFreezeBandwidthBalance",
+      Assert.assertEquals("delegateBalance must be less than available FreezeBandwidthV2 balance",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.fail(e.getMessage());

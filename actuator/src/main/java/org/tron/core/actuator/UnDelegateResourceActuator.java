@@ -76,16 +76,14 @@ public class UnDelegateResourceActuator extends AbstractActuator {
           if (receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
               < unDelegateBalance) {
             // A TVM contract suicide, re-create will produce this situation
-            transferUsage = receiverCapsule.getNetUsage();
-
             receiverCapsule.setAcquiredDelegatedFrozenBalanceForBandwidth(0);
           } else {
             // calculate usage
-            long unDelegateBandwidth = (long) (unDelegateBalance / TRX_PRECISION
+            long unDelegateMaxUsage = (long) (unDelegateBalance / TRX_PRECISION
                 * ((double) (dynamicStore.getTotalNetLimit()) / dynamicStore.getTotalNetWeight()));
             transferUsage = (long) (receiverCapsule.getNetUsage()
                 * ((double) (unDelegateBalance) / receiverCapsule.getAllFrozenBalanceForBandwidth()));
-            transferUsage = Math.min(unDelegateBandwidth, transferUsage);
+            transferUsage = Math.min(unDelegateMaxUsage, transferUsage);
 
             receiverCapsule.addAcquiredDelegatedFrozenBalanceForBandwidth(-unDelegateBalance);
           }
@@ -100,14 +98,14 @@ public class UnDelegateResourceActuator extends AbstractActuator {
           if (receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()
               < unDelegateBalance) {
             // A TVM contract receiver, re-create will produce this situation
-            transferUsage = receiverCapsule.getEnergyUsage();
             receiverCapsule.setAcquiredDelegatedFrozenBalanceForEnergy(0);
           } else {
-            long unDelegateEnergy = (long) (unDelegateBalance / TRX_PRECISION
+            // calculate usage
+            long unDelegateMaxUsage = (long) (unDelegateBalance / TRX_PRECISION
                 * ((double) (dynamicStore.getTotalEnergyCurrentLimit()) / dynamicStore.getTotalEnergyWeight()));
             transferUsage = (long) (receiverCapsule.getEnergyUsage()
                 * ((double) (unDelegateBalance) / receiverCapsule.getAllFrozenBalanceForEnergy()));
-            transferUsage = Math.min(unDelegateEnergy, transferUsage);
+            transferUsage = Math.min(unDelegateMaxUsage, transferUsage);
 
             receiverCapsule.addAcquiredDelegatedFrozenBalanceForEnergy(-unDelegateBalance);
           }
@@ -123,7 +121,7 @@ public class UnDelegateResourceActuator extends AbstractActuator {
     }
 
     // modify owner Account
-    AccountCapsule accountCapsule = accountStore.get(ownerAddress);
+    AccountCapsule ownerCapsule = accountStore.get(ownerAddress);
     byte[] key = DelegatedResourceCapsule
         .createDbKeyV2(unDelegateResourceContract.getOwnerAddress().toByteArray(),
             unDelegateResourceContract.getReceiverAddress().toByteArray());
@@ -131,25 +129,29 @@ public class UnDelegateResourceActuator extends AbstractActuator {
         .get(key);
     switch (unDelegateResourceContract.getResource()) {
       case BANDWIDTH: {
-        long delegateBalance = delegatedResourceCapsule.getFrozenBalanceForBandwidth();
-        delegatedResourceCapsule.setFrozenBalanceForBandwidth(delegateBalance - unDelegateBalance, 0);
-        accountCapsule.addDelegatedFrozenBalanceForBandwidth(-unDelegateBalance);
-        accountCapsule.addFrozenBalanceForBandwidthV2(unDelegateBalance);
+        delegatedResourceCapsule.addFrozenBalanceForBandwidth(-unDelegateBalance, 0);
 
-        long newNetUsage = accountCapsule.getNetUsage() + transferUsage;
-        accountCapsule.setNetUsage(newNetUsage);
-        accountCapsule.setLatestConsumeTime(chainBaseManager.getHeadSlot());
+        ownerCapsule.addDelegatedFrozenBalanceForBandwidth(-unDelegateBalance);
+        ownerCapsule.addFrozenBalanceForBandwidthV2(unDelegateBalance);
+
+        BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
+        processor.updateUsage(ownerCapsule);
+        long newNetUsage = ownerCapsule.getNetUsage() + transferUsage;
+        ownerCapsule.setNetUsage(newNetUsage);
+        ownerCapsule.setLatestConsumeTime(chainBaseManager.getHeadSlot());
       }
       break;
       case ENERGY: {
-        long delegateBalance = delegatedResourceCapsule.getFrozenBalanceForEnergy();
-        delegatedResourceCapsule.setFrozenBalanceForEnergy(delegateBalance - unDelegateBalance, 0);
-        accountCapsule.addDelegatedFrozenBalanceForEnergy(-unDelegateBalance);
-        accountCapsule.addFrozenBalanceForEnergyV2(unDelegateBalance);
+        delegatedResourceCapsule.addFrozenBalanceForEnergy(-unDelegateBalance, 0);
 
-        long newEnergyUsage = accountCapsule.getEnergyUsage() + transferUsage;
-        accountCapsule.setEnergyUsage(newEnergyUsage);
-        accountCapsule.setLatestConsumeTimeForEnergy(chainBaseManager.getHeadSlot());
+        ownerCapsule.addDelegatedFrozenBalanceForEnergy(-unDelegateBalance);
+        ownerCapsule.addFrozenBalanceForEnergyV2(unDelegateBalance);
+
+        EnergyProcessor processor = new EnergyProcessor(dynamicStore, accountStore);
+        processor.updateUsage(ownerCapsule);
+        long newEnergyUsage = ownerCapsule.getEnergyUsage() + transferUsage;
+        ownerCapsule.setEnergyUsage(newEnergyUsage);
+        ownerCapsule.setLatestConsumeTimeForEnergy(chainBaseManager.getHeadSlot());
       }
       break;
       default:
@@ -191,7 +193,7 @@ public class UnDelegateResourceActuator extends AbstractActuator {
       delegatedResourceStore.put(key, delegatedResourceCapsule);
     }
 
-    accountStore.put(ownerAddress, accountCapsule);
+    accountStore.put(ownerAddress, ownerCapsule);
 
     ret.setStatus(fee, code.SUCESS);
 
@@ -264,6 +266,9 @@ public class UnDelegateResourceActuator extends AbstractActuator {
     }
 
     long unDelegateBalance = unDelegateResourceContract.getBalance();
+    if (unDelegateBalance < TRX_PRECISION) {
+      throw new ContractValidateException("unDelegateBalance must be more than 1TRX");
+    }
     switch (unDelegateResourceContract.getResource()) {
       case BANDWIDTH:
         if (delegatedResourceCapsule.getFrozenBalanceForBandwidth() < unDelegateBalance) {

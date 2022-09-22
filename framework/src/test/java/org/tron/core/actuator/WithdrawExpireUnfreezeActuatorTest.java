@@ -187,53 +187,6 @@ public class WithdrawExpireUnfreezeActuatorTest {
   }
 
   @Test
-  public void isGR() {
-    Witness w = Args.getInstance().getGenesisBlock().getWitnesses().get(0);
-    byte[] address = w.getAddress();
-    AccountCapsule grCapsule = new AccountCapsule(ByteString.copyFromUtf8("gr"),
-        ByteString.copyFrom(address), AccountType.Normal, initBalance);
-    dbManager.getAccountStore().put(grCapsule.createDbKey(), grCapsule);
-    long now = System.currentTimeMillis();
-    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
-
-    try {
-      dbManager.getMortgageService()
-          .adjustAllowance(dbManager.getAccountStore(), address, allowance);
-    } catch (BalanceInsufficientException e) {
-      fail("BalanceInsufficientException");
-    }
-    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
-    Assert.assertEquals(accountCapsule.getAllowance(), allowance);
-
-    WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address), 100,
-        "http://google.com");
-
-    dbManager.getAccountStore().put(address, accountCapsule);
-    dbManager.getWitnessStore().put(address, witnessCapsule);
-
-    WithdrawExpireUnfreezeActuator actuator = new WithdrawExpireUnfreezeActuator();
-    actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(getContract(ByteArray.toHexString(address)));
-
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-    Assert.assertTrue(dbManager.getWitnessStore().has(address));
-
-    try {
-      actuator.validate();
-      actuator.execute(ret);
-      fail("cannot run here.");
-
-    } catch (ContractValidateException e) {
-      String readableOwnerAddress = StringUtil.createReadableString(address);
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Account[" + readableOwnerAddress
-          + "] is a guard representative and is not allowed to withdraw Balance", e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
-    }
-  }
-
-  @Test
   public void commonErrorCheck() {
 
     WithdrawExpireUnfreezeActuator actuator = new WithdrawExpireUnfreezeActuator();

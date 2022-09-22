@@ -1,10 +1,15 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
+import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
+
 import com.google.common.math.LongMath;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
@@ -17,14 +22,6 @@ import org.tron.protos.Protocol.Account.UnFreezeV2;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.BalanceContract.WithdrawExpireUnfreezeContract;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
-
-import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
-import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 
 
 @Slf4j(topic = "actuator")
@@ -51,8 +48,8 @@ public class WithdrawExpireUnfreezeActuator extends AbstractActuator {
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
-    AccountCapsule accountCapsule = accountStore.
-        get(withdrawExpireUnfreezeContract.getOwnerAddress().toByteArray());
+    AccountCapsule accountCapsule = accountStore.get(
+        withdrawExpireUnfreezeContract.getOwnerAddress().toByteArray());
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
     List<UnFreezeV2> unfrozenV2List = accountCapsule.getInstance().getUnfrozenV2List();
     long totalWithdrawUnfreeze = getTotalWithdrawUnfreeze(unfrozenV2List, now);
@@ -97,18 +94,10 @@ public class WithdrawExpireUnfreezeActuator extends AbstractActuator {
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
     String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
     if (Objects.isNull(accountCapsule)) {
-      throw new ContractValidateException(ACCOUNT_EXCEPTION_STR +
-              readableOwnerAddress + NOT_EXIST_STR);
+      throw new ContractValidateException(ACCOUNT_EXCEPTION_STR
+          + readableOwnerAddress + NOT_EXIST_STR);
     }
 
-    boolean isGP = CommonParameter.getInstance()
-        .getGenesisBlock().getWitnesses().stream().anyMatch(witness ->
-            Arrays.equals(ownerAddress, witness.getAddress()));
-    if (isGP) {
-      throw new ContractValidateException(
-          ACCOUNT_EXCEPTION_STR + readableOwnerAddress
-              + "] is a guard representative and is not allowed to withdraw Balance");
-    }
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
     List<UnFreezeV2> unfrozenV2List = accountCapsule.getInstance().getUnfrozenV2List();
     long totalWithdrawUnfreeze = getTotalWithdrawUnfreeze(unfrozenV2List, now);
@@ -126,18 +115,18 @@ public class WithdrawExpireUnfreezeActuator extends AbstractActuator {
 
   private long getTotalWithdrawUnfreeze(List<UnFreezeV2> unfrozenV2List, long now) {
     return getTotalWithdrawList(unfrozenV2List, now).stream()
-            .mapToLong(UnFreezeV2::getUnfreezeAmount).sum();
+        .mapToLong(UnFreezeV2::getUnfreezeAmount).sum();
   }
 
   private List<UnFreezeV2> getTotalWithdrawList(List<UnFreezeV2> unfrozenV2List, long now) {
     return unfrozenV2List.stream().filter(unfrozenV2 -> (unfrozenV2.getUnfreezeAmount() > 0
-                    && unfrozenV2.getUnfreezeExpireTime() <= now)).collect(Collectors.toList());
+        && unfrozenV2.getUnfreezeExpireTime() <= now)).collect(Collectors.toList());
   }
 
   private List<UnFreezeV2> getRemainWithdrawList(List<UnFreezeV2> unfrozenV2List, long now) {
     return unfrozenV2List.stream()
-            .filter(unfrozenV2 -> unfrozenV2.getUnfreezeExpireTime() > now)
-            .collect(Collectors.toList());
+        .filter(unfrozenV2 -> unfrozenV2.getUnfreezeExpireTime() > now)
+        .collect(Collectors.toList());
   }
 
   @Override
