@@ -174,9 +174,14 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
    * reset database.
    */
   public void resetDb() {
-    closeDB();
-    FileUtil.recursiveDelete(getDbPath().toString());
-    initDB();
+    resetDbLock.writeLock().lock();
+    try {
+      closeDB();
+      FileUtil.recursiveDelete(getDbPath().toString());
+      initDB();
+    } finally {
+      resetDbLock.writeLock().unlock();
+    }
   }
 
   @Override
@@ -506,9 +511,17 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
    */
   @Override
   public List<String> getStats() throws Exception {
-    String stat = database.getProperty("leveldb.stats");
-    String[] stats = stat.split("\n");
-    return Arrays.stream(stats).skip(3).collect(Collectors.toList());
+    resetDbLock.readLock().lock();
+    try {
+      if (!isAlive()) {
+        return Collections.emptyList();
+      }
+      String stat = database.getProperty("leveldb.stats");
+      String[] stats = stat.split("\n");
+      return Arrays.stream(stats).skip(3).collect(Collectors.toList());
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
   }
 
   @Override
