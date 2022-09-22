@@ -222,8 +222,13 @@ public class UnDelegateResourceActuatorTest {
 
     AccountCapsule receiverCapsule = dbManager.getAccountStore().get(receiver);
     receiverCapsule.setNetUsage(1_000_000_000);
-    receiverCapsule.setLatestConsumeTime(dbManager.getChainBaseManager().getHeadSlot());
+    long nowSlot = dbManager.getChainBaseManager().getHeadSlot();
+    receiverCapsule.setLatestConsumeTime(nowSlot - 14400);
     dbManager.getAccountStore().put(receiver, receiverCapsule);
+    AccountCapsule ownerCapsule = dbManager.getAccountStore().get(owner);
+    ownerCapsule.setNetUsage(1_000_000_000);
+    ownerCapsule.setLatestConsumeTime(nowSlot - 14400);
+    dbManager.getAccountStore().put(owner, ownerCapsule);
 
     UnDelegateResourceActuator actuator = new UnDelegateResourceActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(
@@ -231,13 +236,13 @@ public class UnDelegateResourceActuatorTest {
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
-      AccountCapsule ownerCapsule = dbManager.getAccountStore().get(owner);
+      ownerCapsule = dbManager.getAccountStore().get(owner);
       Assert.assertEquals(delegateBalance,
           receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth());
       Assert.assertEquals(delegateBalance, ownerCapsule.getDelegatedFrozenBalanceForBandwidth());
       Assert.assertEquals(0, ownerCapsule.getFrozenV2BalanceForBandwidth());
       Assert.assertEquals(delegateBalance, ownerCapsule.getTronPower());
-      Assert.assertEquals(0, ownerCapsule.getNetUsage());
+      Assert.assertEquals(1_000_000_000, ownerCapsule.getNetUsage());
       Assert.assertEquals(1_000_000_000, receiverCapsule.getNetUsage());
 
       actuator.validate();
@@ -250,8 +255,7 @@ public class UnDelegateResourceActuatorTest {
       Assert.assertEquals(delegateBalance, ownerCapsule.getFrozenV2BalanceForBandwidth());
       Assert.assertEquals(ownerCapsule.getTronPower(), delegateBalance);
       Assert.assertEquals(1000000000, ownerCapsule.getNetUsage());
-      Assert.assertEquals(dbManager.getChainBaseManager().getHeadSlot(),
-          ownerCapsule.getLatestConsumeTime());
+      Assert.assertEquals(nowSlot, ownerCapsule.getLatestConsumeTime());
 
       // check receiver
       receiverCapsule = dbManager.getAccountStore().get(receiver);
@@ -483,10 +487,15 @@ public class UnDelegateResourceActuatorTest {
     long now = System.currentTimeMillis();
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
 
+    long nowSlot = dbManager.getChainBaseManager().getHeadSlot();
     AccountCapsule receiverCapsule = dbManager.getAccountStore().get(receiver);
     receiverCapsule.setEnergyUsage(1_000_000_000);
-    receiverCapsule.setLatestConsumeTimeForEnergy(dbManager.getChainBaseManager().getHeadSlot());
+    receiverCapsule.setLatestConsumeTimeForEnergy(nowSlot - 14400);
     dbManager.getAccountStore().put(receiver, receiverCapsule);
+    AccountCapsule ownerCapsule = dbManager.getAccountStore().get(owner);
+    ownerCapsule.setEnergyUsage(1_000_000_000);
+    ownerCapsule.setLatestConsumeTimeForEnergy(nowSlot - 14400);
+    dbManager.getAccountStore().put(owner, ownerCapsule);
 
     UnDelegateResourceActuator actuator = new UnDelegateResourceActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
@@ -494,13 +503,13 @@ public class UnDelegateResourceActuatorTest {
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
-      AccountCapsule ownerCapsule = dbManager.getAccountStore().get(owner);
+      ownerCapsule = dbManager.getAccountStore().get(owner);
       Assert.assertEquals(delegateBalance,
           receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy());
       Assert.assertEquals(delegateBalance, ownerCapsule.getDelegatedFrozenBalanceForEnergy());
       Assert.assertEquals(0, ownerCapsule.getFrozenV2BalanceForEnergy());
       Assert.assertEquals(delegateBalance, ownerCapsule.getTronPower());
-      Assert.assertEquals(0, ownerCapsule.getEnergyUsage());
+      Assert.assertEquals(1_000_000_000, ownerCapsule.getEnergyUsage());
       Assert.assertEquals(1_000_000_000, receiverCapsule.getEnergyUsage());
 
       actuator.validate();
@@ -513,8 +522,7 @@ public class UnDelegateResourceActuatorTest {
       Assert.assertEquals(delegateBalance, ownerCapsule.getFrozenV2BalanceForEnergy());
       Assert.assertEquals(ownerCapsule.getTronPower(), delegateBalance);
       Assert.assertEquals(1_000_000_000, ownerCapsule.getEnergyUsage());
-      Assert.assertEquals(dbManager.getChainBaseManager().getHeadSlot(),
-          ownerCapsule.getLatestConsumeTimeForEnergy());
+      Assert.assertEquals(nowSlot, ownerCapsule.getLatestConsumeTimeForEnergy());
 
       // check receiver
       receiverCapsule = dbManager.getAccountStore().get(receiver);

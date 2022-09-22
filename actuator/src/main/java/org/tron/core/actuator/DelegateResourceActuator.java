@@ -57,12 +57,6 @@ public class DelegateResourceActuator extends AbstractActuator {
     AccountCapsule ownerCapsule = accountStore
         .get(delegateResourceContract.getOwnerAddress().toByteArray());
 
-    // TODO remove
-    // if (dynamicStore.supportAllowNewResourceModel()
-    //     && accountCapsule.oldTronPowerIsNotInitialized()) {
-    //   accountCapsule.initializeOldTronPower();
-    // }
-
     long delegateBalance = delegateResourceContract.getBalance();
     byte[] ownerAddress = delegateResourceContract.getOwnerAddress().toByteArray();
     byte[] receiverAddress = delegateResourceContract.getReceiverAddress().toByteArray();
@@ -143,20 +137,30 @@ public class DelegateResourceActuator extends AbstractActuator {
       case BANDWIDTH: {
         BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
         processor.updateUsage(ownerCapsule);
-        long netBalanceUsage = (long) (ownerCapsule.getNetUsage()
-            * ((double) (dynamicStore.getTotalNetLimit()) / dynamicStore.getTotalNetWeight()));
-        if (ownerCapsule.getFrozenV2BalanceForBandwidth() - netBalanceUsage < delegateBalance) {
-          throw new ContractValidateException("delegateBalance must be less than accountFreezeBandwidthBalance");
+
+        //The unit is trx
+        long netTrxUsage = (long) (ownerCapsule.getNetUsage()
+            * ((double) (dynamicStore.getTotalNetWeight()) / dynamicStore.getTotalNetLimit()));
+
+        if (ownerCapsule.getFrozenV2BalanceForBandwidth() - netTrxUsage * TRX_PRECISION
+            < delegateBalance) {
+          throw new ContractValidateException(
+              "delegateBalance must be less than available FreezeBandwidthV2 balance");
         }
       }
       break;
       case ENERGY: {
         EnergyProcessor processor = new EnergyProcessor(dynamicStore, accountStore);
         processor.updateUsage(ownerCapsule);
-        long energyBalanceUsage = (long) (ownerCapsule.getEnergyUsage()
-            * ((double) (dynamicStore.getTotalEnergyCurrentLimit()) / dynamicStore.getTotalEnergyWeight()));
-        if (ownerCapsule.getFrozenV2BalanceForEnergy() - energyBalanceUsage < delegateBalance) {
-          throw new ContractValidateException("delegateBalance must be less than accountFreezeEnergyBalance");
+
+        //The unit is trx
+        long energyTrxUsage = (long) (ownerCapsule.getEnergyUsage()
+            * ((double) (dynamicStore.getTotalEnergyWeight()) / dynamicStore.getTotalEnergyCurrentLimit()));
+
+        if (ownerCapsule.getFrozenV2BalanceForEnergy() - energyTrxUsage * TRX_PRECISION
+            < delegateBalance) {
+          throw new ContractValidateException(
+              "delegateBalance must be less than available FreezeEnergyV2Balance balance");
         }
       }
       break;
