@@ -783,11 +783,11 @@ public class Manager {
     Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, 1,
         MetricLabels.Gauge.QUEUE_QUEUED);
     try {
-      if (!trx.validateSignature(chainBaseManager.getAccountStore(),
-          chainBaseManager.getDynamicPropertiesStore())) {
-        throw new ValidateSignatureException(String.format("trans sig validate failed, id: %s",
-            trx.getTransactionId()));
-      }
+//      if (!trx.validateSignature(chainBaseManager.getAccountStore(),
+//          chainBaseManager.getDynamicPropertiesStore())) {
+//        throw new ValidateSignatureException(String.format("trans sig validate failed, id: %s",
+//            trx.getTransactionId()));
+//      }
 
       synchronized (transactionLock) {
         while (true) {
