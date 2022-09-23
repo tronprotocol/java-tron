@@ -783,11 +783,11 @@ public class Manager {
     Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, 1,
         MetricLabels.Gauge.QUEUE_QUEUED);
     try {
-//      if (!trx.validateSignature(chainBaseManager.getAccountStore(),
-//          chainBaseManager.getDynamicPropertiesStore())) {
-//        throw new ValidateSignatureException(String.format("trans sig validate failed, id: %s",
-//            trx.getTransactionId()));
-//      }
+      if (!trx.validateSignature(chainBaseManager.getAccountStore(),
+          chainBaseManager.getDynamicPropertiesStore())) {
+        throw new ValidateSignatureException(String.format("trans sig validate failed, id: %s",
+            trx.getTransactionId()));
+      }
 
       synchronized (transactionLock) {
         while (true) {
@@ -1341,11 +1341,11 @@ public class Manager {
     validateDup(trxCap);
     long t4 = System.nanoTime();
 
-//    if (!trxCap.validateSignature(chainBaseManager.getAccountStore(),
-//        chainBaseManager.getDynamicPropertiesStore())) {
-//      throw new ValidateSignatureException(
-//          String.format(" %s transaction signature validate failed", txId));
-//    }
+    if (!trxCap.validateSignature(chainBaseManager.getAccountStore(),
+        chainBaseManager.getDynamicPropertiesStore())) {
+      throw new ValidateSignatureException(
+          String.format(" %s transaction signature validate failed", txId));
+    }
 
     TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
         new RuntimeImpl());
@@ -1495,7 +1495,7 @@ public class Manager {
       if (fromPending) {
         pendingTransactions.poll();
         Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, -1,
-            MetricLabels.Gauge.QUEUE_PENDING);
+                MetricLabels.Gauge.QUEUE_PENDING);
       }
 
       if (trx == null) {
@@ -1534,9 +1534,6 @@ public class Manager {
       if (ownerAddressSet.contains(ownerAddress)) {
         trx.setVerified(false);
       }
-      long t4 = System.nanoTime();
-      total_2 += (t4 - t3);
-      long t8 = System.nanoTime();
       // apply transaction
       try (ISession tmpSession = revokingStore.buildSession()) {
         long t5 = System.nanoTime();
