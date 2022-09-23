@@ -33,6 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.error.TronDBException;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.WriteOptionsWrapper;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StorageUtils;
 import org.tron.core.capsule.BlockCapsule;
@@ -572,6 +573,8 @@ public class SnapshotManager implements RevokingDatabase {
       byte[] value = e.getValue();
       String db = simpleDecode(key);
       if (dbMap.get(db) == null) {
+        logger.error("checkpoint db not exist, dbname: {}, key: {}, value: {}",
+            db, ByteArray.toHexString(key), ByteArray.toHexString(value));
         continue;
       }
       byte[] realKey = Arrays.copyOfRange(key, db.getBytes().length + 4, key.length);
