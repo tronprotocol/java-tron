@@ -1098,6 +1098,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowAssetOptimization())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getNewRewardAlgorithm")
+        .setValue(dbManager.getDynamicPropertiesStore().useNewRewardAlgorithm() ? 1 : 0)
+        .build());
+
     return builder.build();
   }
 

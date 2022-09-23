@@ -187,7 +187,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX =
       "ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX".getBytes();
 
-
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -2383,7 +2382,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public boolean useNewRewardAlgorithm() {
-    return getAllowTvmVote() == 1;
+    return getNewRewardAlgorithmEffectiveCycle() != Long.MAX_VALUE;
   }
 
   public void saveNewRewardAlgorithmEffectiveCycle() {
