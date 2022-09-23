@@ -91,7 +91,7 @@ public class SnapshotManager implements RevokingDatabase {
 
   private int checkpointVersion = 1;   // default v1
 
-  private long currentBlockNum = -1;
+  private volatile long currentBlockNum = -1;
 
   public SnapshotManager(String checkpointPath) {
   }
