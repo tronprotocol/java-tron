@@ -1341,11 +1341,11 @@ public class Manager {
     validateDup(trxCap);
     long t4 = System.nanoTime();
 
-    if (!trxCap.validateSignature(chainBaseManager.getAccountStore(),
-        chainBaseManager.getDynamicPropertiesStore())) {
-      throw new ValidateSignatureException(
-          String.format(" %s transaction signature validate failed", txId));
-    }
+//    if (!trxCap.validateSignature(chainBaseManager.getAccountStore(),
+//        chainBaseManager.getDynamicPropertiesStore())) {
+//      throw new ValidateSignatureException(
+//          String.format(" %s transaction signature validate failed", txId));
+//    }
 
     TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
         new RuntimeImpl());
