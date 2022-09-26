@@ -91,7 +91,15 @@ public class SnapshotManager implements RevokingDatabase {
 
   private int checkpointVersion = 1;   // default v1
 
-  private volatile long currentBlockNum = -1;
+  private long currentBlockNum = -1;
+
+  public synchronized long getCurrentBlockNum() {
+    return currentBlockNum;
+  }
+
+  public synchronized void setCurrentBlockNum(long blockNum) {
+    currentBlockNum = blockNum;
+  }
 
   public SnapshotManager(String checkpointPath) {
   }
@@ -334,7 +342,8 @@ public class SnapshotManager implements RevokingDatabase {
         && !db.getDbName().equals("recent-transaction")
         && !db.getDbName().equals("trans-cache")
         && !db.getDbName().equals("witness_schedule")) {
-         next.put("block_number".getBytes(), Longs.toByteArray(currentBlockNum));
+         next.put("block_number".getBytes(), Longs.toByteArray(getCurrentBlockNum()));
+         logger.info("checkpoint add debug info, db: {}, blocknumber: {}", db.getDbName(), Longs.toByteArray(getCurrentBlockNum()));
     }
 
     root.merge(snapshots);
@@ -363,13 +372,14 @@ public class SnapshotManager implements RevokingDatabase {
 
         long checkPointEnd = System.currentTimeMillis();
         refresh();
-        flushCount = 0;
-        logger.info("Flush cost: {} ms, create checkpoint: {}, cost: {} ms, refresh cost: {} ms.",
-            currentBlockNum,
+        logger.info("Flush: {}, flush count: {}, create checkpoint: {} ms, cost: {} ms, refresh cost: {} ms.",
+            getCurrentBlockNum(),
+            flushCount,
             System.currentTimeMillis() - start,
             checkPointEnd - start,
             System.currentTimeMillis() - checkPointEnd
         );
+        flushCount = 0;
       } catch (TronDBException e) {
         logger.error(" Find fatal error, program will be exited soon.", e);
         hitDown = true;
@@ -404,11 +414,17 @@ public class SnapshotManager implements RevokingDatabase {
                 WrappedByteArray.of(v.encode()));
             if (db.getDbName().equals("block")) {
               numberInblock = new BlockCapsule(v.getBytes()).getNum();
+              logger.info("checkpoint check blocknumber, numberInblock: {}", numberInblock);
             }
             if (db.getDbName().equals("properties")) {
               if (Arrays.equals(k.getBytes(), "latest_block_header_number".getBytes())) {
                 numberInPro = Longs.fromByteArray(v.getBytes());
+                logger.info("checkpoint check blocknumber, numberInPro: {}", numberInPro);
               }
+            }
+            if (Arrays.equals("block_number".getBytes(), k.getBytes())) {
+              logger.error("checkpoint should not contain 'blocknumber', db:{}, number: {}",
+                  keyValueDB.getDbName(), Longs.fromByteArray(v.getBytes()));
             }
           }
         }
@@ -417,12 +433,12 @@ public class SnapshotManager implements RevokingDatabase {
         logger.error("checkpoint err, fatal numberInblock != numberInPro, {}, {}", numberInblock, numberInPro);
         System.exit(-1);
       }
-      currentBlockNum = numberInblock;
-      if (currentBlockNum == -1) {
+      setCurrentBlockNum(numberInblock);
+      if (getCurrentBlockNum() == -1) {
         throw new TronDBException("create checkpoint failed, block num should not be -1");
       }
       if (isV2Open()) {
-        String dbName = System.currentTimeMillis()+"_"+currentBlockNum;
+        String dbName = System.currentTimeMillis()+"_"+getCurrentBlockNum();
         checkPointStore = getCheckpointDB(dbName);
         syncFlag = CommonParameter.getInstance().getStorage().isCheckpointSync();
       } else {
