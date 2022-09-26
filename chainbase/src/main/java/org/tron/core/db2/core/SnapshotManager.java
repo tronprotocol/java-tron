@@ -593,7 +593,7 @@ public class SnapshotManager implements RevokingDatabase {
       byte[] realKey = Arrays.copyOfRange(key, db.getBytes().length + 4, key.length);
       byte[] realValue = value.length == 1 ? null : Arrays.copyOfRange(value, 1, value.length);
       if ("properties".equals(db)) {
-        if (Arrays.equals("block_number".getBytes(), key)) {
+        if (Arrays.equals("block_number".getBytes(), realKey)) {
           logger.info("checkpoint properties recover, block number: {}", Longs.fromByteArray(realValue));
         }
       }
