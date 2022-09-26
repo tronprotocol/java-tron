@@ -80,6 +80,12 @@ public class WithdrawExpireUnfreezeActuator extends AbstractActuator {
           "contract type error, expected type [WithdrawExpireUnfreezeContract], real type[" + any
               .getClass() + "]");
     }
+
+    if (dynamicStore.getUnfreezeDelayDays() == 0) {
+      throw new ContractValidateException("Not support WithdrawExpireUnfreeze transaction,"
+          + " need to be opened by the committee");
+    }
+
     final WithdrawExpireUnfreezeContract withdrawExpireUnfreezeContract;
     try {
       withdrawExpireUnfreezeContract = this.any.unpack(WithdrawExpireUnfreezeContract.class);

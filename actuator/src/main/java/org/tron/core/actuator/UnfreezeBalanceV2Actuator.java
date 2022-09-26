@@ -108,6 +108,12 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
           "contract type error, expected type [UnfreezeBalanceContract], real type[" + any
               .getClass() + "]");
     }
+
+    if (dynamicStore.getUnfreezeDelayDays() == 0) {
+      throw new ContractValidateException("Not support UnfreezeV2 transaction,"
+          + " need to be opened by the committee");
+    }
+
     final UnfreezeBalanceV2Contract unfreezeBalanceV2Contract;
     try {
       unfreezeBalanceV2Contract = this.any.unpack(UnfreezeBalanceV2Contract.class);
