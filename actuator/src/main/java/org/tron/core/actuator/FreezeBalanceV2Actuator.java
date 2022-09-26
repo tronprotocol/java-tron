@@ -96,6 +96,11 @@ public class FreezeBalanceV2Actuator extends AbstractActuator {
               .getClass() + "]");
     }
 
+    if (dynamicStore.getUnfreezeDelayDays() == 0) {
+      throw new ContractValidateException("Not support FreezeV2 transaction,"
+          + " need to be opened by the committee");
+    }
+
     final FreezeBalanceV2Contract freezeBalanceV2Contract;
     try {
       freezeBalanceV2Contract = this.any.unpack(FreezeBalanceV2Contract.class);

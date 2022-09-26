@@ -215,6 +215,11 @@ public class UnDelegateResourceActuator extends AbstractActuator {
       throw new ContractValidateException("No support for resource delegate");
     }
 
+    if (dynamicStore.getUnfreezeDelayDays() == 0) {
+      throw new ContractValidateException("Not support Delegate resource transaction,"
+          + " need to be opened by the committee");
+    }
+
     if (!this.any.is(UnDelegateResourceContract.class)) {
       throw new ContractValidateException(
           "contract type error, expected type [UnDelegateResourceContract], real type[" + any

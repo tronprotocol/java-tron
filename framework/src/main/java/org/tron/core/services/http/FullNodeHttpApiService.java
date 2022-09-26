@@ -559,7 +559,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(unFreezeBalanceV2Servlet),
           "/wallet/unfreezebalancev2");
       context.addServlet(new ServletHolder(withdrawExpireUnfreezeServlet),
-              "/wallet/withdrawExpireUnfreeze");
+          "/wallet/withdrawexpireunfreeze");
       context.addServlet(new ServletHolder(delegateResourceServlet),
           "/wallet/delegateresource");
       context.addServlet(new ServletHolder(unDelegateResourceServlet),
