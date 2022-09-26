@@ -278,7 +278,7 @@ public class TronNetDelegate {
           | ZksnarkException
           | EventBloomException e) {
         metricsService.failProcessBlock(block.getNum(), e.getMessage());
-        logger.warn("Process block failed, {}, reason: {}", blockId.getString(), e.getMessage());
+        logger.error("Process block failed, {}, reason: {}", blockId.getString(), e.getMessage());
         throw new P2pException(TypeEnum.BAD_BLOCK, e);
       }
     }
