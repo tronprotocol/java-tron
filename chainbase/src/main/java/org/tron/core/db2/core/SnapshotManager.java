@@ -524,7 +524,7 @@ public class SnapshotManager implements RevokingDatabase {
         throw new IllegalStateException("First check.");
       }
     }
-    recover(checkTmpStore);
+    recover(checkTmpStore.getDbSource());
     unChecked = false;
   }
 
@@ -583,21 +583,27 @@ public class SnapshotManager implements RevokingDatabase {
       System.exit(-1);
     }
 
-    for (String cp: cpList) {
-      TronDatabase<byte[]> checkPointV2Store = getCheckpointDB(cp);
-      recover(checkPointV2Store);
-      checkPointV2Store.close();
+    Map<WrappedByteArray, WrappedByteArray> batch = new HashMap<>();
+    for (String cp : cpList) {
+      try (TronDatabase<byte[]> db = getCheckpointDB(cp)) {
+        for (Map.Entry<byte[], byte[]> entry : db.getDbSource()) {
+          batch.put(WrappedByteArray.of(entry.getKey()), WrappedByteArray.of(entry.getValue()));
+        }
+      }
     }
-    logger.info("checkpoint v2 recover success");
+    Map<byte[], byte[]> db = new HashMap<>();
+    batch.forEach((k, v) -> db.put(k.getBytes(), v.getBytes()));
+    recover(db.entrySet());
+    logger.info("checkpoint v2 recover {} success");
     unChecked = false;
   }
 
-  private void recover(TronDatabase<byte[]> tronDatabase) {
+  private void recover( Iterable<Map.Entry<byte[], byte[]>> checkpoint) {
     Map<String, Chainbase> dbMap = dbs.stream()
         .map(db -> Maps.immutableEntry(db.getDbName(), db))
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     advance();
-    for (Map.Entry<byte[], byte[]> e: tronDatabase.getDbSource()) {
+    for (Map.Entry<byte[], byte[]> e: checkpoint) {
       byte[] key = e.getKey();
       byte[] value = e.getValue();
       String db = simpleDecode(key);
@@ -622,7 +628,6 @@ public class SnapshotManager implements RevokingDatabase {
 
     dbs.forEach(db -> db.getHead().getRoot().merge(db.getHead()));
     retreat();
-    logger.info("checkpoint v2 recover: {}", tronDatabase.getDbName());
   }
 
   private boolean isV2Open() {
