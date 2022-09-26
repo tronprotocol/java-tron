@@ -1034,6 +1034,16 @@ public class Args extends CommonParameter {
       PARAMETER.blockCacheTimeout = config.getLong(Constant.BLOCK_CACHE_TIMEOUT);
     }
 
+    if (config.hasPath(Constant.COMMITTEE_UNFREEZE_DELAY_DAYS)) {
+      PARAMETER.unfreezeDelayDays = config.getLong(Constant.COMMITTEE_UNFREEZE_DELAY_DAYS);
+      if (PARAMETER.unfreezeDelayDays > 365) {
+        PARAMETER.unfreezeDelayDays = 365;
+      }
+      if (PARAMETER.unfreezeDelayDays < 0) {
+        PARAMETER.unfreezeDelayDays = 0;
+      }
+    }
+
     logConfig();
   }
 
