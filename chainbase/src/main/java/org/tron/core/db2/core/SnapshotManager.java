@@ -335,9 +335,10 @@ public class SnapshotManager implements RevokingDatabase {
         && !db.getDbName().equals("votes")
         && !db.getDbName().equals("recent-transaction")
         && !db.getDbName().equals("trans-cache")
+        && !db.getDbName().equals("properties")
         && !db.getDbName().equals("witness_schedule")) {
          next.put("block_number".getBytes(), Longs.toByteArray(currentBlockNum.longValue()));
-         logger.info("checkpoint add debug info, db: {}, blocknumber: {}", db.getDbName(), Longs.toByteArray(currentBlockNum.longValue()));
+         logger.info("checkpoint add debug info, db: {}, blocknumber: {}", db.getDbName(), currentBlockNum.longValue());
     }
 
     root.merge(snapshots);
@@ -552,7 +553,12 @@ public class SnapshotManager implements RevokingDatabase {
         continue;
       }
       try {
-        long blockNumber = Longs.fromByteArray(db.get("block_number".getBytes()));
+        long blockNumber = -1;
+        if ("properties".equals(db.getDbName())) {
+          blockNumber = Longs.fromByteArray(db.get("latest_block_header_number".getBytes()));
+        } else {
+          blockNumber = Longs.fromByteArray(db.get("block_number".getBytes()));
+        }
         logger.info("store: {}, block numer: {}", db.getDbName(), blockNumber);
         minBlockNum = Math.min(minBlockNum, blockNumber);
         maxBlockNum = Math.max(maxBlockNum, blockNumber);

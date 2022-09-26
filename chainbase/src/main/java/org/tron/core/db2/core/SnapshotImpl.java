@@ -31,15 +31,15 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
     previous = snapshot;
     snapshot.setNext(this);
     // inherit
-//    isOptimized = snapshot.isOptimized();
+    isOptimized = snapshot.isOptimized();
     // merge for DynamicPropertiesStore，about 100 keys
-//    if (isOptimized) {
-//      if (root == previous ){
-//        Streams.stream(root.iterator()).forEach( e -> put(e.getKey(),e.getValue()));
-//      }else {
-//        merge(previous);
-//      }
-//    }
+    if (isOptimized) {
+      if (root == previous ){
+        Streams.stream(root.iterator()).forEach( e -> put(e.getKey(),e.getValue()));
+      }else {
+        merge(previous);
+      }
+    }
   }
 
   @Override
