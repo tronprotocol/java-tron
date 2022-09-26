@@ -414,12 +414,12 @@ public class SnapshotManager implements RevokingDatabase {
                 WrappedByteArray.of(v.encode()));
             if (db.getDbName().equals("block")) {
               numberInblock = new BlockCapsule(v.getBytes()).getNum();
-              logger.info("checkpoint check blocknumber, numberInblock: {}", numberInblock);
+             // logger.info("checkpoint check blocknumber, numberInblock: {}", numberInblock);
             }
             if (db.getDbName().equals("properties")) {
               if (Arrays.equals(k.getBytes(), "latest_block_header_number".getBytes())) {
                 numberInPro = Longs.fromByteArray(v.getBytes());
-                logger.info("checkpoint check blocknumber, numberInPro: {}", numberInPro);
+              //  logger.info("checkpoint check blocknumber, numberInPro: {}", numberInPro);
               }
             }
             if (Arrays.equals("block_number".getBytes(), k.getBytes())) {
