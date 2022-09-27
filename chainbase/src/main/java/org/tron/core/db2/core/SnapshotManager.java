@@ -433,12 +433,12 @@ public class SnapshotManager implements RevokingDatabase {
         throw new TronDBException("create checkpoint failed, block num should not be -1");
       }
       if (isV2Open()) {
-        List<String> cpList = getCheckpointList();
+        //List<String> cpList = getCheckpointList();
         long now = System.currentTimeMillis();
-        if (now < Long.parseLong(cpList.get(cpList.size()-1))) {
-          logger.error("checkpoint time err, latest: {}, now: {}", Long.parseLong(cpList.get(cpList.size()-1)), now);
-          System.exit(-1);
-        }
+//        if (now < Long.parseLong(cpList.get(cpList.size()-1))) {
+//          logger.error("checkpoint time err, latest: {}, now: {}", Long.parseLong(cpList.get(cpList.size()-1)), now);
+//          System.exit(-1);
+//        }
         String dbName = now+"_"+currentBlockNum.longValue();
         checkPointStore = getCheckpointDB(dbName);
         syncFlag = CommonParameter.getInstance().getStorage().isCheckpointSync();
