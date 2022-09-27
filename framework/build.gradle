@@ -271,6 +271,7 @@ if (releaseBinary == 'true') {
                 binaryRelease('buildFullNodeJar', 'FullNode', 'org.tron.program.FullNode'),
                 binaryRelease('buildKeystoreFactoryJar', 'KeystoreFactory', 'org.tron.program.KeystoreFactory'),
                 binaryRelease('buildDBConvertJar', 'DBConvert', 'org.tron.program.DBConvert'),
+                binaryRelease('buildDBCheckJar', 'DBCheck', 'org.tron.program.Check'),
                 binaryRelease('buildLiteFullNodeToolJar', 'LiteFullNodeTool', 'org.tron.tool.litefullnode.LiteFullNodeTool'))
     }
 }
