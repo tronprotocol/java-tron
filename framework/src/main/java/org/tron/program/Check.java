@@ -169,6 +169,7 @@ public class Check {
       long total = 0;
       long diffCount = 0;
       for (sourceIterator.seekToFirst(); sourceIterator.hasNext(); sourceIterator.next()) {
+
         byte[] key = sourceIterator.peekNext().getKey();
         if (Arrays.equals("block_number".getBytes(), key)) {
           continue;
@@ -184,11 +185,12 @@ public class Check {
           }
           diffCount++;
         }
+        total++;
       }
         diffCount = 0;
         System.out.println("source dest, diff: " + diffCount);
 
-
+      long desttotal = 0;
         for (destIterator.seekToFirst(); destIterator.hasNext(); destIterator.next()) {
           byte[] key = destIterator.peekNext().getKey();
           if (Arrays.equals("block_number".getBytes(), key)) {
@@ -208,6 +210,7 @@ public class Check {
             }
             diffCount++;
           }
+          desttotal++;
         }
           System.out.println("source dest, diff: " + diffCount);
 
@@ -240,7 +243,8 @@ public class Check {
 
       synchronized (lock) {
         System.out.println("db: " + name);
-        System.out.println("total num: " + total);
+        System.out.println("sourcetotal num: " + total);
+        System.out.println("desttotal num: " + total);
         System.out.println("There are " + diffCount + " diff between source and dest");
         System.out.println("cost: " + (System.currentTimeMillis() - start));
         System.out.println("--------");
