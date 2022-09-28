@@ -80,16 +80,8 @@ import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.ActuatorCreator;
-import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.BlockBalanceTraceCapsule;
-import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.*;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.capsule.ReceiptCapsule;
-import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.TransactionInfoCapsule;
-import org.tron.core.capsule.TransactionRetCapsule;
-import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
@@ -130,32 +122,10 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.service.MortgageService;
-import org.tron.core.store.AccountAssetStore;
-import org.tron.core.store.AccountIdIndexStore;
-import org.tron.core.store.AccountIndexStore;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.AssetIssueStore;
-import org.tron.core.store.AssetIssueV2Store;
-import org.tron.core.store.CodeStore;
-import org.tron.core.store.ContractStore;
-import org.tron.core.store.DelegatedResourceAccountIndexStore;
-import org.tron.core.store.DelegatedResourceStore;
-import org.tron.core.store.DelegationStore;
-import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.ExchangeStore;
-import org.tron.core.store.ExchangeV2Store;
-import org.tron.core.store.IncrementalMerkleTreeStore;
-import org.tron.core.store.NullifierStore;
-import org.tron.core.store.ProposalStore;
-import org.tron.core.store.StorageRowStore;
-import org.tron.core.store.StoreFactory;
-import org.tron.core.store.TransactionHistoryStore;
-import org.tron.core.store.TransactionRetStore;
-import org.tron.core.store.VotesStore;
-import org.tron.core.store.WitnessScheduleStore;
-import org.tron.core.store.WitnessStore;
+import org.tron.core.store.*;
 import org.tron.core.utils.TransactionRegister;
 import org.tron.core.vm.config.VMConfig;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Transaction;
@@ -1204,6 +1174,16 @@ public class Manager {
 
               applyBlock(newBlock, txs);
               tmpSession.commit();
+
+              MarketAccountStore marketAccountStore = chainBaseManager.getMarketAccountStore();
+              for (Map.Entry<byte[], MarketAccountOrderCapsule> entry: marketAccountStore) {
+                if (Arrays.equals("block_number".getBytes(), entry.getKey())) {
+                  continue;
+                }
+                logger.info("checkpoint debug, blocknumber: {}, account: {}, count: {}, totalCount: {}",
+                    newBlock.getNum(),
+                    Hex.toHexString(entry.getKey()), entry.getValue().getCount(), entry.getValue().getTotalCount());
+              }
               // if event subscribe is enabled, post block trigger to queue
               postBlockTrigger(newBlock);
               // if event subscribe is enabled, post solidity trigger to queue
@@ -1628,7 +1608,13 @@ public class Manager {
           transactionCapsule.setVerified(true);
         }
         accountStateCallBack.preExeTrans();
-        TransactionInfo result = processTransaction(transactionCapsule, block);
+        TransactionInfo result = null;
+        try {
+          result = processTransaction(transactionCapsule, block);
+        } catch (ContractValidateException e) {
+          logger.error("process tx failed, id: {}", transactionCapsule.getTransactionId().toString(), e);
+          throw new ContractValidateException(transactionCapsule.getTransactionId().toString(), e);
+        }
         accountStateCallBack.exeTransFinish();
         if (Objects.nonNull(result)) {
           transactionRetCapsule.addTransactionInfo(result);
