@@ -1645,7 +1645,7 @@ public class Manager {
         accountStateCallBack.preExeTrans();
         TransactionInfo result = null;
         try {
-          result = processTransaction(transactionCapsule, block);
+          result = processTransaction(transactionCapsule, block, phase2cost);
         } catch (ContractValidateException e) {
           logger.error("process tx failed, id: {}", transactionCapsule.getTransactionId().toString(), e);
           throw new ContractValidateException(transactionCapsule.getTransactionId().toString(), e);
