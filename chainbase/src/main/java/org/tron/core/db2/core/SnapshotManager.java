@@ -30,6 +30,7 @@ import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.error.TronDBException;
 import org.tron.common.parameter.CommonParameter;
@@ -38,6 +39,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StorageUtils;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.MarketAccountOrderCapsule;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db.TronDatabase;
 import org.tron.core.db2.ISession;
@@ -50,6 +52,7 @@ import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 import org.tron.core.store.CheckPointV2Store;
 import org.tron.core.store.CheckTmpStore;
+import org.tron.core.store.MarketAccountStore;
 
 @Slf4j(topic = "DB")
 public class SnapshotManager implements RevokingDatabase {
@@ -405,6 +408,13 @@ public class SnapshotManager implements RevokingDatabase {
           for (Map.Entry<Key, Value> e : keyValueDB) {
             Key k = e.getKey();
             Value v = e.getValue();
+
+            if (db.getDbName().equals("market_account")) {
+              MarketAccountOrderCapsule marketAccountOrderCapsule = new MarketAccountOrderCapsule(v.getBytes());
+              logger.info("create checkpoint, record sell, account: {}, count: {}, totalCount: {}"
+              , Hex.toHexString(k.getBytes()), marketAccountOrderCapsule.getCount(), marketAccountOrderCapsule.getTotalCount());
+            }
+
             batch.put(WrappedByteArray.of(Bytes.concat(simpleEncode(dbName), k.getBytes())),
                 WrappedByteArray.of(v.encode()));
             if (db.getDbName().equals("block")) {
@@ -479,7 +489,17 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   private void deleteCheckpoint() {
-    checkTmpStore.reset();
+    try {
+      Map<byte[], byte[]> hmap = new HashMap<>();
+      for (Map.Entry<byte[], byte[]> e : checkTmpStore.getDbSource()) {
+        hmap.put(e.getKey(), null);
+      }
+      if (hmap.size() != 0) {
+        checkTmpStore.getDbSource().updateByBatch(hmap);
+      }
+    } catch (Exception e) {
+      throw new TronDBException(e);
+    }
   }
 
   private void pruneCheckpoint() {
@@ -512,6 +532,19 @@ public class SnapshotManager implements RevokingDatabase {
   // ensure run this method first after process start.
   @Override
   public void check() {
+    Map<String, Chainbase> dbMap = dbs.stream()
+        .map(db -> Maps.immutableEntry(db.getDbName(), db))
+        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    Chainbase marketAccountStore = dbMap.get("market_account");
+    for (Map.Entry<byte[], byte[]> entry: marketAccountStore) {
+      if (Arrays.equals("block_number".getBytes(), entry.getKey())) {
+        logger.info("before recover debug, number: {}", Longs.fromByteArray(entry.getValue()));
+        continue;
+      }
+      MarketAccountOrderCapsule accountOrderCapsule = new MarketAccountOrderCapsule(entry.getValue());
+      logger.info("before recover debug, account: {}, count: {}, totalCount: {}",
+          Hex.toHexString(entry.getKey()), accountOrderCapsule.getCount(), accountOrderCapsule.getTotalCount());
+    }
     if (!isV2Open()) {
       List<String> cpList = getCheckpointList();
       if (cpList != null && cpList.size() != 0) {
@@ -628,6 +661,17 @@ public class SnapshotManager implements RevokingDatabase {
 
     dbs.forEach(db -> db.getHead().getRoot().merge(db.getHead()));
     retreat();
+    Chainbase marketAccountStore = dbMap.get("market_account");
+    for (Map.Entry<byte[], byte[]> entry: marketAccountStore) {
+      if (Arrays.equals("block_number".getBytes(), entry.getKey())) {
+        logger.info("before recover debug, number: {}", Longs.fromByteArray(entry.getValue()));
+        continue;
+      }
+      MarketAccountOrderCapsule accountOrderCapsule = new MarketAccountOrderCapsule(entry.getValue());
+      logger.info("recover debug, blocknumber: {}, account: {}, count: {}, totalCount: {}",
+          tronDatabase.getDbName(),
+          Hex.toHexString(entry.getKey()), accountOrderCapsule.getCount(), accountOrderCapsule.getTotalCount());
+    }
     logger.info("checkpoint v2 recover: {}", tronDatabase.getDbName());
   }
 
