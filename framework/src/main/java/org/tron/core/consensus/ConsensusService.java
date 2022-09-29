@@ -44,6 +44,7 @@ public class ConsensusService {
     param.setBlockProduceTimeoutPercent(Args.getInstance().getBlockProducedTimeOut());
     param.setNeedSyncCheck(parameter.isNeedSyncCheck());
     param.setAgreeNodeCount(parameter.getAgreeNodeCount());
+    param.setStressTest(parameter.isStressTest);
     List<Miner> miners = new ArrayList<>();
     List<String> privateKeys = Args.getLocalWitnesses().getPrivateKeys();
     if (privateKeys.size() > 1) {

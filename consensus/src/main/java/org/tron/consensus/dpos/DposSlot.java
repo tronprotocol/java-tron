@@ -5,6 +5,7 @@ import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERV
 import static org.tron.core.config.Parameter.ChainConstant.SINGLE_REPEAT;
 
 import com.google.protobuf.ByteString;
+import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,7 @@ public class DposSlot {
   private ConsensusDelegate consensusDelegate;
 
   @Setter
+  @Getter
   private DposService dposService;
 
   public long getAbSlot(long time) {

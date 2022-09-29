@@ -193,13 +193,13 @@ public class HandshakeHandler extends ByteToMessageDecoder {
       return;
     }
 
-    if (chainBaseManager.getSolidBlockId().getNum() >= msg.getSolidBlockId().getNum()
-        && !chainBaseManager.containBlockInMainChain(msg.getSolidBlockId())) {
-      logger.info("Peer {} different solid block, peer->{}, me->{}", ctx.channel().remoteAddress(),
-          msg.getSolidBlockId().getString(), chainBaseManager.getSolidBlockId().getString());
-      channel.disconnect(ReasonCode.FORKED);
-      return;
-    }
+//    if (chainBaseManager.getSolidBlockId().getNum() >= msg.getSolidBlockId().getNum()
+//        && !chainBaseManager.containBlockInMainChain(msg.getSolidBlockId())) {
+//      logger.info("Peer {} different solid block, peer->{}, me->{}", ctx.channel().remoteAddress(),
+//          msg.getSolidBlockId().getString(), chainBaseManager.getSolidBlockId().getString());
+//      channel.disconnect(ReasonCode.FORKED);
+//      return;
+//    }
 
     if (msg.getFrom().getHost().equals(address.getHostAddress())) {
       channelManager.getHelloMessageCache().put(msg.getFrom().getHost(), msg.getHelloMessage());

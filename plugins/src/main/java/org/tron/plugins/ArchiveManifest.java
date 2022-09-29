@@ -197,12 +197,12 @@ public class ArchiveManifest implements Callable<Boolean> {
       logger.info("File {},does not exist, ignored.", srcDbPath.toString());
       return true;
     }
-    if (!checkEngine()) {
-      logger.info("Db {},not leveldb, ignored.", this.name);
-      return true;
-    }
     if (!checkManifest(levelDbFile.toString())) {
       logger.info("Db {},no need, ignored.", levelDbFile.toString());
+      return true;
+    }
+    if (!checkEngine()) {
+      logger.info("Db {},not leveldb, ignored.", this.name);
       return true;
     }
     open();
