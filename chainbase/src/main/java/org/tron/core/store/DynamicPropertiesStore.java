@@ -845,6 +845,16 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.saveAllowHigherLimitForMaxCpuTimeOfOneTx(
           CommonParameter.getInstance().getAllowHigherLimitForMaxCpuTimeOfOneTx());
     }
+
+    try {
+      this.getAllowNewRewardAlgorithm();
+    } catch (IllegalArgumentException e) {
+      if (CommonParameter.getInstance().getAllowNewRewardAlgorithm() == 1) {
+        this.put(NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE,
+            new BytesCapsule(ByteArray.fromLong(getCurrentCycleNumber())));
+      }
+    }
+
   }
 
   public String intArrayToString(int[] a) {
@@ -2398,6 +2408,15 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElse(Long.MAX_VALUE);
+  }
+
+  public long getAllowNewRewardAlgorithm() {
+    long cycle = this.getNewRewardAlgorithmEffectiveCycle();
+    if (cycle == Long.MAX_VALUE) {
+      throw new IllegalArgumentException("not found NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE");
+    } else {
+      return cycle;
+    }
   }
 
   public long getAllowAccountAssetOptimizationFromRoot() {
