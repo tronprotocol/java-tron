@@ -110,4 +110,9 @@ public class MarketAccountOrderCapsule implements ProtoCapsule<MarketAccountOrde
     return this.accountOrder;
   }
 
+  @Override
+  public MarketAccountOrderCapsule newInstance() {
+    return new MarketAccountOrderCapsule(this.accountOrder);
+  }
+
 }

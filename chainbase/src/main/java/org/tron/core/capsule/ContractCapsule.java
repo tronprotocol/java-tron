@@ -101,6 +101,11 @@ public class ContractCapsule implements ProtoCapsule<SmartContract> {
   }
 
   @Override
+  public ContractCapsule newInstance() {
+    return new ContractCapsule(this.smartContract);
+  }
+
+  @Override
   public String toString() {
     return this.smartContract.toString();
   }

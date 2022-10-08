@@ -74,6 +74,11 @@ public class BlockBalanceTraceCapsule implements ProtoCapsule<BlockBalanceTrace>
     return balanceTrace;
   }
 
+  @Override
+  public BlockBalanceTraceCapsule newInstance() {
+    return new BlockBalanceTraceCapsule(this.balanceTrace);
+  }
+
   public BlockBalanceTrace.BlockIdentifier getBlockIdentifier() {
     return balanceTrace.getBlockIdentifier();
   }

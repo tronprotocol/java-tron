@@ -108,4 +108,9 @@ public class VotesCapsule implements ProtoCapsule<Votes> {
     return this.votes;
   }
 
+  @Override
+  public VotesCapsule newInstance() {
+    return new VotesCapsule(this.votes);
+  }
+
 }

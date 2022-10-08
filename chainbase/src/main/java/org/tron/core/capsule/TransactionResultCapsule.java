@@ -165,4 +165,9 @@ public class TransactionResultCapsule implements ProtoCapsule<Result> {
   public Result getInstance() {
     return this.transactionResult;
   }
+
+  @Override
+  public TransactionResultCapsule newInstance() {
+    return new TransactionResultCapsule(this.transactionResult);
+  }
 }

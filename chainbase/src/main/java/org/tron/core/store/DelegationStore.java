@@ -1,7 +1,7 @@
 package org.tron.core.store;
 
+import java.math.BigInteger;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,8 +10,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
-
-import java.math.BigInteger;
 
 @Slf4j(topic = "DB")
 @Component
@@ -23,13 +21,12 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
 
   @Autowired
   public DelegationStore(@Value("delegation") String dbName) {
-    super(dbName);
+    super(dbName, BytesCapsule.class);
   }
 
   @Override
   public BytesCapsule get(byte[] key) {
-    byte[] value = revokingDB.getUnchecked(key);
-    return ArrayUtils.isEmpty(value) ? null : new BytesCapsule(value);
+    return getNonEmpty(key);
   }
 
   public void addReward(long cycle, byte[] address, long value) {

@@ -16,13 +16,12 @@ public class ExchangeStore extends TronStoreWithRevoking<ExchangeCapsule> {
 
   @Autowired
   protected ExchangeStore(@Value("exchange") String dbName) {
-    super(dbName);
+    super(dbName, ExchangeCapsule.class);
   }
 
   @Override
   public ExchangeCapsule get(byte[] key) throws ItemNotFoundException {
-    byte[] value = revokingDB.get(key);
-    return new ExchangeCapsule(value);
+    return revokingDB.get(key);
   }
 
   /**

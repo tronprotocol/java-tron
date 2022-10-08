@@ -1,7 +1,6 @@
 package org.tron.core.db;
 
-import java.util.Arrays;
-import org.apache.commons.lang3.ArrayUtils;
+import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -17,7 +16,7 @@ public class BlockIndexStore extends TronStoreWithRevoking<BytesCapsule> {
 
   @Autowired
   public BlockIndexStore(@Value("block-index") String dbName) {
-    super(dbName);
+    super(dbName, BytesCapsule.class);
 
   }
 
@@ -37,11 +36,11 @@ public class BlockIndexStore extends TronStoreWithRevoking<BytesCapsule> {
   @Override
   public BytesCapsule get(byte[] key)
       throws ItemNotFoundException {
-    byte[] value = revokingDB.getUnchecked(key);
-    if (ArrayUtils.isEmpty(value)) {
+    BytesCapsule value = getNonEmpty(key);
+    if (Objects.isNull(value)) {
       throw new ItemNotFoundException(String.format("number: %d is not found!",
           ByteArray.toLong(key)));
     }
-    return new BytesCapsule(value);
+    return value;
   }
 }

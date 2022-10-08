@@ -15,7 +15,7 @@ public class AccountIndexStore extends TronStoreWithRevoking<BytesCapsule> {
 
   @Autowired
   public AccountIndexStore(@Value("account-index") String dbName) {
-    super(dbName);
+    super(dbName, BytesCapsule.class);
   }
 
   public void put(AccountCapsule accountCapsule) {
@@ -33,16 +33,12 @@ public class AccountIndexStore extends TronStoreWithRevoking<BytesCapsule> {
 
   @Override
   public BytesCapsule get(byte[] key) {
-    byte[] value = revokingDB.getUnchecked(key);
-    if (ArrayUtils.isEmpty(value)) {
-      return null;
-    }
-    return new BytesCapsule(value);
+    return getNonEmpty(key);
   }
 
   @Override
   public boolean has(byte[] key) {
-    byte[] value = revokingDB.getUnchecked(key);
-    return !ArrayUtils.isEmpty(value);
+    BytesCapsule value = get(key);
+    return Objects.nonNull(value);
   }
 }

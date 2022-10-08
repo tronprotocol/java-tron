@@ -5,6 +5,7 @@ import java.util.Map;
 
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.ChainBaseManager;
+import org.tron.core.capsule.AbiCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.store.AbiStore;
 import org.tron.core.store.ContractStore;
@@ -29,7 +30,8 @@ public class MoveAbiHelper {
     it.forEachRemaining(e -> {
       ContractCapsule contractCapsule = e.getValue();
       if (!contractCapsule.getInstance().getAbi().getEntrysList().isEmpty()) {
-        abiStore.put(e.getKey(), contractCapsule.getInstance().getAbi().toByteArray());
+        abiStore.put(e.getKey(), new AbiCapsule(contractCapsule.getInstance()
+            .getAbi().toByteArray()));
       }
       contractStore.put(e.getKey(), contractCapsule);
       count += 1;

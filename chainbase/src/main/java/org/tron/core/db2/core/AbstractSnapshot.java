@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.tron.core.db2.common.DB;
 
-public abstract class AbstractSnapshot<K, V> implements Snapshot {
+public abstract class AbstractSnapshot<K, V, T> implements Snapshot<T> {
 
   @Getter
   protected DB<K, V> db;
@@ -18,8 +18,8 @@ public abstract class AbstractSnapshot<K, V> implements Snapshot {
   protected boolean isOptimized;
 
   @Override
-  public Snapshot advance() {
-    return new SnapshotImpl(this);
+  public Snapshot advance(Class<T> clz) {
+    return new SnapshotImpl(this, clz);
   }
 
   @Override
@@ -38,7 +38,7 @@ public abstract class AbstractSnapshot<K, V> implements Snapshot {
   }
 
   @Override
-  public boolean isOptimized(){
+  public boolean isOptimized() {
     return isOptimized;
   }
 }

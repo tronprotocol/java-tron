@@ -25,7 +25,7 @@ public class TransactionRetStore extends TronStoreWithRevoking<TransactionRetCap
 
   @Autowired
   public TransactionRetStore(@Value("transactionRetStore") String dbName) {
-    super(dbName);
+    super(dbName, TransactionRetCapsule.class);
   }
 
   @Override
@@ -41,12 +41,10 @@ public class TransactionRetStore extends TronStoreWithRevoking<TransactionRetCap
     if (blockNumber == -1) {
       return null;
     }
-    byte[] value = revokingDB.getUnchecked(ByteArray.fromLong(blockNumber));
-    if (Objects.isNull(value)) {
+    TransactionRetCapsule result  = revokingDB.getUnchecked(ByteArray.fromLong(blockNumber));
+    if (Objects.isNull(result)) {
       return null;
     }
-
-    TransactionRetCapsule result = new TransactionRetCapsule(value);
     if (Objects.isNull(result.getInstance())) {
       return null;
     }
@@ -61,13 +59,7 @@ public class TransactionRetStore extends TronStoreWithRevoking<TransactionRetCap
   }
 
   public TransactionRetCapsule getTransactionInfoByBlockNum(byte[] key) throws BadItemException {
-
-    byte[] value = revokingDB.getUnchecked(key);
-    if (Objects.isNull(value)) {
-      return null;
-    }
-
-    return new TransactionRetCapsule(value);
+    return revokingDB.getUnchecked(key);
   }
 
 }

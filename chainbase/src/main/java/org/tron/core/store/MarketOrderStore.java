@@ -12,13 +12,12 @@ public class MarketOrderStore extends TronStoreWithRevoking<MarketOrderCapsule> 
 
   @Autowired
   protected MarketOrderStore(@Value("market_order") String dbName) {
-    super(dbName);
+    super(dbName, MarketOrderCapsule.class);
   }
 
   @Override
   public MarketOrderCapsule get(byte[] key) throws ItemNotFoundException {
-    byte[] value = revokingDB.get(key);
-    return new MarketOrderCapsule(value);
+    return revokingDB.get(key);
   }
 
 }

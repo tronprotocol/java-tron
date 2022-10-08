@@ -10,6 +10,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Commons;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.db.accountstate.AccountStateCallBackUtils;
 import org.tron.protos.contract.BalanceContract.TransactionBalanceTrace;
@@ -39,7 +40,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
   @Autowired
   private AccountStore(@Value("account") String dbName) {
-    super(dbName);
+    super(dbName, AccountCapsule.class);
   }
 
   public static void setAccount(com.typesafe.config.Config config) {
@@ -54,8 +55,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
   @Override
   public AccountCapsule get(byte[] key) {
-    byte[] value = revokingDB.getUnchecked(key);
-    return ArrayUtils.isEmpty(value) ? null : new AccountCapsule(value);
+    return getNonEmpty(key);
   }
 
   @Override

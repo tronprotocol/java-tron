@@ -127,4 +127,9 @@ public class SpendDescriptionCapsule implements ProtoCapsule<SpendDescription> {
   public SpendDescription getInstance() {
     return this.spendDescription;
   }
+
+  @Override
+  public SpendDescriptionCapsule newInstance() {
+    return new SpendDescriptionCapsule(this.spendDescription);
+  }
 }

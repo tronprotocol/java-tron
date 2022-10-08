@@ -1,6 +1,5 @@
 package org.tron.core.store;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,13 +14,13 @@ public class TransactionHistoryStore extends TronStoreWithRevoking<TransactionIn
 
   @Autowired
   public TransactionHistoryStore(@Value("transactionHistoryStore") String dbName) {
-    super(dbName);
+    super(dbName, TransactionInfoCapsule.class);
   }
 
   @Override
   public TransactionInfoCapsule get(byte[] key) throws BadItemException {
-    byte[] value = revokingDB.getUnchecked(key);
-    return ArrayUtils.isEmpty(value) ? null : new TransactionInfoCapsule(value);
+
+    return getNonEmpty(key);
   }
 
   @Override

@@ -277,6 +277,11 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     return this.block;
   }
 
+  @Override
+  public BlockCapsule newInstance() {
+    return new BlockCapsule(this.block);
+  }
+
   public Sha256Hash getParentHash() {
     return Sha256Hash.wrap(this.block.getBlockHeader().getRawData().getParentHash());
   }

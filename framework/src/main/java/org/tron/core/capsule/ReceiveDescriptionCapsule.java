@@ -131,4 +131,9 @@ public class ReceiveDescriptionCapsule implements ProtoCapsule<ReceiveDescriptio
   public ReceiveDescription getInstance() {
     return this.receiveDescription;
   }
+
+  @Override
+  public ReceiveDescriptionCapsule newInstance() {
+    return new ReceiveDescriptionCapsule(this.receiveDescription);
+  }
 }

@@ -17,6 +17,7 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import org.tron.common.utils.ByteArray;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.TXOutput;
 
 public class TxOutputCapsule implements ProtoCapsule<TXOutput> {
@@ -34,6 +35,10 @@ public class TxOutputCapsule implements ProtoCapsule<TXOutput> {
         .setValue(value)
         .setPubKeyHash(ByteString.copyFrom(ByteArray.fromHexString(address)))
         .build();
+  }
+
+  public TxOutputCapsule(TXOutput txOutput) {
+    this.txOutput = txOutput;
   }
 
   public TXOutput getTxOutput() {
@@ -55,5 +60,10 @@ public class TxOutputCapsule implements ProtoCapsule<TXOutput> {
   @Override
   public TXOutput getInstance() {
     return this.txOutput;
+  }
+
+  @Override
+  public TxOutputCapsule newInstance() {
+    return new TxOutputCapsule(this.txOutput);
   }
 }

@@ -76,7 +76,7 @@ public class CheckpointV2Test {
       BlockCapsule blockCapsule = new BlockCapsule(i, Sha256Hash.ZERO_HASH,
           System.currentTimeMillis(), ByteString.EMPTY);
       try (ISession tmpSession = revokingDatabase.buildSession()) {
-        dbMap.get("block").put(Longs.toByteArray(i), blockCapsule.getData());
+        dbMap.get("block").put(Longs.toByteArray(i), blockCapsule);
         tmpSession.commit();
       }
     }

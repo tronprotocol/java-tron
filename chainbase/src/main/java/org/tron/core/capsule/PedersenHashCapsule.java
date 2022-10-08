@@ -93,6 +93,11 @@ public class PedersenHashCapsule implements ProtoCapsule<PedersenHash> {
     return this.pedersenHash;
   }
 
+  @Override
+  public PedersenHashCapsule newInstance() {
+    return new PedersenHashCapsule(this.pedersenHash);
+  }
+
   public boolean isPresent() {
     return !pedersenHash.getContent().isEmpty();
   }

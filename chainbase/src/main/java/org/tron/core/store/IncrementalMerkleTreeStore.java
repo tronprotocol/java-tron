@@ -1,5 +1,6 @@
 package org.tron.core.store;
 
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,18 +16,17 @@ public class IncrementalMerkleTreeStore
 
   @Autowired
   public IncrementalMerkleTreeStore(@Value("IncrementalMerkleTree") String dbName) {
-    super(dbName);
+    super(dbName, IncrementalMerkleTreeCapsule.class);
   }
 
   @Override
   public IncrementalMerkleTreeCapsule get(byte[] key) {
-    byte[] value = revokingDB.getUnchecked(key);
-    return ArrayUtils.isEmpty(value) ? null : new IncrementalMerkleTreeCapsule(value);
+    return getNonEmpty(key);
   }
 
   public boolean contain(byte[] key) {
-    byte[] value = revokingDB.getUnchecked(key);
-    return !ArrayUtils.isEmpty(value);
+    IncrementalMerkleTreeCapsule value = get(key);
+    return Objects.nonNull(value);
   }
 
 }

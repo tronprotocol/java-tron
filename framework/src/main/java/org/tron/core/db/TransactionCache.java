@@ -12,6 +12,6 @@ public class TransactionCache extends TronStoreWithRevoking<BytesCapsule> {
   @Autowired
   public TransactionCache(@Value("trans-cache") String dbName,
                           RecentTransactionStore recentTransactionStore) {
-    super(new TxCacheDB(dbName, recentTransactionStore));
+    super(new TxCacheDB(dbName, recentTransactionStore), BytesCapsule.class);
   }
 }

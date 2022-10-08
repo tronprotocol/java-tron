@@ -14,18 +14,20 @@ import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
+import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.common.DbSourceInter;
 import org.tron.core.db2.common.LevelDB;
 import org.tron.core.db2.core.Chainbase;
 import org.tron.core.db2.core.Snapshot;
+import org.tron.core.db2.core.SnapshotImpl;
 import org.tron.core.db2.core.SnapshotRoot;
 
 @Slf4j
 public class ChainbaseTest {
 
   private static final String dbPath = "output-chainbase-test";
-  private Chainbase chainbase = null;
+  private Chainbase<BytesCapsule> chainbase = null;
 
   private final byte[] value0 = "00000".getBytes();
   private final byte[] value1 = "10000".getBytes();
@@ -80,7 +82,7 @@ public class ChainbaseTest {
         Args.getInstance().getOutputDirectory(), "testPrefixQueryForLeveldb");
     dataSource.initDB();
     this.chainbase = new Chainbase(new SnapshotRoot(
-        new LevelDB(dataSource)));
+        new LevelDB(dataSource)), BytesCapsule.class);
     testDb(chainbase);
     testRoot(dataSource);
     chainbase.reset();
@@ -93,7 +95,7 @@ public class ChainbaseTest {
         Args.getInstance().getOutputDirectory(), "testPrefixQueryForRocksdb");
     dataSource.initDB();
     this.chainbase = new Chainbase(new SnapshotRoot(
-        new org.tron.core.db2.common.RocksDB(dataSource)));
+        new org.tron.core.db2.common.RocksDB(dataSource)), BytesCapsule.class);
     testDb(chainbase);
     testRoot(dataSource);
     chainbase.reset();
@@ -116,21 +118,21 @@ public class ChainbaseTest {
     Assert.assertTrue(dbSource.prefixQuery(prefix3).isEmpty());
   }
 
-  private void testDb(Chainbase chainbase) {
+  private void testDb(Chainbase<BytesCapsule> chainbase) {
     byte[] keyNotQuery1 = "123".getBytes();
     byte[] keyNotQuery2 = "0000001".getBytes();
     byte[] valueNotQuery1 = "v123".getBytes();
     byte[] valueNotQuery2 = "v0000001".getBytes();
 
-    chainbase.setHead(chainbase.getHead().advance());
-    Snapshot head = chainbase.getHead();
-    Snapshot root = head.getRoot();
+    chainbase.setHead(chainbase.getHead().advance(chainbase.getClz()));
+    SnapshotImpl<BytesCapsule> head = (SnapshotImpl<BytesCapsule>) chainbase.getHead();
+    SnapshotRoot root = (SnapshotRoot) head.getRoot();
     // put some data in head
-    head.put(key0, value0);
-    head.put(key1, value1);
-    head.put(key7, value7);
-    head.put(key3, value3);
-    head.put(key8, value8);
+    head.put(key0, new BytesCapsule(value0));
+    head.put(key1, new BytesCapsule(value1));
+    head.put(key7, new BytesCapsule(value7));
+    head.put(key3, new BytesCapsule(value3));
+    head.put(key8, new BytesCapsule(value8));
     head.remove(key7);
     // put some data in root
     root.put(key2, value2);
@@ -140,21 +142,21 @@ public class ChainbaseTest {
     root.put(key8, valueRoot8);
     root.put(keyNotQuery1, valueNotQuery1);
     // advance head and put some data again
-    head = head.advance();
-    head.put(key4, value4);
-    head.put(key5, value5);
-    head.put(key9,value9);
+    head = (SnapshotImpl<BytesCapsule>) head.advance(chainbase.getClz());
+    head.put(key4, new BytesCapsule(value4));
+    head.put(key5, new BytesCapsule(value5));
+    head.put(key9,new BytesCapsule(value9));
     head.remove(key8);
-    head.put(keyNotQuery2, valueNotQuery2);
+    head.put(keyNotQuery2, new BytesCapsule(valueNotQuery2));
 
-    head = head.advance();
+    head = (SnapshotImpl<BytesCapsule>) head.advance(chainbase.getClz());
     head.remove(key9);
     root.remove(key3);
 
     // test for all, both in snapshotImpl and leveldb
     Map<String,String> result = new HashMap<>();
     chainbase.prefixQuery(prefix).forEach((k, v) ->
-        result.put(ByteArray.toStr(k.getBytes()), ByteArray.toStr(v)));
+        result.put(ByteArray.toStr(k.getBytes()), ByteArray.toStr(v.getData())));
 
     Map<String,String> expect = new HashMap<>();
     expect.put(ByteArray.toStr(key1),ByteArray.toStr(value1));

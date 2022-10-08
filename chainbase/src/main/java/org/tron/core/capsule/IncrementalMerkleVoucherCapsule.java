@@ -94,6 +94,11 @@ public class IncrementalMerkleVoucherCapsule implements ProtoCapsule<Incremental
     return this.voucher;
   }
 
+  @Override
+  public IncrementalMerkleVoucherCapsule newInstance() {
+    return new IncrementalMerkleVoucherCapsule(this.voucher);
+  }
+
   public IncrementalMerkleVoucherContainer toMerkleVoucherContainer() {
     return new IncrementalMerkleVoucherContainer(this);
   }

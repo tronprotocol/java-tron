@@ -13,7 +13,6 @@ import org.tron.common.utils.StorageUtils;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.RecentTransactionStore;
 import org.tron.core.db.RevokingDatabase;
-import org.tron.core.db.RevokingStore;
 import org.tron.core.db.TransactionCache;
 import org.tron.core.db.backup.BackupRocksDBAspect;
 import org.tron.core.db.backup.NeedBeanCondition;
@@ -48,9 +47,7 @@ public class DefaultConfig {
     int dbVersion = Args.getInstance().getStorage().getDbVersion();
     RevokingDatabase revokingDatabase;
     try {
-      if (dbVersion == 1) {
-        revokingDatabase = RevokingStore.getInstance();
-      } else if (dbVersion == 2) {
+      if (dbVersion == 2) {
         revokingDatabase = new SnapshotManager(
             StorageUtils.getOutputDirectoryByDbName("block"));
       } else {

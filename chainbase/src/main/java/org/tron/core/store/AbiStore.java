@@ -16,7 +16,7 @@ public class AbiStore extends TronStoreWithRevoking<AbiCapsule> {
 
   @Autowired
   private AbiStore(@Value("abi") String dbName) {
-    super(dbName);
+    super(dbName, AbiCapsule.class);
   }
 
   @Override
@@ -24,7 +24,7 @@ public class AbiStore extends TronStoreWithRevoking<AbiCapsule> {
     return getUnchecked(key);
   }
 
-  public void put(byte[] key, byte[] value) {
+  public void put(byte[] key, AbiCapsule value) {
     if (Objects.isNull(key) || Objects.isNull(value)) {
       return;
     }

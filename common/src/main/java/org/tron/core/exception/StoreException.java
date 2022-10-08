@@ -1,6 +1,6 @@
 package org.tron.core.exception;
 
-public class StoreException extends Exception {
+public class StoreException extends TronRuntimeException {
 
   public StoreException() {
     super();

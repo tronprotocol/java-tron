@@ -14,7 +14,7 @@ public class CodeStore extends TronStoreWithRevoking<CodeCapsule> {
 
   @Autowired
   private CodeStore(@Value("code") String dbName) {
-    super(dbName);
+    super(dbName, CodeCapsule.class);
   }
 
   @Override
@@ -26,7 +26,7 @@ public class CodeStore extends TronStoreWithRevoking<CodeCapsule> {
     return Streams.stream(revokingDB.iterator()).count();
   }
 
-  public byte[] findCodeByHash(byte[] hash) {
+  public CodeCapsule findCodeByHash(byte[] hash) {
     return revokingDB.getUnchecked(hash);
   }
 }

@@ -4,22 +4,23 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.tron.core.capsule.ProtoCapsule;
 import org.tron.core.db2.core.Chainbase;
 import org.tron.core.exception.ItemNotFoundException;
 
-public interface IRevokingDB extends Iterable<Map.Entry<byte[], byte[]>> {
+public interface IRevokingDB<T extends ProtoCapsule> extends Iterable<Map.Entry<byte[], T>> {
 
-  void put(byte[] key, byte[] newValue);
+  void put(byte[] key, T newValue);
 
   void delete(byte[] key);
 
   boolean has(byte[] key);
 
-  byte[] get(byte[] key) throws ItemNotFoundException;
+  T get(byte[] key) throws ItemNotFoundException;
 
-  byte[] getFromRoot(byte[] key) throws ItemNotFoundException;
+  T getFromRoot(byte[] key) throws ItemNotFoundException;
 
-  byte[] getUnchecked(byte[] key);
+  T getUnchecked(byte[] key);
 
   void close();
 
@@ -32,16 +33,16 @@ public interface IRevokingDB extends Iterable<Map.Entry<byte[], byte[]>> {
   Chainbase.Cursor getCursor();
 
   // for blockstore
-  Set<byte[]> getlatestValues(long limit);
+  Set<T> getlatestValues(long limit);
 
   // for blockstore
-  Set<byte[]> getValuesNext(byte[] key, long limit);
+  Set<T> getValuesNext(byte[] key, long limit);
 
   List<byte[]> getKeysNext(byte[] key, long limit);
 
-  Map<WrappedByteArray, byte[]> prefixQuery(byte[] key);
+  Map<WrappedByteArray, T> prefixQuery(byte[] key);
 
-  default Map<byte[], byte[]> getNext(byte[] key, long limit) {
+  default Map<byte[], T> getNext(byte[] key, long limit) {
     return Collections.emptyMap();
   }
 

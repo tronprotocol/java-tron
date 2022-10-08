@@ -23,7 +23,7 @@ public class WitnessScheduleStore extends TronStoreWithRevoking<BytesCapsule> {
 
   @Autowired
   private WitnessScheduleStore(@Value("witness_schedule") String dbName) {
-    super(dbName);
+    super(dbName, BytesCapsule.class);
   }
 
   private void saveData(byte[] species, List<ByteString> witnessesAddressList) {

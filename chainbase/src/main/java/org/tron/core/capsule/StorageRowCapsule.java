@@ -80,6 +80,11 @@ public class StorageRowCapsule implements ProtoCapsule<byte[]> {
   }
 
   @Override
+  public StorageRowCapsule newInstance() {
+    return new StorageRowCapsule(this);
+  }
+
+  @Override
   public String toString() {
     return Arrays.toString(rowValue);
   }

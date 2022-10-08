@@ -23,7 +23,7 @@ import org.tron.common.utils.Sha256Hash;
 @Slf4j(topic = "capsule")
 public class CodeCapsule implements ProtoCapsule<byte[]> {
 
-  private byte[] code;
+  private final byte[] code;
 
   public CodeCapsule(byte[] code) {
     this.code = code;
@@ -42,6 +42,11 @@ public class CodeCapsule implements ProtoCapsule<byte[]> {
   @Override
   public byte[] getInstance() {
     return this.code;
+  }
+
+  @Override
+  public CodeCapsule newInstance() {
+    return new CodeCapsule(this.code);
   }
 
   @Override

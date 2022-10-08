@@ -1,56 +1,47 @@
 package org.tron.core.db2.common;
 
-import java.util.Arrays;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import org.apache.commons.lang3.ArrayUtils;
+import org.tron.core.capsule.ProtoCapsule;
 
 @EqualsAndHashCode(exclude = "operator")
-public final class Value {
+public final class Value<T extends ProtoCapsule> {
 
   @Getter
-  final private Operator operator;
-  final private WrappedByteArray data;
+  private final  Operator operator;
+  private final  T data;
 
-  private Value(Operator operator, WrappedByteArray data) {
+  public Value(Operator operator, T data) {
     this.operator = operator;
     this.data = data;
   }
 
-  public static Value decode(byte[] bytes) {
-    Operator operator = Operator.valueOf(bytes[0]);
-    byte[] value = null;
-    if (bytes.length > 1) {
-      value = Arrays.copyOfRange(bytes, 1, bytes.length);
-    }
-    return Value.of(operator, value);
-  }
-
-  public static Value copyOf(Operator operator, byte[] data) {
-    return new Value(operator, WrappedByteArray.copyOf(data));
-  }
-
-  public static Value of(Operator operator, byte[] data) {
-    return new Value(operator, WrappedByteArray.of(data));
-  }
 
   public byte[] encode() {
-    if (data.getBytes() == null) {
+    byte[] d;
+    if (data == null || ArrayUtils.isEmpty(d = data.getData())) {
       return new byte[]{operator.getValue()};
     }
 
-    byte[] r = new byte[1 + data.getBytes().length];
+    byte[] r = new byte[1 + d.length];
     r[0] = operator.getValue();
-    System.arraycopy(data.getBytes(), 0, r, 1, data.getBytes().length);
+    System.arraycopy(d, 0, r, 1, d.length);
     return r;
   }
 
-  public byte[] getBytes() {
-    byte[] value = data.getBytes();
-    if (value == null) {
+  public T getData() {
+    if (this.data == null) {
       return null;
     }
+    return (T) this.data.newInstance();
+  }
 
-    return Arrays.copyOf(value, value.length);
+  public byte[] getBytes() {
+    if (data == null) {
+      return null;
+    }
+    return this.data.getData();
   }
 
   public enum Operator {

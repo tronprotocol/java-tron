@@ -1,17 +1,10 @@
 package org.tron.core.store;
 
-import com.google.common.primitives.Bytes;
-import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,10 +17,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.exception.BadItemException;
-import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.BalanceContract.TransactionBalanceTrace;
-
-import java.util.Objects;
 
 
 @Component
@@ -50,7 +40,7 @@ public class BalanceTraceStore extends TronStoreWithRevoking<BlockBalanceTraceCa
 
   @Autowired
   protected BalanceTraceStore(@Value("balance-trace") String dbName) {
-    super(dbName);
+    super(dbName, BlockBalanceTraceCapsule.class);
   }
 
   public void setCurrentTransactionId(TransactionCapsule transactionCapsule) {
@@ -137,12 +127,11 @@ public class BalanceTraceStore extends TronStoreWithRevoking<BlockBalanceTraceCa
     }
 
     byte[] key = ByteArray.fromLong(blockNumber);
-    byte[] value = revokingDB.getUnchecked(key);
-    if (Objects.isNull(value)) {
+    BlockBalanceTraceCapsule blockBalanceTraceCapsule = revokingDB.getUnchecked(key);
+    if (Objects.isNull(blockBalanceTraceCapsule)) {
       return null;
     }
 
-    BlockBalanceTraceCapsule blockBalanceTraceCapsule = new BlockBalanceTraceCapsule(value);
     if (Objects.isNull(blockBalanceTraceCapsule.getInstance())) {
       return null;
     }
@@ -157,12 +146,11 @@ public class BalanceTraceStore extends TronStoreWithRevoking<BlockBalanceTraceCa
     }
 
     byte[] key = ByteArray.fromLong(blockNumber);
-    byte[] value = revokingDB.getUnchecked(key);
-    if (Objects.isNull(value)) {
+    BlockBalanceTraceCapsule blockBalanceTraceCapsule = revokingDB.getUnchecked(key);
+    if (Objects.isNull(blockBalanceTraceCapsule)) {
       return null;
     }
 
-    BlockBalanceTraceCapsule blockBalanceTraceCapsule = new BlockBalanceTraceCapsule(value);
     if (Objects.isNull(blockBalanceTraceCapsule.getInstance())) {
       return null;
     }

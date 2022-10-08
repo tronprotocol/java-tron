@@ -136,4 +136,9 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
   public TransactionInfo getInstance() {
     return this.transactionInfo;
   }
+
+  @Override
+  public TransactionInfoCapsule newInstance() {
+    return new TransactionInfoCapsule(this.transactionInfo);
+  }
 }

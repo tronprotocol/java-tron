@@ -125,4 +125,9 @@ public class DelegatedResourceCapsule implements ProtoCapsule<DelegatedResource>
     return this.delegatedResource;
   }
 
+  @Override
+  public DelegatedResourceCapsule newInstance() {
+    return new DelegatedResourceCapsule(this.delegatedResource);
+  }
+
 }

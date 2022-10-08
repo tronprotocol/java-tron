@@ -1,8 +1,8 @@
 package org.tron.core.capsule;
 
-public class BytesCapsule implements ProtoCapsule {
+public class BytesCapsule implements ProtoCapsule<byte[]> {
 
-  private byte[] bytes;
+  private final byte[] bytes;
 
   public BytesCapsule(byte[] bytes) {
     this.bytes = bytes;
@@ -14,7 +14,12 @@ public class BytesCapsule implements ProtoCapsule {
   }
 
   @Override
-  public Object getInstance() {
-    return null;
+  public byte[] getInstance() {
+    return bytes;
+  }
+
+  @Override
+  public BytesCapsule newInstance() {
+    return new BytesCapsule(this.bytes);
   }
 }

@@ -218,4 +218,9 @@ public class MarketOrderCapsule implements ProtoCapsule<MarketOrder> {
     return this.order;
   }
 
+  @Override
+  public MarketOrderCapsule newInstance() {
+    return new MarketOrderCapsule(this.order);
+  }
+
 }

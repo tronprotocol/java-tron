@@ -24,7 +24,7 @@ public class AccountStateStoreTrie extends TronStoreWithRevoking<BytesCapsule> i
 
   @Autowired
   private AccountStateStoreTrie(@Value("accountTrie") String dbName) {
-    super(dbName);
+    super(dbName, BytesCapsule.class);
   }
 
   @PostConstruct

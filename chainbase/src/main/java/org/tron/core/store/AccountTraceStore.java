@@ -22,7 +22,7 @@ public class AccountTraceStore extends TronStoreWithRevoking<AccountTraceCapsule
 
   @Autowired
   protected AccountTraceStore(@Value("account-trace") String dbName) {
-    super(dbName);
+    super(dbName, AccountTraceCapsule.class);
   }
 
   private long xor(long l) {
@@ -30,29 +30,27 @@ public class AccountTraceStore extends TronStoreWithRevoking<AccountTraceCapsule
   }
 
   public void recordBalanceWithBlock(byte[] address, long number, long balance) {
-//    Pair<Long, Long> pair = getPrevBalance(address, number);
-//    logger.info("recordBalanceWithBlock===== address:{} number:{} balance:{}", StringUtil.encode58Check(address), number, balance);
     byte[] key = Bytes.concat(address, Longs.toByteArray(xor(number)));
     put(key, new AccountTraceCapsule(balance));
   }
 
   public Pair<Long, Long> getPrevBalance(byte[] address, long number) {
     byte[] key = Bytes.concat(address, Longs.toByteArray(xor(number)));
-    Map<byte[], byte[]> result = revokingDB.getNext(key, 1);
+    Map<byte[], AccountTraceCapsule> result = revokingDB.getNext(key, 1);
 
     if (MapUtils.isEmpty(result)) {
       return Pair.of(number, 0L);
     }
 
-    Map.Entry<byte[], byte[]> entry = new ArrayList<>(result.entrySet()).get(0);
+    Map.Entry<byte[], AccountTraceCapsule> entry = new ArrayList<>(result.entrySet()).get(0);
     byte[] resultAddress = Arrays.copyOf(entry.getKey(), 21);
     if (!Arrays.equals(address, resultAddress)) {
       return Pair.of(number, 0L);
     }
 
     try {
-      byte[] numberbytes = Arrays.copyOfRange(entry.getKey(), 21, 29);
-      return Pair.of(xor(Longs.fromByteArray(numberbytes)), new AccountTraceCapsule(entry.getValue()).getBalance());
+      byte[] numberBytes = Arrays.copyOfRange(entry.getKey(), 21, 29);
+      return Pair.of(xor(Longs.fromByteArray(numberBytes)), entry.getValue().getBalance());
     } catch (BadItemException e) {
       return Pair.of(number, 0L);
     }

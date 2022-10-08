@@ -35,6 +35,10 @@ public class TransactionRetCapsule implements ProtoCapsule<TransactionRet> {
     }
   }
 
+  public TransactionRetCapsule(TransactionRet transactionRet) {
+    this.transactionRet = transactionRet;
+  }
+
   public void addTransactionInfo(TransactionInfo result) {
     this.transactionRet = this.transactionRet.toBuilder().addTransactioninfo(result).build();
   }
@@ -50,5 +54,10 @@ public class TransactionRetCapsule implements ProtoCapsule<TransactionRet> {
   @Override
   public TransactionRet getInstance() {
     return transactionRet;
+  }
+
+  @Override
+  public TransactionRetCapsule newInstance() {
+    return new TransactionRetCapsule(this.transactionRet);
   }
 }

@@ -201,7 +201,8 @@ public class TronNetDelegate {
         case BLOCK:
           return new BlockMessage(chainBaseManager.getBlockById(hash));
         case TRX:
-          TransactionCapsule tx = chainBaseManager.getTransactionStore().get(hash.getBytes());
+          TransactionCapsule tx = chainBaseManager.getTransactionStore()
+                  .getCapsule(hash.getBytes());
           if (tx != null) {
             return new TransactionMessage(tx.getInstance());
           }

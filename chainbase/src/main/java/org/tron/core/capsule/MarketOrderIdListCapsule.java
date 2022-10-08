@@ -241,6 +241,11 @@ public class MarketOrderIdListCapsule implements ProtoCapsule<MarketOrderIdList>
     return this.orderIdList;
   }
 
+  @Override
+  public MarketOrderIdListCapsule newInstance() {
+    return new MarketOrderIdListCapsule(this.orderIdList);
+  }
+
   public List<MarketOrderCapsule> getAllOrder(MarketOrderStore orderStore, long limit)
       throws ItemNotFoundException {
 

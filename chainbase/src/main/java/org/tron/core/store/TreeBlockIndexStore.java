@@ -1,6 +1,6 @@
 package org.tron.core.store;
 
-import java.util.Arrays;
+import java.util.Objects;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,7 +16,7 @@ public class TreeBlockIndexStore extends TronStoreWithRevoking<BytesCapsule> {
 
   @Autowired
   public TreeBlockIndexStore(@Value("tree-block-index") String dbName) {
-    super(dbName);
+    super(dbName, BytesCapsule.class);
 
   }
 
@@ -37,11 +37,11 @@ public class TreeBlockIndexStore extends TronStoreWithRevoking<BytesCapsule> {
   @Override
   public BytesCapsule get(byte[] key)
       throws ItemNotFoundException {
-    byte[] value = revokingDB.getUnchecked(key);
-    if (ArrayUtils.isEmpty(value)) {
+    BytesCapsule value = revokingDB.getUnchecked(key);
+    if (Objects.isNull(value) || ArrayUtils.isEmpty(value.getData())) {
       throw new ItemNotFoundException(String.format("number: %d is not found!",
           ByteArray.toLong(key)));
     }
-    return new BytesCapsule(value);
+    return value;
   }
 }

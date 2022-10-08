@@ -3,20 +3,20 @@ package org.tron.core.db;
 import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.exception.BadItemException;
 
 @Slf4j(topic = "DB")
 @Component
-public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> {
+public class TransactionStore extends TronStoreWithRevoking<BytesCapsule> {
 
   @Autowired
   private BlockStore blockStore;
@@ -26,15 +26,15 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
 
   @Autowired
   private TransactionStore(@Value("trans") String dbName) {
-    super(dbName);
+    super(dbName, BytesCapsule.class);
   }
 
-  @Override
+
   public void put(byte[] key, TransactionCapsule item) {
     if (Objects.isNull(item) || item.getBlockNum() == -1) {
-      super.put(key, item);
+      super.put(key, new BytesCapsule(item.getData()));
     } else {
-      revokingDB.put(key, ByteArray.fromLong(item.getBlockNum()));
+      revokingDB.put(key, new BytesCapsule(ByteArray.fromLong(item.getBlockNum())));
     }
   }
 
@@ -66,11 +66,12 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
   }
 
   public long getBlockNumber(byte[] key) throws BadItemException {
-    byte[] value = revokingDB.getUnchecked(key);
-    if (ArrayUtils.isEmpty(value)) {
+    BytesCapsule capsule = getNonEmpty(key);
+    if (Objects.isNull(capsule)) {
       return -1;
     }
 
+    byte[] value = capsule.getData();
     if (value.length == 8) {
       return ByteArray.toLong(value);
     }
@@ -78,13 +79,13 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
     return transactionCapsule.getBlockNum();
   }
 
-  @Override
-  public TransactionCapsule get(byte[] key) throws BadItemException {
-    byte[] value = revokingDB.getUnchecked(key);
-    if (ArrayUtils.isEmpty(value)) {
+
+  public TransactionCapsule getCapsule(byte[] key) throws BadItemException {
+    BytesCapsule capsule = getNonEmpty(key);
+    if (Objects.isNull(capsule)) {
       return null;
     }
-
+    byte[] value = capsule.getData();
     TransactionCapsule transactionCapsule = null;
     long blockHigh = -1;
 
@@ -101,15 +102,6 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
     } else {
       transactionCapsule.setBlockNum(blockHigh);
       return transactionCapsule;
-    }
-  }
-
-  @Override
-  public TransactionCapsule getUnchecked(byte[] key) {
-    try {
-      return get(key);
-    } catch (Exception e) {
-      return null;
     }
   }
 

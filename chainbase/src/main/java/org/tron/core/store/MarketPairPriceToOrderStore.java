@@ -23,7 +23,7 @@ public class MarketPairPriceToOrderStore extends TronStoreWithRevoking<MarketOrd
 
   @Autowired
   protected MarketPairPriceToOrderStore(@Value("market_pair_price_to_order") String dbName) {
-    super(dbName);
+    super(dbName, MarketOrderIdListCapsule.class);
   }
 
   @Override
@@ -42,8 +42,7 @@ public class MarketPairPriceToOrderStore extends TronStoreWithRevoking<MarketOrd
 
   @Override
   public MarketOrderIdListCapsule get(byte[] key) throws ItemNotFoundException {
-    byte[] value = revokingDB.get(key);
-    return new MarketOrderIdListCapsule(value);
+    return revokingDB.get(key);
   }
 
   public List<byte[]> getKeysNext(byte[] key, long limit) {

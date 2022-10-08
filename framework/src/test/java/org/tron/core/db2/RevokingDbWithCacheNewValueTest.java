@@ -2,6 +2,7 @@ package org.tron.core.db2;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -194,9 +195,7 @@ public class RevokingDbWithCacheNewValueTest {
       }
     }
 
-    Set<ProtoCapsuleTest> result = tronDatabase.getRevokingDB().getlatestValues(5).stream()
-        .map(ProtoCapsuleTest::new)
-        .collect(Collectors.toSet());
+    Set<ProtoCapsuleTest> result = tronDatabase.getRevokingDB().getlatestValues(5);
 
     for (int i = 9; i >= 5; i--) {
       Assert.assertTrue(result.contains(new ProtoCapsuleTest(("getLastestValues" + i).getBytes())));
@@ -224,7 +223,7 @@ public class RevokingDbWithCacheNewValueTest {
     Set<ProtoCapsuleTest> result =
         tronDatabase.getRevokingDB().getValuesNext(
             new ProtoCapsuleTest("getValuesNext2".getBytes()).getData(), 3
-        ).stream().map(ProtoCapsuleTest::new).collect(Collectors.toSet());
+        );
 
     for (int i = 2; i < 5; i++) {
       Assert.assertTrue(result.contains(new ProtoCapsuleTest(("getValuesNext" + i).getBytes())));
@@ -471,13 +470,12 @@ public class RevokingDbWithCacheNewValueTest {
   public static class TestRevokingTronStore extends TronStoreWithRevoking<ProtoCapsuleTest> {
 
     protected TestRevokingTronStore(String dbName) {
-      super(dbName);
+      super(dbName, ProtoCapsuleTest.class);
     }
 
     @Override
     public ProtoCapsuleTest get(byte[] key) {
-      byte[] value = this.revokingDB.getUnchecked(key);
-      return ArrayUtils.isEmpty(value) ? null : new ProtoCapsuleTest(value);
+      return this.revokingDB.getUnchecked(key);
     }
   }
 

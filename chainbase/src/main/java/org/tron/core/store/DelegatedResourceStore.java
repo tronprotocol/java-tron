@@ -15,20 +15,17 @@ public class DelegatedResourceStore extends TronStoreWithRevoking<DelegatedResou
 
   @Autowired
   public DelegatedResourceStore(@Value("DelegatedResource") String dbName) {
-    super(dbName);
+    super(dbName, DelegatedResourceCapsule.class);
   }
 
   @Override
   public DelegatedResourceCapsule get(byte[] key) {
-
-    byte[] value = revokingDB.getUnchecked(key);
-    return ArrayUtils.isEmpty(value) ? null : new DelegatedResourceCapsule(value);
+    return getNonEmpty(key);
   }
 
   @Deprecated
   public List<DelegatedResourceCapsule> getByFrom(byte[] key) {
     return revokingDB.getValuesNext(key, Long.MAX_VALUE).stream()
-        .map(DelegatedResourceCapsule::new)
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
   }

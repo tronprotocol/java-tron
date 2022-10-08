@@ -35,7 +35,7 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
 
   @Autowired
   private BlockStore(@Value("block") String dbName) {
-    super(dbName);
+    super(dbName, BlockCapsule.class);
   }
 
   public List<BlockCapsule> getLimitNumber(long startNumber, long limit) {
@@ -47,16 +47,8 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
     return pack(revokingDB.getlatestValues(getNum));
   }
 
-  private List<BlockCapsule> pack(Set<byte[]> values) {
-    List<BlockCapsule> blocks = new ArrayList<>();
-    for (byte[] bytes : values) {
-      try {
-        blocks.add(new BlockCapsule(bytes));
-      } catch (BadItemException e) {
-        logger.error("Find bad item: {}", e.getMessage());
-        // throw new TronDBException(e);
-      }
-    }
+  private List<BlockCapsule> pack(Set<BlockCapsule> values) {
+    List<BlockCapsule> blocks = new ArrayList<>(values);
     blocks.sort(Comparator.comparing(BlockCapsule::getNum));
     return blocks;
   }

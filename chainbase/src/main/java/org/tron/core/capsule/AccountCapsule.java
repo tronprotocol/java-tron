@@ -245,6 +245,11 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return this.account;
   }
 
+  @Override
+  public AccountCapsule newInstance() {
+    return new AccountCapsule(this.account);
+  }
+
   public void setInstance(Account account) {
     this.account = account;
   }

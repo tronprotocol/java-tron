@@ -3,39 +3,35 @@ package org.tron.core.db2.core;
 import java.util.Map;
 import org.tron.core.db2.common.Instance;
 
-public interface Snapshot extends Iterable<Map.Entry<byte[], byte[]>>, Instance<Snapshot> {
+public interface Snapshot<T> extends Iterable<Map.Entry<byte[], T>>, Instance<Snapshot<T>> {
 
-  static boolean isRoot(Snapshot snapshot) {
-    return snapshot != null && snapshot.getClass() == SnapshotRoot.class;
-  }
+  boolean isRoot();
 
-  static boolean isImpl(Snapshot snapshot) {
-    return snapshot != null && snapshot.getClass() == SnapshotImpl.class;
-  }
+  boolean isImpl();
 
-  byte[] get(byte[] key);
+  T get(byte[] key);
 
-  void put(byte[] key, byte[] value);
+  void put(byte[] key, T value);
 
   void remove(byte[] key);
 
   void merge(Snapshot from);
 
-  Snapshot advance();
+  Snapshot<T> advance(Class<T> clz);
 
-  Snapshot retreat();
+  Snapshot<T> retreat();
 
-  Snapshot getPrevious();
+  Snapshot<T> getPrevious();
 
-  void setPrevious(Snapshot previous);
+  void setPrevious(Snapshot<T> previous);
 
   Snapshot getRoot();
 
-  Snapshot getNext();
+  Snapshot<T> getNext();
 
-  void setNext(Snapshot next);
+  void setNext(Snapshot<T> next);
 
-  Snapshot getSolidity();
+  Snapshot<T> getSolidity();
 
   void close();
 

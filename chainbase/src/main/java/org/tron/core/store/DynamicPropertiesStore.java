@@ -191,7 +191,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
-    super(dbName);
+    super(dbName, BytesCapsule.class);
 
     try {
       this.getTotalSignNum();
@@ -2180,13 +2180,15 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public byte[] statsByVersion(int version) {
     String statsKey = FORK_PREFIX + version;
-    return revokingDB.getUnchecked(statsKey.getBytes());
+    BytesCapsule v = revokingDB.getUnchecked(statsKey.getBytes());
+
+    return Objects.isNull(v) ? null : v.getData();
   }
 
   public Boolean getForked(int version) {
     String forkKey = FORK_CONTROLLER + version;
-    byte[] value = revokingDB.getUnchecked(forkKey.getBytes());
-    return value == null ? null : Boolean.valueOf(new String(value));
+    BytesCapsule v  = revokingDB.getUnchecked(forkKey.getBytes());
+    return Objects.isNull(v) ? null : Boolean.valueOf(new String(v.getData()));
   }
 
   /**
@@ -2505,7 +2507,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public long getSetBlackholeAccountPermission() {
-    return Optional.of(getUnchecked(SET_BLACKHOLE_ACCOUNT_PERMISSION))
+    return Optional.ofNullable(getUnchecked(SET_BLACKHOLE_ACCOUNT_PERMISSION))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(

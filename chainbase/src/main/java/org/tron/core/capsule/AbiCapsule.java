@@ -10,6 +10,10 @@ public class AbiCapsule implements ProtoCapsule<ABI> {
 
   private ABI abi;
 
+  public AbiCapsule() {
+    this.abi = ABI.getDefaultInstance();
+  }
+
   public AbiCapsule(byte[] data) {
     try {
       this.abi = ABI.parseFrom(data);
@@ -23,7 +27,7 @@ public class AbiCapsule implements ProtoCapsule<ABI> {
   }
 
   public AbiCapsule(ABI abi) {
-    this.abi = abi.toBuilder().build();
+    this.abi = abi;
   }
 
   @Override
@@ -34,6 +38,11 @@ public class AbiCapsule implements ProtoCapsule<ABI> {
   @Override
   public ABI getInstance() {
     return this.abi;
+  }
+
+  @Override
+  public AbiCapsule newInstance() {
+    return new AbiCapsule(this.abi);
   }
 
   @Override

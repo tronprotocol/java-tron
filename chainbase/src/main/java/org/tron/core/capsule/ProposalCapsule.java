@@ -153,6 +153,11 @@ public class ProposalCapsule implements ProtoCapsule<Proposal> {
     return this.proposal;
   }
 
+  @Override
+  public ProposalCapsule newInstance() {
+    return new ProposalCapsule(this.proposal);
+  }
+
   public boolean hasMostApprovals(List<ByteString> activeWitnesses) {
     long count = this.proposal.getApprovalsList().stream()
         .filter(witness -> activeWitnesses.contains(witness)).count();

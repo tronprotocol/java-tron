@@ -81,6 +81,11 @@ public class WitnessCapsule implements ProtoCapsule<Witness>, Comparable<Witness
     return this.witness;
   }
 
+  @Override
+  public WitnessCapsule newInstance() {
+    return new WitnessCapsule(this.witness);
+  }
+
   public void setPubKey(final ByteString pubKey) {
     this.witness = this.witness.toBuilder().setPubKey(pubKey).build();
   }

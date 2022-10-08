@@ -683,6 +683,11 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   @Override
+  public TransactionCapsule newInstance() {
+    return new TransactionCapsule(this.transaction);
+  }
+
+  @Override
   public String toString() {
 
     toStringBuff.setLength(0);

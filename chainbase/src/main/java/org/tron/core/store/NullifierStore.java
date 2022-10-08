@@ -1,5 +1,6 @@
 package org.tron.core.store;
 
+import java.util.Objects;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,7 +13,7 @@ public class NullifierStore extends TronStoreWithRevoking<BytesCapsule> {
 
   @Autowired
   public NullifierStore(@Value("nullifier") String dbName) {
-    super(dbName);
+    super(dbName, BytesCapsule.class);
   }
 
   public void put(BytesCapsule bytesCapsule) {
@@ -21,17 +22,13 @@ public class NullifierStore extends TronStoreWithRevoking<BytesCapsule> {
 
   @Override
   public BytesCapsule get(byte[] key) {
-    byte[] value = revokingDB.getUnchecked(key);
-    if (ArrayUtils.isEmpty(value)) {
-      return null;
-    }
-    return new BytesCapsule(value);
+    return getNonEmpty(key);
+
   }
 
   @Override
   public boolean has(byte[] key) {
-    byte[] value = revokingDB.getUnchecked(key);
-
-    return !ArrayUtils.isEmpty(value);
+    BytesCapsule value = get(key);
+    return Objects.nonNull(value);
   }
 }

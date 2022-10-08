@@ -131,6 +131,11 @@ public class SnapshotRootTest {
     }
 
     @Override
+    public ProtoCapsuleTest newInstance() {
+      return new ProtoCapsuleTest(this.value);
+    }
+
+    @Override
     public String toString() {
       return "ProtoCapsuleTest{"
           + "value=" + Arrays.toString(value)

@@ -1438,7 +1438,7 @@ public class Wallet {
     TransactionCapsule transactionCapsule = null;
     try {
       transactionCapsule = chainBaseManager.getTransactionStore()
-          .get(transactionId.toByteArray());
+          .getCapsule(transactionId.toByteArray());
     } catch (StoreException e) {
       return null;
     }
@@ -1455,7 +1455,7 @@ public class Wallet {
     TransactionCapsule transactionCapsule;
     try {
       transactionCapsule = chainBaseManager.getTransactionStore()
-          .get(transactionId.toByteArray());
+          .getCapsule(transactionId.toByteArray());
     } catch (StoreException e) {
       return null;
     }

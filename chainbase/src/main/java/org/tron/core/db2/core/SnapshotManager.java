@@ -34,6 +34,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StorageUtils;
+import org.tron.core.capsule.Proto;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db.TronDatabase;
 import org.tron.core.db2.ISession;
@@ -169,7 +170,7 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   private void advance() {
-    dbs.forEach(db -> db.setHead(db.getHead().advance()));
+    dbs.forEach(db -> db.setHead(db.getHead().advance(db.getClz())));
     ++size;
   }
 
@@ -310,7 +311,7 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   private void refreshOne(Chainbase db) {
-    if (Snapshot.isRoot(db.getHead())) {
+    if (db.getHead().isRoot()) {
       return;
     }
 
@@ -370,7 +371,7 @@ public class SnapshotManager implements RevokingDatabase {
       Map<WrappedByteArray, WrappedByteArray> batch = new HashMap<>();
       for (Chainbase db : dbs) {
         Snapshot head = db.getHead();
-        if (Snapshot.isRoot(head)) {
+        if (head.isRoot()) {
           return;
         }
 
@@ -485,7 +486,7 @@ public class SnapshotManager implements RevokingDatabase {
 
   private void checkV1() {
     for (Chainbase db: dbs) {
-      if (!Snapshot.isRoot(db.getHead())) {
+      if (!db.getHead().isRoot()) {
         throw new IllegalStateException("First check.");
       }
     }
@@ -528,13 +529,13 @@ public class SnapshotManager implements RevokingDatabase {
       byte[] realKey = Arrays.copyOfRange(key, db.getBytes().length + 4, key.length);
       byte[] realValue = value.length == 1 ? null : Arrays.copyOfRange(value, 1, value.length);
       if (realValue != null) {
-        dbMap.get(db).getHead().put(realKey, realValue);
+        dbMap.get(db).getHead().put(realKey, Proto.of(realValue,dbMap.get(db).getClz()));
       } else {
         byte op = value[0];
         if (Value.Operator.DELETE.getValue() == op) {
           dbMap.get(db).getHead().remove(realKey);
         } else {
-          dbMap.get(db).getHead().put(realKey, new byte[0]);
+          dbMap.get(db).getHead().put(realKey, Proto.of(new byte[0],dbMap.get(db).getClz()));
         }
       }
     }

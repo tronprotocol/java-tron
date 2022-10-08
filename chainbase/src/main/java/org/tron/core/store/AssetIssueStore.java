@@ -19,7 +19,7 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
 
   @Autowired
   protected AssetIssueStore(@Value("asset-issue") String dbName) {
-    super(dbName);
+    super(dbName, AssetIssueCapsule.class);
   }
 
 

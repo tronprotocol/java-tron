@@ -100,6 +100,11 @@ public class IncrementalMerkleTreeCapsule implements ProtoCapsule<IncrementalMer
     return this.merkleTree;
   }
 
+  @Override
+  public IncrementalMerkleTreeCapsule newInstance() {
+    return new IncrementalMerkleTreeCapsule(this.merkleTree);
+  }
+
   public IncrementalMerkleTreeContainer toMerkleTreeContainer() {
     return new IncrementalMerkleTreeContainer(this);
   }

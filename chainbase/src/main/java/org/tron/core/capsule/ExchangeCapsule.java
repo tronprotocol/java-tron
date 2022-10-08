@@ -172,4 +172,9 @@ public class ExchangeCapsule implements ProtoCapsule<Exchange> {
     return this.exchange;
   }
 
+  @Override
+  public ExchangeCapsule newInstance() {
+    return new ExchangeCapsule(this.exchange);
+  }
+
 }

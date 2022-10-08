@@ -28,6 +28,10 @@ public class PbftSignCapsule implements ProtoCapsule<PBFTCommitResult> {
     pbftCommitResult = builder.build();
   }
 
+  public PbftSignCapsule(PBFTCommitResult pbftCommitResult) {
+    this.pbftCommitResult = pbftCommitResult;
+  }
+
   @Override
   public byte[] getData() {
     return pbftCommitResult.toByteArray();
@@ -36,5 +40,10 @@ public class PbftSignCapsule implements ProtoCapsule<PBFTCommitResult> {
   @Override
   public PBFTCommitResult getInstance() {
     return pbftCommitResult;
+  }
+
+  @Override
+  public PbftSignCapsule newInstance() {
+    return new PbftSignCapsule(this.pbftCommitResult);
   }
 }

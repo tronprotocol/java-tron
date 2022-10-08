@@ -66,6 +66,11 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
   }
 
   @Override
+  public AssetIssueCapsule newInstance() {
+    return new AssetIssueCapsule(this.assetIssueContract);
+  }
+
+  @Override
   public String toString() {
     return this.assetIssueContract.toString();
   }

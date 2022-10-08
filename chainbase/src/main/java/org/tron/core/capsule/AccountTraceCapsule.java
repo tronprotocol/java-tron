@@ -54,4 +54,9 @@ public class AccountTraceCapsule implements ProtoCapsule<AccountTrace> {
   public AccountTrace getInstance() {
     return accountTrace;
   }
+
+  @Override
+  public AccountTraceCapsule newInstance() {
+    return new AccountTraceCapsule(this.accountTrace);
+  }
 }

@@ -17,13 +17,12 @@ public class ProposalStore extends TronStoreWithRevoking<ProposalCapsule> {
 
   @Autowired
   public ProposalStore(@Value("proposal") String dbName) {
-    super(dbName);
+    super(dbName, ProposalCapsule.class);
   }
 
   @Override
   public ProposalCapsule get(byte[] key) throws ItemNotFoundException {
-    byte[] value = revokingDB.get(key);
-    return new ProposalCapsule(value);
+    return revokingDB.get(key);
   }
 
   /**

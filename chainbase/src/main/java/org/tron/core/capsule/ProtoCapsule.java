@@ -5,4 +5,6 @@ public interface ProtoCapsule<T> {
   byte[] getData();
 
   T getInstance();
+
+  ProtoCapsule<T> newInstance();
 }

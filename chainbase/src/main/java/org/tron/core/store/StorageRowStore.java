@@ -13,12 +13,15 @@ public class StorageRowStore extends TronStoreWithRevoking<StorageRowCapsule> {
 
   @Autowired
   private StorageRowStore(@Value("storage-row") String dbName) {
-    super(dbName);
+    super(dbName, StorageRowCapsule.class);
   }
 
   @Override
   public StorageRowCapsule get(byte[] key) {
     StorageRowCapsule row = getUnchecked(key);
+    if (row == null) {
+      return null;
+    }
     row.setRowKey(key);
     return row;
   }

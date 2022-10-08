@@ -84,6 +84,10 @@ public class MarketPriceCapsule implements ProtoCapsule<MarketPrice> {
     return this.price;
   }
 
+  @Override
+  public MarketPriceCapsule newInstance() {
+    return new MarketPriceCapsule(this.price);
+  }
 
 
 }

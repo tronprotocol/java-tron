@@ -11,12 +11,11 @@ public class RecentBlockStore extends TronStoreWithRevoking<BytesCapsule> {
 
   @Autowired
   private RecentBlockStore(@Value("recent-block") String dbName) {
-    super(dbName);
+    super(dbName, BytesCapsule.class);
   }
 
   @Override
   public BytesCapsule get(byte[] key) throws ItemNotFoundException {
-    byte[] value = revokingDB.get(key);
-    return new BytesCapsule(value);
+    return revokingDB.get(key);
   }
 }

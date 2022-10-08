@@ -81,7 +81,7 @@ public class SnapshotManagerTest {
         tronDatabase.put(protoCapsule.getData(), testProtoCapsule);
         BlockCapsule blockCapsule = new BlockCapsule(i, Sha256Hash.ZERO_HASH,
             System.currentTimeMillis(), ByteString.EMPTY);
-        dbMap.get("block").put(Longs.toByteArray(i), blockCapsule.getData());
+        dbMap.get("block").put(Longs.toByteArray(i), blockCapsule);
         tmpSession.commit();
       }
     }

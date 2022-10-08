@@ -16,7 +16,7 @@ public class AccountIdIndexStore extends TronStoreWithRevoking<BytesCapsule> {
 
   @Autowired
   public AccountIdIndexStore(@Value("accountid-index") String dbName) {
-    super(dbName);
+    super(dbName, BytesCapsule.class);
   }
 
   private static byte[] getLowerCaseAccountId(byte[] bsAccountId) {
@@ -40,18 +40,14 @@ public class AccountIdIndexStore extends TronStoreWithRevoking<BytesCapsule> {
   @Override
   public BytesCapsule get(byte[] key) {
     byte[] lowerCaseKey = getLowerCaseAccountId(key);
-    byte[] value = revokingDB.getUnchecked(lowerCaseKey);
-    if (ArrayUtils.isEmpty(value)) {
-      return null;
-    }
-    return new BytesCapsule(value);
+    return getNonEmpty(lowerCaseKey);
+
   }
 
   @Override
   public boolean has(byte[] key) {
-    byte[] lowerCaseKey = getLowerCaseAccountId(key);
-    byte[] value = revokingDB.getUnchecked(lowerCaseKey);
-    return !ArrayUtils.isEmpty(value);
+    BytesCapsule value = get(key);
+    return Objects.nonNull(value);
   }
 
 }
