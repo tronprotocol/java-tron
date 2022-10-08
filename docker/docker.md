@@ -12,7 +12,7 @@ Requires a docker to be installed on the system. Docker version >=20.10.12.
 
 Shell can be obtained from the java-tron project or independently, you can get the script from [here](https://github.com/tronprotocol/java-tron/docker.sh) or download via the wget:
 ```shell
-$ wget https://raw.githubusercontent.com/tronprotocol/java-tron/develop/docker.sh
+$ wget https://raw.githubusercontent.com/tronprotocol/java-tron/develop/docker/docker.sh
 ```
 
 ### Pull the mirror image
