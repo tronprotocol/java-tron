@@ -530,7 +530,12 @@ public class SnapshotManager implements RevokingDatabase {
       if (realValue != null) {
         dbMap.get(db).getHead().put(realKey, realValue);
       } else {
-        dbMap.get(db).getHead().remove(realKey);
+        byte op = value[0];
+        if (Value.Operator.DELETE.getValue() == op) {
+          dbMap.get(db).getHead().remove(realKey);
+        } else {
+          dbMap.get(db).getHead().put(realKey, new byte[0]);
+        }
       }
     }
 
