@@ -81,7 +81,7 @@ public class WithdrawExpireUnfreezeActuator extends AbstractActuator {
               .getClass() + "]");
     }
 
-    if (dynamicStore.getUnfreezeDelayDays() == 0) {
+    if (!dynamicStore.supportUnfreezeDelay()) {
       throw new ContractValidateException("Not support WithdrawExpireUnfreeze transaction,"
           + " need to be opened by the committee");
     }
