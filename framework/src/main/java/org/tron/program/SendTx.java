@@ -175,6 +175,16 @@ public class SendTx {
     }
     SendTx sendTx = new SendTx(fullNodes, broadcastThreadNum, onceSendTxNum, maxRows);
     //send tx
-    sendTx.readTxAndSend(filePath);
+
+    int isMultiFile = filePath.indexOf(";");
+    if (isMultiFile != -1) {
+      String[] filePaths = filePath.split(";");
+      for (String path : filePaths) {
+        logger.info("fileName: {}", path);
+        sendTx.readTxAndSend(path);
+      }
+    } else {
+      sendTx.readTxAndSend(filePath);
+    }
   }
 }
