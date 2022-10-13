@@ -109,7 +109,7 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
               .getClass() + "]");
     }
 
-    if (dynamicStore.getUnfreezeDelayDays() == 0) {
+    if (!dynamicStore.supportUnfreezeDelay()) {
       throw new ContractValidateException("Not support UnfreezeV2 transaction,"
           + " need to be opened by the committee");
     }
@@ -165,7 +165,7 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
 
     if (!checkUnfreezeBalance(accountCapsule, unfreezeBalanceV2Contract, unfreezeBalanceV2Contract.getResource())) {
       throw new ContractValidateException(
-              "Invalid unfreeze_balance, freezing resource[" + unfreezeBalanceV2Contract.getResource() + "] is not enough"
+              "Invalid unfreeze_balance, [" + unfreezeBalanceV2Contract.getUnfreezeBalance() + "] is error"
       );
     }
 
@@ -219,7 +219,8 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
       }
     }
 
-    if (unfreezeBalanceV2Contract.getUnfreezeBalance() <= frozenAmount) {
+    if (unfreezeBalanceV2Contract.getUnfreezeBalance() > 0
+            && unfreezeBalanceV2Contract.getUnfreezeBalance() <= frozenAmount) {
       checkOk = true;
     }
 

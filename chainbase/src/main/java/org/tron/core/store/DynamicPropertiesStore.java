@@ -2546,6 +2546,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             .orElseThrow(() -> new IllegalArgumentException("not found UNFREEZE_DELAY_DAYS"));
   }
 
+  public boolean supportUnfreezeDelay() {
+    return getUnfreezeDelayDays() > 0;
+  }
+
   public void saveUnfreezeDelayDays(long value) {
     this.put(UNFREEZE_DELAY_DAYS, new BytesCapsule(ByteArray.fromLong(value)));
   }

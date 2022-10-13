@@ -15,6 +15,8 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Account.AccountResource;
 
+import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
+
 @Slf4j(topic = "DB")
 public class EnergyProcessor extends ResourceProcessor {
 
@@ -41,7 +43,8 @@ public class EnergyProcessor extends ResourceProcessor {
     long oldEnergyUsage = accountResource.getEnergyUsage();
     long latestConsumeTime = accountResource.getLatestConsumeTimeForEnergy();
 
-    accountCapsule.setEnergyUsage(increase(oldEnergyUsage, 0, latestConsumeTime, now));
+    accountCapsule.setEnergyUsage(increase(accountCapsule, ENERGY,
+            oldEnergyUsage, 0, latestConsumeTime, now));
   }
 
   public void updateTotalEnergyAverageUsage() {
@@ -100,7 +103,7 @@ public class EnergyProcessor extends ResourceProcessor {
     long latestConsumeTime = accountCapsule.getAccountResource().getLatestConsumeTimeForEnergy();
     long energyLimit = calculateGlobalEnergyLimit(accountCapsule);
 
-    long newEnergyUsage = increase(energyUsage, 0, latestConsumeTime, now);
+    long newEnergyUsage = increase(accountCapsule, ENERGY, energyUsage, 0, latestConsumeTime, now);
 
     if (energy > (energyLimit - newEnergyUsage)
         && dynamicPropertiesStore.getAllowTvmFreeze() == 0) {
@@ -109,7 +112,8 @@ public class EnergyProcessor extends ResourceProcessor {
 
     latestConsumeTime = now;
     long latestOperationTime = dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
-    newEnergyUsage = increase(newEnergyUsage, energy, latestConsumeTime, now);
+    newEnergyUsage = increase(accountCapsule, ENERGY,
+            newEnergyUsage, energy, latestConsumeTime, now);
     accountCapsule.setEnergyUsage(newEnergyUsage);
     accountCapsule.setLatestOperationTime(latestOperationTime);
     accountCapsule.setLatestConsumeTimeForEnergy(latestConsumeTime);
@@ -145,7 +149,7 @@ public class EnergyProcessor extends ResourceProcessor {
     long latestConsumeTime = accountCapsule.getAccountResource().getLatestConsumeTimeForEnergy();
     long energyLimit = calculateGlobalEnergyLimit(accountCapsule);
 
-    long newEnergyUsage = increase(energyUsage, 0, latestConsumeTime, now);
+    long newEnergyUsage = increase(accountCapsule, ENERGY, energyUsage, 0, latestConsumeTime, now);
 
     return max(energyLimit - newEnergyUsage, 0); // us
   }

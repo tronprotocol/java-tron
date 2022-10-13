@@ -61,10 +61,8 @@ public class FreezeBalanceV2ActuatorTest {
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
-    //    Args.setParam(new String[]{"--output-directory", dbPath},
-    //        "config-junit.conf");
-    //    dbManager = new Manager();
-    //    dbManager.init();
+    dbManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(1L);
+    dbManager.getDynamicPropertiesStore().saveAllowNewResourceModel(1L);
   }
 
   /**
@@ -369,6 +367,7 @@ public class FreezeBalanceV2ActuatorTest {
     long frozenBalance = 1_000_000_000L;
     FreezeBalanceV2Actuator actuator = new FreezeBalanceV2Actuator();
     ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
+    chainBaseManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(1L);
     chainBaseManager.getDynamicPropertiesStore().saveAllowNewResourceModel(1L);
     actuator.setChainBaseManager(chainBaseManager)
         .setAny(getContractForCpuV2(OWNER_ADDRESS, frozenBalance));
@@ -396,6 +395,7 @@ public class FreezeBalanceV2ActuatorTest {
     long duration = 3;
     FreezeBalanceV2Actuator actuator = new FreezeBalanceV2Actuator();
     ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
+    chainBaseManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(1L);
     chainBaseManager.getDynamicPropertiesStore().saveAllowNewResourceModel(1L);
     actuator.setChainBaseManager(chainBaseManager)
         .setAny(getContractForCpuV2(OWNER_ADDRESS, frozenBalance));
