@@ -62,6 +62,7 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.repository.Repository;
+import org.tron.core.vm.utils.FreezeV2Util;
 import org.tron.core.vm.utils.VoteRewardUtil;
 
 import org.tron.protos.Protocol;
@@ -97,6 +98,12 @@ public class PrecompiledContracts {
 
   private static final EthRipemd160 ethRipemd160 = new EthRipemd160();
   private static final Blake2F blake2F = new Blake2F();
+
+  private static final GetChainParameter getChainParameter = new GetChainParameter();
+  private static final ExpireFreezeV2Balance expireFreezeV2Balance = new ExpireFreezeV2Balance();
+  private static final TotalFrozenBalance totalFrozenBalance = new TotalFrozenBalance();
+  private static final FrozenBalance frozenBalance = new FrozenBalance();
+  private static final FrozenBalanceUsage frozenBalanceUsage = new FrozenBalanceUsage();
 
   private static final DataWord ecRecoverAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000000001");
@@ -138,6 +145,22 @@ public class PrecompiledContracts {
       "0000000000000000000000000000000000000000000000000000000001000009");
   private static final DataWord totalVoteCountAddr = new DataWord(
       "000000000000000000000000000000000000000000000000000000000100000a");
+
+  private static final DataWord getChainParameterAddr = new DataWord(
+      "000000000000000000000000000000000000000000000000000000000100000b");
+
+  private static final DataWord expireFreezeV2BalanceAddr = new DataWord(
+      "000000000000000000000000000000000000000000000000000000000100000c");
+
+  private static final DataWord totalFrozenBalanceAddr = new DataWord(
+      "000000000000000000000000000000000000000000000000000000000100000d");
+
+  private static final DataWord frozenBalanceAddr = new DataWord(
+      "000000000000000000000000000000000000000000000000000000000100000e");
+
+  private static final DataWord fronzenBalanceUsageAddr = new DataWord(
+      "000000000000000000000000000000000000000000000000000000000100000f");
+
   private static final DataWord ethRipemd160Addr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000020003");
   private static final DataWord blake2FAddr = new DataWord(
@@ -215,6 +238,24 @@ public class PrecompiledContracts {
     }
     if (VMConfig.allowTvmCompatibleEvm() && address.equals(blake2FAddr)) {
       return blake2F;
+    }
+
+    if (VMConfig.allowTvmFreezeV2()) {
+      if (address.equals(getChainParameterAddr)) {
+        return getChainParameter;
+      }
+      if (address.equals(expireFreezeV2BalanceAddr)) {
+        return expireFreezeV2Balance;
+      }
+      if (address.equals(totalFrozenBalanceAddr)) {
+        return totalFrozenBalance;
+      }
+      if (address.equals(frozenBalanceAddr)) {
+        return frozenBalance;
+      }
+      if (address.equals(fronzenBalanceUsageAddr)) {
+        return frozenBalanceUsage;
+      }
     }
 
     return null;
@@ -1744,4 +1785,105 @@ public class PrecompiledContracts {
       return Pair.of(true, result);
     }
   }
+
+  public static class GetChainParameter extends PrecompiledContract {
+
+    @Override
+    public long getEnergyForData(byte[] data) {
+      return 0;
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+      return Pair.of(true, DataWord.ZERO().getData());
+    }
+  }
+
+  public static class ExpireFreezeV2Balance extends PrecompiledContract {
+
+    @Override
+    public long getEnergyForData(byte[] data) {
+      return 100;
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+      if (data == null || data.length != WORD_SIZE) {
+        return Pair.of(true, DataWord.ZERO().getData());
+      }
+
+      byte[] caller = TransactionTrace.convertToTronAddress(getCallerAddress());
+      long time = new DataWord(data).longValueSafe();
+      long balance = FreezeV2Util.queryExpireFreezeV2Balance(caller, time, getDeposit());
+      return Pair.of(true, longTo32Bytes(balance));
+    }
+  }
+
+  public static class TotalFrozenBalance extends PrecompiledContract {
+
+    @Override
+    public long getEnergyForData(byte[] data) {
+      return 100;
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+      if (data == null || data.length != 2 * WORD_SIZE) {
+        return Pair.of(true, DataWord.ZERO().getData());
+      }
+
+      DataWord[] words = DataWord.parseArray(data);
+      byte[] address = words[0].toTronAddress();
+      long type = words[1].longValueSafe();
+
+      long balance = FreezeV2Util.queryTotalFrozenBalance(address, type, getDeposit());
+      return Pair.of(true, longTo32Bytes(balance));
+    }
+  }
+
+  public static class FrozenBalance extends PrecompiledContract {
+
+    @Override
+    public long getEnergyForData(byte[] data) {
+      return 100;
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+      if (data == null || data.length != 3 * WORD_SIZE) {
+        return Pair.of(true, DataWord.ZERO().getData());
+      }
+
+      DataWord[] words = DataWord.parseArray(data);
+      byte[] from = words[0].toTronAddress();
+      byte[] to = words[1].toTronAddress();
+      long type = words[2].longValueSafe();
+
+      long balance = FreezeV2Util.queryFrozenBalance(from, to, type, getDeposit());
+      return Pair.of(true, longTo32Bytes(balance));
+    }
+  }
+
+  public static class FrozenBalanceUsage extends PrecompiledContract {
+
+    @Override
+    public long getEnergyForData(byte[] data) {
+      return 100;
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+      if (data == null || data.length != 2 * WORD_SIZE) {
+        return Pair.of(true, DataWord.ZERO().getData());
+      }
+
+      DataWord[] words = DataWord.parseArray(data);
+      byte[] address = words[0].toTronAddress();
+      long type = words[1].longValueSafe();
+
+      long[] values = FreezeV2Util.queryFrozenBalanceUsage(address, type, getDeposit());
+      return Pair.of(true, encodeRes(longTo32Bytes(values[0]), longTo32Bytes(values[1])));
+    }
+  }
+
 }

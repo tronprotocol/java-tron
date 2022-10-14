@@ -223,6 +223,16 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public long[] getAccountEnergyUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule) {
+    return repository.getAccountEnergyUsageBalanceAndRestoreSeconds(accountCapsule);
+  }
+
+  @Override
+  public long[] getAccountNetUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule) {
+    return repository.getAccountNetUsageBalanceAndRestoreSeconds(accountCapsule);
+  }
+
+  @Override
   public long calculateGlobalEnergyLimit(AccountCapsule accountCapsule) {
     return repository.calculateGlobalEnergyLimit(accountCapsule);
   }

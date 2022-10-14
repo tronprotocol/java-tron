@@ -106,6 +106,10 @@ public interface Repository {
 
   long getAccountLeftEnergyFromFreeze(AccountCapsule accountCapsule);
 
+  long[] getAccountEnergyUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule);
+
+  long[] getAccountNetUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule);
+
   long calculateGlobalEnergyLimit(AccountCapsule accountCapsule);
 
   byte[] getBlackHoleAddress();

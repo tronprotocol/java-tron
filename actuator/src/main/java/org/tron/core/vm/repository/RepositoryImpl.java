@@ -169,6 +169,50 @@ public class RepositoryImpl implements Repository {
     return max(energyLimit - newEnergyUsage, 0); // us
   }
 
+  public long[] getAccountEnergyUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule) {
+    long now = getHeadSlot();
+
+    long energyUsage = accountCapsule.getEnergyUsage();
+    long latestConsumeTime = accountCapsule.getAccountResource().getLatestConsumeTimeForEnergy();
+
+    if (now >= latestConsumeTime + windowSize) {
+      return new long[]{0L, 0L};
+    }
+
+    long diff = latestConsumeTime + windowSize - now;
+
+    long newEnergyUsage = increase(energyUsage, 0, latestConsumeTime, now);
+
+    long totalEnergyLimit = getDynamicPropertiesStore().getTotalEnergyCurrentLimit();
+    long totalEnergyWeight = getDynamicPropertiesStore().getTotalEnergyWeight();
+
+    long balance = (long) ((double) newEnergyUsage * totalEnergyWeight / totalEnergyLimit) * 1_000_000L;
+
+    return new long[]{balance, Long.max(0L, diff)};
+  }
+
+  public long[] getAccountNetUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule) {
+    long now = getHeadSlot();
+
+    long netUsage = accountCapsule.getNetUsage();
+    long latestConsumeTime = accountCapsule.getLatestConsumeTime();
+
+    if (now >= latestConsumeTime + windowSize) {
+      return new long[]{0L, 0L};
+    }
+
+    long diff = latestConsumeTime + windowSize - now;
+
+    long newNetUsage = increase(netUsage, 0, latestConsumeTime, now);
+
+    long totalNetLimit = getDynamicPropertiesStore().getTotalNetLimit();
+    long totalNetWeight = getDynamicPropertiesStore().getTotalNetWeight();
+
+    long balance = (long) ((double) newNetUsage * totalNetWeight / totalNetLimit) * 1_000_000L;
+
+    return new long[]{balance, Long.max(0L, diff)};
+  }
+
   @Override
   public AssetIssueCapsule getAssetIssue(byte[] tokenId) {
     byte[] tokenIdWithoutLeadingZero = ByteUtil.stripLeadingZeroes(tokenId);
