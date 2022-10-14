@@ -236,12 +236,12 @@ public class Op {
   public static final int FREEZEEXPIRETIME = 0xd7;
   public static final int VOTEWITNESS = 0xd8;
   public static final int WITHDRAWREWARD = 0xd9;
-  public static final int FREEZEBALANCEV2 = 0xd10;
-  public static final int UNFREEZEBALANCEV2 = 0xd11;
-  public static final int EXPIREFREEZEV2BALANCE = 0xd12;
-  public static final int WITHDRAWEXPIREUNFREEZE = 0xd13;
-  public static final int DELEGATERESOURCE = 0xd14;
-  public static final int UNDELEGATERESOURCE = 0xd15;
+  public static final int FREEZEBALANCEV2 = 0xda;
+  public static final int UNFREEZEBALANCEV2 = 0xdb;
+  public static final int EXPIREFREEZEV2BALANCE = 0xdc;
+  public static final int WITHDRAWEXPIREUNFREEZE = 0xdd;
+  public static final int DELEGATERESOURCE = 0xde;
+  public static final int UNDELEGATERESOURCE = 0xdf;
 
   // (0xf0) Create a new account with associated code
   public static final int CREATE = 0xf0;
