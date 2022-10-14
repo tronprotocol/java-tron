@@ -1,6 +1,11 @@
 package org.tron.core.vm.nativecontract;
 
+import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
+import static org.tron.core.actuator.ActuatorConstant.STORE_NOT_EXIST;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+
 import com.google.protobuf.ByteString;
+import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.utils.DecodeUtil;
@@ -16,12 +21,6 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.vm.nativecontract.param.DelegateResourceParam;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
-
-import java.util.Arrays;
-
-import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
-import static org.tron.core.actuator.ActuatorConstant.STORE_NOT_EXIST;
-import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 @Slf4j(topic = "VMProcessor")
 public class DelegateResourceProcessor {

@@ -1943,7 +1943,7 @@ public class Program {
   }
 
   public boolean voteWitness(int witnessArrayOffset, int witnessArrayLength,
-                             int amountArrayOffset, int amountArrayLength) {
+      int amountArrayOffset, int amountArrayLength) {
     Repository repository = getContractState().newRepositoryChild();
     byte[] owner = getContextAddress();
 

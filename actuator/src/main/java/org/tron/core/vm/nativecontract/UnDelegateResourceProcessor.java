@@ -1,5 +1,10 @@
 package org.tron.core.vm.nativecontract;
 
+import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
+import static org.tron.core.actuator.ActuatorConstant.STORE_NOT_EXIST;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+
+import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.utils.DecodeUtil;
@@ -13,12 +18,6 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.vm.nativecontract.param.UnDelegateResourceParam;
 import org.tron.core.vm.repository.Repository;
-
-import java.util.Arrays;
-
-import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
-import static org.tron.core.actuator.ActuatorConstant.STORE_NOT_EXIST;
-import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 @Slf4j(topic = "VMProcessor")
 public class UnDelegateResourceProcessor {
