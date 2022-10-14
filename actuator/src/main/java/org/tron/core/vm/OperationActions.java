@@ -764,6 +764,77 @@ public class OperationActions {
     program.step();
   }
 
+  public static void freezeBalanceV2Action(Program program) {
+    // after allow vote, check static
+    if (VMConfig.allowTvmVote() && program.isStaticCall()) {
+      throw new Program.StaticCallModificationException();
+    }
+    DataWord resourceType = program.stackPop();
+    DataWord frozenBalance = program.stackPop();
+
+    boolean result = program.freezeBalanceV2(frozenBalance, resourceType);
+    program.stackPush(result ? DataWord.ONE() : DataWord.ZERO());
+    program.step();
+  }
+
+  public static void unfreezeBalanceV2Action(Program program) {
+    if (VMConfig.allowTvmVote() && program.isStaticCall()) {
+      throw new Program.StaticCallModificationException();
+    }
+
+    DataWord resourceType = program.stackPop();
+    DataWord unfreezeBalance = program.stackPop();
+
+    boolean result = program.unfreezeBalanceV2(unfreezeBalance, resourceType);
+    program.stackPush(result ? DataWord.ONE() : DataWord.ZERO());
+    program.step();
+  }
+
+  public static void withdrawExpireUnfreezeAction(Program program) {
+    if (program.isStaticCall()) {
+      throw new Program.StaticCallModificationException();
+    }
+
+    long expireUnfreezeBalance = program.withdrawExpireUnfreeze();
+    program.stackPush(new DataWord(expireUnfreezeBalance));
+    program.step();
+  }
+
+  public static void expireFreezeV2BalanceAction(Program program) {
+    DataWord resourceType = program.stackPop();
+    DataWord ownerAddress = program.stackPop();
+
+    long balance = program.expireFreezeV2Balance(ownerAddress, resourceType);
+    program.stackPush(new DataWord(balance));
+    program.step();
+  }
+
+  public static void delegateResourceAction(Program program) {
+    if (program.isStaticCall()) {
+      throw new Program.StaticCallModificationException();
+    }
+    DataWord resourceType = program.stackPop();
+    DataWord delegateBalance = program.stackPop();
+    DataWord receiverAddress = program.stackPop();
+
+    boolean result = program.delegateResource(receiverAddress, delegateBalance, resourceType);
+    program.stackPush(result ? DataWord.ONE() : DataWord.ZERO());
+    program.step();
+  }
+
+  public static void unDelegateResourceAction(Program program) {
+    if (program.isStaticCall()) {
+      throw new Program.StaticCallModificationException();
+    }
+    DataWord resourceType = program.stackPop();
+    DataWord unDelegateBalance = program.stackPop();
+    DataWord receiverAddress = program.stackPop();
+
+    boolean result = program.unDelegateResource(receiverAddress, unDelegateBalance, resourceType);
+    program.stackPush(result ? DataWord.ONE() : DataWord.ZERO());
+    program.step();
+  }
+
   public static void voteWitnessAction(Program program) {
     if (program.isStaticCall()) {
       throw new Program.StaticCallModificationException();
