@@ -1814,6 +1814,17 @@ public class PrecompiledContracts {
 
       byte[] caller = TransactionTrace.convertToTronAddress(getCallerAddress());
       long time = new DataWord(data).longValueSafe();
+
+      if (time < 0) {
+        return Pair.of(true, DataWord.ZERO().getData());
+      }
+
+      if (time >= Long.MAX_VALUE / 1_000) {
+        time = Long.MAX_VALUE;
+      } else {
+        time = time * 1_000;
+      }
+
       long balance = FreezeV2Util.queryExpireFreezeV2Balance(caller, time, getDeposit());
       return Pair.of(true, longTo32Bytes(balance));
     }

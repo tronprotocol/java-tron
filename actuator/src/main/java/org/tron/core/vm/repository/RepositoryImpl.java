@@ -179,16 +179,16 @@ public class RepositoryImpl implements Repository {
       return new long[]{0L, 0L};
     }
 
-    long diff = latestConsumeTime + windowSize - now;
+    long restoreSlots = latestConsumeTime + windowSize - now;
 
     long newEnergyUsage = increase(energyUsage, 0, latestConsumeTime, now);
 
     long totalEnergyLimit = getDynamicPropertiesStore().getTotalEnergyCurrentLimit();
-    long totalEnergyWeight = getDynamicPropertiesStore().getTotalEnergyWeight();
+    long totalEnergyWeight = getTotalEnergyWeight();
 
     long balance = (long) ((double) newEnergyUsage * totalEnergyWeight / totalEnergyLimit) * 1_000_000L;
 
-    return new long[]{balance, Long.max(0L, diff)};
+    return new long[]{balance, Long.max(0L, restoreSlots * BLOCK_PRODUCED_INTERVAL / 1_000)};
   }
 
   public long[] getAccountNetUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule) {
@@ -201,16 +201,16 @@ public class RepositoryImpl implements Repository {
       return new long[]{0L, 0L};
     }
 
-    long diff = latestConsumeTime + windowSize - now;
+    long restoreSlots = latestConsumeTime + windowSize - now;
 
     long newNetUsage = increase(netUsage, 0, latestConsumeTime, now);
 
     long totalNetLimit = getDynamicPropertiesStore().getTotalNetLimit();
-    long totalNetWeight = getDynamicPropertiesStore().getTotalNetWeight();
+    long totalNetWeight = getTotalNetWeight();
 
     long balance = (long) ((double) newNetUsage * totalNetWeight / totalNetLimit) * 1_000_000L;
 
-    return new long[]{balance, Long.max(0L, diff)};
+    return new long[]{balance, Long.max(0L, restoreSlots * BLOCK_PRODUCED_INTERVAL / 1_000)};
   }
 
   @Override

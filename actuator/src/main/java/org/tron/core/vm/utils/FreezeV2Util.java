@@ -1,22 +1,15 @@
 package org.tron.core.vm.utils;
 
-import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
-import static org.tron.core.config.Parameter.ChainConstant.PRECISION;
-
 import java.util.*;
 import java.util.stream.Collectors;
 
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
-import org.tron.core.config.Parameter;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
 
 public class FreezeV2Util {
-
-  private static final long WINDOW_SIZE =
-      Parameter.ChainConstant.WINDOW_SIZE_MS / BLOCK_PRODUCED_INTERVAL;
 
   private FreezeV2Util() {
   }
@@ -108,30 +101,6 @@ public class FreezeV2Util {
   private static List<Protocol.Account.UnFreezeV2> getTotalWithdrawList(List<Protocol.Account.UnFreezeV2> unfrozenV2List, long now) {
     return unfrozenV2List.stream().filter(unfrozenV2 -> (unfrozenV2.getUnfreezeAmount() > 0
         && unfrozenV2.getUnfreezeExpireTime() <= now)).collect(Collectors.toList());
-  }
-
-  private static long recover(long lastUsage, long lastTime, long now, long windowSize) {
-    long averageLastUsage = divideCeil(lastUsage * PRECISION, windowSize);
-
-    if (lastTime != now) {
-      assert now > lastTime;
-      if (lastTime + windowSize > now) {
-        long delta = now - lastTime;
-        double decay = (windowSize - delta) / (double) windowSize;
-        averageLastUsage = Math.round(averageLastUsage * decay);
-      } else {
-        averageLastUsage = 0;
-      }
-    }
-    return getUsage(averageLastUsage, windowSize);
-  }
-
-  private static long divideCeil(long numerator, long denominator) {
-    return (numerator / denominator) + ((numerator % denominator) > 0 ? 1 : 0);
-  }
-
-  private static long getUsage(long usage, long windowSize) {
-    return usage * windowSize / PRECISION;
   }
 
 }
