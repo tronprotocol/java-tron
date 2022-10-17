@@ -453,7 +453,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     this.addFrozenBalanceForResource(type, balance);
   }
 
-  private void addFrozenBalanceForResource(Common.ResourceCode type, long balance) {
+  public void addFrozenBalanceForResource(Common.ResourceCode type, long balance) {
     boolean doUpdate = false;
     for (int i = 0; i < this.account.getFrozenV2List().size(); i++) {
       if (this.account.getFrozenV2List().get(i).getType().equals(type)) {

@@ -16,6 +16,7 @@ import com.google.protobuf.ByteString;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
@@ -472,12 +473,11 @@ public class Program {
       }
     }
     if (VMConfig.allowTvmFreezeV2()) {
-      byte[] blackHoleAddress = getContractState().getBlackHoleAddress();
-      if (FastByteComparisons.isEqual(owner, obtainer)) {
-        transferDelegatedResourceToInheritorV2(owner, blackHoleAddress, getContractState());
-      } else {
-        transferDelegatedResourceToInheritorV2(owner, obtainer, getContractState());
-      }
+      byte[] Inheritor =
+          FastByteComparisons.isEqual(owner, obtainer)
+              ? getContractState().getBlackHoleAddress()
+              : obtainer;
+      transferFrozenV2BalanceToInheritor(owner, Inheritor, getContractState());
     }
     getResult().addDeleteAccount(this.getContractAddress());
   }
@@ -513,12 +513,18 @@ public class Program {
     repo.addBalance(inheritorAddr, frozenBalanceForBandwidthOfOwner + frozenBalanceForEnergyOfOwner);
   }
 
-  private void transferDelegatedResourceToInheritorV2(byte[] ownerAddr, byte[] inheritorAddr, Repository repo) {
+  private void transferFrozenV2BalanceToInheritor(byte[] ownerAddr, byte[] inheritorAddr, Repository repo) {
     AccountCapsule ownerCapsule = repo.getAccount(ownerAddr);
+    AccountCapsule inheritorCapsule = repo.getAccount(inheritorAddr);
 
-    // transfer owner`s frozen balance for bandwidth to inheritor
+    ownerCapsule.getFrozenV2List().stream()
+        .filter(freezeV2 -> freezeV2.getAmount() > 0)
+        .forEach(
+            freezeV2 ->
+                inheritorCapsule.addFrozenBalanceForResource(
+                    freezeV2.getType(), freezeV2.getAmount()));
 
-    // todo
+    repo.updateAccount(inheritorCapsule.createDbKey(), inheritorCapsule);
   }
 
   private void withdrawRewardAndCancelVote(byte[] owner, Repository repo) {
