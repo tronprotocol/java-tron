@@ -91,8 +91,6 @@ public class CommonParameter {
   public String password;
   @Parameter(names = {"--storage-db-directory"}, description = "Storage db directory")
   public String storageDbDirectory = "";
-  @Parameter(names = {"--storage-db-version"}, description = "Storage db version.(1 or 2)")
-  public String storageDbVersion = "";
   @Parameter(names = {
       "--storage-db-engine"}, description = "Storage db engine.(leveldb or rocksdb)")
   public String storageDbEngine = "";
