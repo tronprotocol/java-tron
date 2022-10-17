@@ -1399,7 +1399,6 @@ public class Program {
       return;
     }
 
-
     Repository deposit = getContractState().newRepositoryChild();
 
     byte[] senderAddress = getContextAddress();

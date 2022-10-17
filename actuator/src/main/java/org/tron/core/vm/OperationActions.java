@@ -967,7 +967,7 @@ public class OperationActions {
   }
 
   public static void exeCall(Program program, DataWord adjustedCallEnergy,
-            DataWord codeAddress, DataWord value, DataWord tokenId, boolean isTokenTransferMsg) {
+      DataWord codeAddress, DataWord value, DataWord tokenId, boolean isTokenTransferMsg) {
 
     DataWord inDataOffs = program.stackPop();
     DataWord inDataSize = program.stackPop();
