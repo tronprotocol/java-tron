@@ -22,14 +22,10 @@ public class FreezeBalanceV2Processor {
     }
 
     byte[] ownerAddress = param.getOwnerAddress();
-    AccountCapsule ownerCapsule = repo.getAccount(ownerAddress);
-    if (repo.getDynamicPropertiesStore().getUnfreezeDelayDays() == 0) {
-      throw new ContractValidateException("Not support FreezeV2 transaction,"
-          + " need to be opened by the committee");
-    }
     if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid address");
     }
+    AccountCapsule ownerCapsule = repo.getAccount(ownerAddress);
     if (ownerCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
@@ -44,12 +40,6 @@ public class FreezeBalanceV2Processor {
       throw new ContractValidateException("FrozenBalance must be less than accountBalance");
     }
 
-    // validate frozen count of owner account
-    int frozenCount = ownerCapsule.getFrozenCount();
-    if (frozenCount != 0 && frozenCount != 1) {
-      throw new ContractValidateException("FrozenCount must be 0 or 1");
-    }
-
     // validate arg @resourceType
     switch (param.getResourceType()) {
       case BANDWIDTH:
@@ -62,8 +52,13 @@ public class FreezeBalanceV2Processor {
         }
         break;
       default:
-        throw new ContractValidateException(
-            "ResourceCode error,valid ResourceCode[BANDWIDTH、ENERGY]");
+        if (repo.getDynamicPropertiesStore().supportAllowNewResourceModel()) {
+          throw new ContractValidateException(
+              "ResourceCode error, valid ResourceCode[BANDWIDTH、ENERGY、TRON_POWER]");
+        } else {
+          throw new ContractValidateException(
+              "ResourceCode error, valid ResourceCode[BANDWIDTH、ENERGY]");
+        }
     }
   }
 

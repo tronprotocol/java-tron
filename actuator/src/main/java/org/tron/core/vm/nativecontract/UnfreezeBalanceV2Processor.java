@@ -33,15 +33,11 @@ public class UnfreezeBalanceV2Processor {
     }
 
     byte[] ownerAddress = param.getOwnerAddress();
-    AccountCapsule accountCapsule = repo.getAccount(ownerAddress);
     DynamicPropertiesStore dynamicStore = repo.getDynamicPropertiesStore();
-    if (dynamicStore.getUnfreezeDelayDays() == 0) {
-      throw new ContractValidateException("Not support UnfreezeV2 transaction,"
-          + " need to be opened by the committee");
-    }
     if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid address");
     }
+    AccountCapsule accountCapsule = repo.getAccount(ownerAddress);
     if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
@@ -58,23 +54,11 @@ public class UnfreezeBalanceV2Processor {
         if (!this.checkExistFrozenBalance(accountCapsule, Common.ResourceCode.BANDWIDTH)) {
           throw new ContractValidateException("no frozenBalance(BANDWIDTH)");
         }
-        // check if it is time to unfreeze
-        long allowedUnfreezeCount = accountCapsule.getFrozenList().stream()
-            .filter(frozen -> frozen.getExpireTime() <= now).count();
-        if (allowedUnfreezeCount <= 0) {
-          throw new ContractValidateException("It's not time to unfreeze(BANDWIDTH).");
-        }
         break;
       case ENERGY:
-        Protocol.Account.Frozen frozenForEnergy = accountCapsule.getAccountResource()
-            .getFrozenBalanceForEnergy();
         // validate frozen balance
         if (!this.checkExistFrozenBalance(accountCapsule, Common.ResourceCode.ENERGY)) {
           throw new ContractValidateException("no frozenBalance(Energy)");
-        }
-        // check if it is time to unfreeze
-        if (frozenForEnergy.getExpireTime() > now) {
-          throw new ContractValidateException("It's not time to unfreeze(Energy).");
         }
         break;
       case TRON_POWER:
@@ -112,7 +96,7 @@ public class UnfreezeBalanceV2Processor {
     return unfreezeBalance <= frozenBalance;
   }
 
-  public boolean checkExistFrozenBalance(AccountCapsule accountCapsule, Common.ResourceCode freezeType) {
+  private boolean checkExistFrozenBalance(AccountCapsule accountCapsule, Common.ResourceCode freezeType) {
     boolean checkOk = false;
     long frozenBalance;
     List<Protocol.Account.FreezeV2> frozenV2List = accountCapsule.getFrozenV2List();

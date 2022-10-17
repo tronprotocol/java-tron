@@ -766,7 +766,7 @@ public class OperationActions {
 
   public static void freezeBalanceV2Action(Program program) {
     // after allow vote, check static
-    if (VMConfig.allowTvmVote() && program.isStaticCall()) {
+    if (program.isStaticCall()) {
       throw new Program.StaticCallModificationException();
     }
     DataWord resourceType = program.stackPop();
@@ -778,7 +778,7 @@ public class OperationActions {
   }
 
   public static void unfreezeBalanceV2Action(Program program) {
-    if (VMConfig.allowTvmVote() && program.isStaticCall()) {
+    if (program.isStaticCall()) {
       throw new Program.StaticCallModificationException();
     }
 
@@ -797,15 +797,6 @@ public class OperationActions {
 
     long expireUnfreezeBalance = program.withdrawExpireUnfreeze();
     program.stackPush(new DataWord(expireUnfreezeBalance));
-    program.step();
-  }
-
-  public static void expireFreezeV2BalanceAction(Program program) {
-    DataWord resourceType = program.stackPop();
-    DataWord ownerAddress = program.stackPop();
-
-    long balance = program.expireFreezeV2Balance(ownerAddress, resourceType);
-    program.stackPush(new DataWord(balance));
     program.step();
   }
 

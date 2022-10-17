@@ -31,18 +31,14 @@ public class DelegateResourceProcessor {
     }
 
     byte[] ownerAddress = param.getOwnerAddress();
-    AccountCapsule ownerCapsule = repo.getAccount(ownerAddress);
     DynamicPropertiesStore dynamicStore = repo.getDynamicPropertiesStore();
     if (!dynamicStore.supportDR()) {
       throw new ContractValidateException("No support for resource delegate");
     }
-    if (dynamicStore.getUnfreezeDelayDays() == 0) {
-      throw new ContractValidateException("Not support Delegate resource transaction,"
-          + " need to be opened by the committee");
-    }
     if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid address");
     }
+    AccountCapsule ownerCapsule = repo.getAccount(ownerAddress);
     if (ownerCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
@@ -59,7 +55,7 @@ public class DelegateResourceProcessor {
         processor.updateUsage(ownerCapsule);
         //The unit is trx
         long netTrxUsage = (long) (ownerCapsule.getNetUsage()
-            * ((double) (dynamicStore.getTotalNetWeight()) / dynamicStore.getTotalNetLimit()));
+            * ((double) (repo.getTotalNetWeight()) / dynamicStore.getTotalNetLimit()));
 
         if (ownerCapsule.getFrozenV2BalanceForBandwidth() - netTrxUsage * TRX_PRECISION
             < delegateBalance) {
@@ -75,7 +71,7 @@ public class DelegateResourceProcessor {
 
         //The unit is trx
         long energyTrxUsage = (long) (ownerCapsule.getEnergyUsage()
-            * ((double) (dynamicStore.getTotalEnergyWeight()) / dynamicStore.getTotalEnergyCurrentLimit()));
+            * ((double) (repo.getTotalEnergyWeight()) / dynamicStore.getTotalEnergyCurrentLimit()));
 
         if (ownerCapsule.getFrozenV2BalanceForEnergy() - energyTrxUsage * TRX_PRECISION
             < delegateBalance) {

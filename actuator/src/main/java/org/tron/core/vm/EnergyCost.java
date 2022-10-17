@@ -38,7 +38,6 @@ public class EnergyCost {
   private static final long FREEZE_EXPIRE_TIME = 50;
   private static final long FREEZE_V2 = 20000;
   private static final long UNFREEZE_V2 = 20000;
-  private static final long EXPIRE_FREEZE_V2_BALANCE = 50;
   private static final long WITHDRAW_EXPIRE_UNFREEZE = 20000;
   private static final long DELEGATE_RESOURCE = 20000;
   private static final long UN_DELEGATE_RESOURCE = 20000;
@@ -288,10 +287,6 @@ public class EnergyCost {
 
   public static long getWithdrawExpireUnfreezeCost(Program ignored) {
     return WITHDRAW_EXPIRE_UNFREEZE;
-  }
-
-  public static long getExpireFreezeV2BalanceCost(Program ignored) {
-    return EXPIRE_FREEZE_V2_BALANCE;
   }
 
   public static long getDelegateResourceCost(Program program) {

@@ -51,7 +51,6 @@ import org.tron.core.vm.VMConstant;
 import org.tron.core.vm.VMUtils;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.nativecontract.DelegateResourceProcessor;
-import org.tron.core.vm.nativecontract.ExpireFreezeV2BalanceProcessor;
 import org.tron.core.vm.nativecontract.FreezeBalanceProcessor;
 import org.tron.core.vm.nativecontract.FreezeBalanceV2Processor;
 import org.tron.core.vm.nativecontract.UnDelegateResourceProcessor;
@@ -61,7 +60,6 @@ import org.tron.core.vm.nativecontract.VoteWitnessProcessor;
 import org.tron.core.vm.nativecontract.WithdrawExpireUnfreezeProcessor;
 import org.tron.core.vm.nativecontract.WithdrawRewardProcessor;
 import org.tron.core.vm.nativecontract.param.DelegateResourceParam;
-import org.tron.core.vm.nativecontract.param.ExpireFreezeV2BalanceParam;
 import org.tron.core.vm.nativecontract.param.FreezeBalanceParam;
 import org.tron.core.vm.nativecontract.param.FreezeBalanceV2Param;
 import org.tron.core.vm.nativecontract.param.UnDelegateResourceParam;
@@ -1755,16 +1753,13 @@ public class Program {
         frozenBalance.longValue(), null,
         "freezeBalanceV2For" + convertResourceToString(resourceType), nonce, null);
 
-    FreezeBalanceV2Param param = new FreezeBalanceV2Param();
-    param.setOwnerAddress(owner);
-    boolean needCheckFrozenTime = CommonParameter.getInstance()
-        .getCheckFrozenTime() == 1; // for test
-    param.setFrozenDuration(needCheckFrozenTime
-        ? repository.getDynamicPropertiesStore().getMinFrozenTime() : 0);
-    param.setResourceType(parseResourceCode(resourceType));
     try {
-      FreezeBalanceV2Processor processor = new FreezeBalanceV2Processor();
+      FreezeBalanceV2Param param = new FreezeBalanceV2Param();
+      param.setOwnerAddress(owner);
+      param.setResourceType(parseResourceCode(resourceType));
       param.setFrozenBalance(frozenBalance.sValue().longValueExact());
+
+      FreezeBalanceV2Processor processor = new FreezeBalanceV2Processor();
       processor.validate(param, repository);
       processor.execute(param, repository);
       repository.commit();
@@ -1789,11 +1784,12 @@ public class Program {
         unfreezeBalance.longValue(), null,
         "unfreezeBalanceV2For" + convertResourceToString(resourceType), nonce, null);
 
-    UnfreezeBalanceV2Param param = new UnfreezeBalanceV2Param();
-    param.setOwnerAddress(owner);
-    param.setUnfreezeBalance(unfreezeBalance.sValue().longValueExact());
-    param.setResourceType(parseResourceCode(resourceType));
     try {
+      UnfreezeBalanceV2Param param = new UnfreezeBalanceV2Param();
+      param.setOwnerAddress(owner);
+      param.setUnfreezeBalance(unfreezeBalance.sValue().longValueExact());
+      param.setResourceType(parseResourceCode(resourceType));
+
       UnfreezeBalanceV2Processor processor = new UnfreezeBalanceV2Processor();
       processor.validate(param, repository);
       processor.execute(param, repository);
@@ -1816,10 +1812,10 @@ public class Program {
     InternalTransaction internalTx = addInternalTx(null, owner, owner, 0, null,
         "withdrawExpireUnfreeze", nonce, null);
 
-    WithdrawExpireUnfreezeParam param = new WithdrawExpireUnfreezeParam();
-    param.setOwnerAddress(owner);
-    param.setNowInMs(getTimestamp().longValue() * 1000);
     try {
+      WithdrawExpireUnfreezeParam param = new WithdrawExpireUnfreezeParam();
+      param.setOwnerAddress(owner);
+
       WithdrawExpireUnfreezeProcessor processor = new WithdrawExpireUnfreezeProcessor();
       processor.validate(param, repository);
       long expireUnfreezeBalance = processor.execute(param, repository);
@@ -1839,23 +1835,6 @@ public class Program {
     return 0;
   }
 
-  public long expireFreezeV2Balance(DataWord ownerAddress, DataWord resourceType) {
-    Repository repository = getContractState().newRepositoryChild();
-    ExpireFreezeV2BalanceParam param = new ExpireFreezeV2BalanceParam();
-    param.setOwnerAddress(ownerAddress.toTronAddress());
-    param.setResourceType(parseResourceCode(resourceType));
-    try {
-      ExpireFreezeV2BalanceProcessor processor = new ExpireFreezeV2BalanceProcessor();
-      processor.validate(param, repository);
-      long balance = processor.execute(param, repository);
-      repository.commit();
-      return balance;
-    } catch (ContractValidateException e) {
-      logger.error("TVM expireFreezeV2Balance: validate failure. Reason: {}", e.getMessage());
-    }
-    return 0;
-  }
-
   public boolean delegateResource(
       DataWord receiverAddress, DataWord delegateBalance, DataWord resourceType) {
     Repository repository = getContractState().newRepositoryChild();
@@ -1867,12 +1846,13 @@ public class Program {
         delegateBalance.longValue(), null,
         "delegateResource" + convertResourceToString(resourceType), nonce, null);
 
-    DelegateResourceParam param = new DelegateResourceParam();
-    param.setOwnerAddress(owner);
-    param.setReceiverAddress(receiver);
-    param.setDelegateBalance(delegateBalance.sValue().longValueExact());
-    param.setResourceType(parseResourceCode(resourceType));
     try {
+      DelegateResourceParam param = new DelegateResourceParam();
+      param.setOwnerAddress(owner);
+      param.setReceiverAddress(receiver);
+      param.setDelegateBalance(delegateBalance.sValue().longValueExact());
+      param.setResourceType(parseResourceCode(resourceType));
+
       DelegateResourceProcessor processor = new DelegateResourceProcessor();
       processor.validate(param, repository);
       processor.execute(param, repository);
@@ -1900,12 +1880,13 @@ public class Program {
         unDelegateBalance.longValue(), null,
         "unDelegateResource" + convertResourceToString(resourceType), nonce, null);
 
-    UnDelegateResourceParam param = new UnDelegateResourceParam();
-    param.setOwnerAddress(owner);
-    param.setReceiverAddress(receiver);
-    param.setUnDelegateBalance(unDelegateBalance.sValue().longValueExact());
-    param.setResourceType(parseResourceCode(resourceType));
     try {
+      UnDelegateResourceParam param = new UnDelegateResourceParam();
+      param.setOwnerAddress(owner);
+      param.setReceiverAddress(receiver);
+      param.setUnDelegateBalance(unDelegateBalance.sValue().longValueExact());
+      param.setResourceType(parseResourceCode(resourceType));
+
       UnDelegateResourceProcessor processor = new UnDelegateResourceProcessor();
       processor.validate(param, repository);
       processor.execute(param, repository);

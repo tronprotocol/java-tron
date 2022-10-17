@@ -10,6 +10,7 @@ public class OperationRegistry {
   public enum Version {
     TRON_V1_0,
     TRON_V1_1,
+    TRON_V1_2,
     // add more
     // TRON_V2,
     // ETH
@@ -20,6 +21,7 @@ public class OperationRegistry {
   static {
     tableMap.put(Version.TRON_V1_0, newTronV10OperationSet());
     tableMap.put(Version.TRON_V1_1, newTronV11OperationSet());
+    tableMap.put(Version.TRON_V1_2, newTronV12OperationSet());
   }
 
   public static JumpTable newTronV10OperationSet() {
@@ -37,6 +39,11 @@ public class OperationRegistry {
   public static JumpTable newTronV11OperationSet() {
     JumpTable table = newTronV10OperationSet();
     adjustMemOperations(table);
+    return table;
+  }
+
+  public static JumpTable newTronV12OperationSet() {
+    JumpTable table = newTronV11OperationSet();
     appendFreezeV2Operations(table);
     appendDelegateOperations(table);
     return table;
@@ -52,6 +59,9 @@ public class OperationRegistry {
     // }
     if (VMConfig.allowHigherLimitForMaxCpuTimeOfOneTx()) {
       return tableMap.get(Version.TRON_V1_1);
+    }
+    if (VMConfig.allowTvmFreezeV2()) {
+      return tableMap.get(Version.TRON_V1_2);
     }
     return tableMap.get(Version.TRON_V1_0);
   }
@@ -587,12 +597,6 @@ public class OperationRegistry {
         Op.WITHDRAWEXPIREUNFREEZE, 0, 1,
         EnergyCost::getWithdrawExpireUnfreezeCost,
         OperationActions::withdrawExpireUnfreezeAction,
-        proposal));
-
-    table.set(new Operation(
-        Op.EXPIREFREEZEV2BALANCE, 2, 1,
-        EnergyCost::getExpireFreezeV2BalanceCost,
-        OperationActions::expireFreezeV2BalanceAction,
         proposal));
   }
 

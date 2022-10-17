@@ -28,18 +28,14 @@ public class UnDelegateResourceProcessor {
     }
 
     byte[] ownerAddress = param.getOwnerAddress();
-    AccountCapsule ownerCapsule = repo.getAccount(ownerAddress);
     DynamicPropertiesStore dynamicStore = repo.getDynamicPropertiesStore();
     if (!dynamicStore.supportDR()) {
       throw new ContractValidateException("No support for resource delegate");
     }
-    if (dynamicStore.getUnfreezeDelayDays() == 0) {
-      throw new ContractValidateException("Not support Delegate resource transaction,"
-          + " need to be opened by the committee");
-    }
     if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid address");
     }
+    AccountCapsule ownerCapsule = repo.getAccount(ownerAddress);
     if (ownerCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
@@ -54,12 +50,14 @@ public class UnDelegateResourceProcessor {
       throw new ContractValidateException(
           "receiverAddress must not be the same as ownerAddress");
     }
-    AccountCapsule receiverCapsule = repo.getAccount(receiverAddress);
-    if (receiverCapsule == null) {
-     String readableReceiverAddress = StringUtil.createReadableString(receiverAddress);
-     throw new ContractValidateException(
-         "Receiver Account[" + readableReceiverAddress + "] does not exist");
-    }
+
+    // TVM contract suicide can result in no receiving account
+//    AccountCapsule receiverCapsule = repo.getAccount(receiverAddress);
+//    if (receiverCapsule == null) {
+//     String readableReceiverAddress = StringUtil.createReadableString(receiverAddress);
+//     throw new ContractValidateException(
+//         "Receiver Account[" + readableReceiverAddress + "] does not exist");
+//    }
 
     byte[] key = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress);
     DelegatedResourceCapsule delegatedResourceCapsule = repo.getDelegatedResource(key);
@@ -93,11 +91,11 @@ public class UnDelegateResourceProcessor {
 
   public void execute(UnDelegateResourceParam param,  Repository repo) {
     byte[] ownerAddress = param.getOwnerAddress();
-    AccountCapsule ownerCapsule = repo.getAccount(param.getOwnerAddress());
-    DynamicPropertiesStore dynamicStore = repo.getDynamicPropertiesStore();
-    long unDelegateBalance = param.getUnDelegateBalance();
     byte[] receiverAddress = param.getReceiverAddress();
+    long unDelegateBalance = param.getUnDelegateBalance();
+    AccountCapsule ownerCapsule = repo.getAccount(ownerAddress);
     AccountCapsule receiverCapsule = repo.getAccount(receiverAddress);
+    DynamicPropertiesStore dynamicStore = repo.getDynamicPropertiesStore();
 
     long transferUsage = 0;
     // modify receiver Account
@@ -115,7 +113,7 @@ public class UnDelegateResourceProcessor {
           } else {
             // calculate usage
             long unDelegateMaxUsage = (long) (unDelegateBalance / TRX_PRECISION
-                * ((double) (dynamicStore.getTotalNetLimit()) / dynamicStore.getTotalNetWeight()));
+                * ((double) (dynamicStore.getTotalNetLimit()) / repo.getTotalNetWeight()));
             transferUsage = (long) (receiverCapsule.getNetUsage()
                 * ((double) (unDelegateBalance) / receiverCapsule.getAllFrozenBalanceForBandwidth()));
             transferUsage = Math.min(unDelegateMaxUsage, transferUsage);
@@ -138,7 +136,7 @@ public class UnDelegateResourceProcessor {
           } else {
             // calculate usage
             long unDelegateMaxUsage = (long) (unDelegateBalance / TRX_PRECISION
-                * ((double) (dynamicStore.getTotalEnergyCurrentLimit()) / dynamicStore.getTotalEnergyWeight()));
+                * ((double) (dynamicStore.getTotalEnergyCurrentLimit()) / repo.getTotalEnergyWeight()));
             transferUsage = (long) (receiverCapsule.getEnergyUsage()
                 * ((double) (unDelegateBalance) / receiverCapsule.getAllFrozenBalanceForEnergy()));
             transferUsage = Math.min(unDelegateMaxUsage, transferUsage);

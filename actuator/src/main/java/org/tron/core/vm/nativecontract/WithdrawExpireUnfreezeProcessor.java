@@ -28,15 +28,11 @@ public class WithdrawExpireUnfreezeProcessor {
     }
 
     byte[] ownerAddress = param.getOwnerAddress();
-    AccountCapsule accountCapsule = repo.getAccount(ownerAddress);
     DynamicPropertiesStore dynamicStore = repo.getDynamicPropertiesStore();
-    if (dynamicStore.getUnfreezeDelayDays() == 0) {
-      throw new ContractValidateException("Not support WithdrawExpireUnfreeze transaction,"
-          + " need to be opened by the committee");
-    }
     if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid address");
     }
+    AccountCapsule accountCapsule = repo.getAccount(ownerAddress);
     if (Objects.isNull(accountCapsule)) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(ACCOUNT_EXCEPTION_STR

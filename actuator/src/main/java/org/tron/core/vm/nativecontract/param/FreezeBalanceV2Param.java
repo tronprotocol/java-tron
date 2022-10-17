@@ -8,8 +8,6 @@ public class FreezeBalanceV2Param {
 
   private long frozenBalance;
 
-  private long frozenDuration;
-
   private Common.ResourceCode resourceType;
 
   public byte[] getOwnerAddress() {
@@ -26,14 +24,6 @@ public class FreezeBalanceV2Param {
 
   public void setFrozenBalance(long frozenBalance) {
     this.frozenBalance = frozenBalance;
-  }
-
-  public long getFrozenDuration() {
-    return frozenDuration;
-  }
-
-  public void setFrozenDuration(long frozenDuration) {
-    this.frozenDuration = frozenDuration;
   }
 
   public Common.ResourceCode getResourceType() {
