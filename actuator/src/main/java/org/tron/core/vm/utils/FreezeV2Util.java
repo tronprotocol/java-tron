@@ -3,6 +3,7 @@ package org.tron.core.vm.utils;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.vm.config.VMConfig;
@@ -77,9 +78,9 @@ public class FreezeV2Util {
     return 0;
   }
 
-  public static long[] queryFrozenBalanceUsage(byte[] address, long type, Repository repository) {
+  public static Pair<Long, Long> queryFrozenBalanceUsage(byte[] address, long type, Repository repository) {
     if (!VMConfig.allowTvmFreezeV2()) {
-      return new long[]{0L, 0L};
+      return Pair.of(0L, 0L);
     }
 
     AccountCapsule accountCapsule = repository.getAccount(address);
@@ -90,7 +91,7 @@ public class FreezeV2Util {
       return repository.getAccountEnergyUsageBalanceAndRestoreSeconds(accountCapsule);
     }
 
-    return new long[]{0L, 0L};
+    return Pair.of(0L, 0L);
   }
 
   private static long getTotalWithdrawUnfreeze(List<Protocol.Account.UnFreezeV2> unfrozenV2List, long time) {

@@ -2,12 +2,14 @@ package org.tron.core.vm.repository;
 
 import static java.lang.Long.max;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.protobuf.ByteString;
 import java.util.HashMap;
 import java.util.Optional;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.bouncycastle.util.Strings;
 import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
@@ -169,14 +171,14 @@ public class RepositoryImpl implements Repository {
     return max(energyLimit - newEnergyUsage, 0); // us
   }
 
-  public long[] getAccountEnergyUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule) {
+  public Pair<Long, Long> getAccountEnergyUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule) {
     long now = getHeadSlot();
 
     long energyUsage = accountCapsule.getEnergyUsage();
     long latestConsumeTime = accountCapsule.getAccountResource().getLatestConsumeTimeForEnergy();
 
     if (now >= latestConsumeTime + windowSize) {
-      return new long[]{0L, 0L};
+      return Pair.of(0L, 0L);
     }
 
     long restoreSlots = latestConsumeTime + windowSize - now;
@@ -186,19 +188,19 @@ public class RepositoryImpl implements Repository {
     long totalEnergyLimit = getDynamicPropertiesStore().getTotalEnergyCurrentLimit();
     long totalEnergyWeight = getTotalEnergyWeight();
 
-    long balance = (long) ((double) newEnergyUsage * totalEnergyWeight / totalEnergyLimit) * 1_000_000L;
+    long balance = (long) ((double) newEnergyUsage * totalEnergyWeight / totalEnergyLimit) * TRX_PRECISION;
 
-    return new long[]{balance, Long.max(0L, restoreSlots * BLOCK_PRODUCED_INTERVAL / 1_000)};
+    return Pair.of(balance, restoreSlots * BLOCK_PRODUCED_INTERVAL / 1_000);
   }
 
-  public long[] getAccountNetUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule) {
+  public Pair<Long, Long> getAccountNetUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule) {
     long now = getHeadSlot();
 
     long netUsage = accountCapsule.getNetUsage();
     long latestConsumeTime = accountCapsule.getLatestConsumeTime();
 
     if (now >= latestConsumeTime + windowSize) {
-      return new long[]{0L, 0L};
+      return Pair.of(0L, 0L);
     }
 
     long restoreSlots = latestConsumeTime + windowSize - now;
@@ -208,9 +210,9 @@ public class RepositoryImpl implements Repository {
     long totalNetLimit = getDynamicPropertiesStore().getTotalNetLimit();
     long totalNetWeight = getTotalNetWeight();
 
-    long balance = (long) ((double) newNetUsage * totalNetWeight / totalNetLimit) * 1_000_000L;
+    long balance = (long) ((double) newNetUsage * totalNetWeight / totalNetLimit) * TRX_PRECISION;
 
-    return new long[]{balance, Long.max(0L, restoreSlots * BLOCK_PRODUCED_INTERVAL / 1_000)};
+    return Pair.of(balance, restoreSlots * BLOCK_PRODUCED_INTERVAL / 1_000);
   }
 
   @Override

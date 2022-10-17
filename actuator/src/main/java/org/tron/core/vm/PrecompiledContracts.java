@@ -1885,15 +1885,19 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
       if (data == null || data.length != 2 * WORD_SIZE) {
-        return Pair.of(true, DataWord.ZERO().getData());
+        return Pair.of(true, encodeRes(DataWord.ZERO().getData(), DataWord.ZERO().getData()));
       }
 
       DataWord[] words = DataWord.parseArray(data);
       byte[] address = words[0].toTronAddress();
       long type = words[1].longValueSafe();
 
-      long[] values = FreezeV2Util.queryFrozenBalanceUsage(address, type, getDeposit());
-      return Pair.of(true, encodeRes(longTo32Bytes(values[0]), longTo32Bytes(values[1])));
+      Pair<Long, Long> values = FreezeV2Util.queryFrozenBalanceUsage(address, type, getDeposit());
+      if (values == null || values.getLeft() == null || values.getRight() == null) {
+        return Pair.of(true, encodeRes(DataWord.ZERO().getData(), DataWord.ZERO().getData()));
+      }
+
+      return Pair.of(true, encodeRes(longTo32Bytes(values.getLeft()), longTo32Bytes(values.getRight())));
     }
   }
 

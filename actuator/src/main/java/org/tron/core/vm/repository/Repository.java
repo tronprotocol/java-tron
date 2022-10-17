@@ -1,5 +1,6 @@
 package org.tron.core.vm.repository;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.capsule.*;
 import org.tron.core.store.*;
@@ -106,9 +107,9 @@ public interface Repository {
 
   long getAccountLeftEnergyFromFreeze(AccountCapsule accountCapsule);
 
-  long[] getAccountEnergyUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule);
+  Pair<Long, Long> getAccountEnergyUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule);
 
-  long[] getAccountNetUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule);
+  Pair<Long, Long> getAccountNetUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule);
 
   long calculateGlobalEnergyLimit(AccountCapsule accountCapsule);
 

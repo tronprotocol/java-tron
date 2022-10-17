@@ -1,5 +1,6 @@
 package org.tron.core.vm.program;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -223,12 +224,12 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
-  public long[] getAccountEnergyUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule) {
+  public Pair<Long, Long> getAccountEnergyUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule) {
     return repository.getAccountEnergyUsageBalanceAndRestoreSeconds(accountCapsule);
   }
 
   @Override
-  public long[] getAccountNetUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule) {
+  public Pair<Long, Long> getAccountNetUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule) {
     return repository.getAccountNetUsageBalanceAndRestoreSeconds(accountCapsule);
   }
 
