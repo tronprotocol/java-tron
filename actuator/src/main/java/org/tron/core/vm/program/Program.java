@@ -575,7 +575,7 @@ public class Program {
                     || (accountCapsule.getEnergyUsage() > 0
                         && (now - accountCapsule.getLatestConsumeTimeForEnergy() >= oneDayTime)))
                 && (accountCapsule.getNetUsage() == 0
-                    || (accountCapsule.getEnergyUsage() > 0
+                    || (accountCapsule.getNetUsage() > 0
                         && (now - accountCapsule.getLatestConsumeTime() >= oneDayTime))));
     return freezeCheck && freezeV2Check;
 //    boolean voteCheck = !VMConfig.allowTvmVote()
