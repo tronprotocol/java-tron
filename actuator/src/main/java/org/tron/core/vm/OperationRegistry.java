@@ -57,11 +57,11 @@ public class OperationRegistry {
     // implement as needed
     // switch (tx.getType()) {
     // }
-    if (VMConfig.allowHigherLimitForMaxCpuTimeOfOneTx()) {
-      return tableMap.get(Version.TRON_V1_1);
-    }
     if (VMConfig.allowTvmFreezeV2()) {
       return tableMap.get(Version.TRON_V1_2);
+    }
+    if (VMConfig.allowHigherLimitForMaxCpuTimeOfOneTx()) {
+      return tableMap.get(Version.TRON_V1_1);
     }
     return tableMap.get(Version.TRON_V1_0);
   }

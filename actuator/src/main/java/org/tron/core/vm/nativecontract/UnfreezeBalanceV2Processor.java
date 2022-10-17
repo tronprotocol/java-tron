@@ -71,8 +71,11 @@ public class UnfreezeBalanceV2Processor {
         }
         break;
       default:
-        throw new ContractValidateException("ResourceCode error."
-            + "valid ResourceCode[BANDWIDTH、Energy]");
+        if (dynamicStore.supportAllowNewResourceModel()) {
+          throw new ContractValidateException("ResourceCode error.valid ResourceCode[BANDWIDTH、Energy、TRON_POWER]");
+        } else {
+          throw new ContractValidateException("ResourceCode error.valid ResourceCode[BANDWIDTH、Energy]");
+        }
     }
 
     if (!checkUnfreezeBalance(accountCapsule, param.getUnfreezeBalance(), param.getResourceType())) {
@@ -165,7 +168,7 @@ public class UnfreezeBalanceV2Processor {
     List<Protocol.Account.FreezeV2> freezeV2List = accountCapsule.getFrozenV2List();
     for (int i = 0; i < freezeV2List.size(); i++) {
       if (freezeV2List.get(i).getType().equals(freezeType)) {
-        Protocol.Account.FreezeV2 freezeV2 =  Protocol.Account.FreezeV2.newBuilder()
+        Protocol.Account.FreezeV2 freezeV2 = Protocol.Account.FreezeV2.newBuilder()
             .setAmount(freezeV2List.get(i).getAmount() - unfreezeBalance)
             .setType(freezeV2List.get(i).getType())
             .build();

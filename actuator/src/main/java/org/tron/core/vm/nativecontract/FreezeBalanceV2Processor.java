@@ -62,7 +62,7 @@ public class FreezeBalanceV2Processor {
     }
   }
 
-  public void execute(FreezeBalanceV2Param param,  Repository repo) {
+  public void execute(FreezeBalanceV2Param param, Repository repo) {
     DynamicPropertiesStore dynamicStore = repo.getDynamicPropertiesStore();
 
     byte[] ownerAddress = param.getOwnerAddress();

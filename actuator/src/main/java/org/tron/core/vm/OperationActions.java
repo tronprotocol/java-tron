@@ -6,7 +6,6 @@ import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.core.vm.config.VMConfig;
@@ -953,7 +952,7 @@ public class OperationActions {
   }
 
   public static void exeCall(Program program, DataWord adjustedCallEnergy,
-            DataWord codeAddress, DataWord value, DataWord tokenId, boolean isTokenTransferMsg) {
+      DataWord codeAddress, DataWord value, DataWord tokenId, boolean isTokenTransferMsg) {
 
     DataWord inDataOffs = program.stackPop();
     DataWord inDataSize = program.stackPop();

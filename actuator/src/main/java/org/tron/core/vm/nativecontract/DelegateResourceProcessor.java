@@ -107,7 +107,7 @@ public class DelegateResourceProcessor {
     }
   }
 
-  public void execute(DelegateResourceParam param,  Repository repo) {
+  public void execute(DelegateResourceParam param, Repository repo) {
     byte[] ownerAddress = param.getOwnerAddress();
     AccountCapsule ownerCapsule = repo.getAccount(param.getOwnerAddress());
     long delegateBalance = param.getDelegateBalance();
@@ -124,7 +124,7 @@ public class DelegateResourceProcessor {
         break;
       case ENERGY:
         delegateResource(ownerAddress, receiverAddress, false,
-            delegateBalance,repo);
+            delegateBalance, repo);
 
         ownerCapsule.addDelegatedFrozenBalanceForEnergy(delegateBalance);
         ownerCapsule.addFrozenBalanceForEnergyV2(-delegateBalance);
