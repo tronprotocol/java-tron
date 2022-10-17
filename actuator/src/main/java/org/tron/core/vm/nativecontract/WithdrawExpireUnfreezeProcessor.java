@@ -40,9 +40,10 @@ public class WithdrawExpireUnfreezeProcessor {
     }
 
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
-    List<Protocol.Account.UnFreezeV2> unfrozenV2List = accountCapsule.getInstance().getUnfrozenV2List();
+    List<Protocol.Account.UnFreezeV2> unfrozenV2List = accountCapsule.getInstance()
+        .getUnfrozenV2List();
     long totalWithdrawUnfreeze = getTotalWithdrawUnfreeze(unfrozenV2List, now);
-    if (totalWithdrawUnfreeze <= 0) {
+    if (totalWithdrawUnfreeze < 0) {
       throw new ContractValidateException("no unFreeze balance to withdraw ");
     }
     try {
@@ -66,11 +67,13 @@ public class WithdrawExpireUnfreezeProcessor {
   public long execute(WithdrawExpireUnfreezeParam param, Repository repo) throws ContractExeException {
     byte[] ownerAddress = param.getOwnerAddress();
     DynamicPropertiesStore dynamicStore = repo.getDynamicPropertiesStore();
-
     AccountCapsule ownerCapsule = repo.getAccount(ownerAddress);
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
     List<Protocol.Account.UnFreezeV2> unfrozenV2List = ownerCapsule.getInstance().getUnfrozenV2List();
     long totalWithdrawUnfreeze = getTotalWithdrawUnfreeze(unfrozenV2List, now);
+    if (totalWithdrawUnfreeze <= 0) {
+      return 0;
+    }
     ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
         .setBalance(ownerCapsule.getBalance() + totalWithdrawUnfreeze)
         .setLatestWithdrawTime(now)

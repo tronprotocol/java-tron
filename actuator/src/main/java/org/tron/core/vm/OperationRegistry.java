@@ -59,8 +59,7 @@ public class OperationRegistry {
     // }
     if (VMConfig.allowTvmFreezeV2()) {
       return tableMap.get(Version.TRON_V1_2);
-    }
-    if (VMConfig.allowHigherLimitForMaxCpuTimeOfOneTx()) {
+    } else if (VMConfig.allowHigherLimitForMaxCpuTimeOfOneTx()) {
       return tableMap.get(Version.TRON_V1_1);
     }
     return tableMap.get(Version.TRON_V1_0);
