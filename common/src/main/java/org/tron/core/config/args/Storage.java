@@ -15,9 +15,12 @@
 
 package org.tron.core.config.args;
 
+import com.google.common.collect.Maps;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
 import java.io.File;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -71,6 +74,14 @@ public class Storage {
 
   private static final String CHECKPOINT_VERSION_KEY = "storage.checkpoint.version";
   private static final String CHECKPOINT_SYNC_KEY = "storage.checkpoint.sync";
+  private static final String CACHE_STRATEGIES = "storage.cache.strategies";
+  private static final String CACHE_STRATEGY = "storage.cache.strategy";
+  private static final String CACHE_STRATEGY_DEFAULT =
+      "initialCapacity=500,maximumSize=10000,expireAfterAccess=36s";
+  public static final List<String> CACHE_DBS =
+      Arrays.asList("storage-row", "account", "recent-block", "delegation", "code", "contract",
+          "asset-issue-v2", "witness", "witness_schedule", "DelegatedResource", "properties",
+          "DelegatedResourceAccountIndex", "votes", "abi");
 
   /**
    * Default values of directory
@@ -138,6 +149,14 @@ public class Storage {
   @Getter
   @Setter
   private int estimatedBlockTransactions;
+
+  public String cacheStrategy = CACHE_STRATEGY_DEFAULT;
+
+  @Getter
+  public Map<String, String> cacheStrategies = Maps.newConcurrentMap();
+
+  @Getter
+  public List<String> cacheDbs = CACHE_DBS;
 
   /**
    * Key: dbName, Value: Property object of that database
@@ -211,6 +230,21 @@ public class Storage {
       estimatedTransactions = 100;
     }
     return estimatedTransactions;
+  }
+
+
+  public  void setCacheStrategies(Config config) {
+    if (config.hasPath(CACHE_STRATEGY)) {
+      this.cacheStrategy = config.getString(CACHE_STRATEGY);
+    }
+    if (config.hasPath(CACHE_STRATEGIES)) {
+      config.getConfig(CACHE_STRATEGIES).resolve().entrySet().forEach(c ->
+          this.cacheStrategies.put(c.getKey(),  c.getValue().unwrapped().toString()));
+    }
+  }
+
+  public String getCacheStrategy(String dbName) {
+    return this.cacheStrategies.getOrDefault(dbName, this.cacheStrategy);
   }
 
   private  Property createProperty(final ConfigObject conf) {
