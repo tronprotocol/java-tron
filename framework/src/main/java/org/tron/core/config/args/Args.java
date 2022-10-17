@@ -468,19 +468,10 @@ public class Args extends CommonParameter {
     }
 
     PARAMETER.storage = new Storage();
-    PARAMETER.storage.setDbVersion(Optional.ofNullable(PARAMETER.storageDbVersion)
-        .filter(StringUtils::isNotEmpty)
-        .map(Integer::valueOf)
-        .orElse(Storage.getDbVersionFromConfig(config)));
 
     PARAMETER.storage.setDbEngine(Optional.ofNullable(PARAMETER.storageDbEngine)
         .filter(StringUtils::isNotEmpty)
         .orElse(Storage.getDbEngineFromConfig(config)));
-
-    if (Constant.ROCKSDB.equalsIgnoreCase(PARAMETER.storage.getDbEngine())
-        && PARAMETER.storage.getDbVersion() == 1) {
-      throw new RuntimeException("db.version = 1 is not supported by ROCKSDB engine.");
-    }
 
     PARAMETER.storage.setDbSync(Optional.ofNullable(PARAMETER.storageDbSynchronous)
         .filter(StringUtils::isNotEmpty)
@@ -1414,7 +1405,6 @@ public class Args extends CommonParameter {
     logger.info("Code version : {}", Version.getVersion());
     logger.info("Version code: {}", Version.VERSION_CODE);
     logger.info("************************ DB config *************************");
-    logger.info("DB version : {}", parameter.getStorage().getDbVersion());
     logger.info("DB engine : {}", parameter.getStorage().getDbEngine());
     logger.info("***************************************************************");
     logger.info("************************ shutDown config *************************");
