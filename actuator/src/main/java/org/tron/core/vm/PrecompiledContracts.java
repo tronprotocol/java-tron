@@ -1790,12 +1790,20 @@ public class PrecompiledContracts {
 
     @Override
     public long getEnergyForData(byte[] data) {
-      return 0;
+      return 50;
     }
 
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
-      return Pair.of(true, DataWord.ZERO().getData());
+      if (data == null || data.length != WORD_SIZE) {
+        return Pair.of(true, DataWord.ZERO().getData());
+      }
+      long code = new DataWord(data).longValueSafe();
+
+      long res = ChainParameterEnum.fromCode(code).getAction().apply(
+          getDeposit().getDynamicPropertiesStore());
+
+      return Pair.of(true, longTo32Bytes(res));
     }
   }
 
