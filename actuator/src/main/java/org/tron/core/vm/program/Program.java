@@ -1892,7 +1892,7 @@ public class Program {
       repository.commit();
       return true;
     } catch (ContractValidateException e) {
-      logger.error("TVM UnfreezeBalanceV2: validate failure. Reason: {}", e.getMessage());
+      logger.error("TVM unDelegateResource: validate failure. Reason: {}", e.getMessage());
     }
     if (internalTx != null) {
       internalTx.reject();
