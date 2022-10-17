@@ -46,6 +46,7 @@ public class OperationRegistry {
     JumpTable table = newTronV11OperationSet();
     appendFreezeV2Operations(table);
     appendDelegateOperations(table);
+    disableFreezeOperation(table);
     return table;
   }
 
@@ -579,29 +580,23 @@ public class OperationRegistry {
   }
 
   public static void appendFreezeV2Operations(JumpTable table) {
-    BooleanSupplier proposal = VMConfig::allowTvmFreeze;
-
     table.set(new Operation(
         Op.FREEZEBALANCEV2, 2, 1,
         EnergyCost::getFreezeBalanceV2Cost,
-        OperationActions::freezeBalanceV2Action,
-        proposal));
+        OperationActions::freezeBalanceV2Action));
 
     table.set(new Operation(
         Op.UNFREEZEBALANCEV2, 2, 1,
         EnergyCost::getUnfreezeBalanceV2Cost,
-        OperationActions::unfreezeBalanceV2Action,
-        proposal));
+        OperationActions::unfreezeBalanceV2Action));
 
     table.set(new Operation(
         Op.WITHDRAWEXPIREUNFREEZE, 0, 1,
         EnergyCost::getWithdrawExpireUnfreezeCost,
-        OperationActions::withdrawExpireUnfreezeAction,
-        proposal));
+        OperationActions::withdrawExpireUnfreezeAction));
   }
 
   public static void appendDelegateOperations(JumpTable table) {
-
     table.set(new Operation(
         Op.DELEGATERESOURCE, 3, 1,
         EnergyCost::getDelegateResourceCost,
@@ -611,5 +606,12 @@ public class OperationRegistry {
         Op.UNDELEGATERESOURCE, 3, 1,
         EnergyCost::getUnDelegateResourceCost,
         OperationActions::unDelegateResourceAction));
+  }
+
+  public static void disableFreezeOperation(JumpTable table) {
+    table.set(new Operation(
+        Op.FREEZE, 3, 1,
+        EnergyCost::getExtTierCost,
+        OperationActions::disabledFreezeAction));
   }
 }

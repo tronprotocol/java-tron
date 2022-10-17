@@ -6,7 +6,6 @@ import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.core.vm.config.VMConfig;
@@ -739,6 +738,21 @@ public class OperationActions {
 
     boolean result = program.freeze(receiverAddress, frozenBalance, resourceType );
     program.stackPush(result ? DataWord.ONE() : DataWord.ZERO());
+    program.step();
+  }
+
+  public static void disabledFreezeAction(Program program) {
+    // after allow vote, check static
+    if (VMConfig.allowTvmVote() && program.isStaticCall()) {
+      throw new Program.StaticCallModificationException();
+    }
+    // 0 as bandwidth, 1 as energy
+    DataWord ignoredResourceType = program.stackPop();
+    DataWord ignoredFrozenBalance = program.stackPop();
+    DataWord ignoredReceiverAddress = program.stackPop();
+
+    // here we just push zero to stack and do nothing
+    program.stackPush(DataWord.ZERO());
     program.step();
   }
 
