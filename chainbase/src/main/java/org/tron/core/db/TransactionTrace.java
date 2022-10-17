@@ -247,6 +247,8 @@ public class TransactionTrace {
     // originAccount Percent = 30%
     AccountCapsule origin = accountStore.get(originAccount);
     AccountCapsule caller = accountStore.get(callerAccount);
+    origin.setEnergyUsage(receipt.getOriginEnergyUsage());
+    caller.setEnergyUsage(receipt.getCallerEnergyUsage());
     receipt.payEnergyBill(
         dynamicPropertiesStore, accountStore, forkController,
         origin,

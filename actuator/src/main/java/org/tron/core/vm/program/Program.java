@@ -8,7 +8,9 @@ import static org.apache.commons.lang3.ArrayUtils.isEmpty;
 import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
 import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
 import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+import static org.tron.core.config.Parameter.ChainConstant.WINDOW_SIZE_MS;
 
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
@@ -17,6 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.map.LRUMap;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -31,6 +34,7 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FastByteComparisons;
 import org.tron.common.utils.Utils;
 import org.tron.common.utils.WalletUtil;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
@@ -467,6 +471,14 @@ public class Program {
         transferDelegatedResourceToInheritor(owner, obtainer, getContractState());
       }
     }
+    if (VMConfig.allowTvmFreezeV2()) {
+      byte[] blackHoleAddress = getContractState().getBlackHoleAddress();
+      if (FastByteComparisons.isEqual(owner, obtainer)) {
+        transferDelegatedResourceToInheritorV2(owner, blackHoleAddress, getContractState());
+      } else {
+        transferDelegatedResourceToInheritorV2(owner, obtainer, getContractState());
+      }
+    }
     getResult().addDeleteAccount(this.getContractAddress());
   }
 
@@ -501,6 +513,14 @@ public class Program {
     repo.addBalance(inheritorAddr, frozenBalanceForBandwidthOfOwner + frozenBalanceForEnergyOfOwner);
   }
 
+  private void transferDelegatedResourceToInheritorV2(byte[] ownerAddr, byte[] inheritorAddr, Repository repo) {
+    AccountCapsule ownerCapsule = repo.getAccount(ownerAddr);
+
+    // transfer owner`s frozen balance for bandwidth to inheritor
+
+    // todo
+  }
+
   private void withdrawRewardAndCancelVote(byte[] owner, Repository repo) {
     VoteRewardUtil.withdrawReward(owner, repo);
 
@@ -533,9 +553,25 @@ public class Program {
   public boolean canSuicide() {
     byte[] owner = getContextAddress();
     AccountCapsule accountCapsule = getContractState().getAccount(owner);
-    return !VMConfig.allowTvmFreeze()
+
+    boolean freezeCheck = !VMConfig.allowTvmFreeze()
         || (accountCapsule.getDelegatedFrozenBalanceForBandwidth() == 0
         && accountCapsule.getDelegatedFrozenBalanceForEnergy() == 0);
+
+    long now = ChainBaseManager.getInstance().getHeadSlot();
+    long oneDayTime = WINDOW_SIZE_MS / BLOCK_PRODUCED_INTERVAL;
+    boolean freezeV2Check =
+        !VMConfig.allowTvmFreezeV2()
+            || (accountCapsule.getDelegatedFrozenBalanceForBandwidth() == 0
+                && accountCapsule.getDelegatedFrozenBalanceForEnergy() == 0
+                && CollectionUtils.isEmpty(accountCapsule.getUnfrozenV2List())
+                && (accountCapsule.getEnergyUsage() == 0
+                    || (accountCapsule.getEnergyUsage() > 0
+                        && (now - accountCapsule.getLatestConsumeTimeForEnergy() >= oneDayTime)))
+                && (accountCapsule.getNetUsage() == 0
+                    || (accountCapsule.getEnergyUsage() > 0
+                        && (now - accountCapsule.getLatestConsumeTime() >= oneDayTime))));
+    return freezeCheck && freezeV2Check;
 //    boolean voteCheck = !VMConfig.allowTvmVote()
 //        || (accountCapsule.getVotesList().size() == 0
 //        && VoteRewardUtil.queryReward(owner, getContractState()) == 0

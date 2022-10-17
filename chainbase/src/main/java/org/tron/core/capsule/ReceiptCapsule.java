@@ -36,6 +36,10 @@ public class ReceiptCapsule {
   @Setter
   private long callerEnergyLeft;
 
+  @Getter
+  @Setter
+  private long callerEnergyUsage;
+
   private Sha256Hash receiptAddress;
 
   public ReceiptCapsule(ResourceReceipt data, Sha256Hash receiptAddress) {
