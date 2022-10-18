@@ -78,7 +78,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 
   @Override
   public void channelActive(ChannelHandlerContext ctx) throws Exception {
-    logger.info("channel active, {}", ctx.channel().remoteAddress());
+    logger.info("Channel active, {}", ctx.channel().remoteAddress());
     channel.setChannelHandlerContext(ctx);
     if (remoteId.length == 64) {
       channel.initNode(remoteId, ((InetSocketAddress) ctx.channel().remoteAddress()).getPort());

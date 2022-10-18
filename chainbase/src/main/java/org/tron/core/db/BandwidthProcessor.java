@@ -11,6 +11,7 @@ import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
@@ -115,12 +116,13 @@ public class BandwidthProcessor extends ResourceProcessor {
         bytesSize += Constant.MAX_RESULT_SIZE_IN_TX;
       }
 
-      logger.debug("trxId {}, bandwidth cost: {}", trx.getTransactionId(), bytesSize);
+      logger.debug("TxId {}, bandwidth cost: {}.", trx.getTransactionId(), bytesSize);
       trace.setNetBill(bytesSize, 0);
       byte[] address = TransactionCapsule.getOwner(contract);
       AccountCapsule accountCapsule = chainBaseManager.getAccountStore().get(address);
       if (accountCapsule == null) {
-        throw new ContractValidateException("account does not exist");
+        throw new ContractValidateException(String.format("account [%s] does not exist",
+            StringUtil.encode58Check(address)));
       }
       long now = chainBaseManager.getHeadSlot();
       if (contractCreateNewAccount(contract)) {
@@ -147,8 +149,9 @@ public class BandwidthProcessor extends ResourceProcessor {
 
       long fee = chainBaseManager.getDynamicPropertiesStore().getTransactionFee() * bytesSize;
       throw new AccountResourceInsufficientException(
-          "Account has insufficient bandwidth[" + bytesSize + "] and balance["
-              + fee + "] to create new account");
+          String.format(
+              "account [%s] has insufficient bandwidth[%d] and balance[%d] to create new account",
+              StringUtil.encode58Check(address), bytesSize, fee));
     }
   }
 
@@ -172,7 +175,10 @@ public class BandwidthProcessor extends ResourceProcessor {
     if (!ret) {
       ret = consumeFeeForCreateNewAccount(accountCapsule, trace);
       if (!ret) {
-        throw new AccountResourceInsufficientException();
+        throw new AccountResourceInsufficientException(String.format(
+            "account [%s] has insufficient bandwidth[%d] and balance[%d] to create new account",
+            StringUtil.encode58Check(accountCapsule.createDbKey()), bytes,
+            chainBaseManager.getDynamicPropertiesStore().getCreateAccountFee()));
       }
     }
   }
@@ -267,7 +273,7 @@ public class BandwidthProcessor extends ResourceProcessor {
         chainBaseManager.getAssetIssueStore(), chainBaseManager.getAssetIssueV2Store())
         .get(assetName.toByteArray());
     if (assetIssueCapsule == null) {
-      throw new ContractValidateException("asset does not exist");
+      throw new ContractValidateException(String.format("asset [%s] does not exist", assetName));
     }
 
     String tokenName = ByteArray.toStr(assetName.toByteArray());
@@ -284,7 +290,9 @@ public class BandwidthProcessor extends ResourceProcessor {
         publicLatestFreeNetTime, now);
 
     if (bytes > (publicFreeAssetNetLimit - newPublicFreeAssetNetUsage)) {
-      logger.debug("The " + tokenID + " public free bandwidth is not enough");
+      logger.debug("The {} public free bandwidth is not enough."
+              + " Bytes: {}, publicFreeAssetNetLimit: {}, newPublicFreeAssetNetUsage: {}.",
+          tokenID, bytes, publicFreeAssetNetLimit,  newPublicFreeAssetNetUsage);
       return false;
     }
 
@@ -306,7 +314,9 @@ public class BandwidthProcessor extends ResourceProcessor {
         latestAssetOperationTime, now);
 
     if (bytes > (freeAssetNetLimit - newFreeAssetNetUsage)) {
-      logger.debug("The " + tokenID + " free bandwidth is not enough");
+      logger.debug("The {} free bandwidth is not enough."
+              + " Bytes: {}, freeAssetNetLimit: {}, newFreeAssetNetUsage:{}.",
+          tokenID, bytes, freeAssetNetLimit, newFreeAssetNetUsage);
       return false;
     }
 
@@ -321,7 +331,9 @@ public class BandwidthProcessor extends ResourceProcessor {
             issuerNetUsage, 0, latestConsumeTime, now);
 
     if (bytes > (issuerNetLimit - newIssuerNetUsage)) {
-      logger.debug("The " + tokenID + " issuer's bandwidth is not enough");
+      logger.debug("The {} issuer's bandwidth is not enough."
+              + " Bytes: {}, issuerNetLimit: {}, newIssuerNetUsage:{}.",
+          tokenID, bytes, issuerNetLimit, newIssuerNetUsage);
       return false;
     }
 
@@ -399,7 +411,9 @@ public class BandwidthProcessor extends ResourceProcessor {
     long newNetUsage = increase(accountCapsule, BANDWIDTH, netUsage, 0, latestConsumeTime, now);
 
     if (bytes > (netLimit - newNetUsage)) {
-      logger.debug("net usage is running out, now use free net usage");
+      logger.debug("Net usage is running out, now use free net usage."
+              + " Bytes: {}, netLimit: {}, newNetUsage: {}.",
+          bytes, netLimit, newNetUsage);
       return false;
     }
 
@@ -422,7 +436,9 @@ public class BandwidthProcessor extends ResourceProcessor {
     long newFreeNetUsage = increase(freeNetUsage, 0, latestConsumeFreeTime, now);
 
     if (bytes > (freeNetLimit - newFreeNetUsage)) {
-      logger.debug("free net usage is running out");
+      logger.debug("Free net usage is running out."
+              + " Bytes: {}, freeNetLimit: {}, newFreeNetUsage: {}.",
+          bytes, freeNetLimit, newFreeNetUsage);
       return false;
     }
 
@@ -433,7 +449,9 @@ public class BandwidthProcessor extends ResourceProcessor {
     long newPublicNetUsage = increase(publicNetUsage, 0, publicNetTime, now);
 
     if (bytes > (publicNetLimit - newPublicNetUsage)) {
-      logger.debug("free public net usage is running out");
+      logger.debug("Free public net usage is running out."
+              + " Bytes: {}, publicNetLimit: {}, newPublicNetUsage: {}.",
+          bytes, publicNetLimit, newPublicNetUsage);
       return false;
     }
 

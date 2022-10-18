@@ -1,21 +1,19 @@
 package org.tron.core.store;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.Spliterator;
-import java.util.function.Consumer;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.stereotype.Component;
 import org.tron.core.db.TronDatabase;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 
-@Component
-public class CheckTmpStore extends TronDatabase<byte[]> {
+import java.util.Spliterator;
+import java.util.function.Consumer;
+
+public class CheckPointV2Store extends TronDatabase<byte[]> {
 
   @Autowired
-  public CheckTmpStore(ApplicationContext ctx) {
-    super("tmp");
+  public CheckPointV2Store(String dbPath) {
+    super(dbPath);
   }
 
   @Override
@@ -24,6 +22,7 @@ public class CheckTmpStore extends TronDatabase<byte[]> {
 
   @Override
   public void delete(byte[] key) {
+    getDbSource().deleteData(key);
   }
 
   @Override

@@ -58,8 +58,8 @@ public class FetchBlockService {
     fetchBlockWorkerExecutor.scheduleWithFixedDelay(() -> {
       try {
         fetchBlockProcess(fetchBlockInfo);
-      } catch (Exception exception) {
-        logger.error("FetchBlockWorkerSchedule thread error. {}", exception.getMessage());
+      } catch (Exception e) {
+        logger.error("FetchBlockWorkerSchedule thread error", e);
       }
     }, 0L, 50L, TimeUnit.MILLISECONDS);
   }
@@ -69,6 +69,11 @@ public class FetchBlockService {
   }
 
   public void fetchBlock(List<Sha256Hash> sha256HashList, PeerConnection peer) {
+    if (sha256HashList.size() > 0) {
+      logger.info("Begin fetch block {} from {}",
+          new BlockCapsule.BlockId(sha256HashList.get(0)).getString(),
+          peer.getInetAddress());
+    }
     if (null != fetchBlockInfo) {
       return;
     }
@@ -78,12 +83,15 @@ public class FetchBlockService {
           if (System.currentTimeMillis() - chainBaseManager.getHeadBlockTimeStamp()
               < BLOCK_FETCH_TIME_OUT_LIMIT) {
             fetchBlockInfo = new FetchBlockInfo(sha256Hash, peer, System.currentTimeMillis());
+            logger.info("Set fetchBlockInfo, block: {}, peer: {}, time: {}", sha256Hash,
+                fetchBlockInfo.getPeer().getInetAddress(), fetchBlockInfo.getTime());
           }
         });
   }
 
 
   public void blockFetchSuccess(Sha256Hash sha256Hash) {
+    logger.info("Fetch block success, {}", new BlockCapsule.BlockId(sha256Hash).getString());
     FetchBlockInfo fetchBlockInfoTemp = this.fetchBlockInfo;
     if (null == fetchBlockInfoTemp || !fetchBlockInfoTemp.getHash().equals(sha256Hash)) {
       return;
@@ -98,6 +106,8 @@ public class FetchBlockService {
     if (System.currentTimeMillis() - chainBaseManager.getHeadBlockTimeStamp()
         >= BLOCK_FETCH_TIME_OUT_LIMIT) {
       this.fetchBlockInfo = null;
+      logger.info("Clear fetchBlockInfo due to {} ms past head block time",
+              BLOCK_FETCH_TIME_OUT_LIMIT);
       return;
     }
     Item item = new Item(fetchBlock.getHash(), InventoryType.BLOCK);
@@ -120,6 +130,8 @@ public class FetchBlockService {
       });
     } else {
       if (System.currentTimeMillis() - fetchBlock.getTime() >= fetchTimeOut) {
+        logger.info("Clear fetchBlockInfo due to fetch block {} timeout {}ms",
+                fetchBlock.getHash(), fetchTimeOut);
         this.fetchBlockInfo = null;
       }
     }

@@ -5,9 +5,10 @@ import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import lombok.extern.slf4j.Slf4j;
 import org.rocksdb.RocksIterator;
+import org.tron.common.error.TronDBException;
 
 
-@Slf4j
+@Slf4j(topic = "DB")
 public final class RockStoreIterator implements DBIterator {
 
   private RocksIterator dbIterator;
@@ -35,11 +36,11 @@ public final class RockStoreIterator implements DBIterator {
         dbIterator.close();
       }
     } catch (Exception e) {
-      System.out.println("e:" + e);
+      logger.error(e.getMessage(), e);
       try {
         dbIterator.close();
       } catch (Exception e1) {
-        System.out.println("e1:" + e1);
+        logger.error(e.getMessage(), e);
       }
     }
     return hasNext;
