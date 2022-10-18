@@ -63,7 +63,7 @@ public class ForkController {
   private boolean passNew(int version) {
     ForkBlockVersionEnum versionEnum = ForkBlockVersionEnum.getForkBlockVersionEnum(version);
     if (versionEnum == null) {
-      logger.error("not exist block version: {}", version);
+      logger.error("Not exist block version: {}.", version);
       return false;
     }
     long latestBlockTime = manager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
@@ -167,7 +167,7 @@ public class ForkController {
     stats[slot] = VERSION_UPGRADE;
     manager.getDynamicPropertiesStore().statsByVersion(version, stats);
     logger.info(
-        "*******update hard fork:{}, witness size:{}, solt:{}, witness:{}, version:{}",
+        "Update hard fork: {}, witness size: {}, solt: {}, witness: {}, version: {}.",
         Streams.zip(witnesses.stream(), Stream.of(ArrayUtils.toObject(stats)), Maps::immutableEntry)
             .map(e -> Maps
                 .immutableEntry(encode58Check(e.getKey().toByteArray()), e.getValue()))

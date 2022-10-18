@@ -20,28 +20,14 @@ package org.tron.common.overlay.discover.table;
 
 import org.tron.common.overlay.discover.node.Node;
 
-/**
- * Created by kest on 5/25/15.
- */
 public class NodeEntry {
-
-  private byte[] ownerId;
   private Node node;
   private String entryId;
   private int distance;
   private long modified;
 
-  public NodeEntry(Node n) {
-    this.node = n;
-    this.ownerId = n.getId();
-    entryId = n.getHost();
-    distance = distance(ownerId, n.getId());
-    touch();
-  }
-
   public NodeEntry(byte[] ownerId, Node n) {
     this.node = n;
-    this.ownerId = ownerId;
     entryId = n.getHost();
     distance = distance(ownerId, n.getId());
     touch();
@@ -115,6 +101,6 @@ public class NodeEntry {
 
   @Override
   public int hashCode() {
-    return this.node.hashCode();
+    return this.entryId.hashCode();
   }
 }

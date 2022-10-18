@@ -72,7 +72,7 @@ public class SyncService {
           startFetchSyncBlock();
         }
       } catch (Exception e) {
-        logger.error("Fetch sync block error.", e);
+        logger.error("Fetch sync block error", e);
       }
     }, 10, 1, TimeUnit.SECONDS);
 
@@ -83,7 +83,7 @@ public class SyncService {
           handleSyncBlock();
         }
       } catch (Exception e) {
-        logger.error("Handle sync block error.", e);
+        logger.error("Handle sync block error", e);
       }
     }, 10, 1, TimeUnit.SECONDS);
   }
@@ -95,7 +95,7 @@ public class SyncService {
 
   public void startSync(PeerConnection peer) {
     if (peer.getTronState().equals(TronState.SYNCING)) {
-      logger.warn("Start sync failed, peer {} is in sync.", peer.getNode().getHost());
+      logger.warn("Start sync failed, peer {} is in sync", peer.getNode().getHost());
       return;
     }
     peer.setTronState(TronState.SYNCING);
@@ -109,14 +109,14 @@ public class SyncService {
   public void syncNext(PeerConnection peer) {
     try {
       if (peer.getSyncChainRequested() != null) {
-        logger.warn("Peer {} is in sync.", peer.getNode().getHost());
+        logger.warn("Peer {} is in sync", peer.getNode().getHost());
         return;
       }
       LinkedList<BlockId> chainSummary = getBlockChainSummary(peer);
       peer.setSyncChainRequested(new Pair<>(chainSummary, System.currentTimeMillis()));
       peer.sendMessage(new SyncBlockChainMessage(chainSummary));
     } catch (Exception e) {
-      logger.error("Peer {} sync failed, reason: {}", peer.getInetAddress(), e.getMessage());
+      logger.warn("Peer {} sync failed, reason: {}", peer.getInetAddress(), e.getMessage());
       peer.disconnect(ReasonCode.SYNC_FAIL);
     }
   }
@@ -273,7 +273,7 @@ public class SyncService {
       tronNetDelegate.processBlock(block, true);
       pbftDataSyncHandler.processPBFTCommitData(block);
     } catch (Exception e) {
-      logger.error("Process sync block {} failed.", blockId.getString(), e);
+      logger.error("Process sync block {} failed", blockId.getString(), e);
       flag = false;
     }
     for (PeerConnection peer : tronNetDelegate.getActivePeer()) {
