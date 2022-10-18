@@ -107,6 +107,8 @@ public interface Repository {
 
   long getAccountLeftEnergyFromFreeze(AccountCapsule accountCapsule);
 
+  long getAccountEnergyUsageFromFreeze(AccountCapsule accountCapsule);
+
   Pair<Long, Long> getAccountEnergyUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule);
 
   Pair<Long, Long> getAccountNetUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule);
@@ -132,5 +134,7 @@ public interface Repository {
   long getTotalNetWeight();
 
   long getTotalEnergyWeight();
+
+  long getHeadSlot();
 
 }

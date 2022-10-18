@@ -171,6 +171,15 @@ public class RepositoryImpl implements Repository {
     return max(energyLimit - newEnergyUsage, 0); // us
   }
 
+  @Override
+  public long getAccountEnergyUsageFromFreeze(AccountCapsule accountCapsule) {
+    long now = getHeadSlot();
+    long energyUsage = accountCapsule.getEnergyUsage();
+    long latestConsumeTime = accountCapsule.getAccountResource().getLatestConsumeTimeForEnergy();
+
+    return increase(energyUsage, 0, latestConsumeTime, now);
+  }
+
   public Pair<Long, Long> getAccountEnergyUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule) {
     long now = getHeadSlot();
 

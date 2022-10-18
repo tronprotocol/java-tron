@@ -545,9 +545,14 @@ public class VMActuator implements Actuator2 {
     long energyFromBalance = max(account.getBalance() - callValue, 0) / sunPerEnergy;
     long availableEnergy = Math.addExact(leftFrozenEnergy, energyFromBalance);
 
-    receipt.setCallerEnergyUsage(account.getEnergyUsage());
     long energyFromFeeLimit = feeLimit / sunPerEnergy;
-    account.setEnergyUsage(min(leftFrozenEnergy, energyFromFeeLimit));
+    long newEnergyUsage = rootRepository.getAccountEnergyUsageFromFreeze(account);
+    long now =  rootRepository.getHeadSlot();
+    receipt.setCallerEnergyUsage(newEnergyUsage);
+    account.setEnergyUsage(newEnergyUsage + min(leftFrozenEnergy, energyFromFeeLimit));
+    account.setLatestConsumeTimeForEnergy(now);
+    rootRepository.updateAccount(account.createDbKey(), account);
+
     return min(availableEnergy, energyFromFeeLimit);
 
   }
@@ -676,7 +681,6 @@ public class VMActuator implements Actuator2 {
       if (VMConfig.allowTvmFreeze()) {
         receipt.setOriginEnergyLeft(originEnergyLeft);
       }
-      receipt.setOriginEnergyUsage(creator.getEnergyUsage());
     }
     if (consumeUserResourcePercent <= 0) {
       creatorEnergyLimit = min(originEnergyLeft, originEnergyLimit);
@@ -694,8 +698,12 @@ public class VMActuator implements Actuator2 {
         );
       }
     }
+    long newEnergyUsage = rootRepository.getAccountEnergyUsageFromFreeze(creator);
+    receipt.setOriginEnergyUsage(newEnergyUsage);
+    long now =  rootRepository.getHeadSlot();
+    creator.setLatestConsumeTimeForEnergy(now);
     creator.setEnergyUsage(creator.getEnergyUsage() + creatorEnergyLimit);
-
+    rootRepository.updateAccount(creator.createDbKey(), creator);
     return Math.addExact(callerEnergyLimit, creatorEnergyLimit);
   }
 

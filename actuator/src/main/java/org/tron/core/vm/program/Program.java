@@ -16,9 +16,9 @@ import com.google.protobuf.ByteString;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.map.LRUMap;
@@ -516,13 +516,27 @@ public class Program {
   private void transferFrozenV2BalanceToInheritor(byte[] ownerAddr, byte[] inheritorAddr, Repository repo) {
     AccountCapsule ownerCapsule = repo.getAccount(ownerAddr);
     AccountCapsule inheritorCapsule = repo.getAccount(inheritorAddr);
+    long now = repo.getHeadSlot();
 
+    // transfer frozen resource
     ownerCapsule.getFrozenV2List().stream()
         .filter(freezeV2 -> freezeV2.getAmount() > 0)
         .forEach(
             freezeV2 ->
                 inheritorCapsule.addFrozenBalanceForResource(
                     freezeV2.getType(), freezeV2.getAmount()));
+
+    // withdraw expire unfrozen balance
+    long expireUnfrozenBalance =
+        ownerCapsule.getUnfrozenV2List().stream()
+            .filter(
+                unFreezeV2 ->
+                    unFreezeV2.getUnfreezeAmount() > 0 && unFreezeV2.getUnfreezeExpireTime() <= now)
+            .mapToLong(Protocol.Account.UnFreezeV2::getUnfreezeAmount)
+            .sum();
+    if (expireUnfrozenBalance > 0) {
+      inheritorCapsule.setBalance(inheritorCapsule.getBalance() + expireUnfrozenBalance);
+    }
 
     repo.updateAccount(inheritorCapsule.createDbKey(), inheritorCapsule);
   }
@@ -564,19 +578,7 @@ public class Program {
         || (accountCapsule.getDelegatedFrozenBalanceForBandwidth() == 0
         && accountCapsule.getDelegatedFrozenBalanceForEnergy() == 0);
 
-    long now = ChainBaseManager.getInstance().getHeadSlot();
-    long oneDayTime = WINDOW_SIZE_MS / BLOCK_PRODUCED_INTERVAL;
-    boolean freezeV2Check =
-        !VMConfig.allowTvmFreezeV2()
-            || (accountCapsule.getDelegatedFrozenBalanceForBandwidth() == 0
-                && accountCapsule.getDelegatedFrozenBalanceForEnergy() == 0
-                && CollectionUtils.isEmpty(accountCapsule.getUnfrozenV2List())
-                && (accountCapsule.getEnergyUsage() == 0
-                    || (accountCapsule.getEnergyUsage() > 0
-                        && (now - accountCapsule.getLatestConsumeTimeForEnergy() >= oneDayTime)))
-                && (accountCapsule.getNetUsage() == 0
-                    || (accountCapsule.getNetUsage() > 0
-                        && (now - accountCapsule.getLatestConsumeTime() >= oneDayTime))));
+    boolean freezeV2Check = freezeV2Check(accountCapsule);
     return freezeCheck && freezeV2Check;
 //    boolean voteCheck = !VMConfig.allowTvmVote()
 //        || (accountCapsule.getVotesList().size() == 0
@@ -584,6 +586,34 @@ public class Program {
 //        && getContractState().getAccountVote(
 //            getContractState().getBeginCycle(owner), owner) == null);
 //    return freezeCheck && voteCheck;
+  }
+
+  private boolean freezeV2Check(AccountCapsule accountCapsule) {
+    long now = ChainBaseManager.getInstance().getHeadSlot();
+    long oneDayTime = WINDOW_SIZE_MS / BLOCK_PRODUCED_INTERVAL;
+
+    boolean isDelegatedResourceEmpty =
+        accountCapsule.getDelegatedFrozenBalanceForBandwidth() == 0
+            && accountCapsule.getDelegatedFrozenBalanceForEnergy() == 0;
+    boolean isUnFrozenV2ListEmpty =
+        CollectionUtils.isEmpty(
+            accountCapsule.getUnfrozenV2List().stream()
+                .filter(unFreezeV2 -> unFreezeV2.getUnfreezeExpireTime() > now)
+                .collect(Collectors.toList()));
+    boolean isEnergyUsageEmpty =
+        accountCapsule.getEnergyUsage() == 0
+            || (accountCapsule.getEnergyUsage() > 0
+                && (now - accountCapsule.getLatestConsumeTimeForEnergy() >= oneDayTime));
+    boolean isNetUsageEmpty =
+        accountCapsule.getNetUsage() == 0
+            || (accountCapsule.getNetUsage() > 0
+                && (now - accountCapsule.getLatestConsumeTime() >= oneDayTime));
+
+    return !VMConfig.allowTvmFreezeV2()
+        || (isDelegatedResourceEmpty
+            && isUnFrozenV2ListEmpty
+            && isEnergyUsageEmpty
+            && isNetUsageEmpty);
   }
 
   @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
@@ -1838,6 +1868,8 @@ public class Program {
       return true;
     } catch (ContractValidateException e) {
       logger.error("TVM UnfreezeBalanceV2: validate failure. Reason: {}", e.getMessage());
+    } catch (ArithmeticException e) {
+      logger.error("TVM UnfreezeBalanceV2: balance out of long range.");
     }
     if (internalTx != null) {
       internalTx.reject();
@@ -1935,6 +1967,8 @@ public class Program {
       return true;
     } catch (ContractValidateException e) {
       logger.error("TVM unDelegateResource: validate failure. Reason: {}", e.getMessage());
+    } catch (ArithmeticException e) {
+      logger.error("TVM unDelegateResource: balance out of long range.");
     }
     if (internalTx != null) {
       internalTx.reject();

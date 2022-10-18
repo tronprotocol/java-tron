@@ -224,6 +224,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public long getAccountEnergyUsageFromFreeze(AccountCapsule accountCapsule) {
+    return repository.getAccountEnergyUsageFromFreeze(accountCapsule);
+  }
+
+  @Override
   public Pair<Long, Long> getAccountEnergyUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule) {
     return repository.getAccountEnergyUsageBalanceAndRestoreSeconds(accountCapsule);
   }
@@ -356,6 +361,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   @Override
   public long getTotalEnergyWeight() {
     return repository.getTotalEnergyWeight();
+  }
+
+  @Override
+  public long getHeadSlot() {
+    return repository.getHeadSlot();
   }
 
 }
