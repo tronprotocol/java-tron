@@ -189,7 +189,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] UNFREEZE_DELAY_DAYS = "UNFREEZE_DELAY_DAYS".getBytes();
 
-
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -847,6 +846,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveAllowHigherLimitForMaxCpuTimeOfOneTx(
           CommonParameter.getInstance().getAllowHigherLimitForMaxCpuTimeOfOneTx());
+    }
+
+    try {
+      this.getNewRewardAlgorithmEffectiveCycle();
+    } catch (IllegalArgumentException e) {
+      if (CommonParameter.getInstance().getAllowNewRewardAlgorithm() == 1) {
+        this.put(NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE,
+            new BytesCapsule(ByteArray.fromLong(getCurrentCycleNumber())));
+      } else {
+        this.put(NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE,
+            new BytesCapsule(ByteArray.fromLong(Long.MAX_VALUE)));
+      }
     }
 
     try {
@@ -2393,7 +2404,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public boolean useNewRewardAlgorithm() {
-    return getAllowTvmVote() == 1;
+    return getNewRewardAlgorithmEffectiveCycle() != Long.MAX_VALUE;
   }
 
   public void saveNewRewardAlgorithmEffectiveCycle() {
@@ -2408,7 +2419,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return Optional.ofNullable(getUnchecked(NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
-        .orElse(Long.MAX_VALUE);
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE"));
   }
 
   public long getAllowAccountAssetOptimizationFromRoot() {

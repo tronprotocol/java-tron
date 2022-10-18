@@ -429,7 +429,17 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   private void deleteCheckpoint() {
-    checkTmpStore.reset();
+    try {
+      Map<byte[], byte[]> hmap = new HashMap<>();
+      for (Map.Entry<byte[], byte[]> e : checkTmpStore.getDbSource()) {
+        hmap.put(e.getKey(), null);
+      }
+      if (hmap.size() != 0) {
+        checkTmpStore.getDbSource().updateByBatch(hmap);
+      }
+    } catch (Exception e) {
+      throw new TronDBException(e);
+    }
   }
 
   private void pruneCheckpoint() {
@@ -520,7 +530,12 @@ public class SnapshotManager implements RevokingDatabase {
       if (realValue != null) {
         dbMap.get(db).getHead().put(realKey, realValue);
       } else {
-        dbMap.get(db).getHead().remove(realKey);
+        byte op = value[0];
+        if (Value.Operator.DELETE.getValue() == op) {
+          dbMap.get(db).getHead().remove(realKey);
+        } else {
+          dbMap.get(db).getHead().put(realKey, new byte[0]);
+        }
       }
     }
 

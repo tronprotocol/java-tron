@@ -560,6 +560,21 @@ public class ProposalUtil {
         }
         break;
       }
+      case ALLOW_NEW_REWARD_ALGO: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_6)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_NEW_REWARD_ALGO]");
+        }
+        if (dynamicPropertiesStore.useNewRewardAlgorithm()) {
+          throw new ContractValidateException(
+              "New reward algorithm has been valid.");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_NEW_REWARD_ALGO] is only allowed to be 1");
+        }
+        break;
+      }
       case UNFREEZE_DELAY_DAYS: {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_6)) {
           throw new ContractValidateException(
@@ -636,8 +651,8 @@ public class ProposalUtil {
     ALLOW_TVM_LONDON(63), // 0, 1
     ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX(65), // 0, 1
     ALLOW_ASSET_OPTIMIZATION(66), // 0, 1
-    UNFREEZE_DELAY_DAYS(67); // 0, [1, 365]
-
+    ALLOW_NEW_REWARD_ALGO(67), // 0, 1
+    UNFREEZE_DELAY_DAYS(68); // 0, 1
 
     private long code;
 

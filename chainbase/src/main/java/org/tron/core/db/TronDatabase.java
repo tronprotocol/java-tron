@@ -59,7 +59,7 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
   }
 
   @PostConstruct
-  private void init() {
+  protected void init() {
     dbStatService.register(dbSource);
   }
 
