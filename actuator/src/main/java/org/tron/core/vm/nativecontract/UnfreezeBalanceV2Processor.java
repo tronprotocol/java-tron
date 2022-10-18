@@ -58,23 +58,23 @@ public class UnfreezeBalanceV2Processor {
       case ENERGY:
         // validate frozen balance
         if (!this.checkExistFrozenBalance(accountCapsule, Common.ResourceCode.ENERGY)) {
-          throw new ContractValidateException("no frozenBalance(Energy)");
+          throw new ContractValidateException("no frozenBalance(ENERGY)");
         }
         break;
       case TRON_POWER:
         if (dynamicStore.supportAllowNewResourceModel()) {
           if (!this.checkExistFrozenBalance(accountCapsule, Common.ResourceCode.TRON_POWER)) {
-            throw new ContractValidateException("no frozenBalance(TronPower)");
+            throw new ContractValidateException("no frozenBalance(TRON_POWER)");
           }
         } else {
-          throw new ContractValidateException("ResourceCode error.valid ResourceCode[BANDWIDTH、Energy]");
+          throw new ContractValidateException("ResourceCode error.valid ResourceCode[BANDWIDTH、ENERGY]");
         }
         break;
       default:
         if (dynamicStore.supportAllowNewResourceModel()) {
-          throw new ContractValidateException("ResourceCode error.valid ResourceCode[BANDWIDTH、Energy、TRON_POWER]");
+          throw new ContractValidateException("ResourceCode error.valid ResourceCode[BANDWIDTH、ENERGY、TRON_POWER]");
         } else {
-          throw new ContractValidateException("ResourceCode error.valid ResourceCode[BANDWIDTH、Energy]");
+          throw new ContractValidateException("ResourceCode error.valid ResourceCode[BANDWIDTH、ENERGY]");
         }
     }
 
