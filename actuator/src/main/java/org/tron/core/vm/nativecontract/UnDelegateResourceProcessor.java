@@ -79,13 +79,13 @@ public class UnDelegateResourceProcessor {
         break;
       case ENERGY:
         if (delegatedResourceCapsule.getFrozenBalanceForEnergy() < unDelegateBalance) {
-          throw new ContractValidateException("insufficient delegateFrozenBalance(Energy), request="
+          throw new ContractValidateException("insufficient delegateFrozenBalance(ENERGY), request="
               + unDelegateBalance + ", balance=" + delegatedResourceCapsule.getFrozenBalanceForEnergy());
         }
         break;
       default:
         throw new ContractValidateException(
-            "ResourceCode error.valid ResourceCode[BANDWIDTH、Energy]");
+            "ResourceCode error.valid ResourceCode[BANDWIDTH、ENERGY]");
     }
   }
 
