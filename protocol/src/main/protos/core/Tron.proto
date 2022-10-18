@@ -192,6 +192,8 @@ message Account {
   // the identity of this account, case insensitive
   bytes account_id = 23;
 
+  int64 net_window_size = 24;
+
   message AccountResource {
     // energy resource, get from frozen
     int64 energy_usage = 1;
@@ -209,6 +211,7 @@ message Account {
     int64 storage_usage = 7;
     int64 latest_exchange_storage_time = 8;
 
+    int64 energy_window_size = 9;
   }
   AccountResource account_resource = 26;
   bytes codeHash = 30;

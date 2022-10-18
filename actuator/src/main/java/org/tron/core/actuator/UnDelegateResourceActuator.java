@@ -2,6 +2,8 @@ package org.tron.core.actuator;
 
 import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
+import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -135,10 +137,13 @@ public class UnDelegateResourceActuator extends AbstractActuator {
         ownerCapsule.addFrozenBalanceForBandwidthV2(unDelegateBalance);
 
         BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
-        processor.updateUsage(ownerCapsule);
-        long newNetUsage = ownerCapsule.getNetUsage() + transferUsage;
-        ownerCapsule.setNetUsage(newNetUsage);
-        ownerCapsule.setLatestConsumeTime(chainBaseManager.getHeadSlot());
+
+        long now = chainBaseManager.getHeadSlot();
+        if (Objects.nonNull(receiverCapsule) && transferUsage > 0) {
+          ownerCapsule.setNetUsage(processor.unDelegateIncrease(ownerCapsule, receiverCapsule,
+                  transferUsage, BANDWIDTH, now));
+          ownerCapsule.setLatestConsumeTime(now);
+        }
       }
       break;
       case ENERGY: {
@@ -148,10 +153,13 @@ public class UnDelegateResourceActuator extends AbstractActuator {
         ownerCapsule.addFrozenBalanceForEnergyV2(unDelegateBalance);
 
         EnergyProcessor processor = new EnergyProcessor(dynamicStore, accountStore);
-        processor.updateUsage(ownerCapsule);
-        long newEnergyUsage = ownerCapsule.getEnergyUsage() + transferUsage;
-        ownerCapsule.setEnergyUsage(newEnergyUsage);
-        ownerCapsule.setLatestConsumeTimeForEnergy(chainBaseManager.getHeadSlot());
+
+        long now = chainBaseManager.getHeadSlot();
+        if (Objects.nonNull(receiverCapsule) && transferUsage > 0) {
+          ownerCapsule.setEnergyUsage(processor.unDelegateIncrease(ownerCapsule, receiverCapsule,
+                  transferUsage, ENERGY, now));
+          ownerCapsule.setLatestConsumeTimeForEnergy(now);
+        }
       }
       break;
       default:
@@ -215,7 +223,7 @@ public class UnDelegateResourceActuator extends AbstractActuator {
       throw new ContractValidateException("No support for resource delegate");
     }
 
-    if (dynamicStore.getUnfreezeDelayDays() == 0) {
+    if (!dynamicStore.supportUnfreezeDelay()) {
       throw new ContractValidateException("Not support Delegate resource transaction,"
           + " need to be opened by the committee");
     }

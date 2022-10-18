@@ -43,9 +43,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.core.config.Parameter.ChainConstant.WINDOW_SIZE_MS;
 import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
 import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 import static org.tron.protos.contract.Common.ResourceCode.TRON_POWER;
+import static org.tron.protos.contract.Common.ResourceCode;
 
 @Slf4j(topic = "capsule")
 public class AccountCapsule implements ProtoCapsule<Account>, Comparable<AccountCapsule> {
@@ -969,6 +972,14 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return this.account.getNetUsage();
   }
 
+  public long getUsage(ResourceCode resourceCode) {
+    if (resourceCode == BANDWIDTH) {
+      return this.account.getNetUsage();
+    } else {
+      return this.account.getAccountResource().getEnergyUsage();
+    }
+  }
+
   public void setNetUsage(long netUsage) {
     this.account = this.account.toBuilder()
         .setNetUsage(netUsage).build();
@@ -1262,4 +1273,30 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     this.account = this.account.toBuilder().clearUnfrozenV2().build();
   }
 
+  public void setNewWindowSize(ResourceCode resourceCode, long newWindowSize) {
+    if (resourceCode == BANDWIDTH) {
+      this.account = this.account.toBuilder().setNetWindowSize(newWindowSize).build();
+    } else {
+      this.account = this.account.toBuilder().setAccountResource(this.account.getAccountResource()
+              .toBuilder().setEnergyWindowSize(newWindowSize).build()).build();
+    }
+  }
+
+  public long getWindowSize(ResourceCode resourceCode) {
+    long windowSize;
+    if (resourceCode == BANDWIDTH) {
+      windowSize = this.account.getNetWindowSize();
+    } else {
+      windowSize = this.account.getAccountResource().getEnergyWindowSize();
+    }
+    return windowSize == 0 ? WINDOW_SIZE_MS / BLOCK_PRODUCED_INTERVAL : windowSize;
+  }
+
+  public long getLastConsumeTime(ResourceCode resourceCode) {
+    if (resourceCode == BANDWIDTH) {
+      return this.account.getLatestConsumeTime();
+    } else {
+      return this.account.getAccountResource().getLatestConsumeTimeForEnergy();
+    }
+  }
 }
