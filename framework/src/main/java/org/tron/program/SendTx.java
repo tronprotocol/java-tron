@@ -16,6 +16,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
@@ -29,13 +32,14 @@ import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 public class SendTx {
 
   private ExecutorService broadcastExecutorService;
+  ScheduledExecutorService scheduledExecutorService;
   private List<WalletGrpc.WalletBlockingStub> blockingStubFullList = new ArrayList<>();
   private int onceSendTxNum; //batch send num once
   private int maxRows; //max read rows from file
+  private static boolean isScheduled = false;
 
   public SendTx(String[] fullNodes, int broadcastThreadNum, int onceSendTxNum, int maxRows) {
     broadcastExecutorService = Executors.newFixedThreadPool(broadcastThreadNum);
-
     for (String fullNode : fullNodes) {
       //construct grpc stub
       ManagedChannel channelFull = ManagedChannelBuilder.forTarget(fullNode)
@@ -47,7 +51,17 @@ public class SendTx {
     }
   }
 
-  private void sendTx(List<Transaction> list) {
+  private void sendTxByScheduled(List<Transaction> list) {
+    Random random = new Random();
+    list.forEach(transaction -> {
+      scheduledExecutorService.schedule(()-> {
+        int index = random.nextInt(blockingStubFullList.size());
+        blockingStubFullList.get(index).broadcastTransaction(transaction);
+      },1, TimeUnit.SECONDS);
+    });
+  }
+
+  private void send(List<Transaction> list){
     Random random = new Random();
     List<Future<Boolean>> futureList = new ArrayList<>(list.size());
     list.forEach(transaction -> {
@@ -64,6 +78,15 @@ public class SendTx {
         e.printStackTrace();
       }
     });
+
+  }
+
+  private void sendTx(List<Transaction> list) {
+    if (isScheduled) {
+      sendTxByScheduled(list);
+    } else {
+      send(list);
+    }
   }
 
   private void readTxAndSend(String path) {
@@ -156,6 +179,11 @@ public class SendTx {
         GenerateTransaction.start();
       }
       return;
+    }
+
+    String scheduledParam = System.getProperty("scheduled");
+    if (StringUtils.isNoneEmpty(scheduledParam)) {
+      isScheduled = true;
     }
 
     String[] fullNodes = args[0].split(";");
