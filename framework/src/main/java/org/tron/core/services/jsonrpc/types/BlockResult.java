@@ -79,10 +79,10 @@ public class BlockResult {
 
   @Getter
   @Setter
-  private String baseFeePerGas = null;
+  private String baseFeePerGas = "0x0";
   @Getter
   @Setter
-  private String mixHash = null;
+  private String mixHash = ByteArray.toJsonHex(new byte[32]);
 
   public BlockResult(Block block, boolean fullTx, Wallet wallet) {
     BlockCapsule blockCapsule = new BlockCapsule(block);
@@ -91,20 +91,26 @@ public class BlockResult {
     hash = ByteArray.toJsonHex(blockCapsule.getBlockId().getBytes());
     parentHash =
         ByteArray.toJsonHex(block.getBlockHeader().getRawData().getParentHash().toByteArray());
-    nonce = null; // no value
-    sha3Uncles = null; // no value
+    nonce = ByteArray.toJsonHex(new byte[8]); // no value
+    sha3Uncles = ByteArray.toJsonHex(new byte[32]); // no value
     logsBloom = ByteArray.toJsonHex(new byte[256]); // no value
     transactionsRoot = ByteArray
         .toJsonHex(block.getBlockHeader().getRawData().getTxTrieRoot().toByteArray());
     stateRoot = ByteArray
         .toJsonHex(block.getBlockHeader().getRawData().getAccountStateRoot().toByteArray());
-    receiptsRoot = null; // no value
-    miner = ByteArray.toJsonHexAddress(blockCapsule.getWitnessAddress().toByteArray());
-    difficulty = null; // no value
-    totalDifficulty = null; // no value
-    extraData = null; // no value
+    receiptsRoot = ByteArray.toJsonHex(new byte[32]); // no value
+
+    if (blockCapsule.getNum() == 0) {
+      miner = ByteArray.toJsonHex(new byte[20]);
+    } else {
+      miner = ByteArray.toJsonHexAddress(blockCapsule.getWitnessAddress().toByteArray());
+    }
+
+    difficulty = "0x0"; // no value
+    totalDifficulty = "0x0"; // no value
+    extraData = "0x"; // no value
     size = ByteArray.toJsonHex(block.getSerializedSize());
-    timestamp = ByteArray.toJsonHex(blockCapsule.getTimeStamp());
+    timestamp = ByteArray.toJsonHex(blockCapsule.getTimeStamp() / 1000);
 
     long gasUsedInBlock = 0;
     long gasLimitInBlock = 0;

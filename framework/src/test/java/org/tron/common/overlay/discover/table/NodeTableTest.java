@@ -21,7 +21,7 @@ public class NodeTableTest {
 
   @Test
   public void test() {
-    Node node1 = Node.instanceOf("127.0.0.1:10002");
+    Node node1 = Node.instanceOf("127.0.0.5:10002");
 
     NodeTable table = new NodeTable(node1);
     Node nodeTemp = table.getNode();
@@ -132,6 +132,9 @@ public class NodeTableTest {
     nodeTable.addNode(node);
     Assert.assertTrue(nodeTable.contains(node));
     nodeTable.dropNode(node);
+    Assert.assertTrue(!nodeTable.contains(node));
+    nodeTable.addNode(node);
+    nodeTable.dropNode(new Node(ids.get(1), ips[0], 10000, 10000));
     Assert.assertTrue(!nodeTable.contains(node));
   }
 

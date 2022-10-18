@@ -189,7 +189,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] UNFREEZE_DELAY_DAYS = "UNFREEZE_DELAY_DAYS".getBytes();
 
-
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -850,6 +849,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
+      this.getNewRewardAlgorithmEffectiveCycle();
+    } catch (IllegalArgumentException e) {
+      if (CommonParameter.getInstance().getAllowNewRewardAlgorithm() == 1) {
+        this.put(NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE,
+            new BytesCapsule(ByteArray.fromLong(getCurrentCycleNumber())));
+      } else {
+        this.put(NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE,
+            new BytesCapsule(ByteArray.fromLong(Long.MAX_VALUE)));
+      }
+    }
+
+    try {
       this.getUnfreezeDelayDays();
     } catch (IllegalArgumentException e) {
       this.saveUnfreezeDelayDays(
@@ -915,7 +926,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public void saveBlockFilledSlotsIndex(int blockFilledSlotsIndex) {
-    logger.debug("blockFilledSlotsIndex:" + blockFilledSlotsIndex);
+    logger.debug("BlockFilledSlotsIndex: {}.", blockFilledSlotsIndex);
     this.put(BLOCK_FILLED_SLOTS_INDEX,
         new BytesCapsule(ByteArray.fromInt(blockFilledSlotsIndex)));
   }
@@ -1946,7 +1957,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public void saveBlockFilledSlots(int[] blockFilledSlots) {
-    logger.debug("blockFilledSlots:" + intArrayToString(blockFilledSlots));
+    logger.debug("BlockFilledSlots: {}.", intArrayToString(blockFilledSlots));
     this.put(BLOCK_FILLED_SLOTS,
         new BytesCapsule(ByteArray.fromString(intArrayToString(blockFilledSlots))));
   }
@@ -2044,7 +2055,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
           .orElseThrow(
               () -> new IllegalArgumentException("not found latest block header number"));
     } catch (ItemNotFoundException | BadItemException e) {
-      logger.error("{}", e);
+      logger.error("Get header from DB, {}.", e.getMessage());
     }
     return -1;
   }
@@ -2071,7 +2082,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
    * save timestamp of creating global latest block.
    */
   public void saveLatestBlockHeaderTimestamp(long t) {
-    logger.info("update latest block header timestamp = {}", t);
+    logger.info("Update latest block header timestamp = {}.", t);
     this.put(LATEST_BLOCK_HEADER_TIMESTAMP, new BytesCapsule(ByteArray.fromLong(t)));
   }
 
@@ -2079,7 +2090,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
    * save number of global latest block.
    */
   public void saveLatestBlockHeaderNumber(long n) {
-    logger.info("update latest block header number = {}", n);
+    logger.info("Update latest block header number = {}.", n);
     this.put(LATEST_BLOCK_HEADER_NUMBER, new BytesCapsule(ByteArray.fromLong(n)));
   }
 
@@ -2087,12 +2098,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
    * save id of global latest block.
    */
   public void saveLatestBlockHeaderHash(ByteString h) {
-    logger.info("update latest block header id = {}", ByteArray.toHexString(h.toByteArray()));
+    logger.info("Update latest block header id = {}.", ByteArray.toHexString(h.toByteArray()));
     this.put(LATEST_BLOCK_HEADER_HASH, new BytesCapsule(h.toByteArray()));
   }
 
   public void saveStateFlag(int n) {
-    logger.info("update state flag = {}", n);
+    logger.info("Update state flag = {}.", n);
     this.put(STATE_FLAG, new BytesCapsule(ByteArray.fromInt(n)));
   }
 
@@ -2122,8 +2133,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     saveNextMaintenanceTime(nextMaintenanceTime);
 
     logger.info(
-        "do update nextMaintenanceTime,currentMaintenanceTime:{}, blockTime:{},"
-            + "nextMaintenanceTime:{}",
+        "Do update nextMaintenanceTime, currentMaintenanceTime: {}, blockTime: {}, "
+            + "nextMaintenanceTime: {}.",
         new DateTime(currentMaintenanceTime), new DateTime(blockTime),
         new DateTime(nextMaintenanceTime)
     );
@@ -2200,7 +2211,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
    * save allow protobuf  number.
    */
   public void saveAllowProtoFilterNum(long num) {
-    logger.info("update allow protobuf number = {}", num);
+    logger.info("Update allow protobuf number = {}.", num);
     this.put(ALLOW_PROTO_FILTER_NUM, new BytesCapsule(ByteArray.fromLong(num)));
   }
 
@@ -2393,7 +2404,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public boolean useNewRewardAlgorithm() {
-    return getAllowTvmVote() == 1;
+    return getNewRewardAlgorithmEffectiveCycle() != Long.MAX_VALUE;
   }
 
   public void saveNewRewardAlgorithmEffectiveCycle() {
@@ -2408,7 +2419,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return Optional.ofNullable(getUnchecked(NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
-        .orElse(Long.MAX_VALUE);
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE"));
   }
 
   public long getAllowAccountAssetOptimizationFromRoot() {

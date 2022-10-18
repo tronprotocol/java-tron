@@ -21,7 +21,6 @@ public class Parameter {
     VERSION_4_5(24, 1596780000000L, 80),
     VERSION_4_6(25, 1596780000000L, 80);
 
-
     @Getter
     private int value;
     @Getter

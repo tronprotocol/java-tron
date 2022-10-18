@@ -1099,6 +1099,11 @@ public class Wallet {
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getNewRewardAlgorithm")
+        .setValue(dbManager.getDynamicPropertiesStore().useNewRewardAlgorithm() ? 1 : 0)
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getUnfreezeDelayDays")
             .setValue(dbManager.getDynamicPropertiesStore().getUnfreezeDelayDays())
             .build());

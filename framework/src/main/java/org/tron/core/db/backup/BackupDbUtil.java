@@ -15,7 +15,7 @@ import org.tron.core.db2.core.Chainbase;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.db2.core.SnapshotRoot;
 
-@Slf4j
+@Slf4j(topic = "DB")
 @Component
 public class BackupDbUtil {
 
@@ -95,16 +95,16 @@ public class BackupDbUtil {
           deleteBackup(DB_BACKUP_INDEX2);
           break;
         default:
-          logger.warn("invalid backup state");
+          logger.warn("invalid backup state {}.", getBackupState());
       }
     } catch (RocksDBException | SecurityException e) {
-      logger.warn("backup db error:" + e);
+      logger.warn("Backup db error.", e);
     }
     long timeUsed = System.currentTimeMillis() - t1;
     logger
-        .info("current block number is {}, backup all store use {} ms!", block.getNum(), timeUsed);
+        .info("Current block number is {}, backup all store use {} ms!", block.getNum(), timeUsed);
     if (timeUsed >= 3000) {
-      logger.warn("backing up db uses too much time.");
+      logger.warn("Backing up db uses too much time. {} ms.", timeUsed);
     }
   }
 
@@ -115,7 +115,7 @@ public class BackupDbUtil {
     } else if (i == DB_BACKUP_INDEX2) {
       path = parameter.getDbBackupConfig().getBak2path();
     } else {
-      throw new RuntimeException("Error backup with undefined index");
+      throw new RuntimeException(String.format("error backup with undefined index %d", i));
     }
     List<Chainbase> stores = ((SnapshotManager) db).getDbs();
     for (Chainbase store : stores) {
@@ -134,7 +134,7 @@ public class BackupDbUtil {
     } else if (i == DB_BACKUP_INDEX2) {
       path = parameter.getDbBackupConfig().getBak2path();
     } else {
-      throw new RuntimeException("Error deleteBackup with undefined index");
+      throw new RuntimeException(String.format("error deleteBackup with undefined index %d", i));
     }
     List<Chainbase> stores = ((SnapshotManager) db).getDbs();
     for (Chainbase store : stores) {

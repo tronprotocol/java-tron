@@ -214,6 +214,7 @@ public class Args extends CommonParameter {
     PARAMETER.shutdownBlockHeight = -1;
     PARAMETER.shutdownBlockCount = -1;
     PARAMETER.blockCacheTimeout = 60;
+    PARAMETER.allowNewRewardAlgorithm = 0;
   }
 
   /**
@@ -500,6 +501,11 @@ public class Args extends CommonParameter {
             Optional.ofNullable(PARAMETER.storageTransactionHistorySwitch)
                 .filter(StringUtils::isNotEmpty)
                 .orElse(Storage.getTransactionHistorySwitchFromConfig(config)));
+
+    PARAMETER.storage
+        .setCheckpointVersion(Storage.getCheckpointVersionFromConfig(config));
+    PARAMETER.storage
+        .setCheckpointSync(Storage.getCheckpointSyncFromConfig(config));
 
     PARAMETER.storage.setEstimatedBlockTransactions(
         Storage.getEstimatedTransactionsFromConfig(config));
@@ -940,6 +946,10 @@ public class Args extends CommonParameter {
     PARAMETER.allowHigherLimitForMaxCpuTimeOfOneTx =
         config.hasPath(Constant.COMMITTEE_ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX) ? config
             .getInt(Constant.COMMITTEE_ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX) : 0;
+
+    PARAMETER.allowNewRewardAlgorithm =
+        config.hasPath(Constant.COMMITTEE_ALLOW_NEW_REWARD_ALGORITHM) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_NEW_REWARD_ALGORITHM) : 0;
 
     initBackupProperty(config);
     if (Constant.ROCKSDB.equalsIgnoreCase(CommonParameter

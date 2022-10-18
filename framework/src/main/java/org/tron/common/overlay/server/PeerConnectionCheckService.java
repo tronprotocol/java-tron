@@ -30,18 +30,18 @@ public class PeerConnectionCheckService {
     if (isFastForward || !isOpenFullTcpDisconnect) {
       return;
     }
-    logger.info("Start peer connection check service.");
+    logger.info("Start peer connection check service");
     poolLoopExecutor.scheduleWithFixedDelay(() -> {
       try {
         check();
       } catch (Throwable t) {
-        logger.error("Exception in peer connection check.", t);
+        logger.error("Exception in peer connection check", t);
       }
     }, 10, 30, TimeUnit.SECONDS);
   }
 
   public void close() {
-    logger.info("Close peer connection check service.");
+    logger.info("Close peer connection check service");
     poolLoopExecutor.shutdown();
   }
 

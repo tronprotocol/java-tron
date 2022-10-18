@@ -120,7 +120,7 @@ public class Channel {
     setStartTime(msg.getTimestamp());
     setTronState(TronState.HANDSHAKE_FINISHED);
     getNodeStatistics().p2pHandShake.add();
-    logger.info("Finish handshake with {}.", ctx.channel().remoteAddress());
+    logger.info("Finish handshake with {}", ctx.channel().remoteAddress());
   }
 
   /**
@@ -215,7 +215,7 @@ public class Channel {
 
   public void setTronState(TronState tronState) {
     this.tronState = tronState;
-    logger.info("Peer {} status change to {}.", inetSocketAddress, tronState);
+    logger.info("Peer {} status change to {}", inetSocketAddress, tronState);
   }
 
   public boolean isActive() {

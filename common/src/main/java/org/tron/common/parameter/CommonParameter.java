@@ -559,6 +559,10 @@ public class CommonParameter {
 
   @Getter
   @Setter
+  public long allowNewRewardAlgorithm;
+
+  @Getter
+  @Setter
   public long unfreezeDelayDays = 0L;
 
   private static double calcMaxTimeRatio() {

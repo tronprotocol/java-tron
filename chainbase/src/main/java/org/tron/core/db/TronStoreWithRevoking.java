@@ -76,12 +76,12 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
                 dbName, CommonParameter.getInstance()
                 .getRocksDBCustomSettings(), getDirectComparator()));
       } else {
-        throw new RuntimeException("dbEngine is error.");
+        throw new RuntimeException(String.format("db engine %s is error", dbEngine));
       }
       this.revokingDB = new Chainbase(new SnapshotRoot(this.db));
 
     } else {
-      throw new RuntimeException("db version is error.");
+      throw new RuntimeException(String.format("db version %d is error", dbVersion));
     }
   }
 
@@ -99,7 +99,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
       this.db = db;
       this.revokingDB = new Chainbase(new SnapshotRoot(db));
     } else {
-      throw new RuntimeException("db version is only 2.(" + dbVersion + ")");
+      throw new RuntimeException(String.format("db version is only 2, actual: %d", dbVersion));
     }
   }
 
@@ -196,7 +196,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
       try {
         ((DBIterator) iterator).close();
       } catch (IOException e) {
-        logger.error("", e);
+        logger.error("Close jni iterator.", e);
       }
     }
   }
