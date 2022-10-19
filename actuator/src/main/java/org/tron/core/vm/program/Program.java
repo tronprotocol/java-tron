@@ -8,9 +8,7 @@ import static org.apache.commons.lang3.ArrayUtils.isEmpty;
 import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
 import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
 import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
-import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
-import static org.tron.core.config.Parameter.ChainConstant.WINDOW_SIZE_MS;
 
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
@@ -55,6 +53,7 @@ import org.tron.core.vm.VM;
 import org.tron.core.vm.VMConstant;
 import org.tron.core.vm.VMUtils;
 import org.tron.core.vm.config.VMConfig;
+import org.tron.core.vm.nativecontract.CancelUnfreezeProcessor;
 import org.tron.core.vm.nativecontract.DelegateResourceProcessor;
 import org.tron.core.vm.nativecontract.FreezeBalanceProcessor;
 import org.tron.core.vm.nativecontract.FreezeBalanceV2Processor;
@@ -64,6 +63,7 @@ import org.tron.core.vm.nativecontract.UnfreezeBalanceV2Processor;
 import org.tron.core.vm.nativecontract.VoteWitnessProcessor;
 import org.tron.core.vm.nativecontract.WithdrawExpireUnfreezeProcessor;
 import org.tron.core.vm.nativecontract.WithdrawRewardProcessor;
+import org.tron.core.vm.nativecontract.param.CancelUnfreezeParam;
 import org.tron.core.vm.nativecontract.param.DelegateResourceParam;
 import org.tron.core.vm.nativecontract.param.FreezeBalanceParam;
 import org.tron.core.vm.nativecontract.param.FreezeBalanceV2Param;
@@ -526,6 +526,26 @@ public class Program {
                 inheritorCapsule.addFrozenBalanceForResource(
                     freezeV2.getType(), freezeV2.getAmount()));
 
+    // merge usage
+    long newNetUsage =
+        repo.increaseV2(
+            inheritorCapsule,
+            Common.ResourceCode.BANDWIDTH,
+            inheritorCapsule.getNetUsage(),
+            ownerCapsule.getNetUsage(),
+            inheritorCapsule.getLatestConsumeTime(),
+            now);
+    inheritorCapsule.setNetUsage(newNetUsage);
+    long newEnergyUsage =
+        repo.increaseV2(
+            inheritorCapsule,
+            Common.ResourceCode.ENERGY,
+            inheritorCapsule.getEnergyUsage(),
+            ownerCapsule.getEnergyUsage(),
+            inheritorCapsule.getLatestConsumeTimeForEnergy(),
+            now);
+    inheritorCapsule.setEnergyUsage(newEnergyUsage);
+
     // withdraw expire unfrozen balance
     long expireUnfrozenBalance =
         ownerCapsule.getUnfrozenV2List().stream()
@@ -589,8 +609,10 @@ public class Program {
   }
 
   private boolean freezeV2Check(AccountCapsule accountCapsule) {
+    if (!VMConfig.allowTvmFreezeV2()) {
+      return true;
+    }
     long now = ChainBaseManager.getInstance().getHeadSlot();
-    long oneDayTime = WINDOW_SIZE_MS / BLOCK_PRODUCED_INTERVAL;
 
     boolean isDelegatedResourceEmpty =
         accountCapsule.getDelegatedFrozenBalanceForBandwidth() == 0
@@ -600,20 +622,8 @@ public class Program {
             accountCapsule.getUnfrozenV2List().stream()
                 .filter(unFreezeV2 -> unFreezeV2.getUnfreezeExpireTime() > now)
                 .collect(Collectors.toList()));
-    boolean isEnergyUsageEmpty =
-        accountCapsule.getEnergyUsage() == 0
-            || (accountCapsule.getEnergyUsage() > 0
-                && (now - accountCapsule.getLatestConsumeTimeForEnergy() >= oneDayTime));
-    boolean isNetUsageEmpty =
-        accountCapsule.getNetUsage() == 0
-            || (accountCapsule.getNetUsage() > 0
-                && (now - accountCapsule.getLatestConsumeTime() >= oneDayTime));
 
-    return !VMConfig.allowTvmFreezeV2()
-        || (isDelegatedResourceEmpty
-            && isUnFrozenV2ListEmpty
-            && isEnergyUsageEmpty
-            && isNetUsageEmpty);
+    return isDelegatedResourceEmpty && isUnFrozenV2ListEmpty;
   }
 
   @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
@@ -1906,6 +1916,34 @@ public class Program {
       internalTx.reject();
     }
     return 0;
+  }
+
+  public boolean cancelUnfreezeAction() {
+    Repository repository = getContractState().newRepositoryChild();
+    byte[] owner = getContextAddress();
+
+    increaseNonce();
+    InternalTransaction internalTx = addInternalTx(null, owner, owner, 0, null,
+        "cancelUnfreeze", nonce, null);
+
+    try {
+      CancelUnfreezeParam param = new CancelUnfreezeParam();
+      param.setOwnerAddress(owner);
+
+      CancelUnfreezeProcessor processor = new CancelUnfreezeProcessor();
+      processor.validate(param, repository);
+      processor.execute(param, repository);
+      repository.commit();
+      return true;
+    } catch (ContractValidateException e) {
+      logger.error("TVM cancelUnfreezeV2Action: validate failure. Reason: {}", e.getMessage());
+    } catch (ContractExeException e) {
+      logger.error("TVM cancelUnfreezeV2Action: execute failure. Reason: {}", e.getMessage());
+    }
+    if (internalTx != null) {
+      internalTx.reject();
+    }
+    return false;
   }
 
   public boolean delegateResource(

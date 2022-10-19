@@ -21,6 +21,7 @@ import org.tron.core.vm.repository.Key;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.Value;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.contract.Common;
 
 public class ContractState implements Repository, ProgramListenerAware {
 
@@ -226,6 +227,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   @Override
   public long getAccountEnergyUsageFromFreeze(AccountCapsule accountCapsule) {
     return repository.getAccountEnergyUsageFromFreeze(accountCapsule);
+  }
+
+  @Override
+  public long increaseV2(AccountCapsule accountCapsule, Common.ResourceCode resourceCode, long lastUsage, long usage, long lastTime, long now) {
+    return repository.increaseV2(accountCapsule, resourceCode, lastUsage, usage, lastTime, now);
   }
 
   @Override

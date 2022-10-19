@@ -814,6 +814,16 @@ public class OperationActions {
     program.step();
   }
 
+  public static void cancelUnfreezeAction(Program program) {
+    if (program.isStaticCall()) {
+      throw new Program.StaticCallModificationException();
+    }
+
+    boolean result = program.cancelUnfreezeAction();
+    program.stackPush(result ? DataWord.ONE() : DataWord.ZERO());
+    program.step();
+  }
+
   public static void delegateResourceAction(Program program) {
     if (program.isStaticCall()) {
       throw new Program.StaticCallModificationException();

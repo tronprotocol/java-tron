@@ -63,6 +63,7 @@ import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.DelegatedResource;
 import org.tron.protos.Protocol.Votes;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.Common;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 
 @Slf4j(topic = "Repository")
@@ -178,6 +179,45 @@ public class RepositoryImpl implements Repository {
     long latestConsumeTime = accountCapsule.getAccountResource().getLatestConsumeTimeForEnergy();
 
     return increase(energyUsage, 0, latestConsumeTime, now);
+  }
+
+  public long increaseV2(
+      AccountCapsule accountCapsule,
+      Common.ResourceCode resourceCode,
+      long lastUsage,
+      long usage,
+      long lastTime,
+      long now) {
+    long oldWindowSize = accountCapsule.getWindowSize(resourceCode);
+    /* old logic */
+    long averageLastUsage = divideCeil(lastUsage * this.precision, oldWindowSize);
+    long averageUsage = divideCeil(usage * this.precision, this.windowSize);
+
+    if (lastTime != now) {
+      assert now > lastTime;
+      if (lastTime + oldWindowSize > now) {
+        long delta = now - lastTime;
+        double decay = (oldWindowSize - delta) / (double) oldWindowSize;
+        averageLastUsage = Math.round(averageLastUsage * decay);
+      } else {
+        averageLastUsage = 0;
+      }
+    }
+    /* new logic */
+    long newUsage = getUsage(averageLastUsage, oldWindowSize) +
+        getUsage(averageUsage, this.windowSize);
+    if (dynamicPropertiesStore.supportUnfreezeDelay()) {
+      long remainUsage = getUsage(averageLastUsage, oldWindowSize);
+      if (remainUsage == 0) {
+        accountCapsule.setNewWindowSize(resourceCode, this.windowSize);
+        return newUsage;
+      }
+      long remainWindowSize = oldWindowSize - (now - lastTime);
+      long newWindowSize = (remainWindowSize * remainUsage + this.windowSize * usage)
+          / newUsage;
+      accountCapsule.setNewWindowSize(resourceCode, newWindowSize);
+    }
+    return newUsage;
   }
 
   public Pair<Long, Long> getAccountEnergyUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule) {

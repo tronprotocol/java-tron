@@ -241,6 +241,7 @@ public class Op {
   public static final int WITHDRAWEXPIREUNFREEZE = 0xdc;
   public static final int DELEGATERESOURCE = 0xdd;
   public static final int UNDELEGATERESOURCE = 0xde;
+  public static final int CANCELUNFREEZE = 0xdf;
 
   // (0xf0) Create a new account with associated code
   public static final int CREATE = 0xf0;

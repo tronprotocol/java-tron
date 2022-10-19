@@ -598,6 +598,12 @@ public class OperationRegistry {
         EnergyCost::getWithdrawExpireUnfreezeCost,
         OperationActions::withdrawExpireUnfreezeAction,
         proposal));
+
+    table.set(new Operation(
+        Op.CANCELUNFREEZE, 0, 1,
+        EnergyCost::getCancelUnfreezeCost,
+        OperationActions::cancelUnfreezeAction,
+        proposal));
   }
 
   public static void appendDelegateOperations(JumpTable table) {

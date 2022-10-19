@@ -53,8 +53,10 @@ public class DelegateResourceProcessor {
       case BANDWIDTH: {
         BandwidthProcessor processor = new BandwidthProcessor(ChainBaseManager.getInstance());
         processor.updateUsage(ownerCapsule);
-        //The unit is trx
-        long netTrxUsage = (long) (ownerCapsule.getNetUsage()
+        // The unit is trx
+        double netUsageRatio = (double) ownerCapsule.getFrozenV2BalanceForBandwidth()
+            / ownerCapsule.getAllFrozenBalanceForBandwidth();
+        long netTrxUsage = (long) (ownerCapsule.getNetUsage() * netUsageRatio
             * ((double) (repo.getTotalNetWeight()) / dynamicStore.getTotalNetLimit()));
 
         if (ownerCapsule.getFrozenV2BalanceForBandwidth() - netTrxUsage * TRX_PRECISION
@@ -69,8 +71,10 @@ public class DelegateResourceProcessor {
               new EnergyProcessor(dynamicStore, ChainBaseManager.getInstance().getAccountStore());
         processor.updateUsage(ownerCapsule);
 
-        //The unit is trx
-        long energyTrxUsage = (long) (ownerCapsule.getEnergyUsage()
+        // The unit is trx
+        double energyUsageRatio = (double) ownerCapsule.getFrozenV2BalanceForEnergy()
+            / ownerCapsule.getAllFrozenBalanceForEnergy();
+        long energyTrxUsage = (long) (ownerCapsule.getEnergyUsage() * energyUsageRatio
             * ((double) (repo.getTotalEnergyWeight()) / dynamicStore.getTotalEnergyCurrentLimit()));
 
         if (ownerCapsule.getFrozenV2BalanceForEnergy() - energyTrxUsage * TRX_PRECISION
