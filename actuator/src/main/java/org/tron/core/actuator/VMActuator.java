@@ -116,7 +116,8 @@ public class VMActuator implements Actuator2 {
     OperationRegistry.init();
     trx = context.getTrxCap().getInstance();
     blockCap = context.getBlockCap();
-    if (VMConfig.allowTvmFreeze() && context.getTrxCap().getTrxTrace() != null) {
+    if ((VMConfig.allowTvmFreeze() || VMConfig.allowTvmFreezeV2())
+        && context.getTrxCap().getTrxTrace() != null) {
       receipt = context.getTrxCap().getTrxTrace().getReceipt();
     }
     //Route Type
