@@ -152,7 +152,7 @@ test {
     }
     maxHeapSize = "1024m"
     doFirst {
-        forkEvery = 5
+        forkEvery = 100
         jvmArgs "-XX:MetaspaceSize=128m","-XX:MaxMetaspaceSize=256m"
     }
 }
