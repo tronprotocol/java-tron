@@ -100,17 +100,18 @@ public class PrecompiledContracts {
   private static final EthRipemd160 ethRipemd160 = new EthRipemd160();
   private static final Blake2F blake2F = new Blake2F();
 
+  // FreezeV2 PrecompileContracts
   private static final GetChainParameter getChainParameter = new GetChainParameter();
-  private static final ExpireFreezeV2Balance expireFreezeV2Balance = new ExpireFreezeV2Balance();
-  private static final TotalFrozenBalanceV2 totalFrozenBalanceV2 = new TotalFrozenBalanceV2();
-  private static final ResourceV2 resourceV2 = new ResourceV2();
-  private static final ResourceUsage resourceUsage = new ResourceUsage();
-
   private static final AvailableUnfreezeV2Size availableUnfreezeSize = new AvailableUnfreezeV2Size();
-
+  private static final TotalFrozenBalanceV2 totalFrozenBalanceV2 = new TotalFrozenBalanceV2();
+  private static final ExpireFrozenBalanceV2 expireFrozenBalanceV2 = new ExpireFrozenBalanceV2();
   private static final DelegatableResource delegatableResource = new DelegatableResource();
-
+  private static final ResourceV2 resourceV2 = new ResourceV2();
   private static final CheckDelegatedResource checkDelegatedResource = new CheckDelegatedResource();
+  private static final ResourceUsage resourceUsage = new ResourceUsage();
+  private static final TotalResource totalResource = new TotalResource();
+  private static final TotalDelegatedResource totalDelegatedResource = new TotalDelegatedResource();
+  private static final TotalAcquiredResource totalAcquiredResource = new TotalAcquiredResource();
 
   private static final DataWord ecRecoverAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000000001");
@@ -153,39 +154,39 @@ public class PrecompiledContracts {
   private static final DataWord totalVoteCountAddr = new DataWord(
       "000000000000000000000000000000000000000000000000000000000100000a");
 
+  // FreezeV2 PrecompileContracts
   private static final DataWord getChainParameterAddr = new DataWord(
       "000000000000000000000000000000000000000000000000000000000100000b");
 
-  private static final DataWord expireFreezeV2BalanceAddr = new DataWord(
+  private static final DataWord availableUnfreezeSizeAddr = new DataWord(
       "000000000000000000000000000000000000000000000000000000000100000c");
 
   private static final DataWord totalFrozenBalanceV2Addr = new DataWord(
       "000000000000000000000000000000000000000000000000000000000100000d");
 
-  private static final DataWord resourceV2Addr = new DataWord(
+  private static final DataWord expireFrozenBalanceV2Addr = new DataWord(
       "000000000000000000000000000000000000000000000000000000000100000e");
 
-  private static final DataWord resourceUsageAddr = new DataWord(
+  private static final DataWord delegatableResourceAddr = new DataWord(
       "000000000000000000000000000000000000000000000000000000000100000f");
 
-  private static final DataWord availableUnfreezeSizeAddr = new DataWord(
+  private static final DataWord resourceV2Addr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000001000010");
 
-  private static final DataWord delegatableResourceAddr = new DataWord(
+  private static final DataWord checkDelegatedResourceAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000001000011");
 
-  private static final DataWord totalResourceAddr = new DataWord(
+  private static final DataWord resourceUsageAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000001000012");
 
-  private static final DataWord totalDelegatedResourceAddr = new DataWord(
+  private static final DataWord totalResourceAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000001000013");
 
-  private static final DataWord totalAcquiredResourceAddr = new DataWord(
+  private static final DataWord totalDelegatedResourceAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000001000014");
 
-  private static final DataWord checkDelegatedResourceAddr = new DataWord(
+  private static final DataWord totalAcquiredResourceAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000001000015");
-
 
   private static final DataWord ethRipemd160Addr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000020003");
@@ -270,28 +271,36 @@ public class PrecompiledContracts {
       if (address.equals(getChainParameterAddr)) {
         return getChainParameter;
       }
-      if (address.equals(expireFreezeV2BalanceAddr)) {
-        return expireFreezeV2Balance;
+      if (address.equals(availableUnfreezeSizeAddr)) {
+        return availableUnfreezeSize;
       }
       if (address.equals(totalFrozenBalanceV2Addr)) {
         return totalFrozenBalanceV2;
       }
-      if (address.equals(resourceV2Addr)) {
-        return resourceV2;
-      }
-      if (address.equals(resourceUsageAddr)) {
-        return resourceUsage;
-      }
-      if (address.equals(availableUnfreezeSizeAddr)) {
-        return availableUnfreezeSize;
+      if (address.equals(expireFrozenBalanceV2Addr)) {
+        return expireFrozenBalanceV2;
       }
       if (address.equals(delegatableResourceAddr)) {
         return delegatableResource;
       }
+      if (address.equals(resourceV2Addr)) {
+        return resourceV2;
+      }
       if (address.equals(checkDelegatedResourceAddr)) {
         return checkDelegatedResource;
       }
-
+      if (address.equals(resourceUsageAddr)) {
+        return resourceUsage;
+      }
+      if (address.equals(totalResourceAddr)) {
+        return totalResource;
+      }
+      if (address.equals(totalDelegatedResourceAddr)) {
+        return totalDelegatedResource;
+      }
+      if (address.equals(totalAcquiredResourceAddr)) {
+        return totalAcquiredResource;
+      }
     }
 
     return null;
@@ -1862,7 +1871,7 @@ public class PrecompiledContracts {
     }
   }
 
-  public static class ExpireFreezeV2Balance extends PrecompiledContract {
+  public static class AvailableUnfreezeV2Size extends PrecompiledContract {
 
     @Override
     public long getEnergyForData(byte[] data) {
@@ -1875,21 +1884,10 @@ public class PrecompiledContracts {
         return Pair.of(true, DataWord.ZERO().getData());
       }
 
-      byte[] caller = TransactionTrace.convertToTronAddress(getCallerAddress());
-      long time = new DataWord(data).longValueSafe();
+      byte[] address = new DataWord(data).toTronAddress();
 
-      if (time < 0) {
-        return Pair.of(true, DataWord.ZERO().getData());
-      }
-
-      if (time >= Long.MAX_VALUE / 1_000) {
-        time = Long.MAX_VALUE;
-      } else {
-        time = time * 1_000;
-      }
-
-      long balance = FreezeV2Util.queryExpireFreezeV2Balance(caller, time, getDeposit());
-      return Pair.of(true, longTo32Bytes(balance));
+      long result = FreezeV2Util.queryAvailableUnfreezeV2Size(address, getDeposit());
+      return Pair.of(true, longTo32Bytes(result));
     }
   }
 
@@ -1915,6 +1913,59 @@ public class PrecompiledContracts {
     }
   }
 
+  public static class ExpireFrozenBalanceV2 extends PrecompiledContract {
+
+    @Override
+    public long getEnergyForData(byte[] data) {
+      return 100;
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+      if (data == null || data.length != WORD_SIZE) {
+        return Pair.of(true, DataWord.ZERO().getData());
+      }
+
+      byte[] caller = TransactionTrace.convertToTronAddress(getCallerAddress());
+      long time = new DataWord(data).longValueSafe();
+
+      if (time < 0) {
+        return Pair.of(true, DataWord.ZERO().getData());
+      }
+
+      if (time >= Long.MAX_VALUE / 1_000) {
+        time = Long.MAX_VALUE;
+      } else {
+        time = time * 1_000;
+      }
+
+      long balance = FreezeV2Util.queryExpireFrozenBalanceV2(caller, time, getDeposit());
+      return Pair.of(true, longTo32Bytes(balance));
+    }
+  }
+
+  public static class DelegatableResource extends PrecompiledContract {
+
+    @Override
+    public long getEnergyForData(byte[] data) {
+      return 100;
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+      if (data == null || data.length != 2 * WORD_SIZE) {
+        return Pair.of(true, DataWord.ZERO().getData());
+      }
+
+      DataWord[] words = DataWord.parseArray(data);
+      byte[] address = words[0].toTronAddress();
+      long type = words[1].longValueSafe();
+
+      long result = FreezeV2Util.queryDelegatableResource(address, type, getDeposit());
+      return Pair.of(true, longTo32Bytes(result));
+    }
+  }
+
   public static class ResourceV2 extends PrecompiledContract {
 
     @Override
@@ -1933,8 +1984,40 @@ public class PrecompiledContracts {
       byte[] to = words[1].toTronAddress();
       long type = words[2].longValueSafe();
 
-      long balance = FreezeV2Util.queryFrozenBalance(from, to, type, getDeposit());
+      long balance;
+      if (Arrays.equals(from, to)) {
+        balance = FreezeV2Util.queryTotalFrozenBalanceV2(from, type, getDeposit());
+      } else {
+        balance = FreezeV2Util.queryFrozenBalanceV2(from, to, type, getDeposit());
+      }
       return Pair.of(true, longTo32Bytes(balance));
+    }
+  }
+
+  public static class CheckDelegatedResource extends PrecompiledContract {
+
+    @Override
+    public long getEnergyForData(byte[] data) {
+      return 100;
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+      if (data == null || data.length != 3 * WORD_SIZE) {
+        return Pair.of(true, encodeMultiRes(DataWord.ZERO().getData(), DataWord.ZERO().getData(), DataWord.ZERO().getData()));
+      }
+
+      DataWord[] words = DataWord.parseArray(data);
+      byte[] target = words[0].toTronAddress();
+      long amount = words[1].longValueSafe();
+      long type = words[2].longValueSafe();
+
+      Triple<Long, Long, Long> values = FreezeV2Util.checkUndelegateResource(target, amount, type, getDeposit());
+      if (values == null || values.getLeft() == null || values.getMiddle() == null || values.getRight() == null) {
+        return Pair.of(true, encodeMultiRes(DataWord.ZERO().getData(), DataWord.ZERO().getData(), DataWord.ZERO().getData()));
+      }
+
+      return Pair.of(true, encodeMultiRes(longTo32Bytes(values.getLeft()), longTo32Bytes(values.getMiddle()), longTo32Bytes(values.getRight())));
     }
   }
 
@@ -1964,31 +2047,11 @@ public class PrecompiledContracts {
     }
   }
 
-  public static class AvailableUnfreezeV2Size extends PrecompiledContract {
+  public static class TotalResource extends PrecompiledContract {
 
     @Override
     public long getEnergyForData(byte[] data) {
-      return 100;
-    }
-
-    @Override
-    public Pair<Boolean, byte[]> execute(byte[] data) {
-      if (data == null || data.length != WORD_SIZE) {
-        return Pair.of(true, DataWord.ZERO().getData());
-      }
-
-      byte[] address = new DataWord(data).toTronAddress();
-
-      long result = FreezeV2Util.queryAvailableUnfreezeV2Size(address, getDeposit());
-      return Pair.of(true, longTo32Bytes(result));
-    }
-  }
-
-  public static class DelegatableResource extends PrecompiledContract {
-
-    @Override
-    public long getEnergyForData(byte[] data) {
-      return 100;
+      return 50;
     }
 
     @Override
@@ -2001,35 +2064,85 @@ public class PrecompiledContracts {
       byte[] address = words[0].toTronAddress();
       long type = words[1].longValueSafe();
 
-      long result = FreezeV2Util.queryDelegatableResource(address, type, getDeposit());
-      return Pair.of(true, longTo32Bytes(result));
+      AccountCapsule accountCapsule = getDeposit().getAccount(address);
+      if (accountCapsule == null) {
+        return Pair.of(true, DataWord.ZERO().getData());
+      }
+
+      long totalResource = 0;
+      if (type == 0) {
+        totalResource = accountCapsule.getAllFrozenBalanceForBandwidth();
+      } else if (type == 1) {
+        totalResource = accountCapsule.getAllFrozenBalanceForEnergy();
+      }
+
+      return Pair.of(true, longTo32Bytes(totalResource));
     }
   }
 
-  public static class CheckDelegatedResource extends PrecompiledContract {
+  public static class TotalDelegatedResource extends PrecompiledContract {
 
     @Override
     public long getEnergyForData(byte[] data) {
-      return 100;
+      return 50;
     }
 
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
-      if (data == null || data.length != 3 * WORD_SIZE) {
-        return Pair.of(true, encodeMultiRes(DataWord.ZERO().getData(), DataWord.ZERO().getData(), DataWord.ZERO().getData()));
+      if (data == null || data.length != 2 * WORD_SIZE) {
+        return Pair.of(true, DataWord.ZERO().getData());
       }
 
       DataWord[] words = DataWord.parseArray(data);
-      byte[] target = words[0].toTronAddress();
-      long amount = words[1].longValueSafe();
-      long type = words[2].longValueSafe();
+      byte[] address = words[0].toTronAddress();
+      long type = words[1].longValueSafe();
 
-      Triple<Long, Long, Long> values = FreezeV2Util.checkUndelegateResource(target, amount, type, getDeposit());
-      if (values == null || values.getLeft() == null || values.getMiddle() == null || values.getRight() == null) {
-        return Pair.of(true, encodeMultiRes(DataWord.ZERO().getData(), DataWord.ZERO().getData(), DataWord.ZERO().getData()));
+      AccountCapsule accountCapsule = getDeposit().getAccount(address);
+      if (accountCapsule == null) {
+        return Pair.of(true, DataWord.ZERO().getData());
       }
 
-      return Pair.of(true, encodeMultiRes(longTo32Bytes(values.getLeft()), longTo32Bytes(values.getMiddle()), longTo32Bytes(values.getRight())));
+      long delegatedResource = 0;
+      if (type == 0) {
+        delegatedResource = accountCapsule.getDelegatedFrozenBalanceForBandwidth();
+      } else if (type == 1) {
+        delegatedResource = accountCapsule.getDelegatedFrozenBalanceForEnergy();
+      }
+
+      return Pair.of(true, longTo32Bytes(delegatedResource));
+    }
+  }
+
+  public static class TotalAcquiredResource extends PrecompiledContract {
+
+    @Override
+    public long getEnergyForData(byte[] data) {
+      return 50;
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+      if (data == null || data.length != 2 * WORD_SIZE) {
+        return Pair.of(true, DataWord.ZERO().getData());
+      }
+
+      DataWord[] words = DataWord.parseArray(data);
+      byte[] address = words[0].toTronAddress();
+      long type = words[1].longValueSafe();
+
+      AccountCapsule accountCapsule = getDeposit().getAccount(address);
+      if (accountCapsule == null) {
+        return Pair.of(true, DataWord.ZERO().getData());
+      }
+
+      long acquiredResource = 0;
+      if (type == 0) {
+        acquiredResource = accountCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth();
+      } else if (type == 1) {
+        acquiredResource = accountCapsule.getAcquiredDelegatedFrozenBalanceForEnergy();
+      }
+
+      return Pair.of(true, longTo32Bytes(acquiredResource));
     }
   }
 

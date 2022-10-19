@@ -63,20 +63,39 @@ public class PrecompiledContractsTest {
   private static final DataWord convertFromTronBase58AddressAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000010009");
 
+  // FreezeV2 PrecompileContracts
   private static final DataWord getChainParameterAddr = new DataWord(
       "000000000000000000000000000000000000000000000000000000000100000b");
 
-  private static final DataWord expireFreezeV2BalanceAddr = new DataWord(
+  private static final DataWord availableUnfreezeSizeAddr = new DataWord(
       "000000000000000000000000000000000000000000000000000000000100000c");
 
-  private static final DataWord totalFrozenBalanceAddr = new DataWord(
+  private static final DataWord totalFrozenBalanceV2Addr = new DataWord(
       "000000000000000000000000000000000000000000000000000000000100000d");
 
-  private static final DataWord frozenBalanceAddr = new DataWord(
+  private static final DataWord expireFrozenBalanceV2Addr = new DataWord(
       "000000000000000000000000000000000000000000000000000000000100000e");
 
-  private static final DataWord fronzenBalanceUsageAddr = new DataWord(
+  private static final DataWord delegatableResourceAddr = new DataWord(
       "000000000000000000000000000000000000000000000000000000000100000f");
+
+  private static final DataWord resourceV2Addr = new DataWord(
+      "0000000000000000000000000000000000000000000000000000000001000010");
+
+  private static final DataWord checkDelegatedResourceAddr = new DataWord(
+      "0000000000000000000000000000000000000000000000000000000001000011");
+
+  private static final DataWord resourceUsageAddr = new DataWord(
+      "0000000000000000000000000000000000000000000000000000000001000012");
+
+  private static final DataWord totalResourceAddr = new DataWord(
+      "0000000000000000000000000000000000000000000000000000000001000013");
+
+  private static final DataWord totalDelegatedResourceAddr = new DataWord(
+      "0000000000000000000000000000000000000000000000000000000001000014");
+
+  private static final DataWord totalAcquiredResourceAddr = new DataWord(
+      "0000000000000000000000000000000000000000000000000000000001000015");
 
   private static final String dbPath = "output_PrecompiledContracts_test";
   private static final String ACCOUNT_NAME = "account";
@@ -303,29 +322,29 @@ public class PrecompiledContractsTest {
   public void tvmFreezeV2SwitchTest() {
     VMConfig.initAllowTvmFreezeV2(0L);
     PrecompiledContract getChainParameterPcc = PrecompiledContracts.getContractForAddress(getChainParameterAddr);
-    PrecompiledContract expireFreezeV2BalancePcc = PrecompiledContracts.getContractForAddress(expireFreezeV2BalanceAddr);
-    PrecompiledContract totalFrozenBalancePcc = PrecompiledContracts.getContractForAddress(totalFrozenBalanceAddr);
-    PrecompiledContract frozenBalancePcc = PrecompiledContracts.getContractForAddress(frozenBalanceAddr);
-    PrecompiledContract frozenBalanceUsagePcc = PrecompiledContracts.getContractForAddress(fronzenBalanceUsageAddr);
+    PrecompiledContract expireFrozenBalanceV2Pcc = PrecompiledContracts.getContractForAddress(expireFrozenBalanceV2Addr);
+    PrecompiledContract totalFrozenBalanceV2Pcc = PrecompiledContracts.getContractForAddress(totalFrozenBalanceV2Addr);
+    PrecompiledContract resourceV2Pcc = PrecompiledContracts.getContractForAddress(resourceV2Addr);
+    PrecompiledContract resourceUsagePcc = PrecompiledContracts.getContractForAddress(resourceUsageAddr);
 
     Assert.assertNull(getChainParameterPcc);
-    Assert.assertNull(expireFreezeV2BalancePcc);
-    Assert.assertNull(totalFrozenBalancePcc);
-    Assert.assertNull(frozenBalancePcc);
-    Assert.assertNull(frozenBalanceUsagePcc);
+    Assert.assertNull(expireFrozenBalanceV2Pcc);
+    Assert.assertNull(totalFrozenBalanceV2Pcc);
+    Assert.assertNull(resourceV2Pcc);
+    Assert.assertNull(resourceUsagePcc);
 
     VMConfig.initAllowTvmFreezeV2(1L);
     getChainParameterPcc = PrecompiledContracts.getContractForAddress(getChainParameterAddr);
-    expireFreezeV2BalancePcc = PrecompiledContracts.getContractForAddress(expireFreezeV2BalanceAddr);
-    totalFrozenBalancePcc = PrecompiledContracts.getContractForAddress(totalFrozenBalanceAddr);
-    frozenBalancePcc = PrecompiledContracts.getContractForAddress(frozenBalanceAddr);
-    frozenBalanceUsagePcc = PrecompiledContracts.getContractForAddress(fronzenBalanceUsageAddr);
+    expireFrozenBalanceV2Pcc = PrecompiledContracts.getContractForAddress(expireFrozenBalanceV2Addr);
+    totalFrozenBalanceV2Pcc = PrecompiledContracts.getContractForAddress(totalFrozenBalanceV2Addr);
+    resourceV2Pcc = PrecompiledContracts.getContractForAddress(resourceV2Addr);
+    resourceUsagePcc = PrecompiledContracts.getContractForAddress(resourceUsageAddr);
 
     Assert.assertNotNull(getChainParameterPcc);
-    Assert.assertNotNull(expireFreezeV2BalancePcc);
-    Assert.assertNotNull(totalFrozenBalancePcc);
-    Assert.assertNotNull(frozenBalancePcc);
-    Assert.assertNotNull(frozenBalanceUsagePcc);
+    Assert.assertNotNull(expireFrozenBalanceV2Pcc);
+    Assert.assertNotNull(totalFrozenBalanceV2Pcc);
+    Assert.assertNotNull(resourceV2Pcc);
+    Assert.assertNotNull(resourceUsagePcc);
   }
 
   @Test
@@ -378,11 +397,10 @@ public class PrecompiledContractsTest {
   }
 
   @Test
-  public void getExpireFreezeV2BalanceTest() {
+  public void getExpireFrozenBalanceV2Test() {
     VMConfig.initAllowTvmFreezeV2(1L);
 
-    PrecompiledContract expireFreezeV2BalancePcc = createPrecompiledContract(expireFreezeV2BalanceAddr, OWNER_ADDRESS);
-
+    PrecompiledContract expireFrozenBalanceV2Pcc = createPrecompiledContract(expireFrozenBalanceV2Addr, OWNER_ADDRESS);
 
   }
 

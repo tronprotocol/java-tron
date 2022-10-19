@@ -1,13 +1,12 @@
 package org.tron.core.vm.utils;
 
-import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
-import org.tron.core.db.EnergyProcessor;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.nativecontract.UnfreezeBalanceV2Processor;
 import org.tron.core.vm.repository.Repository;
@@ -18,7 +17,7 @@ public class FreezeV2Util {
   private FreezeV2Util() {
   }
 
-  public static long queryExpireFreezeV2Balance(byte[] address, long time, Repository repository) {
+  public static long queryExpireFrozenBalanceV2(byte[] address, long time, Repository repository) {
     if (!VMConfig.allowTvmFreezeV2()) {
       return 0;
     }
@@ -63,7 +62,7 @@ public class FreezeV2Util {
   }
 
   // only freezeV2.
-  public static long queryFrozenBalance(byte[] from, byte[] to, long type, Repository repository) {
+  public static long queryFrozenBalanceV2(byte[] from, byte[] to, long type, Repository repository) {
     if (!VMConfig.allowTvmFreezeV2()) {
       return 0;
     }
