@@ -616,7 +616,7 @@ public class OperationRegistry {
         proposal));
 
     table.set(new Operation(
-        Op.UNDELEGATERESOURCE, 3, 1,
+        Op.UNDELEGATERESOURCE, 3, 4,
         EnergyCost::getUnDelegateResourceCost,
         OperationActions::unDelegateResourceAction,
         proposal));
