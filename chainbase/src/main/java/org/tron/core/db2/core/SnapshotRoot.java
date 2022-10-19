@@ -2,11 +2,8 @@ package org.tron.core.db2.core;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+
+import java.util.*;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import org.tron.common.cache.CacheManager;
@@ -125,6 +122,10 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
     Map<WrappedByteArray, WrappedByteArray> accounts = new HashMap<>();
     Map<WrappedByteArray, WrappedByteArray> assets = new HashMap<>();
     batch.forEach((k, v) -> {
+      if (Arrays.equals("block_number".getBytes(), k.getBytes())) {
+        accounts.put(k, v);
+        return;
+      }
       if (ByteArray.isEmpty(v.getBytes())) {
         accounts.put(k, v);
         assets.putAll(assetStore.getDeletedAssets(k.getBytes()));
