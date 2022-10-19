@@ -72,7 +72,7 @@ public class BackupManager implements EventHandler {
     try {
       localIp = InetAddress.getLocalHost().getHostAddress();
     } catch (Exception e) {
-      logger.warn("Failed to get local ip.");
+      logger.warn("Failed to get local ip");
     }
 
     for (String member : parameter.getBackupMembers()) {
@@ -105,7 +105,7 @@ public class BackupManager implements EventHandler {
             .accept(new UdpEvent(new KeepAliveMessage(status.equals(MASTER), priority),
                 new InetSocketAddress(member, port))));
       } catch (Throwable t) {
-        logger.error("Exception in send keep alive message:{}", t.getMessage());
+        logger.error("Exception in send keep alive", t);
       }
     }, 1000, keepAliveInterval, TimeUnit.MILLISECONDS);
   }
@@ -120,7 +120,7 @@ public class BackupManager implements EventHandler {
       return;
     }
     if (!members.contains(sender.getHostString())) {
-      logger.warn("Receive keep alive message from {} is not my member.", sender.getHostString());
+      logger.warn("Receive keep alive message from {} is not my member", sender.getHostString());
       return;
     }
 

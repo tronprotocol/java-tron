@@ -109,7 +109,7 @@ public class DelegateResourceActuator extends AbstractActuator {
       throw new ContractValidateException("No support for resource delegate");
     }
 
-    if (dynamicStore.getUnfreezeDelayDays() == 0) {
+    if (!dynamicStore.supportUnfreezeDelay()) {
       throw new ContractValidateException("Not support Delegate resource transaction,"
           + " need to be opened by the committee");
     }

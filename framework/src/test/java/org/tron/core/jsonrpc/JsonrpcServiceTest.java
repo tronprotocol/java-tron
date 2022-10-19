@@ -1,6 +1,5 @@
 package org.tron.core.jsonrpc;
 
-import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
@@ -230,8 +229,7 @@ public class JsonrpcServiceTest {
     Assert.assertEquals(ByteArray.toJsonHex(blockCapsule.getNum()), blockResult.getNumber());
     Assert
         .assertEquals(blockCapsule.getTransactions().size(), blockResult.getTransactions().length);
-    Assert.assertNull(blockResult.getNonce());
-
+    Assert.assertEquals("0x0000000000000000", blockResult.getNonce());
   }
 
 
