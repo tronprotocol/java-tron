@@ -45,4 +45,9 @@ public class CheckPointV2Store extends TronDatabase<byte[]> {
   public Spliterator spliterator() {
     return null;
   }
+
+  @Override
+  protected void init() {
+  }
+
 }
