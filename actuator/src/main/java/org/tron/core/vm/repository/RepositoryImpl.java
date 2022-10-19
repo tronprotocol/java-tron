@@ -185,17 +185,6 @@ public class RepositoryImpl implements Repository {
     return recover(energyUsage, latestConsumeTime, now, accountWindowSize);
   }
 
-  @Override
-  public long getAccountNetUsageFromFreeze(AccountCapsule accountCapsule) {
-    long now = getHeadSlot();
-    long netUsage = accountCapsule.getNetUsage();
-    long latestConsumeTime = accountCapsule.getLatestConsumeTime();
-
-    long accountWindowSize = accountCapsule.getWindowSize(Common.ResourceCode.BANDWIDTH);
-
-    return recover(netUsage, latestConsumeTime, now, accountWindowSize);
-  }
-
   public long increaseV2(
       AccountCapsule accountCapsule,
       Common.ResourceCode resourceCode,

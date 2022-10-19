@@ -1980,15 +1980,15 @@ public class PrecompiledContracts {
       }
 
       DataWord[] words = DataWord.parseArray(data);
-      byte[] from = words[0].toTronAddress();
-      byte[] to = words[1].toTronAddress();
+      byte[] target = words[0].toTronAddress();
+      byte[] from = words[1].toTronAddress();
       long type = words[2].longValueSafe();
 
       long balance;
-      if (Arrays.equals(from, to)) {
+      if (Arrays.equals(from, target)) {
         balance = FreezeV2Util.queryTotalFrozenBalanceV2(from, type, getDeposit());
       } else {
-        balance = FreezeV2Util.queryFrozenBalanceV2(from, to, type, getDeposit());
+        balance = FreezeV2Util.queryResourceV2(from, target, type, getDeposit());
       }
       return Pair.of(true, longTo32Bytes(balance));
     }

@@ -62,7 +62,7 @@ public class FreezeV2Util {
   }
 
   // only freezeV2.
-  public static long queryFrozenBalanceV2(byte[] from, byte[] to, long type, Repository repository) {
+  public static long queryResourceV2(byte[] from, byte[] to, long type, Repository repository) {
     if (!VMConfig.allowTvmFreezeV2()) {
       return 0;
     }
