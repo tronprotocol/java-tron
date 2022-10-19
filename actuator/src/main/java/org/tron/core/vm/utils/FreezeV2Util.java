@@ -17,7 +17,7 @@ public class FreezeV2Util {
   private FreezeV2Util() {
   }
 
-  public static long queryExpireFrozenBalanceV2(byte[] address, long time, Repository repository) {
+  public static long queryExpireUnfreezeBalanceV2(byte[] address, long time, Repository repository) {
     if (!VMConfig.allowTvmFreezeV2()) {
       return 0;
     }
@@ -33,7 +33,7 @@ public class FreezeV2Util {
     return getTotalWithdrawUnfreeze(unfrozenV2List, time);
   }
 
-  public static long queryTotalFrozenBalanceV2(byte[] address, long type, Repository repository) {
+  public static long queryFrozenBalanceV2(byte[] address, long type, Repository repository) {
     if (!VMConfig.allowTvmFreezeV2()) {
       return 0;
     }
