@@ -151,6 +151,10 @@ test {
         exclude 'org/tron/common/runtime/vm/WithdrawRewardTest.class'
     }
     maxHeapSize = "1024m"
+    doFirst {
+        forkEvery = 5
+        jvmArgs "-XX:MetaspaceSize=128m","-XX:MaxMetaspaceSize=256m"
+    }
 }
 
 task stest(type: Test) {
