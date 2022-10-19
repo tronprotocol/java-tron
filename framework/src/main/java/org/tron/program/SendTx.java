@@ -40,6 +40,7 @@ public class SendTx {
 
   public SendTx(String[] fullNodes, int broadcastThreadNum, int onceSendTxNum, int maxRows) {
     broadcastExecutorService = Executors.newFixedThreadPool(broadcastThreadNum);
+    scheduledExecutorService = Executors.newScheduledThreadPool(broadcastThreadNum);
     for (String fullNode : fullNodes) {
       //construct grpc stub
       ManagedChannel channelFull = ManagedChannelBuilder.forTarget(fullNode)
