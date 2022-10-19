@@ -235,6 +235,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public long getAccountNetUsageFromFreeze(AccountCapsule accountCapsule) {
+    return repository.getAccountNetUsageFromFreeze(accountCapsule);
+  }
+
+  @Override
   public Pair<Long, Long> getAccountEnergyUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule) {
     return repository.getAccountEnergyUsageBalanceAndRestoreSeconds(accountCapsule);
   }

@@ -8,6 +8,7 @@ import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.AfterClass;
@@ -26,10 +27,7 @@ import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.FreezeBalanceActuator;
-import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.ProposalCapsule;
-import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.capsule.*;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -39,6 +37,7 @@ import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.PrecompiledContracts;
 import org.tron.core.vm.PrecompiledContracts.PrecompiledContract;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol.AccountType;
@@ -63,6 +62,22 @@ public class PrecompiledContractsTest {
       "0000000000000000000000000000000000000000000000000000000000010008");
   private static final DataWord convertFromTronBase58AddressAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000010009");
+
+  private static final DataWord getChainParameterAddr = new DataWord(
+      "000000000000000000000000000000000000000000000000000000000100000b");
+
+  private static final DataWord expireFreezeV2BalanceAddr = new DataWord(
+      "000000000000000000000000000000000000000000000000000000000100000c");
+
+  private static final DataWord totalFrozenBalanceAddr = new DataWord(
+      "000000000000000000000000000000000000000000000000000000000100000d");
+
+  private static final DataWord frozenBalanceAddr = new DataWord(
+      "000000000000000000000000000000000000000000000000000000000100000e");
+
+  private static final DataWord fronzenBalanceUsageAddr = new DataWord(
+      "000000000000000000000000000000000000000000000000000000000100000f");
+
   private static final String dbPath = "output_PrecompiledContracts_test";
   private static final String ACCOUNT_NAME = "account";
   private static final String OWNER_ADDRESS;
@@ -282,6 +297,93 @@ public class PrecompiledContractsTest {
     } catch (ItemNotFoundException e) {
       Assert.fail();
     }
+  }
+
+  @Test
+  public void tvmFreezeV2SwitchTest() {
+    VMConfig.initAllowTvmFreezeV2(0L);
+    PrecompiledContract getChainParameterPcc = PrecompiledContracts.getContractForAddress(getChainParameterAddr);
+    PrecompiledContract expireFreezeV2BalancePcc = PrecompiledContracts.getContractForAddress(expireFreezeV2BalanceAddr);
+    PrecompiledContract totalFrozenBalancePcc = PrecompiledContracts.getContractForAddress(totalFrozenBalanceAddr);
+    PrecompiledContract frozenBalancePcc = PrecompiledContracts.getContractForAddress(frozenBalanceAddr);
+    PrecompiledContract frozenBalanceUsagePcc = PrecompiledContracts.getContractForAddress(fronzenBalanceUsageAddr);
+
+    Assert.assertNull(getChainParameterPcc);
+    Assert.assertNull(expireFreezeV2BalancePcc);
+    Assert.assertNull(totalFrozenBalancePcc);
+    Assert.assertNull(frozenBalancePcc);
+    Assert.assertNull(frozenBalanceUsagePcc);
+
+    VMConfig.initAllowTvmFreezeV2(1L);
+    getChainParameterPcc = PrecompiledContracts.getContractForAddress(getChainParameterAddr);
+    expireFreezeV2BalancePcc = PrecompiledContracts.getContractForAddress(expireFreezeV2BalanceAddr);
+    totalFrozenBalancePcc = PrecompiledContracts.getContractForAddress(totalFrozenBalanceAddr);
+    frozenBalancePcc = PrecompiledContracts.getContractForAddress(frozenBalanceAddr);
+    frozenBalanceUsagePcc = PrecompiledContracts.getContractForAddress(fronzenBalanceUsageAddr);
+
+    Assert.assertNotNull(getChainParameterPcc);
+    Assert.assertNotNull(expireFreezeV2BalancePcc);
+    Assert.assertNotNull(totalFrozenBalancePcc);
+    Assert.assertNotNull(frozenBalancePcc);
+    Assert.assertNotNull(frozenBalanceUsagePcc);
+  }
+
+  @Test
+  public void getChainParameterTest() {
+    VMConfig.initAllowTvmFreezeV2(1L);
+
+    PrecompiledContract getChainParameterPcc = createPrecompiledContract(getChainParameterAddr, OWNER_ADDRESS);
+    Repository tempRepository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    getChainParameterPcc.setRepository(tempRepository);
+
+    byte[] TOTAL_ENERGY_CURRENT_LIMIT = "TOTAL_ENERGY_CURRENT_LIMIT".getBytes();
+    byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
+    byte[] UNFREEZE_DELAY_DAYS = "UNFREEZE_DELAY_DAYS".getBytes();
+
+    DataWord totalEnergyCurrentLimitId = new DataWord(
+        "0000000000000000000000000000000000000000000000000000000000000001");
+
+    DataWord totalEnergyWeightId = new DataWord(
+        "0000000000000000000000000000000000000000000000000000000000000002");
+
+    DataWord unfreezeDelayDaysId = new DataWord(
+        "0000000000000000000000000000000000000000000000000000000000000003");
+
+    DataWord invalidId = new DataWord(
+        "0000000000000000000000000000000000000000000000000000000000FFFFFF");
+
+    long energyLimit = 9_000_000_000_000_000L;
+    tempRepository.getDynamicPropertiesStore().put(TOTAL_ENERGY_CURRENT_LIMIT, new BytesCapsule(ByteArray.fromLong(energyLimit)));
+    Pair<Boolean, byte[]> totalEnergyCurrentLimitRes = getChainParameterPcc.execute(totalEnergyCurrentLimitId.getData());
+    Assert.assertTrue(totalEnergyCurrentLimitRes.getLeft());
+    Assert.assertEquals(ByteArray.toLong(totalEnergyCurrentLimitRes.getRight()), energyLimit);
+
+    long energyWeight = 1_000_000_000L;
+    tempRepository.getDynamicPropertiesStore().put(TOTAL_ENERGY_WEIGHT, new BytesCapsule(ByteArray.fromLong(energyWeight)));
+    Pair<Boolean, byte[]> totalEnergyWeightRes = getChainParameterPcc.execute(totalEnergyWeightId.getData());
+    Assert.assertTrue(totalEnergyWeightRes.getLeft());
+    Assert.assertEquals(ByteArray.toLong(totalEnergyWeightRes.getRight()), energyWeight);
+
+    long delayDays = 3L;
+    tempRepository.getDynamicPropertiesStore().put(UNFREEZE_DELAY_DAYS, new BytesCapsule(ByteArray.fromLong(delayDays)));
+    Pair<Boolean, byte[]> delayDaysRes = getChainParameterPcc.execute(unfreezeDelayDaysId.getData());
+    Assert.assertTrue(delayDaysRes.getLeft());
+    Assert.assertEquals(ByteArray.toLong(delayDaysRes.getRight()), delayDays);
+
+    long zero = 0L;
+    Pair<Boolean, byte[]> invalidParamRes = getChainParameterPcc.execute(invalidId.getData());
+    Assert.assertTrue(invalidParamRes.getLeft());
+    Assert.assertEquals(ByteArray.toLong(invalidParamRes.getRight()), zero);
+
+  }
+
+  @Test
+  public void getExpireFreezeV2BalanceTest() {
+    VMConfig.initAllowTvmFreezeV2(1L);
+
+    PrecompiledContract expireFreezeV2BalancePcc = createPrecompiledContract(expireFreezeV2BalanceAddr, OWNER_ADDRESS);
+
+
   }
 
   @Test

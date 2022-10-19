@@ -9,6 +9,8 @@ import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import java.util.Iterator;
 import java.util.List;
+
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
@@ -24,6 +26,7 @@ import org.tron.protos.contract.Common;
 @Slf4j(topic = "VMProcessor")
 public class UnfreezeBalanceV2Processor {
 
+  @Getter
   private static final int UNFREEZE_MAX_TIMES = 16;
 
   public void validate(UnfreezeBalanceV2Param param, Repository repo)

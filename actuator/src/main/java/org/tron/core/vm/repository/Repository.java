@@ -113,6 +113,8 @@ public interface Repository {
   long increaseV2(AccountCapsule accountCapsule, Common.ResourceCode resourceCode,
                   long lastUsage, long usage, long lastTime, long now);
 
+  long getAccountNetUsageFromFreeze(AccountCapsule accountCapsule);
+
   Pair<Long, Long> getAccountEnergyUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule);
 
   Pair<Long, Long> getAccountNetUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule);

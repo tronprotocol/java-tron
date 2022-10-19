@@ -167,7 +167,9 @@ public class RepositoryImpl implements Repository {
     long latestConsumeTime = accountCapsule.getAccountResource().getLatestConsumeTimeForEnergy();
     long energyLimit = calculateGlobalEnergyLimit(accountCapsule);
 
-    long newEnergyUsage = increase(energyUsage, 0, latestConsumeTime, now);
+    long windowSize = accountCapsule.getWindowSize(Common.ResourceCode.ENERGY);
+
+    long newEnergyUsage = recover(energyUsage, latestConsumeTime, now, windowSize);
 
     return max(energyLimit - newEnergyUsage, 0); // us
   }
@@ -178,7 +180,20 @@ public class RepositoryImpl implements Repository {
     long energyUsage = accountCapsule.getEnergyUsage();
     long latestConsumeTime = accountCapsule.getAccountResource().getLatestConsumeTimeForEnergy();
 
-    return increase(energyUsage, 0, latestConsumeTime, now);
+    long accountWindowSize = accountCapsule.getWindowSize(Common.ResourceCode.ENERGY);
+
+    return recover(energyUsage, latestConsumeTime, now, accountWindowSize);
+  }
+
+  @Override
+  public long getAccountNetUsageFromFreeze(AccountCapsule accountCapsule) {
+    long now = getHeadSlot();
+    long netUsage = accountCapsule.getNetUsage();
+    long latestConsumeTime = accountCapsule.getLatestConsumeTime();
+
+    long accountWindowSize = accountCapsule.getWindowSize(Common.ResourceCode.BANDWIDTH);
+
+    return recover(netUsage, latestConsumeTime, now, accountWindowSize);
   }
 
   public long increaseV2(
@@ -225,14 +240,15 @@ public class RepositoryImpl implements Repository {
 
     long energyUsage = accountCapsule.getEnergyUsage();
     long latestConsumeTime = accountCapsule.getAccountResource().getLatestConsumeTimeForEnergy();
+    long accountWindowSize = accountCapsule.getWindowSize(Common.ResourceCode.ENERGY);
 
-    if (now >= latestConsumeTime + windowSize) {
+    if (now >= latestConsumeTime + accountWindowSize) {
       return Pair.of(0L, 0L);
     }
 
-    long restoreSlots = latestConsumeTime + windowSize - now;
+    long restoreSlots = latestConsumeTime + accountWindowSize - now;
 
-    long newEnergyUsage = increase(energyUsage, 0, latestConsumeTime, now);
+    long newEnergyUsage = recover(energyUsage, latestConsumeTime, now, accountWindowSize);
 
     long totalEnergyLimit = getDynamicPropertiesStore().getTotalEnergyCurrentLimit();
     long totalEnergyWeight = getTotalEnergyWeight();
@@ -247,14 +263,15 @@ public class RepositoryImpl implements Repository {
 
     long netUsage = accountCapsule.getNetUsage();
     long latestConsumeTime = accountCapsule.getLatestConsumeTime();
+    long accountWindowSize = accountCapsule.getWindowSize(Common.ResourceCode.BANDWIDTH);
 
-    if (now >= latestConsumeTime + windowSize) {
+    if (now >= latestConsumeTime + accountWindowSize) {
       return Pair.of(0L, 0L);
     }
 
-    long restoreSlots = latestConsumeTime + windowSize - now;
+    long restoreSlots = latestConsumeTime + accountWindowSize - now;
 
-    long newNetUsage = increase(netUsage, 0, latestConsumeTime, now);
+    long newNetUsage = recover(netUsage, latestConsumeTime, now, accountWindowSize);
 
     long totalNetLimit = getDynamicPropertiesStore().getTotalNetLimit();
     long totalNetWeight = getTotalNetWeight();
@@ -781,6 +798,11 @@ public class RepositoryImpl implements Repository {
 
   private long increase(long lastUsage, long usage, long lastTime, long now) {
     return increase(lastUsage, usage, lastTime, now, windowSize);
+  }
+
+  // new recover method, use personal window size.
+  private long recover(long lastUsage, long lastTime, long now, long personalWindowSize) {
+    return increase(lastUsage, 0, lastTime, now, personalWindowSize);
   }
 
   private long increase(long lastUsage, long usage, long lastTime, long now, long windowSize) {
