@@ -537,6 +537,7 @@ public class Program {
             inheritorCapsule.getLatestConsumeTime(),
             now);
     inheritorCapsule.setNetUsage(newNetUsage);
+    inheritorCapsule.setLatestConsumeTime(now);
     long newEnergyUsage =
         repo.increaseV2(
             inheritorCapsule,
@@ -546,6 +547,7 @@ public class Program {
             inheritorCapsule.getLatestConsumeTimeForEnergy(),
             now);
     inheritorCapsule.setEnergyUsage(newEnergyUsage);
+    inheritorCapsule.setLatestConsumeTimeForEnergy(now);
 
     // withdraw expire unfrozen balance
     long expireUnfrozenBalance =

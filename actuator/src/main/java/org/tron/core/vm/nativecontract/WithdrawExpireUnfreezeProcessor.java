@@ -76,7 +76,6 @@ public class WithdrawExpireUnfreezeProcessor {
     }
     ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
         .setBalance(ownerCapsule.getBalance() + totalWithdrawUnfreeze)
-        .setLatestWithdrawTime(now)
         .build());
     List<Protocol.Account.UnFreezeV2> newUnFreezeList = getRemainWithdrawList(unfrozenV2List, now);
     ownerCapsule.clearUnfrozenV2();

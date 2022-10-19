@@ -83,13 +83,15 @@ public class UnfreezeBalanceV2Processor {
 
     if (!checkUnfreezeBalance(accountCapsule, param.getUnfreezeBalance(), param.getResourceType())) {
       throw new ContractValidateException(
-          "Invalid unfreeze_balance, freezing resource[" + param.getResourceType() + "] is not enough"
-      );
+          "Invalid unfreeze_balance, [" + param.getUnfreezeBalance() + "] is error");
     }
   }
 
   private boolean checkUnfreezeBalance(
       AccountCapsule accountCapsule, long unfreezeBalance, Common.ResourceCode freezeType)  {
+    if (unfreezeBalance < 0) {
+      return false;
+    }
     long frozenBalance = 0L;
     List<Protocol.Account.FreezeV2> freezeV2List = accountCapsule.getFrozenV2List();
     for (Protocol.Account.FreezeV2 freezeV2 : freezeV2List) {

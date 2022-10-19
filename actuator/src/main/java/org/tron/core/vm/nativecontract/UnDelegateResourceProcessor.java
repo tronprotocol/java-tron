@@ -69,8 +69,8 @@ public class UnDelegateResourceProcessor {
     }
 
     long unDelegateBalance = param.getUnDelegateBalance();
-    if (unDelegateBalance < TRX_PRECISION) {
-      throw new ContractValidateException("unDelegateBalance must be more than 1TRX");
+    if (unDelegateBalance <= 0) {
+      throw new ContractValidateException("unDelegateBalance must be more than 0 TRX");
     }
     switch (param.getResourceType()) {
       case BANDWIDTH:
