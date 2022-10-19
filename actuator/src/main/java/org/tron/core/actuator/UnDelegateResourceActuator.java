@@ -279,8 +279,8 @@ public class UnDelegateResourceActuator extends AbstractActuator {
     }
 
     long unDelegateBalance = unDelegateResourceContract.getBalance();
-    if (unDelegateBalance < TRX_PRECISION) {
-      throw new ContractValidateException("unDelegateBalance must be more than 1TRX");
+    if (unDelegateBalance <= 0) {
+      throw new ContractValidateException("unDelegateBalance must be more than 0 TRX");
     }
     switch (unDelegateResourceContract.getResource()) {
       case BANDWIDTH:

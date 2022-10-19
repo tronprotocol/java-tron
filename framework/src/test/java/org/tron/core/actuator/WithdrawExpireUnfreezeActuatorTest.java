@@ -133,7 +133,6 @@ public class WithdrawExpireUnfreezeActuatorTest {
       Assert.assertEquals(Long.MAX_VALUE, unfrozenV2List.get(0).getUnfreezeExpireTime());
       Assert.assertEquals(initBalance + 32_000_000L, owner.getBalance());
       Assert.assertEquals(0, owner.getAllowance());
-      Assert.assertNotEquals(0, owner.getLatestWithdrawTime());
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
