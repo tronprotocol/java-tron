@@ -22,6 +22,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.map.LRUMap;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
 import org.tron.common.parameter.CommonParameter;
@@ -1980,7 +1981,7 @@ public class Program {
     return false;
   }
 
-  public boolean unDelegateResource(
+  public Triple<Long, Long, Long> unDelegateResource(
       DataWord receiverAddress, DataWord unDelegateBalance, DataWord resourceType) {
     Repository repository = getContractState().newRepositoryChild();
     byte[] owner = getContextAddress();
@@ -2000,9 +2001,9 @@ public class Program {
 
       UnDelegateResourceProcessor processor = new UnDelegateResourceProcessor();
       processor.validate(param, repository);
-      processor.execute(param, repository);
+      Triple<Long, Long, Long> result = processor.execute(param, repository);
       repository.commit();
-      return true;
+      return result;
     } catch (ContractValidateException e) {
       logger.error("TVM unDelegateResource: validate failure. Reason: {}", e.getMessage());
     } catch (ArithmeticException e) {
@@ -2011,7 +2012,7 @@ public class Program {
     if (internalTx != null) {
       internalTx.reject();
     }
-    return false;
+    return null;
   }
 
   private Common.ResourceCode parseResourceCode(DataWord resourceType) {

@@ -7,6 +7,7 @@ import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.tuple.Triple;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.ChainBaseManager;
@@ -18,6 +19,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.vm.nativecontract.param.UnDelegateResourceParam;
 import org.tron.core.vm.repository.Repository;
+import org.tron.core.vm.utils.FreezeV2Util;
 
 @Slf4j(topic = "VMProcessor")
 public class UnDelegateResourceProcessor {
@@ -89,7 +91,7 @@ public class UnDelegateResourceProcessor {
     }
   }
 
-  public void execute(UnDelegateResourceParam param,  Repository repo) {
+  public Triple<Long, Long, Long> execute(UnDelegateResourceParam param,  Repository repo) {
     byte[] ownerAddress = param.getOwnerAddress();
     byte[] receiverAddress = param.getReceiverAddress();
     long unDelegateBalance = param.getUnDelegateBalance();
@@ -191,5 +193,7 @@ public class UnDelegateResourceProcessor {
     }
     repo.updateDelegatedResource(key, delegatedResourceCapsule);
     repo.updateAccount(ownerCapsule.createDbKey(), ownerCapsule);
+    return FreezeV2Util.checkUndelegateResource(
+        ownerAddress, unDelegateBalance, param.getResourceType().getNumber(), repo);
   }
 }

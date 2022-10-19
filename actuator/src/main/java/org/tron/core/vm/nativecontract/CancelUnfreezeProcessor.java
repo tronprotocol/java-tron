@@ -5,10 +5,7 @@ import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 import static org.tron.core.actuator.ActuatorConstant.STORE_NOT_EXIST;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
-
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
@@ -35,8 +32,8 @@ public class CancelUnfreezeProcessor {
     AccountCapsule accountCapsule = repo.getAccount(ownerAddress);
     if (Objects.isNull(accountCapsule)) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
-      throw new ContractValidateException(ACCOUNT_EXCEPTION_STR
-          + readableOwnerAddress + NOT_EXIST_STR);
+      throw new ContractValidateException(
+          ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
     }
   }
 
@@ -44,16 +41,19 @@ public class CancelUnfreezeProcessor {
     byte[] ownerAddress = param.getOwnerAddress();
     AccountCapsule ownerCapsule = repo.getAccount(ownerAddress);
     long now = repo.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
-    List<Protocol.Account.UnFreezeV2> unfrozenV2List =
-        new ArrayList<>(ownerCapsule.getUnfrozenV2List());
-    ownerCapsule.clearUnfrozenV2();
-    for (Protocol.Account.UnFreezeV2 unFreezeV2: unfrozenV2List) {
+    long withdrawExpireBalance = 0L;
+    for (Protocol.Account.UnFreezeV2 unFreezeV2: ownerCapsule.getUnfrozenV2List()) {
       if (unFreezeV2.getUnfreezeExpireTime() > now) {
         updateFrozenInfoAndTotalResourceWeight(ownerCapsule, unFreezeV2, repo);
       } else {
-        ownerCapsule.addUnfrozenV2(unFreezeV2);
+        // withdraw
+        withdrawExpireBalance += unFreezeV2.getUnfreezeAmount();
       }
     }
+    if (withdrawExpireBalance > 0) {
+      ownerCapsule.setBalance(ownerCapsule.getBalance() + withdrawExpireBalance);
+    }
+    ownerCapsule.clearUnfrozenV2();
 
     repo.updateAccount(ownerCapsule.createDbKey(), ownerCapsule);
   }
