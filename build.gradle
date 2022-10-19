@@ -71,6 +71,9 @@ subprojects {
     }
 }
 
+tasks.withType(JavaCompile).configureEach {
+    options.fork = true
+}
 task copyToParent(type: Copy) {
     into "$buildDir/libs"
     subprojects {
