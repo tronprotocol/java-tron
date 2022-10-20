@@ -1875,7 +1875,7 @@ public class PrecompiledContracts {
 
     @Override
     public long getEnergyForData(byte[] data) {
-      return 100;
+      return 50;
     }
 
     @Override
@@ -1895,7 +1895,7 @@ public class PrecompiledContracts {
 
     @Override
     public long getEnergyForData(byte[] data) {
-      return 100;
+      return 50;
     }
 
     @Override
@@ -1917,7 +1917,7 @@ public class PrecompiledContracts {
 
     @Override
     public long getEnergyForData(byte[] data) {
-      return 100;
+      return 50;
     }
 
     @Override
@@ -1949,7 +1949,7 @@ public class PrecompiledContracts {
 
     @Override
     public long getEnergyForData(byte[] data) {
-      return 100;
+      return 50;
     }
 
     @Override
@@ -1971,7 +1971,7 @@ public class PrecompiledContracts {
 
     @Override
     public long getEnergyForData(byte[] data) {
-      return 100;
+      return 50;
     }
 
     @Override
@@ -1999,7 +1999,7 @@ public class PrecompiledContracts {
 
     @Override
     public long getEnergyForData(byte[] data) {
-      return 100;
+      return 50;
     }
 
     @Override
@@ -2026,7 +2026,7 @@ public class PrecompiledContracts {
 
     @Override
     public long getEnergyForData(byte[] data) {
-      return 100;
+      return 50;
     }
 
     @Override
