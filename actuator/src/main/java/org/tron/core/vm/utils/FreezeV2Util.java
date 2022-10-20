@@ -22,8 +22,6 @@ public class FreezeV2Util {
       return 0;
     }
 
-    // time should be transferred to slot.
-    long slot = repository.getSlotByTimestampMs(time);
     AccountCapsule accountCapsule = repository.getAccount(address);
     if (accountCapsule == null) {
       return 0;
@@ -32,7 +30,7 @@ public class FreezeV2Util {
     List<Protocol.Account.UnFreezeV2> unfrozenV2List =
         accountCapsule.getInstance().getUnfrozenV2List();
 
-    return getTotalWithdrawUnfreeze(unfrozenV2List, slot);
+    return getTotalWithdrawUnfreeze(unfrozenV2List, time);
   }
 
   public static long queryUnfreezableBalanceV2(byte[] address, long type, Repository repository) {
