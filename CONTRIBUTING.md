@@ -186,10 +186,10 @@ Message body use the imperative, present tense: "change" not "changed" nor "chan
 
 Here is an example:
 ```
-feat(block): optimize product block
+feat(block): optimize the block-producing logic
 
-1. optimize the block production threads
-2. improve transaction entry speed
+1. increase the priority that block producing thread acquires synchronization lock
+2. add the interruption exception handling in block-producing thread
 
 Closes #1234
 ```

@@ -472,30 +472,6 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     }
   }
 
-  public Set<byte[]> getValuesPrev(byte[] key, long limit) {
-    if (quitIfNotAlive()) {
-      return null;
-    }
-    if (limit <= 0) {
-      return Sets.newHashSet();
-    }
-    resetDbLock.readLock().lock();
-    try (RocksIterator iter = getRocksIterator()) {
-      Set<byte[]> result = Sets.newHashSet();
-      long i = 0;
-      byte[] data = getData(key);
-      if (Objects.nonNull(data)) {
-        result.add(data);
-        i++;
-      }
-      for (iter.seekForPrev(key); iter.isValid() && i < limit; iter.prev(), i++) {
-        result.add(iter.value());
-      }
-      return result;
-    } finally {
-      resetDbLock.readLock().unlock();
-    }
-  }
 
   public Set<byte[]> getValuesNext(byte[] key, long limit) {
     if (quitIfNotAlive()) {
