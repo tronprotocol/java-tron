@@ -9,7 +9,6 @@ import org.tron.core.actuator.UnfreezeBalanceV2Actuator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.vm.config.VMConfig;
-import org.tron.core.vm.nativecontract.UnfreezeBalanceV2Processor;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
 
@@ -34,7 +33,7 @@ public class FreezeV2Util {
     return getTotalWithdrawUnfreeze(unfrozenV2List, time);
   }
 
-  public static long queryFrozenBalanceV2(byte[] address, long type, Repository repository) {
+  public static long queryUnfreezableBalanceV2(byte[] address, long type, Repository repository) {
     if (!VMConfig.allowTvmFreezeV2()) {
       return 0;
     }

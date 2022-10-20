@@ -102,12 +102,12 @@ public class PrecompiledContracts {
 
   // FreezeV2 PrecompileContracts
   private static final GetChainParameter getChainParameter = new GetChainParameter();
-  private static final AvailableUnfreezeV2Size availableUnfreezeSize = new AvailableUnfreezeV2Size();
-  private static final FrozenBalanceV2 frozenBalanceV2 = new FrozenBalanceV2();
+  private static final AvailableUnfreezeV2Size availableUnfreezeV2Size = new AvailableUnfreezeV2Size();
+  private static final UnfreezableBalanceV2 unfreezableBalanceV2 = new UnfreezableBalanceV2();
   private static final ExpireUnfreezeBalanceV2 expireUnfreezeBalanceV2 = new ExpireUnfreezeBalanceV2();
   private static final DelegatableResource delegatableResource = new DelegatableResource();
   private static final ResourceV2 resourceV2 = new ResourceV2();
-  private static final CheckUndelegateResource checkUndelegateResource = new CheckUndelegateResource();
+  private static final CheckUnDelegateResource checkUnDelegateResource = new CheckUnDelegateResource();
   private static final ResourceUsage resourceUsage = new ResourceUsage();
   private static final TotalResource totalResource = new TotalResource();
   private static final TotalDelegatedResource totalDelegatedResource = new TotalDelegatedResource();
@@ -158,10 +158,10 @@ public class PrecompiledContracts {
   private static final DataWord getChainParameterAddr = new DataWord(
       "000000000000000000000000000000000000000000000000000000000100000b");
 
-  private static final DataWord availableUnfreezeSizeAddr = new DataWord(
+  private static final DataWord availableUnfreezeV2SizeAddr = new DataWord(
       "000000000000000000000000000000000000000000000000000000000100000c");
 
-  private static final DataWord frozenBalanceV2Addr = new DataWord(
+  private static final DataWord unfreezableBalanceV2Addr = new DataWord(
       "000000000000000000000000000000000000000000000000000000000100000d");
 
   private static final DataWord expireUnfreezeBalanceV2Addr = new DataWord(
@@ -173,7 +173,7 @@ public class PrecompiledContracts {
   private static final DataWord resourceV2Addr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000001000010");
 
-  private static final DataWord checkUndelegateResourceAddr = new DataWord(
+  private static final DataWord checkUnDelegateResourceAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000001000011");
 
   private static final DataWord resourceUsageAddr = new DataWord(
@@ -271,11 +271,11 @@ public class PrecompiledContracts {
       if (address.equals(getChainParameterAddr)) {
         return getChainParameter;
       }
-      if (address.equals(availableUnfreezeSizeAddr)) {
-        return availableUnfreezeSize;
+      if (address.equals(availableUnfreezeV2SizeAddr)) {
+        return availableUnfreezeV2Size;
       }
-      if (address.equals(frozenBalanceV2Addr)) {
-        return frozenBalanceV2;
+      if (address.equals(unfreezableBalanceV2Addr)) {
+        return unfreezableBalanceV2;
       }
       if (address.equals(expireUnfreezeBalanceV2Addr)) {
         return expireUnfreezeBalanceV2;
@@ -286,8 +286,8 @@ public class PrecompiledContracts {
       if (address.equals(resourceV2Addr)) {
         return resourceV2;
       }
-      if (address.equals(checkUndelegateResourceAddr)) {
-        return checkUndelegateResource;
+      if (address.equals(checkUnDelegateResourceAddr)) {
+        return checkUnDelegateResource;
       }
       if (address.equals(resourceUsageAddr)) {
         return resourceUsage;
@@ -1891,7 +1891,7 @@ public class PrecompiledContracts {
     }
   }
 
-  public static class FrozenBalanceV2 extends PrecompiledContract {
+  public static class UnfreezableBalanceV2 extends PrecompiledContract {
 
     @Override
     public long getEnergyForData(byte[] data) {
@@ -1908,7 +1908,7 @@ public class PrecompiledContracts {
       byte[] address = words[0].toTronAddress();
       long type = words[1].longValueSafe();
 
-      long balance = FreezeV2Util.queryFrozenBalanceV2(address, type, getDeposit());
+      long balance = FreezeV2Util.queryUnfreezableBalanceV2(address, type, getDeposit());
       return Pair.of(true, longTo32Bytes(balance));
     }
   }
@@ -1922,12 +1922,13 @@ public class PrecompiledContracts {
 
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
-      if (data == null || data.length != WORD_SIZE) {
+      if (data == null || data.length != 2 * WORD_SIZE) {
         return Pair.of(true, DataWord.ZERO().getData());
       }
 
-      byte[] caller = TransactionTrace.convertToTronAddress(getCallerAddress());
-      long time = new DataWord(data).longValueSafe();
+      DataWord[] words = DataWord.parseArray(data);
+      byte[] address = words[0].toTronAddress();
+      long time = words[1].longValueSafe();
 
       if (time < 0) {
         return Pair.of(true, DataWord.ZERO().getData());
@@ -1939,7 +1940,7 @@ public class PrecompiledContracts {
         time = time * 1_000;
       }
 
-      long balance = FreezeV2Util.queryExpireUnfreezeBalanceV2(caller, time, getDeposit());
+      long balance = FreezeV2Util.queryExpireUnfreezeBalanceV2(address, time, getDeposit());
       return Pair.of(true, longTo32Bytes(balance));
     }
   }
@@ -1986,7 +1987,7 @@ public class PrecompiledContracts {
 
       long balance;
       if (Arrays.equals(from, target)) {
-        balance = FreezeV2Util.queryFrozenBalanceV2(from, type, getDeposit());
+        balance = FreezeV2Util.queryUnfreezableBalanceV2(from, type, getDeposit());
       } else {
         balance = FreezeV2Util.queryResourceV2(from, target, type, getDeposit());
       }
@@ -1994,7 +1995,7 @@ public class PrecompiledContracts {
     }
   }
 
-  public static class CheckUndelegateResource extends PrecompiledContract {
+  public static class CheckUnDelegateResource extends PrecompiledContract {
 
     @Override
     public long getEnergyForData(byte[] data) {
