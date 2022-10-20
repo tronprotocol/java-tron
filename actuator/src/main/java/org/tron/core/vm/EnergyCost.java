@@ -39,7 +39,7 @@ public class EnergyCost {
   private static final long FREEZE_V2 = 20000;
   private static final long UNFREEZE_V2 = 20000;
   private static final long WITHDRAW_EXPIRE_UNFREEZE = 20000;
-  private static final long CANCEL_UNFREEZE = 20000;
+  private static final long CANCEL_ALL_UNFREEZE_V2 = 20000;
   private static final long DELEGATE_RESOURCE = 20000;
   private static final long UN_DELEGATE_RESOURCE = 20000;
   private static final long VOTE_WITNESS = 30000;
@@ -290,8 +290,8 @@ public class EnergyCost {
     return WITHDRAW_EXPIRE_UNFREEZE;
   }
 
-  public static long getCancelUnfreezeCost(Program ignored) {
-    return CANCEL_UNFREEZE;
+  public static long getCancelAllUnfreezeV2Cost(Program ignored) {
+    return CANCEL_ALL_UNFREEZE_V2;
   }
 
   public static long getDelegateResourceCost(Program program) {

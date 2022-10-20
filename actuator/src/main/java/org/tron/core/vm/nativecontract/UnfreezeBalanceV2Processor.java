@@ -86,7 +86,7 @@ public class UnfreezeBalanceV2Processor {
 
   private boolean checkUnfreezeBalance(
       AccountCapsule accountCapsule, long unfreezeBalance, Common.ResourceCode freezeType)  {
-    if (unfreezeBalance < 0) {
+    if (unfreezeBalance <= 0) {
       return false;
     }
     long frozenBalance = 0L;

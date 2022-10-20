@@ -816,12 +816,12 @@ public class OperationActions {
     program.step();
   }
 
-  public static void cancelUnfreezeAction(Program program) {
+  public static void cancelAllUnfreezeV2Action(Program program) {
     if (program.isStaticCall()) {
       throw new Program.StaticCallModificationException();
     }
 
-    boolean result = program.cancelUnfreezeAction();
+    boolean result = program.cancelAllUnfreezeV2Action();
     program.stackPush(result ? DataWord.ONE() : DataWord.ZERO());
     program.step();
   }

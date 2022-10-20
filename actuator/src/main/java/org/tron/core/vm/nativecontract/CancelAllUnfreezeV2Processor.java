@@ -13,14 +13,14 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.vm.nativecontract.param.CancelUnfreezeParam;
+import org.tron.core.vm.nativecontract.param.CancelAllUnfreezeV2Param;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
 
 @Slf4j(topic = "VMProcessor")
-public class CancelUnfreezeProcessor {
+public class CancelAllUnfreezeV2Processor {
 
-  public void validate(CancelUnfreezeParam param, Repository repo) throws ContractValidateException {
+  public void validate(CancelAllUnfreezeV2Param param, Repository repo) throws ContractValidateException {
     if (repo == null) {
       throw new ContractValidateException(STORE_NOT_EXIST);
     }
@@ -37,7 +37,7 @@ public class CancelUnfreezeProcessor {
     }
   }
 
-  public void execute(CancelUnfreezeParam param, Repository repo) throws ContractExeException {
+  public void execute(CancelAllUnfreezeV2Param param, Repository repo) throws ContractExeException {
     byte[] ownerAddress = param.getOwnerAddress();
     AccountCapsule ownerCapsule = repo.getAccount(ownerAddress);
     long now = repo.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();

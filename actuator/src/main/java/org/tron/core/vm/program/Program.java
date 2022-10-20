@@ -41,6 +41,8 @@ import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.db.BandwidthProcessor;
+import org.tron.core.db.EnergyProcessor;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
@@ -54,7 +56,7 @@ import org.tron.core.vm.VM;
 import org.tron.core.vm.VMConstant;
 import org.tron.core.vm.VMUtils;
 import org.tron.core.vm.config.VMConfig;
-import org.tron.core.vm.nativecontract.CancelUnfreezeProcessor;
+import org.tron.core.vm.nativecontract.CancelAllUnfreezeV2Processor;
 import org.tron.core.vm.nativecontract.DelegateResourceProcessor;
 import org.tron.core.vm.nativecontract.FreezeBalanceProcessor;
 import org.tron.core.vm.nativecontract.FreezeBalanceV2Processor;
@@ -64,7 +66,7 @@ import org.tron.core.vm.nativecontract.UnfreezeBalanceV2Processor;
 import org.tron.core.vm.nativecontract.VoteWitnessProcessor;
 import org.tron.core.vm.nativecontract.WithdrawExpireUnfreezeProcessor;
 import org.tron.core.vm.nativecontract.WithdrawRewardProcessor;
-import org.tron.core.vm.nativecontract.param.CancelUnfreezeParam;
+import org.tron.core.vm.nativecontract.param.CancelAllUnfreezeV2Param;
 import org.tron.core.vm.nativecontract.param.DelegateResourceParam;
 import org.tron.core.vm.nativecontract.param.FreezeBalanceParam;
 import org.tron.core.vm.nativecontract.param.FreezeBalanceV2Param;
@@ -528,8 +530,9 @@ public class Program {
                     freezeV2.getType(), freezeV2.getAmount()));
 
     // merge usage
+    BandwidthProcessor bandwidthProcessor = new BandwidthProcessor(ChainBaseManager.getInstance());
     long newNetUsage =
-        repo.increaseV2(
+        bandwidthProcessor.increase(
             inheritorCapsule,
             Common.ResourceCode.BANDWIDTH,
             inheritorCapsule.getNetUsage(),
@@ -538,8 +541,12 @@ public class Program {
             now);
     inheritorCapsule.setNetUsage(newNetUsage);
     inheritorCapsule.setLatestConsumeTime(now);
+
+    EnergyProcessor energyProcessor =
+        new EnergyProcessor(
+            repo.getDynamicPropertiesStore(), ChainBaseManager.getInstance().getAccountStore());
     long newEnergyUsage =
-        repo.increaseV2(
+        energyProcessor.increase(
             inheritorCapsule,
             Common.ResourceCode.ENERGY,
             inheritorCapsule.getEnergyUsage(),
@@ -1921,7 +1928,7 @@ public class Program {
     return 0;
   }
 
-  public boolean cancelUnfreezeAction() {
+  public boolean cancelAllUnfreezeV2Action() {
     Repository repository = getContractState().newRepositoryChild();
     byte[] owner = getContextAddress();
 
@@ -1930,10 +1937,10 @@ public class Program {
         "cancelUnfreeze", nonce, null);
 
     try {
-      CancelUnfreezeParam param = new CancelUnfreezeParam();
+      CancelAllUnfreezeV2Param param = new CancelAllUnfreezeV2Param();
       param.setOwnerAddress(owner);
 
-      CancelUnfreezeProcessor processor = new CancelUnfreezeProcessor();
+      CancelAllUnfreezeV2Processor processor = new CancelAllUnfreezeV2Processor();
       processor.validate(param, repository);
       processor.execute(param, repository);
       repository.commit();

@@ -185,45 +185,6 @@ public class RepositoryImpl implements Repository {
     return recover(energyUsage, latestConsumeTime, now, accountWindowSize);
   }
 
-  public long increaseV2(
-      AccountCapsule accountCapsule,
-      Common.ResourceCode resourceCode,
-      long lastUsage,
-      long usage,
-      long lastTime,
-      long now) {
-    long oldWindowSize = accountCapsule.getWindowSize(resourceCode);
-    /* old logic */
-    long averageLastUsage = divideCeil(lastUsage * this.precision, oldWindowSize);
-    long averageUsage = divideCeil(usage * this.precision, this.windowSize);
-
-    if (lastTime != now) {
-      assert now > lastTime;
-      if (lastTime + oldWindowSize > now) {
-        long delta = now - lastTime;
-        double decay = (oldWindowSize - delta) / (double) oldWindowSize;
-        averageLastUsage = Math.round(averageLastUsage * decay);
-      } else {
-        averageLastUsage = 0;
-      }
-    }
-    /* new logic */
-    long newUsage = getUsage(averageLastUsage, oldWindowSize) +
-        getUsage(averageUsage, this.windowSize);
-    if (dynamicPropertiesStore.supportUnfreezeDelay()) {
-      long remainUsage = getUsage(averageLastUsage, oldWindowSize);
-      if (remainUsage == 0) {
-        accountCapsule.setNewWindowSize(resourceCode, this.windowSize);
-        return newUsage;
-      }
-      long remainWindowSize = oldWindowSize - (now - lastTime);
-      long newWindowSize = (remainWindowSize * remainUsage + this.windowSize * usage)
-          / newUsage;
-      accountCapsule.setNewWindowSize(resourceCode, newWindowSize);
-    }
-    return newUsage;
-  }
-
   public Pair<Long, Long> getAccountEnergyUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule) {
     long now = getHeadSlot();
 

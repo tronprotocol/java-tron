@@ -230,11 +230,6 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
-  public long increaseV2(AccountCapsule accountCapsule, Common.ResourceCode resourceCode, long lastUsage, long usage, long lastTime, long now) {
-    return repository.increaseV2(accountCapsule, resourceCode, lastUsage, usage, lastTime, now);
-  }
-
-  @Override
   public Pair<Long, Long> getAccountEnergyUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule) {
     return repository.getAccountEnergyUsageBalanceAndRestoreSeconds(accountCapsule);
   }

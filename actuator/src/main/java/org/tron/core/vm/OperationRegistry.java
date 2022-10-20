@@ -600,9 +600,9 @@ public class OperationRegistry {
         proposal));
 
     table.set(new Operation(
-        Op.CANCELUNFREEZE, 0, 1,
-        EnergyCost::getCancelUnfreezeCost,
-        OperationActions::cancelUnfreezeAction,
+        Op.CANCELALLUNFREEZEV2, 0, 1,
+        EnergyCost::getCancelAllUnfreezeV2Cost,
+        OperationActions::cancelAllUnfreezeV2Action,
         proposal));
   }
 
