@@ -67,13 +67,13 @@ public class PrecompiledContractsTest {
   private static final DataWord getChainParameterAddr = new DataWord(
       "000000000000000000000000000000000000000000000000000000000100000b");
 
-  private static final DataWord availableUnfreezeSizeAddr = new DataWord(
+  private static final DataWord availableUnfreezeV2SizeAddr = new DataWord(
       "000000000000000000000000000000000000000000000000000000000100000c");
 
-  private static final DataWord totalFrozenBalanceV2Addr = new DataWord(
+  private static final DataWord unfreezableBalanceV2Addr = new DataWord(
       "000000000000000000000000000000000000000000000000000000000100000d");
 
-  private static final DataWord expireFrozenBalanceV2Addr = new DataWord(
+  private static final DataWord expireUnfreezeBalanceV2Addr = new DataWord(
       "000000000000000000000000000000000000000000000000000000000100000e");
 
   private static final DataWord delegatableResourceAddr = new DataWord(
@@ -82,7 +82,7 @@ public class PrecompiledContractsTest {
   private static final DataWord resourceV2Addr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000001000010");
 
-  private static final DataWord checkDelegatedResourceAddr = new DataWord(
+  private static final DataWord checkUnDelegateResourceAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000001000011");
 
   private static final DataWord resourceUsageAddr = new DataWord(
@@ -321,30 +321,65 @@ public class PrecompiledContractsTest {
   @Test
   public void tvmFreezeV2SwitchTest() {
     VMConfig.initAllowTvmFreezeV2(0L);
+
     PrecompiledContract getChainParameterPcc = PrecompiledContracts.getContractForAddress(getChainParameterAddr);
-    PrecompiledContract expireFrozenBalanceV2Pcc = PrecompiledContracts.getContractForAddress(expireFrozenBalanceV2Addr);
-    PrecompiledContract totalFrozenBalanceV2Pcc = PrecompiledContracts.getContractForAddress(totalFrozenBalanceV2Addr);
+    PrecompiledContract availableUnfreezeV2SizePcc = PrecompiledContracts.getContractForAddress(availableUnfreezeV2SizeAddr);
+    PrecompiledContract unfreezableBalanceV2Pcc = PrecompiledContracts.getContractForAddress(unfreezableBalanceV2Addr);
+    PrecompiledContract expireUnfreezeBalanceV2Pcc = PrecompiledContracts.getContractForAddress(expireUnfreezeBalanceV2Addr);
+
+    PrecompiledContract delegatableResourcePcc = PrecompiledContracts.getContractForAddress(delegatableResourceAddr);
     PrecompiledContract resourceV2Pcc = PrecompiledContracts.getContractForAddress(resourceV2Addr);
+    PrecompiledContract checkUnDelegateResourcePcc = PrecompiledContracts.getContractForAddress(checkUnDelegateResourceAddr);
+
     PrecompiledContract resourceUsagePcc = PrecompiledContracts.getContractForAddress(resourceUsageAddr);
+    PrecompiledContract totalResourcePcc = PrecompiledContracts.getContractForAddress(totalResourceAddr);
+    PrecompiledContract totalDelegatedResourcePcc = PrecompiledContracts.getContractForAddress(totalDelegatedResourceAddr);
+    PrecompiledContract totalAcquiredResourcePcc = PrecompiledContracts.getContractForAddress(totalAcquiredResourceAddr);
 
     Assert.assertNull(getChainParameterPcc);
-    Assert.assertNull(expireFrozenBalanceV2Pcc);
-    Assert.assertNull(totalFrozenBalanceV2Pcc);
-    Assert.assertNull(resourceV2Pcc);
-    Assert.assertNull(resourceUsagePcc);
+    Assert.assertNull(availableUnfreezeV2SizePcc);
+    Assert.assertNull(expireUnfreezeBalanceV2Pcc);
+    Assert.assertNull(unfreezableBalanceV2Pcc);
 
+    Assert.assertNull(delegatableResourcePcc);
+    Assert.assertNull(resourceV2Pcc);
+    Assert.assertNull(checkUnDelegateResourcePcc);
+
+    Assert.assertNull(resourceUsagePcc);
+    Assert.assertNull(totalResourcePcc);
+    Assert.assertNull(totalDelegatedResourcePcc);
+    Assert.assertNull(totalAcquiredResourcePcc);
+
+    // enable TvmFreezeV2.
     VMConfig.initAllowTvmFreezeV2(1L);
+
     getChainParameterPcc = PrecompiledContracts.getContractForAddress(getChainParameterAddr);
-    expireFrozenBalanceV2Pcc = PrecompiledContracts.getContractForAddress(expireFrozenBalanceV2Addr);
-    totalFrozenBalanceV2Pcc = PrecompiledContracts.getContractForAddress(totalFrozenBalanceV2Addr);
+    availableUnfreezeV2SizePcc = PrecompiledContracts.getContractForAddress(availableUnfreezeV2SizeAddr);
+    unfreezableBalanceV2Pcc = PrecompiledContracts.getContractForAddress(unfreezableBalanceV2Addr);
+    expireUnfreezeBalanceV2Pcc = PrecompiledContracts.getContractForAddress(expireUnfreezeBalanceV2Addr);
+
+    delegatableResourcePcc = PrecompiledContracts.getContractForAddress(delegatableResourceAddr);
     resourceV2Pcc = PrecompiledContracts.getContractForAddress(resourceV2Addr);
+    checkUnDelegateResourcePcc = PrecompiledContracts.getContractForAddress(checkUnDelegateResourceAddr);
+
     resourceUsagePcc = PrecompiledContracts.getContractForAddress(resourceUsageAddr);
+    totalResourcePcc = PrecompiledContracts.getContractForAddress(totalResourceAddr);
+    totalDelegatedResourcePcc = PrecompiledContracts.getContractForAddress(totalDelegatedResourceAddr);
+    totalAcquiredResourcePcc = PrecompiledContracts.getContractForAddress(totalAcquiredResourceAddr);
 
     Assert.assertNotNull(getChainParameterPcc);
-    Assert.assertNotNull(expireFrozenBalanceV2Pcc);
-    Assert.assertNotNull(totalFrozenBalanceV2Pcc);
+    Assert.assertNotNull(availableUnfreezeV2SizePcc);
+    Assert.assertNotNull(expireUnfreezeBalanceV2Pcc);
+    Assert.assertNotNull(unfreezableBalanceV2Pcc);
+
+    Assert.assertNotNull(delegatableResourcePcc);
     Assert.assertNotNull(resourceV2Pcc);
+    Assert.assertNotNull(checkUnDelegateResourcePcc);
+
     Assert.assertNotNull(resourceUsagePcc);
+    Assert.assertNotNull(totalResourcePcc);
+    Assert.assertNotNull(totalDelegatedResourcePcc);
+    Assert.assertNotNull(totalAcquiredResourcePcc);
   }
 
   @Test
@@ -397,10 +432,10 @@ public class PrecompiledContractsTest {
   }
 
   @Test
-  public void getExpireFrozenBalanceV2Test() {
+  public void expireUnfreezeBalanceV2Test() {
     VMConfig.initAllowTvmFreezeV2(1L);
 
-    PrecompiledContract expireFrozenBalanceV2Pcc = createPrecompiledContract(expireFrozenBalanceV2Addr, OWNER_ADDRESS);
+    PrecompiledContract expireUnfreezeBalanceV2Pcc = createPrecompiledContract(expireUnfreezeBalanceV2Addr, OWNER_ADDRESS);
 
   }
 
