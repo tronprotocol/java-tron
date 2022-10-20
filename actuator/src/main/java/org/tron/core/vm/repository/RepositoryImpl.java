@@ -746,10 +746,6 @@ public class RepositoryImpl implements Repository {
     }
   }
 
-  private long increase(long lastUsage, long usage, long lastTime, long now) {
-    return increase(lastUsage, usage, lastTime, now, windowSize);
-  }
-
   // new recover method, use personal window size.
   private long recover(long lastUsage, long lastTime, long now, long personalWindowSize) {
     return increase(lastUsage, 0, lastTime, now, personalWindowSize);

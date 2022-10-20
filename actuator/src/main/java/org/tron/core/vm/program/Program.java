@@ -580,7 +580,7 @@ public class Program {
       inheritorCapsule.setBalance(inheritorCapsule.getBalance() + expireUnfrozenBalance);
       increaseNonce();
       addInternalTx(null, ownerAddr, inheritorAddr, expireUnfrozenBalance, null,
-          "withdrawExpireUnfreeze", nonce, null);
+          "withdrawExpireUnfreezeWhileSuiciding", nonce, null);
     }
 
     repo.updateAccount(inheritorCapsule.createDbKey(), inheritorCapsule);
@@ -1904,7 +1904,7 @@ public class Program {
       if (unfreezeExpireBalance > 0) {
         increaseNonce();
         addInternalTx(null, owner, owner, unfreezeExpireBalance, null,
-            "withdrawExpireUnfreeze", nonce, null);
+            "withdrawExpireUnfreezeWhileUnfreezing", nonce, null);
       }
       return true;
     } catch (ContractValidateException e) {

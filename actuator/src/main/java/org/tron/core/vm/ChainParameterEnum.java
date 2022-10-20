@@ -1,12 +1,11 @@
 package org.tron.core.vm;
 
 import java.util.function.Function;
-
 import org.tron.core.store.DynamicPropertiesStore;
 
 public enum ChainParameterEnum {
 
-  INVALID_PARAMETER_KEY(0, (any) -> 0L),
+  INVALID_PARAMETER_KEY(0, ignored -> 0L),
 
   TOTAL_ENERGY_CURRENT_LIMIT(1, DynamicPropertiesStore::getTotalEnergyCurrentLimit),
 
