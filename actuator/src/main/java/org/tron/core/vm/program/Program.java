@@ -521,7 +521,7 @@ public class Program {
   private long transferFrozenV2BalanceToInheritor(byte[] ownerAddr, byte[] inheritorAddr, Repository repo) {
     AccountCapsule ownerCapsule = repo.getAccount(ownerAddr);
     AccountCapsule inheritorCapsule = repo.getAccount(inheritorAddr);
-    long now = repo.getHeadSlot();
+    long now = repo.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
 
     // transfer frozen resource
     ownerCapsule.getFrozenV2List().stream()
@@ -638,7 +638,7 @@ public class Program {
     if (!VMConfig.allowTvmFreezeV2()) {
       return true;
     }
-    long now = ChainBaseManager.getInstance().getHeadSlot();
+    long now = getContractState().getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
 
     boolean isDelegatedResourceEmpty =
         accountCapsule.getDelegatedFrozenBalanceForBandwidth() == 0
