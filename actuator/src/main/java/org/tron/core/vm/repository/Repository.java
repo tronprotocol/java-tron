@@ -138,4 +138,6 @@ public interface Repository {
 
   long getHeadSlot();
 
+  long getSlotByTimestampMs(long timestamp);
+
 }

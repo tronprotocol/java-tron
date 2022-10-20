@@ -796,8 +796,11 @@ public class RepositoryImpl implements Repository {
   }
 
   public long getHeadSlot() {
-    return (getDynamicPropertiesStore().getLatestBlockHeaderTimestamp()
-        - Long.parseLong(CommonParameter.getInstance()
+    return getSlotByTimestampMs(getDynamicPropertiesStore().getLatestBlockHeaderTimestamp());
+  }
+
+  public long getSlotByTimestampMs(long timestamp) {
+    return (timestamp - Long.parseLong(CommonParameter.getInstance()
         .getGenesisBlock().getTimestamp()))
         / BLOCK_PRODUCED_INTERVAL;
   }

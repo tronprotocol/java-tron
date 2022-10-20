@@ -369,4 +369,9 @@ public class ContractState implements Repository, ProgramListenerAware {
     return repository.getHeadSlot();
   }
 
+  @Override
+  public long getSlotByTimestampMs(long timestamp) {
+    return repository.getSlotByTimestampMs(timestamp);
+  }
+
 }
