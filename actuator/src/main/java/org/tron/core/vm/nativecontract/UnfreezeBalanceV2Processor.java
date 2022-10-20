@@ -126,6 +126,11 @@ public class UnfreezeBalanceV2Processor {
 
     this.unfreezeExpire(accountCapsule, now);
 
+    if (repo.getDynamicPropertiesStore().supportAllowNewResourceModel()
+        && accountCapsule.oldTronPowerIsNotInitialized()) {
+      accountCapsule.initializeOldTronPower();
+    }
+
     this.updateAccountFrozenInfo(param.getResourceType(), accountCapsule, unfreezeBalance);
 
     long expireTime = this.calcUnfreezeExpireTime(now, repo);

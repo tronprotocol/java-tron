@@ -55,7 +55,7 @@ public class DelegateResourceProcessor {
         processor.updateUsage(ownerCapsule);
 
         long netUsage = (long) (ownerCapsule.getNetUsage() * TRX_PRECISION * ((double)
-            (dynamicStore.getTotalNetWeight()) / dynamicStore.getTotalNetLimit()));
+            (repo.getTotalNetWeight()) / dynamicStore.getTotalNetLimit()));
 
         long ownerNetUsage = (long) (netUsage * ((double)(ownerCapsule
             .getFrozenV2BalanceForBandwidth()) /
@@ -74,7 +74,7 @@ public class DelegateResourceProcessor {
         processor.updateUsage(ownerCapsule);
 
         long energyUsage = (long) (ownerCapsule.getEnergyUsage() * TRX_PRECISION * ((double)
-            (dynamicStore.getTotalEnergyWeight()) / dynamicStore.getTotalEnergyCurrentLimit()));
+            (repo.getTotalEnergyWeight()) / dynamicStore.getTotalEnergyCurrentLimit()));
 
         long ownerEnergyUsage = (long) (energyUsage * ((double)(ownerCapsule
             .getFrozenV2BalanceForEnergy()) / ownerCapsule.getAllFrozenBalanceForEnergy()));
