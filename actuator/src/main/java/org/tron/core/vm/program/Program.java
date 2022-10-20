@@ -1934,7 +1934,7 @@ public class Program {
 
     increaseNonce();
     InternalTransaction internalTx = addInternalTx(null, owner, owner, 0, null,
-        "cancelUnfreeze", nonce, null);
+        "cancelAllUnfreezeV2", nonce, null);
 
     try {
       CancelAllUnfreezeV2Param param = new CancelAllUnfreezeV2Param();
@@ -1946,9 +1946,9 @@ public class Program {
       repository.commit();
       return true;
     } catch (ContractValidateException e) {
-      logger.error("TVM cancelUnfreezeV2Action: validate failure. Reason: {}", e.getMessage());
+      logger.error("TVM cancelAllUnfreezeV2Action: validate failure. Reason: {}", e.getMessage());
     } catch (ContractExeException e) {
-      logger.error("TVM cancelUnfreezeV2Action: execute failure. Reason: {}", e.getMessage());
+      logger.error("TVM cancelAllUnfreezeV2Action: execute failure. Reason: {}", e.getMessage());
     }
     if (internalTx != null) {
       internalTx.reject();
