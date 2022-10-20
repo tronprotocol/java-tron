@@ -294,12 +294,7 @@ public class EnergyCost {
     return CANCEL_ALL_UNFREEZE_V2;
   }
 
-  public static long getDelegateResourceCost(Program program) {
-    Stack stack = program.getStack();
-    DataWord receiverAddressWord = stack.get(stack.size() - 3);
-    if (isDeadAccount(program, receiverAddressWord)) {
-      return DELEGATE_RESOURCE + NEW_ACCT_CALL;
-    }
+  public static long getDelegateResourceCost(Program ignored) {
     return DELEGATE_RESOURCE;
   }
 
