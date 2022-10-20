@@ -238,10 +238,10 @@ public class Op {
   public static final int WITHDRAWREWARD = 0xd9;
   public static final int FREEZEBALANCEV2 = 0xda;
   public static final int UNFREEZEBALANCEV2 = 0xdb;
-  public static final int WITHDRAWEXPIREUNFREEZE = 0xdc;
-  public static final int DELEGATERESOURCE = 0xdd;
-  public static final int UNDELEGATERESOURCE = 0xde;
-  public static final int CANCELALLUNFREEZEV2 = 0xdf;
+  public static final int CANCELALLUNFREEZEV2 = 0xdc;
+  public static final int WITHDRAWEXPIREUNFREEZE = 0xdd;
+  public static final int DELEGATERESOURCE = 0xde;
+  public static final int UNDELEGATERESOURCE = 0xdf;
 
   // (0xf0) Create a new account with associated code
   public static final int CREATE = 0xf0;
