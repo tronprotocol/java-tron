@@ -186,7 +186,7 @@ public class ReceiptCapsule {
       long now) throws BalanceInsufficientException {
     long accountEnergyLeft;
     if (dynamicPropertiesStore.getAllowTvmFreeze() == 1
-        || dynamicPropertiesStore.getUnfreezeDelayDays() > 0) {
+        || dynamicPropertiesStore.supportUnfreezeDelay()) {
       accountEnergyLeft = callerEnergyLeft;
     } else {
       accountEnergyLeft = energyProcessor.getAccountLeftEnergyFromFreeze(account);

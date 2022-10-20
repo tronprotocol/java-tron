@@ -31,7 +31,7 @@ public class ConfigLoader {
         VMConfig.initAllowTvmCompatibleEvm(ds.getAllowTvmCompatibleEvm());
         VMConfig.initAllowHigherLimitForMaxCpuTimeOfOneTx(
             ds.getAllowHigherLimitForMaxCpuTimeOfOneTx());
-        VMConfig.initAllowTvmFreezeV2(ds.getUnfreezeDelayDays() > 0 ? 1 : 0);
+        VMConfig.initAllowTvmFreezeV2(ds.supportUnfreezeDelay() ? 1 : 0);
       }
     }
   }
