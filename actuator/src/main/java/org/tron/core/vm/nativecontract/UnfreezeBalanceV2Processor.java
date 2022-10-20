@@ -117,14 +117,14 @@ public class UnfreezeBalanceV2Processor {
     return checkOk;
   }
 
-  public void execute(UnfreezeBalanceV2Param param, Repository repo) {
+  public long execute(UnfreezeBalanceV2Param param, Repository repo) {
     byte[] ownerAddress = param.getOwnerAddress();
     long unfreezeBalance = param.getUnfreezeBalance();
 
     AccountCapsule accountCapsule = repo.getAccount(ownerAddress);
     long now = repo.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
 
-    this.unfreezeExpire(accountCapsule, now);
+    long unfreezeExpireBalance = this.unfreezeExpire(accountCapsule, now);
 
     if (repo.getDynamicPropertiesStore().supportAllowNewResourceModel()
         && accountCapsule.oldTronPowerIsNotInitialized()) {
@@ -145,9 +145,10 @@ public class UnfreezeBalanceV2Processor {
     }
 
     repo.updateAccount(accountCapsule.createDbKey(), accountCapsule);
+    return unfreezeExpireBalance;
   }
 
-  private void unfreezeExpire(AccountCapsule accountCapsule, long now) {
+  private long unfreezeExpire(AccountCapsule accountCapsule, long now) {
     long unfreezeBalance = 0L;
 
     List<Protocol.Account.UnFreezeV2> unFrozenV2List = Lists.newArrayList();
@@ -168,6 +169,7 @@ public class UnfreezeBalanceV2Processor {
             .clearUnfrozenV2()
             .addAllUnfrozenV2(unFrozenV2List).build()
     );
+    return unfreezeBalance;
   }
 
   private void updateAccountFrozenInfo(
