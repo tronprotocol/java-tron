@@ -3,6 +3,7 @@ package org.tron.core.actuator;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
@@ -32,6 +33,7 @@ import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 @Slf4j(topic = "actuator")
 public class UnfreezeBalanceV2Actuator extends AbstractActuator {
 
+  @Getter
   private static final int UNFREEZE_MAX_TIMES = 32;
 
   public UnfreezeBalanceV2Actuator() {

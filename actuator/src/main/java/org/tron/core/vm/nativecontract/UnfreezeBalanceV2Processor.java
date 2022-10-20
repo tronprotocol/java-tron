@@ -10,10 +10,10 @@ import com.google.protobuf.ByteString;
 import java.util.Iterator;
 import java.util.List;
 
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
+import org.tron.core.actuator.UnfreezeBalanceV2Actuator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.exception.ContractValidateException;
@@ -25,9 +25,6 @@ import org.tron.protos.contract.Common;
 
 @Slf4j(topic = "VMProcessor")
 public class UnfreezeBalanceV2Processor {
-
-  @Getter
-  private static final int UNFREEZE_MAX_TIMES = 16;
 
   public void validate(UnfreezeBalanceV2Param param, Repository repo)
       throws ContractValidateException {
@@ -48,7 +45,7 @@ public class UnfreezeBalanceV2Processor {
     }
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
     int unfreezingCount = accountCapsule.getUnfreezingV2Count(now);
-    if (UNFREEZE_MAX_TIMES <= unfreezingCount) {
+    if (UnfreezeBalanceV2Actuator.getUNFREEZE_MAX_TIMES() <= unfreezingCount) {
       throw new ContractValidateException("Invalid unfreeze operation, unfreezing times is over limit");
     }
     switch (param.getResourceType()) {

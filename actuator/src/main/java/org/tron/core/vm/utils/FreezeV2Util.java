@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
+import org.tron.core.actuator.UnfreezeBalanceV2Actuator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.vm.config.VMConfig;
@@ -117,7 +118,7 @@ public class FreezeV2Util {
 
     long now = repository.getHeadSlot();
     int unfreezingV2Count = accountCapsule.getUnfreezingV2Count(now);
-    return Long.max(UnfreezeBalanceV2Processor.getUNFREEZE_MAX_TIMES() - unfreezingV2Count, 0L);
+    return Long.max(UnfreezeBalanceV2Actuator.getUNFREEZE_MAX_TIMES() - unfreezingV2Count, 0L);
   }
 
   public static long queryDelegatableResource(byte[] address, long type, Repository repository) {
