@@ -54,7 +54,7 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   ReadOptions readOpts;
   private String dataBaseName;
   private RocksDB database;
-  private boolean alive;
+  private volatile boolean alive;
   private String parentPath;
   private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
   private static final String KEY_ENGINE = "ENGINE";
@@ -132,16 +132,18 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
 
   @Override
   public Set<byte[]> allKeys() throws RuntimeException {
-    if (quitIfNotAlive()) {
-      return null;
-    }
     resetDbLock.readLock().lock();
-    Set<byte[]> result = Sets.newHashSet();
-    try (final RocksIterator iter = getRocksIterator()) {
-      for (iter.seekToFirst(); iter.isValid(); iter.next()) {
-        result.add(iter.key());
+    try {
+      if (quitIfNotAlive()) {
+        return null;
       }
-      return result;
+      Set<byte[]> result = Sets.newHashSet();
+      try (final RocksIterator iter = getRocksIterator()) {
+        for (iter.seekToFirst(); iter.isValid(); iter.next()) {
+          result.add(iter.key());
+        }
+        return result;
+      }
     } finally {
       resetDbLock.readLock().unlock();
     }
@@ -282,11 +284,11 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
 
   @Override
   public void putData(byte[] key, byte[] value) {
-    if (quitIfNotAlive()) {
-      return;
-    }
     resetDbLock.readLock().lock();
     try {
+      if (quitIfNotAlive()) {
+        return;
+      }
       database.put(key, value);
     } catch (RocksDBException e) {
       throw new RuntimeException(dataBaseName, e);
@@ -297,11 +299,11 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
 
   @Override
   public byte[] getData(byte[] key) {
-    if (quitIfNotAlive()) {
-      return null;
-    }
     resetDbLock.readLock().lock();
     try {
+      if (quitIfNotAlive()) {
+        return null;
+      }
       return database.get(key);
     } catch (RocksDBException e) {
       throw new RuntimeException(dataBaseName, e);
@@ -312,11 +314,11 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
 
   @Override
   public void deleteData(byte[] key) {
-    if (quitIfNotAlive()) {
-      return;
-    }
     resetDbLock.readLock().lock();
     try {
+      if (quitIfNotAlive()) {
+        return;
+      }
       database.delete(key);
     } catch (RocksDBException e) {
       throw new RuntimeException(dataBaseName, e);
@@ -370,11 +372,11 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
 
   @Override
   public void updateByBatch(Map<byte[], byte[]> rows, WriteOptionsWrapper optionsWrapper) {
-    if (quitIfNotAlive()) {
-      return;
-    }
     resetDbLock.readLock().lock();
     try {
+      if (quitIfNotAlive()) {
+        return;
+      }
       updateByBatchInner(rows, optionsWrapper.rocks);
     } catch (Exception e) {
       try {
@@ -389,11 +391,11 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
 
   @Override
   public void updateByBatch(Map<byte[], byte[]> rows) {
-    if (quitIfNotAlive()) {
-      return;
-    }
     resetDbLock.readLock().lock();
     try {
+      if (quitIfNotAlive()) {
+        return;
+      }
       updateByBatchInner(rows);
     } catch (Exception e) {
       try {
@@ -407,40 +409,45 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   }
 
   public List<byte[]> getKeysNext(byte[] key, long limit) {
-    if (quitIfNotAlive()) {
-      return new ArrayList<>();
-    }
-    if (limit <= 0) {
-      return new ArrayList<>();
-    }
     resetDbLock.readLock().lock();
-    try (RocksIterator iter = getRocksIterator()) {
-      List<byte[]> result = new ArrayList<>();
-      long i = 0;
-      for (iter.seek(key); iter.isValid() && i < limit; iter.next(), i++) {
-        result.add(iter.key());
+    try {
+      if (quitIfNotAlive()) {
+        return new ArrayList<>();
       }
-      return result;
+      if (limit <= 0) {
+        return new ArrayList<>();
+      }
+
+      try (RocksIterator iter = getRocksIterator()) {
+        List<byte[]> result = new ArrayList<>();
+        long i = 0;
+        for (iter.seek(key); iter.isValid() && i < limit; iter.next(), i++) {
+          result.add(iter.key());
+        }
+        return result;
+      }
     } finally {
       resetDbLock.readLock().unlock();
     }
   }
 
   public Map<byte[], byte[]> getNext(byte[] key, long limit) {
-    if (quitIfNotAlive()) {
-      return null;
-    }
-    if (limit <= 0) {
-      return Collections.emptyMap();
-    }
     resetDbLock.readLock().lock();
-    try (RocksIterator iter = getRocksIterator()) {
-      Map<byte[], byte[]> result = new HashMap<>();
-      long i = 0;
-      for (iter.seek(key); iter.isValid() && i < limit; iter.next(), i++) {
-        result.put(iter.key(), iter.value());
+    try {
+      if (quitIfNotAlive()) {
+        return null;
       }
-      return result;
+      if (limit <= 0) {
+        return Collections.emptyMap();
+      }
+      try (RocksIterator iter = getRocksIterator()) {
+        Map<byte[], byte[]> result = new HashMap<>();
+        long i = 0;
+        for (iter.seek(key); iter.isValid() && i < limit; iter.next(), i++) {
+          result.put(iter.key(), iter.value());
+        }
+        return result;
+      }
     } finally {
       resetDbLock.readLock().unlock();
     }
@@ -448,40 +455,44 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
 
   @Override
   public Map<WrappedByteArray, byte[]> prefixQuery(byte[] key) {
-    if (quitIfNotAlive()) {
-      return null;
-    }
     resetDbLock.readLock().lock();
-    try (RocksIterator iterator = getRocksIterator()) {
-      Map<WrappedByteArray, byte[]> result = new HashMap<>();
-      for (iterator.seek(key); iterator.isValid(); iterator.next()) {
-        if (Bytes.indexOf(iterator.key(), key) == 0) {
-          result.put(WrappedByteArray.of(iterator.key()), iterator.value());
-        } else {
-          return result;
-        }
+    try {
+      if (quitIfNotAlive()) {
+        return null;
       }
-      return result;
+      try (RocksIterator iterator = getRocksIterator()) {
+        Map<WrappedByteArray, byte[]> result = new HashMap<>();
+        for (iterator.seek(key); iterator.isValid(); iterator.next()) {
+          if (Bytes.indexOf(iterator.key(), key) == 0) {
+            result.put(WrappedByteArray.of(iterator.key()), iterator.value());
+          } else {
+            return result;
+          }
+        }
+        return result;
+      }
     } finally {
       resetDbLock.readLock().unlock();
     }
   }
 
   public Set<byte[]> getlatestValues(long limit) {
-    if (quitIfNotAlive()) {
-      return null;
-    }
-    if (limit <= 0) {
-      return Sets.newHashSet();
-    }
     resetDbLock.readLock().lock();
-    try (RocksIterator iter = getRocksIterator()) {
-      Set<byte[]> result = Sets.newHashSet();
-      long i = 0;
-      for (iter.seekToLast(); iter.isValid() && i < limit; iter.prev(), i++) {
-        result.add(iter.value());
+    try {
+      if (quitIfNotAlive()) {
+        return null;
       }
-      return result;
+      if (limit <= 0) {
+        return Sets.newHashSet();
+      }
+      try (RocksIterator iter = getRocksIterator()) {
+        Set<byte[]> result = Sets.newHashSet();
+        long i = 0;
+        for (iter.seekToLast(); iter.isValid() && i < limit; iter.prev(), i++) {
+          result.add(iter.value());
+        }
+        return result;
+      }
     } finally {
       resetDbLock.readLock().unlock();
     }
@@ -489,20 +500,22 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
 
 
   public Set<byte[]> getValuesNext(byte[] key, long limit) {
-    if (quitIfNotAlive()) {
-      return null;
-    }
-    if (limit <= 0) {
-      return Sets.newHashSet();
-    }
     resetDbLock.readLock().lock();
-    try (RocksIterator iter = getRocksIterator()) {
-      Set<byte[]> result = Sets.newHashSet();
-      long i = 0;
-      for (iter.seek(key); iter.isValid() && i < limit; iter.next(), i++) {
-        result.add(iter.value());
+    try {
+      if (quitIfNotAlive()) {
+        return null;
       }
-      return result;
+      if (limit <= 0) {
+        return Sets.newHashSet();
+      }
+      try (RocksIterator iter = getRocksIterator()) {
+        Set<byte[]> result = Sets.newHashSet();
+        long i = 0;
+        for (iter.seek(key); iter.isValid() && i < limit; iter.next(), i++) {
+          result.add(iter.value());
+        }
+        return result;
+      }
     } finally {
       resetDbLock.readLock().unlock();
     }
