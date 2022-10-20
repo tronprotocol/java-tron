@@ -847,16 +847,8 @@ public class OperationActions {
     DataWord unDelegateBalance = program.stackPop();
     DataWord receiverAddress = program.stackPop();
 
-    Triple<Long, Long, Long> result =
-        program.unDelegateResource(receiverAddress, unDelegateBalance, resourceType);
-    if (Objects.isNull(result)) {
-      program.stackPush(DataWord.ZERO());
-    } else {
-      program.stackPush(new DataWord(result.getLeft()));
-      program.stackPush(new DataWord(result.getMiddle()));
-      program.stackPush(new DataWord(result.getRight()));
-      program.stackPush(DataWord.ONE());
-    }
+    boolean result = program.unDelegateResource(receiverAddress, unDelegateBalance, resourceType);
+    program.stackPush(result ? DataWord.ONE() : DataWord.ZERO());
     program.step();
   }
 
