@@ -70,8 +70,6 @@ import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 public class RepositoryImpl implements Repository {
 
   private final long precision = Parameter.ChainConstant.PRECISION;
-  private final long windowSize = Parameter.ChainConstant.WINDOW_SIZE_MS
-      / BLOCK_PRODUCED_INTERVAL;
   private static final byte[] TOTAL_NET_WEIGHT = "TOTAL_NET_WEIGHT".getBytes();
   private static final byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
 
