@@ -1990,7 +1990,7 @@ public class Program {
     return false;
   }
 
-  public Triple<Long, Long, Long> unDelegateResource(
+  public boolean unDelegateResource(
       DataWord receiverAddress, DataWord unDelegateBalance, DataWord resourceType) {
     Repository repository = getContractState().newRepositoryChild();
     byte[] owner = getContextAddress();
@@ -2010,9 +2010,9 @@ public class Program {
 
       UnDelegateResourceProcessor processor = new UnDelegateResourceProcessor();
       processor.validate(param, repository);
-      Triple<Long, Long, Long> result = processor.execute(param, repository);
+      processor.execute(param, repository);
       repository.commit();
-      return result;
+      return true;
     } catch (ContractValidateException e) {
       logger.error("TVM unDelegateResource: validate failure. Reason: {}", e.getMessage());
     } catch (ArithmeticException e) {
@@ -2021,7 +2021,7 @@ public class Program {
     if (internalTx != null) {
       internalTx.reject();
     }
-    return null;
+    return false;
   }
 
   private Common.ResourceCode parseResourceCode(DataWord resourceType) {
