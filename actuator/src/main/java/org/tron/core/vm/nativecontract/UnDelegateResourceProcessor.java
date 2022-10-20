@@ -3,8 +3,12 @@ package org.tron.core.vm.nativecontract;
 import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
 import static org.tron.core.actuator.ActuatorConstant.STORE_NOT_EXIST;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
+import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 
 import java.util.Arrays;
+import java.util.Objects;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.utils.DecodeUtil;
@@ -157,6 +161,7 @@ public class UnDelegateResourceProcessor {
     // modify owner Account
     byte[] key = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress);
     DelegatedResourceCapsule delegatedResourceCapsule = repo.getDelegatedResource(key);
+    long now = repo.getHeadSlot();
     switch (param.getResourceType()) {
       case BANDWIDTH: {
         delegatedResourceCapsule.addFrozenBalanceForBandwidth(-unDelegateBalance, 0);
@@ -165,10 +170,11 @@ public class UnDelegateResourceProcessor {
         ownerCapsule.addFrozenBalanceForBandwidthV2(unDelegateBalance);
 
         BandwidthProcessor processor = new BandwidthProcessor(ChainBaseManager.getInstance());
-        processor.updateUsage(ownerCapsule);
-        long newNetUsage = ownerCapsule.getNetUsage() + transferUsage;
-        ownerCapsule.setNetUsage(newNetUsage);
-        ownerCapsule.setLatestConsumeTime(ChainBaseManager.getInstance().getHeadSlot());
+        if (Objects.nonNull(receiverCapsule) && transferUsage > 0) {
+          ownerCapsule.setNetUsage(processor.unDelegateIncrease(ownerCapsule, receiverCapsule,
+              transferUsage, BANDWIDTH, now));
+          ownerCapsule.setLatestConsumeTime(now);
+        }
       }
       break;
       case ENERGY: {
@@ -179,10 +185,11 @@ public class UnDelegateResourceProcessor {
 
         EnergyProcessor processor =
             new EnergyProcessor(dynamicStore, ChainBaseManager.getInstance().getAccountStore());
-        processor.updateUsage(ownerCapsule);
-        long newEnergyUsage = ownerCapsule.getEnergyUsage() + transferUsage;
-        ownerCapsule.setEnergyUsage(newEnergyUsage);
-        ownerCapsule.setLatestConsumeTimeForEnergy(ChainBaseManager.getInstance().getHeadSlot());
+        if (Objects.nonNull(receiverCapsule) && transferUsage > 0) {
+          ownerCapsule.setEnergyUsage(processor.unDelegateIncrease(ownerCapsule, receiverCapsule,
+              transferUsage, ENERGY, now));
+          ownerCapsule.setLatestConsumeTimeForEnergy(now);
+        }
       }
       break;
       default:
