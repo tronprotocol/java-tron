@@ -11,12 +11,10 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
-import org.bouncycastle.util.encoders.Hex;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -25,6 +23,7 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.JsonUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
@@ -48,6 +47,7 @@ import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
+import org.tron.core.exception.EventBloomException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
@@ -66,7 +66,6 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ExchangeStore;
 import org.tron.core.store.ExchangeV2Store;
 import org.tron.core.store.IncrementalMerkleTreeStore;
-import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
@@ -75,7 +74,6 @@ import org.tron.protos.contract.AccountContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.ShieldContract;
-import stest.tron.wallet.dailybuild.operationupdate.MutiSignSmartContractTest;
 
 
 @Slf4j
@@ -130,13 +128,35 @@ public class ManagerTest extends BlockGenerate {
   }
 
   @Test
+  public void updateRecentTransaction() throws Exception {
+    TransferContract tc =
+            TransferContract.newBuilder()
+                    .setAmount(10)
+                    .setOwnerAddress(ByteString.copyFromUtf8("aaa"))
+                    .setToAddress(ByteString.copyFromUtf8("bbb"))
+                    .build();
+    TransactionCapsule trx = new TransactionCapsule(tc, ContractType.TransferContract);
+    BlockCapsule b = new BlockCapsule(1, chainManager.getGenesisBlockId(),
+            0, ByteString.copyFrom(new byte[64]));
+    b.addTransaction(trx);
+    dbManager.updateRecentTransaction(b);
+    Assert.assertEquals(1, chainManager.getRecentTransactionStore().size());
+    byte[] key = ByteArray.subArray(ByteArray.fromLong(1), 6, 8);
+    byte[] value = chainManager.getRecentTransactionStore().get(key).getData();
+    RecentTransactionItem item = JsonUtil.json2Obj(new String(value), RecentTransactionItem.class);
+    Assert.assertEquals(1, item.getNum());
+    Assert.assertEquals(1, item.getTransactionIds().size());
+    Assert.assertEquals(trx.getTransactionId().toString(), item.getTransactionIds().get(0));
+  }
+
+  @Test
   public void setBlockReference()
       throws ContractExeException, UnLinkedBlockException, ValidateScheduleException,
       BadBlockException, ContractValidateException, ValidateSignatureException,
       AccountResourceInsufficientException, TransactionExpirationException,
       TooBigTransactionException, DupTransactionException, TaposException, BadNumberBlockException,
       NonCommonBlockException, ReceiptCheckErrException, VMIllegalException,
-      TooBigTransactionResultException, ZksnarkException {
+      TooBigTransactionResultException, ZksnarkException, EventBloomException {
 
     BlockCapsule blockCapsule =
         new BlockCapsule(
@@ -230,23 +250,6 @@ public class ManagerTest extends BlockGenerate {
         chainManager.getExchangeV2Store()) instanceof ExchangeV2Store);
 
   }
-
-
-  @Test
-  public void pushBlockInvalidSignature() {
-    // invalid witness address cause invalid signature
-    String invalidWitness = "bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f";
-    blockCapsule2.setWitness(invalidWitness);
-    try {
-      dbManager.pushBlock(blockCapsule2);
-      Assert.assertTrue(false);
-    } catch (BadBlockException e) {
-      Assert.assertEquals("The signature is not validated", e.getMessage());
-    } catch (Exception e) {
-      Assert.assertFalse(e instanceof Exception);
-    }
-  }
-
 
   @Test
   public void getHeadTest() {
@@ -362,8 +365,8 @@ public class ManagerTest extends BlockGenerate {
           chainManager.getAccountStore(), chainManager.getAssetIssueStore(),
           chainManager.getDynamicPropertiesStore());
       AccountCapsule copyAccount = chainManager.getAccountStore().get(ownerAddress);
-      Assert.assertEquals(copyAccount.getAssetMap().size(), 1);
-      copyAccount.getAssetMap().forEach((k, v) -> {
+      Assert.assertEquals(copyAccount.getAssetMapForTest().size(), 1);
+      copyAccount.getAssetMapForTest().forEach((k, v) -> {
         Assert.assertEquals(k, assetID);
         Assert.assertEquals(v.compareTo(10L), 0);
       });
@@ -455,7 +458,7 @@ public class ManagerTest extends BlockGenerate {
       BadNumberBlockException, DupTransactionException, ContractExeException,
       ValidateSignatureException, TooBigTransactionResultException, TransactionExpirationException,
       TaposException, ReceiptCheckErrException, TooBigTransactionException,
-      AccountResourceInsufficientException {
+      AccountResourceInsufficientException, EventBloomException {
 
     String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
     byte[] privateKey = ByteArray.fromHexString(key);
@@ -563,7 +566,7 @@ public class ManagerTest extends BlockGenerate {
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
-      ZksnarkException {
+      ZksnarkException, EventBloomException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     //  System.out.print("block store size:" + size + "\n");
@@ -682,7 +685,7 @@ public class ManagerTest extends BlockGenerate {
       DupTransactionException, BadBlockException,
       TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
-      ZksnarkException {
+      ZksnarkException, EventBloomException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
@@ -788,7 +791,7 @@ public class ManagerTest extends BlockGenerate {
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
-      ZksnarkException {
+      ZksnarkException, EventBloomException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");

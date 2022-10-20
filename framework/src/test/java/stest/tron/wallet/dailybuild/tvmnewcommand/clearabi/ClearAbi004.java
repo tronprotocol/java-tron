@@ -47,11 +47,7 @@ public class ClearAbi004 {
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
@@ -91,7 +87,7 @@ public class ClearAbi004 {
             containsString("CONTRACT_VALIDATE_ERROR"));
     Assert
         .assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
-            containsString("contract validate error : Contract not exists"));
+            containsString("Contract validate error : Contract not exists"));
 
 
   }

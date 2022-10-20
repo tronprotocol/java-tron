@@ -26,6 +26,8 @@ import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.MARKET_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseEnergyFee;
+import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.EARLIEST_STR;
 
 import com.google.common.collect.ContiguousSet;
 import com.google.common.collect.DiscreteDomain;
@@ -51,6 +53,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.bouncycastle.util.encoders.DecoderException;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -101,9 +104,9 @@ import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
-import org.tron.common.overlay.message.Message;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.ProgramResult;
+import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.DecodeUtil;
@@ -146,12 +149,14 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.MarketUtils;
+import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionContext;
+import org.tron.core.db2.core.Chainbase;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
@@ -159,6 +164,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.SignatureFormatException;
@@ -181,7 +187,6 @@ import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.StoreFactory;
-import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder.ShieldedTRC20ParametersType;
 import org.tron.core.zen.ZenTransactionBuilder;
@@ -246,6 +251,7 @@ public class Wallet {
   private static final byte[] SHIELDED_TRC20_LOG_TOPICS_BURN_TOKEN = Hash.sha3(ByteArray
       .fromString("TokenBurn(address,uint256,bytes32[3])"));
   private static final String BROADCAST_TRANS_FAILED = "Broadcast transaction {} failed, {}.";
+
   @Getter
   private final SignInterface cryptoEngine;
   @Autowired
@@ -263,11 +269,9 @@ public class Wallet {
   @Autowired
   private NodeManager nodeManager;
   private int minEffectiveConnection = Args.getInstance().getMinEffectiveConnection();
+  private boolean trxCacheEnable = Args.getInstance().isTrxCacheEnable();
   public static final String CONTRACT_VALIDATE_EXCEPTION = "ContractValidateException: {}";
-  public static final String CONTRACT_VALIDATE_ERROR = "contract validate error : ";
-
-  @Autowired
-  private TransactionUtil transactionUtil;
+  public static final String CONTRACT_VALIDATE_ERROR = "Contract validate error : ";
 
   /**
    * Creates a new Wallet with a random ECKey.
@@ -329,7 +333,7 @@ public class Wallet {
     if (accountCapsule == null) {
       return null;
     }
-    accountCapsule.importAsset();
+    accountCapsule.importAllAsset();
     BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     processor.updateUsage(accountCapsule);
 
@@ -360,7 +364,7 @@ public class Wallet {
     if (accountCapsule == null) {
       return null;
     }
-    accountCapsule.importAsset();
+    accountCapsule.importAllAsset();
     BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     processor.updateUsage(accountCapsule);
 
@@ -478,14 +482,14 @@ public class Wallet {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
     TransactionCapsule trx = new TransactionCapsule(signedTransaction);
     trx.setTime(System.currentTimeMillis());
+    Sha256Hash txID = trx.getTransactionId();
     try {
-      Message message = new TransactionMessage(signedTransaction.toByteArray());
+      TransactionMessage message = new TransactionMessage(signedTransaction.toByteArray());
       if (minEffectiveConnection != 0) {
         if (tronNetDelegate.getActivePeer().isEmpty()) {
-          logger
-              .warn("Broadcast transaction {} has failed, no connection.", trx.getTransactionId());
+          logger.warn("Broadcast transaction {} has failed, no connection.", txID);
           return builder.setResult(false).setCode(response_code.NO_CONNECTION)
-              .setMessage(ByteString.copyFromUtf8("no connection"))
+              .setMessage(ByteString.copyFromUtf8("No connection."))
               .build();
         }
 
@@ -494,9 +498,9 @@ public class Wallet {
             .count();
 
         if (count < minEffectiveConnection) {
-          String info = "effective connection:" + count + " lt minEffectiveConnection:"
+          String info = "Effective connection:" + count + " lt minEffectiveConnection:"
               + minEffectiveConnection;
-          logger.warn("Broadcast transaction {} has failed, {}.", trx.getTransactionId(), info);
+          logger.warn("Broadcast transaction {} has failed. {}.", txID, info);
           return builder.setResult(false).setCode(response_code.NOT_ENOUGH_EFFECTIVE_CONNECTION)
               .setMessage(ByteString.copyFromUtf8(info))
               .build();
@@ -504,69 +508,77 @@ public class Wallet {
       }
 
       if (dbManager.isTooManyPending()) {
-        logger
-            .warn("Broadcast transaction {} has failed, too many pending.", trx.getTransactionId());
-        return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
+        logger.warn("Broadcast transaction {} has failed, too many pending.", txID);
+        return builder.setResult(false).setCode(response_code.SERVER_BUSY)
+            .setMessage(ByteString.copyFromUtf8("Server busy.")).build();
       }
 
-      if (dbManager.getTransactionIdCache().getIfPresent(trx.getTransactionId()) != null) {
-        logger.warn("Broadcast transaction {} has failed, it already exists.",
-            trx.getTransactionId());
-        return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR).build();
-      } else {
-        dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
+      if (trxCacheEnable) {
+        if (dbManager.getTransactionIdCache().getIfPresent(txID) != null) {
+          logger.warn("Broadcast transaction {} has failed, it already exists.", txID);
+          return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR)
+              .setMessage(ByteString.copyFromUtf8("Transaction already exists.")).build();
+        } else {
+          dbManager.getTransactionIdCache().put(txID, true);
+        }
       }
+
       if (chainBaseManager.getDynamicPropertiesStore().supportVM()) {
         trx.resetResult();
       }
       dbManager.pushTransaction(trx);
-      tronNetService.broadcast(message);
-      logger.info("Broadcast transaction {} successfully.", trx.getTransactionId());
-      return builder.setResult(true).setCode(response_code.SUCCESS).build();
+      int num = tronNetService.fastBroadcastTransaction(message);
+      if (num == 0 && minEffectiveConnection != 0) {
+        return builder.setResult(false).setCode(response_code.NOT_ENOUGH_EFFECTIVE_CONNECTION)
+            .setMessage(ByteString.copyFromUtf8("P2P broadcast failed.")).build();
+      } else {
+        logger.info("Broadcast transaction {} to {} peers successfully.", txID, num);
+        return builder.setResult(true).setCode(response_code.SUCCESS).build();
+      }
     } catch (ValidateSignatureException e) {
-      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
+      logger.warn(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.SIGERROR)
-          .setMessage(ByteString.copyFromUtf8("validate signature error " + e.getMessage()))
+          .setMessage(ByteString.copyFromUtf8("Validate signature error: " + e.getMessage()))
           .build();
     } catch (ContractValidateException e) {
-      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
+      logger.warn(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
           .setMessage(ByteString.copyFromUtf8(CONTRACT_VALIDATE_ERROR + e.getMessage()))
           .build();
     } catch (ContractExeException e) {
-      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
+      logger.warn(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
-          .setMessage(ByteString.copyFromUtf8("contract execute error : " + e.getMessage()))
+          .setMessage(ByteString.copyFromUtf8("Contract execute error : " + e.getMessage()))
           .build();
     } catch (AccountResourceInsufficientException e) {
-      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.BANDWITH_ERROR)
-          .setMessage(ByteString.copyFromUtf8("AccountResourceInsufficient error"))
+          .setMessage(ByteString.copyFromUtf8("Account resource insufficient error."))
           .build();
     } catch (DupTransactionException e) {
-      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
+      logger.warn(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR)
-          .setMessage(ByteString.copyFromUtf8("dup transaction"))
+          .setMessage(ByteString.copyFromUtf8("Dup transaction."))
           .build();
     } catch (TaposException e) {
-      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.TAPOS_ERROR)
-          .setMessage(ByteString.copyFromUtf8("Tapos check error"))
+          .setMessage(ByteString.copyFromUtf8("Tapos check error."))
           .build();
     } catch (TooBigTransactionException e) {
-      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.TOO_BIG_TRANSACTION_ERROR)
-          .setMessage(ByteString.copyFromUtf8("transaction size is too big"))
+          .setMessage(ByteString.copyFromUtf8("Transaction size is too big."))
           .build();
     } catch (TransactionExpirationException e) {
-      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.TRANSACTION_EXPIRATION_ERROR)
-          .setMessage(ByteString.copyFromUtf8("transaction expired"))
+          .setMessage(ByteString.copyFromUtf8("Transaction expired"))
           .build();
     } catch (Exception e) {
-      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.OTHER_ERROR)
-          .setMessage(ByteString.copyFromUtf8("other error : " + e.getMessage()))
+          .setMessage(ByteString.copyFromUtf8("Error: " + e.getMessage()))
           .build();
     }
   }
@@ -583,41 +595,48 @@ public class Wallet {
     tswBuilder.setTransaction(trxExBuilder);
     TransactionApprovedList.Result.Builder resultBuilder = TransactionApprovedList.Result
         .newBuilder();
-    try {
-      Contract contract = trx.getRawData().getContract(0);
-      byte[] owner = TransactionCapsule.getOwner(contract);
-      AccountCapsule account = chainBaseManager.getAccountStore().get(owner);
-      if (account == null) {
-        throw new PermissionException("Account does not exist!");
-      }
 
-      if (trx.getSignatureCount() > 0) {
-        List<ByteString> approveList = new ArrayList<ByteString>();
-        byte[] hash = Sha256Hash.hash(CommonParameter
-            .getInstance().isECKeyCryptoEngine(), trx.getRawData().toByteArray());
-        for (ByteString sig : trx.getSignatureList()) {
-          if (sig.size() < 65) {
-            throw new SignatureFormatException(
-                "Signature size is " + sig.size());
-          }
-          String base64 = TransactionCapsule.getBase64FromByteString(sig);
-          byte[] address = SignUtils.signatureToAddress(hash, base64, Args.getInstance()
-              .isECKeyCryptoEngine());
-          approveList.add(ByteString.copyFrom(address)); //out put approve list.
-        }
-        tswBuilder.addAllApprovedList(approveList);
-      }
-      resultBuilder.setCode(TransactionApprovedList.Result.response_code.SUCCESS);
-    } catch (SignatureFormatException signEx) {
-      resultBuilder.setCode(TransactionApprovedList.Result.response_code.SIGNATURE_FORMAT_ERROR);
-      resultBuilder.setMessage(signEx.getMessage());
-    } catch (SignatureException signEx) {
-      resultBuilder.setCode(TransactionApprovedList.Result.response_code.COMPUTE_ADDRESS_ERROR);
-      resultBuilder.setMessage(signEx.getMessage());
-    } catch (Exception ex) {
+    if (trx.getRawData().getContractCount() == 0) {
       resultBuilder.setCode(TransactionApprovedList.Result.response_code.OTHER_ERROR);
-      resultBuilder.setMessage(ex.getClass() + " : " + ex.getMessage());
+      resultBuilder.setMessage("Invalid transaction: no valid contract");
+    } else {
+      try {
+        Contract contract = trx.getRawData().getContract(0);
+        byte[] owner = TransactionCapsule.getOwner(contract);
+        AccountCapsule account = chainBaseManager.getAccountStore().get(owner);
+        if (account == null) {
+          throw new PermissionException("Account does not exist!");
+        }
+
+        if (trx.getSignatureCount() > 0) {
+          List<ByteString> approveList = new ArrayList<ByteString>();
+          byte[] hash = Sha256Hash.hash(CommonParameter
+              .getInstance().isECKeyCryptoEngine(), trx.getRawData().toByteArray());
+          for (ByteString sig : trx.getSignatureList()) {
+            if (sig.size() < 65) {
+              throw new SignatureFormatException(
+                  "Signature size is " + sig.size());
+            }
+            String base64 = TransactionCapsule.getBase64FromByteString(sig);
+            byte[] address = SignUtils.signatureToAddress(hash, base64, Args.getInstance()
+                .isECKeyCryptoEngine());
+            approveList.add(ByteString.copyFrom(address)); //out put approve list.
+          }
+          tswBuilder.addAllApprovedList(approveList);
+        }
+        resultBuilder.setCode(TransactionApprovedList.Result.response_code.SUCCESS);
+      } catch (SignatureFormatException signEx) {
+        resultBuilder.setCode(TransactionApprovedList.Result.response_code.SIGNATURE_FORMAT_ERROR);
+        resultBuilder.setMessage(signEx.getMessage());
+      } catch (SignatureException signEx) {
+        resultBuilder.setCode(TransactionApprovedList.Result.response_code.COMPUTE_ADDRESS_ERROR);
+        resultBuilder.setMessage(signEx.getMessage());
+      } catch (Exception ex) {
+        resultBuilder.setCode(TransactionApprovedList.Result.response_code.OTHER_ERROR);
+        resultBuilder.setMessage(ex.getClass() + " : " + ex.getMessage());
+      }
     }
+
     tswBuilder.setResult(resultBuilder);
     return tswBuilder.build();
   }
@@ -652,6 +671,15 @@ public class Wallet {
     }
   }
 
+  public BlockCapsule getBlockCapsuleByNum(long blockNum) {
+    try {
+      return chainBaseManager.getBlockByNum(blockNum);
+    } catch (StoreException e) {
+      logger.info(e.getMessage());
+      return null;
+    }
+  }
+
   public long getTransactionCountByBlockNum(long blockNum) {
     long count = 0;
 
@@ -663,6 +691,35 @@ public class Wallet {
     }
 
     return count;
+  }
+
+  public Block getByJsonBlockId(String id) throws JsonRpcInvalidParamsException {
+    if (EARLIEST_STR.equalsIgnoreCase(id)) {
+      return getBlockByNum(0);
+    } else if ("latest".equalsIgnoreCase(id)) {
+      return getNowBlock();
+    } else if ("pending".equalsIgnoreCase(id)) {
+      throw new JsonRpcInvalidParamsException("TAG pending not supported");
+    } else {
+      long blockNumber;
+      try {
+        blockNumber = ByteArray.hexToBigInteger(id).longValue();
+      } catch (Exception e) {
+        throw new JsonRpcInvalidParamsException("invalid block number");
+      }
+
+      return getBlockByNum(blockNumber);
+    }
+  }
+
+  public List<Transaction> getTransactionsByJsonBlockId(String id)
+      throws JsonRpcInvalidParamsException {
+    if ("pending".equalsIgnoreCase(id)) {
+      throw new JsonRpcInvalidParamsException("TAG pending not supported");
+    } else {
+      Block block = getByJsonBlockId(id);
+      return block != null ? block.getTransactionsList() : null;
+    }
   }
 
   public WitnessList getWitnessList() {
@@ -1008,6 +1065,16 @@ public class Wallet {
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowTvmLondon")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmLondon())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowTvmCompatibleEvm")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmCompatibleEvm())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAllowAccountAssetOptimization")
         .setValue(dbManager.getDynamicPropertiesStore().getAllowAccountAssetOptimization())
         .build());
@@ -1022,16 +1089,30 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getTotalNetLimit())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowHigherLimitForMaxCpuTimeOfOneTx")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowHigherLimitForMaxCpuTimeOfOneTx())
+        .build());
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowAssetOptimization")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowAssetOptimization())
+        .build());
+
     return builder.build();
   }
 
   public AssetIssueList getAssetIssueList() {
+    BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
 
     getAssetIssueStoreFinal(chainBaseManager.getDynamicPropertiesStore(),
         chainBaseManager.getAssetIssueStore(),
         chainBaseManager.getAssetIssueV2Store()).getAllAssetIssues()
-        .forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
+        .forEach(
+            issueCapsule -> {
+              processor.updateUsage(issueCapsule);
+              builder.addAssetIssue(issueCapsule.getInstance());
+            });
 
     return builder.build();
   }
@@ -1048,7 +1129,13 @@ public class Wallet {
       return null;
     }
 
-    assetIssueList.forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
+    BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
+    assetIssueList.forEach(
+        issueCapsule -> {
+          processor.updateUsage(issueCapsule);
+          builder.addAssetIssue(issueCapsule.getInstance());
+        }
+    );
     return builder.build();
   }
 
@@ -1062,10 +1149,15 @@ public class Wallet {
             chainBaseManager.getAssetIssueStore(),
             chainBaseManager.getAssetIssueV2Store()).getAllAssetIssues();
 
+    BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     assetIssueCapsuleList.stream()
         .filter(assetIssueCapsule -> assetIssueCapsule.getOwnerAddress().equals(accountAddress))
-        .forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
+        .forEach(
+            issueCapsule -> {
+              processor.updateUsage(issueCapsule);
+              builder.addAssetIssue(issueCapsule.getInstance());
+            });
 
     return builder.build();
   }
@@ -1192,11 +1284,17 @@ public class Wallet {
       return null;
     }
 
+    BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     if (chainBaseManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
       // fetch from old DB, same as old logic ops
       AssetIssueCapsule assetIssueCapsule =
           chainBaseManager.getAssetIssueStore().get(assetName.toByteArray());
-      return assetIssueCapsule != null ? assetIssueCapsule.getInstance() : null;
+      if (assetIssueCapsule != null) {
+        processor.updateUsage(assetIssueCapsule);
+        return assetIssueCapsule.getInstance();
+      } else {
+        return null;
+      }
     } else {
       // get asset issue by name from new DB
       List<AssetIssueCapsule> assetIssueCapsuleList =
@@ -1206,18 +1304,23 @@ public class Wallet {
           .stream()
           .filter(assetIssueCapsule -> assetIssueCapsule.getName().equals(assetName))
           .forEach(
-              issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
+              issueCapsule -> {
+                processor.updateUsage(issueCapsule);
+                builder.addAssetIssue(issueCapsule.getInstance());
+              });
 
       // check count
       if (builder.getAssetIssueCount() > 1) {
         throw new NonUniqueObjectException(
-            "To get more than one asset, please use getAssetIssuebyid syntax");
+            "To get more than one asset, please use getAssetIssueById syntax");
       } else {
         // fetch from DB by assetName as id
         AssetIssueCapsule assetIssueCapsule =
             chainBaseManager.getAssetIssueV2Store().get(assetName.toByteArray());
 
         if (assetIssueCapsule != null) {
+          processor.updateUsage(assetIssueCapsule);
+
           // check already fetch
           if (builder.getAssetIssueCount() > 0
               && builder.getAssetIssue(0).getId()
@@ -1252,10 +1355,15 @@ public class Wallet {
             chainBaseManager.getAssetIssueStore(),
             chainBaseManager.getAssetIssueV2Store()).getAllAssetIssues();
 
+    BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     assetIssueCapsuleList.stream()
         .filter(assetIssueCapsule -> assetIssueCapsule.getName().equals(assetName))
-        .forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
+        .forEach(
+            issueCapsule -> {
+              processor.updateUsage(issueCapsule);
+              builder.addAssetIssue(issueCapsule.getInstance());
+            });
 
     return builder.build();
   }
@@ -1266,7 +1374,14 @@ public class Wallet {
     }
     AssetIssueCapsule assetIssueCapsule = chainBaseManager.getAssetIssueV2Store()
         .get(ByteArray.fromString(assetId));
-    return assetIssueCapsule != null ? assetIssueCapsule.getInstance() : null;
+    if (assetIssueCapsule != null) {
+      BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
+      processor.updateUsage(assetIssueCapsule);
+
+      return assetIssueCapsule.getInstance();
+    } else {
+      return null;
+    }
   }
 
   public NumberMessage totalTransaction() {
@@ -1328,6 +1443,21 @@ public class Wallet {
     return null;
   }
 
+  public TransactionCapsule getTransactionCapsuleById(ByteString transactionId) {
+    if (Objects.isNull(transactionId)) {
+      return null;
+    }
+    TransactionCapsule transactionCapsule;
+    try {
+      transactionCapsule = chainBaseManager.getTransactionStore()
+          .get(transactionId.toByteArray());
+    } catch (StoreException e) {
+      return null;
+    }
+
+    return transactionCapsule;
+  }
+
   public TransactionInfo getTransactionInfoById(ByteString transactionId) {
     if (Objects.isNull(transactionId)) {
       return null;
@@ -1335,7 +1465,7 @@ public class Wallet {
     TransactionInfoCapsule transactionInfoCapsule;
     try {
       transactionInfoCapsule = chainBaseManager.getTransactionRetStore()
-              .getTransactionInfo(transactionId.toByteArray());
+          .getTransactionInfo(transactionId.toByteArray());
     } catch (StoreException e) {
       return null;
     }
@@ -1344,7 +1474,7 @@ public class Wallet {
     }
     try {
       transactionInfoCapsule = chainBaseManager.getTransactionHistoryStore()
-              .get(transactionId.toByteArray());
+          .get(transactionId.toByteArray());
     } catch (BadItemException e) {
       return null;
     }
@@ -2508,33 +2638,36 @@ public class Wallet {
     }
   }
 
-  public Transaction triggerConstantContract(TriggerSmartContract
-      triggerSmartContract,
-      TransactionCapsule trxCap, Builder builder,
-      Return.Builder retBuilder)
+  public Transaction triggerConstantContract(TriggerSmartContract triggerSmartContract,
+      TransactionCapsule trxCap, Builder builder, Return.Builder retBuilder)
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
-    ContractStore contractStore = chainBaseManager.getContractStore();
-    byte[] contractAddress = triggerSmartContract.getContractAddress()
-        .toByteArray();
-    byte[] isContractExist = contractStore
-        .findContractByHash(contractAddress);
-
-    if (ArrayUtils.isEmpty(isContractExist)) {
-      throw new ContractValidateException(
-          "No contract or not a smart contract");
+    if (triggerSmartContract.getContractAddress().isEmpty()) { // deploy contract
+      CreateSmartContract.Builder deployBuilder = CreateSmartContract.newBuilder();
+      deployBuilder.setOwnerAddress(triggerSmartContract.getOwnerAddress());
+      deployBuilder.setNewContract(SmartContract.newBuilder()
+          .setOriginAddress(triggerSmartContract.getOwnerAddress())
+          .setBytecode(triggerSmartContract.getData())
+          .setCallValue(triggerSmartContract.getCallValue())
+          .setConsumeUserResourcePercent(100)
+          .setOriginEnergyLimit(1)
+          .build()
+      );
+      deployBuilder.setCallTokenValue(triggerSmartContract.getCallTokenValue());
+      deployBuilder.setTokenId(triggerSmartContract.getTokenId());
+      trxCap = createTransactionCapsule(deployBuilder.build(), ContractType.CreateSmartContract);
+    } else { // call contract
+      ContractStore contractStore = chainBaseManager.getContractStore();
+      byte[] contractAddress = triggerSmartContract.getContractAddress().toByteArray();
+      if (contractStore.get(contractAddress) == null) {
+        throw new ContractValidateException("Smart contract is not exist.");
+      }
     }
-
-    if (!Args.getInstance().isSupportConstant()) {
-      throw new ContractValidateException("this node does not support constant");
-    }
-
     return callConstantContract(trxCap, builder, retBuilder);
   }
 
-  public Transaction callConstantContract(TransactionCapsule trxCap, Builder
-      builder,
-      Return.Builder retBuilder)
+  public Transaction callConstantContract(TransactionCapsule trxCap,
+      Builder builder, Return.Builder retBuilder)
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
     if (!Args.getInstance().isSupportConstant()) {
@@ -2551,8 +2684,7 @@ public class Wallet {
     }
 
     TransactionContext context = new TransactionContext(new BlockCapsule(headBlock), trxCap,
-        StoreFactory.getInstance(), true,
-        false);
+        StoreFactory.getInstance(), true, false);
     VMActuator vmActuator = new VMActuator(true);
 
     vmActuator.validate(context);
@@ -2568,6 +2700,10 @@ public class Wallet {
     TransactionResultCapsule ret = new TransactionResultCapsule();
     builder.setEnergyUsed(result.getEnergyUsed());
     builder.addConstantResult(ByteString.copyFrom(result.getHReturn()));
+    result.getLogInfoList().forEach(logInfo ->
+        builder.addLogs(LogInfo.buildLog(logInfo)));
+    result.getInternalTransactions().forEach(it ->
+        builder.addInternalTransactions(TransactionUtil.buildInternalTransaction(it)));
     ret.setStatus(0, code.SUCESS);
     if (StringUtils.isNoneEmpty(result.getRuntimeError())) {
       ret.setStatus(0, code.FAILED);
@@ -2607,11 +2743,11 @@ public class Wallet {
   }
 
   /**
-   * Add a wrapper for smart contract.
-   * Current additional information including runtime code for a smart contract.
+   * Add a wrapper for smart contract. Current additional information including runtime code for a
+   * smart contract.
+   *
    * @param bytesMessage the contract address message
    * @return contract info
-   *
    */
   public SmartContractDataWrapper getContractInfo(GrpcAPI.BytesMessage bytesMessage) {
     byte[] address = bytesMessage.getValue().toByteArray();
@@ -3785,5 +3921,159 @@ public class Wallet {
       throw new IllegalArgumentException("account_identifier address is null");
     }
   }
+
+  public long getEnergyFee() {
+    return chainBaseManager.getDynamicPropertiesStore().getEnergyFee();
+  }
+
+  // this function should be called after EnergyPriceHistoryLoader done
+  public long getEnergyFee(long timestamp) {
+    try {
+      String energyPriceHistory =
+          chainBaseManager.getDynamicPropertiesStore().getEnergyPriceHistory();
+      long energyFee = parseEnergyFee(timestamp, energyPriceHistory);
+
+      if (energyFee == -1) {
+        energyFee = getEnergyFee();
+      }
+
+      return energyFee;
+    } catch (Exception e) {
+      logger.error("getEnergyFee timestamp={} failed, error is {}", timestamp, e.getMessage());
+      return getEnergyFee();
+    }
+  }
+
+  public String getEnergyPrices() {
+    try {
+      return chainBaseManager.getDynamicPropertiesStore().getEnergyPriceHistory();
+    } catch (Exception e) {
+      logger.error("getEnergyPrices failed, error is {}", e.getMessage());
+    }
+
+    return null;
+  }
+
+  public String getBandwidthPrices() {
+    try {
+      return chainBaseManager.getDynamicPropertiesStore().getBandwidthPriceHistory();
+    } catch (Exception e) {
+      logger.error("getBandwidthPrices failed, error is {}", e.getMessage());
+    }
+
+    return null;
+  }
+
+  public String getCoinbase() {
+    if (!CommonParameter.getInstance().isWitness()) {
+      return null;
+    }
+
+    // get local witnesses
+    List<String> localPrivateKeys = Args.getLocalWitnesses().getPrivateKeys();
+    List<String> localWitnessAddresses = new ArrayList<>();
+    for (String privateKey : localPrivateKeys) {
+      localWitnessAddresses.add(Hex.toHexString(SignUtils
+          .fromPrivate(ByteArray.fromHexString(privateKey),
+              CommonParameter.getInstance().isECKeyCryptoEngine()).getAddress()));
+    }
+
+    // get all witnesses
+    List<WitnessCapsule> witnesses = consensusDelegate.getAllWitnesses();
+    List<String> witnessAddresses = new ArrayList<>();
+    for (WitnessCapsule witnessCapsule : witnesses) {
+      witnessAddresses.add(Hex.toHexString(witnessCapsule.getAddress().toByteArray()));
+    }
+
+    // check if witnesses contains local witness
+    for (String localWitnessAddress : localWitnessAddresses) {
+      if (witnessAddresses.contains(localWitnessAddress)) {
+        return "0x" + localWitnessAddress;
+      }
+    }
+
+    return null;
+  }
+
+  public boolean isMining() {
+    if (!CommonParameter.getInstance().isWitness()) {
+      return false;
+    }
+
+    // get local witnesses
+    List<String> localPrivateKeys = Args.getLocalWitnesses().getPrivateKeys();
+    List<String> localWitnessAddresses = new ArrayList<>();
+    for (String privateKey : localPrivateKeys) {
+      localWitnessAddresses.add(Hex.toHexString(SignUtils
+          .fromPrivate(ByteArray.fromHexString(privateKey),
+              CommonParameter.getInstance().isECKeyCryptoEngine()).getAddress()));
+    }
+
+    // get active witnesses
+    List<ByteString> activeWitnesses = consensusDelegate.getActiveWitnesses();
+    List<String> activeWitnessAddresses = new ArrayList<>();
+    for (ByteString activeWitness : activeWitnesses) {
+      activeWitnessAddresses.add(Hex.toHexString(activeWitness.toByteArray()));
+    }
+
+    // check if active witnesses contains local witness
+    for (String localWitnessAddress : localWitnessAddresses) {
+      if (activeWitnessAddresses.contains(localWitnessAddress)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  public Chainbase.Cursor getCursor() {
+    return chainBaseManager.getBlockStore().getRevokingDB().getCursor();
+  }
+
+  public Block getBlock(GrpcAPI.BlockReq request) {
+    Block block;
+    long head = chainBaseManager.getHeadBlockNum();
+    if (!request.getIdOrNum().isEmpty()) {
+      Long num = WalletUtil.isLong(request.getIdOrNum());
+      if (num != null) {
+        // quickly check
+        if (num > head) {
+          return null;
+        }
+        if (num < 0) {
+          throw  new IllegalArgumentException("num must be non-positive number.");
+        }
+        block = getBlockByNum(num);
+      } else {
+        RuntimeException e = new IllegalArgumentException("id must be legal block hash.");
+        if (request.getIdOrNum().length() != Sha256Hash.LENGTH * 2) {
+          throw  e;
+        }
+        try {
+          ByteString id = ByteString.copyFrom(ByteArray.fromHexString(request.getIdOrNum()));
+          if (id.size() == Sha256Hash.LENGTH) {
+            num = new BlockId(Sha256Hash.wrap(id)).getNum();
+            // quickly check
+            if (num > head || num < 0) {
+              throw  e;
+            }
+            block = getBlockById(id);
+          } else {
+            throw  e;
+          }
+        } catch (DecoderException ignored) {
+          throw  e;
+        }
+      }
+    } else {
+      block = getNowBlock();
+    }
+    if (Objects.isNull(block) || block.getTransactionsList().isEmpty()
+        || request.getDetail()) {
+      return block;
+    }
+    return block.toBuilder().clearTransactions().build();
+  }
+
 }
 

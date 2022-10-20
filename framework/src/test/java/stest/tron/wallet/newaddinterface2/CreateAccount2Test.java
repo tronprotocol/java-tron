@@ -46,11 +46,7 @@ public class CreateAccount2Test {
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
@@ -99,14 +95,14 @@ public class CreateAccount2Test {
             blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : Account has existed");
+        "Contract validate error : Account has existed");
     //Try to create an invalid account
     byte[] wrongAddress = "wrongAddress".getBytes();
     ret1 = PublicMethed.createAccount2(account007Address, wrongAddress, account007Key,
         blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : Invalid account address");
+        "Contract validate error : Invalid account address");
   }
 
   /**

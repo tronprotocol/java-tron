@@ -17,6 +17,8 @@ public interface IRevokingDB extends Iterable<Map.Entry<byte[], byte[]>> {
 
   byte[] get(byte[] key) throws ItemNotFoundException;
 
+  byte[] getFromRoot(byte[] key) throws ItemNotFoundException;
+
   byte[] getUnchecked(byte[] key);
 
   void close();
@@ -27,6 +29,8 @@ public interface IRevokingDB extends Iterable<Map.Entry<byte[], byte[]>> {
 
   void setCursor(Chainbase.Cursor cursor, long offset);
 
+  Chainbase.Cursor getCursor();
+
   // for blockstore
   Set<byte[]> getlatestValues(long limit);
 
@@ -34,6 +38,8 @@ public interface IRevokingDB extends Iterable<Map.Entry<byte[], byte[]>> {
   Set<byte[]> getValuesNext(byte[] key, long limit);
 
   List<byte[]> getKeysNext(byte[] key, long limit);
+
+  Map<WrappedByteArray, byte[]> prefixQuery(byte[] key);
 
   default Map<byte[], byte[]> getNext(byte[] key, long limit) {
     return Collections.emptyMap();

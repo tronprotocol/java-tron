@@ -36,7 +36,6 @@ import org.tron.common.utils.Property;
  * @version 1.0
  * @since 2018/5/25
  */
-
 public class Storage {
 
   /**
@@ -49,7 +48,13 @@ public class Storage {
   private static final String INDEX_DIRECTORY_CONFIG_KEY = "storage.index.directory";
   private static final String INDEX_SWITCH_CONFIG_KEY = "storage.index.switch";
   private static final String TRANSACTIONHISTORY_SWITCH_CONFIG_KEY = "storage.transHistory.switch";
+  private static final String ESTIMATED_TRANSACTIONS_CONFIG_KEY =
+      "storage.txCache.estimatedTransactions";
   private static final String PROPERTIES_CONFIG_KEY = "storage.properties";
+  private static final String PROPERTIES_CONFIG_DB_KEY = "storage";
+  private static final String PROPERTIES_CONFIG_DEFAULT_KEY = "default";
+  private static final String PROPERTIES_CONFIG_DEFAULT_M_KEY = "defaultM";
+  private static final String PROPERTIES_CONFIG_DEFAULT_L_KEY = "defaultL";
   private static final String DEFAULT_TRANSACTIONHISTORY_SWITCH = "on";
 
   private static final String NAME_CONFIG_KEY = "name";
@@ -74,6 +79,8 @@ public class Storage {
   private static final String DEFAULT_DB_DIRECTORY = "database";
   private static final String DEFAULT_INDEX_DIRECTORY = "index";
   private static final String DEFAULT_INDEX_SWITCH = "on";
+  private static final int DEFAULT_ESTIMATED_TRANSACTIONS = 1000;
+  private Config storage;
 
   /**
    * Database storage directory: /path/to/{dbDirectory}
@@ -112,6 +119,12 @@ public class Storage {
   @Getter
   @Setter
   private String transactionHistorySwitch;
+
+  private Options defaultDbOptions;
+
+  @Getter
+  @Setter
+  private int estimatedBlockTransactions;
 
   /**
    * Key: dbName, Value: Property object of that database
@@ -162,7 +175,20 @@ public class Storage {
         : DEFAULT_TRANSACTIONHISTORY_SWITCH;
   }
 
-  private static Property createProperty(final ConfigObject conf) {
+  public static int getEstimatedTransactionsFromConfig(final Config config) {
+    if (!config.hasPath(ESTIMATED_TRANSACTIONS_CONFIG_KEY)) {
+      return DEFAULT_ESTIMATED_TRANSACTIONS;
+    }
+    int estimatedTransactions = config.getInt(ESTIMATED_TRANSACTIONS_CONFIG_KEY);
+    if (estimatedTransactions > 10000) {
+      estimatedTransactions = 10000;
+    } else if (estimatedTransactions < 100) {
+      estimatedTransactions = 100;
+    }
+    return estimatedTransactions;
+  }
+
+  private  Property createProperty(final ConfigObject conf) {
 
     Property property = new Property();
 
@@ -191,8 +217,15 @@ public class Storage {
     }
 
     // Check, get and set fields of Options
-    Options dbOptions = DbOptionalsUtils.createDefaultDbOptions();
+    Options dbOptions = newDefaultDbOptions(property.getName());
 
+    setIfNeeded(conf, dbOptions);
+
+    property.setDbOptions(dbOptions);
+    return property;
+  }
+
+  private static void setIfNeeded(ConfigObject conf, Options dbOptions) {
     if (conf.containsKey(CREATE_IF_MISSING_CONFIG_KEY)) {
       dbOptions.createIfMissing(
           Boolean.parseBoolean(
@@ -281,9 +314,6 @@ public class Storage {
             "[storage.properties] maxOpenFiles must be Integer type.");
       }
     }
-
-    property.setDbOptions(dbOptions);
-    return property;
   }
 
   /**
@@ -294,7 +324,7 @@ public class Storage {
   public void setPropertyMapFromConfig(final Config config) {
     if (config.hasPath(PROPERTIES_CONFIG_KEY)) {
       propertyMap = config.getObjectList(PROPERTIES_CONFIG_KEY).stream()
-          .map(Storage::createProperty)
+          .map(this::createProperty)
           .collect(Collectors.toMap(Property::getName, p -> p));
     }
   }
@@ -314,5 +344,31 @@ public class Storage {
       }
     }
   }
-}
 
+  public void setDefaultDbOptions(final Config config) {
+    this.defaultDbOptions = DbOptionalsUtils.createDefaultDbOptions();
+    storage = config.getConfig(PROPERTIES_CONFIG_DB_KEY);
+  }
+
+  public Options newDefaultDbOptions(String name ) {
+    // first fetch origin default
+    Options options =  DbOptionalsUtils.newDefaultDbOptions(name, this.defaultDbOptions);
+
+    // then fetch from config for default
+    if (storage.hasPath(PROPERTIES_CONFIG_DEFAULT_KEY)) {
+      setIfNeeded(storage.getObject(PROPERTIES_CONFIG_DEFAULT_KEY), options);
+    }
+
+    // check if has middle config
+    if (storage.hasPath(PROPERTIES_CONFIG_DEFAULT_M_KEY) && DbOptionalsUtils.DB_M.contains(name)) {
+      setIfNeeded(storage.getObject(PROPERTIES_CONFIG_DEFAULT_M_KEY), options);
+
+    }
+    // check if has large config
+    if (storage.hasPath(PROPERTIES_CONFIG_DEFAULT_L_KEY) && DbOptionalsUtils.DB_L.contains(name)) {
+      setIfNeeded(storage.getObject(PROPERTIES_CONFIG_DEFAULT_L_KEY), options);
+    }
+
+    return options;
+  }
+}

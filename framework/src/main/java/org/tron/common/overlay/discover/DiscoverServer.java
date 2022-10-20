@@ -59,7 +59,8 @@ public class DiscoverServer {
   @Autowired
   public DiscoverServer(final NodeManager nodeManager) {
     this.nodeManager = nodeManager;
-    if (parameter.isNodeDiscoveryEnable() && !parameter.isFastForward()) {
+    if (parameter.isNodeDiscoveryEnable() && !parameter.isFastForward()
+            && !parameter.isSolidityNode()) {
       if (port == 0) {
         logger.error("Discovery can't be started while listen port == 0");
       } else {
@@ -109,6 +110,9 @@ public class DiscoverServer {
         logger.warn("Restart discovery server after 5 sec pause...");
         Thread.sleep(5000);
       }
+    } catch (InterruptedException e) {
+      logger.warn("Discover server interrupted.");
+      Thread.currentThread().interrupt();
     } catch (Exception e) {
       logger.error("Start discovery server with port {} failed.", port, e);
     } finally {

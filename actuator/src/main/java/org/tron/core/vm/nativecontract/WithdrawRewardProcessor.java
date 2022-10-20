@@ -15,7 +15,7 @@ import org.tron.core.vm.nativecontract.param.WithdrawRewardParam;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.utils.VoteRewardUtil;
 
-@Slf4j(topic = "Processor")
+@Slf4j(topic = "VMProcessor")
 public class WithdrawRewardProcessor {
 
   public void validate(WithdrawRewardParam param, Repository repo) throws ContractValidateException {

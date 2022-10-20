@@ -51,11 +51,7 @@ public class Create2Test024 {
   private byte[] user001Address = ecKey2.getAddress();
   private String user001Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
@@ -258,7 +254,7 @@ public class Create2Test024 {
     Assert.assertEquals(infoById.get().getResultValue(), 1);
     Assert.assertEquals(infoById.get().getResult().toString(), "FAILED");
     Assert.assertThat(ByteArray.toStr(infoById.get().getResMessage().toByteArray()),
-        containsString("Not enough energy for 'SWAP1' operation executing: "));
+        containsString("REVERT opcode executed"));
 
 
   }

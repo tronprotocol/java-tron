@@ -113,6 +113,7 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.metrics.MetricsApiService;
 import org.tron.core.services.filter.LiteFnQueryGrpcInterceptor;
 import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
+import org.tron.core.services.ratelimiter.RpcApiAccessInterceptor;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.IncomingViewingKey;
@@ -201,6 +202,8 @@ public class RpcApiService implements Service {
   private RateLimiterInterceptor rateLimiterInterceptor;
   @Autowired
   private LiteFnQueryGrpcInterceptor liteFnQueryGrpcInterceptor;
+  @Autowired
+  private RpcApiAccessInterceptor apiAccessInterceptor;
 
   @Autowired
   private MetricsApiService metricsApiService;
@@ -252,11 +255,14 @@ public class RpcApiService implements Service {
           .flowControlWindow(parameter.getFlowControlWindow())
           .maxConnectionIdle(parameter.getMaxConnectionIdleInMillis(), TimeUnit.MILLISECONDS)
           .maxConnectionAge(parameter.getMaxConnectionAgeInMillis(), TimeUnit.MILLISECONDS)
-          .maxMessageSize(parameter.getMaxMessageSize())
+          .maxInboundMessageSize(parameter.getMaxMessageSize())
           .maxHeaderListSize(parameter.getMaxHeaderListSize());
 
       // add a rate limiter interceptor
       serverBuilder.intercept(rateLimiterInterceptor);
+
+      // add api access interceptor
+      serverBuilder.intercept(apiAccessInterceptor);
 
       // add lite fullnode query interceptor
       serverBuilder.intercept(liteFnQueryGrpcInterceptor);
@@ -900,6 +906,12 @@ public class RpcApiService implements Service {
       }
 
       responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getBlock(GrpcAPI.BlockReq  request,
+        StreamObserver<BlockExtention> responseObserver) {
+      getBlockCommon(request, responseObserver);
     }
   }
 
@@ -2651,6 +2663,13 @@ public class RpcApiService implements Service {
         StreamObserver<NumberMessage> responseObserver) {
       getPendingSizeCommon(request, responseObserver);
     }
+
+
+    @Override
+    public void getBlock(GrpcAPI.BlockReq  request,
+        StreamObserver<BlockExtention> responseObserver) {
+      getBlockCommon(request, responseObserver);
+    }
   }
 
   public class MonitorApi extends MonitorGrpc.MonitorImplBase {
@@ -2768,4 +2787,20 @@ public class RpcApiService implements Service {
     }
     responseObserver.onCompleted();
   }
+
+  public void getBlockCommon(GrpcAPI.BlockReq request,
+      StreamObserver<BlockExtention> responseObserver) {
+    try {
+      responseObserver.onNext(block2Extention(wallet.getBlock(request)));
+    } catch (Exception e) {
+      if (e instanceof IllegalArgumentException) {
+        responseObserver.onError(Status.INVALID_ARGUMENT.withDescription(e.getMessage())
+            .withCause(e).asRuntimeException());
+      } else {
+        responseObserver.onError(getRunTimeException(e));
+      }
+    }
+    responseObserver.onCompleted();
+  }
+
 }

@@ -70,14 +70,15 @@ public class ChainidAndSelfBalance001 {
     String methodStr = "getId()";
     TransactionExtention returns = PublicMethed
         .triggerConstantContractForExtention(contractAddress, methodStr, "#",
-        false, 0, maxFeeLimit,"0",0,  testAddress001, testKey001, blockingStubFull);
+        false, 0, maxFeeLimit, "0", 0,  testAddress001, testKey001, blockingStubFull);
 
     String chainIdHex = ByteArray.toHexString(returns.getConstantResult(0).toByteArray());
 
     BlockExtention blockZero = PublicMethed.getBlock2(0, blockingStubFull);
-    String blockZeroId = ByteArray.toHexString(blockZero.getBlockid().toByteArray());
+    String tem = ByteArray.toHexString(blockZero.getBlockid().toByteArray()).substring(56);
+    String blockZeroId = "00000000000000000000000000000000000000000000000000000000" + tem;
 
-    Assert.assertEquals(chainIdHex,blockZeroId);
+    Assert.assertEquals(chainIdHex, blockZeroId);
   }
 
   /*
@@ -98,7 +99,7 @@ public class ChainidAndSelfBalance001 {
     Long contractBalance = PublicMethed
         .queryAccount(contractAddress, blockingStubFull).getBalance();
 
-    Assert.assertEquals(contractBalance,getBalance);
+    Assert.assertEquals(contractBalance, getBalance);
 
   }
 
@@ -116,7 +117,7 @@ public class ChainidAndSelfBalance001 {
     Long contractBalance = PublicMethed
         .queryAccount(contractAddress, blockingStubFull).getBalance();
 
-    Assert.assertEquals(contractBalance,getBalance);
+    Assert.assertEquals(contractBalance, getBalance);
 
   }
 
@@ -132,7 +133,7 @@ public class ChainidAndSelfBalance001 {
     Long accountBalance = PublicMethed
         .queryAccount(testFoundationAddress, blockingStubFull).getBalance();
 
-    Assert.assertEquals(accountBalance,getBalance);
+    Assert.assertEquals(accountBalance, getBalance);
 
   }
 
@@ -148,7 +149,7 @@ public class ChainidAndSelfBalance001 {
         false, 0, maxFeeLimit, "", 0, testAddress001, testKey001, blockingStubFull);
     Long getBalance = ByteArray.toLong(returns.getConstantResult(0).toByteArray());
 
-    Assert.assertEquals(0,getBalance.longValue());
+    Assert.assertEquals(0, getBalance.longValue());
 
   }
 

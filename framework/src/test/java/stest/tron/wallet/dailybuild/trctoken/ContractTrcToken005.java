@@ -58,11 +58,7 @@ public class ContractTrcToken005 {
   private byte[] user001Address = ecKey2.getAddress();
   private String user001Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
@@ -216,7 +212,8 @@ public class ContractTrcToken005 {
     Assert.assertFalse(response.getResult());
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
     Assert
-        .assertEquals("contract validate error : No asset !", response.getMessage().toStringUtf8());
+        .assertEquals("contract validate error : No asset !".toLowerCase(),
+            response.getMessage().toStringUtf8().toLowerCase());
 
     // not have this tokenId
     tokenId = assetAccountId.toStringUtf8();
@@ -229,8 +226,8 @@ public class ContractTrcToken005 {
 
     Assert.assertFalse(response.getResult());
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
-    Assert.assertEquals("contract validate error : Owner no asset!",
-        response.getMessage().toStringUtf8());
+    Assert.assertEquals("contract validate error : Owner no asset!".toLowerCase(),
+        response.getMessage().toStringUtf8().toLowerCase());
 
     // tokenId is Long.MAX_VALUE
     tokenId = Long.toString(Long.MAX_VALUE);
@@ -244,7 +241,8 @@ public class ContractTrcToken005 {
     Assert.assertFalse(response.getResult());
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
     Assert
-        .assertEquals("contract validate error : No asset !", response.getMessage().toStringUtf8());
+        .assertEquals("contract validate error : No asset !".toLowerCase(),
+            response.getMessage().toStringUtf8().toLowerCase());
 
     Assert.assertTrue(PublicMethed
         .transferAsset(user001Address, assetAccountId.toByteArray(), 10L, dev001Address, dev001Key,
@@ -262,8 +260,8 @@ public class ContractTrcToken005 {
 
     Assert.assertFalse(response.getResult());
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
-    Assert.assertEquals("contract validate error : assetBalance is not sufficient.",
-        response.getMessage().toStringUtf8());
+    Assert.assertEquals("contract validate error : assetBalance is not sufficient.".toLowerCase(),
+        response.getMessage().toStringUtf8().toLowerCase());
 
     // tokenvalue is less than 0
     tokenId = assetAccountId.toStringUtf8();
@@ -276,8 +274,8 @@ public class ContractTrcToken005 {
 
     Assert.assertFalse(response.getResult());
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
-    Assert.assertEquals("contract validate error : tokenValue must be >= 0",
-        response.getMessage().toStringUtf8());
+    Assert.assertEquals("contract validate error : tokenValue must be >= 0".toLowerCase(),
+        response.getMessage().toStringUtf8().toLowerCase());
 
     tokenId = assetAccountId.toStringUtf8();
     tokenValue = Long.MIN_VALUE;
@@ -289,8 +287,8 @@ public class ContractTrcToken005 {
 
     Assert.assertFalse(response.getResult());
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
-    Assert.assertEquals("contract validate error : tokenValue must be >= 0",
-        response.getMessage().toStringUtf8());
+    Assert.assertEquals("contract validate error : tokenValue must be >= 0".toLowerCase(),
+        response.getMessage().toStringUtf8().toLowerCase());
 
     /*PublicMethed
         .sendcoin(transferTokenContractAddress, 5000000, fromAddress, testKey002, blockingStubFull);
@@ -307,8 +305,8 @@ public class ContractTrcToken005 {
 
     Assert.assertFalse(response.getResult());
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
-    Assert.assertEquals("contract validate error : tokenId must be > 1000000",
-        response.getMessage().toStringUtf8());
+    Assert.assertEquals("contract validate error : tokenId must be > 1000000".toLowerCase(),
+        response.getMessage().toStringUtf8().toLowerCase());
 
     // tokenId is long.min
     tokenId = Long.toString(Long.MIN_VALUE);
@@ -321,8 +319,8 @@ public class ContractTrcToken005 {
 
     Assert.assertFalse(response.getResult());
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
-    Assert.assertEquals("contract validate error : tokenId must be > 1000000",
-        response.getMessage().toStringUtf8());
+    Assert.assertEquals("contract validate error : tokenId must be > 1000000".toLowerCase(),
+        response.getMessage().toStringUtf8().toLowerCase());
 
     // tokenId is 0
     tokenId = Long.toString(0);
@@ -336,8 +334,8 @@ public class ContractTrcToken005 {
     Assert.assertFalse(response.getResult());
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
     Assert.assertEquals(
-        "contract validate error : invalid arguments with tokenValue = 10, tokenId = 0",
-        response.getMessage().toStringUtf8());
+        "contract validate error : invalid arguments with tokenValue = 10, tokenId = 0"
+            .toLowerCase(), response.getMessage().toStringUtf8().toLowerCase());
 
     /*PublicMethed
         .sendcoin(transferTokenContractAddress, 5000000, fromAddress, testKey002, blockingStubFull);
@@ -353,8 +351,8 @@ public class ContractTrcToken005 {
 
     Assert.assertFalse(response.getResult());
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
-    Assert.assertEquals("contract validate error : tokenId must be > 1000000",
-        response.getMessage().toStringUtf8());
+    Assert.assertEquals("contract validate error : tokenId must be > 1000000".toLowerCase(),
+        response.getMessage().toStringUtf8().toLowerCase());
 
 
     tokenId = Long.toString(-1);
@@ -367,8 +365,8 @@ public class ContractTrcToken005 {
 
     Assert.assertFalse(response.getResult());
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
-    Assert.assertEquals("contract validate error : tokenId must be > 1000000",
-        response.getMessage().toStringUtf8());
+    Assert.assertEquals("contract validate error : tokenId must be > 1000000".toLowerCase(),
+        response.getMessage().toStringUtf8().toLowerCase());
 
 
     tokenId = Long.toString(100_0000L);
@@ -381,8 +379,8 @@ public class ContractTrcToken005 {
 
     Assert.assertFalse(response.getResult());
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
-    Assert.assertEquals("contract validate error : tokenId must be > 1000000",
-        response.getMessage().toStringUtf8());
+    Assert.assertEquals("contract validate error : tokenId must be > 1000000".toLowerCase(),
+        response.getMessage().toStringUtf8().toLowerCase());
 
     accountResource = PublicMethed.getAccountResource(dev001Address, blockingStubFull);
     long devEnergyLimitAfter = accountResource.getEnergyLimit();

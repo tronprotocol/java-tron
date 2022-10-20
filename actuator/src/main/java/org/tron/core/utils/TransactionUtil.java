@@ -205,54 +205,61 @@ public class TransactionUtil {
     trxExBuilder.setResult(retBuilder);
     tswBuilder.setTransaction(trxExBuilder);
     Result.Builder resultBuilder = Result.newBuilder();
-    try {
-      Contract contract = trx.getRawData().getContract(0);
-      byte[] owner = TransactionCapsule.getOwner(contract);
-      AccountCapsule account = chainBaseManager.getAccountStore().get(owner);
-      if (Objects.isNull(account)) {
-        throw new PermissionException("Account does not exist!");
-      }
-      int permissionId = contract.getPermissionId();
-      Permission permission = account.getPermissionById(permissionId);
-      if (permission == null) {
-        throw new PermissionException("Permission for this, does not exist!");
-      }
-      if (permissionId != 0) {
-        if (permission.getType() != PermissionType.Active) {
-          throw new PermissionException("Permission type is wrong!");
-        }
-        //check operations
-        if (!checkPermissionOperations(permission, contract)) {
-          throw new PermissionException("Permission denied!");
-        }
-      }
-      tswBuilder.setPermission(permission);
-      if (trx.getSignatureCount() > 0) {
-        List<ByteString> approveList = new ArrayList<ByteString>();
-        long currentWeight = TransactionCapsule.checkWeight(permission, trx.getSignatureList(),
-            Sha256Hash.hash(CommonParameter.getInstance()
-                .isECKeyCryptoEngine(), trx.getRawData().toByteArray()), approveList);
-        tswBuilder.addAllApprovedList(approveList);
-        tswBuilder.setCurrentWeight(currentWeight);
-      }
-      if (tswBuilder.getCurrentWeight() >= permission.getThreshold()) {
-        resultBuilder.setCode(Result.response_code.ENOUGH_PERMISSION);
-      } else {
-        resultBuilder.setCode(Result.response_code.NOT_ENOUGH_PERMISSION);
-      }
-    } catch (SignatureFormatException signEx) {
-      resultBuilder.setCode(Result.response_code.SIGNATURE_FORMAT_ERROR);
-      resultBuilder.setMessage(signEx.getMessage());
-    } catch (SignatureException signEx) {
-      resultBuilder.setCode(Result.response_code.COMPUTE_ADDRESS_ERROR);
-      resultBuilder.setMessage(signEx.getMessage());
-    } catch (PermissionException permEx) {
-      resultBuilder.setCode(Result.response_code.PERMISSION_ERROR);
-      resultBuilder.setMessage(permEx.getMessage());
-    } catch (Exception ex) {
+
+    if (trx.getRawData().getContractCount() == 0) {
       resultBuilder.setCode(Result.response_code.OTHER_ERROR);
-      resultBuilder.setMessage(ex.getClass() + " : " + ex.getMessage());
+      resultBuilder.setMessage("Invalid transaction: no valid contract");
+    } else {
+      try {
+        Contract contract = trx.getRawData().getContract(0);
+        byte[] owner = TransactionCapsule.getOwner(contract);
+        AccountCapsule account = chainBaseManager.getAccountStore().get(owner);
+        if (Objects.isNull(account)) {
+          throw new PermissionException("Account does not exist!");
+        }
+        int permissionId = contract.getPermissionId();
+        Permission permission = account.getPermissionById(permissionId);
+        if (permission == null) {
+          throw new PermissionException("Permission for this, does not exist!");
+        }
+        if (permissionId != 0) {
+          if (permission.getType() != PermissionType.Active) {
+            throw new PermissionException("Permission type is wrong!");
+          }
+          //check operations
+          if (!checkPermissionOperations(permission, contract)) {
+            throw new PermissionException("Permission denied!");
+          }
+        }
+        tswBuilder.setPermission(permission);
+        if (trx.getSignatureCount() > 0) {
+          List<ByteString> approveList = new ArrayList<ByteString>();
+          long currentWeight = TransactionCapsule.checkWeight(permission, trx.getSignatureList(),
+              Sha256Hash.hash(CommonParameter.getInstance()
+                  .isECKeyCryptoEngine(), trx.getRawData().toByteArray()), approveList);
+          tswBuilder.addAllApprovedList(approveList);
+          tswBuilder.setCurrentWeight(currentWeight);
+        }
+        if (tswBuilder.getCurrentWeight() >= permission.getThreshold()) {
+          resultBuilder.setCode(Result.response_code.ENOUGH_PERMISSION);
+        } else {
+          resultBuilder.setCode(Result.response_code.NOT_ENOUGH_PERMISSION);
+        }
+      } catch (SignatureFormatException signEx) {
+        resultBuilder.setCode(Result.response_code.SIGNATURE_FORMAT_ERROR);
+        resultBuilder.setMessage(signEx.getMessage());
+      } catch (SignatureException signEx) {
+        resultBuilder.setCode(Result.response_code.COMPUTE_ADDRESS_ERROR);
+        resultBuilder.setMessage(signEx.getMessage());
+      } catch (PermissionException permEx) {
+        resultBuilder.setCode(Result.response_code.PERMISSION_ERROR);
+        resultBuilder.setMessage(permEx.getMessage());
+      } catch (Exception ex) {
+        resultBuilder.setCode(Result.response_code.OTHER_ERROR);
+        resultBuilder.setMessage(ex.getClass() + " : " + ex.getMessage());
+      }
     }
+
     tswBuilder.setResult(resultBuilder);
     return tswBuilder.build();
   }

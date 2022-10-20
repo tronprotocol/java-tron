@@ -113,6 +113,7 @@ public class LiteFnQueryHttpFilter implements Filter {
       shouldBeFiltered = true;
     }
     if (shouldBeFiltered) {
+      servletResponse.setContentType("application/json; charset=utf-8");
       servletResponse.getWriter().write("this API is closed because this node is a lite fullnode");
     } else {
       filterChain.doFilter(servletRequest, servletResponse);

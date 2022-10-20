@@ -66,11 +66,7 @@ public class ContractTestSendCoin001 {
   private byte[] user001Address = ecKey2.getAddress();
   private String user001Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+  
 
   /**
    * constructor.
@@ -181,7 +177,7 @@ public class ContractTestSendCoin001 {
             dev001Address, dev001Key, blockingStubFull);
 
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, ret.getCode());
-    Assert.assertEquals("contract validate error : Cannot transfer asset to smartContract.",
+    Assert.assertEquals("Contract validate error : Cannot transfer asset to smartContract.",
         ret.getMessage().toStringUtf8());
     Long contractAssetCount = PublicMethed
         .getAssetIssueValue(transferTokenContractAddress, assetAccountId, blockingStubFull);
@@ -194,7 +190,7 @@ public class ContractTestSendCoin001 {
         .sendcoinForReturn(transferTokenContractAddress, 1_000_000L, fromAddress, testKey002,
             blockingStubFull);
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, ret1.getCode());
-    Assert.assertEquals("contract validate error : Cannot transfer TRX to a smartContract.",
+    Assert.assertEquals("Contract validate error : Cannot transfer TRX to a smartContract.",
         ret1.getMessage().toStringUtf8());
 
     String num = "\"" + Base58.encode58Check(dev001Address) + "\"";
@@ -328,7 +324,7 @@ public class ContractTestSendCoin001 {
             dev001Address, dev001Key, blockingStubFull);
 
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, ret.getCode());
-    Assert.assertEquals("contract validate error : Cannot transfer asset to smartContract.",
+    Assert.assertEquals("Contract validate error : Cannot transfer asset to smartContract.",
         ret.getMessage().toStringUtf8());
     Long contractAssetCount = PublicMethed
         .getAssetIssueValue(testContractAddress, assetAccountId, blockingStubFull);
@@ -341,7 +337,7 @@ public class ContractTestSendCoin001 {
         .sendcoinForReturn(testContractAddress, 1_000_000L, fromAddress, testKey002,
             blockingStubFull);
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, ret1.getCode());
-    Assert.assertEquals("contract validate error : Cannot transfer TRX to a smartContract.",
+    Assert.assertEquals("Contract validate error : Cannot transfer TRX to a smartContract.",
         ret1.getMessage().toStringUtf8());
 
     String num = "\"" + Base58.encode58Check(dev001Address) + "\"";
@@ -478,7 +474,7 @@ public class ContractTestSendCoin001 {
             dev001Address, dev001Key, blockingStubFull);
 
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, ret.getCode());
-    Assert.assertEquals("contract validate error : Cannot transfer asset to smartContract.",
+    Assert.assertEquals("Contract validate error : Cannot transfer asset to smartContract.",
         ret.getMessage().toStringUtf8());
 
     Return ret1 = PublicMethed
@@ -486,7 +482,7 @@ public class ContractTestSendCoin001 {
             dev001Address, dev001Key, blockingStubFull);
 
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, ret1.getCode());
-    Assert.assertEquals("contract validate error : Cannot transfer asset to smartContract.",
+    Assert.assertEquals("Contract validate error : Cannot transfer asset to smartContract.",
         ret1.getMessage().toStringUtf8());
 
     txid = PublicMethed
@@ -557,7 +553,7 @@ public class ContractTestSendCoin001 {
     Assert.assertThat(transactionExtention.getResult().getCode().toString(),
         containsString("CONTRACT_VALIDATE_ERROR"));
     Assert.assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
-        containsString("contract validate error : No contract or not a valid smart contract"));
+        containsString("Contract validate error : No contract or not a valid smart contract"));
 
     Assert.assertTrue(PublicMethed
         .transferAsset(returnAddressBytes, assetAccountId.toByteArray(), 100L, dev001Address,
@@ -592,7 +588,7 @@ public class ContractTestSendCoin001 {
             dev001Address, dev001Key, blockingStubFull);
 
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, ret.getCode());
-    Assert.assertEquals("contract validate error : Cannot transfer asset to smartContract.",
+    Assert.assertEquals("Contract validate error : Cannot transfer asset to smartContract.",
         ret.getMessage().toStringUtf8());
 
     ret1 = PublicMethed
@@ -600,7 +596,7 @@ public class ContractTestSendCoin001 {
             dev001Address, dev001Key, blockingStubFull);
 
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, ret1.getCode());
-    Assert.assertEquals("contract validate error : Cannot transfer asset to smartContract.",
+    Assert.assertEquals("Contract validate error : Cannot transfer asset to smartContract.",
         ret1.getMessage().toStringUtf8());
 
   }

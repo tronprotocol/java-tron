@@ -40,6 +40,10 @@ public class ProposalService extends ProposalUtil {
         }
         case TRANSACTION_FEE: {
           manager.getDynamicPropertiesStore().saveTransactionFee(entry.getValue());
+          // update bandwidth price history
+          manager.getDynamicPropertiesStore().saveBandwidthPriceHistory(
+              manager.getDynamicPropertiesStore().getBandwidthPriceHistory()
+                  + "," + proposalCapsule.getExpirationTime() + ":" + entry.getValue());
           break;
         }
         case ASSET_ISSUE_FEE: {
@@ -75,6 +79,10 @@ public class ProposalService extends ProposalUtil {
         }
         case ENERGY_FEE: {
           manager.getDynamicPropertiesStore().saveEnergyFee(entry.getValue());
+          // update energy price history
+          manager.getDynamicPropertiesStore().saveEnergyPriceHistory(
+              manager.getDynamicPropertiesStore().getEnergyPriceHistory()
+                  + "," + proposalCapsule.getExpirationTime() + ":" + entry.getValue());
           break;
         }
         case EXCHANGE_CREATE_FEE: {
@@ -247,6 +255,14 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveNewRewardAlgorithmEffectiveCycle();
           break;
         }
+        case ALLOW_TVM_LONDON: {
+          manager.getDynamicPropertiesStore().saveAllowTvmLondon(entry.getValue());
+          break;
+        }
+        case ALLOW_TVM_COMPATIBLE_EVM: {
+          manager.getDynamicPropertiesStore().saveAllowTvmCompatibleEvm(entry.getValue());
+          break;
+        }
         case FREE_NET_LIMIT: {
           manager.getDynamicPropertiesStore().saveFreeNetLimit(entry.getValue());
           break;
@@ -255,9 +271,17 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveTotalNetLimit(entry.getValue());
           break;
         }
-
         case ALLOW_ACCOUNT_ASSET_OPTIMIZATION: {
           manager.getDynamicPropertiesStore().setAllowAccountAssetOptimization(entry.getValue());
+          break;
+        }
+        case ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX: {
+          manager.getDynamicPropertiesStore().saveAllowHigherLimitForMaxCpuTimeOfOneTx(
+              entry.getValue());
+          break;
+        }
+        case ALLOW_ASSET_OPTIMIZATION: {
+          manager.getDynamicPropertiesStore().setAllowAssetOptimization(entry.getValue());
           break;
         }
         default:

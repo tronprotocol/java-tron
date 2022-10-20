@@ -37,6 +37,9 @@ import org.tron.tool.litefullnode.iterator.DBIterator;
 @Slf4j(topic = "tool")
 public class LiteFullNodeTool {
 
+  private static final byte[] DB_KEY_LOWEST_BLOCK_NUM = "lowest_block_num".getBytes();
+  private static final byte[] DB_KEY_NODE_TYPE = "node_type".getBytes();
+
   private static final long START_TIME = System.currentTimeMillis() / 1000;
 
   private static final String SNAPSHOT_DIR_NAME = "snapshot";
@@ -49,6 +52,7 @@ public class LiteFullNodeTool {
   private static final String BLOCK_DB_NAME = "block";
   private static final String BLOCK_INDEX_DB_NAME = "block-index";
   private static final String TRANS_CACHE_DB_NAME = "trans-cache";
+  private static final String COMMON_DB_NAME = "common";
 
   private static final String DIR_FORMAT_STRING = "%s%s%s";
 
@@ -79,6 +83,7 @@ public class LiteFullNodeTool {
       "properties",
       "proposal",
       "recent-block",
+      //"recent-transaction",
       "storage-row",
       //TRANS_CACHE_DB_NAME,
       //"tree-block-index",
@@ -204,7 +209,7 @@ public class LiteFullNodeTool {
     if (new File(destDir).exists()) {
       throw new RuntimeException("destDir is already exist, please remove it first");
     }
-    if (!destPath.mkdir()) {
+    if (!destPath.mkdirs()) {
       throw new RuntimeException("destDir create failed, please check");
     }
     Util.copyDatabases(Paths.get(sourceDir), Paths.get(destDir), dbs);
@@ -301,6 +306,10 @@ public class LiteFullNodeTool {
           // put latest blocks into snapshot
           destBlockDb.put(blockId, block);
         });
+
+    DBInterface destCommonDb = DbTool.getDB(snapshotDir, COMMON_DB_NAME);
+    destCommonDb.put(DB_KEY_NODE_TYPE, ByteArray.fromInt(Constant.NODE_TYPE_LIGHT_NODE));
+    destCommonDb.put(DB_KEY_LOWEST_BLOCK_NUM, ByteArray.fromLong(startIndex));
   }
 
   private void checkTranCacheStore(String sourceDir, String snapshotDir)
@@ -477,9 +486,18 @@ public class LiteFullNodeTool {
     return true;
   }
 
-  private void deleteSnapshotFlag(String databaseDir) throws IOException {
-    logger.info("-- delete the info file to identify this node is a real fullnode.");
+  private void deleteSnapshotFlag(String databaseDir) throws IOException, RocksDBException {
+    logger.info("-- delete the info file.");
     Files.delete(Paths.get(databaseDir, INFO_FILE_NAME));
+    DBInterface destBlockIndexDb = DbTool.getDB(databaseDir, BLOCK_INDEX_DB_NAME);
+    if (destBlockIndexDb.get(ByteArray.fromLong(1)) != null) {
+      DBInterface destCommonDb = DbTool.getDB(databaseDir, COMMON_DB_NAME);
+      destCommonDb.delete(DB_KEY_NODE_TYPE);
+      destCommonDb.delete(DB_KEY_LOWEST_BLOCK_NUM);
+      logger.info("-- deleted node_type and lowest_block_num  from  "
+          + "common to identify this node is a real fullnode.");
+    }
+
   }
 
   private void run(Args argv) {

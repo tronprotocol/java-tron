@@ -48,11 +48,7 @@ public class WalletTestAccount014 {
   private String soliInFullnode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(1);
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+  
 
   /**
    * constructor.

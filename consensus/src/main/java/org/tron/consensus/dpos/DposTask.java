@@ -59,6 +59,9 @@ public class DposTask {
               logger.info("Produce block failed: {}", state);
             }
           }
+        } catch (InterruptedException e) {
+          logger.warn("Produce block task interrupted.");
+          Thread.currentThread().interrupt();
         } catch (Throwable throwable) {
           logger.error("Produce block error.", throwable);
         }
@@ -84,36 +87,41 @@ public class DposTask {
       return state;
     }
 
-    synchronized (dposService.getBlockHandle().getLock()) {
+    dposService.getBlockHandle().setBlockWaitLock(true);
+    try {
+      synchronized (dposService.getBlockHandle().getLock()) {
 
-      long slot = dposSlot.getSlot(System.currentTimeMillis() + 50);
-      if (slot == 0) {
-        return State.NOT_TIME_YET;
+        long slot = dposSlot.getSlot(System.currentTimeMillis() + 50);
+        if (slot == 0) {
+          return State.NOT_TIME_YET;
+        }
+
+        ByteString pWitness = dposSlot.getScheduledWitness(slot);
+
+        Miner miner = dposService.getMiners().get(pWitness);
+        if (miner == null) {
+          return State.NOT_MY_TURN;
+        }
+
+        long pTime = dposSlot.getTime(slot);
+        long timeout =
+                pTime + BLOCK_PRODUCED_INTERVAL / 2 * dposService.getBlockProduceTimeoutPercent() / 100;
+        BlockCapsule blockCapsule = dposService.getBlockHandle().produce(miner, pTime, timeout);
+        if (blockCapsule == null) {
+          return State.PRODUCE_BLOCK_FAILED;
+        }
+
+        BlockHeader.raw raw = blockCapsule.getInstance().getBlockHeader().getRawData();
+        logger.info("Produce block successfully, num: {}, time: {}, witness: {}, ID:{}, parentID:{}",
+                raw.getNumber(),
+                new DateTime(raw.getTimestamp()),
+                ByteArray.toHexString(raw.getWitnessAddress().toByteArray()),
+                new Sha256Hash(raw.getNumber(), Sha256Hash.of(CommonParameter
+                        .getInstance().isECKeyCryptoEngine(), raw.toByteArray())),
+                ByteArray.toHexString(raw.getParentHash().toByteArray()));
       }
-
-      ByteString pWitness = dposSlot.getScheduledWitness(slot);
-
-      Miner miner = dposService.getMiners().get(pWitness);
-      if (miner == null) {
-        return State.NOT_MY_TURN;
-      }
-
-      long pTime = dposSlot.getTime(slot);
-      long timeout =
-          pTime + BLOCK_PRODUCED_INTERVAL / 2 * dposService.getBlockProduceTimeoutPercent() / 100;
-      BlockCapsule blockCapsule = dposService.getBlockHandle().produce(miner, pTime, timeout);
-      if (blockCapsule == null) {
-        return State.PRODUCE_BLOCK_FAILED;
-      }
-
-      BlockHeader.raw raw = blockCapsule.getInstance().getBlockHeader().getRawData();
-      logger.info("Produce block successfully, num: {}, time: {}, witness: {}, ID:{}, parentID:{}",
-          raw.getNumber(),
-          new DateTime(raw.getTimestamp()),
-          ByteArray.toHexString(raw.getWitnessAddress().toByteArray()),
-          new Sha256Hash(raw.getNumber(), Sha256Hash.of(CommonParameter
-              .getInstance().isECKeyCryptoEngine(), raw.toByteArray())),
-          ByteArray.toHexString(raw.getParentHash().toByteArray()));
+    } finally {
+      dposService.getBlockHandle().setBlockWaitLock(false);
     }
 
     return State.OK;

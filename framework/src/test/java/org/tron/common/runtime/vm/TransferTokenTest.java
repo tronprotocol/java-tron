@@ -12,12 +12,10 @@ import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TvmTestUtils;
-import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
-import org.tron.core.capsule.AccountAssetCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.config.DefaultConfig;
@@ -27,6 +25,8 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.store.StoreFactory;
+import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
@@ -49,7 +49,7 @@ public class TransferTokenTest {
   private static Manager dbManager;
   private static TronApplicationContext context;
   private static Application appT;
-  private static DepositImpl deposit;
+  private static RepositoryImpl repository;
   private static AccountCapsule ownerCapsule;
 
 
@@ -60,10 +60,10 @@ public class TransferTokenTest {
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     TRANSFER_TO = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     dbManager = context.getBean(Manager.class);
-    deposit = DepositImpl.createRoot(dbManager);
-    deposit.createAccount(Hex.decode(TRANSFER_TO), AccountType.Normal);
-    deposit.addBalance(Hex.decode(TRANSFER_TO), 10);
-    deposit.commit();
+    repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    repository.createAccount(Hex.decode(TRANSFER_TO), AccountType.Normal);
+    repository.addBalance(Hex.decode(TRANSFER_TO), 10);
+    repository.commit();
     ownerCapsule =
         new AccountCapsule(
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
@@ -132,10 +132,10 @@ public class TransferTokenTest {
     /*  1. Test deploy with tokenValue and tokenId */
     long id = createAsset("testToken1");
     byte[] contractAddress = deployTransferTokenContract(id);
-    deposit.commit();
+    repository.commit();
     Assert.assertEquals(100,
-        dbManager.getAccountStore().get(contractAddress).getAssetMapV2().get(String.valueOf(id))
-            .longValue());
+        dbManager.getAccountStore().get(contractAddress)
+                .getAssetV2MapForTest().get(String.valueOf(id)).longValue());
     Assert.assertEquals(1000, dbManager.getAccountStore().get(contractAddress).getBalance());
 
     String selectorStr = "TransferTokenTo(address,trcToken,uint256)";
@@ -158,10 +158,10 @@ public class TransferTokenTest {
 
     org.testng.Assert.assertNull(runtime.getRuntimeError());
     Assert.assertEquals(100 + tokenValue - 9,
-        dbManager.getAccountStore().get(contractAddress).getAssetMapV2().get(String.valueOf(id))
-            .longValue());
-    Assert.assertEquals(9, dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getAssetMapV2()
-        .get(String.valueOf(id)).longValue());
+        dbManager.getAccountStore().get(contractAddress).getAssetV2MapForTest()
+                .get(String.valueOf(id)).longValue());
+    Assert.assertEquals(9, dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO))
+            .getAssetV2MapForTest().get(String.valueOf(id)).longValue());
 
     /*   suicide test  */
     // create new token: testToken2
@@ -183,10 +183,10 @@ public class TransferTokenTest {
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction2, dbManager, null);
     org.testng.Assert.assertNull(runtime.getRuntimeError());
     Assert.assertEquals(100 + tokenValue - 9 + 9,
-        dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getAssetMapV2()
+        dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getAssetV2MapForTest()
             .get(String.valueOf(id)).longValue());
-    Assert.assertEquals(99, dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getAssetMapV2()
-        .get(String.valueOf(id2)).longValue());
+    Assert.assertEquals(99, dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO))
+            .getAssetV2MapForTest().get(String.valueOf(id2)).longValue());
   }
 
   private byte[] deployTransferTokenContract(long id)
@@ -216,7 +216,7 @@ public class TransferTokenTest {
     byte[] contractAddress = TvmTestUtils
         .deployContractWholeProcessReturnContractAddress(contractName, address, ABI, code, value,
             feeLimit, consumeUserResourcePercent, null, tokenValue, tokenId,
-            deposit, null);
+            repository, null);
     return contractAddress;
   }
 
@@ -278,7 +278,7 @@ public class TransferTokenTest {
     byte[] contractAddress = TvmTestUtils
         .deployContractWholeProcessReturnContractAddress(contractName, address, ABI, code, value,
             feeLimit, consumeUserResourcePercent, null, tokenValue, tokenId,
-            deposit, null);
+            repository, null);
     return contractAddress;
   }
 }

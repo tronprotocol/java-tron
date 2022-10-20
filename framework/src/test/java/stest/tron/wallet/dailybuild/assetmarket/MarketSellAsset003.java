@@ -63,21 +63,23 @@ public class MarketSellAsset003 {
     PublicMethed.printAddress(testKey001);
     PublicMethed.printAddress(testKey002);
 
-    Assert.assertTrue(PublicMethed.sendcoin(testAddress001,20000_000000L,foundationAddress001,
-        foundationKey001,blockingStubFull));
-    Assert.assertTrue(PublicMethed.sendcoin(testAddress002,20000_000000L,foundationAddress001,
-        foundationKey001,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(testAddress001, 20000_000000L, foundationAddress001,
+        foundationKey001, blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(testAddress002, 20000_000000L, foundationAddress001,
+        foundationKey001, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Long start = System.currentTimeMillis() + 5000;
     Long end = System.currentTimeMillis() + 1000000000;
-    Assert.assertTrue(PublicMethed.createAssetIssue(testAddress001,name,10000_000000L,1,1,start,
-        end,1,description,url,10000L,10000L,1L, 1L,testKey001,blockingStubFull));
+    Assert.assertTrue(PublicMethed.createAssetIssue(testAddress001, name, 10000_000000L,
+        1, 1, start, end, 1, description, url, 10000L,
+        10000L, 1L, 1L, testKey001, blockingStubFull));
 
     start = System.currentTimeMillis() + 5000;
     end = System.currentTimeMillis() + 1000000000;
-    Assert.assertTrue(PublicMethed.createAssetIssue(testAddress002,name,10000_000000L,1,1,start,
-        end,1,description,url,10000L,10000L,1L, 1L,testKey002,blockingStubFull));
+    Assert.assertTrue(PublicMethed.createAssetIssue(testAddress002, name, 10000_000000L,
+        1, 1, start, end, 1, description, url, 10000L,
+        10000L, 1L, 1L, testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     assetAccountId001 = PublicMethed.queryAccount(testAddress001, blockingStubFull)
@@ -88,11 +90,11 @@ public class MarketSellAsset003 {
   }
 
 
-  @Test(enabled = true,description = "CancelOrder")
+  @Test(enabled = true, description = "CancelOrder")
   void marketCancelAssetTest001() {
 
-    String txid = PublicMethed.marketSellAsset(testAddress001,testKey001,assetAccountId001,100,
-        trx,50,blockingStubFull);
+    String txid = PublicMethed.marketSellAsset(testAddress001, testKey001, assetAccountId001, 100,
+        trx, 50, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<Transaction> transaction = PublicMethed
         .getTransactionById(txid, blockingStubFull);
@@ -104,7 +106,7 @@ public class MarketSellAsset003 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(orderList.get().getOrdersCount() > 0);
     byte[] orderId = orderList.get().getOrders(0).getOrderId().toByteArray();
-    txid = PublicMethed.marketCancelOrder(testAddress001,testKey001,orderId,blockingStubFull);
+    txid = PublicMethed.marketCancelOrder(testAddress001, testKey001, orderId, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     transaction = PublicMethed
@@ -117,11 +119,11 @@ public class MarketSellAsset003 {
 
   }
 
-  @Test(enabled = true,description = "Cancel a cancelled order ")
+  @Test(enabled = true, description = "Cancel a cancelled order ")
   void marketCancelAssetTest002() {
 
-    String txid = PublicMethed.marketSellAsset(testAddress001,testKey001,assetAccountId001,100,
-        trx,50,blockingStubFull);
+    String txid = PublicMethed.marketSellAsset(testAddress001, testKey001, assetAccountId001, 100,
+        trx, 50, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<Transaction> transaction = PublicMethed
         .getTransactionById(txid, blockingStubFull);
@@ -133,7 +135,7 @@ public class MarketSellAsset003 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(orderList.get().getOrdersCount() > 0);
     byte[] orderId = orderList.get().getOrders(0).getOrderId().toByteArray();
-    txid = PublicMethed.marketCancelOrder(testAddress001,testKey001,orderId,blockingStubFull);
+    txid = PublicMethed.marketCancelOrder(testAddress001, testKey001, orderId, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     transaction = PublicMethed
@@ -143,8 +145,9 @@ public class MarketSellAsset003 {
         .getMarketOrderByAccount(testAddress001, blockingStubFull);
     Assert.assertTrue(orderList.get().getOrdersCount() == 0);
 
-    Assert.assertEquals(PublicMethed.marketCancelOrder(testAddress001,testKey001,orderId,
-        blockingStubFull),"contract validate error : Order is not active!");
+    Assert.assertEquals(PublicMethed.marketCancelOrder(testAddress001, testKey001, orderId,
+        blockingStubFull).toLowerCase(),
+        "contract validate error : Order is not active!".toLowerCase());
 
 
   }

@@ -1,6 +1,9 @@
 
 
  contract tokenTest{
+
+     uint pos0;
+     mapping(address => uint) pos1;
      trcToken idCon = 0;
      uint256 tokenValueCon=0;
      uint256 callValueCon = 0;
@@ -22,9 +25,17 @@
          idCon = msg.tokenid;
          tokenValueCon = msg.tokenvalue;
          callValueCon = msg.value;
+         Storage();
      }
 
      function getResultInCon() public payable returns(trcToken, uint256, uint256) {
          return (idCon, tokenValueCon, callValueCon);
      }
+
+
+    function Storage() public {
+        pos0 = 1234;
+        pos1[msg.sender] = 5678;
+    }
+
  }
