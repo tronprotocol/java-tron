@@ -2030,6 +2030,8 @@ public class Program {
         return Common.ResourceCode.BANDWIDTH;
       case 1:
         return Common.ResourceCode.ENERGY;
+      case 2:
+        return Common.ResourceCode.TRON_POWER;
       default:
         return Common.ResourceCode.UNRECOGNIZED;
     }
@@ -2041,6 +2043,8 @@ public class Program {
         return "Bandwidth";
       case 1:
         return "Energy";
+      case 2:
+        return "TronPower";
       default:
         return "UnknownType";
     }
