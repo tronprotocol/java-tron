@@ -220,7 +220,7 @@ public class FreezeV2Util {
       return Triple.of(0L, amount, usagePair.getRight());
     }
 
-    long clean = amount * (resourceLimit - usagePair.getLeft()) / resourceLimit;
+    long clean = (long) (amount * ((double) (resourceLimit - usagePair.getLeft()) / resourceLimit));
 
     return Triple.of(clean, amount - clean, usagePair.getRight());
   }
