@@ -65,7 +65,6 @@ import org.tron.core.vm.program.Program;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.utils.FreezeV2Util;
 import org.tron.core.vm.utils.VoteRewardUtil;
-
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Permission;
 
@@ -1788,9 +1787,19 @@ public class PrecompiledContracts {
       byte[] address = new DataWord(data).toTronAddress();
       AccountCapsule accountCapsule = this.getDeposit().getAccount(address);
 
-      long tronPower = accountCapsule != null
-          ? accountCapsule.getTronPower() / TRX_PRECISION : 0;
-      return Pair.of(true, longTo32Bytes(tronPower));
+      long tronPower;
+      if (accountCapsule == null) {
+        tronPower = 0;
+      } else {
+        // fixme check if supportUnfreezeDelay needed
+        if (getDeposit().getDynamicPropertiesStore().supportUnfreezeDelay()
+            && getDeposit().getDynamicPropertiesStore().supportAllowNewResourceModel()) {
+          tronPower = accountCapsule.getAllTronPower();
+        } else {
+          tronPower = accountCapsule.getTronPower();
+        }
+      }
+      return Pair.of(true, longTo32Bytes(tronPower / TRX_PRECISION));
     }
   }
 
