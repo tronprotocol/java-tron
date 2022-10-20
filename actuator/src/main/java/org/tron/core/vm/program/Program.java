@@ -440,8 +440,8 @@ public class Program {
 
     increaseNonce();
 
-    addInternalTx(null, owner, obtainer, balance, null, "suicide", nonce,
-        getContractState().getAccount(owner).getAssetMapV2());
+    InternalTransaction internalTx = addInternalTx(null, owner, obtainer, balance, null,
+        "suicide", nonce, getContractState().getAccount(owner).getAssetMapV2());
 
     if (FastByteComparisons.compareTo(owner, 0, 20, obtainer, 0, 20) == 0) {
       // if owner == obtainer just zeroing account according to Yellow Paper
@@ -479,7 +479,10 @@ public class Program {
           FastByteComparisons.isEqual(owner, obtainer)
               ? getContractState().getBlackHoleAddress()
               : obtainer;
-      transferFrozenV2BalanceToInheritor(owner, Inheritor, getContractState());
+      long expireUnfrozenBalance = transferFrozenV2BalanceToInheritor(owner, Inheritor, getContractState());
+      if (expireUnfrozenBalance > 0 && internalTx != null) {
+        internalTx.setValue(internalTx.getValue() + expireUnfrozenBalance);
+      }
     }
     getResult().addDeleteAccount(this.getContractAddress());
   }
@@ -515,7 +518,7 @@ public class Program {
     repo.addBalance(inheritorAddr, frozenBalanceForBandwidthOfOwner + frozenBalanceForEnergyOfOwner);
   }
 
-  private void transferFrozenV2BalanceToInheritor(byte[] ownerAddr, byte[] inheritorAddr, Repository repo) {
+  private long transferFrozenV2BalanceToInheritor(byte[] ownerAddr, byte[] inheritorAddr, Repository repo) {
     AccountCapsule ownerCapsule = repo.getAccount(ownerAddr);
     AccountCapsule inheritorCapsule = repo.getAccount(inheritorAddr);
     long now = repo.getHeadSlot();
@@ -578,6 +581,7 @@ public class Program {
     }
 
     repo.updateAccount(inheritorCapsule.createDbKey(), inheritorCapsule);
+    return expireUnfrozenBalance;
   }
 
   private void withdrawRewardAndCancelVote(byte[] owner, Repository repo) {
