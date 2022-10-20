@@ -65,7 +65,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
 
   private String dataBaseName;
   private DB database;
-  private boolean alive;
+  private volatile boolean alive;
   private String parentPath;
   private Options options;
   private WriteOptions writeOptions;
