@@ -27,7 +27,11 @@ import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.FreezeBalanceActuator;
-import org.tron.core.capsule.*;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.ProposalCapsule;
+import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -322,19 +326,30 @@ public class PrecompiledContractsTest {
   public void tvmFreezeV2SwitchTest() {
     VMConfig.initAllowTvmFreezeV2(0L);
 
-    PrecompiledContract getChainParameterPcc = PrecompiledContracts.getContractForAddress(getChainParameterAddr);
-    PrecompiledContract availableUnfreezeV2SizePcc = PrecompiledContracts.getContractForAddress(availableUnfreezeV2SizeAddr);
-    PrecompiledContract unfreezableBalanceV2Pcc = PrecompiledContracts.getContractForAddress(unfreezableBalanceV2Addr);
-    PrecompiledContract expireUnfreezeBalanceV2Pcc = PrecompiledContracts.getContractForAddress(expireUnfreezeBalanceV2Addr);
+    PrecompiledContract getChainParameterPcc =
+        PrecompiledContracts.getContractForAddress(getChainParameterAddr);
+    PrecompiledContract availableUnfreezeV2SizePcc =
+        PrecompiledContracts.getContractForAddress(availableUnfreezeV2SizeAddr);
+    PrecompiledContract unfreezableBalanceV2Pcc =
+        PrecompiledContracts.getContractForAddress(unfreezableBalanceV2Addr);
+    PrecompiledContract expireUnfreezeBalanceV2Pcc =
+        PrecompiledContracts.getContractForAddress(expireUnfreezeBalanceV2Addr);
 
-    PrecompiledContract delegatableResourcePcc = PrecompiledContracts.getContractForAddress(delegatableResourceAddr);
-    PrecompiledContract resourceV2Pcc = PrecompiledContracts.getContractForAddress(resourceV2Addr);
-    PrecompiledContract checkUnDelegateResourcePcc = PrecompiledContracts.getContractForAddress(checkUnDelegateResourceAddr);
+    PrecompiledContract delegatableResourcePcc =
+        PrecompiledContracts.getContractForAddress(delegatableResourceAddr);
+    PrecompiledContract resourceV2Pcc =
+        PrecompiledContracts.getContractForAddress(resourceV2Addr);
+    PrecompiledContract checkUnDelegateResourcePcc =
+        PrecompiledContracts.getContractForAddress(checkUnDelegateResourceAddr);
 
-    PrecompiledContract resourceUsagePcc = PrecompiledContracts.getContractForAddress(resourceUsageAddr);
-    PrecompiledContract totalResourcePcc = PrecompiledContracts.getContractForAddress(totalResourceAddr);
-    PrecompiledContract totalDelegatedResourcePcc = PrecompiledContracts.getContractForAddress(totalDelegatedResourceAddr);
-    PrecompiledContract totalAcquiredResourcePcc = PrecompiledContracts.getContractForAddress(totalAcquiredResourceAddr);
+    PrecompiledContract resourceUsagePcc =
+        PrecompiledContracts.getContractForAddress(resourceUsageAddr);
+    PrecompiledContract totalResourcePcc =
+        PrecompiledContracts.getContractForAddress(totalResourceAddr);
+    PrecompiledContract totalDelegatedResourcePcc =
+        PrecompiledContracts.getContractForAddress(totalDelegatedResourceAddr);
+    PrecompiledContract totalAcquiredResourcePcc =
+        PrecompiledContracts.getContractForAddress(totalAcquiredResourceAddr);
 
     Assert.assertNull(getChainParameterPcc);
     Assert.assertNull(availableUnfreezeV2SizePcc);
@@ -353,19 +368,30 @@ public class PrecompiledContractsTest {
     // enable TvmFreezeV2.
     VMConfig.initAllowTvmFreezeV2(1L);
 
-    getChainParameterPcc = PrecompiledContracts.getContractForAddress(getChainParameterAddr);
-    availableUnfreezeV2SizePcc = PrecompiledContracts.getContractForAddress(availableUnfreezeV2SizeAddr);
-    unfreezableBalanceV2Pcc = PrecompiledContracts.getContractForAddress(unfreezableBalanceV2Addr);
-    expireUnfreezeBalanceV2Pcc = PrecompiledContracts.getContractForAddress(expireUnfreezeBalanceV2Addr);
+    getChainParameterPcc =
+        PrecompiledContracts.getContractForAddress(getChainParameterAddr);
+    availableUnfreezeV2SizePcc =
+        PrecompiledContracts.getContractForAddress(availableUnfreezeV2SizeAddr);
+    unfreezableBalanceV2Pcc =
+        PrecompiledContracts.getContractForAddress(unfreezableBalanceV2Addr);
+    expireUnfreezeBalanceV2Pcc =
+        PrecompiledContracts.getContractForAddress(expireUnfreezeBalanceV2Addr);
 
-    delegatableResourcePcc = PrecompiledContracts.getContractForAddress(delegatableResourceAddr);
-    resourceV2Pcc = PrecompiledContracts.getContractForAddress(resourceV2Addr);
-    checkUnDelegateResourcePcc = PrecompiledContracts.getContractForAddress(checkUnDelegateResourceAddr);
+    delegatableResourcePcc =
+        PrecompiledContracts.getContractForAddress(delegatableResourceAddr);
+    resourceV2Pcc =
+        PrecompiledContracts.getContractForAddress(resourceV2Addr);
+    checkUnDelegateResourcePcc =
+        PrecompiledContracts.getContractForAddress(checkUnDelegateResourceAddr);
 
-    resourceUsagePcc = PrecompiledContracts.getContractForAddress(resourceUsageAddr);
-    totalResourcePcc = PrecompiledContracts.getContractForAddress(totalResourceAddr);
-    totalDelegatedResourcePcc = PrecompiledContracts.getContractForAddress(totalDelegatedResourceAddr);
-    totalAcquiredResourcePcc = PrecompiledContracts.getContractForAddress(totalAcquiredResourceAddr);
+    resourceUsagePcc =
+        PrecompiledContracts.getContractForAddress(resourceUsageAddr);
+    totalResourcePcc =
+        PrecompiledContracts.getContractForAddress(totalResourceAddr);
+    totalDelegatedResourcePcc =
+        PrecompiledContracts.getContractForAddress(totalDelegatedResourceAddr);
+    totalAcquiredResourcePcc =
+        PrecompiledContracts.getContractForAddress(totalAcquiredResourceAddr);
 
     Assert.assertNotNull(getChainParameterPcc);
     Assert.assertNotNull(availableUnfreezeV2SizePcc);
@@ -386,7 +412,8 @@ public class PrecompiledContractsTest {
   public void getChainParameterTest() {
     VMConfig.initAllowTvmFreezeV2(1L);
 
-    PrecompiledContract getChainParameterPcc = createPrecompiledContract(getChainParameterAddr, OWNER_ADDRESS);
+    PrecompiledContract getChainParameterPcc =
+        createPrecompiledContract(getChainParameterAddr, OWNER_ADDRESS);
     Repository tempRepository = RepositoryImpl.createRoot(StoreFactory.getInstance());
     getChainParameterPcc.setRepository(tempRepository);
 
@@ -407,20 +434,26 @@ public class PrecompiledContractsTest {
         "0000000000000000000000000000000000000000000000000000000000FFFFFF");
 
     long energyLimit = 9_000_000_000_000_000L;
-    tempRepository.getDynamicPropertiesStore().put(TOTAL_ENERGY_CURRENT_LIMIT, new BytesCapsule(ByteArray.fromLong(energyLimit)));
-    Pair<Boolean, byte[]> totalEnergyCurrentLimitRes = getChainParameterPcc.execute(totalEnergyCurrentLimitId.getData());
+    tempRepository.getDynamicPropertiesStore().put(TOTAL_ENERGY_CURRENT_LIMIT,
+        new BytesCapsule(ByteArray.fromLong(energyLimit)));
+    Pair<Boolean, byte[]> totalEnergyCurrentLimitRes =
+        getChainParameterPcc.execute(totalEnergyCurrentLimitId.getData());
     Assert.assertTrue(totalEnergyCurrentLimitRes.getLeft());
     Assert.assertEquals(ByteArray.toLong(totalEnergyCurrentLimitRes.getRight()), energyLimit);
 
     long energyWeight = 1_000_000_000L;
-    tempRepository.getDynamicPropertiesStore().put(TOTAL_ENERGY_WEIGHT, new BytesCapsule(ByteArray.fromLong(energyWeight)));
-    Pair<Boolean, byte[]> totalEnergyWeightRes = getChainParameterPcc.execute(totalEnergyWeightId.getData());
+    tempRepository.getDynamicPropertiesStore().put(TOTAL_ENERGY_WEIGHT,
+        new BytesCapsule(ByteArray.fromLong(energyWeight)));
+    Pair<Boolean, byte[]> totalEnergyWeightRes =
+        getChainParameterPcc.execute(totalEnergyWeightId.getData());
     Assert.assertTrue(totalEnergyWeightRes.getLeft());
     Assert.assertEquals(ByteArray.toLong(totalEnergyWeightRes.getRight()), energyWeight);
 
     long delayDays = 3L;
-    tempRepository.getDynamicPropertiesStore().put(UNFREEZE_DELAY_DAYS, new BytesCapsule(ByteArray.fromLong(delayDays)));
-    Pair<Boolean, byte[]> delayDaysRes = getChainParameterPcc.execute(unfreezeDelayDaysId.getData());
+    tempRepository.getDynamicPropertiesStore().put(UNFREEZE_DELAY_DAYS,
+        new BytesCapsule(ByteArray.fromLong(delayDays)));
+    Pair<Boolean, byte[]> delayDaysRes =
+        getChainParameterPcc.execute(unfreezeDelayDaysId.getData());
     Assert.assertTrue(delayDaysRes.getLeft());
     Assert.assertEquals(ByteArray.toLong(delayDaysRes.getRight()), delayDays);
 
@@ -435,7 +468,8 @@ public class PrecompiledContractsTest {
   public void expireUnfreezeBalanceV2Test() {
     VMConfig.initAllowTvmFreezeV2(1L);
 
-    PrecompiledContract expireUnfreezeBalanceV2Pcc = createPrecompiledContract(expireUnfreezeBalanceV2Addr, OWNER_ADDRESS);
+    PrecompiledContract expireUnfreezeBalanceV2Pcc =
+        createPrecompiledContract(expireUnfreezeBalanceV2Addr, OWNER_ADDRESS);
 
   }
 
