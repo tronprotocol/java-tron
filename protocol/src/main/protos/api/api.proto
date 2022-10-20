@@ -224,6 +224,10 @@ service Wallet {
   //Use this function instead of FreezeBalance.
   rpc FreezeBalance2 (FreezeBalanceContract) returns (TransactionExtention) {
   }
+  //Use this function when FreezeBalanceV2.
+  rpc FreezeBalanceV2 (FreezeBalanceV2Contract) returns (TransactionExtention) {
+  }
+
   //Please use UnfreezeBalance2 instead of this function.
   rpc UnfreezeBalance (UnfreezeBalanceContract) returns (Transaction) {
     option (google.api.http) = {
@@ -237,6 +241,10 @@ service Wallet {
   //Use this function instead of UnfreezeBalance.
   rpc UnfreezeBalance2 (UnfreezeBalanceContract) returns (TransactionExtention) {
   }
+  //Use this function when UnfreezeBalanceV2.
+  rpc UnfreezeBalanceV2 (UnfreezeBalanceV2Contract) returns (TransactionExtention) {
+  }
+
   //Please use UnfreezeAsset2 instead of this function.
   rpc UnfreezeAsset (UnfreezeAssetContract) returns (Transaction) {
     option (google.api.http) = {
@@ -263,6 +271,16 @@ service Wallet {
   //Use this function instead of WithdrawBalance.
   rpc WithdrawBalance2 (WithdrawBalanceContract) returns (TransactionExtention) {
   }
+
+  rpc WithdrawExpireUnfreeze (WithdrawExpireUnfreezeContract) returns (TransactionExtention) {
+  }
+
+  rpc DelegateResource (DelegateResourceContract) returns (TransactionExtention) {
+  }
+
+  rpc UnDelegateResource (UnDelegateResourceContract) returns (TransactionExtention) {
+  }
+
   //Please use UpdateAsset2 instead of this function.
   rpc UpdateAsset (UpdateAssetContract) returns (Transaction) {
     option (google.api.http) = {

@@ -2,6 +2,7 @@ syntax = "proto3";
 
 import "google/protobuf/any.proto";
 import "core/Discover.proto";
+import "core/contract/common.proto";
 
 package protocol;
 
@@ -191,6 +192,8 @@ message Account {
   // the identity of this account, case insensitive
   bytes account_id = 23;
 
+  int64 net_window_size = 24;
+
   message AccountResource {
     // energy resource, get from frozen
     int64 energy_usage = 1;
@@ -208,12 +211,25 @@ message Account {
     int64 storage_usage = 7;
     int64 latest_exchange_storage_time = 8;
 
+    int64 energy_window_size = 9;
   }
   AccountResource account_resource = 26;
   bytes codeHash = 30;
   Permission owner_permission = 31;
   Permission witness_permission = 32;
   repeated Permission active_permission = 33;
+
+  message FreezeV2 {
+    ResourceCode type = 1;
+    int64 amount = 2;
+  }
+  message UnFreezeV2 {
+    ResourceCode type = 1;
+    int64 unfreeze_amount = 3;
+    int64 unfreeze_expire_time = 4;
+  }
+  repeated FreezeV2 frozenV2 = 34;
+  repeated UnFreezeV2 unfrozenV2 = 35;
 }
 
 message Key {
@@ -346,6 +362,11 @@ message Transaction {
       ShieldedTransferContract = 51;
       MarketSellAssetContract = 52;
       MarketCancelOrderContract = 53;
+      FreezeBalanceV2Contract = 54;
+      UnfreezeBalanceV2Contract = 55;
+      WithdrawExpireUnfreezeContract = 56;
+      DelegateResourceContract = 57;
+      UnDelegateResourceContract = 58;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;

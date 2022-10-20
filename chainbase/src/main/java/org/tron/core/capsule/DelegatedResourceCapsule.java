@@ -37,6 +37,15 @@ public class DelegatedResourceCapsule implements ProtoCapsule<DelegatedResource>
     return key;
   }
 
+  public static byte[] createDbKeyV2(byte[] from, byte[] to) {
+    byte[] v2Prefix = "v2_".getBytes();
+    byte[] key = new byte[v2Prefix.length + from.length + to.length];
+    System.arraycopy(v2Prefix, 0, key, 0, v2Prefix.length);
+    System.arraycopy(from, 0, key, v2Prefix.length, from.length);
+    System.arraycopy(to, 0, key, v2Prefix.length+from.length, to.length);
+    return key;
+  }
+
   public ByteString getFrom() {
     return this.delegatedResource.getFrom();
   }

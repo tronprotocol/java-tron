@@ -249,6 +249,11 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
     }
 
+    if (dynamicStore.supportUnfreezeDelay()) {
+      throw new ContractValidateException(
+              "freeze v2 is open, old freeze is closed");
+    }
+
     return true;
   }
 

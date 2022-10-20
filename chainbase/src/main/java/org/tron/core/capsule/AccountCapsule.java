@@ -19,8 +19,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.List;
-import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.utils.AssetUtil;
@@ -30,6 +28,8 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.Account.Builder;
 import org.tron.protos.Protocol.Account.Frozen;
+import org.tron.protos.Protocol.Account.FreezeV2;
+import org.tron.protos.Protocol.Account.UnFreezeV2;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
@@ -37,6 +37,18 @@ import org.tron.protos.Protocol.Permission.PermissionType;
 import org.tron.protos.Protocol.Vote;
 import org.tron.protos.contract.AccountContract.AccountCreateContract;
 import org.tron.protos.contract.AccountContract.AccountUpdateContract;
+import org.tron.protos.contract.Common;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.core.config.Parameter.ChainConstant.WINDOW_SIZE_MS;
+import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
+import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
+import static org.tron.protos.contract.Common.ResourceCode.TRON_POWER;
+import static org.tron.protos.contract.Common.ResourceCode;
 
 @Slf4j(topic = "capsule")
 public class AccountCapsule implements ProtoCapsule<Account>, Comparable<AccountCapsule> {
@@ -350,6 +362,11 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return this.account.getAcquiredDelegatedFrozenBalanceForBandwidth();
   }
 
+  public void addFrozenBalanceForBandwidthV2(long balance) {
+    Common.ResourceCode type = Common.ResourceCode.BANDWIDTH;
+    this.addFrozenBalanceForResource(type, balance);
+  }
+
   public void setAcquiredDelegatedFrozenBalanceForBandwidth(long balance) {
     this.account = this.account.toBuilder().setAcquiredDelegatedFrozenBalanceForBandwidth(balance)
         .build();
@@ -434,6 +451,35 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build();
   }
 
+  public void addFrozenBalanceForEnergyV2(long balance) {
+    Common.ResourceCode type = Common.ResourceCode.ENERGY;
+    this.addFrozenBalanceForResource(type, balance);
+  }
+
+  private void addFrozenBalanceForResource(Common.ResourceCode type, long balance) {
+    boolean doUpdate = false;
+    for (int i = 0; i < this.account.getFrozenV2List().size(); i++) {
+      if (this.account.getFrozenV2List().get(i).getType().equals(type)) {
+        long newAmount = this.account.getFrozenV2(i).getAmount() + balance;
+        Account.FreezeV2 freezeV2 = Account.FreezeV2.newBuilder()
+                .setType(type)
+                .setAmount(newAmount)
+                .build();
+        this.updateFrozenV2List(i, freezeV2);
+        doUpdate = true;
+        break;
+      }
+    }
+
+    if (!doUpdate) {
+      Account.FreezeV2 freezeV2 = Account.FreezeV2.newBuilder()
+              .setType(type)
+              .setAmount(balance)
+              .build();
+      this.addFrozenV2List(freezeV2);
+    }
+  }
+
   @Override
   public String toString() {
     return this.account.toString();
@@ -495,18 +541,68 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     tp += account.getAccountResource().getFrozenBalanceForEnergy().getFrozenBalance();
     tp += account.getDelegatedFrozenBalanceForBandwidth();
     tp += account.getAccountResource().getDelegatedFrozenBalanceForEnergy();
+    tp += getFrozenV2List().stream().filter(o -> o.getType() != TRON_POWER)
+            .mapToLong(FreezeV2::getAmount).sum();
     return tp;
   }
 
   public long getAllTronPower() {
     if (account.getOldTronPower() == -1) {
-      return getTronPowerFrozenBalance();
+      return getTronPowerFrozenBalance() + getTronPowerFrozenV2Balance();
     } else if (account.getOldTronPower() == 0) {
-      return getTronPower() + getTronPowerFrozenBalance();
+      return getTronPower() + getTronPowerFrozenBalance() + getTronPowerFrozenV2Balance();
     } else {
-      return account.getOldTronPower() + getTronPowerFrozenBalance();
+      return account.getOldTronPower() + getTronPowerFrozenBalance()
+          + getTronPowerFrozenV2Balance();
     }
   }
+
+
+
+  public List<Account.FreezeV2> getFrozenV2List() {
+    return account.getFrozenV2List();
+  }
+
+  public List<Account.UnFreezeV2> getUnfrozenV2List() {
+    return account.getUnfrozenV2List();
+  }
+
+  public void updateFrozenV2List(int i, Account.FreezeV2 frozenV2) {
+    this.account = this.account.toBuilder()
+            .setFrozenV2(i, frozenV2)
+            .build();
+  }
+
+  public void addFrozenV2List(Account.FreezeV2 frozenV2) {
+    this.account = this.account.toBuilder().addFrozenV2(frozenV2).build();
+  }
+
+  public void addUnfrozenV2List(Common.ResourceCode type, long unfreezeAmount, long expireTime) {
+
+    Account.UnFreezeV2 unFreezeV2 = Account.UnFreezeV2.newBuilder()
+            .setType(type)
+            .setUnfreezeAmount(unfreezeAmount)
+            .setUnfreezeExpireTime(expireTime)
+            .build();
+    this.account = this.account.toBuilder()
+            .addUnfrozenV2(unFreezeV2)
+            .build();
+  }
+
+
+  public int getUnfreezingV2Count(long now) {
+    int count = 0;
+
+    List<Account.UnFreezeV2> unFreezeV2List = account.getUnfrozenV2List();
+    for (Account.UnFreezeV2 item : unFreezeV2List) {
+      if (item.getUnfreezeExpireTime() > now) {
+        count++;
+      }
+    }
+
+    return count;
+  }
+
 
   /*************************** start asset ****************************************/
 
@@ -757,8 +853,18 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return frozenBalance[0];
   }
 
+  public long getFrozenV2BalanceForBandwidth() {
+    List<FreezeV2> frozenList = getFrozenV2List();
+    if (frozenList.isEmpty()) {
+      return 0;
+    }
+    return frozenList.stream().filter(o -> o.getType() == BANDWIDTH)
+            .mapToLong(FreezeV2::getAmount).sum();
+  }
+
   public long getAllFrozenBalanceForBandwidth() {
-    return getFrozenBalance() + getAcquiredDelegatedFrozenBalanceForBandwidth();
+    return getFrozenBalance() + getAcquiredDelegatedFrozenBalanceForBandwidth()
+        + getFrozenV2BalanceForBandwidth();
   }
 
   public int getFrozenSupplyCount() {
@@ -866,6 +972,14 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return this.account.getNetUsage();
   }
 
+  public long getUsage(ResourceCode resourceCode) {
+    if (resourceCode == BANDWIDTH) {
+      return this.account.getNetUsage();
+    } else {
+      return this.account.getAccountResource().getEnergyUsage();
+    }
+  }
+
   public void setNetUsage(long netUsage) {
     this.account = this.account.toBuilder()
         .setNetUsage(netUsage).build();
@@ -891,6 +1005,15 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
 
   public long getEnergyFrozenBalance() {
     return this.account.getAccountResource().getFrozenBalanceForEnergy().getFrozenBalance();
+  }
+
+  public long getFrozenV2BalanceForEnergy() {
+    List<FreezeV2> frozenList = getFrozenV2List();
+    if (frozenList.isEmpty()) {
+      return 0;
+    }
+    return frozenList.stream().filter(o -> o.getType() == ENERGY)
+            .mapToLong(FreezeV2::getAmount).sum();
   }
 
   public boolean oldTronPowerIsNotInitialized() {
@@ -935,8 +1058,18 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build());
   }
 
+  public void addFrozenForTronPowerV2(long balance) {
+    Common.ResourceCode type = Common.ResourceCode.TRON_POWER;
+    this.addFrozenBalanceForResource(type, balance);
+  }
+
   public long getTronPowerFrozenBalance() {
     return this.account.getTronPower().getFrozenBalance();
+  }
+
+  public long getTronPowerFrozenV2Balance() {
+    return getFrozenV2List().stream().filter(o-> o.getType() == TRON_POWER)
+            .mapToLong(FreezeV2::getAmount).sum();
   }
 
   public long getEnergyUsage() {
@@ -951,7 +1084,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public long getAllFrozenBalanceForEnergy() {
-    return getEnergyFrozenBalance() + getAcquiredDelegatedFrozenBalanceForEnergy();
+    return getEnergyFrozenBalance() + getAcquiredDelegatedFrozenBalanceForEnergy()
+        + getFrozenV2BalanceForEnergy();
   }
 
   public long getLatestConsumeTimeForEnergy() {
@@ -1128,4 +1262,41 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     }
   }
 
+  public void addUnfrozenV2(UnFreezeV2 unfrozenV2) {
+    if (Objects.isNull(unfrozenV2)) {
+      return;
+    }
+    this.account = this.account.toBuilder().addUnfrozenV2(unfrozenV2).build();
+  }
+
+  public void clearUnfrozenV2() {
+    this.account = this.account.toBuilder().clearUnfrozenV2().build();
+  }
+
+  public void setNewWindowSize(ResourceCode resourceCode, long newWindowSize) {
+    if (resourceCode == BANDWIDTH) {
+      this.account = this.account.toBuilder().setNetWindowSize(newWindowSize).build();
+    } else {
+      this.account = this.account.toBuilder().setAccountResource(this.account.getAccountResource()
+              .toBuilder().setEnergyWindowSize(newWindowSize).build()).build();
+    }
+  }
+
+  public long getWindowSize(ResourceCode resourceCode) {
+    long windowSize;
+    if (resourceCode == BANDWIDTH) {
+      windowSize = this.account.getNetWindowSize();
+    } else {
+      windowSize = this.account.getAccountResource().getEnergyWindowSize();
+    }
+    return windowSize == 0 ? WINDOW_SIZE_MS / BLOCK_PRODUCED_INTERVAL : windowSize;
+  }
+
+  public long getLastConsumeTime(ResourceCode resourceCode) {
+    if (resourceCode == BANDWIDTH) {
+      return this.account.getLatestConsumeTime();
+    } else {
+      return this.account.getAccountResource().getLatestConsumeTimeForEnergy();
+    }
+  }
 }
