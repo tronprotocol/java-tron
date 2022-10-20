@@ -22,7 +22,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.map.LRUMap;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
 import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
 import org.tron.common.parameter.CommonParameter;
@@ -525,9 +524,19 @@ public class Program {
     ownerCapsule.getFrozenV2List().stream()
         .filter(freezeV2 -> freezeV2.getAmount() > 0)
         .forEach(
-            freezeV2 ->
-                inheritorCapsule.addFrozenBalanceForResource(
-                    freezeV2.getType(), freezeV2.getAmount()));
+            freezeV2 -> {
+              switch (freezeV2.getType()) {
+                case BANDWIDTH:
+                  inheritorCapsule.addFrozenBalanceForBandwidthV2(freezeV2.getAmount());
+                  break;
+                case ENERGY:
+                  inheritorCapsule.addFrozenBalanceForEnergyV2(freezeV2.getAmount());
+                  break;
+                case TRON_POWER:
+                  inheritorCapsule.addFrozenForTronPowerV2(freezeV2.getAmount());
+                  break;
+              }
+            });
 
     // merge usage
     BandwidthProcessor bandwidthProcessor = new BandwidthProcessor(ChainBaseManager.getInstance());
