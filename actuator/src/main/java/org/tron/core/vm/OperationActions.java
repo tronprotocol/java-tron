@@ -6,8 +6,6 @@ import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import org.apache.commons.lang3.tuple.Triple;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.core.vm.config.VMConfig;

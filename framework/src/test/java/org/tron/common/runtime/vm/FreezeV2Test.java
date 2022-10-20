@@ -60,8 +60,6 @@ public class FreezeV2Test {
   private static final byte[] userA = Commons.decode58Check(userAStr);
   private static final String userBStr = "27jzp7nVEkH4Hf3H1PHPp4VDY7DxTy5eydL";
   private static final byte[] userB = Commons.decode58Check(userBStr);
-  private static final String userCStr = "27juXSbMvL6pb8VgmKRgW6ByCfw5RqZjUuo";
-  private static final byte[] userC = Commons.decode58Check(userCStr);
 
   private static String dbPath;
   private static TronApplicationContext context;
@@ -180,7 +178,7 @@ public class FreezeV2Test {
       byte[] callerAddr, byte[] contractAddr, contractResult expectedResult, Consumer<byte[]> check)
       throws Exception {
     return triggerContract(
-        callerAddr, contractAddr, fee, expectedResult, check, "cancelAllUnfreezeV2()");
+        callerAddr, contractAddr, fee, expectedResult, check, "cancelAllUnfreezeBalanceV2()");
   }
 
   private TVMTestResult triggerDelegateResource(
@@ -250,48 +248,57 @@ public class FreezeV2Test {
     withdrawExpireUnfreeze(owner, contract, frozenBalance);
 
     // cancelAllUnfreezeV2
-//    freezeV2(owner, contract, frozenBalance, 0);
-//    cancelAllUnfreezeV2(owner, contract, 0);
-//    clearUnfreezeV2ExpireTime(contract, 0);
-//    unfreezeV2(owner, contract, frozenBalance, 0);
-//    cancelAllUnfreezeV2(owner, contract, frozenBalance);
+    freezeV2(owner, contract, frozenBalance, 0);
+    cancelAllUnfreezeV2(owner, contract, 0);
+    unfreezeV2(owner, contract, frozenBalance, 0);
+    cancelAllUnfreezeV2(owner, contract, 0);
+    freezeV2(owner, contract, frozenBalance, 1);
+    unfreezeV2(owner, contract, frozenBalance, 1);
+    clearUnfreezeV2ExpireTime(contract, 1);
+    cancelAllUnfreezeV2(owner, contract, frozenBalance);
   }
 
   @Test
   public void testDelegateResourceOperations() throws Exception {
     byte[] contract = deployContract("TestFreezeV2", FREEZE_V2_CODE);
-    long frozenBalance = 1_000_000;
+    long resourceAmount = 1_000_000;
     // trigger freezeBalanceV2(uint256,uint256) to get bandwidth
-    freezeV2(owner, contract, frozenBalance, 0);
+    freezeV2(owner, contract, resourceAmount, 0);
     // trigger freezeBalanceV2(uint256,uint256) to get energy
-    freezeV2(owner, contract, frozenBalance, 1);
+    freezeV2(owner, contract, resourceAmount, 1);
     // trigger freezeBalanceV2(uint256,uint256) to get tp
-    freezeV2(owner, contract, frozenBalance, 2);
+    freezeV2(owner, contract, resourceAmount, 2);
 
-    delegateResourceWithException(owner, contract, userA, frozenBalance, 0);
+    delegateResourceWithException(owner, contract, userA, resourceAmount, 0);
     rootRepository.createAccount(userA, Protocol.AccountType.Normal);
     rootRepository.commit();
     delegateResourceWithException(owner, contract, userA, 0, 0);
-    delegateResourceWithException(owner, contract, userA, frozenBalance * 2, 0);
-    delegateResourceWithException(owner, contract, userA, frozenBalance, 2);
-    delegateResourceWithException(owner, contract, userA, frozenBalance, 3);
-    delegateResourceWithException(owner, contract, contract, frozenBalance, 0);
+    delegateResourceWithException(owner, contract, userA, resourceAmount * 2, 0);
+    delegateResourceWithException(owner, contract, userA, resourceAmount, 2);
+    delegateResourceWithException(owner, contract, userA, resourceAmount, 3);
+    delegateResourceWithException(owner, contract, contract, resourceAmount, 0);
 
-    delegateResource(owner, contract, userA, frozenBalance, 0);
-    delegateResource(owner, contract, userA, frozenBalance, 1);
+    delegateResource(owner, contract, userA, resourceAmount, 0);
+    delegateResource(owner, contract, userA, resourceAmount, 1);
 
     // unDelegate
-    unDelegateResourceWithException(owner, contract, userA, frozenBalance, 2);
-    unDelegateResourceWithException(owner, contract, userA, frozenBalance, 3);
+    // invalid args
+    unDelegateResourceWithException(owner, contract, userA, resourceAmount, 2);
+    unDelegateResourceWithException(owner, contract, userA, resourceAmount, 3);
     rootRepository.createAccount(userB, Protocol.AccountType.Normal);
     rootRepository.commit();
-    unDelegateResourceWithException(owner, contract, userB, frozenBalance, 0);
-    unDelegateResourceWithException(owner, contract, contract, frozenBalance, 0);
-    delegateResourceWithException(owner, contract, userA, frozenBalance * 2, 0);
-    delegateResourceWithException(owner, contract, userA, 0, 0);
+    unDelegateResourceWithException(owner, contract, userB, resourceAmount, 0);
+    unDelegateResourceWithException(owner, contract, contract, resourceAmount, 0);
+    unDelegateResourceWithException(owner, contract, userA, resourceAmount * 2, 0);
+    unDelegateResourceWithException(owner, contract, userA, 0, 0);
+    unDelegateResourceWithException(owner, contract, userA, -resourceAmount, 0);
 
-//    unDelegateResource(owner, contract, userA, frozenBalance, 0);
-//    unDelegateResource(owner, contract, userA, frozenBalance, 1);
+    unDelegateResource(owner, contract, userA, resourceAmount, 0);
+    unDelegateResource(owner, contract, userA, resourceAmount, 1);
+
+    // no enough delegated resource
+    unDelegateResourceWithException(owner, contract, userA, resourceAmount, 0);
+    unDelegateResourceWithException(owner, contract, userA, resourceAmount, 1);
   }
 
   private TVMTestResult freezeV2(
@@ -437,15 +444,23 @@ public class FreezeV2Test {
     AccountCapsule oldOwner = accountStore.get(contractAddr);
     long oldBalance = oldOwner.getBalance();
     long now = manager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
+    long oldFrozenBalance =
+        oldOwner.getFrozenV2List().stream().mapToLong(Protocol.Account.FreezeV2::getAmount).sum();
+    long oldUnfreezingBalance =
+        oldOwner.getUnfrozenV2List().stream()
+            .filter(unFreezeV2 -> unFreezeV2.getUnfreezeExpireTime() > now)
+            .mapToLong(Protocol.Account.UnFreezeV2::getUnfreezeAmount)
+            .sum();
 
     TVMTestResult result = triggerCancelAllUnfreezeV2(callerAddr, contractAddr, SUCCESS, null);
 
     AccountCapsule newOwner = accountStore.get(contractAddr);
-    long unfreezeV2Amount = newOwner.getUnfreezingV2Count(now);
-    Assert.assertEquals(0, unfreezeV2Amount);
+    long newUnfreezeV2Amount = newOwner.getUnfreezingV2Count(now);
+    long newFrozenBalance =
+        newOwner.getFrozenV2List().stream().mapToLong(Protocol.Account.FreezeV2::getAmount).sum();
+    Assert.assertEquals(0, newUnfreezeV2Amount);
     Assert.assertEquals(expectedWithdrawBalance, newOwner.getBalance() - oldBalance);
-    oldOwner.setBalance(newOwner.getBalance());
-    Assert.assertArrayEquals(oldOwner.getData(), newOwner.getData());
+    Assert.assertEquals(oldFrozenBalance + oldUnfreezingBalance, newFrozenBalance);
 
     return result;
   }
@@ -527,10 +542,94 @@ public class FreezeV2Test {
       throws Exception {
     AccountStore accountStore = manager.getAccountStore();
     AccountCapsule oldOwner = accountStore.get(contractAddr);
+    AccountCapsule oldReceiver = accountStore.get(receiverAddr);
+    DynamicPropertiesStore dynamicStore = manager.getDynamicPropertiesStore();
+    long acquiredBalance = 0;
+    long transferUsage = 0;
+    if (oldReceiver != null) {
+      acquiredBalance = res == 0 ? oldReceiver.getAcquiredDelegatedFrozenBalanceForBandwidth() :
+          oldReceiver.getAcquiredDelegatedFrozenBalanceForEnergy();
+
+      if (res == 0) {
+        long unDelegateMaxUsage = (long) (amount / TRX_PRECISION
+            * ((double) (dynamicStore.getTotalNetLimit()) / dynamicStore.getTotalNetWeight()));
+        transferUsage = (long) (oldReceiver.getNetUsage()
+            * ((double) (amount) / oldReceiver.getAllFrozenBalanceForBandwidth()));
+        transferUsage = Math.min(unDelegateMaxUsage, transferUsage);
+      } else {
+        long unDelegateMaxUsage = (long) (amount / TRX_PRECISION
+            * ((double) (dynamicStore.getTotalEnergyCurrentLimit())
+            / dynamicStore.getTotalEnergyWeight()));
+        transferUsage = (long) (oldReceiver.getEnergyUsage()
+            * ((double) (amount) / oldReceiver.getAllFrozenBalanceForEnergy()));
+        transferUsage = Math.min(unDelegateMaxUsage, transferUsage);
+      }
+    }
+
+    DelegatedResourceStore delegatedResourceStore = manager.getDelegatedResourceStore();
+    DelegatedResourceCapsule oldDelegatedResource = delegatedResourceStore.get(
+        DelegatedResourceCapsule.createDbKeyV2(contractAddr, receiverAddr));
+    Assert.assertNotNull(oldDelegatedResource);
+    long delegatedFrozenBalance = res == 0 ? oldDelegatedResource.getFrozenBalanceForBandwidth() :
+        oldDelegatedResource.getFrozenBalanceForEnergy();
+    Assert.assertTrue(delegatedFrozenBalance > 0);
+    Assert.assertTrue(amount <= delegatedFrozenBalance);
 
     TVMTestResult result =
         triggerUnDelegateResource(
             callerAddr, contractAddr, SUCCESS, null, receiverAddr, amount, res);
+    // check owner account
+    AccountCapsule newOwner = accountStore.get(contractAddr);
+    newOwner.setBalance(oldOwner.getBalance());
+    if (res == 0) {
+      Assert.assertEquals(
+          oldOwner.getDelegatedFrozenBalanceForBandwidth() - amount,
+          newOwner.getDelegatedFrozenBalanceForBandwidth());
+      Assert.assertEquals(
+          oldOwner.getFrozenV2BalanceForBandwidth() + amount,
+          newOwner.getFrozenV2BalanceForBandwidth());
+      Assert.assertEquals(oldOwner.getNetUsage() + transferUsage, newOwner.getNetUsage());
+    } else {
+      Assert.assertEquals(
+          oldOwner.getDelegatedFrozenBalanceForEnergy() - amount,
+          newOwner.getDelegatedFrozenBalanceForEnergy());
+      Assert.assertEquals(
+          oldOwner.getFrozenV2BalanceForEnergy() + amount, newOwner.getFrozenV2BalanceForEnergy());
+      Assert.assertEquals(oldOwner.getEnergyUsage() + transferUsage, newOwner.getEnergyUsage());
+    }
+
+    // check receiver account
+    AccountCapsule newReceiver = accountStore.get(receiverAddr);
+    if (oldReceiver != null) {
+      Assert.assertNotNull(newReceiver);
+      long newAcquiredBalance =
+          res == 0
+              ? newReceiver.getAcquiredDelegatedFrozenBalanceForBandwidth()
+              : newReceiver.getAcquiredDelegatedFrozenBalanceForEnergy();
+      Assert.assertTrue(newAcquiredBalance == 0 || acquiredBalance - newAcquiredBalance == amount);
+      if (res == 0) {
+        Assert.assertEquals(oldReceiver.getNetUsage() - transferUsage, newReceiver.getNetUsage());
+      } else {
+        Assert.assertEquals(
+            oldReceiver.getEnergyUsage() + transferUsage, newReceiver.getEnergyUsage());
+      }
+    } else {
+      Assert.assertNull(newReceiver);
+    }
+
+    // check delegated resource store
+    DelegatedResourceCapsule newDelegatedResource = delegatedResourceStore.get(
+        DelegatedResourceCapsule.createDbKeyV2(contractAddr, receiverAddr));
+    Assert.assertNotNull(newDelegatedResource);
+    if (res == 0) {
+      Assert.assertEquals(0, newDelegatedResource.getFrozenBalanceForBandwidth());
+      Assert.assertEquals(oldDelegatedResource.getFrozenBalanceForEnergy(),
+          newDelegatedResource.getFrozenBalanceForEnergy());
+    } else {
+      Assert.assertEquals(oldDelegatedResource.getFrozenBalanceForBandwidth(),
+          newDelegatedResource.getFrozenBalanceForBandwidth());
+      Assert.assertEquals(0, newDelegatedResource.getFrozenBalanceForEnergy());
+    }
 
     return result;
   }
