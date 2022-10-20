@@ -91,7 +91,7 @@ public class UnDelegateResourceProcessor {
     }
   }
 
-  public Triple<Long, Long, Long> execute (UnDelegateResourceParam param, Repository repo) {
+  public Triple<Long, Long, Long> execute(UnDelegateResourceParam param, Repository repo) {
     byte[] ownerAddress = param.getOwnerAddress();
     byte[] receiverAddress = param.getReceiverAddress();
     long unDelegateBalance = param.getUnDelegateBalance();
@@ -99,7 +99,7 @@ public class UnDelegateResourceProcessor {
     AccountCapsule receiverCapsule = repo.getAccount(receiverAddress);
     DynamicPropertiesStore dynamicStore = repo.getDynamicPropertiesStore();
 
-    Triple<Long, Long, Long> unDelegateResourceIndo =
+    Triple<Long, Long, Long> unDelegateResourceInfo =
         FreezeV2Util.checkUndelegateResource(
             receiverAddress, unDelegateBalance, param.getResourceType().getNumber(), repo);
 
@@ -197,6 +197,6 @@ public class UnDelegateResourceProcessor {
     }
     repo.updateDelegatedResource(key, delegatedResourceCapsule);
     repo.updateAccount(ownerCapsule.createDbKey(), ownerCapsule);
-    return unDelegateResourceIndo;
+    return unDelegateResourceInfo;
   }
 }

@@ -1,9 +1,9 @@
 package org.tron.common.runtime.vm;
 
-import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.REVERT;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
+import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 
 import com.google.protobuf.ByteString;
 import java.io.File;
@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
@@ -31,12 +30,14 @@ import org.tron.common.utils.WalletUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.store.AccountStore;
+import org.tron.core.store.DelegatedResourceStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.config.ConfigLoader;
@@ -83,6 +84,9 @@ public class FreezeV2Test {
 
     ConfigLoader.disable = true;
     manager.getDynamicPropertiesStore().saveAllowTvmFreeze(1);
+    manager.getDynamicPropertiesStore().saveUnfreezeDelayDays(30);
+    manager.getDynamicPropertiesStore().saveAllowNewResourceModel(1L);
+    manager.getDynamicPropertiesStore().saveAllowDelegateResource(1);
     VMConfig.initVmHardFork(true);
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
@@ -185,7 +189,7 @@ public class FreezeV2Test {
       throws Exception {
     return triggerContract(
         callerAddr, contractAddr, fee, expectedResult, check,
-        "delegateResource(uint,uint,address)", amount, res, receiverAddr);
+        "delegateResource(uint256,uint256,address)", amount, res, StringUtil.encode58Check(receiverAddr));
   }
 
   private TVMTestResult triggerUnDelegateResource(
@@ -194,7 +198,7 @@ public class FreezeV2Test {
       throws Exception {
     return triggerContract(
         callerAddr, contractAddr, fee, expectedResult, check,
-        "unDelegateResource(uint,uint,address)", amount, res, receiverAddr);
+        "unDelegateResource(uint256,uint256,address)", amount, res, StringUtil.encode58Check(receiverAddr));
   }
 
   @Test
@@ -209,8 +213,6 @@ public class FreezeV2Test {
     freezeV2(owner, contract, frozenBalance, 1);
 
     // trigger freezeBalanceV2(uint256,uint256) to get tp
-    freezeV2WithException(owner, contract, frozenBalance, 2);
-    manager.getDynamicPropertiesStore().saveAllowNewResourceModel(1);
     freezeV2(owner, contract, frozenBalance, 2);
 
     // tests of freezeBalanceV2(uint256,uint256) with invalid args
@@ -235,17 +237,17 @@ public class FreezeV2Test {
     unfreezeV2WithException(owner, contract, frozenBalance, 2);
 
     // withdrawExpireUnfreeze
-//    withdrawExpireUnfreezeWithException(owner, contract);
-//    clearUnfreezeV2ExpireTime(contract, 0);
-//    withdrawExpireUnfreeze(owner, contract, frozenBalance);
-//
-//    withdrawExpireUnfreezeWithException(owner, contract);
-//    clearUnfreezeV2ExpireTime(contract, 1);
-//    withdrawExpireUnfreeze(owner, contract, frozenBalance);
-//
-//    withdrawExpireUnfreezeWithException(owner, contract);
-//    clearUnfreezeV2ExpireTime(contract, 2);
-//    withdrawExpireUnfreeze(owner, contract, frozenBalance);
+    withdrawExpireUnfreeze(owner, contract, 0);
+    clearUnfreezeV2ExpireTime(contract, 0);
+    withdrawExpireUnfreeze(owner, contract, frozenBalance);
+
+    withdrawExpireUnfreeze(owner, contract, 0);
+    clearUnfreezeV2ExpireTime(contract, 1);
+    withdrawExpireUnfreeze(owner, contract, frozenBalance);
+
+    withdrawExpireUnfreeze(owner, contract, 0);
+    clearUnfreezeV2ExpireTime(contract, 2);
+    withdrawExpireUnfreeze(owner, contract, frozenBalance);
 
     // cancelAllUnfreezeV2
 //    freezeV2(owner, contract, frozenBalance, 0);
@@ -265,13 +267,31 @@ public class FreezeV2Test {
     freezeV2(owner, contract, frozenBalance, 1);
     // trigger freezeBalanceV2(uint256,uint256) to get tp
     freezeV2(owner, contract, frozenBalance, 2);
-//
-//    delegateResourceWithException(owner, contract, userA, frozenBalance, 0);
-//    rootRepository.createAccount(userA, Protocol.AccountType.Normal);
-//    rootRepository.commit();
-//    delegateResourceWithException(owner, contract, userA, 0, 0);
-//    delegateResourceWithException(owner, contract, userA, frozenBalance * 2, 0);
-//    delegateResourceWithException(owner, contract, userA, frozenBalance, 3);
+
+    delegateResourceWithException(owner, contract, userA, frozenBalance, 0);
+    rootRepository.createAccount(userA, Protocol.AccountType.Normal);
+    rootRepository.commit();
+    delegateResourceWithException(owner, contract, userA, 0, 0);
+    delegateResourceWithException(owner, contract, userA, frozenBalance * 2, 0);
+    delegateResourceWithException(owner, contract, userA, frozenBalance, 2);
+    delegateResourceWithException(owner, contract, userA, frozenBalance, 3);
+    delegateResourceWithException(owner, contract, contract, frozenBalance, 0);
+
+    delegateResource(owner, contract, userA, frozenBalance, 0);
+    delegateResource(owner, contract, userA, frozenBalance, 1);
+
+    // unDelegate
+    unDelegateResourceWithException(owner, contract, userA, frozenBalance, 2);
+    unDelegateResourceWithException(owner, contract, userA, frozenBalance, 3);
+    rootRepository.createAccount(userB, Protocol.AccountType.Normal);
+    rootRepository.commit();
+    unDelegateResourceWithException(owner, contract, userB, frozenBalance, 0);
+    unDelegateResourceWithException(owner, contract, contract, frozenBalance, 0);
+    delegateResourceWithException(owner, contract, userA, frozenBalance * 2, 0);
+    delegateResourceWithException(owner, contract, userA, 0, 0);
+
+//    unDelegateResource(owner, contract, userA, frozenBalance, 0);
+//    unDelegateResource(owner, contract, userA, frozenBalance, 1);
   }
 
   private TVMTestResult freezeV2(
@@ -399,22 +419,16 @@ public class FreezeV2Test {
     AccountCapsule oldOwner = accountStore.get(contractAddr);
     long oldBalance = oldOwner.getBalance();
 
-    TVMTestResult result = triggerWithdrawExpireUnfreeze(callerAddr, contractAddr, SUCCESS,
-        returnValue ->
-            Assert.assertEquals("0000000000000000000000000000000000000000000000000000000000000001",
-                Hex.toHexString(returnValue)));
+    TVMTestResult result = triggerWithdrawExpireUnfreeze(callerAddr, contractAddr, SUCCESS, null);
 
     AccountCapsule newOwner = accountStore.get(contractAddr);
     Assert.assertEquals(oldBalance + expectedWithdrawBalance, newOwner.getBalance());
     oldOwner.setBalance(newOwner.getBalance());
+    oldOwner.clearUnfrozenV2();
+    newOwner.getUnfrozenV2List().forEach(oldOwner::addUnfrozenV2);
     Assert.assertArrayEquals(oldOwner.getData(), newOwner.getData());
 
     return result;
-  }
-
-  private TVMTestResult withdrawExpireUnfreezeWithException(byte[] callerAddr, byte[] contractAddr)
-      throws Exception {
-    return triggerWithdrawExpireUnfreeze(callerAddr, contractAddr, REVERT, null);
   }
 
   private TVMTestResult cancelAllUnfreezeV2(
@@ -424,10 +438,7 @@ public class FreezeV2Test {
     long oldBalance = oldOwner.getBalance();
     long now = manager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
 
-    TVMTestResult result = triggerCancelAllUnfreezeV2(callerAddr, contractAddr, SUCCESS,
-        returnValue ->
-            Assert.assertEquals("0000000000000000000000000000000000000000000000000000000000000001",
-                Hex.toHexString(returnValue)));
+    TVMTestResult result = triggerCancelAllUnfreezeV2(callerAddr, contractAddr, SUCCESS, null);
 
     AccountCapsule newOwner = accountStore.get(contractAddr);
     long unfreezeV2Amount = newOwner.getUnfreezingV2Count(now);
@@ -444,16 +455,62 @@ public class FreezeV2Test {
       throws Exception {
     AccountStore accountStore = manager.getAccountStore();
     AccountCapsule oldOwner = accountStore.get(contractAddr);
-    long oldBalance = oldOwner.getBalance();
+    AccountCapsule oldReceiver = accountStore.get(receiverAddr);
 
-    TVMTestResult result = triggerWithdrawExpireUnfreeze(callerAddr, contractAddr, SUCCESS,
-        returnValue ->
-            Assert.assertEquals("0000000000000000000000000000000000000000000000000000000000000001",
-                Hex.toHexString(returnValue)));
+    DelegatedResourceStore delegatedResourceStore = manager.getDelegatedResourceStore();
+    DelegatedResourceCapsule oldDelegatedResource = delegatedResourceStore.get(
+        DelegatedResourceCapsule.createDbKeyV2(contractAddr, receiverAddr));
+    if (oldDelegatedResource == null) {
+      oldDelegatedResource = new DelegatedResourceCapsule(
+          ByteString.copyFrom(contractAddr),
+          ByteString.copyFrom(receiverAddr));
+    }
+
+    TVMTestResult result = triggerDelegateResource(
+        callerAddr, contractAddr, SUCCESS, null, receiverAddr, amount, res);
 
     AccountCapsule newOwner = accountStore.get(contractAddr);
-    oldOwner.setBalance(newOwner.getBalance());
-    Assert.assertArrayEquals(oldOwner.getData(), newOwner.getData());
+    AccountCapsule newReceiver = accountStore.get(receiverAddr);
+    Assert.assertNotNull(newReceiver);
+    if (res == 0) {
+      Assert.assertEquals(oldOwner.getDelegatedFrozenBalanceForBandwidth() + amount,
+          newOwner.getDelegatedFrozenBalanceForBandwidth());
+      Assert.assertEquals(oldReceiver.getAcquiredDelegatedFrozenBalanceForBandwidth() + amount,
+          newReceiver.getAcquiredDelegatedFrozenBalanceForBandwidth());
+    } else {
+      Assert.assertEquals(oldOwner.getDelegatedFrozenBalanceForEnergy() + amount,
+          newOwner.getDelegatedFrozenBalanceForEnergy());
+      Assert.assertEquals(oldReceiver.getAcquiredDelegatedFrozenBalanceForEnergy() + amount,
+          newReceiver.getAcquiredDelegatedFrozenBalanceForEnergy());
+    }
+    newReceiver.setBalance(oldReceiver.getBalance());
+    oldReceiver.setEnergyUsage(0);
+    oldReceiver.setNewWindowSize(ENERGY, 28800);
+    newReceiver.setEnergyUsage(0);
+    newReceiver.setNewWindowSize(ENERGY,28800);
+    if (res == 0) {
+      oldReceiver.setAcquiredDelegatedFrozenBalanceForBandwidth(0);
+      newReceiver.setAcquiredDelegatedFrozenBalanceForBandwidth(0);
+    } else {
+      oldReceiver.setAcquiredDelegatedFrozenBalanceForEnergy(0);
+      newReceiver.setAcquiredDelegatedFrozenBalanceForEnergy(0);
+    }
+    Assert.assertArrayEquals(oldReceiver.getData(), newReceiver.getData());
+
+    DelegatedResourceCapsule newDelegatedResource = manager.getDelegatedResourceStore().get(
+        DelegatedResourceCapsule.createDbKeyV2(contractAddr, receiverAddr));
+    Assert.assertNotNull(newDelegatedResource);
+    if (res == 0) {
+      Assert.assertEquals(amount + oldDelegatedResource.getFrozenBalanceForBandwidth(),
+          newDelegatedResource.getFrozenBalanceForBandwidth());
+      Assert.assertEquals(oldDelegatedResource.getFrozenBalanceForEnergy(),
+          newDelegatedResource.getFrozenBalanceForEnergy());
+    } else {
+      Assert.assertEquals(oldDelegatedResource.getFrozenBalanceForBandwidth(),
+          newDelegatedResource.getFrozenBalanceForBandwidth());
+      Assert.assertEquals(amount + oldDelegatedResource.getFrozenBalanceForEnergy(),
+          newDelegatedResource.getFrozenBalanceForEnergy());
+    }
 
     return result;
   }
@@ -470,16 +527,10 @@ public class FreezeV2Test {
       throws Exception {
     AccountStore accountStore = manager.getAccountStore();
     AccountCapsule oldOwner = accountStore.get(contractAddr);
-    long oldBalance = oldOwner.getBalance();
 
-    TVMTestResult result = triggerWithdrawExpireUnfreeze(callerAddr, contractAddr, SUCCESS,
-        returnValue ->
-            Assert.assertEquals("0000000000000000000000000000000000000000000000000000000000000001",
-                Hex.toHexString(returnValue)));
-
-    AccountCapsule newOwner = accountStore.get(contractAddr);
-    oldOwner.setBalance(newOwner.getBalance());
-    Assert.assertArrayEquals(oldOwner.getData(), newOwner.getData());
+    TVMTestResult result =
+        triggerUnDelegateResource(
+            callerAddr, contractAddr, SUCCESS, null, receiverAddr, amount, res);
 
     return result;
   }
