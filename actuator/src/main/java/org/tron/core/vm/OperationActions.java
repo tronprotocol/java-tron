@@ -736,23 +736,13 @@ public class OperationActions {
     DataWord frozenBalance = program.stackPop();
     DataWord receiverAddress = program.stackPop();
 
-    boolean result = program.freeze(receiverAddress, frozenBalance, resourceType );
-    program.stackPush(result ? DataWord.ONE() : DataWord.ZERO());
-    program.step();
-  }
-
-  public static void disabledFreezeAction(Program program) {
-    // after allow vote, check static
-    if (VMConfig.allowTvmVote() && program.isStaticCall()) {
-      throw new Program.StaticCallModificationException();
+    if (VMConfig.allowTvmFreezeV2()) {
+      // after v2 activated, we just push zero to stack and do nothing
+      program.stackPush(DataWord.ZERO());
+    } else {
+      boolean result = program.freeze(receiverAddress, frozenBalance, resourceType );
+      program.stackPush(result ? DataWord.ONE() : DataWord.ZERO());
     }
-    // 0 as bandwidth, 1 as energy
-    DataWord ignoredResourceType = program.stackPop();
-    DataWord ignoredFrozenBalance = program.stackPop();
-    DataWord ignoredReceiverAddress = program.stackPop();
-
-    // here we just push zero to stack and do nothing
-    program.stackPush(DataWord.ZERO());
     program.step();
   }
 

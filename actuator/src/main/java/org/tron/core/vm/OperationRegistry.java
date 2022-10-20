@@ -59,9 +59,6 @@ public class OperationRegistry {
     if (VMConfig.allowHigherLimitForMaxCpuTimeOfOneTx()) {
       adjustMemOperations(table);
     }
-    if (VMConfig.allowTvmFreezeV2()) {
-      disableFreezeOperation(table);
-    }
 
     return table;
   }
@@ -620,13 +617,5 @@ public class OperationRegistry {
         EnergyCost::getUnDelegateResourceCost,
         OperationActions::unDelegateResourceAction,
         proposal));
-  }
-
-  public static void disableFreezeOperation(JumpTable table) {
-    table.set(new Operation(
-        Op.FREEZE, 3, 1,
-        EnergyCost::getExtTierCost,
-        OperationActions::disabledFreezeAction,
-        VMConfig::allowTvmFreeze));
   }
 }
