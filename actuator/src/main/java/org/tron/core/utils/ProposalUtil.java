@@ -652,7 +652,7 @@ public class ProposalUtil {
     ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX(65), // 0, 1
     ALLOW_ASSET_OPTIMIZATION(66), // 0, 1
     ALLOW_NEW_REWARD_ALGO(67), // 0, 1
-    UNFREEZE_DELAY_DAYS(68); // 0, 1
+    UNFREEZE_DELAY_DAYS(68); // 0, [1, 365]
 
     private long code;
 
