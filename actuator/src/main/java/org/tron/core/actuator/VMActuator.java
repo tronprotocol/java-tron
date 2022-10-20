@@ -539,7 +539,7 @@ public class VMActuator implements Actuator2 {
     }
 
     long leftFrozenEnergy = rootRepository.getAccountLeftEnergyFromFreeze(account);
-    if (VMConfig.allowTvmFreeze()) {
+    if (VMConfig.allowTvmFreeze() || VMConfig.allowTvmFreezeV2()) {
       receipt.setCallerEnergyLeft(leftFrozenEnergy);
     }
 
@@ -679,7 +679,7 @@ public class VMActuator implements Actuator2 {
     long originEnergyLeft = 0;
     if (consumeUserResourcePercent < VMConstant.ONE_HUNDRED) {
       originEnergyLeft = rootRepository.getAccountLeftEnergyFromFreeze(creator);
-      if (VMConfig.allowTvmFreeze()) {
+      if (VMConfig.allowTvmFreeze() || VMConfig.allowTvmFreezeV2()) {
         receipt.setOriginEnergyLeft(originEnergyLeft);
       }
     }
