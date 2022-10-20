@@ -1,5 +1,6 @@
 package org.tron.core.vm.program;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -20,6 +21,7 @@ import org.tron.core.vm.repository.Key;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.Value;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.contract.Common;
 
 public class ContractState implements Repository, ProgramListenerAware {
 
@@ -223,6 +225,21 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public long getAccountEnergyUsageFromFreeze(AccountCapsule accountCapsule) {
+    return repository.getAccountEnergyUsageFromFreeze(accountCapsule);
+  }
+
+  @Override
+  public Pair<Long, Long> getAccountEnergyUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule) {
+    return repository.getAccountEnergyUsageBalanceAndRestoreSeconds(accountCapsule);
+  }
+
+  @Override
+  public Pair<Long, Long> getAccountNetUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule) {
+    return repository.getAccountNetUsageBalanceAndRestoreSeconds(accountCapsule);
+  }
+
+  @Override
   public long calculateGlobalEnergyLimit(AccountCapsule accountCapsule) {
     return repository.calculateGlobalEnergyLimit(accountCapsule);
   }
@@ -345,6 +362,16 @@ public class ContractState implements Repository, ProgramListenerAware {
   @Override
   public long getTotalEnergyWeight() {
     return repository.getTotalEnergyWeight();
+  }
+
+  @Override
+  public long getHeadSlot() {
+    return repository.getHeadSlot();
+  }
+
+  @Override
+  public long getSlotByTimestampMs(long timestamp) {
+    return repository.getSlotByTimestampMs(timestamp);
   }
 
 }

@@ -7,7 +7,6 @@ import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.bouncycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
 import org.tron.common.runtime.InternalTransaction.TrxType;
 import org.tron.common.runtime.ProgramResult;
@@ -246,6 +245,10 @@ public class TransactionTrace {
     // originAccount Percent = 30%
     AccountCapsule origin = accountStore.get(originAccount);
     AccountCapsule caller = accountStore.get(callerAccount);
+    if (dynamicPropertiesStore.supportUnfreezeDelay()) {
+      origin.setEnergyUsage(receipt.getOriginEnergyUsage());
+      caller.setEnergyUsage(receipt.getCallerEnergyUsage());
+    }
     receipt.payEnergyBill(
         dynamicPropertiesStore, accountStore, forkController,
         origin,

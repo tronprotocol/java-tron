@@ -116,7 +116,8 @@ public class VMActuator implements Actuator2 {
     OperationRegistry.init();
     trx = context.getTrxCap().getInstance();
     blockCap = context.getBlockCap();
-    if (VMConfig.allowTvmFreeze() && context.getTrxCap().getTrxTrace() != null) {
+    if ((VMConfig.allowTvmFreeze() || VMConfig.allowTvmFreezeV2())
+        && context.getTrxCap().getTrxTrace() != null) {
       receipt = context.getTrxCap().getTrxTrace().getReceipt();
     }
     //Route Type
@@ -538,7 +539,7 @@ public class VMActuator implements Actuator2 {
     }
 
     long leftFrozenEnergy = rootRepository.getAccountLeftEnergyFromFreeze(account);
-    if (VMConfig.allowTvmFreeze()) {
+    if (VMConfig.allowTvmFreeze() || VMConfig.allowTvmFreezeV2()) {
       receipt.setCallerEnergyLeft(leftFrozenEnergy);
     }
 
@@ -546,6 +547,13 @@ public class VMActuator implements Actuator2 {
     long availableEnergy = Math.addExact(leftFrozenEnergy, energyFromBalance);
 
     long energyFromFeeLimit = feeLimit / sunPerEnergy;
+    if (VMConfig.allowTvmFreezeV2()) {
+      long newEnergyUsage = rootRepository.getAccountEnergyUsageFromFreeze(account);
+      receipt.setCallerEnergyUsage(newEnergyUsage);
+      account.setEnergyUsage(newEnergyUsage + min(leftFrozenEnergy, energyFromFeeLimit));
+      account.setLatestConsumeTimeForEnergy(rootRepository.getHeadSlot());
+      rootRepository.updateAccount(account.createDbKey(), account);
+    }
     return min(availableEnergy, energyFromFeeLimit);
 
   }
@@ -671,7 +679,7 @@ public class VMActuator implements Actuator2 {
     long originEnergyLeft = 0;
     if (consumeUserResourcePercent < VMConstant.ONE_HUNDRED) {
       originEnergyLeft = rootRepository.getAccountLeftEnergyFromFreeze(creator);
-      if (VMConfig.allowTvmFreeze()) {
+      if (VMConfig.allowTvmFreeze() || VMConfig.allowTvmFreezeV2()) {
         receipt.setOriginEnergyLeft(originEnergyLeft);
       }
     }
@@ -690,6 +698,13 @@ public class VMActuator implements Actuator2 {
             min(originEnergyLeft, originEnergyLimit)
         );
       }
+    }
+    if (VMConfig.allowTvmFreezeV2()) {
+      long newEnergyUsage = rootRepository.getAccountEnergyUsageFromFreeze(creator);
+      receipt.setOriginEnergyUsage(newEnergyUsage);
+      creator.setEnergyUsage(creator.getEnergyUsage() + creatorEnergyLimit);
+      creator.setLatestConsumeTimeForEnergy(rootRepository.getHeadSlot());
+      rootRepository.updateAccount(creator.createDbKey(), creator);
     }
     return Math.addExact(callerEnergyLimit, creatorEnergyLimit);
   }

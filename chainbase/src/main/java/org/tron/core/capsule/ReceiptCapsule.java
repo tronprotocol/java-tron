@@ -36,6 +36,10 @@ public class ReceiptCapsule {
   @Setter
   private long callerEnergyLeft;
 
+  @Getter
+  @Setter
+  private long callerEnergyUsage;
+
   private Sha256Hash receiptAddress;
 
   public ReceiptCapsule(ResourceReceipt data, Sha256Hash receiptAddress) {
@@ -181,7 +185,8 @@ public class ReceiptCapsule {
       EnergyProcessor energyProcessor,
       long now) throws BalanceInsufficientException {
     long accountEnergyLeft;
-    if (dynamicPropertiesStore.getAllowTvmFreeze() == 1) {
+    if (dynamicPropertiesStore.getAllowTvmFreeze() == 1
+        || dynamicPropertiesStore.supportUnfreezeDelay()) {
       accountEnergyLeft = callerEnergyLeft;
     } else {
       accountEnergyLeft = energyProcessor.getAccountLeftEnergyFromFreeze(account);

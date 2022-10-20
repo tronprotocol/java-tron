@@ -148,6 +148,7 @@ public class FreezeTest {
     VMConfig.initAllowTvmSolidity059(1);
     VMConfig.initAllowTvmIstanbul(1);
     VMConfig.initAllowTvmFreeze(1);
+    VMConfig.initAllowTvmFreezeV2(0);
   }
 
   private byte[] deployContract(String contractName, String code) throws Exception {

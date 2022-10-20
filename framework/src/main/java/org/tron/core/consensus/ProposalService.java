@@ -290,7 +290,6 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveNewRewardAlgorithmEffectiveCycle();
           break;
         }
-
         case UNFREEZE_DELAY_DAYS: {
           DynamicPropertiesStore dynamicStore = manager.getDynamicPropertiesStore();
           dynamicStore.saveUnfreezeDelayDays(entry.getValue());

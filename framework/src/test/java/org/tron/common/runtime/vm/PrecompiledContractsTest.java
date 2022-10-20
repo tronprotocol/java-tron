@@ -8,6 +8,7 @@ import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.AfterClass;
@@ -27,6 +28,7 @@ import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.FreezeBalanceActuator;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -39,6 +41,7 @@ import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.PrecompiledContracts;
 import org.tron.core.vm.PrecompiledContracts.PrecompiledContract;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol.AccountType;
@@ -63,6 +66,41 @@ public class PrecompiledContractsTest {
       "0000000000000000000000000000000000000000000000000000000000010008");
   private static final DataWord convertFromTronBase58AddressAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000010009");
+
+  // FreezeV2 PrecompileContracts
+  private static final DataWord getChainParameterAddr = new DataWord(
+      "000000000000000000000000000000000000000000000000000000000100000b");
+
+  private static final DataWord availableUnfreezeV2SizeAddr = new DataWord(
+      "000000000000000000000000000000000000000000000000000000000100000c");
+
+  private static final DataWord unfreezableBalanceV2Addr = new DataWord(
+      "000000000000000000000000000000000000000000000000000000000100000d");
+
+  private static final DataWord expireUnfreezeBalanceV2Addr = new DataWord(
+      "000000000000000000000000000000000000000000000000000000000100000e");
+
+  private static final DataWord delegatableResourceAddr = new DataWord(
+      "000000000000000000000000000000000000000000000000000000000100000f");
+
+  private static final DataWord resourceV2Addr = new DataWord(
+      "0000000000000000000000000000000000000000000000000000000001000010");
+
+  private static final DataWord checkUnDelegateResourceAddr = new DataWord(
+      "0000000000000000000000000000000000000000000000000000000001000011");
+
+  private static final DataWord resourceUsageAddr = new DataWord(
+      "0000000000000000000000000000000000000000000000000000000001000012");
+
+  private static final DataWord totalResourceAddr = new DataWord(
+      "0000000000000000000000000000000000000000000000000000000001000013");
+
+  private static final DataWord totalDelegatedResourceAddr = new DataWord(
+      "0000000000000000000000000000000000000000000000000000000001000014");
+
+  private static final DataWord totalAcquiredResourceAddr = new DataWord(
+      "0000000000000000000000000000000000000000000000000000000001000015");
+
   private static final String dbPath = "output_PrecompiledContracts_test";
   private static final String ACCOUNT_NAME = "account";
   private static final String OWNER_ADDRESS;
@@ -282,6 +320,157 @@ public class PrecompiledContractsTest {
     } catch (ItemNotFoundException e) {
       Assert.fail();
     }
+  }
+
+  @Test
+  public void tvmFreezeV2SwitchTest() {
+    VMConfig.initAllowTvmFreezeV2(0L);
+
+    PrecompiledContract getChainParameterPcc =
+        PrecompiledContracts.getContractForAddress(getChainParameterAddr);
+    PrecompiledContract availableUnfreezeV2SizePcc =
+        PrecompiledContracts.getContractForAddress(availableUnfreezeV2SizeAddr);
+    PrecompiledContract unfreezableBalanceV2Pcc =
+        PrecompiledContracts.getContractForAddress(unfreezableBalanceV2Addr);
+    PrecompiledContract expireUnfreezeBalanceV2Pcc =
+        PrecompiledContracts.getContractForAddress(expireUnfreezeBalanceV2Addr);
+
+    PrecompiledContract delegatableResourcePcc =
+        PrecompiledContracts.getContractForAddress(delegatableResourceAddr);
+    PrecompiledContract resourceV2Pcc =
+        PrecompiledContracts.getContractForAddress(resourceV2Addr);
+    PrecompiledContract checkUnDelegateResourcePcc =
+        PrecompiledContracts.getContractForAddress(checkUnDelegateResourceAddr);
+
+    PrecompiledContract resourceUsagePcc =
+        PrecompiledContracts.getContractForAddress(resourceUsageAddr);
+    PrecompiledContract totalResourcePcc =
+        PrecompiledContracts.getContractForAddress(totalResourceAddr);
+    PrecompiledContract totalDelegatedResourcePcc =
+        PrecompiledContracts.getContractForAddress(totalDelegatedResourceAddr);
+    PrecompiledContract totalAcquiredResourcePcc =
+        PrecompiledContracts.getContractForAddress(totalAcquiredResourceAddr);
+
+    Assert.assertNull(getChainParameterPcc);
+    Assert.assertNull(availableUnfreezeV2SizePcc);
+    Assert.assertNull(expireUnfreezeBalanceV2Pcc);
+    Assert.assertNull(unfreezableBalanceV2Pcc);
+
+    Assert.assertNull(delegatableResourcePcc);
+    Assert.assertNull(resourceV2Pcc);
+    Assert.assertNull(checkUnDelegateResourcePcc);
+
+    Assert.assertNull(resourceUsagePcc);
+    Assert.assertNull(totalResourcePcc);
+    Assert.assertNull(totalDelegatedResourcePcc);
+    Assert.assertNull(totalAcquiredResourcePcc);
+
+    // enable TvmFreezeV2.
+    VMConfig.initAllowTvmFreezeV2(1L);
+
+    getChainParameterPcc =
+        PrecompiledContracts.getContractForAddress(getChainParameterAddr);
+    availableUnfreezeV2SizePcc =
+        PrecompiledContracts.getContractForAddress(availableUnfreezeV2SizeAddr);
+    unfreezableBalanceV2Pcc =
+        PrecompiledContracts.getContractForAddress(unfreezableBalanceV2Addr);
+    expireUnfreezeBalanceV2Pcc =
+        PrecompiledContracts.getContractForAddress(expireUnfreezeBalanceV2Addr);
+
+    delegatableResourcePcc =
+        PrecompiledContracts.getContractForAddress(delegatableResourceAddr);
+    resourceV2Pcc =
+        PrecompiledContracts.getContractForAddress(resourceV2Addr);
+    checkUnDelegateResourcePcc =
+        PrecompiledContracts.getContractForAddress(checkUnDelegateResourceAddr);
+
+    resourceUsagePcc =
+        PrecompiledContracts.getContractForAddress(resourceUsageAddr);
+    totalResourcePcc =
+        PrecompiledContracts.getContractForAddress(totalResourceAddr);
+    totalDelegatedResourcePcc =
+        PrecompiledContracts.getContractForAddress(totalDelegatedResourceAddr);
+    totalAcquiredResourcePcc =
+        PrecompiledContracts.getContractForAddress(totalAcquiredResourceAddr);
+
+    Assert.assertNotNull(getChainParameterPcc);
+    Assert.assertNotNull(availableUnfreezeV2SizePcc);
+    Assert.assertNotNull(expireUnfreezeBalanceV2Pcc);
+    Assert.assertNotNull(unfreezableBalanceV2Pcc);
+
+    Assert.assertNotNull(delegatableResourcePcc);
+    Assert.assertNotNull(resourceV2Pcc);
+    Assert.assertNotNull(checkUnDelegateResourcePcc);
+
+    Assert.assertNotNull(resourceUsagePcc);
+    Assert.assertNotNull(totalResourcePcc);
+    Assert.assertNotNull(totalDelegatedResourcePcc);
+    Assert.assertNotNull(totalAcquiredResourcePcc);
+  }
+
+  @Test
+  public void getChainParameterTest() {
+    VMConfig.initAllowTvmFreezeV2(1L);
+
+    PrecompiledContract getChainParameterPcc =
+        createPrecompiledContract(getChainParameterAddr, OWNER_ADDRESS);
+    Repository tempRepository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    getChainParameterPcc.setRepository(tempRepository);
+
+    byte[] TOTAL_ENERGY_CURRENT_LIMIT = "TOTAL_ENERGY_CURRENT_LIMIT".getBytes();
+    byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
+    byte[] UNFREEZE_DELAY_DAYS = "UNFREEZE_DELAY_DAYS".getBytes();
+
+    DataWord totalEnergyCurrentLimitId = new DataWord(
+        "0000000000000000000000000000000000000000000000000000000000000001");
+
+    DataWord totalEnergyWeightId = new DataWord(
+        "0000000000000000000000000000000000000000000000000000000000000002");
+
+    DataWord unfreezeDelayDaysId = new DataWord(
+        "0000000000000000000000000000000000000000000000000000000000000003");
+
+    DataWord invalidId = new DataWord(
+        "0000000000000000000000000000000000000000000000000000000000FFFFFF");
+
+    long energyLimit = 9_000_000_000_000_000L;
+    tempRepository.getDynamicPropertiesStore().put(TOTAL_ENERGY_CURRENT_LIMIT,
+        new BytesCapsule(ByteArray.fromLong(energyLimit)));
+    Pair<Boolean, byte[]> totalEnergyCurrentLimitRes =
+        getChainParameterPcc.execute(totalEnergyCurrentLimitId.getData());
+    Assert.assertTrue(totalEnergyCurrentLimitRes.getLeft());
+    Assert.assertEquals(ByteArray.toLong(totalEnergyCurrentLimitRes.getRight()), energyLimit);
+
+    long energyWeight = 1_000_000_000L;
+    tempRepository.getDynamicPropertiesStore().put(TOTAL_ENERGY_WEIGHT,
+        new BytesCapsule(ByteArray.fromLong(energyWeight)));
+    Pair<Boolean, byte[]> totalEnergyWeightRes =
+        getChainParameterPcc.execute(totalEnergyWeightId.getData());
+    Assert.assertTrue(totalEnergyWeightRes.getLeft());
+    Assert.assertEquals(ByteArray.toLong(totalEnergyWeightRes.getRight()), energyWeight);
+
+    long delayDays = 3L;
+    tempRepository.getDynamicPropertiesStore().put(UNFREEZE_DELAY_DAYS,
+        new BytesCapsule(ByteArray.fromLong(delayDays)));
+    Pair<Boolean, byte[]> delayDaysRes =
+        getChainParameterPcc.execute(unfreezeDelayDaysId.getData());
+    Assert.assertTrue(delayDaysRes.getLeft());
+    Assert.assertEquals(ByteArray.toLong(delayDaysRes.getRight()), delayDays);
+
+    long zero = 0L;
+    Pair<Boolean, byte[]> invalidParamRes = getChainParameterPcc.execute(invalidId.getData());
+    Assert.assertTrue(invalidParamRes.getLeft());
+    Assert.assertEquals(ByteArray.toLong(invalidParamRes.getRight()), zero);
+
+  }
+
+  @Test
+  public void expireUnfreezeBalanceV2Test() {
+    VMConfig.initAllowTvmFreezeV2(1L);
+
+    PrecompiledContract expireUnfreezeBalanceV2Pcc =
+        createPrecompiledContract(expireUnfreezeBalanceV2Addr, OWNER_ADDRESS);
+
   }
 
   @Test
