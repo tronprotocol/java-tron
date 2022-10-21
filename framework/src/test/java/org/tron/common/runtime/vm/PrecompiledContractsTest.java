@@ -1,5 +1,6 @@
 package org.tron.common.runtime.vm;
 
+import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
 import static org.tron.core.db.TransactionTrace.convertToTronAddress;
 
 import com.google.protobuf.Any;
@@ -7,6 +8,7 @@ import com.google.protobuf.ByteString;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.bouncycastle.util.Arrays;
@@ -42,8 +44,10 @@ import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.PrecompiledContracts;
 import org.tron.core.vm.PrecompiledContracts.PrecompiledContract;
 import org.tron.core.vm.config.VMConfig;
+import org.tron.core.vm.repository.Key;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
+import org.tron.core.vm.repository.Value;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Proposal.State;
@@ -412,6 +416,87 @@ public class PrecompiledContractsTest {
   }
 
   @Test
+  public void delegatableResourceTest() {
+    VMConfig.initAllowTvmFreezeV2(1L);
+
+    PrecompiledContract delegatableResourcePcc =
+        createPrecompiledContract(delegatableResourceAddr, OWNER_ADDRESS);
+    Repository tempRepository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    delegatableResourcePcc.setRepository(tempRepository);
+
+    byte[] owner = new DataWord(ByteArray.fromHexString(OWNER_ADDRESS)).getData();
+    byte[] zero = DataWord.ZERO().getData();
+    byte[] one = new DataWord(1).getData();
+    byte[] address = ByteArray.fromHexString(OWNER_ADDRESS);
+
+    Pair<Boolean, byte[]> res = delegatableResourcePcc.execute(null);
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(0L, ByteArray.toLong(res.getRight()));
+
+    res = delegatableResourcePcc.execute(encodeMultiWord(one, zero));
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(0L, ByteArray.toLong(res.getRight()));
+
+    res = delegatableResourcePcc.execute(encodeMultiWord(owner, owner));
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(0L, ByteArray.toLong(res.getRight()));
+
+    AccountCapsule accountCapsule = tempRepository.getAccount(address);
+    accountCapsule.setAcquiredDelegatedFrozenBalanceForEnergy(10_000_000L);
+    accountCapsule.addFrozenBalanceForBandwidthV2(5_000_000L);
+    accountCapsule.addFrozenBalanceForEnergyV2(10_000_000L);
+
+    tempRepository.putAccountValue(address, accountCapsule);
+
+    res = delegatableResourcePcc.execute(encodeMultiWord(owner, zero));
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(5_000_000L, ByteArray.toLong(res.getRight()));
+
+    res = delegatableResourcePcc.execute(encodeMultiWord(owner, one));
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(10_000_000L, ByteArray.toLong(res.getRight()));
+
+    // with usage.
+    byte[] TOTAL_ENERGY_CURRENT_LIMIT = "TOTAL_ENERGY_CURRENT_LIMIT".getBytes();
+    byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
+
+    long energyLimit = 1_000_000_000_000L;
+    tempRepository.getDynamicPropertiesStore().put(TOTAL_ENERGY_CURRENT_LIMIT,
+        new BytesCapsule(ByteArray.fromLong(energyLimit)));
+
+    long energyWeight = 1_000_000L; // unit: trx
+//    tempRepository.getDynamicPropertiesStore().put(TOTAL_ENERGY_WEIGHT,
+//        new BytesCapsule(ByteArray.fromLong(energyWeight)));
+    tempRepository.saveTotalEnergyWeight(energyWeight);
+
+    // used all energy, recovered 1/2, delegatable: 1/2
+    accountCapsule.setEnergyUsage(20_000_000L);
+
+    long currentSlot = latestTimestamp / 3_000;
+    accountCapsule.setLatestConsumeTimeForEnergy(0L);
+    accountCapsule.setNewWindowSize(Common.ResourceCode.ENERGY, currentSlot * 2);
+    tempRepository.putAccountValue(address, accountCapsule);
+
+    res = delegatableResourcePcc.execute(encodeMultiWord(owner, one));
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(5_000_000L, ByteArray.toLong(res.getRight()));
+
+    // all recovered.
+    accountCapsule.setNewWindowSize(Common.ResourceCode.ENERGY, currentSlot);
+    tempRepository.putAccountValue(address, accountCapsule);
+    res = delegatableResourcePcc.execute(encodeMultiWord(owner, one));
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(10_000_000L, ByteArray.toLong(res.getRight()));
+
+    // all used.
+    accountCapsule.setLatestConsumeTimeForEnergy(currentSlot);
+    tempRepository.putAccountValue(address, accountCapsule);
+    res = delegatableResourcePcc.execute(encodeMultiWord(owner, one));
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(0L, ByteArray.toLong(res.getRight()));
+  }
+
+  @Test
   public void getChainParameterTest() {
     VMConfig.initAllowTvmFreezeV2(1L);
 
@@ -553,6 +638,40 @@ public class PrecompiledContractsTest {
     res = unfreezableBalanceV2Pcc.execute(data);
     Assert.assertTrue(res.getLeft());
     Assert.assertEquals(1_000_000L, ByteArray.toLong(res.getRight()));
+
+    // new test round
+    tempRepository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    unfreezableBalanceV2Pcc.setRepository(tempRepository);
+
+    byte[] owner = new DataWord(ByteArray.fromHexString(OWNER_ADDRESS)).getData();
+    byte[] zero = DataWord.ZERO().getData();
+    byte[] one = new DataWord(1).getData();
+
+    Pair<Boolean, byte[]> result = unfreezableBalanceV2Pcc.execute(null);
+    Assert.assertTrue(result.getLeft());
+    Assert.assertEquals(0L, ByteArray.toLong(result.getRight()));
+
+    result = unfreezableBalanceV2Pcc.execute(encodeMultiWord(one, zero));
+    Assert.assertTrue(result.getLeft());
+    Assert.assertEquals(0L, ByteArray.toLong(result.getRight()));
+
+    result = unfreezableBalanceV2Pcc.execute(encodeMultiWord(owner, owner));
+    Assert.assertTrue(result.getLeft());
+    Assert.assertEquals(0L, ByteArray.toLong(result.getRight()));
+
+    AccountCapsule capsule = tempRepository.getAccount(address);
+    capsule.addFrozenBalanceForBandwidthV2(5_000_000L);
+    capsule.addFrozenBalanceForEnergyV2(10_000_000L);
+
+    tempRepository.putAccountValue(address, capsule);
+
+    result = unfreezableBalanceV2Pcc.execute(encodeMultiWord(owner, zero));
+    Assert.assertTrue(result.getLeft());
+    Assert.assertEquals(5_000_000L, ByteArray.toLong(result.getRight()));
+
+    result = unfreezableBalanceV2Pcc.execute(encodeMultiWord(owner, one));
+    Assert.assertTrue(result.getLeft());
+    Assert.assertEquals(10_000_000L, ByteArray.toLong(result.getRight()));
   }
 
   @Test
@@ -610,6 +729,46 @@ public class PrecompiledContractsTest {
     res = expireUnfreezeBalanceV2Pcc.execute(data);
     Assert.assertTrue(res.getLeft());
     Assert.assertEquals(2_000_000L, ByteArray.toLong(res.getRight()));
+
+    // new test round
+    tempRepository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    expireUnfreezeBalanceV2Pcc.setRepository(tempRepository);
+
+    byte[] owner = new DataWord(ByteArray.fromHexString(OWNER_ADDRESS)).getData();
+    address = ByteArray.fromHexString(OWNER_ADDRESS);
+
+    Pair<Boolean, byte[]> result = expireUnfreezeBalanceV2Pcc.execute(null);
+
+    Assert.assertTrue(result.getLeft());
+    Assert.assertEquals(0L, ByteArray.toLong(result.getRight()));
+
+    result = expireUnfreezeBalanceV2Pcc.execute(
+        encodeMultiWord(DataWord.ZERO().getData(), DataWord.ZERO().getData()));
+    Assert.assertTrue(result.getLeft());
+    Assert.assertEquals(0L, ByteArray.toLong(result.getRight()));
+
+    result = expireUnfreezeBalanceV2Pcc.execute(
+        encodeMultiWord(owner, new DataWord(latestTimestamp / 1_000L).getData()));
+    Assert.assertTrue(result.getLeft());
+    Assert.assertEquals(0L, ByteArray.toLong(result.getRight()));
+
+    accountCapsule = tempRepository.getAccount(address);
+    accountCapsule.addUnfrozenV2List(
+        Common.ResourceCode.BANDWIDTH, 1_000_000L, latestTimestamp);
+    accountCapsule.addUnfrozenV2List(
+        Common.ResourceCode.ENERGY, 1_000_000L, latestTimestamp + 86_400_000L);
+
+    tempRepository.putAccountValue(address, accountCapsule);
+
+    result = expireUnfreezeBalanceV2Pcc.execute(
+        encodeMultiWord(owner, new DataWord(latestTimestamp / 1_000L).getData()));
+    Assert.assertTrue(result.getLeft());
+    Assert.assertEquals(1_000_000L, ByteArray.toLong(result.getRight()));
+
+    result = expireUnfreezeBalanceV2Pcc.execute(
+        encodeMultiWord(owner, new DataWord((latestTimestamp + 86_400_000L) / 1_000L).getData()));
+    Assert.assertTrue(result.getLeft());
+    Assert.assertEquals(2_000_000L, ByteArray.toLong(result.getRight()));
   }
 
   @Test
@@ -634,6 +793,25 @@ public class PrecompiledContractsTest {
     byte[] solidityAddress = contract.execute(data).getRight();
     Assert.assertArrayEquals(solidityAddress,
         new DataWord(Hex.decode(WITNESS_ADDRESS_BASE)).getData());
+  }
+
+  private static byte[] encodeMultiWord(byte[]... words) {
+    if (words == null) {
+      return null;
+    }
+    if (words.length == 1) {
+      return words[0];
+    }
+
+    byte[] res = new byte[words.length * 32];
+
+    for (int i = 0; i < words.length; i++) {
+      byte[] word = stripLeadingZeroes(words[i]);
+
+      System.arraycopy(word, 0, res, 32 * (i + 1) - word.length, word.length);
+    }
+
+    return res;
   }
 
 }
