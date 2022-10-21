@@ -44,9 +44,11 @@ import org.tron.core.vm.PrecompiledContracts.PrecompiledContract;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Proposal.State;
 import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
+import org.tron.protos.contract.Common;
 
 @Slf4j
 public class PrecompiledContractsTest {
@@ -111,6 +113,7 @@ public class PrecompiledContractsTest {
   // withdraw
   private static final long initBalance = 10_000_000_000L;
   private static final long allowance = 32_000_000L;
+  private static final long latestTimestamp = 1_000_000L;
   private static TronApplicationContext context;
   private static Application appT;
   private static Manager dbManager;
@@ -179,7 +182,7 @@ public class PrecompiledContractsTest {
         .put(ownerAccountFirstCapsule.getAddress().toByteArray(), ownerAccountFirstCapsule);
     dbManager.getWitnessStore().put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
 
-    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1000000);
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(latestTimestamp);
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(10);
     dbManager.getDynamicPropertiesStore().saveNextMaintenanceTime(2000000);
   }
@@ -464,6 +467,41 @@ public class PrecompiledContractsTest {
 
   }
 
+  @Test
+  public void availableUnfreezeV2SizeTest() {
+    VMConfig.initAllowTvmFreezeV2(1L);
+
+    PrecompiledContract availableUnfreezeV2SizePcc = createPrecompiledContract(availableUnfreezeV2SizeAddr, OWNER_ADDRESS);
+    Repository tempRepository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    availableUnfreezeV2SizePcc.setRepository(tempRepository);
+
+    byte[] data = new DataWord(ByteArray.fromHexString(OWNER_ADDRESS)).getData();
+    byte[] address = ByteArray.fromHexString(OWNER_ADDRESS);
+
+    Pair<Boolean, byte[]> res = availableUnfreezeV2SizePcc.execute(data);
+
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(32L, ByteArray.toLong(res.getRight()));
+
+    AccountCapsule accountCapsule = tempRepository.getAccount(address);
+    accountCapsule.addUnfrozenV2List(Common.ResourceCode.BANDWIDTH, 1_000_000L, latestTimestamp + 86_400_000L);
+    accountCapsule.addUnfrozenV2List(Common.ResourceCode.ENERGY, 1_000_000L, latestTimestamp + 86_400_000L);
+
+    tempRepository.putAccountValue(address, accountCapsule);
+    res = availableUnfreezeV2SizePcc.execute(data);
+
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(30L, ByteArray.toLong(res.getRight()));
+
+    // expired unfreeze action, available size keep the same.
+    accountCapsule.addUnfrozenV2List(Common.ResourceCode.ENERGY, 1_000_000L, latestTimestamp - 100_000L);
+
+    tempRepository.putAccountValue(address, accountCapsule);
+    res = availableUnfreezeV2SizePcc.execute(data);
+
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(30L, ByteArray.toLong(res.getRight()));
+  }
   @Test
   public void expireUnfreezeBalanceV2Test() {
     VMConfig.initAllowTvmFreezeV2(1L);

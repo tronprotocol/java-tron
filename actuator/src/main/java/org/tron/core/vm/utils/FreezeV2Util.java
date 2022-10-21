@@ -115,7 +115,7 @@ public class FreezeV2Util {
       return 0L;
     }
 
-    long now = repository.getHeadSlot();
+    long now = repository.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
     int unfreezingV2Count = accountCapsule.getUnfreezingV2Count(now);
     return Long.max(UnfreezeBalanceV2Actuator.getUNFREEZE_MAX_TIMES() - unfreezingV2Count, 0L);
   }
