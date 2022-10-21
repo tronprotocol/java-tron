@@ -831,6 +831,52 @@ public class PrecompiledContractsTest {
   }
 
   @Test
+  public void resourceUsageTest() {
+    VMConfig.initAllowTvmFreezeV2(1L);
+
+    PrecompiledContract resourceUsagePcc =
+        createPrecompiledContract(resourceUsageAddr, OWNER_ADDRESS);
+    Repository tempRepository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    resourceUsagePcc.setRepository(tempRepository);
+
+    byte[] address = ByteArray.fromHexString(OWNER_ADDRESS);
+    byte[] address32 = new DataWord(address).getData();
+    byte[] type = ByteUtil.longTo32Bytes(0);
+    byte[] data = ByteUtil.merge(address32, type);
+
+    Pair<Boolean, byte[]> res = resourceUsagePcc.execute(data);
+    Assert.assertTrue(res.getLeft());
+    byte[] usage = Arrays.copyOfRange(res.getRight(), 0, 32);
+    byte[] recoverDuration = Arrays.copyOfRange(res.getRight(), 32, 64);
+    Assert.assertEquals(0, ByteArray.toLong(usage));
+
+    // with usage.
+    byte[] TOTAL_ENERGY_CURRENT_LIMIT = "TOTAL_ENERGY_CURRENT_LIMIT".getBytes();
+
+    long energyLimit = 1_000_000_000_000L;
+    tempRepository.getDynamicPropertiesStore().put(TOTAL_ENERGY_CURRENT_LIMIT,
+        new BytesCapsule(ByteArray.fromLong(energyLimit)));
+
+    long energyWeight = 1_000_000L; // unit: trx
+    tempRepository.saveTotalEnergyWeight(energyWeight);
+
+    AccountCapsule accountCapsule = tempRepository.getAccount(address);
+    // used all energy, recovered 1/2, delegatable: 1/2
+    accountCapsule.setEnergyUsage(20_000_000L);
+
+    long currentSlot = latestTimestamp / 3_000;
+    accountCapsule.setLatestConsumeTimeForEnergy(0L);
+    accountCapsule.setNewWindowSize(Common.ResourceCode.ENERGY, currentSlot * 2);
+    tempRepository.putAccountValue(address, accountCapsule);
+
+    type = ByteUtil.longTo32Bytes(1);
+    res = resourceUsagePcc.execute(encodeMultiWord(address32, type));
+    Assert.assertTrue(res.getLeft());
+    usage = Arrays.copyOfRange(res.getRight(), 0, 32);
+    Assert.assertEquals(10_000_000L, ByteArray.toLong(usage));
+  }
+
+  @Test
   public void totalResourceTest() {
     VMConfig.initAllowTvmFreezeV2(1L);
 

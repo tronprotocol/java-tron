@@ -20,6 +20,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.vm.nativecontract.param.UnfreezeBalanceV2Param;
 import org.tron.core.vm.repository.Repository;
+import org.tron.core.vm.utils.VoteRewardUtil;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.Common;
 
@@ -123,6 +124,7 @@ public class UnfreezeBalanceV2Processor {
 
     AccountCapsule accountCapsule = repo.getAccount(ownerAddress);
     long now = repo.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
+    VoteRewardUtil.withdrawReward(ownerAddress, repo);
 
     long unfreezeExpireBalance = this.unfreezeExpire(accountCapsule, now);
 
