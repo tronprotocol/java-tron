@@ -847,7 +847,6 @@ public class PrecompiledContractsTest {
     Pair<Boolean, byte[]> res = resourceUsagePcc.execute(data);
     Assert.assertTrue(res.getLeft());
     byte[] usage = Arrays.copyOfRange(res.getRight(), 0, 32);
-    byte[] recoverDuration = Arrays.copyOfRange(res.getRight(), 32, 64);
     Assert.assertEquals(0, ByteArray.toLong(usage));
 
     // with usage.
@@ -874,6 +873,22 @@ public class PrecompiledContractsTest {
     Assert.assertTrue(res.getLeft());
     usage = Arrays.copyOfRange(res.getRight(), 0, 32);
     Assert.assertEquals(10_000_000L, ByteArray.toLong(usage));
+
+    accountCapsule.setNewWindowSize(Common.ResourceCode.ENERGY, currentSlot);
+    tempRepository.putAccountValue(address, accountCapsule);
+    res = resourceUsagePcc.execute(encodeMultiWord(address32, type));
+    Assert.assertTrue(res.getLeft());
+    usage = Arrays.copyOfRange(res.getRight(), 0, 32);
+    byte[] recoverDuration = Arrays.copyOfRange(res.getRight(), 32, 64);
+    Assert.assertEquals(0, ByteArray.toLong(usage));
+    Assert.assertEquals(0, ByteArray.toLong(recoverDuration));
+
+    accountCapsule.setLatestConsumeTimeForEnergy(currentSlot);
+    tempRepository.putAccountValue(address, accountCapsule);
+    res = resourceUsagePcc.execute(encodeMultiWord(address32, type));
+    Assert.assertTrue(res.getLeft());
+    usage = Arrays.copyOfRange(res.getRight(), 0, 32);
+    Assert.assertEquals(20_000_000L, ByteArray.toLong(usage));
   }
 
   @Test
