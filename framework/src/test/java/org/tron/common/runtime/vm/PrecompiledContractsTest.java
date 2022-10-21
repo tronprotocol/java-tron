@@ -471,7 +471,8 @@ public class PrecompiledContractsTest {
   public void availableUnfreezeV2SizeTest() {
     VMConfig.initAllowTvmFreezeV2(1L);
 
-    PrecompiledContract availableUnfreezeV2SizePcc = createPrecompiledContract(availableUnfreezeV2SizeAddr, OWNER_ADDRESS);
+    PrecompiledContract availableUnfreezeV2SizePcc =
+        createPrecompiledContract(availableUnfreezeV2SizeAddr, OWNER_ADDRESS);
     Repository tempRepository = RepositoryImpl.createRoot(StoreFactory.getInstance());
     availableUnfreezeV2SizePcc.setRepository(tempRepository);
 
@@ -484,8 +485,10 @@ public class PrecompiledContractsTest {
     Assert.assertEquals(32L, ByteArray.toLong(res.getRight()));
 
     AccountCapsule accountCapsule = tempRepository.getAccount(address);
-    accountCapsule.addUnfrozenV2List(Common.ResourceCode.BANDWIDTH, 1_000_000L, latestTimestamp + 86_400_000L);
-    accountCapsule.addUnfrozenV2List(Common.ResourceCode.ENERGY, 1_000_000L, latestTimestamp + 86_400_000L);
+    accountCapsule.addUnfrozenV2List(
+        Common.ResourceCode.BANDWIDTH, 1_000_000L, latestTimestamp + 86_400_000L);
+    accountCapsule.addUnfrozenV2List(
+        Common.ResourceCode.ENERGY, 1_000_000L, latestTimestamp + 86_400_000L);
 
     tempRepository.putAccountValue(address, accountCapsule);
     res = availableUnfreezeV2SizePcc.execute(data);
@@ -494,7 +497,8 @@ public class PrecompiledContractsTest {
     Assert.assertEquals(30L, ByteArray.toLong(res.getRight()));
 
     // expired unfreeze action, available size keep the same.
-    accountCapsule.addUnfrozenV2List(Common.ResourceCode.ENERGY, 1_000_000L, latestTimestamp - 100_000L);
+    accountCapsule.addUnfrozenV2List(
+        Common.ResourceCode.ENERGY, 1_000_000L, latestTimestamp - 100_000L);
 
     tempRepository.putAccountValue(address, accountCapsule);
     res = availableUnfreezeV2SizePcc.execute(data);
