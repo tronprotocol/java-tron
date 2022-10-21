@@ -24,6 +24,7 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.Commons;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
@@ -31,6 +32,7 @@ import org.tron.core.Wallet;
 import org.tron.core.actuator.FreezeBalanceActuator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -44,10 +46,8 @@ import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.PrecompiledContracts;
 import org.tron.core.vm.PrecompiledContracts.PrecompiledContract;
 import org.tron.core.vm.config.VMConfig;
-import org.tron.core.vm.repository.Key;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
-import org.tron.core.vm.repository.Value;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Proposal.State;
@@ -602,7 +602,7 @@ public class PrecompiledContractsTest {
     unfreezableBalanceV2Pcc.setRepository(tempRepository);
 
     byte[] address = ByteArray.fromHexString(OWNER_ADDRESS);
-    byte[] address32 = new DataWord(ByteArray.fromHexString(OWNER_ADDRESS)).getData();
+    byte[] address32 = new DataWord(address).getData();
     byte[] type = ByteUtil.longTo32Bytes(0);
     byte[] data = ByteUtil.merge(address32, type);
 
@@ -685,7 +685,7 @@ public class PrecompiledContractsTest {
     long now = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
 
     byte[] address = ByteArray.fromHexString(OWNER_ADDRESS);
-    byte[] address32 = new DataWord(ByteArray.fromHexString(OWNER_ADDRESS)).getData();
+    byte[] address32 = new DataWord(address).getData();
     byte[] time = ByteUtil.longTo32Bytes(now / 1000);
     byte[] data = ByteUtil.merge(address32, time);
 
@@ -769,6 +769,200 @@ public class PrecompiledContractsTest {
         encodeMultiWord(owner, new DataWord((latestTimestamp + 86_400_000L) / 1_000L).getData()));
     Assert.assertTrue(result.getLeft());
     Assert.assertEquals(2_000_000L, ByteArray.toLong(result.getRight()));
+  }
+
+  @Test
+  public void resourceV2Test() {
+    VMConfig.initAllowTvmFreezeV2(1L);
+
+    PrecompiledContract resourceV2Pcc =
+        createPrecompiledContract(resourceV2Addr, OWNER_ADDRESS);
+    Repository tempRepository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    resourceV2Pcc.setRepository(tempRepository);
+
+    String targetStr = "27k66nycZATHzBasFT9782nTsYWqVtxdtAc";
+    byte[] targetAddr = Commons.decode58Check(targetStr);
+    byte[] target = new DataWord(targetAddr).getData();
+    String fromStr = "27jzp7nVEkH4Hf3H1PHPp4VDY7DxTy5eydL";
+    byte[] fromAddr = Commons.decode58Check(fromStr);
+    byte[] from = new DataWord(fromAddr).getData();
+    byte[] type = ByteUtil.longTo32Bytes(0);
+    byte[] data = ByteUtil.merge(target, from, type);
+
+    Pair<Boolean, byte[]> res = resourceV2Pcc.execute(data);
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(0, ByteArray.toLong(res.getRight()));
+
+    AccountCapsule fromAccount =
+        tempRepository.createAccount(fromAddr, Protocol.AccountType.Normal);
+    fromAccount.addFrozenBalanceForBandwidthV2(1_000_000L);
+    tempRepository.putAccountValue(fromAddr, fromAccount);
+    data = ByteUtil.merge(from, from, type);
+    res = resourceV2Pcc.execute(data);
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(1_000_000L, ByteArray.toLong(res.getRight()));
+
+    data = ByteUtil.merge(from, from, ByteUtil.longTo32Bytes(1));
+    res = resourceV2Pcc.execute(data);
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(0, ByteArray.toLong(res.getRight()));
+
+    AccountCapsule targetAccount =
+        tempRepository.createAccount(target, Protocol.AccountType.Normal);
+    byte[] key = DelegatedResourceCapsule.createDbKeyV2(fromAddr, targetAddr);
+    DelegatedResourceCapsule delegatedResource =
+        new DelegatedResourceCapsule(
+            ByteString.copyFrom(fromAddr), ByteString.copyFrom(targetAddr));
+    delegatedResource.setFrozenBalanceForBandwidth(1_000_000L, 0);
+    tempRepository.updateDelegatedResource(key, delegatedResource);
+    targetAccount.addAcquiredDelegatedFrozenBalanceForBandwidth(1_000_000L);
+    fromAccount.addDelegatedFrozenBalanceForBandwidth(1_000_000L);
+    tempRepository.putAccountValue(fromAddr, fromAccount);
+    tempRepository.putAccountValue(targetAddr, targetAccount);
+    data = ByteUtil.merge(target, from, type);
+    res = resourceV2Pcc.execute(data);
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(1_000_000L, ByteArray.toLong(res.getRight()));
+
+    data = ByteUtil.merge(from, from, ByteUtil.longTo32Bytes(1));
+    res = resourceV2Pcc.execute(data);
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(0, ByteArray.toLong(res.getRight()));
+  }
+
+  @Test
+  public void totalResourceTest() {
+    VMConfig.initAllowTvmFreezeV2(1L);
+
+    PrecompiledContract totalResourcePcc =
+        createPrecompiledContract(totalResourceAddr, OWNER_ADDRESS);
+    Repository tempRepository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    totalResourcePcc.setRepository(tempRepository);
+
+    byte[] address = ByteArray.fromHexString(OWNER_ADDRESS);
+    byte[] address32 = new DataWord(address).getData();
+    byte[] type = ByteUtil.longTo32Bytes(0);
+    byte[] data = ByteUtil.merge(address32, type);
+
+    Pair<Boolean, byte[]> res = totalResourcePcc.execute(data);
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(0, ByteArray.toLong(res.getRight()));
+
+    AccountCapsule accountCapsule = tempRepository.getAccount(address);
+    tempRepository.putAccountValue(address, accountCapsule);
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(0, ByteArray.toLong(res.getRight()));
+
+    accountCapsule = tempRepository.getAccount(address);
+    accountCapsule.addFrozenBalanceForBandwidthV2(1_000_000L);
+    tempRepository.putAccountValue(address, accountCapsule);
+    res = totalResourcePcc.execute(data);
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(1_000_000L, ByteArray.toLong(res.getRight()));
+
+    accountCapsule.addAcquiredDelegatedFrozenBalanceForBandwidth(1_000_000L);
+    tempRepository.putAccountValue(address, accountCapsule);
+    res = totalResourcePcc.execute(data);
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(2_000_000L, ByteArray.toLong(res.getRight()));
+
+    accountCapsule.addFrozenBalanceForEnergyV2(1_000_000L);
+    tempRepository.putAccountValue(address, accountCapsule);
+    type = ByteUtil.longTo32Bytes(1);
+    data = ByteUtil.merge(address32, type);
+    res = totalResourcePcc.execute(data);
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(1_000_000L, ByteArray.toLong(res.getRight()));
+
+    res = totalResourcePcc.execute(ByteUtil.merge(address32, ByteUtil.longTo32Bytes(2)));
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(0, ByteArray.toLong(res.getRight()));
+  }
+
+  @Test
+  public void totalDelegatedResourceTest() {
+    VMConfig.initAllowTvmFreezeV2(1L);
+
+    PrecompiledContract totalDelegatedResourcePcc =
+        createPrecompiledContract(totalDelegatedResourceAddr, OWNER_ADDRESS);
+    Repository tempRepository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    totalDelegatedResourcePcc.setRepository(tempRepository);
+
+    byte[] address = ByteArray.fromHexString(OWNER_ADDRESS);
+    byte[] address32 = new DataWord(address).getData();
+    byte[] type = ByteUtil.longTo32Bytes(0);
+    byte[] data = ByteUtil.merge(address32, type);
+
+    Pair<Boolean, byte[]> res = totalDelegatedResourcePcc.execute(data);
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(0, ByteArray.toLong(res.getRight()));
+
+    AccountCapsule accountCapsule = tempRepository.getAccount(address);
+    tempRepository.putAccountValue(address, accountCapsule);
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(0, ByteArray.toLong(res.getRight()));
+
+    accountCapsule = tempRepository.getAccount(address);
+    accountCapsule.addDelegatedFrozenBalanceForBandwidth(1_000_000L);
+    tempRepository.putAccountValue(address, accountCapsule);
+    res = totalDelegatedResourcePcc.execute(data);
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(1_000_000L, ByteArray.toLong(res.getRight()));
+
+    accountCapsule.addDelegatedFrozenBalanceForEnergy(1_000_000L);
+    tempRepository.putAccountValue(address, accountCapsule);
+    type = ByteUtil.longTo32Bytes(1);
+    data = ByteUtil.merge(address32, type);
+    res = totalDelegatedResourcePcc.execute(data);
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(1_000_000L, ByteArray.toLong(res.getRight()));
+
+    res = totalDelegatedResourcePcc.execute(ByteUtil.merge(address32, ByteUtil.longTo32Bytes(2)));
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(0, ByteArray.toLong(res.getRight()));
+  }
+
+  @Test
+  public void totalAcquiredResourceTest() {
+    VMConfig.initAllowTvmFreezeV2(1L);
+
+    PrecompiledContract totalAcquiredResourcePcc =
+        createPrecompiledContract(totalAcquiredResourceAddr, OWNER_ADDRESS);
+    Repository tempRepository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    totalAcquiredResourcePcc.setRepository(tempRepository);
+
+    byte[] address = ByteArray.fromHexString(OWNER_ADDRESS);
+    byte[] address32 = new DataWord(address).getData();
+    byte[] type = ByteUtil.longTo32Bytes(0);
+    byte[] data = ByteUtil.merge(address32, type);
+
+    Pair<Boolean, byte[]> res = totalAcquiredResourcePcc.execute(data);
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(0, ByteArray.toLong(res.getRight()));
+
+    AccountCapsule accountCapsule = tempRepository.getAccount(address);
+    tempRepository.putAccountValue(address, accountCapsule);
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(0, ByteArray.toLong(res.getRight()));
+
+    accountCapsule = tempRepository.getAccount(address);
+    accountCapsule.addAcquiredDelegatedFrozenBalanceForBandwidth(1_000_000L);
+    tempRepository.putAccountValue(address, accountCapsule);
+    res = totalAcquiredResourcePcc.execute(data);
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(1_000_000L, ByteArray.toLong(res.getRight()));
+
+    accountCapsule.addAcquiredDelegatedFrozenBalanceForEnergy(1_000_000L);
+    tempRepository.putAccountValue(address, accountCapsule);
+    type = ByteUtil.longTo32Bytes(1);
+    data = ByteUtil.merge(address32, type);
+    res = totalAcquiredResourcePcc.execute(data);
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(1_000_000L, ByteArray.toLong(res.getRight()));
+
+    res = totalAcquiredResourcePcc.execute(ByteUtil.merge(address32, ByteUtil.longTo32Bytes(2)));
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(0, ByteArray.toLong(res.getRight()));
   }
 
   @Test
