@@ -506,6 +506,7 @@ public class PrecompiledContractsTest {
     Assert.assertTrue(res.getLeft());
     Assert.assertEquals(30L, ByteArray.toLong(res.getRight()));
   }
+
   @Test
   public void expireUnfreezeBalanceV2Test() {
     VMConfig.initAllowTvmFreezeV2(1L);
