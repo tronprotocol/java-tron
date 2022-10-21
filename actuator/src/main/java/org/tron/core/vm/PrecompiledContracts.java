@@ -1874,7 +1874,7 @@ public class PrecompiledContracts {
       long code = new DataWord(data).longValueSafe();
 
       long res = ChainParameterEnum.fromCode(code).getAction().apply(
-          getDeposit().getDynamicPropertiesStore());
+          getDeposit());
 
       return Pair.of(true, longTo32Bytes(res));
     }
@@ -2014,7 +2014,8 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
       if (data == null || data.length != 3 * WORD_SIZE) {
-        return Pair.of(true, encodeMultiRes(DataWord.ZERO().getData(), DataWord.ZERO().getData(), DataWord.ZERO().getData()));
+        return Pair.of(true, encodeMultiRes(
+            DataWord.ZERO().getData(), DataWord.ZERO().getData(), DataWord.ZERO().getData()));
       }
 
       DataWord[] words = DataWord.parseArray(data);
@@ -2022,12 +2023,16 @@ public class PrecompiledContracts {
       long amount = words[1].longValueSafe();
       long type = words[2].longValueSafe();
 
-      Triple<Long, Long, Long> values = FreezeV2Util.checkUndelegateResource(target, amount, type, getDeposit());
-      if (values == null || values.getLeft() == null || values.getMiddle() == null || values.getRight() == null) {
-        return Pair.of(true, encodeMultiRes(DataWord.ZERO().getData(), DataWord.ZERO().getData(), DataWord.ZERO().getData()));
+      Triple<Long, Long, Long> values =
+          FreezeV2Util.checkUndelegateResource(target, amount, type, getDeposit());
+      if (values == null || values.getLeft() == null
+          || values.getMiddle() == null || values.getRight() == null) {
+        return Pair.of(true, encodeMultiRes(
+            DataWord.ZERO().getData(), DataWord.ZERO().getData(), DataWord.ZERO().getData()));
       }
 
-      return Pair.of(true, encodeMultiRes(longTo32Bytes(values.getLeft()), longTo32Bytes(values.getMiddle()), longTo32Bytes(values.getRight())));
+      return Pair.of(true, encodeMultiRes(longTo32Bytes(values.getLeft()),
+          longTo32Bytes(values.getMiddle()), longTo32Bytes(values.getRight())));
     }
   }
 
@@ -2053,7 +2058,8 @@ public class PrecompiledContracts {
         return Pair.of(true, encodeRes(DataWord.ZERO().getData(), DataWord.ZERO().getData()));
       }
 
-      return Pair.of(true, encodeRes(longTo32Bytes(values.getLeft()), longTo32Bytes(values.getRight())));
+      return Pair.of(true, encodeRes(
+          longTo32Bytes(values.getLeft()), longTo32Bytes(values.getRight())));
     }
   }
 
