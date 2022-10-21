@@ -1,6 +1,7 @@
 package org.tron.common.runtime.vm;
 
 import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.db.TransactionTrace.convertToTronAddress;
 
 import com.google.protobuf.Any;
@@ -999,14 +1000,17 @@ public class PrecompiledContractsTest {
     res = resourceUsagePcc.execute(encodeMultiWord(address32, type));
     Assert.assertTrue(res.getLeft());
     usage = Arrays.copyOfRange(res.getRight(), 0, 32);
+    byte[] recoverDuration = Arrays.copyOfRange(res.getRight(), 32, 64);
     Assert.assertEquals(10_000_000L, ByteArray.toLong(usage));
+    Assert.assertEquals(
+        currentSlot * BLOCK_PRODUCED_INTERVAL / 1000, ByteArray.toLong(recoverDuration));
 
     accountCapsule.setNewWindowSize(Common.ResourceCode.ENERGY, currentSlot);
     tempRepository.putAccountValue(address, accountCapsule);
     res = resourceUsagePcc.execute(encodeMultiWord(address32, type));
     Assert.assertTrue(res.getLeft());
     usage = Arrays.copyOfRange(res.getRight(), 0, 32);
-    byte[] recoverDuration = Arrays.copyOfRange(res.getRight(), 32, 64);
+    recoverDuration = Arrays.copyOfRange(res.getRight(), 32, 64);
     Assert.assertEquals(0, ByteArray.toLong(usage));
     Assert.assertEquals(0, ByteArray.toLong(recoverDuration));
 
@@ -1015,7 +1019,10 @@ public class PrecompiledContractsTest {
     res = resourceUsagePcc.execute(encodeMultiWord(address32, type));
     Assert.assertTrue(res.getLeft());
     usage = Arrays.copyOfRange(res.getRight(), 0, 32);
+    recoverDuration = Arrays.copyOfRange(res.getRight(), 32, 64);
     Assert.assertEquals(20_000_000L, ByteArray.toLong(usage));
+    Assert.assertEquals(
+        currentSlot * BLOCK_PRODUCED_INTERVAL / 1000, ByteArray.toLong(recoverDuration));
   }
 
   @Test
