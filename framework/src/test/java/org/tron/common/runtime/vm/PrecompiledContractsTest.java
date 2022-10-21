@@ -508,12 +508,108 @@ public class PrecompiledContractsTest {
   }
 
   @Test
+  public void unfreezableBalanceV2Test() {
+    VMConfig.initAllowTvmFreezeV2(1L);
+
+    PrecompiledContract unfreezableBalanceV2Pcc =
+        createPrecompiledContract(unfreezableBalanceV2Addr, OWNER_ADDRESS);
+    Repository tempRepository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    unfreezableBalanceV2Pcc.setRepository(tempRepository);
+
+    byte[] address = ByteArray.fromHexString(OWNER_ADDRESS);
+    byte[] address32 = new DataWord(ByteArray.fromHexString(OWNER_ADDRESS)).getData();
+    byte[] type = ByteUtil.longTo32Bytes(0);
+    byte[] data = ByteUtil.merge(address32, type);
+
+    Pair<Boolean, byte[]> res = unfreezableBalanceV2Pcc.execute(data);
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(0, ByteArray.toLong(res.getRight()));
+
+    AccountCapsule accountCapsule = tempRepository.getAccount(address);
+    accountCapsule.addFrozenBalanceForBandwidthV2(1_000_000L);
+    tempRepository.putAccountValue(address, accountCapsule);
+    res = unfreezableBalanceV2Pcc.execute(data);
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(1_000_000L, ByteArray.toLong(res.getRight()));
+
+    accountCapsule.addFrozenBalanceForBandwidthV2(1_000_000L);
+    tempRepository.putAccountValue(address, accountCapsule);
+    res = unfreezableBalanceV2Pcc.execute(data);
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(2_000_000L, ByteArray.toLong(res.getRight()));
+
+    type = ByteUtil.longTo32Bytes(1);
+    data = ByteUtil.merge(address32, type);
+    accountCapsule.addFrozenBalanceForEnergyV2(1_000_000L);
+    tempRepository.putAccountValue(address, accountCapsule);
+    res = unfreezableBalanceV2Pcc.execute(data);
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(1_000_000L, ByteArray.toLong(res.getRight()));
+
+    type = ByteUtil.longTo32Bytes(2);
+    data = ByteUtil.merge(address32, type);
+    accountCapsule.addFrozenForTronPowerV2(1_000_000L);
+    tempRepository.putAccountValue(address, accountCapsule);
+    res = unfreezableBalanceV2Pcc.execute(data);
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(1_000_000L, ByteArray.toLong(res.getRight()));
+  }
+
+  @Test
   public void expireUnfreezeBalanceV2Test() {
     VMConfig.initAllowTvmFreezeV2(1L);
 
     PrecompiledContract expireUnfreezeBalanceV2Pcc =
         createPrecompiledContract(expireUnfreezeBalanceV2Addr, OWNER_ADDRESS);
+    Repository tempRepository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    expireUnfreezeBalanceV2Pcc.setRepository(tempRepository);
+    long now = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
 
+    byte[] address = ByteArray.fromHexString(OWNER_ADDRESS);
+    byte[] address32 = new DataWord(ByteArray.fromHexString(OWNER_ADDRESS)).getData();
+    byte[] time = ByteUtil.longTo32Bytes(now / 1000);
+    byte[] data = ByteUtil.merge(address32, time);
+
+    Pair<Boolean, byte[]> res = expireUnfreezeBalanceV2Pcc.execute(data);
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(0, ByteArray.toLong(res.getRight()));
+
+    AccountCapsule accountCapsule = tempRepository.getAccount(address);
+    Protocol.Account.UnFreezeV2 unFreezeV2 =
+        Protocol.Account.UnFreezeV2.newBuilder()
+            .setType(Common.ResourceCode.BANDWIDTH)
+            .setUnfreezeExpireTime(now)
+            .setUnfreezeAmount(1_000_000L)
+            .build();
+    accountCapsule.addUnfrozenV2(unFreezeV2);
+    tempRepository.putAccountValue(address, accountCapsule);
+    res = expireUnfreezeBalanceV2Pcc.execute(data);
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(1_000_000L, ByteArray.toLong(res.getRight()));
+
+    unFreezeV2 =
+        Protocol.Account.UnFreezeV2.newBuilder()
+            .setType(Common.ResourceCode.ENERGY)
+            .setUnfreezeExpireTime(now)
+            .setUnfreezeAmount(1_000_000L)
+            .build();
+    accountCapsule.addUnfrozenV2(unFreezeV2);
+    tempRepository.putAccountValue(address, accountCapsule);
+    res = expireUnfreezeBalanceV2Pcc.execute(data);
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(2_000_000L, ByteArray.toLong(res.getRight()));
+
+    unFreezeV2 =
+        Protocol.Account.UnFreezeV2.newBuilder()
+            .setType(Common.ResourceCode.TRON_POWER)
+            .setUnfreezeExpireTime(now + 1_000_000L)
+            .setUnfreezeAmount(1_000_000L)
+            .build();
+    accountCapsule.addUnfrozenV2(unFreezeV2);
+    tempRepository.putAccountValue(address, accountCapsule);
+    res = expireUnfreezeBalanceV2Pcc.execute(data);
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(2_000_000L, ByteArray.toLong(res.getRight()));
   }
 
   @Test

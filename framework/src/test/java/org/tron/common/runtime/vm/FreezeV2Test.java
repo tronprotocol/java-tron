@@ -447,22 +447,30 @@ public class FreezeV2Test {
 
     AccountCapsule newOwner = accountStore.get(contractAddr);
     if (res == 0) {
-      Assert.assertEquals(0, newOwner.getFrozenV2BalanceForBandwidth());
-      Assert.assertEquals(oldTotalNetWeight - frozenBalance / TRX_PRECISION,
-          dynamicStore.getTotalNetWeight());
+      Assert.assertEquals(
+          oldOwner.getFrozenV2BalanceForBandwidth() - unfreezeBalance,
+          newOwner.getFrozenV2BalanceForBandwidth());
+      Assert.assertEquals(
+          oldTotalNetWeight - unfreezeBalance / TRX_PRECISION, dynamicStore.getTotalNetWeight());
       Assert.assertEquals(oldTotalEnergyWeight, dynamicStore.getTotalEnergyWeight());
       Assert.assertEquals(oldTotalTronPowerWeight, dynamicStore.getTotalTronPowerWeight());
     } else if (res == 1) {
-      Assert.assertEquals(0, newOwner.getFrozenV2BalanceForEnergy());
+      Assert.assertEquals(
+          oldOwner.getFrozenV2BalanceForEnergy() - unfreezeBalance,
+          newOwner.getFrozenV2BalanceForEnergy());
       Assert.assertEquals(oldTotalNetWeight, dynamicStore.getTotalNetWeight());
       Assert.assertEquals(oldTotalTronPowerWeight, dynamicStore.getTotalTronPowerWeight());
-      Assert.assertEquals(oldTotalEnergyWeight - frozenBalance / TRX_PRECISION,
+      Assert.assertEquals(
+          oldTotalEnergyWeight - unfreezeBalance / TRX_PRECISION,
           dynamicStore.getTotalEnergyWeight());
     } else {
-      Assert.assertEquals(0, newOwner.getTronPowerFrozenV2Balance());
+      Assert.assertEquals(
+          oldOwner.getTronPowerFrozenV2Balance() - unfreezeBalance,
+          newOwner.getTronPowerFrozenV2Balance());
       Assert.assertEquals(oldTotalEnergyWeight, dynamicStore.getTotalEnergyWeight());
       Assert.assertEquals(oldTotalNetWeight, dynamicStore.getTotalNetWeight());
-      Assert.assertEquals(oldTotalTronPowerWeight - frozenBalance / TRX_PRECISION,
+      Assert.assertEquals(
+          oldTotalTronPowerWeight - unfreezeBalance / TRX_PRECISION,
           dynamicStore.getTotalTronPowerWeight());
     }
 
