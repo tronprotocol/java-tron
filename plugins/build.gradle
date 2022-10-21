@@ -11,7 +11,7 @@ jacoco {
 def versions = [
         checkstyle: '8.7',
 ]
-mainClassName = 'org.tron.plugins.ArchiveManifest'
+mainClassName = 'org.tron.plugins.Toolkit'
 group 'org.tron'
 version '1.0.0'
 
@@ -34,9 +34,19 @@ dependencies {
     compile group: 'com.typesafe', name: 'config', version: '1.3.2'
     compile group: 'me.tongfei', name: 'progressbar', version: '0.9.3'
 
-
-    compile 'com.github.halibobo1205.leveldb-java:leveldb:v0.12.5'
     compile 'com.github.halibobo1205.leveldb-java:leveldb-api:v0.12.5'
+    compile 'com.github.halibobo1205.leveldb-java:leveldb:v0.12.5'
+    compile group: 'org.fusesource.leveldbjni', name: 'leveldbjni-all', version: '1.8'
+    compile group: 'org.rocksdb', name: 'rocksdbjni', version: '5.15.10'
+
+    compile (project(":common")) {
+        exclude group: 'io.prometheus'
+        exclude group: 'org.aspectj'
+        exclude group: 'io.grpc'
+        exclude group: 'com.google.protobuf'
+        exclude group: 'com.google.api.grpc'
+        exclude group: 'net.jcip'
+    }
 }
 
 check.dependsOn 'lint'
@@ -103,6 +113,11 @@ def binaryRelease(taskName, jarName, mainClass) {
                 it.isDirectory() ? it : zipTree(it)
             }
         }
+
+        // exclude these files for bouncycastle
+        exclude "META-INF/*.SF"
+        exclude "META-INF/*.DSA"
+        exclude "META-INF/*.RSA"
 
         manifest {
             attributes "Main-Class": "${mainClass}"
