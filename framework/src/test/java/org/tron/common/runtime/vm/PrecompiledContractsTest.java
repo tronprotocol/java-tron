@@ -466,8 +466,6 @@ public class PrecompiledContractsTest {
         new BytesCapsule(ByteArray.fromLong(energyLimit)));
 
     long energyWeight = 1_000_000L; // unit: trx
-//    tempRepository.getDynamicPropertiesStore().put(TOTAL_ENERGY_WEIGHT,
-//        new BytesCapsule(ByteArray.fromLong(energyWeight)));
     tempRepository.saveTotalEnergyWeight(energyWeight);
 
     // used all energy, recovered 1/2, delegatable: 1/2
@@ -513,8 +511,6 @@ public class PrecompiledContractsTest {
         new BytesCapsule(ByteArray.fromLong(energyLimit)));
 
     long energyWeight = 1_000_000L; // unit: trx
-//    tempRepository.getDynamicPropertiesStore().put(TOTAL_ENERGY_WEIGHT,
-//        new BytesCapsule(ByteArray.fromLong(energyWeight)));
     tempRepository.saveTotalEnergyWeight(energyWeight);
 
     byte[] owner = new DataWord(ByteArray.fromHexString(OWNER_ADDRESS)).getData();
