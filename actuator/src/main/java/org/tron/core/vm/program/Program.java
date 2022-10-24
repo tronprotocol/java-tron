@@ -1863,7 +1863,7 @@ public class Program {
     try {
       FreezeBalanceV2Param param = new FreezeBalanceV2Param();
       param.setOwnerAddress(owner);
-      param.setResourceType(parseResourceCode(resourceType));
+      param.setResourceType(parseResourceCodeV2(resourceType));
       param.setFrozenBalance(frozenBalance.sValue().longValueExact());
 
       FreezeBalanceV2Processor processor = new FreezeBalanceV2Processor();
@@ -1895,7 +1895,7 @@ public class Program {
       UnfreezeBalanceV2Param param = new UnfreezeBalanceV2Param();
       param.setOwnerAddress(owner);
       param.setUnfreezeBalance(unfreezeBalance.sValue().longValueExact());
-      param.setResourceType(parseResourceCode(resourceType));
+      param.setResourceType(parseResourceCodeV2(resourceType));
 
       UnfreezeBalanceV2Processor processor = new UnfreezeBalanceV2Processor();
       processor.validate(param, repository);
@@ -1972,9 +1972,9 @@ public class Program {
       }
       return true;
     } catch (ContractValidateException e) {
-      logger.error("TVM cancelAllUnfreezeV2Action: validate failure. Reason: {}", e.getMessage());
+      logger.error("TVM CancelAllUnfreezeV2Action: validate failure. Reason: {}", e.getMessage());
     } catch (ContractExeException e) {
-      logger.error("TVM cancelAllUnfreezeV2Action: execute failure. Reason: {}", e.getMessage());
+      logger.error("TVM CancelAllUnfreezeV2Action: execute failure. Reason: {}", e.getMessage());
     }
     if (internalTx != null) {
       internalTx.reject();
@@ -1998,7 +1998,7 @@ public class Program {
       param.setOwnerAddress(owner);
       param.setReceiverAddress(receiver);
       param.setDelegateBalance(delegateBalance.sValue().longValueExact());
-      param.setResourceType(parseResourceCode(resourceType));
+      param.setResourceType(parseResourceCodeV2(resourceType));
 
       DelegateResourceProcessor processor = new DelegateResourceProcessor();
       processor.validate(param, repository);
@@ -2006,9 +2006,9 @@ public class Program {
       repository.commit();
       return true;
     } catch (ContractValidateException e) {
-      logger.error("TVM delegateResource: validate failure. Reason: {}", e.getMessage());
+      logger.error("TVM DelegateResource: validate failure. Reason: {}", e.getMessage());
     } catch (ArithmeticException e) {
-      logger.error("TVM delegateResource: balance out of long range.");
+      logger.error("TVM DelegateResource: balance out of long range.");
     }
     if (internalTx != null) {
       internalTx.reject();
@@ -2032,7 +2032,7 @@ public class Program {
       param.setOwnerAddress(owner);
       param.setReceiverAddress(receiver);
       param.setUnDelegateBalance(unDelegateBalance.sValue().longValueExact());
-      param.setResourceType(parseResourceCode(resourceType));
+      param.setResourceType(parseResourceCodeV2(resourceType));
 
       UnDelegateResourceProcessor processor = new UnDelegateResourceProcessor();
       processor.validate(param, repository);
@@ -2040,9 +2040,9 @@ public class Program {
       repository.commit();
       return true;
     } catch (ContractValidateException e) {
-      logger.error("TVM unDelegateResource: validate failure. Reason: {}", e.getMessage());
+      logger.error("TVM UnDelegateResource: validate failure. Reason: {}", e.getMessage());
     } catch (ArithmeticException e) {
-      logger.error("TVM unDelegateResource: balance out of long range.");
+      logger.error("TVM UnDelegateResource: balance out of long range.");
     }
     if (internalTx != null) {
       internalTx.reject();
@@ -2056,10 +2056,27 @@ public class Program {
         return Common.ResourceCode.BANDWIDTH;
       case 1:
         return Common.ResourceCode.ENERGY;
-      case 2:
-        return Common.ResourceCode.TRON_POWER;
       default:
         return Common.ResourceCode.UNRECOGNIZED;
+    }
+  }
+
+  private Common.ResourceCode parseResourceCodeV2(DataWord resourceType) {
+    try {
+      byte type = resourceType.sValue().byteValueExact();
+      switch (type) {
+        case 0:
+          return Common.ResourceCode.BANDWIDTH;
+        case 1:
+          return Common.ResourceCode.ENERGY;
+        case 2:
+          return Common.ResourceCode.TRON_POWER;
+        default:
+          return Common.ResourceCode.UNRECOGNIZED;
+      }
+    } catch (ArithmeticException e) {
+      logger.error("");
+      return Common.ResourceCode.UNRECOGNIZED;
     }
   }
 
