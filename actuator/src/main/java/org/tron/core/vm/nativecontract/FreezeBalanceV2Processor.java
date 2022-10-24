@@ -75,15 +75,15 @@ public class FreezeBalanceV2Processor {
     switch (param.getResourceType()) {
       case BANDWIDTH:
         accountCapsule.addFrozenBalanceForBandwidthV2(frozenBalance);
-        dynamicStore.addTotalNetWeight(frozenBalance / TRX_PRECISION);
+        repo.addTotalNetWeight(frozenBalance / TRX_PRECISION);
         break;
       case ENERGY:
         accountCapsule.addFrozenBalanceForEnergyV2(frozenBalance);
-        dynamicStore.addTotalEnergyWeight(frozenBalance / TRX_PRECISION);
+        repo.addTotalEnergyWeight(frozenBalance / TRX_PRECISION);
         break;
       case TRON_POWER:
         accountCapsule.addFrozenForTronPowerV2(frozenBalance);
-        dynamicStore.addTotalTronPowerWeight(frozenBalance / TRX_PRECISION);
+        repo.addTotalTronPowerWeight(frozenBalance / TRX_PRECISION);
         break;
       default:
         logger.debug("Resource Code Error.");

@@ -198,7 +198,6 @@ public class UnfreezeBalanceV2Processor {
   public void updateTotalResourceWeight(Common.ResourceCode freezeType,
                                         long unfreezeBalance,
                                         Repository repo) {
-    DynamicPropertiesStore dynamicStore = repo.getDynamicPropertiesStore();
     switch (freezeType) {
       case BANDWIDTH:
         repo.addTotalNetWeight(-unfreezeBalance / TRX_PRECISION);

@@ -61,7 +61,6 @@ public class CancelAllUnfreezeV2Processor {
 
   public void updateFrozenInfoAndTotalResourceWeight(
       AccountCapsule accountCapsule, Protocol.Account.UnFreezeV2 unFreezeV2, Repository repo) {
-    DynamicPropertiesStore dynamicStore = repo.getDynamicPropertiesStore();
     switch (unFreezeV2.getType()) {
       case BANDWIDTH:
         accountCapsule.addFrozenBalanceForBandwidthV2(unFreezeV2.getUnfreezeAmount());
