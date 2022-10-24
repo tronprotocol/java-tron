@@ -345,6 +345,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public void addTotalTronPowerWeight(long amount) {
+    repository.addTotalTronPowerWeight(amount);
+  }
+
+  @Override
   public void saveTotalNetWeight(long totalNetWeight) {
     repository.saveTotalNetWeight(totalNetWeight);
   }
@@ -355,6 +360,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public void saveTotalTronPowerWeight(long totalTronPowerWeight) {
+    repository.saveTotalTronPowerWeight(totalTronPowerWeight);
+  }
+
+  @Override
   public long getTotalNetWeight() {
     return repository.getTotalNetWeight();
   }
@@ -362,6 +372,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   @Override
   public long getTotalEnergyWeight() {
     return repository.getTotalEnergyWeight();
+  }
+
+  @Override
+  public long getTotalTronPowerWeight() {
+    return repository.getTotalTronPowerWeight();
   }
 
   @Override

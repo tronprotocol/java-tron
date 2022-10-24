@@ -201,13 +201,13 @@ public class UnfreezeBalanceV2Processor {
     DynamicPropertiesStore dynamicStore = repo.getDynamicPropertiesStore();
     switch (freezeType) {
       case BANDWIDTH:
-        dynamicStore.addTotalNetWeight(-unfreezeBalance / TRX_PRECISION);
+        repo.addTotalNetWeight(-unfreezeBalance / TRX_PRECISION);
         break;
       case ENERGY:
-        dynamicStore.addTotalEnergyWeight(-unfreezeBalance / TRX_PRECISION);
+        repo.addTotalEnergyWeight(-unfreezeBalance / TRX_PRECISION);
         break;
       case TRON_POWER:
-        dynamicStore.addTotalTronPowerWeight(-unfreezeBalance / TRX_PRECISION);
+        repo.addTotalTronPowerWeight(-unfreezeBalance / TRX_PRECISION);
         break;
       default:
         //this should never happen

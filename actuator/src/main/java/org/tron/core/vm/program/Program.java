@@ -1963,8 +1963,13 @@ public class Program {
 
       CancelAllUnfreezeV2Processor processor = new CancelAllUnfreezeV2Processor();
       processor.validate(param, repository);
-      processor.execute(param, repository);
+      long withdrawExpireBalance = processor.execute(param, repository);
       repository.commit();
+      if (withdrawExpireBalance > 0) {
+        increaseNonce();
+        addInternalTx(null, owner, owner, withdrawExpireBalance, null,
+            "withdrawExpireUnfreezeWhileCancelling", nonce, null);
+      }
       return true;
     } catch (ContractValidateException e) {
       logger.error("TVM cancelAllUnfreezeV2Action: validate failure. Reason: {}", e.getMessage());
