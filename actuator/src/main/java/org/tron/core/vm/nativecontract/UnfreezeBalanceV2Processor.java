@@ -18,6 +18,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.nativecontract.param.UnfreezeBalanceV2Param;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.utils.VoteRewardUtil;
@@ -230,15 +231,28 @@ public class UnfreezeBalanceV2Processor {
       }
     }
 
-    if (needToClearVote) {
-      VotesCapsule votesCapsule = repo.getVotes(ownerAddress);
-      if (votesCapsule == null) {
-        votesCapsule = new VotesCapsule(ByteString.copyFrom(ownerAddress),
-            accountCapsule.getVotesList());
+    if (needToClearVote && VMConfig.allowTvmVote() && !accountCapsule.getVotesList().isEmpty()) {
+      long usedTronPower = 0;
+      for (Protocol.Vote vote : accountCapsule.getVotesList()) {
+        usedTronPower += vote.getVoteCount();
       }
-      accountCapsule.clearVotes();
-      votesCapsule.clearNewVotes();
-      repo.updateVotes(ownerAddress, votesCapsule);
+      long ownedTronPower;
+      if (repo.getDynamicPropertiesStore().supportAllowNewResourceModel()) {
+        ownedTronPower = accountCapsule.getAllTronPower();
+      } else {
+        ownedTronPower = accountCapsule.getTronPower();
+      }
+      if (ownedTronPower < usedTronPower * TRX_PRECISION) {
+        VotesCapsule votesCapsule = repo.getVotes(ownerAddress);
+        accountCapsule = repo.getAccount(ownerAddress);
+        if (votesCapsule == null) {
+          votesCapsule =
+              new VotesCapsule(ByteString.copyFrom(ownerAddress), accountCapsule.getVotesList());
+        }
+        accountCapsule.clearVotes();
+        votesCapsule.clearNewVotes();
+        repo.updateVotes(ownerAddress, votesCapsule);
+      }
     }
   }
 }
