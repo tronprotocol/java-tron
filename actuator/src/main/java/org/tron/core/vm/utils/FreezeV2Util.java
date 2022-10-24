@@ -115,7 +115,7 @@ public class FreezeV2Util {
       return 0L;
     }
 
-    long now = repository.getHeadSlot();
+    long now = repository.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
     int unfreezingV2Count = accountCapsule.getUnfreezingV2Count(now);
     return Long.max(UnfreezeBalanceV2Actuator.getUNFREEZE_MAX_TIMES() - unfreezingV2Count, 0L);
   }
@@ -152,7 +152,7 @@ public class FreezeV2Util {
         return 0L;
       }
 
-      return frozenV2Resource * (totalResource - usage) / totalResource;
+      return (long) (frozenV2Resource * ((double) (totalResource - usage) / totalResource));
     }
 
     if (type == 1) {
@@ -177,7 +177,7 @@ public class FreezeV2Util {
         return 0L;
       }
 
-      return frozenV2Resource * (totalResource - usage) / totalResource;
+      return (long) (frozenV2Resource * ((double) (totalResource - usage) / totalResource));
     }
 
     return 0L;
