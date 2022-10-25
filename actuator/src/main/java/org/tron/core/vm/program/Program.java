@@ -521,7 +521,7 @@ public class Program {
   private long transferFrozenV2BalanceToInheritor(byte[] ownerAddr, byte[] inheritorAddr, Repository repo) {
     AccountCapsule ownerCapsule = repo.getAccount(ownerAddr);
     AccountCapsule inheritorCapsule = repo.getAccount(inheritorAddr);
-    long now = repo.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
+    long now = repo.getHeadSlot();
 
     // transfer frozen resource
     ownerCapsule.getFrozenV2List().stream()
@@ -542,38 +542,42 @@ public class Program {
             });
 
     // merge usage
-    BandwidthProcessor bandwidthProcessor = new BandwidthProcessor(ChainBaseManager.getInstance());
-    long newNetUsage =
-        bandwidthProcessor.increase(
-            inheritorCapsule,
-            Common.ResourceCode.BANDWIDTH,
-            inheritorCapsule.getNetUsage(),
-            ownerCapsule.getNetUsage(),
-            inheritorCapsule.getLatestConsumeTime(),
-            now);
-    inheritorCapsule.setNetUsage(newNetUsage);
-    inheritorCapsule.setLatestConsumeTime(now);
+    if (ownerCapsule.getNetUsage() > 0) {
+      BandwidthProcessor bandwidthProcessor =
+          new BandwidthProcessor(ChainBaseManager.getInstance());
+      long newNetUsage =
+          bandwidthProcessor.unDelegateIncrease(
+              inheritorCapsule,
+              ownerCapsule,
+              ownerCapsule.getNetUsage(),
+              Common.ResourceCode.BANDWIDTH,
+              now);
+      inheritorCapsule.setNetUsage(newNetUsage);
+      inheritorCapsule.setLatestConsumeTime(now);
+    }
 
-    EnergyProcessor energyProcessor =
-        new EnergyProcessor(
-            repo.getDynamicPropertiesStore(), ChainBaseManager.getInstance().getAccountStore());
-    long newEnergyUsage =
-        energyProcessor.increase(
-            inheritorCapsule,
-            Common.ResourceCode.ENERGY,
-            inheritorCapsule.getEnergyUsage(),
-            ownerCapsule.getEnergyUsage(),
-            inheritorCapsule.getLatestConsumeTimeForEnergy(),
-            now);
-    inheritorCapsule.setEnergyUsage(newEnergyUsage);
-    inheritorCapsule.setLatestConsumeTimeForEnergy(now);
+    if (ownerCapsule.getEnergyUsage() > 0) {
+      EnergyProcessor energyProcessor =
+          new EnergyProcessor(
+              repo.getDynamicPropertiesStore(), ChainBaseManager.getInstance().getAccountStore());
+      long newEnergyUsage =
+          energyProcessor.unDelegateIncrease(
+              inheritorCapsule,
+              ownerCapsule,
+              ownerCapsule.getEnergyUsage(),
+              Common.ResourceCode.ENERGY,
+              now);
+      inheritorCapsule.setEnergyUsage(newEnergyUsage);
+      inheritorCapsule.setLatestConsumeTimeForEnergy(now);
+    }
 
     // withdraw expire unfrozen balance
+    long nowTimestamp = repo.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
     long expireUnfrozenBalance =
         ownerCapsule.getUnfrozenV2List().stream()
             .filter(
                 unFreezeV2 ->
-                    unFreezeV2.getUnfreezeAmount() > 0 && unFreezeV2.getUnfreezeExpireTime() <= now)
+                    unFreezeV2.getUnfreezeAmount() > 0 && unFreezeV2.getUnfreezeExpireTime() <= nowTimestamp)
             .mapToLong(Protocol.Account.UnFreezeV2::getUnfreezeAmount)
             .sum();
     if (expireUnfrozenBalance > 0) {
@@ -582,9 +586,19 @@ public class Program {
       addInternalTx(null, ownerAddr, inheritorAddr, expireUnfrozenBalance, null,
           "withdrawExpireUnfreezeWhileSuiciding", nonce, null);
     }
-
+    clearOwnerFreezeV2(ownerCapsule);
+    repo.updateAccount(ownerCapsule.createDbKey(), ownerCapsule);
     repo.updateAccount(inheritorCapsule.createDbKey(), inheritorCapsule);
     return expireUnfrozenBalance;
+  }
+
+  private void clearOwnerFreezeV2(AccountCapsule ownerCapsule) {
+    ownerCapsule.clearFrozenV2();
+    ownerCapsule.setNetUsage(0);
+    ownerCapsule.setNewWindowSize(Common.ResourceCode.BANDWIDTH, 0);
+    ownerCapsule.setEnergyUsage(0);
+    ownerCapsule.setNewWindowSize(Common.ResourceCode.ENERGY, 0);
+    ownerCapsule.clearUnfrozenV2();
   }
 
   private void withdrawRewardAndCancelVote(byte[] owner, Repository repo) {

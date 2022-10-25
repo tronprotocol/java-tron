@@ -202,7 +202,7 @@ public class RepositoryImpl implements Repository {
     long totalEnergyLimit = getDynamicPropertiesStore().getTotalEnergyCurrentLimit();
     long totalEnergyWeight = getTotalEnergyWeight();
 
-    long balance = (long) ((double) newEnergyUsage * totalEnergyWeight / totalEnergyLimit) * TRX_PRECISION;
+    long balance = (long) ((double) newEnergyUsage * totalEnergyWeight / totalEnergyLimit * TRX_PRECISION);
 
     return Pair.of(balance, restoreSlots * BLOCK_PRODUCED_INTERVAL / 1_000);
   }
@@ -225,7 +225,7 @@ public class RepositoryImpl implements Repository {
     long totalNetLimit = getDynamicPropertiesStore().getTotalNetLimit();
     long totalNetWeight = getTotalNetWeight();
 
-    long balance = (long) ((double) newNetUsage * totalNetWeight / totalNetLimit) * TRX_PRECISION;
+    long balance = (long) ((double) newNetUsage * totalNetWeight / totalNetLimit * TRX_PRECISION);
 
     return Pair.of(balance, restoreSlots * BLOCK_PRODUCED_INTERVAL / 1_000);
   }
