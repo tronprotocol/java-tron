@@ -1514,17 +1514,11 @@ public class Manager {
       if (ownerAddressSet.contains(ownerAddress)) {
         trx.setVerified(false);
       }
-      long t4 = System.nanoTime();
-      total_2 += (t4 - t3);
-      long t8 = System.nanoTime();
       // apply transaction
       try (ISession tmpSession = revokingStore.buildSession()) {
         long t5 = System.nanoTime();
-        total_3 += (t5 - t4);
         accountStateCallBack.preExeTrans();
         TransactionInfo result = processTransaction(trx, blockCapsule, phase2cost);
-        long t6 = System.nanoTime();
-        total_4 += (t6 - t5);
         accountStateCallBack.exeTransFinish();
         tmpSession.merge();
         blockCapsule.addTransaction(trx);
