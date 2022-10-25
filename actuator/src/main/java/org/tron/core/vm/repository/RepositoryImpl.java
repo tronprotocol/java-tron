@@ -941,7 +941,7 @@ public class RepositoryImpl implements Repository {
   public void addTotalTronPowerWeight(long amount) {
     long totalTronPowerWeight = getTotalTronPowerWeight();
     totalTronPowerWeight += amount;
-    saveTotalEnergyWeight(totalTronPowerWeight);
+    saveTotalTronPowerWeight(totalTronPowerWeight);
   }
 
   @Override

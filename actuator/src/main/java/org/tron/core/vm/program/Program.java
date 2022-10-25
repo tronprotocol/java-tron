@@ -1968,7 +1968,7 @@ public class Program {
       if (withdrawExpireBalance > 0) {
         increaseNonce();
         addInternalTx(null, owner, owner, withdrawExpireBalance, null,
-            "withdrawExpireUnfreezeWhileCancelling", nonce, null);
+            "withdrawExpireUnfreezeWhileCanceling", nonce, null);
       }
       return true;
     } catch (ContractValidateException e) {
@@ -2075,7 +2075,7 @@ public class Program {
           return Common.ResourceCode.UNRECOGNIZED;
       }
     } catch (ArithmeticException e) {
-      logger.error("");
+      logger.error("TVM ParseResourceCodeV2: invalid resource code: {}", resourceType.sValue());
       return Common.ResourceCode.UNRECOGNIZED;
     }
   }
