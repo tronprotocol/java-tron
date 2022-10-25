@@ -1273,6 +1273,10 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     this.account = this.account.toBuilder().clearUnfrozenV2().build();
   }
 
+  public void clearFrozenV2() {
+    this.account = this.account.toBuilder().clearFrozenV2().build();
+  }
+
   public void setNewWindowSize(ResourceCode resourceCode, long newWindowSize) {
     if (resourceCode == BANDWIDTH) {
       this.account = this.account.toBuilder().setNetWindowSize(newWindowSize).build();
