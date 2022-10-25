@@ -244,7 +244,6 @@ public class UnfreezeBalanceV2Processor {
       }
       if (ownedTronPower < usedTronPower * TRX_PRECISION) {
         VotesCapsule votesCapsule = repo.getVotes(ownerAddress);
-        accountCapsule = repo.getAccount(ownerAddress);
         if (votesCapsule == null) {
           votesCapsule =
               new VotesCapsule(ByteString.copyFrom(ownerAddress), accountCapsule.getVotesList());
