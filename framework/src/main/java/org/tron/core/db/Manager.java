@@ -16,7 +16,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -81,8 +80,17 @@ import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.ActuatorCreator;
-import org.tron.core.capsule.*;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BlockBalanceTraceCapsule;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.MarketAccountOrderCapsule;
+import org.tron.core.capsule.ReceiptCapsule;
+import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.TransactionInfoCapsule;
+import org.tron.core.capsule.TransactionRetCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
@@ -123,10 +131,33 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.service.MortgageService;
-import org.tron.core.store.*;
+import org.tron.core.store.AccountAssetStore;
+import org.tron.core.store.AccountIdIndexStore;
+import org.tron.core.store.AccountIndexStore;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.AssetIssueStore;
+import org.tron.core.store.AssetIssueV2Store;
+import org.tron.core.store.CodeStore;
+import org.tron.core.store.ContractStore;
+import org.tron.core.store.DelegatedResourceAccountIndexStore;
+import org.tron.core.store.DelegatedResourceStore;
+import org.tron.core.store.DelegationStore;
+import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.ExchangeStore;
+import org.tron.core.store.ExchangeV2Store;
+import org.tron.core.store.IncrementalMerkleTreeStore;
+import org.tron.core.store.MarketAccountStore;
+import org.tron.core.store.NullifierStore;
+import org.tron.core.store.ProposalStore;
+import org.tron.core.store.StorageRowStore;
+import org.tron.core.store.StoreFactory;
+import org.tron.core.store.TransactionHistoryStore;
+import org.tron.core.store.TransactionRetStore;
+import org.tron.core.store.VotesStore;
+import org.tron.core.store.WitnessScheduleStore;
+import org.tron.core.store.WitnessStore;
 import org.tron.core.utils.TransactionRegister;
 import org.tron.core.vm.config.VMConfig;
-import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Transaction;
@@ -782,7 +813,7 @@ public class Manager {
           }
 
           try (ISession tmpSession = revokingStore.buildSession()) {
-            processTransaction(trx, null, null);
+            processTransaction(trx, null);
             trx.setTrxTrace(null);
             pendingTransactions.add(trx);
             Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, 1,
@@ -1281,8 +1312,7 @@ public class Manager {
   /**
    * Process transaction.
    */
-  public TransactionInfo processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap,
-                                            Map<String, Long> phase2cost)
+  public TransactionInfo processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap)
           throws ValidateSignatureException, ContractValidateException, ContractExeException,
           AccountResourceInsufficientException, TransactionExpirationException,
           TooBigTransactionException, TooBigTransactionResultException,
@@ -1420,8 +1450,6 @@ public class Manager {
     long postponedTrxCount = 0;
     logger.info("Generate block {} begin.", chainBaseManager.getHeadBlockNum() + 1);
 
-    long total_1 = 0, total_2 = 0, total_3 = 0, total_4 = 0, total_5 = 0, total_6 = 0, total_7 = 0, total_8 = 0;
-    long t1 = System.nanoTime();
     BlockCapsule blockCapsule = new BlockCapsule(chainBaseManager.getHeadBlockNum() + 1,
             chainBaseManager.getHeadBlockId(),
             blockTime, miner.getWitnessAddress());
@@ -1441,15 +1469,11 @@ public class Manager {
       }
     }
 
-    TransactionRetCapsule transactionRetCapsule = new TransactionRetCapsule(blockCapsule);
-
     Set<String> accountSet = new HashSet<>();
     AtomicInteger shieldedTransCounts = new AtomicInteger(0);
-    long t2 = System.nanoTime();
-    total_1 = t2 - t1;
-    Map<String, Long> phase2cost = new HashMap<>();
+    List<TransactionCapsule> toBePacked = new ArrayList<>();
+    long currentSize = blockCapsule.getInstance().getSerializedSize();
     while (pendingTransactions.size() > 0 || rePushTransactions.size() > 0) {
-      long t3 = System.nanoTime();
       boolean fromPending = false;
       TransactionCapsule trx;
       if (pendingTransactions.size() > 0) {
@@ -1491,8 +1515,7 @@ public class Manager {
       }
 
       // check the block size
-      if ((blockCapsule.getInstance().getSerializedSize() + trx.getSerializedSize() + 3)
-              > ChainConstant.BLOCK_SIZE) {
+      if ((currentSize = currentSize + trx.getSerializedSize() + 3) > ChainConstant.BLOCK_SIZE) {
         postponedTrxCount++;
         continue;
       }
@@ -1516,21 +1539,17 @@ public class Manager {
       }
       // apply transaction
       try (ISession tmpSession = revokingStore.buildSession()) {
-        long t5 = System.nanoTime();
         accountStateCallBack.preExeTrans();
-        TransactionInfo result = processTransaction(trx, blockCapsule, phase2cost);
+        processTransaction(trx, blockCapsule);
         accountStateCallBack.exeTransFinish();
         tmpSession.merge();
-        blockCapsule.addTransaction(trx);
-        if (Objects.nonNull(result)) {
-          transactionRetCapsule.addTransactionInfo(result);
-        }
+        toBePacked.add(trx);
       } catch (Exception e) {
         logger.error("Process trx {} failed when generating block {}, {}.", trx.getTransactionId(),
                 blockCapsule.getNum(), e.getMessage());
       }
     }
-
+    blockCapsule.addAllTransactions(toBePacked);
     accountStateCallBack.executeGenerateFinish();
 
     session.reset();
@@ -1630,7 +1649,7 @@ public class Manager {
     try {
       merkleContainer.resetCurrentMerkleTree();
       accountStateCallBack.preExecute(block);
-      Map<String, Long> phase2cost = new HashMap<>();
+      List<TransactionInfo> results = new ArrayList<>();
       for (TransactionCapsule transactionCapsule : block.getTransactions()) {
         transactionCapsule.setBlockNum(block.getNum());
         if (block.generatedByMyself) {
@@ -1639,16 +1658,17 @@ public class Manager {
         accountStateCallBack.preExeTrans();
         TransactionInfo result = null;
         try {
-          result = processTransaction(transactionCapsule, block, phase2cost);
+          result = processTransaction(transactionCapsule, block);
         } catch (ContractValidateException e) {
           logger.error("process tx failed, id: {}", transactionCapsule.getTransactionId().toString(), e);
           throw new ContractValidateException(transactionCapsule.getTransactionId().toString(), e);
         }
         accountStateCallBack.exeTransFinish();
         if (Objects.nonNull(result)) {
-          transactionRetCapsule.addTransactionInfo(result);
+          results.add(result);
         }
       }
+      transactionRetCapsule.addAllTransactionInfos(results);
       accountStateCallBack.executePushFinish();
     } finally {
       accountStateCallBack.exceptionFinish();
