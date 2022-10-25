@@ -542,29 +542,34 @@ public class Program {
             });
 
     // merge usage
-    BandwidthProcessor bandwidthProcessor = new BandwidthProcessor(ChainBaseManager.getInstance());
-    long newNetUsage =
-        bandwidthProcessor.unDelegateIncrease(
-            inheritorCapsule,
-            ownerCapsule,
-            ownerCapsule.getNetUsage(),
-            Common.ResourceCode.BANDWIDTH,
-            now);
-    inheritorCapsule.setNetUsage(newNetUsage);
-    inheritorCapsule.setLatestConsumeTime(now);
+    if (ownerCapsule.getNetUsage() > 0) {
+      BandwidthProcessor bandwidthProcessor =
+          new BandwidthProcessor(ChainBaseManager.getInstance());
+      long newNetUsage =
+          bandwidthProcessor.unDelegateIncrease(
+              inheritorCapsule,
+              ownerCapsule,
+              ownerCapsule.getNetUsage(),
+              Common.ResourceCode.BANDWIDTH,
+              now);
+      inheritorCapsule.setNetUsage(newNetUsage);
+      inheritorCapsule.setLatestConsumeTime(now);
+    }
 
-    EnergyProcessor energyProcessor =
-        new EnergyProcessor(
-            repo.getDynamicPropertiesStore(), ChainBaseManager.getInstance().getAccountStore());
-    long newEnergyUsage =
-        energyProcessor.unDelegateIncrease(
-            inheritorCapsule,
-            ownerCapsule,
-            ownerCapsule.getEnergyUsage(),
-            Common.ResourceCode.ENERGY,
-            now);
-    inheritorCapsule.setEnergyUsage(newEnergyUsage);
-    inheritorCapsule.setLatestConsumeTimeForEnergy(now);
+    if (ownerCapsule.getEnergyUsage() > 0) {
+      EnergyProcessor energyProcessor =
+          new EnergyProcessor(
+              repo.getDynamicPropertiesStore(), ChainBaseManager.getInstance().getAccountStore());
+      long newEnergyUsage =
+          energyProcessor.unDelegateIncrease(
+              inheritorCapsule,
+              ownerCapsule,
+              ownerCapsule.getEnergyUsage(),
+              Common.ResourceCode.ENERGY,
+              now);
+      inheritorCapsule.setEnergyUsage(newEnergyUsage);
+      inheritorCapsule.setLatestConsumeTimeForEnergy(now);
+    }
 
     // withdraw expire unfrozen balance
     long nowTimestamp = repo.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
