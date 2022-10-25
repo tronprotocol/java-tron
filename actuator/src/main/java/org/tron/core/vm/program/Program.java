@@ -544,12 +544,11 @@ public class Program {
     // merge usage
     BandwidthProcessor bandwidthProcessor = new BandwidthProcessor(ChainBaseManager.getInstance());
     long newNetUsage =
-        bandwidthProcessor.increase(
+        bandwidthProcessor.unDelegateIncrease(
             inheritorCapsule,
-            Common.ResourceCode.BANDWIDTH,
-            inheritorCapsule.getNetUsage(),
+            ownerCapsule,
             ownerCapsule.getNetUsage(),
-            inheritorCapsule.getLatestConsumeTime(),
+            Common.ResourceCode.BANDWIDTH,
             now);
     inheritorCapsule.setNetUsage(newNetUsage);
     inheritorCapsule.setLatestConsumeTime(now);
@@ -558,12 +557,11 @@ public class Program {
         new EnergyProcessor(
             repo.getDynamicPropertiesStore(), ChainBaseManager.getInstance().getAccountStore());
     long newEnergyUsage =
-        energyProcessor.increase(
+        energyProcessor.unDelegateIncrease(
             inheritorCapsule,
-            Common.ResourceCode.ENERGY,
-            inheritorCapsule.getEnergyUsage(),
+            ownerCapsule,
             ownerCapsule.getEnergyUsage(),
-            inheritorCapsule.getLatestConsumeTimeForEnergy(),
+            Common.ResourceCode.ENERGY,
             now);
     inheritorCapsule.setEnergyUsage(newEnergyUsage);
     inheritorCapsule.setLatestConsumeTimeForEnergy(now);
