@@ -251,8 +251,8 @@ public class ProposalService extends ProposalUtil {
           break;
         }
         case ALLOW_TVM_VOTE: {
-          manager.getDynamicPropertiesStore().saveAllowTvmVote(entry.getValue());
           manager.getDynamicPropertiesStore().saveNewRewardAlgorithmEffectiveCycle();
+          manager.getDynamicPropertiesStore().saveAllowTvmVote(entry.getValue());
           break;
         }
         case ALLOW_TVM_LONDON: {
@@ -282,6 +282,10 @@ public class ProposalService extends ProposalUtil {
         }
         case ALLOW_ASSET_OPTIMIZATION: {
           manager.getDynamicPropertiesStore().setAllowAssetOptimization(entry.getValue());
+          break;
+        }
+        case ALLOW_NEW_REWARD_ALGO: {
+          manager.getDynamicPropertiesStore().saveNewRewardAlgorithmEffectiveCycle();
           break;
         }
         default:

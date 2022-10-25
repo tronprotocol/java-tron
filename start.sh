@@ -46,6 +46,7 @@ ALLOW_MIN_MEMORY=8192
 MAX_DIRECT_MEMORY=1g
 JVM_MS=4g
 JVM_MX=4g
+IS_BACKUP_GC_LOG=true
 
 SPECIFY_MEMORY=0
 RUN=false
@@ -113,6 +114,32 @@ if [ -z "$JAVA_HOME" ] ; then
   echo "Warning: JAVA_HOME environment variable is not set."
 fi
 
+backupGCLog() {
+  local maxFile=5
+  local gcLogDir=logs/gc_logs/
+  if [ ! -d "$gcLogDir" ];then
+    mkdir -p 'logs/gc_logs'
+  fi
+
+  if [ -f 'gc.log' ]; then
+    echo '[info] backup gc.log'
+    local dateformat=`date "+%Y-%m-%d_%H-%M-%S"`
+    tar -czvf gc.log_$dateformat'.tar.gz' gc.log
+    mv gc.log_$dateformat'.tar.gz' $gcLogDir
+    rm -rf gc.log
+
+    # checking the number of backups
+    local currentDirCount=`ls -l $gcLogDir | grep "gc.log*" | wc -l`
+    if [ $currentDirCount -gt $maxFile ]; then
+      local oldFileSize=`expr $currentDirCount - $maxFile`
+      local oldGcLogFiles=(`ls -1 $gcLogDir |head -n $oldFileSize`)
+    fi
+
+    for fileName in ${oldGcLogFiles[@]}; do
+      rm -rf $gcLogDir$fileName
+    done
+  fi
+}
 
 getLatestReleaseVersion() {
   full_node_version=`git ls-remote --tags $GITHUB_REPOSITORY |grep GreatVoyage- | awk -F '/' 'END{print $3}'`
@@ -552,6 +579,10 @@ while [ -n "$1" ]; do
     ;;
   esac
 done
+
+if [[ $IS_BACKUP_GC_LOG = true ]]; then
+  backupGCLog
+fi
 
 if [[ $CLONE_BUILD == true ]];then
   cloneBuild

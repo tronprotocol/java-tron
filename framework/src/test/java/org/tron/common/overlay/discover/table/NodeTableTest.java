@@ -21,7 +21,7 @@ public class NodeTableTest {
 
   @Test
   public void test() {
-    Node node1 = Node.instanceOf("127.0.0.1:10002");
+    Node node1 = Node.instanceOf("127.0.0.5:10002");
 
     NodeTable table = new NodeTable(node1);
     Node nodeTemp = table.getNode();

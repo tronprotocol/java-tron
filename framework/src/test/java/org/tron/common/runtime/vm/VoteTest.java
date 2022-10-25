@@ -301,6 +301,7 @@ public class VoteTest {
     VMConfig.initAllowTvmVote(1);
     manager.getDynamicPropertiesStore().saveChangeDelegation(1);
     manager.getDynamicPropertiesStore().saveAllowTvmVote(1);
+    manager.getDynamicPropertiesStore().saveNewRewardAlgorithmEffectiveCycle();
   }
 
   @After

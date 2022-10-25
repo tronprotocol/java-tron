@@ -3,7 +3,6 @@ package org.tron.core.db2.core;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Ints;
-import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -22,7 +21,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
@@ -30,17 +28,12 @@ import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.error.TronDBException;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.WriteOptionsWrapper;
-import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StorageUtils;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.MarketAccountOrderCapsule;
-import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db.TronDatabase;
 import org.tron.core.db2.ISession;
@@ -49,12 +42,9 @@ import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.Value;
 import org.tron.core.db2.common.WrappedByteArray;
-import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 import org.tron.core.store.CheckPointV2Store;
 import org.tron.core.store.CheckTmpStore;
-import org.tron.core.store.MarketAccountStore;
-import org.tron.protos.Protocol;
 
 @Slf4j(topic = "DB")
 public class SnapshotManager implements RevokingDatabase {
@@ -96,9 +86,6 @@ public class SnapshotManager implements RevokingDatabase {
   private volatile int maxFlushCount = DEFAULT_MIN_FLUSH_COUNT;
 
   private int checkpointVersion = 1;   // default v1
-
-  private AtomicLong currentBlockNum = new AtomicLong(-1);
-
 
   public SnapshotManager(String checkpointPath) {
   }
@@ -335,16 +322,6 @@ public class SnapshotManager implements RevokingDatabase {
       next = next.getNext();
       snapshots.add(next);
     }
-    if (!db.getDbName().equals("market_pair_price_to_order")
-        && !db.getDbName().equals("witness")
-        && !db.getDbName().equals("votes")
-        && !db.getDbName().equals("recent-transaction")
-        && !db.getDbName().equals("trans-cache")
-        && !db.getDbName().equals("properties")
-        && !db.getDbName().equals("witness_schedule")) {
-         next.put("block_number".getBytes(), Longs.toByteArray(currentBlockNum.longValue()));
-         logger.info("checkpoint add debug info, db: {}, blocknumber: {}", db.getDbName(), currentBlockNum.longValue());
-    }
 
     root.merge(snapshots);
 
@@ -372,14 +349,12 @@ public class SnapshotManager implements RevokingDatabase {
 
         long checkPointEnd = System.currentTimeMillis();
         refresh();
-        logger.info("Flush: {}, flush count: {}, create checkpoint: {} ms, cost: {} ms, refresh cost: {} ms.",
-            currentBlockNum.longValue(),
-            flushCount,
+        flushCount = 0;
+        logger.info("Flush cost: {} ms, create checkpoint cost: {} ms, refresh cost: {} ms.",
             System.currentTimeMillis() - start,
             checkPointEnd - start,
             System.currentTimeMillis() - checkPointEnd
         );
-        flushCount = 0;
       } catch (TronDBException e) {
         logger.error(" Find fatal error, program will be exited soon.", e);
         hitDown = true;
@@ -389,8 +364,6 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   private void createCheckpoint() {
-    long numberInPro = -1;
-    long numberInblock = -1;
     TronDatabase<byte[]> checkPointStore = null;
     boolean syncFlag;
     try {
@@ -410,48 +383,13 @@ public class SnapshotManager implements RevokingDatabase {
           for (Map.Entry<Key, Value> e : keyValueDB) {
             Key k = e.getKey();
             Value v = e.getValue();
-
-            if (db.getDbName().equals("market_account")) {
-              MarketAccountOrderCapsule marketAccountOrderCapsule = new MarketAccountOrderCapsule(v.getBytes());
-              logger.info("create checkpoint, record sell, account: {}, count: {}, totalCount: {}"
-              , Hex.toHexString(k.getBytes()), marketAccountOrderCapsule.getCount(), marketAccountOrderCapsule.getTotalCount());
-            }
-
             batch.put(WrappedByteArray.of(Bytes.concat(simpleEncode(dbName), k.getBytes())),
                 WrappedByteArray.of(v.encode()));
-            if (db.getDbName().equals("block")) {
-              numberInblock = new BlockCapsule(v.getBytes()).getNum();
-             // logger.info("checkpoint check blocknumber, numberInblock: {}", numberInblock);
-            }
-            if (db.getDbName().equals("properties")) {
-              if (Arrays.equals(k.getBytes(), "latest_block_header_number".getBytes())) {
-                numberInPro = Longs.fromByteArray(v.getBytes());
-              //  logger.info("checkpoint check blocknumber, numberInPro: {}", numberInPro);
-              }
-            }
-            if (Arrays.equals("block_number".getBytes(), k.getBytes())) {
-              logger.error("checkpoint should not contain 'blocknumber', db:{}, number: {}",
-                  keyValueDB.getDbName(), Longs.fromByteArray(v.getBytes()));
-            }
           }
         }
       }
-      if (numberInblock != numberInPro) {
-        logger.error("checkpoint err, fatal numberInblock != numberInPro, {}, {}", numberInblock, numberInPro);
-        System.exit(-1);
-      }
-      currentBlockNum.set(numberInblock);
-      if (currentBlockNum.longValue() == -1) {
-        throw new TronDBException("create checkpoint failed, block num should not be -1");
-      }
       if (isV2Open()) {
-        //List<String> cpList = getCheckpointList();
-        long now = System.currentTimeMillis();
-//        if (now < Long.parseLong(cpList.get(cpList.size()-1))) {
-//          logger.error("checkpoint time err, latest: {}, now: {}", Long.parseLong(cpList.get(cpList.size()-1)), now);
-//          System.exit(-1);
-//        }
-        String dbName = now+"_"+currentBlockNum.longValue();
+        String dbName = String.valueOf(System.currentTimeMillis());
         checkPointStore = getCheckpointDB(dbName);
         syncFlag = CommonParameter.getInstance().getStorage().isCheckpointSync();
       } else {
@@ -516,37 +454,23 @@ public class SnapshotManager implements RevokingDatabase {
       return;
     }
     for (String cp: cpList.subList(0, cpList.size()-3)) {
-      long timestamp = Long.parseLong(cp.split("_")[0]);
-      long blockNum = Long.parseLong(cp.split("_")[1]);
+      long timestamp = Long.parseLong(cp);
       if (System.currentTimeMillis() - timestamp < ONE_MINUTE_MILLS*2) {
         break;
       }
       String checkpointPath = Paths.get(StorageUtils.getOutputDirectoryByDbName(CHECKPOINT_V2_DIR),
           CommonParameter.getInstance().getStorage().getDbDirectory(), CHECKPOINT_V2_DIR).toString();
       if (!FileUtil.recursiveDelete(Paths.get(checkpointPath, cp).toString())) {
-        logger.error("checkpoint prune failed, blockNum: {}", blockNum);
+        logger.error("checkpoint prune failed, timestamp: {}", timestamp);
         return;
       }
-      logger.info("checkpoint prune success, blockNum: {}", blockNum);
+      logger.debug("checkpoint prune success, timestamp: {}", timestamp);
     }
   }
 
   // ensure run this method first after process start.
   @Override
   public void check() {
-    Map<String, Chainbase> dbMap = dbs.stream()
-        .map(db -> Maps.immutableEntry(db.getDbName(), db))
-        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    Chainbase marketAccountStore = dbMap.get("market_account");
-    for (Map.Entry<byte[], byte[]> entry: marketAccountStore) {
-      if (Arrays.equals("block_number".getBytes(), entry.getKey())) {
-        logger.info("before recover debug, number: {}", Longs.fromByteArray(entry.getValue()));
-        continue;
-      }
-      MarketAccountOrderCapsule accountOrderCapsule = new MarketAccountOrderCapsule(entry.getValue());
-      logger.info("before recover debug, account: {}, count: {}, totalCount: {}",
-          Hex.toHexString(entry.getKey()), accountOrderCapsule.getCount(), accountOrderCapsule.getTotalCount());
-    }
     if (!isV2Open()) {
       List<String> cpList = getCheckpointList();
       if (cpList != null && cpList.size() != 0) {
@@ -580,50 +504,6 @@ public class SnapshotManager implements RevokingDatabase {
       return;
     }
 
-    long minBlockNum = Long.MAX_VALUE, maxBlockNum = -1;
-    for (Chainbase db : dbs) {
-      if (!Snapshot.isRoot(db.getHead())) {
-        throw new IllegalStateException("first check.");
-      }
-      if (db.getDbName().equals("market_pair_price_to_order")
-          || db.getDbName().equals("witness")
-          || db.getDbName().equals("votes")
-          || db.getDbName().equals("recent-transaction")
-          || db.getDbName().equals("trans-cache")
-          || db.getDbName().equals("witness_schedule")) {
-        continue;
-      }
-      try {
-        long blockNumber = -1;
-        if ("properties".equals(db.getDbName())) {
-          blockNumber = Longs.fromByteArray(db.get("latest_block_header_number".getBytes()));
-        } else {
-          blockNumber = Longs.fromByteArray(db.get("block_number".getBytes()));
-        }
-        logger.info("store: {}, block numer: {}", db.getDbName(), blockNumber);
-        minBlockNum = Math.min(minBlockNum, blockNumber);
-        maxBlockNum = Math.max(maxBlockNum, blockNumber);
-      } catch (ItemNotFoundException e) {
-        logger.error("check failed, dbs meta data corrupt, can not get current block number，" +
-            " db: {}", db.getDbName());
-        System.exit(-1);
-      }
-    }
-
-    if (minBlockNum == Long.MAX_VALUE || maxBlockNum == -1) {
-      logger.error("check failed, dbs current block number illegal, minblockNum:{}, maxBlockNum: {}", minBlockNum, maxBlockNum);
-      System.exit(-1);
-    }
-
-    List<Long> sortedAllKeys = cpList.stream().map(entry -> Long.parseLong(entry.split("_")[1]))
-        .sorted().collect(Collectors.toList());
-    if (minBlockNum < sortedAllKeys.get(0) || maxBlockNum > sortedAllKeys.get(sortedAllKeys.size()-1)) {
-      logger.error("check failed, checkpoint incomplete，checkpoint start number: {}, end number: {}, " +
-              "dbs start number: {}, end number: {}",
-          sortedAllKeys.get(0), sortedAllKeys.get(sortedAllKeys.size()-1), minBlockNum, maxBlockNum);
-      System.exit(-1);
-    }
-
     for (String cp: cpList) {
       TronDatabase<byte[]> checkPointV2Store = getCheckpointDB(cp);
       recover(checkPointV2Store);
@@ -643,47 +523,24 @@ public class SnapshotManager implements RevokingDatabase {
       byte[] value = e.getValue();
       String db = simpleDecode(key);
       if (dbMap.get(db) == null) {
-        logger.error("checkpoint db not exist, dbname: {}, key: {}, value: {}",
-            db, ByteArray.toHexString(key), ByteArray.toHexString(value));
         continue;
       }
       byte[] realKey = Arrays.copyOfRange(key, db.getBytes().length + 4, key.length);
       byte[] realValue = value.length == 1 ? null : Arrays.copyOfRange(value, 1, value.length);
-      if ("properties".equals(db)) {
-        if (Arrays.equals("block_number".getBytes(), realKey)) {
-          logger.info("checkpoint properties recover, block number: {}", Longs.fromByteArray(realValue));
-        }
-      }
       if (realValue != null) {
         dbMap.get(db).getHead().put(realKey, realValue);
       } else {
-        if ("market_pair_price_to_order".equals(db)) {
-          Protocol.MarketPrice marketPrice = MarketUtils.decodeKeyToMarketPrice(realKey);
-          if (marketPrice.getBuyTokenQuantity() == 0 && marketPrice.getSellTokenQuantity() == 0) {
-            dbMap.get(db).getHead().put(realKey, new byte[0]);
-          } else {
-            dbMap.get(db).getHead().remove(realKey);
-          }
-        } else {
+        byte op = value[0];
+        if (Value.Operator.DELETE.getValue() == op) {
           dbMap.get(db).getHead().remove(realKey);
+        } else {
+          dbMap.get(db).getHead().put(realKey, new byte[0]);
         }
       }
     }
 
     dbs.forEach(db -> db.getHead().getRoot().merge(db.getHead()));
     retreat();
-    Chainbase marketAccountStore = dbMap.get("market_account");
-    for (Map.Entry<byte[], byte[]> entry: marketAccountStore) {
-      if (Arrays.equals("block_number".getBytes(), entry.getKey())) {
-        logger.info("before recover debug, number: {}", Longs.fromByteArray(entry.getValue()));
-        continue;
-      }
-      MarketAccountOrderCapsule accountOrderCapsule = new MarketAccountOrderCapsule(entry.getValue());
-      logger.info("recover debug, blocknumber: {}, account: {}, count: {}, totalCount: {}",
-          tronDatabase.getDbName(),
-          Hex.toHexString(entry.getKey()), accountOrderCapsule.getCount(), accountOrderCapsule.getTotalCount());
-    }
-    logger.info("checkpoint v2 recover: {}", tronDatabase.getDbName());
   }
 
   private boolean isV2Open() {
