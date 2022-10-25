@@ -72,6 +72,7 @@ public class RepositoryImpl implements Repository {
   private final long precision = Parameter.ChainConstant.PRECISION;
   private static final byte[] TOTAL_NET_WEIGHT = "TOTAL_NET_WEIGHT".getBytes();
   private static final byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
+  private static final byte[] TOTAL_TRON_POWER_WEIGHT = "TOTAL_TRON_POWER_WEIGHT".getBytes();
 
   private StoreFactory storeFactory;
   @Getter
@@ -937,6 +938,13 @@ public class RepositoryImpl implements Repository {
   }
 
   @Override
+  public void addTotalTronPowerWeight(long amount) {
+    long totalTronPowerWeight = getTotalTronPowerWeight();
+    totalTronPowerWeight += amount;
+    saveTotalTronPowerWeight(totalTronPowerWeight);
+  }
+
+  @Override
   public void saveTotalNetWeight(long totalNetWeight) {
     updateDynamicProperty(TOTAL_NET_WEIGHT,
         new BytesCapsule(ByteArray.fromLong(totalNetWeight)));
@@ -946,6 +954,12 @@ public class RepositoryImpl implements Repository {
   public void saveTotalEnergyWeight(long totalEnergyWeight) {
     updateDynamicProperty(TOTAL_ENERGY_WEIGHT,
         new BytesCapsule(ByteArray.fromLong(totalEnergyWeight)));
+  }
+
+  @Override
+  public void saveTotalTronPowerWeight(long totalTronPowerWeight) {
+    updateDynamicProperty(TOTAL_TRON_POWER_WEIGHT,
+        new BytesCapsule(ByteArray.fromLong(totalTronPowerWeight)));
   }
 
   @Override
@@ -964,6 +978,15 @@ public class RepositoryImpl implements Repository {
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found TOTAL_ENERGY_WEIGHT"));
+  }
+
+  @Override
+  public long getTotalTronPowerWeight() {
+    return Optional.ofNullable(getDynamicProperty(TOTAL_TRON_POWER_WEIGHT))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_TRON_POWER_WEIGHT"));
   }
 
 }

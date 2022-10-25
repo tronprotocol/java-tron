@@ -37,7 +37,7 @@ public class CancelAllUnfreezeV2Processor {
     }
   }
 
-  public void execute(CancelAllUnfreezeV2Param param, Repository repo) throws ContractExeException {
+  public long execute(CancelAllUnfreezeV2Param param, Repository repo) throws ContractExeException {
     byte[] ownerAddress = param.getOwnerAddress();
     AccountCapsule ownerCapsule = repo.getAccount(ownerAddress);
     long now = repo.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
@@ -56,23 +56,23 @@ public class CancelAllUnfreezeV2Processor {
     ownerCapsule.clearUnfrozenV2();
 
     repo.updateAccount(ownerCapsule.createDbKey(), ownerCapsule);
+    return withdrawExpireBalance;
   }
 
   public void updateFrozenInfoAndTotalResourceWeight(
       AccountCapsule accountCapsule, Protocol.Account.UnFreezeV2 unFreezeV2, Repository repo) {
-    DynamicPropertiesStore dynamicStore = repo.getDynamicPropertiesStore();
     switch (unFreezeV2.getType()) {
       case BANDWIDTH:
         accountCapsule.addFrozenBalanceForBandwidthV2(unFreezeV2.getUnfreezeAmount());
-        dynamicStore.addTotalNetWeight(unFreezeV2.getUnfreezeAmount() / TRX_PRECISION);
+        repo.addTotalNetWeight(unFreezeV2.getUnfreezeAmount() / TRX_PRECISION);
         break;
       case ENERGY:
         accountCapsule.addFrozenBalanceForEnergyV2(unFreezeV2.getUnfreezeAmount());
-        dynamicStore.addTotalEnergyWeight(unFreezeV2.getUnfreezeAmount() / TRX_PRECISION);
+        repo.addTotalEnergyWeight(unFreezeV2.getUnfreezeAmount() / TRX_PRECISION);
         break;
       case TRON_POWER:
         accountCapsule.addFrozenForTronPowerV2(unFreezeV2.getUnfreezeAmount());
-        dynamicStore.addTotalTronPowerWeight(unFreezeV2.getUnfreezeAmount() / TRX_PRECISION);
+        repo.addTotalTronPowerWeight(unFreezeV2.getUnfreezeAmount() / TRX_PRECISION);
         break;
       default:
         // this should never happen

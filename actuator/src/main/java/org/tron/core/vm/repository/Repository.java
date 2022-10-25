@@ -128,13 +128,19 @@ public interface Repository {
 
   void addTotalEnergyWeight(long amount);
 
+  void addTotalTronPowerWeight(long amount);
+
   void saveTotalNetWeight(long totalNetWeight);
 
   void saveTotalEnergyWeight(long totalEnergyWeight);
 
+  void saveTotalTronPowerWeight(long totalTronPowerWeight);
+
   long getTotalNetWeight();
 
   long getTotalEnergyWeight();
+
+  long getTotalTronPowerWeight();
 
   long getHeadSlot();
 
