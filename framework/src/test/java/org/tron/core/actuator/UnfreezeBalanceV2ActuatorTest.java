@@ -7,8 +7,6 @@ import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -318,57 +316,60 @@ public class UnfreezeBalanceV2ActuatorTest {
   }
 
   @Test
-  public void testClearVotes() {
+  public void testVotes() {
     byte[] ownerAddressBytes = ByteArray.fromHexString(OWNER_ADDRESS);
-    ByteString ownerAddress = ByteString.copyFrom(ownerAddressBytes);
-    long unfreezeBalance = frozenBalance;
+    long unfreezeBalance = frozenBalance / 2;
     long now = System.currentTimeMillis();
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
-
+    dbManager.getDynamicPropertiesStore().saveAllowNewResourceModel(0);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddressBytes);
     accountCapsule.addFrozenBalanceForBandwidthV2(1_000_000_000L);
-
+    accountCapsule.addVotes(ByteString.copyFrom(RECEIVER_ADDRESS.getBytes()), 500);
+    accountCapsule.addVotes(ByteString.copyFrom(OWNER_ACCOUNT_INVALID.getBytes()), 500);
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+
     UnfreezeBalanceV2Actuator actuator = new UnfreezeBalanceV2Actuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
         .setAny(getContractForBandwidthV2(OWNER_ADDRESS, unfreezeBalance));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
-    dbManager.getVotesStore().reset();
-    Assert.assertNull(dbManager.getVotesStore().get(ownerAddressBytes));
     try {
       actuator.validate();
       actuator.execute(ret);
       VotesCapsule votesCapsule = dbManager.getVotesStore().get(ownerAddressBytes);
       Assert.assertNotNull(votesCapsule);
-      Assert.assertEquals(0, votesCapsule.getNewVotes().size());
-    } catch (ContractValidateException e) {
-      Assert.assertFalse(e instanceof ContractValidateException);
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
+      for (Vote vote : votesCapsule.getOldVotes()) {
+        Assert.assertEquals(vote.getVoteCount(), 500);
+      }
+      for (Vote vote : votesCapsule.getNewVotes()) {
+        Assert.assertEquals(vote.getVoteCount(), 250);
+      }
+      accountCapsule = dbManager.getAccountStore().get(ownerAddressBytes);
+      for (Vote vote : accountCapsule.getVotesList()) {
+        Assert.assertEquals(vote.getVoteCount(), 250);
+      }
+    } catch (ContractValidateException | ContractExeException e) {
+      Assert.fail("cannot run here.");
     }
 
-    // if had votes
-    List<Vote> oldVotes = new ArrayList<Vote>();
-    VotesCapsule votesCapsule = new VotesCapsule(
-        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), oldVotes);
-    votesCapsule.addNewVotes(
-            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), 100);
-    dbManager.getVotesStore().put(ByteArray.fromHexString(OWNER_ADDRESS), votesCapsule);
-    accountCapsule.addFrozenBalanceForBandwidthV2(1_000_000_000L);
-    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+    // clear for new resource model
+    dbManager.getDynamicPropertiesStore().saveAllowNewResourceModel(1);
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContractForBandwidthV2(OWNER_ADDRESS, unfreezeBalance / 2));
     try {
       actuator.validate();
       actuator.execute(ret);
-      votesCapsule = dbManager.getVotesStore().get(ownerAddressBytes);
+      VotesCapsule votesCapsule = dbManager.getVotesStore().get(ownerAddressBytes);
       Assert.assertNotNull(votesCapsule);
+      for (Vote vote : votesCapsule.getOldVotes()) {
+        Assert.assertEquals(vote.getVoteCount(), 500);
+      }
       Assert.assertEquals(0, votesCapsule.getNewVotes().size());
-    } catch (ContractValidateException e) {
-      Assert.assertFalse(e instanceof ContractValidateException);
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
+      accountCapsule = dbManager.getAccountStore().get(ownerAddressBytes);
+      Assert.assertEquals(0, accountCapsule.getVotesList().size());
+    } catch (ContractValidateException | ContractExeException e) {
+      Assert.fail("cannot run here.");
     }
-
   }
 
   @Test
