@@ -24,6 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.tron.api.WalletGrpc;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.StringUtil;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
@@ -125,52 +126,6 @@ public class SendTx {
     logger.info("[Final] send tx end");
   }
 
-  public static void split() throws IOException {
-    String dir = "/data/workspace/replay_workspace/data/2022-08-17_43180631/";
-    File file = new File(dir + "getTransactions.txt_43382231_201600");
-    FileWriter fw1 = new FileWriter(dir + "trx_transfer.txt");
-    FileWriter fw2 = new FileWriter(dir + "token10_transfer.txt");
-    FileWriter fw3 = new FileWriter(dir + "usdt_transfer.txt");
-
-    int count = 0;
-    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
-    String line;
-    while ((line = reader.readLine()) != null) {
-      Transaction tx = Transaction.parseFrom(Hex.decode(line));
-      ContractType contractType = tx.getRawData().getContract(0).getType();
-      switch (contractType) {
-        case TransferContract:
-          fw1.write(line + "\n");
-          break;
-        case TransferAssetContract:
-          fw2.write(line + "\n");
-          break;
-        case TriggerSmartContract:
-          TriggerSmartContract triggerSmartContract = tx.getRawData().getContract(0).getParameter()
-              .unpack(TriggerSmartContract.class);
-          byte[] contractAddressBytes = triggerSmartContract.getContractAddress().toByteArray();
-          if (ByteArray.toHexString(contractAddressBytes)
-              .equalsIgnoreCase("41A614F803B6FD780986A42C78EC9C7F77E6DED13C")) {
-            fw3.write(line + "\n");
-          }
-          break;
-        default:
-          break;
-      }
-      count += 1;
-      if (count % 10000 == 0) {
-        logger.info("count: {}", count);
-      }
-    }
-    reader.close();
-    fw1.flush();
-    fw2.flush();
-    fw3.flush();
-    fw1.close();
-    fw2.close();
-    fw3.close();
-  }
-
   public static void main(String[] args) {
     String typeParam = System.getProperty("type");
     if (StringUtils.isNoneEmpty(typeParam)) {
@@ -185,6 +140,16 @@ public class SendTx {
     String scheduledParam = System.getProperty("scheduled");
     if (StringUtils.isNoneEmpty(scheduledParam)) {
       isScheduled = true;
+    }
+
+    String split = System.getProperty("split");
+    if (StringUtils.isNoneEmpty(split)) {
+      try {
+        SplitTransaction.split();
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+      return;
     }
 
     String[] fullNodes = args[0].split(";");
