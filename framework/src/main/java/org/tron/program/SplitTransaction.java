@@ -77,7 +77,7 @@ public class SplitTransaction {
     int count = 0;
     try(BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(transactionSource)))) {
       String line = reader.readLine();
-      while ( line != null) {
+      while (line != null) {
         logger.info("read line: {}", count);
         Transaction tx = Transaction.parseFrom(Hex.decode(line));
         Transaction.Contract.ContractType contractType = tx.getRawData().getContract(0).getType();
@@ -96,7 +96,7 @@ public class SplitTransaction {
           case TransferAssetContract:
             splitTRC10.write(line + "\n");
             if (count % 10000 == 0) {
-              flush(splitTransfer);
+              flush(splitTRC10);
             }
             break;
           case TriggerSmartContract:
@@ -108,7 +108,7 @@ public class SplitTransaction {
               splitTRC20.write(line + "\n");
             }
             if (count % 10000 == 0) {
-              flush(splitTransfer);
+              flush(splitTRC20);
             }
             break;
           default:
@@ -123,10 +123,12 @@ public class SplitTransaction {
         }
         line = reader.readLine();
       }
-      reader.close();
+
       splitTransfer.flush();
       splitTRC10.flush();
       splitTRC20.flush();
+
+      reader.close();
       splitTransfer.close();
       splitTRC10.close();
       splitTRC20.close();
