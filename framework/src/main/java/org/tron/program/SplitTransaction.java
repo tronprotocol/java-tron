@@ -25,13 +25,13 @@ import java.io.InputStreamReader;
 public class SplitTransaction {
 
 
-  //  private static String SPLIT_DIR = "/data/workspace/replay_workspace/data/split/";
-//  private static String TRANSACTION_DIR = null;
-//  private static String TRANSACTION_NAME = null;
-
-  private static String SPLIT_DIR = "/Users/liukai/result.txt";
-  private static String TRANSACTION_DIR = "/Users/liukai/";
-  private static String TRANSACTION_NAME = "test.txt";
+    private static String SPLIT_DIR = "/data/workspace/replay_workspace/data/split/";
+  private static String TRANSACTION_DIR = null;
+  private static String TRANSACTION_NAME = null;
+//
+//  private static String SPLIT_DIR = "/Users/liukai/result.txt";
+//  private static String TRANSACTION_DIR = "/Users/liukai/";
+//  private static String TRANSACTION_NAME = "test.txt";
 
   private static String PREFIX = "split.txt";
   private static String TRX_TYPE = null;
@@ -76,8 +76,9 @@ public class SplitTransaction {
     FileWriter splitTRC20 = new FileWriter(SPLIT_DIR + "usdt_transfer.txt");
     int count = 0;
     try(BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(transactionSource)))) {
-      String line;
-      while ((line = reader.readLine()) != null) {
+      String line = reader.readLine();
+      while ( line != null) {
+        logger.info("read line: {}", count);
         Transaction tx = Transaction.parseFrom(Hex.decode(line));
         Transaction.Contract.ContractType contractType = tx.getRawData().getContract(0).getType();
 
@@ -111,6 +112,7 @@ public class SplitTransaction {
           splitTRC10.flush();
           splitTRC20.flush();
         }
+        line = reader.readLine();
       }
       reader.close();
       splitTransfer.flush();
@@ -120,7 +122,7 @@ public class SplitTransaction {
       splitTRC10.close();
       splitTRC20.close();
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error("split exception, count: {}, message: {}", count, e.getMessage(), e);
     }
   }
 
