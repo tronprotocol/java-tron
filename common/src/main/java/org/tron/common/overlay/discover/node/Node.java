@@ -139,6 +139,6 @@ public class Node implements Serializable, Cloneable {
       return super.clone();
     } catch (CloneNotSupportedException ignored) {
     }
-    return null;
+    return this;
   }
 }
