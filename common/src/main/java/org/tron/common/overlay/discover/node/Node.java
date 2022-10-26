@@ -11,7 +11,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 
 @Slf4j(topic = "discover")
-public class Node implements Serializable, Cloneable {
+public class Node implements Serializable {
 
   private static final long serialVersionUID = -4267600517925770636L;
 
@@ -25,6 +25,7 @@ public class Node implements Serializable, Cloneable {
   private int bindPort;
 
   @Setter
+  @Getter
   private int p2pVersion;
 
   private boolean isFakeNodeId = false;
@@ -41,6 +42,15 @@ public class Node implements Serializable, Cloneable {
     this.host = host;
     this.port = port;
     this.bindPort = bindPort;
+  }
+
+  public Node(Node node) {
+    this.id = node.getId();
+    this.host = node.getHost();
+    this.port = node.getPort();
+    this.isFakeNodeId = node.isDiscoveryNode();
+    this.bindPort = node.getBindPort();
+    this.p2pVersion = node.getP2pVersion();
   }
 
   public static Node instanceOf(String hostPort) {
@@ -131,14 +141,5 @@ public class Node implements Serializable, Cloneable {
     }
 
     return false;
-  }
-
-  @Override
-  public Object clone() {
-    try {
-      return super.clone();
-    } catch (CloneNotSupportedException ignored) {
-    }
-    return this;
   }
 }

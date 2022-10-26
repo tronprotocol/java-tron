@@ -113,7 +113,7 @@ public class NodeTable {
     List<Node> closestNodes = new ArrayList<>();
     for (NodeEntry e : closestEntries) {
       if (!e.getNode().isDiscoveryNode()) {
-        closestNodes.add((Node) e.getNode().clone());
+        closestNodes.add(new Node(e.getNode()));
       }
     }
     Collections.sort(closestNodes, new DistanceComparator(targetId));
