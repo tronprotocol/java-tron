@@ -119,7 +119,7 @@ public class NodeTable {
       }
     }
     Collections.sort(closestNodes, new DistanceComparator(targetId));
-    if (closestEntries.size() > KademliaOptions.BUCKET_SIZE) {
+    if (closestNodes.size() > KademliaOptions.BUCKET_SIZE) {
       closestNodes = closestNodes.subList(0, KademliaOptions.BUCKET_SIZE);
     }
     return closestNodes;
