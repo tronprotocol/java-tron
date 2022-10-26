@@ -78,24 +78,25 @@ public class SplitTransaction {
     try(BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(transactionSource)))) {
       String line = reader.readLine();
       while (line != null) {
-        logger.info("read line: {}", count);
         Transaction tx = Transaction.parseFrom(Hex.decode(line));
         Transaction.Contract.ContractType contractType = tx.getRawData().getContract(0).getType();
-
-        if (TRX_TYPE != null && !contractType.getValueDescriptor().getName().equals(TRX_TYPE)) {
-          continue;
-        }
-
+//        if (TRX_TYPE != null && !contractType.getValueDescriptor().getName().equals(TRX_TYPE)) {
+//          continue;
+//        }
         switch (contractType) {
           case TransferContract:
             splitTransfer.write(line + "\n");
+            logger.info("trx type: TransferContract");
             if (count % 10000 == 0) {
+              logger.info("trx type: TransferContract, flush, count: {}", count);
               flush(splitTransfer);
             }
             break;
           case TransferAssetContract:
             splitTRC10.write(line + "\n");
+            logger.info("trx type: TransferAssetContract");
             if (count % 10000 == 0) {
+              logger.info("trx type: TransferAssetContract, flush, count: {}", count);
               flush(splitTRC10);
             }
             break;
@@ -107,7 +108,9 @@ public class SplitTransaction {
                     .equalsIgnoreCase("41A614F803B6FD780986A42C78EC9C7F77E6DED13C")) {
               splitTRC20.write(line + "\n");
             }
+            logger.info("trx type: splitTRC20");
             if (count % 10000 == 0) {
+              logger.info("trx type: splitTRC20, flush, count: {}", count);
               flush(splitTRC20);
             }
             break;
