@@ -111,14 +111,16 @@ public class NodeTable {
   public synchronized List<Node> getClosestNodes(byte[] targetId) {
     List<NodeEntry> closestEntries = getAllNodes();
     List<Node> closestNodes = new ArrayList<>();
-    Collections.sort(closestEntries, new DistanceComparator(targetId));
-    if (closestEntries.size() > KademliaOptions.BUCKET_SIZE) {
-      closestEntries = closestEntries.subList(0, KademliaOptions.BUCKET_SIZE);
-    }
     for (NodeEntry e : closestEntries) {
       if (!e.getNode().isDiscoveryNode()) {
-        closestNodes.add(e.getNode());
+        Node node = (Node) e.getNode().clone();
+        node.setId(Node.getNodeId());
+        closestNodes.add(node);
       }
+    }
+    Collections.sort(closestNodes, new DistanceComparator(targetId));
+    if (closestEntries.size() > KademliaOptions.BUCKET_SIZE) {
+      closestNodes = closestNodes.subList(0, KademliaOptions.BUCKET_SIZE);
     }
     return closestNodes;
   }

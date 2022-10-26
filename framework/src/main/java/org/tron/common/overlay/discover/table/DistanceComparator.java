@@ -19,11 +19,12 @@
 package org.tron.common.overlay.discover.table;
 
 import java.util.Comparator;
+import org.tron.common.overlay.discover.node.Node;
 
 /**
  * Created by kest on 5/26/15.
  */
-public class DistanceComparator implements Comparator<NodeEntry> {
+public class DistanceComparator implements Comparator<Node> {
 
   private byte[] targetId;
 
@@ -32,9 +33,9 @@ public class DistanceComparator implements Comparator<NodeEntry> {
   }
 
   @Override
-  public int compare(NodeEntry e1, NodeEntry e2) {
-    int d1 = NodeEntry.distance(targetId, e1.getNode().getId());
-    int d2 = NodeEntry.distance(targetId, e2.getNode().getId());
+  public int compare(Node e1, Node e2) {
+    int d1 = NodeEntry.distance(targetId, e1.getId());
+    int d2 = NodeEntry.distance(targetId, e2.getId());
 
     if (d1 > d2) {
       return 1;

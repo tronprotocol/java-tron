@@ -11,7 +11,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 
 @Slf4j(topic = "discover")
-public class Node implements Serializable {
+public class Node implements Serializable, Cloneable {
 
   private static final long serialVersionUID = -4267600517925770636L;
 
@@ -131,5 +131,14 @@ public class Node implements Serializable {
     }
 
     return false;
+  }
+
+  @Override
+  public Object clone() {
+    try {
+      return super.clone();
+    } catch (CloneNotSupportedException ignored) {
+    }
+    return null;
   }
 }
