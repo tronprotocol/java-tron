@@ -5,6 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.utils.ByteArray;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.contract.SmartContractOuterClass;
 
 import java.io.BufferedReader;
@@ -23,10 +24,14 @@ import java.io.InputStreamReader;
 @Slf4j
 public class SplitTransaction {
 
-  private static String SPLIT_DIR = "/data/workspace/replay_workspace/data/split/";
 
-  private static String TRANSACTION_DIR = null;
-  private static String TRANSACTION_NAME = null;
+  //  private static String SPLIT_DIR = "/data/workspace/replay_workspace/data/split/";
+//  private static String TRANSACTION_DIR = null;
+//  private static String TRANSACTION_NAME = null;
+
+  private static String SPLIT_DIR = "/Users/liukai/result.txt";
+  private static String TRANSACTION_DIR = "/Users/liukai/";
+  private static String TRANSACTION_NAME = "test.txt";
 
   private static String PREFIX = "split.txt";
   private static String TRX_TYPE = null;
@@ -69,49 +74,54 @@ public class SplitTransaction {
     FileWriter splitTransfer = new FileWriter(SPLIT_DIR + "trx_transfer.txt");
     FileWriter splitTRC10 = new FileWriter(SPLIT_DIR + "token10_transfer.txt");
     FileWriter splitTRC20 = new FileWriter(SPLIT_DIR + "usdt_transfer.txt");
-
     int count = 0;
-    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(transactionSource)));
-    String line;
-    while ((line = reader.readLine()) != null) {
-      Protocol.Transaction tx = Protocol.Transaction.parseFrom(Hex.decode(line));
-      Protocol.Transaction.Contract.ContractType contractType = tx.getRawData().getContract(0).getType();
+    try(BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(transactionSource)))) {
+      String line;
+      while ((line = reader.readLine()) != null) {
+        Transaction tx = Transaction.parseFrom(Hex.decode(line));
+        Transaction.Contract.ContractType contractType = tx.getRawData().getContract(0).getType();
 
-      if (TRX_TYPE != null && !contractType.getValueDescriptor().getName().equals(TRX_TYPE)) {
-        continue;
-      }
+        if (TRX_TYPE != null && !contractType.getValueDescriptor().getName().equals(TRX_TYPE)) {
+          continue;
+        }
 
-      switch (contractType) {
-        case TransferContract:
-          splitTransfer.write(line + "\n");
-          break;
-        case TransferAssetContract:
-          splitTRC10.write(line + "\n");
-          break;
-        case TriggerSmartContract:
-          SmartContractOuterClass.TriggerSmartContract triggerSmartContract = tx.getRawData().getContract(0).getParameter()
-                  .unpack(SmartContractOuterClass.TriggerSmartContract.class);
-          byte[] contractAddressBytes = triggerSmartContract.getContractAddress().toByteArray();
-          if (ByteArray.toHexString(contractAddressBytes)
-                  .equalsIgnoreCase("41A614F803B6FD780986A42C78EC9C7F77E6DED13C")) {
-            splitTRC20.write(line + "\n");
-          }
-          break;
-        default:
-          break;
+        switch (contractType) {
+          case TransferContract:
+            splitTransfer.write(line + "\n");
+            break;
+          case TransferAssetContract:
+            splitTRC10.write(line + "\n");
+            break;
+          case TriggerSmartContract:
+            SmartContractOuterClass.TriggerSmartContract triggerSmartContract = tx.getRawData().getContract(0).getParameter()
+                    .unpack(SmartContractOuterClass.TriggerSmartContract.class);
+            byte[] contractAddressBytes = triggerSmartContract.getContractAddress().toByteArray();
+            if (ByteArray.toHexString(contractAddressBytes)
+                    .equalsIgnoreCase("41A614F803B6FD780986A42C78EC9C7F77E6DED13C")) {
+              splitTRC20.write(line + "\n");
+            }
+            break;
+          default:
+            break;
+        }
+        count += 1;
+        if (count % 10000 == 0) {
+          logger.info("count: {}", count);
+          splitTransfer.flush();
+          splitTRC10.flush();
+          splitTRC20.flush();
+        }
       }
-      count += 1;
-      if (count % 10000 == 0) {
-        logger.info("count: {}", count);
-      }
+      reader.close();
+      splitTransfer.flush();
+      splitTRC10.flush();
+      splitTRC20.flush();
+      splitTransfer.close();
+      splitTRC10.close();
+      splitTRC20.close();
+    } catch (Exception e) {
+      e.printStackTrace();
     }
-    reader.close();
-    splitTransfer.flush();
-    splitTRC10.flush();
-    splitTRC20.flush();
-    splitTransfer.close();
-    splitTRC10.close();
-    splitTRC20.close();
   }
 
 }
