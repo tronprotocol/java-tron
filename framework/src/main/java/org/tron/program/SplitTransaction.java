@@ -10,6 +10,7 @@ import org.tron.protos.contract.SmartContractOuterClass;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -24,13 +25,13 @@ public class SplitTransaction {
 
   private static String SPLIT_DIR = "/data/workspace/replay_workspace/data/split/";
 
-  private static String TRANSACTION_DIR = "/Users/liukai/workspaces/temp/";
+  private static String TRANSACTION_DIR = null;
   private static String TRANSACTION_NAME = null;
 
   private static String PREFIX = "split.txt";
   private static String TRX_TYPE = null;
 
-  public static void init() {
+  public static void init() throws FileNotFoundException {
     String split = System.getProperty("split");
     if (StringUtils.isNoneEmpty(split)) {
       String trxTypeParam = System.getProperty("trxType");
@@ -41,6 +42,13 @@ public class SplitTransaction {
       String splitDirParam = System.getProperty("splitDir");
       if (StringUtils.isNoneEmpty(splitDirParam)) {
         SPLIT_DIR = splitDirParam;
+      }
+
+      String trxDirParam = System.getProperty("trxDir");
+      if (StringUtils.isNoneEmpty(trxDirParam)) {
+        TRANSACTION_DIR = trxDirParam;
+      } else {
+        throw new IllegalArgumentException("TRANSACTION_DIR cannot be null");
       }
 
       String trxFileNameParam = System.getProperty("trxFileName");
