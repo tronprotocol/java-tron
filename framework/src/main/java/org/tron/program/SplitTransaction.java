@@ -62,6 +62,8 @@ public class SplitTransaction {
   }
 
   public static void split() throws IOException {
+    init();
+
     File transactionSource = new File(TRANSACTION_DIR + TRANSACTION_NAME);
 
     FileWriter splitTransfer = new FileWriter(SPLIT_DIR + "trx_transfer.txt");
