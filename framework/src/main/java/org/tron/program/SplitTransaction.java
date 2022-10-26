@@ -89,9 +89,15 @@ public class SplitTransaction {
         switch (contractType) {
           case TransferContract:
             splitTransfer.write(line + "\n");
+            if (count % 10000 == 0) {
+              flush(splitTransfer);
+            }
             break;
           case TransferAssetContract:
             splitTRC10.write(line + "\n");
+            if (count % 10000 == 0) {
+              flush(splitTransfer);
+            }
             break;
           case TriggerSmartContract:
             SmartContractOuterClass.TriggerSmartContract triggerSmartContract = tx.getRawData().getContract(0).getParameter()
@@ -100,6 +106,9 @@ public class SplitTransaction {
             if (ByteArray.toHexString(contractAddressBytes)
                     .equalsIgnoreCase("41A614F803B6FD780986A42C78EC9C7F77E6DED13C")) {
               splitTRC20.write(line + "\n");
+            }
+            if (count % 10000 == 0) {
+              flush(splitTransfer);
             }
             break;
           default:
@@ -126,4 +135,11 @@ public class SplitTransaction {
     }
   }
 
+  public static void flush(FileWriter fileWriter) {
+    try {
+      fileWriter.flush();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
 }
