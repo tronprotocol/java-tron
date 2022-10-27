@@ -25,6 +25,7 @@ public class Node implements Serializable {
   private int bindPort;
 
   @Setter
+  @Getter
   private int p2pVersion;
 
   private boolean isFakeNodeId = false;
@@ -41,6 +42,15 @@ public class Node implements Serializable {
     this.host = host;
     this.port = port;
     this.bindPort = bindPort;
+  }
+
+  public Node(Node node) {
+    this.id = node.getId();
+    this.host = node.getHost();
+    this.port = node.getPort();
+    this.isFakeNodeId = node.isDiscoveryNode();
+    this.bindPort = node.getBindPort();
+    this.p2pVersion = node.getP2pVersion();
   }
 
   public static Node instanceOf(String hostPort) {
