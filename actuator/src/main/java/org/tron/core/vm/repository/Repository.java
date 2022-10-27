@@ -6,7 +6,6 @@ import org.tron.core.capsule.*;
 import org.tron.core.store.*;
 import org.tron.core.vm.program.Storage;
 import org.tron.protos.Protocol;
-import org.tron.protos.contract.Common;
 
 public interface Repository {
 
@@ -108,7 +107,7 @@ public interface Repository {
 
   long getAccountLeftEnergyFromFreeze(AccountCapsule accountCapsule);
 
-  long getAccountEnergyUsageFromFreeze(AccountCapsule accountCapsule);
+  long getAccountEnergyUsage(AccountCapsule accountCapsule);
 
   Pair<Long, Long> getAccountEnergyUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule);
 

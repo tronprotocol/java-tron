@@ -37,6 +37,7 @@ import org.tron.core.store.StoreFactory;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
+import org.tron.protos.contract.Common;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
@@ -247,7 +248,9 @@ public class TransactionTrace {
     AccountCapsule caller = accountStore.get(callerAccount);
     if (dynamicPropertiesStore.supportUnfreezeDelay()) {
       origin.setEnergyUsage(receipt.getOriginEnergyUsage());
+      origin.setNewWindowSize(Common.ResourceCode.ENERGY, receipt.getOriginEnergyWindowSize());
       caller.setEnergyUsage(receipt.getCallerEnergyUsage());
+      caller.setNewWindowSize(Common.ResourceCode.ENERGY, receipt.getCallerEnergyWindowSize());
     }
     receipt.payEnergyBill(
         dynamicPropertiesStore, accountStore, forkController,

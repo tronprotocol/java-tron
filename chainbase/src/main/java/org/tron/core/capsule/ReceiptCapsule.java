@@ -40,6 +40,14 @@ public class ReceiptCapsule {
   @Setter
   private long callerEnergyUsage;
 
+  @Getter
+  @Setter
+  private long callerEnergyWindowSize;
+
+  @Getter
+  @Setter
+  private long originEnergyWindowSize;
+
   private Sha256Hash receiptAddress;
 
   public ReceiptCapsule(ResourceReceipt data, Sha256Hash receiptAddress) {
@@ -165,7 +173,7 @@ public class ReceiptCapsule {
       long originEnergyLimit,
       EnergyProcessor energyProcessor, long originUsage) {
 
-    if (dynamicPropertiesStore.getAllowTvmFreeze() == 1) {
+    if (dynamicPropertiesStore.getAllowTvmFreeze() == 1 || dynamicPropertiesStore.supportUnfreezeDelay()) {
       return Math.min(originUsage, Math.min(originEnergyLeft, originEnergyLimit));
     }
 
