@@ -260,16 +260,11 @@ tasks.distTar.enabled = false
 
 
 createScript(project, 'org.tron.program.FullNode', 'FullNode')
-createScript(project, 'org.tron.tool.litefullnode.LiteFullNodeTool', 'LiteFullNodeTool')
-createScript(project, 'org.tron.program.SendTx', 'SendTx')
 
 def releaseBinary = hasProperty('binaryRelease') ? getProperty('binaryRelease') : 'true'
 if (releaseBinary == 'true') {
     artifacts {
-        archives(
-                binaryRelease('buildFullNodeJar', 'FullNode', 'org.tron.program.FullNode'),
-                binaryRelease('buildSendTxJar', 'SendTx', 'org.tron.program.SendTx'),
-                binaryRelease('buildLiteFullNodeToolJar', 'LiteFullNodeTool', 'org.tron.tool.litefullnode.LiteFullNodeTool'))
+        archives(binaryRelease('buildFullNodeJar', 'FullNode', 'org.tron.program.FullNode'))
     }
 }
 
