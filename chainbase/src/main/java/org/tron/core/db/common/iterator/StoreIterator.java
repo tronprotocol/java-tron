@@ -35,6 +35,7 @@ public final class StoreIterator implements org.tron.core.db.common.iterator.DBI
       }
     } catch (Exception e) {
       logger.debug(e.getMessage(), e);
+      throw new RuntimeException(e);
     }
 
     return hasNext;

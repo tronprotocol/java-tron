@@ -1,6 +1,5 @@
 package org.tron.tool.litefullnode.db;
 
-import com.google.common.collect.Streams;
 import java.io.IOException;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
@@ -21,8 +20,8 @@ public class RocksDBImpl implements DBInterface {
       return rocksDB.get(key);
     } catch (RocksDBException e) {
       e.printStackTrace();
+      throw new RuntimeException(e);
     }
-    return null;
   }
 
   @Override
@@ -31,6 +30,7 @@ public class RocksDBImpl implements DBInterface {
       rocksDB.put(key, value);
     } catch (RocksDBException e) {
       e.printStackTrace();
+      throw new RuntimeException(e);
     }
   }
 
@@ -40,6 +40,7 @@ public class RocksDBImpl implements DBInterface {
       rocksDB.delete(key);
     } catch (RocksDBException e) {
       e.printStackTrace();
+      throw new RuntimeException(e);
     }
   }
 

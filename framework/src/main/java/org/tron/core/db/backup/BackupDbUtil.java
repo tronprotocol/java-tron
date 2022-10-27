@@ -99,6 +99,7 @@ public class BackupDbUtil {
       }
     } catch (RocksDBException | SecurityException e) {
       logger.warn("backup db error:" + e);
+      throw new RuntimeException(e);
     }
     long timeUsed = System.currentTimeMillis() - t1;
     logger
