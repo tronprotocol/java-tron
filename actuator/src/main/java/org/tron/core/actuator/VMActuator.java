@@ -563,6 +563,7 @@ public class VMActuator implements Actuator2 {
       account.setEnergyUsage(
           energyProcessor.increase(account, Common.ResourceCode.ENERGY,
               account.getEnergyUsage(), min(leftFrozenEnergy, energyFromFeeLimit), now, now));
+      receipt.setCallerEnergyMergedUsage(account.getEnergyUsage());
       rootRepository.updateAccount(account.createDbKey(), account);
     }
     return min(availableEnergy, energyFromFeeLimit);
@@ -723,6 +724,7 @@ public class VMActuator implements Actuator2 {
       creator.setEnergyUsage(
           energyProcessor.increase(creator, Common.ResourceCode.ENERGY,
               creator.getEnergyUsage(), creatorEnergyLimit, now, now));
+      receipt.setOriginEnergyMergedUsage(creator.getEnergyUsage());
       rootRepository.updateAccount(creator.createDbKey(), creator);
     }
     return Math.addExact(callerEnergyLimit, creatorEnergyLimit);

@@ -42,6 +42,14 @@ public class ReceiptCapsule {
 
   @Getter
   @Setter
+  private long callerEnergyMergedUsage;
+
+  @Getter
+  @Setter
+  private long originEnergyMergedUsage;
+
+  @Getter
+  @Setter
   private long callerEnergyWindowSize;
 
   @Getter
