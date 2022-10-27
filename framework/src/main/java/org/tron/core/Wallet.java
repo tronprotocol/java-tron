@@ -102,8 +102,6 @@ import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.Hash;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
-import org.tron.common.overlay.discover.node.NodeHandler;
-import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.vm.LogInfo;
@@ -177,7 +175,7 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
-import org.tron.core.net.message.TransactionMessage;
+import org.tron.core.net.message.adv.TransactionMessage;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AccountTraceStore;
@@ -266,8 +264,6 @@ public class Wallet {
   @Autowired
   private ChainBaseManager chainBaseManager;
 
-  @Autowired
-  private NodeManager nodeManager;
   private int minEffectiveConnection = Args.getInstance().getMinEffectiveConnection();
   private boolean trxCacheEnable = Args.getInstance().isTrxCacheEnable();
   public static final String CONTRACT_VALIDATE_EXCEPTION = "ContractValidateException: {}";
@@ -2426,26 +2422,14 @@ public class Wallet {
   }
 
   public NodeList listNodes() {
-    List<NodeHandler> handlerList = nodeManager.dumpActiveNodes();
-
-    Map<String, NodeHandler> nodeHandlerMap = new HashMap<>();
-    for (NodeHandler handler : handlerList) {
-      String key = handler.getNode().getHexId() + handler.getNode().getHost();
-      nodeHandlerMap.put(key, handler);
-    }
-
     NodeList.Builder nodeListBuilder = NodeList.newBuilder();
-
-    nodeHandlerMap.entrySet().stream()
-        .forEach(v -> {
-          org.tron.common.overlay.discover.node.Node node = v.getValue()
-              .getNode();
-          nodeListBuilder.addNodes(Node.newBuilder().setAddress(
+    TronNetService.getP2pService().getConnectableNodes().forEach(node -> {
+      nodeListBuilder.addNodes(Node.newBuilder().setAddress(
               Address.newBuilder()
-                  .setHost(ByteString
-                      .copyFrom(ByteArray.fromString(node.getHost())))
-                  .setPort(node.getPort())));
-        });
+                      .setHost(ByteString
+                              .copyFrom(ByteArray.fromString(node.getHost())))
+                      .setPort(node.getPort())));
+    });
     return nodeListBuilder.build();
   }
 

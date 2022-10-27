@@ -88,8 +88,6 @@ import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
 import org.tron.common.application.Service;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
-import org.tron.common.overlay.discover.node.NodeHandler;
-import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
@@ -111,6 +109,7 @@ import org.tron.core.exception.StoreException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.metrics.MetricsApiService;
+import org.tron.core.net.TronNetService;
 import org.tron.core.services.filter.LiteFnQueryGrpcInterceptor;
 import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
 import org.tron.core.services.ratelimiter.RpcApiAccessInterceptor;
@@ -188,8 +187,6 @@ public class RpcApiService implements Service {
   @Autowired
   private ChainBaseManager chainBaseManager;
 
-  @Autowired
-  private NodeManager nodeManager;
   @Autowired
   private Wallet wallet;
 
@@ -1603,24 +1600,13 @@ public class RpcApiService implements Service {
 
     @Override
     public void listNodes(EmptyMessage request, StreamObserver<NodeList> responseObserver) {
-      List<NodeHandler> handlerList = nodeManager.dumpActiveNodes();
-
-      Map<String, NodeHandler> nodeHandlerMap = new HashMap<>();
-      for (NodeHandler handler : handlerList) {
-        String key = handler.getNode().getHexId() + handler.getNode().getHost();
-        nodeHandlerMap.put(key, handler);
-      }
-
       NodeList.Builder nodeListBuilder = NodeList.newBuilder();
-
-      nodeHandlerMap.entrySet().stream()
-          .forEach(v -> {
-            org.tron.common.overlay.discover.node.Node node = v.getValue().getNode();
-            nodeListBuilder.addNodes(Node.newBuilder().setAddress(
+      TronNetService.getP2pService().getConnectableNodes().forEach(node -> {
+        nodeListBuilder.addNodes(Node.newBuilder().setAddress(
                 Address.newBuilder()
-                    .setHost(ByteString.copyFrom(ByteArray.fromString(node.getHost())))
-                    .setPort(node.getPort())));
-          });
+                        .setHost(ByteString.copyFrom(ByteArray.fromString(node.getHost())))
+                        .setPort(node.getPort())));
+      });
       responseObserver.onNext(nodeListBuilder.build());
       responseObserver.onCompleted();
     }

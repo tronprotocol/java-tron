@@ -1,31 +1,35 @@
 package org.tron.common.utils;
 
-import java.util.ArrayList;
-import java.util.List;
+import lombok.Data;
 import org.junit.Assert;
 import org.junit.Test;
-import org.tron.common.overlay.discover.node.DBNode;
-import org.tron.common.overlay.discover.node.DBNodeStats;
-import org.tron.common.overlay.discover.node.Node;
 
 public class JsonUtilTest {
 
+  @Data
+  public static class A {
+    private String key;
+    private int value;
+
+    public A() {}
+
+    public A(String key, int value) {
+      this.key = key;
+      this.value = value;
+    }
+  }
+
   @Test
   public void test() {
-    DBNode dbNode = new DBNode();
-    DBNodeStats dbNodeStats = new DBNodeStats(Node.getNodeId(), "1.0.0.1", 1000, 100);
-    List nodes = new ArrayList();
-    nodes.add(dbNodeStats);
-    dbNode.setNodes(nodes);
+    A a1 = new A();
+    a1.setKey("abc");
+    a1.setValue(100);
 
-    String jsonString = JsonUtil.obj2Json(dbNode);
+    String jsonString = JsonUtil.obj2Json(a1);
 
-    DBNode dbNode2 = JsonUtil.json2Obj(jsonString, DBNode.class);
+    A a2 = JsonUtil.json2Obj(jsonString, A.class);
 
-    dbNodeStats = dbNode2.getNodes().get(0);
-
-    Assert.assertEquals(dbNodeStats.getHost(), "1.0.0.1");
-    Assert.assertEquals(dbNodeStats.getPort(), 1000);
-    Assert.assertEquals(dbNodeStats.getReputation(), 100);
+    Assert.assertEquals(a2.getKey(), "abc");
+    Assert.assertEquals(a2.getValue(), 100);
   }
 }

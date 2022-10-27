@@ -2,21 +2,18 @@ package org.tron.core.net.services;
 
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
-
 import java.io.File;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
-
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.core.ChainBaseManager;
@@ -25,10 +22,11 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.net.message.BlockMessage;
+import org.tron.core.net.P2pEventHandlerImpl;
+import org.tron.core.net.message.adv.BlockMessage;
 import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
-import org.tron.core.net.service.RelayService;
+import org.tron.core.net.service.relay.RelayService;
 import org.tron.protos.Protocol;
 
 public class RelayServiceTest {
@@ -37,7 +35,7 @@ public class RelayServiceTest {
   private RelayService service;
   private ChainBaseManager chainBaseManager;
   private PeerConnection peer;
-  private SyncPool syncPool;
+  private P2pEventHandlerImpl p2pEventHandler;
   private String dbPath = "output-relay-service-test";
 
   /**
@@ -50,6 +48,7 @@ public class RelayServiceTest {
     context = new TronApplicationContext(DefaultConfig.class);
     service = context.getBean(RelayService.class);
     chainBaseManager = context.getBean(ChainBaseManager.class);
+    p2pEventHandler = context.getBean(P2pEventHandlerImpl.class);
   }
 
   @After
@@ -108,11 +107,11 @@ public class RelayServiceTest {
       peer.setAddress(getFromHexString("A0299F3DB80A24B20A254B89CE639D59132F157F13"));
       peer.setNeedSyncFromPeer(false);
       peer.setNeedSyncFromUs(false);
-      syncPool = context.getBean(SyncPool.class);
+      p2pEventHandler = context.getBean(P2pEventHandlerImpl.class);
 
       List<PeerConnection> peers = Lists.newArrayList();
       peers.add(peer);
-      ReflectUtils.setFieldValue(syncPool, "activePeers", peers);
+      ReflectUtils.setFieldValue(p2pEventHandler, "activePeers", peers);
       BlockCapsule blockCapsule = new BlockCapsule(chainBaseManager.getHeadBlockNum() + 1,
               chainBaseManager.getHeadBlockId(),
               0, getFromHexString("A04711BF7AFBDF44557DEFBDF4C4E7AA6138C6331F"));
@@ -121,8 +120,7 @@ public class RelayServiceTest {
       Item item = new Item(blockCapsule.getBlockId(), Protocol.Inventory.InventoryType.BLOCK);
       Assert.assertEquals(1, peer.getAdvInvSpread().size());
       Assert.assertNotNull(peer.getAdvInvSpread().getIfPresent(item));
-      peer.close();
-      syncPool.close();
+      peer.getChannel().close();
     } catch (NullPointerException e) {
       System.out.println(e);
     }

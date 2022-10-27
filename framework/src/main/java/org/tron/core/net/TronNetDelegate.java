@@ -16,10 +16,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.backup.BackupServer;
+import org.tron.common.backup.socket.BackupServer;
 import org.tron.common.overlay.message.Message;
-import org.tron.common.overlay.server.ChannelManager;
-import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.MetricLabels;
 import org.tron.common.prometheus.Metrics;
@@ -55,9 +53,9 @@ import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.metrics.MetricsService;
-import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.MessageTypes;
-import org.tron.core.net.message.TransactionMessage;
+import org.tron.core.net.message.adv.BlockMessage;
+import org.tron.core.net.message.adv.TransactionMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.protos.Protocol.Inventory.InventoryType;
@@ -65,12 +63,6 @@ import org.tron.protos.Protocol.Inventory.InventoryType;
 @Slf4j(topic = "net")
 @Component
 public class TronNetDelegate {
-
-  @Autowired
-  private SyncPool syncPool;
-
-  @Autowired
-  private ChannelManager channelManager;
 
   @Autowired
   private Manager dbManager;
@@ -123,7 +115,7 @@ public class TronNetDelegate {
   }
 
   public Collection<PeerConnection> getActivePeer() {
-    return syncPool.getActivePeers();
+    return TronNetService.getPeers();
   }
 
   public long getSyncBeginNumber() {
