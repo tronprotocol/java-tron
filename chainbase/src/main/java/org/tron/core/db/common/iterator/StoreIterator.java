@@ -11,6 +11,8 @@ public final class StoreIterator implements org.tron.core.db.common.iterator.DBI
   private DBIterator dbIterator;
   private boolean first = true;
 
+  private volatile boolean valid = true;
+
   public StoreIterator(DBIterator dbIterator) {
     this.dbIterator = dbIterator;
   }
@@ -22,6 +24,7 @@ public final class StoreIterator implements org.tron.core.db.common.iterator.DBI
 
   @Override
   public boolean hasNext() {
+    checkIteratorValid();
     boolean hasNext = false;
     // true is first item
     try {
@@ -32,9 +35,10 @@ public final class StoreIterator implements org.tron.core.db.common.iterator.DBI
 
       if (!(hasNext = dbIterator.hasNext())) { // false is last item
         dbIterator.close();
+        valid = false;
       }
     } catch (Exception e) {
-      logger.debug(e.getMessage(), e);
+      logger.error(e.getMessage(), e);
     }
 
     return hasNext;
@@ -42,11 +46,18 @@ public final class StoreIterator implements org.tron.core.db.common.iterator.DBI
 
   @Override
   public Entry<byte[], byte[]> next() {
+    checkIteratorValid();
     return dbIterator.next();
   }
 
   @Override
   public void remove() {
     throw new UnsupportedOperationException();
+  }
+
+  private void checkIteratorValid() {
+    if (!valid) {
+      throw new RuntimeException("Iterator have closed!");
+    }
   }
 }
