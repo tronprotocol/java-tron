@@ -542,9 +542,10 @@ public class Program {
             });
 
     // merge usage
+    BandwidthProcessor bandwidthProcessor = new BandwidthProcessor(ChainBaseManager.getInstance());
+    bandwidthProcessor.updateUsage(ownerCapsule);
+    ownerCapsule.setLatestConsumeTime(now);
     if (ownerCapsule.getNetUsage() > 0) {
-      BandwidthProcessor bandwidthProcessor =
-          new BandwidthProcessor(ChainBaseManager.getInstance());
       long newNetUsage =
           bandwidthProcessor.unDelegateIncrease(
               inheritorCapsule,
@@ -556,10 +557,12 @@ public class Program {
       inheritorCapsule.setLatestConsumeTime(now);
     }
 
+    EnergyProcessor energyProcessor =
+        new EnergyProcessor(
+            repo.getDynamicPropertiesStore(), ChainBaseManager.getInstance().getAccountStore());
+    energyProcessor.updateUsage(ownerCapsule);
+    ownerCapsule.setLatestConsumeTimeForEnergy(now);
     if (ownerCapsule.getEnergyUsage() > 0) {
-      EnergyProcessor energyProcessor =
-          new EnergyProcessor(
-              repo.getDynamicPropertiesStore(), ChainBaseManager.getInstance().getAccountStore());
       long newEnergyUsage =
           energyProcessor.unDelegateIncrease(
               inheritorCapsule,

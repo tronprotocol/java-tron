@@ -100,6 +100,7 @@ public class UnDelegateResourceProcessor {
     AccountCapsule ownerCapsule = repo.getAccount(ownerAddress);
     AccountCapsule receiverCapsule = repo.getAccount(receiverAddress);
     DynamicPropertiesStore dynamicStore = repo.getDynamicPropertiesStore();
+    long now = repo.getHeadSlot();
 
     long transferUsage = 0;
     // modify receiver Account
@@ -107,7 +108,6 @@ public class UnDelegateResourceProcessor {
       switch (param.getResourceType()) {
         case BANDWIDTH:
           BandwidthProcessor bandwidthProcessor = new BandwidthProcessor(ChainBaseManager.getInstance());
-          // todo update usage time?
           bandwidthProcessor.updateUsage(receiverCapsule);
 
           if (receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
@@ -127,6 +127,7 @@ public class UnDelegateResourceProcessor {
 
           long newNetUsage = receiverCapsule.getNetUsage() - transferUsage;
           receiverCapsule.setNetUsage(newNetUsage);
+          receiverCapsule.setLatestConsumeTime(now);
           break;
         case ENERGY:
           EnergyProcessor energyProcessor =
@@ -150,6 +151,7 @@ public class UnDelegateResourceProcessor {
 
           long newEnergyUsage = receiverCapsule.getEnergyUsage() - transferUsage;
           receiverCapsule.setEnergyUsage(newEnergyUsage);
+          receiverCapsule.setLatestConsumeTimeForEnergy(now);
           break;
         default:
           //this should never happen
@@ -161,7 +163,6 @@ public class UnDelegateResourceProcessor {
     // modify owner Account
     byte[] key = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress);
     DelegatedResourceCapsule delegatedResourceCapsule = repo.getDelegatedResource(key);
-    long now = repo.getHeadSlot();
     switch (param.getResourceType()) {
       case BANDWIDTH: {
         delegatedResourceCapsule.addFrozenBalanceForBandwidth(-unDelegateBalance, 0);
