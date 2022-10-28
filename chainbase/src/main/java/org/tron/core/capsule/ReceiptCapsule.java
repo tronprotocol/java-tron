@@ -160,7 +160,7 @@ public class ReceiptCapsule {
       return;
     }
 
-    if ((!Objects.isNull(origin))&&caller.getAddress().equals(origin.getAddress())) {
+    if ((!Objects.isNull(origin)) && caller.getAddress().equals(origin.getAddress())) {
       payEnergyBill(dynamicPropertiesStore, accountStore, forkController, caller,
           receipt.getEnergyUsageTotal(), receipt.getResult(), energyProcessor, now);
     } else {
