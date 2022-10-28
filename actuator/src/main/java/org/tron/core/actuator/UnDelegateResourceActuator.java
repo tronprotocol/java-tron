@@ -81,7 +81,7 @@ public class UnDelegateResourceActuator extends AbstractActuator {
             receiverCapsule.setAcquiredDelegatedFrozenBalanceForBandwidth(0);
           } else {
             // calculate usage
-            long unDelegateMaxUsage = (long) (unDelegateBalance / TRX_PRECISION
+            long unDelegateMaxUsage = (long) ((double) unDelegateBalance / TRX_PRECISION
                 * ((double) (dynamicStore.getTotalNetLimit()) / dynamicStore.getTotalNetWeight()));
             transferUsage = (long) (receiverCapsule.getNetUsage()
                 * ((double) (unDelegateBalance) / receiverCapsule.getAllFrozenBalanceForBandwidth()));
@@ -103,7 +103,7 @@ public class UnDelegateResourceActuator extends AbstractActuator {
             receiverCapsule.setAcquiredDelegatedFrozenBalanceForEnergy(0);
           } else {
             // calculate usage
-            long unDelegateMaxUsage = (long) (unDelegateBalance / TRX_PRECISION
+            long unDelegateMaxUsage = (long) ((double) unDelegateBalance / TRX_PRECISION
                 * ((double) (dynamicStore.getTotalEnergyCurrentLimit()) / dynamicStore.getTotalEnergyWeight()));
             transferUsage = (long) (receiverCapsule.getEnergyUsage()
                 * ((double) (unDelegateBalance) / receiverCapsule.getAllFrozenBalanceForEnergy()));
@@ -224,7 +224,7 @@ public class UnDelegateResourceActuator extends AbstractActuator {
     }
 
     if (!dynamicStore.supportUnfreezeDelay()) {
-      throw new ContractValidateException("Not support Delegate resource transaction,"
+      throw new ContractValidateException("Not support unDelegate resource transaction,"
           + " need to be opened by the committee");
     }
 

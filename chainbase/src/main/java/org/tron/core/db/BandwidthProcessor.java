@@ -47,9 +47,11 @@ public class BandwidthProcessor extends ResourceProcessor {
     long latestConsumeTime = accountCapsule.getLatestConsumeTime();
     accountCapsule.setNetUsage(increase(accountCapsule, BANDWIDTH,
             oldNetUsage, 0, latestConsumeTime, now));
+    accountCapsule.setLatestConsumeTime(now);
     long oldFreeNetUsage = accountCapsule.getFreeNetUsage();
     long latestConsumeFreeTime = accountCapsule.getLatestConsumeFreeTime();
     accountCapsule.setFreeNetUsage(increase(oldFreeNetUsage, 0, latestConsumeFreeTime, now));
+    accountCapsule.setLatestConsumeFreeTime(now);
 
     if (chainBaseManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
       Map<String, Long> assetMap = accountCapsule.getAssetMap();
@@ -58,6 +60,7 @@ public class BandwidthProcessor extends ResourceProcessor {
         long latestAssetOperationTime = accountCapsule.getLatestAssetOperationTime(assetName);
         accountCapsule.putFreeAssetNetUsage(assetName,
             increase(oldFreeAssetNetUsage, 0, latestAssetOperationTime, now));
+        accountCapsule.putLatestAssetOperationTimeMap(assetName, now);
       });
     }
     Map<String, Long> assetMapV2 = accountCapsule.getAssetMapV2();
@@ -73,6 +76,7 @@ public class BandwidthProcessor extends ResourceProcessor {
       long latestAssetOperationTime = accountCapsule.getLatestAssetOperationTimeV2(assetName);
       accountCapsule.putFreeAssetNetUsageV2(assetName,
           increase(oldFreeAssetNetUsage, 0, latestAssetOperationTime, now));
+      accountCapsule.putLatestAssetOperationTimeMapV2(assetName, now);
     });
   }
 
@@ -390,12 +394,25 @@ public class BandwidthProcessor extends ResourceProcessor {
 
   public long calculateGlobalNetLimit(AccountCapsule accountCapsule) {
     long frozeBalance = accountCapsule.getAllFrozenBalanceForBandwidth();
+    if (dynamicPropertiesStore.supportUnfreezeDelay()) {
+      return calculateGlobalNetLimitV2(frozeBalance);
+    }
     if (frozeBalance < TRX_PRECISION) {
       return 0;
     }
     long netWeight = frozeBalance / TRX_PRECISION;
     long totalNetLimit = chainBaseManager.getDynamicPropertiesStore().getTotalNetLimit();
     long totalNetWeight = chainBaseManager.getDynamicPropertiesStore().getTotalNetWeight();
+    if (totalNetWeight == 0) {
+      return 0;
+    }
+    return (long) (netWeight * ((double) totalNetLimit / totalNetWeight));
+  }
+
+  public long calculateGlobalNetLimitV2(long frozeBalance) {
+    double netWeight = (double) frozeBalance / TRX_PRECISION;
+    long totalNetLimit = dynamicPropertiesStore.getTotalNetLimit();
+    long totalNetWeight = dynamicPropertiesStore.getTotalNetWeight();
     if (totalNetWeight == 0) {
       return 0;
     }
