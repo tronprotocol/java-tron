@@ -108,8 +108,8 @@ public class UnDelegateResourceProcessor {
             receiverCapsule.setAcquiredDelegatedFrozenBalanceForBandwidth(0);
           } else {
             // calculate usage
-            long unDelegateMaxUsage = (long) (unDelegateBalance / TRX_PRECISION
-                * ((double) (dynamicStore.getTotalNetLimit()) / repo.getTotalNetWeight()));
+            long unDelegateMaxUsage = (long) ((double) unDelegateBalance / TRX_PRECISION
+                * dynamicStore.getTotalNetLimit() / repo.getTotalNetWeight());
             transferUsage = (long) (receiverCapsule.getNetUsage()
                 * ((double) (unDelegateBalance) / receiverCapsule.getAllFrozenBalanceForBandwidth()));
             transferUsage = Math.min(unDelegateMaxUsage, transferUsage);
@@ -131,8 +131,8 @@ public class UnDelegateResourceProcessor {
             receiverCapsule.setAcquiredDelegatedFrozenBalanceForEnergy(0);
           } else {
             // calculate usage
-            long unDelegateMaxUsage = (long) (unDelegateBalance / TRX_PRECISION
-                * ((double) (dynamicStore.getTotalEnergyCurrentLimit()) / repo.getTotalEnergyWeight()));
+            long unDelegateMaxUsage = (long) ((double) unDelegateBalance / TRX_PRECISION
+                * dynamicStore.getTotalEnergyCurrentLimit() / repo.getTotalEnergyWeight());
             transferUsage = (long) (receiverCapsule.getEnergyUsage()
                 * ((double) (unDelegateBalance) / receiverCapsule.getAllFrozenBalanceForEnergy()));
             transferUsage = Math.min(unDelegateMaxUsage, transferUsage);
