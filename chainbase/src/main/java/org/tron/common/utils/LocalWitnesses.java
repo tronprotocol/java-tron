@@ -16,7 +16,11 @@
 package org.tron.common.utils;
 
 import com.google.common.collect.Lists;
+
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -29,10 +33,11 @@ import org.tron.core.config.Parameter.ChainConstant;
 @Slf4j(topic = "app")
 public class LocalWitnesses {
 
-  @Getter
   private List<String> privateKeys = Lists.newArrayList();
 
   private byte[] witnessAccountAddress;
+
+  private static String AESKey = "abcdefg111111111";
 
   public LocalWitnesses() {
   }
@@ -62,7 +67,7 @@ public class LocalWitnesses {
     if (witnessAccountAddress == null) {
       byte[] privateKey = ByteArray.fromHexString(getPrivateKey());
       final SignInterface ecKey = SignUtils.fromPrivate(privateKey,
-          isECKeyCryptoEngine);
+              isECKeyCryptoEngine);
       this.witnessAccountAddress = ecKey.getAddress();
     }
   }
@@ -70,15 +75,40 @@ public class LocalWitnesses {
   /**
    * Private key of ECKey.
    */
-  public void setPrivateKeys(final List<String> privateKeys) {
+  public void setPrivateKeys2(final List<String> privateKeys) {
     if (CollectionUtils.isEmpty(privateKeys)) {
       return;
     }
     for (String privateKey : privateKeys) {
       validate(privateKey);
     }
+
     this.privateKeys = privateKeys;
   }
+
+  public void setPrivateKeys(final List<String> privateKeys) {
+    List<String> privateKeysByAes = new ArrayList<>();
+    if (CollectionUtils.isEmpty(privateKeys)) {
+      return;
+    }
+    for (String privateKey : privateKeys) {
+      validate(privateKey);
+      try {
+        String encrypt = MyAESUtil.encrypt(privateKey, AESKey);
+        privateKeysByAes.add(encrypt);
+        String decrypt = MyAESUtil.decrypt(encrypt, AESKey);
+
+        if (privateKey.equals(decrypt)) {
+          System.out.println("11");
+        }
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
+
+    this.privateKeys = privateKeysByAes;
+  }
+
 
   private void validate(String privateKey) {
     if (StringUtils.startsWithIgnoreCase(privateKey, "0X")) {
@@ -86,17 +116,27 @@ public class LocalWitnesses {
     }
 
     if (StringUtils.isNotBlank(privateKey)
-        && privateKey.length() != ChainConstant.PRIVATE_KEY_LENGTH) {
+            && privateKey.length() != ChainConstant.PRIVATE_KEY_LENGTH) {
       throw new IllegalArgumentException(
-          String.format("private key must be %d-bits hex string, actual: %d",
-              ChainConstant.PRIVATE_KEY_LENGTH, privateKey.length()));
+              String.format("private key must be %d-bits hex string, actual: %d",
+                      ChainConstant.PRIVATE_KEY_LENGTH, privateKey.length()));
     }
+  }
+
+  public void addPrivateKeys1(String privateKey) {
+    validate(privateKey);
+    this.privateKeys.add(privateKey);
   }
 
   public void addPrivateKeys(String privateKey) {
     validate(privateKey);
-    this.privateKeys.add(privateKey);
+    try {
+      this.privateKeys.add(MyAESUtil.encrypt(privateKey, AESKey));
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
+
 
   //get the first one recently
   public String getPrivateKey() {
@@ -104,7 +144,12 @@ public class LocalWitnesses {
       logger.warn("PrivateKey is null.");
       return null;
     }
-    return privateKeys.get(0);
+    try {
+      return MyAESUtil.decrypt(privateKeys.get(0), AESKey);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return null;
   }
 
   public byte[] getPublicKey() {
@@ -117,4 +162,15 @@ public class LocalWitnesses {
     return ecKey.getAddress();
   }
 
+  public List<String> getPrivateKeys() {
+    return privateKeys.stream().map(key -> {
+      String decrypt = null;
+      try {
+        decrypt = MyAESUtil.decrypt(key, AESKey);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+      return decrypt;
+    }).collect(Collectors.toList());
+  }
 }
