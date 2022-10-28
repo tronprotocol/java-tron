@@ -55,14 +55,6 @@ public class UnDelegateResourceProcessor {
           "receiverAddress must not be the same as ownerAddress");
     }
 
-    // TVM contract suicide can result in no receiving account
-//    AccountCapsule receiverCapsule = repo.getAccount(receiverAddress);
-//    if (receiverCapsule == null) {
-//     String readableReceiverAddress = StringUtil.createReadableString(receiverAddress);
-//     throw new ContractValidateException(
-//         "Receiver Account[" + readableReceiverAddress + "] does not exist");
-//    }
-
     byte[] key = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress);
     DelegatedResourceCapsule delegatedResourceCapsule = repo.getDelegatedResource(key);
     if (delegatedResourceCapsule == null) {
@@ -127,7 +119,6 @@ public class UnDelegateResourceProcessor {
 
           long newNetUsage = receiverCapsule.getNetUsage() - transferUsage;
           receiverCapsule.setNetUsage(newNetUsage);
-          receiverCapsule.setLatestConsumeTime(now);
           break;
         case ENERGY:
           EnergyProcessor energyProcessor =
@@ -151,7 +142,6 @@ public class UnDelegateResourceProcessor {
 
           long newEnergyUsage = receiverCapsule.getEnergyUsage() - transferUsage;
           receiverCapsule.setEnergyUsage(newEnergyUsage);
-          receiverCapsule.setLatestConsumeTimeForEnergy(now);
           break;
         default:
           //this should never happen
