@@ -65,7 +65,7 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
     mortgageService.withdrawReward(ownerAddress);
 
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
-    this.unfreezeExpire(accountCapsule, now);
+    long unfreezeAmount = this.unfreezeExpire(accountCapsule, now);
     long unfreezeBalance = unfreezeBalanceV2Contract.getUnfreezeBalance();
 
     if (dynamicStore.supportAllowNewResourceModel()
@@ -91,6 +91,7 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
     accountStore.put(ownerAddress, accountCapsule);
 
     ret.setUnfreezeAmount(unfreezeBalance);
+    ret.setWithdrawExpireAmount(unfreezeAmount);
     ret.setStatus(fee, code.SUCESS);
     return true;
   }
@@ -250,7 +251,7 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
     }
   }
 
-  public void unfreezeExpire(AccountCapsule accountCapsule, long now) {
+  public long unfreezeExpire(AccountCapsule accountCapsule, long now) {
     long unfreezeBalance = 0L;
 
     List<Protocol.Account.UnFreezeV2> unFrozenV2List = Lists.newArrayList();
@@ -271,6 +272,7 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
             .clearUnfrozenV2()
             .addAllUnfrozenV2(unFrozenV2List).build()
     );
+    return unfreezeBalance;
   }
 
   public void updateTotalResourceWeight(final UnfreezeBalanceV2Contract unfreezeBalanceV2Contract,

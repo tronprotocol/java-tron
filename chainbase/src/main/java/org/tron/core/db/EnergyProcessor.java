@@ -45,6 +45,7 @@ public class EnergyProcessor extends ResourceProcessor {
 
     accountCapsule.setEnergyUsage(increase(accountCapsule, ENERGY,
             oldEnergyUsage, 0, latestConsumeTime, now));
+    accountCapsule.setLatestConsumeTimeForEnergy(now);
   }
 
   public void updateTotalEnergyAverageUsage() {
@@ -130,6 +131,9 @@ public class EnergyProcessor extends ResourceProcessor {
 
   public long calculateGlobalEnergyLimit(AccountCapsule accountCapsule) {
     long frozeBalance = accountCapsule.getAllFrozenBalanceForEnergy();
+    if (dynamicPropertiesStore.supportUnfreezeDelay()) {
+      return calculateGlobalEnergyLimitV2(frozeBalance);
+    }
     if (frozeBalance < TRX_PRECISION) {
       return 0;
     }
@@ -142,6 +146,17 @@ public class EnergyProcessor extends ResourceProcessor {
 
     return (long) (energyWeight * ((double) totalEnergyLimit / totalEnergyWeight));
   }
+
+  public long calculateGlobalEnergyLimitV2(long frozeBalance) {
+    double energyWeight = (double) frozeBalance / TRX_PRECISION;
+    long totalEnergyLimit = dynamicPropertiesStore.getTotalEnergyCurrentLimit();
+    long totalEnergyWeight = dynamicPropertiesStore.getTotalEnergyWeight();
+    if (totalEnergyWeight == 0) {
+      return 0;
+    }
+    return (long) (energyWeight * ((double) totalEnergyLimit / totalEnergyWeight));
+  }
+
 
   public long getAccountLeftEnergyFromFreeze(AccountCapsule accountCapsule) {
     long now = getHeadSlot();
