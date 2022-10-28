@@ -557,7 +557,6 @@ public class VMActuator implements Actuator2 {
               rootRepository.getDynamicPropertiesStore(),
               ChainBaseManager.getInstance().getAccountStore());
       energyProcessor.updateUsage(account);
-      account.setLatestConsumeTimeForEnergy(now);
       receipt.setCallerEnergyUsage(account.getEnergyUsage());
       receipt.setCallerEnergyWindowSize(account.getWindowSize(Common.ResourceCode.ENERGY));
       account.setEnergyUsage(
@@ -718,7 +717,6 @@ public class VMActuator implements Actuator2 {
               rootRepository.getDynamicPropertiesStore(),
               ChainBaseManager.getInstance().getAccountStore());
       energyProcessor.updateUsage(creator);
-      creator.setLatestConsumeTimeForEnergy(now);
       receipt.setOriginEnergyUsage(creator.getEnergyUsage());
       receipt.setOriginEnergyWindowSize(creator.getWindowSize(Common.ResourceCode.ENERGY));
       creator.setEnergyUsage(
