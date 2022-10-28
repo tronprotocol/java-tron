@@ -248,17 +248,20 @@ public class TransactionTrace {
     AccountCapsule caller = accountStore.get(callerAccount);
     if (dynamicPropertiesStore.supportUnfreezeDelay()) {
 
-      long originPrevUsage = receipt.getOriginEnergyUsage() * receipt.getOriginEnergyWindowSize();
-      long originRepayUsage = (receipt.getOriginEnergyMergedUsage() - origin.getEnergyUsage())
-          * origin.getWindowSize(Common.ResourceCode.ENERGY);
+      // just fo caller is not origin, we set the related field for origin account
+      if (!caller.getAddress().equals(origin.getAddress())) {
+        long originPrevUsage = receipt.getOriginEnergyUsage() * receipt.getOriginEnergyWindowSize();
+        long originRepayUsage = (receipt.getOriginEnergyMergedUsage() - origin.getEnergyUsage())
+            * origin.getWindowSize(Common.ResourceCode.ENERGY);
 
-      long originUsageAfterRepay = Long.max(0,
-          (originPrevUsage - originRepayUsage) / receipt.getOriginEnergyWindowSize());
-      long originWindowSizeAfterRepay =
-          originUsageAfterRepay == 0 ? 0L : receipt.getOriginEnergyWindowSize();
+        long originUsageAfterRepay = Long.max(0,
+            (originPrevUsage - originRepayUsage) / receipt.getOriginEnergyWindowSize());
+        long originWindowSizeAfterRepay =
+            originUsageAfterRepay == 0 ? 0L : receipt.getOriginEnergyWindowSize();
 
-      origin.setEnergyUsage(originUsageAfterRepay);
-      origin.setNewWindowSize(Common.ResourceCode.ENERGY, originWindowSizeAfterRepay);
+        origin.setEnergyUsage(originUsageAfterRepay);
+        origin.setNewWindowSize(Common.ResourceCode.ENERGY, originWindowSizeAfterRepay);
+      }
 
       long callerPrevUsage = receipt.getCallerEnergyUsage() * receipt.getCallerEnergyWindowSize();
       long callerRepayUsage = (receipt.getCallerEnergyMergedUsage() - caller.getEnergyUsage())
