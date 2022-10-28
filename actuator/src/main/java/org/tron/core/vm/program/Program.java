@@ -544,7 +544,6 @@ public class Program {
     // merge usage
     BandwidthProcessor bandwidthProcessor = new BandwidthProcessor(ChainBaseManager.getInstance());
     bandwidthProcessor.updateUsage(ownerCapsule);
-    ownerCapsule.setLatestConsumeTime(now);
     if (ownerCapsule.getNetUsage() > 0) {
       long newNetUsage =
           bandwidthProcessor.unDelegateIncrease(
@@ -561,7 +560,6 @@ public class Program {
         new EnergyProcessor(
             repo.getDynamicPropertiesStore(), ChainBaseManager.getInstance().getAccountStore());
     energyProcessor.updateUsage(ownerCapsule);
-    ownerCapsule.setLatestConsumeTimeForEnergy(now);
     if (ownerCapsule.getEnergyUsage() > 0) {
       long newEnergyUsage =
           energyProcessor.unDelegateIncrease(
@@ -1989,9 +1987,9 @@ public class Program {
       }
       return true;
     } catch (ContractValidateException e) {
-      logger.error("TVM CancelAllUnfreezeV2Action: validate failure. Reason: {}", e.getMessage());
+      logger.error("TVM CancelAllUnfreezeV2: validate failure. Reason: {}", e.getMessage());
     } catch (ContractExeException e) {
-      logger.error("TVM CancelAllUnfreezeV2Action: execute failure. Reason: {}", e.getMessage());
+      logger.error("TVM CancelAllUnfreezeV2: execute failure. Reason: {}", e.getMessage());
     }
     if (internalTx != null) {
       internalTx.reject();
@@ -2008,7 +2006,7 @@ public class Program {
     increaseNonce();
     InternalTransaction internalTx = addInternalTx(null, owner, receiver,
         delegateBalance.longValue(), null,
-        "delegateResource" + convertResourceToString(resourceType), nonce, null);
+        "delegateResourceOf" + convertResourceToString(resourceType), nonce, null);
 
     try {
       DelegateResourceParam param = new DelegateResourceParam();
@@ -2042,7 +2040,7 @@ public class Program {
     increaseNonce();
     InternalTransaction internalTx = addInternalTx(null, owner, receiver,
         unDelegateBalance.longValue(), null,
-        "unDelegateResource" + convertResourceToString(resourceType), nonce, null);
+        "unDelegateResourceOf" + convertResourceToString(resourceType), nonce, null);
 
     try {
       UnDelegateResourceParam param = new UnDelegateResourceParam();

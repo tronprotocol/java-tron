@@ -48,8 +48,7 @@ public class OperationRegistry {
   }
 
   // Just for warming up class to avoid out_of_time
-  public static void init() {
-  }
+  public static void init() {}
 
   public static JumpTable getTable() {
     // always get the table which has the newest version

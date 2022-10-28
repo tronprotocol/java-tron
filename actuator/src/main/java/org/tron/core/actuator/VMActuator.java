@@ -25,10 +25,12 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.StorageUtils;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.ReceiptCapsule;
+import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.TransactionContext;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -56,6 +58,7 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
+import org.tron.protos.contract.Common;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
@@ -548,10 +551,18 @@ public class VMActuator implements Actuator2 {
 
     long energyFromFeeLimit = feeLimit / sunPerEnergy;
     if (VMConfig.allowTvmFreezeV2()) {
-      long newEnergyUsage = rootRepository.getAccountEnergyUsageFromFreeze(account);
-      receipt.setCallerEnergyUsage(newEnergyUsage);
-      account.setEnergyUsage(newEnergyUsage + min(leftFrozenEnergy, energyFromFeeLimit));
-      account.setLatestConsumeTimeForEnergy(rootRepository.getHeadSlot());
+      long now = rootRepository.getHeadSlot();
+      EnergyProcessor energyProcessor =
+          new EnergyProcessor(
+              rootRepository.getDynamicPropertiesStore(),
+              ChainBaseManager.getInstance().getAccountStore());
+      energyProcessor.updateUsage(account);
+      receipt.setCallerEnergyUsage(account.getEnergyUsage());
+      receipt.setCallerEnergyWindowSize(account.getWindowSize(Common.ResourceCode.ENERGY));
+      account.setEnergyUsage(
+          energyProcessor.increase(account, Common.ResourceCode.ENERGY,
+              account.getEnergyUsage(), min(leftFrozenEnergy, energyFromFeeLimit), now, now));
+      receipt.setCallerEnergyMergedUsage(account.getEnergyUsage());
       rootRepository.updateAccount(account.createDbKey(), account);
     }
     return min(availableEnergy, energyFromFeeLimit);
@@ -700,10 +711,18 @@ public class VMActuator implements Actuator2 {
       }
     }
     if (VMConfig.allowTvmFreezeV2()) {
-      long newEnergyUsage = rootRepository.getAccountEnergyUsageFromFreeze(creator);
-      receipt.setOriginEnergyUsage(newEnergyUsage);
-      creator.setEnergyUsage(creator.getEnergyUsage() + creatorEnergyLimit);
-      creator.setLatestConsumeTimeForEnergy(rootRepository.getHeadSlot());
+      long now = rootRepository.getHeadSlot();
+      EnergyProcessor energyProcessor =
+          new EnergyProcessor(
+              rootRepository.getDynamicPropertiesStore(),
+              ChainBaseManager.getInstance().getAccountStore());
+      energyProcessor.updateUsage(creator);
+      receipt.setOriginEnergyUsage(creator.getEnergyUsage());
+      receipt.setOriginEnergyWindowSize(creator.getWindowSize(Common.ResourceCode.ENERGY));
+      creator.setEnergyUsage(
+          energyProcessor.increase(creator, Common.ResourceCode.ENERGY,
+              creator.getEnergyUsage(), creatorEnergyLimit, now, now));
+      receipt.setOriginEnergyMergedUsage(creator.getEnergyUsage());
       rootRepository.updateAccount(creator.createDbKey(), creator);
     }
     return Math.addExact(callerEnergyLimit, creatorEnergyLimit);

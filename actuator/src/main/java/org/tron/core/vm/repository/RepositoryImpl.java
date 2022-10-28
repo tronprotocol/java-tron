@@ -174,7 +174,7 @@ public class RepositoryImpl implements Repository {
   }
 
   @Override
-  public long getAccountEnergyUsageFromFreeze(AccountCapsule accountCapsule) {
+  public long getAccountEnergyUsage(AccountCapsule accountCapsule) {
     long now = getHeadSlot();
     long energyUsage = accountCapsule.getEnergyUsage();
     long latestConsumeTime = accountCapsule.getAccountResource().getLatestConsumeTimeForEnergy();

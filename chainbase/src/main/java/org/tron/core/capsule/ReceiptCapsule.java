@@ -40,6 +40,22 @@ public class ReceiptCapsule {
   @Setter
   private long callerEnergyUsage;
 
+  @Getter
+  @Setter
+  private long callerEnergyMergedUsage;
+
+  @Getter
+  @Setter
+  private long originEnergyMergedUsage;
+
+  @Getter
+  @Setter
+  private long callerEnergyWindowSize;
+
+  @Getter
+  @Setter
+  private long originEnergyWindowSize;
+
   private Sha256Hash receiptAddress;
 
   public ReceiptCapsule(ResourceReceipt data, Sha256Hash receiptAddress) {
@@ -144,7 +160,7 @@ public class ReceiptCapsule {
       return;
     }
 
-    if ((!Objects.isNull(origin))&&caller.getAddress().equals(origin.getAddress())) {
+    if ((!Objects.isNull(origin)) && caller.getAddress().equals(origin.getAddress())) {
       payEnergyBill(dynamicPropertiesStore, accountStore, forkController, caller,
           receipt.getEnergyUsageTotal(), receipt.getResult(), energyProcessor, now);
     } else {
@@ -165,7 +181,7 @@ public class ReceiptCapsule {
       long originEnergyLimit,
       EnergyProcessor energyProcessor, long originUsage) {
 
-    if (dynamicPropertiesStore.getAllowTvmFreeze() == 1) {
+    if (dynamicPropertiesStore.getAllowTvmFreeze() == 1 || dynamicPropertiesStore.supportUnfreezeDelay()) {
       return Math.min(originUsage, Math.min(originEnergyLeft, originEnergyLimit));
     }
 
