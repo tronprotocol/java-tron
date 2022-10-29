@@ -1,8 +1,15 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
+import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.DecodeUtil;
@@ -19,16 +26,9 @@ import org.tron.core.store.VotesStore;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.Protocol.Vote;
 import org.tron.protos.contract.BalanceContract.UnfreezeBalanceV2Contract;
 import org.tron.protos.contract.Common;
-
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
-
-import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
-import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
-import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 @Slf4j(topic = "actuator")
 public class UnfreezeBalanceV2Actuator extends AbstractActuator {
@@ -81,7 +81,7 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
     accountCapsule.addUnfrozenV2List(freezeType, unfreezeBalance, expireTime);
 
     this.updateTotalResourceWeight(unfreezeBalanceV2Contract, unfreezeBalance);
-    this.clearVotes(accountCapsule,unfreezeBalanceV2Contract, ownerAddress);
+    this.updateVote(accountCapsule, unfreezeBalanceV2Contract, ownerAddress);
 
     if (dynamicStore.supportAllowNewResourceModel()
         && !accountCapsule.oldTronPowerIsInvalid()) {
@@ -155,7 +155,7 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
             throw new ContractValidateException("no frozenBalance(TronPower)");
           }
         } else {
-            throw new ContractValidateException("ResourceCode error.valid ResourceCode[BANDWIDTH、Energy]");
+          throw new ContractValidateException("ResourceCode error.valid ResourceCode[BANDWIDTH、Energy]");
         }
         break;
       default:
@@ -168,7 +168,7 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
 
     if (!checkUnfreezeBalance(accountCapsule, unfreezeBalanceV2Contract, unfreezeBalanceV2Contract.getResource())) {
       throw new ContractValidateException(
-              "Invalid unfreeze_balance, [" + unfreezeBalanceV2Contract.getUnfreezeBalance() + "] is error"
+          "Invalid unfreeze_balance, [" + unfreezeBalanceV2Contract.getUnfreezeBalance() + "] is error"
       );
     }
 
@@ -209,8 +209,8 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
   }
 
   public boolean checkUnfreezeBalance(AccountCapsule accountCapsule,
-                                       final UnfreezeBalanceV2Contract unfreezeBalanceV2Contract,
-                                      Common.ResourceCode freezeType)  {
+                                      final UnfreezeBalanceV2Contract unfreezeBalanceV2Contract,
+                                      Common.ResourceCode freezeType) {
     boolean checkOk = false;
 
     long frozenAmount = 0L;
@@ -223,7 +223,7 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
     }
 
     if (unfreezeBalanceV2Contract.getUnfreezeBalance() > 0
-            && unfreezeBalanceV2Contract.getUnfreezeBalance() <= frozenAmount) {
+        && unfreezeBalanceV2Contract.getUnfreezeBalance() <= frozenAmount) {
       checkOk = true;
     }
 
@@ -241,10 +241,10 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
     List<Protocol.Account.FreezeV2> freezeV2List = accountCapsule.getFrozenV2List();
     for (int i = 0; i < freezeV2List.size(); i++) {
       if (freezeV2List.get(i).getType().equals(freezeType)) {
-        Protocol.Account.FreezeV2 freezeV2 =  Protocol.Account.FreezeV2.newBuilder()
-                .setAmount(freezeV2List.get(i).getAmount() - unfreezeBalance)
-                .setType(freezeV2List.get(i).getType())
-                .build();
+        Protocol.Account.FreezeV2 freezeV2 = Protocol.Account.FreezeV2.newBuilder()
+            .setAmount(freezeV2List.get(i).getAmount() - unfreezeBalance)
+            .setType(freezeV2List.get(i).getType())
+            .build();
         accountCapsule.updateFrozenV2List(i, freezeV2);
         break;
       }
@@ -267,7 +267,7 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
     }
 
     accountCapsule.setInstance(
-            accountCapsule.getInstance().toBuilder()
+        accountCapsule.getInstance().toBuilder()
             .setBalance(accountCapsule.getBalance() + unfreezeBalance)
             .clearUnfrozenV2()
             .addAllUnfrozenV2(unFrozenV2List).build()
@@ -276,7 +276,7 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
   }
 
   public void updateTotalResourceWeight(final UnfreezeBalanceV2Contract unfreezeBalanceV2Contract,
-                                      long unfreezeBalance) {
+                                        long unfreezeBalance) {
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     switch (unfreezeBalanceV2Contract.getResource()) {
       case BANDWIDTH:
@@ -294,38 +294,86 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
     }
   }
 
-  private void clearVotes(AccountCapsule accountCapsule,
+  private void updateVote(AccountCapsule accountCapsule,
                           final UnfreezeBalanceV2Contract unfreezeBalanceV2Contract,
                           byte[] ownerAddress) {
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     VotesStore votesStore = chainBaseManager.getVotesStore();
 
-    boolean needToClearVote = true;
-    if (dynamicStore.supportAllowNewResourceModel()
-            && accountCapsule.oldTronPowerIsInvalid()) {
-      switch (unfreezeBalanceV2Contract.getResource()) {
-        case BANDWIDTH:
-        case ENERGY:
-          needToClearVote = false;
-          break;
-        default:
-          break;
+    if (accountCapsule.getVotesList().isEmpty()) {
+      return;
+    }
+    if (dynamicStore.supportAllowNewResourceModel()) {
+      if (accountCapsule.oldTronPowerIsInvalid()) {
+        switch (unfreezeBalanceV2Contract.getResource()) {
+          case BANDWIDTH:
+          case ENERGY:
+            // there is no need to change votes
+            return;
+          default:
+            break;
+        }
+      } else {
+        // clear all votes at once when new resource model start
+        VotesCapsule votesCapsule;
+        if (!votesStore.has(ownerAddress)) {
+          votesCapsule = new VotesCapsule(
+              unfreezeBalanceV2Contract.getOwnerAddress(),
+              accountCapsule.getVotesList()
+          );
+        } else {
+          votesCapsule = votesStore.get(ownerAddress);
+        }
+        accountCapsule.clearVotes();
+        votesCapsule.clearNewVotes();
+        votesStore.put(ownerAddress, votesCapsule);
+        return;
       }
     }
 
-    if (needToClearVote) {
-      VotesCapsule votesCapsule;
-      if (!votesStore.has(ownerAddress)) {
-        votesCapsule = new VotesCapsule(
-                unfreezeBalanceV2Contract.getOwnerAddress(),
-                accountCapsule.getVotesList()
-        );
-      } else {
-        votesCapsule = votesStore.get(ownerAddress);
+    long totalVote = 0;
+    for (Protocol.Vote vote : accountCapsule.getVotesList()) {
+      totalVote += vote.getVoteCount();
+    }
+    long ownedTronPower;
+    if (dynamicStore.supportAllowNewResourceModel()) {
+      ownedTronPower = accountCapsule.getAllTronPower();
+    } else {
+      ownedTronPower = accountCapsule.getTronPower();
+    }
+
+    // tron power is enough to total votes
+    if (ownedTronPower >= totalVote * TRX_PRECISION) {
+      return;
+    }
+    if (totalVote == 0) {
+      return;
+    }
+
+    VotesCapsule votesCapsule;
+    if (!votesStore.has(ownerAddress)) {
+      votesCapsule = new VotesCapsule(
+          unfreezeBalanceV2Contract.getOwnerAddress(),
+          accountCapsule.getVotesList()
+      );
+    } else {
+      votesCapsule = votesStore.get(ownerAddress);
+    }
+
+    // Update Owner Voting
+    votesCapsule.clearNewVotes();
+    for (Vote vote : accountCapsule.getVotesList()) {
+      long newVoteCount = (long)
+          ((double) vote.getVoteCount() / totalVote * ownedTronPower / TRX_PRECISION);
+      if (newVoteCount > 0) {
+        votesCapsule.addNewVotes(vote.getVoteAddress(), newVoteCount);
       }
-      accountCapsule.clearVotes();
-      votesCapsule.clearNewVotes();
-      votesStore.put(ownerAddress, votesCapsule);
+    }
+    votesStore.put(ownerAddress, votesCapsule);
+
+    accountCapsule.clearVotes();
+    for (Vote vote : votesCapsule.getNewVotes()) {
+      accountCapsule.addVotes(vote.getVoteAddress(), vote.getVoteCount());
     }
   }
 }
