@@ -1473,12 +1473,13 @@ public class Manager {
     AtomicInteger shieldedTransCounts = new AtomicInteger(0);
     List<TransactionCapsule> toBePacked = new ArrayList<>();
     long currentSize = blockCapsule.getInstance().getSerializedSize();
+    boolean isSort = Args.getInstance().isOpenTransactionSort();
     while (pendingTransactions.size() > 0 || rePushTransactions.size() > 0) {
       boolean fromPending = false;
       TransactionCapsule trx;
       if (pendingTransactions.size() > 0) {
         trx = pendingTransactions.peek();
-        if (Args.getInstance().isOpenTransactionSort()) {
+        if (isSort) {
           TransactionCapsule trxRepush = rePushTransactions.peek();
           if (trxRepush == null || trx.getOrder() >= trxRepush.getOrder()) {
             fromPending = true;
@@ -1520,7 +1521,8 @@ public class Manager {
         continue;
       }
       //shielded transaction
-      if (isShieldedTransaction(trx.getInstance())
+      Transaction transaction = trx.getInstance();
+      if (isShieldedTransaction(transaction)
               && shieldedTransCounts.incrementAndGet() > SHIELDED_TRANS_IN_BLOCK_COUNTS) {
         continue;
       }
@@ -1530,7 +1532,7 @@ public class Manager {
       if (accountSet.contains(ownerAddress)) {
         continue;
       } else {
-        if (isMultiSignTransaction(trx.getInstance())) {
+        if (isMultiSignTransaction(transaction)) {
           accountSet.add(ownerAddress);
         }
       }

@@ -14,6 +14,7 @@ public class Metrics {
 
   public static final double MILLISECONDS_PER_SECOND = Collector.MILLISECONDS_PER_SECOND;
   private static volatile boolean initialized = false;
+  private static final boolean enable = CommonParameter.getInstance().isMetricsPrometheusEnable();
 
   private Metrics() {
     throw new IllegalStateException("Metrics");
@@ -40,7 +41,7 @@ public class Metrics {
   }
 
   public static boolean enabled() {
-    return CommonParameter.getInstance().isMetricsPrometheusEnable();
+    return enable;
   }
 
   public static void counterInc(String key, double amt, String... labels) {
