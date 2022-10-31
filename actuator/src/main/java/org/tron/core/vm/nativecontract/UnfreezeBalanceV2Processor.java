@@ -277,7 +277,6 @@ public class UnfreezeBalanceV2Processor {
 
     // Update Owner Voting
     List<Protocol.Vote> votesToAdd = new ArrayList<>();
-    votesCapsule.clearNewVotes();
     for (Protocol.Vote vote : accountCapsule.getVotesList()) {
       long newVoteCount =
           (long) ((double) vote.getVoteCount() / totalVote * ownedTronPower / TRX_PRECISION);
@@ -289,6 +288,7 @@ public class UnfreezeBalanceV2Processor {
                 .build());
       }
     }
+    votesCapsule.clearNewVotes();
     votesCapsule.addAllNewVotes(votesToAdd);
     repo.updateVotes(ownerAddress, votesCapsule);
 
