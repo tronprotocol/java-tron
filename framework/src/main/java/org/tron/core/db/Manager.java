@@ -1518,7 +1518,7 @@ public class Manager {
       // check the block size
       if ((currentSize = currentSize + trx.getSerializedSize() + 3) > ChainConstant.BLOCK_SIZE) {
         postponedTrxCount++;
-        continue;
+        break;
       }
       //shielded transaction
       Transaction transaction = trx.getInstance();
