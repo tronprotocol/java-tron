@@ -493,6 +493,9 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .addVotes(Vote.newBuilder().setVoteAddress(voteAddress).setVoteCount(voteAdd).build())
         .build();
   }
+  public void addAllVotes(List<Vote> votesToAdd) {
+    this.account = this.account.toBuilder().addAllVotes(votesToAdd).build();
+  }
 
   public void clearLatestAssetOperationTimeV2() {
     this.account = this.account.toBuilder()

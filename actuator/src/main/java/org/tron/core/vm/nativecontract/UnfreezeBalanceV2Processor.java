@@ -7,6 +7,7 @@ import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -275,19 +276,23 @@ public class UnfreezeBalanceV2Processor {
     }
 
     // Update Owner Voting
+    List<Protocol.Vote> votesToAdd = new ArrayList<>();
     votesCapsule.clearNewVotes();
     for (Protocol.Vote vote : accountCapsule.getVotesList()) {
       long newVoteCount =
           (long) ((double) vote.getVoteCount() / totalVote * ownedTronPower / TRX_PRECISION);
       if (newVoteCount > 0) {
-        votesCapsule.addNewVotes(vote.getVoteAddress(), newVoteCount);
+        votesToAdd.add(
+            Protocol.Vote.newBuilder()
+                .setVoteAddress(vote.getVoteAddress())
+                .setVoteCount(newVoteCount)
+                .build());
       }
     }
+    votesCapsule.addAllNewVotes(votesToAdd);
     repo.updateVotes(ownerAddress, votesCapsule);
 
     accountCapsule.clearVotes();
-    for (Protocol.Vote vote : votesCapsule.getNewVotes()) {
-      accountCapsule.addVotes(vote.getVoteAddress(), vote.getVoteCount());
-    }
+    accountCapsule.addAllVotes(votesToAdd);
   }
 }
