@@ -864,7 +864,7 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void getMarketOrderListByPair(org.tron.protos.Protocol.MarketOrderPair request,
+    public void getMarketOrderListByPair(MarketOrderPair request,
         StreamObserver<MarketOrderList> responseObserver) {
       try {
         MarketOrderList orderPairList = wallet
@@ -2141,7 +2141,7 @@ public class RpcApiService implements Service {
         StreamObserver<ShieldedAddressInfo> responseObserver) {
 
       try {
-        checkSupportShieldedTRC20Transaction();
+        checkSupportShieldedTransaction();
 
         responseObserver.onNext(wallet.getNewShieldedAddress());
       } catch (Exception e) {
@@ -2155,7 +2155,7 @@ public class RpcApiService implements Service {
     public void getSpendingKey(EmptyMessage request,
         StreamObserver<BytesMessage> responseObserver) {
       try {
-        checkSupportShieldedTRC20Transaction();
+        checkSupportShieldedTransaction();
 
         responseObserver.onNext(wallet.getSpendingKey());
       } catch (Exception e) {
@@ -2169,7 +2169,7 @@ public class RpcApiService implements Service {
     public void getRcm(EmptyMessage request,
         StreamObserver<BytesMessage> responseObserver) {
       try {
-        checkSupportShieldedTRC20Transaction();
+        checkSupportShieldedTransaction();
 
         responseObserver.onNext(wallet.getRcm());
       } catch (Exception e) {
@@ -2185,7 +2185,7 @@ public class RpcApiService implements Service {
       ByteString spendingKey = request.getValue();
 
       try {
-        checkSupportShieldedTRC20Transaction();
+        checkSupportShieldedTransaction();
 
         ExpandedSpendingKeyMessage response = wallet.getExpandedSpendingKey(spendingKey);
         responseObserver.onNext(response);
@@ -2202,7 +2202,7 @@ public class RpcApiService implements Service {
       ByteString ak = request.getValue();
 
       try {
-        checkSupportShieldedTRC20Transaction();
+        checkSupportShieldedTransaction();
 
         responseObserver.onNext(wallet.getAkFromAsk(ak));
       } catch (BadItemException | ZksnarkException e) {
@@ -2218,7 +2218,7 @@ public class RpcApiService implements Service {
       ByteString nk = request.getValue();
 
       try {
-        checkSupportShieldedTRC20Transaction();
+        checkSupportShieldedTransaction();
 
         responseObserver.onNext(wallet.getNkFromNsk(nk));
       } catch (BadItemException | ZksnarkException e) {
@@ -2236,7 +2236,7 @@ public class RpcApiService implements Service {
       ByteString nk = request.getNk();
 
       try {
-        checkSupportShieldedTRC20Transaction();
+        checkSupportShieldedTransaction();
 
         responseObserver.onNext(wallet.getIncomingViewingKey(ak.toByteArray(), nk.toByteArray()));
       } catch (ZksnarkException e) {
@@ -2251,7 +2251,7 @@ public class RpcApiService implements Service {
     public void getDiversifier(EmptyMessage request,
         StreamObserver<DiversifierMessage> responseObserver) {
       try {
-        checkSupportShieldedTRC20Transaction();
+        checkSupportShieldedTransaction();
 
         DiversifierMessage d = wallet.getDiversifier();
         responseObserver.onNext(d);
@@ -2270,7 +2270,7 @@ public class RpcApiService implements Service {
       DiversifierMessage d = request.getD();
 
       try {
-        checkSupportShieldedTRC20Transaction();
+        checkSupportShieldedTransaction();
 
         PaymentAddressMessage saplingPaymentAddressMessage =
             wallet.getPaymentAddress(new IncomingViewingKey(ivk.getIvk().toByteArray()),
@@ -2379,7 +2379,7 @@ public class RpcApiService implements Service {
     public void createSpendAuthSig(SpendAuthSigParameters request,
         StreamObserver<GrpcAPI.BytesMessage> responseObserver) {
       try {
-        checkSupportShieldedTRC20Transaction();
+        checkSupportShieldedTransaction();
 
         BytesMessage spendAuthSig = wallet.createSpendAuthSig(request);
         responseObserver.onNext(spendAuthSig);

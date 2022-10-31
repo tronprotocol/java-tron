@@ -26,7 +26,6 @@ import org.tron.protos.Protocol;
 
 @Slf4j
 public class VMContractTestBase {
-
   protected String dbPath;
   protected Runtime runtime;
   protected Manager manager;
