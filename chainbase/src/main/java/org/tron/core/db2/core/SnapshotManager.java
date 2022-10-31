@@ -169,7 +169,7 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   private void advance() {
-    dbs.forEach(db -> db.setHead(db.getHead().advance()));
+    dbs.stream().parallel().forEach(db -> db.setHead(db.getHead().advance()));
     ++size;
   }
 
@@ -187,7 +187,7 @@ public class SnapshotManager implements RevokingDatabase {
       return;
     }
 
-    dbs.forEach(db -> db.getHead().getPrevious().merge(db.getHead()));
+    dbs.stream().parallel().forEach(db -> db.getHead().getPrevious().merge(db.getHead()));
     retreat();
     --activeSession;
   }
