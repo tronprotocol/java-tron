@@ -140,7 +140,7 @@ public class UnfreezeBalanceV2Processor {
     accountCapsule.addUnfrozenV2List(param.getResourceType(), unfreezeBalance, expireTime);
 
     this.updateTotalResourceWeight(param.getResourceType(), unfreezeBalance, repo);
-    this.clearVotes(accountCapsule, param.getResourceType(), ownerAddress, repo);
+    this.updateVote(accountCapsule, param.getResourceType(), ownerAddress, repo);
 
     if (repo.getDynamicPropertiesStore().supportAllowNewResourceModel()
         && !accountCapsule.oldTronPowerIsInvalid()) {
@@ -215,34 +215,28 @@ public class UnfreezeBalanceV2Processor {
     }
   }
 
-  private void clearVotes(
-      AccountCapsule accountCapsule, Common.ResourceCode freezeType, byte[] ownerAddress, Repository repo) {
+  private void updateVote(
+      AccountCapsule accountCapsule,
+      Common.ResourceCode freezeType,
+      byte[] ownerAddress,
+      Repository repo) {
+    DynamicPropertiesStore dynamicStore = repo.getDynamicPropertiesStore();
 
-    boolean needToClearVote = true;
-    if (repo.getDynamicPropertiesStore().supportAllowNewResourceModel()
-        && accountCapsule.oldTronPowerIsInvalid()) {
-      switch (freezeType) {
-        case BANDWIDTH:
-        case ENERGY:
-          needToClearVote = false;
-          break;
-        default:
-          break;
-      }
+    if (!VMConfig.allowTvmVote() || accountCapsule.getVotesList().isEmpty()) {
+      return;
     }
-
-    if (needToClearVote && VMConfig.allowTvmVote() && !accountCapsule.getVotesList().isEmpty()) {
-      long usedTronPower = 0;
-      for (Protocol.Vote vote : accountCapsule.getVotesList()) {
-        usedTronPower += vote.getVoteCount();
-      }
-      long ownedTronPower;
-      if (repo.getDynamicPropertiesStore().supportAllowNewResourceModel()) {
-        ownedTronPower = accountCapsule.getAllTronPower();
+    if (dynamicStore.supportAllowNewResourceModel()) {
+      if (accountCapsule.oldTronPowerIsInvalid()) {
+        switch (freezeType) {
+          case BANDWIDTH:
+          case ENERGY:
+            // there is no need to change votes
+            return;
+          default:
+            break;
+        }
       } else {
-        ownedTronPower = accountCapsule.getTronPower();
-      }
-      if (ownedTronPower < usedTronPower * TRX_PRECISION) {
+        // clear all votes at once when new resource model start
         VotesCapsule votesCapsule = repo.getVotes(ownerAddress);
         if (votesCapsule == null) {
           votesCapsule =
@@ -251,7 +245,49 @@ public class UnfreezeBalanceV2Processor {
         accountCapsule.clearVotes();
         votesCapsule.clearNewVotes();
         repo.updateVotes(ownerAddress, votesCapsule);
+        return;
       }
+    }
+
+    long totalVote = 0;
+    for (Protocol.Vote vote : accountCapsule.getVotesList()) {
+      totalVote += vote.getVoteCount();
+    }
+    if (totalVote == 0) {
+      return;
+    }
+
+    long ownedTronPower;
+    if (dynamicStore.supportAllowNewResourceModel()) {
+      ownedTronPower = accountCapsule.getAllTronPower();
+    } else {
+      ownedTronPower = accountCapsule.getTronPower();
+    }
+    // tron power is enough to total votes
+    if (ownedTronPower >= totalVote * TRX_PRECISION) {
+      return;
+    }
+
+    VotesCapsule votesCapsule = repo.getVotes(ownerAddress);
+    if (votesCapsule == null) {
+      votesCapsule =
+          new VotesCapsule(ByteString.copyFrom(ownerAddress), accountCapsule.getVotesList());
+    }
+
+    // Update Owner Voting
+    votesCapsule.clearNewVotes();
+    for (Protocol.Vote vote : accountCapsule.getVotesList()) {
+      long newVoteCount =
+          (long) ((double) vote.getVoteCount() / totalVote * ownedTronPower / TRX_PRECISION);
+      if (newVoteCount > 0) {
+        votesCapsule.addNewVotes(vote.getVoteAddress(), newVoteCount);
+      }
+    }
+    repo.updateVotes(ownerAddress, votesCapsule);
+
+    accountCapsule.clearVotes();
+    for (Protocol.Vote vote : votesCapsule.getNewVotes()) {
+      accountCapsule.addVotes(vote.getVoteAddress(), vote.getVoteCount());
     }
   }
 }
