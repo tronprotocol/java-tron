@@ -1414,7 +1414,7 @@ public class Wallet {
     try {
       block = chainBaseManager.getBlockStore().get(blockId.toByteArray()).getInstance();
     } catch (StoreException e) {
-      logger.error(e.getMessage());
+      logger.warn(e.getMessage());
     }
     return block;
   }
