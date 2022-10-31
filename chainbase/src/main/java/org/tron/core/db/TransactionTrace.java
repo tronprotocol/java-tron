@@ -246,7 +246,8 @@ public class TransactionTrace {
     // originAccount Percent = 30%
     AccountCapsule origin = accountStore.get(originAccount);
     AccountCapsule caller = accountStore.get(callerAccount);
-    if (dynamicPropertiesStore.supportUnfreezeDelay()) {
+    if (dynamicPropertiesStore.supportUnfreezeDelay()
+        && receipt.getReceipt().getResult().equals(contractResult.SUCCESS)) {
 
       // just fo caller is not origin, we set the related field for origin account
       if (!caller.getAddress().equals(origin.getAddress())) {
