@@ -47,11 +47,9 @@ public class BandwidthProcessor extends ResourceProcessor {
     long latestConsumeTime = accountCapsule.getLatestConsumeTime();
     accountCapsule.setNetUsage(increase(accountCapsule, BANDWIDTH,
             oldNetUsage, 0, latestConsumeTime, now));
-    accountCapsule.setLatestConsumeTime(now);
     long oldFreeNetUsage = accountCapsule.getFreeNetUsage();
     long latestConsumeFreeTime = accountCapsule.getLatestConsumeFreeTime();
     accountCapsule.setFreeNetUsage(increase(oldFreeNetUsage, 0, latestConsumeFreeTime, now));
-    accountCapsule.setLatestConsumeFreeTime(now);
 
     if (chainBaseManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
       Map<String, Long> assetMap = accountCapsule.getAssetMap();
@@ -60,7 +58,6 @@ public class BandwidthProcessor extends ResourceProcessor {
         long latestAssetOperationTime = accountCapsule.getLatestAssetOperationTime(assetName);
         accountCapsule.putFreeAssetNetUsage(assetName,
             increase(oldFreeAssetNetUsage, 0, latestAssetOperationTime, now));
-        accountCapsule.putLatestAssetOperationTimeMap(assetName, now);
       });
     }
     Map<String, Long> assetMapV2 = accountCapsule.getAssetMapV2();
@@ -76,7 +73,6 @@ public class BandwidthProcessor extends ResourceProcessor {
       long latestAssetOperationTime = accountCapsule.getLatestAssetOperationTimeV2(assetName);
       accountCapsule.putFreeAssetNetUsageV2(assetName,
           increase(oldFreeAssetNetUsage, 0, latestAssetOperationTime, now));
-      accountCapsule.putLatestAssetOperationTimeMapV2(assetName, now);
     });
   }
 
