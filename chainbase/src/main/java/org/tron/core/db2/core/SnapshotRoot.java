@@ -33,7 +33,6 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   public SnapshotRoot(DB<byte[], byte[]> db) {
     this.db = db;
     solidity = this;
-    isOptimized = "properties".equalsIgnoreCase(db.getDbName());
     isAccountDB = "account".equalsIgnoreCase(db.getDbName());
     if (CACHE_DBS.contains(this.db.getDbName())) {
       this.cache = CacheManager.allocate(this.db.getDbName());

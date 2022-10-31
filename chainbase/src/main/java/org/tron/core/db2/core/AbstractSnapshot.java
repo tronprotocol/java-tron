@@ -15,7 +15,6 @@ public abstract class AbstractSnapshot<K, V> implements Snapshot {
 
   protected WeakReference<Snapshot> next;
 
-  protected boolean isOptimized;
 
   @Override
   public Snapshot advance() {
@@ -37,8 +36,4 @@ public abstract class AbstractSnapshot<K, V> implements Snapshot {
     return db.getDbName();
   }
 
-  @Override
-  public boolean isOptimized(){
-    return isOptimized;
-  }
 }
