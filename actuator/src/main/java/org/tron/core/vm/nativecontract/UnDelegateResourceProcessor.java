@@ -119,6 +119,7 @@ public class UnDelegateResourceProcessor {
 
           long newNetUsage = receiverCapsule.getNetUsage() - transferUsage;
           receiverCapsule.setNetUsage(newNetUsage);
+          receiverCapsule.setLatestConsumeTime(now);
           break;
         case ENERGY:
           EnergyProcessor energyProcessor =
@@ -142,6 +143,7 @@ public class UnDelegateResourceProcessor {
 
           long newEnergyUsage = receiverCapsule.getEnergyUsage() - transferUsage;
           receiverCapsule.setEnergyUsage(newEnergyUsage);
+          receiverCapsule.setLatestConsumeTimeForEnergy(now);
           break;
         default:
           //this should never happen
