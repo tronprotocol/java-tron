@@ -45,7 +45,6 @@ public class EnergyProcessor extends ResourceProcessor {
 
     accountCapsule.setEnergyUsage(increase(accountCapsule, ENERGY,
             oldEnergyUsage, 0, latestConsumeTime, now));
-    accountCapsule.setLatestConsumeTimeForEnergy(now);
   }
 
   public void updateTotalEnergyAverageUsage() {

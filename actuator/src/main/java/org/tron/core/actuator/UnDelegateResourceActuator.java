@@ -92,6 +92,7 @@ public class UnDelegateResourceActuator extends AbstractActuator {
 
           long newNetUsage = receiverCapsule.getNetUsage() - transferUsage;
           receiverCapsule.setNetUsage(newNetUsage);
+          receiverCapsule.setLatestConsumeTime(chainBaseManager.getHeadSlot());
           break;
         case ENERGY:
           EnergyProcessor energyProcessor = new EnergyProcessor(dynamicStore, accountStore);
@@ -114,6 +115,7 @@ public class UnDelegateResourceActuator extends AbstractActuator {
 
           long newEnergyUsage = receiverCapsule.getEnergyUsage() - transferUsage;
           receiverCapsule.setEnergyUsage(newEnergyUsage);
+          receiverCapsule.setLatestConsumeTimeForEnergy(chainBaseManager.getHeadSlot());
           break;
         default:
           //this should never happen
