@@ -41,7 +41,7 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
 
   private boolean needOptAsset() {
     return isAccountDB && ChainBaseManager.getInstance().getDynamicPropertiesStore()
-            .getAllowAccountAssetOptimizationFromRoot() == 1;
+        .getAllowAccountAssetOptimizationFromRoot() == 1;
   }
 
   @Override
@@ -64,7 +64,7 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
         return;
       }
       AccountAssetStore assetStore =
-              ChainBaseManager.getInstance().getAccountAssetStore();
+          ChainBaseManager.getInstance().getAccountAssetStore();
       AccountCapsule item = new AccountCapsule(value);
       if (!item.getAssetOptimized()) {
         assetStore.deleteAccount(item.createDbKey());
@@ -151,28 +151,13 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
 
   private void putCache(byte[] key, byte[] value) {
     if (cached()) {
-      if (key == null) {
-        return;
-      }
       cache.put(WrappedByteArray.of(key), WrappedByteArray.of(value));
-    }
-  }
-
-  private void putCache(WrappedByteArray key, WrappedByteArray value) {
-    if (cached()) {
-      if (key == null || value == null) {
-        return;
-      }
-      cache.put(key, value);
     }
   }
 
   private void putCache(Map<WrappedByteArray, WrappedByteArray> values) {
     if (cached()) {
-      if (values == null || values.isEmpty()) {
-        return;
-      }
-      values.forEach(this::putCache);
+      values.forEach(cache::put);
     }
   }
 
