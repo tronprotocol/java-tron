@@ -288,6 +288,10 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveNewRewardAlgorithmEffectiveCycle();
           break;
         }
+        case MEMO_FEE: {
+          manager.getDynamicPropertiesStore().saveMemoFee(entry.getValue());
+          break;
+        }
         default:
           find = false;
           break;

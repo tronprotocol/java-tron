@@ -855,6 +855,42 @@ public class Manager {
     }
   }
 
+  public void consumeMemoFee(TransactionCapsule trx, TransactionTrace trace)
+      throws AccountResourceInsufficientException {
+    if (trx.getInstance().getRawData().getData().isEmpty()) {
+      // no memo
+      return;
+    }
+
+    long fee = getDynamicPropertiesStore().getMemoFee();
+    if (fee == 0) {
+      return;
+    }
+
+    List<Contract> contracts = trx.getInstance().getRawData().getContractList();
+    for (Contract contract : contracts) {
+      byte[] address = TransactionCapsule.getOwner(contract);
+      AccountCapsule accountCapsule = getAccountStore().get(address);
+      try {
+        if (accountCapsule != null) {
+          adjustBalance(getAccountStore(), accountCapsule, -fee);
+
+          if (getDynamicPropertiesStore().supportBlackHoleOptimization()) {
+            getDynamicPropertiesStore().burnTrx(fee);
+          } else {
+            adjustBalance(getAccountStore(), this.getAccountStore().getBlackhole(), +fee);
+          }
+        }
+      } catch (BalanceInsufficientException e) {
+        throw new AccountResourceInsufficientException(
+            String.format("account %s insufficient balance[%d] to memo fee",
+                StringUtil.encode58Check(address), fee));
+      }
+    }
+
+    trace.getReceipt().setMemoFee(fee);
+  }
+
   public void consumeBandwidth(TransactionCapsule trx, TransactionTrace trace)
       throws ContractValidateException, AccountResourceInsufficientException,
       TooBigTransactionResultException {
@@ -1339,6 +1375,7 @@ public class Manager {
 
     consumeBandwidth(trxCap, trace);
     consumeMultiSignFee(trxCap, trace);
+    consumeMemoFee(trxCap, trace);
 
     trace.init(blockCap, eventPluginLoaded);
     trace.checkIsConstant();

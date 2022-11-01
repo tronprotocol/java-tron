@@ -72,9 +72,9 @@ public class TransactionUtil {
     }
     builder.setId(ByteString.copyFrom(trxCap.getTransactionId().getBytes()));
     ProgramResult programResult = trace.getRuntimeResult();
-    long fee =
-        programResult.getRet().getFee() + traceReceipt.getEnergyFee()
-            + traceReceipt.getNetFee() + traceReceipt.getMultiSignFee();
+    long fee = programResult.getRet().getFee() + traceReceipt.getEnergyFee()
+        + traceReceipt.getNetFee() + traceReceipt.getMultiSignFee()
+        + traceReceipt.getMemoFee();
 
     boolean supportTransactionFeePool = trace.getTransactionContext().getStoreFactory()
         .getChainBaseManager().getDynamicPropertiesStore().supportTransactionFeePool();
