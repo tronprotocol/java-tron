@@ -575,6 +575,17 @@ public class ProposalUtil {
         }
         break;
       }
+      case MEMO_FEE: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_6)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [MEMO_FEE]");
+        }
+        if (value < 1 || value > 1_000_000_000) {
+          throw new ContractValidateException(
+              "This value[MEMO_FEE] is only allowed to be in the range 1-1000_000_000");
+        }
+        break;
+      }
       default:
         break;
     }
@@ -639,7 +650,8 @@ public class ProposalUtil {
     ALLOW_TVM_LONDON(63), // 0, 1
     ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX(65), // 0, 1
     ALLOW_ASSET_OPTIMIZATION(66), // 0, 1
-    ALLOW_NEW_REWARD_ALGO(67); // 0, 1
+    ALLOW_NEW_REWARD_ALGO(67), // 0, 1
+    MEMO_FEE(68); // 0, [1, 1000_000_000]
 
     private long code;
 

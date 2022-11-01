@@ -1103,6 +1103,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().useNewRewardAlgorithm() ? 1 : 0)
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getMemoFee")
+        .setValue(dbManager.getDynamicPropertiesStore().getMemoFee())
+        .build());
+
     return builder.build();
   }
 
