@@ -34,11 +34,16 @@ import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.api.GrpcAPI.TransactionSignWeight.Result;
+import org.tron.common.crypto.SignInterface;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Utils;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.SignatureFormatException;
 import org.tron.protos.Protocol.Permission;
@@ -262,6 +267,31 @@ public class TransactionUtil {
 
     tswBuilder.setResult(resultBuilder);
     return tswBuilder.build();
+  }
+
+  public static TransactionCapsule constructTransactionCapsule(
+          final ChainBaseManager chainBaseManager,
+          final TransactionTrace trace,
+          TransactionCapsule fakeTransactionCapsule
+  ) {
+    fakeTransactionCapsule.setTransactionCreate(false);
+    fakeTransactionCapsule.setTrxTrace(trace);
+    fakeTransactionCapsule.setTime(System.currentTimeMillis());
+    fakeTransactionCapsule.setVerified(true);
+
+    BlockCapsule.BlockId blockId = chainBaseManager.getHeadBlockId();
+    fakeTransactionCapsule.setReference(blockId.getNum(), blockId.getBytes());
+    long expiration = chainBaseManager.getHeadBlockTimeStamp()
+            + CommonParameter.getInstance().getTrxExpirationTimeInMilliseconds();
+    fakeTransactionCapsule.setExpiration(expiration);
+    fakeTransactionCapsule.setTimestamp();
+    // gen randome private key
+    SignInterface cryptoEngine = SignUtils.getGeneratedRandomSign(Utils.getRandom(),
+            CommonParameter.getInstance().isECKeyCryptoEngine());
+    byte[] priKey = cryptoEngine.getPrivateKey();
+    // add sign
+    fakeTransactionCapsule.sign(priKey);
+    return fakeTransactionCapsule;
   }
 
 }

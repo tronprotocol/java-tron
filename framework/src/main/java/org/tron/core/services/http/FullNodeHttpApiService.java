@@ -182,7 +182,15 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetDelegatedResourceAccountIndexServlet getDelegatedResourceAccountIndexServlet;
   @Autowired
+  private GetDelegatedResourceAccountIndexV2Servlet getDelegatedResourceAccountIndexV2Servlet;
+  @Autowired
   private GetDelegatedResourceServlet getDelegatedResourceServlet;
+  @Autowired
+  private GetDelegatedResourceV2Servlet getDelegatedResourceV2Servlet;
+  @Autowired
+  private GetCanDelegatedMaxSizeServlet getCanDelegatedMaxSizeServlet;
+  @Autowired
+  private GetCanWithdrawUnfreezeAmountServlet getCanWithdrawUnfreezeAmountServlet;
   @Autowired
   private SetAccountIdServlet setAccountServlet;
   @Autowired
@@ -462,9 +470,18 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(updateEnergyLimitServlet), "/wallet/updateenergylimit");
       context.addServlet(new ServletHolder(getDelegatedResourceServlet),
           "/wallet/getdelegatedresource");
+      context.addServlet(new ServletHolder(getDelegatedResourceV2Servlet),
+              "/wallet/getdelegatedresourcev2");
+      context.addServlet(new ServletHolder(getCanDelegatedMaxSizeServlet),
+              "/wallet/getcandelegatedmaxsize");
+      context.addServlet(new ServletHolder(getCanWithdrawUnfreezeAmountServlet),
+              "/wallet/getcanwithdrawunfreezeamount");
       context.addServlet(
           new ServletHolder(getDelegatedResourceAccountIndexServlet),
           "/wallet/getdelegatedresourceaccountindex");
+      context.addServlet(
+              new ServletHolder(getDelegatedResourceAccountIndexV2Servlet),
+              "/wallet/getdelegatedresourceaccountindexv2");
       context.addServlet(new ServletHolder(setAccountServlet), "/wallet/setaccountid");
       context.addServlet(new ServletHolder(getAccountByIdServlet), "/wallet/getaccountbyid");
       context

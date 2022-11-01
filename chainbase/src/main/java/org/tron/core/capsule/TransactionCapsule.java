@@ -47,6 +47,8 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.ChainBaseManager;
+import org.tron.core.Constant;
 import org.tron.core.actuator.TransactionFactory;
 import org.tron.core.db.TransactionContext;
 import org.tron.core.db.TransactionTrace;
@@ -106,6 +108,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   @Setter
   private long order;
   private byte[] ownerAddress;
+
+  @Getter
+  @Setter
+  private boolean isTransactionCreate = false;
 
   public byte[] getOwnerAddress() {
     if (this.ownerAddress == null) {
@@ -178,6 +184,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   public TransactionCapsule(ParticipateAssetIssueContract participateAssetIssueContract) {
     createTransaction(participateAssetIssueContract, ContractType.ParticipateAssetIssueContract);
+  }
+
+  public TransactionCapsule(BalanceContract.DelegateResourceContract delegateResourceContract) {
+    createTransaction(delegateResourceContract, ContractType.DelegateResourceContract);
   }
 
   public TransactionCapsule(raw rawData, List<ByteString> signatureList) {
@@ -789,5 +799,29 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     } catch (InvalidProtocolBufferException e) {
       return null;
     }
+  }
+
+  public static long consumeBandWidthSize(
+          final TransactionCapsule transactionCapsule,
+          ChainBaseManager chainBaseManager) {
+    long bytesSize = 0L;
+
+    if (chainBaseManager.getDynamicPropertiesStore().supportVM()) {
+      bytesSize = transactionCapsule.getInstance().toBuilder().clearRet().build().getSerializedSize();
+    } else {
+      bytesSize = transactionCapsule.getSerializedSize();
+    }
+
+    List<Transaction.Contract> contracts = transactionCapsule.getInstance().getRawData().getContractList();
+    for (Transaction.Contract contract : contracts) {
+      if (contract.getType() == ContractType.ShieldedTransferContract) {
+        continue;
+      }
+      if (chainBaseManager.getDynamicPropertiesStore().supportVM()) {
+        bytesSize += Constant.MAX_RESULT_SIZE_IN_TX;
+      }
+    }
+
+    return bytesSize;
   }
 }

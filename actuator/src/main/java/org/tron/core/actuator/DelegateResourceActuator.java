@@ -15,6 +15,7 @@ import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.EnergyProcessor;
@@ -24,10 +25,13 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DelegatedResourceStore;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.BalanceContract.DelegateResourceContract;
+import org.tron.protos.contract.Common;
 
 @Slf4j(topic = "actuator")
 public class DelegateResourceActuator extends AbstractActuator {
@@ -138,12 +142,33 @@ public class DelegateResourceActuator extends AbstractActuator {
       throw new ContractValidateException("delegateBalance must be more than 1TRX");
     }
 
+    boolean isTransactionCreate = this.getTx().isTransactionCreate();
     switch (delegateResourceContract.getResource()) {
       case BANDWIDTH: {
         BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
         processor.updateUsage(ownerCapsule);
 
-        long netUsage = (long) (ownerCapsule.getNetUsage() * TRX_PRECISION * ((double)
+        long accountNetUsage = ownerCapsule.getNetUsage();
+        if (isTransactionCreate) {
+          BalanceContract.DelegateResourceContract.Builder builder =
+                  BalanceContract.DelegateResourceContract.newBuilder()
+                          .setOwnerAddress(ByteString.copyFrom(ownerAddress))
+                          .setBalance(ownerCapsule.getAllFrozenBalanceForBandwidth())
+                          .setResource(Common.ResourceCode.BANDWIDTH)
+                          .setReceiverAddress(ByteString.copyFrom(ownerAddress));
+          TransactionCapsule fakeTransactionCapsule = new TransactionCapsule(builder.build());
+
+          TransactionUtil.constructTransactionCapsule(
+                  chainBaseManager,
+                  this.getTx().getTrxTrace(),
+                  fakeTransactionCapsule
+          );
+          long consumeBandWidthSize = TransactionCapsule.consumeBandWidthSize(
+                  fakeTransactionCapsule,
+                  chainBaseManager);
+          accountNetUsage = accountNetUsage + consumeBandWidthSize;
+        }
+        long netUsage = (long) (accountNetUsage * TRX_PRECISION * ((double)
                 (dynamicStore.getTotalNetWeight()) / dynamicStore.getTotalNetLimit()));
 
         long ownerNetUsage = (long) (netUsage * ((double)(ownerCapsule

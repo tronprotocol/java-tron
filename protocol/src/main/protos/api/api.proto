@@ -497,8 +497,21 @@ service Wallet {
   rpc GetDelegatedResource (DelegatedResourceMessage) returns (DelegatedResourceList) {
   };
 
+  rpc GetDelegatedResourceV2 (DelegatedResourceMessage) returns (DelegatedResourceList) {
+  };
+
   rpc GetDelegatedResourceAccountIndex (BytesMessage) returns (DelegatedResourceAccountIndex) {
   };
+
+  rpc GetDelegatedResourceAccountIndexV2 (BytesMessage) returns (DelegatedResourceAccountIndex) {
+  };
+
+  rpc GetCanDelegatedMaxSize (CanDelegatedMaxSizeRequestMessage) returns (CanDelegatedMaxSizeResponseMessage) {
+  };
+
+  rpc GetCanWithdrawUnfreezeAmount (CanWithdrawUnfreezeAmountRequestMessage)
+      returns (CanWithdrawUnfreezeAmountResponseMessage) {
+  }
 
   rpc ListProposals (EmptyMessage) returns (ProposalList) {
     option (google.api.http) = {
@@ -901,8 +914,21 @@ service WalletSolidity {
   rpc GetDelegatedResource (DelegatedResourceMessage) returns (DelegatedResourceList) {
   };
 
+  rpc GetDelegatedResourceV2 (DelegatedResourceMessage) returns (DelegatedResourceList) {
+  };
+
   rpc GetDelegatedResourceAccountIndex (BytesMessage) returns (DelegatedResourceAccountIndex) {
   };
+
+  rpc GetDelegatedResourceAccountIndexV2 (BytesMessage) returns (DelegatedResourceAccountIndex) {
+  };
+
+  rpc GetCanDelegatedMaxSize (CanDelegatedMaxSizeRequestMessage) returns (CanDelegatedMaxSizeResponseMessage) {
+  };
+
+  rpc GetCanWithdrawUnfreezeAmount (CanWithdrawUnfreezeAmountRequestMessage)
+      returns (CanWithdrawUnfreezeAmountResponseMessage) {
+  }
 
   rpc GetExchangeById (BytesMessage) returns (Exchange) {
   };
@@ -1116,6 +1142,21 @@ message DelegatedResourceMessage {
 }
 message DelegatedResourceList {
   repeated DelegatedResource delegatedResource = 1;
+}
+
+message CanDelegatedMaxSizeRequestMessage {
+  int32 type = 1;
+  bytes ownerAddress = 2;
+}
+message CanDelegatedMaxSizeResponseMessage {
+  int64 canDelegatedMaxSize = 1;
+}
+
+message CanWithdrawUnfreezeAmountRequestMessage {
+  bytes ownerAddress = 1;
+}
+message CanWithdrawUnfreezeAmountResponseMessage {
+  int64 canWithdrawUnfreezeAmount = 1;
 }
 
 // Gossip node list
