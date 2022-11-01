@@ -782,7 +782,7 @@ public class Manager {
           }
 
           try (ISession tmpSession = revokingStore.buildSession()) {
-            processTransaction(trx, null, null);
+            processTransaction(trx, null);
             trx.setTrxTrace(null);
             pendingTransactions.add(trx);
             Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, 1,
@@ -1281,8 +1281,7 @@ public class Manager {
   /**
    * Process transaction.
    */
-  public TransactionInfo processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap,
-                                            Map<String, Long> phase2cost)
+  public TransactionInfo processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap)
           throws ValidateSignatureException, ContractValidateException, ContractExeException,
           AccountResourceInsufficientException, TransactionExpirationException,
           TooBigTransactionException, TooBigTransactionResultException,
@@ -1420,8 +1419,6 @@ public class Manager {
     long postponedTrxCount = 0;
     logger.info("Generate block {} begin.", chainBaseManager.getHeadBlockNum() + 1);
 
-    long total_1 = 0, total_2 = 0, total_3 = 0, total_4 = 0, total_5 = 0, total_6 = 0, total_7 = 0, total_8 = 0;
-    long t1 = System.nanoTime();
     BlockCapsule blockCapsule = new BlockCapsule(chainBaseManager.getHeadBlockNum() + 1,
             chainBaseManager.getHeadBlockId(),
             blockTime, miner.getWitnessAddress());
@@ -1441,20 +1438,18 @@ public class Manager {
       }
     }
 
-    TransactionRetCapsule transactionRetCapsule = new TransactionRetCapsule(blockCapsule);
-
     Set<String> accountSet = new HashSet<>();
     AtomicInteger shieldedTransCounts = new AtomicInteger(0);
-    long t2 = System.nanoTime();
-    total_1 = t2 - t1;
-    Map<String, Long> phase2cost = new HashMap<>();
+    List<TransactionCapsule> toBePacked = new ArrayList<>();
+    long currentSize = blockCapsule.getInstance().getSerializedSize();
+    boolean isSort = Args.getInstance().isOpenTransactionSort();
     while (pendingTransactions.size() > 0 || rePushTransactions.size() > 0) {
       long t3 = System.nanoTime();
       boolean fromPending = false;
       TransactionCapsule trx;
       if (pendingTransactions.size() > 0) {
         trx = pendingTransactions.peek();
-        if (Args.getInstance().isOpenTransactionSort()) {
+        if (isSort) {
           TransactionCapsule trxRepush = rePushTransactions.peek();
           if (trxRepush == null || trx.getOrder() >= trxRepush.getOrder()) {
             fromPending = true;
@@ -1491,23 +1486,24 @@ public class Manager {
       }
 
       // check the block size
-      if ((blockCapsule.getInstance().getSerializedSize() + trx.getSerializedSize() + 3)
-              > ChainConstant.BLOCK_SIZE) {
+      if ((currentSize = currentSize + trx.getSerializedSize() + 3) > ChainConstant.BLOCK_SIZE) {
         postponedTrxCount++;
-        continue;
+        break;
       }
+      Transaction transaction = trx.getInstance();
       //shielded transaction
-      if (isShieldedTransaction(trx.getInstance())
-              && shieldedTransCounts.incrementAndGet() > SHIELDED_TRANS_IN_BLOCK_COUNTS) {
+      if (isShieldedTransaction(transaction)
+          && shieldedTransCounts.incrementAndGet() > SHIELDED_TRANS_IN_BLOCK_COUNTS) {
         continue;
       }
       //multi sign transaction
-      byte[] owner = trx.getOwnerAddress();
+      Contract contract = transaction.getRawData().getContract(0);
+      byte[] owner = TransactionCapsule.getOwner(contract);
       String ownerAddress = ByteArray.toHexString(owner);
       if (accountSet.contains(ownerAddress)) {
         continue;
       } else {
-        if (isMultiSignTransaction(trx.getInstance())) {
+        if (isMultiSignTransaction(transaction)) {
           accountSet.add(ownerAddress);
         }
       }
@@ -1516,21 +1512,17 @@ public class Manager {
       }
       // apply transaction
       try (ISession tmpSession = revokingStore.buildSession()) {
-        long t5 = System.nanoTime();
         accountStateCallBack.preExeTrans();
-        TransactionInfo result = processTransaction(trx, blockCapsule, phase2cost);
+        processTransaction(trx, blockCapsule);
         accountStateCallBack.exeTransFinish();
         tmpSession.merge();
-        blockCapsule.addTransaction(trx);
-        if (Objects.nonNull(result)) {
-          transactionRetCapsule.addTransactionInfo(result);
-        }
+        toBePacked.add(trx);
       } catch (Exception e) {
         logger.error("Process trx {} failed when generating block {}, {}.", trx.getTransactionId(),
                 blockCapsule.getNum(), e.getMessage());
       }
     }
-
+    blockCapsule.addAllTransactions(toBePacked);
     accountStateCallBack.executeGenerateFinish();
 
     session.reset();
@@ -1630,7 +1622,7 @@ public class Manager {
     try {
       merkleContainer.resetCurrentMerkleTree();
       accountStateCallBack.preExecute(block);
-      Map<String, Long> phase2cost = new HashMap<>();
+      List<TransactionInfo> results = new ArrayList<>();
       for (TransactionCapsule transactionCapsule : block.getTransactions()) {
         transactionCapsule.setBlockNum(block.getNum());
         if (block.generatedByMyself) {
@@ -1639,16 +1631,17 @@ public class Manager {
         accountStateCallBack.preExeTrans();
         TransactionInfo result = null;
         try {
-          result = processTransaction(transactionCapsule, block, phase2cost);
+          result = processTransaction(transactionCapsule, block);
         } catch (ContractValidateException e) {
           logger.error("process tx failed, id: {}", transactionCapsule.getTransactionId().toString(), e);
           throw new ContractValidateException(transactionCapsule.getTransactionId().toString(), e);
         }
         accountStateCallBack.exeTransFinish();
         if (Objects.nonNull(result)) {
-          transactionRetCapsule.addTransactionInfo(result);
+          results.add(result);
         }
       }
+      transactionRetCapsule.addAllTransactionInfos(results);
       accountStateCallBack.executePushFinish();
     } finally {
       accountStateCallBack.exceptionFinish();
