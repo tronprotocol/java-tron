@@ -30,8 +30,11 @@ import org.tron.core.services.http.GetBlockByNumServlet;
 import org.tron.core.services.http.GetBlockServlet;
 import org.tron.core.services.http.GetBrokerageServlet;
 import org.tron.core.services.http.GetBurnTrxServlet;
+import org.tron.core.services.http.GetCanWithdrawUnfreezeAmountServlet;
 import org.tron.core.services.http.GetDelegatedResourceAccountIndexServlet;
+import org.tron.core.services.http.GetDelegatedResourceAccountIndexV2Servlet;
 import org.tron.core.services.http.GetDelegatedResourceServlet;
+import org.tron.core.services.http.GetDelegatedResourceV2Servlet;
 import org.tron.core.services.http.GetExchangeByIdServlet;
 import org.tron.core.services.http.GetMarketOrderByAccountServlet;
 import org.tron.core.services.http.GetMarketOrderByIdServlet;
@@ -80,7 +83,13 @@ public class SolidityNodeHttpApiService implements Service {
   @Autowired
   private GetDelegatedResourceServlet getDelegatedResourceServlet;
   @Autowired
+  private GetDelegatedResourceV2Servlet getDelegatedResourceV2Servlet;
+  @Autowired
+  private GetCanWithdrawUnfreezeAmountServlet getCanWithdrawUnfreezeAmountServlet;
+  @Autowired
   private GetDelegatedResourceAccountIndexServlet getDelegatedResourceAccountIndexServlet;
+  @Autowired
+  private GetDelegatedResourceAccountIndexV2Servlet getDelegatedResourceAccountIndexV2Servlet;
   @Autowired
   private GetExchangeByIdServlet getExchangeByIdServlet;
   @Autowired
@@ -201,8 +210,14 @@ public class SolidityNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getBlockByNumServlet), "/walletsolidity/getblockbynum");
       context.addServlet(new ServletHolder(getDelegatedResourceServlet),
           "/walletsolidity/getdelegatedresource");
+      context.addServlet(new ServletHolder(getDelegatedResourceV2Servlet),
+              "/walletsolidity/getdelegatedresourcev2");
+      context.addServlet(new ServletHolder(getCanWithdrawUnfreezeAmountServlet),
+              "/walletsolidity/getcanwithdrawunfreezeamount");
       context.addServlet(new ServletHolder(getDelegatedResourceAccountIndexServlet),
           "/walletsolidity/getdelegatedresourceaccountindex");
+      context.addServlet(new ServletHolder(getDelegatedResourceAccountIndexV2Servlet),
+              "/walletsolidity/getdelegatedresourceaccountindexv2");
       context
           .addServlet(new ServletHolder(getExchangeByIdServlet),
               "/walletsolidity/getexchangebyid");

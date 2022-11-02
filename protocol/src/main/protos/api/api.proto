@@ -497,8 +497,18 @@ service Wallet {
   rpc GetDelegatedResource (DelegatedResourceMessage) returns (DelegatedResourceList) {
   };
 
+  rpc GetDelegatedResourceV2 (DelegatedResourceMessage) returns (DelegatedResourceList) {
+  };
+
   rpc GetDelegatedResourceAccountIndex (BytesMessage) returns (DelegatedResourceAccountIndex) {
   };
+
+  rpc GetDelegatedResourceAccountIndexV2 (BytesMessage) returns (DelegatedResourceAccountIndex) {
+  };
+
+  rpc GetCanWithdrawUnfreezeAmount (CanWithdrawUnfreezeAmountRequestMessage)
+      returns (CanWithdrawUnfreezeAmountResponseMessage) {
+  }
 
   rpc ListProposals (EmptyMessage) returns (ProposalList) {
     option (google.api.http) = {
@@ -901,8 +911,18 @@ service WalletSolidity {
   rpc GetDelegatedResource (DelegatedResourceMessage) returns (DelegatedResourceList) {
   };
 
+  rpc GetDelegatedResourceV2 (DelegatedResourceMessage) returns (DelegatedResourceList) {
+  };
+
   rpc GetDelegatedResourceAccountIndex (BytesMessage) returns (DelegatedResourceAccountIndex) {
   };
+
+  rpc GetDelegatedResourceAccountIndexV2 (BytesMessage) returns (DelegatedResourceAccountIndex) {
+  };
+
+  rpc GetCanWithdrawUnfreezeAmount (CanWithdrawUnfreezeAmountRequestMessage)
+      returns (CanWithdrawUnfreezeAmountResponseMessage) {
+  }
 
   rpc GetExchangeById (BytesMessage) returns (Exchange) {
   };
@@ -1116,6 +1136,13 @@ message DelegatedResourceMessage {
 }
 message DelegatedResourceList {
   repeated DelegatedResource delegatedResource = 1;
+}
+
+message CanWithdrawUnfreezeAmountRequestMessage {
+  bytes owner_address = 1;
+}
+message CanWithdrawUnfreezeAmountResponseMessage {
+  int64 amount = 1;
 }
 
 // Gossip node list
