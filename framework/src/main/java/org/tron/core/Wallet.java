@@ -183,6 +183,7 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.AccountTraceStore;
 import org.tron.core.store.BalanceTraceStore;
 import org.tron.core.store.ContractStore;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
@@ -751,9 +752,58 @@ public class Wallet {
     return builder.build();
   }
 
+  public DelegatedResourceList getDelegatedResourceV2(
+          ByteString fromAddress, ByteString toAddress) {
+    DelegatedResourceList.Builder builder = DelegatedResourceList.newBuilder();
+    byte[] dbKey = DelegatedResourceCapsule
+            .createDbKeyV2(fromAddress.toByteArray(), toAddress.toByteArray());
+    DelegatedResourceCapsule delegatedResourceCapsule = chainBaseManager.getDelegatedResourceStore()
+            .get(dbKey);
+    if (delegatedResourceCapsule != null) {
+      builder.addDelegatedResource(delegatedResourceCapsule.getInstance());
+    }
+    return builder.build();
+  }
+
+  public GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage getCanWithdrawUnfreezeAmount(
+          ByteString ownerAddress) {
+    long canWithdrawUnfreezeAmount;
+
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    AccountCapsule accountCapsule = accountStore.get(
+            ownerAddress.toByteArray());
+    long now = dynamicStore.getLatestBlockHeaderTimestamp();
+
+    List<Account.UnFreezeV2> unfrozenV2List = accountCapsule.getInstance().getUnfrozenV2List();
+    canWithdrawUnfreezeAmount = unfrozenV2List
+            .stream()
+            .filter(unfrozenV2 ->
+                    (unfrozenV2.getUnfreezeAmount() > 0
+                    && unfrozenV2.getUnfreezeExpireTime() <= now))
+            .mapToLong(Account.UnFreezeV2::getUnfreezeAmount)
+            .sum();
+
+    GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage.Builder builder =
+            GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage.newBuilder();
+    builder.setCanWithdrawUnfreezeAmount(canWithdrawUnfreezeAmount);
+    return builder.build();
+  }
+
   public DelegatedResourceAccountIndex getDelegatedResourceAccountIndex(ByteString address) {
     DelegatedResourceAccountIndexCapsule accountIndexCapsule =
         chainBaseManager.getDelegatedResourceAccountIndexStore().get(address.toByteArray());
+    if (accountIndexCapsule != null) {
+      return accountIndexCapsule.getInstance();
+    } else {
+      return null;
+    }
+  }
+
+  public DelegatedResourceAccountIndex getDelegatedResourceAccountIndexV2(ByteString address) {
+    byte[] dbKey = DelegatedResourceAccountIndexCapsule.createDbKeyV2(address.toByteArray());
+    DelegatedResourceAccountIndexCapsule accountIndexCapsule =
+            chainBaseManager.getDelegatedResourceAccountIndexStore().get(dbKey);
     if (accountIndexCapsule != null) {
       return accountIndexCapsule.getInstance();
     } else {

@@ -35,6 +35,7 @@ import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.BlockListExtention;
 import org.tron.api.GrpcAPI.BlockReference;
 import org.tron.api.GrpcAPI.BytesMessage;
+import org.tron.api.GrpcAPI.CanWithdrawUnfreezeAmountRequestMessage;
 import org.tron.api.GrpcAPI.DecryptNotes;
 import org.tron.api.GrpcAPI.DecryptNotesMarked;
 import org.tron.api.GrpcAPI.DecryptNotesTRC20;
@@ -91,6 +92,7 @@ import org.tron.common.crypto.SignUtils;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
@@ -601,10 +603,49 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getDelegatedResourceV2(DelegatedResourceMessage request,
+        StreamObserver<DelegatedResourceList> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getDelegatedResourceV2(
+                request.getFromAddress(), request.getToAddress())
+        );
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void getDelegatedResourceAccountIndex(BytesMessage request,
         StreamObserver<org.tron.protos.Protocol.DelegatedResourceAccountIndex> responseObserver) {
       responseObserver
           .onNext(wallet.getDelegatedResourceAccountIndex(request.getValue()));
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getDelegatedResourceAccountIndexV2(BytesMessage request,
+        StreamObserver<org.tron.protos.Protocol.DelegatedResourceAccountIndex> responseObserver) {
+      try {
+        responseObserver
+                .onNext(wallet.getDelegatedResourceAccountIndexV2(request.getValue()));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getCanWithdrawUnfreezeAmount(CanWithdrawUnfreezeAmountRequestMessage request,
+        StreamObserver<GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage> responseObserver) {
+      try {
+        responseObserver
+                .onNext(wallet.getCanWithdrawUnfreezeAmount(
+                        request.getOwnerAddress())
+        );
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
       responseObserver.onCompleted();
     }
 
@@ -2016,10 +2057,50 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
 
+    @Override
+    public void getDelegatedResourceV2(DelegatedResourceMessage request,
+        StreamObserver<DelegatedResourceList> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getDelegatedResourceV2(
+                request.getFromAddress(), request.getToAddress())
+        );
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void getDelegatedResourceAccountIndex(BytesMessage request,
         StreamObserver<org.tron.protos.Protocol.DelegatedResourceAccountIndex> responseObserver) {
       responseObserver
           .onNext(wallet.getDelegatedResourceAccountIndex(request.getValue()));
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getDelegatedResourceAccountIndexV2(BytesMessage request,
+        StreamObserver<org.tron.protos.Protocol.DelegatedResourceAccountIndex> responseObserver) {
+      try {
+        responseObserver
+                .onNext(wallet.getDelegatedResourceAccountIndexV2(request.getValue()));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getCanWithdrawUnfreezeAmount(CanWithdrawUnfreezeAmountRequestMessage request,
+        StreamObserver<GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage> responseObserver) {
+      try {
+        responseObserver
+                .onNext(wallet.getCanWithdrawUnfreezeAmount(
+                        request.getOwnerAddress()
+        ));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
       responseObserver.onCompleted();
     }
 
