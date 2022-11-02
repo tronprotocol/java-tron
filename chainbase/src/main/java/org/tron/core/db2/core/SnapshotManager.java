@@ -471,7 +471,7 @@ public class SnapshotManager implements RevokingDatabase {
           snapshotManager.revoke();
         }
       } catch (Exception e) {
-        logger.error("revoke database error.", e);
+        logger.error("Revoke database error within destroy method.", e);
         throw new RevokingStoreIllegalStateException(e);
       }
       if (disableOnExit) {
