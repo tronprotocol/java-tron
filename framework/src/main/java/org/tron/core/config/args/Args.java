@@ -517,6 +517,7 @@ public class Args extends CommonParameter {
 
     PARAMETER.storage.setEstimatedBlockTransactions(
         Storage.getEstimatedTransactionsFromConfig(config));
+    PARAMETER.storage.setMaxFlushCount(Storage.getSnapshotMaxFlushCountFromConfig(config));
 
     PARAMETER.storage.setDefaultDbOptions(config);
     PARAMETER.storage.setPropertyMapFromConfig(config);
@@ -1437,6 +1438,7 @@ public class Args extends CommonParameter {
     logger.info("************************ DB config *************************");
     logger.info("DB version : {}", parameter.getStorage().getDbVersion());
     logger.info("DB engine : {}", parameter.getStorage().getDbEngine());
+    logger.info("Snapshot max flush count: {}", parameter.getStorage().getMaxFlushCount());
     logger.info("***************************************************************");
     logger.info("************************ shutDown config *************************");
     logger.info("ShutDown blockTime  : {}", parameter.getShutdownBlockTime());

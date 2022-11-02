@@ -54,6 +54,7 @@ public class Storage {
   private static final String TRANSACTIONHISTORY_SWITCH_CONFIG_KEY = "storage.transHistory.switch";
   private static final String ESTIMATED_TRANSACTIONS_CONFIG_KEY =
       "storage.txCache.estimatedTransactions";
+  private static final String SNAPSHOT_MAX_FLUSH_COUNT_CONFIG_KEY = "storage.snapshot.maxFlushCount";
   private static final String PROPERTIES_CONFIG_KEY = "storage.properties";
   private static final String PROPERTIES_CONFIG_DB_KEY = "storage";
   private static final String PROPERTIES_CONFIG_DEFAULT_KEY = "default";
@@ -91,6 +92,7 @@ public class Storage {
   private static final int DEFAULT_CHECKPOINT_VERSION = 1;
   private static final boolean DEFAULT_CHECKPOINT_SYNC = true;
   private static final int DEFAULT_ESTIMATED_TRANSACTIONS = 1000;
+  private static final int DEFAULT_SNAPSHOT_MAX_FLUSH_COUNT = 500;
   private Config storage;
 
   /**
@@ -111,6 +113,10 @@ public class Storage {
   @Getter
   @Setter
   private boolean dbSync;
+
+  @Getter
+  @Setter
+  private int maxFlushCount;
 
   /**
    * Index storage directory: /path/to/{indexDirectory}
@@ -171,6 +177,20 @@ public class Storage {
   public static Boolean getDbVersionSyncFromConfig(final Config config) {
     return config.hasPath(DB_SYNC_CONFIG_KEY)
         ? config.getBoolean(DB_SYNC_CONFIG_KEY) : DEFAULT_DB_SYNC;
+  }
+
+  public static int getSnapshotMaxFlushCountFromConfig(final Config config) {
+    if (!config.hasPath(SNAPSHOT_MAX_FLUSH_COUNT_CONFIG_KEY)) {
+      return DEFAULT_SNAPSHOT_MAX_FLUSH_COUNT;
+    }
+    int maxFlushCountConfig = config.getInt(SNAPSHOT_MAX_FLUSH_COUNT_CONFIG_KEY);
+    if (maxFlushCountConfig <= 0) {
+      throw new IllegalArgumentException("MaxFlushCount value can not be negative or zero!");
+    }
+    if (maxFlushCountConfig > 500) {
+      throw new IllegalArgumentException("MaxFlushCount value must not exceed 500!");
+    }
+    return maxFlushCountConfig;
   }
 
   public static Boolean getContractParseSwitchFromConfig(final Config config) {
