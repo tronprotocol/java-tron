@@ -290,6 +290,10 @@ public class ProposalService extends ProposalUtil {
         }
         case MEMO_FEE: {
           manager.getDynamicPropertiesStore().saveMemoFee(entry.getValue());
+          // update memo fee history
+          manager.getDynamicPropertiesStore().saveMemoFeeHistory(
+              manager.getDynamicPropertiesStore().getMemoFeeHistory()
+                  + "," + proposalCapsule.getExpirationTime() + ":" + entry.getValue());
           break;
         }
         default:
