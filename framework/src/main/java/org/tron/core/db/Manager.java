@@ -239,6 +239,8 @@ public class Manager {
 
   @Getter
   private volatile long latestSolidityNumShutDown;
+  @Getter
+  private int maxFlushCount;
 
   @Getter
   private final ThreadLocal<Histogram.Timer> blockedTimer = new ThreadLocal<>();
@@ -550,6 +552,7 @@ public class Manager {
     }
     // init
     latestSolidityNumShutDown = CommonParameter.getInstance().getShutdownBlockHeight();
+    maxFlushCount = CommonParameter.getInstance().getStorage().getMaxFlushCount();
   }
 
   /**
@@ -958,7 +961,7 @@ public class Manager {
 
     updateFork(block);
     if (System.currentTimeMillis() - block.getTimeStamp() >= 60_000) {
-      revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MAX_FLUSH_COUNT);
+      revokingStore.setMaxFlushCount(maxFlushCount);
       if (Args.getInstance().getShutdownBlockTime() != null
           && Args.getInstance().getShutdownBlockTime().getNextValidTimeAfter(
           new Date(block.getTimeStamp() - SnapshotManager.DEFAULT_MAX_FLUSH_COUNT * 1000 * 3))
