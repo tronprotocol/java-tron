@@ -4085,5 +4085,13 @@ public class Wallet {
     return block.toBuilder().clearTransactions().build();
   }
 
+  public String getMemoFeePrices() {
+    try {
+      return chainBaseManager.getDynamicPropertiesStore().getMemoFeeHistory();
+    } catch (Exception e) {
+      logger.error("getMemoFeePrices failed, error is {}", e.getMessage());
+    }
+    return null;
+  }
 }
 

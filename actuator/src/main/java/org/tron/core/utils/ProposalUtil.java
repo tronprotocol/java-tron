@@ -580,9 +580,9 @@ public class ProposalUtil {
           throw new ContractValidateException(
               "Bad chain parameter id [MEMO_FEE]");
         }
-        if (value < 1 || value > 1_000_000_000) {
+        if (value < 0 || value > 1_000_000_000) {
           throw new ContractValidateException(
-              "This value[MEMO_FEE] is only allowed to be in the range 1-1000_000_000");
+              "This value[MEMO_FEE] is only allowed to be in the range 0-1000_000_000");
         }
         break;
       }
