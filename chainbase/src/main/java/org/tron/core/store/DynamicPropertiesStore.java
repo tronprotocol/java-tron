@@ -187,6 +187,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX =
       "ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX".getBytes();
 
+  private static final byte[] MEMO_FEE = "MEMO_FEE".getBytes();
+  private static final byte[] MEMO_FEE_HISTORY = "MEMO_FEE_HISTORY".getBytes();
+
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -856,6 +859,14 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         this.put(NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE,
             new BytesCapsule(ByteArray.fromLong(Long.MAX_VALUE)));
       }
+    }
+
+    try {
+      this.getMemoFee();
+    } catch (IllegalArgumentException e) {
+      long memoFee = CommonParameter.getInstance().getMemoFee();
+      this.saveMemoFee(memoFee);
+      this.saveMemoFeeHistory("0:" + memoFee);
     }
   }
 
@@ -2526,6 +2537,28 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException(msg));
+  }
+
+  public long getMemoFee() {
+    return Optional.ofNullable(getUnchecked(MEMO_FEE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(() -> new IllegalArgumentException("not found MEMO_FEE"));
+  }
+
+  public void saveMemoFee(long value) {
+    this.put(MEMO_FEE, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public String getMemoFeeHistory() {
+    return Optional.ofNullable(getUnchecked(MEMO_FEE_HISTORY))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toStr)
+        .orElseThrow(() -> new IllegalArgumentException("not found MEMO_FEE_HISTORY"));
+  }
+
+  public void saveMemoFeeHistory(String value) {
+    this.put(MEMO_FEE_HISTORY, new BytesCapsule(ByteArray.fromString(value)));
   }
 
   private static class DynamicResourceProperties {

@@ -1103,6 +1103,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().useNewRewardAlgorithm() ? 1 : 0)
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getMemoFee")
+        .setValue(dbManager.getDynamicPropertiesStore().getMemoFee())
+        .build());
+
     return builder.build();
   }
 
@@ -4080,5 +4085,13 @@ public class Wallet {
     return block.toBuilder().clearTransactions().build();
   }
 
+  public String getMemoFeePrices() {
+    try {
+      return chainBaseManager.getDynamicPropertiesStore().getMemoFeeHistory();
+    } catch (Exception e) {
+      logger.error("getMemoFeePrices failed, error is {}", e.getMessage());
+    }
+    return null;
+  }
 }
 
