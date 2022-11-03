@@ -54,8 +54,8 @@ public class DBIteratorTest {
         Assert.assertTrue(e instanceof  RuntimeException);
       }
       db.close();
-      } finally {
-        factory.destroy(file, new Options());
+    } finally {
+      factory.destroy(file, new Options());
     }
   }
 
