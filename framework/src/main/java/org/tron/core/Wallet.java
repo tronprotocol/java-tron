@@ -22,6 +22,7 @@ import static org.tron.common.utils.Commons.getAssetIssueStoreFinal;
 import static org.tron.common.utils.Commons.getExchangeStoreFinal;
 import static org.tron.common.utils.WalletUtil.isConstant;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_TRANS_ESTIMATE_SIZE;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.MARKET_COUNT_LIMIT_MAX;
@@ -106,6 +107,7 @@ import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.ProgramResult;
+import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
@@ -123,6 +125,7 @@ import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
 import org.tron.consensus.ConsensusDelegate;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
+import org.tron.core.actuator.UnfreezeBalanceV2Actuator;
 import org.tron.core.actuator.VMActuator;
 import org.tron.core.capsule.AbiCapsule;
 import org.tron.core.capsule.AccountCapsule;
@@ -221,6 +224,7 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.BalanceContract.BlockBalanceTrace;
 import org.tron.protos.contract.BalanceContract.TransferContract;
+import org.tron.protos.contract.Common;
 import org.tron.protos.contract.ShieldContract.IncrementalMerkleTree;
 import org.tron.protos.contract.ShieldContract.IncrementalMerkleVoucherInfo;
 import org.tron.protos.contract.ShieldContract.OutputPoint;
@@ -455,6 +459,7 @@ public class Wallet {
   public TransactionCapsule createTransactionCapsule(com.google.protobuf.Message message,
       ContractType contractType) throws ContractValidateException {
     TransactionCapsule trx = new TransactionCapsule(message, contractType);
+    trx.setTransactionCreate(true);
     if (contractType != ContractType.CreateSmartContract
         && contractType != ContractType.TriggerSmartContract) {
       List<Actuator> actList = ActuatorFactory.createActuator(trx, chainBaseManager);
@@ -462,7 +467,7 @@ public class Wallet {
         act.validate();
       }
     }
-
+    trx.setTransactionCreate(false);
     if (contractType == ContractType.CreateSmartContract) {
 
       CreateSmartContract contract = ContractCapsule
@@ -766,7 +771,7 @@ public class Wallet {
   }
 
   public GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage getCanWithdrawUnfreezeAmount(
-          ByteString ownerAddress) {
+          ByteString ownerAddress, long timestamp) {
     GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage.Builder builder =
             GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage.newBuilder();
     long canWithdrawUnfreezeAmount;
@@ -777,20 +782,107 @@ public class Wallet {
     if (accountCapsule == null) {
       return builder.build();
     }
-    long now = dynamicStore.getLatestBlockHeaderTimestamp();
 
     List<Account.UnFreezeV2> unfrozenV2List = accountCapsule.getInstance().getUnfrozenV2List();
     canWithdrawUnfreezeAmount = unfrozenV2List
             .stream()
             .filter(unfrozenV2 ->
                     (unfrozenV2.getUnfreezeAmount() > 0
-                    && unfrozenV2.getUnfreezeExpireTime() <= now))
+                    && unfrozenV2.getUnfreezeExpireTime() <= timestamp))
             .mapToLong(Account.UnFreezeV2::getUnfreezeAmount)
             .sum();
 
 
     builder.setAmount(canWithdrawUnfreezeAmount);
     return builder.build();
+  }
+
+  public GrpcAPI.CanDelegatedMaxSizeResponseMessage getCanDelegatedMaxSize(
+          ByteString ownerAddress,
+          int resourceType) {
+    long canDelegatedMaxSize = 0L;
+    GrpcAPI.CanDelegatedMaxSizeResponseMessage.Builder builder =
+          GrpcAPI.CanDelegatedMaxSizeResponseMessage.newBuilder();
+    if (Common.ResourceCode.BANDWIDTH.getNumber() == resourceType) {
+      canDelegatedMaxSize = this.calcCanDelegatedBandWidthMaxSize(ownerAddress);
+    } else if (Common.ResourceCode.ENERGY.getNumber() == resourceType) {
+      canDelegatedMaxSize = this.calcCanDelegatedEnergyMaxSize(ownerAddress);
+    }
+
+    builder.setCanDelegatedMaxSize(canDelegatedMaxSize);
+    return builder.build();
+  }
+
+  public GrpcAPI.GetAvailableUnfreezeCountResponseMessage getAvailableUnfreezeCount(
+          ByteString ownerAddress) {
+    long getAvailableUnfreezeCount;
+    GrpcAPI.GetAvailableUnfreezeCountResponseMessage.Builder builder =
+            GrpcAPI.GetAvailableUnfreezeCountResponseMessage.newBuilder();
+
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    AccountCapsule accountCapsule = accountStore.get(ownerAddress.toByteArray());
+    if (accountCapsule == null) {
+      return builder.build();
+    }
+    long now = dynamicStore.getLatestBlockHeaderTimestamp();
+
+    List<Account.UnFreezeV2> unfrozenV2List = accountCapsule.getInstance().getUnfrozenV2List();
+    long getUsedUnfreezeCount = unfrozenV2List
+            .stream()
+            .filter(unfrozenV2 ->
+                    (unfrozenV2.getUnfreezeAmount() > 0
+                     && unfrozenV2.getUnfreezeExpireTime() > now))
+            .count();
+    getAvailableUnfreezeCount = UnfreezeBalanceV2Actuator.getUNFREEZE_MAX_TIMES()
+            - getUsedUnfreezeCount;
+    builder.setCount(getAvailableUnfreezeCount);
+    return builder.build();
+  }
+
+  public long calcCanDelegatedBandWidthMaxSize(
+          ByteString ownerAddress) {
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    AccountCapsule ownerCapsule = accountStore.get(ownerAddress.toByteArray());
+
+    BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
+    processor.updateUsage(ownerCapsule);
+
+    long accountNetUsage = ownerCapsule.getNetUsage();
+    if (false) {
+      accountNetUsage += DELEGATE_TRANS_ESTIMATE_SIZE;
+    } else {
+      accountNetUsage += org.tron.core.utils.TransactionUtil
+              .calcCanDelegatedBandWidthMaxSize(chainBaseManager,
+                      ownerAddress, new RuntimeImpl());
+    }
+
+    long netUsage = (long) (accountNetUsage * TRX_PRECISION * ((double)
+            (dynamicStore.getTotalNetWeight()) / dynamicStore.getTotalNetLimit()));
+
+    long ownerNetUsage = (long) (netUsage * ((double)(ownerCapsule.getFrozenV2BalanceForBandwidth())
+            / ownerCapsule.getAllFrozenBalanceForBandwidth()));
+    long remain = ownerCapsule.getFrozenV2BalanceForBandwidth() - ownerNetUsage;
+    return  remain > 0 ? remain : 0;
+  }
+
+  public long calcCanDelegatedEnergyMaxSize(ByteString ownerAddress) {
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    AccountCapsule ownerCapsule = accountStore.get(ownerAddress.toByteArray());
+
+    EnergyProcessor processor = new EnergyProcessor(dynamicStore, accountStore);
+    processor.updateUsage(ownerCapsule);
+
+    long energyUsage = (long) (ownerCapsule.getEnergyUsage() * TRX_PRECISION * ((double)
+            (dynamicStore.getTotalEnergyWeight()) / dynamicStore.getTotalEnergyCurrentLimit()));
+
+    long ownerEnergyUsage = (long) (energyUsage * ((double)(ownerCapsule
+            .getFrozenV2BalanceForEnergy()) / ownerCapsule.getAllFrozenBalanceForEnergy()));
+
+    long remain =  ownerCapsule.getFrozenV2BalanceForEnergy() - ownerEnergyUsage;
+    return remain > 0 ? remain : 0;
   }
 
   public DelegatedResourceAccountIndex getDelegatedResourceAccountIndex(ByteString address) {

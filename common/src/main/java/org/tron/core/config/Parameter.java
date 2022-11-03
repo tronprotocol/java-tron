@@ -70,6 +70,7 @@ public class Parameter {
     public static final int BLOCK_VERSION = 25;
     public static final long FROZEN_PERIOD = 86_400_000L;
     public static final long TRX_PRECISION = 1000_000L;
+    public static final long DELEGATE_TRANS_ESTIMATE_SIZE = 281L;
   }
 
   public class NodeConstant {

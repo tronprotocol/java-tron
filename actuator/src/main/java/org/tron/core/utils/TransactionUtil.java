@@ -34,19 +34,32 @@ import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.api.GrpcAPI.TransactionSignWeight.Result;
+import org.tron.common.crypto.SignInterface;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.runtime.Runtime;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Utils;
 import org.tron.core.ChainBaseManager;
+import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.db.BandwidthProcessor;
+import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.SignatureFormatException;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.StoreFactory;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Permission.PermissionType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.TransactionSign;
+import org.tron.protos.contract.BalanceContract;
+import org.tron.protos.contract.Common;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
@@ -262,6 +275,119 @@ public class TransactionUtil {
 
     tswBuilder.setResult(resultBuilder);
     return tswBuilder.build();
+  }
+
+  public static long calcCanDelegatedBandWidthMaxSize(
+          final ChainBaseManager chainBaseManager,
+          ByteString ownerAddress,
+          TransactionTrace trace) {
+    long canDelegatedBandWidthMaxSize = 0;
+
+    // construct fake transaction to calc bandwidth size
+    BalanceContract.DelegateResourceContract.Builder builder =
+            BalanceContract.DelegateResourceContract.newBuilder()
+                    .setOwnerAddress(ownerAddress)
+                    .setBalance(Long.MAX_VALUE)
+                    .setResource(Common.ResourceCode.BANDWIDTH)
+                    .setReceiverAddress(ownerAddress);
+    TransactionCapsule fakeTransactionCapsule = new TransactionCapsule(builder.build()
+            , Contract.ContractType.DelegateResourceContract);
+
+    org.tron.core.utils.TransactionUtil.constructTransactionCapsule(
+            chainBaseManager,
+            trace,
+            fakeTransactionCapsule
+    );
+
+    canDelegatedBandWidthMaxSize = consumeBandWidthSize(
+            fakeTransactionCapsule,
+            chainBaseManager
+    );
+
+    return  canDelegatedBandWidthMaxSize;
+  }
+
+  public static long calcCanDelegatedBandWidthMaxSize(
+          final ChainBaseManager chainBaseManager,
+          ByteString ownerAddress,
+          Runtime runtime) {
+    long canDelegatedBandWidthMaxSize = 0;
+
+    // construct fake transaction to calc bandwidth size
+    BalanceContract.DelegateResourceContract.Builder builder =
+            BalanceContract.DelegateResourceContract.newBuilder()
+                    .setOwnerAddress(ownerAddress)
+                    .setBalance(Long.MAX_VALUE)
+                    .setResource(Common.ResourceCode.BANDWIDTH)
+                    .setReceiverAddress(ownerAddress);
+    TransactionCapsule fakeTransactionCapsule = new TransactionCapsule(builder.build()
+            , Contract.ContractType.DelegateResourceContract);
+
+    TransactionTrace trace = new TransactionTrace(fakeTransactionCapsule,
+            StoreFactory.getInstance(),
+            runtime);
+    org.tron.core.utils.TransactionUtil.constructTransactionCapsule(
+            chainBaseManager,
+            trace,
+            fakeTransactionCapsule
+    );
+
+    canDelegatedBandWidthMaxSize = consumeBandWidthSize(
+            fakeTransactionCapsule,
+            chainBaseManager
+    );
+
+    return  canDelegatedBandWidthMaxSize;
+  }
+
+  public static TransactionCapsule constructTransactionCapsule(
+          final ChainBaseManager chainBaseManager,
+          final TransactionTrace trace,
+          TransactionCapsule fakeTransactionCapsule
+  ) {
+    fakeTransactionCapsule.setTransactionCreate(false);
+    fakeTransactionCapsule.setTrxTrace(trace);
+    fakeTransactionCapsule.setTime(System.currentTimeMillis());
+    fakeTransactionCapsule.setOrder(Long.MAX_VALUE);
+    fakeTransactionCapsule.setVerified(true);
+
+    BlockCapsule.BlockId blockId = chainBaseManager.getHeadBlockId();
+    fakeTransactionCapsule.setReference(blockId.getNum(), blockId.getBytes());
+    long expiration = chainBaseManager.getHeadBlockTimeStamp()
+            + CommonParameter.getInstance().getTrxExpirationTimeInMilliseconds();
+    fakeTransactionCapsule.setExpiration(expiration);
+    fakeTransactionCapsule.setTimestamp();
+    // gen randome private key
+    SignInterface cryptoEngine = SignUtils.getGeneratedRandomSign(Utils.getRandom(),
+            CommonParameter.getInstance().isECKeyCryptoEngine());
+    byte[] priKey = cryptoEngine.getPrivateKey();
+    // add sign
+    fakeTransactionCapsule.sign(priKey);
+    return fakeTransactionCapsule;
+  }
+
+  public static long consumeBandWidthSize(
+          final TransactionCapsule transactionCapsule,
+          ChainBaseManager chainBaseManager) {
+    long bytesSize = 0L;
+
+    if (true || chainBaseManager.getDynamicPropertiesStore().supportVM()) {
+      bytesSize = transactionCapsule.getInstance().toBuilder().clearRet().build().getSerializedSize();
+    } else {
+      bytesSize = transactionCapsule.getSerializedSize();
+    }
+
+    List<Transaction.Contract> contracts = transactionCapsule.getInstance().getRawData().getContractList();
+    for (Transaction.Contract contract : contracts) {
+      if (contract.getType() == Contract.ContractType.ShieldedTransferContract) {
+        continue;
+      }
+      if (true || chainBaseManager.getDynamicPropertiesStore().supportVM()) {
+        bytesSize += Constant.MAX_RESULT_SIZE_IN_TX;
+      }
+    }
+
+    return bytesSize;
   }
 
 }

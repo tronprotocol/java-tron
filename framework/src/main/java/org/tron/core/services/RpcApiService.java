@@ -639,12 +639,36 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getCanDelegatedMaxSize(GrpcAPI.CanDelegatedMaxSizeRequestMessage request,
+        StreamObserver<GrpcAPI.CanDelegatedMaxSizeResponseMessage> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getCanDelegatedMaxSize(
+                        request.getOwnerAddress(),request.getType()));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getAvailableUnfreezeCount(GrpcAPI.GetAvailableUnfreezeCountRequestMessage request,
+        StreamObserver<GrpcAPI.GetAvailableUnfreezeCountResponseMessage> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getAvailableUnfreezeCount(
+                request.getOwnerAddress()));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void getCanWithdrawUnfreezeAmount(CanWithdrawUnfreezeAmountRequestMessage request,
         StreamObserver<GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage> responseObserver) {
       try {
         responseObserver
                 .onNext(wallet.getCanWithdrawUnfreezeAmount(
-                        request.getOwnerAddress())
+                        request.getOwnerAddress(), request.getTimestamp())
         );
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
@@ -2098,12 +2122,38 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getCanDelegatedMaxSize(GrpcAPI.CanDelegatedMaxSizeRequestMessage request,
+        StreamObserver<GrpcAPI.CanDelegatedMaxSizeResponseMessage> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getCanDelegatedMaxSize(
+                        request.getOwnerAddress(), request.getType()));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getAvailableUnfreezeCount(GrpcAPI.GetAvailableUnfreezeCountRequestMessage request,
+         StreamObserver<GrpcAPI.GetAvailableUnfreezeCountResponseMessage> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getAvailableUnfreezeCount(
+                request.getOwnerAddress()));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void getCanWithdrawUnfreezeAmount(CanWithdrawUnfreezeAmountRequestMessage request,
         StreamObserver<GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage> responseObserver) {
       try {
         responseObserver
                 .onNext(wallet.getCanWithdrawUnfreezeAmount(
-                        request.getOwnerAddress()
+                        request.getOwnerAddress(), request.getTimestamp()
         ));
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
