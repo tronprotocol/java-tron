@@ -215,6 +215,8 @@ public class Args extends CommonParameter {
     PARAMETER.shutdownBlockCount = -1;
     PARAMETER.blockCacheTimeout = 60;
     PARAMETER.allowNewRewardAlgorithm = 0;
+    PARAMETER.allowNewRewardEnable = 0;
+    PARAMETER.memoFee = 0;
   }
 
   /**
@@ -1032,6 +1034,16 @@ public class Args extends CommonParameter {
 
     if (config.hasPath(Constant.BLOCK_CACHE_TIMEOUT)) {
       PARAMETER.blockCacheTimeout = config.getLong(Constant.BLOCK_CACHE_TIMEOUT);
+    }
+
+    if (config.hasPath(Constant.ALLOW_NEW_REWARD_ENABLE)) {
+      PARAMETER.allowNewRewardEnable = config.getLong(Constant.ALLOW_NEW_REWARD_ENABLE);
+      if (PARAMETER.allowNewRewardEnable > 1) {
+        PARAMETER.allowNewRewardEnable = 1;
+      }
+      if (PARAMETER.allowNewRewardEnable < 0) {
+        PARAMETER.allowNewRewardEnable = 0;
+      }
     }
 
     if (config.hasPath(Constant.MEMO_FEE)) {

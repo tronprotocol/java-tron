@@ -307,6 +307,7 @@ public class Constant {
 
   public static final String ALLOW_ACCOUNT_ASSET_OPTIMIZATION = "committee.allowAccountAssetOptimization";
   public static final String ALLOW_ASSET_OPTIMIZATION = "committee.allowAssetOptimization";
+  public static final String ALLOW_NEW_REWARD_ENABLE = "committee.allowNewRewardEnable";
   public static final String MEMO_FEE = "committee.memoFee";
 
   public static final String LOCAL_HOST = "127.0.0.1";
