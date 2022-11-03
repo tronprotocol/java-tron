@@ -565,7 +565,7 @@ public class ProposalUtil {
           throw new ContractValidateException(
               "Bad chain parameter id [ALLOW_NEW_REWARD_ALGO]");
         }
-        if (dynamicPropertiesStore.useNewRewardAlgorithm()) {
+        if (dynamicPropertiesStore.allowNewRewardEnable()) {
           throw new ContractValidateException(
               "New reward algorithm has been valid.");
         }

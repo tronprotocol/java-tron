@@ -187,6 +187,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX =
       "ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX".getBytes();
 
+  private static final byte[] ALLOW_NEW_REWARD = "ALLOW_NEW_REWARD".getBytes();
   private static final byte[] MEMO_FEE = "MEMO_FEE".getBytes();
   private static final byte[] MEMO_FEE_HISTORY = "MEMO_FEE_HISTORY".getBytes();
 
@@ -858,6 +859,16 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       } else {
         this.put(NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE,
             new BytesCapsule(ByteArray.fromLong(Long.MAX_VALUE)));
+      }
+    }
+
+    try {
+      this.getAllowNewRewardEnable();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowNewRewardEnable(CommonParameter.getInstance().getAllowNewRewardEnable());
+      if (CommonParameter.getInstance().getAllowNewRewardEnable() == 1) {
+        this.put(NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE,
+                new BytesCapsule(ByteArray.fromLong(getCurrentCycleNumber())));
       }
     }
 
@@ -2145,6 +2156,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public void addTotalNetWeight(long amount) {
     long totalNetWeight = getTotalNetWeight();
     totalNetWeight += amount;
+    if (allowNewRewardEnable()) {
+      totalNetWeight = Math.max(0, totalNetWeight);
+    }
     saveTotalNetWeight(totalNetWeight);
   }
 
@@ -2152,6 +2166,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public void addTotalEnergyWeight(long amount) {
     long totalEnergyWeight = getTotalEnergyWeight();
     totalEnergyWeight += amount;
+    if (allowNewRewardEnable()) {
+      totalEnergyWeight = Math.max(0, totalEnergyWeight);
+    }
     saveTotalEnergyWeight(totalEnergyWeight);
   }
 
@@ -2159,6 +2176,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public void addTotalTronPowerWeight(long amount) {
     long totalWeight = getTotalTronPowerWeight();
     totalWeight += amount;
+    if (allowNewRewardEnable()) {
+      totalWeight = Math.max(0, totalWeight);
+    }
     saveTotalTronPowerWeight(totalWeight);
   }
 
@@ -2559,6 +2579,21 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public void saveMemoFeeHistory(String value) {
     this.put(MEMO_FEE_HISTORY, new BytesCapsule(ByteArray.fromString(value)));
+  }
+
+  public long getAllowNewRewardEnable() {
+    return Optional.ofNullable(getUnchecked(ALLOW_NEW_REWARD))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(() -> new IllegalArgumentException("not found AllowNewRewardEnable"));
+  }
+
+  public void saveAllowNewRewardEnable(long newReward) {
+    this.put(ALLOW_NEW_REWARD, new BytesCapsule(ByteArray.fromLong(newReward)));
+  }
+
+  public boolean allowNewRewardEnable() {
+    return getAllowNewRewardEnable() == 1;
   }
 
   private static class DynamicResourceProperties {

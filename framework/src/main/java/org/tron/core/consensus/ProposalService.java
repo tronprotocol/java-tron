@@ -286,6 +286,7 @@ public class ProposalService extends ProposalUtil {
         }
         case ALLOW_NEW_REWARD_ALGO: {
           manager.getDynamicPropertiesStore().saveNewRewardAlgorithmEffectiveCycle();
+          manager.getDynamicPropertiesStore().saveAllowNewRewardEnable(entry.getValue());
           break;
         }
         case MEMO_FEE: {
