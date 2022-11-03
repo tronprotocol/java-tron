@@ -30,7 +30,6 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
-import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
@@ -78,7 +77,7 @@ public class UpdateEnergyLimitContractActuatorTest {
     Arrays.fill(stats, (byte) 1);
     dbManager.getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
-    VMConfig.initVmHardFork(true);
+    CommonParameter.getInstance().setBlockNumForEnergyLimit(0);
   }
 
   /**
@@ -93,7 +92,6 @@ public class UpdateEnergyLimitContractActuatorTest {
     } else {
       logger.info("Release resources failure.");
     }
-    CommonParameter.setENERGY_LIMIT_HARD_FORK(false);
   }
 
   /**
