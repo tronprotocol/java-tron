@@ -92,7 +92,7 @@ public class Storage {
   private static final String CACHE_STRATEGY_NORMAL_DEFAULT =
       "initialCapacity=100,maximumSize=500,expireAfterAccess=5m";
   private static final List<String> CACHE_NORMAL_DBS = Arrays.asList("code", "contract",
-      "asset-issue-v2");
+      "asset-issue-v2", "properties");
 
   private static final String CACHE_STRATEGY_BIG_DEFAULT =
       "initialCapacity=1000,maximumSize=10000,expireAfterAccess=1m";
