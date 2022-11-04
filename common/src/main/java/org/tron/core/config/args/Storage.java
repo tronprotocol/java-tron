@@ -15,11 +15,17 @@
 
 package org.tron.core.config.args;
 
+import com.google.common.collect.Maps;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
 import java.io.File;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
@@ -71,6 +77,33 @@ public class Storage {
 
   private static final String CHECKPOINT_VERSION_KEY = "storage.checkpoint.version";
   private static final String CHECKPOINT_SYNC_KEY = "storage.checkpoint.sync";
+
+  private static final String CACHE_STRATEGIES = "storage.cache.strategies";
+  private static final String CACHE_STRATEGY = "storage.cache.strategy";
+  private static final String CACHE_STRATEGY_DEFAULT =
+      "initialCapacity=500,maximumSize=1000,expireAfterAccess=30s";
+
+  private static final String CACHE_STRATEGY_SMALL_DEFAULT =
+      "initialCapacity=10,maximumSize=100,expireAfterAccess=5m";
+  private static final List<String> CACHE_SMALL_DBS = Arrays.asList("recent-block", "witness",
+      "witness_schedule", "DelegatedResource", "DelegatedResourceAccountIndex",
+      "votes", "abi");
+
+  private static final String CACHE_STRATEGY_NORMAL_DEFAULT =
+      "initialCapacity=100,maximumSize=500,expireAfterAccess=5m";
+  private static final List<String> CACHE_NORMAL_DBS = Arrays.asList("code", "contract",
+      "asset-issue-v2");
+
+  private static final String CACHE_STRATEGY_BIG_DEFAULT =
+      "initialCapacity=1000,maximumSize=10000,expireAfterAccess=1m";
+  public static final List<String> CACHE_BIG_DBS = Collections.singletonList("delegation");
+
+  private static final String CACHE_STRATEGY_HUGE_DEFAULT =
+      "initialCapacity=1000,maximumSize=20000,expireAfterAccess=2m";
+  private static final List<String> CACHE_HUGE_DBS = Arrays.asList("storage-row", "account");
+
+  private static final List<String> CACHE_DBS = Stream.of(CACHE_SMALL_DBS, CACHE_NORMAL_DBS,
+      CACHE_BIG_DBS, CACHE_HUGE_DBS).flatMap(Collection::stream).collect(Collectors.toList());
 
   /**
    * Default values of directory
@@ -138,6 +171,15 @@ public class Storage {
   @Getter
   @Setter
   private int estimatedBlockTransactions;
+
+  // second cache
+  private String cacheStrategy = CACHE_STRATEGY_DEFAULT;
+
+  private final Map<String, String> cacheStrategies = Maps.newConcurrentMap();
+
+  @Getter
+  private final List<String> cacheDbs = CACHE_DBS;
+  // second cache
 
   /**
    * Key: dbName, Value: Property object of that database
@@ -211,6 +253,34 @@ public class Storage {
       estimatedTransactions = 100;
     }
     return estimatedTransactions;
+  }
+
+
+  public  void setCacheStrategies(Config config) {
+    if (config.hasPath(CACHE_STRATEGY)) {
+      this.cacheStrategy = config.getString(CACHE_STRATEGY);
+    }
+    if (config.hasPath(CACHE_STRATEGIES)) {
+      config.getConfig(CACHE_STRATEGIES).resolve().entrySet().forEach(c ->
+          this.cacheStrategies.put(c.getKey(),  c.getValue().unwrapped().toString()));
+    }
+  }
+
+  public String getCacheStrategy(String dbName) {
+    String defaultStrategy = this.cacheStrategy;
+    if (CACHE_SMALL_DBS.contains(dbName)) {
+      defaultStrategy = CACHE_STRATEGY_SMALL_DEFAULT;
+    }
+    if (CACHE_NORMAL_DBS.contains(dbName)) {
+      defaultStrategy = CACHE_STRATEGY_NORMAL_DEFAULT;
+    }
+    if (CACHE_BIG_DBS.contains(dbName)) {
+      defaultStrategy = CACHE_STRATEGY_BIG_DEFAULT;
+    }
+    if (CACHE_HUGE_DBS.contains(dbName)) {
+      defaultStrategy = CACHE_STRATEGY_HUGE_DEFAULT;
+    }
+    return this.cacheStrategies.getOrDefault(dbName, defaultStrategy);
   }
 
   private  Property createProperty(final ConfigObject conf) {
