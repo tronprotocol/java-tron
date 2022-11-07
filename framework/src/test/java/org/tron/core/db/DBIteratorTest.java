@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
+import java.util.NoSuchElementException;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.Options;
 import org.junit.AfterClass;
@@ -48,15 +49,18 @@ public class DBIteratorTest {
       while (iterator.hasNext()) {
         iterator.next();
       }
+      Assert.assertFalse(iterator.hasNext());
       try {
         iterator.next();
       } catch (Exception e) {
-        Assert.assertTrue(e instanceof  RuntimeException);
+        Assert.assertTrue(e instanceof  NoSuchElementException);
       }
       db.close();
     } finally {
       factory.destroy(file, new Options());
     }
+
+
   }
 
   @Test
@@ -70,15 +74,17 @@ public class DBIteratorTest {
       while (iterator.hasNext()) {
         iterator.next();
       }
+      Assert.assertFalse(iterator.hasNext());
       try {
         iterator.next();
       } catch (Exception e) {
-        Assert.assertTrue(e instanceof  RuntimeException);
+        Assert.assertTrue(e instanceof  NoSuchElementException);
       }
       db.close();
     } finally {
       RocksDB.destroyDB(file.toString(), new org.rocksdb.Options());
     }
+
   }
 
 }

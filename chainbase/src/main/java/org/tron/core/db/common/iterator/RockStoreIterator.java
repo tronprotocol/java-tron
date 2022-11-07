@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.rocksdb.RocksIterator;
 
 
-@Slf4j(topic = "DB")
+@Slf4j
 public final class RockStoreIterator implements DBIterator {
 
   private RocksIterator dbIterator;
@@ -26,7 +26,9 @@ public final class RockStoreIterator implements DBIterator {
 
   @Override
   public boolean hasNext() {
-    checkIteratorValid();
+    if (!valid) {
+      return false;
+    }
     boolean hasNext = false;
     // true is first item
     try {
@@ -39,11 +41,11 @@ public final class RockStoreIterator implements DBIterator {
         valid = false;
       }
     } catch (Exception e) {
-      logger.error(e.getMessage(), e);
+      System.out.println("e:" + e);
       try {
         dbIterator.close();
       } catch (Exception e1) {
-        logger.error(e.getMessage(), e);
+        System.out.println("e1:" + e1);
       }
     }
     return hasNext;
@@ -51,8 +53,7 @@ public final class RockStoreIterator implements DBIterator {
 
   @Override
   public Entry<byte[], byte[]> next() {
-    checkIteratorValid();
-    if (!dbIterator.isValid()) {
+    if (!valid) {
       throw new NoSuchElementException();
     }
     byte[] key = dbIterator.key();
@@ -74,11 +75,5 @@ public final class RockStoreIterator implements DBIterator {
         throw new UnsupportedOperationException();
       }
     };
-  }
-
-  private void checkIteratorValid() {
-    if (!valid) {
-      throw new RuntimeException("Iterator have closed!");
-    }
   }
 }

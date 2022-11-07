@@ -2,6 +2,7 @@ package org.tron.core.db.common.iterator;
 
 import java.io.IOException;
 import java.util.Map.Entry;
+import java.util.NoSuchElementException;
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.DBIterator;
 
@@ -24,7 +25,10 @@ public final class StoreIterator implements org.tron.core.db.common.iterator.DBI
 
   @Override
   public boolean hasNext() {
-    checkIteratorValid();
+    if (!valid) {
+      return false;
+    }
+
     boolean hasNext = false;
     // true is first item
     try {
@@ -38,7 +42,7 @@ public final class StoreIterator implements org.tron.core.db.common.iterator.DBI
         valid = false;
       }
     } catch (Exception e) {
-      logger.error(e.getMessage(), e);
+      logger.debug(e.getMessage(), e);
     }
 
     return hasNext;
@@ -46,18 +50,14 @@ public final class StoreIterator implements org.tron.core.db.common.iterator.DBI
 
   @Override
   public Entry<byte[], byte[]> next() {
-    checkIteratorValid();
+    if (!valid) {
+      throw new NoSuchElementException();
+    }
     return dbIterator.next();
   }
 
   @Override
   public void remove() {
     throw new UnsupportedOperationException();
-  }
-
-  private void checkIteratorValid() {
-    if (!valid) {
-      throw new RuntimeException("Iterator have closed!");
-    }
   }
 }
