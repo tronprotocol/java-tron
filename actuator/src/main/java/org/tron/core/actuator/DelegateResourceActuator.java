@@ -1,6 +1,7 @@
 package org.tron.core.actuator;
 
 import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
+import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_TRANS_ESTIMATE_SIZE;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.protobuf.ByteString;
@@ -138,12 +139,24 @@ public class DelegateResourceActuator extends AbstractActuator {
       throw new ContractValidateException("delegateBalance must be more than 1TRX");
     }
 
+    boolean isTransactionCreate = this.getTx().isTransactionCreate();
     switch (delegateResourceContract.getResource()) {
       case BANDWIDTH: {
         BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
         processor.updateUsage(ownerCapsule);
 
-        long netUsage = (long) (ownerCapsule.getNetUsage() * TRX_PRECISION * ((double)
+        long accountNetUsage = ownerCapsule.getNetUsage();
+        if (isTransactionCreate) {
+          if (false) {
+            accountNetUsage += DELEGATE_TRANS_ESTIMATE_SIZE;
+          } else {
+            accountNetUsage += org.tron.core.utils.TransactionUtil
+                    .calcCanDelegatedBandWidthMaxSize(chainBaseManager,
+                            ByteString.copyFrom(ownerAddress),
+                            this.getTx().getTrxTrace());
+          }
+        }
+        long netUsage = (long) (accountNetUsage * TRX_PRECISION * ((double)
                 (dynamicStore.getTotalNetWeight()) / dynamicStore.getTotalNetLimit()));
 
         long ownerNetUsage = (long) (netUsage * ((double)(ownerCapsule

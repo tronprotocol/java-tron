@@ -23,6 +23,7 @@ import org.tron.core.services.http.GetAssetIssueByIdServlet;
 import org.tron.core.services.http.GetAssetIssueByNameServlet;
 import org.tron.core.services.http.GetAssetIssueListByNameServlet;
 import org.tron.core.services.http.GetAssetIssueListServlet;
+import org.tron.core.services.http.GetAvailableUnfreezeCountServlet;
 import org.tron.core.services.http.GetBlockByIdServlet;
 import org.tron.core.services.http.GetBlockByLatestNumServlet;
 import org.tron.core.services.http.GetBlockByLimitNextServlet;
@@ -30,6 +31,7 @@ import org.tron.core.services.http.GetBlockByNumServlet;
 import org.tron.core.services.http.GetBlockServlet;
 import org.tron.core.services.http.GetBrokerageServlet;
 import org.tron.core.services.http.GetBurnTrxServlet;
+import org.tron.core.services.http.GetCanDelegatedMaxSizeServlet;
 import org.tron.core.services.http.GetCanWithdrawUnfreezeAmountServlet;
 import org.tron.core.services.http.GetDelegatedResourceAccountIndexServlet;
 import org.tron.core.services.http.GetDelegatedResourceAccountIndexV2Servlet;
@@ -84,6 +86,10 @@ public class SolidityNodeHttpApiService implements Service {
   private GetDelegatedResourceServlet getDelegatedResourceServlet;
   @Autowired
   private GetDelegatedResourceV2Servlet getDelegatedResourceV2Servlet;
+  @Autowired
+  private GetCanDelegatedMaxSizeServlet getCanDelegatedMaxSizeServlet;
+  @Autowired
+  private GetAvailableUnfreezeCountServlet getAvailableUnfreezeCountServlet;
   @Autowired
   private GetCanWithdrawUnfreezeAmountServlet getCanWithdrawUnfreezeAmountServlet;
   @Autowired
@@ -212,6 +218,10 @@ public class SolidityNodeHttpApiService implements Service {
           "/walletsolidity/getdelegatedresource");
       context.addServlet(new ServletHolder(getDelegatedResourceV2Servlet),
               "/walletsolidity/getdelegatedresourcev2");
+      context.addServlet(new ServletHolder(getCanDelegatedMaxSizeServlet),
+              "/walletsolidity/getcandelegatedmaxsize");
+      context.addServlet(new ServletHolder(getAvailableUnfreezeCountServlet),
+              "/walletsolidity/getavailableunfreezecount");
       context.addServlet(new ServletHolder(getCanWithdrawUnfreezeAmountServlet),
               "/walletsolidity/getcanwithdrawunfreezeamount");
       context.addServlet(new ServletHolder(getDelegatedResourceAccountIndexServlet),

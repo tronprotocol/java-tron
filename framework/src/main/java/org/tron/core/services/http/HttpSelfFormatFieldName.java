@@ -154,6 +154,8 @@ public class HttpSelfFormatFieldName {
     //UnDelegateResourceContract
     AddressFieldNameMap.put("protocol.UnDelegateResourceContract.owner_address", 1);
     AddressFieldNameMap.put("protocol.UnDelegateResourceContract.receiver_address", 1);
+    AddressFieldNameMap.put("protocol.CanDelegatedMaxSizeRequestMessage.owner_address", 1);
+    AddressFieldNameMap.put("protocol.GetAvailableUnfreezeCountRequestMessage.owner_address", 1);
     AddressFieldNameMap.put("protocol.CanWithdrawUnfreezeAmountRequestMessage.owner_address", 1);
 
     //***** Tron.proto *****

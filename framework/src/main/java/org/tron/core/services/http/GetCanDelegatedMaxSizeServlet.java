@@ -13,7 +13,7 @@ import org.tron.core.Wallet;
 
 @Component
 @Slf4j(topic = "API")
-public class GetCanWithdrawUnfreezeAmountServlet extends RateLimiterServlet {
+public class GetCanDelegatedMaxSizeServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;
@@ -21,15 +21,14 @@ public class GetCanWithdrawUnfreezeAmountServlet extends RateLimiterServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
       boolean visible = Util.getVisible(request);
+      int type = Integer.parseInt(request.getParameter("type"));
       String ownerAddress = request.getParameter("owner_address");
-      long timestampe = Long.valueOf(request.getParameter("timestamp"));
       if (visible) {
         ownerAddress = Util.getHexAddress(ownerAddress);
       }
       fillResponse(visible,
               ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)),
-              timestampe,
-              response);
+              type, response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -38,13 +37,12 @@ public class GetCanWithdrawUnfreezeAmountServlet extends RateLimiterServlet {
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
       PostParams params = PostParams.getPostParams(request);
-      GrpcAPI.CanWithdrawUnfreezeAmountRequestMessage.Builder build =
-              GrpcAPI.CanWithdrawUnfreezeAmountRequestMessage.newBuilder();
+      GrpcAPI.CanDelegatedMaxSizeRequestMessage.Builder build =
+              GrpcAPI.CanDelegatedMaxSizeRequestMessage.newBuilder();
       JsonFormat.merge(params.getParams(), build, params.isVisible());
       fillResponse(params.isVisible(),
               build.getOwnerAddress(),
-              build.getTimestamp(),
-              response);
+              build.getType(), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -52,10 +50,11 @@ public class GetCanWithdrawUnfreezeAmountServlet extends RateLimiterServlet {
 
   private void fillResponse(boolean visible,
                             ByteString ownerAddress,
-                            long timestampe,
+                            int resourceType,
                             HttpServletResponse response) throws IOException {
-    GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage reply =
-            wallet.getCanWithdrawUnfreezeAmount(ownerAddress, timestampe);
+    GrpcAPI.CanDelegatedMaxSizeResponseMessage reply =
+            wallet.getCanDelegatedMaxSize(ownerAddress,
+                    resourceType);
     if (reply != null) {
       response.getWriter().println(JsonFormat.printToString(reply, visible));
     } else {
