@@ -651,7 +651,7 @@ public class ProposalUtil {
     ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX(65), // 0, 1
     ALLOW_ASSET_OPTIMIZATION(66), // 0, 1
     ALLOW_NEW_REWARD_ALGO(67), // 0, 1
-    MEMO_FEE(68); // 0, [1, 1000_000_000]
+    MEMO_FEE(68); // 0, [0, 1000_000_000]
 
     private long code;
 
