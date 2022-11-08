@@ -13,37 +13,36 @@ import org.tron.core.Wallet;
 
 @Component
 @Slf4j(topic = "API")
-public class GetCanWithdrawUnfreezeAmountServlet extends RateLimiterServlet {
+public class GetAvailableUnfreezeCountServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;
 
+  @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
       boolean visible = Util.getVisible(request);
-      String ownerAddress = request.getParameter("owner_address");
-      long timestamp = Long.valueOf(request.getParameter("timestamp"));
+      String ownerAddress = request.getParameter("ownerAddress");
       if (visible) {
         ownerAddress = Util.getHexAddress(ownerAddress);
       }
       fillResponse(visible,
               ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)),
-              timestamp,
               response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
   }
 
+  @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
       PostParams params = PostParams.getPostParams(request);
-      GrpcAPI.CanWithdrawUnfreezeAmountRequestMessage.Builder build =
-              GrpcAPI.CanWithdrawUnfreezeAmountRequestMessage.newBuilder();
+      GrpcAPI.GetAvailableUnfreezeCountRequestMessage.Builder build =
+              GrpcAPI.GetAvailableUnfreezeCountRequestMessage.newBuilder();
       JsonFormat.merge(params.getParams(), build, params.isVisible());
       fillResponse(params.isVisible(),
               build.getOwnerAddress(),
-              build.getTimestamp(),
               response);
     } catch (Exception e) {
       Util.processError(e, response);
@@ -52,10 +51,9 @@ public class GetCanWithdrawUnfreezeAmountServlet extends RateLimiterServlet {
 
   private void fillResponse(boolean visible,
                             ByteString ownerAddress,
-                            long timestamp,
                             HttpServletResponse response) throws IOException {
-    GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage reply =
-            wallet.getCanWithdrawUnfreezeAmount(ownerAddress, timestamp);
+    GrpcAPI.GetAvailableUnfreezeCountResponseMessage reply =
+            wallet.getAvailableUnfreezeCount(ownerAddress);
     if (reply != null) {
       response.getWriter().println(JsonFormat.printToString(reply, visible));
     } else {

@@ -188,6 +188,8 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetDelegatedResourceV2Servlet getDelegatedResourceV2Servlet;
   @Autowired
+  private GetAvailableUnfreezeCountServlet getAvailableUnfreezeCountServlet;
+  @Autowired
   private GetCanWithdrawUnfreezeAmountServlet getCanWithdrawUnfreezeAmountServlet;
   @Autowired
   private SetAccountIdServlet setAccountServlet;
@@ -470,6 +472,8 @@ public class FullNodeHttpApiService implements Service {
           "/wallet/getdelegatedresource");
       context.addServlet(new ServletHolder(getDelegatedResourceV2Servlet),
               "/wallet/getdelegatedresourcev2");
+      context.addServlet(new ServletHolder(getAvailableUnfreezeCountServlet),
+              "/wallet/getavailableunfreezecount");
       context.addServlet(new ServletHolder(getCanWithdrawUnfreezeAmountServlet),
               "/wallet/getcanwithdrawunfreezeamount");
       context.addServlet(

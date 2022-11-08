@@ -123,6 +123,7 @@ import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
 import org.tron.consensus.ConsensusDelegate;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
+import org.tron.core.actuator.UnfreezeBalanceV2Actuator;
 import org.tron.core.actuator.VMActuator;
 import org.tron.core.capsule.AbiCapsule;
 import org.tron.core.capsule.AccountCapsule;
@@ -766,7 +767,7 @@ public class Wallet {
   }
 
   public GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage getCanWithdrawUnfreezeAmount(
-          ByteString ownerAddress) {
+          ByteString ownerAddress, long timestamp) {
     GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage.Builder builder =
             GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage.newBuilder();
     long canWithdrawUnfreezeAmount;
@@ -777,19 +778,51 @@ public class Wallet {
     if (accountCapsule == null) {
       return builder.build();
     }
-    long now = dynamicStore.getLatestBlockHeaderTimestamp();
+
+    if (timestamp == 0) {
+      timestamp = dynamicStore.getLatestBlockHeaderTimestamp();
+    }
 
     List<Account.UnFreezeV2> unfrozenV2List = accountCapsule.getInstance().getUnfrozenV2List();
+    long finalTimestamp = timestamp;
+
     canWithdrawUnfreezeAmount = unfrozenV2List
             .stream()
             .filter(unfrozenV2 ->
                     (unfrozenV2.getUnfreezeAmount() > 0
-                    && unfrozenV2.getUnfreezeExpireTime() <= now))
+                    && unfrozenV2.getUnfreezeExpireTime() <= finalTimestamp))
             .mapToLong(Account.UnFreezeV2::getUnfreezeAmount)
             .sum();
 
 
     builder.setAmount(canWithdrawUnfreezeAmount);
+    return builder.build();
+  }
+
+  public GrpcAPI.GetAvailableUnfreezeCountResponseMessage getAvailableUnfreezeCount(
+          ByteString ownerAddress) {
+    long getAvailableUnfreezeCount;
+    GrpcAPI.GetAvailableUnfreezeCountResponseMessage.Builder builder =
+            GrpcAPI.GetAvailableUnfreezeCountResponseMessage.newBuilder();
+
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    AccountCapsule accountCapsule = accountStore.get(ownerAddress.toByteArray());
+    if (accountCapsule == null) {
+      return builder.build();
+    }
+    long now = dynamicStore.getLatestBlockHeaderTimestamp();
+
+    List<Account.UnFreezeV2> unfrozenV2List = accountCapsule.getInstance().getUnfrozenV2List();
+    long getUsedUnfreezeCount = unfrozenV2List
+            .stream()
+            .filter(unfrozenV2 ->
+                    (unfrozenV2.getUnfreezeAmount() > 0
+                     && unfrozenV2.getUnfreezeExpireTime() > now))
+            .count();
+    getAvailableUnfreezeCount = UnfreezeBalanceV2Actuator.getUNFREEZE_MAX_TIMES()
+            - getUsedUnfreezeCount;
+    builder.setCount(getAvailableUnfreezeCount);
     return builder.build();
   }
 
