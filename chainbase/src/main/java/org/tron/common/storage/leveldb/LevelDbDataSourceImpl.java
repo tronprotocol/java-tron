@@ -49,6 +49,7 @@ import org.iq80.leveldb.Options;
 import org.iq80.leveldb.ReadOptions;
 import org.iq80.leveldb.WriteBatch;
 import org.iq80.leveldb.WriteOptions;
+import org.slf4j.LoggerFactory;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.storage.metric.DbStat;
@@ -72,7 +73,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   private WriteOptions writeOptions;
   private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
   private static final String LEVELDB = "LEVELDB";
-  private static final Logger leveldbLogger = logger::info;
+  private static final Logger leveldbLogger = LoggerFactory.getLogger(LEVELDB)::info;
 
   /**
    * constructor.
