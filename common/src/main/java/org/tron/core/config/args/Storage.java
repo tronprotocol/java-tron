@@ -84,22 +84,22 @@ public class Storage {
       "initialCapacity=500,maximumSize=1000,expireAfterAccess=30s";
 
   private static final String CACHE_STRATEGY_SMALL_DEFAULT =
-      "initialCapacity=10,maximumSize=100,expireAfterAccess=5m";
+      "initialCapacity=10,maximumSize=100,expireAfterAccess=30s";
   private static final List<String> CACHE_SMALL_DBS = Arrays.asList("recent-block", "witness",
       "witness_schedule", "DelegatedResource", "DelegatedResourceAccountIndex",
       "votes", "abi");
 
   private static final String CACHE_STRATEGY_NORMAL_DEFAULT =
-      "initialCapacity=100,maximumSize=500,expireAfterAccess=5m";
+      "initialCapacity=100,maximumSize=500,expireAfterAccess=30s";
   private static final List<String> CACHE_NORMAL_DBS = Arrays.asList("code", "contract",
       "asset-issue-v2", "properties");
 
   private static final String CACHE_STRATEGY_BIG_DEFAULT =
-      "initialCapacity=1000,maximumSize=10000,expireAfterAccess=1m";
+      "initialCapacity=1000,maximumSize=10000,expireAfterAccess=30s";
   public static final List<String> CACHE_BIG_DBS = Collections.singletonList("delegation");
 
   private static final String CACHE_STRATEGY_HUGE_DEFAULT =
-      "initialCapacity=1000,maximumSize=20000,expireAfterAccess=2m";
+      "initialCapacity=1000,maximumSize=20000,expireAfterAccess=30s";
   private static final List<String> CACHE_HUGE_DBS = Arrays.asList("storage-row", "account");
 
   private static final List<String> CACHE_DBS = Stream.of(CACHE_SMALL_DBS, CACHE_NORMAL_DBS,
