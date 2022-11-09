@@ -52,6 +52,7 @@ import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.ReceiptCheckErrException;
+import org.tron.core.exception.ScriptsException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TooBigTransactionResultException;
@@ -155,7 +156,7 @@ public class ManagerTest extends BlockGenerate {
       BadBlockException, ContractValidateException, ValidateSignatureException,
       AccountResourceInsufficientException, TransactionExpirationException,
       TooBigTransactionException, DupTransactionException, TaposException, BadNumberBlockException,
-      NonCommonBlockException, ReceiptCheckErrException, VMIllegalException,
+      NonCommonBlockException, ReceiptCheckErrException, VMIllegalException, ScriptsException,
       TooBigTransactionResultException, ZksnarkException, EventBloomException {
 
     BlockCapsule blockCapsule =
@@ -461,7 +462,7 @@ public class ManagerTest extends BlockGenerate {
       ValidateScheduleException, ZksnarkException, BadBlockException, VMIllegalException,
       BadNumberBlockException, DupTransactionException, ContractExeException,
       ValidateSignatureException, TooBigTransactionResultException, TransactionExpirationException,
-      TaposException, ReceiptCheckErrException, TooBigTransactionException,
+      TaposException, ReceiptCheckErrException, TooBigTransactionException, ScriptsException,
       AccountResourceInsufficientException, EventBloomException {
 
     String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
@@ -570,7 +571,7 @@ public class ManagerTest extends BlockGenerate {
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
-      ZksnarkException, EventBloomException {
+      ZksnarkException, EventBloomException, ScriptsException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     //  System.out.print("block store size:" + size + "\n");
@@ -686,7 +687,7 @@ public class ManagerTest extends BlockGenerate {
       UnLinkedBlockException, ValidateScheduleException, BadItemException,
       ItemNotFoundException, HeaderNotFound, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException,
-      DupTransactionException, BadBlockException,
+      DupTransactionException, BadBlockException, ScriptsException,
       TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
       ZksnarkException, EventBloomException {
@@ -795,7 +796,7 @@ public class ManagerTest extends BlockGenerate {
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
-      ZksnarkException, EventBloomException {
+      ZksnarkException, EventBloomException, ScriptsException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");

@@ -44,6 +44,7 @@ import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.exception.ReceiptCheckErrException;
+import org.tron.core.exception.ScriptsException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
@@ -276,6 +277,7 @@ public class TronNetDelegate {
           | ReceiptCheckErrException
           | VMIllegalException
           | ZksnarkException
+          | ScriptsException
           | EventBloomException e) {
         metricsService.failProcessBlock(block.getNum(), e.getMessage());
         logger.error("Process block failed, {}, reason: {}", blockId.getString(), e.getMessage());
@@ -300,6 +302,7 @@ public class TronNetDelegate {
         | TransactionExpirationException
         | ReceiptCheckErrException
         | TooBigTransactionResultException
+        | ScriptsException
         | AccountResourceInsufficientException e) {
       throw new P2pException(TypeEnum.TRX_EXE_FAILED, e);
     }

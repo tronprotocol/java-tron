@@ -64,6 +64,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.ReceiptCheckErrException;
+import org.tron.core.exception.ScriptsException;
 import org.tron.core.exception.SignatureFormatException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
@@ -2234,7 +2235,7 @@ public class ShieldedReceiveTest extends BlockGenerate {
   public void testMemoTooLong() throws ContractValidateException, TooBigTransactionException,
       TooBigTransactionResultException, TaposException, TransactionExpirationException,
       ReceiptCheckErrException, DupTransactionException, VMIllegalException,
-      ValidateSignatureException, BadItemException, ContractExeException,
+      ValidateSignatureException, BadItemException, ContractExeException, ScriptsException,
       AccountResourceInsufficientException, InvalidProtocolBufferException, ZksnarkException {
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
@@ -2317,7 +2318,7 @@ public class ShieldedReceiveTest extends BlockGenerate {
   public void testMemoNotEnough() throws ContractValidateException, TooBigTransactionException,
       TooBigTransactionResultException, TaposException, TransactionExpirationException,
       ReceiptCheckErrException, DupTransactionException, VMIllegalException,
-      ValidateSignatureException, BadItemException, ContractExeException,
+      ValidateSignatureException, BadItemException, ContractExeException, ScriptsException,
       AccountResourceInsufficientException, InvalidProtocolBufferException, ZksnarkException {
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 

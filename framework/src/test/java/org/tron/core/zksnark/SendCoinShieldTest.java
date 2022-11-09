@@ -59,6 +59,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.ReceiptCheckErrException;
+import org.tron.core.exception.ScriptsException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TooBigTransactionResultException;
@@ -457,7 +458,7 @@ public class SendCoinShieldTest {
       throws ContractValidateException, TooBigTransactionException,
       TooBigTransactionResultException, TaposException, TransactionExpirationException,
       ReceiptCheckErrException, DupTransactionException, VMIllegalException,
-      ValidateSignatureException, BadItemException, ContractExeException,
+      ValidateSignatureException, BadItemException, ContractExeException, ScriptsException,
       AccountResourceInsufficientException, InvalidProtocolBufferException, ZksnarkException {
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
@@ -544,7 +545,7 @@ public class SendCoinShieldTest {
       throws ContractValidateException, TooBigTransactionException,
       TooBigTransactionResultException, TaposException, TransactionExpirationException,
       ReceiptCheckErrException, DupTransactionException, VMIllegalException,
-      ValidateSignatureException, BadItemException, ContractExeException,
+      ValidateSignatureException, BadItemException, ContractExeException, ScriptsException,
       AccountResourceInsufficientException, InvalidProtocolBufferException, ZksnarkException {
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
@@ -732,7 +733,7 @@ public class SendCoinShieldTest {
   @Test
   public void pushShieldedTransaction()
       throws ContractValidateException, TooBigTransactionException,
-      TooBigTransactionResultException,
+      TooBigTransactionResultException, ScriptsException,
       TaposException, TransactionExpirationException, ReceiptCheckErrException,
       DupTransactionException, VMIllegalException, ValidateSignatureException, BadItemException,
       ContractExeException, AccountResourceInsufficientException, ZksnarkException {

@@ -117,6 +117,7 @@ import org.tron.core.exception.EventBloomException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.ReceiptCheckErrException;
+import org.tron.core.exception.ScriptsException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TooBigTransactionResultException;
@@ -714,7 +715,7 @@ public class Manager {
   }
 
   void validateCommon(TransactionCapsule transactionCapsule)
-      throws TransactionExpirationException, TooBigTransactionException {
+      throws TransactionExpirationException, TooBigTransactionException, ScriptsException {
     if (transactionCapsule.getData().length > Constant.TRANSACTION_MAX_BYTE_SIZE) {
       throw new TooBigTransactionException(String.format(
           "Too big transaction, the size is %d bytes", transactionCapsule.getData().length));
@@ -727,6 +728,10 @@ public class Manager {
           String.format(
           "Transaction expiration, transaction expiration time is %d, but headBlockTime is %d",
               transactionExpiration, headBlockTime));
+    }
+    if ((chainBaseManager.getDynamicPropertiesStore().getMemoFee() > 0)
+        && (!transactionCapsule.getInstance().getRawData().getScripts().isEmpty())) {
+      throw new ScriptsException("Transaction must have no scripts");
     }
   }
 
@@ -758,7 +763,7 @@ public class Manager {
   public boolean pushTransaction(final TransactionCapsule trx)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, DupTransactionException, TaposException,
-      TooBigTransactionException, TransactionExpirationException,
+      TooBigTransactionException, TransactionExpirationException, ScriptsException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
 
     if (isShieldedTransaction(trx.getInstance()) && !Args.getInstance()
@@ -919,7 +924,7 @@ public class Manager {
   public void pushVerifiedBlock(BlockCapsule block) throws ContractValidateException,
       ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
-      TaposException, ValidateScheduleException, ReceiptCheckErrException,
+      TaposException, ValidateScheduleException, ReceiptCheckErrException, ScriptsException,
       VMIllegalException, TooBigTransactionResultException, UnLinkedBlockException,
       NonCommonBlockException, BadNumberBlockException, BadBlockException, ZksnarkException,
       EventBloomException {
@@ -937,7 +942,7 @@ public class Manager {
       ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       TaposException, ValidateScheduleException, ReceiptCheckErrException,
-      VMIllegalException, TooBigTransactionResultException,
+      VMIllegalException, TooBigTransactionResultException, ScriptsException,
       ZksnarkException, BadBlockException, EventBloomException {
     applyBlock(block, block.getTransactions());
   }
@@ -945,7 +950,7 @@ public class Manager {
   private void applyBlock(BlockCapsule block, List<TransactionCapsule> txs)
       throws ContractValidateException, ContractExeException, ValidateSignatureException,
       AccountResourceInsufficientException, TransactionExpirationException,
-      TooBigTransactionException, DupTransactionException, TaposException,
+      TooBigTransactionException, DupTransactionException, TaposException, ScriptsException,
       ValidateScheduleException, ReceiptCheckErrException, VMIllegalException,
       TooBigTransactionResultException, ZksnarkException, BadBlockException, EventBloomException {
     processBlock(block, txs);
@@ -979,7 +984,8 @@ public class Manager {
       ValidateScheduleException, AccountResourceInsufficientException, TaposException,
       TooBigTransactionException, TooBigTransactionResultException, DupTransactionException,
       TransactionExpirationException, NonCommonBlockException, ReceiptCheckErrException,
-      VMIllegalException, ZksnarkException, BadBlockException, EventBloomException {
+      VMIllegalException, ZksnarkException, BadBlockException, EventBloomException,
+      ScriptsException {
 
     MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_FORK_COUNT);
     Metrics.counterInc(MetricKeys.Counter.BLOCK_FORK, 1, MetricLabels.ALL);
@@ -1036,6 +1042,7 @@ public class Manager {
             | ValidateScheduleException
             | VMIllegalException
             | ZksnarkException
+            | ScriptsException
             | BadBlockException e) {
           logger.warn(e.getMessage(), e);
           exception = e;
@@ -1121,7 +1128,7 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException,
       TaposException, TooBigTransactionException, TooBigTransactionResultException,
-      DupTransactionException, TransactionExpirationException,
+      DupTransactionException, TransactionExpirationException, ScriptsException,
       BadNumberBlockException, BadBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, ZksnarkException, EventBloomException {
     setBlockWaitLock(true);
@@ -1327,7 +1334,7 @@ public class Manager {
   public TransactionInfo processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TransactionExpirationException,
-      TooBigTransactionException, TooBigTransactionResultException,
+      TooBigTransactionException, TooBigTransactionResultException, ScriptsException,
       DupTransactionException, TaposException, ReceiptCheckErrException, VMIllegalException {
     if (trxCap == null) {
       return null;
@@ -1627,7 +1634,7 @@ public class Manager {
       AccountResourceInsufficientException, TaposException, TooBigTransactionException,
       DupTransactionException, TransactionExpirationException, ValidateScheduleException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
-      ZksnarkException, BadBlockException, EventBloomException {
+      ZksnarkException, BadBlockException, EventBloomException, ScriptsException {
     // todo set revoking db max size.
 
     // checkWitness
@@ -1922,6 +1929,8 @@ public class Manager {
       logger.debug("Pending manager: outOfSlotTime transaction", e);
     } catch (TooBigTransactionResultException e) {
       logger.debug("Pending manager: too big transaction result", e);
+    } catch (ScriptsException e) {
+      logger.debug("Pending manager: transaction must have no scripts", e);
     }
   }
 
