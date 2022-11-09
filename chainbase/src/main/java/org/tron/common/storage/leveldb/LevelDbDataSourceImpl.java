@@ -44,6 +44,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBIterator;
+import org.iq80.leveldb.Logger;
 import org.iq80.leveldb.Options;
 import org.iq80.leveldb.ReadOptions;
 import org.iq80.leveldb.WriteBatch;
@@ -71,6 +72,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   private WriteOptions writeOptions;
   private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
   private static final String LEVELDB = "LEVELDB";
+  private static final Logger leveldbLogger = logger::info;
 
   /**
    * constructor.
@@ -82,7 +84,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
         CommonParameter.getInstance().getStorage().getDbDirectory()
     ).toString();
     this.dataBaseName = dataBaseName;
-    this.options = options;
+    this.options = options.logger(leveldbLogger);
     this.writeOptions = writeOptions;
     initDB();
   }
@@ -94,7 +96,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     ).toString();
 
     this.dataBaseName = dataBaseName;
-    options = new Options();
+    options = new Options().logger(leveldbLogger);
     writeOptions = new WriteOptions();
   }
 
@@ -157,6 +159,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     dbOptions.paranoidChecks(true);
     dbOptions.verifyChecksums(true);
     dbOptions.maxOpenFiles(32);
+    dbOptions.logger(leveldbLogger);
     return dbOptions;
   }
 
@@ -185,7 +188,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     resetDbLock.writeLock().lock();
     try {
       logger.debug("Destroying existing database: " + fileLocation);
-      Options options = new Options();
+      Options options = new Options().logger(leveldbLogger);
       try {
         factory.destroy(fileLocation, options);
       } catch (IOException e) {
