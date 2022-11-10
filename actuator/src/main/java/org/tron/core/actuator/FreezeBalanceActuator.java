@@ -133,7 +133,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
   private void addTotalWeight(ResourceCode resourceCode, DynamicPropertiesStore dynamicStore,
                               long frozenBalance, long increment) {
-    long weight = dynamicStore.allowNewRewardEnable() ? increment : frozenBalance / TRX_PRECISION;
+    long weight = dynamicStore.allowNewReward() ? increment : frozenBalance / TRX_PRECISION;
     switch (resourceCode) {
       case BANDWIDTH:
         dynamicStore.addTotalNetWeight(weight);

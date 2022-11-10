@@ -390,7 +390,7 @@ public class BandwidthProcessor extends ResourceProcessor {
     long netWeight = frozeBalance / TRX_PRECISION;
     long totalNetLimit = chainBaseManager.getDynamicPropertiesStore().getTotalNetLimit();
     long totalNetWeight = chainBaseManager.getDynamicPropertiesStore().getTotalNetWeight();
-    if (dynamicPropertiesStore.allowNewRewardEnable() && totalNetWeight <= 0) {
+    if (dynamicPropertiesStore.allowNewReward() && totalNetWeight <= 0) {
       return 0;
     }
     if (totalNetWeight == 0) {
