@@ -522,6 +522,11 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return transaction.getRawData().getTimestamp();
   }
 
+  public void setScripts(ByteString bs) {
+    Transaction.raw rawData = this.transaction.getRawData().toBuilder().setScripts(bs).build();
+    this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
+  }
+
   @Deprecated
   public void createTransaction(com.google.protobuf.Message message, ContractType contractType) {
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().addContract(

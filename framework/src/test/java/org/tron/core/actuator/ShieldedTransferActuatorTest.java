@@ -27,6 +27,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.PermissionException;
+import org.tron.core.exception.ScriptsException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.services.http.FullNodeHttpApiService;
@@ -245,6 +246,26 @@ public class ShieldedTransferActuatorTest {
     }
   }
 
+  @Test
+  public void testScriptsException() {
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveMemoFee(1L);
+    try {
+      TransactionCapsule transactionCap = getPublicToShieldedTransaction();
+      transactionCap.setScripts(ByteString.copyFromUtf8("onlyTest"));
+
+      TransactionSign.Builder transactionSignBuild = TransactionSign.newBuilder();
+      transactionSignBuild.setTransaction(transactionCap.getInstance());
+      transactionSignBuild.setPrivateKey(ByteString.copyFrom(
+              ByteArray.fromHexString(ADDRESS_ONE_PRIVATE_KEY)));
+      transactionCap = transactionUtil.addSign(transactionSignBuild.build());
+      dbManager.pushTransaction(transactionCap);
+    } catch (Exception e) {
+      logger.error("exception", e);
+      Assert.assertTrue(e instanceof ScriptsException);
+      Assert.assertEquals("Transaction must have no scripts", e.getMessage());
+    }
+  }
 
   /**
    * public address to public address + zero value shieldAddress
