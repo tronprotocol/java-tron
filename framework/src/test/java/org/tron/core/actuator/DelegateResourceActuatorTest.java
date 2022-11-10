@@ -19,6 +19,7 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -26,9 +27,12 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.utils.TransactionUtil;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
+import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.BalanceContract.DelegateResourceContract;
 import org.tron.protos.contract.Common.ResourceCode;
 
@@ -553,4 +557,29 @@ public class DelegateResourceActuatorTest {
     actuatorTest.setNullDBManagerMsg("No account store or dynamic store!");
     actuatorTest.nullDBManger();
   }
+
+
+  @Test
+  public void consumeSizeTest() {
+    dbManager.getDynamicPropertiesStore().saveAllowCreationOfContracts(1);
+
+    BalanceContract.DelegateResourceContract.Builder builder =
+            BalanceContract.DelegateResourceContract.newBuilder()
+                    .setBalance(Long.MAX_VALUE);
+    TransactionCapsule fakeTransactionCapsule = new TransactionCapsule(builder.build(),
+            Protocol.Transaction.Contract.ContractType.DelegateResourceContract);
+    long size1 = TransactionUtil.consumeBandWidthSize(
+            fakeTransactionCapsule, dbManager.getChainBaseManager());
+
+    BalanceContract.DelegateResourceContract.Builder builder2 =
+            BalanceContract.DelegateResourceContract.newBuilder()
+                    .setBalance(1000_000L);
+    TransactionCapsule fakeTransactionCapsule2 = new TransactionCapsule(builder2.build(),
+            Protocol.Transaction.Contract.ContractType.DelegateResourceContract);
+    long size2 = TransactionUtil.consumeBandWidthSize(
+            fakeTransactionCapsule2, dbManager.getChainBaseManager());
+
+    Assert.assertEquals(size1, size2 + 6);
+  }
+
 }
