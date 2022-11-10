@@ -1099,8 +1099,8 @@ public class Wallet {
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-        .setKey("getAllowNewRewardEnable")
-        .setValue(dbManager.getDynamicPropertiesStore().getAllowNewRewardEnable())
+        .setKey("getAllowNewReward")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowNewReward())
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
