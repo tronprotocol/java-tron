@@ -237,7 +237,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
 
     }
     
-    long weight = dynamicStore.allowNewRewardEnable() ? decrease : -unfreezeBalance / TRX_PRECISION;
+    long weight = dynamicStore.allowNewReward() ? decrease : -unfreezeBalance / TRX_PRECISION;
     switch (unfreezeBalanceContract.getResource()) {
       case BANDWIDTH:
         dynamicStore

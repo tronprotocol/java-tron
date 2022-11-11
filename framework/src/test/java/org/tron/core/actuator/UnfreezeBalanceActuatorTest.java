@@ -140,7 +140,7 @@ public class UnfreezeBalanceActuatorTest {
   @Test
   public void testUnfreezeBalanceForBandwidth() {
     long now = System.currentTimeMillis();
-    dbManager.getDynamicPropertiesStore().saveAllowNewRewardEnable(0);
+    dbManager.getDynamicPropertiesStore().saveAllowNewReward(0);
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
 
     AccountCapsule accountCapsule = dbManager.getAccountStore()
@@ -182,7 +182,7 @@ public class UnfreezeBalanceActuatorTest {
   @Test
   public void testUnfreezeSelfAndOthersForBandwidth() {
     dbManager.getDynamicPropertiesStore().saveAllowDelegateResource(1);
-    dbManager.getDynamicPropertiesStore().saveAllowNewRewardEnable(1);
+    dbManager.getDynamicPropertiesStore().saveAllowNewReward(1);
     long now = System.currentTimeMillis();
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
 
@@ -264,13 +264,13 @@ public class UnfreezeBalanceActuatorTest {
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
-    dbManager.getDynamicPropertiesStore().saveAllowNewRewardEnable(0);
+    dbManager.getDynamicPropertiesStore().saveAllowNewReward(0);
   }
 
   @Test
   public void testUnfreezeBalanceForEnergy() {
     long now = System.currentTimeMillis();
-    dbManager.getDynamicPropertiesStore().saveAllowNewRewardEnable(0);
+    dbManager.getDynamicPropertiesStore().saveAllowNewReward(0);
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
 
     AccountCapsule accountCapsule = dbManager.getAccountStore()

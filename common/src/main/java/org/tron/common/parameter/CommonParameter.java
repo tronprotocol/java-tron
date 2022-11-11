@@ -563,7 +563,7 @@ public class CommonParameter {
 
   @Getter
   @Setter
-  public long allowNewRewardEnable = 0L;
+  public long allowNewReward = 0L;
 
   @Getter
   @Setter

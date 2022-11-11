@@ -133,7 +133,7 @@ public class EnergyProcessor extends ResourceProcessor {
     long energyWeight = frozeBalance / TRX_PRECISION;
     long totalEnergyLimit = dynamicPropertiesStore.getTotalEnergyCurrentLimit();
     long totalEnergyWeight = dynamicPropertiesStore.getTotalEnergyWeight();
-    if (dynamicPropertiesStore.allowNewRewardEnable() && totalEnergyWeight <= 0) {
+    if (dynamicPropertiesStore.allowNewReward() && totalEnergyWeight <= 0) {
       return 0;
     } else {
       assert totalEnergyWeight > 0;
