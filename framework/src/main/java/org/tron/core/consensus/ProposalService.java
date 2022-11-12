@@ -297,6 +297,10 @@ public class ProposalService extends ProposalUtil {
                   + "," + proposalCapsule.getExpirationTime() + ":" + entry.getValue());
           break;
         }
+        case ALLOW_DELEGATE_OPTIMIZATION: {
+          manager.getDynamicPropertiesStore().saveAllowDelegateOptimization(entry.getValue());
+          break;
+        }
         default:
           find = false;
           break;

@@ -753,7 +753,7 @@ public class Wallet {
 
   public DelegatedResourceAccountIndex getDelegatedResourceAccountIndex(ByteString address) {
     DelegatedResourceAccountIndexCapsule accountIndexCapsule =
-        chainBaseManager.getDelegatedResourceAccountIndexStore().get(address.toByteArray());
+        chainBaseManager.getDelegatedResourceAccountIndexStore().getIndex(address.toByteArray());
     if (accountIndexCapsule != null) {
       return accountIndexCapsule.getInstance();
     } else {
@@ -1106,6 +1106,11 @@ public class Wallet {
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getMemoFee")
         .setValue(dbManager.getDynamicPropertiesStore().getMemoFee())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowDelegateOptimization")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowDelegateOptimization())
         .build());
 
     return builder.build();
