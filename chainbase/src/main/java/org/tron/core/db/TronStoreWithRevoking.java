@@ -11,6 +11,7 @@ import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,7 @@ import org.tron.core.db2.common.DB;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.LevelDB;
 import org.tron.core.db2.common.RocksDB;
+import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.db2.core.Chainbase;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.RevokingDBWithCachingOldValue;
@@ -233,5 +235,17 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
 
   public void setCursor(Chainbase.Cursor cursor) {
     revokingDB.setCursor(cursor);
+  }
+
+  public Map<WrappedByteArray, T> prefixQuery(byte[] key) {
+    return revokingDB.prefixQuery(key).entrySet().stream().collect(
+        Collectors.toMap(Map.Entry::getKey, e -> {
+          try {
+            return of(e.getValue());
+          } catch (BadItemException e1) {
+            throw new RuntimeException(e1);
+          }
+        }
+    ));
   }
 }

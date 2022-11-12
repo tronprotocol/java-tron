@@ -190,6 +190,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_NEW_REWARD = "ALLOW_NEW_REWARD".getBytes();
   private static final byte[] MEMO_FEE = "MEMO_FEE".getBytes();
   private static final byte[] MEMO_FEE_HISTORY = "MEMO_FEE_HISTORY".getBytes();
+  private static final byte[] ALLOW_DELEGATE_OPTIMIZATION =
+      "ALLOW_DELEGATE_OPTIMIZATION".getBytes();
+
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -878,6 +881,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       long memoFee = CommonParameter.getInstance().getMemoFee();
       this.saveMemoFee(memoFee);
       this.saveMemoFeeHistory("0:" + memoFee);
+    }
+
+    try {
+      this.getAllowDelegateOptimization();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowDelegateOptimization(
+          CommonParameter.getInstance().getAllowDelegateOptimization());
     }
   }
 
@@ -2590,6 +2600,22 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public void saveAllowNewReward(long newReward) {
     this.put(ALLOW_NEW_REWARD, new BytesCapsule(ByteArray.fromLong(newReward)));
+  }
+
+  public long getAllowDelegateOptimization() {
+    return Optional.ofNullable(getUnchecked(ALLOW_DELEGATE_OPTIMIZATION))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_DELEGATE_OPTIMIZATION"));
+  }
+
+  public boolean supportAllowDelegateOptimization() {
+    return getAllowDelegateOptimization() == 1L;
+  }
+
+  public void saveAllowDelegateOptimization(long value) {
+    this.put(ALLOW_DELEGATE_OPTIMIZATION, new BytesCapsule(ByteArray.fromLong(value)));
   }
 
   public boolean allowNewReward() {

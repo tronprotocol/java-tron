@@ -285,6 +285,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
   private long delegateResource(byte[] ownerAddress, byte[] receiverAddress, boolean isBandwidth,
       long balance, long expireTime) {
     AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicPropertiesStore = chainBaseManager.getDynamicPropertiesStore();
     DelegatedResourceStore delegatedResourceStore = chainBaseManager.getDelegatedResourceStore();
     DelegatedResourceAccountIndexStore delegatedResourceAccountIndexStore = chainBaseManager
         .getDelegatedResourceAccountIndexStore();
@@ -312,35 +313,39 @@ public class FreezeBalanceActuator extends AbstractActuator {
     delegatedResourceStore.put(key, delegatedResourceCapsule);
 
     //modify DelegatedResourceAccountIndexStore
-    {
-      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule = delegatedResourceAccountIndexStore
-          .get(ownerAddress);
-      if (delegatedResourceAccountIndexCapsule == null) {
-        delegatedResourceAccountIndexCapsule = new DelegatedResourceAccountIndexCapsule(
+    if (!dynamicPropertiesStore.supportAllowDelegateOptimization()) {
+
+      DelegatedResourceAccountIndexCapsule ownerIndexCapsule =
+          delegatedResourceAccountIndexStore.get(ownerAddress);
+      if (ownerIndexCapsule == null) {
+        ownerIndexCapsule = new DelegatedResourceAccountIndexCapsule(
             ByteString.copyFrom(ownerAddress));
       }
-      List<ByteString> toAccountsList = delegatedResourceAccountIndexCapsule.getToAccountsList();
+      List<ByteString> toAccountsList = ownerIndexCapsule.getToAccountsList();
       if (!toAccountsList.contains(ByteString.copyFrom(receiverAddress))) {
-        delegatedResourceAccountIndexCapsule.addToAccount(ByteString.copyFrom(receiverAddress));
+        ownerIndexCapsule.addToAccount(ByteString.copyFrom(receiverAddress));
       }
-      delegatedResourceAccountIndexStore
-          .put(ownerAddress, delegatedResourceAccountIndexCapsule);
-    }
+      delegatedResourceAccountIndexStore.put(ownerAddress, ownerIndexCapsule);
 
-    {
-      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule = delegatedResourceAccountIndexStore
-          .get(receiverAddress);
-      if (delegatedResourceAccountIndexCapsule == null) {
-        delegatedResourceAccountIndexCapsule = new DelegatedResourceAccountIndexCapsule(
+      DelegatedResourceAccountIndexCapsule receiverIndexCapsule
+          = delegatedResourceAccountIndexStore.get(receiverAddress);
+      if (receiverIndexCapsule == null) {
+        receiverIndexCapsule = new DelegatedResourceAccountIndexCapsule(
             ByteString.copyFrom(receiverAddress));
       }
-      List<ByteString> fromAccountsList = delegatedResourceAccountIndexCapsule
+      List<ByteString> fromAccountsList = receiverIndexCapsule
           .getFromAccountsList();
       if (!fromAccountsList.contains(ByteString.copyFrom(ownerAddress))) {
-        delegatedResourceAccountIndexCapsule.addFromAccount(ByteString.copyFrom(ownerAddress));
+        receiverIndexCapsule.addFromAccount(ByteString.copyFrom(ownerAddress));
       }
-      delegatedResourceAccountIndexStore
-          .put(receiverAddress, delegatedResourceAccountIndexCapsule);
+      delegatedResourceAccountIndexStore.put(receiverAddress, receiverIndexCapsule);
+
+    } else {
+      // modify DelegatedResourceAccountIndexStore new
+      delegatedResourceAccountIndexStore.convert(ownerAddress);
+      delegatedResourceAccountIndexStore.convert(receiverAddress);
+      delegatedResourceAccountIndexStore.delegate(ownerAddress, receiverAddress,
+          dynamicPropertiesStore.getLatestBlockHeaderTimestamp());
     }
 
     //modify AccountStore
