@@ -2660,7 +2660,7 @@ public class Wallet {
       ContractStore contractStore = chainBaseManager.getContractStore();
       byte[] contractAddress = triggerSmartContract.getContractAddress().toByteArray();
       if (contractStore.get(contractAddress) == null) {
-        throw new ContractValidateException("Smart contract is not exist.");
+        throw new ContractValidateException("Smart contract does not exist.");
       }
     }
     return callConstantContract(trxCap, builder, retBuilder);
