@@ -1056,6 +1056,12 @@ public class Args extends CommonParameter {
       }
     }
 
+    if (config.hasPath(Constant.ALLOW_DELEGATE_OPTIMIZATION)) {
+      PARAMETER.allowDelegateOptimization = config.getLong(Constant.ALLOW_DELEGATE_OPTIMIZATION);
+      PARAMETER.allowDelegateOptimization = Math.min(PARAMETER.allowDelegateOptimization, 1);
+      PARAMETER.allowDelegateOptimization = Math.max(PARAMETER.allowDelegateOptimization, 0);
+    }
+
     logConfig();
   }
 
