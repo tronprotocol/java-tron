@@ -16,8 +16,8 @@ import org.tron.core.db.TronStoreWithRevoking;
 public class DelegatedResourceAccountIndexStore extends
     TronStoreWithRevoking<DelegatedResourceAccountIndexCapsule> {
 
-  private static final byte[] fromPrefix = {0x01};
-  private static final byte[] toPrefix = {0x02};
+  private static final byte[] FROM_PREFIX = {0x01};
+  private static final byte[] TO_PREFIX = {0x02};
 
   @Autowired
   public DelegatedResourceAccountIndexStore(@Value("DelegatedResourceAccountIndex") String dbName) {
@@ -61,13 +61,13 @@ public class DelegatedResourceAccountIndexStore extends
   }
 
   public void delegate(byte[] from, byte[] to, long time) {
-    byte[] fromKey = createKey(fromPrefix, from, to);
+    byte[] fromKey = createKey(FROM_PREFIX, from, to);
     DelegatedResourceAccountIndexCapsule toIndexCapsule =
         new DelegatedResourceAccountIndexCapsule(ByteString.copyFrom(to));
     toIndexCapsule.setTimestamp(time);
     this.put(fromKey, toIndexCapsule);
 
-    byte[] toKey = createKey(toPrefix, to, from);
+    byte[] toKey = createKey(TO_PREFIX, to, from);
     DelegatedResourceAccountIndexCapsule fromIndexCapsule =
         new DelegatedResourceAccountIndexCapsule(ByteString.copyFrom(from));
     fromIndexCapsule.setTimestamp(time);
@@ -75,9 +75,9 @@ public class DelegatedResourceAccountIndexStore extends
   }
 
   public void unDelegate(byte[] from, byte[] to) {
-    byte[] fromKey = createKey(fromPrefix, from, to);
+    byte[] fromKey = createKey(FROM_PREFIX, from, to);
     this.delete(fromKey);
-    byte[] toKey = createKey(toPrefix, to, from);
+    byte[] toKey = createKey(TO_PREFIX, to, from);
     this.delete(toKey);
   }
 
@@ -89,10 +89,10 @@ public class DelegatedResourceAccountIndexStore extends
 
     DelegatedResourceAccountIndexCapsule tmpIndexCapsule =
         new DelegatedResourceAccountIndexCapsule(ByteString.copyFrom(address));
-    byte[] key = new byte[fromPrefix.length + address.length];
+    byte[] key = new byte[FROM_PREFIX.length + address.length];
 
-    System.arraycopy(fromPrefix, 0, key, 0, fromPrefix.length);
-    System.arraycopy(address, 0, key, fromPrefix.length, address.length);
+    System.arraycopy(FROM_PREFIX, 0, key, 0, FROM_PREFIX.length);
+    System.arraycopy(address, 0, key, FROM_PREFIX.length, address.length);
     List<DelegatedResourceAccountIndexCapsule> tmpToList =
         new ArrayList<>(this.prefixQuery(key).values());
 
@@ -101,8 +101,8 @@ public class DelegatedResourceAccountIndexStore extends
         .map(DelegatedResourceAccountIndexCapsule::getAccount).collect(Collectors.toList());
     tmpIndexCapsule.setAllToAccounts(list);
 
-    System.arraycopy(toPrefix, 0, key, 0, toPrefix.length);
-    System.arraycopy(address, 0, key, toPrefix.length, address.length);
+    System.arraycopy(TO_PREFIX, 0, key, 0, TO_PREFIX.length);
+    System.arraycopy(address, 0, key, TO_PREFIX.length, address.length);
     List<DelegatedResourceAccountIndexCapsule> tmpFromList =
         new ArrayList<>(this.prefixQuery(key).values());
     tmpFromList.sort(Comparator.comparing(DelegatedResourceAccountIndexCapsule::getTimestamp));
