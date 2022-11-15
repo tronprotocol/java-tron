@@ -68,6 +68,7 @@ public class TronNetService {
   private static void setP2pConfig(P2pConfig config) {
     TronNetService.p2pConfig = config;
   }
+  
   public void start() {
     try {
       init = true;
