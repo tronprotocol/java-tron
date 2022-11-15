@@ -190,6 +190,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_NEW_REWARD = "ALLOW_NEW_REWARD".getBytes();
   private static final byte[] MEMO_FEE = "MEMO_FEE".getBytes();
   private static final byte[] MEMO_FEE_HISTORY = "MEMO_FEE_HISTORY".getBytes();
+  private static final byte[] ALLOW_DELEGATE_OPTIMIZATION =
+      "ALLOW_DELEGATE_OPTIMIZATION".getBytes();
+
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -863,10 +866,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
-      this.getAllowNewRewardEnable();
+      this.getAllowNewReward();
     } catch (IllegalArgumentException e) {
-      this.saveAllowNewRewardEnable(CommonParameter.getInstance().getAllowNewRewardEnable());
-      if (CommonParameter.getInstance().getAllowNewRewardEnable() == 1) {
+      this.saveAllowNewReward(CommonParameter.getInstance().getAllowNewReward());
+      if (CommonParameter.getInstance().getAllowNewReward() == 1) {
         this.put(NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE,
                 new BytesCapsule(ByteArray.fromLong(getCurrentCycleNumber())));
       }
@@ -878,6 +881,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       long memoFee = CommonParameter.getInstance().getMemoFee();
       this.saveMemoFee(memoFee);
       this.saveMemoFeeHistory("0:" + memoFee);
+    }
+
+    try {
+      this.getAllowDelegateOptimization();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowDelegateOptimization(
+          CommonParameter.getInstance().getAllowDelegateOptimization());
     }
   }
 
@@ -2156,7 +2166,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public void addTotalNetWeight(long amount) {
     long totalNetWeight = getTotalNetWeight();
     totalNetWeight += amount;
-    if (allowNewRewardEnable()) {
+    if (allowNewReward()) {
       totalNetWeight = Math.max(0, totalNetWeight);
     }
     saveTotalNetWeight(totalNetWeight);
@@ -2166,7 +2176,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public void addTotalEnergyWeight(long amount) {
     long totalEnergyWeight = getTotalEnergyWeight();
     totalEnergyWeight += amount;
-    if (allowNewRewardEnable()) {
+    if (allowNewReward()) {
       totalEnergyWeight = Math.max(0, totalEnergyWeight);
     }
     saveTotalEnergyWeight(totalEnergyWeight);
@@ -2176,7 +2186,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public void addTotalTronPowerWeight(long amount) {
     long totalWeight = getTotalTronPowerWeight();
     totalWeight += amount;
-    if (allowNewRewardEnable()) {
+    if (allowNewReward()) {
       totalWeight = Math.max(0, totalWeight);
     }
     saveTotalTronPowerWeight(totalWeight);
@@ -2581,19 +2591,35 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     this.put(MEMO_FEE_HISTORY, new BytesCapsule(ByteArray.fromString(value)));
   }
 
-  public long getAllowNewRewardEnable() {
+  public long getAllowNewReward() {
     return Optional.ofNullable(getUnchecked(ALLOW_NEW_REWARD))
             .map(BytesCapsule::getData)
             .map(ByteArray::toLong)
-            .orElseThrow(() -> new IllegalArgumentException("not found AllowNewRewardEnable"));
+            .orElseThrow(() -> new IllegalArgumentException("not found AllowNewReward"));
   }
 
-  public void saveAllowNewRewardEnable(long newReward) {
+  public void saveAllowNewReward(long newReward) {
     this.put(ALLOW_NEW_REWARD, new BytesCapsule(ByteArray.fromLong(newReward)));
   }
 
-  public boolean allowNewRewardEnable() {
-    return getAllowNewRewardEnable() == 1;
+  public long getAllowDelegateOptimization() {
+    return Optional.ofNullable(getUnchecked(ALLOW_DELEGATE_OPTIMIZATION))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_DELEGATE_OPTIMIZATION"));
+  }
+
+  public boolean supportAllowDelegateOptimization() {
+    return getAllowDelegateOptimization() == 1L;
+  }
+
+  public void saveAllowDelegateOptimization(long value) {
+    this.put(ALLOW_DELEGATE_OPTIMIZATION, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public boolean allowNewReward() {
+    return getAllowNewReward() == 1;
   }
 
   private static class DynamicResourceProperties {

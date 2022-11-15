@@ -103,12 +103,12 @@ If you want to contribute codes to java-tron, please follow the following steps:
 
   Submit a pull request (PR) from your repository to `tronprotocol/java-tron`.
   Please be sure to click on the link in the red box shown below. Select the base branch for tronprotocol and the compare branch for your personal fork repository.
-  ![](https://codimd.s3.shivering-isles.com/demo/uploads/e24435ab42e4287d9369a2136.png)
+  ![image](https://raw.githubusercontent.com/tronprotocol/documentation-en/master/images/javatron_pr.png)
 
 
 
 ## Code Review Guidelines
-The only way to get code into java-tron is to send a pull request. Those pull requests need to be reviewed by someone. there a guide that explains our expectations around PRs for both authors and reviewers.
+The only way to get code into java-tron is to send a pull request. Those pull requests need to be reviewed by someone. The following guide explains our expectations around PRs for both authors and reviewers.
 
 ### Terminology
 - The author of a pull request is the entity who wrote the diff and submitted it to GitHub.

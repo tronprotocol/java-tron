@@ -565,11 +565,15 @@ public class CommonParameter {
 
   @Getter
   @Setter
-  public long allowNewRewardEnable = 0L;
+  public long allowNewReward = 0L;
 
   @Getter
   @Setter
   public long memoFee = 0L;
+
+  @Getter
+  @Setter
+  public long allowDelegateOptimization = 0L;
 
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));

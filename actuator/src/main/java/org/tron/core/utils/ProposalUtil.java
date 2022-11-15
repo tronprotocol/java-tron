@@ -560,18 +560,18 @@ public class ProposalUtil {
         }
         break;
       }
-      case ALLOW_NEW_REWARD_ALGO: {
+      case ALLOW_NEW_REWARD: {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_6)) {
           throw new ContractValidateException(
-              "Bad chain parameter id [ALLOW_NEW_REWARD_ALGO]");
+              "Bad chain parameter id [ALLOW_NEW_REWARD]");
         }
-        if (dynamicPropertiesStore.allowNewRewardEnable()) {
+        if (dynamicPropertiesStore.allowNewReward()) {
           throw new ContractValidateException(
-              "New reward algorithm has been valid.");
+              "New reward has been valid.");
         }
         if (value != 1) {
           throw new ContractValidateException(
-              "This value[ALLOW_NEW_REWARD_ALGO] is only allowed to be 1");
+              "This value[ALLOW_NEW_REWARD] is only allowed to be 1");
         }
         break;
       }
@@ -583,6 +583,17 @@ public class ProposalUtil {
         if (value < 0 || value > 1_000_000_000) {
           throw new ContractValidateException(
               "This value[MEMO_FEE] is only allowed to be in the range 0-1000_000_000");
+        }
+        break;
+      }
+      case ALLOW_DELEGATE_OPTIMIZATION: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_6)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_DELEGATE_OPTIMIZATION]");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_DELEGATE_OPTIMIZATION] is only allowed to be 1");
         }
         break;
       }
@@ -650,8 +661,9 @@ public class ProposalUtil {
     ALLOW_TVM_LONDON(63), // 0, 1
     ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX(65), // 0, 1
     ALLOW_ASSET_OPTIMIZATION(66), // 0, 1
-    ALLOW_NEW_REWARD_ALGO(67), // 0, 1
-    MEMO_FEE(68); // 0, [0, 1000_000_000]
+    ALLOW_NEW_REWARD(67), // 0, 1
+    MEMO_FEE(68), // 0, [0, 1000_000_000]
+    ALLOW_DELEGATE_OPTIMIZATION(69); // 0, 1
 
     private long code;
 
