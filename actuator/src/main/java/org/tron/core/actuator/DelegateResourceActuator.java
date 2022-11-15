@@ -1,6 +1,7 @@
 package org.tron.core.actuator;
 
 import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
+import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_PERIOD;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.protobuf.ByteString;
@@ -57,6 +58,7 @@ public class DelegateResourceActuator extends AbstractActuator {
         .get(delegateResourceContract.getOwnerAddress().toByteArray());
 
     long delegateBalance = delegateResourceContract.getBalance();
+    boolean lock = delegateResourceContract.getLock();
     byte[] ownerAddress = delegateResourceContract.getOwnerAddress().toByteArray();
     byte[] receiverAddress = delegateResourceContract.getReceiverAddress().toByteArray();
 
@@ -64,14 +66,14 @@ public class DelegateResourceActuator extends AbstractActuator {
     switch (delegateResourceContract.getResource()) {
       case BANDWIDTH:
         delegateResource(ownerAddress, receiverAddress, true,
-            delegateBalance);
+            delegateBalance, lock);
 
         ownerCapsule.addDelegatedFrozenV2BalanceForBandwidth(delegateBalance);
         ownerCapsule.addFrozenBalanceForBandwidthV2(-delegateBalance);
         break;
       case ENERGY:
         delegateResource(ownerAddress, receiverAddress, false,
-            delegateBalance);
+            delegateBalance, lock);
 
         ownerCapsule.addDelegatedFrozenV2BalanceForEnergy(delegateBalance);
         ownerCapsule.addFrozenBalanceForEnergyV2(-delegateBalance);
@@ -227,26 +229,36 @@ public class DelegateResourceActuator extends AbstractActuator {
   }
 
   private void delegateResource(byte[] ownerAddress, byte[] receiverAddress, boolean isBandwidth,
-                                long balance) {
+                                long balance, boolean lock) {
     AccountStore accountStore = chainBaseManager.getAccountStore();
     DynamicPropertiesStore dynamicPropertiesStore = chainBaseManager.getDynamicPropertiesStore();
     DelegatedResourceStore delegatedResourceStore = chainBaseManager.getDelegatedResourceStore();
     DelegatedResourceAccountIndexStore delegatedResourceAccountIndexStore = chainBaseManager
         .getDelegatedResourceAccountIndexStore();
 
+    // 1. unlock the expired delegate resource
+    long now = chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
+    delegatedResourceStore.unLockExpireResource(ownerAddress, receiverAddress, now);
+
     //modify DelegatedResourceStore
-    byte[] key = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress);
-    DelegatedResourceCapsule delegatedResourceCapsule = delegatedResourceStore
-        .get(key);
+    byte[] key;
+    long expireTime = 0;
+    if (lock) {
+      expireTime = now + DELEGATE_PERIOD;
+      key = DelegatedResourceCapsule.createLockDbKeyV2(ownerAddress, receiverAddress);
+    } else {
+      key = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress);
+    }
+    DelegatedResourceCapsule delegatedResourceCapsule = delegatedResourceStore.get(key);
     if (delegatedResourceCapsule == null) {
-      delegatedResourceCapsule = new DelegatedResourceCapsule(
-          ByteString.copyFrom(ownerAddress),
+      delegatedResourceCapsule = new DelegatedResourceCapsule(ByteString.copyFrom(ownerAddress),
           ByteString.copyFrom(receiverAddress));
     }
+
     if (isBandwidth) {
-      delegatedResourceCapsule.addFrozenBalanceForBandwidth(balance, 0);
+      delegatedResourceCapsule.addFrozenBalanceForBandwidth(balance, expireTime);
     } else {
-      delegatedResourceCapsule.addFrozenBalanceForEnergy(balance, 0);
+      delegatedResourceCapsule.addFrozenBalanceForEnergy(balance, expireTime);
     }
     delegatedResourceStore.put(key, delegatedResourceCapsule);
 

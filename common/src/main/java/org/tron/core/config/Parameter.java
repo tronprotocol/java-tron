@@ -69,6 +69,7 @@ public class Parameter {
     public static final int MAX_FROZEN_NUMBER = 1;
     public static final int BLOCK_VERSION = 25;
     public static final long FROZEN_PERIOD = 86_400_000L;
+    public static final long DELEGATE_PERIOD = 3 * 86_400_000L;
     public static final long TRX_PRECISION = 1000_000L;
     public static final long DELEGATE_COST_BASE_SIZE = 275L;
   }

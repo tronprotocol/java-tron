@@ -1,5 +1,6 @@
 package org.tron.core.capsule;
 
+import com.google.common.primitives.Bytes;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
@@ -9,7 +10,9 @@ import org.tron.protos.Protocol.DelegatedResource;
 @Slf4j(topic = "capsule")
 public class DelegatedResourceCapsule implements ProtoCapsule<DelegatedResource> {
 
-  private static final byte[] V2_PREFIX = {0x01};
+  public static final byte[] V2_PREFIX = new byte[]{0x01};
+  public static final byte[] V2_LOCK_PREFIX = new byte[]{0x02};
+
   private DelegatedResource delegatedResource;
 
   public DelegatedResourceCapsule(final DelegatedResource delegatedResource) {
@@ -39,11 +42,11 @@ public class DelegatedResourceCapsule implements ProtoCapsule<DelegatedResource>
   }
 
   public static byte[] createDbKeyV2(byte[] from, byte[] to) {
-    byte[] key = new byte[V2_PREFIX.length + from.length + to.length];
-    System.arraycopy(V2_PREFIX, 0, key, 0, V2_PREFIX.length);
-    System.arraycopy(from, 0, key, V2_PREFIX.length, from.length);
-    System.arraycopy(to, 0, key, V2_PREFIX.length + from.length, to.length);
-    return key;
+    return Bytes.concat(V2_PREFIX, from, to);
+  }
+
+  public static byte[] createLockDbKeyV2(byte[] from, byte[] to) {
+    return Bytes.concat(V2_LOCK_PREFIX, from, to);
   }
 
   public ByteString getFrom() {
