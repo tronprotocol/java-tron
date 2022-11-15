@@ -131,12 +131,14 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
   private void processMessage(PeerConnection peer, byte[] data) {
     long startTime = System.currentTimeMillis();
     TronMessage msg = null;
+    MessageTypes type = null;
     try {
       msg = TronMessageFactory.create(data);
+      type = msg.getType();
       peer.getPeerStatistics().messageStatistics.addTcpInMessage(msg);
       logger.info("Receive message from  peer: {}, {}",
               peer.getInetSocketAddress(), msg);
-      switch (msg.getType()) {
+      switch (type) {
         case P2P_PING:
         case P2P_PONG:
           keepAliveService.processMessage(peer, msg);
@@ -179,9 +181,11 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
       long costs = System.currentTimeMillis() - startTime;
       if (costs > 50) {
         logger.info("Message processing costs {} ms, peer: {}, type: {}, time tag: {}",
-                costs, peer.getInetSocketAddress(), msg.getType(), getTimeTag(costs));
-        Metrics.histogramObserve(MetricKeys.Histogram.MESSAGE_PROCESS_LATENCY,
-                costs / Metrics.MILLISECONDS_PER_SECOND, msg.getType().name());
+                costs, peer.getInetSocketAddress(), type, getTimeTag(costs));
+        if (type != null) {
+          Metrics.histogramObserve(MetricKeys.Histogram.MESSAGE_PROCESS_LATENCY,
+                  costs / Metrics.MILLISECONDS_PER_SECOND, type.name());
+        }
       }
     }
   }

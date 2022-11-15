@@ -90,7 +90,7 @@ public class PeerConnection {
 
   private int invCacheSize = 20_000;
 
-  private long BAD_PEER_BAN_TIME = 3600 * 1000;
+  private long BAD_PEER_BAN_TIME = 3_600_000;
 
   @Setter
   @Getter
@@ -282,7 +282,7 @@ public class PeerConnection {
 
   @Override
   public boolean equals(Object o) {
-    if (o == null || !(o instanceof PeerConnection)) {
+    if (!(o instanceof PeerConnection)) {
       return false;
     }
     return this.channel.equals(((PeerConnection) o).getChannel());

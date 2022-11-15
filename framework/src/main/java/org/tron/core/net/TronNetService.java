@@ -65,10 +65,13 @@ public class TronNetService {
 
   private volatile boolean init;
 
+  private static void setP2pConfig(P2pConfig config) {
+    TronNetService.p2pConfig = config;
+  }
   public void start() {
     try {
       init = true;
-      p2pConfig = getConfig();
+      setP2pConfig(getConfig());
       p2pService.start(p2pConfig);
       p2pService.register(p2pEventHandler);
       advService.init();

@@ -21,7 +21,7 @@ public class KeepAliveService {
 
   private long PING_TIMEOUT = 20_000;
 
-  public  long PING_PERIOD = 60_000;
+  private long PING_PERIOD = 60_000;
 
   private final ScheduledExecutorService executor =
       Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "KeepAlive"));

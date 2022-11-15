@@ -104,7 +104,6 @@ public class HandshakeService {
             System.currentTimeMillis() - peer.getChannel().getStartTime());
     PeerManager.sortPeers();
     peer.onConnect();
-    return;
   }
 
   private void sendHelloMessage(PeerConnection peer, long time) {

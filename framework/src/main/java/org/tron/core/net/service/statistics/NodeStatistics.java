@@ -10,8 +10,8 @@ public class NodeStatistics {
   private Protocol.ReasonCode localDisconnectReason = null;
   @Getter
   private int disconnectTimes = 0;
-  private long lastDisconnectedTime = 0;
-  private long firstDisconnectedTime = 0;
+//  private long lastDisconnectedTime = 0;
+//  private long firstDisconnectedTime = 0;
   private long start = System.currentTimeMillis();
 
   public Protocol.ReasonCode getDisconnectReason() {
@@ -35,10 +35,10 @@ public class NodeStatistics {
   }
 
   private void notifyDisconnect() {
-    lastDisconnectedTime = System.currentTimeMillis();
-    if (firstDisconnectedTime == 0) {
-      firstDisconnectedTime = lastDisconnectedTime;
-    }
+//    lastDisconnectedTime = System.currentTimeMillis();
+//    if (firstDisconnectedTime == 0) {
+//      firstDisconnectedTime = lastDisconnectedTime;
+//    }
     disconnectTimes++;
   }
 

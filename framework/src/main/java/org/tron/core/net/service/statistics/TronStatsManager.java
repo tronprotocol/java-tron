@@ -19,10 +19,10 @@ import org.tron.p2p.stats.P2pStats;
 @Slf4j(topic = "net")
 @Component
 public class TronStatsManager {
-  private static volatile long TCP_TRAFFIC_IN = 0;
-  private static volatile long TCP_TRAFFIC_OUT = 0;
-  private static volatile long UDP_TRAFFIC_IN = 0;
-  private static volatile long UDP_TRAFFIC_OUT = 0;
+  private volatile long TCP_TRAFFIC_IN = 0;
+  private volatile long TCP_TRAFFIC_OUT = 0;
+  private volatile long UDP_TRAFFIC_IN = 0;
+  private volatile long UDP_TRAFFIC_OUT = 0;
 
   private static Cache<InetAddress, NodeStatistics> cache = CacheBuilder.newBuilder()
           .maximumSize(3000).recordStats().build();
