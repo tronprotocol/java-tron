@@ -32,7 +32,7 @@ public class TronNetService {
   private static P2pConfig p2pConfig;
 
   @Getter
-  private static P2pService p2pService;
+  private static P2pService p2pService = new P2pService();
 
   @Autowired
   private AdvService advService;
@@ -63,10 +63,12 @@ public class TronNetService {
   @Autowired
   private TronStatsManager tronStatsManager;
 
+  private volatile boolean init;
+
   public void start() {
     try {
+      init = true;
       p2pConfig = getConfig();
-      p2pService = new P2pService();
       p2pService.start(p2pConfig);
       p2pService.register(p2pEventHandler);
       advService.init();
@@ -85,6 +87,9 @@ public class TronNetService {
   }
 
   public void close() {
+    if (!init) {
+      return;
+    }
     PeerManager.close();
     tronStatsManager.close();
     nodePersistService.close();
