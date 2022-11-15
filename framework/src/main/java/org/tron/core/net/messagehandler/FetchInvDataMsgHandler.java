@@ -34,7 +34,6 @@ import org.tron.core.net.service.AdvService;
 import org.tron.core.net.service.SyncService;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.PBFTMessage.Raw;
-import org.tron.protos.Protocol.ReasonCode;
 import org.tron.protos.Protocol.Transaction;
 
 @Slf4j(topic = "net")
@@ -73,9 +72,8 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
         try {
           message = tronNetDelegate.getData(hash, type);
         } catch (Exception e) {
-          logger.error("Fetch item {} failed. reason: {}", item, hash, e.getMessage());
-          peer.disconnect(ReasonCode.FETCH_FAIL);
-          return;
+          throw new P2pException(TypeEnum.DB_ITEM_NOT_FOUND,
+                  "Fetch item " + item + " failed. reason: " + e.getMessage());
         }
       }
 
@@ -145,7 +143,9 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
           .getCount(10);
       int maxCount = advService.getTrxCount().getCount(60);
       if (fetchCount > maxCount) {
-        logger.error("maxCount: " + maxCount + ", fetchCount: " + fetchCount);
+        logger.warn("Peer fetch too more transactions in 10 seconds, "
+                        + "maxCount: {}, fetchCount: {}, peer: {}",
+                maxCount, fetchCount, peer.getInetAddress());
       }
     } else {
       boolean isAdv = true;
@@ -161,8 +161,9 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
         int outBlockCountIn1min = tronOutAdvBlock.getCount(60);
         int producedBlockIn2min = 120_000 / BLOCK_PRODUCED_INTERVAL;
         if (outBlockCountIn1min > producedBlockIn2min) {
-          logger.error("producedBlockIn2min: " + producedBlockIn2min + ", outBlockCountIn1min: "
-              + outBlockCountIn1min);
+          logger.warn("Peer fetch too more blocks in a minute, producedBlockIn2min: {},"
+                          + " outBlockCountIn1min: {}, peer: {}",
+                  producedBlockIn2min, outBlockCountIn1min, peer.getInetAddress());
         }
       } else {
         if (!peer.isNeedSyncFromUs()) {

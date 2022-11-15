@@ -619,6 +619,7 @@ message DelegatedResourceAccountIndex {
   bytes account = 1;
   repeated bytes fromAccounts = 2;
   repeated bytes toAccounts = 3;
+  int64 timestamp = 4;
 }
 
 message NodeInfo {

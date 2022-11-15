@@ -7,6 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.Metrics;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -76,7 +78,11 @@ public class BlockMsgHandler implements TronMsgHandler {
       if (null != time) {
         MetricsUtil.histogramUpdateUnCheck(MetricsKey.NET_LATENCY_FETCH_BLOCK
                 + peer.getNode().getHost(), now - time);
+        Metrics.histogramObserve(MetricKeys.Histogram.BLOCK_FETCH_LATENCY,
+            (now - time) / Metrics.MILLISECONDS_PER_SECOND);
       }
+      Metrics.histogramObserve(MetricKeys.Histogram.BLOCK_RECEIVE_DELAY,
+          (now - blockMessage.getBlockCapsule().getTimeStamp()) / Metrics.MILLISECONDS_PER_SECOND);
       fetchBlockService.blockFetchSuccess(blockId);
       long interval = blockId.getNum() - tronNetDelegate.getHeadBlockId().getNum();
       processBlock(peer, blockMessage.getBlockCapsule());
@@ -113,7 +119,7 @@ public class BlockMsgHandler implements TronMsgHandler {
   private void processBlock(PeerConnection peer, BlockCapsule block) throws P2pException {
     BlockId blockId = block.getBlockId();
     if (!tronNetDelegate.containBlock(block.getParentBlockId())) {
-      logger.warn("Get unlink block {} from {}, head is {}.", blockId.getString(),
+      logger.warn("Get unlink block {} from {}, head is {}", blockId.getString(),
               peer.getInetAddress(), tronNetDelegate.getHeadBlockId().getString());
       syncService.startSync(peer);
       return;

@@ -29,7 +29,7 @@ public class BlockIndexStore extends TronStoreWithRevoking<BytesCapsule> {
       throws ItemNotFoundException {
     BytesCapsule value = getUnchecked(ByteArray.fromLong(num));
     if (value == null || value.getData() == null) {
-      throw new ItemNotFoundException("number: " + num + " is not found!");
+      throw new ItemNotFoundException(String.format("number: %d is not found!", num));
     }
     return new BlockId(Sha256Hash.wrap(value.getData()), num);
   }
@@ -39,7 +39,8 @@ public class BlockIndexStore extends TronStoreWithRevoking<BytesCapsule> {
       throws ItemNotFoundException {
     byte[] value = revokingDB.getUnchecked(key);
     if (ArrayUtils.isEmpty(value)) {
-      throw new ItemNotFoundException("number: " + Arrays.toString(key) + " is not found!");
+      throw new ItemNotFoundException(String.format("number: %d is not found!",
+          ByteArray.toLong(key)));
     }
     return new BytesCapsule(value);
   }

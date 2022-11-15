@@ -93,7 +93,7 @@ public class ChannelManager {
       fastForwardNodes.put(address, node);
     }
 
-    logger.info("Node config, trust {}, active {}, forward {}.",
+    logger.info("Node config, trust {}, active {}, forward {}",
         trustNodes.size(), activeNodes.size(), fastForwardNodes.size());
 
     peerConnectionCheckService.init();
@@ -140,7 +140,7 @@ public class ChannelManager {
 
     if (trustNodes.getIfPresent(peer.getInetAddress()) == null) {
       if (recentlyDisconnected.getIfPresent(peer) != null) {
-        logger.info("Peer {} recently disconnected.", peer.getInetAddress());
+        logger.info("Peer {} recently disconnected", peer.getInetAddress());
         return false;
       }
 

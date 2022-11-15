@@ -50,7 +50,7 @@ public class ChainInventoryMessage extends TronMessage {
           .map(blockId -> new BlockId(blockId.getHash(), blockId.getNumber()))
           .collect(Collectors.toCollection(ArrayList::new));
     } catch (Exception e) {
-      logger.info("breakPoint");
+      logger.info("Failed to get blockIds of chain inventory message");
     }
     return null;
   }

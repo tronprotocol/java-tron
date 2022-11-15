@@ -110,12 +110,13 @@ public class KhaosDatabase extends TronDatabase {
       if (kblock != null) {
         if (blk.getNum() != kblock.num + 1) {
           throw new BadNumberBlockException(
-              "parent number :" + kblock.num + ",block number :" + blk.getNum());
+              String.format("parent number: %d , block number: %d", kblock.num, blk.getNum())
+              );
         }
         block.setParent(kblock);
       } else {
         miniUnlinkedStore.insert(block);
-        logger.error("blk:{}, head:{}, miniStore:{}, miniUnlinkedStore:{}",
+        logger.error("Block: {}, head: {}, miniStore: {}, miniUnlinkedStore: {}.",
             blk,
             head,
             miniStore,
@@ -327,7 +328,7 @@ public class KhaosDatabase extends TronDatabase {
               numKblkMap.remove(k);
               v.forEach(b -> {
                 hashKblkMap.remove(b.id);
-                logger.info("remove from khaosDatabase:{}", b.id);
+                logger.info("Remove from khaosDatabase: {}.", b.id);
               });
             });
 
