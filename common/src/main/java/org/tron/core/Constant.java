@@ -83,8 +83,16 @@ public class Constant {
   public static final String NODE_CONNECTION_TIMEOUT = "node.connection.timeout";
   public static final String NODE_FETCH_BLOCK_TIMEOUT = "node.fetchBlock.timeout";
   public static final String NODE_CHANNEL_READ_TIMEOUT = "node.channel.read.timeout";
+  public static final String NODE_MAX_CONNECTIONS = "node.maxConnections";
+  public static final String NODE_MIN_CONNECTIONS = "node.minConnections";
+  public static final String NODE_MIN_ACTIVE_CONNECTIONS = "node.minActiveConnections";
+
   public static final String NODE_MAX_ACTIVE_NODES = "node.maxActiveNodes";
-  public static final String NODE_MAX_ACTIVE_NODES_WITH_SAMEIP = "node.maxActiveNodesWithSameIp";
+  public static final String NODE_MAX_ACTIVE_NODES_WITH_SAME_IP = "node.maxActiveNodesWithSameIp";
+  public static final String NODE_CONNECT_FACTOR = "node.connectFactor";
+  public static final String NODE_ACTIVE_CONNECT_FACTOR = "node.activeConnectFactor";
+
+  public static final String NODE_MAX_CONNECTIONS_WITH_SAME_IP = "node.maxConnectionsWithSameIp";
   public static final String NODE_MIN_PARTICIPATION_RATE = "node.minParticipationRate";
   public static final String NODE_LISTEN_PORT = "node.listen.port";
   public static final String NODE_DISCOVERY_PUBLIC_HOME_NODE = "node.discovery.public.home.node";
@@ -159,14 +167,6 @@ public class Constant {
   public static final String NODE_VALIDATE_SIGN_THREAD_NUM = "node.validateSignThreadNum";
 
   public static final String NODE_WALLET_EXTENSION_API = "node.walletExtensionApi";
-
-  public static final String NODE_CONNECT_FACTOR = "node.connectFactor";
-
-  public static final String NODE_ACTIVE_CONNECT_FACTOR = "node.activeConnectFactor";
-
-  public static final String NODE_DISCONNECT_NUMBER_FACTOR = "node.disconnectNumberFactor";
-
-  public static final String NODE_MAX_CONNECT_NUMBER_FACTOR = "node.maxConnectNumberFactor";
 
   public static final String NODE_RECEIVE_TCP_MIN_DATA_LENGTH = "node.receiveTcpMinDataLength";
 
@@ -290,6 +290,8 @@ public class Constant {
   public static final String COMMITTEE_ALLOW_TVM_COMPATIBLE_EVM = "committee.allowTvmCompatibleEvm";
   public static final String COMMITTEE_ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX =
       "committee.allowHigherLimitForMaxCpuTimeOfOneTx";
+  public static final String COMMITTEE_ALLOW_NEW_REWARD_ALGORITHM = "committee.allowNewRewardAlgorithm";
+
 
   public static final String METRICS_STORAGE_ENABLE = "node.metrics.storageEnable";
   public static final String METRICS_INFLUXDB_IP = "node.metrics.influxdb.ip";
@@ -305,10 +307,15 @@ public class Constant {
 
   public static final String ALLOW_ACCOUNT_ASSET_OPTIMIZATION = "committee.allowAccountAssetOptimization";
   public static final String ALLOW_ASSET_OPTIMIZATION = "committee.allowAssetOptimization";
+  public static final String ALLOW_NEW_REWARD = "committee.allowNewReward";
+  public static final String MEMO_FEE = "committee.memoFee";
+  public static final String ALLOW_DELEGATE_OPTIMIZATION = "committee.allowDelegateOptimization";
 
   public static final String LOCAL_HOST = "127.0.0.1";
 
   public static final String NODE_SHUTDOWN_BLOCK_TIME = "node.shutdown.BlockTime";
   public static final String NODE_SHUTDOWN_BLOCK_HEIGHT = "node.shutdown.BlockHeight";
   public static final String NODE_SHUTDOWN_BLOCK_COUNT = "node.shutdown.BlockCount";
+
+  public static final String BLOCK_CACHE_TIMEOUT = "node.blockCacheTimeout";
 }

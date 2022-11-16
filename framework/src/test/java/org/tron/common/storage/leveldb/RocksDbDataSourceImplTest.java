@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -25,6 +26,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PropUtil;
 import org.tron.core.config.args.Args;
+import org.tron.core.db2.common.WrappedByteArray;
 
 @Slf4j
 public class RocksDbDataSourceImplTest {
@@ -246,25 +248,6 @@ public class RocksDbDataSourceImplTest {
   }
 
   @Test
-  public void getValuesPrev() {
-    RocksDbDataSourceImpl dataSource = new RocksDbDataSourceImpl(
-        Args.getInstance().getOutputDirectory(), "test_getValuesPrev_key");
-    dataSource.initDB();
-    dataSource.resetDb();
-
-    putSomeKeyValue(dataSource);
-    Set<byte[]> seekKeyLimitNext = dataSource.getValuesPrev("0000000300".getBytes(), 2);
-    HashSet<String> hashSet = Sets.newHashSet(ByteArray.toStr(value1), ByteArray.toStr(value2));
-    seekKeyLimitNext.forEach(value -> {
-      Assert.assertTrue("getValuesPrev1", hashSet.contains(ByteArray.toStr(value)));
-    });
-    seekKeyLimitNext = dataSource.getValuesPrev("0000000100".getBytes(), 2);
-    Assert.assertEquals("getValuesPrev2", 0, seekKeyLimitNext.size());
-    dataSource.resetDb();
-    dataSource.closeDB();
-  }
-
-  @Test
   public void testCheckOrInitEngine() {
     String dir =
         Args.getInstance().getOutputDirectory() + Args.getInstance().getStorage().getDbDirectory();
@@ -288,7 +271,9 @@ public class RocksDbDataSourceImplTest {
     try {
       dataSource.initDB();
     } catch (Exception e) {
-      Assert.assertTrue(e.getMessage().contains("Failed to"));
+      Assert.assertEquals(String.format("failed to check database: %s, engine do not match",
+              "test_engine"),
+              e.getMessage());
     }
     Assert.assertNull(dataSource.getDatabase());
     PropUtil.writeProperty(enginePath, "ENGINE", "ROCKSDB");
@@ -356,6 +341,42 @@ public class RocksDbDataSourceImplTest {
     for (int i = 0; i < limit; i++) {
       Assert.assertArrayEquals(list.get(i), seekKeyLimitNext.get(i));
     }
+
+    dataSource.resetDb();
+    dataSource.closeDB();
+  }
+
+  @Test
+  public void prefixQueryTest() {
+    RocksDbDataSourceImpl dataSource = new RocksDbDataSourceImpl(
+        Args.getInstance().getOutputDirectory(), "test_prefixQuery");
+    dataSource.initDB();
+    dataSource.resetDb();
+
+    putSomeKeyValue(dataSource);
+    // put a kv that will not be queried.
+    byte[] key7 = "0000001".getBytes();
+    byte[] value7 = "0000001v".getBytes();
+    dataSource.putData(key7, value7);
+
+    byte[] prefix = "0000000".getBytes();
+
+    List<String> result = dataSource.prefixQuery(prefix)
+        .keySet()
+        .stream()
+        .map(WrappedByteArray::getBytes)
+        .map(ByteArray::toStr)
+        .collect(Collectors.toList());
+    List<String> list = Arrays.asList(
+        ByteArray.toStr(key1),
+        ByteArray.toStr(key2),
+        ByteArray.toStr(key3),
+        ByteArray.toStr(key4),
+        ByteArray.toStr(key5),
+        ByteArray.toStr(key6));
+
+    Assert.assertEquals(list.size(), result.size());
+    list.forEach(entry -> Assert.assertTrue(result.contains(entry)));
 
     dataSource.resetDb();
     dataSource.closeDB();

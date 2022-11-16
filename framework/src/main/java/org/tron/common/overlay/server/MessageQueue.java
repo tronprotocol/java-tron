@@ -69,17 +69,22 @@ public class MessageQueue {
             continue;
           }
           Message msg = msgQueue.take();
+          if (channel.isDisconnect()) {
+            logger.warn("Failed to send to {} as channel has closed, {}",
+                ctx.channel().remoteAddress(), msg);
+            msgQueue.clear();
+            return;
+          }
           ctx.writeAndFlush(msg.getSendData()).addListener((ChannelFutureListener) future -> {
             if (!future.isSuccess() && !channel.isDisconnect()) {
-              logger.warn("Failed to send to {}, {}", ctx.channel().remoteAddress(), msg);
+              logger.warn("Failed to send to {}, {} ", ctx.channel().remoteAddress(), msg);
             }
           });
         } catch (InterruptedException e) {
-          logger.warn("Send message server interrupted.");
+          logger.warn("Send message server interrupted");
           Thread.currentThread().interrupt();
         } catch (Exception e) {
-          logger.error("Failed to send to {}, error info: {}", ctx.channel().remoteAddress(),
-              e.getMessage());
+          logger.error("Failed to send to {} ", ctx.channel().remoteAddress(), e);
         }
       }
     });
@@ -92,10 +97,15 @@ public class MessageQueue {
   }
 
   public void fastSend(Message msg) {
+    if (channel.isDisconnect()) {
+      logger.warn("Fast send to {} failed as channel has closed, {} ",
+          ctx.channel().remoteAddress(), msg);
+      return;
+    }
     logger.info("Fast send to {}, {} ", ctx.channel().remoteAddress(), msg);
     ctx.writeAndFlush(msg.getSendData()).addListener((ChannelFutureListener) future -> {
       if (!future.isSuccess() && !channel.isDisconnect()) {
-        logger.error("Fast send to {} failed, {}", ctx.channel().remoteAddress(), msg);
+        logger.warn("Fast send to {} failed, {}", ctx.channel().remoteAddress(), msg);
       }
     });
   }
@@ -144,7 +154,7 @@ public class MessageQueue {
   public void close() {
     sendMsgFlag = false;
     if (sendTask != null && !sendTask.isCancelled()) {
-      sendTask.cancel(false);
+      sendTask.cancel(true);
       sendTask = null;
     }
     if (sendMsgThread != null) {
@@ -152,7 +162,7 @@ public class MessageQueue {
         sendMsgThread.join(20);
         sendMsgThread = null;
       } catch (InterruptedException e) {
-        logger.warn("Send message join interrupted.");
+        logger.warn("Send message join interrupted");
         Thread.currentThread().interrupt();
       } catch (Exception e) {
         logger.warn("Join send thread failed, peer {}", ctx.channel().remoteAddress());
@@ -186,7 +196,7 @@ public class MessageQueue {
     }
     if (rt.getRetryTimes() > 0) {
       channel.getNodeStatistics().nodeDisconnectedLocal(ReasonCode.PING_TIMEOUT);
-      logger.warn("Wait {} timeout. close channel {}.",
+      logger.warn("Wait {} timeout. close channel {}",
           rt.getMsg().getAnswerMessage(), ctx.channel().remoteAddress());
       channel.close();
       return;

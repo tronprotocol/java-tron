@@ -26,7 +26,6 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.SmartContractOuterClass.ClearABIContract;
@@ -68,8 +67,8 @@ public class ClearABIContractActuatorTest {
    */
   @BeforeClass
   public static void init() {
-    VMConfig.initAllowTvmConstantinople(1);
     dbManager = context.getBean(Manager.class);
+    dbManager.getDynamicPropertiesStore().saveAllowTvmConstantinople(1);
   }
 
   /**

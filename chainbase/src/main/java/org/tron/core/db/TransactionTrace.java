@@ -41,7 +41,7 @@ import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
-@Slf4j(topic = "TransactionTrace")
+@Slf4j(topic = "DB")
 public class TransactionTrace {
 
   private TransactionCapsule trx;
@@ -138,11 +138,10 @@ public class TransactionTrace {
       ContractCapsule contract = contractStore
           .get(triggerContractFromTransaction.getContractAddress().toByteArray());
       if (contract == null) {
-        logger.info("contract: {} is not in contract store", StringUtil
-            .encode58Check(triggerContractFromTransaction.getContractAddress().toByteArray()));
-        throw new ContractValidateException("contract: " + StringUtil
-            .encode58Check(triggerContractFromTransaction.getContractAddress().toByteArray())
-            + " is not in contract store");
+        throw new ContractValidateException(String.format("contract: %s is not in contract store",
+            StringUtil.encode58Check(triggerContractFromTransaction
+                .getContractAddress().toByteArray())));
+
       }
       ABI abi = contract.getInstance().getAbi();
       if (WalletUtil.isConstant(abi, triggerContractFromTransaction)) {
@@ -224,7 +223,7 @@ public class TransactionTrace {
     long originEnergyLimit = 0;
     switch (trxType) {
       case TRX_CONTRACT_CREATION_TYPE:
-        callerAccount = TransactionCapsule.getOwner(trx.getInstance().getRawData().getContract(0));
+        callerAccount = trx.getOwnerAddress();
         originAccount = callerAccount;
         break;
       case TRX_CONTRACT_CALL_TYPE:
@@ -269,14 +268,13 @@ public class TransactionTrace {
       return;
     }
     if (Objects.isNull(trx.getContractRet())) {
-      throw new ReceiptCheckErrException("null resultCode");
+      throw new ReceiptCheckErrException(
+          String.format("null resultCode id: %s", trx.getTransactionId()));
     }
     if (!trx.getContractRet().equals(receipt.getResult())) {
-      logger.info(
-          "this tx id: {}, the resultCode in received block: {}, the resultCode in self: {}",
-          Hex.toHexString(trx.getTransactionId().getBytes()), trx.getContractRet(),
-          receipt.getResult());
-      throw new ReceiptCheckErrException("Different resultCode");
+      throw new ReceiptCheckErrException(String.format(
+          "different resultCode txId: %s, expect: %s, actual: %s",
+          trx.getTransactionId(), trx.getContractRet(), receipt.getResult()));
     }
   }
 

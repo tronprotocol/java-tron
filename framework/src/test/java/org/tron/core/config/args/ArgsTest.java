@@ -75,7 +75,7 @@ public class ArgsTest {
     Assert.assertEquals(18888, parameter.getNodeListenPort());
     Assert.assertEquals(2000, parameter.getNodeConnectionTimeout());
     Assert.assertEquals(0, parameter.getActiveNodes().size());
-    Assert.assertEquals(30, parameter.getNodeMaxActiveNodes());
+    Assert.assertEquals(30, parameter.getMaxConnections());
     Assert.assertEquals(43, parameter.getNodeP2pVersion());
     //Assert.assertEquals(30, args.getSyncNodeCount());
 

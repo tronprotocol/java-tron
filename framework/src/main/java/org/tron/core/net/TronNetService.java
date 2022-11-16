@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.ChannelManager;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.Metrics;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.net.message.BlockMessage;
@@ -65,6 +67,9 @@ public class TronNetService {
   @Autowired
   private FetchBlockService fetchBlockService;
 
+  private static final String TAG = "~";
+  private static final int DURATION_STEP = 50;
+
   public void start() {
     channelManager.init();
     advService.init();
@@ -72,18 +77,18 @@ public class TronNetService {
     peerStatusCheck.init();
     transactionsMsgHandler.init();
     fetchBlockService.init();
-    logger.info("TronNetService start successfully.");
+    logger.info("TronNetService start successfully");
   }
 
   public void stop() {
-    logger.info("TronNetService closed start.");
+    logger.info("TronNetService closed start");
     channelManager.close();
     advService.close();
     syncService.close();
     peerStatusCheck.close();
     transactionsMsgHandler.close();
     fetchBlockService.close();
-    logger.info("TronNetService closed successfully.");
+    logger.info("TronNetService closed successfully");
   }
 
   public int fastBroadcastTransaction(TransactionMessage msg) {
@@ -95,6 +100,7 @@ public class TronNetService {
   }
 
   protected void onMessage(PeerConnection peer, TronMessage msg) {
+    long startTime = System.currentTimeMillis();
     try {
       switch (msg.getType()) {
         case SYNC_BLOCK_CHAIN:
@@ -123,6 +129,14 @@ public class TronNetService {
       }
     } catch (Exception e) {
       processException(peer, msg, e);
+    } finally {
+      long costs = System.currentTimeMillis() - startTime;
+      if (costs > DURATION_STEP) {
+        logger.info("Message processing costs {} ms, peer: {}, type: {}, time tag: {}",
+            costs, peer.getInetAddress(), msg.getType(), getTimeTag(costs));
+        Metrics.histogramObserve(MetricKeys.Histogram.MESSAGE_PROCESS_LATENCY,
+            costs / Metrics.MILLISECONDS_PER_SECOND, msg.getType().name());
+      }
     }
   }
 
@@ -149,18 +163,30 @@ public class TronNetService {
         case UNLINK_BLOCK:
           code = ReasonCode.UNLINKABLE;
           break;
+        case DB_ITEM_NOT_FOUND:
+          code = ReasonCode.FETCH_FAIL;
+          break;
         default:
           code = ReasonCode.UNKNOWN;
           break;
       }
-      logger.error("Message from {} process failed, {} \n type: {}, detail: {}.",
+      logger.warn("Message from {} process failed, {} \n type: {}, detail: {}",
           peer.getInetAddress(), msg, type, ex.getMessage());
     } else {
       code = ReasonCode.UNKNOWN;
-      logger.error("Message from {} process failed, {}",
+      logger.warn("Message from {} process failed, {}",
           peer.getInetAddress(), msg, ex);
     }
 
     peer.disconnect(code);
+  }
+
+  private String getTimeTag(long duration) {
+    StringBuilder tag = new StringBuilder(TAG);
+    long tagCount = duration / DURATION_STEP;
+    for (; tagCount > 0; tagCount--) {
+      tag.append(TAG);
+    }
+    return tag.toString();
   }
 }

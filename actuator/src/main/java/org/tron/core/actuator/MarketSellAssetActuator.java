@@ -315,6 +315,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
     // makerPair not exists
     long makerPriceNumber = pairToPriceStore.getPriceNum(makerPair);
+
     if (makerPriceNumber == 0) {
       return;
     }

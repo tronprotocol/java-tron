@@ -53,6 +53,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.bouncycastle.util.encoders.DecoderException;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -535,42 +536,42 @@ public class Wallet {
         return builder.setResult(true).setCode(response_code.SUCCESS).build();
       }
     } catch (ValidateSignatureException e) {
-      logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
+      logger.warn(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.SIGERROR)
           .setMessage(ByteString.copyFromUtf8("Validate signature error: " + e.getMessage()))
           .build();
     } catch (ContractValidateException e) {
-      logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
+      logger.warn(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
           .setMessage(ByteString.copyFromUtf8(CONTRACT_VALIDATE_ERROR + e.getMessage()))
           .build();
     } catch (ContractExeException e) {
-      logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
+      logger.warn(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
           .setMessage(ByteString.copyFromUtf8("Contract execute error : " + e.getMessage()))
           .build();
     } catch (AccountResourceInsufficientException e) {
-      logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
+      logger.warn(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.BANDWITH_ERROR)
           .setMessage(ByteString.copyFromUtf8("Account resource insufficient error."))
           .build();
     } catch (DupTransactionException e) {
-      logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
+      logger.warn(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR)
           .setMessage(ByteString.copyFromUtf8("Dup transaction."))
           .build();
     } catch (TaposException e) {
-      logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
+      logger.warn(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.TAPOS_ERROR)
           .setMessage(ByteString.copyFromUtf8("Tapos check error."))
           .build();
     } catch (TooBigTransactionException e) {
-      logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
+      logger.warn(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.TOO_BIG_TRANSACTION_ERROR)
           .setMessage(ByteString.copyFromUtf8("Transaction size is too big."))
           .build();
     } catch (TransactionExpirationException e) {
-      logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
+      logger.warn(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.TRANSACTION_EXPIRATION_ERROR)
           .setMessage(ByteString.copyFromUtf8("Transaction expired"))
           .build();
@@ -686,7 +687,7 @@ public class Wallet {
       Block block = chainBaseManager.getBlockByNum(blockNum).getInstance();
       count = block.getTransactionsCount();
     } catch (StoreException e) {
-      logger.error(e.getMessage());
+      logger.warn(e.getMessage());
     }
 
     return count;
@@ -752,7 +753,7 @@ public class Wallet {
 
   public DelegatedResourceAccountIndex getDelegatedResourceAccountIndex(ByteString address) {
     DelegatedResourceAccountIndexCapsule accountIndexCapsule =
-        chainBaseManager.getDelegatedResourceAccountIndexStore().get(address.toByteArray());
+        chainBaseManager.getDelegatedResourceAccountIndexStore().getIndex(address.toByteArray());
     if (accountIndexCapsule != null) {
       return accountIndexCapsule.getInstance();
     } else {
@@ -1097,6 +1098,21 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowAssetOptimization())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowNewReward")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowNewReward())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getMemoFee")
+        .setValue(dbManager.getDynamicPropertiesStore().getMemoFee())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowDelegateOptimization")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowDelegateOptimization())
+        .build());
+
     return builder.build();
   }
 
@@ -1403,7 +1419,7 @@ public class Wallet {
     try {
       block = chainBaseManager.getBlockStore().get(blockId.toByteArray()).getInstance();
     } catch (StoreException e) {
-      logger.error(e.getMessage());
+      logger.warn(e.getMessage());
     }
     return block;
   }
@@ -3953,6 +3969,16 @@ public class Wallet {
     return null;
   }
 
+  public String getBandwidthPrices() {
+    try {
+      return chainBaseManager.getDynamicPropertiesStore().getBandwidthPriceHistory();
+    } catch (Exception e) {
+      logger.error("getBandwidthPrices failed, error is {}", e.getMessage());
+    }
+
+    return null;
+  }
+
   public String getCoinbase() {
     if (!CommonParameter.getInstance().isWitness()) {
       return null;
@@ -4017,6 +4043,60 @@ public class Wallet {
 
   public Chainbase.Cursor getCursor() {
     return chainBaseManager.getBlockStore().getRevokingDB().getCursor();
+  }
+
+  public Block getBlock(GrpcAPI.BlockReq request) {
+    Block block;
+    long head = chainBaseManager.getHeadBlockNum();
+    if (!request.getIdOrNum().isEmpty()) {
+      Long num = WalletUtil.isLong(request.getIdOrNum());
+      if (num != null) {
+        // quickly check
+        if (num > head) {
+          return null;
+        }
+        if (num < 0) {
+          throw  new IllegalArgumentException("num must be non-positive number.");
+        }
+        block = getBlockByNum(num);
+      } else {
+        RuntimeException e = new IllegalArgumentException("id must be legal block hash.");
+        if (request.getIdOrNum().length() != Sha256Hash.LENGTH * 2) {
+          throw  e;
+        }
+        try {
+          ByteString id = ByteString.copyFrom(ByteArray.fromHexString(request.getIdOrNum()));
+          if (id.size() == Sha256Hash.LENGTH) {
+            num = new BlockId(Sha256Hash.wrap(id)).getNum();
+            // quickly check
+            if (num > head || num < 0) {
+              throw  e;
+            }
+            block = getBlockById(id);
+          } else {
+            throw  e;
+          }
+        } catch (DecoderException ignored) {
+          throw  e;
+        }
+      }
+    } else {
+      block = getNowBlock();
+    }
+    if (Objects.isNull(block) || block.getTransactionsList().isEmpty()
+        || request.getDetail()) {
+      return block;
+    }
+    return block.toBuilder().clearTransactions().build();
+  }
+
+  public String getMemoFeePrices() {
+    try {
+      return chainBaseManager.getDynamicPropertiesStore().getMemoFeeHistory();
+    } catch (Exception e) {
+      logger.error("getMemoFeePrices failed, error is {}", e.getMessage());
+    }
+    return null;
   }
 }
 
