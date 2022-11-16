@@ -224,17 +224,23 @@ public class Args extends CommonParameter {
    */
   private static void printVersion() {
     Properties properties = new Properties();
+    boolean noGitProperties = true;
     try {
       InputStream in = Thread.currentThread()
           .getContextClassLoader().getResourceAsStream("git.properties");
-      properties.load(in);
+      if (in != null) {
+        noGitProperties = false;
+        properties.load(in);
+      }
     } catch (IOException e) {
       logger.error(e.getMessage());
     }
     JCommander.getConsole().println("OS : " + System.getProperty("os.name"));
     JCommander.getConsole().println("JVM : " + System.getProperty("java.vendor") + " "
         + System.getProperty("java.version") + " " + System.getProperty("os.arch"));
-    JCommander.getConsole().println("Git : " + properties.getProperty("git.commit.id"));
+    if (!noGitProperties) {
+      JCommander.getConsole().println("Git : " + properties.getProperty("git.commit.id"));
+    }
     JCommander.getConsole().println("Version : " + Version.getVersion());
     JCommander.getConsole().println("Code : " + Version.VERSION_CODE);
   }
