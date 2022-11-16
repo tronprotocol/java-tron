@@ -123,9 +123,9 @@ public class Args extends CommonParameter {
     PARAMETER.nodeDiscoveryEnable = false;
     PARAMETER.nodeDiscoveryPersist = false;
     PARAMETER.nodeConnectionTimeout = 2000;
-    PARAMETER.activeNodes = Collections.emptyList();
-    PARAMETER.passiveNodes = Collections.emptyList();
-    PARAMETER.fastForwardNodes = Collections.emptyList();
+    PARAMETER.activeNodes = new ArrayList<>();
+    PARAMETER.passiveNodes = new ArrayList<>();
+    PARAMETER.fastForwardNodes = new ArrayList<>();
     PARAMETER.maxFastForwardNum = 3;
     PARAMETER.nodeChannelReadTimeout = 0;
     PARAMETER.maxConnections = 30;
@@ -1116,10 +1116,10 @@ public class Args extends CommonParameter {
 
   private static List<InetSocketAddress> getInetSocketAddress(
           final com.typesafe.config.Config config, String path) {
-    if (!config.hasPath(path)) {
-      return Collections.emptyList();
-    }
     List<InetSocketAddress> ret = new ArrayList<>();
+    if (!config.hasPath(path)) {
+      return ret;
+    }
     List<String> list = config.getStringList(path);
     for (String configString : list) {
       String[] sz = configString.split(":");
@@ -1137,10 +1137,10 @@ public class Args extends CommonParameter {
 
   private static List<InetAddress> getInetAddress(
           final com.typesafe.config.Config config, String path) {
-    if (!config.hasPath(path)) {
-      return Collections.emptyList();
-    }
     List<InetAddress> ret = new ArrayList<>();
+    if (!config.hasPath(path)) {
+      return ret;
+    }
     List<String> list = config.getStringList(path);
     for (String configString : list) {
       try {
