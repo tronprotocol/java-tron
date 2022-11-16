@@ -28,6 +28,7 @@ import static org.tron.core.config.Parameter.DatabaseConstants.MARKET_COUNT_LIMI
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseEnergyFee;
 import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.EARLIEST_STR;
+import static org.tron.protos.contract.Common.ResourceCode;
 
 import com.google.common.collect.ContiguousSet;
 import com.google.common.collect.DiscreteDomain;
@@ -204,6 +205,8 @@ import org.tron.core.zen.note.NoteEncryption.Encryption;
 import org.tron.core.zen.note.OutgoingPlaintext;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.Account.FreezeV2;
+import org.tron.protos.Protocol.Account.UnFreezeV2;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 import org.tron.protos.Protocol.Exchange;
@@ -271,8 +274,8 @@ public class Wallet {
 
   @Autowired
   private NodeManager nodeManager;
-  private int minEffectiveConnection = Args.getInstance().getMinEffectiveConnection();
-  private boolean trxCacheEnable = Args.getInstance().isTrxCacheEnable();
+  private int minEffectiveConnection = CommonParameter.getInstance().getMinEffectiveConnection();
+  private boolean trxCacheEnable = CommonParameter.getInstance().isTrxCacheEnable();
   public static final String CONTRACT_VALIDATE_EXCEPTION = "ContractValidateException: {}";
   public static final String CONTRACT_VALIDATE_ERROR = "Contract validate error : ";
 
@@ -281,7 +284,7 @@ public class Wallet {
    */
   public Wallet() {
     this.cryptoEngine = SignUtils.getGeneratedRandomSign(Utils.getRandom(),
-        Args.getInstance().isECKeyCryptoEngine());
+            CommonParameter.getInstance().isECKeyCryptoEngine());
   }
 
   /**
@@ -307,24 +310,6 @@ public class Wallet {
   public static void setAddressPreFixByte(byte addressPreFixByte) {
     DecodeUtil.addressPreFixByte = addressPreFixByte;
   }
-
-  //  public ShieldAddress generateShieldAddress() {
-  //    ShieldAddress.Builder builder = ShieldAddress.newBuilder();
-  //    ShieldAddressGenerator shieldAddressGenerator = new ShieldAddressGenerator();
-  //
-  //    byte[] privateKey = shieldAddressGenerator.generatePrivateKey();
-  //    byte[] publicKey = shieldAddressGenerator.generatePublicKey(privateKey);
-  //
-  //    byte[] privateKeyEnc = shieldAddressGenerator.generatePrivateKeyEnc(privateKey);
-  //    byte[] publicKeyEnc = shieldAddressGenerator.generatePublicKeyEnc(privateKeyEnc);
-  //
-  //    byte[] addPrivate = ByteUtil.merge(privateKey, privateKeyEnc);
-  //    byte[] addPublic = ByteUtil.merge(publicKey, publicKeyEnc);
-  //
-  //    builder.setPrivateAddress(ByteString.copyFrom(addPrivate));
-  //    builder.setPublicAddress(ByteString.copyFrom(addPublic));
-  //    return builder.build();
-  //  }
 
   public byte[] getAddress() {
     return cryptoEngine.getAddress();
@@ -352,8 +337,30 @@ public class Wallet {
         + BLOCK_PRODUCED_INTERVAL * accountCapsule.getLatestConsumeFreeTime());
     accountCapsule.setLatestConsumeTimeForEnergy(genesisTimeStamp
         + BLOCK_PRODUCED_INTERVAL * accountCapsule.getLatestConsumeTimeForEnergy());
-
+    sortFrozenV2List(accountCapsule);
     return accountCapsule.getInstance();
+  }
+
+  private void sortFrozenV2List(AccountCapsule accountCapsule) {
+    List<FreezeV2> oldFreezeV2List = accountCapsule.getFrozenV2List();
+    accountCapsule.clearFrozenV2();
+    ResourceCode[] codes = ResourceCode.values();
+    for (ResourceCode code : codes) {
+      if (ResourceCode.UNRECOGNIZED != code) {
+        accountCapsule.addFrozenV2List(FreezeV2.newBuilder()
+                .setType(code)
+                .setAmount(0)
+                .build());
+      }
+    }
+    List<FreezeV2> newFreezeV2List = accountCapsule.getFrozenV2List();
+    for (int i = 0; i < newFreezeV2List.size(); i++) {
+      FreezeV2 freezeV2 = newFreezeV2List.get(i);
+      ResourceCode code = freezeV2.getType();
+      Optional<FreezeV2> optional = oldFreezeV2List
+              .stream().filter(o -> o.getType() == code).findFirst();
+      accountCapsule.updateFrozenV2List(i, optional.orElse(freezeV2));
+    }
   }
 
   public Account getAccountById(Account account) {
@@ -784,7 +791,7 @@ public class Wallet {
       timestamp = dynamicStore.getLatestBlockHeaderTimestamp();
     }
 
-    List<Account.UnFreezeV2> unfrozenV2List = accountCapsule.getInstance().getUnfrozenV2List();
+    List<UnFreezeV2> unfrozenV2List = accountCapsule.getInstance().getUnfrozenV2List();
     long finalTimestamp = timestamp;
 
     canWithdrawUnfreezeAmount = unfrozenV2List
@@ -792,7 +799,7 @@ public class Wallet {
             .filter(unfrozenV2 ->
                     (unfrozenV2.getUnfreezeAmount() > 0
                     && unfrozenV2.getUnfreezeExpireTime() <= finalTimestamp))
-            .mapToLong(Account.UnFreezeV2::getUnfreezeAmount)
+            .mapToLong(UnFreezeV2::getUnfreezeAmount)
             .sum();
 
 
@@ -830,7 +837,7 @@ public class Wallet {
     }
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
 
-    List<Account.UnFreezeV2> unfrozenV2List = accountCapsule.getInstance().getUnfrozenV2List();
+    List<UnFreezeV2> unfrozenV2List = accountCapsule.getInstance().getUnfrozenV2List();
     long getUsedUnfreezeCount = unfrozenV2List
             .stream()
             .filter(unfrozenV2 ->
