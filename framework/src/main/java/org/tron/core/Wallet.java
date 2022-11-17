@@ -457,6 +457,7 @@ public class Wallet {
   public TransactionCapsule createTransactionCapsule(com.google.protobuf.Message message,
       ContractType contractType) throws ContractValidateException {
     TransactionCapsule trx = new TransactionCapsule(message, contractType);
+    trx.setTransactionCreate(true);
     if (contractType != ContractType.CreateSmartContract
         && contractType != ContractType.TriggerSmartContract) {
       List<Actuator> actList = ActuatorFactory.createActuator(trx, chainBaseManager);
@@ -464,7 +465,7 @@ public class Wallet {
         act.validate();
       }
     }
-
+    trx.setTransactionCreate(false);
     if (contractType == ContractType.CreateSmartContract) {
 
       CreateSmartContract contract = ContractCapsule

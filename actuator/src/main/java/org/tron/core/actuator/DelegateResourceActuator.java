@@ -28,6 +28,7 @@ import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.BalanceContract.DelegateResourceContract;
+import org.tron.core.utils.TransactionUtil;
 
 @Slf4j(topic = "actuator")
 public class DelegateResourceActuator extends AbstractActuator {
@@ -143,7 +144,12 @@ public class DelegateResourceActuator extends AbstractActuator {
         BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
         processor.updateUsage(ownerCapsule);
 
-        long netUsage = (long) (ownerCapsule.getNetUsage() * TRX_PRECISION * ((double)
+        long accountNetUsage = ownerCapsule.getNetUsage();
+        if (null != this.getTx() && this.getTx().isTransactionCreate()) {
+            accountNetUsage += TransactionUtil.estimateConsumeBandWidthSize(ownerCapsule,
+                    chainBaseManager);
+        }
+        long netUsage = (long) (accountNetUsage * TRX_PRECISION * ((double)
                 (dynamicStore.getTotalNetWeight()) / dynamicStore.getTotalNetLimit()));
 
         long ownerNetUsage = (long) (netUsage * ((double)(ownerCapsule
