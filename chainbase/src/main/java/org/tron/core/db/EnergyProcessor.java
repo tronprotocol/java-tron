@@ -31,7 +31,6 @@ public class EnergyProcessor extends ResourceProcessor {
         / BLOCK_PRODUCED_INTERVAL;
   }
 
-  @Override
   public void updateUsage(AccountCapsule accountCapsule) {
     long now = getHeadSlot();
     updateUsage(accountCapsule, now);

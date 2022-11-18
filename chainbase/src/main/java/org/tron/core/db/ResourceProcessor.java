@@ -33,8 +33,6 @@ abstract class ResourceProcessor {
         AdaptiveResourceLimitConstants.PERIODS_MS / BLOCK_PRODUCED_INTERVAL;
   }
 
-  abstract void updateUsage(AccountCapsule accountCapsule);
-
   abstract void consume(TransactionCapsule trx, TransactionTrace trace)
       throws ContractValidateException, AccountResourceInsufficientException, TooBigTransactionResultException;
 
@@ -63,12 +61,10 @@ abstract class ResourceProcessor {
   public long increase(AccountCapsule accountCapsule, ResourceCode resourceCode,
                           long lastUsage, long usage, long lastTime, long now) {
     long oldWindowSize = accountCapsule.getWindowSize(resourceCode);
-    /* old logic */
     long averageLastUsage = divideCeil(lastUsage * this.precision, oldWindowSize);
     long averageUsage = divideCeil(usage * this.precision, this.windowSize);
 
     if (lastTime != now) {
-      assert now > lastTime;
       if (lastTime + oldWindowSize > now) {
         long delta = now - lastTime;
         double decay = (oldWindowSize - delta) / (double) oldWindowSize;
@@ -77,7 +73,7 @@ abstract class ResourceProcessor {
         averageLastUsage = 0;
       }
     }
-    /* new logic */
+
     long newUsage = getUsage(averageLastUsage, oldWindowSize) +
             getUsage(averageUsage, this.windowSize);
     if (dynamicPropertiesStore.supportUnfreezeDelay()) {
@@ -149,7 +145,6 @@ abstract class ResourceProcessor {
       return false;
     }
   }
-
 
   protected boolean consumeFeeForNewAccount(AccountCapsule accountCapsule, long fee) {
     try {

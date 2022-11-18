@@ -43,7 +43,6 @@ public class UnfreezeBalanceV2ActuatorTest {
   private static final String OWNER_ACCOUNT_INVALID;
   private static final long initBalance = 10_000_000_000L;
   private static final long frozenBalance = 1_000_000_000L;
-  private static final long smallTatalResource = 100L;
   private static Manager dbManager;
   private static TronApplicationContext context;
 
@@ -541,7 +540,7 @@ public class UnfreezeBalanceV2ActuatorTest {
     try {
       actuator.validate();
       //Assert.fail();
-    } catch (ContractValidateException e) {
+    } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
     }
   }
@@ -566,15 +565,15 @@ public class UnfreezeBalanceV2ActuatorTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
             .setAny(getContractForBandwidthV2(OWNER_ADDRESS, unfreezeBalance));
 
-    boolean bret1 = actuator.checkExistFreezedBalance(
+    boolean bret1 = actuator.checkExistFrozenBalance(
             accountCapsule, ResourceCode.BANDWIDTH);
-    Assert.assertTrue(true == bret1);
-    boolean bret2 = actuator.checkExistFreezedBalance(
+    Assert.assertTrue(bret1);
+    boolean bret2 = actuator.checkExistFrozenBalance(
             accountCapsule, ResourceCode.ENERGY);
-    Assert.assertTrue(true == bret2);
-    boolean bret3 = actuator.checkExistFreezedBalance(
+    Assert.assertTrue(bret2);
+    boolean bret3 = actuator.checkExistFrozenBalance(
             accountCapsule, ResourceCode.TRON_POWER);
-    Assert.assertTrue(true == bret3);
+    Assert.assertTrue(bret3);
 
   }
 
@@ -603,7 +602,7 @@ public class UnfreezeBalanceV2ActuatorTest {
     boolean bret1 = actuator.checkUnfreezeBalance(
             accountCapsule, unfreezeBalanceV2Contract, ResourceCode.BANDWIDTH
     );
-    Assert.assertTrue(true == bret1);
+    Assert.assertTrue(bret1);
   }
 
 
@@ -633,7 +632,7 @@ public class UnfreezeBalanceV2ActuatorTest {
 
     ResourceCode freezeType = unfreezeBalanceV2Contract.getResource();
 
-    Assert.assertTrue(ResourceCode.TRON_POWER.equals(freezeType));
+    Assert.assertEquals(ResourceCode.TRON_POWER, freezeType);
   }
 
   @Test
@@ -695,7 +694,7 @@ public class UnfreezeBalanceV2ActuatorTest {
             ResourceCode.BANDWIDTH, accountCapsule, unfreezeBalance
     );
 
-    Assert.assertTrue(accountCapsule.getAllFrozenBalanceForBandwidth() == 1);
+    Assert.assertEquals(1, accountCapsule.getAllFrozenBalanceForBandwidth());
   }
 
 

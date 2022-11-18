@@ -175,11 +175,6 @@ public class FreezeBalanceActuator extends AbstractActuator {
       throw new ContractValidateException("frozenBalance must be less than accountBalance");
     }
 
-//    long maxFrozenNumber = dbManager.getDynamicPropertiesStore().getMaxFrozenNumber();
-//    if (accountCapsule.getFrozenCount() >= maxFrozenNumber) {
-//      throw new ContractValidateException("max frozen number is: " + maxFrozenNumber);
-//    }
-
     long frozenDuration = freezeBalanceContract.getFrozenDuration();
     long minFrozenTime = dynamicStore.getMinFrozenTime();
     long maxFrozenTime = dynamicStore.getMaxFrozenTime();
@@ -224,8 +219,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
     //If the receiver is included in the contract, the receiver will receive the resource.
     if (!ArrayUtils.isEmpty(receiverAddress) && dynamicStore.supportDR()) {
       if (Arrays.equals(receiverAddress, ownerAddress)) {
-        throw new ContractValidateException(
-            "receiverAddress must not be the same as ownerAddress");
+        throw new ContractValidateException("receiverAddress must not be the same as ownerAddress");
       }
 
       if (!DecodeUtil.addressValid(receiverAddress)) {

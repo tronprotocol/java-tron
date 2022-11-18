@@ -36,7 +36,6 @@ public class BandwidthProcessor extends ResourceProcessor {
     this.chainBaseManager = chainBaseManager;
   }
 
-  @Override
   public void updateUsage(AccountCapsule accountCapsule) {
     long now = chainBaseManager.getHeadSlot();
     updateUsage(accountCapsule, now);
@@ -61,8 +60,7 @@ public class BandwidthProcessor extends ResourceProcessor {
       });
     }
     Map<String, Long> assetMapV2 = accountCapsule.getAssetMapV2();
-    Map<String, Long> map = new HashMap<>();
-    map.putAll(assetMapV2);
+    Map<String, Long> map = new HashMap<>(assetMapV2);
     accountCapsule.getAllFreeAssetNetUsageV2().forEach((k, v) -> {
       if (!map.containsKey(k)) {
         map.put(k, 0L);

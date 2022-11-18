@@ -38,6 +38,9 @@ import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
 @Slf4j(topic = "actuator")
 public class UnfreezeBalanceActuator extends AbstractActuator {
 
+  private static final String INVALID_RESOURCE_CODE =
+          "ResourceCode error.valid ResourceCode[BANDWIDTH、Energy]";
+
   public UnfreezeBalanceActuator() {
     super(ContractType.UnfreezeBalanceContract, UnfreezeBalanceContract.class);
   }
@@ -402,8 +405,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           }
           break;
         default:
-          throw new ContractValidateException(
-              "ResourceCode error.valid ResourceCode[BANDWIDTH、Energy]");
+          throw new ContractValidateException(INVALID_RESOURCE_CODE);
       }
 
     } else {
@@ -440,8 +442,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
               throw new ContractValidateException("It's not time to unfreeze(TronPower).");
             }
           } else {
-            throw new ContractValidateException(
-                "ResourceCode error.valid ResourceCode[BANDWIDTH、Energy]");
+            throw new ContractValidateException(INVALID_RESOURCE_CODE);
           }
           break;
         default:
@@ -449,8 +450,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
             throw new ContractValidateException(
                 "ResourceCode error.valid ResourceCode[BANDWIDTH、Energy、TRON_POWER]");
           } else {
-            throw new ContractValidateException(
-                "ResourceCode error.valid ResourceCode[BANDWIDTH、Energy]");
+            throw new ContractValidateException(INVALID_RESOURCE_CODE);
           }
       }
 

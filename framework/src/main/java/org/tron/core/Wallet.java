@@ -344,13 +344,9 @@ public class Wallet {
   private void sortFrozenV2List(AccountCapsule accountCapsule) {
     List<FreezeV2> oldFreezeV2List = accountCapsule.getFrozenV2List();
     accountCapsule.clearFrozenV2();
-    ResourceCode[] codes = ResourceCode.values();
-    for (ResourceCode code : codes) {
+    for (ResourceCode code : ResourceCode.values()) {
       if (ResourceCode.UNRECOGNIZED != code) {
-        accountCapsule.addFrozenV2List(FreezeV2.newBuilder()
-                .setType(code)
-                .setAmount(0)
-                .build());
+        accountCapsule.addFrozenV2List(FreezeV2.newBuilder().setType(code).setAmount(0).build());
       }
     }
     List<FreezeV2> newFreezeV2List = accountCapsule.getFrozenV2List();
@@ -359,7 +355,9 @@ public class Wallet {
       ResourceCode code = freezeV2.getType();
       Optional<FreezeV2> optional = oldFreezeV2List
               .stream().filter(o -> o.getType() == code).findFirst();
-      accountCapsule.updateFrozenV2List(i, optional.orElse(freezeV2));
+      if (optional.isPresent()) {
+        accountCapsule.updateFrozenV2List(i, optional.get());
+      }
     }
   }
 

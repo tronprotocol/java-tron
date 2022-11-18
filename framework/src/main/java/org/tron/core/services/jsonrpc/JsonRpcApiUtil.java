@@ -35,8 +35,10 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract.
 import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
+import org.tron.protos.contract.BalanceContract.DelegateResourceContract;
 import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
+import org.tron.protos.contract.BalanceContract.UnDelegateResourceContract;
 import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeInjectContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
@@ -114,7 +116,7 @@ public class JsonRpcApiUtil {
     if (!toAddressList.isEmpty()) {
       return toAddressList.get(0).toByteArray();
     } else {
-      return null;
+      return new byte[0];
     }
   }
 
@@ -154,6 +156,20 @@ public class JsonRpcApiUtil {
         case UnfreezeBalanceContract:
           receiverAddress = contractParameter.unpack(UnfreezeBalanceContract.class)
               .getReceiverAddress();
+          if (!receiverAddress.isEmpty()) {
+            list.add(receiverAddress);
+          }
+          break;
+        case DelegateResourceContract:
+          receiverAddress = contractParameter.unpack(DelegateResourceContract.class)
+                  .getReceiverAddress();
+          if (!receiverAddress.isEmpty()) {
+            list.add(receiverAddress);
+          }
+          break;
+        case UnDelegateResourceContract:
+          receiverAddress = contractParameter.unpack(UnDelegateResourceContract.class)
+                  .getReceiverAddress();
           if (!receiverAddress.isEmpty()) {
             list.add(receiverAddress);
           }
@@ -205,7 +221,7 @@ public class JsonRpcApiUtil {
           amount = getAmountFromTransactionInfo(hash, contract.getType(), transactionInfo);
           break;
         default:
-          amount = getTransactionAmount(contract, hash, 0, null, wallet);
+          amount = getTransactionAmount(contract, hash, null, wallet);
           break;
       }
     } catch (Exception e) {
@@ -217,7 +233,7 @@ public class JsonRpcApiUtil {
   }
 
   public static long getTransactionAmount(Transaction.Contract contract, String hash,
-      long blockNum, TransactionInfo transactionInfo, Wallet wallet) {
+                                          TransactionInfo transactionInfo, Wallet wallet) {
     long amount = 0;
     try {
       Any contractParameter = contract.getParameter();

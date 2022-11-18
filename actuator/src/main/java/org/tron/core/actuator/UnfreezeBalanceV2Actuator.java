@@ -3,6 +3,10 @@ package org.tron.core.actuator;
 import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
 import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+import static org.tron.protos.contract.Common.ResourceCode;
+import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
+import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
+import static org.tron.protos.contract.Common.ResourceCode.TRON_POWER;
 
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
@@ -24,11 +28,12 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.VotesStore;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.Account.FreezeV2;
+import org.tron.protos.Protocol.Account.UnFreezeV2;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.Protocol.Vote;
 import org.tron.protos.contract.BalanceContract.UnfreezeBalanceV2Contract;
-import org.tron.protos.contract.Common;
 
 @Slf4j(topic = "actuator")
 public class UnfreezeBalanceV2Actuator extends AbstractActuator {
@@ -73,7 +78,7 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
       accountCapsule.initializeOldTronPower();
     }
 
-    Common.ResourceCode freezeType = unfreezeBalanceV2Contract.getResource();
+    ResourceCode freezeType = unfreezeBalanceV2Contract.getResource();
 
     this.updateAccountFrozenInfo(freezeType, accountCapsule, unfreezeBalance);
 
@@ -140,18 +145,18 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
     switch (unfreezeBalanceV2Contract.getResource()) {
       case BANDWIDTH:
-        if (!this.checkExistFreezedBalance(accountCapsule, Common.ResourceCode.BANDWIDTH)) {
+        if (!checkExistFrozenBalance(accountCapsule, BANDWIDTH)) {
           throw new ContractValidateException("no frozenBalance(BANDWIDTH)");
         }
         break;
       case ENERGY:
-        if (!this.checkExistFreezedBalance(accountCapsule, Common.ResourceCode.ENERGY)) {
+        if (!checkExistFrozenBalance(accountCapsule, ENERGY)) {
           throw new ContractValidateException("no frozenBalance(Energy)");
         }
         break;
       case TRON_POWER:
         if (dynamicStore.supportAllowNewResourceModel()) {
-          if (!this.checkExistFreezedBalance(accountCapsule, Common.ResourceCode.TRON_POWER)) {
+          if (!checkExistFrozenBalance(accountCapsule, TRON_POWER)) {
             throw new ContractValidateException("no frozenBalance(TronPower)");
           }
         } else {
@@ -190,32 +195,24 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
     return 0;
   }
 
-  public boolean checkExistFreezedBalance(AccountCapsule accountCapsule, Common.ResourceCode freezeType) {
-    boolean checkOk = false;
-
-    long frozenAmount = 0;
-    List<Protocol.Account.FreezeV2> frozenV2List = accountCapsule.getFrozenV2List();
-    for (Protocol.Account.FreezeV2 frozenV2 : frozenV2List) {
-      if (frozenV2.getType().equals(freezeType)) {
-        frozenAmount = frozenV2.getAmount();
-        if (frozenAmount > 0) {
-          checkOk = true;
-          break;
-        }
+  public boolean checkExistFrozenBalance(AccountCapsule accountCapsule, ResourceCode freezeType) {
+    List<FreezeV2> frozenV2List = accountCapsule.getFrozenV2List();
+    for (FreezeV2 frozenV2 : frozenV2List) {
+      if (frozenV2.getType().equals(freezeType) && frozenV2.getAmount() > 0) {
+        return true;
       }
     }
-
-    return checkOk;
+    return false;
   }
 
   public boolean checkUnfreezeBalance(AccountCapsule accountCapsule,
                                       final UnfreezeBalanceV2Contract unfreezeBalanceV2Contract,
-                                      Common.ResourceCode freezeType) {
+                                      ResourceCode freezeType) {
     boolean checkOk = false;
 
     long frozenAmount = 0L;
-    List<Protocol.Account.FreezeV2> freezeV2List = accountCapsule.getFrozenV2List();
-    for (Protocol.Account.FreezeV2 freezeV2 : freezeV2List) {
+    List<FreezeV2> freezeV2List = accountCapsule.getFrozenV2List();
+    for (FreezeV2 freezeV2 : freezeV2List) {
       if (freezeV2.getType().equals(freezeType)) {
         frozenAmount = freezeV2.getAmount();
         break;
@@ -237,11 +234,11 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
     return now + unfreezeDelayDays * FROZEN_PERIOD;
   }
 
-  public void updateAccountFrozenInfo(Common.ResourceCode freezeType, AccountCapsule accountCapsule, long unfreezeBalance) {
-    List<Protocol.Account.FreezeV2> freezeV2List = accountCapsule.getFrozenV2List();
+  public void updateAccountFrozenInfo(ResourceCode freezeType, AccountCapsule accountCapsule, long unfreezeBalance) {
+    List<FreezeV2> freezeV2List = accountCapsule.getFrozenV2List();
     for (int i = 0; i < freezeV2List.size(); i++) {
       if (freezeV2List.get(i).getType().equals(freezeType)) {
-        Protocol.Account.FreezeV2 freezeV2 = Protocol.Account.FreezeV2.newBuilder()
+        FreezeV2 freezeV2 = FreezeV2.newBuilder()
             .setAmount(freezeV2List.get(i).getAmount() - unfreezeBalance)
             .setType(freezeV2List.get(i).getType())
             .build();
@@ -254,12 +251,12 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
   public long unfreezeExpire(AccountCapsule accountCapsule, long now) {
     long unfreezeBalance = 0L;
 
-    List<Protocol.Account.UnFreezeV2> unFrozenV2List = Lists.newArrayList();
+    List<UnFreezeV2> unFrozenV2List = Lists.newArrayList();
     unFrozenV2List.addAll(accountCapsule.getUnfrozenV2List());
-    Iterator<Protocol.Account.UnFreezeV2> iterator = unFrozenV2List.iterator();
+    Iterator<UnFreezeV2> iterator = unFrozenV2List.iterator();
 
     while (iterator.hasNext()) {
-      Protocol.Account.UnFreezeV2 next = iterator.next();
+      UnFreezeV2 next = iterator.next();
       if (next.getUnfreezeExpireTime() <= now) {
         unfreezeBalance += next.getUnfreezeAmount();
         iterator.remove();
