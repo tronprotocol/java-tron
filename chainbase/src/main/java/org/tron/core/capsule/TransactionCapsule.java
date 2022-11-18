@@ -107,6 +107,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   private long order;
   private byte[] ownerAddress;
 
+  @Getter
+  @Setter
+  private boolean isTransactionCreate = false;
+
   public byte[] getOwnerAddress() {
     if (this.ownerAddress == null) {
       this.ownerAddress = getOwner(this.transaction.getRawData().getContract(0));
