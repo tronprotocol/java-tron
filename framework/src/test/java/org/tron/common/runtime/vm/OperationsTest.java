@@ -317,7 +317,8 @@ public class OperationsTest {
     program = new Program(op, op, invoke, interTrx);;
     testOperations(program);
     Assert.assertEquals(2, program.getResult().getEnergyUsed());
-    Assert.assertEquals(invoke.getContractAddress(), program.getStack().pop());
+    Assert.assertArrayEquals(invoke.getContractAddress().getLast20Bytes(),
+        program.getStack().pop().getLast20Bytes());
 
     // test ORIGIN = 0x32
     op = new byte[]{0x32};

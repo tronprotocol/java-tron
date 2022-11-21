@@ -1,5 +1,6 @@
 package org.tron.common.overlay.server;
 
+import com.google.common.base.Throwables;
 import com.google.protobuf.ByteString;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
@@ -119,7 +120,7 @@ public class Channel {
     setStartTime(msg.getTimestamp());
     setTronState(TronState.HANDSHAKE_FINISHED);
     getNodeStatistics().p2pHandShake.add();
-    logger.info("Finish handshake with {}.", ctx.channel().remoteAddress());
+    logger.info("Finish handshake with {}", ctx.channel().remoteAddress());
   }
 
   /**
@@ -148,8 +149,11 @@ public class Channel {
 
   public void processException(Throwable throwable) {
     Throwable baseThrowable = throwable;
-    while (baseThrowable.getCause() != null) {
-      baseThrowable = baseThrowable.getCause();
+    try {
+      baseThrowable = Throwables.getRootCause(baseThrowable);
+    } catch (IllegalArgumentException e) {
+      baseThrowable = e.getCause();
+      logger.warn("Loop in causal chain detected");
     }
     SocketAddress address = ctx.channel().remoteAddress();
     if (throwable instanceof ReadTimeoutException
@@ -211,7 +215,7 @@ public class Channel {
 
   public void setTronState(TronState tronState) {
     this.tronState = tronState;
-    logger.info("Peer {} status change to {}.", inetSocketAddress, tronState);
+    logger.info("Peer {} status change to {}", inetSocketAddress, tronState);
   }
 
   public boolean isActive() {

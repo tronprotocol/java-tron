@@ -551,7 +551,7 @@ public class Wallet {
           .setMessage(ByteString.copyFromUtf8("Contract execute error : " + e.getMessage()))
           .build();
     } catch (AccountResourceInsufficientException e) {
-      logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
+      logger.warn(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.BANDWITH_ERROR)
           .setMessage(ByteString.copyFromUtf8("Account resource insufficient error."))
           .build();
@@ -561,17 +561,17 @@ public class Wallet {
           .setMessage(ByteString.copyFromUtf8("Dup transaction."))
           .build();
     } catch (TaposException e) {
-      logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
+      logger.warn(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.TAPOS_ERROR)
           .setMessage(ByteString.copyFromUtf8("Tapos check error."))
           .build();
     } catch (TooBigTransactionException e) {
-      logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
+      logger.warn(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.TOO_BIG_TRANSACTION_ERROR)
           .setMessage(ByteString.copyFromUtf8("Transaction size is too big."))
           .build();
     } catch (TransactionExpirationException e) {
-      logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
+      logger.warn(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.TRANSACTION_EXPIRATION_ERROR)
           .setMessage(ByteString.copyFromUtf8("Transaction expired"))
           .build();
@@ -687,7 +687,7 @@ public class Wallet {
       Block block = chainBaseManager.getBlockByNum(blockNum).getInstance();
       count = block.getTransactionsCount();
     } catch (StoreException e) {
-      logger.error(e.getMessage());
+      logger.warn(e.getMessage());
     }
 
     return count;
@@ -753,7 +753,7 @@ public class Wallet {
 
   public DelegatedResourceAccountIndex getDelegatedResourceAccountIndex(ByteString address) {
     DelegatedResourceAccountIndexCapsule accountIndexCapsule =
-        chainBaseManager.getDelegatedResourceAccountIndexStore().get(address.toByteArray());
+        chainBaseManager.getDelegatedResourceAccountIndexStore().getIndex(address.toByteArray());
     if (accountIndexCapsule != null) {
       return accountIndexCapsule.getInstance();
     } else {
@@ -1098,6 +1098,21 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowAssetOptimization())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowNewReward")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowNewReward())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getMemoFee")
+        .setValue(dbManager.getDynamicPropertiesStore().getMemoFee())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowDelegateOptimization")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowDelegateOptimization())
+        .build());
+
     return builder.build();
   }
 
@@ -1404,7 +1419,7 @@ public class Wallet {
     try {
       block = chainBaseManager.getBlockStore().get(blockId.toByteArray()).getInstance();
     } catch (StoreException e) {
-      logger.error(e.getMessage());
+      logger.warn(e.getMessage());
     }
     return block;
   }
@@ -4075,5 +4090,13 @@ public class Wallet {
     return block.toBuilder().clearTransactions().build();
   }
 
+  public String getMemoFeePrices() {
+    try {
+      return chainBaseManager.getDynamicPropertiesStore().getMemoFeeHistory();
+    } catch (Exception e) {
+      logger.error("getMemoFeePrices failed, error is {}", e.getMessage());
+    }
+    return null;
+  }
 }
 
