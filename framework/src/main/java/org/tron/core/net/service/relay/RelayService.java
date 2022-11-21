@@ -100,7 +100,7 @@ public class RelayService {
   public void fillHelloMessage(HelloMessage message, Channel channel) {
     if (isActiveWitness()) {
       fastForwardNodes.forEach(address -> {
-        if (address.equals(channel.getInetAddress())) {
+        if (address.getAddress().equals(channel.getInetAddress())) {
           SignInterface cryptoEngine = SignUtils
               .fromPrivate(ByteArray.fromHexString(Args.getLocalWitnesses().getPrivateKey()),
                   Args.getInstance().isECKeyCryptoEngine());
