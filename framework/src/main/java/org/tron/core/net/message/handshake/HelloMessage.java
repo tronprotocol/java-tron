@@ -3,6 +3,7 @@ package org.tron.core.net.message.handshake;
 import com.google.protobuf.ByteString;
 import lombok.Getter;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
@@ -128,13 +129,28 @@ public class HelloMessage extends TronMessage {
 
   @Override
   public String toString() {
-    return new StringBuilder().append(super.toString())
+    StringBuilder builder = new StringBuilder();
+
+    builder.append(super.toString())
             .append("from: ").append(getFrom().getInetSocketAddress()).append("\n")
             .append("timestamp: ").append(getTimestamp()).append("\n")
             .append("headBlockId: ").append(getHeadBlockId().getString()).append("\n")
             .append("nodeType: ").append(helloMessage.getNodeType()).append("\n")
-            .append("lowestBlockNum: ").append(helloMessage.getLowestBlockNum()).append("\n")
-            .toString();
+            .append("lowestBlockNum: ").append(helloMessage.getLowestBlockNum()).append("\n");
+
+    ByteString address = helloMessage.getAddress();
+    if (address != null && !address.isEmpty()) {
+      builder.append("address:")
+              .append(StringUtil.encode58Check(address.toByteArray())).append("\n");
+    }
+
+    ByteString signature = helloMessage.getSignature();
+    if (signature != null && !signature.isEmpty()) {
+      builder.append("signature:")
+              .append(signature.toByteArray().length).append("\n");
+    }
+
+    return builder.toString();
   }
 
   public Protocol.HelloMessage getInstance() {
