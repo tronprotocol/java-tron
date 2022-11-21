@@ -78,7 +78,7 @@ public class NodeManager implements EventHandler {
       bootNodes.add(Node.instanceOf(boot));
     }
 
-    logger.info("homeNode : {}", homeNode);
+    logger.info("Home node is {}", homeNode);
 
     table = new NodeTable(homeNode);
 
@@ -123,13 +123,13 @@ public class NodeManager implements EventHandler {
         return;
       }
       DBNode dbNode = JsonUtil.json2Obj(new String(nodeBytes), DBNode.class);
-      logger.info("Reading node statistics from store: {} nodes.", dbNode.getNodes().size());
+      logger.info("Reading node statistics from store: {} nodes", dbNode.getNodes().size());
       dbNode.getNodes().forEach(n -> {
         Node node = new Node(n.getId(), n.getHost(), n.getPort());
         getNodeHandler(node).getNodeStatistics().setPersistedReputation(n.getReputation());
       });
     } catch (Exception e) {
-      logger.error("DB read node failed.", e);
+      logger.error("DB read node failed", e);
     }
   }
 
@@ -153,13 +153,13 @@ public class NodeManager implements EventHandler {
 
       dbNode.setNodes(batch);
 
-      logger.info("Write node statistics to store: m:{}/t:{}/{}/{} nodes.",
+      logger.info("Write node statistics to store: m:{}/t:{}/{}/{} nodes",
           nodeHandlerMap.size(), getTable().getAllNodes().size(), size, batch.size());
 
       chainBaseManager.getCommonStore()
           .put(DB_KEY_PEERS, new BytesCapsule(JsonUtil.obj2Json(dbNode).getBytes()));
     } catch (Exception e) {
-      logger.error("DB write node failed.", e);
+      logger.error("DB write node failed", e);
     }
   }
 
@@ -307,7 +307,7 @@ public class NodeManager implements EventHandler {
       nodeManagerTasksTimer.cancel();
       pongTimer.shutdownNow();
     } catch (Exception e) {
-      logger.warn("close failed.", e);
+      logger.error("Close nodeManagerTasksTimer or pongTimer failed", e);
     }
   }
 

@@ -225,7 +225,7 @@ public class SyncPool {
       poolLoopExecutor.shutdownNow();
       logExecutor.shutdownNow();
     } catch (Exception e) {
-      logger.warn("Problems shutting down executor", e);
+      logger.error("Problems shutting down executor", e);
     }
   }
 

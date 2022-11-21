@@ -41,6 +41,11 @@ public class MetricsHistogram {
         "type");
     init(MetricKeys.Histogram.HTTP_BYTES, "http_bytes traffic.",
         "url", "status");
+    init(MetricKeys.Histogram.MESSAGE_PROCESS_LATENCY, "process message latency.",
+        "type");
+    init(MetricKeys.Histogram.BLOCK_FETCH_LATENCY, "fetch block latency.");
+    init(MetricKeys.Histogram.BLOCK_RECEIVE_DELAY,
+        "receive block delay time, receiveTime - blockTime.");
   }
 
   private MetricsHistogram() {

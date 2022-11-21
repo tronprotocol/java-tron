@@ -557,6 +557,22 @@ public class CommonParameter {
   @Setter
   public long blockCacheTimeout = 60;
 
+  @Getter
+  @Setter
+  public long allowNewRewardAlgorithm;
+
+  @Getter
+  @Setter
+  public long allowNewReward = 0L;
+
+  @Getter
+  @Setter
+  public long memoFee = 0L;
+
+  @Getter
+  @Setter
+  public long allowDelegateOptimization = 0L;
+
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));
     return 5.0;

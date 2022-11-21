@@ -214,6 +214,9 @@ public class Args extends CommonParameter {
     PARAMETER.shutdownBlockHeight = -1;
     PARAMETER.shutdownBlockCount = -1;
     PARAMETER.blockCacheTimeout = 60;
+    PARAMETER.allowNewRewardAlgorithm = 0;
+    PARAMETER.allowNewReward = 0;
+    PARAMETER.memoFee = 0;
   }
 
   /**
@@ -500,6 +503,11 @@ public class Args extends CommonParameter {
             Optional.ofNullable(PARAMETER.storageTransactionHistorySwitch)
                 .filter(StringUtils::isNotEmpty)
                 .orElse(Storage.getTransactionHistorySwitchFromConfig(config)));
+
+    PARAMETER.storage
+        .setCheckpointVersion(Storage.getCheckpointVersionFromConfig(config));
+    PARAMETER.storage
+        .setCheckpointSync(Storage.getCheckpointSyncFromConfig(config));
 
     PARAMETER.storage.setEstimatedBlockTransactions(
         Storage.getEstimatedTransactionsFromConfig(config));
@@ -941,6 +949,10 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.COMMITTEE_ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX) ? config
             .getInt(Constant.COMMITTEE_ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX) : 0;
 
+    PARAMETER.allowNewRewardAlgorithm =
+        config.hasPath(Constant.COMMITTEE_ALLOW_NEW_REWARD_ALGORITHM) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_NEW_REWARD_ALGORITHM) : 0;
+
     initBackupProperty(config);
     if (Constant.ROCKSDB.equalsIgnoreCase(CommonParameter
         .getInstance().getStorage().getDbEngine())) {
@@ -1022,6 +1034,32 @@ public class Args extends CommonParameter {
 
     if (config.hasPath(Constant.BLOCK_CACHE_TIMEOUT)) {
       PARAMETER.blockCacheTimeout = config.getLong(Constant.BLOCK_CACHE_TIMEOUT);
+    }
+
+    if (config.hasPath(Constant.ALLOW_NEW_REWARD)) {
+      PARAMETER.allowNewReward = config.getLong(Constant.ALLOW_NEW_REWARD);
+      if (PARAMETER.allowNewReward > 1) {
+        PARAMETER.allowNewReward = 1;
+      }
+      if (PARAMETER.allowNewReward < 0) {
+        PARAMETER.allowNewReward = 0;
+      }
+    }
+
+    if (config.hasPath(Constant.MEMO_FEE)) {
+      PARAMETER.memoFee = config.getLong(Constant.MEMO_FEE);
+      if (PARAMETER.memoFee > 1_000_000_000) {
+        PARAMETER.memoFee = 1_000_000_000;
+      }
+      if (PARAMETER.memoFee < 0) {
+        PARAMETER.memoFee = 0;
+      }
+    }
+
+    if (config.hasPath(Constant.ALLOW_DELEGATE_OPTIMIZATION)) {
+      PARAMETER.allowDelegateOptimization = config.getLong(Constant.ALLOW_DELEGATE_OPTIMIZATION);
+      PARAMETER.allowDelegateOptimization = Math.min(PARAMETER.allowDelegateOptimization, 1);
+      PARAMETER.allowDelegateOptimization = Math.max(PARAMETER.allowDelegateOptimization, 0);
     }
 
     logConfig();
