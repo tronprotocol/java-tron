@@ -119,7 +119,7 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
         pbftMsgHandler.processMessage(peerConnection, message);
       } catch (Exception e) {
         logger.warn("PBFT Message from {} process failed, {}",
-                peerConnection.getInetSocketAddress(), message, e);
+                peerConnection.getInetSocketAddress(), message, e.getMessage());
         peerConnection.disconnect(Protocol.ReasonCode.BAD_PROTOCOL);
       }
       return;
