@@ -36,7 +36,6 @@ import org.tron.protos.Protocol.Permission.PermissionType;
 import org.tron.protos.Protocol.Vote;
 import org.tron.protos.contract.AccountContract.AccountCreateContract;
 import org.tron.protos.contract.AccountContract.AccountUpdateContract;
-import org.tron.protos.contract.Common;
 
 import java.util.List;
 import java.util.Map;
@@ -453,7 +452,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     this.addFrozenBalanceForResource(ENERGY, balance);
   }
 
-  private void addFrozenBalanceForResource(Common.ResourceCode type, long balance) {
+  private void addFrozenBalanceForResource(ResourceCode type, long balance) {
     boolean doUpdate = false;
     for (int i = 0; i < this.account.getFrozenV2List().size(); i++) {
       if (this.account.getFrozenV2List().get(i).getType().equals(type)) {
@@ -564,9 +563,10 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public void updateFrozenV2List(int index, FreezeV2 frozenV2) {
-    this.account = this.account.toBuilder()
-            .setFrozenV2(index, frozenV2)
-            .build();
+    if (Objects.isNull(frozenV2)) {
+      return;
+    }
+    this.account = this.account.toBuilder().setFrozenV2(index, frozenV2).build();
   }
 
   public void addFrozenV2List(FreezeV2 frozenV2) {
@@ -750,9 +750,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return true;
   }
 
-  public boolean addAssetMapV2(Map<String, Long> assetMap) {
+  public void addAssetMapV2(Map<String, Long> assetMap) {
     this.account = this.account.toBuilder().putAllAssetV2(assetMap).build();
-    return true;
   }
 
   public Long getAsset(DynamicPropertiesStore dynamicStore, String key) {
@@ -799,9 +798,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
 
   /*************************** end asset ****************************************/
 
-  public boolean addAllLatestAssetOperationTimeV2(Map<String, Long> map) {
+  public void addAllLatestAssetOperationTimeV2(Map<String, Long> map) {
     this.account = this.account.toBuilder().putAllLatestAssetOperationTimeV2(map).build();
-    return true;
   }
 
   public Map<String, Long> getLatestAssetOperationTimeMap() {
@@ -1097,9 +1095,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     this.account = this.account.toBuilder().setFreeNetUsage(freeNetUsage).build();
   }
 
-  public boolean addAllFreeAssetNetUsageV2(Map<String, Long> map) {
+  public void addAllFreeAssetNetUsageV2(Map<String, Long> map) {
     this.account = this.account.toBuilder().putAllFreeAssetNetUsageV2(map).build();
-    return true;
   }
 
   public long getFreeAssetNetUsage(String assetName) {

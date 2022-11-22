@@ -474,7 +474,7 @@ message TransactionInfo {
   repeated MarketOrderDetail orderDetails = 26;
   int64 packingFee = 27;
 
-  int64 withdraw_Expire_amount = 28;
+  int64 withdraw_expire_amount = 28;
 }
 
 message TransactionRet {
@@ -642,6 +642,7 @@ message DelegatedResourceAccountIndex {
   bytes account = 1;
   repeated bytes fromAccounts = 2;
   repeated bytes toAccounts = 3;
+  int64 timestamp = 4;
 }
 
 message NodeInfo {

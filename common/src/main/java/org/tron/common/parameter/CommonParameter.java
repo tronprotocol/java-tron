@@ -563,6 +563,18 @@ public class CommonParameter {
 
   @Getter
   @Setter
+  public long allowNewReward = 0L;
+
+  @Getter
+  @Setter
+  public long memoFee = 0L;
+
+  @Getter
+  @Setter
+  public long allowDelegateOptimization = 0L;
+
+  @Getter
+  @Setter
   public long unfreezeDelayDays = 0L;
 
   private static double calcMaxTimeRatio() {

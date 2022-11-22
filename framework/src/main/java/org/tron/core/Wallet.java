@@ -344,13 +344,9 @@ public class Wallet {
   private void sortFrozenV2List(AccountCapsule accountCapsule) {
     List<FreezeV2> oldFreezeV2List = accountCapsule.getFrozenV2List();
     accountCapsule.clearFrozenV2();
-    ResourceCode[] codes = ResourceCode.values();
-    for (ResourceCode code : codes) {
+    for (ResourceCode code : ResourceCode.values()) {
       if (ResourceCode.UNRECOGNIZED != code) {
-        accountCapsule.addFrozenV2List(FreezeV2.newBuilder()
-                .setType(code)
-                .setAmount(0)
-                .build());
+        accountCapsule.addFrozenV2List(FreezeV2.newBuilder().setType(code).setAmount(0).build());
       }
     }
     List<FreezeV2> newFreezeV2List = accountCapsule.getFrozenV2List();
@@ -359,7 +355,9 @@ public class Wallet {
       ResourceCode code = freezeV2.getType();
       Optional<FreezeV2> optional = oldFreezeV2List
               .stream().filter(o -> o.getType() == code).findFirst();
-      accountCapsule.updateFrozenV2List(i, optional.orElse(freezeV2));
+      if (optional.isPresent()) {
+        accountCapsule.updateFrozenV2List(i, optional.get());
+      }
     }
   }
 
@@ -698,7 +696,7 @@ public class Wallet {
       Block block = chainBaseManager.getBlockByNum(blockNum).getInstance();
       count = block.getTransactionsCount();
     } catch (StoreException e) {
-      logger.error(e.getMessage());
+      logger.warn(e.getMessage());
     }
 
     return count;
@@ -899,7 +897,7 @@ public class Wallet {
 
   public DelegatedResourceAccountIndex getDelegatedResourceAccountIndex(ByteString address) {
     DelegatedResourceAccountIndexCapsule accountIndexCapsule =
-        chainBaseManager.getDelegatedResourceAccountIndexStore().get(address.toByteArray());
+        chainBaseManager.getDelegatedResourceAccountIndexStore().getIndex(address.toByteArray());
     if (accountIndexCapsule != null) {
       return accountIndexCapsule.getInstance();
     } else {
@@ -1256,8 +1254,18 @@ public class Wallet {
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-        .setKey("getNewRewardAlgorithm")
-        .setValue(dbManager.getDynamicPropertiesStore().useNewRewardAlgorithm() ? 1 : 0)
+        .setKey("getAllowNewReward")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowNewReward())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getMemoFee")
+        .setValue(dbManager.getDynamicPropertiesStore().getMemoFee())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowDelegateOptimization")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowDelegateOptimization())
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
@@ -1571,7 +1579,7 @@ public class Wallet {
     try {
       block = chainBaseManager.getBlockStore().get(blockId.toByteArray()).getInstance();
     } catch (StoreException e) {
-      logger.error(e.getMessage());
+      logger.warn(e.getMessage());
     }
     return block;
   }
@@ -4242,5 +4250,13 @@ public class Wallet {
     return block.toBuilder().clearTransactions().build();
   }
 
+  public String getMemoFeePrices() {
+    try {
+      return chainBaseManager.getDynamicPropertiesStore().getMemoFeeHistory();
+    } catch (Exception e) {
+      logger.error("getMemoFeePrices failed, error is {}", e.getMessage());
+    }
+    return null;
+  }
 }
 

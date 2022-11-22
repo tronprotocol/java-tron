@@ -303,6 +303,8 @@ public class FullNodeHttpApiService implements Service {
   private GetBandwidthPricesServlet getBandwidthPricesServlet;
   @Autowired
   private GetBlockServlet getBlockServlet;
+  @Autowired
+  private GetMemoFeePricesServlet getMemoFeePricesServlet;
 
   @Autowired
   private FreezeBalanceV2Servlet freezeBalanceV2Servlet;
@@ -574,6 +576,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getBandwidthPricesServlet),
           "/wallet/getbandwidthprices");
       context.addServlet(new ServletHolder(getBlockServlet), "/wallet/getblock");
+      context.addServlet(new ServletHolder(getMemoFeePricesServlet), "/wallet/getmemofee");
 
       context.addServlet(new ServletHolder(freezeBalanceV2Servlet),
           "/wallet/freezebalancev2");

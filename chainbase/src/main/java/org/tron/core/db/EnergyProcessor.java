@@ -31,7 +31,6 @@ public class EnergyProcessor extends ResourceProcessor {
         / BLOCK_PRODUCED_INTERVAL;
   }
 
-  @Override
   public void updateUsage(AccountCapsule accountCapsule) {
     long now = getHeadSlot();
     updateUsage(accountCapsule, now);
@@ -141,9 +140,11 @@ public class EnergyProcessor extends ResourceProcessor {
     long energyWeight = frozeBalance / TRX_PRECISION;
     long totalEnergyLimit = dynamicPropertiesStore.getTotalEnergyCurrentLimit();
     long totalEnergyWeight = dynamicPropertiesStore.getTotalEnergyWeight();
-
-    assert totalEnergyWeight > 0;
-
+    if (dynamicPropertiesStore.allowNewReward() && totalEnergyWeight <= 0) {
+      return 0;
+    } else {
+      assert totalEnergyWeight > 0;
+    }
     return (long) (energyWeight * ((double) totalEnergyLimit / totalEnergyWeight));
   }
 

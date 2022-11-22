@@ -24,6 +24,9 @@ public class ReceiptCapsule {
   @Setter
   private long multiSignFee;
 
+  @Getter
+  @Setter
+  private long memoFee;
   /**
    * Available energy of contract deployer before executing transaction
    */
