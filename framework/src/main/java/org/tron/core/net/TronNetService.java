@@ -19,6 +19,7 @@ import org.tron.core.net.service.adv.AdvService;
 import org.tron.core.net.service.fetchblock.FetchBlockService;
 import org.tron.core.net.service.keepalive.KeepAliveService;
 import org.tron.core.net.service.nodepersist.NodePersistService;
+import org.tron.core.net.service.relay.RelayService;
 import org.tron.core.net.service.statistics.TronStatsManager;
 import org.tron.core.net.service.sync.SyncService;
 import org.tron.p2p.P2pConfig;
@@ -63,6 +64,9 @@ public class TronNetService {
   @Autowired
   private TronStatsManager tronStatsManager;
 
+  @Autowired
+  private RelayService relayService;
+
   private volatile boolean init;
 
   private static void setP2pConfig(P2pConfig config) {
@@ -84,6 +88,7 @@ public class TronNetService {
       nodePersistService.init();
       tronStatsManager.init();
       PeerManager.init();
+      relayService.init();
       logger.info("Net service start successfully");
     } catch (Exception e) {
       logger.error("Net service start failed", e);
@@ -104,6 +109,7 @@ public class TronNetService {
     transactionsMsgHandler.close();
     fetchBlockService.close();
     p2pService.close();
+    relayService.close();
     logger.info("Net service closed successfully");
   }
 

@@ -97,6 +97,10 @@ public class RelayService {
     }, 30, 100, TimeUnit.SECONDS);
   }
 
+  public void close() {
+    executorService.shutdown();
+  }
+
   public void fillHelloMessage(HelloMessage message, Channel channel) {
     if (isActiveWitness()) {
       fastForwardNodes.forEach(address -> {
