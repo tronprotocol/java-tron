@@ -314,6 +314,10 @@ public class ProposalService extends ProposalUtil {
               ContractType.UnDelegateResourceContract_VALUE);
           break;
         }
+        case ALLOW_DELEGATE_OPTIMIZATION: {
+          manager.getDynamicPropertiesStore().saveAllowDelegateOptimization(entry.getValue());
+          break;
+        }
         default:
           find = false;
           break;

@@ -93,6 +93,15 @@ public class DelegatedResourceAccountIndexCapsule implements
     }
   }
 
+  public void setTimestamp(long time) {
+    this.delegatedResourceAccountIndex = this.delegatedResourceAccountIndex.toBuilder()
+        .setTimestamp(time)
+        .build();
+  }
+
+  public long getTimestamp() {
+    return this.delegatedResourceAccountIndex.getTimestamp();
+  }
 
   public byte[] createDbKey() {
     return getAccount().toByteArray();
