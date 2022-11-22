@@ -76,6 +76,15 @@ public class DelegatedResourceCapsule implements ProtoCapsule<DelegatedResource>
     return this.delegatedResource.getFrozenBalanceForBandwidth();
   }
 
+  public long getFrozenBalance(boolean isBandwidth) {
+    if (isBandwidth) {
+      return getFrozenBalanceForBandwidth();
+    } else {
+      return getFrozenBalanceForEnergy();
+    }
+
+  }
+
   public void setFrozenBalanceForBandwidth(long bandwidth, long expireTime) {
     this.delegatedResource = this.delegatedResource.toBuilder()
         .setFrozenBalanceForBandwidth(bandwidth)

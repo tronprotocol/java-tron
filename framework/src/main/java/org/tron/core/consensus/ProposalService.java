@@ -286,8 +286,17 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().setAllowAssetOptimization(entry.getValue());
           break;
         }
-        case ALLOW_NEW_REWARD_ALGO: {
+        case ALLOW_NEW_REWARD: {
           manager.getDynamicPropertiesStore().saveNewRewardAlgorithmEffectiveCycle();
+          manager.getDynamicPropertiesStore().saveAllowNewReward(entry.getValue());
+          break;
+        }
+        case MEMO_FEE: {
+          manager.getDynamicPropertiesStore().saveMemoFee(entry.getValue());
+          // update memo fee history
+          manager.getDynamicPropertiesStore().saveMemoFeeHistory(
+              manager.getDynamicPropertiesStore().getMemoFeeHistory()
+                  + "," + proposalCapsule.getExpirationTime() + ":" + entry.getValue());
           break;
         }
         case UNFREEZE_DELAY_DAYS: {

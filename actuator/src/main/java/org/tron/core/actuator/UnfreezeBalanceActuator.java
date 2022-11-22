@@ -86,6 +86,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     byte[] receiverAddress = unfreezeBalanceContract.getReceiverAddress().toByteArray();
     //If the receiver is not included in the contract, unfreeze frozen balance for this account.
     //otherwise,unfreeze delegated frozen balance provided this account.
+    long decrease = 0;
     if (!ArrayUtils.isEmpty(receiverAddress) && dynamicStore.supportDR()) {
       byte[] key = DelegatedResourceCapsule
           .createDbKey(unfreezeBalanceContract.getOwnerAddress().toByteArray(),
@@ -110,31 +111,46 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       }
 
       AccountCapsule receiverCapsule = accountStore.get(receiverAddress);
+
       if (dynamicStore.getAllowTvmConstantinople() == 0 ||
           (receiverCapsule != null && receiverCapsule.getType() != AccountType.Contract)) {
         switch (unfreezeBalanceContract.getResource()) {
           case BANDWIDTH:
+            long oldNetWeight = receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth() / 
+                    TRX_PRECISION;
             if (dynamicStore.getAllowTvmSolidity059() == 1
                 && receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
                 < unfreezeBalance) {
+              oldNetWeight = unfreezeBalance / TRX_PRECISION;
               receiverCapsule.setAcquiredDelegatedFrozenBalanceForBandwidth(0);
             } else {
               receiverCapsule.addAcquiredDelegatedFrozenBalanceForBandwidth(-unfreezeBalance);
             }
+            long newNetWeight = receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth() / 
+                    TRX_PRECISION;
+            decrease = newNetWeight - oldNetWeight;
             break;
           case ENERGY:
+            long oldEnergyWeight = receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy() / 
+                    TRX_PRECISION;
             if (dynamicStore.getAllowTvmSolidity059() == 1
                 && receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy() < unfreezeBalance) {
+              oldEnergyWeight = unfreezeBalance / TRX_PRECISION;
               receiverCapsule.setAcquiredDelegatedFrozenBalanceForEnergy(0);
             } else {
               receiverCapsule.addAcquiredDelegatedFrozenBalanceForEnergy(-unfreezeBalance);
             }
+            long newEnergyWeight = receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy() / 
+                    TRX_PRECISION;
+            decrease = newEnergyWeight - oldEnergyWeight;
             break;
           default:
             //this should never happen
             break;
         }
         accountStore.put(receiverCapsule.createDbKey(), receiverCapsule);
+      } else {
+        decrease = -unfreezeBalance / TRX_PRECISION;
       }
 
       accountCapsule.setBalance(oldBalance + unfreezeBalance);
@@ -176,7 +192,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     } else {
       switch (unfreezeBalanceContract.getResource()) {
         case BANDWIDTH:
-
+          long oldNetWeight = accountCapsule.getFrozenBalance() / TRX_PRECISION;
           List<Frozen> frozenList = Lists.newArrayList();
           frozenList.addAll(accountCapsule.getFrozenList());
           Iterator<Frozen> iterator = frozenList.iterator();
@@ -192,9 +208,11 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
               .setBalance(oldBalance + unfreezeBalance)
               .clearFrozen().addAllFrozen(frozenList).build());
-
+          long newNetWeight = accountCapsule.getFrozenBalance() / TRX_PRECISION;
+          decrease = newNetWeight - oldNetWeight;
           break;
         case ENERGY:
+          long oldEnergyWeight = accountCapsule.getEnergyFrozenBalance() / TRX_PRECISION;
           unfreezeBalance = accountCapsule.getAccountResource().getFrozenBalanceForEnergy()
               .getFrozenBalance();
 
@@ -203,12 +221,17 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
               .setBalance(oldBalance + unfreezeBalance)
               .setAccountResource(newAccountResource).build());
+          long newEnergyWeight = accountCapsule.getEnergyFrozenBalance() / TRX_PRECISION;
+          decrease = newEnergyWeight - oldEnergyWeight;
           break;
         case TRON_POWER:
+          long oldTPWeight = accountCapsule.getTronPowerFrozenBalance() / TRX_PRECISION;
           unfreezeBalance = accountCapsule.getTronPowerFrozenBalance();
           accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
               .setBalance(oldBalance + unfreezeBalance)
               .clearTronPower().build());
+          long newTPWeight = accountCapsule.getTronPowerFrozenBalance() / TRX_PRECISION;
+          decrease = newTPWeight - oldTPWeight;
           break;
         default:
           //this should never happen
@@ -216,19 +239,20 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       }
 
     }
-
+    
+    long weight = dynamicStore.allowNewReward() ? decrease : -unfreezeBalance / TRX_PRECISION;
     switch (unfreezeBalanceContract.getResource()) {
       case BANDWIDTH:
         dynamicStore
-            .addTotalNetWeight(-unfreezeBalance / TRX_PRECISION);
+            .addTotalNetWeight(weight);
         break;
       case ENERGY:
         dynamicStore
-            .addTotalEnergyWeight(-unfreezeBalance / TRX_PRECISION);
+            .addTotalEnergyWeight(weight);
         break;
       case TRON_POWER:
         dynamicStore
-            .addTotalTronPowerWeight(-unfreezeBalance / TRX_PRECISION);
+            .addTotalTronPowerWeight(weight);
         break;
       default:
         //this should never happen
