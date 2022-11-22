@@ -49,8 +49,6 @@ public class RelayService {
   @Autowired
   private ApplicationContext ctx;
 
-  private P2pConfig p2pConfig = TronNetService.getP2pConfig();
-
   private Manager manager;
 
   private WitnessScheduleStore witnessScheduleStore;
@@ -155,7 +153,7 @@ public class RelayService {
         flag = Arrays.equals(sigAddress, witnessPermissionAddress);
       }
       if (flag) {
-        p2pConfig.getTrustNodes().add(channel.getInetAddress());
+        TronNetService.getP2pConfig().getTrustNodes().add(channel.getInetAddress());
       }
       return flag;
     } catch (Exception e) {
@@ -173,12 +171,13 @@ public class RelayService {
   }
 
   private void connect() {
-    fastForwardNodes.forEach(address -> p2pConfig.getActiveNodes().add(address));
+    fastForwardNodes.forEach(address ->
+            TronNetService.getP2pConfig().getActiveNodes().add(address));
   }
 
   private void disconnect() {
     fastForwardNodes.forEach(address -> {
-      p2pConfig.getActiveNodes().remove(address);
+      TronNetService.getP2pConfig().getActiveNodes().remove(address);
       TronNetService.getPeers().forEach(peer -> {
         if (peer.getInetAddress().equals(address.getAddress())) {
           peer.getChannel().close();
