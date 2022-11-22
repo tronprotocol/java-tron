@@ -49,7 +49,7 @@ public class RelayService {
   @Autowired
   private ApplicationContext ctx;
 
-  private P2pConfig p2pConfig;
+  private P2pConfig p2pConfig = TronNetService.getP2pConfig();
 
   private Manager manager;
 
