@@ -559,6 +559,22 @@ public class CommonParameter {
 
   @Getter
   @Setter
+  public long allowNewRewardAlgorithm;
+
+  @Getter
+  @Setter
+  public long allowNewReward = 0L;
+
+  @Getter
+  @Setter
+  public long memoFee = 0L;
+
+  @Getter
+  @Setter
+  public long allowDelegateOptimization = 0L;
+
+  @Getter
+  @Setter
   public boolean isStressTest = true;
 
   private static double calcMaxTimeRatio() {

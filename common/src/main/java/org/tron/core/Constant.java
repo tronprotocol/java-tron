@@ -290,6 +290,8 @@ public class Constant {
   public static final String COMMITTEE_ALLOW_TVM_COMPATIBLE_EVM = "committee.allowTvmCompatibleEvm";
   public static final String COMMITTEE_ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX =
       "committee.allowHigherLimitForMaxCpuTimeOfOneTx";
+  public static final String COMMITTEE_ALLOW_NEW_REWARD_ALGORITHM = "committee.allowNewRewardAlgorithm";
+
 
   public static final String METRICS_STORAGE_ENABLE = "node.metrics.storageEnable";
   public static final String METRICS_INFLUXDB_IP = "node.metrics.influxdb.ip";
@@ -306,6 +308,9 @@ public class Constant {
 
   public static final String ALLOW_ACCOUNT_ASSET_OPTIMIZATION = "committee.allowAccountAssetOptimization";
   public static final String ALLOW_ASSET_OPTIMIZATION = "committee.allowAssetOptimization";
+  public static final String ALLOW_NEW_REWARD = "committee.allowNewReward";
+  public static final String MEMO_FEE = "committee.memoFee";
+  public static final String ALLOW_DELEGATE_OPTIMIZATION = "committee.allowDelegateOptimization";
 
   public static final String LOCAL_HOST = "127.0.0.1";
 

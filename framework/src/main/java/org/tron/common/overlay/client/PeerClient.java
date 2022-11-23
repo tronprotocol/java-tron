@@ -45,22 +45,27 @@ public class PeerClient {
       ChannelFuture f = connectAsync(host, port, remoteId, false);
       f.sync().channel().closeFuture().sync();
     } catch (Exception e) {
-      logger.info("Can't connect to {}:{}, cause:{})", host, port, e.getMessage());
+      logger.warn("Can't connect to {}:{}, cause:{})", host, port, e.getMessage());
     }
   }
 
-  public ChannelFuture connectAsync(NodeHandler nodeHandler, boolean discoveryMode) {
+  public void connectAsync(NodeHandler nodeHandler, boolean discoveryMode) {
     Node node = nodeHandler.getNode();
-    return connectAsync(node.getHost(), node.getPort(), node.getHexId(), discoveryMode)
-        .addListener((ChannelFutureListener) future -> {
-          if (!future.isSuccess()) {
-            logger.warn("Connect to {}:{} fail, cause:{}", node.getHost(), node.getPort(),
-                future.cause().getMessage());
-            nodeHandler.getNodeStatistics().nodeDisconnectedLocal(ReasonCode.CONNECT_FAIL);
-            nodeHandler.getNodeStatistics().notifyDisconnect();
-            future.channel().close();
-          }
-        });
+    try {
+      connectAsync(node.getHost(), node.getPort(), node.getHexId(), discoveryMode)
+              .addListener((ChannelFutureListener) future -> {
+                if (!future.isSuccess()) {
+                  logger.warn("Connect to {}:{} fail, cause:{}", node.getHost(), node.getPort(),
+                          future.cause().getMessage());
+                  nodeHandler.getNodeStatistics().nodeDisconnectedLocal(ReasonCode.CONNECT_FAIL);
+                  nodeHandler.getNodeStatistics().notifyDisconnect();
+                  future.channel().close();
+                }
+              });
+    } catch (Exception e) {
+      logger.warn("Connect to peer {} failed, reason: {}",
+              node.getHost(), e.getMessage());
+    }
   }
 
   private ChannelFuture connectAsync(String host, int port, String remoteId,
