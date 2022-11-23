@@ -9,6 +9,7 @@ import org.tron.protos.Protocol.DelegatedResource;
 @Slf4j(topic = "capsule")
 public class DelegatedResourceCapsule implements ProtoCapsule<DelegatedResource> {
 
+  private static final byte[] V2_PREFIX = {0x01};
   private DelegatedResource delegatedResource;
 
   public DelegatedResourceCapsule(final DelegatedResource delegatedResource) {
@@ -38,11 +39,10 @@ public class DelegatedResourceCapsule implements ProtoCapsule<DelegatedResource>
   }
 
   public static byte[] createDbKeyV2(byte[] from, byte[] to) {
-    byte[] v2Prefix = "v2_".getBytes();
-    byte[] key = new byte[v2Prefix.length + from.length + to.length];
-    System.arraycopy(v2Prefix, 0, key, 0, v2Prefix.length);
-    System.arraycopy(from, 0, key, v2Prefix.length, from.length);
-    System.arraycopy(to, 0, key, v2Prefix.length+from.length, to.length);
+    byte[] key = new byte[V2_PREFIX.length + from.length + to.length];
+    System.arraycopy(V2_PREFIX, 0, key, 0, V2_PREFIX.length);
+    System.arraycopy(from, 0, key, V2_PREFIX.length, from.length);
+    System.arraycopy(to, 0, key, V2_PREFIX.length + from.length, to.length);
     return key;
   }
 

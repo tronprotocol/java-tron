@@ -6,14 +6,12 @@ import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.BandwidthProcessor;
@@ -24,11 +22,11 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DelegatedResourceStore;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.BalanceContract.DelegateResourceContract;
-import org.tron.core.utils.TransactionUtil;
 
 @Slf4j(topic = "actuator")
 public class DelegateResourceActuator extends AbstractActuator {
@@ -146,15 +144,15 @@ public class DelegateResourceActuator extends AbstractActuator {
 
         long accountNetUsage = ownerCapsule.getNetUsage();
         if (null != this.getTx() && this.getTx().isTransactionCreate()) {
-            accountNetUsage += TransactionUtil.estimateConsumeBandWidthSize(ownerCapsule,
-                    chainBaseManager);
+          accountNetUsage += TransactionUtil.estimateConsumeBandWidthSize(ownerCapsule,
+              chainBaseManager);
         }
         long netUsage = (long) (accountNetUsage * TRX_PRECISION * ((double)
-                (dynamicStore.getTotalNetWeight()) / dynamicStore.getTotalNetLimit()));
+            (dynamicStore.getTotalNetWeight()) / dynamicStore.getTotalNetLimit()));
 
-        long ownerNetUsage = (long) (netUsage * ((double)(ownerCapsule
-                .getFrozenV2BalanceForBandwidth()) /
-                ownerCapsule.getAllFrozenBalanceForBandwidth()));
+        long ownerNetUsage = (long) (netUsage * ((double) (ownerCapsule
+            .getFrozenV2BalanceForBandwidth()) /
+            ownerCapsule.getAllFrozenBalanceForBandwidth()));
 
         if (ownerCapsule.getFrozenV2BalanceForBandwidth() - ownerNetUsage
             < delegateBalance) {
@@ -168,10 +166,10 @@ public class DelegateResourceActuator extends AbstractActuator {
         processor.updateUsage(ownerCapsule);
 
         long energyUsage = (long) (ownerCapsule.getEnergyUsage() * TRX_PRECISION * ((double)
-                (dynamicStore.getTotalEnergyWeight()) / dynamicStore.getTotalEnergyCurrentLimit()));
+            (dynamicStore.getTotalEnergyWeight()) / dynamicStore.getTotalEnergyCurrentLimit()));
 
-        long ownerEnergyUsage = (long) (energyUsage * ((double)(ownerCapsule
-                .getFrozenV2BalanceForEnergy()) / ownerCapsule.getAllFrozenBalanceForEnergy()));
+        long ownerEnergyUsage = (long) (energyUsage * ((double) (ownerCapsule
+            .getFrozenV2BalanceForEnergy()) / ownerCapsule.getAllFrozenBalanceForEnergy()));
 
         if (ownerCapsule.getFrozenV2BalanceForEnergy() - ownerEnergyUsage < delegateBalance) {
           throw new ContractValidateException(
@@ -225,6 +223,7 @@ public class DelegateResourceActuator extends AbstractActuator {
   private void delegateResource(byte[] ownerAddress, byte[] receiverAddress, boolean isBandwidth,
                                 long balance) {
     AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicPropertiesStore = chainBaseManager.getDynamicPropertiesStore();
     DelegatedResourceStore delegatedResourceStore = chainBaseManager.getDelegatedResourceStore();
     DelegatedResourceAccountIndexStore delegatedResourceAccountIndexStore = chainBaseManager
         .getDelegatedResourceAccountIndexStore();
@@ -245,34 +244,9 @@ public class DelegateResourceActuator extends AbstractActuator {
     }
     delegatedResourceStore.put(key, delegatedResourceCapsule);
 
-    //modify DelegatedResourceAccountIndexStore owner
-    byte[] ownerKey = DelegatedResourceAccountIndexCapsule.createDbKeyV2(ownerAddress);
-    DelegatedResourceAccountIndexCapsule ownerIndexCapsule = delegatedResourceAccountIndexStore
-        .get(ownerKey);
-    if (ownerIndexCapsule == null) {
-      ownerIndexCapsule = new DelegatedResourceAccountIndexCapsule(
-          ByteString.copyFrom(ownerAddress));
-    }
-    List<ByteString> toAccountsList = ownerIndexCapsule.getToAccountsList();
-    if (!toAccountsList.contains(ByteString.copyFrom(receiverAddress))) {
-      ownerIndexCapsule.addToAccount(ByteString.copyFrom(receiverAddress));
-      delegatedResourceAccountIndexStore.put(ownerKey, ownerIndexCapsule);
-    }
-
-    //modify DelegatedResourceAccountIndexStore receiver
-    byte[] receiverKey = DelegatedResourceAccountIndexCapsule.createDbKeyV2(receiverAddress);
-    DelegatedResourceAccountIndexCapsule receiverIndexCapsule = delegatedResourceAccountIndexStore
-        .get(receiverKey);
-    if (receiverIndexCapsule == null) {
-      receiverIndexCapsule = new DelegatedResourceAccountIndexCapsule(
-          ByteString.copyFrom(receiverAddress));
-    }
-    List<ByteString> fromAccountsList = receiverIndexCapsule
-        .getFromAccountsList();
-    if (!fromAccountsList.contains(ByteString.copyFrom(ownerAddress))) {
-      receiverIndexCapsule.addFromAccount(ByteString.copyFrom(ownerAddress));
-      delegatedResourceAccountIndexStore.put(receiverKey, receiverIndexCapsule);
-    }
+    //modify DelegatedResourceAccountIndexStore
+    delegatedResourceAccountIndexStore.delegateV2(ownerAddress, receiverAddress,
+        dynamicPropertiesStore.getLatestBlockHeaderTimestamp());
 
     //modify AccountStore for receiver
     AccountCapsule receiverCapsule = accountStore.get(receiverAddress);

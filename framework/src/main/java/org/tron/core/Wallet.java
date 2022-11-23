@@ -906,9 +906,8 @@ public class Wallet {
   }
 
   public DelegatedResourceAccountIndex getDelegatedResourceAccountIndexV2(ByteString address) {
-    byte[] dbKey = DelegatedResourceAccountIndexCapsule.createDbKeyV2(address.toByteArray());
-    DelegatedResourceAccountIndexCapsule accountIndexCapsule =
-            chainBaseManager.getDelegatedResourceAccountIndexStore().get(dbKey);
+    DelegatedResourceAccountIndexCapsule accountIndexCapsule = chainBaseManager
+        .getDelegatedResourceAccountIndexStore().getV2Index(address.toByteArray());
     if (accountIndexCapsule != null) {
       return accountIndexCapsule.getInstance();
     } else {

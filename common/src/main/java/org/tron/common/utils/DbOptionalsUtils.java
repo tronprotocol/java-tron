@@ -35,7 +35,7 @@ public class DbOptionalsUtils {
   public static final List<String> DB_L = Arrays.asList("account", "delegation",
       "storage-row");
   // Write frequently
-  public static final List<String> DB_WRITE_L = Arrays.asList("block", "account",
+  protected static final List<String> DB_WRITE_L = Arrays.asList("block", "account",
       "transactionRetStore", "storage-row", "trans");
 
   private DbOptionalsUtils() {
