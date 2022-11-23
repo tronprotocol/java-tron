@@ -109,7 +109,7 @@ public class UnDelegateResourceActuatorTest {
     ownerCapsule.addDelegatedFrozenV2BalanceForBandwidth(delegateBalance);
     dbManager.getAccountStore().put(owner, ownerCapsule);
     AccountCapsule receiverCapsule = dbManager.getAccountStore().get(receiver);
-    receiverCapsule.addAcquiredDelegatedFrozenBalanceForBandwidth(delegateBalance);
+    receiverCapsule.addAcquiredDelegatedFrozenV2BalanceForBandwidth(delegateBalance);
     dbManager.getAccountStore().put(receiver, receiverCapsule);
     dbManager.getDynamicPropertiesStore().addTotalNetWeight(delegateBalance / TRX_PRECISION);
 
@@ -130,7 +130,7 @@ public class UnDelegateResourceActuatorTest {
     ownerCapsule.addDelegatedFrozenV2BalanceForEnergy(delegateBalance);
     dbManager.getAccountStore().put(owner, ownerCapsule);
     AccountCapsule receiverCapsule = dbManager.getAccountStore().get(receiver);
-    receiverCapsule.addAcquiredDelegatedFrozenBalanceForEnergy(delegateBalance);
+    receiverCapsule.addAcquiredDelegatedFrozenV2BalanceForEnergy(delegateBalance);
     dbManager.getAccountStore().put(receiver, receiverCapsule);
     dbManager.getDynamicPropertiesStore().addTotalEnergyWeight(delegateBalance / TRX_PRECISION);
 
@@ -187,7 +187,7 @@ public class UnDelegateResourceActuatorTest {
     try {
       ownerCapsule = dbManager.getAccountStore().get(owner);
       Assert.assertEquals(delegateBalance,
-          receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth());
+          receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth());
       Assert.assertEquals(delegateBalance, ownerCapsule.getDelegatedFrozenV2BalanceForBandwidth());
       Assert.assertEquals(0, ownerCapsule.getFrozenV2BalanceForBandwidth());
       Assert.assertEquals(delegateBalance, ownerCapsule.getTronPower());
@@ -208,7 +208,7 @@ public class UnDelegateResourceActuatorTest {
 
       // check receiver
       receiverCapsule = dbManager.getAccountStore().get(receiver);
-      Assert.assertEquals(0, receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth());
+      Assert.assertEquals(0, receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth());
       Assert.assertEquals(0, receiverCapsule.getNetUsage());
 
       //check DelegatedResource
@@ -254,7 +254,7 @@ public class UnDelegateResourceActuatorTest {
     try {
       AccountCapsule ownerCapsule = dbManager.getAccountStore().get(owner);
       Assert.assertEquals(delegateBalance,
-          receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth());
+          receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth());
       Assert.assertEquals(delegateBalance, ownerCapsule.getDelegatedFrozenV2BalanceForBandwidth());
       Assert.assertEquals(0, ownerCapsule.getFrozenV2BalanceForBandwidth());
       Assert.assertEquals(delegateBalance, ownerCapsule.getTronPower());
@@ -279,7 +279,7 @@ public class UnDelegateResourceActuatorTest {
       // check receiver
       receiverCapsule = dbManager.getAccountStore().get(receiver);
       Assert.assertEquals(delegateBalance / 2,
-          receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth());
+          receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth());
       Assert.assertEquals(1000000000 / 2, receiverCapsule.getNetUsage());
 
       //check DelegatedResource
@@ -371,10 +371,10 @@ public class UnDelegateResourceActuatorTest {
     AccountCapsule receiverCapsule = new AccountCapsule(ByteString.copyFromUtf8("receiver"),
         ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS)), AccountType.Normal,
         initBalance);
-    receiverCapsule.setAcquiredDelegatedFrozenBalanceForBandwidth(10L);
+    receiverCapsule.setAcquiredDelegatedFrozenV2BalanceForBandwidth(10L);
     dbManager.getAccountStore().put(receiver, receiverCapsule);
     receiverCapsule = dbManager.getAccountStore().get(receiver);
-    Assert.assertEquals(10, receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth());
+    Assert.assertEquals(10, receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth());
 
     UnDelegateResourceActuator actuator = new UnDelegateResourceActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
@@ -395,7 +395,7 @@ public class UnDelegateResourceActuatorTest {
 
       // check receiver
       receiverCapsule = dbManager.getAccountStore().get(receiver);
-      Assert.assertEquals(0, receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth());
+      Assert.assertEquals(0, receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth());
 
       //check DelegatedResource
       byte[] key = DelegatedResourceCapsule.createDbKeyV2(owner, receiver);
@@ -446,7 +446,7 @@ public class UnDelegateResourceActuatorTest {
     try {
       ownerCapsule = dbManager.getAccountStore().get(owner);
       Assert.assertEquals(delegateBalance,
-          receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy());
+          receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy());
       Assert.assertEquals(delegateBalance, ownerCapsule.getDelegatedFrozenV2BalanceForEnergy());
       Assert.assertEquals(0, ownerCapsule.getFrozenV2BalanceForEnergy());
       Assert.assertEquals(delegateBalance, ownerCapsule.getTronPower());
@@ -467,7 +467,7 @@ public class UnDelegateResourceActuatorTest {
 
       // check receiver
       receiverCapsule = dbManager.getAccountStore().get(receiver);
-      Assert.assertEquals(0, receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy());
+      Assert.assertEquals(0, receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy());
       Assert.assertEquals(0, receiverCapsule.getEnergyUsage());
 
       //check DelegatedResource
@@ -513,7 +513,7 @@ public class UnDelegateResourceActuatorTest {
     try {
       AccountCapsule ownerCapsule = dbManager.getAccountStore().get(owner);
       Assert.assertEquals(delegateBalance,
-          receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy());
+          receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy());
       Assert.assertEquals(delegateBalance, ownerCapsule.getDelegatedFrozenV2BalanceForEnergy());
       Assert.assertEquals(0, ownerCapsule.getFrozenV2BalanceForEnergy());
       Assert.assertEquals(delegateBalance, ownerCapsule.getTronPower());
@@ -536,7 +536,7 @@ public class UnDelegateResourceActuatorTest {
       // check receiver
       receiverCapsule = dbManager.getAccountStore().get(receiver);
       Assert.assertEquals(delegateBalance / 2,
-          receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy());
+          receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy());
       Assert.assertEquals(1_000_000_000 / 2, receiverCapsule.getEnergyUsage());
 
       //check DelegatedResource
@@ -626,10 +626,10 @@ public class UnDelegateResourceActuatorTest {
     AccountCapsule receiverCapsule = new AccountCapsule(ByteString.copyFromUtf8("receiver"),
         ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS)), AccountType.Normal,
         initBalance);
-    receiverCapsule.setAcquiredDelegatedFrozenBalanceForEnergy(10L);
+    receiverCapsule.setAcquiredDelegatedFrozenV2BalanceForEnergy(10L);
     dbManager.getAccountStore().put(receiver, receiverCapsule);
     receiverCapsule = dbManager.getAccountStore().get(receiver);
-    Assert.assertEquals(10, receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy());
+    Assert.assertEquals(10, receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy());
 
     UnDelegateResourceActuator actuator = new UnDelegateResourceActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
@@ -650,7 +650,7 @@ public class UnDelegateResourceActuatorTest {
 
       // check receiver
       receiverCapsule = dbManager.getAccountStore().get(receiver);
-      Assert.assertEquals(0, receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy());
+      Assert.assertEquals(0, receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy());
 
       //check DelegatedResource
       byte[] key = DelegatedResourceCapsule.createDbKeyV2(owner, receiver);

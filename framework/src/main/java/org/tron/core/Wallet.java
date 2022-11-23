@@ -868,10 +868,15 @@ public class Wallet {
     long netUsage = (long) (accountNetUsage * TRX_PRECISION * ((double)
             (dynamicStore.getTotalNetWeight()) / dynamicStore.getTotalNetLimit()));
 
-    long ownerNetUsage = (long) (netUsage * ((double)(ownerCapsule.getFrozenV2BalanceForBandwidth())
-            / ownerCapsule.getAllFrozenBalanceForBandwidth()));
-    long remain = ownerCapsule.getFrozenV2BalanceForBandwidth() - ownerNetUsage;
-    return  remain > 0 ? remain : 0;
+    long remainNetUsage = netUsage
+            - ownerCapsule.getFrozenBalance()
+            - ownerCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
+            - ownerCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth();
+
+    remainNetUsage = Math.max(0, remainNetUsage);
+
+    long maxSize = ownerCapsule.getFrozenV2BalanceForBandwidth() - remainNetUsage;
+    return Math.max(0, maxSize);
   }
 
   public long calcCanDelegatedEnergyMaxSize(ByteString ownerAddress) {
@@ -888,11 +893,15 @@ public class Wallet {
     long energyUsage = (long) (ownerCapsule.getEnergyUsage() * TRX_PRECISION * ((double)
             (dynamicStore.getTotalEnergyWeight()) / dynamicStore.getTotalEnergyCurrentLimit()));
 
-    long ownerEnergyUsage = (long) (energyUsage * ((double)(ownerCapsule
-            .getFrozenV2BalanceForEnergy()) / ownerCapsule.getAllFrozenBalanceForEnergy()));
+    long remainEnergyUsage = energyUsage
+            - ownerCapsule.getEnergyFrozenBalance()
+            - ownerCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()
+            - ownerCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy();
 
-    long remain =  ownerCapsule.getFrozenV2BalanceForEnergy() - ownerEnergyUsage;
-    return remain > 0 ? remain : 0;
+    remainEnergyUsage = Math.max(0, remainEnergyUsage);
+
+    long maxSize =  ownerCapsule.getFrozenV2BalanceForEnergy() - remainEnergyUsage;
+    return Math.max(0, maxSize);
   }
 
   public DelegatedResourceAccountIndex getDelegatedResourceAccountIndex(ByteString address) {

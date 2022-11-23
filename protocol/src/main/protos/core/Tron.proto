@@ -214,6 +214,7 @@ message Account {
     int64 energy_window_size = 9;
 
     int64 delegated_frozenV2_balance_for_energy = 10;
+    int64 acquired_delegated_frozenV2_balance_for_energy = 11;
   }
   AccountResource account_resource = 26;
   bytes codeHash = 30;
@@ -234,6 +235,7 @@ message Account {
   repeated UnFreezeV2 unfrozenV2 = 35;
 
   int64 delegated_frozenV2_balance_for_bandwidth = 36;
+  int64 acquired_delegated_frozenV2_balance_for_bandwidth = 37;
 }
 
 message Key {

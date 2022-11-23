@@ -326,8 +326,8 @@ public class DelegateResourceActuatorTest {
       AccountCapsule receiverCapsule =
           dbManager.getAccountStore().get(receiver);
       Assert.assertEquals(delegateBalance,
-          receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth());
-      Assert.assertEquals(0L, receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy());
+          receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth());
+      Assert.assertEquals(0L, receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy());
       Assert.assertEquals(0L, receiverCapsule.getTronPower());
 
       DelegatedResourceCapsule delegatedResourceCapsule = dbManager.getDelegatedResourceStore()
@@ -386,9 +386,9 @@ public class DelegateResourceActuatorTest {
 
       AccountCapsule receiverCapsule =
           dbManager.getAccountStore().get(receiver);
-      Assert.assertEquals(0L, receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth());
+      Assert.assertEquals(0L, receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth());
       Assert.assertEquals(delegateBalance,
-          receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy());
+          receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy());
       Assert.assertEquals(0L, receiverCapsule.getTronPower());
 
       DelegatedResourceCapsule delegatedResourceCapsule = dbManager.getDelegatedResourceStore()
