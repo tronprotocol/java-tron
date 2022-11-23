@@ -1236,16 +1236,6 @@ public class Manager {
 
               applyBlock(newBlock, txs);
               tmpSession.commit();
-
-              MarketAccountStore marketAccountStore = chainBaseManager.getMarketAccountStore();
-              for (Map.Entry<byte[], MarketAccountOrderCapsule> entry: marketAccountStore) {
-                if (Arrays.equals("block_number".getBytes(), entry.getKey())) {
-                  continue;
-                }
-                logger.info("checkpoint debug, blocknumber: {}, account: {}, count: {}, totalCount: {}",
-                    newBlock.getNum(),
-                    Hex.toHexString(entry.getKey()), entry.getValue().getCount(), entry.getValue().getTotalCount());
-              }
               // if event subscribe is enabled, post block trigger to queue
               postBlockTrigger(newBlock);
               // if event subscribe is enabled, post solidity trigger to queue
