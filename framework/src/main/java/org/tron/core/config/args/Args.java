@@ -1437,7 +1437,7 @@ public class Args extends CommonParameter {
         PARAMETER.storage.getDbDirectory(), Constant.INFO_FILE_NAME).toString();
     if (FileUtil.isExists(infoFile)) {
       String value = PropUtil.readProperty(infoFile, Constant.SPLIT_BLOCK_NUM);
-      return !"".equals(value) && Long.parseLong(value) > 0;
+      return !"".equals(value) && Long.parseLong(value) > 1;
     }
     return false;
   }
