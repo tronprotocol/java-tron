@@ -267,14 +267,34 @@ createScript(project, 'org.tron.program.DBConvert', 'DBConvert')
 createScript(project, 'org.tron.tool.litefullnode.LiteFullNodeTool', 'LiteFullNodeTool')
 
 def releaseBinary = hasProperty('binaryRelease') ? getProperty('binaryRelease') : 'true'
+def skipSolidity = hasProperty('skipSolidity') ? true : false
+def skipKeystore = hasProperty('skipKeystore') ? true : false
+def skipConvert = hasProperty('skipConvert') ? true : false
+def skipLite = hasProperty('skipLite') ? true : false
+def skipAll = hasProperty('skipAll') ? true : false
 if (releaseBinary == 'true') {
     artifacts {
-        archives(binaryRelease('buildSolidityNodeJar', 'SolidityNode', 'org.tron.program.SolidityNode'),
-                binaryRelease('buildFullNodeJar', 'FullNode', 'org.tron.program.FullNode'),
-                binaryRelease('buildKeystoreFactoryJar', 'KeystoreFactory', 'org.tron.program.KeystoreFactory'),
-                binaryRelease('buildDBConvertJar', 'DBConvert', 'org.tron.program.DBConvert'),
-                binaryRelease('buildLiteFullNodeToolJar', 'LiteFullNodeTool', 'org.tron.tool.litefullnode.LiteFullNodeTool'))
+        archives(binaryRelease('buildFullNodeJar', 'FullNode', 'org.tron.program.FullNode'))
     }
+    if (!skipAll) {
+        if (!skipSolidity) {
+            artifacts {
+                archives(binaryRelease('buildSolidityNodeJar', 'SolidityNode', 'org.tron.program.SolidityNode'))}
+        }
+        if (!skipKeystore) {
+            artifacts {
+                archives(binaryRelease('buildKeystoreFactoryJar', 'KeystoreFactory', 'org.tron.program.KeystoreFactory'))}
+        }
+        if (!skipConvert) {
+            artifacts {
+                archives(binaryRelease('buildDBConvertJar', 'DBConvert', 'org.tron.program.DBConvert'))}
+        }
+        if (!skipLite) {
+            artifacts {
+                archives(binaryRelease('buildLiteFullNodeToolJar', 'LiteFullNodeTool', 'org.tron.tool.litefullnode.LiteFullNodeTool'))}
+        }
+    }
+
 }
 
 task copyToParent(type: Copy) {
