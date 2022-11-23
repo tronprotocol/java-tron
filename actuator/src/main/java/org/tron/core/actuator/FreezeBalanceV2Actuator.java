@@ -14,10 +14,13 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.BalanceContract.FreezeBalanceV2Contract;
+
 import java.util.Objects;
 
 import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
+import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 
 @Slf4j(topic = "actuator")
 public class FreezeBalanceV2Actuator extends AbstractActuator {
@@ -56,16 +59,22 @@ public class FreezeBalanceV2Actuator extends AbstractActuator {
 
     switch (freezeBalanceV2Contract.getResource()) {
       case BANDWIDTH:
+        long oldNetWeight = accountCapsule.getFrozenV2BalanceWithDelegated(BANDWIDTH) / TRX_PRECISION;
         accountCapsule.addFrozenBalanceForBandwidthV2(frozenBalance);
-        dynamicStore.addTotalNetWeight(frozenBalance / TRX_PRECISION);
+        long newNetWeight = accountCapsule.getFrozenV2BalanceWithDelegated(BANDWIDTH) / TRX_PRECISION;
+        dynamicStore.addTotalNetWeight(newNetWeight - oldNetWeight);
         break;
       case ENERGY:
+        long oldEnergyWeight = accountCapsule.getFrozenV2BalanceWithDelegated(ENERGY) / TRX_PRECISION;
         accountCapsule.addFrozenBalanceForEnergyV2(frozenBalance);
-        dynamicStore.addTotalEnergyWeight(frozenBalance / TRX_PRECISION);
+        long newEnergyWeight = accountCapsule.getFrozenV2BalanceWithDelegated(ENERGY) / TRX_PRECISION;
+        dynamicStore.addTotalEnergyWeight(newEnergyWeight - oldEnergyWeight);
         break;
       case TRON_POWER:
+        long oldTPWeight = accountCapsule.getTronPowerFrozenV2Balance() / TRX_PRECISION;
         accountCapsule.addFrozenForTronPowerV2(frozenBalance);
-        dynamicStore.addTotalTronPowerWeight(frozenBalance / TRX_PRECISION);
+        long newTPWeight = accountCapsule.getTronPowerFrozenV2Balance() / TRX_PRECISION;
+        dynamicStore.addTotalTronPowerWeight(newTPWeight - oldTPWeight);
         break;
       default:
         logger.debug("Resource Code Error.");
@@ -78,7 +87,6 @@ public class FreezeBalanceV2Actuator extends AbstractActuator {
 
     return true;
   }
-
 
   @Override
   public boolean validate() throws ContractValidateException {

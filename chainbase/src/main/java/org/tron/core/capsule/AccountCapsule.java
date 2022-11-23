@@ -356,6 +356,11 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         this.account.getDelegatedFrozenBalanceForBandwidth() + balance).build();
   }
 
+  public void addDelegatedFrozenV2BalanceForBandwidth(long balance) {
+    this.account = this.account.toBuilder().setDelegatedFrozenV2BalanceForBandwidth(
+            this.account.getDelegatedFrozenV2BalanceForBandwidth() + balance).build();
+  }
+
   public long getAcquiredDelegatedFrozenBalanceForBandwidth() {
     return this.account.getAcquiredDelegatedFrozenBalanceForBandwidth();
   }
@@ -398,8 +403,16 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return getAccountResource().getDelegatedFrozenBalanceForEnergy();
   }
 
+  public long getDelegatedFrozenV2BalanceForEnergy() {
+    return getAccountResource().getDelegatedFrozenV2BalanceForEnergy();
+  }
+
   public long getDelegatedFrozenBalanceForBandwidth() {
     return this.account.getDelegatedFrozenBalanceForBandwidth();
+  }
+
+  public long getDelegatedFrozenV2BalanceForBandwidth() {
+    return this.account.getDelegatedFrozenV2BalanceForBandwidth();
   }
 
   public void setDelegatedFrozenBalanceForBandwidth(long balance) {
@@ -446,6 +459,14 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     this.account = this.account.toBuilder()
         .setAccountResource(newAccountResource)
         .build();
+  }
+
+  public void addDelegatedFrozenV2BalanceForEnergy(long balance) {
+    AccountResource newAccountResource = getAccountResource().toBuilder()
+            .setDelegatedFrozenV2BalanceForEnergy(
+                    getAccountResource().getDelegatedFrozenV2BalanceForEnergy() + balance).build();
+
+    this.account = this.account.toBuilder().setAccountResource(newAccountResource).build();
   }
 
   public void addFrozenBalanceForEnergyV2(long balance) {
@@ -536,8 +557,11 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     tp += account.getAccountResource().getFrozenBalanceForEnergy().getFrozenBalance();
     tp += account.getDelegatedFrozenBalanceForBandwidth();
     tp += account.getAccountResource().getDelegatedFrozenBalanceForEnergy();
+
     tp += getFrozenV2List().stream().filter(o -> o.getType() != TRON_POWER)
             .mapToLong(FreezeV2::getAmount).sum();
+    tp += account.getDelegatedFrozenV2BalanceForBandwidth();
+    tp += account.getAccountResource().getDelegatedFrozenV2BalanceForEnergy();
     return tp;
   }
 
@@ -1289,4 +1313,13 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       return this.account.getAccountResource().getLatestConsumeTimeForEnergy();
     }
   }
+
+  public long getFrozenV2BalanceWithDelegated(ResourceCode resourceCode) {
+    if (resourceCode == BANDWIDTH) {
+      return getFrozenV2BalanceForBandwidth() + getDelegatedFrozenV2BalanceForBandwidth();
+    } else {
+      return getFrozenV2BalanceForEnergy() + getDelegatedFrozenV2BalanceForEnergy();
+    }
+  }
+
 }

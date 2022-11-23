@@ -159,7 +159,7 @@ public class UnDelegateResourceProcessor {
       case BANDWIDTH: {
         delegatedResourceCapsule.addFrozenBalanceForBandwidth(-unDelegateBalance, 0);
 
-        ownerCapsule.addDelegatedFrozenBalanceForBandwidth(-unDelegateBalance);
+        ownerCapsule.addDelegatedFrozenV2BalanceForBandwidth(-unDelegateBalance);
         ownerCapsule.addFrozenBalanceForBandwidthV2(unDelegateBalance);
 
         BandwidthProcessor processor = new BandwidthProcessor(ChainBaseManager.getInstance());
@@ -173,7 +173,7 @@ public class UnDelegateResourceProcessor {
       case ENERGY: {
         delegatedResourceCapsule.addFrozenBalanceForEnergy(-unDelegateBalance, 0);
 
-        ownerCapsule.addDelegatedFrozenBalanceForEnergy(-unDelegateBalance);
+        ownerCapsule.addDelegatedFrozenV2BalanceForEnergy(-unDelegateBalance);
         ownerCapsule.addFrozenBalanceForEnergyV2(unDelegateBalance);
 
         EnergyProcessor processor =

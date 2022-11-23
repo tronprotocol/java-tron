@@ -124,14 +124,14 @@ public class DelegateResourceProcessor {
         delegateResource(ownerAddress, receiverAddress, true,
             delegateBalance, repo);
 
-        ownerCapsule.addDelegatedFrozenBalanceForBandwidth(delegateBalance);
+        ownerCapsule.addDelegatedFrozenV2BalanceForBandwidth(delegateBalance);
         ownerCapsule.addFrozenBalanceForBandwidthV2(-delegateBalance);
         break;
       case ENERGY:
         delegateResource(ownerAddress, receiverAddress, false,
             delegateBalance, repo);
 
-        ownerCapsule.addDelegatedFrozenBalanceForEnergy(delegateBalance);
+        ownerCapsule.addDelegatedFrozenV2BalanceForEnergy(delegateBalance);
         ownerCapsule.addFrozenBalanceForEnergyV2(-delegateBalance);
         break;
       default:

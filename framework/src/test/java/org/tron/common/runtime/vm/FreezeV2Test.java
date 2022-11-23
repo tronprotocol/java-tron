@@ -561,13 +561,13 @@ public class FreezeV2Test {
     AccountCapsule newReceiver = accountStore.get(receiverAddr);
     Assert.assertNotNull(newReceiver);
     if (res == 0) {
-      Assert.assertEquals(oldOwner.getDelegatedFrozenBalanceForBandwidth() + amount,
-          newOwner.getDelegatedFrozenBalanceForBandwidth());
+      Assert.assertEquals(oldOwner.getDelegatedFrozenV2BalanceForBandwidth() + amount,
+          newOwner.getDelegatedFrozenV2BalanceForBandwidth());
       Assert.assertEquals(oldReceiver.getAcquiredDelegatedFrozenBalanceForBandwidth() + amount,
           newReceiver.getAcquiredDelegatedFrozenBalanceForBandwidth());
     } else {
-      Assert.assertEquals(oldOwner.getDelegatedFrozenBalanceForEnergy() + amount,
-          newOwner.getDelegatedFrozenBalanceForEnergy());
+      Assert.assertEquals(oldOwner.getDelegatedFrozenV2BalanceForEnergy() + amount,
+          newOwner.getDelegatedFrozenV2BalanceForEnergy());
       Assert.assertEquals(oldReceiver.getAcquiredDelegatedFrozenBalanceForEnergy() + amount,
           newReceiver.getAcquiredDelegatedFrozenBalanceForEnergy());
     }
@@ -656,16 +656,16 @@ public class FreezeV2Test {
     newOwner.setBalance(oldOwner.getBalance());
     if (res == 0) {
       Assert.assertEquals(
-          oldOwner.getDelegatedFrozenBalanceForBandwidth() - amount,
-          newOwner.getDelegatedFrozenBalanceForBandwidth());
+          oldOwner.getDelegatedFrozenV2BalanceForBandwidth() - amount,
+          newOwner.getDelegatedFrozenV2BalanceForBandwidth());
       Assert.assertEquals(
           oldOwner.getFrozenV2BalanceForBandwidth() + amount,
           newOwner.getFrozenV2BalanceForBandwidth());
       Assert.assertEquals(oldOwner.getNetUsage() + transferUsage, newOwner.getNetUsage());
     } else {
       Assert.assertEquals(
-          oldOwner.getDelegatedFrozenBalanceForEnergy() - amount,
-          newOwner.getDelegatedFrozenBalanceForEnergy());
+          oldOwner.getDelegatedFrozenV2BalanceForEnergy() - amount,
+          newOwner.getDelegatedFrozenV2BalanceForEnergy());
       Assert.assertEquals(
           oldOwner.getFrozenV2BalanceForEnergy() + amount, newOwner.getFrozenV2BalanceForEnergy());
       Assert.assertEquals(oldOwner.getEnergyUsage() + transferUsage, newOwner.getEnergyUsage());

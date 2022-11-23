@@ -66,14 +66,14 @@ public class DelegateResourceActuator extends AbstractActuator {
         delegateResource(ownerAddress, receiverAddress, true,
             delegateBalance);
 
-        ownerCapsule.addDelegatedFrozenBalanceForBandwidth(delegateBalance);
+        ownerCapsule.addDelegatedFrozenV2BalanceForBandwidth(delegateBalance);
         ownerCapsule.addFrozenBalanceForBandwidthV2(-delegateBalance);
         break;
       case ENERGY:
         delegateResource(ownerAddress, receiverAddress, false,
             delegateBalance);
 
-        ownerCapsule.addDelegatedFrozenBalanceForEnergy(delegateBalance);
+        ownerCapsule.addDelegatedFrozenV2BalanceForEnergy(delegateBalance);
         ownerCapsule.addFrozenBalanceForEnergyV2(-delegateBalance);
         break;
       default:
