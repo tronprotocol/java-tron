@@ -563,11 +563,18 @@ public class Manager {
     if (chainBaseManager.containBlock(genesisBlock.getBlockId())) {
       Args.getInstance().setChainId(genesisBlock.getBlockId().toString());
     } else {
-      if (chainBaseManager.hasBlocks()) {
+      if (chainBaseManager.hasBlocks() && !Args.getInstance().isStressTest) {
         logger.error(
             "Genesis block modify, please delete database directory({}) and restart.",
             Args.getInstance().getOutputDirectory());
         System.exit(1);
+      } else if (Args.getInstance().isStressTest) {
+        this.initAccount();
+        this.initWitness();
+        List<ByteString> srList = new ArrayList<>();
+        Args.getInstance().getGenesisBlock().getWitnesses().forEach(
+            witnessCapsule -> srList.add(ByteString.copyFrom(witnessCapsule.getAddress())));
+        consensus.updateWitness(srList);
       } else {
         logger.info("Create genesis block.");
         Args.getInstance().setChainId(genesisBlock.getBlockId().toString());
