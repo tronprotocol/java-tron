@@ -232,7 +232,6 @@ public class LiteFullNodeTool {
           if (realValue != null) {
             destDb.put(realKey, realValue);
           } else {
-            destDb.delete(realKey);
             byte op = value[0];
             if (Value.Operator.DELETE.getValue() == op) {
               destDb.delete(realKey);
