@@ -17,6 +17,8 @@ dependencies {
     // end google grpc
 
     compile group: 'com.google.api.grpc', name: 'googleapis-common-protos', version: '0.0.3'
+    compile group: 'io.netty', name: 'netty-codec-http', version: '4.1.44.Final'
+    compile group: 'io.netty', name: 'netty-handler', version: '4.1.45.Final'
 }
 
 tasks.matching { it instanceof Test }.all {
