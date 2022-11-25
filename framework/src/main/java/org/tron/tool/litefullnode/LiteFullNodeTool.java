@@ -31,6 +31,7 @@ import org.tron.common.utils.PropUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.db2.common.Value;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.exception.BadItemException;
 import org.tron.tool.litefullnode.db.DBInterface;
@@ -231,7 +232,12 @@ public class LiteFullNodeTool {
           if (realValue != null) {
             destDb.put(realKey, realValue);
           } else {
-            destDb.delete(realKey);
+            byte op = value[0];
+            if (Value.Operator.DELETE.getValue() == op) {
+              destDb.delete(realKey);
+            } else {
+              destDb.put(realKey, new byte[0]);
+            }
           }
         }
       }
