@@ -1474,6 +1474,8 @@ public class Manager {
 
     Set<String> accountSet = new HashSet<>();
     AtomicInteger shieldedTransCounts = new AtomicInteger(0);
+    long fillTime = 0;
+    long fileSize = 0;
     while (pendingTransactions.size() > 0 || rePushTransactions.size() > 0) {
       boolean fromPending = false;
       TransactionCapsule trx;
@@ -1509,7 +1511,10 @@ public class Manager {
                 fromPending, pendingTransactions.size(), rePushTransactions.size());
         continue;
       }
-      if (System.currentTimeMillis() > timeout) {
+      long currentTimeMillis = System.currentTimeMillis();
+      if (currentTimeMillis > timeout) {
+        fillTime = currentTimeMillis - timeout;
+        fileSize = blockCapsule.getInstance().getSerializedSize() + trx.getSerializedSize() + 3;
         logger.warn("Processing transaction time exceeds the producing time {}.",
             System.currentTimeMillis());
         break;
@@ -1560,9 +1565,9 @@ public class Manager {
     session.reset();
 
     logger.info("Generate block {} success, trxs: {}, pendingCount: {}, rePushCount: {},"
-            + " postponedCount: {}.",
+            + " postponedCount: {}, fill time: {}, fill size: {} MB. ",
         blockCapsule.getNum(), blockCapsule.getTransactions().size(),
-        pendingTransactions.size(), rePushTransactions.size(), postponedTrxCount);
+        pendingTransactions.size(), rePushTransactions.size(), postponedTrxCount, fillTime, fileSize / 1000 / 1000);
 
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(miner.getPrivateKey());
