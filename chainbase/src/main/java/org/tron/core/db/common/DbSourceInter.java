@@ -46,4 +46,6 @@ public interface DbSourceInter<V> extends BatchSourceInter<byte[], V>,
 
   void stat();
 
+  Map<WrappedByteArray, byte[]> prefixQuery(byte[] key);
+
 }

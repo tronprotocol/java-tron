@@ -184,7 +184,7 @@ public class NodeHandler {
 
   public void handleNeighbours(NeighborsMessage msg) {
     if (!waitForNeighbors) {
-      logger.warn("Receive neighbors from {} without send find nodes.", node.getHost());
+      logger.warn("Receive neighbors from {} without send find nodes", node.getHost());
       return;
     }
     waitForNeighbors = false;
@@ -231,7 +231,7 @@ public class NodeHandler {
           handleTimedOut();
         }
       } catch (Exception e) {
-        logger.error("Unhandled exception", e);
+        logger.error("Unhandled exception in pong timer schedule", e);
       }
     }, pingTimeout, TimeUnit.MILLISECONDS);
   }

@@ -6,6 +6,7 @@ import static org.tron.core.config.Parameter.ChainConstant.TRANSFER_FEE;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -13,8 +14,10 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.Utils;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -311,6 +314,70 @@ public class FreezeBalanceActuatorTest {
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
+  }
+
+  @Test
+  public void testMultiFreezeDelegatedBalanceForBandwidth() {
+    dbManager.getDynamicPropertiesStore().saveAllowDelegateResource(1);
+    dbManager.getDynamicPropertiesStore().saveAllowDelegateOptimization(1L);
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(10000L);
+    long frozenBalance = 1_000_000_000L;
+    long duration = 3;
+    final int RECEIVE_COUNT = 100;
+    String[] RECEIVE_ADDRESSES = new String[RECEIVE_COUNT + 1];
+
+    DelegatedResourceAccountIndexCapsule ownerIndexCapsule =
+        new DelegatedResourceAccountIndexCapsule(
+            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)));
+    for (int i = 0; i < RECEIVE_COUNT + 1; i++) {
+      ECKey ecKey = new ECKey(Utils.getRandom());
+      RECEIVE_ADDRESSES[i] = ByteArray.toHexString(ecKey.getAddress());
+      if (i != RECEIVE_COUNT) {
+        ownerIndexCapsule.addToAccount(ByteString.copyFrom(ecKey.getAddress()));
+      }
+    }
+    dbManager.getDelegatedResourceAccountIndexStore().put(
+        ByteArray.fromHexString(OWNER_ADDRESS), ownerIndexCapsule);
+    AccountCapsule receiverCapsule =
+        new AccountCapsule(
+            ByteString.copyFromUtf8("receiver"),
+            ByteString.copyFrom(ByteArray.fromHexString(RECEIVE_ADDRESSES[RECEIVE_COUNT])),
+            AccountType.Normal,
+            initBalance);
+    dbManager.getAccountStore().put(receiverCapsule.getAddress().toByteArray(), receiverCapsule);
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    FreezeBalanceActuator actuator = new FreezeBalanceActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getDelegatedContractForBandwidth(
+            OWNER_ADDRESS, RECEIVE_ADDRESSES[RECEIVE_COUNT], frozenBalance, duration));
+    try {
+      ownerIndexCapsule = dbManager
+          .getDelegatedResourceAccountIndexStore().getIndex(ByteArray.fromHexString(OWNER_ADDRESS));
+      List<ByteString> beforeList = ownerIndexCapsule.getToAccountsList();
+      actuator.validate();
+      actuator.execute(ret);
+
+      //check DelegatedResourceAccountIndex convert
+      ownerIndexCapsule = dbManager
+          .getDelegatedResourceAccountIndexStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      Assert.assertNull(ownerIndexCapsule);
+
+      ownerIndexCapsule = dbManager
+          .getDelegatedResourceAccountIndexStore().getIndex(ByteArray.fromHexString(OWNER_ADDRESS));
+      Assert.assertEquals(0, ownerIndexCapsule.getFromAccountsList().size());
+      List<ByteString> tmpList = ownerIndexCapsule.getToAccountsList();
+      Assert.assertEquals(RECEIVE_COUNT + 1, ownerIndexCapsule.getToAccountsList().size());
+      for (int i = 0; i < RECEIVE_COUNT; i++) {
+        Assert.assertEquals(beforeList.get(i), tmpList.get(i));
+      }
+      Assert.assertEquals(RECEIVE_ADDRESSES[RECEIVE_COUNT],
+          ByteArray.toHexString(tmpList.get(RECEIVE_COUNT).toByteArray()));
+    } catch (ContractValidateException | ContractExeException e) {
+      Assert.fail("con not reach here");
+    }
+    dbManager.getDynamicPropertiesStore().saveAllowDelegateOptimization(0L);
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(10000L);
   }
 
   @Test

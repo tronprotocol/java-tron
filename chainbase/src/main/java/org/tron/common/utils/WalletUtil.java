@@ -28,7 +28,8 @@ public class WalletUtil {
       throws PermissionException {
     ByteString operations = permission.getOperations();
     if (operations.size() != 32) {
-      throw new PermissionException("operations size must 32");
+      throw new PermissionException(String.format("operations size must 32, actual: %d",
+          operations.size()));
     }
     int contractType = contract.getTypeValue();
     boolean b = (operations.byteAt(contractType / 8) & (1 << (contractType % 8))) != 0;
@@ -129,6 +130,14 @@ public class WalletUtil {
     byte[] ret = new byte[4];
     System.arraycopy(data, 0, ret, 0, 4);
     return ret;
+  }
+
+  public static Long isLong(String s) {
+    try {
+      return Long.parseLong(s);
+    } catch (NumberFormatException ignored) {
+      return null;
+    }
   }
 
 }

@@ -57,8 +57,10 @@ public class AdvService {
 
   private ConcurrentHashMap<Item, Long> invToSpread = new ConcurrentHashMap<>();
 
+  private long blockCacheTimeout = Args.getInstance().getBlockCacheTimeout();
   private Cache<Item, Long> invToFetchCache = CacheBuilder.newBuilder()
-      .maximumSize(MAX_INV_TO_FETCH_CACHE_SIZE).expireAfterWrite(1, TimeUnit.HOURS)
+      .maximumSize(MAX_INV_TO_FETCH_CACHE_SIZE)
+      .expireAfterWrite(blockCacheTimeout, TimeUnit.MINUTES)
       .recordStats().build();
 
   private Cache<Item, Message> trxCache = CacheBuilder.newBuilder()
@@ -84,7 +86,7 @@ public class AdvService {
       try {
         consumerInvToSpread();
       } catch (Exception exception) {
-        logger.error("Spread thread error. {}", exception.getMessage(), exception);
+        logger.error("Spread thread error", exception);
       }
     }, 100, 30, TimeUnit.MILLISECONDS);
 
@@ -92,7 +94,7 @@ public class AdvService {
       try {
         consumerInvToFetch();
       } catch (Exception exception) {
-        logger.error("Fetch thread error. {}", exception.getMessage(), exception);
+        logger.error("Fetch thread error", exception);
       }
     }, 100, 30, TimeUnit.MILLISECONDS);
   }
@@ -149,7 +151,7 @@ public class AdvService {
             .collect(Collectors.toList());
 
     if (peers.size() == 0) {
-      logger.warn("Broadcast transaction {} failed, no connection.", msg.getMessageId());
+      logger.warn("Broadcast transaction {} failed, no connection", msg.getMessageId());
       return 0;
     }
 
@@ -171,7 +173,7 @@ public class AdvService {
       }
     }
     if (peersCount == 0) {
-      logger.warn("Broadcast transaction {} failed, no peers.", msg.getMessageId());
+      logger.warn("Broadcast transaction {} failed, no peers", msg.getMessageId());
     }
     return peersCount;
   }
@@ -183,7 +185,7 @@ public class AdvService {
     }
 
     if (invToSpread.size() > MAX_SPREAD_SIZE) {
-      logger.warn("Drop message, type: {}, ID: {}.", msg.getType(), msg.getMessageId());
+      logger.warn("Drop message, type: {}, ID: {}", msg.getType(), msg.getMessageId());
       return;
     }
 
@@ -267,7 +269,7 @@ public class AdvService {
       }
       invToFetch.forEach((item, time) -> {
         if (time < now - MSG_CACHE_DURATION_IN_BLOCKS * BLOCK_PRODUCED_INTERVAL) {
-          logger.info("This obj is too late to fetch, type: {} hash: {}.", item.getType(),
+          logger.info("This obj is too late to fetch, type: {} hash: {}", item.getType(),
                   item.getHash());
           invToFetch.remove(item);
           invToFetchCache.invalidate(item);
@@ -333,13 +335,19 @@ public class AdvService {
     }
 
     public void add(Item id, PeerConnection peer) {
-      if (send.containsKey(peer) && !send.get(peer).containsKey(id.getType())) {
-        send.get(peer).put(id.getType(), new LinkedList<>());
-      } else if (!send.containsKey(peer)) {
-        send.put(peer, new HashMap<>());
-        send.get(peer).put(id.getType(), new LinkedList<>());
+      HashMap<InventoryType, LinkedList<Sha256Hash>> map = send.get(peer);
+      if (map == null) {
+        map = new HashMap<>();
+        send.put(peer, map);
       }
-      send.get(peer).get(id.getType()).offer(id.getHash());
+
+      LinkedList<Sha256Hash> list = map.get(id.getType());
+      if (list == null) {
+        list = new LinkedList<>();
+        map.put(id.getType(), list);
+      }
+
+      list.offer(id.getHash());
     }
 
     public int getSize(PeerConnection peer) {

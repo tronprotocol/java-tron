@@ -23,6 +23,7 @@ import org.tron.common.utils.Pair;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.NetConstants;
+import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.net.TronNetDelegate;
@@ -48,8 +49,9 @@ public class SyncService {
 
   private Map<BlockMessage, PeerConnection> blockJustReceived = new ConcurrentHashMap<>();
 
+  private long blockCacheTimeout = Args.getInstance().getBlockCacheTimeout();
   private Cache<BlockId, Long> requestBlockIds = CacheBuilder.newBuilder().maximumSize(10_000)
-      .expireAfterWrite(1, TimeUnit.HOURS).initialCapacity(10_000)
+      .expireAfterWrite(blockCacheTimeout, TimeUnit.MINUTES).initialCapacity(10_000)
       .recordStats().build();
 
   private ScheduledExecutorService fetchExecutor = Executors.newSingleThreadScheduledExecutor();
@@ -70,7 +72,7 @@ public class SyncService {
           startFetchSyncBlock();
         }
       } catch (Exception e) {
-        logger.error("Fetch sync block error.", e);
+        logger.error("Fetch sync block error", e);
       }
     }, 10, 1, TimeUnit.SECONDS);
 
@@ -81,7 +83,7 @@ public class SyncService {
           handleSyncBlock();
         }
       } catch (Exception e) {
-        logger.error("Handle sync block error.", e);
+        logger.error("Handle sync block error", e);
       }
     }, 10, 1, TimeUnit.SECONDS);
   }
@@ -92,6 +94,10 @@ public class SyncService {
   }
 
   public void startSync(PeerConnection peer) {
+    if (peer.getTronState().equals(TronState.SYNCING)) {
+      logger.warn("Start sync failed, peer {} is in sync", peer.getNode().getHost());
+      return;
+    }
     peer.setTronState(TronState.SYNCING);
     peer.setNeedSyncFromPeer(true);
     peer.getSyncBlockToFetch().clear();
@@ -103,14 +109,14 @@ public class SyncService {
   public void syncNext(PeerConnection peer) {
     try {
       if (peer.getSyncChainRequested() != null) {
-        logger.warn("Peer {} is in sync.", peer.getNode().getHost());
+        logger.warn("Peer {} is in sync", peer.getNode().getHost());
         return;
       }
       LinkedList<BlockId> chainSummary = getBlockChainSummary(peer);
       peer.setSyncChainRequested(new Pair<>(chainSummary, System.currentTimeMillis()));
       peer.sendMessage(new SyncBlockChainMessage(chainSummary));
     } catch (Exception e) {
-      logger.error("Peer {} sync failed, reason: {}", peer.getInetAddress(), e.getMessage());
+      logger.warn("Peer {} sync failed, reason: {}", peer.getInetAddress(), e.getMessage());
       peer.disconnect(ReasonCode.SYNC_FAIL);
     }
   }
@@ -234,8 +240,8 @@ public class SyncService {
 
       isProcessed[0] = false;
 
-      synchronized (tronNetDelegate.getBlockLock()) {
-        blockWaitToProcess.forEach((msg, peerConnection) -> {
+      blockWaitToProcess.forEach((msg, peerConnection) -> {
+        synchronized (tronNetDelegate.getBlockLock()) {
           if (peerConnection.isDisconnect()) {
             blockWaitToProcess.remove(msg);
             invalid(msg.getBlockId());
@@ -254,8 +260,8 @@ public class SyncService {
             isProcessed[0] = true;
             processSyncBlock(msg.getBlockCapsule());
           }
-        });
-      }
+        }
+      });
     }
   }
 
@@ -267,7 +273,7 @@ public class SyncService {
       tronNetDelegate.processBlock(block, true);
       pbftDataSyncHandler.processPBFTCommitData(block);
     } catch (Exception e) {
-      logger.error("Process sync block {} failed.", blockId.getString(), e);
+      logger.error("Process sync block {} failed", blockId.getString(), e);
       flag = false;
     }
     for (PeerConnection peer : tronNetDelegate.getActivePeer()) {

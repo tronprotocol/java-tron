@@ -1,6 +1,7 @@
 package org.tron.core.services;
 
 import static org.tron.core.utils.ProposalUtil.ProposalType.ENERGY_FEE;
+import static org.tron.core.utils.ProposalUtil.ProposalType.TRANSACTION_FEE;
 import static org.tron.core.utils.ProposalUtil.ProposalType.WITNESS_127_PAY_PER_BLOCK;
 
 import java.io.File;
@@ -82,6 +83,26 @@ public class ProposalServiceTest {
     String currentHistory = manager.getDynamicPropertiesStore().getEnergyPriceHistory();
     Assert.assertEquals(preHistory + "," + proposalCapsule.getExpirationTime() + ":" + newPrice,
         currentHistory);
+  }
+
+  @Test
+  public void testUpdateTransactionFee() {
+    String preHistory = manager.getDynamicPropertiesStore().getBandwidthPriceHistory();
+
+    long newPrice = 1500;
+    Proposal proposal =
+        Proposal.newBuilder().putParameters(TRANSACTION_FEE.getCode(), newPrice).build();
+    ProposalCapsule proposalCapsule = new ProposalCapsule(proposal);
+    proposalCapsule.setExpirationTime(1627279200000L);
+    boolean result = ProposalService.process(manager, proposalCapsule);
+    Assert.assertTrue(result);
+
+    long currentPrice = manager.getDynamicPropertiesStore().getTransactionFee();
+    Assert.assertEquals(currentPrice, newPrice);
+
+    String expResult = preHistory + "," + proposalCapsule.getExpirationTime() + ":" + newPrice;
+    String currentHistory = manager.getDynamicPropertiesStore().getBandwidthPriceHistory();
+    Assert.assertEquals(expResult, currentHistory);
   }
 
   @AfterClass
