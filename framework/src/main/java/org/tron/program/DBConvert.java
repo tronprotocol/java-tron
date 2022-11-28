@@ -58,6 +58,7 @@ public class DBConvert implements Callable<Boolean> {
   private final long startTime;
   private static final int CPUS  = Runtime.getRuntime().availableProcessors();
   private static final int BATCH  = 256;
+  private static final String CHECKPOINT_V2_DIR_NAME = "checkpoint";
 
 
   @Override
@@ -110,8 +111,18 @@ public class DBConvert implements Callable<Boolean> {
       return 404;
     }
     List<File> files = Arrays.stream(Objects.requireNonNull(dbDirectory.listFiles()))
-        .filter(File::isDirectory).collect(
-            Collectors.toList());
+        .filter(File::isDirectory)
+        .filter(e -> !CHECKPOINT_V2_DIR_NAME.equals(e.getName()))
+        .collect(Collectors.toList());
+
+    // add checkpoint v2 convert
+    File cpV2Dir = new File(Paths.get(dbSrc, CHECKPOINT_V2_DIR_NAME).toString());
+    List<File> cpList = null;
+    if (cpV2Dir.exists()) {
+      cpList = Arrays.stream(Objects.requireNonNull(cpV2Dir.listFiles()))
+          .filter(File::isDirectory)
+          .collect(Collectors.toList());
+    }
 
     if (files.isEmpty()) {
       logger.info("{} does not contain any database.", dbSrc);
@@ -128,6 +139,12 @@ public class DBConvert implements Callable<Boolean> {
     esDb.allowCoreThreadTimeOut(true);
 
     files.forEach(f -> res.add(esDb.submit(new DBConvert(dbSrc, dbDst, f.getName()))));
+    // convert v2
+    if (cpList != null) {
+      cpList.forEach(f -> res.add(esDb.submit(
+          new DBConvert(dbSrc + "/" + CHECKPOINT_V2_DIR_NAME,
+              dbDst + "/" + CHECKPOINT_V2_DIR_NAME, f.getName()))));
+    }
 
     int fails = res.size();
 

@@ -24,14 +24,11 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db2.RevokingDbWithCacheNewValueTest.TestRevokingTronStore;
-import org.tron.core.db2.SnapshotRootTest.ProtoCapsuleTest;
 import org.tron.core.db2.core.Chainbase;
 import org.tron.core.db2.core.SnapshotManager;
-import org.tron.core.exception.BadItemException;
-import org.tron.core.exception.ItemNotFoundException;
 
 @Slf4j
-public class SnapshotManagerTest {
+public class CheckpointV2Test {
 
   private SnapshotManager revokingDatabase;
   private TronApplicationContext context;
@@ -42,6 +39,8 @@ public class SnapshotManagerTest {
   public void init() {
     Args.setParam(new String[]{"-d", "output_SnapshotManager_test"},
         Constant.TEST_CONF);
+    Args.getInstance().getStorage().setCheckpointVersion(2);
+    Args.getInstance().getStorage().setCheckpointSync(true);
     context = new TronApplicationContext(DefaultConfig.class);
     appT = ApplicationFactory.create(context);
     revokingDatabase = context.getBean(SnapshotManager.class);
@@ -61,54 +60,47 @@ public class SnapshotManagerTest {
   }
 
   @Test
-  public synchronized void testRefresh()
-      throws BadItemException, ItemNotFoundException {
+  public void testCheckpointV2() {
     while (revokingDatabase.size() != 0) {
       revokingDatabase.pop();
     }
 
     revokingDatabase.setMaxFlushCount(0);
     revokingDatabase.setUnChecked(false);
-    revokingDatabase.setMaxSize(5);
+    revokingDatabase.setMaxSize(0);
     List<Chainbase> dbList = revokingDatabase.getDbs();
     Map<String, Chainbase> dbMap = dbList.stream()
         .map(db -> Maps.immutableEntry(db.getDbName(), db))
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    ProtoCapsuleTest protoCapsule = new ProtoCapsuleTest("refresh".getBytes());
-    for (int i = 1; i < 11; i++) {
-      ProtoCapsuleTest testProtoCapsule = new ProtoCapsuleTest(("refresh" + i).getBytes());
+    for (int i = 1; i <= 5; i++) {
+      BlockCapsule blockCapsule = new BlockCapsule(i, Sha256Hash.ZERO_HASH,
+          System.currentTimeMillis(), ByteString.EMPTY);
       try (ISession tmpSession = revokingDatabase.buildSession()) {
-        tronDatabase.put(protoCapsule.getData(), testProtoCapsule);
-        BlockCapsule blockCapsule = new BlockCapsule(i, Sha256Hash.ZERO_HASH,
-            System.currentTimeMillis(), ByteString.EMPTY);
         dbMap.get("block").put(Longs.toByteArray(i), blockCapsule.getData());
         tmpSession.commit();
       }
     }
+    revokingDatabase.buildSession();
 
-    revokingDatabase.flush();
-    Assert.assertEquals(new ProtoCapsuleTest("refresh10".getBytes()),
-        tronDatabase.get(protoCapsule.getData()));
-  }
-
-  @Test
-  public synchronized void testClose() {
-    while (revokingDatabase.size() != 0) {
-      revokingDatabase.pop();
+    Iterator<Map.Entry<byte[], byte[]>> iterator = dbMap.get("block").iterator();
+    Sha256Hash preDbHash = Sha256Hash.ZERO_HASH;
+    while (iterator.hasNext()) {
+      Map.Entry<byte[], byte[]> entry = iterator.next();
+      byte[] hashBytes = Bytes.concat(entry.getKey(), entry.getValue());
+      preDbHash = Sha256Hash.of(true, Bytes.concat(preDbHash.getBytes(), hashBytes));
     }
 
-    revokingDatabase.setMaxFlushCount(0);
-    revokingDatabase.setUnChecked(false);
-    revokingDatabase.setMaxSize(5);
-    ProtoCapsuleTest protoCapsule = new ProtoCapsuleTest("close".getBytes());
-    for (int i = 1; i < 11; i++) {
-      ProtoCapsuleTest testProtoCapsule = new ProtoCapsuleTest(("close" + i).getBytes());
-      try (ISession tmpSession = revokingDatabase.buildSession()) {
-        tronDatabase.put(protoCapsule.getData(), testProtoCapsule);
-      }
-    }
-    Assert.assertEquals(null,
-        tronDatabase.get(protoCapsule.getData()));
+    revokingDatabase.check();
+    revokingDatabase.buildSession();
 
+    Iterator<Map.Entry<byte[], byte[]>> iterator2 = dbMap.get("block").iterator();
+    Sha256Hash afterDbHash = Sha256Hash.ZERO_HASH;
+    while (iterator2.hasNext()) {
+      Map.Entry<byte[], byte[]> entry = iterator2.next();
+      byte[] hashBytes = Bytes.concat(entry.getKey(), entry.getValue());
+      afterDbHash = Sha256Hash.of(true, Bytes.concat(afterDbHash.getBytes(), hashBytes));
+    }
+
+    Assert.assertEquals(0, preDbHash.compareTo(afterDbHash));
   }
 }

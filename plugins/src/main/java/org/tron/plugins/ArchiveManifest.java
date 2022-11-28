@@ -108,6 +108,11 @@ public class ArchiveManifest implements Callable<Boolean> {
       return 404;
     }
 
+    if (!dbDirectory.isDirectory()) {
+      logger.info("{} is not directory.", parameters.databaseDirectory);
+      return 405;
+    }
+
     List<File> files = Arrays.stream(Objects.requireNonNull(dbDirectory.listFiles()))
         .filter(File::isDirectory).collect(
             Collectors.toList());
@@ -192,12 +197,12 @@ public class ArchiveManifest implements Callable<Boolean> {
       logger.info("File {},does not exist, ignored.", srcDbPath.toString());
       return true;
     }
-    if (!checkEngine()) {
-      logger.info("Db {},not leveldb, ignored.", this.name);
-      return true;
-    }
     if (!checkManifest(levelDbFile.toString())) {
       logger.info("Db {},no need, ignored.", levelDbFile.toString());
+      return true;
+    }
+    if (!checkEngine()) {
+      logger.info("Db {},not leveldb, ignored.", this.name);
       return true;
     }
     open();

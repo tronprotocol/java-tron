@@ -63,7 +63,7 @@ public class PeerServer {
       logger.info("TCP listener closed");
 
     } catch (Exception e) {
-      logger.error("Start TCP server failed.", e);
+      logger.error("Start TCP server failed", e);
     } finally {
       workerGroup.shutdownGracefully();
       bossGroup.shutdownGracefully();
@@ -77,7 +77,7 @@ public class PeerServer {
         logger.info("Closing TCP server...");
         channelFuture.channel().close().sync();
       } catch (Exception e) {
-        logger.warn("Closing TCP server failed.", e);
+        logger.error("Closing TCP server failed", e);
       }
     }
   }
