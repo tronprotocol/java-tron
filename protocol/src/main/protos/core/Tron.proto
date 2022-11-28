@@ -490,6 +490,7 @@ message BlockHeader {
 message Block {
   repeated Transaction transactions = 1;
   BlockHeader block_header = 2;
+  bytes stateRoot = 12;
 }
 
 message ChainInventory {

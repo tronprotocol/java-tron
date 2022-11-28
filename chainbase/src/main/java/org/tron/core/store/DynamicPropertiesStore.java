@@ -17,6 +17,8 @@ import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.TronStoreWithRevoking;
+import org.tron.core.db.accountstate.StateType;
+import org.tron.core.db.accountstate.WorldStateCallBackUtils;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 
@@ -145,6 +147,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ACTIVE_DEFAULT_OPERATIONS = "ACTIVE_DEFAULT_OPERATIONS".getBytes();
   //Used only for account state root, once，value is {0,1} allow is 1
   private static final byte[] ALLOW_ACCOUNT_STATE_ROOT = "ALLOW_ACCOUNT_STATE_ROOT".getBytes();
+  private static final byte[] ALLOW_STATE_ROOT = "ALLOW_STATE_ROOT".getBytes();
   private static final byte[] CURRENT_CYCLE_NUMBER = "CURRENT_CYCLE_NUMBER".getBytes();
   private static final byte[] CHANGE_DELEGATION = "CHANGE_DELEGATION".getBytes();
   private static final byte[] ALLOW_PBFT = "ALLOW_PBFT".getBytes();
@@ -195,8 +198,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
 
   @Autowired
-  private DynamicPropertiesStore(@Value("properties") String dbName) {
+  private WorldStateCallBackUtils worldStateCallBackUtils;
+
+  @Autowired
+  private DynamicPropertiesStore(@Value("properties") String dbName, WorldStateCallBackUtils worldStateCallBackUtils) {
     super(dbName);
+    this.worldStateCallBackUtils = worldStateCallBackUtils;
 
     try {
       this.getTotalSignNum();
@@ -727,6 +734,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveAllowAccountStateRoot(CommonParameter.getInstance()
           .getAllowAccountStateRoot());
+    }
+
+    try {
+      this.getAllowStateRoot();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowStateRoot(CommonParameter.getInstance()
+          .getAllowStateRoot());
     }
 
     try {
@@ -2263,6 +2277,23 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return getAllowAccountStateRoot() == 1;
   }
 
+  public void saveAllowStateRoot(long allowStateRoot) {
+    this.put(ALLOW_STATE_ROOT,
+        new BytesCapsule(ByteArray.fromLong(allowStateRoot)));
+  }
+
+  public long getAllowStateRoot() {
+    return Optional.ofNullable(getUnchecked(ALLOW_STATE_ROOT))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_STATE_ROOT"));
+  }
+
+  public boolean allowStateRoot() {
+    return getAllowStateRoot() == 1;
+  }
+
   public long getCurrentCycleNumber() {
     return Optional.ofNullable(getUnchecked(CURRENT_CYCLE_NUMBER))
         .map(BytesCapsule::getData)
@@ -2620,6 +2651,14 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public boolean allowNewReward() {
     return getAllowNewReward() == 1;
+  }
+
+  @Override
+  public void put(byte[] key, BytesCapsule item) {
+    super.put(key, item);
+    // todo: filter the keys that are not the state data
+    worldStateCallBackUtils.callBack(StateType.Properties, key, item);
+    //if (key not contain in state key set) { return; }
   }
 
   private static class DynamicResourceProperties {

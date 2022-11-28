@@ -9,9 +9,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
+import org.tron.core.db.accountstate.StateType;
+import org.tron.core.db.accountstate.WorldStateCallBackUtils;
 
 @Component
 public class DelegatedResourceStore extends TronStoreWithRevoking<DelegatedResourceCapsule> {
+
+  @Autowired
+  private WorldStateCallBackUtils worldStateCallBackUtils;
 
   @Autowired
   public DelegatedResourceStore(@Value("DelegatedResource") String dbName) {
@@ -31,6 +36,12 @@ public class DelegatedResourceStore extends TronStoreWithRevoking<DelegatedResou
         .map(DelegatedResourceCapsule::new)
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
+  }
+
+  @Override
+  public void put(byte[] key, DelegatedResourceCapsule item) {
+    super.put(key, item);
+    worldStateCallBackUtils.callBack(StateType.DelegatedResource, key, item);
   }
 
 }

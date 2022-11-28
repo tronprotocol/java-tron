@@ -12,10 +12,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
+import org.tron.core.db.accountstate.StateType;
+import org.tron.core.db.accountstate.WorldStateCallBackUtils;
 
 @Slf4j(topic = "DB")
 @Component
 public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
+
+  @Autowired
+  private WorldStateCallBackUtils worldStateCallBackUtils;
 
   @Autowired
   protected AssetIssueStore(@Value("asset-issue") String dbName) {
@@ -67,5 +72,11 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
 
   public List<AssetIssueCapsule> getAssetIssuesPaginated(long offset, long limit) {
     return getAssetIssuesPaginated(getAllAssetIssues(), offset, limit);
+  }
+
+  @Override
+  public void put(byte[] key, AssetIssueCapsule item) {
+    super.put(key, item);
+    worldStateCallBackUtils.callBack(StateType.AccountIssue, key, item);
   }
 }

@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 import org.tron.core.capsule.AbiCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
+import org.tron.core.db.accountstate.StateType;
+import org.tron.core.db.accountstate.WorldStateCallBackUtils;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 
 import java.util.Objects;
@@ -16,6 +18,9 @@ import java.util.Objects;
 @Slf4j(topic = "DB")
 @Component
 public class ContractStore extends TronStoreWithRevoking<ContractCapsule> {
+
+  @Autowired
+  private WorldStateCallBackUtils worldStateCallBackUtils;
 
   @Autowired
   private ContractStore(@Value("contract") String dbName) {
@@ -37,6 +42,7 @@ public class ContractStore extends TronStoreWithRevoking<ContractCapsule> {
       item = new ContractCapsule(item.getInstance().toBuilder().clearAbi().build());
     }
     revokingDB.put(key, item.getData());
+    worldStateCallBackUtils.callBack(StateType.Contract, key, item);
   }
 
   /**
