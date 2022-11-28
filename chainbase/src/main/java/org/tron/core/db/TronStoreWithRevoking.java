@@ -35,6 +35,8 @@ import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.SnapshotRoot;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.state.StateType;
+import org.tron.core.state.WorldStateCallBackUtils;
 
 
 @Slf4j(topic = "DB")
@@ -52,6 +54,11 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   private DbStatService dbStatService;
 
   private DB<byte[], byte[]> db;
+
+  private StateType type;
+
+  @Autowired
+  protected WorldStateCallBackUtils worldStateCallBackUtils;
 
   protected TronStoreWithRevoking(String dbName) {
     String dbEngine = CommonParameter.getInstance().getStorage().getDbEngine();
@@ -74,6 +81,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
       throw new RuntimeException(String.format("db engine %s is error", dbEngine));
     }
     this.revokingDB = new Chainbase(new SnapshotRoot(this.db));
+    type = StateType.get(getDbName());
   }
 
   protected org.iq80.leveldb.Options getOptionsByDbNameForLevelDB(String dbName) {
@@ -87,11 +95,12 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   protected TronStoreWithRevoking(DB<byte[], byte[]> db) {
     this.db = db;
     this.revokingDB = new Chainbase(new SnapshotRoot(db));
+    type = StateType.get(getDbName());
   }
 
   @Override
   public String getDbName() {
-    return null;
+    return db.getDbName();
   }
 
   @PostConstruct
@@ -107,11 +116,18 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     }
 
     revokingDB.put(key, item.getData());
+    // todo: optimize, minimize the ops
+    if (worldStateCallBackUtils != null) {
+      worldStateCallBackUtils.callBack(type, key, item);
+    }
   }
 
   @Override
   public void delete(byte[] key) {
     revokingDB.delete(key);
+    if (worldStateCallBackUtils != null) {
+      worldStateCallBackUtils.callBack(type, key, null);
+    }
   }
 
   @Override

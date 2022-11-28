@@ -6,10 +6,10 @@ import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.protobuf.ByteString;
 import java.util.HashMap;
-import java.util.Optional;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.util.Strings;
 import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
@@ -17,16 +17,11 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.Commons;
-import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StorageUtils;
 import org.tron.common.utils.StringUtil;
-import org.tron.core.ChainBaseManager;
-import org.tron.core.capsule.AbiCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.CodeCapsule;
 import org.tron.core.capsule.ContractCapsule;
@@ -36,93 +31,44 @@ import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter;
-import org.tron.core.db.BlockIndexStore;
-import org.tron.core.db.BlockStore;
-import org.tron.core.db.KhaosDatabase;
 import org.tron.core.db.TransactionTrace;
-import org.tron.core.exception.BadItemException;
-import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.exception.StoreException;
-import org.tron.core.store.AbiStore;
+import org.tron.core.state.WorldStateQueryInstance;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
-import org.tron.core.store.CodeStore;
-import org.tron.core.store.ContractStateStore;
-import org.tron.core.store.ContractStore;
-import org.tron.core.store.DelegatedResourceAccountIndexStore;
-import org.tron.core.store.DelegatedResourceStore;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.StorageRowStore;
 import org.tron.core.store.StoreFactory;
-import org.tron.core.store.VotesStore;
-import org.tron.core.store.WitnessStore;
 import org.tron.core.vm.config.VMConfig;
-import org.tron.core.vm.program.Program.IllegalOperationException;
 import org.tron.core.vm.program.Storage;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.DelegatedResource;
 import org.tron.protos.Protocol.Votes;
-import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.Common;
-import org.tron.protos.contract.SmartContractOuterClass.ContractState;
+import org.tron.protos.contract.SmartContractOuterClass;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 
 @Slf4j(topic = "Repository")
-public class RepositoryImpl implements Repository {
+public class RepositoryStateImpl implements Repository {
 
   private final long precision = Parameter.ChainConstant.PRECISION;
-  private static final byte[] TOTAL_NET_WEIGHT = "TOTAL_NET_WEIGHT".getBytes();
-  private static final byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
-  private static final byte[] TOTAL_TRON_POWER_WEIGHT = "TOTAL_TRON_POWER_WEIGHT".getBytes();
 
+  private Bytes32 rootHash;
   private StoreFactory storeFactory;
+
   @Getter
-  private DynamicPropertiesStore dynamicPropertiesStore;
-  @Getter
-  private AccountStore accountStore;
-  @Getter
-  private AssetIssueStore assetIssueStore;
-  @Getter
-  private AssetIssueV2Store assetIssueV2Store;
-  @Getter
-  private AbiStore abiStore;
-  @Getter
-  private CodeStore codeStore;
-  @Getter
-  private ContractStore contractStore;
-  @Getter
-  private ContractStateStore contractStateStore;
-  @Getter
-  private StorageRowStore storageRowStore;
-  @Getter
-  private BlockStore blockStore;
-  @Getter
-  private KhaosDatabase khaosDb;
-  @Getter
-  private BlockIndexStore blockIndexStore;
-  @Getter
-  private WitnessStore witnessStore;
-  @Getter
-  private DelegatedResourceStore delegatedResourceStore;
-  @Getter
-  private VotesStore votesStore;
-  @Getter
-  private DelegationStore delegationStore;
-  @Getter
-  private DelegatedResourceAccountIndexStore delegatedResourceAccountIndexStore;
+  private final WorldStateQueryInstance worldStateQueryInstance;
 
   private Repository parent = null;
 
   private final HashMap<Key, Value<Account>> accountCache = new HashMap<>();
   private final HashMap<Key, Value<byte[]>> codeCache = new HashMap<>();
   private final HashMap<Key, Value<SmartContract>> contractCache = new HashMap<>();
-  private final HashMap<Key, Value<ContractState>> contractStateCache
-      = new HashMap<>();
+  private final HashMap<Key, Value<SmartContractOuterClass.ContractState>> contractStateCache
+          = new HashMap<>();
   private final HashMap<Key, Storage> storageCache = new HashMap<>();
 
   private final HashMap<Key, Value<AssetIssueContract>> assetIssueCache = new HashMap<>();
@@ -130,47 +76,31 @@ public class RepositoryImpl implements Repository {
   private final HashMap<Key, Value<DelegatedResource>> delegatedResourceCache = new HashMap<>();
   private final HashMap<Key, Value<Votes>> votesCache = new HashMap<>();
   private final HashMap<Key, Value<byte[]>> delegationCache = new HashMap<>();
-  private final HashMap<Key, Value<DelegatedResourceAccountIndex>> delegatedResourceAccountIndexCache = new HashMap<>();
+  private final HashMap<Key, Value<Protocol.DelegatedResourceAccountIndex>>
+          delegatedResourceAccountIndexCache = new HashMap<>();
 
-  public static void removeLruCache(byte[] address) {
-  }
-
-  public RepositoryImpl(StoreFactory storeFactory, RepositoryImpl repository) {
+  public RepositoryStateImpl(StoreFactory storeFactory, RepositoryStateImpl repository,
+                             Bytes32 rootHash) {
+    this.rootHash = rootHash;
+    this.worldStateQueryInstance = new WorldStateQueryInstance(rootHash,
+            storeFactory.getChainBaseManager());
     init(storeFactory, repository);
   }
 
-  public static RepositoryImpl createRoot(StoreFactory storeFactory) {
-    return new RepositoryImpl(storeFactory, null);
+  public static RepositoryStateImpl createRoot(StoreFactory storeFactory, Bytes32 rootHash) {
+    return new RepositoryStateImpl(storeFactory, null, rootHash);
   }
 
-  protected void init(StoreFactory storeFactory, RepositoryImpl parent) {
+  protected void init(StoreFactory storeFactory, RepositoryStateImpl parent) {
     if (storeFactory != null) {
       this.storeFactory = storeFactory;
-      ChainBaseManager manager = storeFactory.getChainBaseManager();
-      dynamicPropertiesStore = manager.getDynamicPropertiesStore();
-      accountStore = manager.getAccountStore();
-      abiStore = manager.getAbiStore();
-      codeStore = manager.getCodeStore();
-      contractStore = manager.getContractStore();
-      contractStateStore = manager.getContractStateStore();
-      assetIssueStore = manager.getAssetIssueStore();
-      assetIssueV2Store = manager.getAssetIssueV2Store();
-      storageRowStore = manager.getStorageRowStore();
-      blockStore = manager.getBlockStore();
-      khaosDb = manager.getKhaosDb();
-      blockIndexStore = manager.getBlockIndexStore();
-      witnessStore = manager.getWitnessStore();
-      delegatedResourceStore = manager.getDelegatedResourceStore();
-      votesStore = manager.getVotesStore();
-      delegationStore = manager.getDelegationStore();
-      delegatedResourceAccountIndexStore = manager.getDelegatedResourceAccountIndexStore();
     }
     this.parent = parent;
   }
 
   @Override
   public Repository newRepositoryChild() {
-    return new RepositoryImpl(storeFactory, this);
+    return new RepositoryStateImpl(storeFactory, this, this.rootHash);
   }
 
   @Override
@@ -182,7 +112,6 @@ public class RepositoryImpl implements Repository {
     long energyLimit = calculateGlobalEnergyLimit(accountCapsule);
 
     long windowSize = accountCapsule.getWindowSize(Common.ResourceCode.ENERGY);
-
     long newEnergyUsage = recover(energyUsage, latestConsumeTime, now, windowSize);
 
     return max(energyLimit - newEnergyUsage, 0); // us
@@ -199,6 +128,7 @@ public class RepositoryImpl implements Repository {
     return recover(energyUsage, latestConsumeTime, now, accountWindowSize);
   }
 
+  @Override
   public Pair<Long, Long> getAccountEnergyUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule) {
     long now = getHeadSlot();
 
@@ -222,6 +152,7 @@ public class RepositoryImpl implements Repository {
     return Pair.of(balance, restoreSlots * BLOCK_PRODUCED_INTERVAL / 1_000);
   }
 
+  @Override
   public Pair<Long, Long> getAccountNetUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule) {
     long now = getHeadSlot();
 
@@ -257,14 +188,32 @@ public class RepositoryImpl implements Repository {
     if (this.parent != null) {
       assetIssueCapsule = parent.getAssetIssue(tokenIdWithoutLeadingZero);
     } else {
-      assetIssueCapsule = Commons
-          .getAssetIssueStoreFinal(dynamicPropertiesStore, assetIssueStore, assetIssueV2Store)
-          .get(tokenIdWithoutLeadingZero);
+      assetIssueCapsule = worldStateQueryInstance.getAssetIssue(tokenIdWithoutLeadingZero);
     }
     if (assetIssueCapsule != null) {
       assetIssueCache.put(key, Value.create(assetIssueCapsule));
     }
     return assetIssueCapsule;
+  }
+
+  @Override
+  public AssetIssueV2Store getAssetIssueV2Store() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public AssetIssueStore getAssetIssueStore() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public DynamicPropertiesStore getDynamicPropertiesStore() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public DelegationStore getDelegationStore() {
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -277,7 +226,7 @@ public class RepositoryImpl implements Repository {
 
   @Override
   public AccountCapsule createAccount(byte[] address, String accountName,
-      Protocol.AccountType type) {
+                                      Protocol.AccountType type) {
     Key key = new Key(address);
     AccountCapsule account = new AccountCapsule(ByteString.copyFrom(address),
         ByteString.copyFromUtf8(accountName),
@@ -297,7 +246,7 @@ public class RepositoryImpl implements Repository {
     if (parent != null) {
       accountCapsule = parent.getAccount(address);
     } else {
-      accountCapsule = getAccountStore().get(address);
+      accountCapsule = worldStateQueryInstance.getAccount(address);
     }
 
     if (accountCapsule != null) {
@@ -318,8 +267,8 @@ public class RepositoryImpl implements Repository {
       bytesCapsule = parent.getDynamicProperty(word);
     } else {
       try {
-        bytesCapsule = getDynamicPropertiesStore().get(word);
-      } catch (BadItemException | ItemNotFoundException e) {
+        bytesCapsule = worldStateQueryInstance.getDynamicProperty(word);
+      } catch (IllegalArgumentException e) {
         logger.warn("Not found dynamic property:" + Strings.fromUTF8ByteArray(word));
         bytesCapsule = null;
       }
@@ -342,7 +291,7 @@ public class RepositoryImpl implements Repository {
     if (parent != null) {
       delegatedResourceCapsule = parent.getDelegatedResource(key);
     } else {
-      delegatedResourceCapsule = getDelegatedResourceStore().get(key);
+      delegatedResourceCapsule = worldStateQueryInstance.getDelegatedResource(key);
     }
 
     if (delegatedResourceCapsule != null) {
@@ -362,7 +311,7 @@ public class RepositoryImpl implements Repository {
     if (parent != null) {
       votesCapsule = parent.getVotes(address);
     } else {
-      votesCapsule = getVotesStore().get(address);
+      votesCapsule = worldStateQueryInstance.getVotes(address);
     }
 
     if (votesCapsule != null) {
@@ -373,7 +322,7 @@ public class RepositoryImpl implements Repository {
 
   @Override
   public WitnessCapsule getWitness(byte[] address) {
-    return witnessStore.get(address);
+    return worldStateQueryInstance.getWitness(address);
   }
 
   @Override
@@ -412,7 +361,7 @@ public class RepositoryImpl implements Repository {
     if (parent != null) {
       bytesCapsule = parent.getDelegation(key);
     } else {
-      bytesCapsule = getDelegationStore().get(key.getData());
+      bytesCapsule = worldStateQueryInstance.getDelegation(key.getData());
     }
     if (bytesCapsule != null) {
       delegationCache.put(key, Value.create(bytesCapsule.getData()));
@@ -425,19 +374,20 @@ public class RepositoryImpl implements Repository {
     Key cacheKey = new Key(key);
     if (delegatedResourceAccountIndexCache.containsKey(cacheKey)) {
       return new DelegatedResourceAccountIndexCapsule(
-          delegatedResourceAccountIndexCache.get(cacheKey).getValue());
+              delegatedResourceAccountIndexCache.get(cacheKey).getValue());
     }
 
     DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule;
     if (parent != null) {
       delegatedResourceAccountIndexCapsule = parent.getDelegatedResourceAccountIndex(key);
     } else {
-      delegatedResourceAccountIndexCapsule = getDelegatedResourceAccountIndexStore().get(key);
+      delegatedResourceAccountIndexCapsule = worldStateQueryInstance
+              .getDelegatedResourceAccountIndex(key);
     }
 
     if (delegatedResourceAccountIndexCapsule != null) {
       delegatedResourceAccountIndexCache.put(
-          cacheKey, Value.create(delegatedResourceAccountIndexCapsule));
+              cacheKey, Value.create(delegatedResourceAccountIndexCapsule));
     }
     return delegatedResourceAccountIndexCapsule;
   }
@@ -445,9 +395,8 @@ public class RepositoryImpl implements Repository {
 
   @Override
   public void deleteContract(byte[] address) {
-    getCodeStore().delete(address);
-    getAccountStore().delete(address);
-    getContractStore().delete(address);
+    throw new UnsupportedOperationException();
+
   }
 
   @Override
@@ -467,7 +416,7 @@ public class RepositoryImpl implements Repository {
     if (parent != null) {
       contractCapsule = parent.getContract(address);
     } else {
-      contractCapsule = getContractStore().get(address);
+      contractCapsule = worldStateQueryInstance.getContract(address);
     }
 
     if (contractCapsule != null) {
@@ -487,7 +436,7 @@ public class RepositoryImpl implements Repository {
     if (parent != null) {
       contractStateCapsule = parent.getContractState(address);
     } else {
-      contractStateCapsule = getContractStateStore().get(address);
+      contractStateCapsule = worldStateQueryInstance.getContractState(address);
     }
 
     if (contractStateCapsule != null) {
@@ -505,7 +454,7 @@ public class RepositoryImpl implements Repository {
   @Override
   public void updateContractState(byte[] address, ContractStateCapsule contractStateCapsule) {
     contractStateCache.put(Key.create(address),
-        Value.create(contractStateCapsule, Type.DIRTY));
+            Value.create(contractStateCapsule, Type.DIRTY));
   }
 
   @Override
@@ -522,7 +471,7 @@ public class RepositoryImpl implements Repository {
 
   @Override
   public void updateDelegatedResource(byte[] word,
-      DelegatedResourceCapsule delegatedResourceCapsule) {
+                                      DelegatedResourceCapsule delegatedResourceCapsule) {
     delegatedResourceCache.put(Key.create(word),
         Value.create(delegatedResourceCapsule, Type.DIRTY));
   }
@@ -559,10 +508,10 @@ public class RepositoryImpl implements Repository {
   }
 
   @Override
-  public void updateDelegatedResourceAccountIndex(
-      byte[] word, DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule) {
+  public void updateDelegatedResourceAccountIndex(byte[] word,
+                 DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule) {
     delegatedResourceAccountIndexCache.put(
-        Key.create(word), Value.create(delegatedResourceAccountIndexCapsule, Type.DIRTY));
+            Key.create(word), Value.create(delegatedResourceAccountIndexCapsule, Type.DIRTY));
   }
 
   @Override
@@ -588,11 +537,8 @@ public class RepositoryImpl implements Repository {
     if (parent != null) {
       code = parent.getCode(address);
     } else {
-      if (null == getCodeStore().get(address)) {
-        code = null;
-      } else {
-        code = getCodeStore().get(address).getData();
-      }
+      CodeCapsule c = worldStateQueryInstance.getCode(address);
+      code = null == c ? null : c.getData();
     }
     if (code != null) {
       codeCache.put(key, Value.create(code));
@@ -646,7 +592,7 @@ public class RepositoryImpl implements Repository {
         storage = parentStorage;
       }
     } else {
-      storage = new Storage(address, getStorageRowStore());
+      storage = new Storage(address, worldStateQueryInstance);
     }
     ContractCapsule contract = getContract(address);
     if (contract != null) {
@@ -684,7 +630,7 @@ public class RepositoryImpl implements Repository {
     accountCapsule.setBalance(Math.addExact(balance, value));
     Key key = Key.create(address);
     accountCache.put(key, Value.create(accountCapsule,
-         accountCache.get(key).getType().addType(Type.DIRTY)));
+        accountCache.get(key).getType().addType(Type.DIRTY)));
     return accountCapsule.getBalance();
   }
 
@@ -794,7 +740,7 @@ public class RepositoryImpl implements Repository {
     }
     Key key = Key.create(address);
     accountCache.put(key, Value.create(accountCapsule,
-         accountCache.get(key).getType().addType(Type.DIRTY)));
+        accountCache.get(key).getType().addType(Type.DIRTY)));
     return accountCapsule.getAssetV2(new String(tokenIdWithoutLeadingZero));
   }
 
@@ -815,16 +761,7 @@ public class RepositoryImpl implements Repository {
 
   @Override
   public BlockCapsule getBlockByNum(long num) {
-    try {
-      Sha256Hash hash = getBlockIdByNum(num);
-      BlockCapsule block = this.khaosDb.getBlock(hash);
-      if (block == null) {
-        block = blockStore.get(hash.getBytes());
-      }
-      return block;
-    } catch (StoreException e) {
-      throw new IllegalOperationException("cannot find block num");
-    }
+    throw new UnsupportedOperationException();
   }
 
   // new recover method, use personal window size.
@@ -858,28 +795,31 @@ public class RepositoryImpl implements Repository {
     return usage * windowSize / precision;
   }
 
+  @Override
   public long calculateGlobalEnergyLimit(AccountCapsule accountCapsule) {
     long frozeBalance = accountCapsule.getAllFrozenBalanceForEnergy();
     if (frozeBalance < 1_000_000L) {
       return 0;
     }
     long energyWeight = frozeBalance / 1_000_000L;
-    long totalEnergyLimit = getDynamicPropertiesStore().getTotalEnergyCurrentLimit();
-    long totalEnergyWeight = getDynamicPropertiesStore().getTotalEnergyWeight();
+    long totalEnergyLimit = getWorldStateQueryInstance().getTotalEnergyCurrentLimit();
+    long totalEnergyWeight = getWorldStateQueryInstance().getTotalEnergyWeight();
 
     assert totalEnergyWeight > 0;
 
     return (long) (energyWeight * ((double) totalEnergyLimit / totalEnergyWeight));
   }
 
+  @Override
   public long getHeadSlot() {
-    return getSlotByTimestampMs(getDynamicPropertiesStore().getLatestBlockHeaderTimestamp());
+    return getSlotByTimestampMs(getWorldStateQueryInstance().getLatestBlockHeaderTimestamp());
   }
 
+  @Override
   public long getSlotByTimestampMs(long timestamp) {
     return (timestamp - Long.parseLong(CommonParameter.getInstance()
-        .getGenesisBlock().getTimestamp()))
-        / BLOCK_PRODUCED_INTERVAL;
+            .getGenesisBlock().getTimestamp()))
+            / BLOCK_PRODUCED_INTERVAL;
   }
 
   private void commitAccountCache(Repository deposit) {
@@ -888,7 +828,7 @@ public class RepositoryImpl implements Repository {
         if (deposit != null) {
           deposit.putAccount(key, value);
         } else {
-          getAccountStore().put(key.getData(), new AccountCapsule(value.getValue()));
+          throw new UnsupportedOperationException();
         }
       }
     });
@@ -900,7 +840,7 @@ public class RepositoryImpl implements Repository {
         if (deposit != null) {
           deposit.putCode(key, value);
         } else {
-          getCodeStore().put(key.getData(), new CodeCapsule(value.getValue()));
+          throw new UnsupportedOperationException();
         }
       }
     }));
@@ -912,11 +852,7 @@ public class RepositoryImpl implements Repository {
         if (deposit != null) {
           deposit.putContract(key, value);
         } else {
-          ContractCapsule contractCapsule = new ContractCapsule(value.getValue());
-          if (!abiStore.has(key.getData())) {
-            abiStore.put(key.getData(), new AbiCapsule(contractCapsule));
-          }
-          getContractStore().put(key.getData(), contractCapsule);
+          throw new UnsupportedOperationException();
         }
       }
     }));
@@ -928,8 +864,7 @@ public class RepositoryImpl implements Repository {
         if (deposit != null) {
           deposit.putContractState(key, value);
         } else {
-          ContractStateCapsule contractStateCapsule = new ContractStateCapsule(value.getValue());
-          getContractStateStore().put(key.getData(), contractStateCapsule);
+         throw new UnsupportedOperationException();
         }
       }
     }));
@@ -941,8 +876,7 @@ public class RepositoryImpl implements Repository {
         // write to parent cache
         deposit.putStorage(address, storage);
       } else {
-        // persistence
-        storage.commit();
+        throw new UnsupportedOperationException();
       }
     });
 
@@ -954,7 +888,7 @@ public class RepositoryImpl implements Repository {
         if (deposit != null) {
           deposit.putDynamicProperty(key, value);
         } else {
-          getDynamicPropertiesStore().put(key.getData(), new BytesCapsule(value.getValue()));
+          throw new UnsupportedOperationException();
         }
       }
     }));
@@ -966,7 +900,7 @@ public class RepositoryImpl implements Repository {
         if (deposit != null) {
           deposit.putDelegatedResource(key, value);
         } else {
-          getDelegatedResourceStore().put(key.getData(), new DelegatedResourceCapsule(value.getValue()));
+          throw new UnsupportedOperationException();
         }
       }
     }));
@@ -978,7 +912,7 @@ public class RepositoryImpl implements Repository {
         if (deposit != null) {
           deposit.putVotes(key, value);
         } else {
-          getVotesStore().put(key.getData(), new VotesCapsule(value.getValue()));
+          throw new UnsupportedOperationException();
         }
       }
     }));
@@ -990,7 +924,7 @@ public class RepositoryImpl implements Repository {
         if (deposit != null) {
           deposit.putDelegation(key, value);
         } else {
-          getDelegationStore().put(key.getData(), new BytesCapsule(value.getValue()));
+          throw new UnsupportedOperationException();
         }
       }
     });
@@ -1002,24 +936,13 @@ public class RepositoryImpl implements Repository {
         if (deposit != null) {
           deposit.putDelegatedResourceAccountIndex(key, value);
         } else {
-          if (ByteUtil.isNullOrZeroArray(value.getValue().toByteArray())) {
-            getDelegatedResourceAccountIndexStore().delete(key.getData());
-          } else {
-            getDelegatedResourceAccountIndexStore().put(key.getData(),
-                new DelegatedResourceAccountIndexCapsule(value.getValue()));
-          }
+          throw new UnsupportedOperationException();
         }
       }
     }));
   }
 
-  /**
-   * Get the block id from the number.
-   */
-  private BlockId getBlockIdByNum(final long num) throws ItemNotFoundException {
-    return this.blockIndexStore.get(num);
-  }
-
+  // todo: check whether replace getDynamicPropertiesStore to worldStateQuery
   @Override
   public AccountCapsule createNormalAccount(byte[] address) {
     boolean withDefaultPermission =
@@ -1058,47 +981,35 @@ public class RepositoryImpl implements Repository {
 
   @Override
   public void saveTotalNetWeight(long totalNetWeight) {
-    updateDynamicProperty(TOTAL_NET_WEIGHT,
+    updateDynamicProperty(DynamicPropertiesStore.DynamicResourceProperties.TOTAL_NET_WEIGHT,
         new BytesCapsule(ByteArray.fromLong(totalNetWeight)));
   }
 
   @Override
   public void saveTotalEnergyWeight(long totalEnergyWeight) {
-    updateDynamicProperty(TOTAL_ENERGY_WEIGHT,
+    updateDynamicProperty(DynamicPropertiesStore.DynamicResourceProperties.TOTAL_ENERGY_WEIGHT,
         new BytesCapsule(ByteArray.fromLong(totalEnergyWeight)));
   }
 
   @Override
   public void saveTotalTronPowerWeight(long totalTronPowerWeight) {
-    updateDynamicProperty(TOTAL_TRON_POWER_WEIGHT,
-        new BytesCapsule(ByteArray.fromLong(totalTronPowerWeight)));
+    updateDynamicProperty(DynamicPropertiesStore.DynamicResourceProperties.TOTAL_TRON_POWER_WEIGHT,
+            new BytesCapsule(ByteArray.fromLong(totalTronPowerWeight)));
   }
 
   @Override
   public long getTotalNetWeight() {
-    return Optional.ofNullable(getDynamicProperty(TOTAL_NET_WEIGHT))
-        .map(BytesCapsule::getData)
-        .map(ByteArray::toLong)
-        .orElseThrow(
-            () -> new IllegalArgumentException("not found TOTAL_NET_WEIGHT"));
+    return worldStateQueryInstance.getTotalNetWeight();
   }
 
   @Override
   public long getTotalEnergyWeight() {
-    return Optional.ofNullable(getDynamicProperty(TOTAL_ENERGY_WEIGHT))
-        .map(BytesCapsule::getData)
-        .map(ByteArray::toLong)
-        .orElseThrow(
-            () -> new IllegalArgumentException("not found TOTAL_ENERGY_WEIGHT"));
+    return worldStateQueryInstance.getTotalEnergyWeight();
   }
 
   @Override
   public long getTotalTronPowerWeight() {
-    return Optional.ofNullable(getDynamicProperty(TOTAL_TRON_POWER_WEIGHT))
-        .map(BytesCapsule::getData)
-        .map(ByteArray::toLong)
-        .orElseThrow(
-            () -> new IllegalArgumentException("not found TOTAL_TRON_POWER_WEIGHT"));
+    return worldStateQueryInstance.getTotalTronPowerWeight();
   }
 
 }

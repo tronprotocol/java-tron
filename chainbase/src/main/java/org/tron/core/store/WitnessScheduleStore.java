@@ -71,4 +71,5 @@ public class WitnessScheduleStore extends TronStoreWithRevoking<BytesCapsule> {
   public List<ByteString> getCurrentShuffledWitnesses() {
     return getData(CURRENT_SHUFFLED_WITNESSES);
   }
+
 }

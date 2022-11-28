@@ -12,7 +12,7 @@ import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.db.accountstate.AccountStateEntity;
 import org.tron.core.db.accountstate.TrieService;
 import org.tron.core.db2.common.DB;
-import org.tron.core.trie.TrieImpl;
+import org.tron.core.state.trie.TrieImpl;
 
 @Slf4j(topic = "AccountState")
 @Component
@@ -59,11 +59,6 @@ public class AccountStateStoreTrie extends TronStoreWithRevoking<BytesCapsule> i
   @Override
   public BytesCapsule get(byte[] key) {
     return super.getUnchecked(key);
-  }
-
-  @Override
-  public void put(byte[] key, BytesCapsule item) {
-    super.put(key, item);
   }
 
   @Override

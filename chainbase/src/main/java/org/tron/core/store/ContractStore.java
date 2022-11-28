@@ -2,14 +2,11 @@ package org.tron.core.store;
 
 import com.google.common.collect.Streams;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.tron.core.capsule.AbiCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 
 import java.util.Objects;
 
@@ -36,7 +33,7 @@ public class ContractStore extends TronStoreWithRevoking<ContractCapsule> {
     if (item.getInstance().hasAbi()) {
       item = new ContractCapsule(item.getInstance().toBuilder().clearAbi().build());
     }
-    revokingDB.put(key, item.getData());
+    super.put(key, item);
   }
 
   /**

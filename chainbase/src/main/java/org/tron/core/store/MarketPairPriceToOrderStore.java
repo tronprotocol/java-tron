@@ -91,4 +91,5 @@ public class MarketPairPriceToOrderStore extends TronStoreWithRevoking<MarketOrd
       return ByteUtil.equals(keysNext.get(0), key) ? keysNext.get(1) : keysNext.get(0);
     }
   }
+
 }

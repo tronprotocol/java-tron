@@ -22,4 +22,5 @@ public class StorageRowStore extends TronStoreWithRevoking<StorageRowCapsule> {
     row.setRowKey(key);
     return row;
   }
+
 }

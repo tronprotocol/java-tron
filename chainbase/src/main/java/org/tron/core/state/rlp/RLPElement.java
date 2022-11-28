@@ -1,4 +1,4 @@
-package org.tron.core.capsule.utils;
+package org.tron.core.state.rlp;
 
 import java.io.Serializable;
 

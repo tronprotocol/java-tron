@@ -20,4 +20,5 @@ public class VotesStore extends TronStoreWithRevoking<VotesCapsule> {
     byte[] value = revokingDB.getUnchecked(key);
     return ArrayUtils.isEmpty(value) ? null : new VotesCapsule(value);
   }
+
 }

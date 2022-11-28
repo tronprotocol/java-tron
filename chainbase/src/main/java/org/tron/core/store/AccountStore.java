@@ -113,7 +113,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   }
 
 
-  public byte[] getBlackholeAddress() {
+  public static byte[] getBlackholeAddress() {
     return assertsAddress.get("Blackhole");
   }
 

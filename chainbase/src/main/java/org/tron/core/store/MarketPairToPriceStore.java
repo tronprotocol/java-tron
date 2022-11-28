@@ -69,4 +69,5 @@ public class MarketPairToPriceStore extends TronStoreWithRevoking<BytesCapsule> 
 
     setPriceNum(pairKey, number);
   }
+
 }

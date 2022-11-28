@@ -197,7 +197,7 @@ public class LiteFullNodeTool {
     if (!destPath.mkdirs()) {
       throw new RuntimeException(String.format("destDir: %s create failed, please check", destDir));
     }
-    Util.copyDatabases(Paths.get(sourceDir), Paths.get(destDir), dbs);
+    FileUtil.copyDatabases(Paths.get(sourceDir), Paths.get(destDir), dbs);
   }
 
   private void mergeCheckpoint(String sourceDir, String destDir, List<String> destDbs) {
@@ -405,13 +405,13 @@ public class LiteFullNodeTool {
     if (!FileUtil.createDirIfNotExists(bakDir)) {
       throw new RuntimeException(String.format("create bak dir %s failed", bakDir));
     }
-    Util.copyDatabases(Paths.get(databaseDir), Paths.get(bakDir), archiveDbs);
+    FileUtil.copyDatabases(Paths.get(databaseDir), Paths.get(bakDir), archiveDbs);
     archiveDbs.forEach(db -> FileUtil.deleteDir(new File(databaseDir, db)));
   }
 
   private void copyHistory2Database(String historyDir, String databaseDir) throws IOException {
     logger.info("Begin to copy history to database.");
-    Util.copyDatabases(Paths.get(historyDir), Paths.get(databaseDir), archiveDbs);
+    FileUtil.copyDatabases(Paths.get(historyDir), Paths.get(databaseDir), archiveDbs);
   }
 
   private void trimHistory(String databaseDir, BlockNumInfo blockNumInfo)
