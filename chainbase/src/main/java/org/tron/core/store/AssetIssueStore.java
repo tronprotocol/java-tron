@@ -68,4 +68,5 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
   public List<AssetIssueCapsule> getAssetIssuesPaginated(long offset, long limit) {
     return getAssetIssuesPaginated(getAllAssetIssues(), offset, limit);
   }
+
 }

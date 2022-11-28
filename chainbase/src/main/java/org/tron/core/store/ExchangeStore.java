@@ -36,4 +36,5 @@ public class ExchangeStore extends TronStoreWithRevoking<ExchangeCapsule> {
                 : -1)
         .collect(Collectors.toList());
   }
+
 }

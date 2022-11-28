@@ -29,4 +29,5 @@ public class CodeStore extends TronStoreWithRevoking<CodeCapsule> {
   public byte[] findCodeByHash(byte[] hash) {
     return revokingDB.getUnchecked(hash);
   }
+
 }

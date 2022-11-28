@@ -37,6 +37,8 @@ import org.tron.core.db2.core.RevokingDBWithCachingOldValue;
 import org.tron.core.db2.core.SnapshotRoot;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.state.StateType;
+import org.tron.core.state.WorldStateCallBackUtils;
 
 
 @Slf4j(topic = "DB")
@@ -54,6 +56,11 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   private DbStatService dbStatService;
 
   private DB<byte[], byte[]> db;
+
+  private StateType type;
+
+  @Autowired
+  protected WorldStateCallBackUtils worldStateCallBackUtils;
 
   protected TronStoreWithRevoking(String dbName) {
     int dbVersion = CommonParameter.getInstance().getStorage().getDbVersion();
@@ -85,6 +92,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     } else {
       throw new RuntimeException(String.format("db version %d is error", dbVersion));
     }
+    type = StateType.get(getDbName());
   }
 
   protected org.iq80.leveldb.Options getOptionsByDbNameForLevelDB(String dbName) {
@@ -100,6 +108,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     if (dbVersion == 2) {
       this.db = db;
       this.revokingDB = new Chainbase(new SnapshotRoot(db));
+      type = StateType.get(getDbName());
     } else {
       throw new RuntimeException(String.format("db version is only 2, actual: %d", dbVersion));
     }
@@ -120,7 +129,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
 
   @Override
   public String getDbName() {
-    return null;
+    return db.getDbName();
   }
 
   @PostConstruct
@@ -136,6 +145,10 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     }
 
     revokingDB.put(key, item.getData());
+    // todo: optimize, minimize the ops
+    if (worldStateCallBackUtils != null) {
+      worldStateCallBackUtils.callBack(type, key, item);
+    }
   }
 
   @Override

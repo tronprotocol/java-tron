@@ -10,6 +10,8 @@ import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.capsule.StorageRowCapsule;
+import org.tron.core.state.WorldStateQueryInstance;
+import org.tron.core.state.trie.TrieImpl;
 import org.tron.core.store.StorageRowStore;
 
 public class Storage {
@@ -75,6 +77,21 @@ public class Storage {
       return new DataWord(rowCache.get(key).getValue());
     } else {
       StorageRowCapsule row = store.get(compose(key.getData(), addrHash));
+      if (row == null || row.getInstance() == null) {
+        return null;
+      }
+      rowCache.put(key, row);
+      return new DataWord(row.getValue());
+    }
+  }
+
+  // for state query
+  public DataWord getValue(DataWord key, WorldStateQueryInstance worldStateQueryInstance) {
+    if (rowCache.containsKey(key)) {
+      return new DataWord(rowCache.get(key).getValue());
+    } else {
+      byte[] rowKey = compose(key.getData(), addrHash);
+      StorageRowCapsule row = worldStateQueryInstance.getStorageRow(rowKey);
       if (row == null || row.getInstance() == null) {
         return null;
       }

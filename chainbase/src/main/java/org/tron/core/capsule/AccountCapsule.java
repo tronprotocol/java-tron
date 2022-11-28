@@ -17,10 +17,14 @@ package org.tron.core.capsule;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.utils.AssetUtil;
@@ -43,6 +47,9 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
 
   private Account account;
   private boolean flag = false;
+
+  @Getter
+  private Set<String> dirtyAssetSet = Sets.newHashSet();
 
   /**
    * get account from bytes data.
@@ -566,6 +573,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
           .putAsset(nameKey, Math.addExact(currentAmount, amount))
           .putAssetV2(tokenID, Math.addExact(currentAmount, amount))
           .build();
+      dirtyAssetSet.add(tokenID);
     }
     //key is token id
     if (dynamicPropertiesStore.getAllowSameTokenName() == 1) {
@@ -578,6 +586,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       this.account = this.account.toBuilder()
           .putAssetV2(tokenIDStr, Math.addExact(currentAmount, amount))
           .build();
+      dirtyAssetSet.add(tokenIDStr);
     }
     return true;
   }
@@ -610,6 +619,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
                 .putAsset(nameKey, Math.subtractExact(currentAmount, amount))
                 .putAssetV2(tokenID, Math.subtractExact(currentAmount, amount))
                 .build();
+        dirtyAssetSet.add(tokenID);
         return true;
       }
     }
@@ -622,6 +632,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         this.account = this.account.toBuilder()
                 .putAssetV2(tokenID, Math.subtractExact(currentAmount, amount))
                 .build();
+        dirtyAssetSet.add(tokenID);
         return true;
       }
     }
@@ -657,9 +668,11 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       return false;
     }
 
+    String keyStr = ByteArray.toStr(key);
     this.account = this.account.toBuilder()
-        .putAssetV2(ByteArray.toStr(key), value)
+        .putAssetV2(keyStr, value)
         .build();
+    dirtyAssetSet.add(keyStr);
     return true;
   }
 

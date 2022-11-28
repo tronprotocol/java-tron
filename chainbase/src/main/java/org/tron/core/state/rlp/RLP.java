@@ -1,4 +1,4 @@
-package org.tron.core.capsule.utils;
+package org.tron.core.state.rlp;
 
 import static java.util.Arrays.copyOfRange;
 import static org.bouncycastle.util.Arrays.concatenate;

@@ -1,11 +1,11 @@
-package org.tron.core.trie;
+package org.tron.core.state.trie;
 
 import static org.apache.commons.lang3.concurrent.ConcurrentUtils.constantFuture;
 import static org.tron.common.crypto.Hash.EMPTY_TRIE_HASH;
 import static org.tron.common.utils.ByteArray.toHexString;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
-import static org.tron.core.capsule.utils.RLP.EMPTY_ELEMENT_RLP;
-import static org.tron.core.capsule.utils.RLP.encodeList;
+import static org.tron.core.state.rlp.RLP.EMPTY_ELEMENT_RLP;
+import static org.tron.core.state.rlp.RLP.encodeList;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.ArrayList;
@@ -23,8 +23,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.Hash;
 import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.capsule.utils.FastByteComparisons;
-import org.tron.core.capsule.utils.RLP;
+import org.tron.core.state.rlp.FastByteComparisons;
+import org.tron.core.state.rlp.RLP;
 import org.tron.core.db2.common.ConcurrentHashDB;
 import org.tron.core.db2.common.DB;
 
@@ -107,7 +107,7 @@ public class TrieImpl implements Trie<byte[]> {
   }
 
   private void deleteHash(byte[] hash) {
-    cache.remove(hash);
+   // cache.remove(hash);
   }
 
   public byte[] get(byte[] key) {

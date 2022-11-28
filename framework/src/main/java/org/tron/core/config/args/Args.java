@@ -521,6 +521,9 @@ public class Args extends CommonParameter {
     PARAMETER.storage.setDefaultDbOptions(config);
     PARAMETER.storage.setPropertyMapFromConfig(config);
 
+    PARAMETER.storage.setAllowStateRoot(config);
+    PARAMETER.storage.setStateGenesisDirectory(config);
+
     PARAMETER.seedNode = new SeedNode();
     PARAMETER.seedNode.setIpList(Optional.ofNullable(PARAMETER.seedNodes)
         .filter(seedNode -> 0 != seedNode.size())

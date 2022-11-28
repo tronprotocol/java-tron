@@ -129,6 +129,8 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.service.MortgageService;
+import org.tron.core.state.WorldStateCallBack;
+import org.tron.core.state.WorldStateGenesis;
 import org.tron.core.store.AccountAssetStore;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
@@ -213,6 +215,8 @@ public class Manager {
   @Autowired
   private AccountStateCallBack accountStateCallBack;
   @Autowired
+  private WorldStateCallBack worldStateCallBack;
+  @Autowired
   private TrieService trieService;
   private Set<String> ownerAddressSet = new HashSet<>();
   @Getter
@@ -223,6 +227,8 @@ public class Manager {
   @Autowired
   @Getter
   private ChainBaseManager chainBaseManager;
+  @Autowired
+  private WorldStateGenesis worldStateGenesis;
   // transactions cache
   private BlockingQueue<TransactionCapsule> pendingTransactions;
   @Getter
@@ -432,6 +438,10 @@ public class Manager {
     isRunFilterProcessThread = false;
   }
 
+  public void stopStateUpdateThread() {
+    worldStateCallBack.stopUpdateService();
+  }
+
   @PostConstruct
   public void init() {
     ChainBaseManager.init(chainBaseManager);
@@ -440,6 +450,7 @@ public class Manager {
         .initStore(chainBaseManager.getWitnessStore(), chainBaseManager.getDelegationStore(),
             chainBaseManager.getDynamicPropertiesStore(), chainBaseManager.getAccountStore());
     accountStateCallBack.setChainBaseManager(chainBaseManager);
+    worldStateCallBack.setChainBaseManager(chainBaseManager);
     trieService.setChainBaseManager(chainBaseManager);
     revokingStore.disable();
     revokingStore.check();
@@ -505,7 +516,8 @@ public class Manager {
 
     // init liteFullNode
     initLiteNode();
-
+    // init worldState
+    worldStateGenesis.init(chainBaseManager);
     long headNum = chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     logger.info("Current headNum is: {}.", headNum);
     int nodeType = chainBaseManager.getCommonStore().getNodeType();
@@ -570,11 +582,6 @@ public class Manager {
       } else {
         logger.info("Create genesis block.");
         Args.getInstance().setChainId(genesisBlock.getBlockId().toString());
-
-        chainBaseManager.getBlockStore().put(genesisBlock.getBlockId().getBytes(), genesisBlock);
-        chainBaseManager.getBlockIndexStore().put(genesisBlock.getBlockId());
-
-        logger.info(SAVE_BLOCK, genesisBlock);
         // init Dynamic Properties Store
         chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(0);
         chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderHash(
@@ -586,6 +593,13 @@ public class Manager {
         this.khaosDb.start(genesisBlock);
         this.updateRecentBlock(genesisBlock);
         initAccountHistoryBalance();
+        // init genesis state
+        worldStateCallBack.initGenesis(genesisBlock, chainBaseManager.getWorldStateTrieStore());
+
+        chainBaseManager.getBlockStore().put(genesisBlock.getBlockId().getBytes(), genesisBlock);
+        chainBaseManager.getBlockIndexStore().put(genesisBlock.getBlockId());
+
+        logger.info(SAVE_BLOCK, genesisBlock);
       }
     }
   }
@@ -1654,15 +1668,18 @@ public class Manager {
         new TransactionRetCapsule(block);
     try {
       merkleContainer.resetCurrentMerkleTree();
+      worldStateCallBack.preExecute(block, chainBaseManager.getWorldStateTrieStore());
       accountStateCallBack.preExecute(block);
       for (TransactionCapsule transactionCapsule : block.getTransactions()) {
         transactionCapsule.setBlockNum(block.getNum());
         if (block.generatedByMyself) {
           transactionCapsule.setVerified(true);
         }
+        worldStateCallBack.preExeTrans();
         accountStateCallBack.preExeTrans();
         TransactionInfo result = processTransaction(transactionCapsule, block);
         accountStateCallBack.exeTransFinish();
+        worldStateCallBack.exeTransFinish();
         if (Objects.nonNull(result)) {
           transactionRetCapsule.addTransactionInfo(result);
         }
@@ -1705,6 +1722,7 @@ public class Manager {
       chainBaseManager.getSectionBloomStore().write(block.getNum());
       block.setBloom(blockBloom);
     }
+    worldStateCallBack.executePushFinish();
   }
 
   private void payReward(BlockCapsule block) {

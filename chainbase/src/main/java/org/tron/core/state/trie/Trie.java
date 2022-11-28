@@ -1,4 +1,4 @@
-package org.tron.core.trie;
+package org.tron.core.state.trie;
 
 /**
  *

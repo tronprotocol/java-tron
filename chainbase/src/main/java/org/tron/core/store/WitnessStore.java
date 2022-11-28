@@ -35,4 +35,5 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
     byte[] value = revokingDB.getUnchecked(key);
     return ArrayUtils.isEmpty(value) ? null : new WitnessCapsule(value);
   }
+
 }

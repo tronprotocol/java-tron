@@ -10,10 +10,15 @@ import org.springframework.stereotype.Component;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.state.StateType;
+import org.tron.core.state.WorldStateCallBackUtils;
 import org.tron.protos.Protocol.Proposal.State;
 
 @Component
 public class ProposalStore extends TronStoreWithRevoking<ProposalCapsule> {
+
+  @Autowired
+  private WorldStateCallBackUtils worldStateCallBackUtils;
 
   @Autowired
   public ProposalStore(@Value("proposal") String dbName) {
@@ -50,5 +55,11 @@ public class ProposalStore extends TronStoreWithRevoking<ProposalCapsule> {
             (ProposalCapsule a, ProposalCapsule b) -> a.getExpirationTime() > b.getExpirationTime()
                 ? 1 : -1)
         .collect(Collectors.toList());
+  }
+
+  @Override
+  public void put(byte[] key, ProposalCapsule item) {
+    super.put(key, item);
+    worldStateCallBackUtils.callBack(StateType.Proposal, key, item);
   }
 }

@@ -1,4 +1,4 @@
-package org.tron.core.capsule.utils;
+package org.tron.core.state.rlp;
 
 import java.util.ArrayList;
 import org.tron.common.utils.ByteArray;
