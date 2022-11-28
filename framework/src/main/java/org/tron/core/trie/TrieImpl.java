@@ -107,7 +107,7 @@ public class TrieImpl implements Trie<byte[]> {
   }
 
   private void deleteHash(byte[] hash) {
-    cache.remove(hash);
+   // cache.remove(hash);
   }
 
   public byte[] get(byte[] key) {

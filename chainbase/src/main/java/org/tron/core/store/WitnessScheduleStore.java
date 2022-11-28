@@ -11,10 +11,15 @@ import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
+import org.tron.core.db.accountstate.StateType;
+import org.tron.core.db.accountstate.WorldStateCallBackUtils;
 
 @Slf4j(topic = "DB")
 @Component
 public class WitnessScheduleStore extends TronStoreWithRevoking<BytesCapsule> {
+
+  @Autowired
+  private WorldStateCallBackUtils worldStateCallBackUtils;
 
   private static final byte[] ACTIVE_WITNESSES = "active_witnesses".getBytes();
   private static final byte[] CURRENT_SHUFFLED_WITNESSES = "current_shuffled_witnesses".getBytes();
@@ -70,5 +75,11 @@ public class WitnessScheduleStore extends TronStoreWithRevoking<BytesCapsule> {
 
   public List<ByteString> getCurrentShuffledWitnesses() {
     return getData(CURRENT_SHUFFLED_WITNESSES);
+  }
+
+  @Override
+  public void put(byte[] key, BytesCapsule item) {
+    super.put(key, item);
+    worldStateCallBackUtils.callBack(StateType.WitnessSchedule, key, item);
   }
 }

@@ -9,6 +9,8 @@ import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.MarketOrderIdListCapsule;
 import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.db.TronStoreWithRevoking;
+import org.tron.core.db.accountstate.StateType;
+import org.tron.core.db.accountstate.WorldStateCallBackUtils;
 
 /**
  * This store is used to store the first price Key of specific token pair
@@ -17,6 +19,9 @@ import org.tron.core.db.TronStoreWithRevoking;
  * */
 @Component
 public class MarketPairToPriceStore extends TronStoreWithRevoking<BytesCapsule> {
+
+  @Autowired
+  private WorldStateCallBackUtils worldStateCallBackUtils;
 
   @Autowired
   protected MarketPairToPriceStore(@Value("market_pair_to_price") String dbName) {
@@ -68,5 +73,11 @@ public class MarketPairToPriceStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     setPriceNum(pairKey, number);
+  }
+
+  @Override
+  public void put(byte[] key, BytesCapsule item) {
+    super.put(key, item);
+    worldStateCallBackUtils.callBack(StateType.MarketPairToPrice, key, item);
   }
 }
