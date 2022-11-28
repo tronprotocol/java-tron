@@ -73,9 +73,53 @@ public class UsddManager {
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
   }
 
+  @Test(enabled = true, description = "Open experimental check address ")
+  public void test01lock() {
+    String ownerPk1="0eb8e2b7a54e775e0ef8baebf5ff9dd952032788f11c6f3b582aff1b9a2443c5";
+    String ownerPk2="aac82ddc73c7a25b3b5034cd76badac07247c7561ef235ca54f753c32f60f138";
+    String ownerPk3="112cdf38cfcf5af91c8547454e63ce7360e1cf165440d7d28a1e41fc07c633b6";
+    String ownerPk4="021682220665ab1cd97099e3ea29dbcf4b9947f1c3e1afc2a31823fc539219e8";
+    String ownerPk5="cc9ffeeed1708986ab812e1a0f54d70717060b7c0776e1ae78834e672ad5c13e";
+    String ownerPk6="3a486c97ddc991ca795766b50791524249b07567f1a567ee70f79cdf0de79619";
+    String ownerPk7="f8c190440b4adfea1eb4507ca8f749d2cbd02979fdbaca9f537d585b55c479f8";
+    String[] ownerPks = new String[7];
+
+    ownerPks[0] = ownerPk1;
+    ownerPks[1] = ownerPk2;
+    ownerPks[2] = ownerPk3;
+    ownerPks[3] = ownerPk4;
+    ownerPks[4] = ownerPk5;
+    ownerPks[5] = ownerPk6;
+    ownerPks[6] = ownerPk7;
+    for (int i = 0; i < 7; i++) {
+      String txid = "";
+      String param = "9";
+      txid = PublicMethed.triggerContract(PublicMethed.decode58Check(lockContract),
+              "confirmTransaction(uint256)", param, false,
+              0, maxFeeLimit, PublicMethed.getFinalAddress(ownerPks[i]), ownerPks[i], blockingStubFull);
+      Optional<Protocol.TransactionInfo> infoById = null;
+      /*PublicMethed.waitProduceNextBlock(blockingStubFull);
+      infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+      logger.info(infoById.toString());
+      Assert.assertEquals(0, infoById.get().getResultValue());*/
+    }
+
+    /*for (int i = 0; i < 3; i++) {
+      String txid = "";
+      String param = "1";
+      txid = PublicMethed.triggerContract(PublicMethed.decode58Check(lockContract),
+          "revokeConfirmation(uint256)", param, false,
+          0, maxFeeLimit, PublicMethed.getFinalAddress(ownerPks[i]), ownerPks[i], blockingStubFull);
+      Optional<Protocol.TransactionInfo> infoById = null;
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
+      infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+      logger.info(infoById.toString());
+      Assert.assertEquals(0, infoById.get().getResultValue());
+    }*/
+  }
 
   @Test(enabled = true, description = "Open experimental check address ")
-  public void test01Sig() {
+  public void test02Sig() {
     String ownerPk1="0eb8e2b7a54e775e0ef8baebf5ff9dd952032788f11c6f3b582aff1b9a2443c5";
     String ownerPk2="aac82ddc73c7a25b3b5034cd76badac07247c7561ef235ca54f753c32f60f138";
     String ownerPk3="112cdf38cfcf5af91c8547454e63ce7360e1cf165440d7d28a1e41fc07c633b6";
@@ -94,7 +138,7 @@ public class UsddManager {
     ownerPks[6] = ownerPk7;
     for (int i = 1; i < 7; i++) {
       String txid = "";
-      String param = "7";
+      String param = "67";
       txid = PublicMethed.triggerContract(PublicMethed.decode58Check(MultiSigAuthorizer),
           "confirmTransaction(uint256)", param, false,
           0, maxFeeLimit, PublicMethed.getFinalAddress(ownerPks[i]), ownerPks[i], blockingStubFull);
@@ -120,50 +164,24 @@ public class UsddManager {
   }
 
   @Test(enabled = true, description = "Open experimental check address ")
-  public void test02lock() {
-    String ownerPk1="0eb8e2b7a54e775e0ef8baebf5ff9dd952032788f11c6f3b582aff1b9a2443c5";
+  public void test02ProposeSig() {
     String ownerPk2="aac82ddc73c7a25b3b5034cd76badac07247c7561ef235ca54f753c32f60f138";
-    String ownerPk3="112cdf38cfcf5af91c8547454e63ce7360e1cf165440d7d28a1e41fc07c633b6";
-    String ownerPk4="021682220665ab1cd97099e3ea29dbcf4b9947f1c3e1afc2a31823fc539219e8";
-    String ownerPk5="cc9ffeeed1708986ab812e1a0f54d70717060b7c0776e1ae78834e672ad5c13e";
-    String ownerPk6="3a486c97ddc991ca795766b50791524249b07567f1a567ee70f79cdf0de79619";
-    String ownerPk7="f8c190440b4adfea1eb4507ca8f749d2cbd02979fdbaca9f537d585b55c479f8";
     String[] ownerPks = new String[7];
 
-    ownerPks[0] = ownerPk1;
-    ownerPks[1] = ownerPk2;
-    ownerPks[2] = ownerPk3;
-    ownerPks[3] = ownerPk4;
-    ownerPks[4] = ownerPk5;
-    ownerPks[5] = ownerPk6;
-    ownerPks[6] = ownerPk7;
-    for (int i = 0; i < 7; i++) {
+    ownerPks[0] = ownerPk2;
+    for (int i = 1; i < 10; i++) {
       String txid = "";
-      String param = "3";
-      txid = PublicMethed.triggerContract(PublicMethed.decode58Check(lockContract),
-          "confirmTransaction(uint256)", param, false,
-          0, maxFeeLimit, PublicMethed.getFinalAddress(ownerPks[i]), ownerPks[i], blockingStubFull);
-      Optional<Protocol.TransactionInfo> infoById = null;
-      /*PublicMethed.waitProduceNextBlock(blockingStubFull);
-      infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-      logger.info(infoById.toString());
-      Assert.assertEquals(0, infoById.get().getResultValue());*/
+      String param = "\"TKGRE6oiU3rEzasue4MsB6sCXXSTx9BAe3\","+100000;
+      txid = PublicMethed.triggerContract(PublicMethed.decode58Check(MultiSigAuthorizer),
+          "proposeCirculate(address,uint256)", param, false,
+          0, maxFeeLimit, PublicMethed.getFinalAddress(ownerPks[0]), ownerPks[0], blockingStubFull);
+//      Optional<Protocol.TransactionInfo> infoById = null;
+//      PublicMethed.waitProduceNextBlock(blockingStubFull);
+//      infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+//      logger.info(infoById.toString());
+//      Assert.assertEquals(0, infoById.get().getResultValue());
     }
-
-    /*for (int i = 0; i < 3; i++) {
-      String txid = "";
-      String param = "1";
-      txid = PublicMethed.triggerContract(PublicMethed.decode58Check(lockContract),
-          "revokeConfirmation(uint256)", param, false,
-          0, maxFeeLimit, PublicMethed.getFinalAddress(ownerPks[i]), ownerPks[i], blockingStubFull);
-      Optional<Protocol.TransactionInfo> infoById = null;
-      PublicMethed.waitProduceNextBlock(blockingStubFull);
-      infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-      logger.info(infoById.toString());
-      Assert.assertEquals(0, infoById.get().getResultValue());
-    }*/
   }
-
 
   @Test(enabled = true, description = "Open experimental check address ")
   public void test03Raiser() {
@@ -192,7 +210,7 @@ public class UsddManager {
     ownerPks[6] = ownerPk7;
     for (int i = 0; i < 5; i++) {
       String txid = "";
-      String param = "10";
+      String param = "16";
       txid = PublicMethed.triggerContract(PublicMethed.decode58Check(MultiSigFundRaiser),
           "confirmTransaction(uint256)", param, false,
           0, maxFeeLimit, PublicMethed.getFinalAddress(ownerPks[i]), ownerPks[i], blockingStubFull);
@@ -224,7 +242,7 @@ public class UsddManager {
     ownerPks[6] = ownerPk7;
     for (int i = 0; i < 7; i++) {
       String txid = "";
-      String param = "147";
+      String param = "181";
       txid = PublicMethed.triggerContract(PublicMethed.decode58Check(PSMMultiSigWallet),
           "confirmTransaction(uint256)", param, false,
           0, maxFeeLimit, PublicMethed.getFinalAddress(ownerPks[i]), ownerPks[i], blockingStubFull);
