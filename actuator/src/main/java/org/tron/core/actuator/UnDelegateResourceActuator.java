@@ -72,10 +72,10 @@ public class UnDelegateResourceActuator extends AbstractActuator {
           BandwidthProcessor bandwidthProcessor = new BandwidthProcessor(chainBaseManager);
           bandwidthProcessor.updateUsage(receiverCapsule);
 
-          if (receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
+          if (receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth()
               < unDelegateBalance) {
             // A TVM contract suicide, re-create will produce this situation
-            receiverCapsule.setAcquiredDelegatedFrozenBalanceForBandwidth(0);
+            receiverCapsule.setAcquiredDelegatedFrozenV2BalanceForBandwidth(0);
           } else {
             // calculate usage
             long unDelegateMaxUsage = (long) ((double) unDelegateBalance / TRX_PRECISION
@@ -84,7 +84,7 @@ public class UnDelegateResourceActuator extends AbstractActuator {
                 * ((double) (unDelegateBalance) / receiverCapsule.getAllFrozenBalanceForBandwidth()));
             transferUsage = Math.min(unDelegateMaxUsage, transferUsage);
 
-            receiverCapsule.addAcquiredDelegatedFrozenBalanceForBandwidth(-unDelegateBalance);
+            receiverCapsule.addAcquiredDelegatedFrozenV2BalanceForBandwidth(-unDelegateBalance);
           }
 
           long newNetUsage = receiverCapsule.getNetUsage() - transferUsage;
@@ -95,10 +95,10 @@ public class UnDelegateResourceActuator extends AbstractActuator {
           EnergyProcessor energyProcessor = new EnergyProcessor(dynamicStore, accountStore);
           energyProcessor.updateUsage(receiverCapsule);
 
-          if (receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()
+          if (receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy()
               < unDelegateBalance) {
             // A TVM contract receiver, re-create will produce this situation
-            receiverCapsule.setAcquiredDelegatedFrozenBalanceForEnergy(0);
+            receiverCapsule.setAcquiredDelegatedFrozenV2BalanceForEnergy(0);
           } else {
             // calculate usage
             long unDelegateMaxUsage = (long) ((double) unDelegateBalance / TRX_PRECISION
@@ -107,7 +107,7 @@ public class UnDelegateResourceActuator extends AbstractActuator {
                 * ((double) (unDelegateBalance) / receiverCapsule.getAllFrozenBalanceForEnergy()));
             transferUsage = Math.min(unDelegateMaxUsage, transferUsage);
 
-            receiverCapsule.addAcquiredDelegatedFrozenBalanceForEnergy(-unDelegateBalance);
+            receiverCapsule.addAcquiredDelegatedFrozenV2BalanceForEnergy(-unDelegateBalance);
           }
 
           long newEnergyUsage = receiverCapsule.getEnergyUsage() - transferUsage;
@@ -132,7 +132,7 @@ public class UnDelegateResourceActuator extends AbstractActuator {
       case BANDWIDTH: {
         delegatedResourceCapsule.addFrozenBalanceForBandwidth(-unDelegateBalance, 0);
 
-        ownerCapsule.addDelegatedFrozenBalanceForBandwidth(-unDelegateBalance);
+        ownerCapsule.addDelegatedFrozenV2BalanceForBandwidth(-unDelegateBalance);
         ownerCapsule.addFrozenBalanceForBandwidthV2(unDelegateBalance);
 
         BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
@@ -148,7 +148,7 @@ public class UnDelegateResourceActuator extends AbstractActuator {
       case ENERGY: {
         delegatedResourceCapsule.addFrozenBalanceForEnergy(-unDelegateBalance, 0);
 
-        ownerCapsule.addDelegatedFrozenBalanceForEnergy(-unDelegateBalance);
+        ownerCapsule.addDelegatedFrozenV2BalanceForEnergy(-unDelegateBalance);
         ownerCapsule.addFrozenBalanceForEnergyV2(unDelegateBalance);
 
         EnergyProcessor processor = new EnergyProcessor(dynamicStore, accountStore);

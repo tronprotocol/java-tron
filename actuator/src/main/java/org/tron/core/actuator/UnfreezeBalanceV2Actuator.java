@@ -80,12 +80,10 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
 
     ResourceCode freezeType = unfreezeBalanceV2Contract.getResource();
 
-    this.updateAccountFrozenInfo(freezeType, accountCapsule, unfreezeBalance);
-
     long expireTime = this.calcUnfreezeExpireTime(now);
     accountCapsule.addUnfrozenV2List(freezeType, unfreezeBalance, expireTime);
 
-    this.updateTotalResourceWeight(unfreezeBalanceV2Contract, unfreezeBalance);
+    this.updateTotalResourceWeight(accountCapsule, unfreezeBalanceV2Contract, unfreezeBalance);
     this.updateVote(accountCapsule, unfreezeBalanceV2Contract, ownerAddress);
 
     if (dynamicStore.supportAllowNewResourceModel()
@@ -272,18 +270,28 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
     return unfreezeBalance;
   }
 
-  public void updateTotalResourceWeight(final UnfreezeBalanceV2Contract unfreezeBalanceV2Contract,
+  public void updateTotalResourceWeight(AccountCapsule accountCapsule,
+                                        final UnfreezeBalanceV2Contract unfreezeBalanceV2Contract,
                                         long unfreezeBalance) {
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     switch (unfreezeBalanceV2Contract.getResource()) {
       case BANDWIDTH:
-        dynamicStore.addTotalNetWeight(-unfreezeBalance / TRX_PRECISION);
+        long oldNetWeight = accountCapsule.getFrozenV2BalanceWithDelegated(BANDWIDTH) / TRX_PRECISION;
+        accountCapsule.addFrozenBalanceForBandwidthV2(-unfreezeBalance);
+        long newNetWeight = accountCapsule.getFrozenV2BalanceWithDelegated(BANDWIDTH) / TRX_PRECISION;
+        dynamicStore.addTotalNetWeight(newNetWeight - oldNetWeight);
         break;
       case ENERGY:
-        dynamicStore.addTotalEnergyWeight(-unfreezeBalance / TRX_PRECISION);
+        long oldEnergyWeight = accountCapsule.getFrozenV2BalanceWithDelegated(ENERGY) / TRX_PRECISION;
+        accountCapsule.addFrozenBalanceForEnergyV2(-unfreezeBalance);
+        long newEnergyWeight = accountCapsule.getFrozenV2BalanceWithDelegated(ENERGY) / TRX_PRECISION;
+        dynamicStore.addTotalEnergyWeight(newEnergyWeight - oldEnergyWeight);
         break;
       case TRON_POWER:
-        dynamicStore.addTotalTronPowerWeight(-unfreezeBalance / TRX_PRECISION);
+        long oldTPWeight = accountCapsule.getTronPowerFrozenV2Balance() / TRX_PRECISION;
+        accountCapsule.addFrozenForTronPowerV2(-unfreezeBalance);
+        long newTPWeight = accountCapsule.getTronPowerFrozenV2Balance() / TRX_PRECISION;
+        dynamicStore.addTotalTronPowerWeight(newTPWeight - oldTPWeight);
         break;
       default:
         //this should never happen

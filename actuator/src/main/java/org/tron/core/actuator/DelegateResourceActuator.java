@@ -66,14 +66,14 @@ public class DelegateResourceActuator extends AbstractActuator {
         delegateResource(ownerAddress, receiverAddress, true,
             delegateBalance);
 
-        ownerCapsule.addDelegatedFrozenBalanceForBandwidth(delegateBalance);
+        ownerCapsule.addDelegatedFrozenV2BalanceForBandwidth(delegateBalance);
         ownerCapsule.addFrozenBalanceForBandwidthV2(-delegateBalance);
         break;
       case ENERGY:
         delegateResource(ownerAddress, receiverAddress, false,
             delegateBalance);
 
-        ownerCapsule.addDelegatedFrozenBalanceForEnergy(delegateBalance);
+        ownerCapsule.addDelegatedFrozenV2BalanceForEnergy(delegateBalance);
         ownerCapsule.addFrozenBalanceForEnergyV2(-delegateBalance);
         break;
       default:
@@ -150,14 +150,16 @@ public class DelegateResourceActuator extends AbstractActuator {
         long netUsage = (long) (accountNetUsage * TRX_PRECISION * ((double)
             (dynamicStore.getTotalNetWeight()) / dynamicStore.getTotalNetLimit()));
 
-        long ownerNetUsage = (long) (netUsage * ((double) (ownerCapsule
-            .getFrozenV2BalanceForBandwidth()) /
-            ownerCapsule.getAllFrozenBalanceForBandwidth()));
+        long remainNetUsage = netUsage
+                - ownerCapsule.getFrozenBalance()
+                - ownerCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
+                - ownerCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth();
 
-        if (ownerCapsule.getFrozenV2BalanceForBandwidth() - ownerNetUsage
-            < delegateBalance) {
+        remainNetUsage = Math.max(0, remainNetUsage);
+
+        if (ownerCapsule.getFrozenV2BalanceForBandwidth() - remainNetUsage < delegateBalance) {
           throw new ContractValidateException(
-              "delegateBalance must be less than available FreezeBandwidthV2 balance");
+                  "delegateBalance must be less than available FreezeBandwidthV2 balance");
         }
       }
       break;
@@ -168,12 +170,16 @@ public class DelegateResourceActuator extends AbstractActuator {
         long energyUsage = (long) (ownerCapsule.getEnergyUsage() * TRX_PRECISION * ((double)
             (dynamicStore.getTotalEnergyWeight()) / dynamicStore.getTotalEnergyCurrentLimit()));
 
-        long ownerEnergyUsage = (long) (energyUsage * ((double) (ownerCapsule
-            .getFrozenV2BalanceForEnergy()) / ownerCapsule.getAllFrozenBalanceForEnergy()));
+        long remainEnergyUsage = energyUsage
+                - ownerCapsule.getEnergyFrozenBalance()
+                - ownerCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()
+                - ownerCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy();
 
-        if (ownerCapsule.getFrozenV2BalanceForEnergy() - ownerEnergyUsage < delegateBalance) {
+        remainEnergyUsage = Math.max(0, remainEnergyUsage);
+
+        if (ownerCapsule.getFrozenV2BalanceForEnergy() - remainEnergyUsage < delegateBalance) {
           throw new ContractValidateException(
-              "delegateBalance must be less than available FreezeEnergyV2Balance balance");
+                  "delegateBalance must be less than available FreezeEnergyV2Balance balance");
         }
       }
       break;
@@ -251,9 +257,9 @@ public class DelegateResourceActuator extends AbstractActuator {
     //modify AccountStore for receiver
     AccountCapsule receiverCapsule = accountStore.get(receiverAddress);
     if (isBandwidth) {
-      receiverCapsule.addAcquiredDelegatedFrozenBalanceForBandwidth(balance);
+      receiverCapsule.addAcquiredDelegatedFrozenV2BalanceForBandwidth(balance);
     } else {
-      receiverCapsule.addAcquiredDelegatedFrozenBalanceForEnergy(balance);
+      receiverCapsule.addAcquiredDelegatedFrozenV2BalanceForEnergy(balance);
     }
     accountStore.put(receiverCapsule.createDbKey(), receiverCapsule);
   }

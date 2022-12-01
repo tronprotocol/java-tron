@@ -42,7 +42,7 @@ public class DelegateResourceActuatorTest {
   private static final String OWNER_ACCOUNT_INVALID;
   private static final long initBalance = 10_000_000_000L;
   private static Manager dbManager;
-  private static TronApplicationContext context;
+  private static final TronApplicationContext context;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
@@ -135,23 +135,21 @@ public class DelegateResourceActuatorTest {
             .build());
   }
 
-  private Any getDelegateContractForCpu(
-      String ownerAddress, String receiveAddress, long unfreezeBalance) {
+  private Any getDelegateContractForCpu(long unfreezeBalance) {
     return Any.pack(
         DelegateResourceContract.newBuilder()
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
-            .setReceiverAddress(ByteString.copyFrom(ByteArray.fromHexString(receiveAddress)))
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setReceiverAddress(ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS)))
             .setBalance(unfreezeBalance)
             .setResource(ResourceCode.ENERGY)
             .build());
   }
 
-  private Any getDelegateContractForTronPower(
-      String ownerAddress, String receiveAddress, long unfreezeBalance) {
+  private Any getDelegateContractForTronPower(long unfreezeBalance) {
     return Any.pack(
         DelegateResourceContract.newBuilder()
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
-            .setReceiverAddress(ByteString.copyFrom(ByteArray.fromHexString(receiveAddress)))
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setReceiverAddress(ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS)))
             .setBalance(unfreezeBalance)
             .setResource(ResourceCode.TRON_POWER)
             .build());
@@ -180,7 +178,7 @@ public class DelegateResourceActuatorTest {
     }
 
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(
-        getDelegateContractForCpu(OWNER_ADDRESS, RECEIVER_ADDRESS, 1_000_000_000L));
+        getDelegateContractForCpu(1_000_000_000L));
     try {
       actuator.validate();
       actuator.execute(ret);
@@ -238,7 +236,7 @@ public class DelegateResourceActuatorTest {
 
     DelegateResourceActuator actuator = new DelegateResourceActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(
-        getDelegateContractForCpu(OWNER_ADDRESS, RECEIVER_ADDRESS, initBalance));
+        getDelegateContractForCpu(initBalance));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -316,11 +314,11 @@ public class DelegateResourceActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+      Assert.assertEquals(code.SUCESS, ret.getInstance().getRet());
       AccountCapsule ownerCapsule =
           dbManager.getAccountStore().get(owner);
 
-      Assert.assertEquals(delegateBalance, ownerCapsule.getDelegatedFrozenBalanceForBandwidth());
+      Assert.assertEquals(delegateBalance, ownerCapsule.getDelegatedFrozenV2BalanceForBandwidth());
       Assert.assertEquals(initBalance - delegateBalance,
           ownerCapsule.getFrozenV2BalanceForBandwidth());
       Assert.assertEquals(initBalance, ownerCapsule.getTronPower());
@@ -328,8 +326,8 @@ public class DelegateResourceActuatorTest {
       AccountCapsule receiverCapsule =
           dbManager.getAccountStore().get(receiver);
       Assert.assertEquals(delegateBalance,
-          receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth());
-      Assert.assertEquals(0L, receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy());
+          receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth());
+      Assert.assertEquals(0L, receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy());
       Assert.assertEquals(0L, receiverCapsule.getTronPower());
 
       DelegatedResourceCapsule delegatedResourceCapsule = dbManager.getDelegatedResourceStore()
@@ -367,7 +365,7 @@ public class DelegateResourceActuatorTest {
     long delegateBalance = 1_000_000_000L;
     DelegateResourceActuator actuator = new DelegateResourceActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(
-        getDelegateContractForCpu(OWNER_ADDRESS, RECEIVER_ADDRESS, delegateBalance));
+        getDelegateContractForCpu(delegateBalance));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     long totalEnergyWeightBefore = dbManager.getDynamicPropertiesStore().getTotalEnergyWeight();
@@ -382,15 +380,15 @@ public class DelegateResourceActuatorTest {
 
       Assert.assertEquals(initBalance, ownerCapsule.getBalance());
       Assert.assertEquals(0L, ownerCapsule.getFrozenBalance());
-      Assert.assertEquals(0L, ownerCapsule.getDelegatedFrozenBalanceForBandwidth());
-      Assert.assertEquals(delegateBalance, ownerCapsule.getDelegatedFrozenBalanceForEnergy());
+      Assert.assertEquals(0L, ownerCapsule.getDelegatedFrozenV2BalanceForBandwidth());
+      Assert.assertEquals(delegateBalance, ownerCapsule.getDelegatedFrozenV2BalanceForEnergy());
       Assert.assertEquals(initBalance, ownerCapsule.getTronPower());
 
       AccountCapsule receiverCapsule =
           dbManager.getAccountStore().get(receiver);
-      Assert.assertEquals(0L, receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth());
+      Assert.assertEquals(0L, receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth());
       Assert.assertEquals(delegateBalance,
-          receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy());
+          receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy());
       Assert.assertEquals(0L, receiverCapsule.getTronPower());
 
       DelegatedResourceCapsule delegatedResourceCapsule = dbManager.getDelegatedResourceStore()
@@ -450,8 +448,7 @@ public class DelegateResourceActuatorTest {
     long delegateBalance = 1_000_000_000L;
     DelegateResourceActuator actuator = new DelegateResourceActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(getDelegateContractForTronPower(
-            OWNER_ADDRESS, RECEIVER_ADDRESS, delegateBalance));
+        .setAny(getDelegateContractForTronPower(delegateBalance));
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();

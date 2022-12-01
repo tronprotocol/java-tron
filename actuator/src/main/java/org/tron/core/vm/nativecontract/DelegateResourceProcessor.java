@@ -57,14 +57,16 @@ public class DelegateResourceProcessor {
         long netUsage = (long) (ownerCapsule.getNetUsage() * TRX_PRECISION * ((double)
             (repo.getTotalNetWeight()) / dynamicStore.getTotalNetLimit()));
 
-        long ownerNetUsage = (long) (netUsage * ((double)(ownerCapsule
-            .getFrozenV2BalanceForBandwidth()) /
-            ownerCapsule.getAllFrozenBalanceForBandwidth()));
+        long remainNetUsage = netUsage
+                - ownerCapsule.getFrozenBalance()
+                - ownerCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
+                - ownerCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth();
 
-        if (ownerCapsule.getFrozenV2BalanceForBandwidth() - ownerNetUsage
-            < delegateBalance) {
+        remainNetUsage = Math.max(0, remainNetUsage);
+
+        if (ownerCapsule.getFrozenV2BalanceForBandwidth() - remainNetUsage < delegateBalance) {
           throw new ContractValidateException(
-              "delegateBalance must be less than available FreezeBandwidthV2 balance");
+                  "delegateBalance must be less than available FreezeBandwidthV2 balance");
         }
       }
       break;
@@ -76,12 +78,16 @@ public class DelegateResourceProcessor {
         long energyUsage = (long) (ownerCapsule.getEnergyUsage() * TRX_PRECISION * ((double)
             (repo.getTotalEnergyWeight()) / dynamicStore.getTotalEnergyCurrentLimit()));
 
-        long ownerEnergyUsage = (long) (energyUsage * ((double)(ownerCapsule
-            .getFrozenV2BalanceForEnergy()) / ownerCapsule.getAllFrozenBalanceForEnergy()));
+        long remainEnergyUsage = energyUsage
+                - ownerCapsule.getEnergyFrozenBalance()
+                - ownerCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()
+                - ownerCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy();
 
-        if (ownerCapsule.getFrozenV2BalanceForEnergy() - ownerEnergyUsage < delegateBalance) {
+        remainEnergyUsage = Math.max(0, remainEnergyUsage);
+
+        if (ownerCapsule.getFrozenV2BalanceForEnergy() - remainEnergyUsage < delegateBalance) {
           throw new ContractValidateException(
-              "delegateBalance must be less than available FreezeEnergyV2Balance balance");
+                  "delegateBalance must be less than available FreezeEnergyV2Balance balance");
         }
       }
       break;
@@ -124,14 +130,14 @@ public class DelegateResourceProcessor {
         delegateResource(ownerAddress, receiverAddress, true,
             delegateBalance, repo);
 
-        ownerCapsule.addDelegatedFrozenBalanceForBandwidth(delegateBalance);
+        ownerCapsule.addDelegatedFrozenV2BalanceForBandwidth(delegateBalance);
         ownerCapsule.addFrozenBalanceForBandwidthV2(-delegateBalance);
         break;
       case ENERGY:
         delegateResource(ownerAddress, receiverAddress, false,
             delegateBalance, repo);
 
-        ownerCapsule.addDelegatedFrozenBalanceForEnergy(delegateBalance);
+        ownerCapsule.addDelegatedFrozenV2BalanceForEnergy(delegateBalance);
         ownerCapsule.addFrozenBalanceForEnergyV2(-delegateBalance);
         break;
       default:
@@ -164,9 +170,9 @@ public class DelegateResourceProcessor {
     //update Account for receiver
     AccountCapsule receiverCapsule = repo.getAccount(receiverAddress);
     if (isBandwidth) {
-      receiverCapsule.addAcquiredDelegatedFrozenBalanceForBandwidth(delegateBalance);
+      receiverCapsule.addAcquiredDelegatedFrozenV2BalanceForBandwidth(delegateBalance);
     } else {
-      receiverCapsule.addAcquiredDelegatedFrozenBalanceForEnergy(delegateBalance);
+      receiverCapsule.addAcquiredDelegatedFrozenV2BalanceForEnergy(delegateBalance);
     }
     repo.updateDelegatedResource(key, delegatedResourceCapsule);
     repo.updateAccount(receiverCapsule.createDbKey(), receiverCapsule);

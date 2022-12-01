@@ -561,15 +561,15 @@ public class FreezeV2Test {
     AccountCapsule newReceiver = accountStore.get(receiverAddr);
     Assert.assertNotNull(newReceiver);
     if (res == 0) {
-      Assert.assertEquals(oldOwner.getDelegatedFrozenBalanceForBandwidth() + amount,
-          newOwner.getDelegatedFrozenBalanceForBandwidth());
-      Assert.assertEquals(oldReceiver.getAcquiredDelegatedFrozenBalanceForBandwidth() + amount,
-          newReceiver.getAcquiredDelegatedFrozenBalanceForBandwidth());
+      Assert.assertEquals(oldOwner.getDelegatedFrozenV2BalanceForBandwidth() + amount,
+          newOwner.getDelegatedFrozenV2BalanceForBandwidth());
+      Assert.assertEquals(oldReceiver.getAcquiredDelegatedFrozenV2BalanceForBandwidth() + amount,
+          newReceiver.getAcquiredDelegatedFrozenV2BalanceForBandwidth());
     } else {
-      Assert.assertEquals(oldOwner.getDelegatedFrozenBalanceForEnergy() + amount,
-          newOwner.getDelegatedFrozenBalanceForEnergy());
-      Assert.assertEquals(oldReceiver.getAcquiredDelegatedFrozenBalanceForEnergy() + amount,
-          newReceiver.getAcquiredDelegatedFrozenBalanceForEnergy());
+      Assert.assertEquals(oldOwner.getDelegatedFrozenV2BalanceForEnergy() + amount,
+          newOwner.getDelegatedFrozenV2BalanceForEnergy());
+      Assert.assertEquals(oldReceiver.getAcquiredDelegatedFrozenV2BalanceForEnergy() + amount,
+          newReceiver.getAcquiredDelegatedFrozenV2BalanceForEnergy());
     }
     newReceiver.setBalance(oldReceiver.getBalance());
     oldReceiver.setEnergyUsage(0);
@@ -577,11 +577,11 @@ public class FreezeV2Test {
     newReceiver.setEnergyUsage(0);
     newReceiver.setNewWindowSize(ENERGY,28800);
     if (res == 0) {
-      oldReceiver.setAcquiredDelegatedFrozenBalanceForBandwidth(0);
-      newReceiver.setAcquiredDelegatedFrozenBalanceForBandwidth(0);
+      oldReceiver.setAcquiredDelegatedFrozenV2BalanceForBandwidth(0);
+      newReceiver.setAcquiredDelegatedFrozenV2BalanceForBandwidth(0);
     } else {
-      oldReceiver.setAcquiredDelegatedFrozenBalanceForEnergy(0);
-      newReceiver.setAcquiredDelegatedFrozenBalanceForEnergy(0);
+      oldReceiver.setAcquiredDelegatedFrozenV2BalanceForEnergy(0);
+      newReceiver.setAcquiredDelegatedFrozenV2BalanceForEnergy(0);
     }
     Assert.assertArrayEquals(oldReceiver.getData(), newReceiver.getData());
 
@@ -620,8 +620,8 @@ public class FreezeV2Test {
     long acquiredBalance = 0;
     long transferUsage = 0;
     if (oldReceiver != null) {
-      acquiredBalance = res == 0 ? oldReceiver.getAcquiredDelegatedFrozenBalanceForBandwidth() :
-          oldReceiver.getAcquiredDelegatedFrozenBalanceForEnergy();
+      acquiredBalance = res == 0 ? oldReceiver.getAcquiredDelegatedFrozenV2BalanceForBandwidth() :
+          oldReceiver.getAcquiredDelegatedFrozenV2BalanceForEnergy();
 
       if (res == 0) {
         long unDelegateMaxUsage = (long) (amount / TRX_PRECISION
@@ -656,16 +656,16 @@ public class FreezeV2Test {
     newOwner.setBalance(oldOwner.getBalance());
     if (res == 0) {
       Assert.assertEquals(
-          oldOwner.getDelegatedFrozenBalanceForBandwidth() - amount,
-          newOwner.getDelegatedFrozenBalanceForBandwidth());
+          oldOwner.getDelegatedFrozenV2BalanceForBandwidth() - amount,
+          newOwner.getDelegatedFrozenV2BalanceForBandwidth());
       Assert.assertEquals(
           oldOwner.getFrozenV2BalanceForBandwidth() + amount,
           newOwner.getFrozenV2BalanceForBandwidth());
       Assert.assertEquals(oldOwner.getNetUsage() + transferUsage, newOwner.getNetUsage());
     } else {
       Assert.assertEquals(
-          oldOwner.getDelegatedFrozenBalanceForEnergy() - amount,
-          newOwner.getDelegatedFrozenBalanceForEnergy());
+          oldOwner.getDelegatedFrozenV2BalanceForEnergy() - amount,
+          newOwner.getDelegatedFrozenV2BalanceForEnergy());
       Assert.assertEquals(
           oldOwner.getFrozenV2BalanceForEnergy() + amount, newOwner.getFrozenV2BalanceForEnergy());
       Assert.assertEquals(oldOwner.getEnergyUsage() + transferUsage, newOwner.getEnergyUsage());
@@ -677,8 +677,8 @@ public class FreezeV2Test {
       Assert.assertNotNull(newReceiver);
       long newAcquiredBalance =
           res == 0
-              ? newReceiver.getAcquiredDelegatedFrozenBalanceForBandwidth()
-              : newReceiver.getAcquiredDelegatedFrozenBalanceForEnergy();
+              ? newReceiver.getAcquiredDelegatedFrozenV2BalanceForBandwidth()
+              : newReceiver.getAcquiredDelegatedFrozenV2BalanceForEnergy();
       Assert.assertTrue(newAcquiredBalance == 0 || acquiredBalance - newAcquiredBalance == amount);
       if (res == 0) {
         Assert.assertEquals(oldReceiver.getNetUsage() - transferUsage, newReceiver.getNetUsage());
