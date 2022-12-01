@@ -7,16 +7,13 @@ import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.BandwidthProcessor;
@@ -143,7 +140,7 @@ public class UnDelegateResourceActuator extends AbstractActuator {
         long now = chainBaseManager.getHeadSlot();
         if (Objects.nonNull(receiverCapsule) && transferUsage > 0) {
           ownerCapsule.setNetUsage(processor.unDelegateIncrease(ownerCapsule, receiverCapsule,
-                  transferUsage, BANDWIDTH, now));
+              transferUsage, BANDWIDTH, now));
           ownerCapsule.setLatestConsumeTime(now);
         }
       }
@@ -159,7 +156,7 @@ public class UnDelegateResourceActuator extends AbstractActuator {
         long now = chainBaseManager.getHeadSlot();
         if (Objects.nonNull(receiverCapsule) && transferUsage > 0) {
           ownerCapsule.setEnergyUsage(processor.unDelegateIncrease(ownerCapsule, receiverCapsule,
-                  transferUsage, ENERGY, now));
+              transferUsage, ENERGY, now));
           ownerCapsule.setLatestConsumeTimeForEnergy(now);
         }
       }
@@ -173,32 +170,8 @@ public class UnDelegateResourceActuator extends AbstractActuator {
         && delegatedResourceCapsule.getFrozenBalanceForEnergy() == 0) {
       delegatedResourceStore.delete(key);
 
-      //modify DelegatedResourceAccountIndexStore for owner
-      byte[] ownerKey = DelegatedResourceAccountIndexCapsule.createDbKeyV2(ownerAddress);
-      DelegatedResourceAccountIndexCapsule ownerIndexCapsule = delegatedResourceAccountIndexStore
-          .get(ownerKey);
-      if (ownerIndexCapsule != null) {
-        List<ByteString> toAccountsList = new ArrayList<>(ownerIndexCapsule
-            .getToAccountsList());
-        toAccountsList.remove(ByteString.copyFrom(receiverAddress));
-        ownerIndexCapsule.setAllToAccounts(toAccountsList);
-        delegatedResourceAccountIndexStore
-            .put(ownerKey, ownerIndexCapsule);
-      }
-
-      //modify DelegatedResourceAccountIndexStore  for receive
-      byte[] receiverKey = DelegatedResourceAccountIndexCapsule.createDbKeyV2(receiverAddress);
-      DelegatedResourceAccountIndexCapsule receiverIndexCapsule = delegatedResourceAccountIndexStore
-          .get(receiverKey);
-      if (receiverIndexCapsule != null) {
-        List<ByteString> fromAccountsList = new ArrayList<>(receiverIndexCapsule
-            .getFromAccountsList());
-        fromAccountsList.remove(ByteString.copyFrom(ownerAddress));
-        receiverIndexCapsule.setAllFromAccounts(fromAccountsList);
-        delegatedResourceAccountIndexStore
-            .put(receiverKey, receiverIndexCapsule);
-      }
-
+      //modify DelegatedResourceAccountIndexStore
+      delegatedResourceAccountIndexStore.unDelegateV2(ownerAddress, receiverAddress);
     } else {
       delegatedResourceStore.put(key, delegatedResourceCapsule);
     }

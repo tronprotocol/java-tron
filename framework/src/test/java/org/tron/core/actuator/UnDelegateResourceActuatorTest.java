@@ -6,7 +6,6 @@ import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -99,11 +98,7 @@ public class UnDelegateResourceActuatorTest {
     byte[] receiver = ByteArray.fromHexString(RECEIVER_ADDRESS);
     dbManager.getDelegatedResourceStore().delete(DelegatedResourceCapsule.createDbKeyV2(
         owner, receiver));
-    dbManager.getDelegatedResourceAccountIndexStore().delete(
-        DelegatedResourceAccountIndexCapsule.createDbKeyV2(owner));
-    dbManager.getDelegatedResourceAccountIndexStore().delete(
-        DelegatedResourceAccountIndexCapsule.createDbKeyV2(receiver));
-
+    dbManager.getDelegatedResourceAccountIndexStore().unDelegateV2(owner, receiver);
     dbManager.getDynamicPropertiesStore().saveAllowDelegateResource(1);
   }
 
@@ -125,30 +120,7 @@ public class UnDelegateResourceActuatorTest {
     dbManager.getDelegatedResourceStore().put(
         DelegatedResourceCapsule.createDbKeyV2(owner, receiver), delegatedResourceCapsule);
 
-
-    byte[] ownerKey = DelegatedResourceAccountIndexCapsule.createDbKeyV2(owner);
-    DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule =
-        new DelegatedResourceAccountIndexCapsule(ByteString.copyFrom(owner));
-
-    List<ByteString> toAccountsList = delegatedResourceAccountIndexCapsule.getToAccountsList();
-    if (!toAccountsList.contains(ByteString.copyFrom(receiver))) {
-      delegatedResourceAccountIndexCapsule.addToAccount(ByteString.copyFrom(receiver));
-    }
-    dbManager.getDelegatedResourceAccountIndexStore()
-        .put(ownerKey, delegatedResourceAccountIndexCapsule);
-
-
-    byte[] receiverKey = DelegatedResourceAccountIndexCapsule.createDbKeyV2(receiver);
-    delegatedResourceAccountIndexCapsule = new DelegatedResourceAccountIndexCapsule(
-        ByteString.copyFrom(receiver));
-
-    List<ByteString> fromAccountsList = delegatedResourceAccountIndexCapsule
-        .getFromAccountsList();
-    if (!fromAccountsList.contains(ByteString.copyFrom(owner))) {
-      delegatedResourceAccountIndexCapsule.addFromAccount(ByteString.copyFrom(owner));
-    }
-    dbManager.getDelegatedResourceAccountIndexStore()
-        .put(receiverKey, delegatedResourceAccountIndexCapsule);
+    dbManager.getDelegatedResourceAccountIndexStore().delegateV2(owner, receiver, 1);
   }
 
   public void delegateCpuForOwner() {
@@ -169,30 +141,7 @@ public class UnDelegateResourceActuatorTest {
     dbManager.getDelegatedResourceStore().put(
         DelegatedResourceCapsule.createDbKeyV2(owner, receiver), delegatedResourceCapsule);
 
-
-    byte[] ownerKey = DelegatedResourceAccountIndexCapsule.createDbKeyV2(owner);
-    DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule =
-        new DelegatedResourceAccountIndexCapsule(ByteString.copyFrom(owner));
-
-    List<ByteString> toAccountsList = delegatedResourceAccountIndexCapsule.getToAccountsList();
-    if (!toAccountsList.contains(ByteString.copyFrom(receiver))) {
-      delegatedResourceAccountIndexCapsule.addToAccount(ByteString.copyFrom(receiver));
-    }
-    dbManager.getDelegatedResourceAccountIndexStore()
-        .put(ownerKey, delegatedResourceAccountIndexCapsule);
-
-
-    byte[] receiverKey = DelegatedResourceAccountIndexCapsule.createDbKeyV2(receiver);
-    delegatedResourceAccountIndexCapsule = new DelegatedResourceAccountIndexCapsule(
-        ByteString.copyFrom(receiver));
-
-    List<ByteString> fromAccountsList = delegatedResourceAccountIndexCapsule
-        .getFromAccountsList();
-    if (!fromAccountsList.contains(ByteString.copyFrom(owner))) {
-      delegatedResourceAccountIndexCapsule.addFromAccount(ByteString.copyFrom(owner));
-    }
-    dbManager.getDelegatedResourceAccountIndexStore()
-        .put(receiverKey, delegatedResourceAccountIndexCapsule);
+    dbManager.getDelegatedResourceAccountIndexStore().delegateV2(owner, receiver, 1);
   }
 
   private Any getDelegatedContractForBandwidth(
@@ -270,15 +219,13 @@ public class UnDelegateResourceActuatorTest {
       Assert.assertNull(delegatedCapsule);
 
       //check DelegatedResourceAccountIndex
-      key = DelegatedResourceAccountIndexCapsule.createDbKeyV2(owner);
       DelegatedResourceAccountIndexCapsule ownerIndexCapsule = dbManager
-          .getDelegatedResourceAccountIndexStore().get(key);
+          .getDelegatedResourceAccountIndexStore().getV2Index(owner);
       Assert.assertEquals(0, ownerIndexCapsule.getFromAccountsList().size());
       Assert.assertEquals(0, ownerIndexCapsule.getToAccountsList().size());
 
-      key = DelegatedResourceAccountIndexCapsule.createDbKeyV2(receiver);
       DelegatedResourceAccountIndexCapsule receiverIndexCapsule = dbManager
-          .getDelegatedResourceAccountIndexStore().get(key);
+          .getDelegatedResourceAccountIndexStore().getV2Index(receiver);
       Assert.assertEquals(0, receiverIndexCapsule.getToAccountsList().size());
       Assert.assertEquals(0, receiverIndexCapsule.getFromAccountsList().size());
 
@@ -345,15 +292,13 @@ public class UnDelegateResourceActuatorTest {
           delegatedResourceCapsule.getFrozenBalanceForBandwidth());
 
       //check DelegatedResourceAccountIndex
-      key = DelegatedResourceAccountIndexCapsule.createDbKeyV2(owner);
       DelegatedResourceAccountIndexCapsule ownerIndexCapsule = dbManager
-          .getDelegatedResourceAccountIndexStore().get(key);
+          .getDelegatedResourceAccountIndexStore().getV2Index(owner);
       Assert.assertEquals(0, ownerIndexCapsule.getFromAccountsList().size());
       Assert.assertEquals(1, ownerIndexCapsule.getToAccountsList().size());
 
-      key = DelegatedResourceAccountIndexCapsule.createDbKeyV2(receiver);
       DelegatedResourceAccountIndexCapsule receiverIndexCapsule = dbManager
-          .getDelegatedResourceAccountIndexStore().get(key);
+          .getDelegatedResourceAccountIndexStore().getV2Index(receiver);
       Assert.assertEquals(0, receiverIndexCapsule.getToAccountsList().size());
       Assert.assertEquals(1, receiverIndexCapsule.getFromAccountsList().size());
 
@@ -399,15 +344,13 @@ public class UnDelegateResourceActuatorTest {
       Assert.assertNull(delegatedResourceCapsule);
 
       //check DelegatedResourceAccountIndex
-      key = DelegatedResourceAccountIndexCapsule.createDbKeyV2(owner);
       DelegatedResourceAccountIndexCapsule ownerIndexCapsule = dbManager
-          .getDelegatedResourceAccountIndexStore().get(key);
+          .getDelegatedResourceAccountIndexStore().getV2Index(owner);
       Assert.assertEquals(0, ownerIndexCapsule.getFromAccountsList().size());
       Assert.assertEquals(0, ownerIndexCapsule.getToAccountsList().size());
 
-      key = DelegatedResourceAccountIndexCapsule.createDbKeyV2(receiver);
       DelegatedResourceAccountIndexCapsule receiverIndexCapsule = dbManager
-          .getDelegatedResourceAccountIndexStore().get(key);
+          .getDelegatedResourceAccountIndexStore().getV2Index(receiver);
       Assert.assertEquals(0, receiverIndexCapsule.getToAccountsList().size());
       Assert.assertEquals(0, receiverIndexCapsule.getFromAccountsList().size());
 
@@ -462,15 +405,13 @@ public class UnDelegateResourceActuatorTest {
       Assert.assertNull(delegatedCapsule);
 
       //check DelegatedResourceAccountIndex
-      key = DelegatedResourceAccountIndexCapsule.createDbKeyV2(owner);
       DelegatedResourceAccountIndexCapsule ownerIndexCapsule = dbManager
-          .getDelegatedResourceAccountIndexStore().get(key);
+          .getDelegatedResourceAccountIndexStore().getV2Index(owner);
       Assert.assertEquals(0, ownerIndexCapsule.getFromAccountsList().size());
       Assert.assertEquals(0, ownerIndexCapsule.getToAccountsList().size());
 
-      key = DelegatedResourceAccountIndexCapsule.createDbKeyV2(receiver);
       DelegatedResourceAccountIndexCapsule receiverIndexCapsule = dbManager
-          .getDelegatedResourceAccountIndexStore().get(key);
+          .getDelegatedResourceAccountIndexStore().getV2Index(receiver);
       Assert.assertEquals(0, receiverIndexCapsule.getToAccountsList().size());
       Assert.assertEquals(0, receiverIndexCapsule.getFromAccountsList().size());
 
@@ -537,15 +478,13 @@ public class UnDelegateResourceActuatorTest {
       Assert.assertNull(delegatedCapsule);
 
       //check DelegatedResourceAccountIndex
-      key = DelegatedResourceAccountIndexCapsule.createDbKeyV2(owner);
       DelegatedResourceAccountIndexCapsule ownerIndexCapsule = dbManager
-          .getDelegatedResourceAccountIndexStore().get(key);
+          .getDelegatedResourceAccountIndexStore().getV2Index(owner);
       Assert.assertEquals(0, ownerIndexCapsule.getFromAccountsList().size());
       Assert.assertEquals(0, ownerIndexCapsule.getToAccountsList().size());
 
-      key = DelegatedResourceAccountIndexCapsule.createDbKeyV2(receiver);
       DelegatedResourceAccountIndexCapsule receiverIndexCapsule = dbManager
-          .getDelegatedResourceAccountIndexStore().get(key);
+          .getDelegatedResourceAccountIndexStore().getV2Index(owner);
       Assert.assertEquals(0, receiverIndexCapsule.getToAccountsList().size());
       Assert.assertEquals(0, receiverIndexCapsule.getFromAccountsList().size());
 
@@ -609,15 +548,13 @@ public class UnDelegateResourceActuatorTest {
           delegatedCapsule.getFrozenBalanceForEnergy());
 
       //check DelegatedResourceAccountIndex
-      key = DelegatedResourceAccountIndexCapsule.createDbKeyV2(owner);
       DelegatedResourceAccountIndexCapsule ownerIndexCapsule = dbManager
-          .getDelegatedResourceAccountIndexStore().get(key);
+          .getDelegatedResourceAccountIndexStore().getV2Index(owner);
       Assert.assertEquals(0, ownerIndexCapsule.getFromAccountsList().size());
       Assert.assertEquals(1, ownerIndexCapsule.getToAccountsList().size());
 
-      key = DelegatedResourceAccountIndexCapsule.createDbKeyV2(receiver);
       DelegatedResourceAccountIndexCapsule receiverIndexCapsule = dbManager
-          .getDelegatedResourceAccountIndexStore().get(key);
+          .getDelegatedResourceAccountIndexStore().getV2Index(receiver);
       Assert.assertEquals(0, receiverIndexCapsule.getToAccountsList().size());
       Assert.assertEquals(1, receiverIndexCapsule.getFromAccountsList().size());
 
@@ -662,15 +599,13 @@ public class UnDelegateResourceActuatorTest {
       Assert.assertNull(delegatedCapsule);
 
       //check DelegatedResourceAccountIndex
-      key = DelegatedResourceAccountIndexCapsule.createDbKeyV2(owner);
       DelegatedResourceAccountIndexCapsule ownerIndexCapsule = dbManager
-          .getDelegatedResourceAccountIndexStore().get(key);
+          .getDelegatedResourceAccountIndexStore().getV2Index(owner);
       Assert.assertEquals(0, ownerIndexCapsule.getFromAccountsList().size());
       Assert.assertEquals(0, ownerIndexCapsule.getToAccountsList().size());
 
-      key = DelegatedResourceAccountIndexCapsule.createDbKeyV2(receiver);
       DelegatedResourceAccountIndexCapsule receiverIndexCapsule = dbManager
-          .getDelegatedResourceAccountIndexStore().get(key);
+          .getDelegatedResourceAccountIndexStore().getV2Index(receiver);
       Assert.assertEquals(0, receiverIndexCapsule.getToAccountsList().size());
       Assert.assertEquals(0, receiverIndexCapsule.getFromAccountsList().size());
 
@@ -726,15 +661,13 @@ public class UnDelegateResourceActuatorTest {
       Assert.assertNull(delegatedResourceCapsule);
 
       //check DelegatedResourceAccountIndex
-      key = DelegatedResourceAccountIndexCapsule.createDbKeyV2(owner);
       DelegatedResourceAccountIndexCapsule ownerIndexCapsule = dbManager
-          .getDelegatedResourceAccountIndexStore().get(key);
+          .getDelegatedResourceAccountIndexStore().getV2Index(owner);
       Assert.assertEquals(0, ownerIndexCapsule.getFromAccountsList().size());
       Assert.assertEquals(0, ownerIndexCapsule.getToAccountsList().size());
 
-      key = DelegatedResourceAccountIndexCapsule.createDbKeyV2(receiver);
       DelegatedResourceAccountIndexCapsule receiverIndexCapsule = dbManager
-          .getDelegatedResourceAccountIndexStore().get(key);
+          .getDelegatedResourceAccountIndexStore().getV2Index(receiver);
       Assert.assertEquals(0, receiverIndexCapsule.getToAccountsList().size());
       Assert.assertEquals(0, receiverIndexCapsule.getFromAccountsList().size());
 
