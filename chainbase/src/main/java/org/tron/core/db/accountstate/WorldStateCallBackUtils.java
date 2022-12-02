@@ -2,6 +2,12 @@ package org.tron.core.db.accountstate;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import com.google.common.primitives.Bytes;
+import com.google.common.primitives.Longs;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ProtoCapsule;
@@ -13,13 +19,20 @@ public class WorldStateCallBackUtils {
   protected List<TrieEntry> trieEntryList = new ArrayList<>();
 
   public void callBack(StateType type, byte[] key, ProtoCapsule capsule) {
-    // todo: decouple the asset10 and remove it from account
     byte[] value = null;
     switch (type) {
       case Account:
-        AccountCapsule accountCapsule = (AccountCapsule) capsule;
+        AccountCapsule accountCapsule = new AccountCapsule(capsule.getData());
+        Set<String> dirtySet = accountCapsule.getDirtyAssetSet();
+        Map<String, Long> assetMap = accountCapsule.getAssetMapV2();
+        for (String tokenId: dirtySet) {
+          if (assetMap.containsKey(tokenId)) {
+            callBack(StateType.AccountIssueV2,
+                Bytes.concat(key, Longs.toByteArray(Long.parseLong(tokenId))),
+                Longs.toByteArray(assetMap.get(tokenId)));
+          }
+        }
         accountCapsule.clearAsset();
-        accountCapsule.clearAssetV2();
         value = accountCapsule.getData();
         break;
       case AccountIndex:
