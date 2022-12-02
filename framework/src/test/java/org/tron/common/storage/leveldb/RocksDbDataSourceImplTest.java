@@ -248,25 +248,6 @@ public class RocksDbDataSourceImplTest {
   }
 
   @Test
-  public void getValuesPrev() {
-    RocksDbDataSourceImpl dataSource = new RocksDbDataSourceImpl(
-        Args.getInstance().getOutputDirectory(), "test_getValuesPrev_key");
-    dataSource.initDB();
-    dataSource.resetDb();
-
-    putSomeKeyValue(dataSource);
-    Set<byte[]> seekKeyLimitNext = dataSource.getValuesPrev("0000000300".getBytes(), 2);
-    HashSet<String> hashSet = Sets.newHashSet(ByteArray.toStr(value1), ByteArray.toStr(value2));
-    seekKeyLimitNext.forEach(value -> {
-      Assert.assertTrue("getValuesPrev1", hashSet.contains(ByteArray.toStr(value)));
-    });
-    seekKeyLimitNext = dataSource.getValuesPrev("0000000100".getBytes(), 2);
-    Assert.assertEquals("getValuesPrev2", 0, seekKeyLimitNext.size());
-    dataSource.resetDb();
-    dataSource.closeDB();
-  }
-
-  @Test
   public void testCheckOrInitEngine() {
     String dir =
         Args.getInstance().getOutputDirectory() + Args.getInstance().getStorage().getDbDirectory();
@@ -290,7 +271,9 @@ public class RocksDbDataSourceImplTest {
     try {
       dataSource.initDB();
     } catch (Exception e) {
-      Assert.assertTrue(e.getMessage().contains("Failed to"));
+      Assert.assertEquals(String.format("failed to check database: %s, engine do not match",
+              "test_engine"),
+              e.getMessage());
     }
     Assert.assertNull(dataSource.getDatabase());
     PropUtil.writeProperty(enginePath, "ENGINE", "ROCKSDB");

@@ -69,6 +69,9 @@ public class MetricKeys {
     public static final String INTERNAL_SERVICE_LATENCY = "tron:internal_service_latency_seconds";
     public static final String DB_SERVICE_LATENCY = "tron:db_service_latency_seconds";
     public static final String CHECKPOINT_LATENCY = "tron:checkpoint_latency_seconds";
+    public static final String MESSAGE_PROCESS_LATENCY = "tron:message_process_latency_seconds";
+    public static final String BLOCK_FETCH_LATENCY = "tron:block_fetch_latency_seconds";
+    public static final String BLOCK_RECEIVE_DELAY = "tron:block_receive_delay_seconds";
 
     private Histogram() {
       throw new IllegalStateException("Histogram");

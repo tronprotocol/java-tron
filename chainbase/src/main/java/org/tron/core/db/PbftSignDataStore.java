@@ -6,7 +6,7 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.core.capsule.PbftSignCapsule;
 import org.tron.protos.Protocol.PBFTMessage.DataType;
 
-@Slf4j
+@Slf4j(topic = "DB")
 @Component
 public class PbftSignDataStore extends TronDatabase<PbftSignCapsule> {
 

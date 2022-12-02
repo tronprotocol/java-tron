@@ -7,6 +7,8 @@ import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCE_TIMEOUT
 import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
 
 import com.beust.jcommander.JCommander;
+import com.beust.jcommander.ParameterDescription;
+import com.google.common.base.Strings;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
 import io.grpc.internal.GrpcUtil;
@@ -22,9 +24,13 @@ import java.net.URL;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
@@ -208,6 +214,9 @@ public class Args extends CommonParameter {
     PARAMETER.shutdownBlockHeight = -1;
     PARAMETER.shutdownBlockCount = -1;
     PARAMETER.blockCacheTimeout = 60;
+    PARAMETER.allowNewRewardAlgorithm = 0;
+    PARAMETER.allowNewReward = 0;
+    PARAMETER.memoFee = 0;
   }
 
   /**
@@ -228,6 +237,95 @@ public class Args extends CommonParameter {
     JCommander.getConsole().println("Git : " + properties.getProperty("git.commit.id"));
     JCommander.getConsole().println("Version : " + Version.getVersion());
     JCommander.getConsole().println("Code : " + Version.VERSION_CODE);
+  }
+
+  public static void printHelp(JCommander jCommander) {
+    List<ParameterDescription> parameterDescriptionList = jCommander.getParameters();
+    Map<String, ParameterDescription> stringParameterDescriptionMap = new HashMap<>();
+    for (ParameterDescription parameterDescription : parameterDescriptionList) {
+      String parameterName = parameterDescription.getParameterized().getName();
+      stringParameterDescriptionMap.put(parameterName, parameterDescription);
+    }
+
+    StringBuilder helpStr = new StringBuilder();
+    helpStr.append("Name:\n\tFullNode - the java-tron command line interface\n");
+    String programName = Strings.isNullOrEmpty(jCommander.getProgramName()) ? "FullNode.jar" :
+        jCommander.getProgramName();
+    helpStr.append(String.format("%nUsage: java -jar %s [options] [seedNode <seedNode> ...]%n",
+        programName));
+    helpStr.append(String.format("%nVERSION: %n%s-%s%n", Version.getVersion(),
+        getCommitIdAbbrev()));
+
+    Map<String, String[]> groupOptionListMap = Args.getOptionGroup();
+    for (Map.Entry<String, String[]> entry : groupOptionListMap.entrySet()) {
+      String group = entry.getKey();
+      helpStr.append(String.format("%n%s OPTIONS:%n", group.toUpperCase()));
+      int optionMaxLength = Arrays.stream(entry.getValue()).mapToInt(p -> {
+        ParameterDescription tmpParameterDescription = stringParameterDescriptionMap.get(p);
+        if (tmpParameterDescription == null) {
+          return 1;
+        }
+        return tmpParameterDescription.getNames().length();
+      }).max().orElse(1);
+
+      for (String option : groupOptionListMap.get(group)) {
+        ParameterDescription parameterDescription = stringParameterDescriptionMap.get(option);
+        if (parameterDescription == null) {
+          logger.warn("Miss option:{}", option);
+          continue;
+        }
+        String tmpOptionDesc = String.format("%s\t\t\t%s%n",
+            Strings.padEnd(parameterDescription.getNames(), optionMaxLength, ' '),
+            upperFirst(parameterDescription.getDescription()));
+        helpStr.append(tmpOptionDesc);
+      }
+    }
+    JCommander.getConsole().println(helpStr.toString());
+  }
+
+  public static String upperFirst(String name) {
+    if (name.length() <= 1) {
+      return name;
+    }
+    name = name.substring(0, 1).toUpperCase() + name.substring(1);
+    return name;
+  }
+
+  private static String getCommitIdAbbrev() {
+    Properties properties = new Properties();
+    try {
+      InputStream in = Thread.currentThread()
+          .getContextClassLoader().getResourceAsStream("git.properties");
+      properties.load(in);
+    } catch (IOException e) {
+      logger.warn("Load resource failed,git.properties {}", e.getMessage());
+    }
+    return properties.getProperty("git.commit.id.abbrev");
+  }
+
+  private static Map<String, String[]> getOptionGroup() {
+    String[] tronOption = new String[] {"version", "help", "shellConfFileName", "logbackPath",
+        "eventSubscribe"};
+    String[] dbOption = new String[] {"outputDirectory"};
+    String[] witnessOption = new String[] {"witness", "privateKey"};
+    String[] vmOption = new String[] {"debug"};
+
+    Map<String, String[]> optionGroupMap = new LinkedHashMap<>();
+    optionGroupMap.put("tron", tronOption);
+    optionGroupMap.put("db", dbOption);
+    optionGroupMap.put("witness", witnessOption);
+    optionGroupMap.put("virtual machine", vmOption);
+
+    for (String[] optionList : optionGroupMap.values()) {
+      for (String option : optionList) {
+        try {
+          CommonParameter.class.getField(option);
+        } catch (NoSuchFieldException e) {
+          logger.warn("NoSuchFieldException:{},{}", option, e.getMessage());
+        }
+      }
+    }
+    return optionGroupMap;
   }
 
   /**
@@ -405,6 +503,11 @@ public class Args extends CommonParameter {
             Optional.ofNullable(PARAMETER.storageTransactionHistorySwitch)
                 .filter(StringUtils::isNotEmpty)
                 .orElse(Storage.getTransactionHistorySwitchFromConfig(config)));
+
+    PARAMETER.storage
+        .setCheckpointVersion(Storage.getCheckpointVersionFromConfig(config));
+    PARAMETER.storage
+        .setCheckpointSync(Storage.getCheckpointSyncFromConfig(config));
 
     PARAMETER.storage.setEstimatedBlockTransactions(
         Storage.getEstimatedTransactionsFromConfig(config));
@@ -846,6 +949,10 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.COMMITTEE_ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX) ? config
             .getInt(Constant.COMMITTEE_ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX) : 0;
 
+    PARAMETER.allowNewRewardAlgorithm =
+        config.hasPath(Constant.COMMITTEE_ALLOW_NEW_REWARD_ALGORITHM) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_NEW_REWARD_ALGORITHM) : 0;
+
     initBackupProperty(config);
     if (Constant.ROCKSDB.equalsIgnoreCase(CommonParameter
         .getInstance().getStorage().getDbEngine())) {
@@ -927,6 +1034,32 @@ public class Args extends CommonParameter {
 
     if (config.hasPath(Constant.BLOCK_CACHE_TIMEOUT)) {
       PARAMETER.blockCacheTimeout = config.getLong(Constant.BLOCK_CACHE_TIMEOUT);
+    }
+
+    if (config.hasPath(Constant.ALLOW_NEW_REWARD)) {
+      PARAMETER.allowNewReward = config.getLong(Constant.ALLOW_NEW_REWARD);
+      if (PARAMETER.allowNewReward > 1) {
+        PARAMETER.allowNewReward = 1;
+      }
+      if (PARAMETER.allowNewReward < 0) {
+        PARAMETER.allowNewReward = 0;
+      }
+    }
+
+    if (config.hasPath(Constant.MEMO_FEE)) {
+      PARAMETER.memoFee = config.getLong(Constant.MEMO_FEE);
+      if (PARAMETER.memoFee > 1_000_000_000) {
+        PARAMETER.memoFee = 1_000_000_000;
+      }
+      if (PARAMETER.memoFee < 0) {
+        PARAMETER.memoFee = 0;
+      }
+    }
+
+    if (config.hasPath(Constant.ALLOW_DELEGATE_OPTIMIZATION)) {
+      PARAMETER.allowDelegateOptimization = config.getLong(Constant.ALLOW_DELEGATE_OPTIMIZATION);
+      PARAMETER.allowDelegateOptimization = Math.min(PARAMETER.allowDelegateOptimization, 1);
+      PARAMETER.allowDelegateOptimization = Math.max(PARAMETER.allowDelegateOptimization, 0);
     }
 
     logConfig();

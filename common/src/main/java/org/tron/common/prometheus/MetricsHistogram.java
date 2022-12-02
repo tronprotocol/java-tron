@@ -49,6 +49,11 @@ public class MetricsHistogram {
             "type","db");
     init(MetricKeys.Histogram.SNAPSHOT_SERVICE_VALUE_BYTES, "snapshot value bytes.","db");
     init(MetricKeys.Histogram.SNAPSHOT_SERVICE_LATENCY,"snapshot service latency","db","op");
+    init(MetricKeys.Histogram.MESSAGE_PROCESS_LATENCY, "process message latency.",
+        "type");
+    init(MetricKeys.Histogram.BLOCK_FETCH_LATENCY, "fetch block latency.");
+    init(MetricKeys.Histogram.BLOCK_RECEIVE_DELAY,
+        "receive block delay time, receiveTime - blockTime.");
   }
 
   private MetricsHistogram() {

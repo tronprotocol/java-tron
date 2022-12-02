@@ -67,6 +67,7 @@ public class ApplicationImpl implements Application {
     tronNetService.stop();
     consensusService.stop();
     synchronized (dbManager.getRevokingStore()) {
+      dbManager.getSession().reset();
       closeRevokingStore();
       closeAllStore();
     }

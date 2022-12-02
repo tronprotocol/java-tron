@@ -3,6 +3,7 @@ package org.tron.program;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import io.prometheus.client.CollectorRegistry;
+import com.beust.jcommander.JCommander;
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
@@ -60,7 +61,9 @@ public class FullNode {
     load(parameter.getLogbackPath());
 
     if (parameter.isHelp()) {
-      logger.info("Here is the help message.");
+      JCommander jCommander = JCommander.newBuilder().addObject(Args.PARAMETER).build();
+      jCommander.parse(args);
+      Args.printHelp(jCommander);
       return;
     }
 
