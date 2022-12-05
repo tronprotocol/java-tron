@@ -177,11 +177,3 @@ Thank you for considering to help out with the source code! If you'd like to con
 
 # License
 java-tron is released under the [LGPLv3 license](https://github.com/tronprotocol/java-tron/blob/master/LICENSE).
-
-
-
-The minimum hardware requirements are `CPU with 8 cores`,`16GB RAM` and `1TB free storage space` to sync the Mainnet, the recommended hardware requirements:
-* CPU with 16+ cores(32+ cores for a super representative)
-* 32+ GB RAM(64+ GB for a super representative)
-* High Performance SSD with at least 1.5TB free space
-* 100+ MB/s download Internet service
