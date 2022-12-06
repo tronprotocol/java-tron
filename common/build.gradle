@@ -37,7 +37,7 @@ repositories {
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
     compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.69'
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.10.3'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.13.4.1'
     compile "com.cedarsoftware:java-util:1.8.0"
     compile group: 'org.apache.httpcomponents', name: 'httpasyncclient', version: '4.1.1'
     compile group: 'commons-codec', name: 'commons-codec', version: '1.11'
