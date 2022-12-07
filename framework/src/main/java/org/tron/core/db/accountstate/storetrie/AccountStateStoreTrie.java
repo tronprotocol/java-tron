@@ -12,7 +12,7 @@ import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.db.accountstate.AccountStateEntity;
 import org.tron.core.db.accountstate.TrieService;
 import org.tron.core.db2.common.DB;
-import org.tron.core.trie.TrieImpl;
+import org.tron.core.state.trie.TrieImpl;
 
 @Slf4j(topic = "AccountState")
 @Component

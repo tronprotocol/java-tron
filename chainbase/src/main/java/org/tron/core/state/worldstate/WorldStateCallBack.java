@@ -1,6 +1,5 @@
-package org.tron.core.db.worldstate;
+package org.tron.core.state.worldstate;
 
-import com.google.protobuf.ByteString;
 import com.google.protobuf.Internal;
 import java.util.Arrays;
 import lombok.Setter;
@@ -11,8 +10,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.crypto.Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.db.accountstate.WorldStateCallBackUtils;
-import org.tron.core.trie.TrieImpl;
+import org.tron.core.state.trie.TrieImpl;
 
 @Slf4j(topic = "State")
 @Component
