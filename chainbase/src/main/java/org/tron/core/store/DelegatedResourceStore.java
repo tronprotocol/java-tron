@@ -36,7 +36,7 @@ public class DelegatedResourceStore extends TronStoreWithRevoking<DelegatedResou
 
   public void unLockExpireResource(byte[] from, byte[] to, long now) {
     byte[] lockKey = DelegatedResourceCapsule
-        .createLockDbKeyV2(from, to);
+        .createDbKeyV2(from, to, true);
     DelegatedResourceCapsule lockResource = get(lockKey);
     if (lockResource == null) {
       return;
@@ -47,7 +47,7 @@ public class DelegatedResourceStore extends TronStoreWithRevoking<DelegatedResou
     }
 
     byte[] unlockKey = DelegatedResourceCapsule
-        .createDbKeyV2(from, to);
+        .createDbKeyV2(from, to, false);
     DelegatedResourceCapsule unlockResource = get(unlockKey);
     if (unlockResource == null) {
       unlockResource = new DelegatedResourceCapsule(ByteString.copyFrom(from),

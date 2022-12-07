@@ -933,7 +933,7 @@ public class PrecompiledContractsTest {
 
     AccountCapsule targetAccount =
         tempRepository.createAccount(target, Protocol.AccountType.Normal);
-    byte[] key = DelegatedResourceCapsule.createDbKeyV2(fromAddr, targetAddr);
+    byte[] key = DelegatedResourceCapsule.createDbKeyV2(fromAddr, targetAddr, false);
     DelegatedResourceCapsule delegatedResource =
         new DelegatedResourceCapsule(
             ByteString.copyFrom(fromAddr), ByteString.copyFrom(targetAddr));

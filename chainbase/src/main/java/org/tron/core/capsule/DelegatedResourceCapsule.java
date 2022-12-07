@@ -41,12 +41,11 @@ public class DelegatedResourceCapsule implements ProtoCapsule<DelegatedResource>
     return key;
   }
 
-  public static byte[] createDbKeyV2(byte[] from, byte[] to) {
+  public static byte[] createDbKeyV2(byte[] from, byte[] to, boolean lock) {
+    if (lock) {
+      return Bytes.concat(V2_LOCK_PREFIX, from, to);
+    }
     return Bytes.concat(V2_PREFIX, from, to);
-  }
-
-  public static byte[] createLockDbKeyV2(byte[] from, byte[] to) {
-    return Bytes.concat(V2_LOCK_PREFIX, from, to);
   }
 
   public ByteString getFrom() {

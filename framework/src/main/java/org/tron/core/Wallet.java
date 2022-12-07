@@ -764,11 +764,18 @@ public class Wallet {
           ByteString fromAddress, ByteString toAddress) {
     DelegatedResourceList.Builder builder = DelegatedResourceList.newBuilder();
     byte[] dbKey = DelegatedResourceCapsule
-            .createDbKeyV2(fromAddress.toByteArray(), toAddress.toByteArray());
-    DelegatedResourceCapsule delegatedResourceCapsule = chainBaseManager.getDelegatedResourceStore()
-            .get(dbKey);
-    if (delegatedResourceCapsule != null) {
-      builder.addDelegatedResource(delegatedResourceCapsule.getInstance());
+        .createDbKeyV2(fromAddress.toByteArray(), toAddress.toByteArray(), false);
+    DelegatedResourceCapsule unlockResource = chainBaseManager.getDelegatedResourceStore()
+        .get(dbKey);
+    if (unlockResource != null) {
+      builder.addDelegatedResource(unlockResource.getInstance());
+    }
+    dbKey = DelegatedResourceCapsule
+        .createDbKeyV2(fromAddress.toByteArray(), toAddress.toByteArray(), true);
+    DelegatedResourceCapsule lockResource = chainBaseManager.getDelegatedResourceStore()
+        .get(dbKey);
+    if (lockResource != null) {
+      builder.addDelegatedResource(lockResource.getInstance());
     }
     return builder.build();
   }

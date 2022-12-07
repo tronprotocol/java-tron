@@ -154,7 +154,7 @@ public class DelegateResourceProcessor {
       long delegateBalance,
       Repository repo) {
     //modify DelegatedResourceStore
-    byte[] key = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress);
+    byte[] key = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress, false);
     DelegatedResourceCapsule delegatedResourceCapsule = repo.getDelegatedResource(key);
     if (delegatedResourceCapsule == null) {
       delegatedResourceCapsule = new DelegatedResourceCapsule(

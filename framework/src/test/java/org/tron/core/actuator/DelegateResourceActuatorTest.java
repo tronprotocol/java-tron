@@ -104,7 +104,9 @@ public class DelegateResourceActuatorTest {
 
     // clear delegate
     dbManager.getDelegatedResourceStore().delete(DelegatedResourceCapsule.createDbKeyV2(
-        owner, receiver));
+        owner, receiver, false));
+    dbManager.getDelegatedResourceStore().delete(DelegatedResourceCapsule.createDbKeyV2(
+        owner, receiver, true));
     dbManager.getDelegatedResourceAccountIndexStore().unDelegateV2(owner, receiver);
   }
 
@@ -333,7 +335,7 @@ public class DelegateResourceActuatorTest {
       DelegatedResourceCapsule delegatedResourceCapsule = dbManager.getDelegatedResourceStore()
           .get(DelegatedResourceCapsule
               .createDbKeyV2(ByteArray.fromHexString(OWNER_ADDRESS),
-                  ByteArray.fromHexString(RECEIVER_ADDRESS)));
+                  ByteArray.fromHexString(RECEIVER_ADDRESS), false));
 
       Assert.assertEquals(delegateBalance, delegatedResourceCapsule.getFrozenBalanceForBandwidth());
       long totalNetWeightAfter = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
@@ -392,7 +394,7 @@ public class DelegateResourceActuatorTest {
       Assert.assertEquals(0L, receiverCapsule.getTronPower());
 
       DelegatedResourceCapsule delegatedResourceCapsule = dbManager.getDelegatedResourceStore()
-          .get(DelegatedResourceCapsule.createDbKeyV2(owner, receiver));
+          .get(DelegatedResourceCapsule.createDbKeyV2(owner, receiver, false));
 
       Assert.assertEquals(0L, delegatedResourceCapsule.getFrozenBalanceForBandwidth());
       Assert.assertEquals(delegateBalance, delegatedResourceCapsule.getFrozenBalanceForEnergy());
