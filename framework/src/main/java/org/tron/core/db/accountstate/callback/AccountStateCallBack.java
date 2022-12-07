@@ -15,7 +15,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.accountstate.AccountStateCallBackUtils;
 import org.tron.core.db.accountstate.storetrie.AccountStateStoreTrie;
 import org.tron.core.exception.BadBlockException;
-import org.tron.core.trie.TrieImpl;
+import org.tron.core.state.trie.TrieImpl;
 
 
 @Slf4j(topic = "AccountState")

@@ -1,4 +1,4 @@
-package org.tron.core.trie;
+package org.tron.core.state.trie;
 
 import static org.tron.common.utils.ByteArray.toHexString;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;

@@ -17,8 +17,8 @@ import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.TronStoreWithRevoking;
-import org.tron.core.db.accountstate.StateType;
-import org.tron.core.db.accountstate.WorldStateCallBackUtils;
+import org.tron.core.state.worldstate.StateType;
+import org.tron.core.state.worldstate.WorldStateCallBackUtils;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 

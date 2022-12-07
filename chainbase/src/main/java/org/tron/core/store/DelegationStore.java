@@ -10,8 +10,8 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
-import org.tron.core.db.accountstate.StateType;
-import org.tron.core.db.accountstate.WorldStateCallBackUtils;
+import org.tron.core.state.worldstate.StateType;
+import org.tron.core.state.worldstate.WorldStateCallBackUtils;
 
 import java.math.BigInteger;
 
