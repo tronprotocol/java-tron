@@ -598,7 +598,7 @@ public class ProposalUtil {
         break;
       }
       case UNFREEZE_DELAY_DAYS: {
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_6)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_7)) {
           throw new ContractValidateException(
                   "Bad chain parameter id [UNFREEZE_DELAY_DAYS]");
         }

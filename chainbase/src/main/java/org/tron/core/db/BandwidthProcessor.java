@@ -36,12 +36,15 @@ public class BandwidthProcessor extends ResourceProcessor {
     this.chainBaseManager = chainBaseManager;
   }
 
-  public void updateUsage(AccountCapsule accountCapsule) {
+  public void updateUsageForDelegated(AccountCapsule ac) {
     long now = chainBaseManager.getHeadSlot();
-    updateUsage(accountCapsule, now);
+    long oldNetUsage = ac.getNetUsage();
+    long latestConsumeTime = ac.getLatestConsumeTime();
+    ac.setNetUsage(increase(ac, BANDWIDTH, oldNetUsage, 0, latestConsumeTime, now));
   }
 
-  private void updateUsage(AccountCapsule accountCapsule, long now) {
+  public void updateUsage(AccountCapsule accountCapsule) {
+    long now = chainBaseManager.getHeadSlot();
     long oldNetUsage = accountCapsule.getNetUsage();
     long latestConsumeTime = accountCapsule.getLatestConsumeTime();
     accountCapsule.setNetUsage(increase(accountCapsule, BANDWIDTH,

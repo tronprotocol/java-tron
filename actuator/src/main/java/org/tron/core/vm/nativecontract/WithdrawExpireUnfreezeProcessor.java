@@ -79,7 +79,7 @@ public class WithdrawExpireUnfreezeProcessor {
         .build());
     List<Protocol.Account.UnFreezeV2> newUnFreezeList = getRemainWithdrawList(unfrozenV2List, now);
     ownerCapsule.clearUnfrozenV2();
-    newUnFreezeList.forEach(ownerCapsule::addUnfrozenV2);
+    ownerCapsule.addAllUnfrozenV2(newUnFreezeList);
     repo.updateAccount(ownerCapsule.createDbKey(), ownerCapsule);
     return totalWithdrawUnfreeze;
   }

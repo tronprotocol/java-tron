@@ -23,7 +23,7 @@ abstract class ResourceProcessor {
   protected long windowSize;
   protected long averageWindowSize;
 
-  public ResourceProcessor(DynamicPropertiesStore dynamicPropertiesStore,
+  protected ResourceProcessor(DynamicPropertiesStore dynamicPropertiesStore,
       AccountStore accountStore) {
     this.dynamicPropertiesStore = dynamicPropertiesStore;
     this.accountStore = accountStore;
@@ -90,18 +90,15 @@ abstract class ResourceProcessor {
     return newUsage;
   }
 
-  public long unDelegateIncrease(AccountCapsule owner, AccountCapsule receiver,
+  public long unDelegateIncrease(AccountCapsule owner, final AccountCapsule receiver,
                        long transferUsage, ResourceCode resourceCode, long now) {
     long lastOwnerTime = owner.getLastConsumeTime(resourceCode);
-    long lastReceiverTime = receiver.getLastConsumeTime(resourceCode);
-    long ownerWindowSize = owner.getWindowSize(resourceCode);
-    long receiverWindowSize = receiver.getWindowSize(resourceCode);
     long ownerUsage = owner.getUsage(resourceCode);
     // Update itself first
     ownerUsage = increase(owner, resourceCode, ownerUsage, 0, lastOwnerTime, now);
 
-    long remainOwnerWindowSize = ownerWindowSize - (now - lastOwnerTime);
-    long remainReceiverWindowSize = receiverWindowSize - (now - lastReceiverTime);
+    long remainOwnerWindowSize = owner.getWindowSize(resourceCode);
+    long remainReceiverWindowSize = receiver.getWindowSize(resourceCode);
     remainOwnerWindowSize = remainOwnerWindowSize < 0 ? 0 : remainOwnerWindowSize;
     remainReceiverWindowSize = remainReceiverWindowSize < 0 ? 0 : remainReceiverWindowSize;
 

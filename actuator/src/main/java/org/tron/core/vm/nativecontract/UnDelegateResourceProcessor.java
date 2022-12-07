@@ -100,7 +100,7 @@ public class UnDelegateResourceProcessor {
       switch (param.getResourceType()) {
         case BANDWIDTH:
           BandwidthProcessor bandwidthProcessor = new BandwidthProcessor(ChainBaseManager.getInstance());
-          bandwidthProcessor.updateUsage(receiverCapsule);
+          bandwidthProcessor.updateUsageForDelegated(receiverCapsule);
 
           if (receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth()
               < unDelegateBalance) {

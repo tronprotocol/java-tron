@@ -67,10 +67,11 @@ public class UnDelegateResourceActuator extends AbstractActuator {
     long transferUsage = 0;
     // modify receiver Account
     if (receiverCapsule != null) {
+      long now = chainBaseManager.getHeadSlot();
       switch (unDelegateResourceContract.getResource()) {
         case BANDWIDTH:
           BandwidthProcessor bandwidthProcessor = new BandwidthProcessor(chainBaseManager);
-          bandwidthProcessor.updateUsage(receiverCapsule);
+          bandwidthProcessor.updateUsageForDelegated(receiverCapsule);
 
           if (receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth()
               < unDelegateBalance) {
@@ -89,7 +90,7 @@ public class UnDelegateResourceActuator extends AbstractActuator {
 
           long newNetUsage = receiverCapsule.getNetUsage() - transferUsage;
           receiverCapsule.setNetUsage(newNetUsage);
-          receiverCapsule.setLatestConsumeTime(chainBaseManager.getHeadSlot());
+          receiverCapsule.setLatestConsumeTime(now);
           break;
         case ENERGY:
           EnergyProcessor energyProcessor = new EnergyProcessor(dynamicStore, accountStore);
@@ -112,7 +113,7 @@ public class UnDelegateResourceActuator extends AbstractActuator {
 
           long newEnergyUsage = receiverCapsule.getEnergyUsage() - transferUsage;
           receiverCapsule.setEnergyUsage(newEnergyUsage);
-          receiverCapsule.setLatestConsumeTimeForEnergy(chainBaseManager.getHeadSlot());
+          receiverCapsule.setLatestConsumeTimeForEnergy(now);
           break;
         default:
           //this should never happen

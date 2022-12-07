@@ -142,7 +142,7 @@ public class DelegateResourceActuator extends AbstractActuator {
     switch (delegateResourceContract.getResource()) {
       case BANDWIDTH: {
         BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
-        processor.updateUsage(ownerCapsule);
+        processor.updateUsageForDelegated(ownerCapsule);
 
         long accountNetUsage = ownerCapsule.getNetUsage();
         if (null != this.getTx() && this.getTx().isTransactionCreate()) {
@@ -181,7 +181,7 @@ public class DelegateResourceActuator extends AbstractActuator {
 
         if (ownerCapsule.getFrozenV2BalanceForEnergy() - remainEnergyUsage < delegateBalance) {
           throw new ContractValidateException(
-                  "delegateBalance must be less than available FreezeEnergyV2Balance balance");
+                  "delegateBalance must be less than available FreezeEnergyV2 balance");
         }
       }
       break;

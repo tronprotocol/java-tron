@@ -58,7 +58,7 @@ public class WithdrawExpireUnfreezeActuator extends AbstractActuator {
         .build());
     List<UnFreezeV2> newUnFreezeList = getRemainWithdrawList(unfrozenV2List, now);
     accountCapsule.clearUnfrozenV2();
-    newUnFreezeList.forEach(accountCapsule::addUnfrozenV2);
+    accountCapsule.addAllUnfrozenV2(newUnFreezeList);
     accountStore.put(accountCapsule.createDbKey(), accountCapsule);
     ret.setWithdrawExpireAmount(totalWithdrawUnfreeze);
     ret.setStatus(fee, code.SUCESS);
