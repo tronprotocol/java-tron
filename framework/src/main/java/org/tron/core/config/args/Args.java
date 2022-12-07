@@ -72,6 +72,7 @@ import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.exception.CipherException;
 import org.tron.core.store.AccountStore;
+import org.tron.core.utils.ProposalUtil;
 import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
 import org.tron.program.Version;
@@ -1073,6 +1074,42 @@ public class Args extends CommonParameter {
       if (PARAMETER.unfreezeDelayDays < 0) {
         PARAMETER.unfreezeDelayDays = 0;
       }
+    }
+
+    if (config.hasPath(Constant.ALLOW_DYNAMIC_ENERGY)) {
+      PARAMETER.allowDynamicEnergy = config.getLong(Constant.ALLOW_DYNAMIC_ENERGY);
+      PARAMETER.allowDynamicEnergy = Math.min(PARAMETER.allowDynamicEnergy, 1);
+      PARAMETER.allowDynamicEnergy = Math.max(PARAMETER.allowDynamicEnergy, 0);
+    }
+
+    if (config.hasPath(Constant.DYNAMIC_ENERGY_THRESHOLD)) {
+      PARAMETER.dynamicEnergyThreshold = config.getLong(Constant.DYNAMIC_ENERGY_THRESHOLD);
+      PARAMETER.dynamicEnergyThreshold = Math.min(PARAMETER.dynamicEnergyThreshold, 100_000_000_000_000_000L);
+      PARAMETER.dynamicEnergyThreshold = Math.max(PARAMETER.dynamicEnergyThreshold, 0);
+    }
+
+    if (config.hasPath(Constant.DYNAMIC_ENERGY_INCREASE_FACTOR)) {
+      PARAMETER.dynamicEnergyIncreaseFactor = config.getLong(Constant.DYNAMIC_ENERGY_INCREASE_FACTOR);
+      PARAMETER.dynamicEnergyIncreaseFactor =
+          Math.min(PARAMETER.dynamicEnergyIncreaseFactor, 100_000_000_000_000_000L);
+      PARAMETER.dynamicEnergyIncreaseFactor =
+          Math.max(PARAMETER.dynamicEnergyIncreaseFactor, 0);
+    }
+
+    if (config.hasPath(Constant.DYNAMIC_ENERGY_MAX_FACTOR)) {
+      PARAMETER.dynamicEnergyMaxFactor = config.getLong(Constant.DYNAMIC_ENERGY_MAX_FACTOR);
+      PARAMETER.dynamicEnergyMaxFactor =
+          Math.min(PARAMETER.dynamicEnergyMaxFactor, 100_000_000_000_000_000L);
+      PARAMETER.dynamicEnergyMaxFactor =
+          Math.max(PARAMETER.dynamicEnergyMaxFactor, 0);
+    }
+
+    if (config.hasPath(Constant.DYNAMIC_ENERGY_TRIGGER_BASE)) {
+      PARAMETER.dynamicEnergyTriggerBase = config.getLong(Constant.DYNAMIC_ENERGY_TRIGGER_BASE);
+      PARAMETER.dynamicEnergyTriggerBase =
+          Math.min(PARAMETER.dynamicEnergyTriggerBase, 100_000_000_000_000_000L);
+      PARAMETER.dynamicEnergyTriggerBase =
+          Math.max(PARAMETER.dynamicEnergyTriggerBase, 0);
     }
 
     logConfig();

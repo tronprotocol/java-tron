@@ -192,6 +192,16 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] MEMO_FEE_HISTORY = "MEMO_FEE_HISTORY".getBytes();
   private static final byte[] ALLOW_DELEGATE_OPTIMIZATION =
       "ALLOW_DELEGATE_OPTIMIZATION".getBytes();
+  private static final byte[] ALLOW_DYNAMIC_ENERGY =
+      "ALLOW_DYNAMIC_ENERGY".getBytes();
+  private static final byte[] DYNAMIC_ENERGY_THRESHOLD =
+      "DYNAMIC_ENERGY_THRESHOLD".getBytes();
+  private static final byte[] DYNAMIC_ENERGY_INCREASE_FACTOR =
+      "DYNAMIC_ENERGY_INCREASE_FACTOR".getBytes();
+  private static final byte[] DYNAMIC_ENERGY_MAX_FACTOR =
+      "DYNAMIC_ENERGY_MAX_FACTOR".getBytes();
+  private static final byte[] DYNAMIC_ENERGY_TRIGGER_BASE =
+      "DYNAMIC_ENERGY_TRIGGER_BASE".getBytes();
 
   private static final byte[] UNFREEZE_DELAY_DAYS = "UNFREEZE_DELAY_DAYS".getBytes();
 
@@ -898,7 +908,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getUnfreezeDelayDays();
     } catch (IllegalArgumentException e) {
       this.saveUnfreezeDelayDays(
-              CommonParameter.getInstance().getUnfreezeDelayDays()
+          CommonParameter.getInstance().getUnfreezeDelayDays()
       );
     }
 
@@ -908,6 +918,36 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.saveAllowOptimizedReturnValueOfChainId(
           CommonParameter.getInstance().getAllowOptimizedReturnValueOfChainId()
       );
+    }
+
+    try {
+      this.getAllowDynamicEnergy();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowDynamicEnergy(CommonParameter.getInstance().getAllowDynamicEnergy());
+    }
+
+    try {
+      this.getDynamicEnergyThreshold();
+    } catch (IllegalArgumentException e) {
+      this.saveDynamicEnergyThreshold(CommonParameter.getInstance().getDynamicEnergyThreshold());
+    }
+
+    try {
+      this.getDynamicEnergyIncreaseFactor();
+    } catch (IllegalArgumentException e) {
+      this.saveDynamicEnergyIncreaseFactor(CommonParameter.getInstance().getDynamicEnergyIncreaseFactor());
+    }
+
+    try {
+      this.getDynamicEnergyMaxFactor();
+    } catch (IllegalArgumentException e) {
+      this.saveDynamicEnergyMaxFactor(CommonParameter.getInstance().getDynamicEnergyMaxFactor());
+    }
+
+    try {
+      this.getDynamicEnergyTriggerBase();
+    } catch (IllegalArgumentException e) {
+      this.saveDynamicEnergyTriggerBase(CommonParameter.getInstance().getDynamicEnergyTriggerBase());
     }
   }
 
@@ -2636,6 +2676,70 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public void saveAllowDelegateOptimization(long value) {
     this.put(ALLOW_DELEGATE_OPTIMIZATION, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getAllowDynamicEnergy() {
+    return Optional.ofNullable(getUnchecked(ALLOW_DYNAMIC_ENERGY))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_DYNAMIC_ENERGY"));
+  }
+
+  public boolean supportAllowDynamicEnergy() {
+    return getAllowDynamicEnergy() == 1L;
+  }
+
+  public void saveAllowDynamicEnergy(long value) {
+    this.put(ALLOW_DYNAMIC_ENERGY, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getDynamicEnergyThreshold() {
+    return Optional.ofNullable(getUnchecked(DYNAMIC_ENERGY_THRESHOLD))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found DYNAMIC_ENERGY_THRESHOLD"));
+  }
+
+  public void saveDynamicEnergyThreshold(long value) {
+    this.put(DYNAMIC_ENERGY_THRESHOLD, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getDynamicEnergyIncreaseFactor() {
+    return Optional.ofNullable(getUnchecked(DYNAMIC_ENERGY_INCREASE_FACTOR))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found DYNAMIC_ENERGY_INCREASE_FACTOR"));
+  }
+
+  public void saveDynamicEnergyIncreaseFactor(long value) {
+    this.put(DYNAMIC_ENERGY_INCREASE_FACTOR, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getDynamicEnergyMaxFactor() {
+    return Optional.ofNullable(getUnchecked(DYNAMIC_ENERGY_MAX_FACTOR))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found DYNAMIC_ENERGY_MAX_FACTOR"));
+  }
+
+  public void saveDynamicEnergyMaxFactor(long value) {
+    this.put(DYNAMIC_ENERGY_MAX_FACTOR, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getDynamicEnergyTriggerBase() {
+    return Optional.ofNullable(getUnchecked(DYNAMIC_ENERGY_TRIGGER_BASE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found DYNAMIC_ENERGY_TRIGGER_BASE"));
+  }
+
+  public void saveDynamicEnergyTriggerBase(long value) {
+    this.put(DYNAMIC_ENERGY_TRIGGER_BASE, new BytesCapsule(ByteArray.fromLong(value)));
   }
 
   public boolean allowNewReward() {

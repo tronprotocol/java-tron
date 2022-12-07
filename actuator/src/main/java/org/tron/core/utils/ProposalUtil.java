@@ -620,6 +620,32 @@ public class ProposalUtil {
         break;
       }
 
+      case ALLOW_DYNAMIC_ENERGY: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_7)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [UNFREEZE_DELAY_DAYS]");
+        }
+        if (value < 0 || value > 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_DYNAMIC_ENERGY] is only allowed to be in the range 0-1"
+          );
+        }
+        break;
+      }
+      case DYNAMIC_ENERGY_THRESHOLD:
+      case DYNAMIC_ENERGY_INCREASE_FACTOR:
+      case DYNAMIC_ENERGY_MAX_FACTOR:
+      case DYNAMIC_ENERGY_TRIGGER_BASE: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_7)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [UNFREEZE_DELAY_DAYS]");
+        }
+
+        if (value < 0 || value > LONG_VALUE) {
+          throw new ContractValidateException(LONG_VALUE_ERROR);
+        }
+        break;
+      }
       default:
         break;
     }
@@ -688,7 +714,12 @@ public class ProposalUtil {
     MEMO_FEE(68), // 0, [0, 1000_000_000]
     ALLOW_DELEGATE_OPTIMIZATION(69),
     UNFREEZE_DELAY_DAYS(70), // 0, [1, 365]
-    ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID(71); // 0, 1
+    ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID(71), // 0, 1
+    ALLOW_DYNAMIC_ENERGY(72), // 0, 1
+    DYNAMIC_ENERGY_THRESHOLD(73), // 0, [0, LONG]
+    DYNAMIC_ENERGY_INCREASE_FACTOR(74), // 0, [0, 1_000_000_000_000]
+    DYNAMIC_ENERGY_MAX_FACTOR(75), // 0, [0, 1_000_000_000_000]
+    DYNAMIC_ENERGY_TRIGGER_BASE(76); // 0, [0, 100_000_000]
 
     private long code;
 

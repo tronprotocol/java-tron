@@ -314,6 +314,16 @@ public class Constant {
   public static final String MEMO_FEE = "committee.memoFee";
   public static final String ALLOW_DELEGATE_OPTIMIZATION = "committee.allowDelegateOptimization";
 
+  public static final String ALLOW_DYNAMIC_ENERGY = "committee.allowDynamicEnergy";
+
+  public static final String DYNAMIC_ENERGY_THRESHOLD = "committee.dynamicEnergyThreshold";
+
+  public static final String DYNAMIC_ENERGY_INCREASE_FACTOR = "committee.dynamicEnergyIncreaseFactor";
+
+  public static final String DYNAMIC_ENERGY_MAX_FACTOR = "committee.dynamicEnergyMaxFactor";
+
+  public static final String DYNAMIC_ENERGY_TRIGGER_BASE = "committee.dynamicEnergyTriggerBase";
+
   public static final String LOCAL_HOST = "127.0.0.1";
 
   public static final String NODE_SHUTDOWN_BLOCK_TIME = "node.shutdown.BlockTime";

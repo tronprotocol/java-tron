@@ -1292,6 +1292,31 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowOptimizedReturnValueOfChainId())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowDynamicEnergy")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowDynamicEnergy())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getDynamicEnergyThreshold")
+        .setValue(dbManager.getDynamicPropertiesStore().getDynamicEnergyThreshold())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getDynamicEnergyIncreaseFactor")
+        .setValue(dbManager.getDynamicPropertiesStore().getDynamicEnergyIncreaseFactor())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getDynamicEnergyMaxFactor")
+        .setValue(dbManager.getDynamicPropertiesStore().getDynamicEnergyMaxFactor())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getDynamicEnergyTriggerBase")
+        .setValue(dbManager.getDynamicPropertiesStore().getDynamicEnergyTriggerBase())
+        .build());
+
     return builder.build();
   }
 
