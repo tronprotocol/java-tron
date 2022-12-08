@@ -15,7 +15,7 @@ public interface DB<K, V> extends Iterable<Map.Entry<K, V>>, Instance<DB<K, V>> 
 
   void remove(K k);
 
-  Iterator iterator();
+  Iterator<Map.Entry<K, V>> iterator();
 
   void close();
 
