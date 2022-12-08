@@ -104,7 +104,9 @@ public class DelegateResourceActuatorTest {
 
     // clear delegate
     dbManager.getDelegatedResourceStore().delete(DelegatedResourceCapsule.createDbKeyV2(
-        owner, receiver));
+        owner, receiver, false));
+    dbManager.getDelegatedResourceStore().delete(DelegatedResourceCapsule.createDbKeyV2(
+        owner, receiver, true));
     dbManager.getDelegatedResourceAccountIndexStore().unDelegateV2(owner, receiver);
   }
 
@@ -191,7 +193,7 @@ public class DelegateResourceActuatorTest {
       Assert.fail("cannot run here.");
     } catch (ContractValidateException e) {
       Assert.assertEquals(
-          "delegateBalance must be less than available FreezeEnergyV2Balance balance",
+          "delegateBalance must be less than available FreezeEnergyV2 balance",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.fail(e.getMessage());
@@ -251,7 +253,7 @@ public class DelegateResourceActuatorTest {
       Assert.fail("cannot run here.");
     } catch (ContractValidateException e) {
       Assert.assertEquals(
-          "delegateBalance must be less than available FreezeEnergyV2Balance balance",
+          "delegateBalance must be less than available FreezeEnergyV2 balance",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.fail(e.getMessage());
@@ -339,7 +341,7 @@ public class DelegateResourceActuatorTest {
       DelegatedResourceCapsule delegatedResourceCapsule = dbManager.getDelegatedResourceStore()
           .get(DelegatedResourceCapsule
               .createDbKeyV2(ByteArray.fromHexString(OWNER_ADDRESS),
-                  ByteArray.fromHexString(RECEIVER_ADDRESS)));
+                  ByteArray.fromHexString(RECEIVER_ADDRESS), false));
 
       Assert.assertEquals(delegateBalance, delegatedResourceCapsule.getFrozenBalanceForBandwidth());
       long totalNetWeightAfter = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
@@ -400,11 +402,11 @@ public class DelegateResourceActuatorTest {
       DelegatedResourceCapsule delegatedResourceCapsule = dbManager.getDelegatedResourceStore()
               .get(DelegatedResourceCapsule
                       .createDbKeyV2(ByteArray.fromHexString(OWNER_ADDRESS),
-                              ByteArray.fromHexString(RECEIVER_ADDRESS)));
+                              ByteArray.fromHexString(RECEIVER_ADDRESS), false));
       DelegatedResourceCapsule lockedResourceCapsule = dbManager.getDelegatedResourceStore()
               .get(DelegatedResourceCapsule
-                      .createLockDbKeyV2(ByteArray.fromHexString(OWNER_ADDRESS),
-                              ByteArray.fromHexString(RECEIVER_ADDRESS)));
+                      .createDbKeyV2(ByteArray.fromHexString(OWNER_ADDRESS),
+                              ByteArray.fromHexString(RECEIVER_ADDRESS), true));
       Assert.assertNull(delegatedResourceCapsule);
       Assert.assertNotNull(lockedResourceCapsule);
       Assert.assertNotEquals(0, lockedResourceCapsule.getExpireTimeForBandwidth());
@@ -465,7 +467,7 @@ public class DelegateResourceActuatorTest {
       Assert.assertEquals(0L, receiverCapsule.getTronPower());
 
       DelegatedResourceCapsule delegatedResourceCapsule = dbManager.getDelegatedResourceStore()
-          .get(DelegatedResourceCapsule.createDbKeyV2(owner, receiver));
+          .get(DelegatedResourceCapsule.createDbKeyV2(owner, receiver, false));
 
       Assert.assertEquals(0L, delegatedResourceCapsule.getFrozenBalanceForBandwidth());
       Assert.assertEquals(delegateBalance, delegatedResourceCapsule.getFrozenBalanceForEnergy());

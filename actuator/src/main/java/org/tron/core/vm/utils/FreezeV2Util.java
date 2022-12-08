@@ -67,7 +67,7 @@ public class FreezeV2Util {
       return 0;
     }
 
-    byte[] key = DelegatedResourceCapsule.createDbKeyV2(from, to);
+    byte[] key = DelegatedResourceCapsule.createDbKeyV2(from, to, false);
     DelegatedResourceCapsule delegatedResource = repository.getDelegatedResource(key);
     if (delegatedResource == null) {
       return 0;

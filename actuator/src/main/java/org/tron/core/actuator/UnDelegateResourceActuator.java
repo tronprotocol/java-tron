@@ -127,7 +127,7 @@ public class UnDelegateResourceActuator extends AbstractActuator {
         dynamicStore.getLatestBlockHeaderTimestamp());
 
     byte[] unlockKey = DelegatedResourceCapsule
-        .createDbKeyV2(ownerAddress, receiverAddress);
+        .createDbKeyV2(ownerAddress, receiverAddress, false);
     DelegatedResourceCapsule unlockResource = delegatedResourceStore
         .get(unlockKey);
 
@@ -180,7 +180,7 @@ public class UnDelegateResourceActuator extends AbstractActuator {
     }
 
     byte[] lockKey = DelegatedResourceCapsule
-        .createLockDbKeyV2(ownerAddress, receiverAddress);
+        .createDbKeyV2(ownerAddress, receiverAddress, true);
     DelegatedResourceCapsule lockResource = delegatedResourceStore
         .get(lockKey);
     if (lockResource == null && unlockResource == null) {
@@ -257,11 +257,11 @@ public class UnDelegateResourceActuator extends AbstractActuator {
     // }
 
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
-    byte[] key = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress);
-    DelegatedResourceCapsule delegatedResourceCapsule = delegatedResourceStore.get(key);
-    byte[] lockKey = DelegatedResourceCapsule.createLockDbKeyV2(ownerAddress, receiverAddress);
+    byte[] key = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress, false);
+    DelegatedResourceCapsule unlockResourceCapsule = delegatedResourceStore.get(key);
+    byte[] lockKey = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress, true);
     DelegatedResourceCapsule lockResourceCapsule = delegatedResourceStore.get(lockKey);
-    if (delegatedResourceCapsule == null && lockResourceCapsule == null) {
+    if (unlockResourceCapsule == null && lockResourceCapsule == null) {
       throw new ContractValidateException(
           "delegated Resource does not exist");
     }
@@ -273,8 +273,8 @@ public class UnDelegateResourceActuator extends AbstractActuator {
     switch (unDelegateResourceContract.getResource()) {
       case BANDWIDTH: {
         long delegateBalance = 0;
-        if (delegatedResourceCapsule != null) {
-          delegateBalance += delegatedResourceCapsule.getFrozenBalanceForBandwidth();
+        if (unlockResourceCapsule != null) {
+          delegateBalance += unlockResourceCapsule.getFrozenBalanceForBandwidth();
         }
         if (lockResourceCapsule != null
             && lockResourceCapsule.getExpireTimeForBandwidth() < now) {
@@ -289,8 +289,8 @@ public class UnDelegateResourceActuator extends AbstractActuator {
       break;
       case ENERGY: {
         long delegateBalance = 0;
-        if (delegatedResourceCapsule != null) {
-          delegateBalance += delegatedResourceCapsule.getFrozenBalanceForEnergy();
+        if (unlockResourceCapsule != null) {
+          delegateBalance += unlockResourceCapsule.getFrozenBalanceForEnergy();
         }
         if (lockResourceCapsule != null
             && lockResourceCapsule.getExpireTimeForEnergy() < now) {

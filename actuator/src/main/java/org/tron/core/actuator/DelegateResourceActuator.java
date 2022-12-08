@@ -153,15 +153,15 @@ public class DelegateResourceActuator extends AbstractActuator {
             (dynamicStore.getTotalNetWeight()) / dynamicStore.getTotalNetLimit()));
 
         long remainNetUsage = netUsage
-                - ownerCapsule.getFrozenBalance()
-                - ownerCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
-                - ownerCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth();
+            - ownerCapsule.getFrozenBalance()
+            - ownerCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
+            - ownerCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth();
 
         remainNetUsage = Math.max(0, remainNetUsage);
 
         if (ownerCapsule.getFrozenV2BalanceForBandwidth() - remainNetUsage < delegateBalance) {
           throw new ContractValidateException(
-                  "delegateBalance must be less than available FreezeBandwidthV2 balance");
+              "delegateBalance must be less than available FreezeBandwidthV2 balance");
         }
       }
       break;
@@ -173,9 +173,9 @@ public class DelegateResourceActuator extends AbstractActuator {
             (dynamicStore.getTotalEnergyWeight()) / dynamicStore.getTotalEnergyCurrentLimit()));
 
         long remainEnergyUsage = energyUsage
-                - ownerCapsule.getEnergyFrozenBalance()
-                - ownerCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()
-                - ownerCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy();
+            - ownerCapsule.getEnergyFrozenBalance()
+            - ownerCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()
+            - ownerCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy();
 
         remainEnergyUsage = Math.max(0, remainEnergyUsage);
 
@@ -245,10 +245,8 @@ public class DelegateResourceActuator extends AbstractActuator {
     long expireTime = 0;
     if (lock) {
       expireTime = now + DELEGATE_PERIOD;
-      key = DelegatedResourceCapsule.createLockDbKeyV2(ownerAddress, receiverAddress);
-    } else {
-      key = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress);
     }
+    key = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress, lock);
     DelegatedResourceCapsule delegatedResourceCapsule = delegatedResourceStore.get(key);
     if (delegatedResourceCapsule == null) {
       delegatedResourceCapsule = new DelegatedResourceCapsule(ByteString.copyFrom(ownerAddress),

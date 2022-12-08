@@ -98,9 +98,9 @@ public class UnDelegateResourceActuatorTest {
     byte[] owner = ByteArray.fromHexString(OWNER_ADDRESS);
     byte[] receiver = ByteArray.fromHexString(RECEIVER_ADDRESS);
     dbManager.getDelegatedResourceStore().delete(DelegatedResourceCapsule.createDbKeyV2(
-        owner, receiver));
-    dbManager.getDelegatedResourceStore().delete(DelegatedResourceCapsule.createLockDbKeyV2(
-            owner, receiver));
+        owner, receiver, false));
+    dbManager.getDelegatedResourceStore().delete(DelegatedResourceCapsule.createDbKeyV2(
+        owner, receiver, true));
     dbManager.getDelegatedResourceAccountIndexStore().unDelegateV2(owner, receiver);
     dbManager.getDynamicPropertiesStore().saveAllowDelegateResource(1);
   }
@@ -121,7 +121,7 @@ public class UnDelegateResourceActuatorTest {
         ByteString.copyFrom(receiver));
     delegatedResourceCapsule.setFrozenBalanceForBandwidth(delegateBalance, 0);
     dbManager.getDelegatedResourceStore().put(
-        DelegatedResourceCapsule.createDbKeyV2(owner, receiver), delegatedResourceCapsule);
+        DelegatedResourceCapsule.createDbKeyV2(owner, receiver, false), delegatedResourceCapsule);
 
     dbManager.getDelegatedResourceAccountIndexStore().delegateV2(owner, receiver, 1);
   }
@@ -142,7 +142,7 @@ public class UnDelegateResourceActuatorTest {
             ByteString.copyFrom(receiver));
     delegatedResourceCapsule.setFrozenBalanceForBandwidth(delegateBalance, period);
     dbManager.getDelegatedResourceStore().put(
-            DelegatedResourceCapsule.createLockDbKeyV2(owner, receiver), delegatedResourceCapsule);
+            DelegatedResourceCapsule.createDbKeyV2(owner, receiver, true), delegatedResourceCapsule);
 
     dbManager.getDelegatedResourceAccountIndexStore().delegateV2(owner, receiver, 1);
   }
@@ -163,7 +163,7 @@ public class UnDelegateResourceActuatorTest {
         ByteString.copyFrom(receiver));
     delegatedResourceCapsule.setFrozenBalanceForEnergy(delegateBalance, 0);
     dbManager.getDelegatedResourceStore().put(
-        DelegatedResourceCapsule.createDbKeyV2(owner, receiver), delegatedResourceCapsule);
+        DelegatedResourceCapsule.createDbKeyV2(owner, receiver, false), delegatedResourceCapsule);
 
     dbManager.getDelegatedResourceAccountIndexStore().delegateV2(owner, receiver, 1);
   }
@@ -236,7 +236,7 @@ public class UnDelegateResourceActuatorTest {
       Assert.assertEquals(0, receiverCapsule.getNetUsage());
 
       //check DelegatedResource
-      byte[] key = DelegatedResourceCapsule.createDbKeyV2(owner, receiver);
+      byte[] key = DelegatedResourceCapsule.createDbKeyV2(owner, receiver, false);
       DelegatedResourceCapsule delegatedCapsule = dbManager.getDelegatedResourceStore().get(key);
       Assert.assertNull(delegatedCapsule);
 
@@ -290,9 +290,9 @@ public class UnDelegateResourceActuatorTest {
       Assert.assertEquals(1_000_000_000, ownerCapsule.getNetUsage());
       Assert.assertEquals(1_000_000_000, receiverCapsule.getNetUsage());
       DelegatedResourceCapsule delegatedResourceCapsule = dbManager.getDelegatedResourceStore()
-              .get(DelegatedResourceCapsule.createDbKeyV2(owner, receiver));
+              .get(DelegatedResourceCapsule.createDbKeyV2(owner, receiver, false));
       DelegatedResourceCapsule lockedResourceCapsule = dbManager.getDelegatedResourceStore()
-              .get(DelegatedResourceCapsule.createLockDbKeyV2(owner, receiver));
+              .get(DelegatedResourceCapsule.createDbKeyV2(owner, receiver, true));
 
       Assert.assertNull(delegatedResourceCapsule);
       Assert.assertNotNull(lockedResourceCapsule);
@@ -303,9 +303,9 @@ public class UnDelegateResourceActuatorTest {
 
       // check
       DelegatedResourceCapsule delegatedResourceCapsule1 = dbManager.getDelegatedResourceStore()
-              .get(DelegatedResourceCapsule.createDbKeyV2(owner, receiver));
+              .get(DelegatedResourceCapsule.createDbKeyV2(owner, receiver, false));
       DelegatedResourceCapsule lockedResourceCapsule1 = dbManager.getDelegatedResourceStore()
-              .get(DelegatedResourceCapsule.createLockDbKeyV2(owner, receiver));
+              .get(DelegatedResourceCapsule.createDbKeyV2(owner, receiver, true));
       Assert.assertNull(delegatedResourceCapsule1);
       Assert.assertNull(lockedResourceCapsule1);
       // check owner
@@ -362,9 +362,9 @@ public class UnDelegateResourceActuatorTest {
       Assert.assertEquals(1_000_000_000, ownerCapsule.getNetUsage());
       Assert.assertEquals(1_000_000_000, receiverCapsule.getNetUsage());
       DelegatedResourceCapsule delegatedResourceCapsule = dbManager.getDelegatedResourceStore()
-              .get(DelegatedResourceCapsule.createDbKeyV2(owner, receiver));
+              .get(DelegatedResourceCapsule.createDbKeyV2(owner, receiver, false));
       DelegatedResourceCapsule lockedResourceCapsule = dbManager.getDelegatedResourceStore()
-              .get(DelegatedResourceCapsule.createLockDbKeyV2(owner, receiver));
+              .get(DelegatedResourceCapsule.createDbKeyV2(owner, receiver, true));
       Assert.assertNotNull(delegatedResourceCapsule);
       Assert.assertNotNull(lockedResourceCapsule);
 
@@ -374,9 +374,9 @@ public class UnDelegateResourceActuatorTest {
 
       // check DelegatedResource
       DelegatedResourceCapsule delegatedResourceCapsule1 = dbManager.getDelegatedResourceStore()
-              .get(DelegatedResourceCapsule.createDbKeyV2(owner, receiver));
+              .get(DelegatedResourceCapsule.createDbKeyV2(owner, receiver, false));
       DelegatedResourceCapsule lockedResourceCapsule1 = dbManager.getDelegatedResourceStore()
-              .get(DelegatedResourceCapsule.createLockDbKeyV2(owner, receiver));
+              .get(DelegatedResourceCapsule.createDbKeyV2(owner, receiver, true));
       Assert.assertNull(delegatedResourceCapsule1);
       Assert.assertNotNull(lockedResourceCapsule1);
       // check owner
@@ -431,9 +431,9 @@ public class UnDelegateResourceActuatorTest {
       Assert.assertEquals(1_000_000_000, ownerCapsule.getNetUsage());
       Assert.assertEquals(1_000_000_000, receiverCapsule.getNetUsage());
       DelegatedResourceCapsule delegatedResourceCapsule = dbManager.getDelegatedResourceStore()
-              .get(DelegatedResourceCapsule.createDbKeyV2(owner, receiver));
+              .get(DelegatedResourceCapsule.createDbKeyV2(owner, receiver, false));
       DelegatedResourceCapsule lockedResourceCapsule = dbManager.getDelegatedResourceStore()
-              .get(DelegatedResourceCapsule.createLockDbKeyV2(owner, receiver));
+              .get(DelegatedResourceCapsule.createDbKeyV2(owner, receiver, true));
       Assert.assertNull(delegatedResourceCapsule);
       Assert.assertNotNull(lockedResourceCapsule);
 
@@ -497,7 +497,7 @@ public class UnDelegateResourceActuatorTest {
       Assert.assertEquals(1000000000 / 2, receiverCapsule.getNetUsage());
 
       //check DelegatedResource
-      byte[] key = DelegatedResourceCapsule.createDbKeyV2(owner, receiver);
+      byte[] key = DelegatedResourceCapsule.createDbKeyV2(owner, receiver, false);
       DelegatedResourceCapsule delegatedResourceCapsule =
           dbManager.getDelegatedResourceStore().get(key);
       Assert.assertEquals(delegateBalance / 2,
@@ -550,7 +550,7 @@ public class UnDelegateResourceActuatorTest {
       Assert.assertNull(dbManager.getAccountStore().get(receiver));
 
       //check DelegatedResource
-      byte[] key = DelegatedResourceCapsule.createDbKeyV2(owner, receiver);
+      byte[] key = DelegatedResourceCapsule.createDbKeyV2(owner, receiver, false);
       DelegatedResourceCapsule delegatedResourceCapsule =
           dbManager.getDelegatedResourceStore().get(key);
       Assert.assertNull(delegatedResourceCapsule);
@@ -612,7 +612,7 @@ public class UnDelegateResourceActuatorTest {
       Assert.assertEquals(0, receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth());
 
       //check DelegatedResource
-      byte[] key = DelegatedResourceCapsule.createDbKeyV2(owner, receiver);
+      byte[] key = DelegatedResourceCapsule.createDbKeyV2(owner, receiver, false);
       DelegatedResourceCapsule delegatedCapsule = dbManager.getDelegatedResourceStore().get(key);
       Assert.assertNull(delegatedCapsule);
 
@@ -685,7 +685,7 @@ public class UnDelegateResourceActuatorTest {
       Assert.assertEquals(0, receiverCapsule.getEnergyUsage());
 
       //check DelegatedResource
-      byte[] key = DelegatedResourceCapsule.createDbKeyV2(owner, receiver);
+      byte[] key = DelegatedResourceCapsule.createDbKeyV2(owner, receiver, false);
       DelegatedResourceCapsule delegatedCapsule = dbManager.getDelegatedResourceStore().get(key);
       Assert.assertNull(delegatedCapsule);
 
@@ -754,7 +754,7 @@ public class UnDelegateResourceActuatorTest {
       Assert.assertEquals(1_000_000_000 / 2, receiverCapsule.getEnergyUsage());
 
       //check DelegatedResource
-      byte[] key = DelegatedResourceCapsule.createDbKeyV2(owner, receiver);
+      byte[] key = DelegatedResourceCapsule.createDbKeyV2(owner, receiver, false);
       DelegatedResourceCapsule delegatedCapsule = dbManager.getDelegatedResourceStore().get(key);
       Assert.assertEquals(delegateBalance / 2,
           delegatedCapsule.getFrozenBalanceForEnergy());
@@ -806,7 +806,7 @@ public class UnDelegateResourceActuatorTest {
       Assert.assertNull(dbManager.getAccountStore().get(receiver));
 
       //check DelegatedResource
-      byte[] key = DelegatedResourceCapsule.createDbKeyV2(owner, receiver);
+      byte[] key = DelegatedResourceCapsule.createDbKeyV2(owner, receiver, false);
       DelegatedResourceCapsule delegatedCapsule = dbManager.getDelegatedResourceStore().get(key);
       Assert.assertNull(delegatedCapsule);
 
@@ -867,7 +867,7 @@ public class UnDelegateResourceActuatorTest {
       Assert.assertEquals(0, receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy());
 
       //check DelegatedResource
-      byte[] key = DelegatedResourceCapsule.createDbKeyV2(owner, receiver);
+      byte[] key = DelegatedResourceCapsule.createDbKeyV2(owner, receiver, false);
       DelegatedResourceCapsule delegatedResourceCapsule =
           dbManager.getDelegatedResourceStore().get(key);
       Assert.assertNull(delegatedResourceCapsule);
