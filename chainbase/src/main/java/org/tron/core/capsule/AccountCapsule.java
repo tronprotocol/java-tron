@@ -19,6 +19,7 @@ import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.utils.AssetUtil;
 import org.tron.core.store.AssetIssueStore;
@@ -1324,6 +1325,13 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       return;
     }
     this.account = this.account.toBuilder().addUnfrozenV2(unfrozenV2).build();
+  }
+
+  public void addAllUnfrozenV2(List<UnFreezeV2> unFreezeV2List) {
+    if (CollectionUtils.isEmpty(unFreezeV2List)) {
+      return;
+    }
+    this.account = this.account.toBuilder().addAllUnfrozenV2(unFreezeV2List).build();
   }
 
   public void clearUnfrozenV2() {

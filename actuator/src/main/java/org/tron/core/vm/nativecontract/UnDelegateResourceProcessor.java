@@ -55,7 +55,7 @@ public class UnDelegateResourceProcessor {
           "receiverAddress must not be the same as ownerAddress");
     }
 
-    byte[] key = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress);
+    byte[] key = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress, false);
     DelegatedResourceCapsule delegatedResourceCapsule = repo.getDelegatedResource(key);
     if (delegatedResourceCapsule == null) {
       throw new ContractValidateException(
@@ -100,7 +100,7 @@ public class UnDelegateResourceProcessor {
       switch (param.getResourceType()) {
         case BANDWIDTH:
           BandwidthProcessor bandwidthProcessor = new BandwidthProcessor(ChainBaseManager.getInstance());
-          bandwidthProcessor.updateUsage(receiverCapsule);
+          bandwidthProcessor.updateUsageForDelegated(receiverCapsule);
 
           if (receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth()
               < unDelegateBalance) {
@@ -153,7 +153,7 @@ public class UnDelegateResourceProcessor {
     }
 
     // modify owner Account
-    byte[] key = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress);
+    byte[] key = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress, false);
     DelegatedResourceCapsule delegatedResourceCapsule = repo.getDelegatedResource(key);
     switch (param.getResourceType()) {
       case BANDWIDTH: {

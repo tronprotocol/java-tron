@@ -543,7 +543,7 @@ public class Program {
 
     // merge usage
     BandwidthProcessor bandwidthProcessor = new BandwidthProcessor(ChainBaseManager.getInstance());
-    bandwidthProcessor.updateUsage(ownerCapsule);
+    bandwidthProcessor.updateUsageForDelegated(ownerCapsule);
     ownerCapsule.setLatestConsumeTime(now);
     if (ownerCapsule.getNetUsage() > 0) {
       long newNetUsage =

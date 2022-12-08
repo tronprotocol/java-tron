@@ -1,6 +1,7 @@
 package org.tron.core.actuator;
 
 import static junit.framework.TestCase.fail;
+import static org.junit.Assert.assertEquals;
 import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
 import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 
@@ -39,12 +40,12 @@ public class WithdrawExpireUnfreezeActuatorTest {
 
   private static final String dbPath = "output_withdraw_expire_unfreeze_test";
   private static final String OWNER_ADDRESS;
-  private static final String OWNER_ADDRESS_INVALID = "aaaa";
+  private static final String OWNER_ADDRESS_INVALID = "abc";
   private static final String OWNER_ACCOUNT_INVALID;
   private static final long initBalance = 10_000_000_000L;
   private static final long allowance = 32_000_000L;
   private static Manager dbManager;
-  private static TronApplicationContext context;
+  private static final TronApplicationContext context;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
@@ -110,7 +111,7 @@ public class WithdrawExpireUnfreezeActuatorTest {
     byte[] address = ByteArray.fromHexString(OWNER_ADDRESS);
 
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
-    Assert.assertEquals(accountCapsule.getLatestWithdrawTime(), 0);
+    assertEquals(0, accountCapsule.getLatestWithdrawTime());
 
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address), 100,
         "http://baidu.com");
@@ -125,18 +126,16 @@ public class WithdrawExpireUnfreezeActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      Assert.assertEquals(code.SUCESS, ret.getInstance().getRet());
+      assertEquals(code.SUCESS, ret.getInstance().getRet());
       AccountCapsule owner = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       List<UnFreezeV2> unfrozenV2List = owner.getInstance().getUnfrozenV2List();
-      Assert.assertEquals(1, unfrozenV2List.size());
-      Assert.assertEquals(Long.MAX_VALUE, unfrozenV2List.get(0).getUnfreezeExpireTime());
-      Assert.assertEquals(initBalance + 32_000_000L, owner.getBalance());
-      Assert.assertEquals(32_000_000L, ret.getWithdrawExpireAmount());
-    } catch (ContractValidateException e) {
-      Assert.assertFalse(e instanceof ContractValidateException);
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
+      assertEquals(1, unfrozenV2List.size());
+      assertEquals(Long.MAX_VALUE, unfrozenV2List.get(0).getUnfreezeExpireTime());
+      assertEquals(initBalance + 32_000_000L, owner.getBalance());
+      assertEquals(32_000_000L, ret.getWithdrawExpireAmount());
+    } catch (ContractValidateException | ContractExeException e) {
+      fail();
     }
   }
 
@@ -155,12 +154,9 @@ public class WithdrawExpireUnfreezeActuatorTest {
       fail("cannot run here.");
 
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-
-      Assert.assertEquals("Invalid address", e.getMessage());
-
+      assertEquals("Invalid address", e.getMessage());
     } catch (ContractExeException e) {
-      Assert.assertTrue(e instanceof ContractExeException);
+      Assert.fail(e.getMessage());
     }
 
   }
@@ -178,10 +174,9 @@ public class WithdrawExpireUnfreezeActuatorTest {
       actuator.execute(ret);
       fail("cannot run here.");
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Account[" + OWNER_ACCOUNT_INVALID + "] not exists", e.getMessage());
+      assertEquals("Account[" + OWNER_ACCOUNT_INVALID + "] not exists", e.getMessage());
     } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
+      Assert.fail();
     }
   }
 
@@ -209,8 +204,8 @@ public class WithdrawExpireUnfreezeActuatorTest {
       fail("BalanceInsufficientException");
     }
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
-    Assert.assertEquals(accountCapsule.getAllowance(), allowance);
-    Assert.assertEquals(accountCapsule.getLatestWithdrawTime(), 0);
+    assertEquals(allowance, accountCapsule.getAllowance());
+    assertEquals(0, accountCapsule.getLatestWithdrawTime());
 
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address), 100,
         "http://google.com");

@@ -67,10 +67,11 @@ public class UnDelegateResourceActuator extends AbstractActuator {
     long transferUsage = 0;
     // modify receiver Account
     if (receiverCapsule != null) {
+      long now = chainBaseManager.getHeadSlot();
       switch (unDelegateResourceContract.getResource()) {
         case BANDWIDTH:
           BandwidthProcessor bandwidthProcessor = new BandwidthProcessor(chainBaseManager);
-          bandwidthProcessor.updateUsage(receiverCapsule);
+          bandwidthProcessor.updateUsageForDelegated(receiverCapsule);
 
           if (receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth()
               < unDelegateBalance) {
@@ -89,7 +90,7 @@ public class UnDelegateResourceActuator extends AbstractActuator {
 
           long newNetUsage = receiverCapsule.getNetUsage() - transferUsage;
           receiverCapsule.setNetUsage(newNetUsage);
-          receiverCapsule.setLatestConsumeTime(chainBaseManager.getHeadSlot());
+          receiverCapsule.setLatestConsumeTime(now);
           break;
         case ENERGY:
           EnergyProcessor energyProcessor = new EnergyProcessor(dynamicStore, accountStore);
@@ -112,7 +113,7 @@ public class UnDelegateResourceActuator extends AbstractActuator {
 
           long newEnergyUsage = receiverCapsule.getEnergyUsage() - transferUsage;
           receiverCapsule.setEnergyUsage(newEnergyUsage);
-          receiverCapsule.setLatestConsumeTimeForEnergy(chainBaseManager.getHeadSlot());
+          receiverCapsule.setLatestConsumeTimeForEnergy(now);
           break;
         default:
           //this should never happen
@@ -121,16 +122,20 @@ public class UnDelegateResourceActuator extends AbstractActuator {
       accountStore.put(receiverCapsule.createDbKey(), receiverCapsule);
     }
 
+    // transfer lock delegate to unlock
+    delegatedResourceStore.unLockExpireResource(ownerAddress, receiverAddress,
+        dynamicStore.getLatestBlockHeaderTimestamp());
+
+    byte[] unlockKey = DelegatedResourceCapsule
+        .createDbKeyV2(ownerAddress, receiverAddress, false);
+    DelegatedResourceCapsule unlockResource = delegatedResourceStore
+        .get(unlockKey);
+
     // modify owner Account
     AccountCapsule ownerCapsule = accountStore.get(ownerAddress);
-    byte[] key = DelegatedResourceCapsule
-        .createDbKeyV2(unDelegateResourceContract.getOwnerAddress().toByteArray(),
-            unDelegateResourceContract.getReceiverAddress().toByteArray());
-    DelegatedResourceCapsule delegatedResourceCapsule = delegatedResourceStore
-        .get(key);
     switch (unDelegateResourceContract.getResource()) {
       case BANDWIDTH: {
-        delegatedResourceCapsule.addFrozenBalanceForBandwidth(-unDelegateBalance, 0);
+        unlockResource.addFrozenBalanceForBandwidth(-unDelegateBalance, 0);
 
         ownerCapsule.addDelegatedFrozenV2BalanceForBandwidth(-unDelegateBalance);
         ownerCapsule.addFrozenBalanceForBandwidthV2(unDelegateBalance);
@@ -146,7 +151,7 @@ public class UnDelegateResourceActuator extends AbstractActuator {
       }
       break;
       case ENERGY: {
-        delegatedResourceCapsule.addFrozenBalanceForEnergy(-unDelegateBalance, 0);
+        unlockResource.addFrozenBalanceForEnergy(-unDelegateBalance, 0);
 
         ownerCapsule.addDelegatedFrozenV2BalanceForEnergy(-unDelegateBalance);
         ownerCapsule.addFrozenBalanceForEnergyV2(unDelegateBalance);
@@ -166,14 +171,21 @@ public class UnDelegateResourceActuator extends AbstractActuator {
         break;
     }
 
-    if (delegatedResourceCapsule.getFrozenBalanceForBandwidth() == 0
-        && delegatedResourceCapsule.getFrozenBalanceForEnergy() == 0) {
-      delegatedResourceStore.delete(key);
+    if (unlockResource.getFrozenBalanceForBandwidth() == 0
+        && unlockResource.getFrozenBalanceForEnergy() == 0) {
+      delegatedResourceStore.delete(unlockKey);
+      unlockResource = null;
+    } else {
+      delegatedResourceStore.put(unlockKey, unlockResource);
+    }
 
+    byte[] lockKey = DelegatedResourceCapsule
+        .createDbKeyV2(ownerAddress, receiverAddress, true);
+    DelegatedResourceCapsule lockResource = delegatedResourceStore
+        .get(lockKey);
+    if (lockResource == null && unlockResource == null) {
       //modify DelegatedResourceAccountIndexStore
       delegatedResourceAccountIndexStore.unDelegateV2(ownerAddress, receiverAddress);
-    } else {
-      delegatedResourceStore.put(key, delegatedResourceCapsule);
     }
 
     accountStore.put(ownerAddress, ownerCapsule);
@@ -244,11 +256,12 @@ public class UnDelegateResourceActuator extends AbstractActuator {
     //       "Receiver Account[" + readableReceiverAddress + "] does not exist");
     // }
 
-    byte[] key = DelegatedResourceCapsule
-        .createDbKeyV2(unDelegateResourceContract.getOwnerAddress().toByteArray(),
-            unDelegateResourceContract.getReceiverAddress().toByteArray());
-    DelegatedResourceCapsule delegatedResourceCapsule = delegatedResourceStore.get(key);
-    if (delegatedResourceCapsule == null) {
+    long now = dynamicStore.getLatestBlockHeaderTimestamp();
+    byte[] key = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress, false);
+    DelegatedResourceCapsule unlockResourceCapsule = delegatedResourceStore.get(key);
+    byte[] lockKey = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress, true);
+    DelegatedResourceCapsule lockResourceCapsule = delegatedResourceStore.get(lockKey);
+    if (unlockResourceCapsule == null && lockResourceCapsule == null) {
       throw new ContractValidateException(
           "delegated Resource does not exist");
     }
@@ -258,23 +271,41 @@ public class UnDelegateResourceActuator extends AbstractActuator {
       throw new ContractValidateException("unDelegateBalance must be more than 0 TRX");
     }
     switch (unDelegateResourceContract.getResource()) {
-      case BANDWIDTH:
-        if (delegatedResourceCapsule.getFrozenBalanceForBandwidth() < unDelegateBalance) {
-          throw new ContractValidateException("insufficient delegatedFrozenBalance(BANDWIDTH), request="
-              + unDelegateBalance + ", balance=" + delegatedResourceCapsule.getFrozenBalanceForBandwidth());
+      case BANDWIDTH: {
+        long delegateBalance = 0;
+        if (unlockResourceCapsule != null) {
+          delegateBalance += unlockResourceCapsule.getFrozenBalanceForBandwidth();
         }
-        break;
-      case ENERGY:
-        if (delegatedResourceCapsule.getFrozenBalanceForEnergy() < unDelegateBalance) {
+        if (lockResourceCapsule != null
+            && lockResourceCapsule.getExpireTimeForBandwidth() < now) {
+          delegateBalance += lockResourceCapsule.getFrozenBalanceForBandwidth();
+        }
+        if (delegateBalance < unDelegateBalance) {
+          throw new ContractValidateException(
+              "insufficient delegatedFrozenBalance(BANDWIDTH), request="
+                  + unDelegateBalance + ", unlock_balance=" + delegateBalance);
+        }
+      }
+      break;
+      case ENERGY: {
+        long delegateBalance = 0;
+        if (unlockResourceCapsule != null) {
+          delegateBalance += unlockResourceCapsule.getFrozenBalanceForEnergy();
+        }
+        if (lockResourceCapsule != null
+            && lockResourceCapsule.getExpireTimeForEnergy() < now) {
+          delegateBalance += lockResourceCapsule.getFrozenBalanceForEnergy();
+        }
+        if (delegateBalance < unDelegateBalance) {
           throw new ContractValidateException("insufficient delegateFrozenBalance(Energy), request="
-              + unDelegateBalance + ", balance=" + delegatedResourceCapsule.getFrozenBalanceForEnergy());
+              + unDelegateBalance + ", unlock_balance=" + delegateBalance);
         }
-        break;
+      }
+      break;
       default:
         throw new ContractValidateException(
             "ResourceCode error.valid ResourceCode[BANDWIDTH、Energy]");
     }
-
 
     return true;
   }

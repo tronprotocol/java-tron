@@ -547,7 +547,7 @@ public class FreezeV2Test {
 
     DelegatedResourceStore delegatedResourceStore = manager.getDelegatedResourceStore();
     DelegatedResourceCapsule oldDelegatedResource = delegatedResourceStore.get(
-        DelegatedResourceCapsule.createDbKeyV2(contractAddr, receiverAddr));
+        DelegatedResourceCapsule.createDbKeyV2(contractAddr, receiverAddr, false));
     if (oldDelegatedResource == null) {
       oldDelegatedResource = new DelegatedResourceCapsule(
           ByteString.copyFrom(contractAddr),
@@ -586,7 +586,7 @@ public class FreezeV2Test {
     Assert.assertArrayEquals(oldReceiver.getData(), newReceiver.getData());
 
     DelegatedResourceCapsule newDelegatedResource = manager.getDelegatedResourceStore().get(
-        DelegatedResourceCapsule.createDbKeyV2(contractAddr, receiverAddr));
+        DelegatedResourceCapsule.createDbKeyV2(contractAddr, receiverAddr, false));
     Assert.assertNotNull(newDelegatedResource);
     if (res == 0) {
       Assert.assertEquals(amount + oldDelegatedResource.getFrozenBalanceForBandwidth(),
@@ -641,7 +641,7 @@ public class FreezeV2Test {
 
     DelegatedResourceStore delegatedResourceStore = manager.getDelegatedResourceStore();
     DelegatedResourceCapsule oldDelegatedResource = delegatedResourceStore.get(
-        DelegatedResourceCapsule.createDbKeyV2(contractAddr, receiverAddr));
+        DelegatedResourceCapsule.createDbKeyV2(contractAddr, receiverAddr, false));
     Assert.assertNotNull(oldDelegatedResource);
     long delegatedFrozenBalance = res == 0 ? oldDelegatedResource.getFrozenBalanceForBandwidth() :
         oldDelegatedResource.getFrozenBalanceForEnergy();
@@ -692,7 +692,7 @@ public class FreezeV2Test {
 
     // check delegated resource store
     DelegatedResourceCapsule newDelegatedResource = delegatedResourceStore.get(
-        DelegatedResourceCapsule.createDbKeyV2(contractAddr, receiverAddr));
+        DelegatedResourceCapsule.createDbKeyV2(contractAddr, receiverAddr, false));
     Assert.assertNotNull(newDelegatedResource);
     if (res == 0) {
       Assert.assertEquals(0, newDelegatedResource.getFrozenBalanceForBandwidth());

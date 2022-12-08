@@ -52,7 +52,7 @@ public class DelegateResourceProcessor {
     switch (param.getResourceType()) {
       case BANDWIDTH: {
         BandwidthProcessor processor = new BandwidthProcessor(ChainBaseManager.getInstance());
-        processor.updateUsage(ownerCapsule);
+        processor.updateUsageForDelegated(ownerCapsule);
 
         long netUsage = (long) (ownerCapsule.getNetUsage() * TRX_PRECISION * ((double)
             (repo.getTotalNetWeight()) / dynamicStore.getTotalNetLimit()));
@@ -87,7 +87,7 @@ public class DelegateResourceProcessor {
 
         if (ownerCapsule.getFrozenV2BalanceForEnergy() - remainEnergyUsage < delegateBalance) {
           throw new ContractValidateException(
-                  "delegateBalance must be less than available FreezeEnergyV2Balance balance");
+                  "delegateBalance must be less than available FreezeEnergyV2 balance");
         }
       }
       break;
@@ -154,7 +154,7 @@ public class DelegateResourceProcessor {
       long delegateBalance,
       Repository repo) {
     //modify DelegatedResourceStore
-    byte[] key = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress);
+    byte[] key = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress, false);
     DelegatedResourceCapsule delegatedResourceCapsule = repo.getDelegatedResource(key);
     if (delegatedResourceCapsule == null) {
       delegatedResourceCapsule = new DelegatedResourceCapsule(

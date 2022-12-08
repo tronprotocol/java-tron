@@ -102,6 +102,7 @@ message DelegateResourceContract {
   ResourceCode resource = 2;
   int64 balance = 3;
   bytes receiver_address = 4;
+  bool  lock = 5;
 }
 
 message UnDelegateResourceContract {
