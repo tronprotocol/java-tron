@@ -141,8 +141,8 @@ public class UnDelegateResourceActuatorTest {
             ByteString.copyFrom(owner),
             ByteString.copyFrom(receiver));
     delegatedResourceCapsule.setFrozenBalanceForBandwidth(delegateBalance, period);
-    dbManager.getDelegatedResourceStore().put(
-            DelegatedResourceCapsule.createDbKeyV2(owner, receiver, true), delegatedResourceCapsule);
+    dbManager.getDelegatedResourceStore().put(DelegatedResourceCapsule
+        .createDbKeyV2(owner, receiver, true), delegatedResourceCapsule);
 
     dbManager.getDelegatedResourceAccountIndexStore().delegateV2(owner, receiver, 1);
   }

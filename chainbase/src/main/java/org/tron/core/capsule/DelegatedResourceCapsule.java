@@ -10,8 +10,8 @@ import org.tron.protos.Protocol.DelegatedResource;
 @Slf4j(topic = "capsule")
 public class DelegatedResourceCapsule implements ProtoCapsule<DelegatedResource> {
 
-  public static final byte[] V2_PREFIX = new byte[]{0x01};
-  public static final byte[] V2_LOCK_PREFIX = new byte[]{0x02};
+  protected static final byte[] V2_PREFIX = new byte[]{0x01};
+  protected static final byte[] V2_LOCK_PREFIX = new byte[]{0x02};
 
   private DelegatedResource delegatedResource;
 
