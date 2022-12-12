@@ -1,6 +1,9 @@
 package org.tron.common.parameter;
 
 import com.beust.jcommander.Parameter;
+
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -11,7 +14,6 @@ import org.tron.common.args.GenesisBlock;
 import org.tron.common.config.DbBackupConfig;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
-import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.setting.RocksDbSettings;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Overlay;
@@ -390,12 +392,12 @@ public class CommonParameter {
   public GenesisBlock genesisBlock;
   @Getter
   @Setter
-  public List<Node> activeNodes;
+  public List<InetSocketAddress> activeNodes;
   @Getter
   @Setter
-  public List<Node> passiveNodes;
+  public List<InetAddress> passiveNodes;
   @Getter
-  public List<Node> fastForwardNodes;
+  public List<InetSocketAddress> fastForwardNodes;
   @Getter
   public int maxFastForwardNum;
   @Getter
