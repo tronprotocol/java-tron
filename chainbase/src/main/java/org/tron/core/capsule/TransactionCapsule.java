@@ -108,6 +108,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   private byte[] ownerAddress;
   private Sha256Hash id;
 
+  @Getter
+  @Setter
+  private boolean isTransactionCreate = false;
+
   public byte[] getOwnerAddress() {
     if (this.ownerAddress == null) {
       this.ownerAddress = getOwner(this.transaction.getRawData().getContract(0));

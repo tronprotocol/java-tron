@@ -2,12 +2,14 @@ package org.tron.core.vm.repository;
 
 import static java.lang.Long.max;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.protobuf.ByteString;
 import java.util.HashMap;
 import java.util.Optional;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.bouncycastle.util.Strings;
 import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
@@ -61,16 +63,16 @@ import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.DelegatedResource;
 import org.tron.protos.Protocol.Votes;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.Common;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 
 @Slf4j(topic = "Repository")
 public class RepositoryImpl implements Repository {
 
   private final long precision = Parameter.ChainConstant.PRECISION;
-  private final long windowSize = Parameter.ChainConstant.WINDOW_SIZE_MS
-      / BLOCK_PRODUCED_INTERVAL;
   private static final byte[] TOTAL_NET_WEIGHT = "TOTAL_NET_WEIGHT".getBytes();
   private static final byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
+  private static final byte[] TOTAL_TRON_POWER_WEIGHT = "TOTAL_TRON_POWER_WEIGHT".getBytes();
 
   private StoreFactory storeFactory;
   @Getter
@@ -164,9 +166,68 @@ public class RepositoryImpl implements Repository {
     long latestConsumeTime = accountCapsule.getAccountResource().getLatestConsumeTimeForEnergy();
     long energyLimit = calculateGlobalEnergyLimit(accountCapsule);
 
-    long newEnergyUsage = increase(energyUsage, 0, latestConsumeTime, now);
+    long windowSize = accountCapsule.getWindowSize(Common.ResourceCode.ENERGY);
+
+    long newEnergyUsage = recover(energyUsage, latestConsumeTime, now, windowSize);
 
     return max(energyLimit - newEnergyUsage, 0); // us
+  }
+
+  @Override
+  public long getAccountEnergyUsage(AccountCapsule accountCapsule) {
+    long now = getHeadSlot();
+    long energyUsage = accountCapsule.getEnergyUsage();
+    long latestConsumeTime = accountCapsule.getAccountResource().getLatestConsumeTimeForEnergy();
+
+    long accountWindowSize = accountCapsule.getWindowSize(Common.ResourceCode.ENERGY);
+
+    return recover(energyUsage, latestConsumeTime, now, accountWindowSize);
+  }
+
+  public Pair<Long, Long> getAccountEnergyUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule) {
+    long now = getHeadSlot();
+
+    long energyUsage = accountCapsule.getEnergyUsage();
+    long latestConsumeTime = accountCapsule.getAccountResource().getLatestConsumeTimeForEnergy();
+    long accountWindowSize = accountCapsule.getWindowSize(Common.ResourceCode.ENERGY);
+
+    if (now >= latestConsumeTime + accountWindowSize) {
+      return Pair.of(0L, 0L);
+    }
+
+    long restoreSlots = latestConsumeTime + accountWindowSize - now;
+
+    long newEnergyUsage = recover(energyUsage, latestConsumeTime, now, accountWindowSize);
+
+    long totalEnergyLimit = getDynamicPropertiesStore().getTotalEnergyCurrentLimit();
+    long totalEnergyWeight = getTotalEnergyWeight();
+
+    long balance = (long) ((double) newEnergyUsage * totalEnergyWeight / totalEnergyLimit * TRX_PRECISION);
+
+    return Pair.of(balance, restoreSlots * BLOCK_PRODUCED_INTERVAL / 1_000);
+  }
+
+  public Pair<Long, Long> getAccountNetUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule) {
+    long now = getHeadSlot();
+
+    long netUsage = accountCapsule.getNetUsage();
+    long latestConsumeTime = accountCapsule.getLatestConsumeTime();
+    long accountWindowSize = accountCapsule.getWindowSize(Common.ResourceCode.BANDWIDTH);
+
+    if (now >= latestConsumeTime + accountWindowSize) {
+      return Pair.of(0L, 0L);
+    }
+
+    long restoreSlots = latestConsumeTime + accountWindowSize - now;
+
+    long newNetUsage = recover(netUsage, latestConsumeTime, now, accountWindowSize);
+
+    long totalNetLimit = getDynamicPropertiesStore().getTotalNetLimit();
+    long totalNetWeight = getTotalNetWeight();
+
+    long balance = (long) ((double) newNetUsage * totalNetWeight / totalNetLimit * TRX_PRECISION);
+
+    return Pair.of(balance, restoreSlots * BLOCK_PRODUCED_INTERVAL / 1_000);
   }
 
   @Override
@@ -684,8 +745,9 @@ public class RepositoryImpl implements Repository {
     }
   }
 
-  private long increase(long lastUsage, long usage, long lastTime, long now) {
-    return increase(lastUsage, usage, lastTime, now, windowSize);
+  // new recover method, use personal window size.
+  private long recover(long lastUsage, long lastTime, long now, long personalWindowSize) {
+    return increase(lastUsage, 0, lastTime, now, personalWindowSize);
   }
 
   private long increase(long lastUsage, long usage, long lastTime, long now, long windowSize) {
@@ -729,8 +791,11 @@ public class RepositoryImpl implements Repository {
   }
 
   public long getHeadSlot() {
-    return (getDynamicPropertiesStore().getLatestBlockHeaderTimestamp()
-        - Long.parseLong(CommonParameter.getInstance()
+    return getSlotByTimestampMs(getDynamicPropertiesStore().getLatestBlockHeaderTimestamp());
+  }
+
+  public long getSlotByTimestampMs(long timestamp) {
+    return (timestamp - Long.parseLong(CommonParameter.getInstance()
         .getGenesisBlock().getTimestamp()))
         / BLOCK_PRODUCED_INTERVAL;
   }
@@ -873,6 +938,13 @@ public class RepositoryImpl implements Repository {
   }
 
   @Override
+  public void addTotalTronPowerWeight(long amount) {
+    long totalTronPowerWeight = getTotalTronPowerWeight();
+    totalTronPowerWeight += amount;
+    saveTotalTronPowerWeight(totalTronPowerWeight);
+  }
+
+  @Override
   public void saveTotalNetWeight(long totalNetWeight) {
     updateDynamicProperty(TOTAL_NET_WEIGHT,
         new BytesCapsule(ByteArray.fromLong(totalNetWeight)));
@@ -882,6 +954,12 @@ public class RepositoryImpl implements Repository {
   public void saveTotalEnergyWeight(long totalEnergyWeight) {
     updateDynamicProperty(TOTAL_ENERGY_WEIGHT,
         new BytesCapsule(ByteArray.fromLong(totalEnergyWeight)));
+  }
+
+  @Override
+  public void saveTotalTronPowerWeight(long totalTronPowerWeight) {
+    updateDynamicProperty(TOTAL_TRON_POWER_WEIGHT,
+        new BytesCapsule(ByteArray.fromLong(totalTronPowerWeight)));
   }
 
   @Override
@@ -900,6 +978,15 @@ public class RepositoryImpl implements Repository {
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found TOTAL_ENERGY_WEIGHT"));
+  }
+
+  @Override
+  public long getTotalTronPowerWeight() {
+    return Optional.ofNullable(getDynamicProperty(TOTAL_TRON_POWER_WEIGHT))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_TRON_POWER_WEIGHT"));
   }
 
 }

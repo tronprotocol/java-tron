@@ -13,6 +13,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TooBigTransactionResultException;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.protos.contract.Common.ResourceCode;
 
 abstract class ResourceProcessor {
 
@@ -22,7 +23,7 @@ abstract class ResourceProcessor {
   protected long windowSize;
   protected long averageWindowSize;
 
-  public ResourceProcessor(DynamicPropertiesStore dynamicPropertiesStore,
+  protected ResourceProcessor(DynamicPropertiesStore dynamicPropertiesStore,
       AccountStore accountStore) {
     this.dynamicPropertiesStore = dynamicPropertiesStore;
     this.accountStore = accountStore;
@@ -31,8 +32,6 @@ abstract class ResourceProcessor {
     this.averageWindowSize =
         AdaptiveResourceLimitConstants.PERIODS_MS / BLOCK_PRODUCED_INTERVAL;
   }
-
-  abstract void updateUsage(AccountCapsule accountCapsule);
 
   abstract void consume(TransactionCapsule trx, TransactionTrace trace)
       throws ContractValidateException, AccountResourceInsufficientException, TooBigTransactionResultException;
@@ -57,6 +56,64 @@ abstract class ResourceProcessor {
     }
     averageLastUsage += averageUsage;
     return getUsage(averageLastUsage, windowSize);
+  }
+
+  public long increase(AccountCapsule accountCapsule, ResourceCode resourceCode,
+                          long lastUsage, long usage, long lastTime, long now) {
+    long oldWindowSize = accountCapsule.getWindowSize(resourceCode);
+    long averageLastUsage = divideCeil(lastUsage * this.precision, oldWindowSize);
+    long averageUsage = divideCeil(usage * this.precision, this.windowSize);
+
+    if (lastTime != now) {
+      if (lastTime + oldWindowSize > now) {
+        long delta = now - lastTime;
+        double decay = (oldWindowSize - delta) / (double) oldWindowSize;
+        averageLastUsage = Math.round(averageLastUsage * decay);
+      } else {
+        averageLastUsage = 0;
+      }
+    }
+
+    long newUsage = getUsage(averageLastUsage, oldWindowSize) +
+            getUsage(averageUsage, this.windowSize);
+    if (dynamicPropertiesStore.supportUnfreezeDelay()) {
+      long remainUsage = getUsage(averageLastUsage, oldWindowSize);
+      if (remainUsage == 0) {
+        accountCapsule.setNewWindowSize(resourceCode, this.windowSize);
+        return newUsage;
+      }
+      long remainWindowSize = oldWindowSize - (now - lastTime);
+      long newWindowSize = (remainWindowSize * remainUsage + this.windowSize * usage)
+              / newUsage;
+      accountCapsule.setNewWindowSize(resourceCode, newWindowSize);
+    }
+    return newUsage;
+  }
+
+  public long unDelegateIncrease(AccountCapsule owner, final AccountCapsule receiver,
+                       long transferUsage, ResourceCode resourceCode, long now) {
+    long lastOwnerTime = owner.getLastConsumeTime(resourceCode);
+    long ownerUsage = owner.getUsage(resourceCode);
+    // Update itself first
+    ownerUsage = increase(owner, resourceCode, ownerUsage, 0, lastOwnerTime, now);
+
+    long remainOwnerWindowSize = owner.getWindowSize(resourceCode);
+    long remainReceiverWindowSize = receiver.getWindowSize(resourceCode);
+    remainOwnerWindowSize = remainOwnerWindowSize < 0 ? 0 : remainOwnerWindowSize;
+    remainReceiverWindowSize = remainReceiverWindowSize < 0 ? 0 : remainReceiverWindowSize;
+
+    long newOwnerUsage = ownerUsage + transferUsage;
+    // mean ownerUsage == 0 and transferUsage == 0
+    if (newOwnerUsage == 0) {
+        owner.setNewWindowSize(resourceCode, this.windowSize);
+      return newOwnerUsage;
+    }
+    // calculate new windowSize
+    long newOwnerWindowSize = (ownerUsage * remainOwnerWindowSize +
+            transferUsage * remainReceiverWindowSize)
+            / newOwnerUsage;
+    owner.setNewWindowSize(resourceCode, newOwnerWindowSize);
+    return newOwnerUsage;
   }
 
   private long divideCeil(long numerator, long denominator) {
@@ -85,7 +142,6 @@ abstract class ResourceProcessor {
       return false;
     }
   }
-
 
   protected boolean consumeFeeForNewAccount(AccountCapsule accountCapsule, long fee) {
     try {

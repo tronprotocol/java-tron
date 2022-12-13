@@ -620,6 +620,13 @@ Transaction and transaction-related messages.
           ClearABIContract = 48;
           UpdateBrokerageContract = 49;
           ShieldedTransferContract = 51;
+          MarketSellAssetContract = 52;
+          MarketCancelOrderContract = 53;
+          FreezeBalanceV2Contract = 54;
+          UnfreezeBalanceV2Contract = 55;
+          WithdrawExpireUnfreezeContract = 56;
+          DelegateResourceContract = 57;
+          UnDelegateResourceContract = 58;
         }
         ContractType type = 1;
         google.protobuf.Any parameter = 2;
@@ -873,6 +880,13 @@ Contract and contract-related messages.
       ClearABIContract = 48;
       UpdateBrokerageContract = 49;
       ShieldedTransferContract = 51;
+      MarketSellAssetContract = 52;
+      MarketCancelOrderContract = 53;
+      FreezeBalanceV2Contract = 54;
+      UnfreezeBalanceV2Contract = 55;
+      WithdrawExpireUnfreezeContract = 56;
+      DelegateResourceContract = 57;
+      UnDelegateResourceContract = 58;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;

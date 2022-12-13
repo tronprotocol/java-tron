@@ -24,6 +24,8 @@ import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 
+import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
+
 @Slf4j(topic = "DB")
 public class BandwidthProcessor extends ResourceProcessor {
 
@@ -34,16 +36,19 @@ public class BandwidthProcessor extends ResourceProcessor {
     this.chainBaseManager = chainBaseManager;
   }
 
-  @Override
-  public void updateUsage(AccountCapsule accountCapsule) {
+  public void updateUsageForDelegated(AccountCapsule ac) {
     long now = chainBaseManager.getHeadSlot();
-    updateUsage(accountCapsule, now);
+    long oldNetUsage = ac.getNetUsage();
+    long latestConsumeTime = ac.getLatestConsumeTime();
+    ac.setNetUsage(increase(ac, BANDWIDTH, oldNetUsage, 0, latestConsumeTime, now));
   }
 
-  private void updateUsage(AccountCapsule accountCapsule, long now) {
+  public void updateUsage(AccountCapsule accountCapsule) {
+    long now = chainBaseManager.getHeadSlot();
     long oldNetUsage = accountCapsule.getNetUsage();
     long latestConsumeTime = accountCapsule.getLatestConsumeTime();
-    accountCapsule.setNetUsage(increase(oldNetUsage, 0, latestConsumeTime, now));
+    accountCapsule.setNetUsage(increase(accountCapsule, BANDWIDTH,
+            oldNetUsage, 0, latestConsumeTime, now));
     long oldFreeNetUsage = accountCapsule.getFreeNetUsage();
     long latestConsumeFreeTime = accountCapsule.getLatestConsumeFreeTime();
     accountCapsule.setFreeNetUsage(increase(oldFreeNetUsage, 0, latestConsumeFreeTime, now));
@@ -58,8 +63,7 @@ public class BandwidthProcessor extends ResourceProcessor {
       });
     }
     Map<String, Long> assetMapV2 = accountCapsule.getAssetMapV2();
-    Map<String, Long> map = new HashMap<>();
-    map.putAll(assetMapV2);
+    Map<String, Long> map = new HashMap<>(assetMapV2);
     accountCapsule.getAllFreeAssetNetUsageV2().forEach((k, v) -> {
       if (!map.containsKey(k)) {
         map.put(k, 0L);
@@ -189,13 +193,14 @@ public class BandwidthProcessor extends ResourceProcessor {
     long netUsage = accountCapsule.getNetUsage();
     long latestConsumeTime = accountCapsule.getLatestConsumeTime();
     long netLimit = calculateGlobalNetLimit(accountCapsule);
-    long newNetUsage = increase(netUsage, 0, latestConsumeTime, now);
+    long newNetUsage = increase(accountCapsule, BANDWIDTH, netUsage, 0, latestConsumeTime, now);
 
     long netCost = bytes * createNewAccountBandwidthRatio;
     if (netCost <= (netLimit - newNetUsage)) {
       latestConsumeTime = now;
       long latestOperationTime = chainBaseManager.getHeadBlockTimeStamp();
-      newNetUsage = increase(newNetUsage, netCost, latestConsumeTime, now);
+      newNetUsage = increase(accountCapsule, BANDWIDTH,
+              newNetUsage, netCost, latestConsumeTime, now);
       accountCapsule.setLatestConsumeTime(latestConsumeTime);
       accountCapsule.setLatestOperationTime(latestOperationTime);
       accountCapsule.setNetUsage(newNetUsage);
@@ -323,7 +328,8 @@ public class BandwidthProcessor extends ResourceProcessor {
     long latestConsumeTime = issuerAccountCapsule.getLatestConsumeTime();
     long issuerNetLimit = calculateGlobalNetLimit(issuerAccountCapsule);
 
-    long newIssuerNetUsage = increase(issuerNetUsage, 0, latestConsumeTime, now);
+    long newIssuerNetUsage = increase(issuerAccountCapsule, BANDWIDTH,
+            issuerNetUsage, 0, latestConsumeTime, now);
 
     if (bytes > (issuerNetLimit - newIssuerNetUsage)) {
       logger.debug("The {} issuer's bandwidth is not enough."
@@ -337,7 +343,8 @@ public class BandwidthProcessor extends ResourceProcessor {
     publicLatestFreeNetTime = now;
     long latestOperationTime = chainBaseManager.getHeadBlockTimeStamp();
 
-    newIssuerNetUsage = increase(newIssuerNetUsage, bytes, latestConsumeTime, now);
+    newIssuerNetUsage = increase(issuerAccountCapsule, BANDWIDTH,
+            newIssuerNetUsage, bytes, latestConsumeTime, now);
     newFreeAssetNetUsage = increase(newFreeAssetNetUsage,
         bytes, latestAssetOperationTime, now);
     newPublicFreeAssetNetUsage = increase(newPublicFreeAssetNetUsage, bytes,
@@ -384,6 +391,9 @@ public class BandwidthProcessor extends ResourceProcessor {
 
   public long calculateGlobalNetLimit(AccountCapsule accountCapsule) {
     long frozeBalance = accountCapsule.getAllFrozenBalanceForBandwidth();
+    if (dynamicPropertiesStore.supportUnfreezeDelay()) {
+      return calculateGlobalNetLimitV2(frozeBalance);
+    }
     if (frozeBalance < TRX_PRECISION) {
       return 0;
     }
@@ -399,13 +409,23 @@ public class BandwidthProcessor extends ResourceProcessor {
     return (long) (netWeight * ((double) totalNetLimit / totalNetWeight));
   }
 
+  public long calculateGlobalNetLimitV2(long frozeBalance) {
+    double netWeight = (double) frozeBalance / TRX_PRECISION;
+    long totalNetLimit = dynamicPropertiesStore.getTotalNetLimit();
+    long totalNetWeight = dynamicPropertiesStore.getTotalNetWeight();
+    if (totalNetWeight == 0) {
+      return 0;
+    }
+    return (long) (netWeight * ((double) totalNetLimit / totalNetWeight));
+  }
+
   private boolean useAccountNet(AccountCapsule accountCapsule, long bytes, long now) {
 
     long netUsage = accountCapsule.getNetUsage();
     long latestConsumeTime = accountCapsule.getLatestConsumeTime();
     long netLimit = calculateGlobalNetLimit(accountCapsule);
 
-    long newNetUsage = increase(netUsage, 0, latestConsumeTime, now);
+    long newNetUsage = increase(accountCapsule, BANDWIDTH, netUsage, 0, latestConsumeTime, now);
 
     if (bytes > (netLimit - newNetUsage)) {
       logger.debug("Net usage is running out, now use free net usage."
@@ -416,7 +436,7 @@ public class BandwidthProcessor extends ResourceProcessor {
 
     latestConsumeTime = now;
     long latestOperationTime = chainBaseManager.getHeadBlockTimeStamp();
-    newNetUsage = increase(newNetUsage, bytes, latestConsumeTime, now);
+    newNetUsage = increase(accountCapsule, BANDWIDTH, newNetUsage, bytes, latestConsumeTime, now);
     accountCapsule.setNetUsage(newNetUsage);
     accountCapsule.setLatestOperationTime(latestOperationTime);
     accountCapsule.setLatestConsumeTime(latestConsumeTime);

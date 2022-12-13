@@ -36,6 +36,12 @@ public class EnergyCost {
   private static final long NEW_ACCT_CALL = 25000;
   private static final long UNFREEZE = 20000;
   private static final long FREEZE_EXPIRE_TIME = 50;
+  private static final long FREEZE_V2 = 10000;
+  private static final long UNFREEZE_V2 = 10000;
+  private static final long WITHDRAW_EXPIRE_UNFREEZE = 10000;
+  private static final long CANCEL_ALL_UNFREEZE_V2 = 10000;
+  private static final long DELEGATE_RESOURCE = 10000;
+  private static final long UN_DELEGATE_RESOURCE = 10000;
   private static final long VOTE_WITNESS = 30000;
   private static final long WITHDRAW_REWARD = 20000;
   private static final long CREATE = 32000;
@@ -270,6 +276,30 @@ public class EnergyCost {
 
   public static long getFreezeExpireTimeCost(Program ignored) {
     return FREEZE_EXPIRE_TIME;
+  }
+
+  public static long getFreezeBalanceV2Cost(Program ignored) {
+    return FREEZE_V2;
+  }
+
+  public static long getUnfreezeBalanceV2Cost(Program ignored) {
+    return UNFREEZE_V2;
+  }
+
+  public static long getWithdrawExpireUnfreezeCost(Program ignored) {
+    return WITHDRAW_EXPIRE_UNFREEZE;
+  }
+
+  public static long getCancelAllUnfreezeV2Cost(Program ignored) {
+    return CANCEL_ALL_UNFREEZE_V2;
+  }
+
+  public static long getDelegateResourceCost(Program ignored) {
+    return DELEGATE_RESOURCE;
+  }
+
+  public static long getUnDelegateResourceCost(Program ignored) {
+    return UN_DELEGATE_RESOURCE;
   }
 
   public static long getVoteWitnessCost(Program program) {

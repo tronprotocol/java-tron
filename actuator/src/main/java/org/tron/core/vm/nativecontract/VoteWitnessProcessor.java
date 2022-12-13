@@ -8,11 +8,9 @@ import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.common.math.LongMath;
 import com.google.protobuf.ByteString;
-
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
@@ -87,7 +85,14 @@ public class VoteWitnessProcessor {
         }
       }
 
-      long tronPower = accountCapsule.getTronPower();
+      long tronPower;
+      // fixme check if supportUnfreezeDelay needed
+      if (repo.getDynamicPropertiesStore().supportUnfreezeDelay()
+          && repo.getDynamicPropertiesStore().supportAllowNewResourceModel()) {
+        tronPower = accountCapsule.getAllTronPower();
+      } else {
+        tronPower = accountCapsule.getTronPower();
+      }
       sum =  LongMath.checkedMultiply(sum, TRX_PRECISION);
       if (sum > tronPower) {
         throw new ContractExeException(

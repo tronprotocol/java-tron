@@ -1069,6 +1069,16 @@ public class Args extends CommonParameter {
       PARAMETER.allowDelegateOptimization = Math.max(PARAMETER.allowDelegateOptimization, 0);
     }
 
+    if (config.hasPath(Constant.COMMITTEE_UNFREEZE_DELAY_DAYS)) {
+      PARAMETER.unfreezeDelayDays = config.getLong(Constant.COMMITTEE_UNFREEZE_DELAY_DAYS);
+      if (PARAMETER.unfreezeDelayDays > 365) {
+        PARAMETER.unfreezeDelayDays = 365;
+      }
+      if (PARAMETER.unfreezeDelayDays < 0) {
+        PARAMETER.unfreezeDelayDays = 0;
+      }
+    }
+
     logConfig();
   }
 
