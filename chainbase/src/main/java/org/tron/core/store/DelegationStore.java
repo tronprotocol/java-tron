@@ -10,17 +10,12 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
-import org.tron.core.state.StateType;
-import org.tron.core.state.WorldStateCallBackUtils;
 
 import java.math.BigInteger;
 
 @Slf4j(topic = "DB")
 @Component
 public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
-
-  @Autowired
-  private WorldStateCallBackUtils worldStateCallBackUtils;
 
   public static final long REMARK = -1L;
   public static final int DEFAULT_BROKERAGE = 20;
@@ -172,12 +167,6 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
 
   private byte[] buildViKey(long cycle, byte[] address) {
     return (cycle + "-" + Hex.toHexString(address) + "-vi").getBytes();
-  }
-
-  @Override
-  public void put(byte[] key, BytesCapsule item) {
-    super.put(key, item);
-    worldStateCallBackUtils.callBack(StateType.Delegation, key, item);
   }
 
 }

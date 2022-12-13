@@ -9,14 +9,9 @@ import org.springframework.stereotype.Component;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
-import org.tron.core.state.StateType;
-import org.tron.core.state.WorldStateCallBackUtils;
 
 @Component
 public class AccountIndexStore extends TronStoreWithRevoking<BytesCapsule> {
-
-  @Autowired
-  private WorldStateCallBackUtils worldStateCallBackUtils;
 
   @Autowired
   public AccountIndexStore(@Value("account-index") String dbName) {
@@ -24,11 +19,8 @@ public class AccountIndexStore extends TronStoreWithRevoking<BytesCapsule> {
   }
 
   public void put(AccountCapsule accountCapsule) {
-    byte[] key = accountCapsule.getAccountName().toByteArray();
-    BytesCapsule value = new BytesCapsule(
-        accountCapsule.getAddress().toByteArray());
-    put(key, value);
-    worldStateCallBackUtils.callBack(StateType.AccountIndex, key, value);
+    put(accountCapsule.getAccountName().toByteArray(),
+        new BytesCapsule(accountCapsule.getAddress().toByteArray()));
   }
 
   public byte[] get(ByteString name) {

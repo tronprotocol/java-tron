@@ -7,15 +7,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.CodeCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
-import org.tron.core.state.StateType;
-import org.tron.core.state.WorldStateCallBackUtils;
 
 @Slf4j(topic = "DB")
 @Component
 public class CodeStore extends TronStoreWithRevoking<CodeCapsule> {
-
-  @Autowired
-  private WorldStateCallBackUtils worldStateCallBackUtils;
 
   @Autowired
   private CodeStore(@Value("code") String dbName) {
@@ -35,9 +30,4 @@ public class CodeStore extends TronStoreWithRevoking<CodeCapsule> {
     return revokingDB.getUnchecked(hash);
   }
 
-  @Override
-  public void put(byte[] key, CodeCapsule item) {
-    super.put(key, item);
-    worldStateCallBackUtils.callBack(StateType.Code, key, item);
-  }
 }

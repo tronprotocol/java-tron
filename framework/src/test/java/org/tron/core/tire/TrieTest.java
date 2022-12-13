@@ -26,9 +26,8 @@ import java.util.Map;
 import org.bouncycastle.util.Arrays;
 import org.junit.Assert;
 import org.junit.Test;
-import org.tron.core.capsule.utils.RLP;
-import org.tron.core.trie.TrieImpl;
-import org.tron.core.trie.TrieImpl.Node;
+import org.tron.core.state.rlp.RLP;
+import org.tron.core.state.trie.TrieImpl;
 
 public class TrieTest {
 
@@ -58,9 +57,9 @@ public class TrieTest {
     byte[] rootHash = trie.getRootHash();
     TrieImpl trieCopy = new TrieImpl(trie.getCache(), rootHash);
     Assert.assertNull(trie.prove(RLP.encodeInt(111)));
-    Map<byte[], Node> map = trieCopy.prove(new byte[]{1, 1});
+    Map<byte[], TrieImpl.Node> map = trieCopy.prove(new byte[]{1, 1});
     boolean result = trie
-        .verifyProof(trieCopy.getRootHash(), new byte[]{1, 1}, (LinkedHashMap<byte[], Node>) map);
+        .verifyProof(trieCopy.getRootHash(), new byte[]{1, 1}, (LinkedHashMap<byte[], TrieImpl.Node>) map);
     Assert.assertTrue(result);
     System.out.println(trieCopy.prove(RLP.encodeInt(5)));
     System.out.println(trieCopy.prove(RLP.encodeInt(6)));

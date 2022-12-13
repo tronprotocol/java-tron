@@ -19,7 +19,7 @@ public class WorldStateCallBackUtils {
   protected List<TrieEntry> trieEntryList = new ArrayList<>();
 
   public void callBack(StateType type, byte[] key, ProtoCapsule capsule) {
-    byte[] value = null;
+    byte[] value;
     switch (type) {
       case Account:
         AccountCapsule accountCapsule = new AccountCapsule(capsule.getData());
@@ -27,7 +27,7 @@ public class WorldStateCallBackUtils {
         Map<String, Long> assetMap = accountCapsule.getAssetMapV2();
         for (String tokenId: dirtySet) {
           if (assetMap.containsKey(tokenId)) {
-            callBack(StateType.AccountIssueV2,
+            callBack(StateType.AccountIssue,
                 Bytes.concat(key, Longs.toByteArray(Long.parseLong(tokenId))),
                 Longs.toByteArray(assetMap.get(tokenId)));
           }
@@ -59,6 +59,8 @@ public class WorldStateCallBackUtils {
       case WitnessSchedule:
         value = capsule.getData();
         break;
+      default:
+         return;
     }
     callBack(type, key, value);
   }

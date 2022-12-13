@@ -586,7 +586,7 @@ public class Manager {
         this.updateRecentBlock(genesisBlock);
         initAccountHistoryBalance();
         // init genesis state
-        worldStateCallBack.initGenesis(genesisBlock);
+        worldStateCallBack.initGenesis(genesisBlock, chainBaseManager.getWorldStateTrieStore());
         System.out.println(genesisBlock);
 
         chainBaseManager.getBlockStore().put(genesisBlock.getBlockId().getBytes(), genesisBlock);
@@ -1660,7 +1660,7 @@ public class Manager {
         new TransactionRetCapsule(block);
     try {
       merkleContainer.resetCurrentMerkleTree();
-      worldStateCallBack.preExecute(block);
+      worldStateCallBack.preExecute(block, chainBaseManager.getWorldStateTrieStore());
       accountStateCallBack.preExecute(block);
       for (TransactionCapsule transactionCapsule : block.getTransactions()) {
         transactionCapsule.setBlockNum(block.getNum());

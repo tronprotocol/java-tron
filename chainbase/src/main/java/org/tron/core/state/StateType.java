@@ -2,6 +2,8 @@ package org.tron.core.state;
 
 public enum StateType {
 
+  UNDEFINED((byte)0x00, "undefined"),
+
   Account((byte)0x01, "account"),
 //  AccountAsset((byte)0x02, "account-asset"),
   AccountIndex((byte)0x03, "account-index"),
@@ -38,5 +40,56 @@ public enum StateType {
 
   public byte value() {
     return this.value;
+  }
+
+  public static StateType get(String name) {
+    switch (name) {
+      case "account":
+        return Account;
+      case "account-index":
+        return AccountIndex;
+      case "accountid-index":
+        return AccountIdIndex;
+      case "asset-issue":
+        return AccountIssue;
+      case "code":
+        return Code;
+      case "contract":
+        return Contract;
+      case "delegation":
+        return Delegation;
+      case "DelegatedResource":
+        return DelegatedResource;
+      case "exchange":
+        return Exchange;
+      case "exchange-v2":
+        return ExchangeV2;
+      case "IncrementalMerkleTree":
+        return IncrementalMerkleTree;
+      case "market_account":
+        return MarketAccount;
+      case "market_order":
+        return MarketOrder;
+      case "market_pair_price_to_order":
+        return MarketPairPriceToOrder;
+      case "market_pair_to_price":
+        return MarketPairToPrice;
+      case "nullifier":
+        return Nullifier;
+      case "properties":
+        return Properties;
+      case "proposal":
+        return Proposal;
+      case "storage-row":
+        return StorageRow;
+      case "votes":
+        return Votes;
+      case "witness":
+        return Witness;
+      case "witness_schedule":
+        return WitnessSchedule;
+      default:
+        return UNDEFINED;
+    }
   }
 }
