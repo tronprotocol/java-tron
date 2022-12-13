@@ -35,6 +35,7 @@ import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.BlockListExtention;
 import org.tron.api.GrpcAPI.BlockReference;
 import org.tron.api.GrpcAPI.BytesMessage;
+import org.tron.api.GrpcAPI.CanWithdrawUnfreezeAmountRequestMessage;
 import org.tron.api.GrpcAPI.DecryptNotes;
 import org.tron.api.GrpcAPI.DecryptNotesMarked;
 import org.tron.api.GrpcAPI.DecryptNotesTRC20;
@@ -88,8 +89,6 @@ import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
 import org.tron.common.application.Service;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
-import org.tron.common.overlay.discover.node.NodeHandler;
-import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
@@ -111,6 +110,7 @@ import org.tron.core.exception.StoreException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.metrics.MetricsApiService;
+import org.tron.core.net.TronNetService;
 import org.tron.core.services.filter.LiteFnQueryGrpcInterceptor;
 import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
 import org.tron.core.services.ratelimiter.RpcApiAccessInterceptor;
@@ -142,13 +142,17 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIss
 import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract;
+import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.BalanceContract.AccountBalanceRequest;
 import org.tron.protos.contract.BalanceContract.AccountBalanceResponse;
 import org.tron.protos.contract.BalanceContract.BlockBalanceTrace;
+import org.tron.protos.contract.BalanceContract.DelegateResourceContract;
 import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
+import org.tron.protos.contract.BalanceContract.UnDelegateResourceContract;
 import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
 import org.tron.protos.contract.BalanceContract.WithdrawBalanceContract;
+import org.tron.protos.contract.BalanceContract.WithdrawExpireUnfreezeContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeCreateContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeInjectContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
@@ -188,8 +192,6 @@ public class RpcApiService implements Service {
   @Autowired
   private ChainBaseManager chainBaseManager;
 
-  @Autowired
-  private NodeManager nodeManager;
   @Autowired
   private Wallet wallet;
 
@@ -597,10 +599,77 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getDelegatedResourceV2(DelegatedResourceMessage request,
+        StreamObserver<DelegatedResourceList> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getDelegatedResourceV2(
+                request.getFromAddress(), request.getToAddress())
+        );
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void getDelegatedResourceAccountIndex(BytesMessage request,
         StreamObserver<org.tron.protos.Protocol.DelegatedResourceAccountIndex> responseObserver) {
-      responseObserver
+      try {
+        responseObserver
           .onNext(wallet.getDelegatedResourceAccountIndex(request.getValue()));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getDelegatedResourceAccountIndexV2(BytesMessage request,
+        StreamObserver<org.tron.protos.Protocol.DelegatedResourceAccountIndex> responseObserver) {
+      try {
+        responseObserver
+                .onNext(wallet.getDelegatedResourceAccountIndexV2(request.getValue()));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getCanDelegatedMaxSize(GrpcAPI.CanDelegatedMaxSizeRequestMessage request,
+        StreamObserver<GrpcAPI.CanDelegatedMaxSizeResponseMessage> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getCanDelegatedMaxSize(
+                        request.getOwnerAddress(),request.getType()));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getAvailableUnfreezeCount(GrpcAPI.GetAvailableUnfreezeCountRequestMessage request,
+        StreamObserver<GrpcAPI.GetAvailableUnfreezeCountResponseMessage> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getAvailableUnfreezeCount(
+                request.getOwnerAddress()));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getCanWithdrawUnfreezeAmount(CanWithdrawUnfreezeAmountRequestMessage request,
+        StreamObserver<GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage> responseObserver) {
+      try {
+        responseObserver
+                .onNext(wallet.getCanWithdrawUnfreezeAmount(
+                        request.getOwnerAddress(), request.getTimestamp())
+        );
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
       responseObserver.onCompleted();
     }
 
@@ -1481,6 +1550,12 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void freezeBalanceV2(BalanceContract.FreezeBalanceV2Contract request,
+                                StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.FreezeBalanceV2Contract, responseObserver);
+    }
+
+    @Override
     public void unfreezeBalance(UnfreezeBalanceContract request,
         StreamObserver<Transaction> responseObserver) {
       try {
@@ -1502,6 +1577,12 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void unfreezeBalanceV2(BalanceContract.UnfreezeBalanceV2Contract request,
+                                  StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.UnfreezeBalanceV2Contract, responseObserver);
+    }
+
+    @Override
     public void withdrawBalance(WithdrawBalanceContract request,
         StreamObserver<Transaction> responseObserver) {
       try {
@@ -1520,6 +1601,27 @@ public class RpcApiService implements Service {
     public void withdrawBalance2(WithdrawBalanceContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.WithdrawBalanceContract, responseObserver);
+    }
+
+    @Override
+    public void withdrawExpireUnfreeze(WithdrawExpireUnfreezeContract request,
+                                       StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.WithdrawExpireUnfreezeContract,
+              responseObserver);
+    }
+
+    @Override
+    public void delegateResource(DelegateResourceContract request,
+                                 StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.DelegateResourceContract,
+          responseObserver);
+    }
+
+    @Override
+    public void unDelegateResource(UnDelegateResourceContract request,
+                                       StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.UnDelegateResourceContract,
+          responseObserver);
     }
 
     @Override
@@ -1603,24 +1705,13 @@ public class RpcApiService implements Service {
 
     @Override
     public void listNodes(EmptyMessage request, StreamObserver<NodeList> responseObserver) {
-      List<NodeHandler> handlerList = nodeManager.dumpActiveNodes();
-
-      Map<String, NodeHandler> nodeHandlerMap = new HashMap<>();
-      for (NodeHandler handler : handlerList) {
-        String key = handler.getNode().getHexId() + handler.getNode().getHost();
-        nodeHandlerMap.put(key, handler);
-      }
-
       NodeList.Builder nodeListBuilder = NodeList.newBuilder();
-
-      nodeHandlerMap.entrySet().stream()
-          .forEach(v -> {
-            org.tron.common.overlay.discover.node.Node node = v.getValue().getNode();
-            nodeListBuilder.addNodes(Node.newBuilder().setAddress(
+      TronNetService.getP2pService().getConnectableNodes().forEach(node -> {
+        nodeListBuilder.addNodes(Node.newBuilder().setAddress(
                 Address.newBuilder()
-                    .setHost(ByteString.copyFrom(ByteArray.fromString(node.getHost())))
-                    .setPort(node.getPort())));
-          });
+                        .setHost(ByteString.copyFrom(ByteArray.fromString(node.getHost())))
+                        .setPort(node.getPort())));
+      });
       responseObserver.onNext(nodeListBuilder.build());
       responseObserver.onCompleted();
     }
@@ -1858,7 +1949,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void deployContract(CreateSmartContract request,
-        io.grpc.stub.StreamObserver<TransactionExtention> responseObserver) {
+        StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.CreateSmartContract, responseObserver);
     }
 
@@ -1979,10 +2070,80 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
 
+    @Override
+    public void getDelegatedResourceV2(DelegatedResourceMessage request,
+        StreamObserver<DelegatedResourceList> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getDelegatedResourceV2(
+                request.getFromAddress(), request.getToAddress())
+        );
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void getDelegatedResourceAccountIndex(BytesMessage request,
         StreamObserver<org.tron.protos.Protocol.DelegatedResourceAccountIndex> responseObserver) {
-      responseObserver
+      try {
+        responseObserver
           .onNext(wallet.getDelegatedResourceAccountIndex(request.getValue()));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getDelegatedResourceAccountIndexV2(BytesMessage request,
+        StreamObserver<org.tron.protos.Protocol.DelegatedResourceAccountIndex> responseObserver) {
+      try {
+        responseObserver
+                .onNext(wallet.getDelegatedResourceAccountIndexV2(request.getValue()));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getCanDelegatedMaxSize(GrpcAPI.CanDelegatedMaxSizeRequestMessage request,
+        StreamObserver<GrpcAPI.CanDelegatedMaxSizeResponseMessage> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getCanDelegatedMaxSize(
+                        request.getOwnerAddress(), request.getType()));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getAvailableUnfreezeCount(GrpcAPI.GetAvailableUnfreezeCountRequestMessage request,
+         StreamObserver<GrpcAPI.GetAvailableUnfreezeCountResponseMessage> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getAvailableUnfreezeCount(
+                request.getOwnerAddress()));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getCanWithdrawUnfreezeAmount(CanWithdrawUnfreezeAmountRequestMessage request,
+        StreamObserver<GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage> responseObserver) {
+      try {
+        responseObserver
+                .onNext(wallet.getCanWithdrawUnfreezeAmount(
+                        request.getOwnerAddress(), request.getTimestamp()
+        ));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
       responseObserver.onCompleted();
     }
 
@@ -2507,7 +2668,7 @@ public class RpcApiService implements Service {
     @Override
     public void getTriggerInputForShieldedTRC20Contract(
         ShieldedTRC20TriggerContractParameters request,
-        io.grpc.stub.StreamObserver<org.tron.api.GrpcAPI.BytesMessage> responseObserver) {
+        StreamObserver<org.tron.api.GrpcAPI.BytesMessage> responseObserver) {
       try {
         checkSupportShieldedTRC20Transaction();
 

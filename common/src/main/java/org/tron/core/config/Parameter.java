@@ -19,7 +19,8 @@ public class Parameter {
     VERSION_4_3(22, 1596780000000L, 80),
     VERSION_4_4(23, 1596780000000L, 80),
     VERSION_4_5(24, 1596780000000L, 80),
-    VERSION_4_6(25, 1596780000000L, 80);
+    VERSION_4_6(25, 1596780000000L, 80),
+    VERSION_4_7(26, 1596780000000L, 80);
 
     @Getter
     private int value;
@@ -69,7 +70,9 @@ public class Parameter {
     public static final int MAX_FROZEN_NUMBER = 1;
     public static final int BLOCK_VERSION = 25;
     public static final long FROZEN_PERIOD = 86_400_000L;
+    public static final long DELEGATE_PERIOD = 3 * 86_400_000L;
     public static final long TRX_PRECISION = 1000_000L;
+    public static final long DELEGATE_COST_BASE_SIZE = 275L;
   }
 
   public class NodeConstant {

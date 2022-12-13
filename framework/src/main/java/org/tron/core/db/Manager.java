@@ -1480,16 +1480,17 @@ public class Manager {
       }
     }
 
-    TransactionRetCapsule transactionRetCapsule = new TransactionRetCapsule(blockCapsule);
-
     Set<String> accountSet = new HashSet<>();
     AtomicInteger shieldedTransCounts = new AtomicInteger(0);
+    List<TransactionCapsule> toBePacked = new ArrayList<>();
+    long currentSize = blockCapsule.getInstance().getSerializedSize();
+    boolean isSort = Args.getInstance().isOpenTransactionSort();
     while (pendingTransactions.size() > 0 || rePushTransactions.size() > 0) {
       boolean fromPending = false;
       TransactionCapsule trx;
       if (pendingTransactions.size() > 0) {
         trx = pendingTransactions.peek();
-        if (Args.getInstance().isOpenTransactionSort()) {
+        if (isSort) {
           TransactionCapsule trxRepush = rePushTransactions.peek();
           if (trxRepush == null || trx.getOrder() >= trxRepush.getOrder()) {
             fromPending = true;
@@ -1526,13 +1527,14 @@ public class Manager {
       }
 
       // check the block size
-      if ((blockCapsule.getInstance().getSerializedSize() + trx.getSerializedSize() + 3)
+      if ((currentSize + trx.getSerializedSize() + 3)
           > ChainConstant.BLOCK_SIZE) {
         postponedTrxCount++;
-        continue;
+        continue; // try pack more small trx
       }
       //shielded transaction
-      if (isShieldedTransaction(trx.getInstance())
+      Transaction transaction = trx.getInstance();
+      if (isShieldedTransaction(transaction)
           && shieldedTransCounts.incrementAndGet() > SHIELDED_TRANS_IN_BLOCK_COUNTS) {
         continue;
       }
@@ -1542,7 +1544,7 @@ public class Manager {
       if (accountSet.contains(ownerAddress)) {
         continue;
       } else {
-        if (isMultiSignTransaction(trx.getInstance())) {
+        if (isMultiSignTransaction(transaction)) {
           accountSet.add(ownerAddress);
         }
       }
@@ -1552,27 +1554,25 @@ public class Manager {
       // apply transaction
       try (ISession tmpSession = revokingStore.buildSession()) {
         accountStateCallBack.preExeTrans();
-        TransactionInfo result = processTransaction(trx, blockCapsule);
+        processTransaction(trx, blockCapsule);
         accountStateCallBack.exeTransFinish();
         tmpSession.merge();
-        blockCapsule.addTransaction(trx);
-        if (Objects.nonNull(result)) {
-          transactionRetCapsule.addTransactionInfo(result);
-        }
+        toBePacked.add(trx);
+        currentSize += trx.getSerializedSize() + 2; // proto tag num is 1 , so tag size is 2
       } catch (Exception e) {
         logger.error("Process trx {} failed when generating block {}, {}.", trx.getTransactionId(),
             blockCapsule.getNum(), e.getMessage());
       }
     }
-
+    blockCapsule.addAllTransactions(toBePacked);
     accountStateCallBack.executeGenerateFinish();
 
     session.reset();
 
-    logger.info("Generate block {} success, trxs: {}, pendingCount: {}, rePushCount: {},"
-            + " postponedCount: {}.",
+    logger.info("Generate block {} success, trxs:{}, pendingCount: {}, rePushCount: {},"
+            + " postponedCount: {}, blockSize: {} B",
         blockCapsule.getNum(), blockCapsule.getTransactions().size(),
-        pendingTransactions.size(), rePushTransactions.size(), postponedTrxCount);
+        pendingTransactions.size(), rePushTransactions.size(), postponedTrxCount, currentSize);
 
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(miner.getPrivateKey());
@@ -1664,8 +1664,10 @@ public class Manager {
     try {
       merkleContainer.resetCurrentMerkleTree();
       accountStateCallBack.preExecute(block);
+      List<TransactionInfo> results = new ArrayList<>();
+      long num = block.getNum();
       for (TransactionCapsule transactionCapsule : block.getTransactions()) {
-        transactionCapsule.setBlockNum(block.getNum());
+        transactionCapsule.setBlockNum(num);
         if (block.generatedByMyself) {
           transactionCapsule.setVerified(true);
         }
@@ -1673,9 +1675,10 @@ public class Manager {
         TransactionInfo result = processTransaction(transactionCapsule, block);
         accountStateCallBack.exeTransFinish();
         if (Objects.nonNull(result)) {
-          transactionRetCapsule.addTransactionInfo(result);
+          results.add(result);
         }
       }
+      transactionRetCapsule.addAllTransactionInfos(results);
       accountStateCallBack.executePushFinish();
     } finally {
       accountStateCallBack.exceptionFinish();

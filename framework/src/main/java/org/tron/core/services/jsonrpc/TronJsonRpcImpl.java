@@ -778,7 +778,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
           ByteArray.fromHexString(transactionCall.getData()));
     } else {
       try {
-        ByteArray.hexToBigInteger(blockNumOrTag).longValue();
+        ByteArray.hexToBigInteger(blockNumOrTag);
       } catch (Exception e) {
         throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
       }

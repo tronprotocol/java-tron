@@ -22,6 +22,7 @@ import org.tron.core.services.interfaceOnSolidity.http.GetAssetIssueByIdOnSolidi
 import org.tron.core.services.interfaceOnSolidity.http.GetAssetIssueByNameOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetAssetIssueListByNameOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetAssetIssueListOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetAvailableUnfreezeCountOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetBlockByIdOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetBlockByLatestNumOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetBlockByLimitNextOnSolidityServlet;
@@ -29,8 +30,12 @@ import org.tron.core.services.interfaceOnSolidity.http.GetBlockByNumOnSoliditySe
 import org.tron.core.services.interfaceOnSolidity.http.GetBlockOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetBrokerageOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetBurnTrxOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetCanDelegatedMaxSizeOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetCanWithdrawUnfreezeAmountOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetDelegatedResourceAccountIndexOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetDelegatedResourceAccountIndexV2OnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetDelegatedResourceOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetDelegatedResourceV2OnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetEnergyPricesOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetExchangeByIdOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetMarketOrderByAccountOnSolidityServlet;
@@ -55,6 +60,7 @@ import org.tron.core.services.interfaceOnSolidity.http.ScanNoteByOvkOnSoliditySe
 import org.tron.core.services.interfaceOnSolidity.http.ScanShieldedTRC20NotesByIvkOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.ScanShieldedTRC20NotesByOvkOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.TriggerConstantContractOnSolidityServlet;
+
 
 @Slf4j(topic = "API")
 public class HttpApiOnSolidityService implements Service {
@@ -87,8 +93,20 @@ public class HttpApiOnSolidityService implements Service {
   @Autowired
   private GetDelegatedResourceOnSolidityServlet getDelegatedResourceOnSolidityServlet;
   @Autowired
+  private GetDelegatedResourceV2OnSolidityServlet getDelegatedResourceV2OnSolidityServlet;
+  @Autowired
+  private GetCanDelegatedMaxSizeOnSolidityServlet getCanDelegatedMaxSizeOnSolidityServlet;
+  @Autowired
+  private GetAvailableUnfreezeCountOnSolidityServlet getAvailableUnfreezeCountOnSolidityServlet;
+  @Autowired
+  private GetCanWithdrawUnfreezeAmountOnSolidityServlet
+          getCanWithdrawUnfreezeAmountOnSolidityServlet;
+  @Autowired
   private GetDelegatedResourceAccountIndexOnSolidityServlet
       getDelegatedResourceAccountIndexOnSolidityServlet;
+  @Autowired
+  private GetDelegatedResourceAccountIndexV2OnSolidityServlet
+          getDelegatedResourceAccountIndexV2OnSolidityServlet;
   @Autowired
   private GetExchangeByIdOnSolidityServlet getExchangeByIdOnSolidityServlet;
   @Autowired
@@ -198,8 +216,18 @@ public class HttpApiOnSolidityService implements Service {
           "/walletsolidity/getblockbynum");
       context.addServlet(new ServletHolder(getDelegatedResourceOnSolidityServlet),
           "/walletsolidity/getdelegatedresource");
+      context.addServlet(new ServletHolder(getDelegatedResourceV2OnSolidityServlet),
+              "/walletsolidity/getdelegatedresourcev2");
+      context.addServlet(new ServletHolder(getCanDelegatedMaxSizeOnSolidityServlet),
+              "/walletsolidity/getcandelegatedmaxsize");
+      context.addServlet(new ServletHolder(getAvailableUnfreezeCountOnSolidityServlet),
+              "/walletsolidity/getavailableunfreezecount");
+      context.addServlet(new ServletHolder(getCanWithdrawUnfreezeAmountOnSolidityServlet),
+              "/walletsolidity/getcanwithdrawunfreezeamount");
       context.addServlet(new ServletHolder(getDelegatedResourceAccountIndexOnSolidityServlet),
           "/walletsolidity/getdelegatedresourceaccountindex");
+      context.addServlet(new ServletHolder(getDelegatedResourceAccountIndexV2OnSolidityServlet),
+              "/walletsolidity/getdelegatedresourceaccountindexv2");
       context.addServlet(new ServletHolder(getExchangeByIdOnSolidityServlet),
           "/walletsolidity/getexchangebyid");
       context.addServlet(new ServletHolder(listExchangesOnSolidityServlet),

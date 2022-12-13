@@ -1,5 +1,6 @@
 package org.tron.core.vm.program;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -223,6 +224,21 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public long getAccountEnergyUsage(AccountCapsule accountCapsule) {
+    return repository.getAccountEnergyUsage(accountCapsule);
+  }
+
+  @Override
+  public Pair<Long, Long> getAccountEnergyUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule) {
+    return repository.getAccountEnergyUsageBalanceAndRestoreSeconds(accountCapsule);
+  }
+
+  @Override
+  public Pair<Long, Long> getAccountNetUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule) {
+    return repository.getAccountNetUsageBalanceAndRestoreSeconds(accountCapsule);
+  }
+
+  @Override
   public long calculateGlobalEnergyLimit(AccountCapsule accountCapsule) {
     return repository.calculateGlobalEnergyLimit(accountCapsule);
   }
@@ -328,6 +344,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public void addTotalTronPowerWeight(long amount) {
+    repository.addTotalTronPowerWeight(amount);
+  }
+
+  @Override
   public void saveTotalNetWeight(long totalNetWeight) {
     repository.saveTotalNetWeight(totalNetWeight);
   }
@@ -338,6 +359,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public void saveTotalTronPowerWeight(long totalTronPowerWeight) {
+    repository.saveTotalTronPowerWeight(totalTronPowerWeight);
+  }
+
+  @Override
   public long getTotalNetWeight() {
     return repository.getTotalNetWeight();
   }
@@ -345,6 +371,21 @@ public class ContractState implements Repository, ProgramListenerAware {
   @Override
   public long getTotalEnergyWeight() {
     return repository.getTotalEnergyWeight();
+  }
+
+  @Override
+  public long getTotalTronPowerWeight() {
+    return repository.getTotalTronPowerWeight();
+  }
+
+  @Override
+  public long getHeadSlot() {
+    return repository.getHeadSlot();
+  }
+
+  @Override
+  public long getSlotByTimestampMs(long timestamp) {
+    return repository.getSlotByTimestampMs(timestamp);
   }
 
 }

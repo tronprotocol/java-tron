@@ -15,9 +15,11 @@
 
 package org.tron.core.config.args;
 
+import com.google.common.collect.Maps;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
 import java.io.File;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -25,6 +27,8 @@ import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.Options;
+import org.tron.common.cache.CacheStrategies;
+import org.tron.common.cache.CacheType;
 import org.tron.common.utils.DbOptionalsUtils;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Property;
@@ -71,6 +75,8 @@ public class Storage {
 
   private static final String CHECKPOINT_VERSION_KEY = "storage.checkpoint.version";
   private static final String CHECKPOINT_SYNC_KEY = "storage.checkpoint.sync";
+
+  private static final String CACHE_STRATEGIES = "storage.cache.strategies";
 
   /**
    * Default values of directory
@@ -138,6 +144,13 @@ public class Storage {
   @Getter
   @Setter
   private int estimatedBlockTransactions;
+
+  // second cache
+  private final Map<CacheType, String> cacheStrategies = Maps.newConcurrentMap();
+
+  @Getter
+  private final List<String> cacheDbs = CacheStrategies.CACHE_DBS;
+  // second cache
 
   /**
    * Key: dbName, Value: Property object of that database
@@ -211,6 +224,19 @@ public class Storage {
       estimatedTransactions = 100;
     }
     return estimatedTransactions;
+  }
+
+
+  public  void setCacheStrategies(Config config) {
+    if (config.hasPath(CACHE_STRATEGIES)) {
+      config.getConfig(CACHE_STRATEGIES).resolve().entrySet().forEach(c ->
+          this.cacheStrategies.put(CacheType.valueOf(c.getKey()),
+              c.getValue().unwrapped().toString()));
+    }
+  }
+
+  public String getCacheStrategy(CacheType dbName) {
+    return this.cacheStrategies.getOrDefault(dbName, CacheStrategies.getCacheStrategy(dbName));
   }
 
   private  Property createProperty(final ConfigObject conf) {

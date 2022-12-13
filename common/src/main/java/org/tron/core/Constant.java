@@ -285,6 +285,7 @@ public class Constant {
 
   public static final String COMMITTEE_ALLOW_TVM_FREEZE = "committee.allowTvmFreeze";
   public static final String COMMITTEE_ALLOW_TVM_VOTE = "committee.allowTvmVote";
+  public static final String COMMITTEE_UNFREEZE_DELAY_DAYS = "committee.unfreezeDelayDays";
 
   public static final String COMMITTEE_ALLOW_TVM_LONDON = "committee.allowTvmLondon";
   public static final String COMMITTEE_ALLOW_TVM_COMPATIBLE_EVM = "committee.allowTvmCompatibleEvm";

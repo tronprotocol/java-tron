@@ -194,6 +194,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       "ALLOW_DELEGATE_OPTIMIZATION".getBytes();
 
 
+  private static final byte[] UNFREEZE_DELAY_DAYS = "UNFREEZE_DELAY_DAYS".getBytes();
+
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -888,6 +890,14 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveAllowDelegateOptimization(
           CommonParameter.getInstance().getAllowDelegateOptimization());
+    }
+
+    try {
+      this.getUnfreezeDelayDays();
+    } catch (IllegalArgumentException e) {
+      this.saveUnfreezeDelayDays(
+              CommonParameter.getInstance().getUnfreezeDelayDays()
+      );
     }
   }
 
@@ -2620,6 +2630,21 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public boolean allowNewReward() {
     return getAllowNewReward() == 1;
+  }
+
+  public long getUnfreezeDelayDays() {
+    return Optional.ofNullable(getUnchecked(UNFREEZE_DELAY_DAYS))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(() -> new IllegalArgumentException("not found UNFREEZE_DELAY_DAYS"));
+  }
+
+  public boolean supportUnfreezeDelay() {
+    return getUnfreezeDelayDays() > 0;
+  }
+
+  public void saveUnfreezeDelayDays(long value) {
+    this.put(UNFREEZE_DELAY_DAYS, new BytesCapsule(ByteArray.fromLong(value)));
   }
 
   private static class DynamicResourceProperties {

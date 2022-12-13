@@ -90,15 +90,16 @@ public class TransactionUtil {
     }
 
     ByteString contractResult = ByteString.copyFrom(programResult.getHReturn());
-    ByteString ContractAddress = ByteString.copyFrom(programResult.getContractAddress());
+    ByteString contractAddress = ByteString.copyFrom(programResult.getContractAddress());
 
     builder.setFee(fee);
     builder.addContractResult(contractResult);
-    builder.setContractAddress(ContractAddress);
+    builder.setContractAddress(contractAddress);
     builder.setUnfreezeAmount(programResult.getRet().getUnfreezeAmount());
     builder.setAssetIssueID(programResult.getRet().getAssetIssueID());
     builder.setExchangeId(programResult.getRet().getExchangeId());
     builder.setWithdrawAmount(programResult.getRet().getWithdrawAmount());
+    builder.setWithdrawExpireAmount(programResult.getRet().getWithdrawExpireAmount());
     builder.setExchangeReceivedAmount(programResult.getRet().getExchangeReceivedAmount());
     builder.setExchangeInjectAnotherAmount(programResult.getRet().getExchangeInjectAnotherAmount());
     builder.setExchangeWithdrawAnotherAmount(
