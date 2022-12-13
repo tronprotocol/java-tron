@@ -6,14 +6,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
-import org.tron.core.state.StateType;
-import org.tron.core.state.WorldStateCallBackUtils;
 
 @Component
 public class NullifierStore extends TronStoreWithRevoking<BytesCapsule> {
-
-  @Autowired
-  private WorldStateCallBackUtils worldStateCallBackUtils;
 
   @Autowired
   public NullifierStore(@Value("nullifier") String dbName) {
@@ -22,7 +17,6 @@ public class NullifierStore extends TronStoreWithRevoking<BytesCapsule> {
 
   public void put(BytesCapsule bytesCapsule) {
     put(bytesCapsule.getData(), new BytesCapsule(bytesCapsule.getData()));
-    worldStateCallBackUtils.callBack(StateType.Nullifier, bytesCapsule.getData(), bytesCapsule);
   }
 
   @Override

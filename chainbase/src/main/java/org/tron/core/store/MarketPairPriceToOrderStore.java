@@ -16,15 +16,10 @@ import org.tron.common.utils.StorageUtils;
 import org.tron.core.capsule.MarketOrderIdListCapsule;
 import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.db.TronStoreWithRevoking;
-import org.tron.core.state.StateType;
-import org.tron.core.state.WorldStateCallBackUtils;
 import org.tron.core.exception.ItemNotFoundException;
 
 @Component
 public class MarketPairPriceToOrderStore extends TronStoreWithRevoking<MarketOrderIdListCapsule> {
-
-  @Autowired
-  private WorldStateCallBackUtils worldStateCallBackUtils;
 
   @Autowired
   protected MarketPairPriceToOrderStore(@Value("market_pair_price_to_order") String dbName) {
@@ -95,12 +90,6 @@ public class MarketPairPriceToOrderStore extends TronStoreWithRevoking<MarketOrd
     } else {
       return ByteUtil.equals(keysNext.get(0), key) ? keysNext.get(1) : keysNext.get(0);
     }
-  }
-
-  @Override
-  public void put(byte[] key, MarketOrderIdListCapsule item) {
-    super.put(key, item);
-    worldStateCallBackUtils.callBack(StateType.MarketPairPriceToOrder, key, item);
   }
 
 }

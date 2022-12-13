@@ -37,6 +37,8 @@ import org.tron.core.db2.core.RevokingDBWithCachingOldValue;
 import org.tron.core.db2.core.SnapshotRoot;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.state.StateType;
+import org.tron.core.state.WorldStateCallBackUtils;
 
 
 @Slf4j(topic = "DB")
@@ -54,6 +56,9 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   private DbStatService dbStatService;
 
   private DB<byte[], byte[]> db;
+
+  @Autowired
+  private WorldStateCallBackUtils worldStateCallBackUtils;
 
   protected TronStoreWithRevoking(String dbName) {
     int dbVersion = CommonParameter.getInstance().getStorage().getDbVersion();
@@ -120,7 +125,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
 
   @Override
   public String getDbName() {
-    return null;
+    return db.getDbName();
   }
 
   @PostConstruct
@@ -136,6 +141,8 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     }
 
     revokingDB.put(key, item.getData());
+    // todo: optimize, minimize the ops
+    worldStateCallBackUtils.callBack(StateType.get(getDbName()), key, item);
   }
 
   @Override

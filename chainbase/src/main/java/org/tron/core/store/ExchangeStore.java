@@ -9,15 +9,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
-import org.tron.core.state.StateType;
-import org.tron.core.state.WorldStateCallBackUtils;
 import org.tron.core.exception.ItemNotFoundException;
 
 @Component
 public class ExchangeStore extends TronStoreWithRevoking<ExchangeCapsule> {
-
-  @Autowired
-  private WorldStateCallBackUtils worldStateCallBackUtils;
 
   @Autowired
   protected ExchangeStore(@Value("exchange") String dbName) {
@@ -42,9 +37,4 @@ public class ExchangeStore extends TronStoreWithRevoking<ExchangeCapsule> {
         .collect(Collectors.toList());
   }
 
-  @Override
-  public void put(byte[] key, ExchangeCapsule item) {
-    super.put(key, item);
-    worldStateCallBackUtils.callBack(StateType.Exchange, key, item);
-  }
 }

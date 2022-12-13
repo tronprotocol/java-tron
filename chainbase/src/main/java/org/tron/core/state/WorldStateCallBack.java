@@ -23,8 +23,8 @@ public class WorldStateCallBack extends WorldStateCallBackUtils {
   @Setter
   private ChainBaseManager chainBaseManager;
 
-  @Autowired
-  private WorldStateTrieStore worldStateTrieStore;
+//  @Autowired
+//  private WorldStateTrieStore worldStateTrieStore;
 
   public WorldStateCallBack() {
     this.execute = true;
@@ -42,7 +42,7 @@ public class WorldStateCallBack extends WorldStateCallBackUtils {
     trieEntryList.clear();
   }
 
-  public void preExecute(BlockCapsule blockCapsule) {
+  public void preExecute(BlockCapsule blockCapsule, WorldStateTrieStore worldStateTrieStore) {
     this.blockCapsule = blockCapsule;
     this.execute = true;
     this.allowGenerateRoot = chainBaseManager.getDynamicPropertiesStore().allowStateRoot();
@@ -81,7 +81,7 @@ public class WorldStateCallBack extends WorldStateCallBackUtils {
     execute = false;
   }
 
-  public void initGenesis(BlockCapsule blockCapsule) {
+  public void initGenesis(BlockCapsule blockCapsule, WorldStateTrieStore worldStateTrieStore) {
     if (!exe()) {
       return;
     }

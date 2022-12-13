@@ -7,17 +7,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
-import org.tron.core.state.StateType;
-import org.tron.core.state.WorldStateCallBackUtils;
 
 import java.util.Objects;
 
 @Slf4j(topic = "DB")
 @Component
 public class ContractStore extends TronStoreWithRevoking<ContractCapsule> {
-
-  @Autowired
-  private WorldStateCallBackUtils worldStateCallBackUtils;
 
   @Autowired
   private ContractStore(@Value("contract") String dbName) {
@@ -39,7 +34,6 @@ public class ContractStore extends TronStoreWithRevoking<ContractCapsule> {
       item = new ContractCapsule(item.getInstance().toBuilder().clearAbi().build());
     }
     revokingDB.put(key, item.getData());
-    worldStateCallBackUtils.callBack(StateType.Contract, key, item);
   }
 
   /**
