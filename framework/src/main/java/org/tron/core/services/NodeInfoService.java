@@ -186,7 +186,7 @@ public class NodeInfoService {
     configNodeInfo.setBackupListenPort(parameter.getBackupPort());
     configNodeInfo.setBackupMemberSize(parameter.getBackupMembers().size());
     configNodeInfo.setBackupPriority(parameter.getBackupPriority());
-    configNodeInfo.setDbVersion(parameter.getStorage().getDbVersion());
+    configNodeInfo.setDbVersion(2);
     configNodeInfo.setMinParticipationRate(parameter.getMinParticipationRate());
     configNodeInfo.setSupportConstant(parameter.isSupportConstant());
     configNodeInfo.setMinTimeRatio(parameter.getMinTimeRatio());
