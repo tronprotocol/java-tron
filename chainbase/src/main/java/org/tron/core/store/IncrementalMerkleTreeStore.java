@@ -7,8 +7,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
-import org.tron.core.db.accountstate.StateType;
-import org.tron.core.db.accountstate.WorldStateCallBackUtils;
+import org.tron.core.state.worldstate.StateType;
+import org.tron.core.state.worldstate.WorldStateCallBackUtils;
 
 @Slf4j(topic = "DB")
 @Component

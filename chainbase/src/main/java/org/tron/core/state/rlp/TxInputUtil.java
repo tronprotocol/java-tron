@@ -13,7 +13,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.core.capsule.utils;
+package org.tron.core.state.rlp;
 
 import com.google.protobuf.ByteString;
 import org.tron.protos.Protocol.TXInput;

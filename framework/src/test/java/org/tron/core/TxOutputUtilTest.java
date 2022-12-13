@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.capsule.utils.TxOutputUtil;
+import org.tron.core.state.rlp.TxOutputUtil;
 import org.tron.protos.Protocol.TXOutput;
 
 @Slf4j

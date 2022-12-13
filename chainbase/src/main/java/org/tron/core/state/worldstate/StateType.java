@@ -1,4 +1,4 @@
-package org.tron.core.db.accountstate;
+package org.tron.core.state.worldstate;
 
 public enum StateType {
 
