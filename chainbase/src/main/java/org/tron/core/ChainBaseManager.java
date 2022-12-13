@@ -33,6 +33,7 @@ import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.service.MortgageService;
+import org.tron.core.state.WorldStateTrieStore;
 import org.tron.core.store.AbiStore;
 import org.tron.core.store.AccountAssetStore;
 import org.tron.core.store.AccountIdIndexStore;
@@ -230,6 +231,10 @@ public class ChainBaseManager {
   private SectionBloomStore sectionBloomStore;
 
   @Autowired
+  @Getter
+  private WorldStateTrieStore worldStateTrieStore;
+
+  @Autowired
   private DbStatService dbStatService;
 
   public void closeOneStore(ITronChainBase database) {
@@ -277,6 +282,7 @@ public class ChainBaseManager {
     closeOneStore(pbftSignDataStore);
     closeOneStore(sectionBloomStore);
     closeOneStore(accountAssetStore);
+    closeOneStore(worldStateTrieStore);
   }
 
   // for test only

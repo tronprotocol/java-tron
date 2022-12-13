@@ -10,8 +10,8 @@ import org.springframework.stereotype.Component;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.state.worldstate.StateType;
-import org.tron.core.state.worldstate.WorldStateCallBackUtils;
+import org.tron.core.state.StateType;
+import org.tron.core.state.WorldStateCallBackUtils;
 import org.tron.protos.Protocol.Proposal.State;
 
 @Component

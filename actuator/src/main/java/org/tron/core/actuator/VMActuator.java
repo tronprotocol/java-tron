@@ -22,6 +22,7 @@ import org.tron.common.runtime.InternalTransaction.ExecutorType;
 import org.tron.common.runtime.InternalTransaction.TrxType;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StorageUtils;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
@@ -50,6 +51,7 @@ import org.tron.core.vm.program.invoke.ProgramInvoke;
 import org.tron.core.vm.program.invoke.ProgramInvokeFactory;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
+import org.tron.core.vm.repository.RepositoryStateImpl;
 import org.tron.core.vm.utils.MUtil;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Block;
@@ -104,14 +106,27 @@ public class VMActuator implements Actuator2 {
 
   @Override
   public void validate(Object object) throws ContractValidateException {
-
     TransactionContext context = (TransactionContext) object;
     if (Objects.isNull(context)) {
       throw new RuntimeException("TransactionContext is null");
     }
 
+    // check whether is state query
+    boolean stateQuery = false;
+    if (context.getBlockCap() != null) {
+      if (context.getBlockCap().getNum() < context.getStoreFactory()
+          .getChainBaseManager().getDynamicPropertiesStore().getLatestBlockHeaderNumber()) {
+        stateQuery = true;
+      }
+    }
+
     // Load Config
-    ConfigLoader.load(context.getStoreFactory());
+    if (!stateQuery) {
+      ConfigLoader.load(context.getStoreFactory());
+    } else {
+      ConfigLoader.load(context.getStoreFactory(),
+          context.getBlockCap().getInstance().getStateRoot().toByteArray());
+    }
     // Warm up registry class
     OperationRegistry.init();
     trx = context.getTrxCap().getInstance();
@@ -122,7 +137,13 @@ public class VMActuator implements Actuator2 {
     //Route Type
     ContractType contractType = this.trx.getRawData().getContract(0).getType();
     //Prepare Repository
-    rootRepository = RepositoryImpl.createRoot(context.getStoreFactory());
+    if (!stateQuery) {
+      rootRepository = RepositoryImpl.createRoot(context.getStoreFactory());
+    } else {
+      // todo: review
+      rootRepository = RepositoryStateImpl.createRoot(context.getStoreFactory(),
+          context.getBlockCap().getStateRoot().getBytes());
+    }
 
     enableEventListener = context.isEventPluginLoaded();
 
@@ -284,7 +305,6 @@ public class VMActuator implements Actuator2 {
       String txHash = Hex.toHexString(rootInternalTx.getHash());
       VMUtils.saveProgramTraceFile(txHash, traceContent);
     }
-
   }
 
   private void create()

@@ -129,7 +129,7 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.service.MortgageService;
-import org.tron.core.state.worldstate.WorldStateCallBack;
+import org.tron.core.state.WorldStateCallBack;
 import org.tron.core.store.AccountAssetStore;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
@@ -574,11 +574,6 @@ public class Manager {
       } else {
         logger.info("Create genesis block.");
         Args.getInstance().setChainId(genesisBlock.getBlockId().toString());
-
-        chainBaseManager.getBlockStore().put(genesisBlock.getBlockId().getBytes(), genesisBlock);
-        chainBaseManager.getBlockIndexStore().put(genesisBlock.getBlockId());
-
-        logger.info(SAVE_BLOCK, genesisBlock);
         // init Dynamic Properties Store
         chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(0);
         chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderHash(
@@ -590,6 +585,14 @@ public class Manager {
         this.khaosDb.start(genesisBlock);
         this.updateRecentBlock(genesisBlock);
         initAccountHistoryBalance();
+        // init genesis state
+        worldStateCallBack.initGenesis(genesisBlock);
+        System.out.println(genesisBlock);
+
+        chainBaseManager.getBlockStore().put(genesisBlock.getBlockId().getBytes(), genesisBlock);
+        chainBaseManager.getBlockIndexStore().put(genesisBlock.getBlockId());
+
+        logger.info(SAVE_BLOCK, genesisBlock);
       }
     }
   }

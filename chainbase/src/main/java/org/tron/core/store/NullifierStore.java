@@ -6,8 +6,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
-import org.tron.core.state.worldstate.StateType;
-import org.tron.core.state.worldstate.WorldStateCallBackUtils;
+import org.tron.core.state.StateType;
+import org.tron.core.state.WorldStateCallBackUtils;
 
 @Component
 public class NullifierStore extends TronStoreWithRevoking<BytesCapsule> {

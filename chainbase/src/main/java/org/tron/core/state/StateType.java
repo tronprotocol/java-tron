@@ -1,4 +1,4 @@
-package org.tron.core.state.worldstate;
+package org.tron.core.state;
 
 public enum StateType {
 
@@ -7,7 +7,7 @@ public enum StateType {
   AccountIndex((byte)0x03, "account-index"),
   AccountIdIndex((byte)0x04, "accountid-index"),
   AccountIssue((byte)0x05, "asset-issue"),
-  AccountIssueV2((byte)0x06, "asset-issue-v2"),
+//  AccountIssueV2((byte)0x05, "asset-issue-v2"),  // same as AccountIssue
   Code((byte)0x07, "code"),
   Contract((byte)0x08, "contract"),
   Delegation((byte)0x09, "delegation"),
