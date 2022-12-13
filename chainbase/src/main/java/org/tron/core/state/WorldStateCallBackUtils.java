@@ -1,4 +1,4 @@
-package org.tron.core.state.worldstate;
+package org.tron.core.state;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +51,7 @@ public class WorldStateCallBackUtils {
   }
 
   private void callBack(StateType type, byte[] key, byte[] value) {
+    // todo: move to upper
     if (!exe()) {
       return;
     }

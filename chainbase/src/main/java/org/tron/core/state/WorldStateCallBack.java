@@ -1,4 +1,4 @@
-package org.tron.core.state.worldstate;
+package org.tron.core.state;
 
 import com.google.protobuf.Internal;
 import java.util.Arrays;
@@ -8,6 +8,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.Hash;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.state.trie.TrieImpl;
@@ -24,6 +25,11 @@ public class WorldStateCallBack extends WorldStateCallBackUtils {
 
   @Autowired
   private WorldStateTrieStore worldStateTrieStore;
+
+  public WorldStateCallBack() {
+    this.execute = true;
+    this.allowGenerateRoot = CommonParameter.getInstance().getAllowStateRoot() == 1;
+  }
 
   public void preExeTrans() {
     trieEntryList.clear();
@@ -62,6 +68,24 @@ public class WorldStateCallBack extends WorldStateCallBackUtils {
       return;
     }
     // update state after processTx
+    for (TrieEntry trieEntry : trieEntryList) {
+      trie.put(Hash.encodeElement(trieEntry.getKey()), trieEntry.getData());
+    }
+    trieEntryList.clear();
+
+    byte[] newRoot = trie.getRootHash();
+    if (ArrayUtils.isEmpty(newRoot)) {
+      newRoot = Hash.EMPTY_TRIE_HASH;
+    }
+    blockCapsule.setStateRoot(newRoot);
+    execute = false;
+  }
+
+  public void initGenesis(BlockCapsule blockCapsule) {
+    if (!exe()) {
+      return;
+    }
+    trie = new TrieImpl(worldStateTrieStore, Hash.EMPTY_TRIE_HASH);
     for (TrieEntry trieEntry : trieEntryList) {
       trie.put(Hash.encodeElement(trieEntry.getKey()), trieEntry.getData());
     }

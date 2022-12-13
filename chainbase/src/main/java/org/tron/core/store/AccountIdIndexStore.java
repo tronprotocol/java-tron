@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
-import org.tron.core.state.worldstate.StateType;
-import org.tron.core.state.worldstate.WorldStateCallBackUtils;
+import org.tron.core.state.StateType;
+import org.tron.core.state.WorldStateCallBackUtils;
 
 //todo : need Compatibility test
 @Component

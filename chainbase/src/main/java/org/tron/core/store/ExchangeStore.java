@@ -9,8 +9,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
-import org.tron.core.state.worldstate.StateType;
-import org.tron.core.state.worldstate.WorldStateCallBackUtils;
+import org.tron.core.state.StateType;
+import org.tron.core.state.WorldStateCallBackUtils;
 import org.tron.core.exception.ItemNotFoundException;
 
 @Component

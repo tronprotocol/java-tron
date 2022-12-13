@@ -4,6 +4,8 @@ import static org.tron.core.capsule.ReceiptCapsule.checkForEnergyLimit;
 
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.utils.ByteArray;
+import org.tron.core.state.WorldStateQueryInstance;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.StoreFactory;
 
@@ -32,6 +34,32 @@ public class ConfigLoader {
         VMConfig.initAllowHigherLimitForMaxCpuTimeOfOneTx(
             ds.getAllowHigherLimitForMaxCpuTimeOfOneTx());
       }
+    }
+  }
+
+  public static void load(StoreFactory storeFactory, byte[] rootHash) {
+    if (!disable) {
+      System.out.println("root hash" + ByteArray.toHexString(rootHash));
+      WorldStateQueryInstance wq = new WorldStateQueryInstance(rootHash, storeFactory.getChainBaseManager());
+      VMConfig.setVmTrace(CommonParameter.getInstance().isVmTrace());
+
+      long blockNum = wq.getLatestBlockHeaderNumber();
+      boolean energyLimit = blockNum >=
+          CommonParameter.getInstance().getBlockNumForEnergyLimit();
+
+      VMConfig.initVmHardFork(energyLimit);
+      VMConfig.initAllowMultiSign(wq.getAllowMultiSign());
+      VMConfig.initAllowTvmTransferTrc10(wq.getAllowTvmTransferTrc10());
+      VMConfig.initAllowTvmConstantinople(wq.getAllowTvmConstantinople());
+      VMConfig.initAllowTvmSolidity059(wq.getAllowTvmSolidity059());
+      VMConfig.initAllowShieldedTRC20Transaction(wq.getAllowShieldedTRC20Transaction());
+      VMConfig.initAllowTvmIstanbul(wq.getAllowTvmIstanbul());
+      VMConfig.initAllowTvmFreeze(wq.getAllowTvmFreeze());
+      VMConfig.initAllowTvmVote(wq.getAllowTvmVote());
+      VMConfig.initAllowTvmLondon(wq.getAllowTvmLondon());
+      VMConfig.initAllowTvmCompatibleEvm(wq.getAllowTvmCompatibleEvm());
+      VMConfig.initAllowHigherLimitForMaxCpuTimeOfOneTx(
+          wq.getAllowHigherLimitForMaxCpuTimeOfOneTx());
     }
   }
 }

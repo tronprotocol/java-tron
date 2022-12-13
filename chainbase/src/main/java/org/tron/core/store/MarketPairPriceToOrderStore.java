@@ -16,8 +16,8 @@ import org.tron.common.utils.StorageUtils;
 import org.tron.core.capsule.MarketOrderIdListCapsule;
 import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.db.TronStoreWithRevoking;
-import org.tron.core.state.worldstate.StateType;
-import org.tron.core.state.worldstate.WorldStateCallBackUtils;
+import org.tron.core.state.StateType;
+import org.tron.core.state.WorldStateCallBackUtils;
 import org.tron.core.exception.ItemNotFoundException;
 
 @Component
