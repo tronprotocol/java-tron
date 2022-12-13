@@ -82,7 +82,6 @@ public class ArchiveManifest implements Callable<Boolean> {
     dbOptions.maxOpenFiles(1000);
     dbOptions.maxBatchSize(64_000);
     dbOptions.maxManifestSize(128);
-    dbOptions.fast(false);
     return dbOptions;
   }
 

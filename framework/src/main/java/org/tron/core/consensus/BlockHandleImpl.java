@@ -12,7 +12,7 @@ import org.tron.consensus.base.State;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.net.TronNetService;
-import org.tron.core.net.message.BlockMessage;
+import org.tron.core.net.message.adv.BlockMessage;
 
 @Slf4j(topic = "consensus")
 @Component

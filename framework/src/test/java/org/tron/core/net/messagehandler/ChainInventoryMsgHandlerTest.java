@@ -9,7 +9,7 @@ import org.tron.common.utils.Pair;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.exception.P2pException;
-import org.tron.core.net.message.ChainInventoryMessage;
+import org.tron.core.net.message.sync.ChainInventoryMessage;
 import org.tron.core.net.peer.PeerConnection;
 
 public class ChainInventoryMsgHandlerTest {

@@ -113,7 +113,7 @@ public abstract class BaseNet {
     Collection<PeerConnection> peerConnections = ReflectUtils
         .invokeMethod(tronNetDelegate, "getActivePeer");
     for (PeerConnection peer : peerConnections) {
-      peer.close();
+      peer.getChannel().close();
     }
 
     context.destroy();

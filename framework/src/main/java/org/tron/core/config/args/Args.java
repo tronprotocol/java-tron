@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URL;
 import java.nio.file.Paths;
@@ -56,7 +57,6 @@ import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.TriggerConfig;
 import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
-import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.parameter.RateLimiterInitialization;
 import org.tron.common.setting.RocksDbSettings;
@@ -123,9 +123,9 @@ public class Args extends CommonParameter {
     PARAMETER.nodeDiscoveryEnable = false;
     PARAMETER.nodeDiscoveryPersist = false;
     PARAMETER.nodeConnectionTimeout = 2000;
-    PARAMETER.activeNodes = Collections.emptyList();
-    PARAMETER.passiveNodes = Collections.emptyList();
-    PARAMETER.fastForwardNodes = Collections.emptyList();
+    PARAMETER.activeNodes = new ArrayList<>();
+    PARAMETER.passiveNodes = new ArrayList<>();
+    PARAMETER.fastForwardNodes = new ArrayList<>();
     PARAMETER.maxFastForwardNum = 3;
     PARAMETER.nodeChannelReadTimeout = 0;
     PARAMETER.maxConnections = 30;
@@ -893,11 +893,11 @@ public class Args extends CommonParameter {
             .getInt(Constant.NODE_VALID_CONTRACT_PROTO_THREADS)
             : Runtime.getRuntime().availableProcessors();
 
-    PARAMETER.activeNodes = getNodes(config, Constant.NODE_ACTIVE);
+    PARAMETER.activeNodes = getInetSocketAddress(config, Constant.NODE_ACTIVE);
 
-    PARAMETER.passiveNodes = getNodes(config, Constant.NODE_PASSIVE);
+    PARAMETER.passiveNodes = getInetAddress(config, Constant.NODE_PASSIVE);
 
-    PARAMETER.fastForwardNodes = getNodes(config, Constant.NODE_FAST_FORWARD);
+    PARAMETER.fastForwardNodes = getInetSocketAddress(config, Constant.NODE_FAST_FORWARD);
 
     PARAMETER.maxFastForwardNum = config.hasPath(Constant.NODE_MAX_FAST_FORWARD_NUM) ? config
             .getInt(Constant.NODE_MAX_FAST_FORWARD_NUM) : 3;
@@ -1131,25 +1131,46 @@ public class Args extends CommonParameter {
     return initialization;
   }
 
-  private static List<Node> getNodes(final com.typesafe.config.Config config, String path) {
+  private static List<InetSocketAddress> getInetSocketAddress(
+          final com.typesafe.config.Config config, String path) {
+    List<InetSocketAddress> ret = new ArrayList<>();
     if (!config.hasPath(path)) {
-      return Collections.emptyList();
+      return ret;
     }
-    List<Node> ret = new ArrayList<>();
     List<String> list = config.getStringList(path);
     for (String configString : list) {
-      Node n = Node.instanceOf(configString);
-      if (!(PARAMETER.nodeDiscoveryBindIp.equals(n.getHost())
-          || PARAMETER.nodeExternalIp.equals(n.getHost())
-          || Constant.LOCAL_HOST.equals(n.getHost()))
-          || PARAMETER.nodeListenPort != n.getPort()) {
-        ret.add(n);
+      String[] sz = configString.split(":");
+      String ip = sz[0];
+      int port = Integer.parseInt(sz[1]);
+      if (!(PARAMETER.nodeDiscoveryBindIp.equals(ip)
+          || PARAMETER.nodeExternalIp.equals(ip)
+          || Constant.LOCAL_HOST.equals(ip))
+          || PARAMETER.nodeListenPort != port) {
+        ret.add(new InetSocketAddress(ip, port));
       }
     }
     return ret;
   }
 
-  private static EventPluginConfig getEventPluginConfig(final com.typesafe.config.Config config) {
+  private static List<InetAddress> getInetAddress(
+          final com.typesafe.config.Config config, String path) {
+    List<InetAddress> ret = new ArrayList<>();
+    if (!config.hasPath(path)) {
+      return ret;
+    }
+    List<String> list = config.getStringList(path);
+    for (String configString : list) {
+      try {
+        ret.add(InetAddress.getByName(configString.split(":")[0]));
+      } catch (Exception e) {
+        logger.warn("Get inet address failed, {}", e.getMessage());
+      }
+    }
+    return ret;
+  }
+
+  private static EventPluginConfig getEventPluginConfig(
+          final com.typesafe.config.Config config) {
     EventPluginConfig eventPluginConfig = new EventPluginConfig();
 
     boolean useNativeQueue = false;
@@ -1447,7 +1468,7 @@ public class Args extends CommonParameter {
         PARAMETER.storage.getDbDirectory(), Constant.INFO_FILE_NAME).toString();
     if (FileUtil.isExists(infoFile)) {
       String value = PropUtil.readProperty(infoFile, Constant.SPLIT_BLOCK_NUM);
-      return !"".equals(value) && Long.parseLong(value) > 0;
+      return !"".equals(value) && Long.parseLong(value) > 1;
     }
     return false;
   }

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.core.exception.P2pException;
-import org.tron.core.net.message.SyncBlockChainMessage;
+import org.tron.core.net.message.sync.SyncBlockChainMessage;
 import org.tron.core.net.peer.PeerConnection;
 
 public class SyncBlockChainMsgHandlerTest {
