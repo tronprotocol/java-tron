@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -112,6 +113,17 @@ public class TronNetDelegate {
     });
     hitThread.setName("hit-thread");
     hitThread.start();
+  }
+
+  @PreDestroy
+  public void close() {
+    try {
+      hitThread.interrupt();
+      // help GC
+      hitThread = null;
+    } catch (Exception e) {
+      logger.warn("hitThread interrupt error", e);
+    }
   }
 
   public Collection<PeerConnection> getActivePeer() {

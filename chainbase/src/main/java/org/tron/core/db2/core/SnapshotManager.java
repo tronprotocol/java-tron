@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -114,6 +115,17 @@ public class SnapshotManager implements RevokingDatabase {
     });
     exitThread.setName("exit-thread");
     exitThread.start();
+  }
+
+  @PreDestroy
+  public void close() {
+    try {
+      exitThread.interrupt();
+      // help GC
+      exitThread = null;
+    } catch (Exception e) {
+      logger.warn("exitThread interrupt error", e);
+    }
   }
 
   public static String simpleDecode(byte[] bytes) {
