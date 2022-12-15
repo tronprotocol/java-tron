@@ -587,7 +587,6 @@ public class Manager {
         initAccountHistoryBalance();
         // init genesis state
         worldStateCallBack.initGenesis(genesisBlock, chainBaseManager.getWorldStateTrieStore());
-        System.out.println(genesisBlock);
 
         chainBaseManager.getBlockStore().put(genesisBlock.getBlockId().getBytes(), genesisBlock);
         chainBaseManager.getBlockIndexStore().put(genesisBlock.getBlockId());

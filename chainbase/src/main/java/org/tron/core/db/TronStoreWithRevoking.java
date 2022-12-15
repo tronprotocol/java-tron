@@ -58,7 +58,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   private DB<byte[], byte[]> db;
 
   @Autowired
-  private WorldStateCallBackUtils worldStateCallBackUtils;
+  protected WorldStateCallBackUtils worldStateCallBackUtils;
 
   protected TronStoreWithRevoking(String dbName) {
     int dbVersion = CommonParameter.getInstance().getStorage().getDbVersion();

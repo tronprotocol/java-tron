@@ -196,10 +196,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_DELEGATE_OPTIMIZATION =
       "ALLOW_DELEGATE_OPTIMIZATION".getBytes();
 
-
-  @Autowired
-  private WorldStateCallBackUtils worldStateCallBackUtils;
-
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName, WorldStateCallBackUtils worldStateCallBackUtils) {
     super(dbName);
@@ -2651,14 +2647,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public boolean allowNewReward() {
     return getAllowNewReward() == 1;
-  }
-
-  @Override
-  public void put(byte[] key, BytesCapsule item) {
-    super.put(key, item);
-    // todo: filter the keys that are not the state data
-    worldStateCallBackUtils.callBack(StateType.Properties, key, item);
-    //if (key not contain in state key set) { return; }
   }
 
   public static class DynamicResourceProperties {
