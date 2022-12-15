@@ -369,9 +369,6 @@ public class CommonParameter {
   public long allowAccountStateRoot;
   @Getter
   @Setter
-  public long allowStateRoot = 1; // todo: make it configurable
-  @Getter
-  @Setter
   public int validContractProtoThreadNum = 1;
   @Getter
   @Setter

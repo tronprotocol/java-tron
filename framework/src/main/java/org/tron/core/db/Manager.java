@@ -130,6 +130,7 @@ import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.service.MortgageService;
 import org.tron.core.state.WorldStateCallBack;
+import org.tron.core.state.WorldStateGenesis;
 import org.tron.core.store.AccountAssetStore;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
@@ -226,6 +227,8 @@ public class Manager {
   @Autowired
   @Getter
   private ChainBaseManager chainBaseManager;
+  @Autowired
+  private WorldStateGenesis worldStateGenesis;
   // transactions cache
   private BlockingQueue<TransactionCapsule> pendingTransactions;
   @Getter
@@ -509,7 +512,8 @@ public class Manager {
 
     // init liteFullNode
     initLiteNode();
-
+    // init worldState
+    worldStateGenesis.init();
     long headNum = chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     logger.info("Current headNum is: {}.", headNum);
     int nodeType = chainBaseManager.getCommonStore().getNodeType();

@@ -147,7 +147,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ACTIVE_DEFAULT_OPERATIONS = "ACTIVE_DEFAULT_OPERATIONS".getBytes();
   //Used only for account state root, once，value is {0,1} allow is 1
   private static final byte[] ALLOW_ACCOUNT_STATE_ROOT = "ALLOW_ACCOUNT_STATE_ROOT".getBytes();
-  private static final byte[] ALLOW_STATE_ROOT = "ALLOW_STATE_ROOT".getBytes();
   private static final byte[] CURRENT_CYCLE_NUMBER = "CURRENT_CYCLE_NUMBER".getBytes();
   private static final byte[] CHANGE_DELEGATION = "CHANGE_DELEGATION".getBytes();
   private static final byte[] ALLOW_PBFT = "ALLOW_PBFT".getBytes();
@@ -734,13 +733,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveAllowAccountStateRoot(CommonParameter.getInstance()
           .getAllowAccountStateRoot());
-    }
-
-    try {
-      this.getAllowStateRoot();
-    } catch (IllegalArgumentException e) {
-      this.saveAllowStateRoot(CommonParameter.getInstance()
-          .getAllowStateRoot());
     }
 
     try {
@@ -2275,23 +2267,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public boolean allowAccountStateRoot() {
     return getAllowAccountStateRoot() == 1;
-  }
-
-  public void saveAllowStateRoot(long allowStateRoot) {
-    this.put(ALLOW_STATE_ROOT,
-        new BytesCapsule(ByteArray.fromLong(allowStateRoot)));
-  }
-
-  public long getAllowStateRoot() {
-    return Optional.ofNullable(getUnchecked(ALLOW_STATE_ROOT))
-        .map(BytesCapsule::getData)
-        .map(ByteArray::toLong)
-        .orElseThrow(
-            () -> new IllegalArgumentException("not found ALLOW_STATE_ROOT"));
-  }
-
-  public boolean allowStateRoot() {
-    return getAllowStateRoot() == 1;
   }
 
   public long getCurrentCycleNumber() {

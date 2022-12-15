@@ -28,7 +28,7 @@ public class WorldStateCallBack extends WorldStateCallBackUtils {
 
   public WorldStateCallBack() {
     this.execute = true;
-    this.allowGenerateRoot = CommonParameter.getInstance().getAllowStateRoot() == 1;
+    this.allowGenerateRoot = CommonParameter.getInstance().getStorage().isAllowStateRoot();
   }
 
   public void preExeTrans() {
@@ -45,7 +45,6 @@ public class WorldStateCallBack extends WorldStateCallBackUtils {
   public void preExecute(BlockCapsule blockCapsule, WorldStateTrieStore worldStateTrieStore) {
     this.blockCapsule = blockCapsule;
     this.execute = true;
-    this.allowGenerateRoot = chainBaseManager.getDynamicPropertiesStore().allowStateRoot();
     if (!exe()) {
       return;
     }
