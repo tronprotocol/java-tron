@@ -264,7 +264,7 @@ public class PeerConnection {
             reason.name().toLowerCase(Locale.ROOT));
   }
 
-  private boolean needToLog(Message msg) {
+  public static boolean needToLog(Message msg) {
     if (msg instanceof PingMessage
             || msg instanceof PongMessage
             || msg instanceof TransactionsMessage
