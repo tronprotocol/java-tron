@@ -47,6 +47,25 @@ DB convert provides a helper which can convert LevelDB data to RocksDB data, par
   java -jar Toolkit.jar db convert  output-directory/database /tmp/database
 ```
 
+## DB Copy
+
+DB copy provides a helper which can copy LevelDB or RocksDB data quickly on the same file systems by creating hard links.
+
+### Available parameters:
+
+- `<src>`: Source path for database. Default: output-directory/database
+- `<dest>`: Output path for database. Default: output-directory-cp/database
+- `-h | --help`: provide the help info
+
+### Examples:
+
+```shell script
+# full command
+  java -jar Toolkit.jar db cp [-h] <src> <dest>
+# examples
+  java -jar Toolkit.jar db cp  output-directory/database /tmp/databse
+```
+
 
 ## DB Lite
 
