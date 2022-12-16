@@ -69,6 +69,8 @@
   <logger level="INFO" name="DB"/>
   <logger level="INFO" name="capsule"/>
   <logger level="INFO" name="VM"/>
+  <logger level="OFF" name="LEVELDB"/>
+  <logger level="OFF" name="ROCKSDB"/>
 
   <logger level="INFO" name="tool" additivity="false">
     <appender-ref ref="CONSOLE"/>
