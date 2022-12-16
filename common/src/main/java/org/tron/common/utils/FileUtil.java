@@ -21,11 +21,14 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.FileSystemException;
+import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -148,5 +151,51 @@ public class FileUtil {
   public static boolean isExists(String path) {
     File file = new File(path);
     return file.exists();
+  }
+
+
+  /**
+   * Copy src to dest, if dest is a directory and already exists, throw Exception.
+   *
+   * <p>Note: This method is not rigorous, because all the dirs that its FileName
+   * is contained in List(subDirs) will be filtered, this may result in unpredictable result.
+   * just used in LiteFullNodeTool.
+   *
+   * @param src     Path or File
+   * @param dest    Path or File
+   * @param subDirs only the subDirs in {@code src} will be copied
+   * @throws IOException IOException
+   */
+  public static void copyDatabases(Path src, Path dest, List<String> subDirs) {
+    // create subdirs, as using parallel() to run, so should create dirs first.
+    subDirs.parallelStream().forEach(dir -> {
+      if (FileUtil.isExists(Paths.get(src.toString(), dir).toString())) {
+        try {
+          Files.walk(Paths.get(src.toString(), dir), FileVisitOption.FOLLOW_LINKS)
+              .forEach(source -> copy(source, dest.resolve(src.relativize(source))));
+        } catch (IOException e) {
+          logger.error("copy database failed, src: {}, dest: {}, error: {}",
+              Paths.get(src.toString(), dir), Paths.get(dest.toString(), dir), e.getMessage());
+          throw new RuntimeException(e);
+        }
+      }
+    });
+  }
+
+  private static void copy(Path source, Path dest) {
+    try {
+      // create hard link when file is .sst
+      if (source.toString().endsWith(".sst")) {
+        try {
+          Files.createLink(dest, source);
+        } catch (FileSystemException e) {
+          Files.copy(source, dest, StandardCopyOption.REPLACE_EXISTING);
+        }
+      } else {
+        Files.copy(source, dest, StandardCopyOption.REPLACE_EXISTING);
+      }
+    } catch (Exception e) {
+      throw new RuntimeException(e.getMessage(), e);
+    }
   }
 }

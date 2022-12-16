@@ -57,6 +57,8 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
 
   private DB<byte[], byte[]> db;
 
+  private StateType type;
+
   @Autowired
   protected WorldStateCallBackUtils worldStateCallBackUtils;
 
@@ -132,6 +134,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   private void init() {
     revokingDatabase.add(revokingDB);
     dbStatService.register(db);
+    type = StateType.get(getDbName());
   }
 
   @Override
@@ -142,7 +145,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
 
     revokingDB.put(key, item.getData());
     // todo: optimize, minimize the ops
-    worldStateCallBackUtils.callBack(StateType.get(getDbName()), key, item);
+    worldStateCallBackUtils.callBack(type, key, item);
   }
 
   @Override

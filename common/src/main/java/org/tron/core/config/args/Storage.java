@@ -72,6 +72,9 @@ public class Storage {
   private static final String CHECKPOINT_VERSION_KEY = "storage.checkpoint.version";
   private static final String CHECKPOINT_SYNC_KEY = "storage.checkpoint.sync";
 
+  private static final String STATE_ROOT_SWITCH_KEY = "storage.stateRoot.switch";
+  private static final String STATE_GENESIS_DIRECTORY_KEY = "storage.stateGenesis.directory";
+
   /**
    * Default values of directory
    */
@@ -85,6 +88,7 @@ public class Storage {
   private static final int DEFAULT_CHECKPOINT_VERSION = 1;
   private static final boolean DEFAULT_CHECKPOINT_SYNC = true;
   private static final int DEFAULT_ESTIMATED_TRANSACTIONS = 1000;
+  private static final String DEFAULT_STATE_GENESIS_DIRECTORY = "state-genesis";
   private Config storage;
 
   /**
@@ -138,6 +142,12 @@ public class Storage {
   @Getter
   @Setter
   private int estimatedBlockTransactions;
+
+  @Getter
+  private boolean allowStateRoot;
+
+  @Getter
+  private String stateGenesisDirectory = DEFAULT_STATE_GENESIS_DIRECTORY;
 
   /**
    * Key: dbName, Value: Property object of that database
@@ -211,6 +221,18 @@ public class Storage {
       estimatedTransactions = 100;
     }
     return estimatedTransactions;
+  }
+
+  public void setAllowStateRoot(final Config config) {
+    if (config.hasPath(STATE_ROOT_SWITCH_KEY)) {
+      this.allowStateRoot = config.getBoolean(STATE_ROOT_SWITCH_KEY);
+    }
+  }
+
+  public  void setStateGenesisDirectory(final Config config) {
+    if (config.hasPath(STATE_GENESIS_DIRECTORY_KEY)) {
+      this.stateGenesisDirectory = config.getString(STATE_GENESIS_DIRECTORY_KEY);
+    }
   }
 
   private  Property createProperty(final ConfigObject conf) {
