@@ -541,6 +541,13 @@ public class Manager {
     long exitHeight = CommonParameter.getInstance().getShutdownBlockHeight();
     long exitCount = CommonParameter.getInstance().getShutdownBlockCount();
 
+    if (exitHeight > 0 && exitHeight < headNum) {
+      logger.info("ShutDownBlockHeight {} is less than headNum {}, reset it to -1.",
+          exitHeight, headNum);
+      CommonParameter.getInstance().setShutdownBlockHeight(-1);
+      exitHeight = -1;
+    }
+
     if (exitCount > 0 && (exitHeight < 0 || exitHeight > headNum + exitCount)) {
       CommonParameter.getInstance().setShutdownBlockHeight(headNum + exitCount);
     }
