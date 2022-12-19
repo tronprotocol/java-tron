@@ -964,12 +964,12 @@ public class Manager {
       revokingStore.setMaxFlushCount(maxFlushCount);
       if (Args.getInstance().getShutdownBlockTime() != null
           && Args.getInstance().getShutdownBlockTime().getNextValidTimeAfter(
-          new Date(block.getTimeStamp() - SnapshotManager.DEFAULT_MAX_FLUSH_COUNT * 1000 * 3))
+          new Date(block.getTimeStamp() - maxFlushCount * 1000 * 3))
           .compareTo(new Date(block.getTimeStamp())) <= 0) {
         revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MIN_FLUSH_COUNT);
       }
       if (latestSolidityNumShutDown > 0 && latestSolidityNumShutDown - block.getNum()
-          <= SnapshotManager.DEFAULT_MAX_FLUSH_COUNT) {
+          <= maxFlushCount) {
         revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MIN_FLUSH_COUNT);
       }
     } else {
