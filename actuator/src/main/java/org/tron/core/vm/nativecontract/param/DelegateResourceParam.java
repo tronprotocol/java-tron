@@ -12,6 +12,8 @@ public class DelegateResourceParam {
 
   private Common.ResourceCode resourceType;
 
+  private boolean lock;
+
   public byte[] getOwnerAddress() {
     return ownerAddress;
   }
@@ -42,5 +44,13 @@ public class DelegateResourceParam {
 
   public void setResourceType(Common.ResourceCode resourceType) {
     this.resourceType = resourceType;
+  }
+
+  public boolean isLock() {
+    return lock;
+  }
+
+  public void setLock(boolean lock) {
+    this.lock = lock;
   }
 }

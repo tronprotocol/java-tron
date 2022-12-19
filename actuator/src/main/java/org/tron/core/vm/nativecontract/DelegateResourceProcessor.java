@@ -1,11 +1,6 @@
 package org.tron.core.vm.nativecontract;
 
-import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
-import static org.tron.core.actuator.ActuatorConstant.STORE_NOT_EXIST;
-import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
-
 import com.google.protobuf.ByteString;
-import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.utils.DecodeUtil;
@@ -21,6 +16,13 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.vm.nativecontract.param.DelegateResourceParam;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
+
+import java.util.Arrays;
+
+import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
+import static org.tron.core.actuator.ActuatorConstant.STORE_NOT_EXIST;
+import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_PERIOD;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 @Slf4j(topic = "VMProcessor")
 public class DelegateResourceProcessor {
@@ -71,8 +73,8 @@ public class DelegateResourceProcessor {
       }
       break;
       case ENERGY: {
-          EnergyProcessor processor =
-              new EnergyProcessor(dynamicStore, ChainBaseManager.getInstance().getAccountStore());
+        EnergyProcessor processor =
+            new EnergyProcessor(dynamicStore, ChainBaseManager.getInstance().getAccountStore());
         processor.updateUsage(ownerCapsule);
 
         long energyUsage = (long) (ownerCapsule.getEnergyUsage() * TRX_PRECISION * ((double)
@@ -123,19 +125,20 @@ public class DelegateResourceProcessor {
     AccountCapsule ownerCapsule = repo.getAccount(param.getOwnerAddress());
     long delegateBalance = param.getDelegateBalance();
     byte[] receiverAddress = param.getReceiverAddress();
+    boolean lock = param.isLock();
 
     // delegate resource to receiver
     switch (param.getResourceType()) {
       case BANDWIDTH:
         delegateResource(ownerAddress, receiverAddress, true,
-            delegateBalance, repo);
+            delegateBalance, repo, lock);
 
         ownerCapsule.addDelegatedFrozenV2BalanceForBandwidth(delegateBalance);
         ownerCapsule.addFrozenBalanceForBandwidthV2(-delegateBalance);
         break;
       case ENERGY:
         delegateResource(ownerAddress, receiverAddress, false,
-            delegateBalance, repo);
+            delegateBalance, repo, lock);
 
         ownerCapsule.addDelegatedFrozenV2BalanceForEnergy(delegateBalance);
         ownerCapsule.addFrozenBalanceForEnergyV2(-delegateBalance);
@@ -152,7 +155,8 @@ public class DelegateResourceProcessor {
       byte[] receiverAddress,
       boolean isBandwidth,
       long delegateBalance,
-      Repository repo) {
+      Repository repo,
+      boolean lock) {
     //modify DelegatedResourceStore
     byte[] key = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress, false);
     DelegatedResourceCapsule delegatedResourceCapsule = repo.getDelegatedResource(key);
@@ -161,10 +165,15 @@ public class DelegateResourceProcessor {
           ByteString.copyFrom(ownerAddress),
           ByteString.copyFrom(receiverAddress));
     }
+    long expireTime = 0;
+    if (lock) {
+      expireTime =
+          repo.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + DELEGATE_PERIOD;
+    }
     if (isBandwidth) {
-      delegatedResourceCapsule.addFrozenBalanceForBandwidth(delegateBalance, 0);
+      delegatedResourceCapsule.addFrozenBalanceForBandwidth(delegateBalance, expireTime);
     } else {
-      delegatedResourceCapsule.addFrozenBalanceForEnergy(delegateBalance, 0);
+      delegatedResourceCapsule.addFrozenBalanceForEnergy(delegateBalance, expireTime);
     }
 
     //update Account for receiver
