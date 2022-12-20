@@ -12,10 +12,23 @@ import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.utils.*;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.StorageUtils;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.ChainBaseManager;
-import org.tron.core.capsule.*;
+import org.tron.core.capsule.AbiCapsule;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.CodeCapsule;
+import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.DelegatedResourceCapsule;
+import org.tron.core.capsule.VotesCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
@@ -24,7 +37,19 @@ import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.state.WorldStateQueryInstance;
-import org.tron.core.store.*;
+import org.tron.core.store.AbiStore;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.AssetIssueStore;
+import org.tron.core.store.AssetIssueV2Store;
+import org.tron.core.store.CodeStore;
+import org.tron.core.store.ContractStore;
+import org.tron.core.store.DelegatedResourceStore;
+import org.tron.core.store.DelegationStore;
+import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.StorageRowStore;
+import org.tron.core.store.StoreFactory;
+import org.tron.core.store.VotesStore;
+import org.tron.core.store.WitnessStore;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program.IllegalOperationException;
 import org.tron.core.vm.program.Storage;
@@ -434,7 +459,7 @@ public class RepositoryStateImpl implements Repository {
     if (parent != null) {
       code = parent.getCode(address);
     } else {
-      code= worldStateQueryInstance.getCode(address);
+      code= worldStateQueryInstance.getCode(address).getData();
     }
     if (code != null) {
       codeCache.put(key, Value.create(code));

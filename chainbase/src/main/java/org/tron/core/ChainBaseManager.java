@@ -33,6 +33,7 @@ import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.service.MortgageService;
+import org.tron.core.state.WorldStateGenesis;
 import org.tron.core.state.WorldStateTrieStore;
 import org.tron.core.store.AbiStore;
 import org.tron.core.store.AccountAssetStore;
@@ -233,6 +234,10 @@ public class ChainBaseManager {
   @Autowired
   @Getter
   private WorldStateTrieStore worldStateTrieStore;
+
+  @Autowired
+  @Getter
+  private WorldStateGenesis worldStateGenesis;
 
   @Autowired
   private DbStatService dbStatService;

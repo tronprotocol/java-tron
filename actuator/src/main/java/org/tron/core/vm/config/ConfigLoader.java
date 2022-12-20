@@ -39,7 +39,6 @@ public class ConfigLoader {
 
   public static void load(StoreFactory storeFactory, byte[] rootHash) {
     if (!disable) {
-      System.out.println("root hash" + ByteArray.toHexString(rootHash));
       WorldStateQueryInstance wq = new WorldStateQueryInstance(rootHash, storeFactory.getChainBaseManager());
       VMConfig.setVmTrace(CommonParameter.getInstance().isVmTrace());
 

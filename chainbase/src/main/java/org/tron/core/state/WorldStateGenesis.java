@@ -36,7 +36,6 @@ import org.tron.core.capsule.BlockCapsule;
 @Slf4j(topic = "DB")
 public class WorldStateGenesis {
 
-  @Autowired
   private ChainBaseManager chainBaseManager;
 
   private final boolean allowStateRoot = CommonParameter.getInstance().getStorage()
@@ -60,13 +59,14 @@ public class WorldStateGenesis {
 
   private volatile boolean inited = false;
 
-  public synchronized void init() {
+  public synchronized void init(ChainBaseManager chainBaseManager) {
     if (!allowStateRoot) {
       return;
     }
     if (inited) {
       return;
     }
+    this.chainBaseManager = chainBaseManager;
     genesisHeight = chainBaseManager.getGenesisBlockId().getNum();
     tryInitGenesis();
     initGenesisDBs();
