@@ -36,6 +36,16 @@ public class FileUtils {
     return DBUtils.LEVELDB.equals(engine);
   }
 
+  public static boolean isRocksDBEngine(Path path) {
+    String dir = path.toString();
+    String enginePath = dir + File.separator + "engine.properties";
+    if (!new File(enginePath).exists()) {
+      return false;
+    }
+    String engine = readProperty(enginePath, DBUtils.KEY_ENGINE);
+    return DBUtils.ROCKSDB.equals(engine);
+  }
+
   public static String readProperty(String file, String key) {
     try (FileInputStream fileInputStream = new FileInputStream(file);
          InputStream inputStream = new BufferedInputStream(fileInputStream)) {
