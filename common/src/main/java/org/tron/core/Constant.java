@@ -318,9 +318,12 @@ public class Constant {
 
   public static final String DYNAMIC_ENERGY_THRESHOLD = "committee.dynamicEnergyThreshold";
 
-  public static final String DYNAMIC_ENERGY_INCREASE_FACTOR = "committee.dynamicEnergyIncreaseFactor";
+  public static final String DYNAMIC_ENERGY_INCREASE_FACTOR
+      = "committee.dynamicEnergyIncreaseFactor";
 
   public static final String DYNAMIC_ENERGY_MAX_FACTOR = "committee.dynamicEnergyMaxFactor";
+
+  public static final long DYNAMIC_ENERGY_FACTOR_DECIMAL = 100L;
 
   public static final String DYNAMIC_ENERGY_TRIGGER_BASE = "committee.dynamicEnergyTriggerBase";
 

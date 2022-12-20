@@ -4,6 +4,7 @@ import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static org.apache.commons.lang3.ArrayUtils.getLength;
 import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
+import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
 
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
@@ -50,8 +51,11 @@ import org.tron.core.vm.program.Program.TransferException;
 import org.tron.core.vm.program.ProgramPrecompile;
 import org.tron.core.vm.program.invoke.ProgramInvoke;
 import org.tron.core.vm.program.invoke.ProgramInvokeFactory;
+import org.tron.core.vm.repository.Key;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
+import org.tron.core.vm.repository.Type;
+import org.tron.core.vm.repository.Value;
 import org.tron.core.vm.utils.MUtil;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Block;
@@ -175,6 +179,35 @@ public class VMActuator implements Actuator2 {
           result.setRuntimeError(e.getMessage());
           result.setException(e);
           throw e;
+        }
+
+        if (rootRepository.getDynamicPropertiesStore().supportAllowDynamicEnergy()) {
+          // only add trigger_energy_base when type is call.
+          if (this.trx.getRawData().getContract(0).getType()
+              == ContractType.TriggerSmartContract) {
+
+            ContractCapsule deployedContract =
+                rootRepository.getContract(program.getContextAddress());
+            if (deployedContract != null) {
+
+              if (deployedContract.catchUpToCycle(
+                  rootRepository.getDynamicPropertiesStore().getCurrentCycleNumber(),
+                  rootRepository.getDynamicPropertiesStore().getDynamicEnergyThreshold(),
+                  rootRepository.getDynamicPropertiesStore().getDynamicEnergyIncreaseFactor(),
+                  rootRepository.getDynamicPropertiesStore().getDynamicEnergyMaxFactor())) {
+                rootRepository.putContract(
+                    Key.create(program.getContextAddress()),
+                    Value.create(deployedContract, Type.DIRTY));
+              }
+
+              if (deployedContract.getEnergyFactor() > DYNAMIC_ENERGY_FACTOR_DECIMAL) {
+                program.spendEnergy(
+                    rootRepository.getDynamicPropertiesStore().getDynamicEnergyTriggerBase()
+                        * deployedContract.getEnergyFactor() / DYNAMIC_ENERGY_FACTOR_DECIMAL,
+                    "DYNAMIC_ENERGY_TRIGGER_BASE");
+              }
+            }
+          }
         }
 
         VM.play(program, OperationRegistry.getTable());
