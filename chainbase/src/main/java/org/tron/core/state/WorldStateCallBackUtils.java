@@ -19,6 +19,10 @@ public class WorldStateCallBackUtils {
   protected List<TrieEntry> trieEntryList = new ArrayList<>();
 
   public void callBack(StateType type, byte[] key, ProtoCapsule capsule) {
+    if (!exe()) {
+      return;
+    }
+
     byte[] value;
     switch (type) {
       case Account:
@@ -42,16 +46,15 @@ public class WorldStateCallBackUtils {
       case Contract:
       case Delegation:
       case DelegatedResource:
-//      case DelegatedResourceAccountIndex:
       case Exchange:
       case ExchangeV2:
       case IncrementalMerkleTree:
       case MarketAccount:
       case MarketOrder:
-      case MarketPairPriceToOrder: // todo: should support prefix query
+      case MarketPairPriceToOrder:
       case MarketPairToPrice:
       case Nullifier:
-      case Properties:   // todo: check all properties which is not a state data
+      case Properties:
       case Proposal:
       case StorageRow:
       case Votes:
@@ -66,11 +69,6 @@ public class WorldStateCallBackUtils {
   }
 
   private void callBack(StateType type, byte[] key, byte[] value) {
-    // todo: move to upper
-    if (!exe()) {
-      return;
-    }
-    // todo: why return
 //    if (value == null) {
 //      return;
 //    }

@@ -18,38 +18,49 @@ public class WorldStateQueryInstance {
   @Getter
   private byte[] rootHash;
 
+  private WorldStateGenesis worldStateGenesis;
+
   public WorldStateQueryInstance(byte[] rootHash, ChainBaseManager chainBaseManager) {
     // todo: check hash is legal
     this.rootHash = rootHash;
     this.trieImpl = new TrieImpl(chainBaseManager.getWorldStateTrieStore(), rootHash);
+    this.worldStateGenesis = chainBaseManager.getWorldStateGenesis();
   }
 
   public AccountCapsule getAccount(byte[] address) {
     byte[] encodeKey = encodeKey(StateType.Account.value(), address);
     byte[] value = trieImpl.get(encodeKey);
-    if (Objects.nonNull(value)) {
-      // todo: merge asset map from trie
-      return new AccountCapsule(value);
+    if (Objects.isNull(value)) {
+      value = worldStateGenesis.get(StateType.Account, address);
     }
-    return null;
+    return Objects.nonNull(value) ? new AccountCapsule(value) : null;
   }
 
   // contract
   public ContractCapsule getContract(byte[] address) {
     byte[] encodeKey = encodeKey(StateType.Contract.value(), address);
     byte[] value = trieImpl.get(encodeKey);
+    if (Objects.isNull(value)) {
+      value = worldStateGenesis.get(StateType.Contract, address);
+    }
     return Objects.nonNull(value) ? new ContractCapsule(value) : null;
   }
 
-  public byte[] getCode(byte[] address) {
+  public CodeCapsule getCode(byte[] address) {
     byte[] encodeKey = encodeKey(StateType.Code.value(), address);
     byte[] value = trieImpl.get(encodeKey);
-    return Objects.nonNull(value) ? value : null;
+    if (Objects.isNull(value)) {
+      value = worldStateGenesis.get(StateType.Code, address);
+    }
+    return Objects.nonNull(value) ? new CodeCapsule(value) : null;
   }
 
   public StorageRowCapsule getStorageRow(byte[] key) {
     byte[] encodeKey = encodeKey(StateType.StorageRow.value(), key);
     byte[] value = trieImpl.get(encodeKey);
+    if (Objects.isNull(value)) {
+      value = worldStateGenesis.get(StateType.StorageRow, key);
+    }
     if (Objects.nonNull(value)) {
       StorageRowCapsule storageRowCapsule = new StorageRowCapsule(value);
       storageRowCapsule.setRowKey(key);
@@ -62,6 +73,9 @@ public class WorldStateQueryInstance {
   public AssetIssueCapsule getAssetIssue(byte[] tokenId) {
     byte[] encodeKey = encodeKey(StateType.AccountIssue.value(), tokenId);
     byte[] value = trieImpl.get(encodeKey);
+    if (Objects.isNull(value)) {
+      value = worldStateGenesis.get(StateType.AccountIssue, tokenId);
+    }
     return Objects.nonNull(value) ? new AssetIssueCapsule(value) : null;
   }
 
@@ -69,6 +83,9 @@ public class WorldStateQueryInstance {
   public WitnessCapsule getWitness(byte[] address) {
     byte[] encodeKey = encodeKey(StateType.Witness.value(), address);
     byte[] value = trieImpl.get(encodeKey);
+    if (Objects.isNull(value)) {
+      value = worldStateGenesis.get(StateType.Witness, address);
+    }
     return Objects.nonNull(value) ? new WitnessCapsule(value) : null;
   }
 
@@ -76,12 +93,18 @@ public class WorldStateQueryInstance {
   public DelegatedResourceCapsule getDelegatedResource(byte[] key) {
     byte[] encodeKey = encodeKey(StateType.DelegatedResource.value(), key);
     byte[] value = trieImpl.get(encodeKey);
+    if (Objects.isNull(value)) {
+      value = worldStateGenesis.get(StateType.DelegatedResource, key);
+    }
     return Objects.nonNull(value) ? new DelegatedResourceCapsule(value) : null;
   }
 
   public BytesCapsule getDelegation(byte[] key) {
     byte[] encodeKey = encodeKey(StateType.Delegation.value(), key);
     byte[] value = trieImpl.get(encodeKey);
+    if (Objects.isNull(value)) {
+      value = worldStateGenesis.get(StateType.Delegation, key);
+    }
     return Objects.nonNull(value) ? new BytesCapsule(value) : null;
   }
 
@@ -89,6 +112,9 @@ public class WorldStateQueryInstance {
   public VotesCapsule getVotes(byte[] address) {
     byte[] encodeKey = encodeKey(StateType.Votes.value(), address);
     byte[] value = trieImpl.get(encodeKey);
+    if (Objects.isNull(value)) {
+      value = worldStateGenesis.get(StateType.Votes, address);
+    }
     return Objects.nonNull(value) ? new VotesCapsule(value) : null;
   }
 
@@ -96,12 +122,22 @@ public class WorldStateQueryInstance {
   public BytesCapsule getDynamicProperty(byte[] key) {
     byte[] encodeKey = encodeKey(StateType.Properties.value(), key);
     byte[] value = trieImpl.get(encodeKey);
-    return Objects.nonNull(value) ? new BytesCapsule(value) : null;
+    if (Objects.isNull(value)) {
+      value = worldStateGenesis.get(StateType.Properties, key);
+    }
+    if (Objects.nonNull(value)) {
+      return new BytesCapsule(value);
+    } else {
+      throw new IllegalArgumentException("not found: " + ByteArray.toStr(key));
+    }
   }
 
   public long getDynamicPropertyLong(byte[] key) {
     byte[] encodeKey = encodeKey(StateType.Properties.value(), key);
     byte[] value = trieImpl.get(encodeKey);
+    if (Objects.isNull(value)) {
+      value = worldStateGenesis.get(StateType.Properties, key);
+    }
     if (Objects.nonNull(value)) {
       return Longs.fromByteArray(value);
     } else {

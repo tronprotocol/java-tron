@@ -513,7 +513,7 @@ public class Manager {
     // init liteFullNode
     initLiteNode();
     // init worldState
-    worldStateGenesis.init();
+    worldStateGenesis.init(chainBaseManager);
     long headNum = chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     logger.info("Current headNum is: {}.", headNum);
     int nodeType = chainBaseManager.getCommonStore().getNodeType();

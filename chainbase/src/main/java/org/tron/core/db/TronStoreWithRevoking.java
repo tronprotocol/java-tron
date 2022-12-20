@@ -92,6 +92,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     } else {
       throw new RuntimeException(String.format("db version %d is error", dbVersion));
     }
+    type = StateType.get(getDbName());
   }
 
   protected org.iq80.leveldb.Options getOptionsByDbNameForLevelDB(String dbName) {
@@ -107,6 +108,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     if (dbVersion == 2) {
       this.db = db;
       this.revokingDB = new Chainbase(new SnapshotRoot(db));
+      type = StateType.get(getDbName());
     } else {
       throw new RuntimeException(String.format("db version is only 2, actual: %d", dbVersion));
     }
@@ -134,7 +136,6 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   private void init() {
     revokingDatabase.add(revokingDB);
     dbStatService.register(db);
-    type = StateType.get(getDbName());
   }
 
   @Override
