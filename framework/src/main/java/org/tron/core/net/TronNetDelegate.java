@@ -94,9 +94,8 @@ public class TronNetDelegate {
 
   private Thread hitThread;
 
-  // for Test
   @Setter
-  private volatile boolean  test = false;
+  private volatile boolean exit = true;
 
   private Cache<BlockId, Long> freshBlockId = CacheBuilder.newBuilder()
           .maximumSize(blockIdCacheSize).expireAfterWrite(1, TimeUnit.HOURS)
@@ -107,7 +106,7 @@ public class TronNetDelegate {
     hitThread =  new Thread(() -> {
       LockSupport.park();
       // to Guarantee Some other thread invokes unpark with the current thread as the target
-      if (hitDown && !test) {
+      if (hitDown && exit) {
         System.exit(0);
       }
     });
