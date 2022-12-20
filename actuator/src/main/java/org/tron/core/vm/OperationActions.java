@@ -819,10 +819,10 @@ public class OperationActions {
     if (program.isStaticCall()) {
       throw new Program.StaticCallModificationException();
     }
+    DataWord lock = program.stackPop();
     DataWord resourceType = program.stackPop();
     DataWord delegateBalance = program.stackPop();
     DataWord receiverAddress = program.stackPop();
-    DataWord lock = program.stackPop();
 
     boolean result = program.delegateResource(receiverAddress, delegateBalance, resourceType, lock);
     program.stackPush(result ? DataWord.ONE() : DataWord.ZERO());

@@ -1,5 +1,6 @@
 package org.tron.core.vm.nativecontract;
 
+import com.google.common.primitives.Bytes;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -8,10 +9,12 @@ import org.tron.common.utils.StringUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.actuator.ActuatorConstant;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.vm.nativecontract.param.DelegateResourceParam;
 import org.tron.core.vm.repository.Repository;
@@ -157,8 +160,12 @@ public class DelegateResourceProcessor {
       long delegateBalance,
       Repository repo,
       boolean lock) {
-    //modify DelegatedResourceStore
-    byte[] key = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress, false);
+    // unlock the expired delegate resource
+    long now = repo.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
+    repo.unlockExpireResource(ownerAddress, receiverAddress, now);
+
+    //modify DelegatedResource
+    byte[] key = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress, lock);
     DelegatedResourceCapsule delegatedResourceCapsule = repo.getDelegatedResource(key);
     if (delegatedResourceCapsule == null) {
       delegatedResourceCapsule = new DelegatedResourceCapsule(
@@ -175,6 +182,21 @@ public class DelegateResourceProcessor {
     } else {
       delegatedResourceCapsule.addFrozenBalanceForEnergy(delegateBalance, expireTime);
     }
+
+    //modify DelegatedResourceAccountIndex
+    byte[] fromKey = Bytes.concat(
+        DelegatedResourceAccountIndexStore.getV2_FROM_PREFIX(), ownerAddress, receiverAddress);
+    DelegatedResourceAccountIndexCapsule toIndexCapsule =
+        new DelegatedResourceAccountIndexCapsule(ByteString.copyFrom(receiverAddress));
+    toIndexCapsule.setTimestamp(now);
+    repo.updateDelegatedResourceAccountIndex(fromKey, toIndexCapsule);
+
+    byte[] toKey = Bytes.concat(
+        DelegatedResourceAccountIndexStore.getV2_TO_PREFIX(), receiverAddress, ownerAddress);
+    DelegatedResourceAccountIndexCapsule fromIndexCapsule =
+        new DelegatedResourceAccountIndexCapsule(ByteString.copyFrom(ownerAddress));
+    fromIndexCapsule.setTimestamp(now);
+    repo.updateDelegatedResourceAccountIndex(toKey, fromIndexCapsule);
 
     //update Account for receiver
     AccountCapsule receiverCapsule = repo.getAccount(receiverAddress);

@@ -1,14 +1,8 @@
 package org.tron.core.actuator;
 
-import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
-import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
-
 import com.google.common.math.LongMath;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
@@ -23,46 +17,19 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.BalanceContract.WithdrawExpireUnfreezeContract;
 
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
+import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
+
 
 @Slf4j(topic = "actuator")
 public class WithdrawExpireUnfreezeActuator extends AbstractActuator {
 
   public WithdrawExpireUnfreezeActuator() {
     super(ContractType.WithdrawExpireUnfreezeContract, WithdrawExpireUnfreezeContract.class);
-  }
-
-  @Override
-  public boolean execute(Object result) throws ContractExeException {
-    TransactionResultCapsule ret = (TransactionResultCapsule) result;
-    if (Objects.isNull(ret)) {
-      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
-    }
-    long fee = calcFee();
-    AccountStore accountStore = chainBaseManager.getAccountStore();
-    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
-    final WithdrawExpireUnfreezeContract withdrawExpireUnfreezeContract;
-    try {
-      withdrawExpireUnfreezeContract = any.unpack(WithdrawExpireUnfreezeContract.class);
-    } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage(), e);
-      ret.setStatus(fee, code.FAILED);
-      throw new ContractExeException(e.getMessage());
-    }
-    AccountCapsule accountCapsule = accountStore.get(
-        withdrawExpireUnfreezeContract.getOwnerAddress().toByteArray());
-    long now = dynamicStore.getLatestBlockHeaderTimestamp();
-    List<UnFreezeV2> unfrozenV2List = accountCapsule.getInstance().getUnfrozenV2List();
-    long totalWithdrawUnfreeze = getTotalWithdrawUnfreeze(unfrozenV2List, now);
-    accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
-        .setBalance(accountCapsule.getBalance() + totalWithdrawUnfreeze)
-        .build());
-    List<UnFreezeV2> newUnFreezeList = getRemainWithdrawList(unfrozenV2List, now);
-    accountCapsule.clearUnfrozenV2();
-    accountCapsule.addAllUnfrozenV2(newUnFreezeList);
-    accountStore.put(accountCapsule.createDbKey(), accountCapsule);
-    ret.setWithdrawExpireAmount(totalWithdrawUnfreeze);
-    ret.setStatus(fee, code.SUCESS);
-    return true;
   }
 
   @Override
@@ -127,6 +94,40 @@ public class WithdrawExpireUnfreezeActuator extends AbstractActuator {
   private List<UnFreezeV2> getTotalWithdrawList(List<UnFreezeV2> unfrozenV2List, long now) {
     return unfrozenV2List.stream().filter(unfrozenV2 -> (unfrozenV2.getUnfreezeAmount() > 0
         && unfrozenV2.getUnfreezeExpireTime() <= now)).collect(Collectors.toList());
+  }
+
+  @Override
+  public boolean execute(Object result) throws ContractExeException {
+    TransactionResultCapsule ret = (TransactionResultCapsule) result;
+    if (Objects.isNull(ret)) {
+      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
+    }
+    long fee = calcFee();
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    final WithdrawExpireUnfreezeContract withdrawExpireUnfreezeContract;
+    try {
+      withdrawExpireUnfreezeContract = any.unpack(WithdrawExpireUnfreezeContract.class);
+    } catch (InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage(), e);
+      ret.setStatus(fee, code.FAILED);
+      throw new ContractExeException(e.getMessage());
+    }
+    AccountCapsule accountCapsule = accountStore.get(
+        withdrawExpireUnfreezeContract.getOwnerAddress().toByteArray());
+    long now = dynamicStore.getLatestBlockHeaderTimestamp();
+    List<UnFreezeV2> unfrozenV2List = accountCapsule.getInstance().getUnfrozenV2List();
+    long totalWithdrawUnfreeze = getTotalWithdrawUnfreeze(unfrozenV2List, now);
+    accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
+        .setBalance(accountCapsule.getBalance() + totalWithdrawUnfreeze)
+        .build());
+    List<UnFreezeV2> newUnFreezeList = getRemainWithdrawList(unfrozenV2List, now);
+    accountCapsule.clearUnfrozenV2();
+    accountCapsule.addAllUnfrozenV2(newUnFreezeList);
+    accountStore.put(accountCapsule.createDbKey(), accountCapsule);
+    ret.setWithdrawExpireAmount(totalWithdrawUnfreeze);
+    ret.setStatus(fee, code.SUCESS);
+    return true;
   }
 
   private List<UnFreezeV2> getRemainWithdrawList(List<UnFreezeV2> unfrozenV2List, long now) {

@@ -39,6 +39,8 @@ public interface Repository {
 
   BytesCapsule getDelegation(Key key);
 
+  DelegatedResourceAccountIndexCapsule getDelegatedResourceAccountIndex(byte[] key);
+
   void deleteContract(byte[] address);
 
   void createContract(byte[] address, ContractCapsule contractCapsule);
@@ -62,6 +64,8 @@ public interface Repository {
   void updateAccountVote(byte[] word, long cycle, AccountCapsule accountCapsule);
 
   void updateDelegation(byte[] word, BytesCapsule bytesCapsule);
+
+  void updateDelegatedResourceAccountIndex(byte[] word, DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule);
 
   void saveCode(byte[] address, byte[] code);
 
@@ -100,6 +104,8 @@ public interface Repository {
   void putVotes(Key key, Value value);
 
   void putDelegation(Key key, Value value);
+
+  void putDelegatedResourceAccountIndex(Key key, Value value);
 
   long addTokenBalance(byte[] address, byte[] tokenId, long value);
 
@@ -145,4 +151,5 @@ public interface Repository {
 
   long getSlotByTimestampMs(long timestamp);
 
+  void unlockExpireResource(byte[] from, byte[] to, long now);
 }
