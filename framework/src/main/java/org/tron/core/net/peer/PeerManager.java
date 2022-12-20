@@ -43,11 +43,11 @@ public class PeerManager {
 
   public static void close() {
     try {
-      peers.forEach(p -> {
+      for (PeerConnection p : new ArrayList<>(peers)) {
         if (!p.isDisconnect()) {
           p.getChannel().close();
         }
-      });
+      }
       executor.shutdownNow();
     } catch (Exception e) {
       logger.error("Peer manager shutdown failed", e);

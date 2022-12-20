@@ -137,8 +137,8 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
       type = msg.getType();
       peer.getPeerStatistics().messageStatistics.addTcpInMessage(msg);
       if (PeerConnection.needToLog(msg)) {
-        logger.info("Receive message from  peer: {}, {}",
-          peer.getInetSocketAddress(), msg);
+        logger.info("Receive message from  peer: {}, {}", 
+                peer.getInetSocketAddress(), msg);
       }
       switch (type) {
         case P2P_PING:
