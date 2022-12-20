@@ -20,14 +20,19 @@ import org.tron.core.services.interfaceOnPBFT.http.GetAssetIssueByIdOnPBFTServle
 import org.tron.core.services.interfaceOnPBFT.http.GetAssetIssueByNameOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetAssetIssueListByNameOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetAssetIssueListOnPBFTServlet;
+import org.tron.core.services.interfaceOnPBFT.http.GetAvailableUnfreezeCountOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetBlockByIdOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetBlockByLatestNumOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetBlockByLimitNextOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetBlockByNumOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetBrokerageOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetBurnTrxOnPBFTServlet;
+import org.tron.core.services.interfaceOnPBFT.http.GetCanDelegatedMaxSizeOnPBFTServlet;
+import org.tron.core.services.interfaceOnPBFT.http.GetCanWithdrawUnfreezeAmountOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetDelegatedResourceAccountIndexOnPBFTServlet;
+import org.tron.core.services.interfaceOnPBFT.http.GetDelegatedResourceAccountIndexV2OnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetDelegatedResourceOnPBFTServlet;
+import org.tron.core.services.interfaceOnPBFT.http.GetDelegatedResourceV2OnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetEnergyPricesOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetExchangeByIdOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetMarketOrderByAccountOnPBFTServlet;
@@ -154,6 +159,18 @@ public class HttpApiOnPBFTService implements Service {
   @Autowired
   private GetBlockOnPBFTServlet getBlockOnPBFTServlet;
 
+  @Autowired
+  private GetAvailableUnfreezeCountOnPBFTServlet getAvailableUnfreezeCountOnPBFTServlet;
+  @Autowired
+  private GetCanDelegatedMaxSizeOnPBFTServlet getCanDelegatedMaxSizeOnPBFTServlet;
+  @Autowired
+  private GetCanWithdrawUnfreezeAmountOnPBFTServlet getCanWithdrawUnfreezeAmountOnPBFTServlet;
+  @Autowired
+  private GetDelegatedResourceAccountIndexV2OnPBFTServlet
+      getDelegatedResourceAccountIndexV2OnPBFTServlet;
+  @Autowired
+  private GetDelegatedResourceV2OnPBFTServlet getDelegatedResourceV2OnPBFTServlet;
+
   @Override
   public void init() {
 
@@ -242,6 +259,17 @@ public class HttpApiOnPBFTService implements Service {
           "/getenergyprices");
       context.addServlet(new ServletHolder(getBlockOnPBFTServlet),
           "/getblock");
+
+      context.addServlet(new ServletHolder(getAvailableUnfreezeCountOnPBFTServlet),
+          "/getavailableunfreezecount");
+      context.addServlet(new ServletHolder(getCanDelegatedMaxSizeOnPBFTServlet),
+          "/getcandelegatedmaxsize");
+      context.addServlet(new ServletHolder(getCanWithdrawUnfreezeAmountOnPBFTServlet),
+          "/getcanwithdrawunfreezeamount");
+      context.addServlet(new ServletHolder(getDelegatedResourceAccountIndexV2OnPBFTServlet),
+          "/getdelegatedresourceaccountindexv2");
+      context.addServlet(new ServletHolder(getDelegatedResourceV2OnPBFTServlet),
+          "/getdelegatedresourcev2");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
