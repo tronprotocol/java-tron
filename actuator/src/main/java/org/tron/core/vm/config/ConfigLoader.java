@@ -32,6 +32,8 @@ public class ConfigLoader {
         VMConfig.initAllowHigherLimitForMaxCpuTimeOfOneTx(
             ds.getAllowHigherLimitForMaxCpuTimeOfOneTx());
         VMConfig.initAllowTvmFreezeV2(ds.supportUnfreezeDelay() ? 1 : 0);
+        VMConfig.initAllowOptimizedReturnValueOfChainId(
+            ds.getAllowOptimizedReturnValueOfChainId());
       }
     }
   }
