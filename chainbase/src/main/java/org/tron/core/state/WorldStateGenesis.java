@@ -141,11 +141,6 @@ public class WorldStateGenesis {
 
   private void initGenesis() {
     logger.info("State genesis init start");
-    File f = stateGenesisPath.toFile();
-    if (f.exists()) {
-      logger.info("Delete corrupted state genesis path : {}", stateGenesisPath);
-      FileUtil.deleteDir(stateGenesisPath.toFile());
-    }
     FileUtil.createDirIfNotExists(stateGenesisPath.toString());
     long height = chainBaseManager.getHeadBlockNum();
     if (height == genesisHeight) {
@@ -164,6 +159,12 @@ public class WorldStateGenesis {
       logger.error("Corrupted source path, miss : {}", miss);
       throw new IllegalArgumentException(String.format("Corrupted source path: %s", miss));
     }
+    // delete if exit
+    dbs.stream().map(db -> Paths.get(stateGenesisPath.toString(), db).toFile())
+        .filter(File::exists).forEach(dir -> {
+          logger.info("Delete corrupted state genesis path : {}", dir);
+          FileUtil.deleteDir(dir);
+        });
     FileUtil.copyDatabases(source, stateGenesisPath, dbs);
     logger.info("State genesis init end, {}, {}", stateGenesisPath, dbs);
   }
