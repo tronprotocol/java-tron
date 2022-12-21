@@ -25,51 +25,44 @@ public class CommonParameter {
   public static CommonParameter PARAMETER = new CommonParameter();
   @Setter
   public static boolean ENERGY_LIMIT_HARD_FORK = false;
-  @Parameter(names = {"-c", "--config"}, description = "Config file (default:config.conf)")
+  @Parameter(names = {"-c", "--config"}, description = "Config File")
   public String shellConfFileName = "";
   @Getter
-  @Parameter(names = {"-d", "--output-directory"},
-      description = "Data directory for the databases (default:output-directory)")
+  @Parameter(names = {"-d", "--output-directory"}, description = "Directory")
   public String outputDirectory = "output-directory";
   @Getter
-  @Parameter(names = {"--log-config"}, description = "Logback config file")
+  @Parameter(names = {"--log-config"})
   public String logbackPath = "";
   @Getter
-  @Parameter(names = {"-h", "--help"}, help = true, description = "Show help message")
+  @Parameter(names = {"-h", "--help"}, help = true, description = "HELP message")
   public boolean help = false;
   @Getter
   @Setter
-  @Parameter(names = {"-w", "--witness"}, description = "Is witness node")
+  @Parameter(names = {"-w", "--witness"})
   public boolean witness = false;
   @Getter
   @Setter
-  @Parameter(names = {"--support-constant"}, description = "Support constant calling for TVM. " +
-      "(defalut: false)")
+  @Parameter(names = {"--support-constant"})
   public boolean supportConstant = false;
   @Getter
   @Setter
-  @Parameter(names = {"--max-energy-limit-for-constant"}, description = "Max energy limit for " +
-      "constant calling. (default: 100,000,000)")
+  @Parameter(names = {"--max-energy-limit-for-constant"})
   public long maxEnergyLimitForConstant = 100_000_000L;
   @Getter
   @Setter
-  @Parameter(names = {"--lru-cache-size"}, description = "Max LRU size for caching bytecode and " +
-      "result of JUMPDEST analysis. (default: 500)")
+  @Parameter(names = {"--lru-cache-size"})
   public int lruCacheSize = 500;
   @Getter
   @Setter
-  @Parameter(names = {"--debug"}, description = "Switch for TVM debug mode. In debug model, TVM " +
-      "will not check for timeout. (default: false)")
+  @Parameter(names = {"--debug"})
   public boolean debug = false;
   @Getter
   @Setter
-  @Parameter(names = {"--min-time-ratio"}, description = "Maximum CPU tolerance when executing " +
-      "non-timeout transactions while synchronizing blocks. (default: 5.0)")
+  @Parameter(names = {"--min-time-ratio"})
   public double minTimeRatio = 0.0;
   @Getter
   @Setter
-  @Parameter(names = {"--max-time-ratio"}, description = "Maximum CPU tolerance when executing " +
-      "timeout transactions while synchronizing blocks. (default: 0.0)")
+  @Parameter(names = {"--max-time-ratio"})
   public double maxTimeRatio = calcMaxTimeRatio();
   @Getter
   @Setter
@@ -77,13 +70,12 @@ public class CommonParameter {
   public int longRunningTime = 10;
   @Getter
   @Setter
-  @Parameter(names = {"--max-connect-number"}, description = "Http server max connect number " +
-      "(default:50)")
+  @Parameter(names = {"--max-connect-number"})
   public int maxHttpConnectNumber = 50;
   @Getter
   @Parameter(description = "--seed-nodes")
   public List<String> seedNodes = new ArrayList<>();
-  @Parameter(names = {"-p", "--private-key"}, description = "Witness private key")
+  @Parameter(names = {"-p", "--private-key"}, description = "private-key")
   public String privateKey = "";
   @Parameter(names = {"--witness-address"}, description = "witness-address")
   public String witnessAddress = "";
@@ -100,8 +92,8 @@ public class CommonParameter {
       "--storage-db-synchronous"},
       description = "Storage db is synchronous or not.(true or false)")
   public String storageDbSynchronous = "";
-  @Parameter(names = {"--contract-parse-enable"}, description = "Switch for contract parses in " +
-      "java-tron. (default: true)")
+  @Parameter(names = {"--contract-parse-enable"},
+      description = "enable contract parses in java-tron or not.(true or false)")
   public String contractParseEnable = "";
   @Parameter(names = {"--storage-index-directory"},
       description = "Storage index directory")
@@ -170,8 +162,7 @@ public class CommonParameter {
   public long nodeP2pPingInterval;
   @Getter
   @Setter
-  @Parameter(names = {"--save-internaltx"}, description = "Save internal transactions generated " +
-      "during TVM execution, such as create, call, suicide and so on. (default: false)")
+  @Parameter(names = {"--save-internaltx"})
   public boolean saveInternalTx;
   @Getter
   @Setter
@@ -351,12 +342,12 @@ public class CommonParameter {
   public long blockNumForEnergyLimit;
   @Getter
   @Setter
-  @Parameter(names = {"--es"}, description = "Start event subscribe server")
+  @Parameter(names = {"--es"})
   public boolean eventSubscribe = false;
   @Getter
   @Setter
   public long trxExpirationTimeInMilliseconds; // (ms)
-  @Parameter(names = {"-v", "--version"}, description = "Output code version", help = true)
+  @Parameter(names = {"-v", "--version"}, description = "output code version", help = true)
   public boolean version;
   @Getter
   @Setter
