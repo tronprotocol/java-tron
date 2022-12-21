@@ -945,18 +945,16 @@ public class RepositoryImpl implements Repository {
 
   private void commitDelegatedResourceAccountIndexCache(Repository deposit) {
     delegatedResourceAccountIndexCache.forEach(((key, value) -> {
-      if (value.getValue() == null) {
+      if (value.getType().isDirty() || value.getType().isCreate()) {
         if (deposit != null) {
           deposit.putDelegatedResourceAccountIndex(key, value);
         } else {
-          getDelegatedResourceAccountIndexStore().delete(key.getData());
-        }
-      } else if (value.getType().isDirty() || value.getType().isCreate()) {
-        if (deposit != null) {
-          deposit.putDelegatedResourceAccountIndex(key, value);
-        } else {
-          getDelegatedResourceAccountIndexStore().put(key.getData(),
-              new DelegatedResourceAccountIndexCapsule(value.getValue()));
+          if (ByteUtil.isNullOrZeroArray(value.getValue().toByteArray())) {
+            getDelegatedResourceAccountIndexStore().delete(key.getData());
+          } else {
+            getDelegatedResourceAccountIndexStore().put(key.getData(),
+                new DelegatedResourceAccountIndexCapsule(value.getValue()));
+          }
         }
       }
     }));

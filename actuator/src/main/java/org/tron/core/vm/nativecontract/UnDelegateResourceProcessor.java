@@ -16,7 +16,6 @@ import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.vm.nativecontract.param.UnDelegateResourceParam;
 import org.tron.core.vm.repository.Repository;
-import org.tron.protos.Protocol;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -200,14 +199,11 @@ public class UnDelegateResourceProcessor {
       byte[] fromKey = Bytes.concat(
           DelegatedResourceAccountIndexStore.getV2_FROM_PREFIX(), ownerAddress, receiverAddress);
       repo.updateDelegatedResourceAccountIndex(
-          fromKey,
-          new DelegatedResourceAccountIndexCapsule((Protocol.DelegatedResourceAccountIndex) null));
-      byte[] toKey =
-          Bytes.concat(
-              DelegatedResourceAccountIndexStore.getV2_TO_PREFIX(), receiverAddress, ownerAddress);
+          fromKey, new DelegatedResourceAccountIndexCapsule(new byte[0]));
+      byte[] toKey = Bytes.concat(
+          DelegatedResourceAccountIndexStore.getV2_TO_PREFIX(), receiverAddress, ownerAddress);
       repo.updateDelegatedResourceAccountIndex(
-          toKey,
-          new DelegatedResourceAccountIndexCapsule((Protocol.DelegatedResourceAccountIndex) null));
+          toKey, new DelegatedResourceAccountIndexCapsule(new byte[0]));
     }
 
     repo.updateDelegatedResource(key, delegatedResourceCapsule);
