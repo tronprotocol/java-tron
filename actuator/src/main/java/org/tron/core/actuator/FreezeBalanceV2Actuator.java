@@ -30,6 +30,65 @@ public class FreezeBalanceV2Actuator extends AbstractActuator {
   }
 
   @Override
+  public boolean execute(Object result) throws ContractExeException {
+    TransactionResultCapsule ret = (TransactionResultCapsule) result;
+    if (Objects.isNull(ret)) {
+      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
+    }
+
+    long fee = calcFee();
+    final FreezeBalanceV2Contract freezeBalanceV2Contract;
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    try {
+      freezeBalanceV2Contract = any.unpack(FreezeBalanceV2Contract.class);
+    } catch (InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage(), e);
+      ret.setStatus(fee, code.FAILED);
+      throw new ContractExeException(e.getMessage());
+    }
+    AccountCapsule accountCapsule = accountStore.get(freezeBalanceV2Contract.getOwnerAddress().toByteArray());
+
+    if (dynamicStore.supportAllowNewResourceModel()
+        && accountCapsule.oldTronPowerIsNotInitialized()) {
+      accountCapsule.initializeOldTronPower();
+    }
+
+    long newBalance = accountCapsule.getBalance() - freezeBalanceV2Contract.getFrozenBalance();
+    long frozenBalance = freezeBalanceV2Contract.getFrozenBalance();
+
+    switch (freezeBalanceV2Contract.getResource()) {
+      case BANDWIDTH:
+        long oldNetWeight = accountCapsule.getFrozenV2BalanceWithDelegated(BANDWIDTH) / TRX_PRECISION;
+        accountCapsule.addFrozenBalanceForBandwidthV2(frozenBalance);
+        long newNetWeight = accountCapsule.getFrozenV2BalanceWithDelegated(BANDWIDTH) / TRX_PRECISION;
+        dynamicStore.addTotalNetWeight(newNetWeight - oldNetWeight);
+        break;
+      case ENERGY:
+        long oldEnergyWeight = accountCapsule.getFrozenV2BalanceWithDelegated(ENERGY) / TRX_PRECISION;
+        accountCapsule.addFrozenBalanceForEnergyV2(frozenBalance);
+        long newEnergyWeight = accountCapsule.getFrozenV2BalanceWithDelegated(ENERGY) / TRX_PRECISION;
+        dynamicStore.addTotalEnergyWeight(newEnergyWeight - oldEnergyWeight);
+        break;
+      case TRON_POWER:
+        long oldTPWeight = accountCapsule.getTronPowerFrozenV2Balance() / TRX_PRECISION;
+        accountCapsule.addFrozenForTronPowerV2(frozenBalance);
+        long newTPWeight = accountCapsule.getTronPowerFrozenV2Balance() / TRX_PRECISION;
+        dynamicStore.addTotalTronPowerWeight(newTPWeight - oldTPWeight);
+        break;
+      default:
+        logger.debug("Resource Code Error.");
+    }
+
+    accountCapsule.setBalance(newBalance);
+    accountStore.put(accountCapsule.createDbKey(), accountCapsule);
+
+    ret.setStatus(fee, code.SUCESS);
+
+    return true;
+  }
+
+  @Override
   public boolean validate() throws ContractValidateException {
     if (this.any == null) {
       throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
@@ -100,65 +159,6 @@ public class FreezeBalanceV2Actuator extends AbstractActuator {
               "ResourceCode error, valid ResourceCode[BANDWIDTH、ENERGY]");
         }
     }
-
-    return true;
-  }
-
-  @Override
-  public boolean execute(Object result) throws ContractExeException {
-    TransactionResultCapsule ret = (TransactionResultCapsule) result;
-    if (Objects.isNull(ret)) {
-      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
-    }
-
-    long fee = calcFee();
-    final FreezeBalanceV2Contract freezeBalanceV2Contract;
-    AccountStore accountStore = chainBaseManager.getAccountStore();
-    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
-    try {
-      freezeBalanceV2Contract = any.unpack(FreezeBalanceV2Contract.class);
-    } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage(), e);
-      ret.setStatus(fee, code.FAILED);
-      throw new ContractExeException(e.getMessage());
-    }
-    AccountCapsule accountCapsule = accountStore.get(freezeBalanceV2Contract.getOwnerAddress().toByteArray());
-
-    if (dynamicStore.supportAllowNewResourceModel()
-        && accountCapsule.oldTronPowerIsNotInitialized()) {
-      accountCapsule.initializeOldTronPower();
-    }
-
-    long newBalance = accountCapsule.getBalance() - freezeBalanceV2Contract.getFrozenBalance();
-    long frozenBalance = freezeBalanceV2Contract.getFrozenBalance();
-
-    switch (freezeBalanceV2Contract.getResource()) {
-      case BANDWIDTH:
-        long oldNetWeight = accountCapsule.getFrozenV2BalanceWithDelegated(BANDWIDTH) / TRX_PRECISION;
-        accountCapsule.addFrozenBalanceForBandwidthV2(frozenBalance);
-        long newNetWeight = accountCapsule.getFrozenV2BalanceWithDelegated(BANDWIDTH) / TRX_PRECISION;
-        dynamicStore.addTotalNetWeight(newNetWeight - oldNetWeight);
-        break;
-      case ENERGY:
-        long oldEnergyWeight = accountCapsule.getFrozenV2BalanceWithDelegated(ENERGY) / TRX_PRECISION;
-        accountCapsule.addFrozenBalanceForEnergyV2(frozenBalance);
-        long newEnergyWeight = accountCapsule.getFrozenV2BalanceWithDelegated(ENERGY) / TRX_PRECISION;
-        dynamicStore.addTotalEnergyWeight(newEnergyWeight - oldEnergyWeight);
-        break;
-      case TRON_POWER:
-        long oldTPWeight = accountCapsule.getTronPowerFrozenV2Balance() / TRX_PRECISION;
-        accountCapsule.addFrozenForTronPowerV2(frozenBalance);
-        long newTPWeight = accountCapsule.getTronPowerFrozenV2Balance() / TRX_PRECISION;
-        dynamicStore.addTotalTronPowerWeight(newTPWeight - oldTPWeight);
-        break;
-      default:
-        logger.debug("Resource Code Error.");
-    }
-
-    accountCapsule.setBalance(newBalance);
-    accountStore.put(accountCapsule.createDbKey(), accountCapsule);
-
-    ret.setStatus(fee, code.SUCESS);
 
     return true;
   }

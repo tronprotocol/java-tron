@@ -1,7 +1,13 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
+import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_PERIOD;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Arrays;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.utils.DecodeUtil;
@@ -23,19 +29,66 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.BalanceContract.DelegateResourceContract;
 
-import java.util.Arrays;
-import java.util.Objects;
-
-import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
-import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_PERIOD;
-import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
-
 @Slf4j(topic = "actuator")
 public class DelegateResourceActuator extends AbstractActuator {
 
   public DelegateResourceActuator() {
     super(ContractType.DelegateResourceContract, DelegateResourceContract.class);
   }
+
+  @Override
+  public boolean execute(Object result) throws ContractExeException {
+    TransactionResultCapsule ret = (TransactionResultCapsule) result;
+    if (Objects.isNull(ret)) {
+      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
+    }
+
+    long fee = calcFee();
+    final DelegateResourceContract delegateResourceContract;
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    try {
+      delegateResourceContract = any.unpack(DelegateResourceContract.class);
+    } catch (InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage(), e);
+      ret.setStatus(fee, code.FAILED);
+      throw new ContractExeException(e.getMessage());
+    }
+
+    AccountCapsule ownerCapsule = accountStore
+        .get(delegateResourceContract.getOwnerAddress().toByteArray());
+
+    long delegateBalance = delegateResourceContract.getBalance();
+    boolean lock = delegateResourceContract.getLock();
+    byte[] ownerAddress = delegateResourceContract.getOwnerAddress().toByteArray();
+    byte[] receiverAddress = delegateResourceContract.getReceiverAddress().toByteArray();
+
+    // delegate resource to receiver
+    switch (delegateResourceContract.getResource()) {
+      case BANDWIDTH:
+        delegateResource(ownerAddress, receiverAddress, true,
+            delegateBalance, lock);
+
+        ownerCapsule.addDelegatedFrozenV2BalanceForBandwidth(delegateBalance);
+        ownerCapsule.addFrozenBalanceForBandwidthV2(-delegateBalance);
+        break;
+      case ENERGY:
+        delegateResource(ownerAddress, receiverAddress, false,
+            delegateBalance, lock);
+
+        ownerCapsule.addDelegatedFrozenV2BalanceForEnergy(delegateBalance);
+        ownerCapsule.addFrozenBalanceForEnergyV2(-delegateBalance);
+        break;
+      default:
+        logger.debug("Resource Code Error.");
+    }
+
+    accountStore.put(ownerCapsule.createDbKey(), ownerCapsule);
+
+    ret.setStatus(fee, code.SUCESS);
+
+    return true;
+  }
+
 
   @Override
   public boolean validate() throws ContractValidateException {
@@ -128,7 +181,7 @@ public class DelegateResourceActuator extends AbstractActuator {
 
         if (ownerCapsule.getFrozenV2BalanceForEnergy() - remainEnergyUsage < delegateBalance) {
           throw new ContractValidateException(
-              "delegateBalance must be less than available FreezeEnergyV2 balance");
+                  "delegateBalance must be less than available FreezeEnergyV2 balance");
         }
       }
       break;
@@ -161,59 +214,6 @@ public class DelegateResourceActuator extends AbstractActuator {
       throw new ContractValidateException(
           "Do not allow delegate resources to contract addresses");
     }
-
-    return true;
-  }
-
-  @Override
-  public boolean execute(Object result) throws ContractExeException {
-    TransactionResultCapsule ret = (TransactionResultCapsule) result;
-    if (Objects.isNull(ret)) {
-      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
-    }
-
-    long fee = calcFee();
-    final DelegateResourceContract delegateResourceContract;
-    AccountStore accountStore = chainBaseManager.getAccountStore();
-    try {
-      delegateResourceContract = any.unpack(DelegateResourceContract.class);
-    } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage(), e);
-      ret.setStatus(fee, code.FAILED);
-      throw new ContractExeException(e.getMessage());
-    }
-
-    AccountCapsule ownerCapsule = accountStore
-        .get(delegateResourceContract.getOwnerAddress().toByteArray());
-
-    long delegateBalance = delegateResourceContract.getBalance();
-    boolean lock = delegateResourceContract.getLock();
-    byte[] ownerAddress = delegateResourceContract.getOwnerAddress().toByteArray();
-    byte[] receiverAddress = delegateResourceContract.getReceiverAddress().toByteArray();
-
-    // delegate resource to receiver
-    switch (delegateResourceContract.getResource()) {
-      case BANDWIDTH:
-        delegateResource(ownerAddress, receiverAddress, true,
-            delegateBalance, lock);
-
-        ownerCapsule.addDelegatedFrozenV2BalanceForBandwidth(delegateBalance);
-        ownerCapsule.addFrozenBalanceForBandwidthV2(-delegateBalance);
-        break;
-      case ENERGY:
-        delegateResource(ownerAddress, receiverAddress, false,
-            delegateBalance, lock);
-
-        ownerCapsule.addDelegatedFrozenV2BalanceForEnergy(delegateBalance);
-        ownerCapsule.addFrozenBalanceForEnergyV2(-delegateBalance);
-        break;
-      default:
-        logger.debug("Resource Code Error.");
-    }
-
-    accountStore.put(ownerCapsule.createDbKey(), ownerCapsule);
-
-    ret.setStatus(fee, code.SUCESS);
 
     return true;
   }

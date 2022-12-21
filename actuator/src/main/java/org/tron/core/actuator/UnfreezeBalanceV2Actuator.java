@@ -1,8 +1,19 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
+import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+import static org.tron.protos.contract.Common.ResourceCode;
+import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
+import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
+import static org.tron.protos.contract.Common.ResourceCode.TRON_POWER;
+
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.DecodeUtil;
@@ -24,18 +35,6 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.Protocol.Vote;
 import org.tron.protos.contract.BalanceContract.UnfreezeBalanceV2Contract;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
-
-import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
-import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
-import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
-import static org.tron.protos.contract.Common.ResourceCode;
-import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
-import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
-import static org.tron.protos.contract.Common.ResourceCode.TRON_POWER;
-
 @Slf4j(topic = "actuator")
 public class UnfreezeBalanceV2Actuator extends AbstractActuator {
 
@@ -44,6 +43,60 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
 
   public UnfreezeBalanceV2Actuator() {
     super(ContractType.UnfreezeBalanceV2Contract, UnfreezeBalanceV2Contract.class);
+  }
+
+  @Override
+  public boolean execute(Object result) throws ContractExeException {
+    TransactionResultCapsule ret = (TransactionResultCapsule) result;
+    if (Objects.isNull(ret)) {
+      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
+    }
+
+    long fee = calcFee();
+    final UnfreezeBalanceV2Contract unfreezeBalanceV2Contract;
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    MortgageService mortgageService = chainBaseManager.getMortgageService();
+    try {
+      unfreezeBalanceV2Contract = any.unpack(UnfreezeBalanceV2Contract.class);
+    } catch (InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage(), e);
+      ret.setStatus(fee, code.FAILED);
+      throw new ContractExeException(e.getMessage());
+    }
+    byte[] ownerAddress = unfreezeBalanceV2Contract.getOwnerAddress().toByteArray();
+    long now = dynamicStore.getLatestBlockHeaderTimestamp();
+
+    mortgageService.withdrawReward(ownerAddress);
+
+    AccountCapsule accountCapsule = accountStore.get(ownerAddress);
+    long unfreezeAmount = this.unfreezeExpire(accountCapsule, now);
+    long unfreezeBalance = unfreezeBalanceV2Contract.getUnfreezeBalance();
+
+    if (dynamicStore.supportAllowNewResourceModel()
+        && accountCapsule.oldTronPowerIsNotInitialized()) {
+      accountCapsule.initializeOldTronPower();
+    }
+
+    ResourceCode freezeType = unfreezeBalanceV2Contract.getResource();
+
+    long expireTime = this.calcUnfreezeExpireTime(now);
+    accountCapsule.addUnfrozenV2List(freezeType, unfreezeBalance, expireTime);
+
+    this.updateTotalResourceWeight(accountCapsule, unfreezeBalanceV2Contract, unfreezeBalance);
+    this.updateVote(accountCapsule, unfreezeBalanceV2Contract, ownerAddress);
+
+    if (dynamicStore.supportAllowNewResourceModel()
+        && !accountCapsule.oldTronPowerIsInvalid()) {
+      accountCapsule.invalidateOldTronPower();
+    }
+
+    accountStore.put(ownerAddress, accountCapsule);
+
+    ret.setUnfreezeAmount(unfreezeBalance);
+    ret.setWithdrawExpireAmount(unfreezeAmount);
+    ret.setStatus(fee, code.SUCESS);
+    return true;
   }
 
   @Override
@@ -130,6 +183,26 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
     return true;
   }
 
+  @Override
+  public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
+    return any.unpack(UnfreezeBalanceV2Contract.class).getOwnerAddress();
+  }
+
+  @Override
+  public long calcFee() {
+    return 0;
+  }
+
+  public boolean checkExistFrozenBalance(AccountCapsule accountCapsule, ResourceCode freezeType) {
+    List<FreezeV2> frozenV2List = accountCapsule.getFrozenV2List();
+    for (FreezeV2 frozenV2 : frozenV2List) {
+      if (frozenV2.getType().equals(freezeType) && frozenV2.getAmount() > 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public boolean checkUnfreezeBalance(AccountCapsule accountCapsule,
                                       final UnfreezeBalanceV2Contract unfreezeBalanceV2Contract,
                                       ResourceCode freezeType) {
@@ -150,80 +223,6 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
     }
 
     return checkOk;
-  }
-
-  public boolean checkExistFrozenBalance(AccountCapsule accountCapsule, ResourceCode freezeType) {
-    List<FreezeV2> frozenV2List = accountCapsule.getFrozenV2List();
-    for (FreezeV2 frozenV2 : frozenV2List) {
-      if (frozenV2.getType().equals(freezeType) && frozenV2.getAmount() > 0) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  @Override
-  public boolean execute(Object result) throws ContractExeException {
-    TransactionResultCapsule ret = (TransactionResultCapsule) result;
-    if (Objects.isNull(ret)) {
-      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
-    }
-
-    long fee = calcFee();
-    final UnfreezeBalanceV2Contract unfreezeBalanceV2Contract;
-    AccountStore accountStore = chainBaseManager.getAccountStore();
-    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
-    MortgageService mortgageService = chainBaseManager.getMortgageService();
-    try {
-      unfreezeBalanceV2Contract = any.unpack(UnfreezeBalanceV2Contract.class);
-    } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage(), e);
-      ret.setStatus(fee, code.FAILED);
-      throw new ContractExeException(e.getMessage());
-    }
-    byte[] ownerAddress = unfreezeBalanceV2Contract.getOwnerAddress().toByteArray();
-    long now = dynamicStore.getLatestBlockHeaderTimestamp();
-
-    mortgageService.withdrawReward(ownerAddress);
-
-    AccountCapsule accountCapsule = accountStore.get(ownerAddress);
-    long unfreezeAmount = this.unfreezeExpire(accountCapsule, now);
-    long unfreezeBalance = unfreezeBalanceV2Contract.getUnfreezeBalance();
-
-    if (dynamicStore.supportAllowNewResourceModel()
-        && accountCapsule.oldTronPowerIsNotInitialized()) {
-      accountCapsule.initializeOldTronPower();
-    }
-
-    ResourceCode freezeType = unfreezeBalanceV2Contract.getResource();
-
-    long expireTime = this.calcUnfreezeExpireTime(now);
-    accountCapsule.addUnfrozenV2List(freezeType, unfreezeBalance, expireTime);
-
-    this.updateTotalResourceWeight(accountCapsule, unfreezeBalanceV2Contract, unfreezeBalance);
-    this.updateVote(accountCapsule, unfreezeBalanceV2Contract, ownerAddress);
-
-    if (dynamicStore.supportAllowNewResourceModel()
-        && !accountCapsule.oldTronPowerIsInvalid()) {
-      accountCapsule.invalidateOldTronPower();
-    }
-
-    accountStore.put(ownerAddress, accountCapsule);
-
-    ret.setUnfreezeAmount(unfreezeBalance);
-    ret.setWithdrawExpireAmount(unfreezeAmount);
-    ret.setStatus(fee, code.SUCESS);
-    return true;
-  }
-
-  @Override
-  public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return any.unpack(UnfreezeBalanceV2Contract.class).getOwnerAddress();
-  }
-
-  @Override
-  public long calcFee() {
-    return 0;
   }
 
   public long calcUnfreezeExpireTime(long now) {

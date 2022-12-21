@@ -1,7 +1,14 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
+import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
+
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Arrays;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.utils.DecodeUtil;
@@ -21,134 +28,11 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.BalanceContract.UnDelegateResourceContract;
 
-import java.util.Arrays;
-import java.util.Objects;
-
-import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
-import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
-import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
-import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
-
 @Slf4j(topic = "actuator")
 public class UnDelegateResourceActuator extends AbstractActuator {
 
   public UnDelegateResourceActuator() {
     super(ContractType.UnDelegateResourceContract, UnDelegateResourceContract.class);
-  }
-
-  @Override
-  public boolean validate() throws ContractValidateException {
-    if (this.any == null) {
-      throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
-    }
-    if (chainBaseManager == null) {
-      throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
-    }
-    AccountStore accountStore = chainBaseManager.getAccountStore();
-    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
-    DelegatedResourceStore delegatedResourceStore = chainBaseManager.getDelegatedResourceStore();
-    if (!dynamicStore.supportDR()) {
-      throw new ContractValidateException("No support for resource delegate");
-    }
-
-    if (!dynamicStore.supportUnfreezeDelay()) {
-      throw new ContractValidateException("Not support unDelegate resource transaction,"
-          + " need to be opened by the committee");
-    }
-
-    if (!this.any.is(UnDelegateResourceContract.class)) {
-      throw new ContractValidateException(
-          "contract type error, expected type [UnDelegateResourceContract], real type[" + any
-              .getClass() + "]");
-    }
-    final UnDelegateResourceContract unDelegateResourceContract;
-    try {
-      unDelegateResourceContract = this.any.unpack(UnDelegateResourceContract.class);
-    } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage(), e);
-      throw new ContractValidateException(e.getMessage());
-    }
-
-    byte[] ownerAddress = unDelegateResourceContract.getOwnerAddress().toByteArray();
-    if (!DecodeUtil.addressValid(ownerAddress)) {
-      throw new ContractValidateException("Invalid address");
-    }
-    AccountCapsule ownerCapsule = accountStore.get(ownerAddress);
-    if (ownerCapsule == null) {
-      String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
-      throw new ContractValidateException(
-          ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] does not exist");
-    }
-
-    byte[] receiverAddress = unDelegateResourceContract.getReceiverAddress().toByteArray();
-    if (ArrayUtils.isEmpty(receiverAddress) || !DecodeUtil.addressValid(receiverAddress)) {
-      throw new ContractValidateException("Invalid receiverAddress");
-    }
-    if (Arrays.equals(receiverAddress, ownerAddress)) {
-      throw new ContractValidateException(
-          "receiverAddress must not be the same as ownerAddress");
-    }
-
-    // TVM contract suicide can result in no receiving account
-    // AccountCapsule receiverCapsule = accountStore.get(receiverAddress);
-    // if (receiverCapsule == null) {
-    //   String readableReceiverAddress = StringUtil.createReadableString(receiverAddress);
-    //   throw new ContractValidateException(
-    //       "Receiver Account[" + readableReceiverAddress + "] does not exist");
-    // }
-
-    long now = dynamicStore.getLatestBlockHeaderTimestamp();
-    byte[] key = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress, false);
-    DelegatedResourceCapsule unlockResourceCapsule = delegatedResourceStore.get(key);
-    byte[] lockKey = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress, true);
-    DelegatedResourceCapsule lockResourceCapsule = delegatedResourceStore.get(lockKey);
-    if (unlockResourceCapsule == null && lockResourceCapsule == null) {
-      throw new ContractValidateException(
-          "delegated Resource does not exist");
-    }
-
-    long unDelegateBalance = unDelegateResourceContract.getBalance();
-    if (unDelegateBalance <= 0) {
-      throw new ContractValidateException("unDelegateBalance must be more than 0 TRX");
-    }
-    switch (unDelegateResourceContract.getResource()) {
-      case BANDWIDTH: {
-        long delegateBalance = 0;
-        if (unlockResourceCapsule != null) {
-          delegateBalance += unlockResourceCapsule.getFrozenBalanceForBandwidth();
-        }
-        if (lockResourceCapsule != null
-            && lockResourceCapsule.getExpireTimeForBandwidth() < now) {
-          delegateBalance += lockResourceCapsule.getFrozenBalanceForBandwidth();
-        }
-        if (delegateBalance < unDelegateBalance) {
-          throw new ContractValidateException(
-              "insufficient delegatedFrozenBalance(BANDWIDTH), request="
-                  + unDelegateBalance + ", unlock_balance=" + delegateBalance);
-        }
-      }
-      break;
-      case ENERGY: {
-        long delegateBalance = 0;
-        if (unlockResourceCapsule != null) {
-          delegateBalance += unlockResourceCapsule.getFrozenBalanceForEnergy();
-        }
-        if (lockResourceCapsule != null
-            && lockResourceCapsule.getExpireTimeForEnergy() < now) {
-          delegateBalance += lockResourceCapsule.getFrozenBalanceForEnergy();
-        }
-        if (delegateBalance < unDelegateBalance) {
-          throw new ContractValidateException("insufficient delegateFrozenBalance(Energy), request="
-              + unDelegateBalance + ", unlock_balance=" + delegateBalance);
-        }
-      }
-      break;
-      default:
-        throw new ContractValidateException(
-            "ResourceCode error.valid ResourceCode[BANDWIDTH、Energy]");
-    }
-
-    return true;
   }
 
   @Override
@@ -307,6 +191,121 @@ public class UnDelegateResourceActuator extends AbstractActuator {
     accountStore.put(ownerAddress, ownerCapsule);
 
     ret.setStatus(fee, code.SUCESS);
+
+    return true;
+  }
+
+  @Override
+  public boolean validate() throws ContractValidateException {
+    if (this.any == null) {
+      throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
+    }
+    if (chainBaseManager == null) {
+      throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
+    }
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    DelegatedResourceStore delegatedResourceStore = chainBaseManager.getDelegatedResourceStore();
+    if (!dynamicStore.supportDR()) {
+      throw new ContractValidateException("No support for resource delegate");
+    }
+
+    if (!dynamicStore.supportUnfreezeDelay()) {
+      throw new ContractValidateException("Not support unDelegate resource transaction,"
+          + " need to be opened by the committee");
+    }
+
+    if (!this.any.is(UnDelegateResourceContract.class)) {
+      throw new ContractValidateException(
+          "contract type error, expected type [UnDelegateResourceContract], real type[" + any
+              .getClass() + "]");
+    }
+    final UnDelegateResourceContract unDelegateResourceContract;
+    try {
+      unDelegateResourceContract = this.any.unpack(UnDelegateResourceContract.class);
+    } catch (InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage(), e);
+      throw new ContractValidateException(e.getMessage());
+    }
+
+    byte[] ownerAddress = unDelegateResourceContract.getOwnerAddress().toByteArray();
+    if (!DecodeUtil.addressValid(ownerAddress)) {
+      throw new ContractValidateException("Invalid address");
+    }
+    AccountCapsule ownerCapsule = accountStore.get(ownerAddress);
+    if (ownerCapsule == null) {
+      String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
+      throw new ContractValidateException(
+          ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] does not exist");
+    }
+
+    byte[] receiverAddress = unDelegateResourceContract.getReceiverAddress().toByteArray();
+    if (ArrayUtils.isEmpty(receiverAddress) || !DecodeUtil.addressValid(receiverAddress)) {
+      throw new ContractValidateException("Invalid receiverAddress");
+    }
+    if (Arrays.equals(receiverAddress, ownerAddress)) {
+      throw new ContractValidateException(
+          "receiverAddress must not be the same as ownerAddress");
+    }
+
+    // TVM contract suicide can result in no receiving account
+    // AccountCapsule receiverCapsule = accountStore.get(receiverAddress);
+    // if (receiverCapsule == null) {
+    //   String readableReceiverAddress = StringUtil.createReadableString(receiverAddress);
+    //   throw new ContractValidateException(
+    //       "Receiver Account[" + readableReceiverAddress + "] does not exist");
+    // }
+
+    long now = dynamicStore.getLatestBlockHeaderTimestamp();
+    byte[] key = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress, false);
+    DelegatedResourceCapsule unlockResourceCapsule = delegatedResourceStore.get(key);
+    byte[] lockKey = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress, true);
+    DelegatedResourceCapsule lockResourceCapsule = delegatedResourceStore.get(lockKey);
+    if (unlockResourceCapsule == null && lockResourceCapsule == null) {
+      throw new ContractValidateException(
+          "delegated Resource does not exist");
+    }
+
+    long unDelegateBalance = unDelegateResourceContract.getBalance();
+    if (unDelegateBalance <= 0) {
+      throw new ContractValidateException("unDelegateBalance must be more than 0 TRX");
+    }
+    switch (unDelegateResourceContract.getResource()) {
+      case BANDWIDTH: {
+        long delegateBalance = 0;
+        if (unlockResourceCapsule != null) {
+          delegateBalance += unlockResourceCapsule.getFrozenBalanceForBandwidth();
+        }
+        if (lockResourceCapsule != null
+            && lockResourceCapsule.getExpireTimeForBandwidth() < now) {
+          delegateBalance += lockResourceCapsule.getFrozenBalanceForBandwidth();
+        }
+        if (delegateBalance < unDelegateBalance) {
+          throw new ContractValidateException(
+              "insufficient delegatedFrozenBalance(BANDWIDTH), request="
+                  + unDelegateBalance + ", unlock_balance=" + delegateBalance);
+        }
+      }
+      break;
+      case ENERGY: {
+        long delegateBalance = 0;
+        if (unlockResourceCapsule != null) {
+          delegateBalance += unlockResourceCapsule.getFrozenBalanceForEnergy();
+        }
+        if (lockResourceCapsule != null
+            && lockResourceCapsule.getExpireTimeForEnergy() < now) {
+          delegateBalance += lockResourceCapsule.getFrozenBalanceForEnergy();
+        }
+        if (delegateBalance < unDelegateBalance) {
+          throw new ContractValidateException("insufficient delegateFrozenBalance(Energy), request="
+              + unDelegateBalance + ", unlock_balance=" + delegateBalance);
+        }
+      }
+      break;
+      default:
+        throw new ContractValidateException(
+            "ResourceCode error.valid ResourceCode[BANDWIDTH、Energy]");
+    }
 
     return true;
   }
