@@ -438,6 +438,10 @@ public class Manager {
     isRunFilterProcessThread = false;
   }
 
+  public void stopStateUpdateThread() {
+    worldStateCallBack.stopUpdateService();
+  }
+
   @PostConstruct
   public void init() {
     ChainBaseManager.init(chainBaseManager);
