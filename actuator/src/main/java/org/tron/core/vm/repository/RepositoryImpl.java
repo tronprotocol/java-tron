@@ -842,39 +842,6 @@ public class RepositoryImpl implements Repository {
         / BLOCK_PRODUCED_INTERVAL;
   }
 
-  @Override
-  public void unlockExpireResource(byte[] from, byte[] to, long now) {
-    byte[] lockKey = DelegatedResourceCapsule.createDbKeyV2(from, to, true);
-    DelegatedResourceCapsule lockResource = getDelegatedResource(lockKey);
-    if (lockResource == null) {
-      return;
-    }
-    if (lockResource.getExpireTimeForEnergy() >= now
-        && lockResource.getExpireTimeForBandwidth() >= now) {
-      return;
-    }
-
-    byte[] unlockKey = DelegatedResourceCapsule.createDbKeyV2(from, to, false);
-    DelegatedResourceCapsule unlockResource = getDelegatedResource(unlockKey);
-    if (unlockResource == null) {
-      unlockResource = new DelegatedResourceCapsule(ByteString.copyFrom(from),
-          ByteString.copyFrom(to));
-    }
-    if (lockResource.getExpireTimeForEnergy() < now) {
-      unlockResource.addFrozenBalanceForEnergy(
-          lockResource.getFrozenBalanceForEnergy(), 0);
-      lockResource.setFrozenBalanceForEnergy(0, 0);
-    }
-    if (lockResource.getExpireTimeForBandwidth() < now) {
-      unlockResource.addFrozenBalanceForBandwidth(
-          lockResource.getFrozenBalanceForBandwidth(), 0);
-      lockResource.setFrozenBalanceForBandwidth(0, 0);
-    }
-
-    updateDelegatedResource(lockKey, lockResource);
-    updateDelegatedResource(unlockKey, unlockResource);
-  }
-
   private void commitAccountCache(Repository deposit) {
     accountCache.forEach((key, value) -> {
       if (value.getType().isCreate() || value.getType().isDirty()) {
@@ -978,16 +945,18 @@ public class RepositoryImpl implements Repository {
 
   private void commitDelegatedResourceAccountIndexCache(Repository deposit) {
     delegatedResourceAccountIndexCache.forEach(((key, value) -> {
-      if (value.getType().isDirty() || value.getType().isCreate()) {
+      if (value.getValue() == null) {
         if (deposit != null) {
           deposit.putDelegatedResourceAccountIndex(key, value);
         } else {
-          if (value.getValue() == null) {
-            getDelegatedResourceAccountIndexStore().delete(key.getData());
-          } else {
-            getDelegatedResourceAccountIndexStore().put(key.getData(),
-                new DelegatedResourceAccountIndexCapsule(value.getValue()));
-          }
+          getDelegatedResourceAccountIndexStore().delete(key.getData());
+        }
+      } else if (value.getType().isDirty() || value.getType().isCreate()) {
+        if (deposit != null) {
+          deposit.putDelegatedResourceAccountIndex(key, value);
+        } else {
+          getDelegatedResourceAccountIndexStore().put(key.getData(),
+              new DelegatedResourceAccountIndexCapsule(value.getValue()));
         }
       }
     }));

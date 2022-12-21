@@ -404,8 +404,4 @@ public class ContractState implements Repository, ProgramListenerAware {
     return repository.getSlotByTimestampMs(timestamp);
   }
 
-  @Override
-  public void unlockExpireResource(byte[] from, byte[] to, long now) {
-    repository.unlockExpireResource(from, to, now);
-  }
 }

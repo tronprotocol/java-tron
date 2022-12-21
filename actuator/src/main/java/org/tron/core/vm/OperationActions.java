@@ -1,17 +1,16 @@
 package org.tron.core.vm;
 
+import static org.tron.common.crypto.Hash.sha3;
+import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
+
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.Stack;
-
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.tron.common.crypto.Hash.sha3;
-import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 
 public class OperationActions {
 
@@ -819,12 +818,11 @@ public class OperationActions {
     if (program.isStaticCall()) {
       throw new Program.StaticCallModificationException();
     }
-    DataWord lock = program.stackPop();
     DataWord resourceType = program.stackPop();
     DataWord delegateBalance = program.stackPop();
     DataWord receiverAddress = program.stackPop();
 
-    boolean result = program.delegateResource(receiverAddress, delegateBalance, resourceType, lock);
+    boolean result = program.delegateResource(receiverAddress, delegateBalance, resourceType);
     program.stackPush(result ? DataWord.ONE() : DataWord.ZERO());
     program.step();
   }

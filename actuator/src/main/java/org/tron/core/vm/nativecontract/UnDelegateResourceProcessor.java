@@ -7,6 +7,7 @@ import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.EnergyProcessor;
@@ -15,6 +16,7 @@ import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.vm.nativecontract.param.UnDelegateResourceParam;
 import org.tron.core.vm.repository.Repository;
+import org.tron.protos.Protocol;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -57,12 +59,9 @@ public class UnDelegateResourceProcessor {
           "receiverAddress must not be the same as ownerAddress");
     }
 
-    long now = dynamicStore.getLatestBlockHeaderTimestamp();
     byte[] key = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress, false);
-    DelegatedResourceCapsule unlockResourceCapsule = repo.getDelegatedResource(key);
-    byte[] lockKey = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress, true);
-    DelegatedResourceCapsule lockResourceCapsule = repo.getDelegatedResource(lockKey);
-    if (unlockResourceCapsule == null && lockResourceCapsule == null) {
+    DelegatedResourceCapsule delegatedResourceCapsule = repo.getDelegatedResource(key);
+    if (delegatedResourceCapsule == null) {
       throw new ContractValidateException(
           "delegated Resource does not exist");
     }
@@ -72,37 +71,18 @@ public class UnDelegateResourceProcessor {
       throw new ContractValidateException("unDelegateBalance must be more than 0 TRX");
     }
     switch (param.getResourceType()) {
-      case BANDWIDTH: {
-        long delegateBalance = 0;
-        if (unlockResourceCapsule != null) {
-          delegateBalance += unlockResourceCapsule.getFrozenBalanceForBandwidth();
+      case BANDWIDTH:
+        if (delegatedResourceCapsule.getFrozenBalanceForBandwidth() < unDelegateBalance) {
+          throw new ContractValidateException("insufficient delegatedFrozenBalance(BANDWIDTH), request="
+              + unDelegateBalance + ", balance=" + delegatedResourceCapsule.getFrozenBalanceForBandwidth());
         }
-        if (lockResourceCapsule != null
-            && lockResourceCapsule.getExpireTimeForBandwidth() < now) {
-          delegateBalance += lockResourceCapsule.getFrozenBalanceForBandwidth();
-        }
-        if (delegateBalance < unDelegateBalance) {
-          throw new ContractValidateException(
-              "insufficient delegatedFrozenBalance(BANDWIDTH), request="
-                  + unDelegateBalance + ", unlock_balance=" + delegateBalance);
-        }
-      }
-      break;
-      case ENERGY: {
-        long delegateBalance = 0;
-        if (unlockResourceCapsule != null) {
-          delegateBalance += unlockResourceCapsule.getFrozenBalanceForEnergy();
-        }
-        if (lockResourceCapsule != null
-            && lockResourceCapsule.getExpireTimeForEnergy() < now) {
-          delegateBalance += lockResourceCapsule.getFrozenBalanceForEnergy();
-        }
-        if (delegateBalance < unDelegateBalance) {
+        break;
+      case ENERGY:
+        if (delegatedResourceCapsule.getFrozenBalanceForEnergy() < unDelegateBalance) {
           throw new ContractValidateException("insufficient delegateFrozenBalance(ENERGY), request="
-              + unDelegateBalance + ", unlock_balance=" + delegateBalance);
+              + unDelegateBalance + ", balance=" + delegatedResourceCapsule.getFrozenBalanceForEnergy());
         }
-      }
-      break;
+        break;
       default:
         throw new ContractValidateException(
             "ResourceCode error.valid ResourceCode[BANDWIDTH、ENERGY]");
@@ -176,16 +156,12 @@ public class UnDelegateResourceProcessor {
       repo.updateAccount(receiverCapsule.createDbKey(), receiverCapsule);
     }
 
-    // transfer lock delegate to unlock
-    repo.unlockExpireResource(
-        ownerAddress, receiverAddress, dynamicStore.getLatestBlockHeaderTimestamp());
-
     // modify owner Account
     byte[] key = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress, false);
-    DelegatedResourceCapsule unlockResource = repo.getDelegatedResource(key);
+    DelegatedResourceCapsule delegatedResourceCapsule = repo.getDelegatedResource(key);
     switch (param.getResourceType()) {
       case BANDWIDTH: {
-        unlockResource.addFrozenBalanceForBandwidth(-unDelegateBalance, 0);
+        delegatedResourceCapsule.addFrozenBalanceForBandwidth(-unDelegateBalance, 0);
 
         ownerCapsule.addDelegatedFrozenV2BalanceForBandwidth(-unDelegateBalance);
         ownerCapsule.addFrozenBalanceForBandwidthV2(unDelegateBalance);
@@ -199,7 +175,7 @@ public class UnDelegateResourceProcessor {
       }
       break;
       case ENERGY: {
-        unlockResource.addFrozenBalanceForEnergy(-unDelegateBalance, 0);
+        delegatedResourceCapsule.addFrozenBalanceForEnergy(-unDelegateBalance, 0);
 
         ownerCapsule.addDelegatedFrozenV2BalanceForEnergy(-unDelegateBalance);
         ownerCapsule.addFrozenBalanceForEnergyV2(unDelegateBalance);
@@ -218,22 +194,23 @@ public class UnDelegateResourceProcessor {
         break;
     }
 
-    byte[] lockKey = DelegatedResourceCapsule
-        .createDbKeyV2(ownerAddress, receiverAddress, true);
-    DelegatedResourceCapsule lockResource = repo.getDelegatedResource(lockKey);
-    if (lockResource == null
-        && unlockResource.getFrozenBalanceForBandwidth() == 0
-        && unlockResource.getFrozenBalanceForEnergy() == 0) {
+    if (delegatedResourceCapsule.getFrozenBalanceForBandwidth() == 0
+        && delegatedResourceCapsule.getFrozenBalanceForEnergy() == 0) {
       //modify DelegatedResourceAccountIndex
       byte[] fromKey = Bytes.concat(
           DelegatedResourceAccountIndexStore.getV2_FROM_PREFIX(), ownerAddress, receiverAddress);
-      repo.updateDelegatedResourceAccountIndex(fromKey, null);
-      byte[] toKey = Bytes.concat(
-          DelegatedResourceAccountIndexStore.getV2_TO_PREFIX(), receiverAddress, ownerAddress);
-      repo.updateDelegatedResourceAccountIndex(toKey, null);
+      repo.updateDelegatedResourceAccountIndex(
+          fromKey,
+          new DelegatedResourceAccountIndexCapsule((Protocol.DelegatedResourceAccountIndex) null));
+      byte[] toKey =
+          Bytes.concat(
+              DelegatedResourceAccountIndexStore.getV2_TO_PREFIX(), receiverAddress, ownerAddress);
+      repo.updateDelegatedResourceAccountIndex(
+          toKey,
+          new DelegatedResourceAccountIndexCapsule((Protocol.DelegatedResourceAccountIndex) null));
     }
 
-    repo.updateDelegatedResource(key, unlockResource);
+    repo.updateDelegatedResource(key, delegatedResourceCapsule);
     repo.updateAccount(ownerCapsule.createDbKey(), ownerCapsule);
   }
 }

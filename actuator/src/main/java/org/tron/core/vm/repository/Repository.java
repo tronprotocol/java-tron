@@ -151,5 +151,4 @@ public interface Repository {
 
   long getSlotByTimestampMs(long timestamp);
 
-  void unlockExpireResource(byte[] from, byte[] to, long now);
 }

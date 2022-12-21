@@ -1,6 +1,22 @@
 package org.tron.core.vm.program;
 
+import static java.lang.StrictMath.min;
+import static java.lang.String.format;
+import static org.apache.commons.lang3.ArrayUtils.EMPTY_BYTE_ARRAY;
+import static org.apache.commons.lang3.ArrayUtils.getLength;
+import static org.apache.commons.lang3.ArrayUtils.isEmpty;
+import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
+import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
+import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+
 import com.google.protobuf.ByteString;
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.map.LRUMap;
@@ -75,23 +91,6 @@ import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.contract.Common;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.Builder;
-
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
-
-import static java.lang.StrictMath.min;
-import static java.lang.String.format;
-import static org.apache.commons.lang3.ArrayUtils.EMPTY_BYTE_ARRAY;
-import static org.apache.commons.lang3.ArrayUtils.getLength;
-import static org.apache.commons.lang3.ArrayUtils.isEmpty;
-import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
-import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
-import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
-import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 @Slf4j(topic = "VM")
 public class Program {
@@ -2001,7 +2000,7 @@ public class Program {
   }
 
   public boolean delegateResource(
-      DataWord receiverAddress, DataWord delegateBalance, DataWord resourceType, DataWord lock) {
+      DataWord receiverAddress, DataWord delegateBalance, DataWord resourceType) {
     Repository repository = getContractState().newRepositoryChild();
     byte[] owner = getContextAddress();
     byte[] receiver = receiverAddress.toTronAddress();
@@ -2017,7 +2016,6 @@ public class Program {
       param.setReceiverAddress(receiver);
       param.setDelegateBalance(delegateBalance.sValue().longValueExact());
       param.setResourceType(parseResourceCodeV2(resourceType));
-      param.setLock(lock.sValue().longValueExact() != 0);
 
       DelegateResourceProcessor processor = new DelegateResourceProcessor();
       processor.validate(param, repository);
