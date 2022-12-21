@@ -5,41 +5,39 @@ import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
-import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.ContractStateCapsule;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.Program.JVMStackOverFlowException;
 import org.tron.core.vm.program.Program.OutOfTimeException;
 import org.tron.core.vm.program.Program.TransferException;
-import org.tron.core.vm.repository.Key;
-import org.tron.core.vm.repository.Type;
-import org.tron.core.vm.repository.Value;
 
 @Slf4j(topic = "VM")
 public class VM {
 
   public static void play(Program program, JumpTable jumpTable) {
     try {
-      ContractCapsule contextContract = null;
+      ContractStateCapsule contextContractState = null;
       long factor = DYNAMIC_ENERGY_FACTOR_DECIMAL;
+      long energyUsage = 0L;
 
       boolean allowDynamicEnergy =
           program.getContractState().getDynamicPropertiesStore().supportAllowDynamicEnergy();
 
       if (allowDynamicEnergy) {
-        contextContract = program.getContractState().getContract(program.getContextAddress());
+        contextContractState = program.getContractState().getContractState(program.getContextAddress());
 
-        if (contextContract.catchUpToCycle(
+        if (contextContractState.catchUpToCycle(
             program.getContractState().getDynamicPropertiesStore().getCurrentCycleNumber(),
             program.getContractState().getDynamicPropertiesStore().getDynamicEnergyThreshold(),
             program.getContractState().getDynamicPropertiesStore().getDynamicEnergyIncreaseFactor(),
             program.getContractState().getDynamicPropertiesStore().getDynamicEnergyMaxFactor())) {
-          program.getContractState().putContract(
-              Key.create(program.getContextAddress()),
-              Value.create(contextContract, Type.DIRTY));
+
+          program.getContractState().updateContractState(
+              program.getContextAddress(), contextContractState);
         }
 
-        factor = contextContract.getEnergyFactor();
+        factor = contextContractState.getEnergyFactor();
       }
 
       while (!program.isStopped()) {
@@ -62,12 +60,9 @@ public class VM {
           /* spend energy before execution */
           long energy = op.getEnergyCost(program);
           if (allowDynamicEnergy) {
-            contextContract.addEnergyUsage(energy);
-            program.getContractState().putContract(
-                Key.create(program.getContextAddress()),
-                Value.create(contextContract, Type.DIRTY));
+            energyUsage += energy;
 
-            if (factor != DYNAMIC_ENERGY_FACTOR_DECIMAL) {
+            if (factor > DYNAMIC_ENERGY_FACTOR_DECIMAL) {
               energy = energy * factor / DYNAMIC_ENERGY_FACTOR_DECIMAL;
             }
           }
@@ -92,6 +87,15 @@ public class VM {
           program.fullTrace();
         }
       }
+
+      if (allowDynamicEnergy) {
+        contextContractState = program.getContractState().getContractState(program.getContextAddress());
+        contextContractState.addEnergyUsage(energyUsage);
+        program.getContractState().updateContractState(
+            program.getContextAddress(),
+            contextContractState);
+      }
+
     } catch (JVMStackOverFlowException | OutOfTimeException e) {
       throw e;
     } catch (RuntimeException e) {

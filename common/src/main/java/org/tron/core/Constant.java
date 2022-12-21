@@ -325,6 +325,8 @@ public class Constant {
 
   public static final long DYNAMIC_ENERGY_FACTOR_DECIMAL = 100L;
 
+  public static final int DYNAMIC_ENERGY_DECREASE_DIVISION = 4;
+
   public static final String DYNAMIC_ENERGY_TRIGGER_BASE = "committee.dynamicEnergyTriggerBase";
 
   public static final String LOCAL_HOST = "127.0.0.1";

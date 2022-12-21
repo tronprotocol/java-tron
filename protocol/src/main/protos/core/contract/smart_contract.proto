@@ -56,10 +56,12 @@ message SmartContract {
   bytes code_hash = 9;
   bytes trx_hash = 10;
   int32 version = 11;
+}
 
-  int64 energy_usage = 12;
-  int64 energy_factor = 13;
-  int64 update_cycle = 14;
+message ContractState {
+  int64 energy_usage = 1;
+  int64 energy_factor = 2;
+  int64 update_cycle = 3;
 }
 
 message CreateSmartContract {

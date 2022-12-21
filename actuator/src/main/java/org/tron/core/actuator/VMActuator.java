@@ -30,6 +30,7 @@ import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.ContractStateCapsule;
 import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.TransactionContext;
@@ -51,11 +52,8 @@ import org.tron.core.vm.program.Program.TransferException;
 import org.tron.core.vm.program.ProgramPrecompile;
 import org.tron.core.vm.program.invoke.ProgramInvoke;
 import org.tron.core.vm.program.invoke.ProgramInvokeFactory;
-import org.tron.core.vm.repository.Key;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
-import org.tron.core.vm.repository.Type;
-import org.tron.core.vm.repository.Value;
 import org.tron.core.vm.utils.MUtil;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Block;
@@ -183,27 +181,26 @@ public class VMActuator implements Actuator2 {
 
         if (rootRepository.getDynamicPropertiesStore().supportAllowDynamicEnergy()) {
           // only add trigger_energy_base when type is call.
-          if (this.trx.getRawData().getContract(0).getType()
-              == ContractType.TriggerSmartContract) {
+          if (TrxType.TRX_CONTRACT_CREATION_TYPE == trxType) {
 
-            ContractCapsule deployedContract =
-                rootRepository.getContract(program.getContextAddress());
-            if (deployedContract != null) {
+            ContractStateCapsule contractStateCapsule =
+                rootRepository.getContractState(program.getContextAddress());
+            if (contractStateCapsule != null) {
 
-              if (deployedContract.catchUpToCycle(
+              if (contractStateCapsule.catchUpToCycle(
                   rootRepository.getDynamicPropertiesStore().getCurrentCycleNumber(),
                   rootRepository.getDynamicPropertiesStore().getDynamicEnergyThreshold(),
                   rootRepository.getDynamicPropertiesStore().getDynamicEnergyIncreaseFactor(),
                   rootRepository.getDynamicPropertiesStore().getDynamicEnergyMaxFactor())) {
-                rootRepository.putContract(
-                    Key.create(program.getContextAddress()),
-                    Value.create(deployedContract, Type.DIRTY));
+                rootRepository.updateContractState(
+                    program.getContextAddress(),
+                    contractStateCapsule);
               }
 
-              if (deployedContract.getEnergyFactor() > DYNAMIC_ENERGY_FACTOR_DECIMAL) {
+              if (contractStateCapsule.getEnergyFactor() > DYNAMIC_ENERGY_FACTOR_DECIMAL) {
                 program.spendEnergy(
                     rootRepository.getDynamicPropertiesStore().getDynamicEnergyTriggerBase()
-                        * deployedContract.getEnergyFactor() / DYNAMIC_ENERGY_FACTOR_DECIMAL,
+                        * contractStateCapsule.getEnergyFactor() / DYNAMIC_ENERGY_FACTOR_DECIMAL,
                     "DYNAMIC_ENERGY_TRIGGER_BASE");
               }
             }

@@ -4,12 +4,12 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.tron.protos.contract.SmartContractOuterClass;
 
-public class ContractCapsuleTest {
+public class ContractStateCapsuleTest {
 
   @Test
   public void testCatchUpCycle() {
-    ContractCapsule capsule = new ContractCapsule(
-        SmartContractOuterClass.SmartContract.newBuilder()
+    ContractStateCapsule capsule = new ContractStateCapsule(
+        SmartContractOuterClass.ContractState.newBuilder()
             .setEnergyUsage(1_000_000L)
             .setEnergyFactor(150L)
             .setUpdateCycle(1000L)
@@ -25,8 +25,8 @@ public class ContractCapsuleTest {
     Assert.assertEquals(0L, capsule.getEnergyUsage());
     Assert.assertEquals(100L, capsule.getEnergyFactor());
 
-    capsule = new ContractCapsule(
-        SmartContractOuterClass.SmartContract.newBuilder()
+    capsule = new ContractStateCapsule(
+        SmartContractOuterClass.ContractState.newBuilder()
             .setEnergyUsage(1_000_000L)
             .setEnergyFactor(150L)
             .setUpdateCycle(1000L)
@@ -37,8 +37,8 @@ public class ContractCapsuleTest {
     Assert.assertEquals(0L, capsule.getEnergyUsage());
     Assert.assertEquals(134L, capsule.getEnergyFactor());
 
-    capsule = new ContractCapsule(
-        SmartContractOuterClass.SmartContract.newBuilder()
+    capsule = new ContractStateCapsule(
+        SmartContractOuterClass.ContractState.newBuilder()
             .setEnergyUsage(1_000_000L)
             .setEnergyFactor(150L)
             .setUpdateCycle(1000L)
@@ -49,8 +49,8 @@ public class ContractCapsuleTest {
     Assert.assertEquals(0L, capsule.getEnergyUsage());
     Assert.assertEquals(142L, capsule.getEnergyFactor());
 
-    capsule = new ContractCapsule(
-        SmartContractOuterClass.SmartContract.newBuilder()
+    capsule = new ContractStateCapsule(
+        SmartContractOuterClass.ContractState.newBuilder()
             .setEnergyUsage(1_000_000L)
             .setEnergyFactor(150L)
             .setUpdateCycle(1000L)
@@ -61,8 +61,8 @@ public class ContractCapsuleTest {
     Assert.assertEquals(0L, capsule.getEnergyUsage());
     Assert.assertEquals(180L, capsule.getEnergyFactor());
 
-    capsule = new ContractCapsule(
-        SmartContractOuterClass.SmartContract.newBuilder()
+    capsule = new ContractStateCapsule(
+        SmartContractOuterClass.ContractState.newBuilder()
             .setEnergyUsage(1_000_000L)
             .setEnergyFactor(150L)
             .setUpdateCycle(1000L)
@@ -73,8 +73,8 @@ public class ContractCapsuleTest {
     Assert.assertEquals(0L, capsule.getEnergyUsage());
     Assert.assertEquals(200L, capsule.getEnergyFactor());
 
-    capsule = new ContractCapsule(
-        SmartContractOuterClass.SmartContract.newBuilder()
+    capsule = new ContractStateCapsule(
+        SmartContractOuterClass.ContractState.newBuilder()
             .setEnergyUsage(1_000_000L)
             .setEnergyFactor(150L)
             .setUpdateCycle(1000L)
@@ -85,8 +85,8 @@ public class ContractCapsuleTest {
     Assert.assertEquals(0L, capsule.getEnergyUsage());
     Assert.assertEquals(175L, capsule.getEnergyFactor());
 
-    capsule = new ContractCapsule(
-        SmartContractOuterClass.SmartContract.newBuilder()
+    capsule = new ContractStateCapsule(
+        SmartContractOuterClass.ContractState.newBuilder()
             .setEnergyUsage(1_000_000L)
             .setEnergyFactor(150L)
             .setUpdateCycle(1000L)
@@ -97,8 +97,8 @@ public class ContractCapsuleTest {
     Assert.assertEquals(0L, capsule.getEnergyUsage());
     Assert.assertEquals(153L, capsule.getEnergyFactor());
 
-    capsule = new ContractCapsule(
-        SmartContractOuterClass.SmartContract.newBuilder()
+    capsule = new ContractStateCapsule(
+        SmartContractOuterClass.ContractState.newBuilder()
             .setEnergyUsage(1_000_000L)
             .setEnergyFactor(150L)
             .setUpdateCycle(1000L)
@@ -109,8 +109,8 @@ public class ContractCapsuleTest {
     Assert.assertEquals(0L, capsule.getEnergyUsage());
     Assert.assertEquals(133L, capsule.getEnergyFactor());
 
-    capsule = new ContractCapsule(
-        SmartContractOuterClass.SmartContract.newBuilder()
+    capsule = new ContractStateCapsule(
+        SmartContractOuterClass.ContractState.newBuilder()
             .setEnergyUsage(1_000_000L)
             .setEnergyFactor(150L)
             .setUpdateCycle(1000L)
@@ -121,8 +121,8 @@ public class ContractCapsuleTest {
     Assert.assertEquals(0L, capsule.getEnergyUsage());
     Assert.assertEquals(117L, capsule.getEnergyFactor());
 
-    capsule = new ContractCapsule(
-        SmartContractOuterClass.SmartContract.newBuilder()
+    capsule = new ContractStateCapsule(
+        SmartContractOuterClass.ContractState.newBuilder()
             .setEnergyUsage(1_000_000L)
             .setEnergyFactor(150L)
             .setUpdateCycle(1000L)
@@ -133,8 +133,8 @@ public class ContractCapsuleTest {
     Assert.assertEquals(0L, capsule.getEnergyUsage());
     Assert.assertEquals(117L, capsule.getEnergyFactor());
 
-    capsule = new ContractCapsule(
-        SmartContractOuterClass.SmartContract.newBuilder()
+    capsule = new ContractStateCapsule(
+        SmartContractOuterClass.ContractState.newBuilder()
             .setEnergyUsage(1_000_000L)
             .setEnergyFactor(150L)
             .setUpdateCycle(1000L)
@@ -145,8 +145,8 @@ public class ContractCapsuleTest {
     Assert.assertEquals(0L, capsule.getEnergyUsage());
     Assert.assertEquals(102L, capsule.getEnergyFactor());
 
-    capsule = new ContractCapsule(
-        SmartContractOuterClass.SmartContract.newBuilder()
+    capsule = new ContractStateCapsule(
+        SmartContractOuterClass.ContractState.newBuilder()
             .setEnergyUsage(1_000_000L)
             .setEnergyFactor(150L)
             .setUpdateCycle(1000L)

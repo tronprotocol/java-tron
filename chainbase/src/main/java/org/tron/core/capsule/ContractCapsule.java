@@ -17,7 +17,6 @@ package org.tron.core.capsule;
 
 import static java.lang.Math.max;
 import static java.lang.Math.min;
-import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -135,96 +134,4 @@ public class ContractCapsule implements ProtoCapsule<SmartContract> {
     return this.smartContract.getVersion();
   }
 
-  public long getEnergyUsage() {
-    return this.smartContract.getEnergyUsage();
-  }
-
-  public void setEnergyUsage(long value) {
-    this.smartContract = this.smartContract.toBuilder().setEnergyUsage(value).build();
-  }
-
-  public void addEnergyUsage(long toAdd) {
-    setEnergyUsage(getEnergyUsage() + toAdd);
-  }
-
-  public long getEnergyFactor() {
-    return this.smartContract.getEnergyFactor();
-  }
-
-  public void setEnergyFactor(long value) {
-    this.smartContract = this.smartContract.toBuilder().setEnergyFactor(value).build();
-  }
-
-  public long getUpdateCycle() {
-    return this.smartContract.getUpdateCycle();
-  }
-
-  public void setUpdateCycle(long value) {
-    this.smartContract = this.smartContract.toBuilder().setUpdateCycle(value).build();
-  }
-
-  public void addUpdateCycle(long toAdd) {
-    setUpdateCycle(getUpdateCycle() + toAdd);
-  }
-
-  public boolean catchUpToCycle(long newCycle, long threshold, long increaseFactor, long maxFactor) {
-    long lastCycle = getUpdateCycle();
-    if (lastCycle >= newCycle) {
-      return false;
-    }
-
-    if (lastCycle == 0L || newCycle - lastCycle >= 10) {
-      this.smartContract = this.smartContract.toBuilder()
-          .setUpdateCycle(newCycle)
-          .setEnergyUsage(0L)
-          .setEnergyFactor(DYNAMIC_ENERGY_FACTOR_DECIMAL)
-          .build();
-      return true;
-    }
-
-    // increase first
-    if (getEnergyUsage() >= threshold) {
-      lastCycle += 1;
-      this.smartContract = this.smartContract.toBuilder()
-          .setUpdateCycle(lastCycle)
-          .setEnergyUsage(0L)
-          .setEnergyFactor(Math.min(
-              maxFactor,
-              getEnergyFactor() * increaseFactor / DYNAMIC_ENERGY_FACTOR_DECIMAL))
-          .build();
-    }
-
-    // decrease
-    long cycleCount = newCycle - lastCycle;
-    if (cycleCount <= 0) {
-      return true;
-    }
-
-    // no need to decrease
-    if (getEnergyFactor() <= DYNAMIC_ENERGY_FACTOR_DECIMAL) {
-      this.smartContract = this.smartContract.toBuilder()
-          .setUpdateCycle(newCycle)
-          .setEnergyUsage(0L)
-          .setEnergyFactor(DYNAMIC_ENERGY_FACTOR_DECIMAL)
-          .build();
-      return true;
-    }
-
-    double decreaseFactor = 1 - ((double) increaseFactor / DYNAMIC_ENERGY_FACTOR_DECIMAL - 1) / 4;
-    if (cycleCount > 1) {
-      decreaseFactor = Math.pow(
-          decreaseFactor,
-          cycleCount);
-    }
-
-    this.smartContract = this.smartContract.toBuilder()
-        .setUpdateCycle(newCycle)
-        .setEnergyUsage(0L)
-        .setEnergyFactor(Math.max(
-            DYNAMIC_ENERGY_FACTOR_DECIMAL,
-            (long) (getEnergyFactor() * decreaseFactor)))
-        .build();
-
-    return true;
-  }
 }
