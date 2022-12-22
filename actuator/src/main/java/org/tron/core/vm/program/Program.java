@@ -2204,7 +2204,7 @@ public class Program {
     return 0;
   }
 
-  public long updateContextContractCycle() {
+  public long updateContextContractFactor() {
     ContractStateCapsule contractStateCapsule =
         contractState.getContractState(getContextAddress());
 

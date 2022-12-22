@@ -111,8 +111,10 @@ public class ContractStateCapsule implements ProtoCapsule<ContractState> {
       return true;
     }
 
-    double decreaseFactor = 1 - ((double) increaseFactor / DYNAMIC_ENERGY_FACTOR_DECIMAL - 1)
-        / DYNAMIC_ENERGY_DECREASE_DIVISION;
+    double decreaseFactor = Math.max(
+        DYNAMIC_ENERY_DECREASE_FACTOR_MAX,
+        1 - ((double) increaseFactor / DYNAMIC_ENERGY_FACTOR_DECIMAL - 1)
+                / DYNAMIC_ENERGY_DECREASE_DIVISION);
     if (cycleCount > 1) {
       decreaseFactor = Math.pow(
           decreaseFactor,

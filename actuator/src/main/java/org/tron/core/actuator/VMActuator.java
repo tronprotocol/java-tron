@@ -30,7 +30,6 @@ import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
-import org.tron.core.capsule.ContractStateCapsule;
 import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.TransactionContext;
@@ -182,7 +181,7 @@ public class VMActuator implements Actuator2 {
         if (rootRepository.getDynamicPropertiesStore().supportAllowDynamicEnergy()) {
           // only add trigger_energy_base when type is call.
           if (TrxType.TRX_CONTRACT_CREATION_TYPE == trxType) {
-            long energyFactor = program.updateContextContractCycle();
+            long energyFactor = program.updateContextContractFactor();
             if (energyFactor > DYNAMIC_ENERGY_FACTOR_DECIMAL) {
               program.spendEnergy(
                   rootRepository.getDynamicPropertiesStore().getDynamicEnergyTriggerBase()

@@ -2,6 +2,7 @@ package org.tron.core.vm;
 
 import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
 
+import com.google.common.collect.ImmutableSet;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
@@ -14,6 +15,9 @@ import org.tron.core.vm.program.Program.TransferException;
 @Slf4j(topic = "VM")
 public class VM {
 
+  private static final ImmutableSet CALL_OPS = ImmutableSet.of(Op.CALL, Op.STATICCALL,
+      Op.DELEGATECALL, Op.CALLCODE, Op.CALLTOKEN);
+
   public static void play(Program program, JumpTable jumpTable) {
     try {
       long factor = DYNAMIC_ENERGY_FACTOR_DECIMAL;
@@ -23,7 +27,7 @@ public class VM {
           program.getContractState().getDynamicPropertiesStore().supportAllowDynamicEnergy();
 
       if (allowDynamicEnergy) {
-        factor = program.updateContextContractCycle();
+        factor = program.updateContextContractFactor();
       }
 
       while (!program.isStopped()) {
@@ -46,10 +50,16 @@ public class VM {
           /* spend energy before execution */
           long energy = op.getEnergyCost(program);
           if (allowDynamicEnergy) {
-            energyUsage += energy;
+            long actualEnergy = energy;
+            // CALL Ops have special calculation on energy.
+            if (CALL_OPS.contains(op)) {
+              actualEnergy = energy - program.getAdjustedCallEnergy().longValueSafe();
+            }
+            energyUsage += actualEnergy;
 
             if (factor > DYNAMIC_ENERGY_FACTOR_DECIMAL) {
-              energy = energy * factor / DYNAMIC_ENERGY_FACTOR_DECIMAL;
+              energy = energy - actualEnergy
+                  + actualEnergy * factor / DYNAMIC_ENERGY_FACTOR_DECIMAL;
             }
           }
           program.spendEnergy(energy, opName);

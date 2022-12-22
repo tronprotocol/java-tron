@@ -654,7 +654,8 @@ public class ProposalUtil {
 
         if (value < DYNAMIC_ENERGY_FACTOR_DECIMAL || value > DYNAMIC_ENERGY_FACTOR_RANGE) {
           throw new ContractValidateException(
-              "This value[DYNAMIC_ENERGY_INCREASE_FACTOR] is only allowed to be in the range 100-10000"
+              "This value[DYNAMIC_ENERGY_INCREASE_FACTOR] "
+                  + "is only allowed to be in the range 100-10000"
           );
         }
         break;
@@ -675,7 +676,7 @@ public class ProposalUtil {
       case DYNAMIC_ENERGY_TRIGGER_BASE: {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_7)) {
           throw new ContractValidateException(
-              "Bad chain parameter id [UNFREEZE_DELAY_DAYS]");
+              "Bad chain parameter id [DYNAMIC_ENERGY_TRIGGER_BASE]");
         }
 
         if (value < 0 || value > LONG_VALUE) {

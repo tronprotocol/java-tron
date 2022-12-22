@@ -329,6 +329,8 @@ public class Constant {
 
   public static final int DYNAMIC_ENERGY_DECREASE_DIVISION = 4;
 
+  public static final double DYNAMIC_ENERY_DECREASE_FACTOR_MAX = 0.5;
+
   public static final int DYNAMIC_ENERGY_DECREASE_MAX_CYCLE = 10;
 
   public static final String DYNAMIC_ENERGY_TRIGGER_BASE = "committee.dynamicEnergyTriggerBase";
