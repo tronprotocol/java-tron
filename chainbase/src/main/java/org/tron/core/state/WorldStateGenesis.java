@@ -21,11 +21,8 @@ import org.rocksdb.ComparatorOptions;
 import org.rocksdb.LRUCache;
 import org.rocksdb.Options;
 import org.rocksdb.RocksDBException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.crypto.Hash;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.MarketOrderPriceComparatorForRockDB;
 import org.tron.common.utils.PropUtil;
@@ -201,14 +198,10 @@ public class WorldStateGenesis {
     return header;
   }
 
-  private byte[] encodeKey(StateType prefix, byte[] key) {
-    byte[] p = new byte[]{prefix.value()};
-    return Hash.encodeElement(ByteUtil.merge(p, key));
-  }
-
 
   interface DB extends Closeable {
     byte[] get(byte[] key) throws RocksDBException;
+
     String name();
   }
 
