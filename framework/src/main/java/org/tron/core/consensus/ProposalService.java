@@ -318,6 +318,11 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveAllowDelegateOptimization(entry.getValue());
           break;
         }
+        case ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID: {
+          manager.getDynamicPropertiesStore()
+              .saveAllowOptimizedReturnValueOfChainId(entry.getValue());
+          break;
+        }
         default:
           find = false;
           break;

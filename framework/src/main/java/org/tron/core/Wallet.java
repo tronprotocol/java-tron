@@ -1284,6 +1284,11 @@ public class Wallet {
             .setValue(dbManager.getDynamicPropertiesStore().getUnfreezeDelayDays())
             .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowOptimizedReturnValueOfChainId")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowOptimizedReturnValueOfChainId())
+        .build());
+
     return builder.build();
   }
 

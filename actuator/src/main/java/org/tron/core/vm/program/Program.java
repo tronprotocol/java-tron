@@ -1256,7 +1256,7 @@ public class Program {
 
   public DataWord getChainId() {
     byte[] chainId = getContractState().getBlockByNum(0).getBlockId().getBytes();
-    if (VMConfig.allowTvmCompatibleEvm()) {
+    if (VMConfig.allowTvmCompatibleEvm() || VMConfig.allowOptimizedReturnValueOfChainId()) {
       chainId = Arrays.copyOfRange(chainId, chainId.length - 4, chainId.length);
     }
     return new DataWord(chainId).clone();
