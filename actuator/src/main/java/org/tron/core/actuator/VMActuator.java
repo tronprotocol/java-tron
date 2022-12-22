@@ -182,27 +182,12 @@ public class VMActuator implements Actuator2 {
         if (rootRepository.getDynamicPropertiesStore().supportAllowDynamicEnergy()) {
           // only add trigger_energy_base when type is call.
           if (TrxType.TRX_CONTRACT_CREATION_TYPE == trxType) {
-
-            ContractStateCapsule contractStateCapsule =
-                rootRepository.getContractState(program.getContextAddress());
-            if (contractStateCapsule != null) {
-
-              if (contractStateCapsule.catchUpToCycle(
-                  rootRepository.getDynamicPropertiesStore().getCurrentCycleNumber(),
-                  rootRepository.getDynamicPropertiesStore().getDynamicEnergyThreshold(),
-                  rootRepository.getDynamicPropertiesStore().getDynamicEnergyIncreaseFactor(),
-                  rootRepository.getDynamicPropertiesStore().getDynamicEnergyMaxFactor())) {
-                rootRepository.updateContractState(
-                    program.getContextAddress(),
-                    contractStateCapsule);
-              }
-
-              if (contractStateCapsule.getEnergyFactor() > DYNAMIC_ENERGY_FACTOR_DECIMAL) {
-                program.spendEnergy(
-                    rootRepository.getDynamicPropertiesStore().getDynamicEnergyTriggerBase()
-                        * contractStateCapsule.getEnergyFactor() / DYNAMIC_ENERGY_FACTOR_DECIMAL,
-                    "DYNAMIC_ENERGY_TRIGGER_BASE");
-              }
+            long energyFactor = program.updateContextContractCycle();
+            if (energyFactor > DYNAMIC_ENERGY_FACTOR_DECIMAL) {
+              program.spendEnergy(
+                  rootRepository.getDynamicPropertiesStore().getDynamicEnergyTriggerBase()
+                      * energyFactor / DYNAMIC_ENERGY_FACTOR_DECIMAL,
+                  "DYNAMIC_ENERGY_TRIGGER_BASE");
             }
           }
         }

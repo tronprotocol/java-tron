@@ -19,6 +19,8 @@ import org.tron.core.config.args.Overlay;
 import org.tron.core.config.args.SeedNode;
 import org.tron.core.config.args.Storage;
 
+import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
+
 public class CommonParameter {
 
   public static final String IGNORE_WRONG_WITNESS_ADDRESS_FORMAT =
@@ -590,11 +592,11 @@ public class CommonParameter {
 
   @Getter
   @Setter
-  public long dynamicEnergyIncreaseFactor = 0L;
+  public long dynamicEnergyIncreaseFactor = DYNAMIC_ENERGY_FACTOR_DECIMAL;
 
   @Getter
   @Setter
-  public long dynamicEnergyMaxFactor = 0L;
+  public long dynamicEnergyMaxFactor = DYNAMIC_ENERGY_FACTOR_DECIMAL;
 
   @Getter
   @Setter

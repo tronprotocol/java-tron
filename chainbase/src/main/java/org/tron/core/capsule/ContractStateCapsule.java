@@ -1,12 +1,11 @@
 package org.tron.core.capsule;
 
-import static org.tron.core.Constant.DYNAMIC_ENERGY_DECREASE_DIVISION;
-import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
-
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.protos.contract.SmartContractOuterClass;
 import org.tron.protos.contract.SmartContractOuterClass.ContractState;
+
+import static org.tron.core.Constant.*;
 
 @Slf4j(topic = "capsule")
 public class ContractStateCapsule implements ProtoCapsule<ContractState> {
@@ -67,13 +66,15 @@ public class ContractStateCapsule implements ProtoCapsule<ContractState> {
     setUpdateCycle(getUpdateCycle() + toAdd);
   }
 
-  public boolean catchUpToCycle(long newCycle, long threshold, long increaseFactor, long maxFactor) {
+  public boolean catchUpToCycle(
+      long newCycle, long threshold, long increaseFactor, long maxFactor) {
     long lastCycle = getUpdateCycle();
     if (lastCycle == newCycle) {
       return false;
     }
 
-    if (lastCycle > newCycle || lastCycle == 0L || newCycle - lastCycle >= 10) {
+    if (lastCycle > newCycle || lastCycle == 0L
+        || newCycle - lastCycle >= DYNAMIC_ENERGY_DECREASE_MAX_CYCLE) {
       this.contractState = this.contractState.toBuilder()
           .setUpdateCycle(newCycle)
           .setEnergyUsage(0L)

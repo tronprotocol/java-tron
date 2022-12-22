@@ -8,6 +8,7 @@ import static org.apache.commons.lang3.ArrayUtils.isEmpty;
 import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
 import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
 import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
+import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.protobuf.ByteString;
@@ -37,6 +38,7 @@ import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.ContractStateCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -89,6 +91,7 @@ import org.tron.core.vm.utils.VoteRewardUtil;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.contract.Common;
+import org.tron.protos.contract.SmartContractOuterClass;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.Builder;
 
@@ -2199,6 +2202,49 @@ public class Program {
       internalTx.reject();
     }
     return 0;
+  }
+
+  public long updateContextContractCycle() {
+    ContractStateCapsule contractStateCapsule =
+        contractState.getContractState(getContextAddress());
+
+    if (contractStateCapsule == null) {
+      contractStateCapsule = new ContractStateCapsule(
+          SmartContractOuterClass.ContractState.newBuilder()
+              .setUpdateCycle(contractState.getDynamicPropertiesStore().getCurrentCycleNumber())
+              .setEnergyUsage(0L)
+              .setEnergyFactor(DYNAMIC_ENERGY_FACTOR_DECIMAL)
+              .build());
+      contractState.updateContractState(getContextAddress(), contractStateCapsule);
+    } else {
+      if (contractStateCapsule.catchUpToCycle(
+          contractState.getDynamicPropertiesStore().getCurrentCycleNumber(),
+          contractState.getDynamicPropertiesStore().getDynamicEnergyThreshold(),
+          contractState.getDynamicPropertiesStore().getDynamicEnergyIncreaseFactor(),
+          contractState.getDynamicPropertiesStore().getDynamicEnergyMaxFactor())) {
+        contractState.updateContractState(
+            getContextAddress(),
+            contractStateCapsule);
+      }
+    }
+    return contractStateCapsule.getEnergyFactor();
+  }
+
+  public void addContextContractUsage(long value) {
+    ContractStateCapsule contractStateCapsule =
+        contractState.getContractState(getContextAddress());
+
+    if (contractStateCapsule == null) {
+      contractStateCapsule = new ContractStateCapsule(
+          SmartContractOuterClass.ContractState.newBuilder()
+              .setUpdateCycle(contractState.getDynamicPropertiesStore().getCurrentCycleNumber())
+              .setEnergyUsage(0L)
+              .setEnergyFactor(DYNAMIC_ENERGY_FACTOR_DECIMAL)
+              .build());
+    }
+
+    contractStateCapsule.addEnergyUsage(value);
+    contractState.updateContractState(getContextAddress(), contractStateCapsule);
   }
 
   /**

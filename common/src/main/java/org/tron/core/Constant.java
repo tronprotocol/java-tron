@@ -325,7 +325,11 @@ public class Constant {
 
   public static final long DYNAMIC_ENERGY_FACTOR_DECIMAL = 100L;
 
+  public static final long DYNAMIC_ENERGY_FACTOR_RANGE = 10_000L;
+
   public static final int DYNAMIC_ENERGY_DECREASE_DIVISION = 4;
+
+  public static final int DYNAMIC_ENERGY_DECREASE_MAX_CYCLE = 10;
 
   public static final String DYNAMIC_ENERGY_TRIGGER_BASE = "committee.dynamicEnergyTriggerBase";
 

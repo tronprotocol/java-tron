@@ -5,7 +5,6 @@ import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
-import org.tron.core.capsule.ContractStateCapsule;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.Program.JVMStackOverFlowException;
@@ -17,7 +16,6 @@ public class VM {
 
   public static void play(Program program, JumpTable jumpTable) {
     try {
-      ContractStateCapsule contextContractState = null;
       long factor = DYNAMIC_ENERGY_FACTOR_DECIMAL;
       long energyUsage = 0L;
 
@@ -25,19 +23,7 @@ public class VM {
           program.getContractState().getDynamicPropertiesStore().supportAllowDynamicEnergy();
 
       if (allowDynamicEnergy) {
-        contextContractState = program.getContractState().getContractState(program.getContextAddress());
-
-        if (contextContractState.catchUpToCycle(
-            program.getContractState().getDynamicPropertiesStore().getCurrentCycleNumber(),
-            program.getContractState().getDynamicPropertiesStore().getDynamicEnergyThreshold(),
-            program.getContractState().getDynamicPropertiesStore().getDynamicEnergyIncreaseFactor(),
-            program.getContractState().getDynamicPropertiesStore().getDynamicEnergyMaxFactor())) {
-
-          program.getContractState().updateContractState(
-              program.getContextAddress(), contextContractState);
-        }
-
-        factor = contextContractState.getEnergyFactor();
+        factor = program.updateContextContractCycle();
       }
 
       while (!program.isStopped()) {
@@ -89,11 +75,7 @@ public class VM {
       }
 
       if (allowDynamicEnergy) {
-        contextContractState = program.getContractState().getContractState(program.getContextAddress());
-        contextContractState.addEnergyUsage(energyUsage);
-        program.getContractState().updateContractState(
-            program.getContextAddress(),
-            contextContractState);
+        program.addContextContractUsage(energyUsage);
       }
 
     } catch (JVMStackOverFlowException | OutOfTimeException e) {

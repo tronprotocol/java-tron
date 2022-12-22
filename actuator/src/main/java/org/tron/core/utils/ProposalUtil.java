@@ -6,6 +6,9 @@ import org.tron.core.config.Parameter.ForkBlockVersionEnum;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.DynamicPropertiesStore;
 
+import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
+import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_RANGE;
+
 public class ProposalUtil {
 
   protected static final long LONG_VALUE = 100_000_000_000_000_000L;
@@ -623,7 +626,7 @@ public class ProposalUtil {
       case ALLOW_DYNAMIC_ENERGY: {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_7)) {
           throw new ContractValidateException(
-              "Bad chain parameter id [UNFREEZE_DELAY_DAYS]");
+              "Bad chain parameter id [ALLOW_DYNAMIC_ENERGY]");
         }
         if (value < 0 || value > 1) {
           throw new ContractValidateException(
@@ -632,9 +635,43 @@ public class ProposalUtil {
         }
         break;
       }
-      case DYNAMIC_ENERGY_THRESHOLD:
-      case DYNAMIC_ENERGY_INCREASE_FACTOR:
-      case DYNAMIC_ENERGY_MAX_FACTOR:
+      case DYNAMIC_ENERGY_THRESHOLD: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_7)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [DYNAMIC_ENERGY_THRESHOLD]");
+        }
+
+        if (value < 0 || value > LONG_VALUE) {
+          throw new ContractValidateException(LONG_VALUE_ERROR);
+        }
+        break;
+      }
+      case DYNAMIC_ENERGY_INCREASE_FACTOR: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_7)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [DYNAMIC_ENERGY_INCREASE_FACTOR]");
+        }
+
+        if (value < DYNAMIC_ENERGY_FACTOR_DECIMAL || value > DYNAMIC_ENERGY_FACTOR_RANGE) {
+          throw new ContractValidateException(
+              "This value[DYNAMIC_ENERGY_INCREASE_FACTOR] is only allowed to be in the range 100-10000"
+          );
+        }
+        break;
+      }
+      case DYNAMIC_ENERGY_MAX_FACTOR: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_7)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [DYNAMIC_ENERGY_MAX_FACTOR]");
+        }
+
+        if (value < DYNAMIC_ENERGY_FACTOR_DECIMAL || value > DYNAMIC_ENERGY_FACTOR_RANGE) {
+          throw new ContractValidateException(
+              "This value[DYNAMIC_ENERGY_MAX_FACTOR] is only allowed to be in the range 100-10000"
+          );
+        }
+        break;
+      }
       case DYNAMIC_ENERGY_TRIGGER_BASE: {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_7)) {
           throw new ContractValidateException(
@@ -717,9 +754,9 @@ public class ProposalUtil {
     ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID(71), // 0, 1
     ALLOW_DYNAMIC_ENERGY(72), // 0, 1
     DYNAMIC_ENERGY_THRESHOLD(73), // 0, [0, LONG]
-    DYNAMIC_ENERGY_INCREASE_FACTOR(74), // 0, [0, 1_000_000_000_000]
-    DYNAMIC_ENERGY_MAX_FACTOR(75), // 0, [0, 1_000_000_000_000]
-    DYNAMIC_ENERGY_TRIGGER_BASE(76); // 0, [0, 100_000_000]
+    DYNAMIC_ENERGY_INCREASE_FACTOR(74), // 0, [100, 10_000]
+    DYNAMIC_ENERGY_MAX_FACTOR(75), // 0, [100, 10_000]
+    DYNAMIC_ENERGY_TRIGGER_BASE(76); // 0, [0, LONG]
 
     private long code;
 
