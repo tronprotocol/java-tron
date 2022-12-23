@@ -1,13 +1,13 @@
 package org.tron.core.utils;
 
+import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
+import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_RANGE;
+
 import org.tron.common.utils.ForkController;
 import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.Parameter.ForkBlockVersionEnum;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.DynamicPropertiesStore;
-
-import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
-import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_RANGE;
 
 public class ProposalUtil {
 

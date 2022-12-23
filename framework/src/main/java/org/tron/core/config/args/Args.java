@@ -3,6 +3,7 @@ package org.tron.core.config.args;
 import static java.lang.Math.max;
 import static java.lang.System.exit;
 import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
+import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
 import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_RANGE;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCE_TIMEOUT_PERCENT;
 import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
@@ -1085,16 +1086,18 @@ public class Args extends CommonParameter {
 
     if (config.hasPath(Constant.DYNAMIC_ENERGY_THRESHOLD)) {
       PARAMETER.dynamicEnergyThreshold = config.getLong(Constant.DYNAMIC_ENERGY_THRESHOLD);
-      PARAMETER.dynamicEnergyThreshold = Math.min(PARAMETER.dynamicEnergyThreshold, 100_000_000_000_000_000L);
+      PARAMETER.dynamicEnergyThreshold
+          = Math.min(PARAMETER.dynamicEnergyThreshold, 100_000_000_000_000_000L);
       PARAMETER.dynamicEnergyThreshold = Math.max(PARAMETER.dynamicEnergyThreshold, 0);
     }
 
     if (config.hasPath(Constant.DYNAMIC_ENERGY_INCREASE_FACTOR)) {
-      PARAMETER.dynamicEnergyIncreaseFactor = config.getLong(Constant.DYNAMIC_ENERGY_INCREASE_FACTOR);
+      PARAMETER.dynamicEnergyIncreaseFactor
+          = config.getLong(Constant.DYNAMIC_ENERGY_INCREASE_FACTOR);
       PARAMETER.dynamicEnergyIncreaseFactor =
           Math.min(PARAMETER.dynamicEnergyIncreaseFactor, DYNAMIC_ENERGY_FACTOR_RANGE);
       PARAMETER.dynamicEnergyIncreaseFactor =
-          Math.max(PARAMETER.dynamicEnergyIncreaseFactor, 0);
+          Math.max(PARAMETER.dynamicEnergyIncreaseFactor, DYNAMIC_ENERGY_FACTOR_DECIMAL);
     }
 
     if (config.hasPath(Constant.DYNAMIC_ENERGY_MAX_FACTOR)) {
@@ -1102,7 +1105,7 @@ public class Args extends CommonParameter {
       PARAMETER.dynamicEnergyMaxFactor =
           Math.min(PARAMETER.dynamicEnergyMaxFactor, DYNAMIC_ENERGY_FACTOR_RANGE);
       PARAMETER.dynamicEnergyMaxFactor =
-          Math.max(PARAMETER.dynamicEnergyMaxFactor, 0);
+          Math.max(PARAMETER.dynamicEnergyMaxFactor, DYNAMIC_ENERGY_FACTOR_DECIMAL);
     }
 
     if (config.hasPath(Constant.DYNAMIC_ENERGY_TRIGGER_BASE)) {

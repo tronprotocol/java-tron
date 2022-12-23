@@ -1,5 +1,7 @@
 package org.tron.common.parameter;
 
+import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
+
 import com.beust.jcommander.Parameter;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -18,8 +20,6 @@ import org.tron.core.Constant;
 import org.tron.core.config.args.Overlay;
 import org.tron.core.config.args.SeedNode;
 import org.tron.core.config.args.Storage;
-
-import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
 
 public class CommonParameter {
 

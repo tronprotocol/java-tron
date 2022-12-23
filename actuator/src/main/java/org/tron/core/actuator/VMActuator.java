@@ -180,7 +180,7 @@ public class VMActuator implements Actuator2 {
 
         if (rootRepository.getDynamicPropertiesStore().supportAllowDynamicEnergy()) {
           // only add trigger_energy_base when type is call.
-          if (TrxType.TRX_CONTRACT_CREATION_TYPE == trxType) {
+          if (TrxType.TRX_CONTRACT_CALL_TYPE == trxType) {
             long energyFactor = program.updateContextContractFactor();
             if (energyFactor > DYNAMIC_ENERGY_FACTOR_DECIMAL) {
               program.spendEnergy(

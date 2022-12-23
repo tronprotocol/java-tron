@@ -14,7 +14,7 @@ import org.tron.core.db.TronStoreWithRevoking;
 public class ContractStateStore extends TronStoreWithRevoking<ContractStateCapsule> {
 
   @Autowired
-  private ContractStateStore(@Value("contractState") String dbName) {
+  private ContractStateStore(@Value("contract-state") String dbName) {
     super(dbName);
   }
 

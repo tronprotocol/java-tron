@@ -1,11 +1,14 @@
 package org.tron.core.capsule;
 
+import static org.tron.core.Constant.DYNAMIC_ENERGY_DECREASE_DIVISION;
+import static org.tron.core.Constant.DYNAMIC_ENERGY_DECREASE_MAX_CYCLE;
+import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
+import static org.tron.core.Constant.DYNAMIC_ENERY_DECREASE_FACTOR_MIN;
+
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.protos.contract.SmartContractOuterClass;
 import org.tron.protos.contract.SmartContractOuterClass.ContractState;
-
-import static org.tron.core.Constant.*;
 
 @Slf4j(topic = "capsule")
 public class ContractStateCapsule implements ProtoCapsule<ContractState> {
@@ -112,7 +115,7 @@ public class ContractStateCapsule implements ProtoCapsule<ContractState> {
     }
 
     double decreaseFactor = Math.max(
-        DYNAMIC_ENERY_DECREASE_FACTOR_MAX,
+        DYNAMIC_ENERY_DECREASE_FACTOR_MIN,
         1 - ((double) increaseFactor / DYNAMIC_ENERGY_FACTOR_DECIMAL - 1)
                 / DYNAMIC_ENERGY_DECREASE_DIVISION);
     if (cycleCount > 1) {
