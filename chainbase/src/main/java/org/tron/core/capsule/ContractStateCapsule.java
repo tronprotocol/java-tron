@@ -27,6 +27,14 @@ public class ContractStateCapsule implements ProtoCapsule<ContractState> {
     }
   }
 
+  public ContractStateCapsule(long currentCycle) {
+    this.contractState = ContractState.newBuilder()
+        .setUpdateCycle(currentCycle)
+        .setEnergyFactor(DYNAMIC_ENERGY_FACTOR_DECIMAL)
+        .setEnergyUsage(0L)
+        .build();
+  }
+
   @Override
   public byte[] getData() {
     return this.contractState.toByteArray();

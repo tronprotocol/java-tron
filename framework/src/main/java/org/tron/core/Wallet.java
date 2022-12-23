@@ -133,6 +133,7 @@ import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.CodeCapsule;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.ContractStateCapsule;
 import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
@@ -231,6 +232,7 @@ import org.tron.protos.contract.ShieldContract.OutputPointInfo;
 import org.tron.protos.contract.ShieldContract.PedersenHash;
 import org.tron.protos.contract.ShieldContract.ReceiveDescription;
 import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
+import org.tron.protos.contract.SmartContractOuterClass.ContractState;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContractDataWrapper;
@@ -2947,6 +2949,33 @@ public class Wallet {
       return contractCapsule.getInstance();
     }
     return null;
+  }
+
+  public ContractState getContractState(GrpcAPI.BytesMessage bytesMessage) {
+    byte[] address = bytesMessage.getValue().toByteArray();
+
+    ContractCapsule contractCapsule = chainBaseManager.getContractStore().get(address);
+    if (contractCapsule == null) {
+      logger.error(
+          "Get contract state failed, the contract does not exist!");
+      return null;
+    }
+
+    ContractStateCapsule contractStateCapsule
+        = chainBaseManager.getContractStateStore().get(address);
+    if (Objects.nonNull(contractStateCapsule)) {
+      contractStateCapsule.catchUpToCycle(
+          chainBaseManager.getDynamicPropertiesStore().getCurrentCycleNumber(),
+          chainBaseManager.getDynamicPropertiesStore().getDynamicEnergyThreshold(),
+          chainBaseManager.getDynamicPropertiesStore().getDynamicEnergyIncreaseFactor(),
+          chainBaseManager.getDynamicPropertiesStore().getDynamicEnergyMaxFactor()
+      );
+      return contractStateCapsule.getInstance();
+    }
+
+    return new ContractStateCapsule(
+        chainBaseManager.getDynamicPropertiesStore().getCurrentCycleNumber())
+        .getInstance();
   }
 
   /**

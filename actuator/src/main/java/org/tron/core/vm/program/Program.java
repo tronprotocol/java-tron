@@ -2210,11 +2210,7 @@ public class Program {
 
     if (contractStateCapsule == null) {
       contractStateCapsule = new ContractStateCapsule(
-          SmartContractOuterClass.ContractState.newBuilder()
-              .setUpdateCycle(contractState.getDynamicPropertiesStore().getCurrentCycleNumber())
-              .setEnergyUsage(0L)
-              .setEnergyFactor(DYNAMIC_ENERGY_FACTOR_DECIMAL)
-              .build());
+          contractState.getDynamicPropertiesStore().getCurrentCycleNumber());
       contractState.updateContractState(getContextAddress(), contractStateCapsule);
     } else {
       if (contractStateCapsule.catchUpToCycle(
@@ -2236,11 +2232,7 @@ public class Program {
 
     if (contractStateCapsule == null) {
       contractStateCapsule = new ContractStateCapsule(
-          SmartContractOuterClass.ContractState.newBuilder()
-              .setUpdateCycle(contractState.getDynamicPropertiesStore().getCurrentCycleNumber())
-              .setEnergyUsage(0L)
-              .setEnergyFactor(DYNAMIC_ENERGY_FACTOR_DECIMAL)
-              .build());
+          contractState.getDynamicPropertiesStore().getCurrentCycleNumber());
     }
 
     contractStateCapsule.addEnergyUsage(value);

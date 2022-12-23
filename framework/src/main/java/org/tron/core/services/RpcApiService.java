@@ -165,6 +165,7 @@ import org.tron.protos.contract.ProposalContract.ProposalDeleteContract;
 import org.tron.protos.contract.ShieldContract.IncrementalMerkleVoucherInfo;
 import org.tron.protos.contract.ShieldContract.OutputPointInfo;
 import org.tron.protos.contract.SmartContractOuterClass.ClearABIContract;
+import org.tron.protos.contract.SmartContractOuterClass.ContractState;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContractDataWrapper;
@@ -2037,6 +2038,14 @@ public class RpcApiService implements Service {
         StreamObserver<SmartContract> responseObserver) {
       SmartContract contract = wallet.getContract(request);
       responseObserver.onNext(contract);
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getContractState(BytesMessage request,
+        StreamObserver<ContractState> responseObserver) {
+      ContractState contractState = wallet.getContractState(request);
+      responseObserver.onNext(contractState);
       responseObserver.onCompleted();
     }
 
