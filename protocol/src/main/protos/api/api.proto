@@ -471,9 +471,6 @@ service Wallet {
   rpc GetContract (BytesMessage) returns (SmartContract) {
   }
 
-  rpc GetContractState (BytesMessage) returns (ContractState) {
-  }
-
   rpc GetContractInfo (BytesMessage) returns (SmartContractDataWrapper) {
   }
 

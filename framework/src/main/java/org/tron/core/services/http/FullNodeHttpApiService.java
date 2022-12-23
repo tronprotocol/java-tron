@@ -138,8 +138,6 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetContractInfoServlet getContractInfoServlet;
   @Autowired
-  private GetContractStateServlet getContractStateServlet;
-  @Autowired
   private ClearABIServlet clearABIServlet;
   @Autowired
   private ProposalCreateServlet proposalCreateServlet;
@@ -446,7 +444,6 @@ public class FullNodeHttpApiService implements Service {
           "/wallet/triggerconstantcontract");
       context.addServlet(new ServletHolder(getContractServlet), "/wallet/getcontract");
       context.addServlet(new ServletHolder(getContractInfoServlet), "/wallet/getcontractinfo");
-      context.addServlet(new ServletHolder(getContractStateServlet), "/wallet/getcontractstate");
       context.addServlet(new ServletHolder(clearABIServlet), "/wallet/clearabi");
       context.addServlet(new ServletHolder(proposalCreateServlet), "/wallet/proposalcreate");
       context.addServlet(new ServletHolder(proposalApproveServlet), "/wallet/proposalapprove");

@@ -100,4 +100,5 @@ message UpdateEnergyLimitContract {
 message SmartContractDataWrapper {
   SmartContract smart_contract = 1;
   bytes runtimecode = 2;
+  ContractState contract_state = 3;
 }

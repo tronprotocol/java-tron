@@ -232,7 +232,6 @@ import org.tron.protos.contract.ShieldContract.OutputPointInfo;
 import org.tron.protos.contract.ShieldContract.PedersenHash;
 import org.tron.protos.contract.ShieldContract.ReceiveDescription;
 import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
-import org.tron.protos.contract.SmartContractOuterClass.ContractState;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContractDataWrapper;
@@ -2951,33 +2950,6 @@ public class Wallet {
     return null;
   }
 
-  public ContractState getContractState(GrpcAPI.BytesMessage bytesMessage) {
-    byte[] address = bytesMessage.getValue().toByteArray();
-
-    ContractCapsule contractCapsule = chainBaseManager.getContractStore().get(address);
-    if (contractCapsule == null) {
-      logger.error(
-          "Get contract state failed, the contract does not exist!");
-      return null;
-    }
-
-    ContractStateCapsule contractStateCapsule
-        = chainBaseManager.getContractStateStore().get(address);
-    if (Objects.nonNull(contractStateCapsule)) {
-      contractStateCapsule.catchUpToCycle(
-          chainBaseManager.getDynamicPropertiesStore().getCurrentCycleNumber(),
-          chainBaseManager.getDynamicPropertiesStore().getDynamicEnergyThreshold(),
-          chainBaseManager.getDynamicPropertiesStore().getDynamicEnergyIncreaseFactor(),
-          chainBaseManager.getDynamicPropertiesStore().getDynamicEnergyMaxFactor()
-      );
-      return contractStateCapsule.getInstance();
-    }
-
-    return new ContractStateCapsule(
-        chainBaseManager.getDynamicPropertiesStore().getCurrentCycleNumber())
-        .getInstance();
-  }
-
   /**
    * Add a wrapper for smart contract. Current additional information including runtime code for a
    * smart contract.
@@ -3008,7 +2980,22 @@ public class Wallet {
       } else {
         contractCapsule.setRuntimecode(new byte[0]);
       }
-      return contractCapsule.generateWrapper();
+      SmartContractDataWrapper wrapper = contractCapsule.generateWrapper();
+
+      ContractStateCapsule contractStateCapsule
+          = chainBaseManager.getContractStateStore().get(address);
+      if (Objects.nonNull(contractStateCapsule)) {
+        contractStateCapsule.catchUpToCycle(
+            chainBaseManager.getDynamicPropertiesStore().getCurrentCycleNumber(),
+            chainBaseManager.getDynamicPropertiesStore().getDynamicEnergyThreshold(),
+            chainBaseManager.getDynamicPropertiesStore().getDynamicEnergyIncreaseFactor(),
+            chainBaseManager.getDynamicPropertiesStore().getDynamicEnergyMaxFactor()
+        );
+      } else {
+        contractStateCapsule = new ContractStateCapsule(
+            chainBaseManager.getDynamicPropertiesStore().getCurrentCycleNumber());
+      }
+      return wrapper.toBuilder().setContractState(contractStateCapsule.getInstance()).build();
     }
     return null;
   }
