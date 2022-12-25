@@ -2847,43 +2847,57 @@ public class Wallet {
   }
 
   public Transaction estimateEnergy(TriggerSmartContract triggerSmartContract,
-      TransactionCapsule trxCap, Builder builder,
-      Return.Builder retBuilder, GrpcAPI.EstimateEnergyMessage.Builder estimateBuilder)
+      TransactionCapsule txCap, TransactionExtention.Builder txExtBuilder,
+      Return.Builder txRetBuilder, GrpcAPI.EstimateEnergyMessage.Builder estimateBuilder)
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
+
+    if (!Args.getInstance().estimateEnergyApi) {
+      throw new ContractValidateException("this node does not estimate energy");
+    }
 
     DynamicPropertiesStore dps = chainBaseManager.getDynamicPropertiesStore();
     long high = dps.getMaxFeeLimit();
-    trxCap.setFeeLimit(high);
+    txCap.setFeeLimit(high);
 
     Transaction transaction = triggerConstantContract(
-        triggerSmartContract, trxCap, builder, retBuilder);
+        triggerSmartContract, txCap, txExtBuilder, txRetBuilder);
 
     // If failed, return directly.
     if (transaction.getRet(0).getRet().equals(code.FAILED)) {
-      estimateBuilder.setTransactionExtension(builder);
-      estimateBuilder.setEnergyRequired(builder.getEnergyUsed());
+      estimateBuilder.setTransactionExtension(txExtBuilder);
       return transaction;
     }
 
-    long low = getEnergyFee() * builder.getEnergyUsed();
+    long low = dps.getEnergyFee() * txExtBuilder.getEnergyUsed();
 
-    while (low + 1 < high) {
+    while (low + TRX_PRECISION < high) {
       // clean the prev exec data.
-      trxCap.resetResult();
-      builder.clear();
-      retBuilder.clear();
+      txCap.resetResult();
+      txExtBuilder.clear();
+      txRetBuilder.clear();
 
       long mid = (high + low) / 2;
-      trxCap.setFeeLimit(mid);
-      triggerConstantContract(triggerSmartContract, trxCap, builder, retBuilder);
+      txCap.setFeeLimit(mid);
+      triggerConstantContract(triggerSmartContract, txCap, txExtBuilder, txRetBuilder);
       if (transaction.getRet(0).getRet().equals(code.FAILED)) {
         low = mid;
       } else {
         high = mid;
       }
     }
-    estimateBuilder.setTransactionExtension(builder);
-    estimateBuilder.setEnergyRequired((long) Math.ceil((double) high / dps.getEnergyFee()));
+
+    // Retry the binary search result
+    txCap.resetResult();
+    txCap.setFeeLimit(high);
+    txExtBuilder.clear();
+    txRetBuilder.clear();
+    triggerConstantContract(triggerSmartContract, txCap, txExtBuilder, txRetBuilder);
+
+    // Setting estimating result
+    estimateBuilder.setTransactionExtension(txExtBuilder);
+    if (transaction.getRet(0).getRet().equals(code.SUCESS)) {
+      estimateBuilder.setEnergyRequired((long) Math.ceil((double) high / dps.getEnergyFee()));
+    }
 
     return transaction;
   }

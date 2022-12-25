@@ -45,6 +45,7 @@ import org.tron.api.GrpcAPI.EasyTransferByPrivateMessage;
 import org.tron.api.GrpcAPI.EasyTransferMessage;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.api.GrpcAPI.EmptyMessage;
+import org.tron.api.GrpcAPI.EstimateEnergyMessage;
 import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.ExpandedSpendingKeyMessage;
 import org.tron.api.GrpcAPI.IncomingViewingKeyDiversifierMessage;
@@ -1979,17 +1980,11 @@ public class RpcApiService implements Service {
 
     @Override
     public void estimateEnergy(TriggerSmartContract request,
-        StreamObserver<GrpcAPI.EstimateEnergyMessage> responseObserver) {
+        StreamObserver<EstimateEnergyMessage> responseObserver) {
       TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
       Return.Builder retBuilder = Return.newBuilder();
-      GrpcAPI.EstimateEnergyMessage.Builder estimateBuilder
-          = GrpcAPI.EstimateEnergyMessage.newBuilder();
-
-      if (!CommonParameter.getInstance().isEstimateEnergyApi()) {
-        responseObserver.onNext(null);
-        responseObserver.onCompleted();
-        return;
-      }
+      EstimateEnergyMessage.Builder estimateBuilder
+          = EstimateEnergyMessage.newBuilder();
 
       try {
         TransactionCapsule trxCap = createTransactionCapsule(request,
