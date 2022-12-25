@@ -527,6 +527,17 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return transaction.getRawData().getTimestamp();
   }
 
+  public void setFeeLimit(long feeLimit) {
+    Transaction.raw rawData = this.transaction.getRawData().toBuilder()
+        .setFeeLimit(feeLimit)
+        .build();
+    setRawData(rawData);
+  }
+
+  public long getFeeLimit() {
+    return transaction.getRawData().getFeeLimit();
+  }
+
   @Deprecated
   public void createTransaction(com.google.protobuf.Message message, ContractType contractType) {
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().addContract(

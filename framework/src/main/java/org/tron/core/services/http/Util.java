@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.eclipse.jetty.util.StringUtil;
+import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
@@ -58,6 +59,7 @@ public class Util {
   public static final String PERMISSION_ID = "Permission_id";
   public static final String VISIBLE = "visible";
   public static final String TRANSACTION = "transaction";
+  public static final String TRANSACTION_EXTENSION = "transactionExtension";
   public static final String VALUE = "value";
   public static final String CONTRACT_TYPE = "contractType";
   public static final String EXTRA_DATA = "extra_data";
@@ -157,6 +159,17 @@ public class Util {
       transactionObject.put(VISIBLE, selfType);
       jsonObject.put(TRANSACTION, transactionObject);
     }
+    return jsonObject.toJSONString();
+  }
+
+  public static String printEstimateEnergyMessage(GrpcAPI.EstimateEnergyMessage message, boolean selfType) {
+    String string = JsonFormat.printToString(message, selfType);
+    JSONObject jsonObject = JSONObject.parseObject(string);
+
+    String extension = printTransactionExtention(message.getTransactionExtension(), selfType);
+    JSONObject extensionObject = JSONObject.parseObject(extension);
+
+    jsonObject.put(TRANSACTION_EXTENSION, extensionObject);
     return jsonObject.toJSONString();
   }
 

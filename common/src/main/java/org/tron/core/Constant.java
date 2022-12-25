@@ -168,6 +168,8 @@ public class Constant {
 
   public static final String NODE_WALLET_EXTENSION_API = "node.walletExtensionApi";
 
+  public static final String NODE_ESTIMATE_ENERGY_API = "node.estimateEnergyApi";
+
   public static final String NODE_RECEIVE_TCP_MIN_DATA_LENGTH = "node.receiveTcpMinDataLength";
 
   public static final String NODE_IS_OPEN_FULL_TCP_DISCONNECT = "node.isOpenFullTcpDisconnect";

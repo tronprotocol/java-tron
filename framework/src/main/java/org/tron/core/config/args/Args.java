@@ -74,7 +74,6 @@ import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.exception.CipherException;
 import org.tron.core.store.AccountStore;
-import org.tron.core.utils.ProposalUtil;
 import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
 import org.tron.program.Version;
@@ -169,6 +168,7 @@ public class Args extends CommonParameter {
     PARAMETER.solidityNode = false;
     PARAMETER.trustNodeAddr = "";
     PARAMETER.walletExtensionApi = false;
+    PARAMETER.estimateEnergyApi = false;
     PARAMETER.receiveTcpMinDataLength = 2048;
     PARAMETER.isOpenFullTcpDisconnect = false;
     PARAMETER.supportConstant = false;
@@ -793,6 +793,9 @@ public class Args extends CommonParameter {
     PARAMETER.walletExtensionApi =
         config.hasPath(Constant.NODE_WALLET_EXTENSION_API)
             && config.getBoolean(Constant.NODE_WALLET_EXTENSION_API);
+    PARAMETER.estimateEnergyApi =
+        config.hasPath(Constant.NODE_ESTIMATE_ENERGY_API)
+            && config.getBoolean(Constant.NODE_ESTIMATE_ENERGY_API);
 
     PARAMETER.receiveTcpMinDataLength = config.hasPath(Constant.NODE_RECEIVE_TCP_MIN_DATA_LENGTH)
         ? config.getLong(Constant.NODE_RECEIVE_TCP_MIN_DATA_LENGTH) : 2048;

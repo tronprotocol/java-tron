@@ -2846,6 +2846,47 @@ public class Wallet {
     }
   }
 
+  public Transaction estimateEnergy(TriggerSmartContract triggerSmartContract,
+      TransactionCapsule trxCap, Builder builder,
+      Return.Builder retBuilder, GrpcAPI.EstimateEnergyMessage.Builder estimateBuilder)
+      throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
+
+    long high = chainBaseManager.getDynamicPropertiesStore().getMaxFeeLimit();
+    trxCap.setFeeLimit(high);
+
+    Transaction transaction = triggerConstantContract(
+        triggerSmartContract, trxCap, builder, retBuilder);
+
+    // If failed, return directly.
+    if (transaction.getRet(0).getRet().equals(code.FAILED)) {
+      estimateBuilder.setTransactionExtension(builder);
+      estimateBuilder.setEnergyRequired(builder.getEnergyUsed());
+      return transaction;
+    }
+
+    long low = getEnergyFee() * builder.getEnergyUsed();
+
+    while (low + 1 < high) {
+      // clean the prev exec data.
+      trxCap.resetResult();
+      builder.clear();
+      retBuilder.clear();
+
+      long mid = (high + low) / 2;
+      trxCap.setFeeLimit(mid);
+      triggerConstantContract(triggerSmartContract, trxCap, builder, retBuilder);
+      if (transaction.getRet(0).getRet().equals(code.FAILED)) {
+        low = mid;
+      } else {
+        high = mid;
+      }
+    }
+    estimateBuilder.setTransactionExtension(builder);
+    estimateBuilder.setEnergyRequired(high);
+
+    return transaction;
+  }
+
   public Transaction triggerConstantContract(TriggerSmartContract triggerSmartContract,
       TransactionCapsule trxCap, Builder builder, Return.Builder retBuilder)
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {

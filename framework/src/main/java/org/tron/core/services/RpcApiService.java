@@ -11,9 +11,6 @@ import io.grpc.StatusRuntimeException;
 import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -1978,6 +1975,53 @@ public class RpcApiService implements Service {
         StreamObserver<TransactionExtention> responseObserver) {
 
       callContract(request, responseObserver, false);
+    }
+
+    @Override
+    public void estimateEnergy(TriggerSmartContract request,
+        StreamObserver<GrpcAPI.EstimateEnergyMessage> responseObserver) {
+      TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
+      Return.Builder retBuilder = Return.newBuilder();
+      GrpcAPI.EstimateEnergyMessage.Builder estimateBuilder
+          = GrpcAPI.EstimateEnergyMessage.newBuilder();
+
+      if (!CommonParameter.getInstance().isEstimateEnergyApi()) {
+        responseObserver.onNext(null);
+        responseObserver.onCompleted();
+        return;
+      }
+
+      try {
+        TransactionCapsule trxCap = createTransactionCapsule(request,
+            ContractType.TriggerSmartContract);
+        Transaction trx = wallet.estimateEnergy(
+            request, trxCap, trxExtBuilder, retBuilder, estimateBuilder);
+
+        trxExtBuilder.setTransaction(trx);
+        trxExtBuilder.setTxid(trxCap.getTransactionId().getByteString());
+        retBuilder.setResult(true).setCode(response_code.SUCCESS);
+        trxExtBuilder.setResult(retBuilder);
+      } catch (ContractValidateException | VMIllegalException e) {
+        retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
+            .setMessage(ByteString.copyFromUtf8(Wallet
+                .CONTRACT_VALIDATE_ERROR + e.getMessage()));
+        trxExtBuilder.setResult(retBuilder);
+        logger.warn(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
+      } catch (RuntimeException e) {
+        retBuilder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
+            .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
+        trxExtBuilder.setResult(retBuilder);
+        logger.warn("When run constant call in VM, have Runtime Exception: " + e.getMessage());
+      } catch (Exception e) {
+        retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
+            .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
+        trxExtBuilder.setResult(retBuilder);
+        logger.warn("unknown exception caught: " + e.getMessage(), e);
+      } finally {
+        estimateBuilder.setTransactionExtension(trxExtBuilder);
+        responseObserver.onNext(estimateBuilder.build());
+        responseObserver.onCompleted();
+      }
     }
 
     @Override

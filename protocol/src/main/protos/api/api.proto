@@ -480,6 +480,9 @@ service Wallet {
   rpc TriggerConstantContract (TriggerSmartContract) returns (TransactionExtention) {
   }
 
+  rpc EstimateEnergy (TriggerSmartContract) returns (EstimateEnergyMessage) {
+  }
+
   rpc ClearContractABI (ClearABIContract) returns (TransactionExtention) {
   }
 
@@ -1308,6 +1311,11 @@ message TransactionExtention {
   int64 energy_used = 5;
   repeated TransactionInfo.Log logs = 6;
   repeated InternalTransaction internal_transactions = 7;
+}
+
+message EstimateEnergyMessage {
+  TransactionExtention transactionExtension = 1;
+  int64 energy_required = 2;
 }
 
 message BlockExtention {
