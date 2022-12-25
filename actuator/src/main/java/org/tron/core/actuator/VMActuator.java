@@ -124,9 +124,9 @@ public class VMActuator implements Actuator2 {
     trx = context.getTrxCap().getInstance();
     // If tx`s fee limit is set, use it to calc max energy limit for constant call
     if (isConstantCall && trx.getRawData().getFeeLimit() > 0) {
-      maxEnergyLimit = trx.getRawData().getFeeLimit()
+      maxEnergyLimit = Math.min(maxEnergyLimit, trx.getRawData().getFeeLimit()
           / context.getStoreFactory().getChainBaseManager()
-          .getDynamicPropertiesStore().getEnergyFee();
+          .getDynamicPropertiesStore().getEnergyFee());
     }
     blockCap = context.getBlockCap();
     if ((VMConfig.allowTvmFreeze() || VMConfig.allowTvmFreezeV2())
