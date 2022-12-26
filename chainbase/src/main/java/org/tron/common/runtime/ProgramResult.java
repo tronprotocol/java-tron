@@ -25,6 +25,12 @@ public class ProgramResult {
   private long energyUsed = 0;
   //private long futureRefund = 0;
 
+  @Getter
+  private long energyPenalty = 0;
+
+  @Getter
+  private long energyOrigin = 0;
+
   private byte[] hReturn = EMPTY_BYTE_ARRAY;
   private byte[] contractAddress = EMPTY_BYTE_ARRAY;
   private RuntimeException exception;
@@ -62,6 +68,13 @@ public class ProgramResult {
 
   public void spendEnergy(long energy) {
     energyUsed += energy;
+    energyOrigin += energy;
+  }
+
+  public void spendEnergyWithPenalty(long origin, long penalty) {
+    energyOrigin += origin;
+    energyPenalty += penalty;
+    energyUsed += origin + penalty;
   }
 
   public void setRevert() {

@@ -2960,6 +2960,8 @@ public class Wallet {
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     builder.setEnergyUsed(result.getEnergyUsed());
+    builder.setEnergyOrigin(result.getEnergyOrigin());
+    builder.setEnergyPenalty(result.getEnergyPenalty());
     builder.addConstantResult(ByteString.copyFrom(result.getHReturn()));
     result.getLogInfoList().forEach(logInfo ->
         builder.addLogs(LogInfo.buildLog(logInfo)));

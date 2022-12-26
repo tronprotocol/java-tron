@@ -58,11 +58,17 @@ public class VM {
             energyUsage += actualEnergy;
 
             if (factor > DYNAMIC_ENERGY_FACTOR_DECIMAL) {
-              energy = energy - actualEnergy
-                  + actualEnergy * factor / DYNAMIC_ENERGY_FACTOR_DECIMAL;
+              long penalty =
+                  actualEnergy * factor / DYNAMIC_ENERGY_FACTOR_DECIMAL - actualEnergy;
+              program.spendEnergyWithPenalty(energy, penalty, opName);
+            } else {
+              program.spendEnergy(energy, opName);
             }
+
+          } else {
+            program.spendEnergy(energy, opName);
           }
-          program.spendEnergy(energy, opName);
+
 
           /* check if cpu time out */
           program.checkCPUTimeLimit(opName);

@@ -1108,6 +1108,16 @@ public class Program {
     getResult().spendEnergy(energyValue);
   }
 
+  public void spendEnergyWithPenalty(long origin, long penalty, String opName) {
+    if (getEnergylimitLeftLong() < origin + penalty) {
+      throw new OutOfEnergyException(
+          "Not enough energy for '%s' operation executing: curInvokeEnergyLimit[%d],"
+              + " curOpEnergy[%d], penaltyEnergy[%d], usedEnergy[%d]",
+          opName, invoke.getEnergyLimit(), origin, penalty, getResult().getEnergyUsed());
+    }
+    getResult().spendEnergyWithPenalty(origin, penalty);
+  }
+
   public void checkCPUTimeLimit(String opName) {
 
     if (CommonParameter.getInstance().isDebug()) {
