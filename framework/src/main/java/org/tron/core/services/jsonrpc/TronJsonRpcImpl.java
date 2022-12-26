@@ -387,7 +387,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     if (blockNumber == -1) {
       trx = wallet.triggerConstantContract(triggerContract, trxCap, trxExtBuilder, retBuilder);
     } else {
-      trx = wallet.triggerStateConstantContract(triggerContract, trxCap, trxExtBuilder, retBuilder, blockNumber);
+      trx = wallet.triggerStateConstantContract(
+          triggerContract, trxCap, trxExtBuilder, retBuilder, blockNumber);
     }
 
     trxExtBuilder.setTransaction(trx);
@@ -401,7 +402,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
    * getMethodSign(methodName(uint256,uint256)) || data1 || data2
    */
   private String call(byte[] ownerAddressByte, byte[] contractAddressByte, long value,
-      byte[] data, long blockNumber) throws JsonRpcInvalidRequestException, JsonRpcInternalException {
+      byte[] data, long blockNumber)
+      throws JsonRpcInvalidRequestException, JsonRpcInternalException {
 
     TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
     Return.Builder retBuilder = Return.newBuilder();

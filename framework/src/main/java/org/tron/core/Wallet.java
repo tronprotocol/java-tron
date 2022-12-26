@@ -356,6 +356,19 @@ public class Wallet {
     return accountCapsule.getInstance();
   }
 
+  public Account getAccount(byte[] address, long blockNumber) {
+    byte[] rootHash = getRootHashByNumber(blockNumber);
+    if (rootHash == null) {
+      return null;
+    }
+    WorldStateQueryInstance worldStateQueryInstance = initWorldStateQueryInstance(rootHash);
+    AccountCapsule accountCapsule = worldStateQueryInstance.getAccount(address);
+    if (accountCapsule == null) {
+      return null;
+    }
+    return accountCapsule.getInstance();
+  }
+
   public Account getAccountById(Account account) {
     AccountStore accountStore = chainBaseManager.getAccountStore();
     AccountIdIndexStore accountIdIndexStore = chainBaseManager.getAccountIdIndexStore();
@@ -2760,6 +2773,19 @@ public class Wallet {
     return null;
   }
 
+  public SmartContract getContract(byte[] address, long blockNumber) {
+    byte[] rootHash = getRootHashByNumber(blockNumber);
+    if (rootHash == null) {
+      return null;
+    }
+    WorldStateQueryInstance worldStateQueryInstance = initWorldStateQueryInstance(rootHash);
+    ContractCapsule contractCapsule = worldStateQueryInstance.getContract(address);
+    if (contractCapsule == null) {
+      return null;
+    }
+    return contractCapsule.getInstance();
+  }
+
   /**
    * Add a wrapper for smart contract. Current additional information including runtime code for a
    * smart contract.
@@ -4102,20 +4128,6 @@ public class Wallet {
     return null;
   }
 
-  // state query
-  public Account getAccount(byte[] address, long blockNumber) {
-    byte[] rootHash = getRootHashByNumber(blockNumber);
-    if (rootHash == null) {
-      return null;
-    }
-    WorldStateQueryInstance worldStateQueryInstance = initWorldStateQueryInstance(rootHash);
-    AccountCapsule accountCapsule = worldStateQueryInstance.getAccount(address);
-    if (accountCapsule == null) {
-      return null;
-    }
-    return accountCapsule.getInstance();
-  }
-
   public byte[] getCode(byte[] address, long blockNumber) {
     byte[] rootHash = getRootHashByNumber(blockNumber);
     if (rootHash == null) {
@@ -4127,19 +4139,6 @@ public class Wallet {
       return null;
     }
     return codeCapsule.getInstance();
-  }
-
-  public SmartContract getContract(byte[] address, long blockNumber) {
-    byte[] rootHash = getRootHashByNumber(blockNumber);
-    if (rootHash == null) {
-      return null;
-    }
-    WorldStateQueryInstance worldStateQueryInstance = initWorldStateQueryInstance(rootHash);
-    ContractCapsule contractCapsule = worldStateQueryInstance.getContract(address);
-    if (contractCapsule == null) {
-      return null;
-    }
-    return contractCapsule.getInstance();
   }
 
   public byte[] getStorageAt(byte[] address, String storageIdx, long blockNumber) {
@@ -4193,8 +4192,8 @@ public class Wallet {
   }
 
   public Transaction callStateConstantContract(TransactionCapsule trxCap,
-                                          Builder builder, Return.Builder retBuilder, long blockNumber)
-      throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
+      Builder builder, Return.Builder retBuilder, long blockNumber)
+      throws ContractValidateException, ContractExeException, HeaderNotFound {
 
     if (!Args.getInstance().isSupportConstant()) {
       throw new ContractValidateException("this node does not support constant");
@@ -4244,7 +4243,6 @@ public class Wallet {
     trxCap.setResult(ret);
     return trxCap.getInstance();
   }
-
 
   private byte[] getRootHashByNumber(long blockNumber) {
     if (!CommonParameter.getInstance().getStorage().isAllowStateRoot()) {

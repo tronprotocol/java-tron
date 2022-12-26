@@ -33,7 +33,7 @@ public class ContractStore extends TronStoreWithRevoking<ContractCapsule> {
     if (item.getInstance().hasAbi()) {
       item = new ContractCapsule(item.getInstance().toBuilder().clearAbi().build());
     }
-    revokingDB.put(key, item.getData());
+    super.put(key, item);
   }
 
   /**

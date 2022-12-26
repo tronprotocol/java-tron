@@ -21,7 +21,6 @@ import org.rocksdb.ComparatorOptions;
 import org.rocksdb.LRUCache;
 import org.rocksdb.Options;
 import org.rocksdb.RocksDBException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.Hash;
 import org.tron.common.parameter.CommonParameter;
@@ -102,6 +101,10 @@ public class WorldStateGenesis {
     }
     if (!inited) {
       throw new IllegalStateException("StateRoot is not inited.");
+    }
+
+    if (stateGenesisHeight == 0) {
+      return null;
     }
 
     if (stateGenesisHeight > genesisHeight) {

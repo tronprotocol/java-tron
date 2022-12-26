@@ -1,13 +1,11 @@
 package org.tron.core.state;
 
+import com.google.common.primitives.Bytes;
+import com.google.common.primitives.Longs;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import com.google.common.primitives.Bytes;
-import com.google.common.primitives.Longs;
-import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ProtoCapsule;
