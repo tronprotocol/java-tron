@@ -4,7 +4,6 @@ import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static org.apache.commons.lang3.ArrayUtils.getLength;
 import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
-import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
 
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
@@ -185,19 +184,6 @@ public class VMActuator implements Actuator2 {
           result.setRuntimeError(e.getMessage());
           result.setException(e);
           throw e;
-        }
-
-        if (rootRepository.getDynamicPropertiesStore().supportAllowDynamicEnergy()) {
-          // only add trigger_energy_base when type is call.
-          if (TrxType.TRX_CONTRACT_CALL_TYPE == trxType) {
-            long energyFactor = program.updateContextContractFactor();
-            if (energyFactor > DYNAMIC_ENERGY_FACTOR_DECIMAL) {
-              program.spendEnergy(
-                  rootRepository.getDynamicPropertiesStore().getDynamicEnergyTriggerBase()
-                      * energyFactor / DYNAMIC_ENERGY_FACTOR_DECIMAL,
-                  "DYNAMIC_ENERGY_TRIGGER_BASE");
-            }
-          }
         }
 
         VM.play(program, OperationRegistry.getTable());

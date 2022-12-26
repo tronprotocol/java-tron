@@ -673,17 +673,6 @@ public class ProposalUtil {
         }
         break;
       }
-      case DYNAMIC_ENERGY_TRIGGER_BASE: {
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_7)) {
-          throw new ContractValidateException(
-              "Bad chain parameter id [DYNAMIC_ENERGY_TRIGGER_BASE]");
-        }
-
-        if (value < 0 || value > LONG_VALUE) {
-          throw new ContractValidateException(LONG_VALUE_ERROR);
-        }
-        break;
-      }
       default:
         break;
     }
@@ -756,8 +745,7 @@ public class ProposalUtil {
     ALLOW_DYNAMIC_ENERGY(72), // 0, 1
     DYNAMIC_ENERGY_THRESHOLD(73), // 0, [0, LONG]
     DYNAMIC_ENERGY_INCREASE_FACTOR(74), // 0, [100, 10_000]
-    DYNAMIC_ENERGY_MAX_FACTOR(75), // 0, [100, 10_000]
-    DYNAMIC_ENERGY_TRIGGER_BASE(76); // 0, [0, LONG]
+    DYNAMIC_ENERGY_MAX_FACTOR(75); // 0, [100, 10_000]
 
     private long code;
 

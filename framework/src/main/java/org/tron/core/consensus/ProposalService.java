@@ -339,10 +339,6 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveDynamicEnergyMaxFactor(entry.getValue());
           break;
         }
-        case DYNAMIC_ENERGY_TRIGGER_BASE: {
-          manager.getDynamicPropertiesStore().saveDynamicEnergyTriggerBase(entry.getValue());
-          break;
-        }
         default:
           find = false;
           break;

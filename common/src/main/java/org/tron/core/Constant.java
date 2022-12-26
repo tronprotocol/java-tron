@@ -335,8 +335,6 @@ public class Constant {
 
   public static final int DYNAMIC_ENERGY_DECREASE_MAX_CYCLE = 10;
 
-  public static final String DYNAMIC_ENERGY_TRIGGER_BASE = "committee.dynamicEnergyTriggerBase";
-
   public static final String LOCAL_HOST = "127.0.0.1";
 
   public static final String NODE_SHUTDOWN_BLOCK_TIME = "node.shutdown.BlockTime";

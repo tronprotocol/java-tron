@@ -1313,11 +1313,6 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getDynamicEnergyMaxFactor())
         .build());
 
-    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-        .setKey("getDynamicEnergyTriggerBase")
-        .setValue(dbManager.getDynamicPropertiesStore().getDynamicEnergyTriggerBase())
-        .build());
-
     return builder.build();
   }
 

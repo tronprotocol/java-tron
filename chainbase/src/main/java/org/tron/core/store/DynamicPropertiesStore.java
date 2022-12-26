@@ -200,8 +200,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       "DYNAMIC_ENERGY_INCREASE_FACTOR".getBytes();
   private static final byte[] DYNAMIC_ENERGY_MAX_FACTOR =
       "DYNAMIC_ENERGY_MAX_FACTOR".getBytes();
-  private static final byte[] DYNAMIC_ENERGY_TRIGGER_BASE =
-      "DYNAMIC_ENERGY_TRIGGER_BASE".getBytes();
 
   private static final byte[] UNFREEZE_DELAY_DAYS = "UNFREEZE_DELAY_DAYS".getBytes();
 
@@ -942,12 +940,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getDynamicEnergyMaxFactor();
     } catch (IllegalArgumentException e) {
       this.saveDynamicEnergyMaxFactor(CommonParameter.getInstance().getDynamicEnergyMaxFactor());
-    }
-
-    try {
-      this.getDynamicEnergyTriggerBase();
-    } catch (IllegalArgumentException e) {
-      this.saveDynamicEnergyTriggerBase(CommonParameter.getInstance().getDynamicEnergyTriggerBase());
     }
   }
 
@@ -2728,18 +2720,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public void saveDynamicEnergyMaxFactor(long value) {
     this.put(DYNAMIC_ENERGY_MAX_FACTOR, new BytesCapsule(ByteArray.fromLong(value)));
-  }
-
-  public long getDynamicEnergyTriggerBase() {
-    return Optional.ofNullable(getUnchecked(DYNAMIC_ENERGY_TRIGGER_BASE))
-        .map(BytesCapsule::getData)
-        .map(ByteArray::toLong)
-        .orElseThrow(
-            () -> new IllegalArgumentException("not found DYNAMIC_ENERGY_TRIGGER_BASE"));
-  }
-
-  public void saveDynamicEnergyTriggerBase(long value) {
-    this.put(DYNAMIC_ENERGY_TRIGGER_BASE, new BytesCapsule(ByteArray.fromLong(value)));
   }
 
   public boolean allowNewReward() {

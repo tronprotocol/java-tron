@@ -1111,14 +1111,6 @@ public class Args extends CommonParameter {
           Math.max(PARAMETER.dynamicEnergyMaxFactor, DYNAMIC_ENERGY_FACTOR_DECIMAL);
     }
 
-    if (config.hasPath(Constant.DYNAMIC_ENERGY_TRIGGER_BASE)) {
-      PARAMETER.dynamicEnergyTriggerBase = config.getLong(Constant.DYNAMIC_ENERGY_TRIGGER_BASE);
-      PARAMETER.dynamicEnergyTriggerBase =
-          Math.min(PARAMETER.dynamicEnergyTriggerBase, 100_000_000_000_000_000L);
-      PARAMETER.dynamicEnergyTriggerBase =
-          Math.max(PARAMETER.dynamicEnergyTriggerBase, 0);
-    }
-
     logConfig();
   }
 
