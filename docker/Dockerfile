@@ -1,4 +1,4 @@
-FROM tronprotocol/centos7
+FROM tronprotocol/centos7:0.2
 
 ENV TMP_DIR="/tron-build"
 ENV JDK_TAR="jdk-8u202-linux-x64.tar.gz"
@@ -24,7 +24,7 @@ RUN set -o errexit -o nounset \
     && git checkout master \
     && ./gradlew build -x test \
     && cd build/distributions \
-    && unzip -o java-tron-1.0.0.zip \
+    && 7za x -y java-tron-1.0.0.zip  \
     && mv java-tron-1.0.0 $BASE_DIR \
     && rm -rf $TMP_DIR \
     && rm -rf ~/.gradle \
