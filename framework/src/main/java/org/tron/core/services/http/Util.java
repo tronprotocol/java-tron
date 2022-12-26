@@ -162,7 +162,8 @@ public class Util {
     return jsonObject.toJSONString();
   }
 
-  public static String printEstimateEnergyMessage(GrpcAPI.EstimateEnergyMessage message, boolean selfType) {
+  public static String printEstimateEnergyMessage(GrpcAPI.EstimateEnergyMessage message,
+      boolean selfType) {
     String string = JsonFormat.printToString(message, selfType);
     JSONObject jsonObject = JSONObject.parseObject(string);
 
