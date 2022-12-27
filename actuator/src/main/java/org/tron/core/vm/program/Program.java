@@ -37,6 +37,7 @@ import org.tron.common.utils.FastByteComparisons;
 import org.tron.common.utils.Utils;
 import org.tron.common.utils.WalletUtil;
 import org.tron.core.ChainBaseManager;
+import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
@@ -2234,25 +2235,19 @@ public class Program {
           contractState.getDynamicPropertiesStore().getCurrentCycleNumber());
       contractState.updateContractState(getContextAddress(), contractStateCapsule);
     } else {
-      if (contractStateCapsule.catchUpToCycle(
-          contractState.getDynamicPropertiesStore())) {
-        contractState.updateContractState(
-            getContextAddress(),
-            contractStateCapsule);
+      if (contractStateCapsule.catchUpToCycle(contractState.getDynamicPropertiesStore())) {
+        contractState.updateContractState(getContextAddress(), contractStateCapsule
+        );
       }
     }
-    contextContractFactor = contractStateCapsule.getEnergyFactor();
+    contextContractFactor = contractStateCapsule.getEnergyFactor()
+        + Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
     return contextContractFactor;
   }
 
   public void addContextContractUsage(long value) {
     ContractStateCapsule contractStateCapsule =
         contractState.getContractState(getContextAddress());
-
-    if (contractStateCapsule == null) {
-      contractStateCapsule = new ContractStateCapsule(
-          contractState.getDynamicPropertiesStore().getCurrentCycleNumber());
-    }
 
     contractStateCapsule.addEnergyUsage(value);
     contractState.updateContractState(getContextAddress(), contractStateCapsule);

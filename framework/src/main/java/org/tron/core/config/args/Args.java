@@ -3,8 +3,8 @@ package org.tron.core.config.args;
 import static java.lang.Math.max;
 import static java.lang.System.exit;
 import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
-import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
-import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_RANGE;
+import static org.tron.core.Constant.DYNAMIC_ENERGY_INCREASE_FACTOR_RANGE;
+import static org.tron.core.Constant.DYNAMIC_ENERGY_MAX_FACTOR_RANGE;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCE_TIMEOUT_PERCENT;
 import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
 
@@ -1098,17 +1098,18 @@ public class Args extends CommonParameter {
       PARAMETER.dynamicEnergyIncreaseFactor
           = config.getLong(Constant.DYNAMIC_ENERGY_INCREASE_FACTOR);
       PARAMETER.dynamicEnergyIncreaseFactor =
-          Math.min(PARAMETER.dynamicEnergyIncreaseFactor, DYNAMIC_ENERGY_FACTOR_RANGE);
+          Math.min(PARAMETER.dynamicEnergyIncreaseFactor, DYNAMIC_ENERGY_INCREASE_FACTOR_RANGE);
       PARAMETER.dynamicEnergyIncreaseFactor =
-          Math.max(PARAMETER.dynamicEnergyIncreaseFactor, DYNAMIC_ENERGY_FACTOR_DECIMAL);
+          Math.max(PARAMETER.dynamicEnergyIncreaseFactor, 0);
     }
 
     if (config.hasPath(Constant.DYNAMIC_ENERGY_MAX_FACTOR)) {
-      PARAMETER.dynamicEnergyMaxFactor = config.getLong(Constant.DYNAMIC_ENERGY_MAX_FACTOR);
+      PARAMETER.dynamicEnergyMaxFactor
+          = config.getLong(Constant.DYNAMIC_ENERGY_MAX_FACTOR);
       PARAMETER.dynamicEnergyMaxFactor =
-          Math.min(PARAMETER.dynamicEnergyMaxFactor, DYNAMIC_ENERGY_FACTOR_RANGE);
+          Math.min(PARAMETER.dynamicEnergyMaxFactor, DYNAMIC_ENERGY_MAX_FACTOR_RANGE);
       PARAMETER.dynamicEnergyMaxFactor =
-          Math.max(PARAMETER.dynamicEnergyMaxFactor, DYNAMIC_ENERGY_FACTOR_DECIMAL);
+          Math.max(PARAMETER.dynamicEnergyMaxFactor, 0);
     }
 
     logConfig();
