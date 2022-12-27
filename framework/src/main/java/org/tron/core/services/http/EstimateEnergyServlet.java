@@ -95,7 +95,7 @@ public class EstimateEnergyServlet extends RateLimiterServlet {
           .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + errString));
     }
     trxExtBuilder.setResult(retBuilder);
-    estimateEnergyBuilder.setTransactionExtension(trxExtBuilder);
+    estimateEnergyBuilder.setResult(retBuilder);
     response.getWriter().println(
         Util.printEstimateEnergyMessage(estimateEnergyBuilder.build(), visible));
   }

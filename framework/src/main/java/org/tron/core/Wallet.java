@@ -2859,7 +2859,7 @@ public class Wallet {
 
     // If failed, return directly.
     if (transaction.getRet(0).getRet().equals(code.FAILED)) {
-      estimateBuilder.setTransactionExtension(txExtBuilder);
+      estimateBuilder.setResult(txRetBuilder);
       return transaction;
     }
 
@@ -2889,7 +2889,7 @@ public class Wallet {
     triggerConstantContract(triggerSmartContract, txCap, txExtBuilder, txRetBuilder);
 
     // Setting estimating result
-    estimateBuilder.setTransactionExtension(txExtBuilder);
+    estimateBuilder.setResult(txRetBuilder);
     if (transaction.getRet(0).getRet().equals(code.SUCESS)) {
       estimateBuilder.setEnergyRequired((long) Math.ceil((double) high / dps.getEnergyFee()));
     }

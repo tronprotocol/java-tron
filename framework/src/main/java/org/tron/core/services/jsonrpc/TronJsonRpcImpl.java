@@ -415,7 +415,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     trxExtBuilder.setTxid(trxCap.getTransactionId().getByteString());
     trxExtBuilder.setResult(retBuilder);
     retBuilder.setResult(true).setCode(response_code.SUCCESS);
-    estimateBuilder.setTransactionExtension(trxExtBuilder);
+    estimateBuilder.setResult(retBuilder);
   }
 
 

@@ -1316,7 +1316,7 @@ message TransactionExtention {
 }
 
 message EstimateEnergyMessage {
-  TransactionExtention transactionExtension = 1;
+  Return result = 1;
   int64 energy_required = 2;
 }
 

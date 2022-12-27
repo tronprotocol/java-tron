@@ -164,14 +164,7 @@ public class Util {
 
   public static String printEstimateEnergyMessage(GrpcAPI.EstimateEnergyMessage message,
       boolean selfType) {
-    String string = JsonFormat.printToString(message, selfType);
-    JSONObject jsonObject = JSONObject.parseObject(string);
-
-    String extension = printTransactionExtention(message.getTransactionExtension(), selfType);
-    JSONObject extensionObject = JSONObject.parseObject(extension);
-
-    jsonObject.put(TRANSACTION_EXTENSION, extensionObject);
-    return jsonObject.toJSONString();
+    return JsonFormat.printToString(message, selfType);
   }
 
   public static String printTransactionSignWeight(TransactionSignWeight transactionSignWeight,

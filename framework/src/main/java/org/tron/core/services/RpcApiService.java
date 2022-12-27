@@ -2013,7 +2013,7 @@ public class RpcApiService implements Service {
         trxExtBuilder.setResult(retBuilder);
         logger.warn("unknown exception caught: " + e.getMessage(), e);
       } finally {
-        estimateBuilder.setTransactionExtension(trxExtBuilder);
+        estimateBuilder.setResult(retBuilder);
         responseObserver.onNext(estimateBuilder.build());
         responseObserver.onCompleted();
       }
