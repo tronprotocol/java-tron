@@ -995,8 +995,8 @@ public class FreezeV2Test {
           expectedIncreasingBalance, newInheritor.getBalance() - oldBalanceOfInheritor);
     }
 
-    Assert.assertEquals(0, oldContract.getDelegatedFrozenBalanceForBandwidth());
-    Assert.assertEquals(0, oldContract.getDelegatedFrozenBalanceForEnergy());
+    Assert.assertEquals(0, oldContract.getDelegatedFrozenV2BalanceForBandwidth());
+    Assert.assertEquals(0, oldContract.getDelegatedFrozenV2BalanceForEnergy());
     Assert.assertEquals(
         oldContract.getFrozenBalance(),
         newInheritor.getFrozenBalance() - oldInheritorFrozenBalance);
