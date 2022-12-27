@@ -105,7 +105,7 @@ public class ContractStateCapsule implements ProtoCapsule<ContractState> {
       this.contractState = ContractState.newBuilder()
           .setUpdateCycle(lastCycle)
           .setEnergyFactor(Math.min(
-              maxFactor,
+              decimal + maxFactor,
               getEnergyFactor() * (decimal + increaseFactor) / decimal))
           .build();
     }
