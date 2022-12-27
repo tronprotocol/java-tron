@@ -424,6 +424,9 @@ public class EnergyCost {
       long factor = program.getContextContractFactor();
       if (factor > DYNAMIC_ENERGY_FACTOR_DECIMAL) {
         long penalty = energyCost * factor / DYNAMIC_ENERGY_FACTOR_DECIMAL - energyCost;
+        if (penalty < 0) {
+          penalty = 0;
+        }
         program.setCallPenaltyEnergy(penalty);
         energyCost += penalty;
       }

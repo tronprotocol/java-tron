@@ -63,6 +63,9 @@ public class VM {
                 penalty = program.getCallPenaltyEnergy();
               } else {
                 penalty = energy * factor / DYNAMIC_ENERGY_FACTOR_DECIMAL - energy;
+                if (penalty < 0) {
+                  penalty = 0;
+                }
                 energy += penalty;
               }
 

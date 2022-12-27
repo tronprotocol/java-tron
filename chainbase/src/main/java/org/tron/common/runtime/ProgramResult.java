@@ -25,9 +25,6 @@ public class ProgramResult {
   //private long futureRefund = 0;
 
   @Getter
-  private long energyPenalty = 0;
-
-  @Getter
   private long energyPenaltyTotal = 0;
 
   private byte[] hReturn = EMPTY_BYTE_ARRAY;
@@ -70,7 +67,6 @@ public class ProgramResult {
   }
 
   public void spendEnergyWithPenalty(long total, long penalty) {
-    energyPenalty += penalty;
     energyPenaltyTotal += penalty;
     energyUsed += total;
   }
