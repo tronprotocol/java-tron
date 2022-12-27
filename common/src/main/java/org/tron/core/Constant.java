@@ -68,6 +68,7 @@ public class Constant {
   public static final String VM_MIN_TIME_RATIO = "vm.minTimeRatio";
   public static final String VM_MAX_TIME_RATIO = "vm.maxTimeRatio";
   public static final String VM_LONG_RUNNING_TIME = "vm.longRunningTime";
+  public static final String VM_ESTIMATE_ENERGY = "vm.estimateEnergy";
 
   public static final String ROCKSDB = "ROCKSDB";
 
@@ -167,8 +168,6 @@ public class Constant {
   public static final String NODE_VALIDATE_SIGN_THREAD_NUM = "node.validateSignThreadNum";
 
   public static final String NODE_WALLET_EXTENSION_API = "node.walletExtensionApi";
-
-  public static final String NODE_ESTIMATE_ENERGY_API = "node.estimateEnergyApi";
 
   public static final String NODE_RECEIVE_TCP_MIN_DATA_LENGTH = "node.receiveTcpMinDataLength";
 

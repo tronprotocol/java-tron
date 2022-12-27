@@ -570,7 +570,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       return "0x0";
     }
 
-    boolean supportEstimateEnergy = CommonParameter.getInstance().isEstimateEnergyApi();
+    boolean supportEstimateEnergy = CommonParameter.getInstance().isEstimateEnergy();
 
     TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
     Return.Builder retBuilder = Return.newBuilder();

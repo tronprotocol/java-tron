@@ -290,7 +290,7 @@ public class CommonParameter {
   public boolean walletExtensionApi;
   @Getter
   @Setter
-  public boolean estimateEnergyApi;
+  public boolean estimateEnergy;
   @Getter
   @Setter
   public int backupPriority;

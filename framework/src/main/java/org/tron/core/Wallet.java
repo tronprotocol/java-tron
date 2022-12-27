@@ -2846,7 +2846,7 @@ public class Wallet {
       Return.Builder txRetBuilder, GrpcAPI.EstimateEnergyMessage.Builder estimateBuilder)
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
-    if (!Args.getInstance().estimateEnergyApi) {
+    if (!Args.getInstance().estimateEnergy) {
       throw new ContractValidateException("this node does not estimate energy");
     }
 
