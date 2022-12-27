@@ -72,6 +72,7 @@ public class VM {
               energyUsage += actualEnergy;
               program.spendEnergyWithPenalty(energy, penalty, opName);
             } else {
+              energyUsage += energy;
               program.spendEnergy(energy, opName);
             }
 
