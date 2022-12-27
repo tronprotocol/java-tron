@@ -69,10 +69,10 @@ public class ProgramResult {
     energyUsed += energy;
   }
 
-  public void spendEnergyWithPenalty(long origin, long penalty) {
+  public void spendEnergyWithPenalty(long total, long penalty) {
     energyPenalty += penalty;
     energyPenaltyTotal += penalty;
-    energyUsed += origin + penalty;
+    energyUsed += total;
   }
 
   public void setRevert() {

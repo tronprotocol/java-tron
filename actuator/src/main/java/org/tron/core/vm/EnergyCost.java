@@ -5,6 +5,8 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.Stack;
 
+import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
+
 public class EnergyCost {
 
   private static final long ZERO_TIER = 0;
@@ -417,6 +419,15 @@ public class EnergyCost {
         stack.get(stack.size() - opOff - 3));
     energyCost += calcMemEnergy(oldMemSize, in.max(out),
         0, op);
+
+    if (program.supportDynamicEnergy()) {
+      long factor = program.getContextContractFactor();
+      if (factor > DYNAMIC_ENERGY_FACTOR_DECIMAL) {
+        long penalty = energyCost * factor / DYNAMIC_ENERGY_FACTOR_DECIMAL - energyCost;
+        program.setCallPenaltyEnergy(penalty);
+        energyCost += penalty;
+      }
+    }
 
     if (energyCost > program.getEnergyLimitLeft().longValueSafe()) {
       throw new Program.OutOfEnergyException(

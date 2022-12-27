@@ -17,6 +17,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.map.LRUMap;
@@ -130,6 +133,12 @@ public class Program {
   private ProgramPrecompile programPrecompile;
   private int contractVersion;
   private DataWord adjustedCallEnergy;
+  @Getter
+  @Setter
+  private long contextContractFactor;
+  @Getter
+  @Setter
+  private long callPenaltyEnergy;
 
   public Program(byte[] ops, byte[] codeAddress, ProgramInvoke programInvoke,
                  InternalTransaction internalTransaction) {
@@ -420,6 +429,10 @@ public class Program {
    */
   public void allocateMemory(int offset, int size) {
     memory.extend(offset, size);
+  }
+
+  public boolean supportDynamicEnergy() {
+    return contractState.getDynamicPropertiesStore().supportAllowDynamicEnergy();
   }
 
   public void suicide(DataWord obtainerAddress) {
@@ -1106,14 +1119,14 @@ public class Program {
     getResult().spendEnergy(energyValue);
   }
 
-  public void spendEnergyWithPenalty(long origin, long penalty, String opName) {
-    if (getEnergylimitLeftLong() < origin + penalty) {
+  public void spendEnergyWithPenalty(long total, long penalty, String opName) {
+    if (getEnergylimitLeftLong() < total) {
       throw new OutOfEnergyException(
           "Not enough energy for '%s' operation executing: curInvokeEnergyLimit[%d],"
               + " curOpEnergy[%d], penaltyEnergy[%d], usedEnergy[%d]",
-          opName, invoke.getEnergyLimit(), origin, penalty, getResult().getEnergyUsed());
+          opName, invoke.getEnergyLimit(), total - penalty, penalty, getResult().getEnergyUsed());
     }
-    getResult().spendEnergyWithPenalty(origin, penalty);
+    getResult().spendEnergyWithPenalty(total, penalty);
   }
 
   public void checkCPUTimeLimit(String opName) {
@@ -2228,7 +2241,8 @@ public class Program {
             contractStateCapsule);
       }
     }
-    return contractStateCapsule.getEnergyFactor();
+    contextContractFactor = contractStateCapsule.getEnergyFactor();
+    return contextContractFactor;
   }
 
   public void addContextContractUsage(long value) {
