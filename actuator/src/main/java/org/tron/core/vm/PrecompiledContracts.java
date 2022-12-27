@@ -2120,13 +2120,9 @@ public class PrecompiledContracts {
 
       long delegatedResource = 0;
       if (type == 0) {
-        delegatedResource =
-            accountCapsule.getDelegatedFrozenBalanceForBandwidth()
-                + accountCapsule.getDelegatedFrozenV2BalanceForBandwidth();
+        delegatedResource = accountCapsule.getTotalDelegatedFrozenBalanceForBandwidth();
       } else if (type == 1) {
-        delegatedResource =
-            accountCapsule.getDelegatedFrozenBalanceForEnergy()
-                + accountCapsule.getDelegatedFrozenV2BalanceForEnergy();
+        delegatedResource = accountCapsule.getTotalDelegatedFrozenBalanceForEnergy();
       }
 
       return Pair.of(true, longTo32Bytes(delegatedResource));
@@ -2157,13 +2153,9 @@ public class PrecompiledContracts {
 
       long acquiredResource = 0;
       if (type == 0) {
-        acquiredResource =
-            accountCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
-                + accountCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth();
+        acquiredResource = accountCapsule.getTotalAcquiredDelegatedFrozenBalanceForBandwidth();
       } else if (type == 1) {
-        acquiredResource =
-            accountCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()
-                + accountCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy();
+        acquiredResource = accountCapsule.getTotalAcquiredDelegatedFrozenBalanceForEnergy();
       }
 
       return Pair.of(true, longTo32Bytes(acquiredResource));
