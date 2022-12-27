@@ -821,6 +821,9 @@ public class Wallet {
       canDelegatedMaxSize = this.calcCanDelegatedEnergyMaxSize(ownerAddress);
     }
 
+    if (canDelegatedMaxSize < TRX_PRECISION) {
+      canDelegatedMaxSize = 0L;
+    }
     builder.setMaxSize(canDelegatedMaxSize);
     return builder.build();
   }
