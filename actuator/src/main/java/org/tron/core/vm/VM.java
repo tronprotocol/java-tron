@@ -3,6 +3,7 @@ package org.tron.core.vm;
 import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
 
 import com.google.common.collect.ImmutableSet;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
@@ -15,7 +16,7 @@ import org.tron.core.vm.program.Program.TransferException;
 @Slf4j(topic = "VM")
 public class VM {
 
-  private static final ImmutableSet CALL_OPS = ImmutableSet.of(Op.CALL, Op.STATICCALL,
+  private static final Set<Integer> CALL_OPS = ImmutableSet.of(Op.CALL, Op.STATICCALL,
       Op.DELEGATECALL, Op.CALLCODE, Op.CALLTOKEN);
 
   public static void play(Program program, JumpTable jumpTable) {
@@ -52,7 +53,7 @@ public class VM {
           if (allowDynamicEnergy) {
             long actualEnergy = energy;
             // CALL Ops have special calculation on energy.
-            if (CALL_OPS.contains(op)) {
+            if (CALL_OPS.contains(op.getOpcode())) {
               actualEnergy = energy - program.getAdjustedCallEnergy().longValueSafe();
             }
             energyUsage += actualEnergy;

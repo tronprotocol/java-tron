@@ -1,12 +1,11 @@
 package org.tron.core.capsule;
 
 import static org.tron.core.Constant.DYNAMIC_ENERGY_DECREASE_DIVISION;
-import static org.tron.core.Constant.DYNAMIC_ENERGY_DECREASE_MAX_CYCLE;
 import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
-import static org.tron.core.Constant.DYNAMIC_ENERY_DECREASE_FACTOR_MIN;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.contract.SmartContractOuterClass;
 import org.tron.protos.contract.SmartContractOuterClass.ContractState;
 
@@ -28,11 +27,7 @@ public class ContractStateCapsule implements ProtoCapsule<ContractState> {
   }
 
   public ContractStateCapsule(long currentCycle) {
-    this.contractState = ContractState.newBuilder()
-        .setUpdateCycle(currentCycle)
-        .setEnergyFactor(DYNAMIC_ENERGY_FACTOR_DECIMAL)
-        .setEnergyUsage(0L)
-        .build();
+    reset(currentCycle);
   }
 
   @Override
@@ -77,69 +72,73 @@ public class ContractStateCapsule implements ProtoCapsule<ContractState> {
     setUpdateCycle(getUpdateCycle() + toAdd);
   }
 
+  public boolean catchUpToCycle(DynamicPropertiesStore dps) {
+    return catchUpToCycle(
+        dps.getCurrentCycleNumber(),
+        dps.getDynamicEnergyThreshold(),
+        dps.getDynamicEnergyIncreaseFactor(),
+        dps.getDynamicEnergyMaxFactor()
+    );
+  }
+
   public boolean catchUpToCycle(
-      long newCycle, long threshold, long increaseFactor, long maxFactor) {
+      long newCycle, long threshold, long increaseFactor, long maxFactor
+  ) {
     long lastCycle = getUpdateCycle();
+
+    // Updated within this cycle
     if (lastCycle == newCycle) {
       return false;
     }
 
-    if (lastCycle > newCycle || lastCycle == 0L
-        || newCycle - lastCycle >= DYNAMIC_ENERGY_DECREASE_MAX_CYCLE) {
-      this.contractState = this.contractState.toBuilder()
-          .setUpdateCycle(newCycle)
-          .setEnergyUsage(0L)
-          .setEnergyFactor(DYNAMIC_ENERGY_FACTOR_DECIMAL)
-          .build();
+    // Guard judge and uninitialized state
+    if (lastCycle > newCycle || lastCycle == 0L) {
+      reset(newCycle);
       return true;
     }
 
-    // increase first
+    final long decimal = DYNAMIC_ENERGY_FACTOR_DECIMAL;
+
+    // Increase the last cycle
     if (getEnergyUsage() >= threshold) {
       lastCycle += 1;
-      this.contractState = this.contractState.toBuilder()
+      this.contractState = ContractState.newBuilder()
           .setUpdateCycle(lastCycle)
-          .setEnergyUsage(0L)
           .setEnergyFactor(Math.min(
               maxFactor,
-              getEnergyFactor() * increaseFactor / DYNAMIC_ENERGY_FACTOR_DECIMAL))
+              getEnergyFactor() * (decimal + increaseFactor) / decimal))
           .build();
     }
 
-    // decrease
+    // No need to decrease
     long cycleCount = newCycle - lastCycle;
     if (cycleCount <= 0) {
       return true;
     }
 
-    // no need to decrease
-    if (getEnergyFactor() <= DYNAMIC_ENERGY_FACTOR_DECIMAL) {
-      this.contractState = this.contractState.toBuilder()
-          .setUpdateCycle(newCycle)
-          .setEnergyUsage(0L)
-          .setEnergyFactor(DYNAMIC_ENERGY_FACTOR_DECIMAL)
-          .build();
-      return true;
-    }
+    // Calc the decrease percent (decrease factor [75% ~ 100%])
+    double decreaseFactor =  1 - (double) increaseFactor / decimal
+        / DYNAMIC_ENERGY_DECREASE_DIVISION;
+    double decreasePercent = Math.pow(decreaseFactor, cycleCount);
 
-    double decreaseFactor = Math.max(
-        DYNAMIC_ENERY_DECREASE_FACTOR_MIN,
-        1 - ((double) increaseFactor / DYNAMIC_ENERGY_FACTOR_DECIMAL - 1)
-                / DYNAMIC_ENERGY_DECREASE_DIVISION);
-    if (cycleCount > 1) {
-      decreaseFactor = Math.pow(
-          decreaseFactor,
-          cycleCount);
-    }
-
-    this.contractState = this.contractState.toBuilder()
+    // Decrease to this cycle
+    // (If long time no tx and factor is 100%,
+    //  we just calc it again and result factor is still 100%.
+    //  That means we merge this special case to normal cases)
+    this.contractState = ContractState.newBuilder()
         .setUpdateCycle(newCycle)
-        .setEnergyUsage(0L)
         .setEnergyFactor(Math.max(
-            DYNAMIC_ENERGY_FACTOR_DECIMAL,
-            (long) (getEnergyFactor() * decreaseFactor)))
+            decimal,
+            (long) (getEnergyFactor() * decreasePercent)))
         .build();
 
     return true;
+  }
+
+  public void reset(long latestCycle) {
+    this.contractState = ContractState.newBuilder()
+        .setUpdateCycle(latestCycle)
+        .setEnergyFactor(DYNAMIC_ENERGY_FACTOR_DECIMAL)
+        .build();
   }
 }

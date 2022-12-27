@@ -8,7 +8,6 @@ import static org.apache.commons.lang3.ArrayUtils.isEmpty;
 import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
 import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
 import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
-import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.protobuf.ByteString;
@@ -91,7 +90,6 @@ import org.tron.core.vm.utils.VoteRewardUtil;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.contract.Common;
-import org.tron.protos.contract.SmartContractOuterClass;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.Builder;
 
@@ -2224,10 +2222,7 @@ public class Program {
       contractState.updateContractState(getContextAddress(), contractStateCapsule);
     } else {
       if (contractStateCapsule.catchUpToCycle(
-          contractState.getDynamicPropertiesStore().getCurrentCycleNumber(),
-          contractState.getDynamicPropertiesStore().getDynamicEnergyThreshold(),
-          contractState.getDynamicPropertiesStore().getDynamicEnergyIncreaseFactor(),
-          contractState.getDynamicPropertiesStore().getDynamicEnergyMaxFactor())) {
+          contractState.getDynamicPropertiesStore())) {
         contractState.updateContractState(
             getContextAddress(),
             contractStateCapsule);

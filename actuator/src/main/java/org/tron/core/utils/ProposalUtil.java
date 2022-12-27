@@ -1,6 +1,5 @@
 package org.tron.core.utils;
 
-import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
 import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_RANGE;
 
 import org.tron.common.utils.ForkController;
@@ -652,10 +651,10 @@ public class ProposalUtil {
               "Bad chain parameter id [DYNAMIC_ENERGY_INCREASE_FACTOR]");
         }
 
-        if (value < DYNAMIC_ENERGY_FACTOR_DECIMAL || value > DYNAMIC_ENERGY_FACTOR_RANGE) {
+        if (value < 0 || value > DYNAMIC_ENERGY_FACTOR_RANGE) {
           throw new ContractValidateException(
               "This value[DYNAMIC_ENERGY_INCREASE_FACTOR] "
-                  + "is only allowed to be in the range 100-10000"
+                  + "is only allowed to be in the range 0-10000"
           );
         }
         break;
@@ -666,9 +665,10 @@ public class ProposalUtil {
               "Bad chain parameter id [DYNAMIC_ENERGY_MAX_FACTOR]");
         }
 
-        if (value < DYNAMIC_ENERGY_FACTOR_DECIMAL || value > DYNAMIC_ENERGY_FACTOR_RANGE) {
+        if (value < 0 || value > DYNAMIC_ENERGY_FACTOR_RANGE) {
           throw new ContractValidateException(
-              "This value[DYNAMIC_ENERGY_MAX_FACTOR] is only allowed to be in the range 100-10000"
+              "This value[DYNAMIC_ENERGY_MAX_FACTOR] "
+                  + "is only allowed to be in the range 0-10000"
           );
         }
         break;
