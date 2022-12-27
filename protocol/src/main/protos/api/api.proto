@@ -1311,8 +1311,7 @@ message TransactionExtention {
   int64 energy_used = 5;
   repeated TransactionInfo.Log logs = 6;
   repeated InternalTransaction internal_transactions = 7;
-  int64 energy_origin = 8;
-  int64 energy_penalty = 9;
+  int64 energy_penalty = 8;
 }
 
 message EstimateEnergyMessage {

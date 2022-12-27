@@ -158,6 +158,13 @@ public class TransactionTrace {
     receipt.setEnergyUsageTotal(energyUsage);
   }
 
+  public void setPenalty(long energyPenalty) {
+    if (energyPenalty < 0) {
+      energyPenalty = 0L;
+    }
+    receipt.setEnergyPenaltyTotal(energyPenalty);
+  }
+
   //set net bill
   public void setNetBill(long netUsage, long netFee) {
     receipt.setNetUsage(netUsage);
@@ -179,6 +186,7 @@ public class TransactionTrace {
     /*  VM execute  */
     runtime.execute(transactionContext);
     setBill(transactionContext.getProgramResult().getEnergyUsed());
+    setPenalty(transactionContext.getProgramResult().getEnergyPenaltyTotal());
 
 //    if (TrxType.TRX_PRECOMPILED_TYPE != trxType) {
 //      if (contractResult.OUT_OF_TIME

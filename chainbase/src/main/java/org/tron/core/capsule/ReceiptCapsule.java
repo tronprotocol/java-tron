@@ -129,6 +129,14 @@ public class ReceiptCapsule {
     this.receipt = this.receipt.toBuilder().setEnergyUsageTotal(energyUsage).build();
   }
 
+  public long getEnergyPenaltyTotal() {
+    return this.receipt.getEnergyPenaltyTotal();
+  }
+
+  public void setEnergyPenaltyTotal(long penalty) {
+    this.receipt = this.receipt.toBuilder().setEnergyPenaltyTotal(penalty).build();
+  }
+
   public long getNetUsage() {
     return this.receipt.getNetUsage();
   }
