@@ -90,7 +90,7 @@ public class Storage {
   private static final int DEFAULT_CHECKPOINT_VERSION = 1;
   private static final boolean DEFAULT_CHECKPOINT_SYNC = true;
   private static final int DEFAULT_ESTIMATED_TRANSACTIONS = 1000;
-  private static final int DEFAULT_SNAPSHOT_MAX_FLUSH_COUNT = 500;
+  private static final int DEFAULT_SNAPSHOT_MAX_FLUSH_COUNT = 1;
   private Config storage;
 
   /**

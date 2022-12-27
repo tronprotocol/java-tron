@@ -206,7 +206,7 @@ public class PeerConnection {
             + "remainNum:%d\n"
             + "syncChainRequested:%d\n"
             + "blockInProcess:%d\n",
-        channel.getInetAddress(),
+        channel.getInetSocketAddress(),
         (now - channel.getStartTime()) / Constant.ONE_THOUSAND,
         channel.getLatency(),
         fastForwardBlock != null ? fastForwardBlock.getNum() : blockBothHave.getNum(),

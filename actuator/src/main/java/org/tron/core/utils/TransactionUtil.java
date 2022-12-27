@@ -299,6 +299,7 @@ public class TransactionUtil {
           final AccountCapsule ownerCapsule,
           ChainBaseManager chainBaseManager) {
     DelegateResourceContract.Builder builder = DelegateResourceContract.newBuilder()
+                    .setLock(true)
                     .setBalance(ownerCapsule.getFrozenV2BalanceForBandwidth());
     TransactionCapsule fakeTransactionCapsule = new TransactionCapsule(builder.build()
             , ContractType.DelegateResourceContract);

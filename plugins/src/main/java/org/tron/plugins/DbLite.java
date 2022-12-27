@@ -591,8 +591,7 @@ public class DbLite implements Callable<Integer> {
           } else {
             iterator.seek(head);
           }
-          ProgressBar.wrap(iterator, dbName)
-              .forEachRemaining(e -> destDb.put(e.getKey(), e.getValue()));
+          iterator.forEachRemaining(e -> destDb.put(e.getKey(), e.getValue()));
         }
       } catch (IOException | RocksDBException e) {
         throw new RuntimeException(e);

@@ -821,6 +821,9 @@ public class Wallet {
       canDelegatedMaxSize = this.calcCanDelegatedEnergyMaxSize(ownerAddress);
     }
 
+    if (canDelegatedMaxSize < TRX_PRECISION) {
+      canDelegatedMaxSize = 0L;
+    }
     builder.setMaxSize(canDelegatedMaxSize);
     return builder.build();
   }
@@ -1283,6 +1286,11 @@ public class Wallet {
             .setKey("getUnfreezeDelayDays")
             .setValue(dbManager.getDynamicPropertiesStore().getUnfreezeDelayDays())
             .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowOptimizedReturnValueOfChainId")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowOptimizedReturnValueOfChainId())
+        .build());
 
     return builder.build();
   }

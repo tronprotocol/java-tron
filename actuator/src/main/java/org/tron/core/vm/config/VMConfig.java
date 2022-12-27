@@ -37,6 +37,8 @@ public class VMConfig {
 
   private static boolean ALLOW_TVM_FREEZE_V2 = false;
 
+  private static boolean ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID = false;
+
   private VMConfig() {
   }
 
@@ -100,6 +102,10 @@ public class VMConfig {
     ALLOW_TVM_FREEZE_V2 = allow == 1;
   }
 
+  public static void initAllowOptimizedReturnValueOfChainId(long allow) {
+    ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID = allow == 1;
+  }
+
   public static boolean getEnergyLimitHardFork() {
     return CommonParameter.ENERGY_LIMIT_HARD_FORK;
   }
@@ -150,5 +156,9 @@ public class VMConfig {
 
   public static boolean allowTvmFreezeV2() {
     return ALLOW_TVM_FREEZE_V2;
+  }
+
+  public static boolean allowOptimizedReturnValueOfChainId() {
+    return ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID;
   }
 }

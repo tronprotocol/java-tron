@@ -956,6 +956,10 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.COMMITTEE_ALLOW_NEW_REWARD_ALGORITHM) ? config
             .getInt(Constant.COMMITTEE_ALLOW_NEW_REWARD_ALGORITHM) : 0;
 
+    PARAMETER.allowOptimizedReturnValueOfChainId =
+        config.hasPath(Constant.COMMITTEE_ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID) : 0;
+
     initBackupProperty(config);
     if (Constant.ROCKSDB.equalsIgnoreCase(CommonParameter
         .getInstance().getStorage().getDbEngine())) {
