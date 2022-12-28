@@ -30,8 +30,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
-import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.BytesMessage;
+import org.tron.api.GrpcAPI.EstimateEnergyMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionExtention;
@@ -394,7 +394,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
   private void estimateEnergy(byte[] ownerAddressByte, byte[] contractAddressByte,
       long value, byte[] data, TransactionExtention.Builder trxExtBuilder,
-      Return.Builder retBuilder, GrpcAPI.EstimateEnergyMessage.Builder estimateBuilder)
+      Return.Builder retBuilder, EstimateEnergyMessage.Builder estimateBuilder)
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
     TriggerSmartContract triggerContract = triggerCallContract(
@@ -417,7 +417,6 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     retBuilder.setResult(true).setCode(response_code.SUCCESS);
     estimateBuilder.setResult(retBuilder);
   }
-
 
   /**
    * @param data Hash of the method signature and encoded parameters. for example:
@@ -574,8 +573,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
     TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
     Return.Builder retBuilder = Return.newBuilder();
-    GrpcAPI.EstimateEnergyMessage.Builder estimateBuilder
-        = GrpcAPI.EstimateEnergyMessage.newBuilder();
+    EstimateEnergyMessage.Builder estimateBuilder
+        = EstimateEnergyMessage.newBuilder();
 
     try {
       byte[] contractAddress;
@@ -635,9 +634,10 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
       if (supportEstimateEnergy) {
         return ByteArray.toJsonHex(estimateBuilder.getEnergyRequired());
+      } else {
+        return ByteArray.toJsonHex(trxExtBuilder.getEnergyUsed());
       }
 
-      return ByteArray.toJsonHex(trxExtBuilder.getEnergyUsed());
     }
   }
 
