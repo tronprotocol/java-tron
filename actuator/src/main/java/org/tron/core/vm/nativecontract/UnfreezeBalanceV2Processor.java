@@ -1,16 +1,7 @@
 package org.tron.core.vm.nativecontract;
 
-import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
-import static org.tron.core.actuator.ActuatorConstant.STORE_NOT_EXIST;
-import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
-import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
-
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
@@ -25,6 +16,17 @@ import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.utils.VoteRewardUtil;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.Common;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
+import static org.tron.core.actuator.ActuatorConstant.STORE_NOT_EXIST;
+import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
+import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 
 @Slf4j(topic = "VMProcessor")
 public class UnfreezeBalanceV2Processor {
@@ -105,19 +107,13 @@ public class UnfreezeBalanceV2Processor {
   }
 
   private boolean checkExistFrozenBalance(AccountCapsule accountCapsule, Common.ResourceCode freezeType) {
-    boolean checkOk = false;
-    long frozenBalance;
     List<Protocol.Account.FreezeV2> frozenV2List = accountCapsule.getFrozenV2List();
     for (Protocol.Account.FreezeV2 frozenV2 : frozenV2List) {
-      if (frozenV2.getType().equals(freezeType)) {
-        frozenBalance = frozenV2.getAmount();
-        if (frozenBalance > 0) {
-          checkOk = true;
-          break;
-        }
+      if (frozenV2.getType().equals(freezeType) && frozenV2.getAmount() > 0) {
+        return true;
       }
     }
-    return checkOk;
+    return false;
   }
 
   public long execute(UnfreezeBalanceV2Param param, Repository repo) {
@@ -135,12 +131,10 @@ public class UnfreezeBalanceV2Processor {
       accountCapsule.initializeOldTronPower();
     }
 
-    this.updateAccountFrozenInfo(param.getResourceType(), accountCapsule, unfreezeBalance);
-
     long expireTime = this.calcUnfreezeExpireTime(now, repo);
     accountCapsule.addUnfrozenV2List(param.getResourceType(), unfreezeBalance, expireTime);
 
-    this.updateTotalResourceWeight(param.getResourceType(), unfreezeBalance, repo);
+    this.updateTotalResourceWeight(accountCapsule, param.getResourceType(), unfreezeBalance, repo);
     this.updateVote(accountCapsule, param.getResourceType(), ownerAddress, repo);
 
     if (repo.getDynamicPropertiesStore().supportAllowNewResourceModel()
@@ -176,39 +170,34 @@ public class UnfreezeBalanceV2Processor {
     return unfreezeBalance;
   }
 
-  private void updateAccountFrozenInfo(
-      Common.ResourceCode freezeType, AccountCapsule accountCapsule, long unfreezeBalance) {
-    List<Protocol.Account.FreezeV2> freezeV2List = accountCapsule.getFrozenV2List();
-    for (int i = 0; i < freezeV2List.size(); i++) {
-      if (freezeV2List.get(i).getType().equals(freezeType)) {
-        Protocol.Account.FreezeV2 freezeV2 = Protocol.Account.FreezeV2.newBuilder()
-            .setAmount(freezeV2List.get(i).getAmount() - unfreezeBalance)
-            .setType(freezeV2List.get(i).getType())
-            .build();
-        accountCapsule.updateFrozenV2List(i, freezeV2);
-        break;
-      }
-    }
-  }
-
   private long calcUnfreezeExpireTime(long now, Repository repo) {
     long unfreezeDelayDays = repo.getDynamicPropertiesStore().getUnfreezeDelayDays();
 
     return now + unfreezeDelayDays * FROZEN_PERIOD;
   }
 
-  public void updateTotalResourceWeight(Common.ResourceCode freezeType,
+  public void updateTotalResourceWeight(AccountCapsule accountCapsule,
+                                        Common.ResourceCode freezeType,
                                         long unfreezeBalance,
                                         Repository repo) {
     switch (freezeType) {
       case BANDWIDTH:
-        repo.addTotalNetWeight(-unfreezeBalance / TRX_PRECISION);
+        long oldNetWeight = accountCapsule.getFrozenV2BalanceWithDelegated(BANDWIDTH) / TRX_PRECISION;
+        accountCapsule.addFrozenBalanceForBandwidthV2(-unfreezeBalance);
+        long newNetWeight = accountCapsule.getFrozenV2BalanceWithDelegated(BANDWIDTH) / TRX_PRECISION;
+        repo.addTotalNetWeight(newNetWeight - oldNetWeight);
         break;
       case ENERGY:
-        repo.addTotalEnergyWeight(-unfreezeBalance / TRX_PRECISION);
+        long oldEnergyWeight = accountCapsule.getFrozenV2BalanceWithDelegated(ENERGY) / TRX_PRECISION;
+        accountCapsule.addFrozenBalanceForEnergyV2(-unfreezeBalance);
+        long newEnergyWeight = accountCapsule.getFrozenV2BalanceWithDelegated(ENERGY) / TRX_PRECISION;
+        repo.addTotalEnergyWeight(newEnergyWeight - oldEnergyWeight);
         break;
       case TRON_POWER:
-        repo.addTotalTronPowerWeight(-unfreezeBalance / TRX_PRECISION);
+        long oldTPWeight = accountCapsule.getTronPowerFrozenV2Balance() / TRX_PRECISION;
+        accountCapsule.addFrozenForTronPowerV2(-unfreezeBalance);
+        long newTPWeight = accountCapsule.getTronPowerFrozenV2Balance() / TRX_PRECISION;
+        repo.addTotalTronPowerWeight(newTPWeight - oldTPWeight);
         break;
       default:
         //this should never happen

@@ -44,42 +44,53 @@ public class CommonParameter {
   public boolean witness = false;
   @Getter
   @Setter
-  @Parameter(names = {"--support-constant"}, description = "Support constant calling for TVM. " +
-      "(defalut: false)")
+  @Parameter(names = {"--support-constant"}, description = "Support constant calling for TVM. "
+      + "(defalut: false)")
   public boolean supportConstant = false;
   @Getter
   @Setter
-  @Parameter(names = {"--max-energy-limit-for-constant"}, description = "Max energy limit for " +
-      "constant calling. (default: 100,000,000)")
+  @Parameter(names = {"--max-energy-limit-for-constant"}, description = "Max energy limit for "
+      + "constant calling. (default: 100,000,000)")
   public long maxEnergyLimitForConstant = 100_000_000L;
   @Getter
   @Setter
-  @Parameter(names = {"--lru-cache-size"}, description = "Max LRU size for caching bytecode and " +
-      "result of JUMPDEST analysis. (default: 500)")
+  @Parameter(names = {"--lru-cache-size"}, description = "Max LRU size for caching bytecode and "
+      + "result of JUMPDEST analysis. (default: 500)")
   public int lruCacheSize = 500;
   @Getter
   @Setter
-  @Parameter(names = {"--debug"}, description = "Switch for TVM debug mode. In debug model, TVM " +
-      "will not check for timeout. (default: false)")
+  @Parameter(names = {"--debug"}, description = "Switch for TVM debug mode. In debug model, TVM "
+      + "will not check for timeout. (default: false)")
   public boolean debug = false;
   @Getter
   @Setter
-  @Parameter(names = {"--min-time-ratio"}, description = "Maximum CPU tolerance when executing " +
-      "non-timeout transactions while synchronizing blocks. (default: 5.0)")
+  @Parameter(names = {"--min-time-ratio"}, description = "Maximum CPU tolerance when executing "
+      + "non-timeout transactions while synchronizing blocks. (default: 5.0)")
   public double minTimeRatio = 0.0;
   @Getter
   @Setter
-  @Parameter(names = {"--max-time-ratio"}, description = "Maximum CPU tolerance when executing " +
-      "timeout transactions while synchronizing blocks. (default: 0.0)")
+  @Parameter(names = {"--max-time-ratio"}, description = "Maximum CPU tolerance when executing "
+      + "timeout transactions while synchronizing blocks. (default: 0.0)")
   public double maxTimeRatio = calcMaxTimeRatio();
+  @Getter
+  @Setter
+  @Parameter(names = {"--save-internaltx"}, description = "Save internal transactions generated "
+      + "during TVM execution, such as create, call and suicide. (default: false)")
+  public boolean saveInternalTx;
+  @Getter
+  @Setter
+  @Parameter(names = {"--save-featured-internaltx"}, description = "Save featured internal "
+      + "transactions generated during TVM execution, such as freeze, vote and so on. "
+      + "(default: false)")
+  public boolean saveFeaturedInternalTx;
   @Getter
   @Setter
   @Parameter(names = {"--long-running-time"})
   public int longRunningTime = 10;
   @Getter
   @Setter
-  @Parameter(names = {"--max-connect-number"}, description = "Http server max connect number " +
-      "(default:50)")
+  @Parameter(names = {"--max-connect-number"}, description = "Http server max connect number "
+      + "(default:50)")
   public int maxHttpConnectNumber = 50;
   @Getter
   @Parameter(description = "--seed-nodes")
@@ -167,11 +178,6 @@ public class CommonParameter {
   @Getter
   @Setter
   public long nodeP2pPingInterval;
-  @Getter
-  @Setter
-  @Parameter(names = {"--save-internaltx"}, description = "Save internal transactions generated " +
-      "during TVM execution, such as create, call, suicide and so on. (default: false)")
-  public boolean saveInternalTx;
   @Getter
   @Setter
   public int nodeP2pVersion;

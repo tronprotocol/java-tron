@@ -30,6 +30,7 @@ import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.CodeCapsule;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -47,6 +48,7 @@ import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.CodeStore;
 import org.tron.core.store.ContractStore;
+import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DelegatedResourceStore;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
@@ -62,6 +64,7 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.DelegatedResource;
 import org.tron.protos.Protocol.Votes;
+import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.Common;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
@@ -105,6 +108,8 @@ public class RepositoryImpl implements Repository {
   private VotesStore votesStore;
   @Getter
   private DelegationStore delegationStore;
+  @Getter
+  private DelegatedResourceAccountIndexStore delegatedResourceAccountIndexStore;
 
   private Repository parent = null;
 
@@ -118,6 +123,7 @@ public class RepositoryImpl implements Repository {
   private final HashMap<Key, Value<DelegatedResource>> delegatedResourceCache = new HashMap<>();
   private final HashMap<Key, Value<Votes>> votesCache = new HashMap<>();
   private final HashMap<Key, Value<byte[]>> delegationCache = new HashMap<>();
+  private final HashMap<Key, Value<DelegatedResourceAccountIndex>> delegatedResourceAccountIndexCache = new HashMap<>();
 
   public static void removeLruCache(byte[] address) {
   }
@@ -149,6 +155,7 @@ public class RepositoryImpl implements Repository {
       delegatedResourceStore = manager.getDelegatedResourceStore();
       votesStore = manager.getVotesStore();
       delegationStore = manager.getDelegationStore();
+      delegatedResourceAccountIndexStore = manager.getDelegatedResourceAccountIndexStore();
     }
     this.parent = parent;
   }
@@ -405,6 +412,28 @@ public class RepositoryImpl implements Repository {
     return bytesCapsule;
   }
 
+  @Override
+  public DelegatedResourceAccountIndexCapsule getDelegatedResourceAccountIndex(byte[] key) {
+    Key cacheKey = new Key(key);
+    if (delegatedResourceAccountIndexCache.containsKey(cacheKey)) {
+      return new DelegatedResourceAccountIndexCapsule(
+          delegatedResourceAccountIndexCache.get(cacheKey).getValue());
+    }
+
+    DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule;
+    if (parent != null) {
+      delegatedResourceAccountIndexCapsule = parent.getDelegatedResourceAccountIndex(key);
+    } else {
+      delegatedResourceAccountIndexCapsule = getDelegatedResourceAccountIndexStore().get(key);
+    }
+
+    if (delegatedResourceAccountIndexCapsule != null) {
+      delegatedResourceAccountIndexCache.put(
+          cacheKey, Value.create(delegatedResourceAccountIndexCapsule));
+    }
+    return delegatedResourceAccountIndexCapsule;
+  }
+
 
   @Override
   public void deleteContract(byte[] address) {
@@ -493,6 +522,13 @@ public class RepositoryImpl implements Repository {
   public void updateDelegation(byte[] word, BytesCapsule bytesCapsule) {
     delegationCache.put(Key.create(word),
         Value.create(bytesCapsule.getData(), Type.DIRTY));
+  }
+
+  @Override
+  public void updateDelegatedResourceAccountIndex(
+      byte[] word, DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule) {
+    delegatedResourceAccountIndexCache.put(
+        Key.create(word), Value.create(delegatedResourceAccountIndexCapsule, Type.DIRTY));
   }
 
   @Override
@@ -637,6 +673,7 @@ public class RepositoryImpl implements Repository {
     commitDelegatedResourceCache(repository);
     commitVotesCache(repository);
     commitDelegationCache(repository);
+    commitDelegatedResourceAccountIndexCache(repository);
   }
 
   @Override
@@ -683,6 +720,11 @@ public class RepositoryImpl implements Repository {
   @Override
   public void putDelegation(Key key, Value value) {
     delegationCache.put(key, value);
+  }
+
+  @Override
+  public void putDelegatedResourceAccountIndex(Key key, Value value) {
+    delegatedResourceAccountIndexCache.put(key, value);
   }
 
   @Override
@@ -899,6 +941,23 @@ public class RepositoryImpl implements Repository {
         }
       }
     });
+  }
+
+  private void commitDelegatedResourceAccountIndexCache(Repository deposit) {
+    delegatedResourceAccountIndexCache.forEach(((key, value) -> {
+      if (value.getType().isDirty() || value.getType().isCreate()) {
+        if (deposit != null) {
+          deposit.putDelegatedResourceAccountIndex(key, value);
+        } else {
+          if (ByteUtil.isNullOrZeroArray(value.getValue().toByteArray())) {
+            getDelegatedResourceAccountIndexStore().delete(key.getData());
+          } else {
+            getDelegatedResourceAccountIndexStore().put(key.getData(),
+                new DelegatedResourceAccountIndexCapsule(value.getValue()));
+          }
+        }
+      }
+    }));
   }
 
   /**

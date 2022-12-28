@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import lombok.Getter;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,7 +22,9 @@ public class DelegatedResourceAccountIndexStore extends
   private static final byte[] FROM_PREFIX = {0x01};
   private static final byte[] TO_PREFIX = {0x02};
 
+  @Getter
   private static final byte[] V2_FROM_PREFIX = {0x03};
+  @Getter
   private static final byte[] V2_TO_PREFIX = {0x04};
 
   @Autowired

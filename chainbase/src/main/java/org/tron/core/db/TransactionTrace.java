@@ -250,7 +250,7 @@ public class TransactionTrace {
         && receipt.getReceipt().getResult().equals(contractResult.SUCCESS)) {
 
       // just fo caller is not origin, we set the related field for origin account
-      if (!caller.getAddress().equals(origin.getAddress())) {
+      if (origin != null && !caller.getAddress().equals(origin.getAddress())) {
         long originPrevUsage = receipt.getOriginEnergyUsage() * receipt.getOriginEnergyWindowSize();
         long originRepayUsage = (receipt.getOriginEnergyMergedUsage() - origin.getEnergyUsage())
             * origin.getWindowSize(Common.ResourceCode.ENERGY);
