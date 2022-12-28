@@ -2,13 +2,11 @@ package org.tron.core.services.interfaceOnSolidity.http.solidity;
 
 import java.util.EnumSet;
 import javax.servlet.DispatcherType;
-import javax.servlet.Filter;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.server.ConnectionLimit;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.application.Service;
@@ -16,6 +14,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.filter.HttpApiAccessFilter;
 import org.tron.core.services.filter.LiteFnQueryHttpFilter;
+import org.tron.core.services.interfaceOnSolidity.http.EstimateEnergyOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetAccountByIdOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetAccountOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetAssetIssueByIdOnSolidityServlet;
@@ -154,6 +153,8 @@ public class HttpApiOnSolidityService implements Service {
   @Autowired
   private TriggerConstantContractOnSolidityServlet triggerConstantContractOnSolidityServlet;
   @Autowired
+  private EstimateEnergyOnSolidityServlet estimateEnergyOnSolidityServlet;
+  @Autowired
   private GetTransactionInfoByBlockNumOnSolidityServlet
       getTransactionInfoByBlockNumOnSolidityServlet;
   @Autowired
@@ -258,6 +259,8 @@ public class HttpApiOnSolidityService implements Service {
           "/walletsolidity/isshieldedtrc20contractnotespent");
       context.addServlet(new ServletHolder(triggerConstantContractOnSolidityServlet),
           "/walletsolidity/triggerconstantcontract");
+      context.addServlet(new ServletHolder(estimateEnergyOnSolidityServlet),
+          "/walletsolidity/estimateenergy");
       context.addServlet(new ServletHolder(getTransactionInfoByBlockNumOnSolidityServlet),
           "/walletsolidity/gettransactioninfobyblocknum");
       context.addServlet(new ServletHolder(getMarketOrderByAccountOnSolidityServlet),

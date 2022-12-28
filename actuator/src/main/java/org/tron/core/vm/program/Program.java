@@ -17,6 +17,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.map.LRUMap;
@@ -34,9 +37,11 @@ import org.tron.common.utils.FastByteComparisons;
 import org.tron.common.utils.Utils;
 import org.tron.common.utils.WalletUtil;
 import org.tron.core.ChainBaseManager;
+import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.ContractStateCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -129,6 +134,12 @@ public class Program {
   private ProgramPrecompile programPrecompile;
   private int contractVersion;
   private DataWord adjustedCallEnergy;
+  @Getter
+  @Setter
+  private long contextContractFactor;
+  @Getter
+  @Setter
+  private long callPenaltyEnergy;
 
   public Program(byte[] ops, byte[] codeAddress, ProgramInvoke programInvoke,
                  InternalTransaction internalTransaction) {
@@ -419,6 +430,10 @@ public class Program {
    */
   public void allocateMemory(int offset, int size) {
     memory.extend(offset, size);
+  }
+
+  public boolean supportDynamicEnergy() {
+    return contractState.getDynamicPropertiesStore().supportAllowDynamicEnergy();
   }
 
   public void suicide(DataWord obtainerAddress) {
@@ -1103,6 +1118,16 @@ public class Program {
           opName, invoke.getEnergyLimit(), energyValue, getResult().getEnergyUsed());
     }
     getResult().spendEnergy(energyValue);
+  }
+
+  public void spendEnergyWithPenalty(long total, long penalty, String opName) {
+    if (getEnergylimitLeftLong() < total) {
+      throw new OutOfEnergyException(
+          "Not enough energy for '%s' operation executing: curInvokeEnergyLimit[%d],"
+              + " curOpEnergy[%d], penaltyEnergy[%d], usedEnergy[%d]",
+          opName, invoke.getEnergyLimit(), total - penalty, penalty, getResult().getEnergyUsed());
+    }
+    getResult().spendEnergyWithPenalty(total, penalty);
   }
 
   public void checkCPUTimeLimit(String opName) {
@@ -2199,6 +2224,33 @@ public class Program {
       internalTx.reject();
     }
     return 0;
+  }
+
+  public long updateContextContractFactor() {
+    ContractStateCapsule contractStateCapsule =
+        contractState.getContractState(getContextAddress());
+
+    if (contractStateCapsule == null) {
+      contractStateCapsule = new ContractStateCapsule(
+          contractState.getDynamicPropertiesStore().getCurrentCycleNumber());
+      contractState.updateContractState(getContextAddress(), contractStateCapsule);
+    } else {
+      if (contractStateCapsule.catchUpToCycle(contractState.getDynamicPropertiesStore())) {
+        contractState.updateContractState(getContextAddress(), contractStateCapsule
+        );
+      }
+    }
+    contextContractFactor = contractStateCapsule.getEnergyFactor()
+        + Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
+    return contextContractFactor;
+  }
+
+  public void addContextContractUsage(long value) {
+    ContractStateCapsule contractStateCapsule =
+        contractState.getContractState(getContextAddress());
+
+    contractStateCapsule.addEnergyUsage(value);
+    contractState.updateContractState(getContextAddress(), contractStateCapsule);
   }
 
   /**

@@ -3,6 +3,8 @@ package org.tron.core.config.args;
 import static java.lang.Math.max;
 import static java.lang.System.exit;
 import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
+import static org.tron.core.Constant.DYNAMIC_ENERGY_INCREASE_FACTOR_RANGE;
+import static org.tron.core.Constant.DYNAMIC_ENERGY_MAX_FACTOR_RANGE;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCE_TIMEOUT_PERCENT;
 import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
 
@@ -166,6 +168,7 @@ public class Args extends CommonParameter {
     PARAMETER.solidityNode = false;
     PARAMETER.trustNodeAddr = "";
     PARAMETER.walletExtensionApi = false;
+    PARAMETER.estimateEnergy = false;
     PARAMETER.receiveTcpMinDataLength = 2048;
     PARAMETER.isOpenFullTcpDisconnect = false;
     PARAMETER.supportConstant = false;
@@ -790,6 +793,9 @@ public class Args extends CommonParameter {
     PARAMETER.walletExtensionApi =
         config.hasPath(Constant.NODE_WALLET_EXTENSION_API)
             && config.getBoolean(Constant.NODE_WALLET_EXTENSION_API);
+    PARAMETER.estimateEnergy =
+        config.hasPath(Constant.VM_ESTIMATE_ENERGY)
+            && config.getBoolean(Constant.VM_ESTIMATE_ENERGY);
 
     PARAMETER.receiveTcpMinDataLength = config.hasPath(Constant.NODE_RECEIVE_TCP_MIN_DATA_LENGTH)
         ? config.getLong(Constant.NODE_RECEIVE_TCP_MIN_DATA_LENGTH) : 2048;
@@ -1077,6 +1083,37 @@ public class Args extends CommonParameter {
       if (PARAMETER.unfreezeDelayDays < 0) {
         PARAMETER.unfreezeDelayDays = 0;
       }
+    }
+
+    if (config.hasPath(Constant.ALLOW_DYNAMIC_ENERGY)) {
+      PARAMETER.allowDynamicEnergy = config.getLong(Constant.ALLOW_DYNAMIC_ENERGY);
+      PARAMETER.allowDynamicEnergy = Math.min(PARAMETER.allowDynamicEnergy, 1);
+      PARAMETER.allowDynamicEnergy = Math.max(PARAMETER.allowDynamicEnergy, 0);
+    }
+
+    if (config.hasPath(Constant.DYNAMIC_ENERGY_THRESHOLD)) {
+      PARAMETER.dynamicEnergyThreshold = config.getLong(Constant.DYNAMIC_ENERGY_THRESHOLD);
+      PARAMETER.dynamicEnergyThreshold
+          = Math.min(PARAMETER.dynamicEnergyThreshold, 100_000_000_000_000_000L);
+      PARAMETER.dynamicEnergyThreshold = Math.max(PARAMETER.dynamicEnergyThreshold, 0);
+    }
+
+    if (config.hasPath(Constant.DYNAMIC_ENERGY_INCREASE_FACTOR)) {
+      PARAMETER.dynamicEnergyIncreaseFactor
+          = config.getLong(Constant.DYNAMIC_ENERGY_INCREASE_FACTOR);
+      PARAMETER.dynamicEnergyIncreaseFactor =
+          Math.min(PARAMETER.dynamicEnergyIncreaseFactor, DYNAMIC_ENERGY_INCREASE_FACTOR_RANGE);
+      PARAMETER.dynamicEnergyIncreaseFactor =
+          Math.max(PARAMETER.dynamicEnergyIncreaseFactor, 0);
+    }
+
+    if (config.hasPath(Constant.DYNAMIC_ENERGY_MAX_FACTOR)) {
+      PARAMETER.dynamicEnergyMaxFactor
+          = config.getLong(Constant.DYNAMIC_ENERGY_MAX_FACTOR);
+      PARAMETER.dynamicEnergyMaxFactor =
+          Math.min(PARAMETER.dynamicEnergyMaxFactor, DYNAMIC_ENERGY_MAX_FACTOR_RANGE);
+      PARAMETER.dynamicEnergyMaxFactor =
+          Math.max(PARAMETER.dynamicEnergyMaxFactor, 0);
     }
 
     logConfig();

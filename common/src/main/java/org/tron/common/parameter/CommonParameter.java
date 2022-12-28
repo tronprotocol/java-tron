@@ -1,5 +1,7 @@
 package org.tron.common.parameter;
 
+import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
+
 import com.beust.jcommander.Parameter;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -294,6 +296,9 @@ public class CommonParameter {
   public boolean walletExtensionApi;
   @Getter
   @Setter
+  public boolean estimateEnergy;
+  @Getter
+  @Setter
   public int backupPriority;
   @Getter
   @Setter
@@ -585,6 +590,22 @@ public class CommonParameter {
   @Getter
   @Setter
   public long allowOptimizedReturnValueOfChainId = 0L;
+
+  @Getter
+  @Setter
+  public long allowDynamicEnergy = 0L;
+
+  @Getter
+  @Setter
+  public long dynamicEnergyThreshold = 0L;
+
+  @Getter
+  @Setter
+  public long dynamicEnergyIncreaseFactor = DYNAMIC_ENERGY_FACTOR_DECIMAL;
+
+  @Getter
+  @Setter
+  public long dynamicEnergyMaxFactor = DYNAMIC_ENERGY_FACTOR_DECIMAL;
 
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));

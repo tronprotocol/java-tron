@@ -1,5 +1,9 @@
 package org.tron.core.vm;
 
+import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
+
+import com.google.common.collect.ImmutableSet;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
@@ -12,8 +16,21 @@ import org.tron.core.vm.program.Program.TransferException;
 @Slf4j(topic = "VM")
 public class VM {
 
+  private static final Set<Integer> CALL_OPS = ImmutableSet.of(Op.CALL, Op.STATICCALL,
+      Op.DELEGATECALL, Op.CALLCODE, Op.CALLTOKEN);
+
   public static void play(Program program, JumpTable jumpTable) {
     try {
+      long factor = DYNAMIC_ENERGY_FACTOR_DECIMAL;
+      long energyUsage = 0L;
+
+      boolean allowDynamicEnergy =
+          program.getContractState().getDynamicPropertiesStore().supportAllowDynamicEnergy();
+
+      if (allowDynamicEnergy) {
+        factor = program.updateContextContractFactor();
+      }
+
       while (!program.isStopped()) {
         if (VMConfig.vmTrace()) {
           program.saveOpTrace();
@@ -32,7 +49,37 @@ public class VM {
 
           String opName = Op.getNameOf(op.getOpcode());
           /* spend energy before execution */
-          program.spendEnergy(op.getEnergyCost(program), opName);
+          long energy = op.getEnergyCost(program);
+          if (allowDynamicEnergy) {
+            if (factor > DYNAMIC_ENERGY_FACTOR_DECIMAL) {
+              long actualEnergy = energy;
+              long penalty;
+
+              // CALL Ops have special calculation on energy.
+              if (CALL_OPS.contains(op.getOpcode())) {
+                actualEnergy = energy
+                    - program.getAdjustedCallEnergy().longValueSafe()
+                    - program.getCallPenaltyEnergy();
+                penalty = program.getCallPenaltyEnergy();
+              } else {
+                penalty = energy * factor / DYNAMIC_ENERGY_FACTOR_DECIMAL - energy;
+                if (penalty < 0) {
+                  penalty = 0;
+                }
+                energy += penalty;
+              }
+
+              energyUsage += actualEnergy;
+              program.spendEnergyWithPenalty(energy, penalty, opName);
+            } else {
+              energyUsage += energy;
+              program.spendEnergy(energy, opName);
+            }
+
+          } else {
+            program.spendEnergy(energy, opName);
+          }
+
 
           /* check if cpu time out */
           program.checkCPUTimeLimit(opName);
@@ -53,6 +100,11 @@ public class VM {
           program.fullTrace();
         }
       }
+
+      if (allowDynamicEnergy) {
+        program.addContextContractUsage(energyUsage);
+      }
+
     } catch (JVMStackOverFlowException | OutOfTimeException e) {
       throw e;
     } catch (RuntimeException e) {

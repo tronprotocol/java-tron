@@ -11,21 +11,19 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.api.GrpcAPI.EstimateEnergyMessage;
 import org.tron.api.GrpcAPI.Return;
-import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
-
 
 @Component
 @Slf4j(topic = "API")
-public class TriggerConstantContractServlet extends RateLimiterServlet {
+public class EstimateEnergyServlet extends RateLimiterServlet {
 
   private final String functionSelector = "function_selector";
 
@@ -51,6 +49,7 @@ public class TriggerConstantContractServlet extends RateLimiterServlet {
       throws IOException {
     TriggerSmartContract.Builder build = TriggerSmartContract.newBuilder();
     TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
+    EstimateEnergyMessage.Builder estimateEnergyBuilder = EstimateEnergyMessage.newBuilder();
     Return.Builder retBuilder = Return.newBuilder();
     boolean visible = false;
     try {
@@ -73,29 +72,31 @@ public class TriggerConstantContractServlet extends RateLimiterServlet {
       } else {
         build.setData(ByteString.copyFrom(new byte[0]));
       }
-      TransactionCapsule trxCap = wallet
-          .createTransactionCapsule(build.build(), ContractType.TriggerSmartContract);
+      TransactionCapsule trxCap = wallet.createTransactionCapsule(build.build(),
+          Protocol.Transaction.Contract.ContractType.TriggerSmartContract);
 
-      Transaction trx = wallet
-          .triggerConstantContract(build.build(),trxCap,
+      Protocol.Transaction trx = wallet
+          .estimateEnergy(build.build(), trxCap,
               trxExtBuilder,
-              retBuilder);
+              retBuilder, estimateEnergyBuilder);
       trx = Util.setTransactionPermissionId(jsonObject, trx);
       trx = Util.setTransactionExtraData(jsonObject, trx, visible);
       trxExtBuilder.setTransaction(trx);
-      retBuilder.setResult(true).setCode(response_code.SUCCESS);
+      retBuilder.setResult(true).setCode(Return.response_code.SUCCESS);
     } catch (ContractValidateException e) {
-      retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
+      retBuilder.setResult(false).setCode(Return.response_code.CONTRACT_VALIDATE_ERROR)
           .setMessage(ByteString.copyFromUtf8(e.getMessage()));
     } catch (Exception e) {
       String errString = null;
       if (e.getMessage() != null) {
         errString = e.getMessage().replaceAll("[\"]", "\'");
       }
-      retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
+      retBuilder.setResult(false).setCode(Return.response_code.OTHER_ERROR)
           .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + errString));
     }
     trxExtBuilder.setResult(retBuilder);
-    response.getWriter().println(Util.printTransactionExtention(trxExtBuilder.build(), visible));
+    estimateEnergyBuilder.setResult(retBuilder);
+    response.getWriter().println(
+        Util.printEstimateEnergyMessage(estimateEnergyBuilder.build(), visible));
   }
 }

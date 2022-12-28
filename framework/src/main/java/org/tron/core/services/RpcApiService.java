@@ -11,9 +11,6 @@ import io.grpc.StatusRuntimeException;
 import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -48,6 +45,7 @@ import org.tron.api.GrpcAPI.EasyTransferByPrivateMessage;
 import org.tron.api.GrpcAPI.EasyTransferMessage;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.api.GrpcAPI.EmptyMessage;
+import org.tron.api.GrpcAPI.EstimateEnergyMessage;
 import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.ExpandedSpendingKeyMessage;
 import org.tron.api.GrpcAPI.IncomingViewingKeyDiversifierMessage;
@@ -182,6 +180,7 @@ public class RpcApiService implements Service {
 
   public static final String CONTRACT_VALIDATE_EXCEPTION = "ContractValidateException: {}";
   private static final String EXCEPTION_CAUGHT = "exception caught";
+  private static final String UNKNOWN_EXCEPTION_CAUGHT = "unknown exception caught: ";
   private static final long BLOCK_LIMIT_NUM = 100;
   private static final long TRANSACTION_LIMIT_NUM = 1000;
   private int port = Args.getInstance().getRpcPort();
@@ -318,7 +317,7 @@ public class RpcApiService implements Service {
       retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
           .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
       trxExtBuilder.setResult(retBuilder);
-      logger.warn("unknown exception caught: " + e.getMessage(), e);
+      logger.warn(UNKNOWN_EXCEPTION_CAUGHT + e.getMessage(), e);
     } finally {
       responseObserver.onNext(trxExtBuilder.build());
       responseObserver.onCompleted();
@@ -1981,6 +1980,47 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void estimateEnergy(TriggerSmartContract request,
+        StreamObserver<EstimateEnergyMessage> responseObserver) {
+      TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
+      Return.Builder retBuilder = Return.newBuilder();
+      EstimateEnergyMessage.Builder estimateBuilder
+          = EstimateEnergyMessage.newBuilder();
+
+      try {
+        TransactionCapsule trxCap = createTransactionCapsule(request,
+            ContractType.TriggerSmartContract);
+        Transaction trx = wallet.estimateEnergy(
+            request, trxCap, trxExtBuilder, retBuilder, estimateBuilder);
+
+        trxExtBuilder.setTransaction(trx);
+        trxExtBuilder.setTxid(trxCap.getTransactionId().getByteString());
+        retBuilder.setResult(true).setCode(response_code.SUCCESS);
+        trxExtBuilder.setResult(retBuilder);
+      } catch (ContractValidateException | VMIllegalException e) {
+        retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
+            .setMessage(ByteString.copyFromUtf8(Wallet
+                .CONTRACT_VALIDATE_ERROR + e.getMessage()));
+        trxExtBuilder.setResult(retBuilder);
+        logger.warn(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
+      } catch (RuntimeException e) {
+        retBuilder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
+            .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
+        trxExtBuilder.setResult(retBuilder);
+        logger.warn("When run estimate energy in VM, have Runtime Exception: " + e.getMessage());
+      } catch (Exception e) {
+        retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
+            .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
+        trxExtBuilder.setResult(retBuilder);
+        logger.warn(UNKNOWN_EXCEPTION_CAUGHT + e.getMessage(), e);
+      } finally {
+        estimateBuilder.setResult(retBuilder);
+        responseObserver.onNext(estimateBuilder.build());
+        responseObserver.onCompleted();
+      }
+    }
+
+    @Override
     public void triggerConstantContract(TriggerSmartContract request,
         StreamObserver<TransactionExtention> responseObserver) {
 
@@ -2019,7 +2059,7 @@ public class RpcApiService implements Service {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
         trxExtBuilder.setResult(retBuilder);
-        logger.warn("unknown exception caught: " + e.getMessage(), e);
+        logger.warn(UNKNOWN_EXCEPTION_CAUGHT + e.getMessage(), e);
       } finally {
         responseObserver.onNext(trxExtBuilder.build());
         responseObserver.onCompleted();

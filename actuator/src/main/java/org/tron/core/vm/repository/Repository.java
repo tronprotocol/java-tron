@@ -47,7 +47,11 @@ public interface Repository {
 
   ContractCapsule getContract(byte[] address);
 
+  ContractStateCapsule getContractState(byte[] address);
+
   void updateContract(byte[] address, ContractCapsule contractCapsule);
+
+  void updateContractState(byte[] address, ContractStateCapsule contractStateCapsule);
 
   void updateAccount(byte[] address, AccountCapsule accountCapsule);
 
@@ -92,6 +96,8 @@ public interface Repository {
   void putCode(Key key, Value value);
 
   void putContract(Key key, Value value);
+
+  void putContractState(Key key, Value value);
 
   void putStorage(Key key, Storage cache);
 

@@ -68,6 +68,7 @@ public class Constant {
   public static final String VM_MIN_TIME_RATIO = "vm.minTimeRatio";
   public static final String VM_MAX_TIME_RATIO = "vm.maxTimeRatio";
   public static final String VM_LONG_RUNNING_TIME = "vm.longRunningTime";
+  public static final String VM_ESTIMATE_ENERGY = "vm.estimateEnergy";
 
   public static final String ROCKSDB = "ROCKSDB";
 
@@ -315,6 +316,23 @@ public class Constant {
   public static final String ALLOW_NEW_REWARD = "committee.allowNewReward";
   public static final String MEMO_FEE = "committee.memoFee";
   public static final String ALLOW_DELEGATE_OPTIMIZATION = "committee.allowDelegateOptimization";
+
+  public static final String ALLOW_DYNAMIC_ENERGY = "committee.allowDynamicEnergy";
+
+  public static final String DYNAMIC_ENERGY_THRESHOLD = "committee.dynamicEnergyThreshold";
+
+  public static final String DYNAMIC_ENERGY_INCREASE_FACTOR
+      = "committee.dynamicEnergyIncreaseFactor";
+
+  public static final String DYNAMIC_ENERGY_MAX_FACTOR = "committee.dynamicEnergyMaxFactor";
+
+  public static final long DYNAMIC_ENERGY_FACTOR_DECIMAL = 10_000L;
+
+  public static final long DYNAMIC_ENERGY_INCREASE_FACTOR_RANGE = 10_000L;
+
+  public static final long DYNAMIC_ENERGY_MAX_FACTOR_RANGE = 100_000L;
+
+  public static final int DYNAMIC_ENERGY_DECREASE_DIVISION = 4;
 
   public static final String LOCAL_HOST = "127.0.0.1";
 
