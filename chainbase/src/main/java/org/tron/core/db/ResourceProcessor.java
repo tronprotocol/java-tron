@@ -58,6 +58,12 @@ abstract class ResourceProcessor {
     return getUsage(averageLastUsage, windowSize);
   }
 
+  public long recovery(AccountCapsule accountCapsule, ResourceCode resourceCode,
+                       long lastUsage, long lastTime, long now) {
+    long oldWindowSize = accountCapsule.getWindowSize(resourceCode);
+    return increase(lastUsage, 0, lastTime, now, oldWindowSize);
+  }
+
   public long increase(AccountCapsule accountCapsule, ResourceCode resourceCode,
                           long lastUsage, long usage, long lastTime, long now) {
     long oldWindowSize = accountCapsule.getWindowSize(resourceCode);
