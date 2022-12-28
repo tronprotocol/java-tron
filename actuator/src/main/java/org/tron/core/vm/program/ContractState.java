@@ -8,6 +8,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.ContractStateCapsule;
+import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -224,6 +225,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public void putDelegatedResourceAccountIndex(Key key, Value value) {
+    repository.putDelegatedResourceAccountIndex(key, value);
+  }
+
+  @Override
   public long addTokenBalance(byte[] address, byte[] tokenId, long value) {
     return repository.addTokenBalance(address, tokenId, value);
   }
@@ -304,6 +310,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public DelegatedResourceAccountIndexCapsule getDelegatedResourceAccountIndex(byte[] key) {
+    return repository.getDelegatedResourceAccountIndex(key);
+  }
+
+  @Override
   public void updateDynamicProperty(byte[] word, BytesCapsule bytesCapsule) {
     repository.updateDynamicProperty(word, bytesCapsule);
   }
@@ -336,6 +347,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   @Override
   public void updateDelegation(byte[] word, BytesCapsule bytesCapsule) {
     repository.updateDelegation(word, bytesCapsule);
+  }
+
+  @Override
+  public void updateDelegatedResourceAccountIndex(byte[] word, DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule) {
+    repository.updateDelegatedResourceAccountIndex(word, delegatedResourceAccountIndexCapsule);
   }
 
   @Override

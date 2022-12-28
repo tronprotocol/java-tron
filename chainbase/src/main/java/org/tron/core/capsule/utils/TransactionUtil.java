@@ -124,8 +124,18 @@ public class TransactionUtil {
     builder.setReceipt(traceReceipt.getReceipt());
 
     if (CommonParameter.getInstance().isSaveInternalTx()) {
-      programResult.getInternalTransactions().forEach(it ->
-          builder.addInternalTransactions(buildInternalTransaction(it)));
+      if (CommonParameter.getInstance().isSaveFeaturedInternalTx()) {
+        programResult.getInternalTransactions().forEach(it ->
+            builder.addInternalTransactions(buildInternalTransaction(it)));
+      } else {
+        programResult.getInternalTransactions().stream()
+            .filter(it ->
+                "call".equals(it.getNote())
+                    || "create".equals(it.getNote())
+                    || "suicide".equals(it.getNote()))
+            .forEach(it ->
+                builder.addInternalTransactions(buildInternalTransaction(it)));
+      }
     }
 
     return new TransactionInfoCapsule(builder.build());

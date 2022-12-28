@@ -2120,9 +2120,9 @@ public class PrecompiledContracts {
 
       long delegatedResource = 0;
       if (type == 0) {
-        delegatedResource = accountCapsule.getDelegatedFrozenBalanceForBandwidth();
+        delegatedResource = accountCapsule.getTotalDelegatedFrozenBalanceForBandwidth();
       } else if (type == 1) {
-        delegatedResource = accountCapsule.getDelegatedFrozenBalanceForEnergy();
+        delegatedResource = accountCapsule.getTotalDelegatedFrozenBalanceForEnergy();
       }
 
       return Pair.of(true, longTo32Bytes(delegatedResource));
@@ -2153,9 +2153,9 @@ public class PrecompiledContracts {
 
       long acquiredResource = 0;
       if (type == 0) {
-        acquiredResource = accountCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth();
+        acquiredResource = accountCapsule.getTotalAcquiredDelegatedFrozenBalanceForBandwidth();
       } else if (type == 1) {
-        acquiredResource = accountCapsule.getAcquiredDelegatedFrozenBalanceForEnergy();
+        acquiredResource = accountCapsule.getTotalAcquiredDelegatedFrozenBalanceForEnergy();
       }
 
       return Pair.of(true, longTo32Bytes(acquiredResource));

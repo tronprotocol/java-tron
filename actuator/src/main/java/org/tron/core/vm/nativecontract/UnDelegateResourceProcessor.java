@@ -1,27 +1,30 @@
 package org.tron.core.vm.nativecontract;
 
-import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
-import static org.tron.core.actuator.ActuatorConstant.STORE_NOT_EXIST;
-import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
-import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
-import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
-
-import java.util.Arrays;
-import java.util.Objects;
-
+import com.google.common.primitives.Bytes;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.vm.nativecontract.param.UnDelegateResourceParam;
 import org.tron.core.vm.repository.Repository;
+
+import java.util.Arrays;
+import java.util.Objects;
+
+import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
+import static org.tron.core.actuator.ActuatorConstant.STORE_NOT_EXIST;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
+import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 
 @Slf4j(topic = "VMProcessor")
 public class UnDelegateResourceProcessor {
@@ -189,6 +192,20 @@ public class UnDelegateResourceProcessor {
         //this should never happen
         break;
     }
+
+    if (delegatedResourceCapsule.getFrozenBalanceForBandwidth() == 0
+        && delegatedResourceCapsule.getFrozenBalanceForEnergy() == 0) {
+      //modify DelegatedResourceAccountIndex
+      byte[] fromKey = Bytes.concat(
+          DelegatedResourceAccountIndexStore.getV2_FROM_PREFIX(), ownerAddress, receiverAddress);
+      repo.updateDelegatedResourceAccountIndex(
+          fromKey, new DelegatedResourceAccountIndexCapsule(new byte[0]));
+      byte[] toKey = Bytes.concat(
+          DelegatedResourceAccountIndexStore.getV2_TO_PREFIX(), receiverAddress, ownerAddress);
+      repo.updateDelegatedResourceAccountIndex(
+          toKey, new DelegatedResourceAccountIndexCapsule(new byte[0]));
+    }
+
     repo.updateDelegatedResource(key, delegatedResourceCapsule);
     repo.updateAccount(ownerCapsule.createDbKey(), ownerCapsule);
   }

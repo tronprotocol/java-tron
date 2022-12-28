@@ -4,6 +4,7 @@ import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 import static org.tron.core.actuator.ActuatorConstant.STORE_NOT_EXIST;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
+import com.google.common.primitives.Bytes;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
@@ -13,10 +14,12 @@ import org.tron.common.utils.StringUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.actuator.ActuatorConstant;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.vm.nativecontract.param.DelegateResourceParam;
 import org.tron.core.vm.repository.Repository;
@@ -71,8 +74,8 @@ public class DelegateResourceProcessor {
       }
       break;
       case ENERGY: {
-          EnergyProcessor processor =
-              new EnergyProcessor(dynamicStore, ChainBaseManager.getInstance().getAccountStore());
+        EnergyProcessor processor =
+            new EnergyProcessor(dynamicStore, ChainBaseManager.getInstance().getAccountStore());
         processor.updateUsage(ownerCapsule);
 
         long energyUsage = (long) (ownerCapsule.getEnergyUsage() * TRX_PRECISION * ((double)
@@ -166,6 +169,22 @@ public class DelegateResourceProcessor {
     } else {
       delegatedResourceCapsule.addFrozenBalanceForEnergy(delegateBalance, 0);
     }
+
+    //modify DelegatedResourceAccountIndex
+    long now = repo.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
+    byte[] fromKey = Bytes.concat(
+        DelegatedResourceAccountIndexStore.getV2_FROM_PREFIX(), ownerAddress, receiverAddress);
+    DelegatedResourceAccountIndexCapsule toIndexCapsule =
+        new DelegatedResourceAccountIndexCapsule(ByteString.copyFrom(receiverAddress));
+    toIndexCapsule.setTimestamp(now);
+    repo.updateDelegatedResourceAccountIndex(fromKey, toIndexCapsule);
+
+    byte[] toKey = Bytes.concat(
+        DelegatedResourceAccountIndexStore.getV2_TO_PREFIX(), receiverAddress, ownerAddress);
+    DelegatedResourceAccountIndexCapsule fromIndexCapsule =
+        new DelegatedResourceAccountIndexCapsule(ByteString.copyFrom(ownerAddress));
+    fromIndexCapsule.setTimestamp(now);
+    repo.updateDelegatedResourceAccountIndex(toKey, fromIndexCapsule);
 
     //update Account for receiver
     AccountCapsule receiverCapsule = repo.getAccount(receiverAddress);

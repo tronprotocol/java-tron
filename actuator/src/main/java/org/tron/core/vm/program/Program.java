@@ -673,8 +673,8 @@ public class Program {
     long now = getContractState().getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
 
     boolean isDelegatedResourceEmpty =
-        accountCapsule.getDelegatedFrozenBalanceForBandwidth() == 0
-            && accountCapsule.getDelegatedFrozenBalanceForEnergy() == 0;
+        accountCapsule.getDelegatedFrozenV2BalanceForBandwidth() == 0
+            && accountCapsule.getDelegatedFrozenV2BalanceForEnergy() == 0;
     boolean isUnFrozenV2ListEmpty =
         CollectionUtils.isEmpty(
             accountCapsule.getUnfrozenV2List().stream()

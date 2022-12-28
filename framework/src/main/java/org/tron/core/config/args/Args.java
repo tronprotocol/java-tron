@@ -835,6 +835,10 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.VM_SAVE_INTERNAL_TX)
             && config.getBoolean(Constant.VM_SAVE_INTERNAL_TX);
 
+    PARAMETER.saveFeaturedInternalTx =
+        config.hasPath(Constant.VM_SAVE_FEATURED_INTERNAL_TX)
+            && config.getBoolean(Constant.VM_SAVE_FEATURED_INTERNAL_TX);
+
     // PARAMETER.allowShieldedTransaction =
     //     config.hasPath(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) ? config
     //         .getInt(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) : 0;
