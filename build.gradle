@@ -17,12 +17,13 @@ subprojects {
     buildscript {
         repositories {
             mavenCentral()
-            jcenter()
-            maven { url 'https://jitpack.io' }
+            maven {
+                url "https://plugins.gradle.org/m2/"
+            }
         }
         dependencies {
-            classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.12'
-            classpath 'com.github.jengelman.gradle.plugins:shadow:5.2.0'
+            classpath 'com.google.protobuf:protobuf-gradle-plugin:0.9.1'
+            classpath "gradle.plugin.com.github.johnrengelman:shadow:7.1.2"
         }
     }
 
@@ -30,7 +31,6 @@ subprojects {
         mavenLocal()
         mavenCentral()
         maven { url 'https://repo.spring.io/plugins-release' }
-        maven { url 'https://jitpack.io' }
     }
 
     dependencies {
