@@ -2,6 +2,7 @@ package org.tron.core.vm;
 
 import java.math.BigInteger;
 import org.tron.common.runtime.vm.DataWord;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.Stack;
 
@@ -420,7 +421,7 @@ public class EnergyCost {
     energyCost += calcMemEnergy(oldMemSize, in.max(out),
         0, op);
 
-    if (program.supportDynamicEnergy()) {
+    if (VMConfig.allowDynamicEnergy()) {
       long factor = program.getContextContractFactor();
       if (factor > DYNAMIC_ENERGY_FACTOR_DECIMAL) {
         long penalty = energyCost * factor / DYNAMIC_ENERGY_FACTOR_DECIMAL - energyCost;
