@@ -2,28 +2,26 @@ package org.tron.core.state;
 
 import com.google.protobuf.Internal;
 import java.util.Arrays;
-import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.bouncycastle.util.encoders.Hex;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.Hash;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.state.trie.TrieImpl;
+import org.tron.core.state.trie.TrieReserveImpl;
 
 @Slf4j(topic = "State")
 @Component
 public class WorldStateCallBack extends WorldStateCallBackUtils {
 
   private BlockCapsule blockCapsule;
-  private volatile TrieImpl trie;
+  private volatile TrieReserveImpl trie;
 
   long cost = 0;
 
@@ -31,21 +29,30 @@ public class WorldStateCallBack extends WorldStateCallBackUtils {
   private ChainBaseManager chainBaseManager;
 
   private LinkedBlockingQueue<TrieEntry> queue = new LinkedBlockingQueue<>();
-  private boolean updateServiceRunning;
+  ExecutorService executorService = Executors.newSingleThreadExecutor();
 
   private final Runnable updateService =
       () -> {
-        while (updateServiceRunning) {
-          TrieEntry trieEntry = null;
+        while (true) {
+          TrieEntry trieEntry;
+          trieEntry = queue.peek();
+          if (trieEntry == null) {
+            try {
+              Thread.sleep(5);
+              continue;
+            } catch (InterruptedException e) {
+              logger.error("state update failed, get trie entry failed, err: {}", e.getMessage());
+              System.exit(-1);
+            }
+          }
+
           try {
-            trieEntry = queue.poll(10, TimeUnit.MILLISECONDS);
-          } catch (InterruptedException e) {
-            logger.error("state update failed, get trie entry failed, err: {}", e.getMessage());
+            trie.put(Hash.encodeElement(trieEntry.getKey()), trieEntry.getData());
+          } catch (Exception e) {
+            logger.error("state update failed, put trie entry failed, err: {}", e.getMessage());
             System.exit(-1);
           }
-          if (trieEntry != null) {
-            trie.put(Hash.encodeElement(trieEntry.getKey()), trieEntry.getData());
-          }
+          queue.poll();
         }
       };
 
@@ -53,8 +60,7 @@ public class WorldStateCallBack extends WorldStateCallBackUtils {
     this.execute = true;
     this.allowGenerateRoot = CommonParameter.getInstance().getStorage().isAllowStateRoot();
     if (this.allowGenerateRoot) {
-      this.updateServiceRunning = true;
-      new Thread(updateService).start();
+      executorService.submit(updateService);
     }
   }
 
@@ -80,14 +86,15 @@ public class WorldStateCallBack extends WorldStateCallBackUtils {
     try {
       BlockCapsule parentBlockCapsule =
           chainBaseManager.getBlockById(blockCapsule.getParentBlockId());
-      rootHash = parentBlockCapsule.getInstance().getStateRoot().toByteArray();
+      rootHash = parentBlockCapsule.getInstance().getBlockHeader()
+          .getArchiveStateRoot().toByteArray();
     } catch (Exception e) {
       logger.error("", e);
     }
     if (Arrays.equals(Internal.EMPTY_BYTE_ARRAY, rootHash)) {
       rootHash = Hash.EMPTY_TRIE_HASH;
     }
-    trie = new TrieImpl(worldStateTrieStore, rootHash);
+    trie = new TrieReserveImpl(worldStateTrieStore, rootHash);
   }
 
   public void executePushFinish() {
@@ -100,7 +107,7 @@ public class WorldStateCallBack extends WorldStateCallBackUtils {
     trieEntryList.clear();
     while (queue.size() != 0) {
       try {
-        Thread.sleep(5);
+        Thread.sleep(10);
       } catch (InterruptedException e) {
         logger.error("Fatal error, {}", e.getMessage());
       }
@@ -110,17 +117,18 @@ public class WorldStateCallBack extends WorldStateCallBackUtils {
     if (ArrayUtils.isEmpty(newRoot)) {
       newRoot = Hash.EMPTY_TRIE_HASH;
     }
-    blockCapsule.setStateRoot(newRoot);
+    blockCapsule.setArchiveStateRoot(newRoot);
     execute = false;
     cost += System.currentTimeMillis() - start;
-    logger.debug("state update, block: {}, cost: {}", blockCapsule.getBlockId().getString(), cost);
+    logger.info("state update, block: {}, cost: {}", blockCapsule.getBlockId().getString(), cost);
+    logger.debug("trie delete total count: {}", deleteCount);
   }
 
   public void initGenesis(BlockCapsule blockCapsule, WorldStateTrieStore worldStateTrieStore) {
     if (!exe()) {
       return;
     }
-    trie = new TrieImpl(worldStateTrieStore, Hash.EMPTY_TRIE_HASH);
+    trie = new TrieReserveImpl(worldStateTrieStore, Hash.EMPTY_TRIE_HASH);
     for (TrieEntry trieEntry : trieEntryList) {
       trie.put(Hash.encodeElement(trieEntry.getKey()), trieEntry.getData());
     }
@@ -130,7 +138,7 @@ public class WorldStateCallBack extends WorldStateCallBackUtils {
     if (ArrayUtils.isEmpty(newRoot)) {
       newRoot = Hash.EMPTY_TRIE_HASH;
     }
-    blockCapsule.setStateRoot(newRoot);
+    blockCapsule.setArchiveStateRoot(newRoot);
     execute = false;
   }
 
@@ -156,7 +164,7 @@ public class WorldStateCallBack extends WorldStateCallBackUtils {
   }
 
   public void stopUpdateService() {
-    updateServiceRunning = false;
+    executorService.shutdown();
   }
 
 }

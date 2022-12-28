@@ -22,7 +22,6 @@ import org.tron.common.runtime.InternalTransaction.ExecutorType;
 import org.tron.common.runtime.InternalTransaction.TrxType;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StorageUtils;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
@@ -125,7 +124,7 @@ public class VMActuator implements Actuator2 {
       ConfigLoader.load(context.getStoreFactory());
     } else {
       ConfigLoader.load(context.getStoreFactory(),
-          context.getBlockCap().getInstance().getStateRoot().toByteArray());
+          context.getBlockCap().getArchiveStateRoot().getBytes());
     }
     // Warm up registry class
     OperationRegistry.init();
@@ -142,7 +141,7 @@ public class VMActuator implements Actuator2 {
     } else {
       // todo: review
       rootRepository = RepositoryStateImpl.createRoot(context.getStoreFactory(),
-          context.getBlockCap().getStateRoot().getBytes());
+          context.getBlockCap().getArchiveStateRoot().getBytes());
     }
 
     enableEventListener = context.isEventPluginLoaded();

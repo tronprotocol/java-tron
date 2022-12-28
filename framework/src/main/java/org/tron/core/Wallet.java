@@ -4258,7 +4258,7 @@ public class Wallet {
     }
 
     try {
-      return chainBaseManager.getBlockByNum(blockNumber).getStateRoot().getBytes();
+      return chainBaseManager.getBlockByNum(blockNumber).getArchiveStateRoot().getBytes();
     } catch (ItemNotFoundException | BadItemException e) {
       throw new IllegalArgumentException("block not found, block number: " + blockNumber);
     }

@@ -28,6 +28,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.tron.core.state.rlp.RLP;
 import org.tron.core.state.trie.TrieImpl;
+import org.tron.core.state.trie.TrieReserveImpl;
 
 public class TrieTest {
 
@@ -136,6 +137,24 @@ public class TrieTest {
     }
     byte[] rootHash2 = trie2.getRootHash();
     Assert.assertTrue(java.util.Arrays.equals(rootHash1, rootHash2));
+  }
+
+  @Test
+  public void testDelete() {
+    TrieReserveImpl trie = new TrieReserveImpl();
+    int n = 100;
+    for (int i = 1; i < n; i++) {
+      trie.put(RLP.encodeInt(i), String.valueOf(i).getBytes());
+    }
+    byte[] rootHash1 = trie.getRootHash();
+
+    TrieImpl trie2 = new TrieImpl(trie.getCache(), rootHash1);
+    trie2.put(RLP.encodeInt(1), null);
+    trie2.put(RLP.encodeInt(2), new byte[0]);
+    trie2.delete(RLP.encodeInt(3));
+    Assert.assertArrayEquals(null, trie2.get(RLP.encodeInt(1)));
+    Assert.assertArrayEquals(null, trie2.get(RLP.encodeInt(2)));
+    Assert.assertArrayEquals(null, trie2.get(RLP.encodeInt(3)));
   }
 
   private void assertTrue(byte[] key, TrieImpl trieCopy) {

@@ -1,5 +1,7 @@
 package org.tron.core.state;
 
+import static org.tron.core.state.WorldStateQueryInstance.DELETE;
+
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Longs;
 import java.util.ArrayList;
@@ -15,9 +17,16 @@ public class WorldStateCallBackUtils {
   protected volatile boolean execute = false;
   protected volatile boolean allowGenerateRoot = false;
   protected List<TrieEntry> trieEntryList = new ArrayList<>();
+  public long deleteCount = 0;  // todo: to be delete
 
   public void callBack(StateType type, byte[] key, ProtoCapsule capsule) {
     if (!exe()) {
+      return;
+    }
+
+    if (capsule == null) {
+      deleteCount++;
+      callBack(type, key, DELETE);
       return;
     }
 
@@ -67,9 +76,6 @@ public class WorldStateCallBackUtils {
   }
 
   private void callBack(StateType type, byte[] key, byte[] value) {
-//    if (value == null) {
-//      return;
-//    }
     trieEntryList.add(TrieEntry.build(encodeKey(type.value(), key), value));
   }
 

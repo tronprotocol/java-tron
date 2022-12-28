@@ -484,13 +484,13 @@ message BlockHeader {
   }
   raw raw_data = 1;
   bytes witness_signature = 2;
+  bytes archiveStateRoot = 3;
 }
 
 // block
 message Block {
   repeated Transaction transactions = 1;
   BlockHeader block_header = 2;
-  bytes stateRoot = 12;
 }
 
 message ChainInventory {

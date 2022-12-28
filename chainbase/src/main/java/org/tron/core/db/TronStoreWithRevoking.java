@@ -145,7 +145,6 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     }
 
     revokingDB.put(key, item.getData());
-    // todo: optimize, minimize the ops
     if (worldStateCallBackUtils != null) {
       worldStateCallBackUtils.callBack(type, key, item);
     }
@@ -154,6 +153,10 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   @Override
   public void delete(byte[] key) {
     revokingDB.delete(key);
+
+    if (worldStateCallBackUtils != null) {
+      worldStateCallBackUtils.callBack(type, key, null);
+    }
   }
 
   @Override

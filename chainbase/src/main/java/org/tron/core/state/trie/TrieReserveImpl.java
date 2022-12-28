@@ -1,13 +1,17 @@
 package org.tron.core.state.trie;
 
-import static org.apache.commons.lang3.concurrent.ConcurrentUtils.constantFuture;
-import static org.tron.common.crypto.Hash.EMPTY_TRIE_HASH;
-import static org.tron.common.utils.ByteArray.toHexString;
-import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
-import static org.tron.core.state.rlp.RLP.EMPTY_ELEMENT_RLP;
-import static org.tron.core.state.rlp.RLP.encodeList;
-
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import org.apache.commons.lang3.text.StrBuilder;
+import org.bouncycastle.util.encoders.Hex;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.tron.common.crypto.Hash;
+import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.db2.common.ConcurrentHashDB;
+import org.tron.core.db2.common.DB;
+import org.tron.core.state.rlp.FastByteComparisons;
+import org.tron.core.state.rlp.RLP;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -17,43 +21,40 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import org.apache.commons.lang3.text.StrBuilder;
-import org.bouncycastle.util.encoders.Hex;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.tron.common.crypto.Hash;
-import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.state.rlp.FastByteComparisons;
-import org.tron.core.state.rlp.RLP;
-import org.tron.core.db2.common.ConcurrentHashDB;
-import org.tron.core.db2.common.DB;
+
+import static org.apache.commons.lang3.concurrent.ConcurrentUtils.constantFuture;
+import static org.tron.common.crypto.Hash.EMPTY_TRIE_HASH;
+import static org.tron.common.utils.ByteArray.toHexString;
+import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
+import static org.tron.core.state.rlp.RLP.EMPTY_ELEMENT_RLP;
+import static org.tron.core.state.rlp.RLP.encodeList;
 
 /**
- *
+ *  This class is used for world state, will merge with `TrieImpl` in future.
  */
-public class TrieImpl implements Trie<byte[]> {
+public class TrieReserveImpl implements Trie<byte[]> {
 
   private static final Object NULL_NODE = new Object();
   private static final int MIN_BRANCHES_CONCURRENTLY = 3;
-  private static final Logger logger = LoggerFactory.getLogger(TrieImpl.class);
+  private static final Logger logger = LoggerFactory.getLogger(TrieReserveImpl.class);
   private static ExecutorService executor;
   private DB<byte[], BytesCapsule> cache;
   private Node root;
   private boolean async = true;
 
-  public TrieImpl() {
+  public TrieReserveImpl() {
     this((byte[]) null);
   }
 
-  public TrieImpl(byte[] root) {
+  public TrieReserveImpl(byte[] root) {
     this(new ConcurrentHashDB(), root);
   }
 
-  public TrieImpl(DB<byte[], BytesCapsule> cache) {
+  public TrieReserveImpl(DB<byte[], BytesCapsule> cache) {
     this(cache, null);
   }
 
-  public TrieImpl(DB<byte[], BytesCapsule> cache, byte[] root) {
+  public TrieReserveImpl(DB<byte[], BytesCapsule> cache, byte[] root) {
     this.cache = cache;
     setRoot(root);
   }
@@ -107,7 +108,7 @@ public class TrieImpl implements Trie<byte[]> {
   }
 
   private void deleteHash(byte[] hash) {
-    cache.remove(hash);
+   // cache.remove(hash);
   }
 
   public byte[] get(byte[] key) {
@@ -317,7 +318,7 @@ public class TrieImpl implements Trie<byte[]> {
       return false;
     }
 
-    TrieImpl trieImpl1 = (TrieImpl) o;
+    TrieReserveImpl trieImpl1 = (TrieReserveImpl) o;
 
     return FastByteComparisons.equalByte(getRootHash(), trieImpl1.getRootHash());
 
