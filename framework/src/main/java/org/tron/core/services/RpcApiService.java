@@ -180,6 +180,7 @@ public class RpcApiService implements Service {
 
   public static final String CONTRACT_VALIDATE_EXCEPTION = "ContractValidateException: {}";
   private static final String EXCEPTION_CAUGHT = "exception caught";
+  private static final String UNKNOWN_EXCEPTION_CAUGHT = "unknown exception caught: ";
   private static final long BLOCK_LIMIT_NUM = 100;
   private static final long TRANSACTION_LIMIT_NUM = 1000;
   private int port = Args.getInstance().getRpcPort();
@@ -316,7 +317,7 @@ public class RpcApiService implements Service {
       retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
           .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
       trxExtBuilder.setResult(retBuilder);
-      logger.warn("unknown exception caught: " + e.getMessage(), e);
+      logger.warn(UNKNOWN_EXCEPTION_CAUGHT + e.getMessage(), e);
     } finally {
       responseObserver.onNext(trxExtBuilder.build());
       responseObserver.onCompleted();
@@ -2011,7 +2012,7 @@ public class RpcApiService implements Service {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
         trxExtBuilder.setResult(retBuilder);
-        logger.warn("unknown exception caught: " + e.getMessage(), e);
+        logger.warn(UNKNOWN_EXCEPTION_CAUGHT + e.getMessage(), e);
       } finally {
         estimateBuilder.setResult(retBuilder);
         responseObserver.onNext(estimateBuilder.build());
@@ -2058,7 +2059,7 @@ public class RpcApiService implements Service {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
         trxExtBuilder.setResult(retBuilder);
-        logger.warn("unknown exception caught: " + e.getMessage(), e);
+        logger.warn(UNKNOWN_EXCEPTION_CAUGHT + e.getMessage(), e);
       } finally {
         responseObserver.onNext(trxExtBuilder.build());
         responseObserver.onCompleted();
