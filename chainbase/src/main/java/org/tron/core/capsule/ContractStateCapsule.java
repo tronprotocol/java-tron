@@ -100,7 +100,8 @@ public class ContractStateCapsule implements ProtoCapsule<ContractState> {
     final long precisionFactor = DYNAMIC_ENERGY_FACTOR_DECIMAL;
 
     // Increase the last cycle
-    if (getEnergyUsage() >= threshold) {
+    // fix the threshold = 0 caused incompatible
+    if (getEnergyUsage() > threshold) {
       lastCycle += 1;
       double increasePercent = 1 + (double) increaseFactor / precisionFactor;
       this.contractState = ContractState.newBuilder()
