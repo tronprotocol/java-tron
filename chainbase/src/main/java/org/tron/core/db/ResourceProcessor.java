@@ -74,8 +74,8 @@ abstract class ResourceProcessor {
       }
     }
 
-    long newUsage = getUsage(averageLastUsage, oldWindowSize) +
-            getUsage(averageUsage, this.windowSize);
+    long newUsage = getUsage(averageLastUsage, oldWindowSize)
+        + getUsage(averageUsage, this.windowSize);
     if (dynamicPropertiesStore.supportUnfreezeDelay()) {
       long remainUsage = getUsage(averageLastUsage, oldWindowSize);
       if (remainUsage == 0) {

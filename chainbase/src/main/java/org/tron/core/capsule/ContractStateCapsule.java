@@ -119,8 +119,10 @@ public class ContractStateCapsule implements ProtoCapsule<ContractState> {
     }
 
     // Calc the decrease percent (decrease factor [75% ~ 100%])
-    long decreaseFactor =  increaseFactor / DYNAMIC_ENERGY_DECREASE_DIVISION;
-    double decreasePercent = Math.pow(1 - (double) decreaseFactor / precisionFactor, cycleCount);
+    double decreasePercent = Math.pow(
+        1 - (double) increaseFactor / DYNAMIC_ENERGY_DECREASE_DIVISION / precisionFactor,
+        cycleCount
+    );
 
     // Decrease to this cycle
     // (If long time no tx and factor is 100%,

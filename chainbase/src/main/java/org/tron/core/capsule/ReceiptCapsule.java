@@ -192,7 +192,8 @@ public class ReceiptCapsule {
       long originEnergyLimit,
       EnergyProcessor energyProcessor, long originUsage) {
 
-    if (dynamicPropertiesStore.getAllowTvmFreeze() == 1 || dynamicPropertiesStore.supportUnfreezeDelay()) {
+    if (dynamicPropertiesStore.getAllowTvmFreeze() == 1
+        || dynamicPropertiesStore.supportUnfreezeDelay()) {
       return Math.min(originUsage, Math.min(originEnergyLeft, originEnergyLimit));
     }
 
