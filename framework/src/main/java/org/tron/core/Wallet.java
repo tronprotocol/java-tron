@@ -3039,12 +3039,7 @@ public class Wallet {
       ContractStateCapsule contractStateCapsule
           = chainBaseManager.getContractStateStore().get(address);
       if (Objects.nonNull(contractStateCapsule)) {
-        contractStateCapsule.catchUpToCycle(
-            chainBaseManager.getDynamicPropertiesStore().getCurrentCycleNumber(),
-            chainBaseManager.getDynamicPropertiesStore().getDynamicEnergyThreshold(),
-            chainBaseManager.getDynamicPropertiesStore().getDynamicEnergyIncreaseFactor(),
-            chainBaseManager.getDynamicPropertiesStore().getDynamicEnergyMaxFactor()
-        );
+        contractStateCapsule.catchUpToCycle(chainBaseManager.getDynamicPropertiesStore());
       } else {
         contractStateCapsule = new ContractStateCapsule(
             chainBaseManager.getDynamicPropertiesStore().getCurrentCycleNumber());

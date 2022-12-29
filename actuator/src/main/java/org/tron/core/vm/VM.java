@@ -24,10 +24,7 @@ public class VM {
       long factor = DYNAMIC_ENERGY_FACTOR_DECIMAL;
       long energyUsage = 0L;
 
-      boolean allowDynamicEnergy =
-          program.getContractState().getDynamicPropertiesStore().supportAllowDynamicEnergy();
-
-      if (allowDynamicEnergy) {
+      if (VMConfig.allowDynamicEnergy()) {
         factor = program.updateContextContractFactor();
       }
 
@@ -50,7 +47,7 @@ public class VM {
           String opName = Op.getNameOf(op.getOpcode());
           /* spend energy before execution */
           long energy = op.getEnergyCost(program);
-          if (allowDynamicEnergy) {
+          if (VMConfig.allowDynamicEnergy()) {
             if (factor > DYNAMIC_ENERGY_FACTOR_DECIMAL) {
               long actualEnergy = energy;
               long penalty;
@@ -101,7 +98,7 @@ public class VM {
         }
       }
 
-      if (allowDynamicEnergy) {
+      if (VMConfig.allowDynamicEnergy()) {
         program.addContextContractUsage(energyUsage);
       }
 

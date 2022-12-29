@@ -432,10 +432,6 @@ public class Program {
     memory.extend(offset, size);
   }
 
-  public boolean supportDynamicEnergy() {
-    return contractState.getDynamicPropertiesStore().supportAllowDynamicEnergy();
-  }
-
   public void suicide(DataWord obtainerAddress) {
 
     byte[] owner = getContextAddress();
@@ -2235,7 +2231,11 @@ public class Program {
           contractState.getDynamicPropertiesStore().getCurrentCycleNumber());
       contractState.updateContractState(getContextAddress(), contractStateCapsule);
     } else {
-      if (contractStateCapsule.catchUpToCycle(contractState.getDynamicPropertiesStore())) {
+      if (contractStateCapsule.catchUpToCycle(
+          contractState.getDynamicPropertiesStore().getCurrentCycleNumber(),
+          VMConfig.getDynamicEnergyThreshold(),
+          VMConfig.getDynamicEnergyIncreaseFactor(),
+          VMConfig.getDynamicEnergyMaxFactor())) {
         contractState.updateContractState(getContextAddress(), contractStateCapsule
         );
       }

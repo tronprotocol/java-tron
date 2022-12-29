@@ -14,6 +14,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.filter.HttpApiAccessFilter;
 import org.tron.core.services.filter.LiteFnQueryHttpFilter;
+import org.tron.core.services.interfaceOnPBFT.http.EstimateEnergyOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetAccountByIdOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetAccountOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetAssetIssueByIdOnPBFTServlet;
@@ -127,7 +128,8 @@ public class HttpApiOnPBFTService implements Service {
   private GetRewardOnPBFTServlet getRewardServlet;
   @Autowired
   private TriggerConstantContractOnPBFTServlet triggerConstantContractOnPBFTServlet;
-
+  @Autowired
+  private EstimateEnergyOnPBFTServlet estimateEnergyOnPBFTServlet;
   @Autowired
   private LiteFnQueryHttpFilter liteFnQueryHttpFilter;
   @Autowired
@@ -223,6 +225,7 @@ public class HttpApiOnPBFTService implements Service {
       context.addServlet(new ServletHolder(isSpendOnPBFTServlet), "/isspend");
       context.addServlet(new ServletHolder(triggerConstantContractOnPBFTServlet),
           "/triggerconstantcontract");
+      context.addServlet(new ServletHolder(estimateEnergyOnPBFTServlet), "/estimateenergy");
 
       // only for PBFTNode
       context.addServlet(new ServletHolder(getTransactionByIdOnPBFTServlet), "/gettransactionbyid");
