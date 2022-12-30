@@ -1,8 +1,7 @@
 package org.tron.core.capsule;
 
 import java.util.Objects;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.ForkController;
@@ -17,47 +16,59 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.ResourceReceipt;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
 
+@Data
 public class ReceiptCapsule {
 
   private ResourceReceipt receipt;
-  @Getter
-  @Setter
+
   private long multiSignFee;
 
-  @Getter
-  @Setter
   private long memoFee;
+
   /**
    * Available energy of contract deployer before executing transaction
    */
-  @Setter
   private long originEnergyLeft;
 
   /**
    * Available energy of caller before executing transaction
    */
-  @Setter
   private long callerEnergyLeft;
 
-  @Getter
-  @Setter
+  /**
+   * Energy usage of caller before merging frozen energy
+   */
   private long callerEnergyUsage;
 
-  @Getter
-  @Setter
+  /**
+   * Energy usage of caller after merging frozen energy
+   */
   private long callerEnergyMergedUsage;
 
-  @Getter
-  @Setter
+  /**
+   * Energy usage of origin after merging frozen energy
+   */
   private long originEnergyMergedUsage;
 
-  @Getter
-  @Setter
+  /**
+   * Window size of caller before merging frozen energy
+   */
   private long callerEnergyWindowSize;
 
-  @Getter
-  @Setter
+  /**
+   * Window size of caller after merging frozen energy
+   */
+  private long callerEnergyMergedWindowSize;
+
+  /**
+   * Window size of origin before merging frozen energy
+   */
   private long originEnergyWindowSize;
+
+  /**
+   * Window size of origin after merging frozen energy
+   */
+  private long originEnergyMergedWindowSize;
 
   private Sha256Hash receiptAddress;
 
