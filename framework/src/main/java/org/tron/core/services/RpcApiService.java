@@ -1990,28 +1990,19 @@ public class RpcApiService implements Service {
       try {
         TransactionCapsule trxCap = createTransactionCapsule(request,
             ContractType.TriggerSmartContract);
-        Transaction trx = wallet.estimateEnergy(
-            request, trxCap, trxExtBuilder, retBuilder, estimateBuilder);
-
-        trxExtBuilder.setTransaction(trx);
-        trxExtBuilder.setTxid(trxCap.getTransactionId().getByteString());
-        retBuilder.setResult(true).setCode(response_code.SUCCESS);
-        trxExtBuilder.setResult(retBuilder);
+        wallet.estimateEnergy(request, trxCap, trxExtBuilder, retBuilder, estimateBuilder);
       } catch (ContractValidateException | VMIllegalException e) {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
             .setMessage(ByteString.copyFromUtf8(Wallet
                 .CONTRACT_VALIDATE_ERROR + e.getMessage()));
-        trxExtBuilder.setResult(retBuilder);
         logger.warn(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       } catch (RuntimeException e) {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
-        trxExtBuilder.setResult(retBuilder);
         logger.warn("When run estimate energy in VM, have Runtime Exception: " + e.getMessage());
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
-        trxExtBuilder.setResult(retBuilder);
         logger.warn(UNKNOWN_EXCEPTION_CAUGHT + e.getMessage(), e);
       } finally {
         estimateBuilder.setResult(retBuilder);

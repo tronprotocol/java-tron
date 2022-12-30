@@ -75,14 +75,8 @@ public class EstimateEnergyServlet extends RateLimiterServlet {
       TransactionCapsule trxCap = wallet.createTransactionCapsule(build.build(),
           Protocol.Transaction.Contract.ContractType.TriggerSmartContract);
 
-      Protocol.Transaction trx = wallet
-          .estimateEnergy(build.build(), trxCap,
-              trxExtBuilder,
-              retBuilder, estimateEnergyBuilder);
-      trx = Util.setTransactionPermissionId(jsonObject, trx);
-      trx = Util.setTransactionExtraData(jsonObject, trx, visible);
-      trxExtBuilder.setTransaction(trx);
-      retBuilder.setResult(true).setCode(Return.response_code.SUCCESS);
+      wallet.estimateEnergy(build.build(), trxCap,
+          trxExtBuilder, retBuilder, estimateEnergyBuilder);
     } catch (ContractValidateException e) {
       retBuilder.setResult(false).setCode(Return.response_code.CONTRACT_VALIDATE_ERROR)
           .setMessage(ByteString.copyFromUtf8(e.getMessage()));
@@ -94,7 +88,6 @@ public class EstimateEnergyServlet extends RateLimiterServlet {
       retBuilder.setResult(false).setCode(Return.response_code.OTHER_ERROR)
           .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + errString));
     }
-    trxExtBuilder.setResult(retBuilder);
     estimateEnergyBuilder.setResult(retBuilder);
     response.getWriter().println(
         Util.printEstimateEnergyMessage(estimateEnergyBuilder.build(), visible));
