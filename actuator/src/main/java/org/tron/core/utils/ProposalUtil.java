@@ -633,6 +633,11 @@ public class ProposalUtil {
               "This value[ALLOW_DYNAMIC_ENERGY] is only allowed to be in the range 0-1"
           );
         }
+        if (value == 1 && dynamicPropertiesStore.getChangeDelegation() == 0) {
+          throw new ContractValidateException(
+              "[ALLOW_CHANGE_DELEGATION] proposal must be approved "
+                  + "before [ALLOW_DYNAMIC_ENERGY] can be opened");
+        }
         break;
       }
       case DYNAMIC_ENERGY_THRESHOLD: {
