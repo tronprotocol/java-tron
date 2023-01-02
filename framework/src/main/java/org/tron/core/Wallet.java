@@ -2874,7 +2874,8 @@ public class Wallet {
 
       long mid = (high + low) / 2;
       txCap.setFeeLimit(mid);
-      triggerConstantContract(triggerSmartContract, txCap, txExtBuilder, txRetBuilder);
+      transaction = triggerConstantContract(
+          triggerSmartContract, txCap, txExtBuilder, txRetBuilder);
       if (transaction.getRet(0).getRet().equals(code.FAILED)) {
         low = mid;
       } else {
@@ -2887,7 +2888,7 @@ public class Wallet {
     txCap.setFeeLimit(high);
     txExtBuilder.clear();
     txRetBuilder.clear();
-    triggerConstantContract(triggerSmartContract, txCap, txExtBuilder, txRetBuilder);
+    transaction = triggerConstantContract(triggerSmartContract, txCap, txExtBuilder, txRetBuilder);
 
     // Setting estimating result
     estimateBuilder.setResult(txRetBuilder);
