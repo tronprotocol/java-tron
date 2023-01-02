@@ -48,15 +48,20 @@ public class VM {
           /* spend energy before execution */
           long energy = op.getEnergyCost(program);
           if (VMConfig.allowDynamicEnergy()) {
+            long actualEnergy = energy;
+            // CALL Ops have special calculation on energy.
+            if (CALL_OPS.contains(op.getOpcode())) {
+              actualEnergy = energy
+                  - program.getAdjustedCallEnergy().longValueSafe()
+                  - program.getCallPenaltyEnergy();
+            }
+            energyUsage += actualEnergy;
+
             if (factor > DYNAMIC_ENERGY_FACTOR_DECIMAL) {
-              long actualEnergy = energy;
               long penalty;
 
               // CALL Ops have special calculation on energy.
               if (CALL_OPS.contains(op.getOpcode())) {
-                actualEnergy = energy
-                    - program.getAdjustedCallEnergy().longValueSafe()
-                    - program.getCallPenaltyEnergy();
                 penalty = program.getCallPenaltyEnergy();
               } else {
                 penalty = energy * factor / DYNAMIC_ENERGY_FACTOR_DECIMAL - energy;
@@ -66,10 +71,8 @@ public class VM {
                 energy += penalty;
               }
 
-              energyUsage += actualEnergy;
               program.spendEnergyWithPenalty(energy, penalty, opName);
             } else {
-              energyUsage += energy;
               program.spendEnergy(energy, opName);
             }
 
