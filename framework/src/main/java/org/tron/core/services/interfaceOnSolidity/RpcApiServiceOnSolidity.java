@@ -391,6 +391,13 @@ public class RpcApiServiceOnSolidity implements Service {
           .triggerConstantContract(request, responseObserver));
     }
 
+    @Override
+    public void estimateEnergy(TriggerSmartContract request,
+        StreamObserver<GrpcAPI.EstimateEnergyMessage> responseObserver) {
+      walletOnSolidity.futureGet(() -> rpcApiService.getWalletSolidityApi()
+          .estimateEnergy(request, responseObserver));
+    }
+
 
     @Override
     public void generateAddress(EmptyMessage request,
