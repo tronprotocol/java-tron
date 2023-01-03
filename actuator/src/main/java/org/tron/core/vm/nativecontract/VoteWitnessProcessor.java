@@ -86,7 +86,6 @@ public class VoteWitnessProcessor {
       }
 
       long tronPower;
-      // fixme check if supportUnfreezeDelay needed
       if (repo.getDynamicPropertiesStore().supportUnfreezeDelay()
           && repo.getDynamicPropertiesStore().supportAllowNewResourceModel()) {
         tronPower = accountCapsule.getAllTronPower();
