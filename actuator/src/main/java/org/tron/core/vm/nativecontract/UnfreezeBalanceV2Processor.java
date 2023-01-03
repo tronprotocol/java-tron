@@ -1,7 +1,17 @@
 package org.tron.core.vm.nativecontract;
 
+import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
+import static org.tron.core.actuator.ActuatorConstant.STORE_NOT_EXIST;
+import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
+import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
+
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
@@ -16,17 +26,6 @@ import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.utils.VoteRewardUtil;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.Common;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
-import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
-import static org.tron.core.actuator.ActuatorConstant.STORE_NOT_EXIST;
-import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
-import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
-import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
-import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 
 @Slf4j(topic = "VMProcessor")
 public class UnfreezeBalanceV2Processor {
@@ -119,10 +118,10 @@ public class UnfreezeBalanceV2Processor {
   public long execute(UnfreezeBalanceV2Param param, Repository repo) {
     byte[] ownerAddress = param.getOwnerAddress();
     long unfreezeBalance = param.getUnfreezeBalance();
+    VoteRewardUtil.withdrawReward(ownerAddress, repo);
 
     AccountCapsule accountCapsule = repo.getAccount(ownerAddress);
     long now = repo.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
-    VoteRewardUtil.withdrawReward(ownerAddress, repo);
 
     long unfreezeExpireBalance = this.unfreezeExpire(accountCapsule, now);
 
