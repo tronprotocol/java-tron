@@ -174,6 +174,11 @@ Thank you for considering to help out with the source code! If you'd like to con
 * [Wallet-cli](https://github.com/tronprotocol/wallet-cli) TRON network wallet using command line.
 * [TIP](https://github.com/tronprotocol/tips) TRON Improvement Proposal (TIP) describes standards for the TRON network.
 * [TP](https://github.com/tronprotocol/tips/tree/master/tp) TRON Protocol (TP) describes standards already implemented in TRON network but not published as a TIP.
-
+# Integrity Check
+* After January 3, 2023， releases are signed the gpg key:
+  ```
+  pub: 1254 F859 D2B1 BD9F 66E7 107D F859 BCB4 4A28 290B
+  uid: build@tron.network
+  ```
 # License
 java-tron is released under the [LGPLv3 license](https://github.com/tronprotocol/java-tron/blob/master/LICENSE).
