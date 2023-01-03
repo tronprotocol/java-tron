@@ -238,10 +238,10 @@ public class ProgramResult {
 
   public void merge(ProgramResult another) {
     addInternalTransactions(another.getInternalTransactions());
+    addTotalPenalty(another.getEnergyPenaltyTotal());
     if (another.getException() == null && !another.isRevert()) {
       addDeleteAccounts(another.getDeleteAccounts());
       addLogInfos(another.getLogInfoList());
-      addTotalPenalty(another.getEnergyPenaltyTotal());
       //addFutureRefund(another.getFutureRefund());
       //addTouchAccounts(another.getTouchedAccounts());
     }
