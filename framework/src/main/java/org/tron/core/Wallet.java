@@ -2850,6 +2850,11 @@ public class Wallet {
       throw new ContractValidateException("this node does not support estimate energy");
     }
 
+    if (!Args.getInstance().supportConstant) {
+      throw new ContractValidateException("this node does not support constant, "
+          + "so estimate energy cannot work");
+    }
+
     DynamicPropertiesStore dps = chainBaseManager.getDynamicPropertiesStore();
     long high = dps.getMaxFeeLimit();
     txCap.setFeeLimit(high);
