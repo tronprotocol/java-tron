@@ -1791,7 +1791,6 @@ public class PrecompiledContracts {
       if (accountCapsule == null) {
         tronPower = 0;
       } else {
-        // fixme check if supportUnfreezeDelay needed
         if (getDeposit().getDynamicPropertiesStore().supportUnfreezeDelay()
             && getDeposit().getDynamicPropertiesStore().supportAllowNewResourceModel()) {
           tronPower = accountCapsule.getAllTronPower();
