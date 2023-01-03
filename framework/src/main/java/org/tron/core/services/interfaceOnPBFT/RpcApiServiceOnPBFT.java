@@ -405,6 +405,15 @@ public class RpcApiServiceOnPBFT implements Service {
       );
     }
 
+    @Override
+    public void estimateEnergy(TriggerSmartContract request,
+        StreamObserver<GrpcAPI.EstimateEnergyMessage> responseObserver) {
+      walletOnPBFT.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .estimateEnergy(request, responseObserver)
+      );
+    }
+
 
     @Override
     public void generateAddress(EmptyMessage request,

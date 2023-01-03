@@ -70,19 +70,34 @@ public class FreezeV2Util {
     }
 
     byte[] key = DelegatedResourceCapsule.createDbKeyV2(from, to, false);
+    byte[] lockKey = DelegatedResourceCapsule.createDbKeyV2(from, to, true);
     DelegatedResourceCapsule delegatedResource = repository.getDelegatedResource(key);
-    if (delegatedResource == null) {
+    DelegatedResourceCapsule lockDelegateResource = repository.getDelegatedResource(lockKey);
+    if (delegatedResource == null && lockDelegateResource == null) {
       return 0;
     }
 
+    long amount = 0;
     // BANDWIDTH
     if (type == 0) {
-      return delegatedResource.getFrozenBalanceForBandwidth();
+      if (delegatedResource != null) {
+        amount += delegatedResource.getFrozenBalanceForBandwidth();
+      }
+      if (lockDelegateResource != null) {
+        amount += lockDelegateResource.getFrozenBalanceForBandwidth();
+      }
+      return amount;
     }
 
     // ENERGY
     if (type == 1) {
-      return delegatedResource.getFrozenBalanceForEnergy();
+      if (delegatedResource != null) {
+        amount += delegatedResource.getFrozenBalanceForEnergy();
+      }
+      if (lockDelegateResource != null) {
+        amount += lockDelegateResource.getFrozenBalanceForEnergy();
+      }
+      return amount;
     }
 
     return 0;

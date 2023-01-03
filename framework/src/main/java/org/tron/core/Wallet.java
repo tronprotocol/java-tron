@@ -2847,7 +2847,12 @@ public class Wallet {
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
     if (!Args.getInstance().estimateEnergy) {
-      throw new ContractValidateException("this node does not estimate energy");
+      throw new ContractValidateException("this node does not support estimate energy");
+    }
+
+    if (!Args.getInstance().supportConstant) {
+      throw new ContractValidateException("this node does not support constant, "
+          + "so estimate energy cannot work");
     }
 
     DynamicPropertiesStore dps = chainBaseManager.getDynamicPropertiesStore();

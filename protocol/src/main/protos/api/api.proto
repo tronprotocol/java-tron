@@ -1012,6 +1012,9 @@ service WalletSolidity {
   rpc TriggerConstantContract (TriggerSmartContract) returns (TransactionExtention) {
   }
 
+  rpc EstimateEnergy (TriggerSmartContract) returns (EstimateEnergyMessage) {
+  }
+
   rpc GetTransactionInfoByBlockNum (NumberMessage) returns (TransactionInfoList) {
   }
 

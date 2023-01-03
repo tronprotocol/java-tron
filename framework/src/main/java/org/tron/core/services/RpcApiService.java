@@ -965,6 +965,38 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void estimateEnergy(TriggerSmartContract request,
+        StreamObserver<EstimateEnergyMessage> responseObserver) {
+      TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
+      Return.Builder retBuilder = Return.newBuilder();
+      EstimateEnergyMessage.Builder estimateBuilder
+          = EstimateEnergyMessage.newBuilder();
+
+      try {
+        TransactionCapsule trxCap = createTransactionCapsule(request,
+            ContractType.TriggerSmartContract);
+        wallet.estimateEnergy(request, trxCap, trxExtBuilder, retBuilder, estimateBuilder);
+      } catch (ContractValidateException | VMIllegalException e) {
+        retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
+            .setMessage(ByteString.copyFromUtf8(Wallet
+                .CONTRACT_VALIDATE_ERROR + e.getMessage()));
+        logger.warn(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
+      } catch (RuntimeException e) {
+        retBuilder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
+            .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
+        logger.warn("When run estimate energy in VM, have Runtime Exception: " + e.getMessage());
+      } catch (Exception e) {
+        retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
+            .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
+        logger.warn(UNKNOWN_EXCEPTION_CAUGHT + e.getMessage(), e);
+      } finally {
+        estimateBuilder.setResult(retBuilder);
+        responseObserver.onNext(estimateBuilder.build());
+        responseObserver.onCompleted();
+      }
+    }
+
+    @Override
     public void getTransactionInfoByBlockNum(NumberMessage request,
         StreamObserver<TransactionInfoList> responseObserver) {
       try {
