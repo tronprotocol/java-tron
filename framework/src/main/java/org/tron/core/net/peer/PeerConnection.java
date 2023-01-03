@@ -194,6 +194,8 @@ public class PeerConnection {
 
   public String log() {
     long now = System.currentTimeMillis();
+    BlockId syncBlockId = syncBlockToFetch.peek();
+    Pair<Deque<BlockId>, Long> requested = syncChainRequested;
     return String.format(
         "Peer %s\n"
             + "connect time: %ds [%sms]\n"
@@ -213,10 +215,10 @@ public class PeerConnection {
         isNeedSyncFromPeer(),
         isNeedSyncFromUs(),
         syncBlockToFetch.size(),
-        !syncBlockToFetch.isEmpty() ? syncBlockToFetch.peek().getNum() : -1,
+        syncBlockId != null ? syncBlockId.getNum() : -1,
         syncBlockRequested.size(),
         remainNum,
-        syncChainRequested == null ? 0 : (now - syncChainRequested.getValue())
+        requested == null ? 0 : (now - requested.getValue())
                 / Constant.ONE_THOUSAND,
         syncBlockInProcess.size());
   }
