@@ -189,6 +189,7 @@ import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.StoreFactory;
+import org.tron.core.vm.program.Program;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder.ShieldedTRC20ParametersType;
 import org.tron.core.zen.ZenTransactionBuilder;
@@ -2854,13 +2855,29 @@ public class Wallet {
       throw new ContractValidateException("this node does not support constant, "
           + "so estimate energy cannot work");
     }
+    int retry = Args.getInstance().estimateEnergyMaxRetry;
 
     DynamicPropertiesStore dps = chainBaseManager.getDynamicPropertiesStore();
     long high = dps.getMaxFeeLimit();
     txCap.setFeeLimit(high);
 
-    Transaction transaction = triggerConstantContract(
-        triggerSmartContract, txCap, txExtBuilder, txRetBuilder);
+    Transaction transaction;
+
+    while (true) {
+      try {
+        txCap.resetResult();
+        txExtBuilder.clear();
+        txRetBuilder.clear();
+        transaction = triggerConstantContract(
+            triggerSmartContract, txCap, txExtBuilder, txRetBuilder);
+        break;
+      } catch (Program.OutOfTimeException e) {
+        retry--;
+        if (retry < 0) {
+          throw e;
+        }
+      }
+    }
 
     // If failed, return directly.
     if (transaction.getRet(0).getRet().equals(code.FAILED)) {
@@ -2871,20 +2888,60 @@ public class Wallet {
 
     long low = dps.getEnergyFee() * txExtBuilder.getEnergyUsed();
 
+    long twoTimes = low * 2;
+    if (twoTimes < high) {
+      txCap.setFeeLimit(twoTimes);
+      while (true) {
+        try {
+          txCap.resetResult();
+          txExtBuilder.clear();
+          txRetBuilder.clear();
+          transaction = triggerConstantContract(
+              triggerSmartContract, txCap, txExtBuilder, txRetBuilder);
+
+          if (transaction.getRet(0).getRet().equals(code.SUCESS)) {
+            high = twoTimes;
+          }
+
+          break;
+        } catch (Program.OutOfTimeException e) {
+          retry--;
+          if (retry < 0) {
+            throw e;
+          }
+        }
+      }
+    }
+
     while (low + TRX_PRECISION < high) {
       // clean the prev exec data.
       txCap.resetResult();
       txExtBuilder.clear();
       txRetBuilder.clear();
 
-      long mid = (high + low) / 2;
-      txCap.setFeeLimit(mid);
-      transaction = triggerConstantContract(
-          triggerSmartContract, txCap, txExtBuilder, txRetBuilder);
+      long quarter = low + (high - low) / 4;
+      txCap.setFeeLimit(quarter);
+
+      while (true) {
+        try {
+          txCap.resetResult();
+          txExtBuilder.clear();
+          txRetBuilder.clear();
+          transaction = triggerConstantContract(
+              triggerSmartContract, txCap, txExtBuilder, txRetBuilder);
+          break;
+        } catch (Program.OutOfTimeException e) {
+          retry--;
+          if (retry < 0) {
+            throw e;
+          }
+        }
+      }
+
       if (transaction.getRet(0).getRet().equals(code.FAILED)) {
-        low = mid;
+        low = quarter;
       } else {
-        high = mid;
+        high = quarter;
       }
     }
 

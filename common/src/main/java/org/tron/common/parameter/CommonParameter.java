@@ -299,6 +299,9 @@ public class CommonParameter {
   public boolean estimateEnergy;
   @Getter
   @Setter
+  public int estimateEnergyMaxRetry;
+  @Getter
+  @Setter
   public int backupPriority;
   @Getter
   @Setter
