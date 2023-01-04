@@ -81,17 +81,17 @@ $ ./gradlew clean build -x test
 # Running java-tron
 Running java-tron requires `Oracle JDK 1.8` to be installed, other JDK versions are not supported yet. Make sure you operate on `Linux` and `MacOS` operating systems.
 
-Get the mainnet configurate file: [main_net_config.conf](https://github.com/tronprotocol/tron-deployment/blob/master/main_net_config.conf), other network configuration files can be find [here](https://github.com/tronprotocol/tron-deployment).
+Get the mainnet configuration file: [main_net_config.conf](https://github.com/tronprotocol/tron-deployment/blob/master/main_net_config.conf), other network configuration files can be find [here](https://github.com/tronprotocol/tron-deployment).
 ## Hardware Requirements
 Minimum:
 * CPU with 8 cores
 * 16GB RAM
-* 1TB free storage space to sync the Mainnet
+* 2TB free storage space to sync the Mainnet
 
 Recommended:
 * CPU with 16+ cores(32+ cores for a super representative)
 * 32GB+ RAM(64GB+ for a super representative)
-* High Performance SSD with at least 1.5TB free space
+* High Performance SSD with at least 2.5TB free space
 * 100+ MB/s download Internet service
 
 
