@@ -236,7 +236,7 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
         options.setLogger(new Logger(options) {
           @Override
           protected void log(InfoLogLevel infoLogLevel, String logMsg) {
-            rocksDbLogger.info(logMsg);
+            rocksDbLogger.info("{} {}", dataBaseName, logMsg);
           }
         });
 

@@ -73,7 +73,13 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   private WriteOptions writeOptions;
   private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
   private static final String LEVELDB = "LEVELDB";
-  private static final Logger leveldbLogger = LoggerFactory.getLogger(LEVELDB)::info;
+  private static final org.slf4j.Logger innerLogger = LoggerFactory.getLogger(LEVELDB);
+  private Logger leveldbLogger = new Logger() {
+    @Override
+    public void log(String message) {
+      innerLogger.info("{} {}", dataBaseName, message);
+    }
+  };
 
   /**
    * constructor.
@@ -155,21 +161,6 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     }
   }
 
-  @Deprecated
-  private Options createDbOptions() {
-    Options dbOptions = new Options();
-    dbOptions.createIfMissing(true);
-    dbOptions.compressionType(CompressionType.NONE);
-    dbOptions.blockSize(10 * 1024 * 1024);
-    dbOptions.writeBufferSize(10 * 1024 * 1024);
-    dbOptions.cacheSize(0);
-    dbOptions.paranoidChecks(true);
-    dbOptions.verifyChecksums(true);
-    dbOptions.maxOpenFiles(32);
-    dbOptions.logger(leveldbLogger);
-    return dbOptions;
-  }
-
   public Path getDbPath() {
     return Paths.get(parentPath, dataBaseName);
   }
@@ -191,24 +182,6 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   @Override
   public boolean isAlive() {
     return alive;
-  }
-
-  /**
-   * destroy database.
-   */
-  public void destroyDb(File fileLocation) {
-    resetDbLock.writeLock().lock();
-    try {
-      logger.debug("Destroying existing database: " + fileLocation);
-      Options options = new Options().logger(leveldbLogger);
-      try {
-        factory.destroy(fileLocation, options);
-      } catch (IOException e) {
-        logger.error(e.getMessage(), e);
-      }
-    } finally {
-      resetDbLock.writeLock().unlock();
-    }
   }
 
   @Override
@@ -488,10 +461,6 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
 
   public Stream<Entry<byte[], byte[]>> stream() {
     return StreamSupport.stream(spliterator(), false);
-  }
-
-  public Stream<Entry<byte[], byte[]>> parallelStream() {
-    return StreamSupport.stream(spliterator(), true);
   }
 
   @Override
