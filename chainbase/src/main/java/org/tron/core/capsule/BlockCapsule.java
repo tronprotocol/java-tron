@@ -284,6 +284,10 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     return this.block;
   }
 
+  public long getSerializedSize() {
+    return this.block.getSerializedSize();
+  }
+
   public Sha256Hash getParentHash() {
     return Sha256Hash.wrap(this.block.getBlockHeader().getRawData().getParentHash());
   }

@@ -1570,7 +1570,8 @@ public class Manager {
       }
 
       // check the block size
-      if ((currentSize + trx.getSerializedSize() + 3)
+      long trxPackSize = trx.computeTrxSizeForBlockMessage();
+      if ((currentSize + trxPackSize)
           > ChainConstant.BLOCK_SIZE) {
         postponedTrxCount++;
         continue; // try pack more small trx
@@ -1601,7 +1602,7 @@ public class Manager {
         accountStateCallBack.exeTransFinish();
         tmpSession.merge();
         toBePacked.add(trx);
-        currentSize += trx.getSerializedSize() + 2; // proto tag num is 1 , so tag size is 2
+        currentSize += trxPackSize;
       } catch (Exception e) {
         logger.error("Process trx {} failed when generating block {}, {}.", trx.getTransactionId(),
             blockCapsule.getNum(), e.getMessage());
@@ -1612,17 +1613,17 @@ public class Manager {
 
     session.reset();
 
-    logger.info("Generate block {} success, trxs:{}, pendingCount: {}, rePushCount: {},"
-            + " postponedCount: {}, blockSize: {} B",
-        blockCapsule.getNum(), blockCapsule.getTransactions().size(),
-        pendingTransactions.size(), rePushTransactions.size(), postponedTrxCount, currentSize);
-
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(miner.getPrivateKey());
 
     BlockCapsule capsule = new BlockCapsule(blockCapsule.getInstance());
     capsule.generatedByMyself = true;
     Metrics.histogramObserve(timer);
+    logger.info("Generate block {} success, trxs:{}, pendingCount: {}, rePushCount: {},"
+                    + " postponedCount: {}, blockSize: {} B",
+            capsule.getNum(), capsule.getTransactions().size(),
+            pendingTransactions.size(), rePushTransactions.size(), postponedTrxCount,
+            capsule.getSerializedSize());
     return capsule;
   }
 
