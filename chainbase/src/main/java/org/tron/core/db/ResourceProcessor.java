@@ -80,8 +80,7 @@ abstract class ResourceProcessor {
       }
     }
 
-    long newUsage = getUsage(averageLastUsage, oldWindowSize)
-        + getUsage(averageUsage, this.windowSize);
+    long newUsage = getUsage(averageLastUsage, oldWindowSize, averageUsage, this.windowSize);
     if (dynamicPropertiesStore.supportUnfreezeDelay()) {
       long remainUsage = getUsage(averageLastUsage, oldWindowSize);
       if (remainUsage == 0) {
@@ -128,6 +127,10 @@ abstract class ResourceProcessor {
 
   private long getUsage(long usage, long windowSize) {
     return usage * windowSize / precision;
+  }
+
+  private long getUsage(long oldUsage, long oldWindowSize, long newUsage, long newWindowSize) {
+    return (oldUsage * oldWindowSize + newUsage * newWindowSize) / precision;
   }
 
   protected boolean consumeFeeForBandwidth(AccountCapsule accountCapsule, long fee) {
