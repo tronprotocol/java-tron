@@ -2865,10 +2865,7 @@ public class Wallet {
 
     while (true) {
       try {
-        txCap.resetResult();
-        txExtBuilder.clear();
-        txRetBuilder.clear();
-        transaction = triggerConstantContract(
+        transaction = cleanContextAndTriggerConstantContract(
             triggerSmartContract, txCap, txExtBuilder, txRetBuilder);
         break;
       } catch (Program.OutOfTimeException e) {
@@ -2893,10 +2890,7 @@ public class Wallet {
       txCap.setFeeLimit(twoTimes);
       while (true) {
         try {
-          txCap.resetResult();
-          txExtBuilder.clear();
-          txRetBuilder.clear();
-          transaction = triggerConstantContract(
+          transaction = cleanContextAndTriggerConstantContract(
               triggerSmartContract, txCap, txExtBuilder, txRetBuilder);
 
           if (transaction.getRet(0).getRet().equals(code.FAILED)) {
@@ -2926,10 +2920,7 @@ public class Wallet {
 
       while (true) {
         try {
-          txCap.resetResult();
-          txExtBuilder.clear();
-          txRetBuilder.clear();
-          transaction = triggerConstantContract(
+          transaction = cleanContextAndTriggerConstantContract(
               triggerSmartContract, txCap, txExtBuilder, txRetBuilder);
           break;
         } catch (Program.OutOfTimeException e) {
@@ -2948,12 +2939,9 @@ public class Wallet {
     }
 
     // Retry the binary search result
-    txCap.resetResult();
     txCap.setFeeLimit(high);
-    txExtBuilder.clear();
-    txRetBuilder.clear();
-    transaction = triggerConstantContract(triggerSmartContract, txCap, txExtBuilder, txRetBuilder);
-
+    transaction = cleanContextAndTriggerConstantContract(
+        triggerSmartContract, txCap, txExtBuilder, txRetBuilder);
     // Setting estimating result
     estimateBuilder.setResult(txRetBuilder);
     if (transaction.getRet(0).getRet().equals(code.SUCESS)) {
@@ -2962,6 +2950,19 @@ public class Wallet {
       estimateBuilder.setEnergyRequired((long) Math.ceil((double) high / dps.getEnergyFee()));
     }
 
+    return transaction;
+  }
+
+  private Transaction cleanContextAndTriggerConstantContract(
+      TriggerSmartContract triggerSmartContract, TransactionCapsule txCap,
+      Builder txExtBuilder, Return.Builder txRetBuilder)
+      throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
+    Transaction transaction;
+    txCap.resetResult();
+    txExtBuilder.clear();
+    txRetBuilder.clear();
+    transaction = triggerConstantContract(
+        triggerSmartContract, txCap, txExtBuilder, txRetBuilder);
     return transaction;
   }
 
