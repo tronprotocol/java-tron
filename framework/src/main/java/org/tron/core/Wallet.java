@@ -2859,14 +2859,13 @@ public class Wallet {
 
     DynamicPropertiesStore dps = chainBaseManager.getDynamicPropertiesStore();
     long high = dps.getMaxFeeLimit();
-    txCap.setFeeLimit(high);
 
     Transaction transaction;
 
     while (true) {
       try {
         transaction = cleanContextAndTriggerConstantContract(
-            triggerSmartContract, txCap, txExtBuilder, txRetBuilder);
+            triggerSmartContract, txCap, txExtBuilder, txRetBuilder, high);
         break;
       } catch (Program.OutOfTimeException e) {
         retry--;
@@ -2887,11 +2886,10 @@ public class Wallet {
 
     long twoTimes = low * 2;
     if (twoTimes < high) {
-      txCap.setFeeLimit(twoTimes);
       while (true) {
         try {
           transaction = cleanContextAndTriggerConstantContract(
-              triggerSmartContract, txCap, txExtBuilder, txRetBuilder);
+              triggerSmartContract, txCap, txExtBuilder, txRetBuilder, twoTimes);
 
           if (transaction.getRet(0).getRet().equals(code.FAILED)) {
             low = twoTimes;
@@ -2910,18 +2908,12 @@ public class Wallet {
     }
 
     while (low + TRX_PRECISION < high) {
-      // clean the prev exec data.
-      txCap.resetResult();
-      txExtBuilder.clear();
-      txRetBuilder.clear();
-
       long mid = (low + high) / 2;
-      txCap.setFeeLimit(mid);
 
       while (true) {
         try {
           transaction = cleanContextAndTriggerConstantContract(
-              triggerSmartContract, txCap, txExtBuilder, txRetBuilder);
+              triggerSmartContract, txCap, txExtBuilder, txRetBuilder, mid);
           break;
         } catch (Program.OutOfTimeException e) {
           retry--;
@@ -2939,9 +2931,8 @@ public class Wallet {
     }
 
     // Retry the binary search result
-    txCap.setFeeLimit(high);
     transaction = cleanContextAndTriggerConstantContract(
-        triggerSmartContract, txCap, txExtBuilder, txRetBuilder);
+        triggerSmartContract, txCap, txExtBuilder, txRetBuilder, high);
     // Setting estimating result
     estimateBuilder.setResult(txRetBuilder);
     if (transaction.getRet(0).getRet().equals(code.SUCESS)) {
@@ -2955,9 +2946,10 @@ public class Wallet {
 
   private Transaction cleanContextAndTriggerConstantContract(
       TriggerSmartContract triggerSmartContract, TransactionCapsule txCap,
-      Builder txExtBuilder, Return.Builder txRetBuilder)
+      Builder txExtBuilder, Return.Builder txRetBuilder, long feeLimit)
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
     Transaction transaction;
+    txCap.setFeeLimit(feeLimit);
     txCap.resetResult();
     txExtBuilder.clear();
     txRetBuilder.clear();
