@@ -2899,7 +2899,9 @@ public class Wallet {
           transaction = triggerConstantContract(
               triggerSmartContract, txCap, txExtBuilder, txRetBuilder);
 
-          if (transaction.getRet(0).getRet().equals(code.SUCESS)) {
+          if (transaction.getRet(0).getRet().equals(code.FAILED)) {
+            low = twoTimes;
+          } else {
             high = twoTimes;
           }
 
