@@ -189,6 +189,7 @@ import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.StoreFactory;
+import org.tron.core.vm.program.Program;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder.ShieldedTRC20ParametersType;
 import org.tron.core.zen.ZenTransactionBuilder;
@@ -2854,13 +2855,25 @@ public class Wallet {
       throw new ContractValidateException("this node does not support constant, "
           + "so estimate energy cannot work");
     }
+    int retry = Args.getInstance().estimateEnergyMaxRetry;
 
     DynamicPropertiesStore dps = chainBaseManager.getDynamicPropertiesStore();
     long high = dps.getMaxFeeLimit();
-    txCap.setFeeLimit(high);
 
-    Transaction transaction = triggerConstantContract(
-        triggerSmartContract, txCap, txExtBuilder, txRetBuilder);
+    Transaction transaction;
+
+    while (true) {
+      try {
+        transaction = cleanContextAndTriggerConstantContract(
+            triggerSmartContract, txCap, txExtBuilder, txRetBuilder, high);
+        break;
+      } catch (Program.OutOfTimeException e) {
+        retry--;
+        if (retry < 0) {
+          throw e;
+        }
+      }
+    }
 
     // If failed, return directly.
     if (transaction.getRet(0).getRet().equals(code.FAILED)) {
@@ -2871,16 +2884,45 @@ public class Wallet {
 
     long low = dps.getEnergyFee() * txExtBuilder.getEnergyUsed();
 
-    while (low + TRX_PRECISION < high) {
-      // clean the prev exec data.
-      txCap.resetResult();
-      txExtBuilder.clear();
-      txRetBuilder.clear();
+    long twoTimes = low * 2;
+    if (twoTimes < high) {
+      while (true) {
+        try {
+          transaction = cleanContextAndTriggerConstantContract(
+              triggerSmartContract, txCap, txExtBuilder, txRetBuilder, twoTimes);
 
-      long mid = (high + low) / 2;
-      txCap.setFeeLimit(mid);
-      transaction = triggerConstantContract(
-          triggerSmartContract, txCap, txExtBuilder, txRetBuilder);
+          if (transaction.getRet(0).getRet().equals(code.FAILED)) {
+            low = twoTimes;
+          } else {
+            high = twoTimes;
+          }
+
+          break;
+        } catch (Program.OutOfTimeException e) {
+          retry--;
+          if (retry < 0) {
+            throw e;
+          }
+        }
+      }
+    }
+
+    while (low + TRX_PRECISION < high) {
+      long mid = (low + high) / 2;
+
+      while (true) {
+        try {
+          transaction = cleanContextAndTriggerConstantContract(
+              triggerSmartContract, txCap, txExtBuilder, txRetBuilder, mid);
+          break;
+        } catch (Program.OutOfTimeException e) {
+          retry--;
+          if (retry < 0) {
+            throw e;
+          }
+        }
+      }
+
       if (transaction.getRet(0).getRet().equals(code.FAILED)) {
         low = mid;
       } else {
@@ -2889,12 +2931,8 @@ public class Wallet {
     }
 
     // Retry the binary search result
-    txCap.resetResult();
-    txCap.setFeeLimit(high);
-    txExtBuilder.clear();
-    txRetBuilder.clear();
-    transaction = triggerConstantContract(triggerSmartContract, txCap, txExtBuilder, txRetBuilder);
-
+    transaction = cleanContextAndTriggerConstantContract(
+        triggerSmartContract, txCap, txExtBuilder, txRetBuilder, high);
     // Setting estimating result
     estimateBuilder.setResult(txRetBuilder);
     if (transaction.getRet(0).getRet().equals(code.SUCESS)) {
@@ -2903,6 +2941,20 @@ public class Wallet {
       estimateBuilder.setEnergyRequired((long) Math.ceil((double) high / dps.getEnergyFee()));
     }
 
+    return transaction;
+  }
+
+  private Transaction cleanContextAndTriggerConstantContract(
+      TriggerSmartContract triggerSmartContract, TransactionCapsule txCap,
+      Builder txExtBuilder, Return.Builder txRetBuilder, long feeLimit)
+      throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
+    Transaction transaction;
+    txCap.setFeeLimit(feeLimit);
+    txCap.resetResult();
+    txExtBuilder.clear();
+    txRetBuilder.clear();
+    transaction = triggerConstantContract(
+        triggerSmartContract, txCap, txExtBuilder, txRetBuilder);
     return transaction;
   }
 

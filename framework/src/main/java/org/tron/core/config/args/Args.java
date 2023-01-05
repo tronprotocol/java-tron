@@ -169,6 +169,7 @@ public class Args extends CommonParameter {
     PARAMETER.trustNodeAddr = "";
     PARAMETER.walletExtensionApi = false;
     PARAMETER.estimateEnergy = false;
+    PARAMETER.estimateEnergyMaxRetry = 3;
     PARAMETER.receiveTcpMinDataLength = 2048;
     PARAMETER.isOpenFullTcpDisconnect = false;
     PARAMETER.supportConstant = false;
@@ -796,6 +797,14 @@ public class Args extends CommonParameter {
     PARAMETER.estimateEnergy =
         config.hasPath(Constant.VM_ESTIMATE_ENERGY)
             && config.getBoolean(Constant.VM_ESTIMATE_ENERGY);
+    PARAMETER.estimateEnergyMaxRetry = config.hasPath(Constant.VM_ESTIMATE_ENERGY_MAX_RETRY)
+        ? config.getInt(Constant.VM_ESTIMATE_ENERGY_MAX_RETRY) : 3;
+    if (PARAMETER.estimateEnergyMaxRetry < 0) {
+      PARAMETER.estimateEnergyMaxRetry = 0;
+    }
+    if (PARAMETER.estimateEnergyMaxRetry > 10) {
+      PARAMETER.estimateEnergyMaxRetry = 10;
+    }
 
     PARAMETER.receiveTcpMinDataLength = config.hasPath(Constant.NODE_RECEIVE_TCP_MIN_DATA_LENGTH)
         ? config.getLong(Constant.NODE_RECEIVE_TCP_MIN_DATA_LENGTH) : 2048;
