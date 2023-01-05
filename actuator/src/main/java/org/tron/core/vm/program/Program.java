@@ -617,6 +617,7 @@ public class Program {
         votesCapsule.clearNewVotes();
       }
       ownerCapsule.clearVotes();
+      ownerCapsule.setOldTronPower(0);
       repo.updateVotes(owner, votesCapsule);
     }
     try {
