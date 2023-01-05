@@ -2921,8 +2921,8 @@ public class Wallet {
       txExtBuilder.clear();
       txRetBuilder.clear();
 
-      long quarter = low + (high - low) / 4;
-      txCap.setFeeLimit(quarter);
+      long mid = (low + high) / 2;
+      txCap.setFeeLimit(mid);
 
       while (true) {
         try {
@@ -2941,9 +2941,9 @@ public class Wallet {
       }
 
       if (transaction.getRet(0).getRet().equals(code.FAILED)) {
-        low = quarter;
+        low = mid;
       } else {
-        high = quarter;
+        high = mid;
       }
     }
 
