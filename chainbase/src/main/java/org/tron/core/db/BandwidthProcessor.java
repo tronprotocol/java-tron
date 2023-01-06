@@ -193,15 +193,24 @@ public class BandwidthProcessor extends ResourceProcessor {
     long netUsage = accountCapsule.getNetUsage();
     long latestConsumeTime = accountCapsule.getLatestConsumeTime();
     long netLimit = calculateGlobalNetLimit(accountCapsule);
-    // only participate in the calculation as a temporary variable, without disk flushing
-    long recoveryNetUsage = recovery(accountCapsule, BANDWIDTH, netUsage, latestConsumeTime, now);
+    long newNetUsage;
+    if (!dynamicPropertiesStore.supportUnfreezeDelay()) {
+      newNetUsage = increase(netUsage, 0, latestConsumeTime, now);
+    } else {
+      // only participate in the calculation as a temporary variable, without disk flushing
+      newNetUsage = recovery(accountCapsule, BANDWIDTH, netUsage, latestConsumeTime, now);
+    }
 
     long netCost = bytes * createNewAccountBandwidthRatio;
-    if (netCost <= (netLimit - recoveryNetUsage)) {
+    if (netCost <= (netLimit - newNetUsage)) {
       long latestOperationTime = chainBaseManager.getHeadBlockTimeStamp();
-      // Participate in calculation and flush disk persistence
-      long newNetUsage = increase(accountCapsule, BANDWIDTH,
-              netUsage, netCost, latestConsumeTime, now);
+      if (!dynamicPropertiesStore.supportUnfreezeDelay()) {
+        newNetUsage = increase(newNetUsage, netCost, now, now);
+      } else {
+        // Participate in calculation and flush disk persistence
+        newNetUsage = increase(accountCapsule, BANDWIDTH,
+            netUsage, netCost, latestConsumeTime, now);
+      }
       accountCapsule.setLatestConsumeTime(now);
       accountCapsule.setLatestOperationTime(latestOperationTime);
       accountCapsule.setNetUsage(newNetUsage);
@@ -328,23 +337,33 @@ public class BandwidthProcessor extends ResourceProcessor {
     long issuerNetUsage = issuerAccountCapsule.getNetUsage();
     long latestConsumeTime = issuerAccountCapsule.getLatestConsumeTime();
     long issuerNetLimit = calculateGlobalNetLimit(issuerAccountCapsule);
-    // only participate in the calculation as a temporary variable, without disk flushing
-    long recoveryIssuerNetUsage = recovery(issuerAccountCapsule, BANDWIDTH, issuerNetUsage,
-        latestConsumeTime, now);
+    long newIssuerNetUsage;
+    if (!dynamicPropertiesStore.supportUnfreezeDelay()) {
+      newIssuerNetUsage = increase(issuerNetUsage, 0, latestConsumeTime, now);
+    } else {
+      // only participate in the calculation as a temporary variable, without disk flushing
+      newIssuerNetUsage = recovery(issuerAccountCapsule, BANDWIDTH, issuerNetUsage,
+          latestConsumeTime, now);
+    }
 
-    if (bytes > (issuerNetLimit - recoveryIssuerNetUsage)) {
+    if (bytes > (issuerNetLimit - newIssuerNetUsage)) {
       logger.debug("The {} issuer's bandwidth is not enough."
-              + " Bytes: {}, issuerNetLimit: {}, recoveryIssuerNetUsage:{}.",
-          tokenID, bytes, issuerNetLimit, recoveryIssuerNetUsage);
+              + " Bytes: {}, issuerNetLimit: {}, newIssuerNetUsage:{}.",
+          tokenID, bytes, issuerNetLimit, newIssuerNetUsage);
       return false;
     }
 
     latestAssetOperationTime = now;
     publicLatestFreeNetTime = now;
     long latestOperationTime = chainBaseManager.getHeadBlockTimeStamp();
-    // Participate in calculation and flush disk persistence
-    long newIssuerNetUsage = increase(issuerAccountCapsule, BANDWIDTH,
-            issuerNetUsage, bytes, latestConsumeTime, now);
+    if (!dynamicPropertiesStore.supportUnfreezeDelay()) {
+      newIssuerNetUsage = increase(newIssuerNetUsage, bytes, now, now);
+    } else {
+      // Participate in calculation and flush disk persistence
+      newIssuerNetUsage = increase(issuerAccountCapsule, BANDWIDTH,
+          issuerNetUsage, bytes, latestConsumeTime, now);
+    }
+
     newFreeAssetNetUsage = increase(newFreeAssetNetUsage,
         bytes, latestAssetOperationTime, now);
     newPublicFreeAssetNetUsage = increase(newPublicFreeAssetNetUsage, bytes,
@@ -424,19 +443,31 @@ public class BandwidthProcessor extends ResourceProcessor {
     long netUsage = accountCapsule.getNetUsage();
     long latestConsumeTime = accountCapsule.getLatestConsumeTime();
     long netLimit = calculateGlobalNetLimit(accountCapsule);
-    // only participate in the calculation as a temporary variable, without disk flushing
-    long recoveryNetUsage = recovery(accountCapsule, BANDWIDTH, netUsage, latestConsumeTime, now);
 
-    if (bytes > (netLimit - recoveryNetUsage)) {
+    long newNetUsage;
+    if (!dynamicPropertiesStore.supportUnfreezeDelay()) {
+      newNetUsage = increase(netUsage, 0, latestConsumeTime, now);
+    } else {
+      // only participate in the calculation as a temporary variable, without disk flushing
+      newNetUsage = recovery(accountCapsule, BANDWIDTH, netUsage, latestConsumeTime, now);
+    }
+
+
+    if (bytes > (netLimit - newNetUsage)) {
       logger.debug("Net usage is running out, now use free net usage."
-              + " Bytes: {}, netLimit: {}, recoveryNetUsage: {}.",
-          bytes, netLimit, recoveryNetUsage);
+              + " Bytes: {}, netLimit: {}, newNetUsage: {}.",
+          bytes, netLimit, newNetUsage);
       return false;
     }
 
     long latestOperationTime = chainBaseManager.getHeadBlockTimeStamp();
-    // Participate in calculation and flush disk persistence
-    long newNetUsage = increase(accountCapsule, BANDWIDTH, netUsage, bytes, latestConsumeTime, now);
+    if (!dynamicPropertiesStore.supportUnfreezeDelay()) {
+      newNetUsage = increase(newNetUsage, bytes, now, now);
+    } else {
+      // Participate in calculation and flush disk persistence
+      newNetUsage = increase(accountCapsule, BANDWIDTH, netUsage, bytes, latestConsumeTime, now);
+    }
+
     accountCapsule.setNetUsage(newNetUsage);
     accountCapsule.setLatestOperationTime(latestOperationTime);
     accountCapsule.setLatestConsumeTime(now);

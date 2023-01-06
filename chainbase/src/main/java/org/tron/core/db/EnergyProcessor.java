@@ -101,20 +101,30 @@ public class EnergyProcessor extends ResourceProcessor {
     long energyUsage = accountCapsule.getEnergyUsage();
     long latestConsumeTime = accountCapsule.getAccountResource().getLatestConsumeTimeForEnergy();
     long energyLimit = calculateGlobalEnergyLimit(accountCapsule);
-    // only participate in the calculation as a temporary variable, without disk flushing
-    long recoveryEnergyUsage = recovery(accountCapsule, ENERGY, energyUsage,
-        latestConsumeTime, now);
+    long newEnergyUsage;
+    if (!dynamicPropertiesStore.supportUnfreezeDelay()) {
+      newEnergyUsage = increase(energyUsage, 0, latestConsumeTime, now);
+    } else {
+      // only participate in the calculation as a temporary variable, without disk flushing
+      newEnergyUsage = recovery(accountCapsule, ENERGY, energyUsage,
+          latestConsumeTime, now);
+    }
 
-    if (energy > (energyLimit - recoveryEnergyUsage)
+    if (energy > (energyLimit - newEnergyUsage)
         && dynamicPropertiesStore.getAllowTvmFreeze() == 0
         && !dynamicPropertiesStore.supportUnfreezeDelay()) {
       return false;
     }
 
     long latestOperationTime = dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
-    // Participate in calculation and flush disk persistence
-    long newEnergyUsage = increase(accountCapsule, ENERGY, energyUsage, energy,
-        latestConsumeTime, now);
+    if (!dynamicPropertiesStore.supportUnfreezeDelay()) {
+      newEnergyUsage = increase(newEnergyUsage, energy, now, now);
+    } else {
+      // Participate in calculation and flush disk persistence
+      newEnergyUsage = increase(accountCapsule, ENERGY, energyUsage, energy,
+          latestConsumeTime, now);
+    }
+
     accountCapsule.setEnergyUsage(newEnergyUsage);
     accountCapsule.setLatestOperationTime(latestOperationTime);
     accountCapsule.setLatestConsumeTimeForEnergy(now);
