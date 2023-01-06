@@ -81,7 +81,7 @@ public abstract class ConditionallyStopTest extends BlockGenerate {
     consensusService.start();
     chainManager = dbManager.getChainBaseManager();
     tronNetDelegate = context.getBean(TronNetDelegate.class);
-    tronNetDelegate.setTest(true);
+    tronNetDelegate.setExit(false);
     currentHeader = dbManager.getDynamicPropertiesStore()
         .getLatestBlockHeaderNumberFromDB();
   }

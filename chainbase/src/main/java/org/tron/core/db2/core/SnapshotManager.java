@@ -7,7 +7,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -15,6 +14,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
-
+import javax.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -49,7 +49,6 @@ import org.tron.core.store.CheckTmpStore;
 @Slf4j(topic = "DB")
 public class SnapshotManager implements RevokingDatabase {
 
-  public static final int DEFAULT_MAX_FLUSH_COUNT = 500;
   public static final int DEFAULT_MIN_FLUSH_COUNT = 1;
   private static final int DEFAULT_STACK_MAX_SIZE = 256;
   private static final long ONE_MINUTE_MILLS = 60*1000L;
@@ -115,6 +114,17 @@ public class SnapshotManager implements RevokingDatabase {
     });
     exitThread.setName("exit-thread");
     exitThread.start();
+  }
+
+  @PreDestroy
+  public void close() {
+    try {
+      exitThread.interrupt();
+      // help GC
+      exitThread = null;
+    } catch (Exception e) {
+      logger.warn("exitThread interrupt error", e);
+    }
   }
 
   public static String simpleDecode(byte[] bytes) {
@@ -375,6 +385,12 @@ public class SnapshotManager implements RevokingDatabase {
         }
 
         String dbName = db.getDbName();
+
+        if (Objects.equals(dbName, "trans-cache")) {
+          // trans-cache is deprecated
+          continue;
+        }
+
         Snapshot next = head.getRoot();
         for (int i = 0; i < flushCount; ++i) {
           next = next.getNext();

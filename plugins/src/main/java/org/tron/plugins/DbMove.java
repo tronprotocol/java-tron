@@ -15,12 +15,15 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import me.tongfei.progressbar.ProgressBar;
+import org.tron.plugins.utils.FileUtils;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
+@Slf4j(topic = "move")
 @Command(name = "mv", aliases = "move",
-    description = "mv db to pre-set new path . For example HDD,reduce storage expenses.")
+    description = "Move db to pre-set new path . For example HDD,reduce storage expenses.")
 public class DbMove implements Callable<Integer> {
 
   private static final String PROPERTIES_CONFIG_KEY = "storage.properties";
@@ -35,24 +38,24 @@ public class DbMove implements Callable<Integer> {
 
   @CommandLine.Option(names = {"-d", "--database-directory"},
       defaultValue = "output-directory",
-      converter = Db.PathConverter.class,
+      converter = PathConverter.class,
       description = "database directory path. Default: ${DEFAULT-VALUE}")
   static Path database;
 
   @CommandLine.Option(names = {"-c", "--config"},
       defaultValue = "config.conf",
       converter = ConfigConverter.class,
-      order = Integer.MAX_VALUE,
       description = " config file. Default: ${DEFAULT-VALUE}")
   Config config;
 
-  @CommandLine.Option(names = {"-h", "--help"}, help = true, description = "display a help message")
-  boolean help;
+  @CommandLine.Option(names = {"-h", "--help"})
+  static boolean help;
 
   @Override
   public Integer call() throws Exception {
     if (help) {
       spec.commandLine().usage(System.out);
+      help = false;
       return 0;
     }
 
@@ -129,7 +132,7 @@ public class DbMove implements Callable<Integer> {
             }
           });
       try {
-        if (deleteDir(p.original.toFile())) {
+        if (FileUtils.deleteDir(p.original.toFile())) {
           Files.createSymbolicLink(p.original, p.destination);
         }
       } catch (IOException | UnsupportedOperationException x) {
@@ -144,20 +147,6 @@ public class DbMove implements Callable<Integer> {
     spec.commandLine().getErr().println(NOT_FIND);
   }
 
-  /**
-   * delete directory.
-   */
-  public static boolean deleteDir(File dir) {
-    if (dir.isDirectory()) {
-      String[] children = dir.list();
-      if (children != null) {
-        for (String child : children) {
-          deleteDir(new File(dir, child));
-        }
-      }
-    }
-    return dir.delete();
-  }
 
   static class Property {
 
@@ -174,7 +163,7 @@ public class DbMove implements Callable<Integer> {
       if (this.original.toFile().isFile()) {
         throw new IOException(this.original + " is a file!");
       }
-      if (isSymbolicLink(original.toFile())) {
+      if (FileUtils.isSymbolicLink(original.toFile())) {
         throw new IOException(original + " is  symbolicLink!");
       }
       this.destination = destination.toFile().getCanonicalFile().toPath();
@@ -184,21 +173,6 @@ public class DbMove implements Callable<Integer> {
       if (this.destination.equals(this.original)) {
         throw new IOException("destination and original can not be same:[" + this.original + "]!");
       }
-    }
-
-    public boolean isSymbolicLink(File file) throws IOException {
-      if (file == null) {
-        throw new NullPointerException("File must not be null");
-      }
-
-      File canon;
-      if (file.getParent() == null) {
-        canon = file;
-      } else {
-        File canonDir = file.getParentFile().getCanonicalFile();
-        canon = new File(canonDir, file.getName());
-      }
-      return !canon.getCanonicalFile().equals(canon.getAbsoluteFile());
     }
   }
 
@@ -210,6 +184,9 @@ public class DbMove implements Callable<Integer> {
     }
 
     public Config convert(String value) throws Exception {
+      if (help) {
+        return null;
+      }
       File file  = Paths.get(value).toFile();
       if (file.exists() && file.isFile()) {
         Config config = ConfigFactory.parseFile(Paths.get(value).toFile());
@@ -245,6 +222,23 @@ public class DbMove implements Callable<Integer> {
         return config;
       } else {
         throw new IOException("DB config [" + value + "] not exist!");
+      }
+    }
+  }
+
+  static class PathConverter implements CommandLine.ITypeConverter<Path> {
+    PathConverter() {
+    }
+
+    public Path convert(String value) throws IOException {
+      if (help) {
+        return null;
+      }
+      File file  = Paths.get(value).toFile();
+      if (file.exists() && file.isDirectory()) {
+        return file.toPath();
+      } else {
+        throw new IOException("DB path [" + value + "] not exist!");
       }
     }
   }

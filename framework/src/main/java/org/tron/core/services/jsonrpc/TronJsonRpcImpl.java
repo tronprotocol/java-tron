@@ -31,6 +31,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.tron.api.GrpcAPI.BytesMessage;
+import org.tron.api.GrpcAPI.EstimateEnergyMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionExtention;
@@ -38,6 +39,7 @@ import org.tron.common.crypto.Hash;
 import org.tron.common.logsfilter.ContractEventParser;
 import org.tron.common.logsfilter.capsule.BlockFilterCapsule;
 import org.tron.common.logsfilter.capsule.LogsFilterCapsule;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
@@ -390,6 +392,27 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     retBuilder.setResult(true).setCode(response_code.SUCCESS);
   }
 
+  private void estimateEnergy(byte[] ownerAddressByte, byte[] contractAddressByte,
+      long value, byte[] data, TransactionExtention.Builder trxExtBuilder,
+      Return.Builder retBuilder, EstimateEnergyMessage.Builder estimateBuilder)
+      throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
+
+    TriggerSmartContract triggerContract = triggerCallContract(
+        ownerAddressByte,
+        contractAddressByte,
+        value,
+        data,
+        0,
+        null
+    );
+
+    TransactionCapsule trxCap = wallet.createTransactionCapsule(triggerContract,
+        ContractType.TriggerSmartContract);
+    wallet.estimateEnergy(triggerContract, trxCap, trxExtBuilder, retBuilder, estimateBuilder);
+    retBuilder.setResult(true).setCode(response_code.SUCCESS);
+    estimateBuilder.setResult(retBuilder);
+  }
+
   /**
    * @param data Hash of the method signature and encoded parameters. for example:
    * getMethodSign(methodName(uint256,uint256)) || data1 || data2
@@ -541,8 +564,12 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       return "0x0";
     }
 
+    boolean supportEstimateEnergy = CommonParameter.getInstance().isEstimateEnergy();
+
     TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
     Return.Builder retBuilder = Return.newBuilder();
+    EstimateEnergyMessage.Builder estimateBuilder
+        = EstimateEnergyMessage.newBuilder();
 
     try {
       byte[] contractAddress;
@@ -553,13 +580,22 @@ public class TronJsonRpcImpl implements TronJsonRpc {
         contractAddress = new byte[0];
       }
 
-      callTriggerConstantContract(ownerAddress,
-          contractAddress,
-          args.parseValue(),
-          ByteArray.fromHexString(args.getData()),
-          trxExtBuilder,
-          retBuilder);
-
+      if (supportEstimateEnergy) {
+        estimateEnergy(ownerAddress,
+            contractAddress,
+            args.parseValue(),
+            ByteArray.fromHexString(args.getData()),
+            trxExtBuilder,
+            retBuilder,
+            estimateBuilder);
+      } else {
+        callTriggerConstantContract(ownerAddress,
+            contractAddress,
+            args.parseValue(),
+            ByteArray.fromHexString(args.getData()),
+            trxExtBuilder,
+            retBuilder);
+      }
 
     } catch (ContractValidateException e) {
       String errString = "invalid contract";
@@ -590,7 +626,13 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
       throw new JsonRpcInternalException(errMsg);
     } else {
-      return ByteArray.toJsonHex(trxExtBuilder.getEnergyUsed());
+
+      if (supportEstimateEnergy) {
+        return ByteArray.toJsonHex(estimateBuilder.getEnergyRequired());
+      } else {
+        return ByteArray.toJsonHex(trxExtBuilder.getEnergyUsed());
+      }
+
     }
   }
 
@@ -778,7 +820,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
           ByteArray.fromHexString(transactionCall.getData()));
     } else {
       try {
-        ByteArray.hexToBigInteger(blockNumOrTag).longValue();
+        ByteArray.hexToBigInteger(blockNumOrTag);
       } catch (Exception e) {
         throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
       }
