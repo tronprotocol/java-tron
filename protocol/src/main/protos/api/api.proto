@@ -224,6 +224,10 @@ service Wallet {
   //Use this function instead of FreezeBalance.
   rpc FreezeBalance2 (FreezeBalanceContract) returns (TransactionExtention) {
   }
+  //Use this function when FreezeBalanceV2.
+  rpc FreezeBalanceV2 (FreezeBalanceV2Contract) returns (TransactionExtention) {
+  }
+
   //Please use UnfreezeBalance2 instead of this function.
   rpc UnfreezeBalance (UnfreezeBalanceContract) returns (Transaction) {
     option (google.api.http) = {
@@ -237,6 +241,10 @@ service Wallet {
   //Use this function instead of UnfreezeBalance.
   rpc UnfreezeBalance2 (UnfreezeBalanceContract) returns (TransactionExtention) {
   }
+  //Use this function when UnfreezeBalanceV2.
+  rpc UnfreezeBalanceV2 (UnfreezeBalanceV2Contract) returns (TransactionExtention) {
+  }
+
   //Please use UnfreezeAsset2 instead of this function.
   rpc UnfreezeAsset (UnfreezeAssetContract) returns (Transaction) {
     option (google.api.http) = {
@@ -263,6 +271,16 @@ service Wallet {
   //Use this function instead of WithdrawBalance.
   rpc WithdrawBalance2 (WithdrawBalanceContract) returns (TransactionExtention) {
   }
+
+  rpc WithdrawExpireUnfreeze (WithdrawExpireUnfreezeContract) returns (TransactionExtention) {
+  }
+
+  rpc DelegateResource (DelegateResourceContract) returns (TransactionExtention) {
+  }
+
+  rpc UnDelegateResource (UnDelegateResourceContract) returns (TransactionExtention) {
+  }
+
   //Please use UpdateAsset2 instead of this function.
   rpc UpdateAsset (UpdateAssetContract) returns (Transaction) {
     option (google.api.http) = {
@@ -462,6 +480,9 @@ service Wallet {
   rpc TriggerConstantContract (TriggerSmartContract) returns (TransactionExtention) {
   }
 
+  rpc EstimateEnergy (TriggerSmartContract) returns (EstimateEnergyMessage) {
+  }
+
   rpc ClearContractABI (ClearABIContract) returns (TransactionExtention) {
   }
 
@@ -479,8 +500,25 @@ service Wallet {
   rpc GetDelegatedResource (DelegatedResourceMessage) returns (DelegatedResourceList) {
   };
 
+  rpc GetDelegatedResourceV2 (DelegatedResourceMessage) returns (DelegatedResourceList) {
+  };
+
   rpc GetDelegatedResourceAccountIndex (BytesMessage) returns (DelegatedResourceAccountIndex) {
   };
+
+  rpc GetDelegatedResourceAccountIndexV2 (BytesMessage) returns (DelegatedResourceAccountIndex) {
+  };
+
+  rpc GetCanDelegatedMaxSize (CanDelegatedMaxSizeRequestMessage) returns (CanDelegatedMaxSizeResponseMessage) {
+  };
+
+  rpc GetAvailableUnfreezeCount (GetAvailableUnfreezeCountRequestMessage)
+      returns (GetAvailableUnfreezeCountResponseMessage) {
+  };
+
+  rpc GetCanWithdrawUnfreezeAmount (CanWithdrawUnfreezeAmountRequestMessage)
+      returns (CanWithdrawUnfreezeAmountResponseMessage) {
+  }
 
   rpc ListProposals (EmptyMessage) returns (ProposalList) {
     option (google.api.http) = {
@@ -883,8 +921,25 @@ service WalletSolidity {
   rpc GetDelegatedResource (DelegatedResourceMessage) returns (DelegatedResourceList) {
   };
 
+  rpc GetDelegatedResourceV2 (DelegatedResourceMessage) returns (DelegatedResourceList) {
+  };
+
   rpc GetDelegatedResourceAccountIndex (BytesMessage) returns (DelegatedResourceAccountIndex) {
   };
+
+  rpc GetDelegatedResourceAccountIndexV2 (BytesMessage) returns (DelegatedResourceAccountIndex) {
+  };
+
+  rpc GetCanDelegatedMaxSize (CanDelegatedMaxSizeRequestMessage) returns (CanDelegatedMaxSizeResponseMessage) {
+  };
+
+  rpc GetAvailableUnfreezeCount (GetAvailableUnfreezeCountRequestMessage)
+      returns (GetAvailableUnfreezeCountResponseMessage) {
+  };
+
+  rpc GetCanWithdrawUnfreezeAmount (CanWithdrawUnfreezeAmountRequestMessage)
+      returns (CanWithdrawUnfreezeAmountResponseMessage) {
+  }
 
   rpc GetExchangeById (BytesMessage) returns (Exchange) {
   };
@@ -955,6 +1010,9 @@ service WalletSolidity {
   };
 
   rpc TriggerConstantContract (TriggerSmartContract) returns (TransactionExtention) {
+  }
+
+  rpc EstimateEnergy (TriggerSmartContract) returns (EstimateEnergyMessage) {
   }
 
   rpc GetTransactionInfoByBlockNum (NumberMessage) returns (TransactionInfoList) {
@@ -1100,6 +1158,29 @@ message DelegatedResourceList {
   repeated DelegatedResource delegatedResource = 1;
 }
 
+message GetAvailableUnfreezeCountRequestMessage {
+  bytes owner_address = 1;
+}
+message GetAvailableUnfreezeCountResponseMessage {
+  int64 count = 1;
+}
+
+message CanDelegatedMaxSizeRequestMessage {
+  int32 type = 1;
+  bytes owner_address = 2;
+}
+message CanDelegatedMaxSizeResponseMessage {
+  int64 max_size = 1;
+}
+
+message CanWithdrawUnfreezeAmountRequestMessage {
+  bytes owner_address = 1;
+  int64 timestamp = 2;
+}
+message CanWithdrawUnfreezeAmountResponseMessage {
+  int64 amount = 1;
+}
+
 // Gossip node list
 message NodeList {
   repeated Node nodes = 1;
@@ -1233,6 +1314,12 @@ message TransactionExtention {
   int64 energy_used = 5;
   repeated TransactionInfo.Log logs = 6;
   repeated InternalTransaction internal_transactions = 7;
+  int64 energy_penalty = 8;
+}
+
+message EstimateEnergyMessage {
+  Return result = 1;
+  int64 energy_required = 2;
 }
 
 message BlockExtention {

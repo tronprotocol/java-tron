@@ -6,7 +6,6 @@ import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.core.vm.config.VMConfig;
@@ -737,8 +736,13 @@ public class OperationActions {
     DataWord frozenBalance = program.stackPop();
     DataWord receiverAddress = program.stackPop();
 
-    boolean result = program.freeze(receiverAddress, frozenBalance, resourceType );
-    program.stackPush(result ? DataWord.ONE() : DataWord.ZERO());
+    if (VMConfig.allowTvmFreezeV2()) {
+      // after v2 activated, we just push zero to stack and do nothing
+      program.stackPush(DataWord.ZERO());
+    } else {
+      boolean result = program.freeze(receiverAddress, frozenBalance, resourceType );
+      program.stackPush(result ? DataWord.ONE() : DataWord.ZERO());
+    }
     program.step();
   }
 
@@ -761,6 +765,78 @@ public class OperationActions {
 
     long expireTime = program.freezeExpireTime(targetAddress, resourceType);
     program.stackPush(new DataWord(expireTime / 1000));
+    program.step();
+  }
+
+  public static void freezeBalanceV2Action(Program program) {
+    // after allow vote, check static
+    if (program.isStaticCall()) {
+      throw new Program.StaticCallModificationException();
+    }
+    DataWord resourceType = program.stackPop();
+    DataWord frozenBalance = program.stackPop();
+
+    boolean result = program.freezeBalanceV2(frozenBalance, resourceType);
+    program.stackPush(result ? DataWord.ONE() : DataWord.ZERO());
+    program.step();
+  }
+
+  public static void unfreezeBalanceV2Action(Program program) {
+    if (program.isStaticCall()) {
+      throw new Program.StaticCallModificationException();
+    }
+
+    DataWord resourceType = program.stackPop();
+    DataWord unfreezeBalance = program.stackPop();
+
+    boolean result = program.unfreezeBalanceV2(unfreezeBalance, resourceType);
+    program.stackPush(result ? DataWord.ONE() : DataWord.ZERO());
+    program.step();
+  }
+
+  public static void withdrawExpireUnfreezeAction(Program program) {
+    if (program.isStaticCall()) {
+      throw new Program.StaticCallModificationException();
+    }
+
+    long expireUnfreezeBalance = program.withdrawExpireUnfreeze();
+    program.stackPush(new DataWord(expireUnfreezeBalance));
+    program.step();
+  }
+
+  public static void cancelAllUnfreezeV2Action(Program program) {
+    if (program.isStaticCall()) {
+      throw new Program.StaticCallModificationException();
+    }
+
+    boolean result = program.cancelAllUnfreezeV2Action();
+    program.stackPush(result ? DataWord.ONE() : DataWord.ZERO());
+    program.step();
+  }
+
+  public static void delegateResourceAction(Program program) {
+    if (program.isStaticCall()) {
+      throw new Program.StaticCallModificationException();
+    }
+    DataWord resourceType = program.stackPop();
+    DataWord delegateBalance = program.stackPop();
+    DataWord receiverAddress = program.stackPop();
+
+    boolean result = program.delegateResource(receiverAddress, delegateBalance, resourceType);
+    program.stackPush(result ? DataWord.ONE() : DataWord.ZERO());
+    program.step();
+  }
+
+  public static void unDelegateResourceAction(Program program) {
+    if (program.isStaticCall()) {
+      throw new Program.StaticCallModificationException();
+    }
+    DataWord resourceType = program.stackPop();
+    DataWord unDelegateBalance = program.stackPop();
+    DataWord receiverAddress = program.stackPop();
+
+    boolean result = program.unDelegateResource(receiverAddress, unDelegateBalance, resourceType);
+    program.stackPush(result ? DataWord.ONE() : DataWord.ZERO());
     program.step();
   }
 
@@ -891,7 +967,7 @@ public class OperationActions {
   }
 
   public static void exeCall(Program program, DataWord adjustedCallEnergy,
-            DataWord codeAddress, DataWord value, DataWord tokenId, boolean isTokenTransferMsg) {
+      DataWord codeAddress, DataWord value, DataWord tokenId, boolean isTokenTransferMsg) {
 
     DataWord inDataOffs = program.stackPop();
     DataWord inDataSize = program.stackPop();

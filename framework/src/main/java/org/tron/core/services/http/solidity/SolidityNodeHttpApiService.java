@@ -2,13 +2,11 @@ package org.tron.core.services.http.solidity;
 
 import java.util.EnumSet;
 import javax.servlet.DispatcherType;
-import javax.servlet.Filter;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.server.ConnectionLimit;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -16,6 +14,9 @@ import org.tron.common.application.Service;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.filter.HttpApiAccessFilter;
+import org.tron.core.services.http.DelegateResourceServlet;
+import org.tron.core.services.http.EstimateEnergyServlet;
+import org.tron.core.services.http.FreezeBalanceV2Servlet;
 import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.services.http.GetAccountByIdServlet;
 import org.tron.core.services.http.GetAccountServlet;
@@ -23,6 +24,7 @@ import org.tron.core.services.http.GetAssetIssueByIdServlet;
 import org.tron.core.services.http.GetAssetIssueByNameServlet;
 import org.tron.core.services.http.GetAssetIssueListByNameServlet;
 import org.tron.core.services.http.GetAssetIssueListServlet;
+import org.tron.core.services.http.GetAvailableUnfreezeCountServlet;
 import org.tron.core.services.http.GetBlockByIdServlet;
 import org.tron.core.services.http.GetBlockByLatestNumServlet;
 import org.tron.core.services.http.GetBlockByLimitNextServlet;
@@ -30,8 +32,12 @@ import org.tron.core.services.http.GetBlockByNumServlet;
 import org.tron.core.services.http.GetBlockServlet;
 import org.tron.core.services.http.GetBrokerageServlet;
 import org.tron.core.services.http.GetBurnTrxServlet;
+import org.tron.core.services.http.GetCanDelegatedMaxSizeServlet;
+import org.tron.core.services.http.GetCanWithdrawUnfreezeAmountServlet;
 import org.tron.core.services.http.GetDelegatedResourceAccountIndexServlet;
+import org.tron.core.services.http.GetDelegatedResourceAccountIndexV2Servlet;
 import org.tron.core.services.http.GetDelegatedResourceServlet;
+import org.tron.core.services.http.GetDelegatedResourceV2Servlet;
 import org.tron.core.services.http.GetExchangeByIdServlet;
 import org.tron.core.services.http.GetMarketOrderByAccountServlet;
 import org.tron.core.services.http.GetMarketOrderByIdServlet;
@@ -55,6 +61,9 @@ import org.tron.core.services.http.ScanNoteByOvkServlet;
 import org.tron.core.services.http.ScanShieldedTRC20NotesByIvkServlet;
 import org.tron.core.services.http.ScanShieldedTRC20NotesByOvkServlet;
 import org.tron.core.services.http.TriggerConstantContractServlet;
+import org.tron.core.services.http.UnDelegateResourceServlet;
+import org.tron.core.services.http.UnFreezeBalanceV2Servlet;
+import org.tron.core.services.http.WithdrawExpireUnfreezeServlet;
 
 
 @Component
@@ -77,7 +86,17 @@ public class SolidityNodeHttpApiService implements Service {
   @Autowired
   private GetDelegatedResourceServlet getDelegatedResourceServlet;
   @Autowired
+  private GetDelegatedResourceV2Servlet getDelegatedResourceV2Servlet;
+  @Autowired
+  private GetCanDelegatedMaxSizeServlet getCanDelegatedMaxSizeServlet;
+  @Autowired
+  private GetAvailableUnfreezeCountServlet getAvailableUnfreezeCountServlet;
+  @Autowired
+  private GetCanWithdrawUnfreezeAmountServlet getCanWithdrawUnfreezeAmountServlet;
+  @Autowired
   private GetDelegatedResourceAccountIndexServlet getDelegatedResourceAccountIndexServlet;
+  @Autowired
+  private GetDelegatedResourceAccountIndexV2Servlet getDelegatedResourceAccountIndexV2Servlet;
   @Autowired
   private GetExchangeByIdServlet getExchangeByIdServlet;
   @Autowired
@@ -143,6 +162,8 @@ public class SolidityNodeHttpApiService implements Service {
   private GetRewardServlet getRewardServlet;
   @Autowired
   private TriggerConstantContractServlet triggerConstantContractServlet;
+  @Autowired
+  private EstimateEnergyServlet estimateEnergyServlet;
 
   @Autowired
   private GetTransactionInfoByBlockNumServlet getTransactionInfoByBlockNumServlet;
@@ -152,6 +173,17 @@ public class SolidityNodeHttpApiService implements Service {
 
   @Autowired
   private GetBlockServlet getBlockServlet;
+
+  @Autowired
+  private FreezeBalanceV2Servlet freezeBalanceV2Servlet;
+  @Autowired
+  private UnFreezeBalanceV2Servlet unFreezeBalanceV2Servlet;
+  @Autowired
+  private WithdrawExpireUnfreezeServlet withdrawExpireUnfreezeServlet;
+  @Autowired
+  private DelegateResourceServlet delegateResourceServlet;
+  @Autowired
+  private UnDelegateResourceServlet unDelegateResourceServlet;
 
   @Override
   public void init() {
@@ -187,8 +219,18 @@ public class SolidityNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getBlockByNumServlet), "/walletsolidity/getblockbynum");
       context.addServlet(new ServletHolder(getDelegatedResourceServlet),
           "/walletsolidity/getdelegatedresource");
+      context.addServlet(new ServletHolder(getDelegatedResourceV2Servlet),
+              "/walletsolidity/getdelegatedresourcev2");
+      context.addServlet(new ServletHolder(getCanDelegatedMaxSizeServlet),
+              "/walletsolidity/getcandelegatedmaxsize");
+      context.addServlet(new ServletHolder(getAvailableUnfreezeCountServlet),
+              "/walletsolidity/getavailableunfreezecount");
+      context.addServlet(new ServletHolder(getCanWithdrawUnfreezeAmountServlet),
+              "/walletsolidity/getcanwithdrawunfreezeamount");
       context.addServlet(new ServletHolder(getDelegatedResourceAccountIndexServlet),
           "/walletsolidity/getdelegatedresourceaccountindex");
+      context.addServlet(new ServletHolder(getDelegatedResourceAccountIndexV2Servlet),
+              "/walletsolidity/getdelegatedresourceaccountindexv2");
       context
           .addServlet(new ServletHolder(getExchangeByIdServlet),
               "/walletsolidity/getexchangebyid");
@@ -248,6 +290,8 @@ public class SolidityNodeHttpApiService implements Service {
               "/walletsolidity/gettransactioncountbyblocknum");
       context.addServlet(new ServletHolder(triggerConstantContractServlet),
           "/walletsolidity/triggerconstantcontract");
+      context.addServlet(new ServletHolder(estimateEnergyServlet),
+          "/walletsolidity/estimateenergy");
 
       context.addServlet(new ServletHolder(getNodeInfoServlet), "/wallet/getnodeinfo");
       context.addServlet(new ServletHolder(getNodeInfoServlet), "/walletsolidity/getnodeinfo");
@@ -255,6 +299,16 @@ public class SolidityNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getRewardServlet), "/walletsolidity/getReward");
       context.addServlet(new ServletHolder(getBurnTrxServlet), "/walletsolidity/getburntrx");
       context.addServlet(new ServletHolder(getBlockServlet), "/walletsolidity/getblock");
+      context.addServlet(new ServletHolder(freezeBalanceV2Servlet),
+          "/walletsolidity/freezebalancev2");
+      context.addServlet(new ServletHolder(unFreezeBalanceV2Servlet),
+          "/walletsolidity/unfreezebalancev2");
+      context.addServlet(new ServletHolder(withdrawExpireUnfreezeServlet),
+          "/walletsolidity/withdrawexpireunfreeze");
+      context.addServlet(new ServletHolder(delegateResourceServlet),
+          "/walletsolidity/delegateresource");
+      context.addServlet(new ServletHolder(unDelegateResourceServlet),
+          "/walletsolidity/undelegateresource");
       // http access filter
       context.addFilter(new FilterHolder(httpApiAccessFilter), "/walletsolidity/*",
           EnumSet.allOf(DispatcherType.class));

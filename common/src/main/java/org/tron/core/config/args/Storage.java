@@ -15,9 +15,11 @@
 
 package org.tron.core.config.args;
 
+import com.google.common.collect.Maps;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
 import java.io.File;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -25,6 +27,8 @@ import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.Options;
+import org.tron.common.cache.CacheStrategies;
+import org.tron.common.cache.CacheType;
 import org.tron.common.utils.DbOptionalsUtils;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Property;
@@ -42,7 +46,6 @@ public class Storage {
    * Keys (names) of database config
    */
   private static final String DB_DIRECTORY_CONFIG_KEY = "storage.db.directory";
-  private static final String DB_VERSION_CONFIG_KEY = "storage.db.version";
   private static final String DB_ENGINE_CONFIG_KEY = "storage.db.engine";
   private static final String DB_SYNC_CONFIG_KEY = "storage.db.sync";
   private static final String INDEX_DIRECTORY_CONFIG_KEY = "storage.index.directory";
@@ -50,6 +53,7 @@ public class Storage {
   private static final String TRANSACTIONHISTORY_SWITCH_CONFIG_KEY = "storage.transHistory.switch";
   private static final String ESTIMATED_TRANSACTIONS_CONFIG_KEY =
       "storage.txCache.estimatedTransactions";
+  private static final String SNAPSHOT_MAX_FLUSH_COUNT_CONFIG_KEY = "storage.snapshot.maxFlushCount";
   private static final String PROPERTIES_CONFIG_KEY = "storage.properties";
   private static final String PROPERTIES_CONFIG_DB_KEY = "storage";
   private static final String PROPERTIES_CONFIG_DEFAULT_KEY = "default";
@@ -72,10 +76,11 @@ public class Storage {
   private static final String CHECKPOINT_VERSION_KEY = "storage.checkpoint.version";
   private static final String CHECKPOINT_SYNC_KEY = "storage.checkpoint.sync";
 
+  private static final String CACHE_STRATEGIES = "storage.cache.strategies";
+
   /**
    * Default values of directory
    */
-  private static final int DEFAULT_DB_VERSION = 2;
   private static final String DEFAULT_DB_ENGINE = "LEVELDB";
   private static final boolean DEFAULT_DB_SYNC = false;
   private static final boolean DEFAULT_EVENT_SUBSCRIBE_CONTRACT_PARSE = true;
@@ -85,6 +90,7 @@ public class Storage {
   private static final int DEFAULT_CHECKPOINT_VERSION = 1;
   private static final boolean DEFAULT_CHECKPOINT_SYNC = true;
   private static final int DEFAULT_ESTIMATED_TRANSACTIONS = 1000;
+  private static final int DEFAULT_SNAPSHOT_MAX_FLUSH_COUNT = 1;
   private Config storage;
 
   /**
@@ -96,15 +102,15 @@ public class Storage {
 
   @Getter
   @Setter
-  private int dbVersion;
-
-  @Getter
-  @Setter
   private String dbEngine;
 
   @Getter
   @Setter
   private boolean dbSync;
+
+  @Getter
+  @Setter
+  private int maxFlushCount;
 
   /**
    * Index storage directory: /path/to/{indexDirectory}
@@ -139,16 +145,18 @@ public class Storage {
   @Setter
   private int estimatedBlockTransactions;
 
+  // second cache
+  private final Map<CacheType, String> cacheStrategies = Maps.newConcurrentMap();
+
+  @Getter
+  private final List<String> cacheDbs = CacheStrategies.CACHE_DBS;
+  // second cache
+
   /**
    * Key: dbName, Value: Property object of that database
    */
   @Getter
   private Map<String, Property> propertyMap;
-
-  public static int getDbVersionFromConfig(final Config config) {
-    return config.hasPath(DB_VERSION_CONFIG_KEY)
-        ? config.getInt(DB_VERSION_CONFIG_KEY) : DEFAULT_DB_VERSION;
-  }
 
   public static String getDbEngineFromConfig(final Config config) {
     return config.hasPath(DB_ENGINE_CONFIG_KEY)
@@ -158,6 +166,20 @@ public class Storage {
   public static Boolean getDbVersionSyncFromConfig(final Config config) {
     return config.hasPath(DB_SYNC_CONFIG_KEY)
         ? config.getBoolean(DB_SYNC_CONFIG_KEY) : DEFAULT_DB_SYNC;
+  }
+
+  public static int getSnapshotMaxFlushCountFromConfig(final Config config) {
+    if (!config.hasPath(SNAPSHOT_MAX_FLUSH_COUNT_CONFIG_KEY)) {
+      return DEFAULT_SNAPSHOT_MAX_FLUSH_COUNT;
+    }
+    int maxFlushCountConfig = config.getInt(SNAPSHOT_MAX_FLUSH_COUNT_CONFIG_KEY);
+    if (maxFlushCountConfig <= 0) {
+      throw new IllegalArgumentException("MaxFlushCount value can not be negative or zero!");
+    }
+    if (maxFlushCountConfig > 500) {
+      throw new IllegalArgumentException("MaxFlushCount value must not exceed 500!");
+    }
+    return maxFlushCountConfig;
   }
 
   public static Boolean getContractParseSwitchFromConfig(final Config config) {
@@ -211,6 +233,19 @@ public class Storage {
       estimatedTransactions = 100;
     }
     return estimatedTransactions;
+  }
+
+
+  public  void setCacheStrategies(Config config) {
+    if (config.hasPath(CACHE_STRATEGIES)) {
+      config.getConfig(CACHE_STRATEGIES).resolve().entrySet().forEach(c ->
+          this.cacheStrategies.put(CacheType.valueOf(c.getKey()),
+              c.getValue().unwrapped().toString()));
+    }
+  }
+
+  public String getCacheStrategy(CacheType dbName) {
+    return this.cacheStrategies.getOrDefault(dbName, CacheStrategies.getCacheStrategy(dbName));
   }
 
   private  Property createProperty(final ConfigObject conf) {
