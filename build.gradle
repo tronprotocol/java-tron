@@ -17,12 +17,13 @@ subprojects {
     buildscript {
         repositories {
             mavenCentral()
-            jcenter()
-            maven { url 'https://jitpack.io' }
+            maven {
+                url "https://plugins.gradle.org/m2/"
+            }
         }
         dependencies {
-            classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.12'
-            classpath 'com.github.jengelman.gradle.plugins:shadow:5.2.0'
+            classpath 'com.google.protobuf:protobuf-gradle-plugin:0.9.1'
+            classpath "gradle.plugin.com.github.johnrengelman:shadow:7.1.2"
         }
     }
 
@@ -30,7 +31,6 @@ subprojects {
         mavenLocal()
         mavenCentral()
         maven { url 'https://repo.spring.io/plugins-release' }
-        maven { url 'https://jitpack.io' }
     }
 
     dependencies {
@@ -44,11 +44,11 @@ subprojects {
         testAnnotationProcessor 'org.projectlombok:lombok:1.18.12'
         compile group: 'com.google.guava', name: 'guava', version: '24.1-jre'
         compile "com.google.code.findbugs:jsr305:3.0.0"
-        compile group: 'org.springframework', name: 'spring-context', version: '4.2.4.RELEASE'
-        compile group: 'org.springframework', name: 'spring-tx', version: '4.2.4.RELEASE'
+        compile group: 'org.springframework', name: 'spring-context', version: '5.3.18'
+        compile group: 'org.springframework', name: 'spring-tx', version: '5.3.18'
         compile "org.apache.commons:commons-lang3:3.4"
         compile group: 'org.apache.commons', name: 'commons-math', version: '2.2'
-        compile "org.apache.commons:commons-collections4:4.0"
+        compile "org.apache.commons:commons-collections4:4.1"
         compile group: 'joda-time', name: 'joda-time', version: '2.3'
 
     }

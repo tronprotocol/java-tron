@@ -4,6 +4,7 @@ import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.REVERT;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
+import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 
 import com.google.protobuf.ByteString;
 import java.io.File;
@@ -147,6 +148,7 @@ public class FreezeTest {
     VMConfig.initAllowTvmSolidity059(1);
     VMConfig.initAllowTvmIstanbul(1);
     VMConfig.initAllowTvmFreeze(1);
+    VMConfig.initAllowTvmFreezeV2(0);
   }
 
   private byte[] deployContract(String contractName, String code) throws Exception {
@@ -798,7 +800,9 @@ public class FreezeTest {
     if (oldReceiver != null) {
       newReceiver.setBalance(oldReceiver.getBalance());
       oldReceiver.setEnergyUsage(0);
+      oldReceiver.setNewWindowSize(ENERGY, 28800);
       newReceiver.setEnergyUsage(0);
+      newReceiver.setNewWindowSize(ENERGY,28800);
       if (res == 0) {
         oldReceiver.setAcquiredDelegatedFrozenBalanceForBandwidth(0);
         newReceiver.setAcquiredDelegatedFrozenBalanceForBandwidth(0);
@@ -912,7 +916,9 @@ public class FreezeTest {
           || acquiredBalance - newAcquiredBalance == delegatedFrozenBalance);
       newReceiver.setBalance(oldReceiver.getBalance());
       newReceiver.setEnergyUsage(0);
+      newReceiver.setNewWindowSize(ENERGY,28800);
       oldReceiver.setEnergyUsage(0);
+      oldReceiver.setNewWindowSize(ENERGY,28800);
       if (res == 0) {
         oldReceiver.setAcquiredDelegatedFrozenBalanceForBandwidth(0);
         newReceiver.setAcquiredDelegatedFrozenBalanceForBandwidth(0);
