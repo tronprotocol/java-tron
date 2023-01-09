@@ -118,6 +118,7 @@ public class ManagerTest extends BlockGenerate {
     blockCapsule2.setMerkleRoot();
     blockCapsule2.sign(
         ByteArray.fromHexString(Args.getLocalWitnesses().getPrivateKey()));
+    Assert.assertTrue(dbManager.getMaxFlushCount() == 200);
   }
 
   @After

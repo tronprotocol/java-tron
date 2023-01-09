@@ -133,4 +133,5 @@ public class ContractCapsule implements ProtoCapsule<SmartContract> {
   public int getContractVersion() {
     return this.smartContract.getVersion();
   }
+
 }

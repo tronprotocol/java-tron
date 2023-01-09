@@ -69,6 +69,10 @@ public abstract class Message {
     return Unpooled.wrappedBuffer(ArrayUtils.add(this.getData(), 0, type));
   }
 
+  public byte[] getSendBytes() {
+    return ArrayUtils.add(this.getData(), 0, type);
+  }
+
   public Sha256Hash getMessageId() {
     return Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(),
         getData());

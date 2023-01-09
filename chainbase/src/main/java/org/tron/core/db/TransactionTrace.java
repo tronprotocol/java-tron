@@ -7,7 +7,6 @@ import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.bouncycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
 import org.tron.common.runtime.InternalTransaction.TrxType;
 import org.tron.common.runtime.ProgramResult;
@@ -38,6 +37,7 @@ import org.tron.core.store.StoreFactory;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
+import org.tron.protos.contract.Common;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
@@ -158,6 +158,13 @@ public class TransactionTrace {
     receipt.setEnergyUsageTotal(energyUsage);
   }
 
+  public void setPenalty(long energyPenalty) {
+    if (energyPenalty < 0) {
+      energyPenalty = 0L;
+    }
+    receipt.setEnergyPenaltyTotal(energyPenalty);
+  }
+
   //set net bill
   public void setNetBill(long netUsage, long netFee) {
     receipt.setNetUsage(netUsage);
@@ -179,6 +186,7 @@ public class TransactionTrace {
     /*  VM execute  */
     runtime.execute(transactionContext);
     setBill(transactionContext.getProgramResult().getEnergyUsed());
+    setPenalty(transactionContext.getProgramResult().getEnergyPenaltyTotal());
 
 //    if (TrxType.TRX_PRECOMPILED_TYPE != trxType) {
 //      if (contractResult.OUT_OF_TIME
@@ -246,6 +254,24 @@ public class TransactionTrace {
     // originAccount Percent = 30%
     AccountCapsule origin = accountStore.get(originAccount);
     AccountCapsule caller = accountStore.get(callerAccount);
+    if (dynamicPropertiesStore.supportUnfreezeDelay()
+        && receipt.getReceipt().getResult().equals(contractResult.SUCCESS)) {
+
+      // just fo caller is not origin, we set the related field for origin account
+      if (origin != null && !caller.getAddress().equals(origin.getAddress())) {
+        resetAccountUsage(origin,
+            receipt.getOriginEnergyUsage(),
+            receipt.getOriginEnergyWindowSize(),
+            receipt.getOriginEnergyMergedUsage(),
+            receipt.getOriginEnergyMergedWindowSize());
+      }
+
+      resetAccountUsage(caller,
+          receipt.getCallerEnergyUsage(),
+          receipt.getCallerEnergyWindowSize(),
+          receipt.getCallerEnergyMergedUsage(),
+          receipt.getCallerEnergyMergedWindowSize());
+    }
     receipt.payEnergyBill(
         dynamicPropertiesStore, accountStore, forkController,
         origin,
@@ -253,6 +279,23 @@ public class TransactionTrace {
         percent, originEnergyLimit,
         energyProcessor,
         EnergyProcessor.getHeadSlot(dynamicPropertiesStore));
+  }
+
+  private void resetAccountUsage(AccountCapsule accountCap,
+      long usage, long size, long mergedUsage, long mergedSize) {
+    long currentSize = accountCap.getWindowSize(Common.ResourceCode.ENERGY);
+    long currentUsage = accountCap.getEnergyUsage();
+    // Drop the pre consumed frozen energy
+    long newArea = currentUsage * currentSize
+        - (mergedUsage * mergedSize - usage * size);
+    // If area merging happened during suicide, use the current window size
+    long newSize = mergedSize == currentSize ? size : currentSize;
+    // Calc new usage by fixed x-axes
+    long newUsage = Long.max(0, newArea / newSize);
+    // Reset account usage and window size
+    accountCap.setEnergyUsage(newUsage);
+    accountCap.setNewWindowSize(Common.ResourceCode.ENERGY,
+        newUsage == 0 ? 0L : newSize);
   }
 
   public boolean checkNeedRetry() {

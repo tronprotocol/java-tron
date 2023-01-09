@@ -9,7 +9,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.ReflectUtils;
@@ -18,21 +17,22 @@ import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.net.message.BlockMessage;
-import org.tron.core.net.message.TransactionMessage;
+import org.tron.core.net.P2pEventHandlerImpl;
+import org.tron.core.net.message.adv.BlockMessage;
+import org.tron.core.net.message.adv.TransactionMessage;
 import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
-import org.tron.core.net.service.AdvService;
+import org.tron.core.net.service.adv.AdvService;
+import org.tron.p2p.P2pEventHandler;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
-//@Ignore
 public class AdvServiceTest {
 
   protected TronApplicationContext context;
   private AdvService service;
   private PeerConnection peer;
-  private SyncPool syncPool;
+  private P2pEventHandlerImpl p2pEventHandler;
   private String dbPath = "output-adv-service-test";
 
   /**
@@ -52,7 +52,6 @@ public class AdvServiceTest {
   @After
   public void destroy() {
     Args.clearParam();
-    context.destroy();
     FileUtil.deleteDir(new File(dbPath));
   }
 
@@ -60,7 +59,6 @@ public class AdvServiceTest {
   public void test() {
     testAddInv();
     testBroadcast();
-    //testFastSend();
     testTrxBroadcast();
   }
 
@@ -87,51 +85,22 @@ public class AdvServiceTest {
 
     try {
       peer = context.getBean(PeerConnection.class);
-      syncPool = context.getBean(SyncPool.class);
+      p2pEventHandler = context.getBean(P2pEventHandlerImpl.class);
 
       List<PeerConnection> peers = Lists.newArrayList();
       peers.add(peer);
-      ReflectUtils.setFieldValue(syncPool, "activePeers", peers);
+      ReflectUtils.setFieldValue(P2pEventHandler.class, "peers", peers);
       BlockCapsule blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
           System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString());
       BlockMessage msg = new BlockMessage(blockCapsule);
       service.broadcast(msg);
       Item item = new Item(blockCapsule.getBlockId(), InventoryType.BLOCK);
       Assert.assertNotNull(service.getMessage(item));
-
-      peer.close();
-      syncPool.close();
     } catch (NullPointerException e) {
       System.out.println(e);
     }
   }
-  /*
-  private void testFastSend() {
 
-    try {
-      peer = context.getBean(PeerConnection.class);
-      syncPool = context.getBean(SyncPool.class);
-
-      List<PeerConnection> peers = Lists.newArrayList();
-      peers.add(peer);
-      ReflectUtils.setFieldValue(syncPool, "activePeers", peers);
-      BlockCapsule blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
-          System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString());
-      BlockMessage msg = new BlockMessage(blockCapsule);
-      service.fastForward(msg);
-      Item item = new Item(blockCapsule.getBlockId(), InventoryType.BLOCK);
-      //Assert.assertNull(service.getMessage(item));
-
-      peer.getAdvInvRequest().put(item, System.currentTimeMillis());
-      service.onDisconnect(peer);
-
-      peer.close();
-      syncPool.close();
-    } catch (NullPointerException e) {
-      System.out.println(e);
-    }
-  }
-  */
 
   private void testTrxBroadcast() {
     Protocol.Transaction trx = Protocol.Transaction.newBuilder().build();
