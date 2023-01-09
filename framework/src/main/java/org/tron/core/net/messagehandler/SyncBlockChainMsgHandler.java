@@ -11,9 +11,9 @@ import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.net.TronNetDelegate;
-import org.tron.core.net.message.ChainInventoryMessage;
-import org.tron.core.net.message.SyncBlockChainMessage;
 import org.tron.core.net.message.TronMessage;
+import org.tron.core.net.message.sync.ChainInventoryMessage;
+import org.tron.core.net.message.sync.SyncBlockChainMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol;
 

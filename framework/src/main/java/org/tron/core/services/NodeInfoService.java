@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
+
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,14 +23,20 @@ import org.tron.common.entity.NodeInfo.MachineInfo;
 import org.tron.common.entity.NodeInfo.MachineInfo.DeadLockThreadInfo;
 import org.tron.common.entity.NodeInfo.MachineInfo.MemoryDescInfo;
 import org.tron.common.entity.PeerInfo;
-import org.tron.common.overlay.discover.node.NodeManager;
-import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.MetricTime;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.db.Manager;
+import org.tron.core.net.P2pEventHandlerImpl;
+import org.tron.core.net.TronNetService;
 import org.tron.core.net.peer.PeerConnection;
+import org.tron.core.net.peer.PeerManager;
+import org.tron.core.net.service.statistics.NodeStatistics;
+import org.tron.core.net.service.statistics.PeerStatistics;
 import org.tron.core.services.WitnessProductBlockService.CheatWitnessInfo;
+import org.tron.p2p.P2pConfig;
+import org.tron.p2p.P2pService;
+import org.tron.p2p.connection.Channel;
 import org.tron.program.Version;
 import org.tron.protos.Protocol.ReasonCode;
 
@@ -41,12 +49,6 @@ public class NodeInfoService {
   private OperatingSystemMXBean operatingSystemMXBean = (OperatingSystemMXBean) ManagementFactory
       .getOperatingSystemMXBean();
   private CommonParameter parameter = CommonParameter.getInstance();
-
-  @Autowired
-  private SyncPool syncPool;
-
-  @Autowired
-  private NodeManager nodeManager;
 
   @Autowired
   private Manager dbManager;
@@ -124,48 +126,49 @@ public class NodeInfoService {
   }
 
   private void setConnectInfo(NodeInfo nodeInfo) {
-    nodeInfo.setCurrentConnectCount(syncPool.getActivePeers().size());
-    nodeInfo.setActiveConnectCount(syncPool.getActivePeersCount().get());
-    nodeInfo.setPassiveConnectCount(syncPool.getPassivePeersCount().get());
-    long totalFlow = 0;
+    int activeCnt = PeerManager.getActivePeersCount().get();
+    int passiveCnt = PeerManager.getPassivePeersCount().get();
+    nodeInfo.setCurrentConnectCount(activeCnt + passiveCnt);
+    nodeInfo.setActiveConnectCount(activeCnt);
+    nodeInfo.setPassiveConnectCount(passiveCnt);
     List<PeerInfo> peerInfoList = new ArrayList<>();
-    for (PeerConnection peerConnection : syncPool.getActivePeers()) {
+    for (PeerConnection peerConnection : PeerManager.getPeers()) {
+      Channel channel = peerConnection.getChannel();
+      NodeStatistics nodeStatistics = peerConnection.getNodeStatistics();
+      P2pService P2pService = TronNetService.getP2pService();
+      P2pConfig p2pConfig = TronNetService.getP2pConfig();
       PeerInfo peerInfo = new PeerInfo();
       peerInfo.setHeadBlockWeBothHave(peerConnection.getBlockBothHave().getString());
-      peerInfo.setActive(peerConnection.isActive());
-      peerInfo.setAvgLatency(peerConnection.getNodeStatistics().pingMessageLatency.getAvg());
+      peerInfo.setActive(peerConnection.getChannel().isActive());
+      peerInfo.setAvgLatency(peerConnection.getChannel().getLatency());
       peerInfo.setBlockInPorcSize(peerConnection.getSyncBlockInProcess().size());
-      peerInfo.setConnectTime(peerConnection.getStartTime());
-      peerInfo.setDisconnectTimes(peerConnection.getNodeStatistics().getDisconnectTimes());
+      peerInfo.setConnectTime(channel.getStartTime());
+      peerInfo.setDisconnectTimes(nodeStatistics.getDisconnectTimes());
       //peerInfo.setHeadBlockTimeWeBothHave(peerConnection.getHeadBlockTimeWeBothHave());
-      peerInfo.setHost(peerConnection.getNode().getHost());
-      peerInfo.setInFlow(peerConnection.getNodeStatistics().tcpFlow.getTotalCount());
+      peerInfo.setHost(channel.getInetAddress().toString());
       peerInfo.setLastBlockUpdateTime(peerConnection.getBlockBothHaveUpdateTime());
       peerInfo.setLastSyncBlock(peerConnection.getLastSyncBlockId() == null ? ""
           : peerConnection.getLastSyncBlockId().getString());
-      ReasonCode reasonCode = peerConnection.getNodeStatistics()
-          .getTronLastLocalDisconnectReason();
+      ReasonCode reasonCode = nodeStatistics.getLocalDisconnectReason();
       peerInfo.setLocalDisconnectReason(reasonCode == null ? "" : reasonCode.toString());
-      reasonCode = peerConnection.getNodeStatistics().getTronLastRemoteDisconnectReason();
+      reasonCode = nodeStatistics.getRemoteDisconnectReason();
       peerInfo.setRemoteDisconnectReason(reasonCode == null ? "" : reasonCode.toString());
       peerInfo.setNeedSyncFromPeer(peerConnection.isNeedSyncFromPeer());
       peerInfo.setNeedSyncFromUs(peerConnection.isNeedSyncFromUs());
-      peerInfo.setNodeCount(nodeManager.getTable().getAllNodes().size());
-      peerInfo.setNodeId(peerConnection.getNode().getHexId());
-      peerInfo.setPort(peerConnection.getNode().getPort());
+      int tableNodesSize = P2pService.getTableNodes().size();
+      peerInfo.setNodeCount(tableNodesSize);
+      peerInfo.setNodeId(Hex.encodeHexString(p2pConfig.getNodeID()));
+      peerInfo.setPort(p2pConfig.getPort());
       peerInfo.setRemainNum(peerConnection.getRemainNum());
-      peerInfo.setScore(peerConnection.getNodeStatistics().getReputation());
       peerInfo.setSyncBlockRequestedSize(peerConnection.getSyncBlockRequested().size());
       peerInfo.setSyncFlag(peerConnection.isDisconnect());
       peerInfo.setSyncToFetchSize(peerConnection.getSyncBlockToFetch().size());
       peerInfo.setSyncToFetchSizePeekNum(peerConnection.getSyncBlockToFetch().size() > 0
           ? peerConnection.getSyncBlockToFetch().peek().getNum() : -1);
       peerInfo.setUnFetchSynNum(peerConnection.getRemainNum());
-      totalFlow += peerConnection.getNodeStatistics().tcpFlow.getTotalCount();
       peerInfoList.add(peerInfo);
     }
     nodeInfo.setPeerList(peerInfoList);
-    nodeInfo.setTotalFlow(totalFlow);
   }
 
   private void setConfigNodeInfo(NodeInfo nodeInfo) {
@@ -177,13 +180,13 @@ public class NodeInfoService {
     configNodeInfo.setDiscoverEnable(parameter.isNodeDiscoveryEnable());
     configNodeInfo.setActiveNodeSize(parameter.getActiveNodes().size());
     configNodeInfo.setPassiveNodeSize(parameter.getPassiveNodes().size());
-    configNodeInfo.setSendNodeSize(parameter.getSeedNodes().size());
+    configNodeInfo.setSendNodeSize(parameter.getSeedNode().getIpList().size());
     configNodeInfo.setMaxConnectCount(parameter.getMaxConnections());
     configNodeInfo.setSameIpMaxConnectCount(parameter.getMaxConnectionsWithSameIp());
     configNodeInfo.setBackupListenPort(parameter.getBackupPort());
     configNodeInfo.setBackupMemberSize(parameter.getBackupMembers().size());
     configNodeInfo.setBackupPriority(parameter.getBackupPriority());
-    configNodeInfo.setDbVersion(parameter.getStorage().getDbVersion());
+    configNodeInfo.setDbVersion(2);
     configNodeInfo.setMinParticipationRate(parameter.getMinParticipationRate());
     configNodeInfo.setSupportConstant(parameter.isSupportConstant());
     configNodeInfo.setMinTimeRatio(parameter.getMinTimeRatio());

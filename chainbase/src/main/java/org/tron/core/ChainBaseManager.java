@@ -43,6 +43,7 @@ import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.BalanceTraceStore;
 import org.tron.core.store.CodeStore;
+import org.tron.core.store.ContractStateStore;
 import org.tron.core.store.ContractStore;
 import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DelegatedResourceStore;
@@ -141,6 +142,9 @@ public class ChainBaseManager {
   @Autowired
   @Getter
   private ContractStore contractStore;
+  @Autowired
+  @Getter
+  private ContractStateStore contractStateStore;
   @Autowired
   @Getter
   private DelegatedResourceStore delegatedResourceStore;
@@ -260,6 +264,7 @@ public class ChainBaseManager {
     closeOneStore(abiStore);
     closeOneStore(codeStore);
     closeOneStore(contractStore);
+    closeOneStore(contractStateStore);
     closeOneStore(storageRowStore);
     closeOneStore(exchangeStore);
     closeOneStore(proposalStore);

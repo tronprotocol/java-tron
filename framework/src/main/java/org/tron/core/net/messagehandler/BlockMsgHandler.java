@@ -18,14 +18,14 @@ import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.net.TronNetDelegate;
-import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.TronMessage;
+import org.tron.core.net.message.adv.BlockMessage;
 import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
-import org.tron.core.net.service.AdvService;
-import org.tron.core.net.service.FetchBlockService;
-import org.tron.core.net.service.RelayService;
-import org.tron.core.net.service.SyncService;
+import org.tron.core.net.service.adv.AdvService;
+import org.tron.core.net.service.fetchblock.FetchBlockService;
+import org.tron.core.net.service.relay.RelayService;
+import org.tron.core.net.service.sync.SyncService;
 import org.tron.core.services.WitnessProductBlockService;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
@@ -61,7 +61,7 @@ public class BlockMsgHandler implements TronMsgHandler {
     BlockMessage blockMessage = (BlockMessage) msg;
     BlockId blockId = blockMessage.getBlockId();
 
-    if (!fastForward && !peer.isFastForwardPeer()) {
+    if (!fastForward && !peer.isRelayPeer()) {
       check(peer, blockMessage);
     }
 
@@ -71,13 +71,13 @@ public class BlockMsgHandler implements TronMsgHandler {
     } else {
       Item item = new Item(blockId, InventoryType.BLOCK);
       long now = System.currentTimeMillis();
-      if (peer.isFastForwardPeer()) {
+      if (peer.isRelayPeer()) {
         peer.getAdvInvSpread().put(item, now);
       }
       Long time = peer.getAdvInvRequest().remove(item);
       if (null != time) {
         MetricsUtil.histogramUpdateUnCheck(MetricsKey.NET_LATENCY_FETCH_BLOCK
-                + peer.getNode().getHost(), now - time);
+                + peer.getInetAddress(), now - time);
         Metrics.histogramObserve(MetricKeys.Histogram.BLOCK_FETCH_LATENCY,
             (now - time) / Metrics.MILLISECONDS_PER_SECOND);
       }
@@ -91,7 +91,7 @@ public class BlockMsgHandler implements TronMsgHandler {
                       + "txs/process {}/{}ms, witness: {}",
               blockId.getNum(),
               interval,
-              peer.getInetAddress(),
+              peer.getInetSocketAddress(),
               time == null ? 0 : now - time,
               now - blockMessage.getBlockCapsule().getTimeStamp(),
               ((BlockMessage) msg).getBlockCapsule().getTransactions().size(),

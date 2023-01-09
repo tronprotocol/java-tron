@@ -108,6 +108,10 @@ public class ConsensusDelegate {
     return witnessStore.getAllWitnesses();
   }
 
+  public List<WitnessCapsule> updateWitnessStandby(List<WitnessCapsule> all) {
+    return witnessStore.updateWitnessStandby(all);
+  }
+
   public void saveStateFlag(int flag) {
     dynamicPropertiesStore.saveStateFlag(flag);
   }

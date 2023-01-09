@@ -73,18 +73,11 @@ public class TriggerConstantContractServlet extends RateLimiterServlet {
       } else {
         build.setData(ByteString.copyFrom(new byte[0]));
       }
-      long feeLimit = Util.getJsonLongValue(jsonObject, "fee_limit");
-
       TransactionCapsule trxCap = wallet
           .createTransactionCapsule(build.build(), ContractType.TriggerSmartContract);
 
-      Transaction.Builder txBuilder = trxCap.getInstance().toBuilder();
-      Transaction.raw.Builder rawBuilder = trxCap.getInstance().getRawData().toBuilder();
-      rawBuilder.setFeeLimit(feeLimit);
-      txBuilder.setRawData(rawBuilder);
-
       Transaction trx = wallet
-          .triggerConstantContract(build.build(), new TransactionCapsule(txBuilder.build()),
+          .triggerConstantContract(build.build(),trxCap,
               trxExtBuilder,
               retBuilder);
       trx = Util.setTransactionPermissionId(jsonObject, trx);
