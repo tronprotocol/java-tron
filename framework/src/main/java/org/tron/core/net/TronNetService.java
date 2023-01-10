@@ -145,6 +145,9 @@ public class TronNetService {
     config.setVersion(parameter.getNodeP2pVersion());
     config.setDisconnectionPolicyEnable(parameter.isOpenFullTcpDisconnect());
     config.setDiscoverEnable(parameter.isNodeDiscoveryEnable());
+    if (config.getIp() == null) {
+      config.setIp(parameter.getNodeExternalIp());
+    }
     return config;
   }
 }
