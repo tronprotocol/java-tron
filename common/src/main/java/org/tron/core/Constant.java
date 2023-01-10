@@ -332,7 +332,7 @@ public class Constant {
 
   public static final long DYNAMIC_ENERGY_INCREASE_FACTOR_RANGE = 10_000L;
 
-  public static final long DYNAMIC_ENERGY_MAX_FACTOR_RANGE = 100_000L;
+  public static final long DYNAMIC_ENERGY_MAX_FACTOR_RANGE = 10_000_000L;
 
   public static final int DYNAMIC_ENERGY_DECREASE_DIVISION = 4;
 
