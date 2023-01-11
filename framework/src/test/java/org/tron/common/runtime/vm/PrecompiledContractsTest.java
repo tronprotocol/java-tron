@@ -473,12 +473,26 @@ public class PrecompiledContractsTest {
 
     long currentSlot = latestTimestamp / 3_000;
     accountCapsule.setLatestConsumeTimeForEnergy(0L);
-    accountCapsule.setNewWindowSize(Common.ResourceCode.ENERGY, currentSlot * 2);
+
+    // recovered 1/4, usage_left: 15_000_000
+    // use delegated first, 10_000_000
+    // then, 5_000_000 is delegatable.
+    accountCapsule.setNewWindowSize(Common.ResourceCode.ENERGY, currentSlot * 4);
     tempRepository.putAccountValue(address, accountCapsule);
 
     res = delegatableResourcePcc.execute(encodeMultiWord(owner, one));
     Assert.assertTrue(res.getLeft());
     Assert.assertEquals(5_000_000L, ByteArray.toLong(res.getRight()));
+
+    // recovered 1/2, usage_left 10_000_000
+    // use delegated first, 10_000_000
+    // then all the FrozenBalanceForEnergyV2 is delegatable
+    accountCapsule.setNewWindowSize(Common.ResourceCode.ENERGY, currentSlot * 2);
+    tempRepository.putAccountValue(address, accountCapsule);
+
+    res = delegatableResourcePcc.execute(encodeMultiWord(owner, one));
+    Assert.assertTrue(res.getLeft());
+    Assert.assertEquals(10_000_000L, ByteArray.toLong(res.getRight()));
 
     // all recovered.
     accountCapsule.setNewWindowSize(Common.ResourceCode.ENERGY, currentSlot);

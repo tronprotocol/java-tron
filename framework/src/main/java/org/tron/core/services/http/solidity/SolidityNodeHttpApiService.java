@@ -15,6 +15,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.filter.HttpApiAccessFilter;
 import org.tron.core.services.http.DelegateResourceServlet;
+import org.tron.core.services.http.EstimateEnergyServlet;
 import org.tron.core.services.http.FreezeBalanceV2Servlet;
 import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.services.http.GetAccountByIdServlet;
@@ -161,6 +162,8 @@ public class SolidityNodeHttpApiService implements Service {
   private GetRewardServlet getRewardServlet;
   @Autowired
   private TriggerConstantContractServlet triggerConstantContractServlet;
+  @Autowired
+  private EstimateEnergyServlet estimateEnergyServlet;
 
   @Autowired
   private GetTransactionInfoByBlockNumServlet getTransactionInfoByBlockNumServlet;
@@ -287,6 +290,8 @@ public class SolidityNodeHttpApiService implements Service {
               "/walletsolidity/gettransactioncountbyblocknum");
       context.addServlet(new ServletHolder(triggerConstantContractServlet),
           "/walletsolidity/triggerconstantcontract");
+      context.addServlet(new ServletHolder(estimateEnergyServlet),
+          "/walletsolidity/estimateenergy");
 
       context.addServlet(new ServletHolder(getNodeInfoServlet), "/wallet/getnodeinfo");
       context.addServlet(new ServletHolder(getNodeInfoServlet), "/walletsolidity/getnodeinfo");

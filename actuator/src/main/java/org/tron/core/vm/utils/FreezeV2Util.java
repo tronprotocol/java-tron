@@ -12,6 +12,8 @@ import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
 
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+
 public class FreezeV2Util {
 
   private FreezeV2Util() {
@@ -68,19 +70,34 @@ public class FreezeV2Util {
     }
 
     byte[] key = DelegatedResourceCapsule.createDbKeyV2(from, to, false);
+    byte[] lockKey = DelegatedResourceCapsule.createDbKeyV2(from, to, true);
     DelegatedResourceCapsule delegatedResource = repository.getDelegatedResource(key);
-    if (delegatedResource == null) {
+    DelegatedResourceCapsule lockDelegateResource = repository.getDelegatedResource(lockKey);
+    if (delegatedResource == null && lockDelegateResource == null) {
       return 0;
     }
 
+    long amount = 0;
     // BANDWIDTH
     if (type == 0) {
-      return delegatedResource.getFrozenBalanceForBandwidth();
+      if (delegatedResource != null) {
+        amount += delegatedResource.getFrozenBalanceForBandwidth();
+      }
+      if (lockDelegateResource != null) {
+        amount += lockDelegateResource.getFrozenBalanceForBandwidth();
+      }
+      return amount;
     }
 
     // ENERGY
     if (type == 1) {
-      return delegatedResource.getFrozenBalanceForEnergy();
+      if (delegatedResource != null) {
+        amount += delegatedResource.getFrozenBalanceForEnergy();
+      }
+      if (lockDelegateResource != null) {
+        amount += lockDelegateResource.getFrozenBalanceForEnergy();
+      }
+      return amount;
     }
 
     return 0;
@@ -146,13 +163,13 @@ public class FreezeV2Util {
         return frozenV2Resource;
       }
 
-      // total resource
-      long totalResource = accountCapsule.getAllFrozenBalanceForBandwidth();
-      if (totalResource <= usage) {
-        return 0L;
-      }
+      long remainNetUsage = usage
+          - accountCapsule.getFrozenBalance()
+          - accountCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
+          - accountCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth();
 
-      return (long) (frozenV2Resource * ((double) (totalResource - usage) / totalResource));
+      remainNetUsage = Math.max(0, remainNetUsage);
+      return Math.max(0L, frozenV2Resource - remainNetUsage);
     }
 
     if (type == 1) {
@@ -171,13 +188,13 @@ public class FreezeV2Util {
         return frozenV2Resource;
       }
 
-      // total resource
-      long totalResource = accountCapsule.getAllFrozenBalanceForEnergy();
-      if (totalResource <= usage) {
-        return 0L;
-      }
+      long remainEnergyUsage = usage
+          - accountCapsule.getEnergyFrozenBalance()
+          - accountCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()
+          - accountCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy();
 
-      return (long) (frozenV2Resource * ((double) (totalResource - usage) / totalResource));
+      remainEnergyUsage = Math.max(0, remainEnergyUsage);
+      return Math.max(0L, frozenV2Resource - remainEnergyUsage);
     }
 
     return 0L;

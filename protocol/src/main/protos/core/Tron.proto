@@ -321,6 +321,7 @@ message ResourceReceipt {
   int64 net_usage = 5;
   int64 net_fee = 6;
   Transaction.Result.contractResult result = 7;
+  int64 energy_penalty_total = 8;
 }
 
 message MarketOrderDetail {

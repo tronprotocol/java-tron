@@ -11,8 +11,6 @@ public class BlockSyncCountStopTest extends ConditionallyStopTest {
 
   protected void initParameter(CommonParameter parameter) {
     parameter.setShutdownBlockCount(sync);
-    // will ignore
-    parameter.setShutdownBlockHeight(1024);
   }
 
   @Override

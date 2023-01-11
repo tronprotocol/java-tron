@@ -20,6 +20,7 @@ import org.tron.protos.Protocol.Transaction.Result.contractResult;
 public class ReceiptCapsule {
 
   private ResourceReceipt receipt;
+
   @Getter
   @Setter
   private long multiSignFee;
@@ -27,6 +28,7 @@ public class ReceiptCapsule {
   @Getter
   @Setter
   private long memoFee;
+
   /**
    * Available energy of contract deployer before executing transaction
    */
@@ -39,25 +41,54 @@ public class ReceiptCapsule {
   @Setter
   private long callerEnergyLeft;
 
+  /**
+   * Energy usage of caller before merging frozen energy
+   */
   @Getter
   @Setter
   private long callerEnergyUsage;
 
+  /**
+   * Energy usage of caller after merging frozen energy
+   */
   @Getter
   @Setter
   private long callerEnergyMergedUsage;
 
+  /**
+   * Energy usage of origin after merging frozen energy
+   */
   @Getter
   @Setter
   private long originEnergyMergedUsage;
 
+  /**
+   * Window size of caller before merging frozen energy
+   */
   @Getter
   @Setter
   private long callerEnergyWindowSize;
 
+  /**
+   * Window size of caller after merging frozen energy
+   */
+  @Getter
+  @Setter
+  private long callerEnergyMergedWindowSize;
+
+  /**
+   * Window size of origin before merging frozen energy
+   */
   @Getter
   @Setter
   private long originEnergyWindowSize;
+
+  /**
+   * Window size of origin after merging frozen energy
+   */
+  @Getter
+  @Setter
+  private long originEnergyMergedWindowSize;
 
   private Sha256Hash receiptAddress;
 
@@ -129,6 +160,14 @@ public class ReceiptCapsule {
     this.receipt = this.receipt.toBuilder().setEnergyUsageTotal(energyUsage).build();
   }
 
+  public long getEnergyPenaltyTotal() {
+    return this.receipt.getEnergyPenaltyTotal();
+  }
+
+  public void setEnergyPenaltyTotal(long penalty) {
+    this.receipt = this.receipt.toBuilder().setEnergyPenaltyTotal(penalty).build();
+  }
+
   public long getNetUsage() {
     return this.receipt.getNetUsage();
   }
@@ -184,7 +223,8 @@ public class ReceiptCapsule {
       long originEnergyLimit,
       EnergyProcessor energyProcessor, long originUsage) {
 
-    if (dynamicPropertiesStore.getAllowTvmFreeze() == 1 || dynamicPropertiesStore.supportUnfreezeDelay()) {
+    if (dynamicPropertiesStore.getAllowTvmFreeze() == 1
+        || dynamicPropertiesStore.supportUnfreezeDelay()) {
       return Math.min(originUsage, Math.min(originEnergyLeft, originEnergyLimit));
     }
 

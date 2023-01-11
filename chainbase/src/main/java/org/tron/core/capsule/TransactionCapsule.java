@@ -23,6 +23,7 @@ import com.google.common.primitives.Bytes;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.CodedInputStream;
+import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.Internal;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -527,6 +528,17 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return transaction.getRawData().getTimestamp();
   }
 
+  public void setFeeLimit(long feeLimit) {
+    Transaction.raw rawData = this.transaction.getRawData().toBuilder()
+        .setFeeLimit(feeLimit)
+        .build();
+    setRawData(rawData);
+  }
+
+  public long getFeeLimit() {
+    return transaction.getRawData().getFeeLimit();
+  }
+
   @Deprecated
   public void createTransaction(com.google.protobuf.Message message, ContractType contractType) {
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().addContract(
@@ -682,6 +694,18 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   public long getSerializedSize() {
     return this.transaction.getSerializedSize();
+  }
+
+  /**
+   * Compute the number of bytes that would be needed to encode an embedded message field, including
+   * tag.
+   * message Block {
+   *   repeated Transaction transactions = 1;
+   *   BlockHeader block_header = 2;
+   * }
+   */
+  public long computeTrxSizeForBlockMessage() {
+    return CodedOutputStream.computeMessageSize(1, this.transaction);
   }
 
   public long getResultSerializedSize() {

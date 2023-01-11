@@ -93,7 +93,6 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
 
     accountStore.put(ownerAddress, accountCapsule);
 
-    ret.setUnfreezeAmount(unfreezeBalance);
     ret.setWithdrawExpireAmount(unfreezeAmount);
     ret.setStatus(fee, code.SUCESS);
     return true;

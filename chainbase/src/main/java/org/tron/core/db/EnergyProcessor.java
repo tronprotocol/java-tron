@@ -101,8 +101,14 @@ public class EnergyProcessor extends ResourceProcessor {
     long energyUsage = accountCapsule.getEnergyUsage();
     long latestConsumeTime = accountCapsule.getAccountResource().getLatestConsumeTimeForEnergy();
     long energyLimit = calculateGlobalEnergyLimit(accountCapsule);
-
-    long newEnergyUsage = increase(accountCapsule, ENERGY, energyUsage, 0, latestConsumeTime, now);
+    long newEnergyUsage;
+    if (!dynamicPropertiesStore.supportUnfreezeDelay()) {
+      newEnergyUsage = increase(energyUsage, 0, latestConsumeTime, now);
+    } else {
+      // only participate in the calculation as a temporary variable, without disk flushing
+      newEnergyUsage = recovery(accountCapsule, ENERGY, energyUsage,
+          latestConsumeTime, now);
+    }
 
     if (energy > (energyLimit - newEnergyUsage)
         && dynamicPropertiesStore.getAllowTvmFreeze() == 0
@@ -110,13 +116,18 @@ public class EnergyProcessor extends ResourceProcessor {
       return false;
     }
 
-    latestConsumeTime = now;
     long latestOperationTime = dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
-    newEnergyUsage = increase(accountCapsule, ENERGY,
-            newEnergyUsage, energy, latestConsumeTime, now);
+    if (!dynamicPropertiesStore.supportUnfreezeDelay()) {
+      newEnergyUsage = increase(newEnergyUsage, energy, now, now);
+    } else {
+      // Participate in calculation and flush disk persistence
+      newEnergyUsage = increase(accountCapsule, ENERGY, energyUsage, energy,
+          latestConsumeTime, now);
+    }
+
     accountCapsule.setEnergyUsage(newEnergyUsage);
     accountCapsule.setLatestOperationTime(latestOperationTime);
-    accountCapsule.setLatestConsumeTimeForEnergy(latestConsumeTime);
+    accountCapsule.setLatestConsumeTimeForEnergy(now);
 
     accountStore.put(accountCapsule.createDbKey(), accountCapsule);
 
@@ -165,7 +176,7 @@ public class EnergyProcessor extends ResourceProcessor {
     long latestConsumeTime = accountCapsule.getAccountResource().getLatestConsumeTimeForEnergy();
     long energyLimit = calculateGlobalEnergyLimit(accountCapsule);
 
-    long newEnergyUsage = increase(accountCapsule, ENERGY, energyUsage, 0, latestConsumeTime, now);
+    long newEnergyUsage = recovery(accountCapsule, ENERGY, energyUsage, latestConsumeTime, now);
 
     return max(energyLimit - newEnergyUsage, 0); // us
   }

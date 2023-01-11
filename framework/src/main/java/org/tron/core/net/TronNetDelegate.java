@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -93,9 +94,8 @@ public class TronNetDelegate {
 
   private Thread hitThread;
 
-  // for Test
   @Setter
-  private volatile boolean  test = false;
+  private volatile boolean exit = true;
 
   private Cache<BlockId, Long> freshBlockId = CacheBuilder.newBuilder()
           .maximumSize(blockIdCacheSize).expireAfterWrite(1, TimeUnit.HOURS)
@@ -106,12 +106,23 @@ public class TronNetDelegate {
     hitThread =  new Thread(() -> {
       LockSupport.park();
       // to Guarantee Some other thread invokes unpark with the current thread as the target
-      if (hitDown && !test) {
+      if (hitDown && exit) {
         System.exit(0);
       }
     });
     hitThread.setName("hit-thread");
     hitThread.start();
+  }
+
+  @PreDestroy
+  public void close() {
+    try {
+      hitThread.interrupt();
+      // help GC
+      hitThread = null;
+    } catch (Exception e) {
+      logger.warn("hitThread interrupt error", e);
+    }
   }
 
   public Collection<PeerConnection> getActivePeer() {

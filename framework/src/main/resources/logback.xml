@@ -26,8 +26,16 @@
       <maxHistory>7</maxHistory>
       <totalSizeCap>50GB</totalSizeCap>
     </rollingPolicy>
-    <encoder>
+    <encoder class="org.tron.common.log.layout.MultiLayoutPattern">
       <pattern>%d{HH:mm:ss.SSS} %-5level [%t] [%c{1}]\(%F:%L\) %m%n</pattern>
+      <rule>
+        <logger>LEVELDB</logger>
+        <pattern>%d{HH:mm:ss.SSS} %m%n</pattern>
+      </rule>
+      <rule>
+        <logger>ROCKSDB</logger>
+        <pattern>%d{HH:mm:ss.SSS} %m%n</pattern>
+      </rule>
     </encoder>
     <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
       <level>TRACE</level>
@@ -69,7 +77,8 @@
   <logger level="INFO" name="DB"/>
   <logger level="INFO" name="capsule"/>
   <logger level="INFO" name="VM"/>
-
+  <logger level="INFO" name="LEVELDB"/>
+  <logger level="INFO" name="ROCKSDB"/>
   <logger level="INFO" name="tool" additivity="false">
     <appender-ref ref="CONSOLE"/>
   </logger>

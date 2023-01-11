@@ -43,6 +43,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.bouncycastle.util.encoders.Hex;
+import org.quartz.CronExpression;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.TransactionInfoList;
@@ -240,6 +241,8 @@ public class Manager {
 
   @Getter
   private volatile long latestSolidityNumShutDown;
+  @Getter
+  private int maxFlushCount;
 
   @Getter
   private final ThreadLocal<Histogram.Timer> blockedTimer = new ThreadLocal<>();
@@ -536,21 +539,15 @@ public class Manager {
     //initActuatorCreator
     ActuatorCreator.init();
     TransactionRegister.registerActuator();
-
-    long exitHeight = CommonParameter.getInstance().getShutdownBlockHeight();
-    long exitCount = CommonParameter.getInstance().getShutdownBlockCount();
-
-    if (exitCount > 0 && (exitHeight < 0 || exitHeight > headNum + exitCount)) {
-      CommonParameter.getInstance().setShutdownBlockHeight(headNum + exitCount);
+    // init auto-stop
+    try {
+      initAutoStop();
+    } catch (IllegalArgumentException e) {
+      logger.error("Auto-stop params error: {}", e.getMessage());
+      System.exit(1);
     }
 
-    if (CommonParameter.getInstance().getShutdownBlockHeight() < headNum) {
-      logger.info("ShutDownBlockHeight {} is less than headNum {}, ignored.",
-          CommonParameter.getInstance().getShutdownBlockHeight(), headNum);
-      CommonParameter.getInstance().setShutdownBlockHeight(-1);
-    }
-    // init
-    latestSolidityNumShutDown = CommonParameter.getInstance().getShutdownBlockHeight();
+    maxFlushCount = CommonParameter.getInstance().getStorage().getMaxFlushCount();
   }
 
   /**
@@ -680,6 +677,62 @@ public class Manager {
               witnessCapsule.setIsJobs(true);
               chainBaseManager.getWitnessStore().put(keyAddress, witnessCapsule);
             });
+  }
+
+  /**
+   * init auto-stop, check params
+   */
+  private void initAutoStop() {
+    final long headNum = chainBaseManager.getHeadBlockNum();
+    final long headTime = chainBaseManager.getHeadBlockTimeStamp();
+    final long exitHeight = CommonParameter.getInstance().getShutdownBlockHeight();
+    final long exitCount = CommonParameter.getInstance().getShutdownBlockCount();
+    final CronExpression blockTime = Args.getInstance().getShutdownBlockTime();
+
+    if (exitHeight > 0 && exitHeight < headNum) {
+      throw new IllegalArgumentException(
+          String.format("shutDownBlockHeight %d is less than headNum %d", exitHeight, headNum));
+    }
+
+    if (exitCount == 0) {
+      throw new IllegalArgumentException(
+          String.format("shutDownBlockCount %d is less than 1", exitCount));
+    }
+
+    if (blockTime != null && blockTime.getNextValidTimeAfter(new Date(headTime)) == null) {
+      throw new IllegalArgumentException(
+          String.format("shutDownBlockTime %s is illegal", blockTime));
+    }
+
+    if (exitHeight > 0 && exitCount > 0) {
+      throw new IllegalArgumentException(
+          String.format("shutDownBlockHeight %d and shutDownBlockCount %d set both",
+              exitHeight, exitCount));
+    }
+
+    if (exitHeight > 0 && blockTime != null) {
+      throw new IllegalArgumentException(
+          String.format("shutDownBlockHeight %d and shutDownBlockTime %s set both",
+              exitHeight, blockTime));
+    }
+
+    if (exitCount > 0 && blockTime != null) {
+      throw new IllegalArgumentException(
+          String.format("shutDownBlockCount %d and shutDownBlockTime %s set both",
+              exitCount, blockTime));
+    }
+
+    if (exitHeight == headNum) {
+      logger.info("Auto-stop hit: shutDownBlockHeight: {}, currentHeaderNum: {}, exit now",
+          exitHeight, headNum);
+      System.exit(0);
+    }
+
+    if (exitCount > 0) {
+      CommonParameter.getInstance().setShutdownBlockHeight(headNum + exitCount);
+    }
+    // init
+    latestSolidityNumShutDown = CommonParameter.getInstance().getShutdownBlockHeight();
   }
 
   public AccountStore getAccountStore() {
@@ -966,15 +1019,15 @@ public class Manager {
 
     updateFork(block);
     if (System.currentTimeMillis() - block.getTimeStamp() >= 60_000) {
-      revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MAX_FLUSH_COUNT);
+      revokingStore.setMaxFlushCount(maxFlushCount);
       if (Args.getInstance().getShutdownBlockTime() != null
           && Args.getInstance().getShutdownBlockTime().getNextValidTimeAfter(
-          new Date(block.getTimeStamp() - SnapshotManager.DEFAULT_MAX_FLUSH_COUNT * 1000 * 3))
+            new Date(block.getTimeStamp() - maxFlushCount * 1000 * 3L))
           .compareTo(new Date(block.getTimeStamp())) <= 0) {
         revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MIN_FLUSH_COUNT);
       }
       if (latestSolidityNumShutDown > 0 && latestSolidityNumShutDown - block.getNum()
-          <= SnapshotManager.DEFAULT_MAX_FLUSH_COUNT) {
+          <= maxFlushCount) {
         revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MIN_FLUSH_COUNT);
       }
     } else {
@@ -1527,7 +1580,8 @@ public class Manager {
       }
 
       // check the block size
-      if ((currentSize + trx.getSerializedSize() + 3)
+      long trxPackSize = trx.computeTrxSizeForBlockMessage();
+      if ((currentSize + trxPackSize)
           > ChainConstant.BLOCK_SIZE) {
         postponedTrxCount++;
         continue; // try pack more small trx
@@ -1558,7 +1612,7 @@ public class Manager {
         accountStateCallBack.exeTransFinish();
         tmpSession.merge();
         toBePacked.add(trx);
-        currentSize += trx.getSerializedSize() + 2; // proto tag num is 1 , so tag size is 2
+        currentSize += trxPackSize;
       } catch (Exception e) {
         logger.error("Process trx {} failed when generating block {}, {}.", trx.getTransactionId(),
             blockCapsule.getNum(), e.getMessage());
@@ -1569,17 +1623,17 @@ public class Manager {
 
     session.reset();
 
-    logger.info("Generate block {} success, trxs:{}, pendingCount: {}, rePushCount: {},"
-            + " postponedCount: {}, blockSize: {} B",
-        blockCapsule.getNum(), blockCapsule.getTransactions().size(),
-        pendingTransactions.size(), rePushTransactions.size(), postponedTrxCount, currentSize);
-
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(miner.getPrivateKey());
 
     BlockCapsule capsule = new BlockCapsule(blockCapsule.getInstance());
     capsule.generatedByMyself = true;
     Metrics.histogramObserve(timer);
+    logger.info("Generate block {} success, trxs:{}, pendingCount: {}, rePushCount: {},"
+                    + " postponedCount: {}, blockSize: {} B",
+            capsule.getNum(), capsule.getTransactions().size(),
+            pendingTransactions.size(), rePushTransactions.size(), postponedTrxCount,
+            capsule.getSerializedSize());
     return capsule;
   }
 

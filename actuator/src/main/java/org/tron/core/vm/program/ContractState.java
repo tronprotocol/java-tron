@@ -7,6 +7,8 @@ import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.ContractStateCapsule;
+import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -105,8 +107,18 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public ContractStateCapsule getContractState(byte[] address) {
+    return repository.getContractState(address);
+  }
+
+  @Override
   public void updateContract(byte[] address, ContractCapsule contractCapsule) {
     repository.updateContract(address, contractCapsule);
+  }
+
+  @Override
+  public void updateContractState(byte[] address, ContractStateCapsule contractStateCapsule) {
+    repository.updateContractState(address, contractStateCapsule);
   }
 
   @Override
@@ -182,6 +194,10 @@ public class ContractState implements Repository, ProgramListenerAware {
     repository.putContract(key, value);
   }
 
+  @Override
+  public void putContractState(Key key, Value value) {
+    repository.putContractState(key, value);
+  }
 
   public void putStorage(Key key, Storage cache) {
     repository.putStorage(key, cache);
@@ -206,6 +222,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   @Override
   public void putDelegation(Key key, Value value) {
     repository.putDelegation(key, value);
+  }
+
+  @Override
+  public void putDelegatedResourceAccountIndex(Key key, Value value) {
+    repository.putDelegatedResourceAccountIndex(key, value);
   }
 
   @Override
@@ -289,6 +310,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public DelegatedResourceAccountIndexCapsule getDelegatedResourceAccountIndex(byte[] key) {
+    return repository.getDelegatedResourceAccountIndex(key);
+  }
+
+  @Override
   public void updateDynamicProperty(byte[] word, BytesCapsule bytesCapsule) {
     repository.updateDynamicProperty(word, bytesCapsule);
   }
@@ -321,6 +347,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   @Override
   public void updateDelegation(byte[] word, BytesCapsule bytesCapsule) {
     repository.updateDelegation(word, bytesCapsule);
+  }
+
+  @Override
+  public void updateDelegatedResourceAccountIndex(byte[] word, DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule) {
+    repository.updateDelegatedResourceAccountIndex(word, delegatedResourceAccountIndexCapsule);
   }
 
   @Override

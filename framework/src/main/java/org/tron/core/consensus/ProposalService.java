@@ -318,6 +318,27 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveAllowDelegateOptimization(entry.getValue());
           break;
         }
+        case ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID: {
+          manager.getDynamicPropertiesStore()
+              .saveAllowOptimizedReturnValueOfChainId(entry.getValue());
+          break;
+        }
+        case ALLOW_DYNAMIC_ENERGY: {
+          manager.getDynamicPropertiesStore().saveAllowDynamicEnergy(entry.getValue());
+          break;
+        }
+        case DYNAMIC_ENERGY_THRESHOLD: {
+          manager.getDynamicPropertiesStore().saveDynamicEnergyThreshold(entry.getValue());
+          break;
+        }
+        case DYNAMIC_ENERGY_INCREASE_FACTOR: {
+          manager.getDynamicPropertiesStore().saveDynamicEnergyIncreaseFactor(entry.getValue());
+          break;
+        }
+        case DYNAMIC_ENERGY_MAX_FACTOR: {
+          manager.getDynamicPropertiesStore().saveDynamicEnergyMaxFactor(entry.getValue());
+          break;
+        }
         default:
           find = false;
           break;

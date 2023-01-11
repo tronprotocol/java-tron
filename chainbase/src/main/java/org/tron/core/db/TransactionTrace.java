@@ -158,6 +158,13 @@ public class TransactionTrace {
     receipt.setEnergyUsageTotal(energyUsage);
   }
 
+  public void setPenalty(long energyPenalty) {
+    if (energyPenalty < 0) {
+      energyPenalty = 0L;
+    }
+    receipt.setEnergyPenaltyTotal(energyPenalty);
+  }
+
   //set net bill
   public void setNetBill(long netUsage, long netFee) {
     receipt.setNetUsage(netUsage);
@@ -179,6 +186,7 @@ public class TransactionTrace {
     /*  VM execute  */
     runtime.execute(transactionContext);
     setBill(transactionContext.getProgramResult().getEnergyUsed());
+    setPenalty(transactionContext.getProgramResult().getEnergyPenaltyTotal());
 
 //    if (TrxType.TRX_PRECOMPILED_TYPE != trxType) {
 //      if (contractResult.OUT_OF_TIME
@@ -250,30 +258,19 @@ public class TransactionTrace {
         && receipt.getReceipt().getResult().equals(contractResult.SUCCESS)) {
 
       // just fo caller is not origin, we set the related field for origin account
-      if (!caller.getAddress().equals(origin.getAddress())) {
-        long originPrevUsage = receipt.getOriginEnergyUsage() * receipt.getOriginEnergyWindowSize();
-        long originRepayUsage = (receipt.getOriginEnergyMergedUsage() - origin.getEnergyUsage())
-            * origin.getWindowSize(Common.ResourceCode.ENERGY);
-
-        long originUsageAfterRepay = Long.max(0,
-            (originPrevUsage - originRepayUsage) / receipt.getOriginEnergyWindowSize());
-        long originWindowSizeAfterRepay =
-            originUsageAfterRepay == 0 ? 0L : receipt.getOriginEnergyWindowSize();
-
-        origin.setEnergyUsage(originUsageAfterRepay);
-        origin.setNewWindowSize(Common.ResourceCode.ENERGY, originWindowSizeAfterRepay);
+      if (origin != null && !caller.getAddress().equals(origin.getAddress())) {
+        resetAccountUsage(origin,
+            receipt.getOriginEnergyUsage(),
+            receipt.getOriginEnergyWindowSize(),
+            receipt.getOriginEnergyMergedUsage(),
+            receipt.getOriginEnergyMergedWindowSize());
       }
 
-      long callerPrevUsage = receipt.getCallerEnergyUsage() * receipt.getCallerEnergyWindowSize();
-      long callerRepayUsage = (receipt.getCallerEnergyMergedUsage() - caller.getEnergyUsage())
-          * caller.getWindowSize(Common.ResourceCode.ENERGY);
-
-      long callerUsageAfterRepay = Long.max(0,
-          (callerPrevUsage - callerRepayUsage) / receipt.getCallerEnergyWindowSize());
-      long callerWindowSizeAfterRepay =
-          callerUsageAfterRepay == 0 ? 0L : receipt.getCallerEnergyWindowSize();
-      caller.setEnergyUsage(callerUsageAfterRepay);
-      caller.setNewWindowSize(Common.ResourceCode.ENERGY, callerWindowSizeAfterRepay);
+      resetAccountUsage(caller,
+          receipt.getCallerEnergyUsage(),
+          receipt.getCallerEnergyWindowSize(),
+          receipt.getCallerEnergyMergedUsage(),
+          receipt.getCallerEnergyMergedWindowSize());
     }
     receipt.payEnergyBill(
         dynamicPropertiesStore, accountStore, forkController,
@@ -282,6 +279,23 @@ public class TransactionTrace {
         percent, originEnergyLimit,
         energyProcessor,
         EnergyProcessor.getHeadSlot(dynamicPropertiesStore));
+  }
+
+  private void resetAccountUsage(AccountCapsule accountCap,
+      long usage, long size, long mergedUsage, long mergedSize) {
+    long currentSize = accountCap.getWindowSize(Common.ResourceCode.ENERGY);
+    long currentUsage = accountCap.getEnergyUsage();
+    // Drop the pre consumed frozen energy
+    long newArea = currentUsage * currentSize
+        - (mergedUsage * mergedSize - usage * size);
+    // If area merging happened during suicide, use the current window size
+    long newSize = mergedSize == currentSize ? size : currentSize;
+    // Calc new usage by fixed x-axes
+    long newUsage = Long.max(0, newArea / newSize);
+    // Reset account usage and window size
+    accountCap.setEnergyUsage(newUsage);
+    accountCap.setNewWindowSize(Common.ResourceCode.ENERGY,
+        newUsage == 0 ? 0L : newSize);
   }
 
   public boolean checkNeedRetry() {

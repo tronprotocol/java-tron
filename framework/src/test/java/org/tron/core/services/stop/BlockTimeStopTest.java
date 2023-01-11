@@ -28,10 +28,6 @@ public class BlockTimeStopTest extends ConditionallyStopTest {
 
   protected void initParameter(CommonParameter parameter) {
     parameter.setShutdownBlockTime(cronExpression);
-    // will ignore
-    parameter.setShutdownBlockHeight(48);
-    // will ignore
-    parameter.setShutdownBlockCount(32);
   }
 
   @Override

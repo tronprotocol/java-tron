@@ -136,8 +136,9 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
       msg = TronMessageFactory.create(data);
       type = msg.getType();
       peer.getPeerStatistics().messageStatistics.addTcpInMessage(msg);
-      logger.info("Receive message from  peer: {}, {}",
-              peer.getInetSocketAddress(), msg);
+      if (PeerConnection.needToLog(msg)) {
+        logger.info("Receive message from  peer: {}, {}", peer.getInetSocketAddress(), msg);
+      }
       switch (type) {
         case P2P_PING:
         case P2P_PONG:

@@ -39,13 +39,19 @@ public interface Repository {
 
   BytesCapsule getDelegation(Key key);
 
+  DelegatedResourceAccountIndexCapsule getDelegatedResourceAccountIndex(byte[] key);
+
   void deleteContract(byte[] address);
 
   void createContract(byte[] address, ContractCapsule contractCapsule);
 
   ContractCapsule getContract(byte[] address);
 
+  ContractStateCapsule getContractState(byte[] address);
+
   void updateContract(byte[] address, ContractCapsule contractCapsule);
+
+  void updateContractState(byte[] address, ContractStateCapsule contractStateCapsule);
 
   void updateAccount(byte[] address, AccountCapsule accountCapsule);
 
@@ -62,6 +68,8 @@ public interface Repository {
   void updateAccountVote(byte[] word, long cycle, AccountCapsule accountCapsule);
 
   void updateDelegation(byte[] word, BytesCapsule bytesCapsule);
+
+  void updateDelegatedResourceAccountIndex(byte[] word, DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule);
 
   void saveCode(byte[] address, byte[] code);
 
@@ -89,6 +97,8 @@ public interface Repository {
 
   void putContract(Key key, Value value);
 
+  void putContractState(Key key, Value value);
+
   void putStorage(Key key, Storage cache);
 
   void putAccountValue(byte[] address, AccountCapsule accountCapsule);
@@ -100,6 +110,8 @@ public interface Repository {
   void putVotes(Key key, Value value);
 
   void putDelegation(Key key, Value value);
+
+  void putDelegatedResourceAccountIndex(Key key, Value value);
 
   long addTokenBalance(byte[] address, byte[] tokenId, long value);
 

@@ -87,6 +87,8 @@ public class VMActuator implements Actuator2 {
   @Setter
   private boolean isConstantCall;
 
+  private long maxEnergyLimit;
+
   @Setter
   private boolean enableEventListener;
 
@@ -94,6 +96,7 @@ public class VMActuator implements Actuator2 {
 
   public VMActuator(boolean isConstantCall) {
     this.isConstantCall = isConstantCall;
+    this.maxEnergyLimit = CommonParameter.getInstance().maxEnergyLimitForConstant;
   }
 
   private static long getEnergyFee(long callerEnergyUsage, long callerEnergyFrozen,
@@ -118,6 +121,12 @@ public class VMActuator implements Actuator2 {
     // Warm up registry class
     OperationRegistry.init();
     trx = context.getTrxCap().getInstance();
+    // If tx`s fee limit is set, use it to calc max energy limit for constant call
+    if (isConstantCall && trx.getRawData().getFeeLimit() > 0) {
+      maxEnergyLimit = Math.min(maxEnergyLimit, trx.getRawData().getFeeLimit()
+          / context.getStoreFactory().getChainBaseManager()
+          .getDynamicPropertiesStore().getEnergyFee());
+    }
     blockCap = context.getBlockCap();
     if ((VMConfig.allowTvmFreeze() || VMConfig.allowTvmFreezeV2())
         && context.getTrxCap().getTrxTrace() != null) {
@@ -356,7 +365,7 @@ public class VMActuator implements Actuator2 {
       // according to version
 
       if (isConstantCall) {
-        energyLimit = CommonParameter.getInstance().maxEnergyLimitForConstant;
+        energyLimit = maxEnergyLimit;
       } else {
         if (StorageUtils.getEnergyLimitHardFork()) {
           if (callValue < 0) {
@@ -486,7 +495,7 @@ public class VMActuator implements Actuator2 {
       AccountCapsule caller = rootRepository.getAccount(callerAddress);
       long energyLimit;
       if (isConstantCall) {
-        energyLimit = CommonParameter.getInstance().maxEnergyLimitForConstant;
+        energyLimit = maxEnergyLimit;
       } else {
         AccountCapsule creator = rootRepository
             .getAccount(deployedContract.getInstance().getOriginAddress().toByteArray());
@@ -564,6 +573,7 @@ public class VMActuator implements Actuator2 {
           energyProcessor.increase(account, Common.ResourceCode.ENERGY,
               account.getEnergyUsage(), min(leftFrozenEnergy, energyFromFeeLimit), now, now));
       receipt.setCallerEnergyMergedUsage(account.getEnergyUsage());
+      receipt.setCallerEnergyMergedWindowSize(account.getWindowSize(Common.ResourceCode.ENERGY));
       rootRepository.updateAccount(account.createDbKey(), account);
     }
     return min(availableEnergy, energyFromFeeLimit);
@@ -725,6 +735,7 @@ public class VMActuator implements Actuator2 {
           energyProcessor.increase(creator, Common.ResourceCode.ENERGY,
               creator.getEnergyUsage(), creatorEnergyLimit, now, now));
       receipt.setOriginEnergyMergedUsage(creator.getEnergyUsage());
+      receipt.setOriginEnergyMergedWindowSize(creator.getWindowSize(Common.ResourceCode.ENERGY));
       rootRepository.updateAccount(creator.createDbKey(), creator);
     }
     return Math.addExact(callerEnergyLimit, creatorEnergyLimit);

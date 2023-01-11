@@ -1,29 +1,28 @@
 # Toolkit Manual
 
-This package contains a set of tools for Tron, the following is the documentation for each tool.
+This package contains a set of tools for TRON, the followings are the documentation for each tool.
 
 ## DB Archive
 
-DB archive provides the ability to reformat the manifest according to the current `database`,
-parameters are compatible with previous `ArchiveManifest`.
+DB archive provides the ability to reformat the manifest according to the current `database`, parameters are compatible with the previous `ArchiveManifest`.
 
-Parameter explanation:
+### Available parameters:
 
-- `-b | --batch-size`: [int] specify the batch manifest size,default：80000.
-- `-d | --database-directory`: [string] specify the database directory to be processed,default：output-directory/database.
-- `-m | --manifest-size`: [int] specify the minimum required manifest file size ，unit:M，default：0.
-- `-h | --help`: provide the help info
+- `-b | --batch-size`: Specify the batch manifest size, default: 80000.
+- `-d | --database-directory`: Specify the database directory to be processed, default: output-directory/database.
+- `-m | --manifest-size`: Specify the minimum required manifest file size, unit: M, default: 0.
+- `-h | --help`: Provide the help info.
 
-Demo:
+### Examples:
 
 ```shell script
 # full command
   java -jar Toolkit.jar db archive [-h] [-b=<maxBatchSize>] [-d=<databaseDirectory>] [-m=<maxManifestSize>]
 # examples
    java -jar Toolkit.jar db archive #1. use default settings
-   java -jar Toolkit.jar db archive -d /tmp/db/database #2. Specify the database directory as /tmp/db/database
-   java -jar Toolkit.jar db archive -b 64000 #3. Specify the batch size to 64000 when optimizing Manifest
-   java -jar Toolkit.jar db archive -m 128 #4. Specify optimization only when Manifest exceeds 128M
+   java -jar Toolkit.jar db archive -d /tmp/db/database #2. specify the database directory as /tmp/db/database
+   java -jar Toolkit.jar db archive -b 64000 #3. specify the batch size to 64000 when optimizing manifest
+   java -jar Toolkit.jar db archive -m 128 #4. specify optimization only when Manifest exceeds 128M
 ```
 
 
@@ -31,38 +30,57 @@ Demo:
 
 DB convert provides a helper which can convert LevelDB data to RocksDB data, parameters are compatible with previous `DBConvert`.
 
-Parameter explanation:
+### Available parameters:
 
-- `<src>`: Input path for leveldb. Default: output-directory/database
-- `<dest>`: Output path for rocksdb. Default: output-directory-dst/database
-- `--safe`: In safe mode, read data from leveldb then put rocksdb, it's a very time-consuming procedure. If not, just change engine.properties from leveldb to rocksdb,rocksdb
-  is compatible with leveldb for current version.This may not be the case in the future.Default: false
-- `-h | --help`: provide the help info
+- `<src>`: Input path for leveldb, default: output-directory/database.
+- `<dest>`: Output path for rocksdb, default: output-directory-dst/database.
+- `--safe`: In safe mode, read data from leveldb then put into rocksdb, it's a very time-consuming procedure. If not, just change engine.properties from leveldb to rocksdb, rocksdb
+  is compatible with leveldb for the current version. This may not be the case in the future, default: false.
+- `-h | --help`: Provide the help info.
 
-Demo:
+### Examples:
 
 ```shell script
 # full command
   java -jar Toolkit.jar db convert [-h] [--safe] <src> <dest>
 # examples
-  java -jar Toolkit.jar db convert  output-directory/database /tmp/databse
+  java -jar Toolkit.jar db convert  output-directory/database /tmp/database
+```
+
+## DB Copy
+
+DB copy provides a helper which can copy LevelDB or RocksDB data quickly on the same file systems by creating hard links.
+
+### Available parameters:
+
+- `<src>`: Source path for database. Default: output-directory/database
+- `<dest>`: Output path for database. Default: output-directory-cp/database
+- `-h | --help`: provide the help info
+
+### Examples:
+
+```shell script
+# full command
+  java -jar Toolkit.jar db cp [-h] <src> <dest>
+# examples
+  java -jar Toolkit.jar db cp  output-directory/database /tmp/databse
 ```
 
 
 ## DB Lite
 
-DB Lite provides lite database, parameters are compatible with previous `LiteFullNodeTool`.
+DB lite provides lite database, parameters are compatible with previous `LiteFullNodeTool`.
 
-Parameter explanation:
+### Available parameters:
 
-- `-o | --operate`: [split,merge]. Default: split.
-- `-t | --type`: only used with operate=split: [snapshot,history]. Default: snapshot.
-- `-fn | --fn-data-path`: the database path to be split or merged.
-- `-ds | --dataset-path`: when operation is `split`,`dataset-path` is the path that store the `snapshot` or `history`,when
-  operation is `split`,`dataset-path` is the `history` data path.
-- `-h | --help`: provide the help info
+- `-o | --operate`: [split,merge], default: split.
+- `-t | --type`: Only used with operate=split: [snapshot,history], default: snapshot.
+- `-fn | --fn-data-path`: The database path to be split or merged.
+- `-ds | --dataset-path`: When operation is `split`,`dataset-path` is the path that store the `snapshot` or `history`, when
+  operation is `split`, `dataset-path` is the `history` data path.
+- `-h | --help`: Provide the help info.
 
-Demo:
+### Examples:
 
 ```shell script
 # full command
@@ -78,17 +96,20 @@ Demo:
 
 ## DB Move
 
-DB Move provides a helper to move some dbs to pre-set new path. For example move `block`, `transactionRetStore` or `transactionHistoryStore` to HDD,reduce storage expenses
+DB move provides a helper to move some dbs to a pre-set new path. For example move `block`, `transactionRetStore` or `transactionHistoryStore` to HDD for reducing storage expenses.
 
-Parameter explanation:
+### Available parameters:
 
 - `-c | --config`: config file. Default: config.conf.
 - `-d | --database-directory`: database directory path. Default: output-directory.
 - `-h | --help`: provide the help info
 
-Demo:
+### Examples:
 
-Take the example of moving `block` and `trans`
+Take the example of moving `block` and `trans`.
+
+
+Set path for `block` and `trans`.
 
 ```conf
 storage {
@@ -106,10 +127,11 @@ storage {
  ......
 }
 ```
-
+Execute move command.
 ```shell script
 # full command
   java -jar Toolkit.jar db mv [-h] [-c=<config>] [-d=<database>]
 # examples
   java -jar Toolkit.jar db mv -c main_net_config.conf -d /data/tron/output-directory
 ```
+

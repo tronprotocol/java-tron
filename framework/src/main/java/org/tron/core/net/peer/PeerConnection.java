@@ -194,6 +194,8 @@ public class PeerConnection {
 
   public String log() {
     long now = System.currentTimeMillis();
+    BlockId syncBlockId = syncBlockToFetch.peek();
+    Pair<Deque<BlockId>, Long> requested = syncChainRequested;
     return String.format(
         "Peer %s\n"
             + "connect time: %ds [%sms]\n"
@@ -206,17 +208,17 @@ public class PeerConnection {
             + "remainNum:%d\n"
             + "syncChainRequested:%d\n"
             + "blockInProcess:%d\n",
-        channel.getInetAddress(),
+        channel.getInetSocketAddress(),
         (now - channel.getStartTime()) / Constant.ONE_THOUSAND,
         channel.getLatency(),
         fastForwardBlock != null ? fastForwardBlock.getNum() : blockBothHave.getNum(),
         isNeedSyncFromPeer(),
         isNeedSyncFromUs(),
         syncBlockToFetch.size(),
-        !syncBlockToFetch.isEmpty() ? syncBlockToFetch.peek().getNum() : -1,
+        syncBlockId != null ? syncBlockId.getNum() : -1,
         syncBlockRequested.size(),
         remainNum,
-        syncChainRequested == null ? 0 : (now - syncChainRequested.getValue())
+        requested == null ? 0 : (now - requested.getValue())
                 / Constant.ONE_THOUSAND,
         syncBlockInProcess.size());
   }
@@ -264,7 +266,7 @@ public class PeerConnection {
             reason.name().toLowerCase(Locale.ROOT));
   }
 
-  private boolean needToLog(Message msg) {
+  public static boolean needToLog(Message msg) {
     if (msg instanceof PingMessage
             || msg instanceof PongMessage
             || msg instanceof TransactionsMessage

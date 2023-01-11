@@ -4,6 +4,8 @@ import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
 import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 import static org.tron.core.actuator.ActuatorConstant.STORE_NOT_EXIST;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
+import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +14,6 @@ import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.vm.nativecontract.param.CancelAllUnfreezeV2Param;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
@@ -63,16 +64,22 @@ public class CancelAllUnfreezeV2Processor {
       AccountCapsule accountCapsule, Protocol.Account.UnFreezeV2 unFreezeV2, Repository repo) {
     switch (unFreezeV2.getType()) {
       case BANDWIDTH:
+        long oldNetWeight = accountCapsule.getFrozenV2BalanceWithDelegated(BANDWIDTH) / TRX_PRECISION;
         accountCapsule.addFrozenBalanceForBandwidthV2(unFreezeV2.getUnfreezeAmount());
-        repo.addTotalNetWeight(unFreezeV2.getUnfreezeAmount() / TRX_PRECISION);
+        long newNetWeight = accountCapsule.getFrozenV2BalanceWithDelegated(BANDWIDTH) / TRX_PRECISION;
+        repo.addTotalNetWeight(newNetWeight - oldNetWeight);
         break;
       case ENERGY:
+        long oldEnergyWeight = accountCapsule.getFrozenV2BalanceWithDelegated(ENERGY) / TRX_PRECISION;
         accountCapsule.addFrozenBalanceForEnergyV2(unFreezeV2.getUnfreezeAmount());
-        repo.addTotalEnergyWeight(unFreezeV2.getUnfreezeAmount() / TRX_PRECISION);
+        long newEnergyWeight = accountCapsule.getFrozenV2BalanceWithDelegated(ENERGY) / TRX_PRECISION;
+        repo.addTotalEnergyWeight(newEnergyWeight - oldEnergyWeight);
         break;
       case TRON_POWER:
+        long oldTPWeight = accountCapsule.getTronPowerFrozenV2Balance() / TRX_PRECISION;
         accountCapsule.addFrozenForTronPowerV2(unFreezeV2.getUnfreezeAmount());
-        repo.addTotalTronPowerWeight(unFreezeV2.getUnfreezeAmount() / TRX_PRECISION);
+        long newTPWeight = accountCapsule.getTronPowerFrozenV2Balance() / TRX_PRECISION;
+        repo.addTotalTronPowerWeight(newTPWeight - oldTPWeight);
         break;
       default:
         // this should never happen

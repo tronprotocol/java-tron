@@ -19,6 +19,7 @@ import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -77,6 +78,17 @@ public class PbftMessageHandle {
   @PostConstruct
   public void init() {
     start();
+  }
+
+  @PreDestroy
+  public void close() {
+    try {
+      timer.cancel();
+      // help GC
+      timer = null;
+    } catch (Exception e) {
+      logger.warn("pbft-timer cancel error", e);
+    }
   }
 
   public List<Miner> getSrMinerList() {
