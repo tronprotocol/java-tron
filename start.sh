@@ -541,14 +541,12 @@ while [ -n "$1" ]; do
   --run)
     if [[ $ALL_OPT_LENGTH -eq 1 ]]; then
       restart
-      exit
     fi
     RUN=true
     shift 1
     ;;
   --stop)
     stopService
-    exit
     ;;
   FullNode)
     RUN=true
