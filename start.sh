@@ -597,7 +597,6 @@ if [[ $QUICK_START == true ]]; then
       restart
     fi
   fi
-  exit
 fi
 
 if [[ $UPGRADE == true ]]; then
@@ -614,13 +613,11 @@ if [[ $DOWNLOAD == true ]]; then
   fi
 fi
 
-if [[ $ALL_OPT_LENGTH -eq 0 ]]; then
+if [[ $ALL_OPT_LENGTH -eq 0 || $ALL_OPT_LENGTH -gt 0 ]]; then
   restart
-  exit
 fi
 
 if [[ $RUN == true ]]; then
   restart
-  exit
 fi
 
