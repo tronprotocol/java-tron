@@ -383,7 +383,8 @@ rebuildManifest() {
     $JAVACMD -jar $ARCHIVE_JAR -d $REBUILD_DIR -m $REBUILD_MANIFEST_SIZE -b $REBUILD_BATCH_SIZE
   else
     echo 'info: download the rebuild manifest plugin from the github'
-    download $RELEASE_URL/download/GreatVoyage-v4.3.0/$ARCHIVE_JAR $ARCHIVE_JAR
+    local latest=$(`echo getLatestReleaseVersion`)
+    download $RELEASE_URL/download/GreatVoyage-v"$latest"/$ARCHIVE_JAR $ARCHIVE_JAR
     if [[ $download == 0 ]]; then
       echo 'info: download success, rebuild manifest'
       $JAVACMD -jar $ARCHIVE_JAR $REBUILD_DIR -m $REBUILD_MANIFEST_SIZE -b $REBUILD_BATCH_SIZE
