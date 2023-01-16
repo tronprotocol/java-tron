@@ -18,6 +18,7 @@ import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.ForkController;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
+import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.ForkBlockVersionEnum;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -355,6 +356,15 @@ public class ProposalUtilTest {
     } catch (ContractValidateException e) {
       Assert.assertEquals("Bad chain parameter value, valid range is [0, 1_000_000_000_000L]",
           e.getMessage());
+    }
+  }
+
+  @Test
+  public void blockVersionCheck() {
+    for (ForkBlockVersionEnum forkVersion : ForkBlockVersionEnum.values()) {
+      if (forkVersion.getValue() > Parameter.ChainConstant.BLOCK_VERSION) {
+        Assert.fail("ForkBlockVersion must be less than BLOCK_VERSION");
+      }
     }
   }
 }
