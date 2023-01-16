@@ -1,14 +1,9 @@
 package org.tron.core.service;
 
 import com.google.protobuf.ByteString;
-
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +13,6 @@ import org.springframework.stereotype.Component;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DelegationStore;
@@ -52,31 +46,17 @@ public class MortgageService {
   }
 
   public void payStandbyWitness() {
-    List<WitnessCapsule> witnessCapsules = witnessStore.getAllWitnesses();
-    Map<ByteString, WitnessCapsule> witnessCapsuleMap = new HashMap<>();
-    List<ByteString> witnessAddressList = new ArrayList<>();
-    for (WitnessCapsule witnessCapsule : witnessCapsules) {
-      witnessAddressList.add(witnessCapsule.getAddress());
-      witnessCapsuleMap.put(witnessCapsule.getAddress(), witnessCapsule);
+    List<WitnessCapsule> witnessStandbys = witnessStore.getWitnessStandby();
+    long voteSum = witnessStandbys.stream().mapToLong(WitnessCapsule::getVoteCount).sum();
+    if (voteSum < 1) {
+      return;
     }
-    witnessAddressList.sort(Comparator.comparingLong((ByteString b) -> witnessCapsuleMap.get(b).getVoteCount())
-            .reversed().thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
-    if (witnessAddressList.size() > ChainConstant.WITNESS_STANDBY_LENGTH) {
-      witnessAddressList = witnessAddressList.subList(0, ChainConstant.WITNESS_STANDBY_LENGTH);
-    }
-    long voteSum = 0;
     long totalPay = dynamicPropertiesStore.getWitness127PayPerBlock();
-    for (ByteString b : witnessAddressList) {
-      voteSum += witnessCapsuleMap.get(b).getVoteCount();
-    }
-
-    if (voteSum > 0) {
-      for (ByteString b : witnessAddressList) {
-        double eachVotePay = (double) totalPay / voteSum;
-        long pay = (long) (witnessCapsuleMap.get(b).getVoteCount() * eachVotePay);
-        logger.debug("Pay {} stand reward {}.", Hex.toHexString(b.toByteArray()), pay);
-        payReward(b.toByteArray(), pay);
-      }
+    double eachVotePay = (double) totalPay / voteSum;
+    for (WitnessCapsule w : witnessStandbys) {
+      long pay = (long) (w.getVoteCount() * eachVotePay);
+      payReward(w.getAddress().toByteArray(), pay);
+      logger.debug("Pay {} stand reward {}.", Hex.toHexString(w.getAddress().toByteArray()), pay);
     }
   }
 

@@ -3,6 +3,8 @@ plugins {
     id "com.gorylenko.gradle-git-properties" version "2.4.1"
 }
 
+gitProperties.failOnNoGitDirectory = false;
+
 apply plugin: 'application'
 apply plugin: 'checkstyle'
 
@@ -46,6 +48,8 @@ dependencies {
 
     compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.69'
 
+    compile group: 'io.github.tronprotocol', name: 'libp2p', version: '0.1.1'
+
     compile group: 'com.typesafe', name: 'config', version: '1.3.2'
 
     compile "com.cedarsoftware:java-util:1.8.0"
@@ -58,7 +62,6 @@ dependencies {
 
     compile group: 'com.google.inject', name: 'guice', version: '4.1.0'
 
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.10.3'
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.8.5'
 
     compile group: 'io.dropwizard.metrics', name: 'metrics-core', version: '3.1.2'
@@ -70,8 +73,8 @@ dependencies {
     compile group: 'com.google.api.grpc', name: 'googleapis-common-protos', version: '0.0.3'
 
     // http
-    compile 'org.eclipse.jetty:jetty-server:9.4.11.v20180605'
-    compile 'org.eclipse.jetty:jetty-servlet:9.4.11.v20180605'
+    compile 'org.eclipse.jetty:jetty-server:9.4.49.v20220914'
+    compile 'org.eclipse.jetty:jetty-servlet:9.4.49.v20220914'
     compile 'com.alibaba:fastjson:1.2.83'
     compile group: 'org.apache.httpcomponents', name: 'httpasyncclient', version: '4.1.1'
     // end http
@@ -86,7 +89,6 @@ dependencies {
     compile group: 'org.pf4j', name: 'pf4j', version: '2.5.0'
 
     compile group: 'org.zeromq', name: 'jeromq', version: '0.5.0'
-    compile 'com.github.tronprotocol:zksnark-java-sdk:master-SNAPSHOT'
     compile project(":chainbase")
     compile project(":protocol")
     compile project(":actuator")
@@ -265,14 +267,34 @@ createScript(project, 'org.tron.program.DBConvert', 'DBConvert')
 createScript(project, 'org.tron.tool.litefullnode.LiteFullNodeTool', 'LiteFullNodeTool')
 
 def releaseBinary = hasProperty('binaryRelease') ? getProperty('binaryRelease') : 'true'
+def skipSolidity = hasProperty('skipSolidity') ? true : false
+def skipKeystore = hasProperty('skipKeystore') ? true : false
+def skipConvert = hasProperty('skipConvert') ? true : false
+def skipLite = hasProperty('skipLite') ? true : false
+def skipAll = hasProperty('skipAll') ? true : false
 if (releaseBinary == 'true') {
     artifacts {
-        archives(binaryRelease('buildSolidityNodeJar', 'SolidityNode', 'org.tron.program.SolidityNode'),
-                binaryRelease('buildFullNodeJar', 'FullNode', 'org.tron.program.FullNode'),
-                binaryRelease('buildKeystoreFactoryJar', 'KeystoreFactory', 'org.tron.program.KeystoreFactory'),
-                binaryRelease('buildDBConvertJar', 'DBConvert', 'org.tron.program.DBConvert'),
-                binaryRelease('buildLiteFullNodeToolJar', 'LiteFullNodeTool', 'org.tron.tool.litefullnode.LiteFullNodeTool'))
+        archives(binaryRelease('buildFullNodeJar', 'FullNode', 'org.tron.program.FullNode'))
     }
+    if (!skipAll) {
+        if (!skipSolidity) {
+            artifacts {
+                archives(binaryRelease('buildSolidityNodeJar', 'SolidityNode', 'org.tron.program.SolidityNode'))}
+        }
+        if (!skipKeystore) {
+            artifacts {
+                archives(binaryRelease('buildKeystoreFactoryJar', 'KeystoreFactory', 'org.tron.program.KeystoreFactory'))}
+        }
+        if (!skipConvert) {
+            artifacts {
+                archives(binaryRelease('buildDBConvertJar', 'DBConvert', 'org.tron.program.DBConvert'))}
+        }
+        if (!skipLite) {
+            artifacts {
+                archives(binaryRelease('buildLiteFullNodeToolJar', 'LiteFullNodeTool', 'org.tron.tool.litefullnode.LiteFullNodeTool'))}
+        }
+    }
+
 }
 
 task copyToParent(type: Copy) {

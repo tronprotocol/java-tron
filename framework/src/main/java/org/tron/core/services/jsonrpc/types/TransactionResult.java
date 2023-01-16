@@ -137,8 +137,8 @@ public class TransactionResult {
 
   public TransactionResult(Transaction tx, Wallet wallet) {
     TransactionCapsule capsule = new TransactionCapsule(tx);
-    byte[] txid = capsule.getTransactionId().getBytes();
-    hash = ByteArray.toJsonHex(txid);
+    byte[] txId = capsule.getTransactionId().getBytes();
+    hash = ByteArray.toJsonHex(txId);
     nonce = ByteArray.toJsonHex(new byte[8]); // no value
     blockHash = "0x";
     blockNumber = "0x";

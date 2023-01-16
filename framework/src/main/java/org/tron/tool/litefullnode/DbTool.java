@@ -27,7 +27,7 @@ import org.tron.tool.litefullnode.db.RocksDBImpl;
 public class DbTool {
 
   private static final String KEY_ENGINE = "ENGINE";
-  private static final String ENGINE_FILE = "engine.properties";
+  public static final String ENGINE_FILE = "engine.properties";
   private static final String FILE_SEPARATOR = File.separator;
   private static final String ROCKSDB = "ROCKSDB";
 
