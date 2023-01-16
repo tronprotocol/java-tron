@@ -15,6 +15,7 @@ import org.tron.common.prometheus.Metrics;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.net.P2pEventHandlerImpl;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.services.interfaceJsonRpcOnPBFT.JsonRpcServiceOnPBFT;
@@ -28,7 +29,6 @@ import org.tron.core.services.jsonrpc.FullNodeJsonRpcHttpService;
 @Slf4j(topic = "app")
 public class FullNode {
 
-  public static final int dbVersion = 2;
 
   public static volatile boolean shutDownSign = false;
 
@@ -79,7 +79,6 @@ public class FullNode {
     TronApplicationContext context =
         new TronApplicationContext(beanFactory);
     context.register(DefaultConfig.class);
-
     context.refresh();
     Application appT = ApplicationFactory.create(context);
     shutdown(appT);
@@ -103,38 +102,34 @@ public class FullNode {
 
     // full node and solidity node fuse together
     // provide solidity rpc and http server on the full node.
-    if (CommonParameter.getInstance().getStorage().getDbVersion() == dbVersion) {
-      RpcApiServiceOnSolidity rpcApiServiceOnSolidity = context
-          .getBean(RpcApiServiceOnSolidity.class);
-      appT.addService(rpcApiServiceOnSolidity);
-      HttpApiOnSolidityService httpApiOnSolidityService = context
-          .getBean(HttpApiOnSolidityService.class);
-      if (CommonParameter.getInstance().solidityNodeHttpEnable) {
-        appT.addService(httpApiOnSolidityService);
-      }
+    RpcApiServiceOnSolidity rpcApiServiceOnSolidity = context
+        .getBean(RpcApiServiceOnSolidity.class);
+    appT.addService(rpcApiServiceOnSolidity);
+    HttpApiOnSolidityService httpApiOnSolidityService = context
+        .getBean(HttpApiOnSolidityService.class);
+    if (CommonParameter.getInstance().solidityNodeHttpEnable) {
+      appT.addService(httpApiOnSolidityService);
+    }
 
-      // JSON-RPC on solidity
-      if (CommonParameter.getInstance().jsonRpcHttpSolidityNodeEnable) {
-        JsonRpcServiceOnSolidity jsonRpcServiceOnSolidity = context
-            .getBean(JsonRpcServiceOnSolidity.class);
-        appT.addService(jsonRpcServiceOnSolidity);
-      }
+    // JSON-RPC on solidity
+    if (CommonParameter.getInstance().jsonRpcHttpSolidityNodeEnable) {
+      JsonRpcServiceOnSolidity jsonRpcServiceOnSolidity = context
+          .getBean(JsonRpcServiceOnSolidity.class);
+      appT.addService(jsonRpcServiceOnSolidity);
     }
 
     // PBFT API (HTTP and GRPC)
-    if (CommonParameter.getInstance().getStorage().getDbVersion() == dbVersion) {
-      RpcApiServiceOnPBFT rpcApiServiceOnPBFT = context
-          .getBean(RpcApiServiceOnPBFT.class);
-      appT.addService(rpcApiServiceOnPBFT);
-      HttpApiOnPBFTService httpApiOnPBFTService = context
-          .getBean(HttpApiOnPBFTService.class);
-      appT.addService(httpApiOnPBFTService);
+    RpcApiServiceOnPBFT rpcApiServiceOnPBFT = context
+        .getBean(RpcApiServiceOnPBFT.class);
+    appT.addService(rpcApiServiceOnPBFT);
+    HttpApiOnPBFTService httpApiOnPBFTService = context
+        .getBean(HttpApiOnPBFTService.class);
+    appT.addService(httpApiOnPBFTService);
 
-      // JSON-RPC on PBFT
-      if (CommonParameter.getInstance().jsonRpcHttpPBFTNodeEnable) {
-        JsonRpcServiceOnPBFT jsonRpcServiceOnPBFT = context.getBean(JsonRpcServiceOnPBFT.class);
-        appT.addService(jsonRpcServiceOnPBFT);
-      }
+    // JSON-RPC on PBFT
+    if (CommonParameter.getInstance().jsonRpcHttpPBFTNodeEnable) {
+      JsonRpcServiceOnPBFT jsonRpcServiceOnPBFT = context.getBean(JsonRpcServiceOnPBFT.class);
+      appT.addService(jsonRpcServiceOnPBFT);
     }
 
     appT.initServices(parameter);

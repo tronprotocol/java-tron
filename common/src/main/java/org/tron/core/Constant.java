@@ -68,6 +68,9 @@ public class Constant {
   public static final String VM_MIN_TIME_RATIO = "vm.minTimeRatio";
   public static final String VM_MAX_TIME_RATIO = "vm.maxTimeRatio";
   public static final String VM_LONG_RUNNING_TIME = "vm.longRunningTime";
+  public static final String VM_ESTIMATE_ENERGY = "vm.estimateEnergy";
+
+  public static final String VM_ESTIMATE_ENERGY_MAX_RETRY = "vm.estimateEnergyMaxRetry";
 
   public static final String ROCKSDB = "ROCKSDB";
 
@@ -192,6 +195,8 @@ public class Constant {
 
   public static final String VM_SAVE_INTERNAL_TX = "vm.saveInternalTx";
 
+  public static final String VM_SAVE_FEATURED_INTERNAL_TX = "vm.saveFeaturedInternalTx";
+
   // public static final String COMMITTEE_ALLOW_SHIELDED_TRANSACTION = "committee.allowShieldedTransaction";
 
   public static final String COMMITTEE_ALLOW_SHIELDED_TRC20_TRANSACTION = "committee"
@@ -285,12 +290,15 @@ public class Constant {
 
   public static final String COMMITTEE_ALLOW_TVM_FREEZE = "committee.allowTvmFreeze";
   public static final String COMMITTEE_ALLOW_TVM_VOTE = "committee.allowTvmVote";
+  public static final String COMMITTEE_UNFREEZE_DELAY_DAYS = "committee.unfreezeDelayDays";
 
   public static final String COMMITTEE_ALLOW_TVM_LONDON = "committee.allowTvmLondon";
   public static final String COMMITTEE_ALLOW_TVM_COMPATIBLE_EVM = "committee.allowTvmCompatibleEvm";
   public static final String COMMITTEE_ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX =
       "committee.allowHigherLimitForMaxCpuTimeOfOneTx";
   public static final String COMMITTEE_ALLOW_NEW_REWARD_ALGORITHM = "committee.allowNewRewardAlgorithm";
+  public static final String COMMITTEE_ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID =
+      "committee.allowOptimizedReturnValueOfChainId";
 
 
   public static final String METRICS_STORAGE_ENABLE = "node.metrics.storageEnable";
@@ -310,6 +318,23 @@ public class Constant {
   public static final String ALLOW_NEW_REWARD = "committee.allowNewReward";
   public static final String MEMO_FEE = "committee.memoFee";
   public static final String ALLOW_DELEGATE_OPTIMIZATION = "committee.allowDelegateOptimization";
+
+  public static final String ALLOW_DYNAMIC_ENERGY = "committee.allowDynamicEnergy";
+
+  public static final String DYNAMIC_ENERGY_THRESHOLD = "committee.dynamicEnergyThreshold";
+
+  public static final String DYNAMIC_ENERGY_INCREASE_FACTOR
+      = "committee.dynamicEnergyIncreaseFactor";
+
+  public static final String DYNAMIC_ENERGY_MAX_FACTOR = "committee.dynamicEnergyMaxFactor";
+
+  public static final long DYNAMIC_ENERGY_FACTOR_DECIMAL = 10_000L;
+
+  public static final long DYNAMIC_ENERGY_INCREASE_FACTOR_RANGE = 10_000L;
+
+  public static final long DYNAMIC_ENERGY_MAX_FACTOR_RANGE = 100_000L;
+
+  public static final int DYNAMIC_ENERGY_DECREASE_DIVISION = 4;
 
   public static final String LOCAL_HOST = "127.0.0.1";
 

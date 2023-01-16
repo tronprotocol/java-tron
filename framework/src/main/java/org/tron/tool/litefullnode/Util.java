@@ -43,7 +43,7 @@ public class Util {
     });
   }
 
-  private static void copy(Path source, Path dest) {
+  public static void copy(Path source, Path dest) {
     try {
       // create hard link when file is .sst
       if (source.toString().endsWith(".sst")) {

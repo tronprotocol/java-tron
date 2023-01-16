@@ -2,9 +2,9 @@ package org.tron.core.net;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.tron.common.overlay.message.DisconnectMessage;
 import org.tron.core.exception.P2pException;
 import org.tron.core.net.message.MessageTypes;
+import org.tron.core.net.message.base.DisconnectMessage;
 import org.tron.protos.Protocol.ReasonCode;
 
 public class MessageTest {
