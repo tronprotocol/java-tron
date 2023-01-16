@@ -58,6 +58,12 @@ message SmartContract {
   int32 version = 11;
 }
 
+message ContractState {
+  int64 energy_usage = 1;
+  int64 energy_factor = 2;
+  int64 update_cycle = 3;
+}
+
 message CreateSmartContract {
   bytes owner_address = 1;
   SmartContract new_contract = 2;
@@ -94,4 +100,5 @@ message UpdateEnergyLimitContract {
 message SmartContractDataWrapper {
   SmartContract smart_contract = 1;
   bytes runtimecode = 2;
+  ContractState contract_state = 3;
 }
