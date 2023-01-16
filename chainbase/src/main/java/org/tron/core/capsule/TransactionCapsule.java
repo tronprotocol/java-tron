@@ -23,6 +23,7 @@ import com.google.common.primitives.Bytes;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.CodedInputStream;
+import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.Internal;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -106,6 +107,11 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   @Setter
   private long order;
   private byte[] ownerAddress;
+  private Sha256Hash id;
+
+  @Getter
+  @Setter
+  private boolean isTransactionCreate = false;
 
   public byte[] getOwnerAddress() {
     if (this.ownerAddress == null) {
@@ -488,7 +494,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         .setRefBlockHash(ByteString.copyFrom(ByteArray.subArray(blockHash, 8, 16)))
         .setRefBlockBytes(ByteString.copyFrom(ByteArray.subArray(refBlockNum, 6, 8)))
         .build();
-    this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
+    setRawData(rawData);
   }
 
   public long getExpiration() {
@@ -501,25 +507,36 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   public void setExpiration(long expiration) {
     Transaction.raw rawData = this.transaction.getRawData().toBuilder().setExpiration(expiration)
         .build();
-    this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
+    setRawData(rawData);
   }
 
   public void setTimestamp() {
     Transaction.raw rawData = this.transaction.getRawData().toBuilder()
         .setTimestamp(System.currentTimeMillis())
         .build();
-    this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
+    setRawData(rawData);
   }
 
   public void setTimestamp(long timestamp) {
     Transaction.raw rawData = this.transaction.getRawData().toBuilder()
         .setTimestamp(timestamp)
         .build();
-    this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
+    setRawData(rawData);
   }
 
   public long getTimestamp() {
     return transaction.getRawData().getTimestamp();
+  }
+
+  public void setFeeLimit(long feeLimit) {
+    Transaction.raw rawData = this.transaction.getRawData().toBuilder()
+        .setFeeLimit(feeLimit)
+        .build();
+    setRawData(rawData);
+  }
+
+  public long getFeeLimit() {
+    return transaction.getRawData().getFeeLimit();
   }
 
   @Deprecated
@@ -545,7 +562,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     SignInterface cryptoEngine = SignUtils
         .fromPrivate(privateKey, CommonParameter.getInstance().isECKeyCryptoEngine());
     ByteString sig = ByteString.copyFrom(cryptoEngine.Base64toBytes(cryptoEngine
-        .signHash(getRawHash().getBytes())));
+        .signHash(getTransactionId().getBytes())));
     this.transaction = this.transaction.toBuilder().addSignature(sig).build();
   }
 
@@ -568,7 +585,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         .fromPrivate(privateKey, CommonParameter.getInstance().isECKeyCryptoEngine());
     byte[] address = cryptoEngine.getAddress();
     if (this.transaction.getSignatureCount() > 0) {
-      checkWeight(permission, this.transaction.getSignatureList(), this.getRawHash().getBytes(),
+      checkWeight(permission, this.transaction.getSignatureList(),
+          this.getTransactionId().getBytes(),
           approveList);
       if (approveList.contains(ByteString.copyFrom(address))) {
         throw new PermissionException(encode58Check(address) + " had signed!");
@@ -582,7 +600,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
               + " but it is not contained of permission.");
     }
     ByteString sig = ByteString.copyFrom(cryptoEngine.Base64toBytes(cryptoEngine
-        .signHash(getRawHash().getBytes())));
+        .signHash(getTransactionId().getBytes())));
     this.transaction = this.transaction.toBuilder().addSignature(sig).build();
   }
   
@@ -614,7 +632,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         throw new ValidateSignatureException("too many signatures");
       }
 
-      byte[] hash = this.getRawHash().getBytes();
+      byte[] hash = getTransactionId().getBytes();
 
       try {
         if (!validateSignature(this.transaction, hash, accountStore, dynamicPropertiesStore)) {
@@ -657,7 +675,16 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   public Sha256Hash getTransactionId() {
-    return getRawHash();
+    if (this.id == null) {
+      this.id = getRawHash();
+    }
+    return this.id;
+  }
+
+  private void setRawData(Transaction.raw rawData) {
+    this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
+    // invalidate trxId
+    this.id = null;
   }
 
   @Override
@@ -667,6 +694,18 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   public long getSerializedSize() {
     return this.transaction.getSerializedSize();
+  }
+
+  /**
+   * Compute the number of bytes that would be needed to encode an embedded message field, including
+   * tag.
+   * message Block {
+   *   repeated Transaction transactions = 1;
+   *   BlockHeader block_header = 2;
+   * }
+   */
+  public long computeTrxSizeForBlockMessage() {
+    return CodedOutputStream.computeMessageSize(1, this.transaction);
   }
 
   public long getResultSerializedSize() {

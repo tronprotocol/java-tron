@@ -142,6 +142,21 @@ public class HttpSelfFormatFieldName {
     AddressFieldNameMap.put("protocol.ShieldedTransferContract.transparent_to_address", 1);
     //UpdateBrokerageContract
     AddressFieldNameMap.put("protocol.UpdateBrokerageContract.owner_address", 1);
+    //FreezeBalanceV2Contract
+    AddressFieldNameMap.put("protocol.FreezeBalanceV2Contract.owner_address", 1);
+    //UnfreezeBalanceV2Contract
+    AddressFieldNameMap.put("protocol.UnfreezeBalanceV2Contract.owner_address", 1);
+    //WithdrawExpireUnfreezeContract
+    AddressFieldNameMap.put("protocol.WithdrawExpireUnfreezeContract.owner_address", 1);
+    //DelegateResourceContract
+    AddressFieldNameMap.put("protocol.DelegateResourceContract.owner_address", 1);
+    AddressFieldNameMap.put("protocol.DelegateResourceContract.receiver_address", 1);
+    //UnDelegateResourceContract
+    AddressFieldNameMap.put("protocol.UnDelegateResourceContract.owner_address", 1);
+    AddressFieldNameMap.put("protocol.UnDelegateResourceContract.receiver_address", 1);
+    AddressFieldNameMap.put("protocol.CanDelegatedMaxSizeRequestMessage.owner_address", 1);
+    AddressFieldNameMap.put("protocol.GetAvailableUnfreezeCountRequestMessage.owner_address", 1);
+    AddressFieldNameMap.put("protocol.CanWithdrawUnfreezeAmountRequestMessage.owner_address", 1);
 
     //***** Tron.proto *****
     //AccountId

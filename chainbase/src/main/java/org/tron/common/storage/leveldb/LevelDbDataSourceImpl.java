@@ -44,10 +44,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBIterator;
+import org.iq80.leveldb.Logger;
 import org.iq80.leveldb.Options;
 import org.iq80.leveldb.ReadOptions;
 import org.iq80.leveldb.WriteBatch;
 import org.iq80.leveldb.WriteOptions;
+import org.slf4j.LoggerFactory;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.storage.metric.DbStat;
@@ -65,12 +67,19 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
 
   private String dataBaseName;
   private DB database;
-  private boolean alive;
+  private volatile boolean alive;
   private String parentPath;
   private Options options;
   private WriteOptions writeOptions;
   private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
   private static final String LEVELDB = "LEVELDB";
+  private static final org.slf4j.Logger innerLogger = LoggerFactory.getLogger(LEVELDB);
+  private Logger leveldbLogger = new Logger() {
+    @Override
+    public void log(String message) {
+      innerLogger.info("{} {}", dataBaseName, message);
+    }
+  };
 
   /**
    * constructor.
@@ -82,7 +91,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
         CommonParameter.getInstance().getStorage().getDbDirectory()
     ).toString();
     this.dataBaseName = dataBaseName;
-    this.options = options;
+    this.options = options.logger(leveldbLogger);
     this.writeOptions = writeOptions;
     initDB();
   }
@@ -94,7 +103,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     ).toString();
 
     this.dataBaseName = dataBaseName;
-    options = new Options();
+    options = new Options().logger(leveldbLogger);
     writeOptions = new WriteOptions();
   }
 
@@ -152,20 +161,6 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     }
   }
 
-  @Deprecated
-  private Options createDbOptions() {
-    Options dbOptions = new Options();
-    dbOptions.createIfMissing(true);
-    dbOptions.compressionType(CompressionType.NONE);
-    dbOptions.blockSize(10 * 1024 * 1024);
-    dbOptions.writeBufferSize(10 * 1024 * 1024);
-    dbOptions.cacheSize(0);
-    dbOptions.paranoidChecks(true);
-    dbOptions.verifyChecksums(true);
-    dbOptions.maxOpenFiles(32);
-    return dbOptions;
-  }
-
   public Path getDbPath() {
     return Paths.get(parentPath, dataBaseName);
   }
@@ -187,24 +182,6 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   @Override
   public boolean isAlive() {
     return alive;
-  }
-
-  /**
-   * destroy database.
-   */
-  public void destroyDb(File fileLocation) {
-    resetDbLock.writeLock().lock();
-    try {
-      logger.debug("Destroying existing database: " + fileLocation);
-      Options options = new Options();
-      try {
-        factory.destroy(fileLocation, options);
-      } catch (IOException e) {
-        logger.error(e.getMessage(), e);
-      }
-    } finally {
-      resetDbLock.writeLock().unlock();
-    }
   }
 
   @Override
@@ -484,10 +461,6 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
 
   public Stream<Entry<byte[], byte[]>> stream() {
     return StreamSupport.stream(spliterator(), false);
-  }
-
-  public Stream<Entry<byte[], byte[]>> parallelStream() {
-    return StreamSupport.stream(spliterator(), true);
   }
 
   @Override
