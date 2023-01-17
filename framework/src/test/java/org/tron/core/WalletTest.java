@@ -20,21 +20,17 @@ package org.tron.core;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
-import static stest.tron.wallet.common.client.utils.PublicMethed.decode58Check;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.api.GrpcAPI;
@@ -42,26 +38,21 @@ import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.ProposalList;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Utils;
-import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
-import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.ProposalUtil.ProposalType;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol;
-import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.BlockHeader.raw;
@@ -76,21 +67,18 @@ import org.tron.protos.contract.BalanceContract.TransferContract;
 
 
 @Slf4j
-public class WalletTest {
+public class WalletTest extends BaseTest {
 
   public static final String ACCOUNT_ADDRESS_ONE = "121212a9cf";
   public static final String ACCOUNT_ADDRESS_TWO = "232323a9cf";
   public static final String ACCOUNT_ADDRESS_THREE = "343434a9cf";
   public static final String ACCOUNT_ADDRESS_FOUR = "454545a9cf";
   public static final String ACCOUNT_ADDRESS_FIVE = "565656a9cf";
-  public static final String ACCOUNT_ADDRESS_SIX = "12344349cf";
   public static final long BLOCK_NUM_ONE = 1;
   public static final long BLOCK_NUM_TWO = 2;
   public static final long BLOCK_NUM_THREE = 3;
   public static final long BLOCK_NUM_FOUR = 4;
   public static final long BLOCK_NUM_FIVE = 5;
-  public static final long CYCLE_NUM_ONE = 1;
-  public static final long CYCLE_NUM_TWO = 2;
   public static final long BLOCK_TIMESTAMP_ONE = DateTime.now().minusDays(4).getMillis();
   public static final long BLOCK_TIMESTAMP_TWO = DateTime.now().minusDays(3).getMillis();
   public static final long BLOCK_TIMESTAMP_THREE = DateTime.now().minusDays(2).getMillis();
@@ -101,16 +89,13 @@ public class WalletTest {
   public static final long BLOCK_WITNESS_THREE = 14;
   public static final long BLOCK_WITNESS_FOUR = 15;
   public static final long BLOCK_WITNESS_FIVE = 16;
-  //private static DeferredTransaction deferredTransaction;
   public static final long TRANSACTION_TIMESTAMP_ONE = DateTime.now().minusDays(4).getMillis();
   public static final long TRANSACTION_TIMESTAMP_TWO = DateTime.now().minusDays(3).getMillis();
   public static final long TRANSACTION_TIMESTAMP_THREE = DateTime.now().minusDays(2).getMillis();
   public static final long TRANSACTION_TIMESTAMP_FOUR = DateTime.now().minusDays(1).getMillis();
   public static final long TRANSACTION_TIMESTAMP_FIVE = DateTime.now().getMillis();
-  private static TronApplicationContext context;
-  private static Wallet wallet;
-  private static ChainBaseManager chainBaseManager;
-  private static String dbPath = "output_wallet_test";
+  @Resource
+  private Wallet wallet;
   private static Block block1;
   private static Block block2;
   private static Block block3;
@@ -121,27 +106,23 @@ public class WalletTest {
   private static Transaction transaction3;
   private static Transaction transaction4;
   private static Transaction transaction5;
-  private static Transaction transaction6;
   private static AssetIssueCapsule Asset1;
 
   static {
+    dbPath = "output_wallet_test";
     Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
   }
 
-  @BeforeClass
-  public static void init() {
-    wallet = context.getBean(Wallet.class);
-    chainBaseManager = context.getBean(ChainBaseManager.class);
+  @Before
+  public void before() {
     initTransaction();
     initBlock();
-    chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(5);
   }
 
   /**
    * initTransaction.
    */
-  private static void initTransaction() {
+  private void initTransaction() {
     transaction1 = getBuildTransaction(
         getBuildTransferContract(ACCOUNT_ADDRESS_ONE, ACCOUNT_ADDRESS_TWO),
         TRANSACTION_TIMESTAMP_ONE, BLOCK_NUM_ONE);
@@ -166,20 +147,15 @@ public class WalletTest {
         getBuildTransferContract(ACCOUNT_ADDRESS_FIVE, ACCOUNT_ADDRESS_ONE),
         TRANSACTION_TIMESTAMP_FIVE, BLOCK_NUM_FIVE);
     addTransactionToStore(transaction5);
-
-    transaction6 = getBuildTransaction(
-        getBuildTransferContract(ACCOUNT_ADDRESS_ONE, ACCOUNT_ADDRESS_SIX),
-        TRANSACTION_TIMESTAMP_FIVE, BLOCK_NUM_FIVE);
-    addTransactionToStore(transaction5);
   }
 
-  private static void addTransactionToStore(Transaction transaction) {
+  private void addTransactionToStore(Transaction transaction) {
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
     chainBaseManager.getTransactionStore()
         .put(transactionCapsule.getTransactionId().getBytes(), transactionCapsule);
   }
 
-  private static void addTransactionInfoToStore(Transaction transaction) {
+  private void addTransactionInfoToStore(Transaction transaction) {
     TransactionInfoCapsule transactionInfo = new TransactionInfoCapsule();
     byte[] trxId = transaction.getRawData().toByteArray();
     transactionInfo.setId(trxId);
@@ -207,7 +183,7 @@ public class WalletTest {
   /**
    * initBlock.
    */
-  private static void initBlock() {
+  private void initBlock() {
 
     block1 = getBuildBlock(BLOCK_TIMESTAMP_ONE, BLOCK_NUM_ONE, BLOCK_WITNESS_ONE,
         ACCOUNT_ADDRESS_ONE, transaction1, transaction2);
@@ -235,7 +211,7 @@ public class WalletTest {
     addTransactionInfoToStore(transaction5);
   }
 
-  private static void addBlockToStore(Block block) {
+  private void addBlockToStore(Block block) {
     BlockCapsule blockCapsule = new BlockCapsule(block);
     chainBaseManager.getBlockStore().put(blockCapsule.getBlockId().getBytes(), blockCapsule);
   }
@@ -250,14 +226,14 @@ public class WalletTest {
   }
 
 
-  private static void buildAssetIssue() {
+  private void buildAssetIssue() {
     AssetIssueContract.Builder builder = AssetIssueContract.newBuilder();
     builder.setName(ByteString.copyFromUtf8("Asset1"));
     Asset1 = new AssetIssueCapsule(builder.build());
     chainBaseManager.getAssetIssueStore().put(Asset1.createDbKey(), Asset1);
   }
 
-  private static void buildProposal() {
+  private void buildProposal() {
     Proposal.Builder builder = Proposal.newBuilder();
     builder.setProposalId(1L).setProposerAddress(ByteString.copyFromUtf8("Address1"));
     ProposalCapsule proposalCapsule = new ProposalCapsule(builder.build());
@@ -269,7 +245,7 @@ public class WalletTest {
     chainBaseManager.getDynamicPropertiesStore().saveLatestProposalNum(2L);
   }
 
-  private static void buildExchange() {
+  private void buildExchange() {
     Exchange.Builder builder = Exchange.newBuilder();
     builder.setExchangeId(1L).setCreatorAddress(ByteString.copyFromUtf8("Address1"));
     ExchangeCapsule ExchangeCapsule = new ExchangeCapsule(builder.build());
@@ -283,13 +259,6 @@ public class WalletTest {
 
   }
 
-  @AfterClass
-  public static void removeDb() {
-    Args.clearParam();
-    context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
-  }
-
   @Test
   public void testWallet() {
     Wallet wallet1 = new Wallet();
@@ -298,7 +267,7 @@ public class WalletTest {
         .getAddress()));
     logger.info("wallet2 address = {}", ByteArray.toHexString(wallet2
         .getAddress()));
-    assertFalse(wallet1.getAddress().equals(wallet2.getAddress()));
+    assertNotEquals(wallet1.getAddress(), wallet2.getAddress());
   }
 
   @Test
