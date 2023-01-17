@@ -31,7 +31,6 @@ shareddata.*
 
 # protobuf generated classes
 src/main/gen
-
 src/main/java/org/tron/core/bftconsensus
 src/test/java/org/tron/consensus2
 src/main/java/META-INF/

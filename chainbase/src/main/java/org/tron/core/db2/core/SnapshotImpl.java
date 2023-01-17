@@ -36,16 +36,6 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
     }
     previous = snapshot;
     snapshot.setNext(this);
-    // inherit
-    isOptimized = snapshot.isOptimized();
-    // merge for DynamicPropertiesStore，about 100 keys
-    if (isOptimized) {
-      if (root == previous ){
-        Streams.stream(root.iterator()).forEach( e -> put(e.getKey(),e.getValue()));
-      }else {
-        merge(previous);
-      }
-    }
   }
 
   @Override
@@ -58,16 +48,6 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
             MetricKeys.Histogram.SNAPSHOT_SERVICE_LATENCY, root.getDbName(), MetricLabels.Histogram.SNAPSHOT_GET);
     Snapshot snapshot = head;
     Value value;
-    if (isOptimized) {
-      value = db.get(Key.of(key));
-      if(Objects.nonNull(value)) {
-        Metrics.histogramObserve(requestTimer);
-      }
-      Metrics.counterInc(MetricKeys.Counter.SNAPSHOT_GET, 1, root.getDbName(),
-              Objects.isNull(value) ? MetricLabels.Counter.SNAPSHOT_GET_MISS : MetricLabels.Counter.SNAPSHOT_GET_SUCCESS,
-              MetricLabels.Counter.SNAPSHOT_GET_NOT_REACH_ROOT);
-      return value == null ? null: value.getBytes();
-    }
     while (Snapshot.isImpl(snapshot)) {
       if ((value = ((SnapshotImpl) snapshot).db.get(Key.of(key))) != null) {
         Metrics.histogramObserve(requestTimer);

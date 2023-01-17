@@ -16,7 +16,6 @@ import lombok.Setter;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
-import org.tron.common.utils.ByteArraySet;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
 
@@ -24,6 +23,9 @@ public class ProgramResult {
 
   private long energyUsed = 0;
   //private long futureRefund = 0;
+
+  @Getter
+  private long energyPenaltyTotal = 0;
 
   private byte[] hReturn = EMPTY_BYTE_ARRAY;
   private byte[] contractAddress = EMPTY_BYTE_ARRAY;
@@ -64,6 +66,11 @@ public class ProgramResult {
     energyUsed += energy;
   }
 
+  public void spendEnergyWithPenalty(long total, long penalty) {
+    energyPenaltyTotal += penalty;
+    energyUsed += total;
+  }
+
   public void setRevert() {
     this.revert = true;
   }
@@ -74,6 +81,10 @@ public class ProgramResult {
 
   public void refundEnergy(long energy) {
     energyUsed -= energy;
+  }
+
+  public void addTotalPenalty(long penalty) {
+    energyPenaltyTotal += penalty;
   }
 
   public byte[] getContractAddress() {
@@ -227,6 +238,7 @@ public class ProgramResult {
 
   public void merge(ProgramResult another) {
     addInternalTransactions(another.getInternalTransactions());
+    addTotalPenalty(another.getEnergyPenaltyTotal());
     if (another.getException() == null && !another.isRevert()) {
       addDeleteAccounts(another.getDeleteAccounts());
       addLogInfos(another.getLogInfoList());

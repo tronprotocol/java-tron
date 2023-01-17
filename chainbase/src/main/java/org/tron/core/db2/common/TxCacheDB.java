@@ -62,29 +62,24 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
     this.TRANSACTION_COUNT =
         CommonParameter.getInstance().getStorage().getEstimatedBlockTransactions();
     this.recentTransactionStore = recentTransactionStore;
-    int dbVersion = CommonParameter.getInstance().getStorage().getDbVersion();
     String dbEngine = CommonParameter.getInstance().getStorage().getDbEngine();
-    if (dbVersion == 2) {
-      if ("LEVELDB".equals(dbEngine.toUpperCase())) {
-        this.persistentStore = new LevelDB(
-            new LevelDbDataSourceImpl(StorageUtils.getOutputDirectoryByDbName(name),
-                name, StorageUtils.getOptionsByDbName(name),
-                new WriteOptions().sync(CommonParameter.getInstance()
-                    .getStorage().isDbSync())));
-      } else if ("ROCKSDB".equals(dbEngine.toUpperCase())) {
-        String parentPath = Paths
-            .get(StorageUtils.getOutputDirectoryByDbName(name), CommonParameter
-                .getInstance().getStorage().getDbDirectory()).toString();
+    if ("LEVELDB".equals(dbEngine.toUpperCase())) {
+      this.persistentStore = new LevelDB(
+          new LevelDbDataSourceImpl(StorageUtils.getOutputDirectoryByDbName(name),
+              name, StorageUtils.getOptionsByDbName(name),
+              new WriteOptions().sync(CommonParameter.getInstance()
+                  .getStorage().isDbSync())));
+    } else if ("ROCKSDB".equals(dbEngine.toUpperCase())) {
+      String parentPath = Paths
+          .get(StorageUtils.getOutputDirectoryByDbName(name), CommonParameter
+              .getInstance().getStorage().getDbDirectory()).toString();
 
-        this.persistentStore = new RocksDB(
-            new RocksDbDataSourceImpl(parentPath,
-                name, CommonParameter.getInstance()
-                .getRocksDBCustomSettings()));
-      } else {
-        throw new RuntimeException(String.format("db type: %s is not supported", dbEngine));
-      }
+      this.persistentStore = new RocksDB(
+          new RocksDbDataSourceImpl(parentPath,
+              name, CommonParameter.getInstance()
+              .getRocksDBCustomSettings()));
     } else {
-      throw new RuntimeException(String.format("db version: %d is not supported", dbVersion));
+      throw new RuntimeException(String.format("db type: %s is not supported", dbEngine));
     }
     this.bloomFilters[0] = BloomFilter.create(Funnels.byteArrayFunnel(),
         MAX_BLOCK_SIZE * TRANSACTION_COUNT);

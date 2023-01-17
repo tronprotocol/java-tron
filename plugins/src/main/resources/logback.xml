@@ -16,11 +16,11 @@
 
   <appender class="ch.qos.logback.core.rolling.RollingFileAppender"
     name="FILE">
-    <file>./logs/archive.log</file>
+    <file>./logs/toolkit.log</file>
     <rollingPolicy
       class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
       <!-- rollover daily -->
-      <fileNamePattern>./logs/archive-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+      <fileNamePattern>./logs/toolkit-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
       <!-- each file should be at most 500MB, keep 30 days worth of history, but at most 50GB -->
       <maxFileSize>500MB</maxFileSize>
       <maxHistory>10</maxHistory>
@@ -49,6 +49,9 @@
     <appender-ref ref="ASYNC"/>
   </root>
   <logger level="INFO" name="archive"/>
+  <logger level="INFO" name="convert"/>
+  <logger level="INFO" name="lite"/>
+  <logger level="INFO" name="move"/>
 
 </configuration>
 

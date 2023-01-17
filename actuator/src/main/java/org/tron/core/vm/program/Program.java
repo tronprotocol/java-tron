@@ -16,7 +16,12 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
+
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.map.LRUMap;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -31,12 +36,17 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FastByteComparisons;
 import org.tron.common.utils.Utils;
 import org.tron.common.utils.WalletUtil;
+import org.tron.core.ChainBaseManager;
+import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.ContractStateCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.db.BandwidthProcessor;
+import org.tron.core.db.EnergyProcessor;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
@@ -50,13 +60,25 @@ import org.tron.core.vm.VM;
 import org.tron.core.vm.VMConstant;
 import org.tron.core.vm.VMUtils;
 import org.tron.core.vm.config.VMConfig;
+import org.tron.core.vm.nativecontract.CancelAllUnfreezeV2Processor;
+import org.tron.core.vm.nativecontract.DelegateResourceProcessor;
 import org.tron.core.vm.nativecontract.FreezeBalanceProcessor;
+import org.tron.core.vm.nativecontract.FreezeBalanceV2Processor;
+import org.tron.core.vm.nativecontract.UnDelegateResourceProcessor;
 import org.tron.core.vm.nativecontract.UnfreezeBalanceProcessor;
+import org.tron.core.vm.nativecontract.UnfreezeBalanceV2Processor;
 import org.tron.core.vm.nativecontract.VoteWitnessProcessor;
+import org.tron.core.vm.nativecontract.WithdrawExpireUnfreezeProcessor;
 import org.tron.core.vm.nativecontract.WithdrawRewardProcessor;
+import org.tron.core.vm.nativecontract.param.CancelAllUnfreezeV2Param;
+import org.tron.core.vm.nativecontract.param.DelegateResourceParam;
 import org.tron.core.vm.nativecontract.param.FreezeBalanceParam;
+import org.tron.core.vm.nativecontract.param.FreezeBalanceV2Param;
+import org.tron.core.vm.nativecontract.param.UnDelegateResourceParam;
 import org.tron.core.vm.nativecontract.param.UnfreezeBalanceParam;
+import org.tron.core.vm.nativecontract.param.UnfreezeBalanceV2Param;
 import org.tron.core.vm.nativecontract.param.VoteWitnessParam;
+import org.tron.core.vm.nativecontract.param.WithdrawExpireUnfreezeParam;
 import org.tron.core.vm.nativecontract.param.WithdrawRewardParam;
 import org.tron.core.vm.program.invoke.ProgramInvoke;
 import org.tron.core.vm.program.invoke.ProgramInvokeFactory;
@@ -112,6 +134,12 @@ public class Program {
   private ProgramPrecompile programPrecompile;
   private int contractVersion;
   private DataWord adjustedCallEnergy;
+  @Getter
+  @Setter
+  private long contextContractFactor;
+  @Getter
+  @Setter
+  private long callPenaltyEnergy;
 
   public Program(byte[] ops, byte[] codeAddress, ProgramInvoke programInvoke,
                  InternalTransaction internalTransaction) {
@@ -423,8 +451,8 @@ public class Program {
 
     increaseNonce();
 
-    addInternalTx(null, owner, obtainer, balance, null, "suicide", nonce,
-        getContractState().getAccount(owner).getAssetMapV2());
+    InternalTransaction internalTx = addInternalTx(null, owner, obtainer, balance, null,
+        "suicide", nonce, getContractState().getAccount(owner).getAssetMapV2());
 
     if (FastByteComparisons.compareTo(owner, 0, 20, obtainer, 0, 20) == 0) {
       // if owner == obtainer just zeroing account according to Yellow Paper
@@ -455,6 +483,16 @@ public class Program {
         transferDelegatedResourceToInheritor(owner, blackHoleAddress, getContractState());
       } else {
         transferDelegatedResourceToInheritor(owner, obtainer, getContractState());
+      }
+    }
+    if (VMConfig.allowTvmFreezeV2()) {
+      byte[] Inheritor =
+          FastByteComparisons.isEqual(owner, obtainer)
+              ? getContractState().getBlackHoleAddress()
+              : obtainer;
+      long expireUnfrozenBalance = transferFrozenV2BalanceToInheritor(owner, Inheritor, getContractState());
+      if (expireUnfrozenBalance > 0 && internalTx != null) {
+        internalTx.setValue(internalTx.getValue() + expireUnfrozenBalance);
       }
     }
     getResult().addDeleteAccount(this.getContractAddress());
@@ -491,6 +529,92 @@ public class Program {
     repo.addBalance(inheritorAddr, frozenBalanceForBandwidthOfOwner + frozenBalanceForEnergyOfOwner);
   }
 
+  private long transferFrozenV2BalanceToInheritor(byte[] ownerAddr, byte[] inheritorAddr, Repository repo) {
+    AccountCapsule ownerCapsule = repo.getAccount(ownerAddr);
+    AccountCapsule inheritorCapsule = repo.getAccount(inheritorAddr);
+    long now = repo.getHeadSlot();
+
+    // transfer frozen resource
+    ownerCapsule.getFrozenV2List().stream()
+        .filter(freezeV2 -> freezeV2.getAmount() > 0)
+        .forEach(
+            freezeV2 -> {
+              switch (freezeV2.getType()) {
+                case BANDWIDTH:
+                  inheritorCapsule.addFrozenBalanceForBandwidthV2(freezeV2.getAmount());
+                  break;
+                case ENERGY:
+                  inheritorCapsule.addFrozenBalanceForEnergyV2(freezeV2.getAmount());
+                  break;
+                case TRON_POWER:
+                  inheritorCapsule.addFrozenForTronPowerV2(freezeV2.getAmount());
+                  break;
+              }
+            });
+
+    // merge usage
+    BandwidthProcessor bandwidthProcessor = new BandwidthProcessor(ChainBaseManager.getInstance());
+    bandwidthProcessor.updateUsageForDelegated(ownerCapsule);
+    ownerCapsule.setLatestConsumeTime(now);
+    if (ownerCapsule.getNetUsage() > 0) {
+      long newNetUsage =
+          bandwidthProcessor.unDelegateIncrease(
+              inheritorCapsule,
+              ownerCapsule,
+              ownerCapsule.getNetUsage(),
+              Common.ResourceCode.BANDWIDTH,
+              now);
+      inheritorCapsule.setNetUsage(newNetUsage);
+      inheritorCapsule.setLatestConsumeTime(now);
+    }
+
+    EnergyProcessor energyProcessor =
+        new EnergyProcessor(
+            repo.getDynamicPropertiesStore(), ChainBaseManager.getInstance().getAccountStore());
+    energyProcessor.updateUsage(ownerCapsule);
+    ownerCapsule.setLatestConsumeTimeForEnergy(now);
+    if (ownerCapsule.getEnergyUsage() > 0) {
+      long newEnergyUsage =
+          energyProcessor.unDelegateIncrease(
+              inheritorCapsule,
+              ownerCapsule,
+              ownerCapsule.getEnergyUsage(),
+              Common.ResourceCode.ENERGY,
+              now);
+      inheritorCapsule.setEnergyUsage(newEnergyUsage);
+      inheritorCapsule.setLatestConsumeTimeForEnergy(now);
+    }
+
+    // withdraw expire unfrozen balance
+    long nowTimestamp = repo.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
+    long expireUnfrozenBalance =
+        ownerCapsule.getUnfrozenV2List().stream()
+            .filter(
+                unFreezeV2 ->
+                    unFreezeV2.getUnfreezeAmount() > 0 && unFreezeV2.getUnfreezeExpireTime() <= nowTimestamp)
+            .mapToLong(Protocol.Account.UnFreezeV2::getUnfreezeAmount)
+            .sum();
+    if (expireUnfrozenBalance > 0) {
+      inheritorCapsule.setBalance(inheritorCapsule.getBalance() + expireUnfrozenBalance);
+      increaseNonce();
+      addInternalTx(null, ownerAddr, inheritorAddr, expireUnfrozenBalance, null,
+          "withdrawExpireUnfreezeWhileSuiciding", nonce, null);
+    }
+    clearOwnerFreezeV2(ownerCapsule);
+    repo.updateAccount(ownerCapsule.createDbKey(), ownerCapsule);
+    repo.updateAccount(inheritorCapsule.createDbKey(), inheritorCapsule);
+    return expireUnfrozenBalance;
+  }
+
+  private void clearOwnerFreezeV2(AccountCapsule ownerCapsule) {
+    ownerCapsule.clearFrozenV2();
+    ownerCapsule.setNetUsage(0);
+    ownerCapsule.setNewWindowSize(Common.ResourceCode.BANDWIDTH, 0);
+    ownerCapsule.setEnergyUsage(0);
+    ownerCapsule.setNewWindowSize(Common.ResourceCode.ENERGY, 0);
+    ownerCapsule.clearUnfrozenV2();
+  }
+
   private void withdrawRewardAndCancelVote(byte[] owner, Repository repo) {
     VoteRewardUtil.withdrawReward(owner, repo);
 
@@ -504,6 +628,7 @@ public class Program {
         votesCapsule.clearNewVotes();
       }
       ownerCapsule.clearVotes();
+      ownerCapsule.setOldTronPower(0);
       repo.updateVotes(owner, votesCapsule);
     }
     try {
@@ -523,15 +648,37 @@ public class Program {
   public boolean canSuicide() {
     byte[] owner = getContextAddress();
     AccountCapsule accountCapsule = getContractState().getAccount(owner);
-    return !VMConfig.allowTvmFreeze()
+
+    boolean freezeCheck = !VMConfig.allowTvmFreeze()
         || (accountCapsule.getDelegatedFrozenBalanceForBandwidth() == 0
         && accountCapsule.getDelegatedFrozenBalanceForEnergy() == 0);
+
+    boolean freezeV2Check = freezeV2Check(accountCapsule);
+    return freezeCheck && freezeV2Check;
 //    boolean voteCheck = !VMConfig.allowTvmVote()
 //        || (accountCapsule.getVotesList().size() == 0
 //        && VoteRewardUtil.queryReward(owner, getContractState()) == 0
 //        && getContractState().getAccountVote(
 //            getContractState().getBeginCycle(owner), owner) == null);
 //    return freezeCheck && voteCheck;
+  }
+
+  private boolean freezeV2Check(AccountCapsule accountCapsule) {
+    if (!VMConfig.allowTvmFreezeV2()) {
+      return true;
+    }
+    long now = getContractState().getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
+
+    boolean isDelegatedResourceEmpty =
+        accountCapsule.getDelegatedFrozenV2BalanceForBandwidth() == 0
+            && accountCapsule.getDelegatedFrozenV2BalanceForEnergy() == 0;
+    boolean isUnFrozenV2ListEmpty =
+        CollectionUtils.isEmpty(
+            accountCapsule.getUnfrozenV2List().stream()
+                .filter(unFreezeV2 -> unFreezeV2.getUnfreezeExpireTime() > now)
+                .collect(Collectors.toList()));
+
+    return isDelegatedResourceEmpty && isUnFrozenV2ListEmpty;
   }
 
   @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
@@ -970,6 +1117,16 @@ public class Program {
     getResult().spendEnergy(energyValue);
   }
 
+  public void spendEnergyWithPenalty(long total, long penalty, String opName) {
+    if (getEnergylimitLeftLong() < total) {
+      throw new OutOfEnergyException(
+          "Not enough energy for '%s' operation executing: curInvokeEnergyLimit[%d],"
+              + " curOpEnergy[%d], penaltyEnergy[%d], usedEnergy[%d]",
+          opName, invoke.getEnergyLimit(), total - penalty, penalty, getResult().getEnergyUsed());
+    }
+    getResult().spendEnergyWithPenalty(total, penalty);
+  }
+
   public void checkCPUTimeLimit(String opName) {
 
     if (CommonParameter.getInstance().isDebug()) {
@@ -1121,7 +1278,7 @@ public class Program {
 
   public DataWord getChainId() {
     byte[] chainId = getContractState().getBlockByNum(0).getBlockId().getBytes();
-    if (VMConfig.allowTvmCompatibleEvm()) {
+    if (VMConfig.allowTvmCompatibleEvm() || VMConfig.allowOptimizedReturnValueOfChainId()) {
       chainId = Arrays.copyOfRange(chainId, chainId.length - 4, chainId.length);
     }
     return new DataWord(chainId).clone();
@@ -1388,7 +1545,6 @@ public class Program {
       this.refundEnergy(msg.getEnergy().longValue(), " call deep limit reach");
       return;
     }
-
 
     Repository deposit = getContractState().newRepositoryChild();
 
@@ -1734,6 +1890,205 @@ public class Program {
     return 0;
   }
 
+  public boolean freezeBalanceV2(DataWord frozenBalance, DataWord resourceType) {
+    Repository repository = getContractState().newRepositoryChild();
+    byte[] owner = getContextAddress();
+
+    increaseNonce();
+    InternalTransaction internalTx = addInternalTx(null, owner, owner,
+        frozenBalance.longValue(), null,
+        "freezeBalanceV2For" + convertResourceToString(resourceType), nonce, null);
+
+    try {
+      FreezeBalanceV2Param param = new FreezeBalanceV2Param();
+      param.setOwnerAddress(owner);
+      param.setResourceType(parseResourceCodeV2(resourceType));
+      param.setFrozenBalance(frozenBalance.sValue().longValueExact());
+
+      FreezeBalanceV2Processor processor = new FreezeBalanceV2Processor();
+      processor.validate(param, repository);
+      processor.execute(param, repository);
+      repository.commit();
+      return true;
+    } catch (ContractValidateException e) {
+      logger.error("TVM FreezeBalanceV2: validate failure. Reason: {}", e.getMessage());
+    } catch (ArithmeticException e) {
+      logger.error("TVM FreezeBalanceV2: frozenBalance out of long range.");
+    }
+    if (internalTx != null) {
+      internalTx.reject();
+    }
+    return false;
+  }
+
+  public boolean unfreezeBalanceV2(DataWord unfreezeBalance, DataWord resourceType) {
+    Repository repository = getContractState().newRepositoryChild();
+    byte[] owner = getContextAddress();
+
+    increaseNonce();
+    InternalTransaction internalTx = addInternalTx(null, owner, owner,
+        unfreezeBalance.longValue(), null,
+        "unfreezeBalanceV2For" + convertResourceToString(resourceType), nonce, null);
+
+    try {
+      UnfreezeBalanceV2Param param = new UnfreezeBalanceV2Param();
+      param.setOwnerAddress(owner);
+      param.setUnfreezeBalance(unfreezeBalance.sValue().longValueExact());
+      param.setResourceType(parseResourceCodeV2(resourceType));
+
+      UnfreezeBalanceV2Processor processor = new UnfreezeBalanceV2Processor();
+      processor.validate(param, repository);
+      long unfreezeExpireBalance = processor.execute(param, repository);
+      repository.commit();
+      if (unfreezeExpireBalance > 0) {
+        increaseNonce();
+        addInternalTx(null, owner, owner, unfreezeExpireBalance, null,
+            "withdrawExpireUnfreezeWhileUnfreezing", nonce, null);
+      }
+      return true;
+    } catch (ContractValidateException e) {
+      logger.error("TVM UnfreezeBalanceV2: validate failure. Reason: {}", e.getMessage());
+    } catch (ArithmeticException e) {
+      logger.error("TVM UnfreezeBalanceV2: balance out of long range.");
+    }
+    if (internalTx != null) {
+      internalTx.reject();
+    }
+    return false;
+  }
+
+  public long withdrawExpireUnfreeze() {
+    Repository repository = getContractState().newRepositoryChild();
+    byte[] owner = getContextAddress();
+
+    increaseNonce();
+    InternalTransaction internalTx = addInternalTx(null, owner, owner, 0, null,
+        "withdrawExpireUnfreeze", nonce, null);
+
+    try {
+      WithdrawExpireUnfreezeParam param = new WithdrawExpireUnfreezeParam();
+      param.setOwnerAddress(owner);
+
+      WithdrawExpireUnfreezeProcessor processor = new WithdrawExpireUnfreezeProcessor();
+      processor.validate(param, repository);
+      long expireUnfreezeBalance = processor.execute(param, repository);
+      repository.commit();
+      if (internalTx != null) {
+        internalTx.setValue(expireUnfreezeBalance);
+      }
+      return expireUnfreezeBalance;
+    } catch (ContractValidateException e) {
+      logger.error("TVM WithdrawExpireUnfreeze: validate failure. Reason: {}", e.getMessage());
+    } catch (ContractExeException e) {
+      logger.error("TVM WithdrawExpireUnfreeze: execute failure. Reason: {}", e.getMessage());
+    }
+    if (internalTx != null) {
+      internalTx.reject();
+    }
+    return 0;
+  }
+
+  public boolean cancelAllUnfreezeV2Action() {
+    Repository repository = getContractState().newRepositoryChild();
+    byte[] owner = getContextAddress();
+
+    increaseNonce();
+    InternalTransaction internalTx = addInternalTx(null, owner, owner, 0, null,
+        "cancelAllUnfreezeV2", nonce, null);
+
+    try {
+      CancelAllUnfreezeV2Param param = new CancelAllUnfreezeV2Param();
+      param.setOwnerAddress(owner);
+
+      CancelAllUnfreezeV2Processor processor = new CancelAllUnfreezeV2Processor();
+      processor.validate(param, repository);
+      long withdrawExpireBalance = processor.execute(param, repository);
+      repository.commit();
+      if (withdrawExpireBalance > 0) {
+        increaseNonce();
+        addInternalTx(null, owner, owner, withdrawExpireBalance, null,
+            "withdrawExpireUnfreezeWhileCanceling", nonce, null);
+      }
+      return true;
+    } catch (ContractValidateException e) {
+      logger.error("TVM CancelAllUnfreezeV2: validate failure. Reason: {}", e.getMessage());
+    } catch (ContractExeException e) {
+      logger.error("TVM CancelAllUnfreezeV2: execute failure. Reason: {}", e.getMessage());
+    }
+    if (internalTx != null) {
+      internalTx.reject();
+    }
+    return false;
+  }
+
+  public boolean delegateResource(
+      DataWord receiverAddress, DataWord delegateBalance, DataWord resourceType) {
+    Repository repository = getContractState().newRepositoryChild();
+    byte[] owner = getContextAddress();
+    byte[] receiver = receiverAddress.toTronAddress();
+
+    increaseNonce();
+    InternalTransaction internalTx = addInternalTx(null, owner, receiver,
+        delegateBalance.longValue(), null,
+        "delegateResourceOf" + convertResourceToString(resourceType), nonce, null);
+
+    try {
+      DelegateResourceParam param = new DelegateResourceParam();
+      param.setOwnerAddress(owner);
+      param.setReceiverAddress(receiver);
+      param.setDelegateBalance(delegateBalance.sValue().longValueExact());
+      param.setResourceType(parseResourceCodeV2(resourceType));
+
+      DelegateResourceProcessor processor = new DelegateResourceProcessor();
+      processor.validate(param, repository);
+      processor.execute(param, repository);
+      repository.commit();
+      return true;
+    } catch (ContractValidateException e) {
+      logger.error("TVM DelegateResource: validate failure. Reason: {}", e.getMessage());
+    } catch (ArithmeticException e) {
+      logger.error("TVM DelegateResource: balance out of long range.");
+    }
+    if (internalTx != null) {
+      internalTx.reject();
+    }
+    return false;
+  }
+
+  public boolean unDelegateResource(
+      DataWord receiverAddress, DataWord unDelegateBalance, DataWord resourceType) {
+    Repository repository = getContractState().newRepositoryChild();
+    byte[] owner = getContextAddress();
+    byte[] receiver = receiverAddress.toTronAddress();
+
+    increaseNonce();
+    InternalTransaction internalTx = addInternalTx(null, owner, receiver,
+        unDelegateBalance.longValue(), null,
+        "unDelegateResourceOf" + convertResourceToString(resourceType), nonce, null);
+
+    try {
+      UnDelegateResourceParam param = new UnDelegateResourceParam();
+      param.setOwnerAddress(owner);
+      param.setReceiverAddress(receiver);
+      param.setUnDelegateBalance(unDelegateBalance.sValue().longValueExact());
+      param.setResourceType(parseResourceCodeV2(resourceType));
+
+      UnDelegateResourceProcessor processor = new UnDelegateResourceProcessor();
+      processor.validate(param, repository);
+      processor.execute(param, repository);
+      repository.commit();
+      return true;
+    } catch (ContractValidateException e) {
+      logger.error("TVM UnDelegateResource: validate failure. Reason: {}", e.getMessage());
+    } catch (ArithmeticException e) {
+      logger.error("TVM UnDelegateResource: balance out of long range.");
+    }
+    if (internalTx != null) {
+      internalTx.reject();
+    }
+    return false;
+  }
+
   private Common.ResourceCode parseResourceCode(DataWord resourceType) {
     switch (resourceType.intValue()) {
       case 0:
@@ -1745,12 +2100,33 @@ public class Program {
     }
   }
 
+  private Common.ResourceCode parseResourceCodeV2(DataWord resourceType) {
+    try {
+      byte type = resourceType.sValue().byteValueExact();
+      switch (type) {
+        case 0:
+          return Common.ResourceCode.BANDWIDTH;
+        case 1:
+          return Common.ResourceCode.ENERGY;
+        case 2:
+          return Common.ResourceCode.TRON_POWER;
+        default:
+          return Common.ResourceCode.UNRECOGNIZED;
+      }
+    } catch (ArithmeticException e) {
+      logger.error("TVM ParseResourceCodeV2: invalid resource code: {}", resourceType.sValue());
+      return Common.ResourceCode.UNRECOGNIZED;
+    }
+  }
+
   private String convertResourceToString(DataWord resourceType) {
     switch (resourceType.intValue()) {
       case 0:
         return "Bandwidth";
       case 1:
         return "Energy";
+      case 2:
+        return "TronPower";
       default:
         return "UnknownType";
     }
@@ -1845,6 +2221,37 @@ public class Program {
       internalTx.reject();
     }
     return 0;
+  }
+
+  public long updateContextContractFactor() {
+    ContractStateCapsule contractStateCapsule =
+        contractState.getContractState(getContextAddress());
+
+    if (contractStateCapsule == null) {
+      contractStateCapsule = new ContractStateCapsule(
+          contractState.getDynamicPropertiesStore().getCurrentCycleNumber());
+      contractState.updateContractState(getContextAddress(), contractStateCapsule);
+    } else {
+      if (contractStateCapsule.catchUpToCycle(
+          contractState.getDynamicPropertiesStore().getCurrentCycleNumber(),
+          VMConfig.getDynamicEnergyThreshold(),
+          VMConfig.getDynamicEnergyIncreaseFactor(),
+          VMConfig.getDynamicEnergyMaxFactor())) {
+        contractState.updateContractState(getContextAddress(), contractStateCapsule
+        );
+      }
+    }
+    contextContractFactor = contractStateCapsule.getEnergyFactor()
+        + Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
+    return contextContractFactor;
+  }
+
+  public void addContextContractUsage(long value) {
+    ContractStateCapsule contractStateCapsule =
+        contractState.getContractState(getContextAddress());
+
+    contractStateCapsule.addEnergyUsage(value);
+    contractState.updateContractState(getContextAddress(), contractStateCapsule);
   }
 
   /**

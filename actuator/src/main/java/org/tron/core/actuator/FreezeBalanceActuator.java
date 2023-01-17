@@ -244,8 +244,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
     //If the receiver is included in the contract, the receiver will receive the resource.
     if (!ArrayUtils.isEmpty(receiverAddress) && dynamicStore.supportDR()) {
       if (Arrays.equals(receiverAddress, ownerAddress)) {
-        throw new ContractValidateException(
-            "receiverAddress must not be the same as ownerAddress");
+        throw new ContractValidateException("receiverAddress must not be the same as ownerAddress");
       }
 
       if (!DecodeUtil.addressValid(receiverAddress)) {
@@ -267,6 +266,11 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
       }
 
+    }
+
+    if (dynamicStore.supportUnfreezeDelay()) {
+      throw new ContractValidateException(
+              "freeze v2 is open, old freeze is closed");
     }
 
     return true;
