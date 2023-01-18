@@ -5,25 +5,19 @@ import static stest.tron.wallet.common.client.utils.PublicMethed.jsonStr2Abi;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import java.io.File;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol;
@@ -32,11 +26,9 @@ import org.tron.protos.contract.SmartContractOuterClass.ClearABIContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
 
-
 @Slf4j
-public class ClearABIContractActuatorTest {
+public class ClearABIContractActuatorTest extends BaseTest {
 
-  private static final String dbPath = "output_clearabicontract_test";
   private static final String OWNER_ADDRESS;
   private static final String OWNER_ADDRESS_ACCOUNT_NAME = "test_account";
   private static final String SECOND_ACCOUNT_ADDRESS;
@@ -49,12 +41,10 @@ public class ClearABIContractActuatorTest {
       "[{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\""
           + ":\"constructor\"}]");
   private static final ABI TARGET_ABI = ABI.getDefaultInstance();
-  private static TronApplicationContext context;
-  private static Manager dbManager;
 
   static {
+    dbPath = "output_clearabicontract_test";
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ADDRESS_NOTEXIST =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
@@ -63,33 +53,11 @@ public class ClearABIContractActuatorTest {
   }
 
   /**
-   * Init data.
-   */
-  @BeforeClass
-  public static void init() {
-    dbManager = context.getBean(Manager.class);
-    dbManager.getDynamicPropertiesStore().saveAllowTvmConstantinople(1);
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
-  }
-
-  /**
    * create temp Capsule test need.
    */
   @Before
   public void createCapsule() {
+    dbManager.getDynamicPropertiesStore().saveAllowTvmConstantinople(1);
     // address in accountStore and the owner of contract
     AccountCapsule accountCapsule =
         new AccountCapsule(
