@@ -1502,6 +1502,7 @@ public class Args extends CommonParameter {
     logger.info("\n");
   }
 
+
   public static void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {
     PARAMETER.fullNodeAllowShieldedTransactionArgs = fullNodeAllowShieldedTransaction;
   }

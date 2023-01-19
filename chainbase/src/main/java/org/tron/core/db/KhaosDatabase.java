@@ -198,7 +198,7 @@ public class KhaosDatabase extends TronDatabase {
 
     return new Pair<>(list1, list2);
   }
-  
+
   private void checkNull(Object o) throws NonCommonBlockException {
     if (o == null) {
       throw new NonCommonBlockException();
