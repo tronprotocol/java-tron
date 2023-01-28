@@ -1,17 +1,17 @@
 package org.tron.core.net.messagehandler;
 
+import static org.junit.Assert.assertEquals;
+
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import java.util.List;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
+import javax.annotation.Resource;
+import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.Parameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
@@ -21,22 +21,21 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.Transaction;
 
-public class BlockMsgHandlerTest {
+public class BlockMsgHandlerTest extends BaseTest {
 
-  protected TronApplicationContext context;
+  @Resource
   private BlockMsgHandler handler;
+  @Resource
   private PeerConnection peer;
 
   /**
    * init context.
    */
-  @Before
-  public void init() {
-    Args.setParam(new String[]{"--output-directory", "output-directory", "--debug"},
+  @BeforeClass
+  public static void init() {
+    dbPath = "output_blockmsghandler_test";
+    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"},
         Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-    handler = context.getBean(BlockMsgHandler.class);
-    peer = context.getBean(PeerConnection.class);
   }
 
   @Test
@@ -49,7 +48,7 @@ public class BlockMsgHandlerTest {
       msg = new BlockMessage(blockCapsule);
       handler.processMessage(peer, msg);
     } catch (P2pException e) {
-      Assert.assertTrue(e.getMessage().equals("no request"));
+      assertEquals("no request", e.getMessage());
     }
 
     try {
@@ -69,7 +68,7 @@ public class BlockMsgHandlerTest {
       handler.processMessage(peer, msg);
     } catch (P2pException e) {
       //System.out.println(e);
-      Assert.assertTrue(e.getMessage().equals("block size over limit"));
+      assertEquals("block size over limit", e.getMessage());
     }
 
     try {
@@ -81,7 +80,7 @@ public class BlockMsgHandlerTest {
       handler.processMessage(peer, msg);
     } catch (P2pException e) {
       //System.out.println(e);
-      Assert.assertTrue(e.getMessage().equals("block time error"));
+      assertEquals("block time error", e.getMessage());
     }
 
     try {
@@ -105,11 +104,5 @@ public class BlockMsgHandlerTest {
     } catch (NullPointerException | P2pException e) {
       System.out.println(e);
     }
-  }
-
-  @After
-  public void destroy() {
-    Args.clearParam();
-    context.destroy();
   }
 }

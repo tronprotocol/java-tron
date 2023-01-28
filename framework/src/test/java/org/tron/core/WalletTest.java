@@ -284,7 +284,6 @@ public class WalletTest extends BaseTest {
   @Test
   public void testGetEcKey() {
     ECKey ecKey = new ECKey(Utils.getRandom());
-    ECKey ecKey2 = new ECKey(Utils.getRandom());
     Wallet wallet1 = new Wallet(ecKey);
     logger.info("ecKey address = {}", ByteArray.toHexString(ecKey
         .getAddress()));
@@ -415,8 +414,7 @@ public class WalletTest extends BaseTest {
   public void getPaginatedAssetIssueList() {
     buildAssetIssue();
     AssetIssueList assetList1 = wallet.getAssetIssueList(0, 100);
-    Assert.assertTrue("get Asset1",
-        assetList1.getAssetIssue(0).getName().equals(Asset1.getName()));
+    assertEquals("get Asset1", assetList1.getAssetIssue(0).getName(), Asset1.getName());
     try {
       assetList1.getAssetIssue(1);
     } catch (Exception e) {
@@ -519,7 +517,7 @@ public class WalletTest extends BaseTest {
 
     });
 
-    System.out.printf(builder.build().toString());
+    System.out.print(builder.build());
   }
 }
 

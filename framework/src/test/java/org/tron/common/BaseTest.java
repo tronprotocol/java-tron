@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import java.io.File;
 import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.AfterClass;
 import org.junit.runner.RunWith;
 import org.springframework.test.annotation.DirtiesContext;
@@ -28,7 +29,6 @@ import org.tron.protos.Protocol;
 public abstract class BaseTest {
 
   protected static String dbPath;
-
   @Resource
   protected Manager dbManager;
   @Resource
@@ -37,7 +37,7 @@ public abstract class BaseTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
-    if (FileUtil.deleteDir(new File(dbPath))) {
+    if (StringUtils.isNotEmpty(dbPath) && FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
     } else {
       logger.info("Release resources failure.");
@@ -81,5 +81,4 @@ public abstract class BaseTest {
 
     return block.toBuilder().setBlockHeader(blockHeader).build();
   }
-
 }

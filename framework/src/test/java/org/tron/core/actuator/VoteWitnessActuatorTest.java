@@ -48,6 +48,8 @@ public class VoteWitnessActuatorTest extends BaseTest {
   @Resource
   private ConsensusService consensusService;
 
+  private static boolean consensusStart;
+
   static {
     dbPath = "output_VoteWitness_test";
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
@@ -66,8 +68,6 @@ public class VoteWitnessActuatorTest extends BaseTest {
    */
   @Before
   public void createCapsule() {
-    consensusService.start();
-
     WitnessCapsule ownerCapsule =
         new WitnessCapsule(
             StringUtil.hexString2ByteString(WITNESS_ADDRESS),
@@ -91,6 +91,12 @@ public class VoteWitnessActuatorTest extends BaseTest {
     dbManager.getAccountStore()
         .put(ownerAccountFirstCapsule.getAddress().toByteArray(), ownerAccountFirstCapsule);
     dbManager.getWitnessStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
+
+    if (consensusStart) {
+      return;
+    }
+    consensusService.start();
+    consensusStart = true;
   }
 
   private Any getContract(String address, String voteaddress, Long value) {
@@ -174,7 +180,6 @@ public class VoteWitnessActuatorTest extends BaseTest {
       actuator.execute(ret);
       fail("Invalid address");
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Invalid address", e.getMessage());
       maintenanceManager.doMaintenance();
       WitnessCapsule witnessCapsule = dbManager.getWitnessStore()
@@ -271,7 +276,7 @@ public class VoteWitnessActuatorTest extends BaseTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      Assert.assertTrue(false);
+      Assert.fail();
     } catch (ContractValidateException e) {
       Assert.assertEquals(0, dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS)).getVotesList().size());

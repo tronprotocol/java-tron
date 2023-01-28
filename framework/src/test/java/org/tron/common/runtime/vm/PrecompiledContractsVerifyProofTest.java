@@ -1,30 +1,24 @@
 package org.tron.common.runtime.vm;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.api.GrpcAPI.ShieldedTRC20Parameters;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.PedersenHashCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.vm.PrecompiledContracts.MerkleHash;
@@ -45,20 +39,17 @@ import org.tron.protos.contract.ShieldContract;
 import stest.tron.wallet.common.client.WalletClient;
 
 @Slf4j
-public class PrecompiledContractsVerifyProofTest {
+public class PrecompiledContractsVerifyProofTest extends BaseTest {
 
-  private static final String dbPath = "output_PrecompiledContracts_VerifyProof_test";
   private static final String SHIELDED_CONTRACT_ADDRESS_STR = "TGAmX5AqVUoXCf8MoHxbuhQPmhGfWTnEgA";
   private static final byte[] SHIELDED_CONTRACT_ADDRESS;
   private static final String PUBLIC_TO_ADDRESS_STR = "TBaBXpRAeBhs75TZT751LwyhrcR25XeUot";
   private static final byte[] PUBLIC_TO_ADDRESS;
   private static final byte[] DEFAULT_OVK;
-  private static TronApplicationContext context;
-  private static Manager dbManager;
 
   static {
+    dbPath = "output_PrecompiledContracts_VerifyProof_test";
     Args.setParam(new String[]{"--output-directory", dbPath}, "config-test.conf");
-    context = new TronApplicationContext(DefaultConfig.class);
     DEFAULT_OVK = ByteArray
         .fromHexString("030c8c2bc59fb3eb8afb047a8ea4b028743d23e7d38c6fa30908358431e2314d");
     SHIELDED_CONTRACT_ADDRESS = WalletClient.decodeFromBase58Check(SHIELDED_CONTRACT_ADDRESS_STR);
@@ -70,28 +61,6 @@ public class PrecompiledContractsVerifyProofTest {
   VerifyTransferProof transferContract = new VerifyTransferProof();
   VerifyBurnProof burnContract = new VerifyBurnProof();
   MerkleHash merkleHash = new MerkleHash();
-
-  /**
-   * Init data.
-   */
-  @BeforeClass
-  public static void init() {
-    dbManager = context.getBean(Manager.class);
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
-  }
 
   @Test
   public void verifyMintProofCorrect() throws ZksnarkException {
