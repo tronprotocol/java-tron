@@ -2,6 +2,7 @@ package org.tron.tool.litefullnode;
 
 import java.io.IOException;
 import java.nio.file.FileSystemException;
+import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,7 +32,7 @@ public class Util {
     subDirs.forEach(dir -> {
       if (FileUtil.isExists(Paths.get(src.toString(), dir).toString())) {
         try {
-          Files.walk(Paths.get(src.toString(), dir))
+          Files.walk(Paths.get(src.toString(), dir), FileVisitOption.FOLLOW_LINKS)
                   .forEach(source -> copy(source, dest.resolve(src.relativize(source))));
         } catch (IOException e) {
           logger.error("copy database failed, src: {}, dest: {}, error: {}",
@@ -42,7 +43,7 @@ public class Util {
     });
   }
 
-  private static void copy(Path source, Path dest) {
+  public static void copy(Path source, Path dest) {
     try {
       // create hard link when file is .sst
       if (source.toString().endsWith(".sst")) {

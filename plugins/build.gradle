@@ -30,11 +30,14 @@ dependencies {
     testCompile group: 'org.mockito', name: 'mockito-core', version: '2.13.0'
     testCompile group: 'org.hamcrest', name: 'hamcrest-junit', version: '1.0.0.1'
     testCompile group: 'org.testng', name: 'testng', version: '6.14.3'
-    // https://mvnrepository.com/artifact/com.beust/jcommander
-    compile group: 'com.beust', name: 'jcommander', version: '1.78'
-
-    compile 'com.github.halibobo1205.leveldb-java:leveldb:v0.12.5'
-    compile 'com.github.halibobo1205.leveldb-java:leveldb-api:v0.12.5'
+    compile group: 'info.picocli', name: 'picocli', version: '4.6.3'
+    compile group: 'com.typesafe', name: 'config', version: '1.3.2'
+    compile group: 'me.tongfei', name: 'progressbar', version: '0.9.3'
+    compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.69'
+    compile group: 'org.rocksdb', name: 'rocksdbjni', version: '5.15.10'
+    compile 'io.github.tronprotocol:leveldbjni-all:1.18.2'
+    compile 'io.github.tronprotocol:leveldb:1.18.2'
+    compile project(":protocol")
 }
 
 check.dependsOn 'lint'
@@ -102,6 +105,11 @@ def binaryRelease(taskName, jarName, mainClass) {
             }
         }
 
+        // exclude these files for bouncycastle
+        exclude "META-INF/*.SF"
+        exclude "META-INF/*.DSA"
+        exclude "META-INF/*.RSA"
+
         manifest {
             attributes "Main-Class": "${mainClass}"
         }
@@ -127,11 +135,21 @@ applicationDistribution.from("../gradle/java-tron.vmoptions") {
     into "bin"
 }
 createScript(project, 'org.tron.plugins.ArchiveManifest', 'ArchiveManifest')
+createScript(project, 'org.tron.plugins.Toolkit', 'Toolkit')
 
 def releaseBinary = hasProperty('binaryRelease') ? getProperty('binaryRelease') : 'true'
+def skipArchive = hasProperty('skipArchive') ? true : false
+def skipAll = hasProperty('skipAll') ? true : false
 if (releaseBinary == 'true') {
     artifacts {
-        archives(binaryRelease('buildArchiveManifestJar', 'ArchiveManifest', 'org.tron.plugins.ArchiveManifest'))
+        archives(binaryRelease('buildToolkitJar', 'Toolkit', 'org.tron.plugins.Toolkit'))
+    }
+    if (!skipAll) {
+        if (!skipArchive) {
+            artifacts {
+                archives(binaryRelease('buildArchiveManifestJar', 'ArchiveManifest', 'org.tron.plugins.ArchiveManifest'))
+            }
+        }
     }
 }
 

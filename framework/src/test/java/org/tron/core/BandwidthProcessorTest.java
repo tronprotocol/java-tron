@@ -147,6 +147,8 @@ public class BandwidthProcessorTest {
             AccountType.AssetIssue,
             chainBaseManager.getDynamicPropertiesStore().getAssetIssueFee());
 
+    assetCapsule2.addAcquiredDelegatedFrozenBalanceForBandwidth(999999L);
+
     chainBaseManager.getAccountStore().reset();
     chainBaseManager.getAccountAssetStore().reset();
     chainBaseManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
@@ -857,5 +859,18 @@ public class BandwidthProcessorTest {
       chainBaseManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS));
       chainBaseManager.getAccountStore().delete(ByteArray.fromHexString(TO_ADDRESS));
     }
+  }
+
+  @Test
+  public void testCalculateGlobalNetLimit() {
+    chainBaseManager.getDynamicPropertiesStore().saveTotalNetWeight(6310L);
+    BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
+    AccountCapsule accountCapsule = chainBaseManager.getAccountStore()
+            .get(ByteArray.fromHexString(ASSET_ADDRESS_V2));
+    long netLimit = processor.calculateGlobalNetLimit(accountCapsule);
+    Assert.assertEquals(0, netLimit);
+    long netLimitV2 = processor
+            .calculateGlobalNetLimitV2(accountCapsule.getAllFrozenBalanceForBandwidth());
+    Assert.assertTrue(netLimitV2 > 0);
   }
 }

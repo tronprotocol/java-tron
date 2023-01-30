@@ -1,5 +1,6 @@
 package org.tron.core.vm.repository;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.capsule.*;
 import org.tron.core.store.*;
@@ -38,13 +39,19 @@ public interface Repository {
 
   BytesCapsule getDelegation(Key key);
 
+  DelegatedResourceAccountIndexCapsule getDelegatedResourceAccountIndex(byte[] key);
+
   void deleteContract(byte[] address);
 
   void createContract(byte[] address, ContractCapsule contractCapsule);
 
   ContractCapsule getContract(byte[] address);
 
+  ContractStateCapsule getContractState(byte[] address);
+
   void updateContract(byte[] address, ContractCapsule contractCapsule);
+
+  void updateContractState(byte[] address, ContractStateCapsule contractStateCapsule);
 
   void updateAccount(byte[] address, AccountCapsule accountCapsule);
 
@@ -61,6 +68,8 @@ public interface Repository {
   void updateAccountVote(byte[] word, long cycle, AccountCapsule accountCapsule);
 
   void updateDelegation(byte[] word, BytesCapsule bytesCapsule);
+
+  void updateDelegatedResourceAccountIndex(byte[] word, DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule);
 
   void saveCode(byte[] address, byte[] code);
 
@@ -88,6 +97,8 @@ public interface Repository {
 
   void putContract(Key key, Value value);
 
+  void putContractState(Key key, Value value);
+
   void putStorage(Key key, Storage cache);
 
   void putAccountValue(byte[] address, AccountCapsule accountCapsule);
@@ -100,11 +111,19 @@ public interface Repository {
 
   void putDelegation(Key key, Value value);
 
+  void putDelegatedResourceAccountIndex(Key key, Value value);
+
   long addTokenBalance(byte[] address, byte[] tokenId, long value);
 
   long getTokenBalance(byte[] address, byte[] tokenId);
 
   long getAccountLeftEnergyFromFreeze(AccountCapsule accountCapsule);
+
+  long getAccountEnergyUsage(AccountCapsule accountCapsule);
+
+  Pair<Long, Long> getAccountEnergyUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule);
+
+  Pair<Long, Long> getAccountNetUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule);
 
   long calculateGlobalEnergyLimit(AccountCapsule accountCapsule);
 
@@ -120,12 +139,22 @@ public interface Repository {
 
   void addTotalEnergyWeight(long amount);
 
+  void addTotalTronPowerWeight(long amount);
+
   void saveTotalNetWeight(long totalNetWeight);
 
   void saveTotalEnergyWeight(long totalEnergyWeight);
 
+  void saveTotalTronPowerWeight(long totalTronPowerWeight);
+
   long getTotalNetWeight();
 
   long getTotalEnergyWeight();
+
+  long getTotalTronPowerWeight();
+
+  long getHeadSlot();
+
+  long getSlotByTimestampMs(long timestamp);
 
 }

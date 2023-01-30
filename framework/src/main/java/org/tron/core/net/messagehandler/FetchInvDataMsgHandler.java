@@ -1,7 +1,5 @@
 package org.tron.core.net.messagehandler;
 
-import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
-
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
@@ -10,7 +8,6 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.overlay.discover.node.statistics.MessageCount;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.consensus.ConsensusDelegate;
@@ -21,20 +18,19 @@ import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.net.TronNetDelegate;
-import org.tron.core.net.message.BlockMessage;
-import org.tron.core.net.message.FetchInvDataMessage;
 import org.tron.core.net.message.MessageTypes;
-import org.tron.core.net.message.PbftCommitMessage;
-import org.tron.core.net.message.TransactionMessage;
-import org.tron.core.net.message.TransactionsMessage;
 import org.tron.core.net.message.TronMessage;
+import org.tron.core.net.message.adv.BlockMessage;
+import org.tron.core.net.message.adv.FetchInvDataMessage;
+import org.tron.core.net.message.adv.TransactionMessage;
+import org.tron.core.net.message.adv.TransactionsMessage;
+import org.tron.core.net.message.pbft.PbftCommitMessage;
 import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
-import org.tron.core.net.service.AdvService;
-import org.tron.core.net.service.SyncService;
+import org.tron.core.net.service.adv.AdvService;
+import org.tron.core.net.service.sync.SyncService;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.PBFTMessage.Raw;
-import org.tron.protos.Protocol.ReasonCode;
 import org.tron.protos.Protocol.Transaction;
 
 @Slf4j(topic = "net")
@@ -73,9 +69,8 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
         try {
           message = tronNetDelegate.getData(hash, type);
         } catch (Exception e) {
-          logger.error("Fetch item {} failed. reason: {}", item, hash, e.getMessage());
-          peer.disconnect(ReasonCode.FETCH_FAIL);
-          return;
+          throw new P2pException(TypeEnum.DB_ITEM_NOT_FOUND,
+                  "Fetch item " + item + " failed. reason: " + e.getMessage());
         }
       }
 
@@ -141,11 +136,13 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
           throw new P2pException(TypeEnum.BAD_MESSAGE, "not spread inv: {}" + hash);
         }
       }
-      int fetchCount = peer.getNodeStatistics().messageStatistics.tronInTrxFetchInvDataElement
-          .getCount(10);
+      int fetchCount = peer.getPeerStatistics().messageStatistics.tronInTrxFetchInvDataElement
+              .getCount(10);
       int maxCount = advService.getTrxCount().getCount(60);
       if (fetchCount > maxCount) {
-        logger.error("maxCount: " + maxCount + ", fetchCount: " + fetchCount);
+        logger.warn("Peer fetch too more transactions in 10 seconds, "
+                        + "maxCount: {}, fetchCount: {}, peer: {}",
+                maxCount, fetchCount, peer.getInetAddress());
       }
     } else {
       boolean isAdv = true;
@@ -155,16 +152,7 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
           break;
         }
       }
-      if (isAdv) {
-        MessageCount tronOutAdvBlock = peer.getNodeStatistics().messageStatistics.tronOutAdvBlock;
-        tronOutAdvBlock.add(fetchInvDataMsg.getHashList().size());
-        int outBlockCountIn1min = tronOutAdvBlock.getCount(60);
-        int producedBlockIn2min = 120_000 / BLOCK_PRODUCED_INTERVAL;
-        if (outBlockCountIn1min > producedBlockIn2min) {
-          logger.error("producedBlockIn2min: " + producedBlockIn2min + ", outBlockCountIn1min: "
-              + outBlockCountIn1min);
-        }
-      } else {
+      if (!isAdv) {
         if (!peer.isNeedSyncFromUs()) {
           throw new P2pException(TypeEnum.BAD_MESSAGE, "no need sync");
         }

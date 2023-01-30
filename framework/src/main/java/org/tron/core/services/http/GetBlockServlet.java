@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.http.HttpMethod;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.api.GrpcAPI.BlockMessage;
+import org.tron.api.GrpcAPI.BlockReq;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Block;
 
@@ -33,7 +33,7 @@ public class GetBlockServlet extends RateLimiterServlet {
   private void handle(HttpServletRequest request, HttpServletResponse response) {
     try {
       PostParams params = parseParams(request);
-      BlockMessage message = buildRequest(params.getParams(), params.isVisible());
+      BlockReq message = buildRequest(params.getParams(), params.isVisible());
       fillResponse(params.isVisible(), message, response);
     } catch (Exception e) {
       Util.processError(e, response);
@@ -43,10 +43,10 @@ public class GetBlockServlet extends RateLimiterServlet {
   private PostParams parseParams(HttpServletRequest request) throws Exception {
     HttpMethod m = HttpMethod.fromString(request.getMethod());
     if (HttpMethod.GET.equals(m)) {
-      String idOrNum = request.getParameter("idOrNum");
+      String idOrNum = request.getParameter("id_or_num");
       JSONObject params = new JSONObject();
       if (!Strings.isNullOrEmpty(idOrNum)) {
-        params.put("idOrNum", idOrNum);
+        params.put("id_or_num", idOrNum);
       }
       params.put("detail", Boolean.parseBoolean(request.getParameter("detail")));
       return new PostParams(JSON.toJSONString(params),
@@ -58,16 +58,16 @@ public class GetBlockServlet extends RateLimiterServlet {
     throw new UnsupportedOperationException();
   }
 
-  private BlockMessage buildRequest(String params, boolean visible)
+  private BlockReq buildRequest(String params, boolean visible)
       throws JsonFormat.ParseException {
-    BlockMessage.Builder build = BlockMessage.newBuilder();
+    BlockReq.Builder build = BlockReq.newBuilder();
     if (!Strings.isNullOrEmpty(params)) {
       JsonFormat.merge(params, build, visible);
     }
     return build.build();
   }
 
-  private void fillResponse(boolean visible, BlockMessage request, HttpServletResponse response)
+  private void fillResponse(boolean visible, BlockReq request, HttpServletResponse response)
       throws IOException {
     try {
       Block reply = wallet.getBlock(request);

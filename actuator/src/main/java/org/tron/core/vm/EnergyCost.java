@@ -2,8 +2,11 @@ package org.tron.core.vm;
 
 import java.math.BigInteger;
 import org.tron.common.runtime.vm.DataWord;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.Stack;
+
+import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
 
 public class EnergyCost {
 
@@ -36,6 +39,12 @@ public class EnergyCost {
   private static final long NEW_ACCT_CALL = 25000;
   private static final long UNFREEZE = 20000;
   private static final long FREEZE_EXPIRE_TIME = 50;
+  private static final long FREEZE_V2 = 10000;
+  private static final long UNFREEZE_V2 = 10000;
+  private static final long WITHDRAW_EXPIRE_UNFREEZE = 10000;
+  private static final long CANCEL_ALL_UNFREEZE_V2 = 10000;
+  private static final long DELEGATE_RESOURCE = 10000;
+  private static final long UN_DELEGATE_RESOURCE = 10000;
   private static final long VOTE_WITNESS = 30000;
   private static final long WITHDRAW_REWARD = 20000;
   private static final long CREATE = 32000;
@@ -272,6 +281,30 @@ public class EnergyCost {
     return FREEZE_EXPIRE_TIME;
   }
 
+  public static long getFreezeBalanceV2Cost(Program ignored) {
+    return FREEZE_V2;
+  }
+
+  public static long getUnfreezeBalanceV2Cost(Program ignored) {
+    return UNFREEZE_V2;
+  }
+
+  public static long getWithdrawExpireUnfreezeCost(Program ignored) {
+    return WITHDRAW_EXPIRE_UNFREEZE;
+  }
+
+  public static long getCancelAllUnfreezeV2Cost(Program ignored) {
+    return CANCEL_ALL_UNFREEZE_V2;
+  }
+
+  public static long getDelegateResourceCost(Program ignored) {
+    return DELEGATE_RESOURCE;
+  }
+
+  public static long getUnDelegateResourceCost(Program ignored) {
+    return UN_DELEGATE_RESOURCE;
+  }
+
   public static long getVoteWitnessCost(Program program) {
 
     Stack stack = program.getStack();
@@ -387,6 +420,18 @@ public class EnergyCost {
         stack.get(stack.size() - opOff - 3));
     energyCost += calcMemEnergy(oldMemSize, in.max(out),
         0, op);
+
+    if (VMConfig.allowDynamicEnergy()) {
+      long factor = program.getContextContractFactor();
+      if (factor > DYNAMIC_ENERGY_FACTOR_DECIMAL) {
+        long penalty = energyCost * factor / DYNAMIC_ENERGY_FACTOR_DECIMAL - energyCost;
+        if (penalty < 0) {
+          penalty = 0;
+        }
+        program.setCallPenaltyEnergy(penalty);
+        energyCost += penalty;
+      }
+    }
 
     if (energyCost > program.getEnergyLimitLeft().longValueSafe()) {
       throw new Program.OutOfEnergyException(

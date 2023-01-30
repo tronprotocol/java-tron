@@ -9,6 +9,7 @@ import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -156,6 +157,8 @@ public class TransferActuator extends AbstractActuator {
       }
 
       if (balance < Math.addExact(amount, fee)) {
+        logger.warn("Balance is not sufficient. Account: {}, balance: {}, amount: {}, fee: {}.",
+            StringUtil.encode58Check(ownerAddress), balance, amount, fee);
         throw new ContractValidateException(
             "Validate TransferContract error, balance is not sufficient.");
       }

@@ -2,6 +2,7 @@ package org.tron.common.runtime.vm;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.File;
 import java.util.List;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -12,15 +13,23 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.util.StringUtils;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction;
+import org.tron.common.utils.FileUtil;
+import org.tron.core.ChainBaseManager;
+import org.tron.core.Constant;
+import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.JumpTable;
 import org.tron.core.vm.Op;
 import org.tron.core.vm.Operation;
 import org.tron.core.vm.OperationRegistry;
 import org.tron.core.vm.VM;
+import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.invoke.ProgramInvokeMockImpl;
@@ -32,9 +41,17 @@ public class OperationsTest {
   private ProgramInvokeMockImpl invoke;
   private Program program;
   private final JumpTable jumpTable = OperationRegistry.newTronV10OperationSet();
+  private static ChainBaseManager chainBaseManager;
+  private static String dbPath;
+  private static TronApplicationContext context;
 
   @BeforeClass
   public static void init() {
+    dbPath = "output_" + OperationsTest.class.getName();
+    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
+    context = new TronApplicationContext(DefaultConfig.class);
+    Manager manager = context.getBean(Manager.class);
+    chainBaseManager = manager.getChainBaseManager();
     CommonParameter.getInstance().setDebug(true);
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
@@ -46,7 +63,15 @@ public class OperationsTest {
 
   @AfterClass
   public static void destroy() {
+    ConfigLoader.disable = false;
+    VMConfig.initVmHardFork(false);
     Args.clearParam();
+    context.destroy();
+    if (FileUtil.deleteDir(new File(dbPath))) {
+      logger.info("Release resources successful.");
+    } else {
+      logger.error("Release resources failure.");
+    }
     VMConfig.initAllowTvmTransferTrc10(0);
     VMConfig.initAllowTvmConstantinople(0);
     VMConfig.initAllowTvmSolidity059(0);
@@ -92,9 +117,12 @@ public class OperationsTest {
 
   @SneakyThrows
   private Program buildEmptyContext(byte[] ops) {
+    StoreFactory.init();
+    StoreFactory storeFactory = StoreFactory.getInstance();
+    storeFactory.setChainBaseManager(chainBaseManager);
     Program context = new Program(
         ops, ops,
-        new ProgramInvokeMockImpl(ops, ops),
+        new ProgramInvokeMockImpl(storeFactory, ops, ops),
         new InternalTransaction(
             Protocol.Transaction.getDefaultInstance(),
             InternalTransaction.TrxType.TRX_UNKNOWN_TYPE));
@@ -317,7 +345,8 @@ public class OperationsTest {
     program = new Program(op, op, invoke, interTrx);;
     testOperations(program);
     Assert.assertEquals(2, program.getResult().getEnergyUsed());
-    Assert.assertEquals(invoke.getContractAddress(), program.getStack().pop());
+    Assert.assertArrayEquals(invoke.getContractAddress().getLast20Bytes(),
+        program.getStack().pop().getLast20Bytes());
 
     // test ORIGIN = 0x32
     op = new byte[]{0x32};

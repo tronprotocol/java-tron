@@ -118,6 +118,7 @@ public class ManagerTest extends BlockGenerate {
     blockCapsule2.setMerkleRoot();
     blockCapsule2.sign(
         ByteArray.fromHexString(Args.getLocalWitnesses().getPrivateKey()));
+    Assert.assertTrue(dbManager.getMaxFlushCount() == 200);
   }
 
   @After
@@ -298,7 +299,8 @@ public class ManagerTest extends BlockGenerate {
       Assert.assertTrue(false);
     } catch (BalanceInsufficientException e) {
       Assert.assertEquals(
-          StringUtil.createReadableString(account.createDbKey()) + " insufficient balance",
+          StringUtil.createReadableString(account.createDbKey()) + " insufficient balance"
+                  + ", balance: " + account.getBalance() + ", amount: " + 40,
           e.getMessage());
     }
 
@@ -354,7 +356,8 @@ public class ManagerTest extends BlockGenerate {
     } catch (BalanceInsufficientException e) {
       Assert.assertTrue(e instanceof BalanceInsufficientException);
       Assert.assertEquals(
-          "reduceAssetAmount failed !", e.getMessage());
+          "reduceAssetAmount failed! account: " + StringUtil.encode58Check(account.createDbKey()),
+              e.getMessage());
     }
 
     account.setBalance(30);
@@ -389,7 +392,8 @@ public class ManagerTest extends BlockGenerate {
       Assert.assertTrue(false);
     } catch (BadBlockException e) {
       Assert.assertTrue(e instanceof BadBlockException);
-      Assert.assertEquals("The merkle hash is not validated", e.getMessage());
+      Assert.assertEquals("The merkle hash is not validated for "
+              + blockCapsule2.getNum(), e.getMessage());
     } catch (Exception e) {
       Assert.assertFalse(e instanceof Exception);
     }
@@ -403,7 +407,7 @@ public class ManagerTest extends BlockGenerate {
       Assert.assertTrue(false);
     } catch (BalanceInsufficientException e) {
       Assert.assertTrue(e instanceof BalanceInsufficientException);
-      Assert.assertEquals("Total shielded pool value can not below 0", e.getMessage());
+      Assert.assertEquals("total shielded pool value can not below 0, actual: -1", e.getMessage());
     }
 
     long beforeTotalShieldValue = chainManager.getDynamicPropertiesStore()
@@ -444,7 +448,8 @@ public class ManagerTest extends BlockGenerate {
       Assert.assertTrue(false);
     } catch (BadBlockException e) {
       Assert.assertTrue(e instanceof BadBlockException);
-      Assert.assertEquals("shielded transaction count > " + SHIELDED_TRANS_IN_BLOCK_COUNTS,
+      Assert.assertEquals("num: " + blockCapsule2.getNum()
+                      + ", shielded transaction count > " + SHIELDED_TRANS_IN_BLOCK_COUNTS,
           e.getMessage());
     } catch (Exception e) {
       Assert.assertFalse(e instanceof Exception);

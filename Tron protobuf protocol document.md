@@ -620,6 +620,13 @@ Transaction and transaction-related messages.
           ClearABIContract = 48;
           UpdateBrokerageContract = 49;
           ShieldedTransferContract = 51;
+          MarketSellAssetContract = 52;
+          MarketCancelOrderContract = 53;
+          FreezeBalanceV2Contract = 54;
+          UnfreezeBalanceV2Contract = 55;
+          WithdrawExpireUnfreezeContract = 56;
+          DelegateResourceContract = 57;
+          UnDelegateResourceContract = 58;
         }
         ContractType type = 1;
         google.protobuf.Any parameter = 2;
@@ -873,6 +880,13 @@ Contract and contract-related messages.
       ClearABIContract = 48;
       UpdateBrokerageContract = 49;
       ShieldedTransferContract = 51;
+      MarketSellAssetContract = 52;
+      MarketCancelOrderContract = 53;
+      FreezeBalanceV2Contract = 54;
+      UnfreezeBalanceV2Contract = 55;
+      WithdrawExpireUnfreezeContract = 56;
+      DelegateResourceContract = 57;
+      UnDelegateResourceContract = 58;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;
@@ -2019,7 +2033,7 @@ message `SmartContract` has mutiple attributes and nested message `ABI`
       TOO_MANY_PEERS = 0x04;
       DUPLICATE_PEER = 0x05;
       INCOMPATIBLE_PROTOCOL = 0x06;
-      NULL_IDENTITY = 0x07;
+      RANDOM_ELIMINATION = 0x07;
       PEER_QUITING = 0x08;
       UNEXPECTED_IDENTITY = 0x09;
       LOCAL_IDENTITY = 0x0A;

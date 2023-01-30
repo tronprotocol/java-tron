@@ -44,10 +44,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBIterator;
+import org.iq80.leveldb.Logger;
 import org.iq80.leveldb.Options;
 import org.iq80.leveldb.ReadOptions;
 import org.iq80.leveldb.WriteBatch;
 import org.iq80.leveldb.WriteOptions;
+import org.slf4j.LoggerFactory;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.storage.metric.DbStat;
@@ -65,12 +67,19 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
 
   private String dataBaseName;
   private DB database;
-  private boolean alive;
+  private volatile boolean alive;
   private String parentPath;
   private Options options;
   private WriteOptions writeOptions;
   private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
   private static final String LEVELDB = "LEVELDB";
+  private static final org.slf4j.Logger innerLogger = LoggerFactory.getLogger(LEVELDB);
+  private Logger leveldbLogger = new Logger() {
+    @Override
+    public void log(String message) {
+      innerLogger.info("{} {}", dataBaseName, message);
+    }
+  };
 
   /**
    * constructor.
@@ -82,7 +91,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
         CommonParameter.getInstance().getStorage().getDbDirectory()
     ).toString();
     this.dataBaseName = dataBaseName;
-    this.options = options;
+    this.options = options.logger(leveldbLogger);
     this.writeOptions = writeOptions;
     initDB();
   }
@@ -94,7 +103,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     ).toString();
 
     this.dataBaseName = dataBaseName;
-    options = new Options();
+    options = new Options().logger(leveldbLogger);
     writeOptions = new WriteOptions();
   }
 
@@ -102,22 +111,24 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   public void initDB() {
     resetDbLock.writeLock().lock();
     try {
-      logger.debug("~> LevelDbDataSourceImpl.initDB(): " + dataBaseName);
+      logger.debug("Init DB: {}.", dataBaseName);
 
       if (isAlive()) {
         return;
       }
 
       if (dataBaseName == null) {
-        throw new NullPointerException("no name set to the dbStore");
+        throw new IllegalArgumentException("No name set to the dbStore");
       }
 
       try {
         openDatabase(options);
         alive = true;
       } catch (IOException ioe) {
-        throw new RuntimeException("Can't initialize database", ioe);
+        throw new RuntimeException(String.format("Can't initialize database, %s", dataBaseName),
+            ioe);
       }
+      logger.debug("Init DB {} done.", dataBaseName);
     } finally {
       resetDbLock.writeLock().unlock();
     }
@@ -133,31 +144,21 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     }
     try {
       database = factory.open(dbPath.toFile(), dbOptions);
-      logger.info("DB {} open success with : writeBufferSize {}M,cacheSize {}M,maxOpenFiles {}.",
-          this.getDBName(), dbOptions.writeBufferSize() / 1024 / 1024,
-          dbOptions.cacheSize() / 1024 / 1024, dbOptions.maxOpenFiles());
+      if (!this.getDBName().startsWith("checkpoint")) {
+        logger.info("DB {} open success with writeBufferSize {} M, cacheSize {} M, maxOpenFiles {}.",
+            this.getDBName(), dbOptions.writeBufferSize() / 1024 / 1024,
+            dbOptions.cacheSize() / 1024 / 1024, dbOptions.maxOpenFiles());
+      }
     } catch (IOException e) {
       if (e.getMessage().contains("Corruption:")) {
+        logger.warn("DB {} corruption detected, try to repair it.", this.getDBName(), e);
         factory.repair(dbPath.toFile(), dbOptions);
+        logger.warn("DB {} corruption detected, repair done.", this.getDBName());
         database = factory.open(dbPath.toFile(), dbOptions);
       } else {
         throw e;
       }
     }
-  }
-
-  @Deprecated
-  private Options createDbOptions() {
-    Options dbOptions = new Options();
-    dbOptions.createIfMissing(true);
-    dbOptions.compressionType(CompressionType.NONE);
-    dbOptions.blockSize(10 * 1024 * 1024);
-    dbOptions.writeBufferSize(10 * 1024 * 1024);
-    dbOptions.cacheSize(0);
-    dbOptions.paranoidChecks(true);
-    dbOptions.verifyChecksums(true);
-    dbOptions.maxOpenFiles(32);
-    return dbOptions;
   }
 
   public Path getDbPath() {
@@ -168,32 +169,19 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
    * reset database.
    */
   public void resetDb() {
-    closeDB();
-    FileUtil.recursiveDelete(getDbPath().toString());
-    initDB();
+    resetDbLock.writeLock().lock();
+    try {
+      closeDB();
+      FileUtil.recursiveDelete(getDbPath().toString());
+      initDB();
+    } finally {
+      resetDbLock.writeLock().unlock();
+    }
   }
 
   @Override
   public boolean isAlive() {
     return alive;
-  }
-
-  /**
-   * destroy database.
-   */
-  public void destroyDb(File fileLocation) {
-    resetDbLock.writeLock().lock();
-    try {
-      logger.debug("Destroying existing database: " + fileLocation);
-      Options options = new Options();
-      try {
-        factory.destroy(fileLocation, options);
-      } catch (IOException e) {
-        logger.error(e.getMessage(), e);
-      }
-    } finally {
-      resetDbLock.writeLock().unlock();
-    }
   }
 
   @Override
@@ -373,30 +361,6 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     }
   }
 
-  public Set<byte[]> getValuesPrev(byte[] key, long limit) {
-    if (limit <= 0) {
-      return Sets.newHashSet();
-    }
-    resetDbLock.readLock().lock();
-    try (DBIterator iterator = getDBIterator()) {
-      Set<byte[]> result = Sets.newHashSet();
-      long i = 0;
-      byte[] data = getData(key);
-      if (Objects.nonNull(data)) {
-        result.add(data);
-        i++;
-      }
-      for (iterator.seek(key); iterator.hasPrev() && i++ < limit; iterator.prev()) {
-        result.add(iterator.peekPrev().getValue());
-      }
-      return result;
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    } finally {
-      resetDbLock.readLock().unlock();
-    }
-  }
-
   @Override
   public long getTotal() throws RuntimeException {
     resetDbLock.readLock().lock();
@@ -484,7 +448,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
       database.close();
       alive = false;
     } catch (IOException e) {
-      logger.error("Failed to find the dbStore file on the closeDB: {} ", dataBaseName);
+      logger.error("Failed to find the dbStore file on the closeDB: {}.", dataBaseName, e);
     } finally {
       resetDbLock.writeLock().unlock();
     }
@@ -497,10 +461,6 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
 
   public Stream<Entry<byte[], byte[]>> stream() {
     return StreamSupport.stream(spliterator(), false);
-  }
-
-  public Stream<Entry<byte[], byte[]>> parallelStream() {
-    return StreamSupport.stream(spliterator(), true);
   }
 
   @Override
@@ -524,9 +484,17 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
    */
   @Override
   public List<String> getStats() throws Exception {
-    String stat = database.getProperty("leveldb.stats");
-    String[] stats = stat.split("\n");
-    return Arrays.stream(stats).skip(3).collect(Collectors.toList());
+    resetDbLock.readLock().lock();
+    try {
+      if (!isAlive()) {
+        return Collections.emptyList();
+      }
+      String stat = database.getProperty("leveldb.stats");
+      String[] stats = stat.split("\n");
+      return Arrays.stream(stats).skip(3).collect(Collectors.toList());
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
   }
 
   @Override

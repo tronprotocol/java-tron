@@ -11,8 +11,6 @@ public class BlockHeightStopTest extends ConditionallyStopTest {
 
   protected void initParameter(CommonParameter parameter) {
     parameter.setShutdownBlockHeight(height);
-    // will ignore
-    parameter.setShutdownBlockCount(128);
   }
 
   @Override

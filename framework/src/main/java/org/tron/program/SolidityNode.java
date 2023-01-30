@@ -11,9 +11,7 @@ import org.springframework.util.StringUtils;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.overlay.client.DatabaseGrpcClient;
-import org.tron.common.overlay.discover.DiscoverServer;
-import org.tron.common.overlay.discover.node.NodeManager;
+import org.tron.common.client.DatabaseGrpcClient;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.Metrics;
 import org.tron.core.ChainBaseManager;
@@ -22,7 +20,6 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.core.net.TronNetService;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.http.solidity.SolidityNodeHttpApiService;
 import org.tron.protos.Protocol.Block;
@@ -96,14 +93,6 @@ public class SolidityNode {
     appT.initServices(parameter);
     appT.startServices();
     appT.startup();
-
-    //Disable peer discovery for solidity node
-    DiscoverServer discoverServer = context.getBean(DiscoverServer.class);
-    discoverServer.close();
-    NodeManager nodeManager = context.getBean(NodeManager.class);
-    nodeManager.close();
-    TronNetService tronNetService = context.getBean(TronNetService.class);
-    tronNetService.stop();
 
     SolidityNode node = new SolidityNode(appT.getDbManager());
     node.start();

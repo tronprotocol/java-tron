@@ -5,6 +5,7 @@ import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import org.bouncycastle.util.Arrays;
 import org.junit.Test;
 import org.testng.Assert;
 import org.tron.common.crypto.Hash;
@@ -94,6 +95,20 @@ public class EventParserTest {
 
     Assert.assertEquals(dataMap.get("4"), "abcdefg123");
     Assert.assertEquals(dataMap.get("str"), "abcdefg123");
+
+  }
+
+  @Test
+  public void testParseRevert() {
+    String dataHex = "08c379a0"
+        + "0000000000000000000000000000000000000000000000000000000000000020"
+        + "0000000000000000000000000000000000000000000000000000000000000016"
+        + "6e6f7420656e6f75676820696e7075742076616c756500000000000000000000";
+
+    byte[] data = ByteArray.fromHexString(dataHex);
+    String msg = ContractEventParser.parseDataBytes(Arrays.copyOfRange(data, 4, data.length),
+        "string", 0);
+    Assert.assertEquals(msg, "not enough input value");
 
   }
 }

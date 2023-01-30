@@ -1,14 +1,18 @@
 package org.tron.core.db2.core;
 
-import ch.qos.logback.core.encoder.ByteArrayUtil;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.Getter;
+import org.tron.common.cache.CacheManager;
+import org.tron.common.cache.CacheType;
+import org.tron.common.cache.TronCache;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
@@ -23,11 +27,17 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   private Snapshot solidity;
   private boolean isAccountDB;
 
+  private TronCache<WrappedByteArray, WrappedByteArray> cache;
+  private static final List<String> CACHE_DBS = CommonParameter.getInstance()
+      .getStorage().getCacheDbs();
+
   public SnapshotRoot(DB<byte[], byte[]> db) {
     this.db = db;
     solidity = this;
-    isOptimized = "properties".equalsIgnoreCase(db.getDbName());
     isAccountDB = "account".equalsIgnoreCase(db.getDbName());
+    if (CACHE_DBS.contains(this.db.getDbName())) {
+      this.cache = CacheManager.allocate(CacheType.findByType(this.db.getDbName()));
+    }
   }
 
   private boolean needOptAsset() {
@@ -37,11 +47,18 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
 
   @Override
   public byte[] get(byte[] key) {
-    return db.get(key);
+    WrappedByteArray cache = getCache(key);
+    if (cache != null) {
+      return cache.getBytes();
+    }
+    byte[] value = db.get(key);
+    putCache(key, value);
+    return value;
   }
 
   @Override
   public void put(byte[] key, byte[] value) {
+    byte[] v = value;
     if (needOptAsset()) {
       if (ByteArray.isEmpty(value)) {
         remove(key);
@@ -56,10 +73,10 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
       }
       assetStore.putAccount(item.getInstance());
       item.clearAsset();
-      db.put(key, item.getData());
-    } else {
-      db.put(key, value);
+      v = item.getData();
     }
+    db.put(key, v);
+    putCache(key, v);
   }
 
   @Override
@@ -68,6 +85,7 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
       ChainBaseManager.getInstance().getAccountAssetStore().deleteAccount(key);
     }
     db.remove(key);
+    putCache(key, null);
   }
 
   @Override
@@ -81,6 +99,7 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
       processAccount(batch);
     } else {
       ((Flusher) db).flush(batch);
+      putCache(batch);
     }
   }
 
@@ -97,6 +116,7 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
       processAccount(batch);
     } else {
       ((Flusher) db).flush(batch);
+      putCache(batch);
     }
   }
 
@@ -120,10 +140,36 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
       }
     });
     ((Flusher) db).flush(accounts);
+    putCache(accounts);
     if (assets.size() > 0) {
       assetStore.updateByBatch(AccountAssetStore.convert(assets));
     }
   }
+
+  private boolean cached() {
+    return Objects.nonNull(this.cache);
+  }
+
+  private void putCache(byte[] key, byte[] value) {
+    if (cached()) {
+      cache.put(WrappedByteArray.of(key), WrappedByteArray.of(value));
+    }
+  }
+
+  private void putCache(Map<WrappedByteArray, WrappedByteArray> values) {
+    if (cached()) {
+      values.forEach(cache::put);
+    }
+  }
+
+  private WrappedByteArray getCache(byte[] key) {
+    if (cached()) {
+      return cache.getIfPresent(WrappedByteArray.of(key));
+    }
+    return null;
+  }
+
+  // second cache
 
   @Override
   public Snapshot retreat() {
@@ -142,11 +188,17 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
 
   @Override
   public void close() {
+    if (cached()) {
+      CacheManager.release(cache);
+    }
     ((Flusher) db).close();
   }
 
   @Override
   public void reset() {
+    if (cached()) {
+      CacheManager.release(cache);
+    }
     ((Flusher) db).reset();
   }
 

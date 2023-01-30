@@ -3,6 +3,10 @@ package org.tron.core.actuator;
 import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+import static org.tron.protos.contract.Common.ResourceCode;
+import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
+import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
+import static org.tron.protos.contract.Common.ResourceCode.TRON_POWER;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -72,44 +76,48 @@ public class FreezeBalanceActuator extends AbstractActuator {
     byte[] ownerAddress = freezeBalanceContract.getOwnerAddress().toByteArray();
     byte[] receiverAddress = freezeBalanceContract.getReceiverAddress().toByteArray();
 
+    long increment;
     switch (freezeBalanceContract.getResource()) {
       case BANDWIDTH:
         if (!ArrayUtils.isEmpty(receiverAddress)
             && dynamicStore.supportDR()) {
-          delegateResource(ownerAddress, receiverAddress, true,
-              frozenBalance, expireTime);
+          increment = delegateResource(ownerAddress, receiverAddress, true,
+                  frozenBalance, expireTime);
           accountCapsule.addDelegatedFrozenBalanceForBandwidth(frozenBalance);
         } else {
+          long oldNetWeight = accountCapsule.getFrozenBalance() / TRX_PRECISION;
           long newFrozenBalanceForBandwidth =
               frozenBalance + accountCapsule.getFrozenBalance();
           accountCapsule.setFrozenForBandwidth(newFrozenBalanceForBandwidth, expireTime);
+          long newNetWeight = accountCapsule.getFrozenBalance() / TRX_PRECISION;
+          increment = newNetWeight - oldNetWeight;
         }
-        dynamicStore
-            .addTotalNetWeight(frozenBalance / TRX_PRECISION);
+        addTotalWeight(BANDWIDTH, dynamicStore, frozenBalance, increment);
         break;
       case ENERGY:
         if (!ArrayUtils.isEmpty(receiverAddress)
             && dynamicStore.supportDR()) {
-          delegateResource(ownerAddress, receiverAddress, false,
-              frozenBalance, expireTime);
+          increment = delegateResource(ownerAddress, receiverAddress, false,
+                  frozenBalance, expireTime);
           accountCapsule.addDelegatedFrozenBalanceForEnergy(frozenBalance);
         } else {
+          long oldEnergyWeight = accountCapsule.getEnergyFrozenBalance() / TRX_PRECISION;
           long newFrozenBalanceForEnergy =
-              frozenBalance + accountCapsule.getAccountResource()
-                  .getFrozenBalanceForEnergy()
-                  .getFrozenBalance();
+              frozenBalance + accountCapsule.getEnergyFrozenBalance();
           accountCapsule.setFrozenForEnergy(newFrozenBalanceForEnergy, expireTime);
+          long newEnergyWeight = accountCapsule.getEnergyFrozenBalance() / TRX_PRECISION;
+          increment = newEnergyWeight - oldEnergyWeight;
         }
-        dynamicStore
-            .addTotalEnergyWeight(frozenBalance / TRX_PRECISION);
+        addTotalWeight(ENERGY, dynamicStore, frozenBalance, increment);
         break;
       case TRON_POWER:
+        long oldTPWeight = accountCapsule.getTronPowerFrozenBalance() / TRX_PRECISION;
         long newFrozenBalanceForTronPower =
             frozenBalance + accountCapsule.getTronPowerFrozenBalance();
         accountCapsule.setFrozenForTronPower(newFrozenBalanceForTronPower, expireTime);
-
-        dynamicStore
-            .addTotalTronPowerWeight(frozenBalance / TRX_PRECISION);
+        long newTPWeight = accountCapsule.getTronPowerFrozenBalance() / TRX_PRECISION;
+        increment = newTPWeight - oldTPWeight;
+        addTotalWeight(TRON_POWER, dynamicStore, frozenBalance, increment);
         break;
       default:
         logger.debug("Resource Code Error.");
@@ -123,6 +131,23 @@ public class FreezeBalanceActuator extends AbstractActuator {
     return true;
   }
 
+  private void addTotalWeight(ResourceCode resourceCode, DynamicPropertiesStore dynamicStore,
+                              long frozenBalance, long increment) {
+    long weight = dynamicStore.allowNewReward() ? increment : frozenBalance / TRX_PRECISION;
+    switch (resourceCode) {
+      case BANDWIDTH:
+        dynamicStore.addTotalNetWeight(weight);
+        break;
+      case ENERGY:
+        dynamicStore.addTotalEnergyWeight(weight);
+        break;
+      case TRON_POWER:
+        dynamicStore.addTotalTronPowerWeight(weight);
+        break;
+      default:
+        logger.debug("Resource Code Error.");
+    }
+  }
 
   @Override
   public boolean validate() throws ContractValidateException {
@@ -175,11 +200,6 @@ public class FreezeBalanceActuator extends AbstractActuator {
       throw new ContractValidateException("frozenBalance must be less than accountBalance");
     }
 
-//    long maxFrozenNumber = dbManager.getDynamicPropertiesStore().getMaxFrozenNumber();
-//    if (accountCapsule.getFrozenCount() >= maxFrozenNumber) {
-//      throw new ContractValidateException("max frozen number is: " + maxFrozenNumber);
-//    }
-
     long frozenDuration = freezeBalanceContract.getFrozenDuration();
     long minFrozenTime = dynamicStore.getMinFrozenTime();
     long maxFrozenTime = dynamicStore.getMaxFrozenTime();
@@ -224,8 +244,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
     //If the receiver is included in the contract, the receiver will receive the resource.
     if (!ArrayUtils.isEmpty(receiverAddress) && dynamicStore.supportDR()) {
       if (Arrays.equals(receiverAddress, ownerAddress)) {
-        throw new ContractValidateException(
-            "receiverAddress must not be the same as ownerAddress");
+        throw new ContractValidateException("receiverAddress must not be the same as ownerAddress");
       }
 
       if (!DecodeUtil.addressValid(receiverAddress)) {
@@ -249,6 +268,11 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
     }
 
+    if (dynamicStore.supportUnfreezeDelay()) {
+      throw new ContractValidateException(
+              "freeze v2 is open, old freeze is closed");
+    }
+
     return true;
   }
 
@@ -262,9 +286,10 @@ public class FreezeBalanceActuator extends AbstractActuator {
     return 0;
   }
 
-  private void delegateResource(byte[] ownerAddress, byte[] receiverAddress, boolean isBandwidth,
+  private long delegateResource(byte[] ownerAddress, byte[] receiverAddress, boolean isBandwidth,
       long balance, long expireTime) {
     AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicPropertiesStore = chainBaseManager.getDynamicPropertiesStore();
     DelegatedResourceStore delegatedResourceStore = chainBaseManager.getDelegatedResourceStore();
     DelegatedResourceAccountIndexStore delegatedResourceAccountIndexStore = chainBaseManager
         .getDelegatedResourceAccountIndexStore();
@@ -292,46 +317,56 @@ public class FreezeBalanceActuator extends AbstractActuator {
     delegatedResourceStore.put(key, delegatedResourceCapsule);
 
     //modify DelegatedResourceAccountIndexStore
-    {
-      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule = delegatedResourceAccountIndexStore
-          .get(ownerAddress);
-      if (delegatedResourceAccountIndexCapsule == null) {
-        delegatedResourceAccountIndexCapsule = new DelegatedResourceAccountIndexCapsule(
+    if (!dynamicPropertiesStore.supportAllowDelegateOptimization()) {
+
+      DelegatedResourceAccountIndexCapsule ownerIndexCapsule =
+          delegatedResourceAccountIndexStore.get(ownerAddress);
+      if (ownerIndexCapsule == null) {
+        ownerIndexCapsule = new DelegatedResourceAccountIndexCapsule(
             ByteString.copyFrom(ownerAddress));
       }
-      List<ByteString> toAccountsList = delegatedResourceAccountIndexCapsule.getToAccountsList();
+      List<ByteString> toAccountsList = ownerIndexCapsule.getToAccountsList();
       if (!toAccountsList.contains(ByteString.copyFrom(receiverAddress))) {
-        delegatedResourceAccountIndexCapsule.addToAccount(ByteString.copyFrom(receiverAddress));
+        ownerIndexCapsule.addToAccount(ByteString.copyFrom(receiverAddress));
       }
-      delegatedResourceAccountIndexStore
-          .put(ownerAddress, delegatedResourceAccountIndexCapsule);
-    }
+      delegatedResourceAccountIndexStore.put(ownerAddress, ownerIndexCapsule);
 
-    {
-      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule = delegatedResourceAccountIndexStore
-          .get(receiverAddress);
-      if (delegatedResourceAccountIndexCapsule == null) {
-        delegatedResourceAccountIndexCapsule = new DelegatedResourceAccountIndexCapsule(
+      DelegatedResourceAccountIndexCapsule receiverIndexCapsule
+          = delegatedResourceAccountIndexStore.get(receiverAddress);
+      if (receiverIndexCapsule == null) {
+        receiverIndexCapsule = new DelegatedResourceAccountIndexCapsule(
             ByteString.copyFrom(receiverAddress));
       }
-      List<ByteString> fromAccountsList = delegatedResourceAccountIndexCapsule
+      List<ByteString> fromAccountsList = receiverIndexCapsule
           .getFromAccountsList();
       if (!fromAccountsList.contains(ByteString.copyFrom(ownerAddress))) {
-        delegatedResourceAccountIndexCapsule.addFromAccount(ByteString.copyFrom(ownerAddress));
+        receiverIndexCapsule.addFromAccount(ByteString.copyFrom(ownerAddress));
       }
-      delegatedResourceAccountIndexStore
-          .put(receiverAddress, delegatedResourceAccountIndexCapsule);
+      delegatedResourceAccountIndexStore.put(receiverAddress, receiverIndexCapsule);
+
+    } else {
+      // modify DelegatedResourceAccountIndexStore new
+      delegatedResourceAccountIndexStore.convert(ownerAddress);
+      delegatedResourceAccountIndexStore.convert(receiverAddress);
+      delegatedResourceAccountIndexStore.delegate(ownerAddress, receiverAddress,
+          dynamicPropertiesStore.getLatestBlockHeaderTimestamp());
     }
 
     //modify AccountStore
     AccountCapsule receiverCapsule = accountStore.get(receiverAddress);
+    long oldWeight;
+    long newWeight;
     if (isBandwidth) {
+      oldWeight = receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth() / TRX_PRECISION;
       receiverCapsule.addAcquiredDelegatedFrozenBalanceForBandwidth(balance);
+      newWeight = receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth() / TRX_PRECISION;
     } else {
+      oldWeight = receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy() / TRX_PRECISION;
       receiverCapsule.addAcquiredDelegatedFrozenBalanceForEnergy(balance);
+      newWeight = receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy() / TRX_PRECISION;
     }
-
     accountStore.put(receiverCapsule.createDbKey(), receiverCapsule);
+    return newWeight - oldWeight;
   }
 
 }

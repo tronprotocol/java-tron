@@ -72,9 +72,9 @@ public class TransactionUtil {
     }
     builder.setId(ByteString.copyFrom(trxCap.getTransactionId().getBytes()));
     ProgramResult programResult = trace.getRuntimeResult();
-    long fee =
-        programResult.getRet().getFee() + traceReceipt.getEnergyFee()
-            + traceReceipt.getNetFee() + traceReceipt.getMultiSignFee();
+    long fee = programResult.getRet().getFee() + traceReceipt.getEnergyFee()
+        + traceReceipt.getNetFee() + traceReceipt.getMultiSignFee()
+        + traceReceipt.getMemoFee();
 
     boolean supportTransactionFeePool = trace.getTransactionContext().getStoreFactory()
         .getChainBaseManager().getDynamicPropertiesStore().supportTransactionFeePool();
@@ -90,15 +90,16 @@ public class TransactionUtil {
     }
 
     ByteString contractResult = ByteString.copyFrom(programResult.getHReturn());
-    ByteString ContractAddress = ByteString.copyFrom(programResult.getContractAddress());
+    ByteString contractAddress = ByteString.copyFrom(programResult.getContractAddress());
 
     builder.setFee(fee);
     builder.addContractResult(contractResult);
-    builder.setContractAddress(ContractAddress);
+    builder.setContractAddress(contractAddress);
     builder.setUnfreezeAmount(programResult.getRet().getUnfreezeAmount());
     builder.setAssetIssueID(programResult.getRet().getAssetIssueID());
     builder.setExchangeId(programResult.getRet().getExchangeId());
     builder.setWithdrawAmount(programResult.getRet().getWithdrawAmount());
+    builder.setWithdrawExpireAmount(programResult.getRet().getWithdrawExpireAmount());
     builder.setExchangeReceivedAmount(programResult.getRet().getExchangeReceivedAmount());
     builder.setExchangeInjectAnotherAmount(programResult.getRet().getExchangeInjectAnotherAmount());
     builder.setExchangeWithdrawAnotherAmount(
@@ -123,8 +124,18 @@ public class TransactionUtil {
     builder.setReceipt(traceReceipt.getReceipt());
 
     if (CommonParameter.getInstance().isSaveInternalTx()) {
-      programResult.getInternalTransactions().forEach(it ->
-          builder.addInternalTransactions(buildInternalTransaction(it)));
+      if (CommonParameter.getInstance().isSaveFeaturedInternalTx()) {
+        programResult.getInternalTransactions().forEach(it ->
+            builder.addInternalTransactions(buildInternalTransaction(it)));
+      } else {
+        programResult.getInternalTransactions().stream()
+            .filter(it ->
+                "call".equals(it.getNote())
+                    || "create".equals(it.getNote())
+                    || "suicide".equals(it.getNote()))
+            .forEach(it ->
+                builder.addInternalTransactions(buildInternalTransaction(it)));
+      }
     }
 
     return new TransactionInfoCapsule(builder.build());

@@ -4,6 +4,7 @@ import static org.tron.common.utils.Commons.decodeFromBase58Check;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -24,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.eclipse.jetty.util.StringUtil;
+import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
@@ -57,6 +59,7 @@ public class Util {
   public static final String PERMISSION_ID = "Permission_id";
   public static final String VISIBLE = "visible";
   public static final String TRANSACTION = "transaction";
+  public static final String TRANSACTION_EXTENSION = "transactionExtension";
   public static final String VALUE = "value";
   public static final String CONTRACT_TYPE = "contractType";
   public static final String EXTRA_DATA = "extra_data";
@@ -159,6 +162,11 @@ public class Util {
     return jsonObject.toJSONString();
   }
 
+  public static String printEstimateEnergyMessage(GrpcAPI.EstimateEnergyMessage message,
+      boolean selfType) {
+    return JsonFormat.printToString(message, selfType);
+  }
+
   public static String printTransactionSignWeight(TransactionSignWeight transactionSignWeight,
       boolean selfType) {
     String string = JsonFormat.printToString(transactionSignWeight, selfType);
@@ -252,7 +260,7 @@ public class Util {
 
   /**
    * Note: the contracts of the returned transaction may be empty
-   * */
+   */
   public static Transaction packTransaction(String strTransaction, boolean selfType) {
     JSONObject jsonTransaction = JSON.parseObject(strTransaction);
     JSONObject rawData = jsonTransaction.getJSONObject("raw_data");
@@ -290,6 +298,10 @@ public class Util {
         logger.debug("invalid contractType: {}", contractType);
       } catch (ParseException e) {
         logger.debug("ParseException: {}", e.getMessage());
+      } catch (ClassCastException e) {
+        logger.debug("ClassCastException: {}", e.getMessage());
+      } catch (JSONException e) {
+        logger.debug("JSONException: {}", e.getMessage());
       } catch (Exception e) {
         logger.error("", e);
       }
@@ -491,8 +503,10 @@ public class Util {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
-      JSONObject jsonObject = JSONObject.parseObject(input);
-      addressStr = jsonObject.getString(addressParam);
+      JSONObject jsonObject = JSON.parseObject(input);
+      if (jsonObject != null) {
+        addressStr = jsonObject.getString(addressParam);
+      }
     }
     if (StringUtils.isNotBlank(addressStr)) {
       if (StringUtils.startsWith(addressStr, Constant.ADD_PRE_FIX_STRING_MAINNET)) {

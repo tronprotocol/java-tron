@@ -52,6 +52,9 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
 
   private TransactionCapsule getTransactionFromKhaosDatabase(byte[] key, long high) {
     List<KhaosBlock> khaosBlocks = khaosDatabase.getMiniStore().getBlockByNum(high);
+    if (khaosBlocks == null) {
+      return null;
+    }
     for (KhaosBlock bl : khaosBlocks) {
       for (TransactionCapsule e : bl.getBlk().getTransactions()) {
         if (e.getTransactionId().equals(Sha256Hash.wrap(key))) {

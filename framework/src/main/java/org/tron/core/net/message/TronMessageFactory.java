@@ -1,20 +1,28 @@
 package org.tron.core.net.message;
 
 import org.apache.commons.lang3.ArrayUtils;
-import org.tron.common.overlay.message.MessageFactory;
+import org.tron.consensus.pbft.message.PbftMessage;
 import org.tron.core.exception.P2pException;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
+import org.tron.core.net.message.adv.BlockMessage;
+import org.tron.core.net.message.adv.FetchInvDataMessage;
+import org.tron.core.net.message.adv.InventoryMessage;
+import org.tron.core.net.message.adv.TransactionMessage;
+import org.tron.core.net.message.adv.TransactionsMessage;
+import org.tron.core.net.message.base.DisconnectMessage;
+import org.tron.core.net.message.handshake.HelloMessage;
+import org.tron.core.net.message.keepalive.PingMessage;
+import org.tron.core.net.message.keepalive.PongMessage;
+import org.tron.core.net.message.pbft.PbftCommitMessage;
+import org.tron.core.net.message.sync.ChainInventoryMessage;
+import org.tron.core.net.message.sync.SyncBlockChainMessage;
 
-/**
- * msg factory.
- */
-public class TronMessageFactory extends MessageFactory {
+public class TronMessageFactory {
 
   private static final String DATA_LEN = ", len=";
 
-  @Override
-  public TronMessage create(byte[] data) throws Exception {
+  public static TronMessage create(byte[] data) throws Exception {
     boolean isException = false;
     try {
       byte type = data[0];
@@ -34,21 +42,27 @@ public class TronMessageFactory extends MessageFactory {
     }
   }
 
-  private TronMessage create(byte type, byte[] packed) throws Exception {
+  private static TronMessage create(byte type, byte[] packed) throws Exception {
     MessageTypes receivedTypes = MessageTypes.fromByte(type);
     if (receivedTypes == null) {
       throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE,
           "type=" + type + DATA_LEN + packed.length);
     }
     switch (receivedTypes) {
+      case P2P_HELLO:
+        return new HelloMessage(packed);
+      case P2P_DISCONNECT:
+        return new DisconnectMessage(packed);
+      case P2P_PING:
+        return new PingMessage(packed);
+      case P2P_PONG:
+        return new PongMessage(packed);
       case TRX:
         return new TransactionMessage(packed);
       case BLOCK:
         return new BlockMessage(packed);
       case TRXS:
         return new TransactionsMessage(packed);
-      case BLOCKS:
-        return new BlocksMessage(packed);
       case INVENTORY:
         return new InventoryMessage(packed);
       case FETCH_INV_DATA:
@@ -57,12 +71,6 @@ public class TronMessageFactory extends MessageFactory {
         return new SyncBlockChainMessage(packed);
       case BLOCK_CHAIN_INVENTORY:
         return new ChainInventoryMessage(packed);
-      case ITEM_NOT_FOUND:
-        return new ItemNotFound();
-      case FETCH_BLOCK_HEADERS:
-        return new FetchBlockHeadersMessage(packed);
-      case TRX_INVENTORY:
-        return new TransactionInventoryMessage(packed);
       case PBFT_COMMIT_MSG:
         return new PbftCommitMessage(packed);
       default:

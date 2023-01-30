@@ -43,6 +43,7 @@ import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.BalanceTraceStore;
 import org.tron.core.store.CodeStore;
+import org.tron.core.store.ContractStateStore;
 import org.tron.core.store.ContractStore;
 import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DelegatedResourceStore;
@@ -143,6 +144,9 @@ public class ChainBaseManager {
   private ContractStore contractStore;
   @Autowired
   @Getter
+  private ContractStateStore contractStateStore;
+  @Autowired
+  @Getter
   private DelegatedResourceStore delegatedResourceStore;
   @Autowired
   @Getter
@@ -233,13 +237,13 @@ public class ChainBaseManager {
   private DbStatService dbStatService;
 
   public void closeOneStore(ITronChainBase database) {
-    logger.info("******** begin to close " + database.getName() + " ********");
+    logger.info("******** Begin to close {}. ********",  database.getName());
     try {
       database.close();
     } catch (Exception e) {
-      logger.info("failed to close  " + database.getName() + ". " + e);
+      logger.info("Failed to close {}.", database.getName(), e);
     } finally {
-      logger.info("******** end to close " + database.getName() + " ********");
+      logger.info("******** End to close {}. ********", database.getName());
     }
   }
 
@@ -260,6 +264,7 @@ public class ChainBaseManager {
     closeOneStore(abiStore);
     closeOneStore(codeStore);
     closeOneStore(contractStore);
+    closeOneStore(contractStateStore);
     closeOneStore(storageRowStore);
     closeOneStore(exchangeStore);
     closeOneStore(proposalStore);
@@ -297,8 +302,7 @@ public class ChainBaseManager {
     if (CollectionUtils.isNotEmpty(blocks)) {
       return blocks.get(0);
     } else {
-      logger.info("Header block Not Found");
-      throw new HeaderNotFound("Header block Not Found");
+      throw new HeaderNotFound("header block not found");
     }
   }
 

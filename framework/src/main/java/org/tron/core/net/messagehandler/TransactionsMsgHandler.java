@@ -15,12 +15,12 @@ import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.net.TronNetDelegate;
-import org.tron.core.net.message.TransactionMessage;
-import org.tron.core.net.message.TransactionsMessage;
 import org.tron.core.net.message.TronMessage;
+import org.tron.core.net.message.adv.TransactionMessage;
+import org.tron.core.net.message.adv.TransactionsMessage;
 import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
-import org.tron.core.net.service.AdvService;
+import org.tron.core.net.service.adv.AdvService;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.ReasonCode;
 import org.tron.protos.Protocol.Transaction;
@@ -64,17 +64,26 @@ public class TransactionsMsgHandler implements TronMsgHandler {
   public void processMessage(PeerConnection peer, TronMessage msg) throws P2pException {
     TransactionsMessage transactionsMessage = (TransactionsMessage) msg;
     check(peer, transactionsMessage);
+    int smartContractQueueSize = 0;
+    int trxHandlePoolQueueSize = 0;
+    int dropSmartContractCount = 0;
     for (Transaction trx : transactionsMessage.getTransactions().getTransactionsList()) {
       int type = trx.getRawData().getContract(0).getType().getNumber();
       if (type == ContractType.TriggerSmartContract_VALUE
           || type == ContractType.CreateSmartContract_VALUE) {
         if (!smartContractQueue.offer(new TrxEvent(peer, new TransactionMessage(trx)))) {
-          logger.warn("Add smart contract failed, queueSize {}:{}", smartContractQueue.size(),
-              queue.size());
+          smartContractQueueSize = smartContractQueue.size();
+          trxHandlePoolQueueSize = queue.size();
+          dropSmartContractCount++;
         }
       } else {
         trxHandlePool.submit(() -> handleTransaction(peer, new TransactionMessage(trx)));
       }
+    }
+
+    if (dropSmartContractCount > 0) {
+      logger.warn("Add smart contract failed, drop count: {}, queueSize {}:{}",
+          dropSmartContractCount, smartContractQueueSize, trxHandlePoolQueueSize);
     }
   }
 
@@ -97,17 +106,17 @@ public class TransactionsMsgHandler implements TronMsgHandler {
           trxHandlePool.submit(() -> handleTransaction(event.getPeer(), event.getMsg()));
         }
       } catch (InterruptedException e) {
-        logger.warn("Handle smart server interrupted.");
+        logger.warn("Handle smart server interrupted");
         Thread.currentThread().interrupt();
       } catch (Exception e) {
-        logger.error("Handle smart contract exception.", e);
+        logger.error("Handle smart contract exception", e);
       }
     }, 1000, 20, TimeUnit.MILLISECONDS);
   }
 
   private void handleTransaction(PeerConnection peer, TransactionMessage trx) {
     if (peer.isDisconnect()) {
-      logger.warn("Drop trx {} from {}, peer is disconnect.", trx.getMessageId(),
+      logger.warn("Drop trx {} from {}, peer is disconnect", trx.getMessageId(),
           peer.getInetAddress());
       return;
     }
@@ -126,7 +135,7 @@ public class TransactionsMsgHandler implements TronMsgHandler {
         peer.disconnect(ReasonCode.BAD_TX);
       }
     } catch (Exception e) {
-      logger.error("Trx {} from peer {} process failed.", trx.getMessageId(), peer.getInetAddress(),
+      logger.error("Trx {} from peer {} process failed", trx.getMessageId(), peer.getInetAddress(),
           e);
     }
   }

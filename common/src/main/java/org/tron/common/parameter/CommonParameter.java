@@ -1,6 +1,10 @@
 package org.tron.common.parameter;
 
+import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
+
 import com.beust.jcommander.Parameter;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -11,7 +15,6 @@ import org.tron.common.args.GenesisBlock;
 import org.tron.common.config.DbBackupConfig;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
-import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.setting.RocksDbSettings;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Overlay;
@@ -25,57 +28,76 @@ public class CommonParameter {
   public static CommonParameter PARAMETER = new CommonParameter();
   @Setter
   public static boolean ENERGY_LIMIT_HARD_FORK = false;
-  @Parameter(names = {"-c", "--config"}, description = "Config File")
+  @Parameter(names = {"-c", "--config"}, description = "Config file (default:config.conf)")
   public String shellConfFileName = "";
   @Getter
-  @Parameter(names = {"-d", "--output-directory"}, description = "Directory")
+  @Parameter(names = {"-d", "--output-directory"},
+      description = "Data directory for the databases (default:output-directory)")
   public String outputDirectory = "output-directory";
   @Getter
-  @Parameter(names = {"--log-config"})
+  @Parameter(names = {"--log-config"}, description = "Logback config file")
   public String logbackPath = "";
   @Getter
-  @Parameter(names = {"-h", "--help"}, help = true, description = "HELP message")
+  @Parameter(names = {"-h", "--help"}, help = true, description = "Show help message")
   public boolean help = false;
   @Getter
   @Setter
-  @Parameter(names = {"-w", "--witness"})
+  @Parameter(names = {"-w", "--witness"}, description = "Is witness node")
   public boolean witness = false;
   @Getter
   @Setter
-  @Parameter(names = {"--support-constant"})
+  @Parameter(names = {"--support-constant"}, description = "Support constant calling for TVM. "
+      + "(defalut: false)")
   public boolean supportConstant = false;
   @Getter
   @Setter
-  @Parameter(names = {"--max-energy-limit-for-constant"})
+  @Parameter(names = {"--max-energy-limit-for-constant"}, description = "Max energy limit for "
+      + "constant calling. (default: 100,000,000)")
   public long maxEnergyLimitForConstant = 100_000_000L;
   @Getter
   @Setter
-  @Parameter(names = {"--lru-cache-size"})
+  @Parameter(names = {"--lru-cache-size"}, description = "Max LRU size for caching bytecode and "
+      + "result of JUMPDEST analysis. (default: 500)")
   public int lruCacheSize = 500;
   @Getter
   @Setter
-  @Parameter(names = {"--debug"})
+  @Parameter(names = {"--debug"}, description = "Switch for TVM debug mode. In debug model, TVM "
+      + "will not check for timeout. (default: false)")
   public boolean debug = false;
   @Getter
   @Setter
-  @Parameter(names = {"--min-time-ratio"})
+  @Parameter(names = {"--min-time-ratio"}, description = "Maximum CPU tolerance when executing "
+      + "non-timeout transactions while synchronizing blocks. (default: 5.0)")
   public double minTimeRatio = 0.0;
   @Getter
   @Setter
-  @Parameter(names = {"--max-time-ratio"})
+  @Parameter(names = {"--max-time-ratio"}, description = "Maximum CPU tolerance when executing "
+      + "timeout transactions while synchronizing blocks. (default: 0.0)")
   public double maxTimeRatio = calcMaxTimeRatio();
+  @Getter
+  @Setter
+  @Parameter(names = {"--save-internaltx"}, description = "Save internal transactions generated "
+      + "during TVM execution, such as create, call and suicide. (default: false)")
+  public boolean saveInternalTx;
+  @Getter
+  @Setter
+  @Parameter(names = {"--save-featured-internaltx"}, description = "Save featured internal "
+      + "transactions generated during TVM execution, such as freeze, vote and so on. "
+      + "(default: false)")
+  public boolean saveFeaturedInternalTx;
   @Getter
   @Setter
   @Parameter(names = {"--long-running-time"})
   public int longRunningTime = 10;
   @Getter
   @Setter
-  @Parameter(names = {"--max-connect-number"})
+  @Parameter(names = {"--max-connect-number"}, description = "Http server max connect number "
+      + "(default:50)")
   public int maxHttpConnectNumber = 50;
   @Getter
   @Parameter(description = "--seed-nodes")
   public List<String> seedNodes = new ArrayList<>();
-  @Parameter(names = {"-p", "--private-key"}, description = "private-key")
+  @Parameter(names = {"-p", "--private-key"}, description = "Witness private key")
   public String privateKey = "";
   @Parameter(names = {"--witness-address"}, description = "witness-address")
   public String witnessAddress = "";
@@ -83,8 +105,6 @@ public class CommonParameter {
   public String password;
   @Parameter(names = {"--storage-db-directory"}, description = "Storage db directory")
   public String storageDbDirectory = "";
-  @Parameter(names = {"--storage-db-version"}, description = "Storage db version.(1 or 2)")
-  public String storageDbVersion = "";
   @Parameter(names = {
       "--storage-db-engine"}, description = "Storage db engine.(leveldb or rocksdb)")
   public String storageDbEngine = "";
@@ -92,8 +112,8 @@ public class CommonParameter {
       "--storage-db-synchronous"},
       description = "Storage db is synchronous or not.(true or false)")
   public String storageDbSynchronous = "";
-  @Parameter(names = {"--contract-parse-enable"},
-      description = "enable contract parses in java-tron or not.(true or false)")
+  @Parameter(names = {"--contract-parse-enable"}, description = "Switch for contract parses in " +
+      "java-tron. (default: true)")
   public String contractParseEnable = "";
   @Parameter(names = {"--storage-index-directory"},
       description = "Storage index directory")
@@ -129,10 +149,16 @@ public class CommonParameter {
   public int nodeChannelReadTimeout;
   @Getter
   @Setter
-  public int nodeMaxActiveNodes;
+  public int maxConnections;
   @Getter
   @Setter
-  public int nodeMaxActiveNodesWithSameIp;
+  public int minConnections;
+  @Getter
+  @Setter
+  public int minActiveConnections;
+  @Getter
+  @Setter
+  public int maxConnectionsWithSameIp;
   @Getter
   @Setter
   public int minParticipationRate;
@@ -154,10 +180,6 @@ public class CommonParameter {
   @Getter
   @Setter
   public long nodeP2pPingInterval;
-  @Getter
-  @Setter
-  @Parameter(names = {"--save-internaltx"})
-  public boolean saveInternalTx;
   @Getter
   @Setter
   public int nodeP2pVersion;
@@ -274,6 +296,12 @@ public class CommonParameter {
   public boolean walletExtensionApi;
   @Getter
   @Setter
+  public boolean estimateEnergy;
+  @Getter
+  @Setter
+  public int estimateEnergyMaxRetry;
+  @Getter
+  @Setter
   public int backupPriority;
   @Getter
   @Setter
@@ -284,18 +312,6 @@ public class CommonParameter {
   @Getter
   @Setter
   public List<String> backupMembers;
-  @Getter
-  @Setter
-  public double connectFactor;
-  @Getter
-  @Setter
-  public double activeConnectFactor;
-  @Getter
-  @Setter
-  public double disconnectNumberFactor;
-  @Getter
-  @Setter
-  public double maxConnectNumberFactor;
   @Getter
   @Setter
   public long receiveTcpMinDataLength;
@@ -348,12 +364,12 @@ public class CommonParameter {
   public long blockNumForEnergyLimit;
   @Getter
   @Setter
-  @Parameter(names = {"--es"})
+  @Parameter(names = {"--es"}, description = "Start event subscribe server")
   public boolean eventSubscribe = false;
   @Getter
   @Setter
   public long trxExpirationTimeInMilliseconds; // (ms)
-  @Parameter(names = {"-v", "--version"}, description = "output code version", help = true)
+  @Parameter(names = {"-v", "--version"}, description = "Output code version", help = true)
   public boolean version;
   @Getter
   @Setter
@@ -387,12 +403,12 @@ public class CommonParameter {
   public GenesisBlock genesisBlock;
   @Getter
   @Setter
-  public List<Node> activeNodes;
+  public List<InetSocketAddress> activeNodes;
   @Getter
   @Setter
-  public List<Node> passiveNodes;
+  public List<InetAddress> passiveNodes;
   @Getter
-  public List<Node> fastForwardNodes;
+  public List<InetSocketAddress> fastForwardNodes;
   @Getter
   public int maxFastForwardNum;
   @Getter
@@ -549,6 +565,50 @@ public class CommonParameter {
   @Getter
   @Setter
   public long shutdownBlockCount = -1;
+
+  @Getter
+  @Setter
+  public long blockCacheTimeout = 60;
+
+  @Getter
+  @Setter
+  public long allowNewRewardAlgorithm;
+
+  @Getter
+  @Setter
+  public long allowNewReward = 0L;
+
+  @Getter
+  @Setter
+  public long memoFee = 0L;
+
+  @Getter
+  @Setter
+  public long allowDelegateOptimization = 0L;
+
+  @Getter
+  @Setter
+  public long unfreezeDelayDays = 0L;
+
+  @Getter
+  @Setter
+  public long allowOptimizedReturnValueOfChainId = 0L;
+
+  @Getter
+  @Setter
+  public long allowDynamicEnergy = 0L;
+
+  @Getter
+  @Setter
+  public long dynamicEnergyThreshold = 0L;
+
+  @Getter
+  @Setter
+  public long dynamicEnergyIncreaseFactor = 0L;
+
+  @Getter
+  @Setter
+  public long dynamicEnergyMaxFactor = 0L;
 
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));

@@ -26,8 +26,8 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.PbftSignDataStore;
 import org.tron.core.exception.P2pException;
-import org.tron.core.net.message.PbftCommitMessage;
 import org.tron.core.net.message.TronMessage;
+import org.tron.core.net.message.pbft.PbftCommitMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.PBFTMessage.DataType;
 import org.tron.protos.Protocol.PBFTMessage.Raw;
@@ -92,11 +92,11 @@ public class PbftDataSyncHandler implements TronMsgHandler {
       if (raw.getDataType() == DataType.BLOCK
           && pbftSignDataStore.getBlockSignData(raw.getViewN()) == null) {
         pbftSignDataStore.putBlockSignData(raw.getViewN(), pbftCommitMessage.getPbftSignCapsule());
-        logger.info("save the block {} pbft commit data", raw.getViewN());
+        logger.info("Save the block {} pbft commit data", raw.getViewN());
       } else if (raw.getDataType() == DataType.SRL
           && pbftSignDataStore.getSrSignData(raw.getEpoch()) == null) {
         pbftSignDataStore.putSrSignData(raw.getEpoch(), pbftCommitMessage.getPbftSignCapsule());
-        logger.info("save the srl {} pbft commit data", raw.getEpoch());
+        logger.info("Save the srl {} pbft commit data", raw.getEpoch());
       }
     } catch (InvalidProtocolBufferException e) {
       logger.error("", e);
