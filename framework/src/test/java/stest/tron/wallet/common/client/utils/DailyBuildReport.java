@@ -119,7 +119,7 @@ public class DailyBuildReport extends TestListenerAdapter {
    */
   public List<Map.Entry<String, Integer>> calculateAfterDailyBuild() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
-            .usePlaintext(true)
+            .usePlaintext()
             .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     endBlockNum = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build())

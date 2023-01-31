@@ -68,7 +68,7 @@ public class ContractScenario011 {
     PublicMethed.printAddress(deployKey);
     PublicMethed.printAddress(triggerKey);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     Assert.assertTrue(PublicMethed.sendcoin(deployAddress, 50000000000L, fromAddress,
@@ -80,7 +80,7 @@ public class ContractScenario011 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     channelFull1 = ManagedChannelBuilder.forTarget(fullnode1)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
   }

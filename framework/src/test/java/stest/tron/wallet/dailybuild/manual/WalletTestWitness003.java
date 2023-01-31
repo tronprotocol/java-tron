@@ -90,7 +90,7 @@ public class WalletTestWitness003 {
     logger.info(Base58.encode58Check(PublicMethed.getFinalAddress(lowBalTest)));
 
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }

@@ -56,7 +56,7 @@ public class CreateAccount2Test {
   public void beforeClass() {
     logger.info(account007Key);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     Assert.assertTrue(PublicMethed.sendcoin(account007Address, 10000000,

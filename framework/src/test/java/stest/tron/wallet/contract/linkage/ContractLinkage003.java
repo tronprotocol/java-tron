@@ -54,11 +54,11 @@ public class ContractLinkage003 {
   public void beforeClass() {
     PublicMethed.printAddress(linkage002Key);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     channelFull1 = ManagedChannelBuilder.forTarget(fullnode1)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
   }

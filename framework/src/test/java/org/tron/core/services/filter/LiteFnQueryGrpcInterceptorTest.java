@@ -59,10 +59,10 @@ public class LiteFnQueryGrpcInterceptorTest {
     String pBFTNode = String.format("%s:%d", Args.getInstance().getNodeDiscoveryBindIp(),
             Args.getInstance().getRpcOnPBFTPort());
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
-            .usePlaintext(true)
+            .usePlaintext()
             .build();
     channelpBFT = ManagedChannelBuilder.forTarget(pBFTNode)
-            .usePlaintext(true)
+            .usePlaintext()
             .build();
     context = new TronApplicationContext(DefaultConfig.class);
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);

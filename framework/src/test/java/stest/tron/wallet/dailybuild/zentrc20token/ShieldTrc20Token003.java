@@ -44,12 +44,12 @@ public class ShieldTrc20Token003 extends ZenTrc20Base {
   @BeforeClass(enabled = true)
   public void beforeClass() throws Exception {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
     channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
     publicFromAmount = getRandomAmount();

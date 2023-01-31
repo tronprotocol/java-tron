@@ -103,17 +103,17 @@ public class WalletTestZenTokenStress {
   public void beforeClass() {
     PublicMethed.printAddress(foundationZenTokenKey);
     PublicMethed.printAddress(zenTokenOwnerKey);
-    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true)
+    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext()
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
     channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
 
     channelSolidity1 = ManagedChannelBuilder.forTarget(soliditynode1)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubSolidity1 = WalletSolidityGrpc.newBlockingStub(channelSolidity1);
 

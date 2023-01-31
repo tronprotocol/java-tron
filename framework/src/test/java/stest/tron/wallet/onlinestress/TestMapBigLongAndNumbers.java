@@ -63,7 +63,7 @@ public class TestMapBigLongAndNumbers {
   public void beforeClass() {
     PublicMethed.printAddress(triggerKey);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 

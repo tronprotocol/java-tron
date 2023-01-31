@@ -70,7 +70,7 @@ public class Creatasset {
     logger.info(testKeyForAssetIssue016);
     logger.info(transferAssetCreateKey);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
@@ -104,7 +104,7 @@ public class Creatasset {
       fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
           .get(randNum);
       channelFull = ManagedChannelBuilder.forTarget(fullnode)
-          .usePlaintext(true)
+          .usePlaintext()
           .build();
       blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 

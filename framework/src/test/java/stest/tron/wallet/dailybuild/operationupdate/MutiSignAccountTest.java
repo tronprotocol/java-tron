@@ -83,7 +83,7 @@ public class MutiSignAccountTest {
   public void beforeClass() {
     //operations = "77ff1fc0037e0100000000000000000000000000000000000000000000000000";
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
