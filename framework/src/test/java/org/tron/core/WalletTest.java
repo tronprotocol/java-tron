@@ -18,7 +18,6 @@
 
 package org.tron.core;
 
-import static junit.framework.TestCase.fail;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -26,14 +25,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
 import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
-import static stest.tron.wallet.common.client.utils.PublicMethed.decode58Check;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.junit.AfterClass;
@@ -55,23 +51,21 @@ import org.tron.common.utils.Utils;
 import org.tron.core.actuator.DelegateResourceActuator;
 import org.tron.core.actuator.FreezeBalanceActuator;
 import org.tron.core.actuator.UnfreezeBalanceV2Actuator;
-import org.tron.core.actuator.WithdrawExpireUnfreezeActuator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.ProposalUtil.ProposalType;
 import org.tron.core.utils.TransactionUtil;
@@ -873,7 +867,6 @@ public class WalletTest {
     }
   }
 
-
   @Test
   public void testGetCanWithdrawUnfreezeAmount() {
     long now = System.currentTimeMillis();
@@ -899,5 +892,63 @@ public class WalletTest {
     Assert.assertEquals(16_000_000L * 2, message.getAmount());
   }
 
+  @Test
+  public void testGetMemoFeePrices() {
+    String memeFeeList = wallet.getMemoFeePrices();
+    Assert.assertEquals("0:0", memeFeeList);
+  }
+
+  @Test
+  public void testGetChainParameters() {
+    Protocol.ChainParameters params = wallet.getChainParameters();
+    //getTotalEnergyAverageUsage & getTotalEnergyCurrentLimit have not ProposalType.
+    Assert.assertEquals(ProposalType.values().length + 2, params.getChainParameterCount());
+  }
+
+  @Test
+  public void testGetAccountById() {
+    AccountCapsule ownerCapsule =
+        dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    ownerCapsule.setAccountId(ByteString.copyFromUtf8("1001").toByteArray());
+    chainBaseManager.getAccountIdIndexStore().put(ownerCapsule);
+    Protocol.Account account = wallet.getAccountById(
+        Protocol.Account.newBuilder().setAccountId(ByteString.copyFromUtf8("1001")).build());
+    Assert.assertEquals(ownerCapsule.getAddress(),account.getAddress());
+  }
+
+  @Test
+  public void testGetAccountResource() {
+    GrpcAPI.AccountResourceMessage accountResource =
+        wallet.getAccountResource(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)));
+    Assert.assertEquals(
+        chainBaseManager.getDynamicPropertiesStore().getFreeNetLimit(),
+        accountResource.getFreeNetLimit());
+    Assert.assertEquals(0, accountResource.getFreeNetUsed());
+  }
+
+  @Test
+  public void testGetAssetIssueByName() {
+    String assetName = "My_asset";
+    String id = "10001";
+    AssetIssueCapsule assetCapsule = new AssetIssueCapsule(ByteArray.fromHexString(OWNER_ADDRESS),
+        id,assetName,"abbr", 1_000_000_000_000L,6);
+    chainBaseManager.getAssetIssueStore().put(assetCapsule.createDbKey(), assetCapsule);
+    chainBaseManager.getAssetIssueV2Store().put(assetCapsule.createDbV2Key(), assetCapsule);
+    try {
+      AssetIssueContract assetIssue =
+          wallet.getAssetIssueByName(ByteString.copyFromUtf8(assetName));
+      Assert.assertEquals(ByteString.copyFromUtf8(assetName),assetIssue.getName());
+      Assert.assertEquals(id,assetIssue.getId());
+      chainBaseManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+      assetIssue = wallet.getAssetIssueByName(ByteString.copyFromUtf8(assetName));
+      Assert.assertEquals(ByteString.copyFromUtf8(assetName),assetIssue.getName());
+      Assert.assertEquals(id,assetIssue.getId());
+    } catch (NonUniqueObjectException e) {
+      Assert.fail(e.getMessage());
+    }
+    chainBaseManager.getAssetIssueStore().delete(assetCapsule.createDbKey());
+    chainBaseManager.getAssetIssueV2Store().delete(assetCapsule.createDbV2Key());
+    chainBaseManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+  }
 }
 
