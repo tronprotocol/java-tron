@@ -7,6 +7,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Deque;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -28,6 +29,7 @@ import org.tron.consensus.pbft.message.PbftBaseMessage;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.NetConstants;
+import org.tron.core.config.args.Args;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.net.TronNetDelegate;
@@ -50,6 +52,8 @@ import org.tron.protos.Protocol;
 @Scope("prototype")
 public class PeerConnection {
 
+  private static List<InetSocketAddress> relayNodes = Args.getInstance().getFastForwardNodes();
+
   @Getter
   private PeerStatistics peerStatistics = new PeerStatistics();
 
@@ -61,7 +65,7 @@ public class PeerConnection {
 
   @Getter
   @Setter
-  private boolean isRelayPeer;
+  private volatile boolean isRelayPeer;
 
   @Getter
   @Setter
@@ -143,6 +147,9 @@ public class PeerConnection {
 
   public void setChannel(Channel channel) {
     this.channel = channel;
+    if (relayNodes.contains(channel.getInetSocketAddress())) {
+      this.isRelayPeer = true;
+    }
     this.nodeStatistics = TronStatsManager.getNodeStatistics(channel.getInetAddress());
   }
 
