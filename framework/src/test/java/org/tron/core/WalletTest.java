@@ -988,6 +988,7 @@ public class WalletTest {
     GrpcAPI.EstimateEnergyMessage.Builder estimateBuilder
         = GrpcAPI.EstimateEnergyMessage.newBuilder();
 
+    Args.getInstance().setEstimateEnergy(false);
     try {
       wallet.estimateEnergy(
           contract, trxCap, trxExtBuilder, retBuilder, estimateBuilder);
