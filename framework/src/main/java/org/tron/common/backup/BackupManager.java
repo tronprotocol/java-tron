@@ -114,6 +114,7 @@ public class BackupManager implements EventHandler {
   public void handleEvent(UdpEvent udpEvent) {
     InetSocketAddress sender = udpEvent.getAddress();
     Message msg = udpEvent.getMessage();
+    logger.info("Receive msg from {}, type:{}", sender.getHostString(), msg.getType());
     if (!msg.getType().equals(BACKUP_KEEP_ALIVE)) {
       logger.warn("Receive not keep alive message from {}, type {}", sender.getHostString(),
           msg.getType());
