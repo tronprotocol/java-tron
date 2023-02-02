@@ -1907,6 +1907,7 @@ public class Manager {
   public void closeAllStore() {
     logger.info("******** Begin to close db. ********");
     chainBaseManager.closeAllStore();
+    validateSignService.shutdown();
     logger.info("******** End to close db. ********");
   }
 
