@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
-
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -28,10 +27,13 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.Metrics;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.BIUtil;
+import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FastByteComparisons;
 import org.tron.common.utils.Utils;
@@ -2232,13 +2234,23 @@ public class Program {
           contractState.getDynamicPropertiesStore().getCurrentCycleNumber());
       contractState.updateContractState(getContextAddress(), contractStateCapsule);
     } else {
+      long oldEnergyFactor = contractStateCapsule.getEnergyFactor();
+      String contractAddress = Base58.encode(getContextAddress());
+      if (contractStateCapsule.getEnergyUsage() > VMConfig.getDynamicEnergyThreshold() / 10) {
+        Metrics.gaugeSet(MetricKeys.Gauge.CONTRACT_USAGE,
+            contractStateCapsule.getEnergyUsage(), contractAddress);
+      }
+
       if (contractStateCapsule.catchUpToCycle(
           contractState.getDynamicPropertiesStore().getCurrentCycleNumber(),
           VMConfig.getDynamicEnergyThreshold(),
           VMConfig.getDynamicEnergyIncreaseFactor(),
           VMConfig.getDynamicEnergyMaxFactor())) {
-        contractState.updateContractState(getContextAddress(), contractStateCapsule
-        );
+        contractState.updateContractState(getContextAddress(), contractStateCapsule);
+        if (contractStateCapsule.getEnergyFactor() != oldEnergyFactor) {
+          Metrics.gaugeSet(MetricKeys.Gauge.CONTRACT_FACTOR,
+              contractStateCapsule.getEnergyFactor(), contractAddress);
+        }
       }
     }
     contextContractFactor = contractStateCapsule.getEnergyFactor()

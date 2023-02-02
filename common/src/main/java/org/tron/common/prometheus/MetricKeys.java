@@ -40,6 +40,9 @@ public class MetricKeys {
     public static final String MINER = "tron:miner_g";
     public static final String PROPOSAL = "tron:proposal_g";
 
+    public static final String CONTRACT_FACTOR = "tron:contract_factor_g";
+    public static final String CONTRACT_USAGE = "tron:contract_usage_g";
+
     private Gauge() {
       throw new IllegalStateException("Gauge");
     }

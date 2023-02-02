@@ -2,8 +2,8 @@ package org.tron.program;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
-import io.prometheus.client.CollectorRegistry;
 import com.beust.jcommander.JCommander;
+import io.prometheus.client.CollectorRegistry;
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
@@ -16,7 +16,6 @@ import org.tron.common.prometheus.Metrics;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.net.P2pEventHandlerImpl;
 import org.tron.core.prometheus.exports.KhaosExports;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.http.FullNodeHttpApiService;
