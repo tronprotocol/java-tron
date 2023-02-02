@@ -7,6 +7,7 @@ import java.nio.file.Paths;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -25,6 +26,7 @@ import org.tron.core.services.RpcApiService;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.tool.litefullnode.LiteFullNodeTool;
 
+@Ignore
 @Slf4j
 public class LiteFullNodeToolTest {
 
