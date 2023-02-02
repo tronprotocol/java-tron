@@ -60,7 +60,7 @@ public class BackupServer {
                 ch.pipeline().addLast(TrafficStats.udp);
                 ch.pipeline().addLast(new ProtobufVarint32LengthFieldPrepender());
                 ch.pipeline().addLast(new ProtobufVarint32FrameDecoder());
-                ch.pipeline().addLast(new PacketDecoder());
+                ch.pipeline().addLast(new BackUpPacketDecoder());
                 MessageHandler messageHandler = new MessageHandler(ch, backupManager);
                 backupManager.setMessageHandler(messageHandler);
                 ch.pipeline().addLast(messageHandler);

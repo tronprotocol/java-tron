@@ -27,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.common.backup.message.Message;
 
 @Slf4j(topic = "net")
-public class PacketDecoder extends MessageToMessageDecoder<DatagramPacket> {
+public class BackUpPacketDecoder extends MessageToMessageDecoder<DatagramPacket> {
 
   private static final int MAXSIZE = 2048;
 
@@ -36,6 +36,7 @@ public class PacketDecoder extends MessageToMessageDecoder<DatagramPacket> {
       throws Exception {
     ByteBuf buf = packet.content();
     int length = buf.readableBytes();
+    logger.debug("Msg Content length: {}", length);
     if (length <= 1 || length >= MAXSIZE) {
       logger
           .warn("UDP rcv bad packet, from {} length = {}", ctx.channel().remoteAddress(), length);
