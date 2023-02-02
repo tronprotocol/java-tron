@@ -1,14 +1,12 @@
 apply plugin: 'com.google.protobuf'
 
-def protobufVersion = "3.20.3"
+def protobufVersion = "3.19.2"
 
 def grpcVersion = "1.14.0"
 
 dependencies {
     compile group: 'com.google.protobuf', name: 'protobuf-java', version: protobufVersion
     compile group: 'com.google.protobuf', name: 'protobuf-java-util', version: protobufVersion
-    compile group: 'com.google.code.gson', name: 'gson', version: '2.9.0'
-
     compile group: 'net.jcip', name: 'jcip-annotations', version: '1.0'
 
 //    checkstyleConfig "com.puppycrawl.tools:checkstyle:${versions.checkstyle}"
@@ -19,9 +17,6 @@ dependencies {
     // end google grpc
 
     compile group: 'com.google.api.grpc', name: 'googleapis-common-protos', version: '0.0.3'
-    compile group: 'io.netty', name: 'netty-codec-http', version: '4.1.78.Final'
-    compile group: 'io.netty', name: 'netty-handler', version: '4.1.78.Final'
-    compile group: 'io.netty', name: 'netty-codec-http2', version: '4.1.78.Final'
 }
 
 tasks.matching { it instanceof Test }.all {
