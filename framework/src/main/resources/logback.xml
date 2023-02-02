@@ -66,8 +66,8 @@
   </root>
 
   <logger level="INFO" name="app"/>
-  <logger level="INFO" name="net"/>
-  <logger level="INFO" name="backup"/>
+  <logger level="DEBUG" name="net"/>
+  <logger level="DEBUG" name="backup"/>
   <logger level="INFO" name="discover"/>
   <logger level="INFO" name="crypto"/>
   <logger level="INFO" name="utils"/>
