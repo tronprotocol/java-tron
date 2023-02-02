@@ -27,6 +27,7 @@ import io.netty.channel.socket.nio.NioDatagramChannel;
 import java.net.InetSocketAddress;
 import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.utils.ByteArray;
 
 @Slf4j(topic = "net")
 public class MessageHandler extends SimpleChannelInboundHandler<UdpEvent>
@@ -57,10 +58,11 @@ public class MessageHandler extends SimpleChannelInboundHandler<UdpEvent>
 
   @Override
   public void accept(UdpEvent udpEvent) {
-    logger.info("send udp msg type {}, len {} to {} ",
+    logger.info("send udp msg type {}, len {} to {}, data: {} ",
         udpEvent.getMessage().getType(),
         udpEvent.getMessage().getSendData().length,
-        udpEvent.getAddress());
+        udpEvent.getAddress(),
+        ByteArray.toHexString(udpEvent.getMessage().getSendData()));
     InetSocketAddress address = udpEvent.getAddress();
     sendPacket(udpEvent.getMessage().getSendData(), address);
   }
