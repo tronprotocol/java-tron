@@ -3,7 +3,6 @@ package org.tron.program;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import com.beust.jcommander.JCommander;
-import io.prometheus.client.CollectorRegistry;
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
@@ -16,7 +15,6 @@ import org.tron.common.prometheus.Metrics;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.prometheus.exports.KhaosExports;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.services.interfaceJsonRpcOnPBFT.JsonRpcServiceOnPBFT;
@@ -84,9 +82,6 @@ public class FullNode {
     Application appT = ApplicationFactory.create(context);
     shutdown(appT);
 
-    //init prometheus metrics
-    initPrometheusMetrics(context);
-
     // grpc api server
     RpcApiService rpcApiService = context.getBean(RpcApiService.class);
     appT.addService(rpcApiService);
@@ -141,18 +136,6 @@ public class FullNode {
     appT.startup();
 
     rpcApiService.blockUntilShutdown();
-  }
-
-  private static void initPrometheusMetrics(TronApplicationContext context) {
-    try {
-      if (!CommonParameter.getInstance().isMetricsPrometheusEnable()) {
-        return;
-      }
-      KhaosExports khaosExports = context.getBean(KhaosExports.class);
-      khaosExports.register(CollectorRegistry.defaultRegistry);
-    } catch (Exception e) {
-      logger.warn("init prometheus failed:", e.getMessage());
-    }
   }
 
   public static void shutdown(final Application app) {

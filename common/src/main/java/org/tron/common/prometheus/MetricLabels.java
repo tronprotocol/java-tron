@@ -33,13 +33,6 @@ public class MetricLabels {
     public static final String TXS_FAIL_SIG = "sig";
     public static final String TXS_FAIL_TAPOS = "tapos";
     public static final String TXS_FAIL_DUP = "dup";
-    public static final String SNAPSHOT_GET_SUCCESS = SUCCESS;
-    public static final String SNAPSHOT_GET_MISS = "miss";
-    public static final String SNAPSHOT_GET_REACH_ROOT = "reachRoot";
-    public static final String SNAPSHOT_GET_NOT_REACH_ROOT = "notReachRoot";
-    public static final String DB_GET_MISS = "miss";
-    public static final String DB_GET_SUCCESS = SUCCESS;
-
 
     private Counter() {
       throw new IllegalStateException("Counter");
@@ -77,37 +70,6 @@ public class MetricLabels {
   public static class Histogram {
     public static final String TRAFFIC_IN = "in";
     public static final String TRAFFIC_OUT = "out";
-
-    public static final String DB_GET = "get";
-    public static final String DB_PUT = "put";
-    public static final String DB_DEL = "del";
-    public static final String DB_NEXT = "next";
-    public static final String DB_BATCH = "batch";
-    public static final String DB_PREFIX = "prefix";
-    public static final String DB_GET_LATEST_VALUES = "getLatestValues";
-    public static final String DB_GET_VALUES_NEXT = "getValuesNext";
-    public static final String DB_GET_KEYS_NEXT = "getKeysNext";
-    public static final String DB_GET_VALUES_PREV = "getValuesPrev";
-    public static final String DB_GET_TOTAL = "getTotal";
-    public static final String DB_UPDATE_BY_BATCH_INNER = "updateByBatchInner";
-    public static final String DB_UPDATE_BY_BATCH_INNER_WITH_OPTIONS = "updateByBatchInnerWithOptions";
-    public static final String DB_INNER_BATCH_UPDATE = "innerBatchUpdate";
-    public static final String DB_UPDATE_BY_BATCH_WITH_OPTIONS = "updateByBatchWithOptions";
-    public static final String DB_UPDATE_BY_BATCH = "updateByBatch";
-
-    public static final String SNAPSHOT_GET = "get";
-    public static final String SNAPSHOT_PUT = "put";
-
-
-
-
-
-
-
-    public static final String CHECKPOINT_CREATE = "create";
-    public static final String CHECKPOINT_DELETE = "delete";
-    public static final String CHECKPOINT_FLUSH = "flush";
-    public static final String CHECKPOINT_TOTAL = "total";
 
     private Histogram() {
       throw new IllegalStateException("Histogram");

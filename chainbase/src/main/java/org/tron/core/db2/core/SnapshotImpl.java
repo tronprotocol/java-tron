@@ -11,13 +11,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-
-import io.prometheus.client.Histogram;
 import lombok.Getter;
-import org.tron.common.prometheus.MetricKeys;
-import org.tron.common.prometheus.MetricLabels;
-import org.tron.common.prometheus.Metrics;
-import org.tron.common.utils.ByteUtil;
 import org.tron.core.db2.common.HashDB;
 import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.Value;
@@ -44,26 +38,17 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   }
 
   private byte[] get(Snapshot head, byte[] key) {
-    Histogram.Timer requestTimer = Metrics.histogramStartTimer(
-            MetricKeys.Histogram.SNAPSHOT_SERVICE_LATENCY, root.getDbName(), MetricLabels.Histogram.SNAPSHOT_GET);
     Snapshot snapshot = head;
     Value value;
     while (Snapshot.isImpl(snapshot)) {
       if ((value = ((SnapshotImpl) snapshot).db.get(Key.of(key))) != null) {
-        Metrics.histogramObserve(requestTimer);
-        Metrics.counterInc(MetricKeys.Counter.SNAPSHOT_GET,1,root.getDbName(),MetricLabels.Counter.SNAPSHOT_GET_SUCCESS,
-                MetricLabels.Counter.SNAPSHOT_GET_NOT_REACH_ROOT);
         return value.getBytes();
       }
 
       snapshot = snapshot.getPrevious();
     }
 
-    byte[] result = snapshot == null ? null : snapshot.get(key);
-    Metrics.counterInc(MetricKeys.Counter.SNAPSHOT_GET,1,root.getDbName(),
-            Objects.isNull(result)?MetricLabels.Counter.SNAPSHOT_GET_MISS:MetricLabels.Counter.SNAPSHOT_GET_SUCCESS,
-            MetricLabels.Counter.SNAPSHOT_GET_REACH_ROOT);
-    return result;
+    return snapshot == null ? null : snapshot.get(key);
   }
 
   @Override
@@ -72,8 +57,6 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
     Preconditions.checkNotNull(value, "value in db is not null.");
 
     db.put(Key.copyOf(key), Value.copyOf(Value.Operator.PUT, value));
-    Metrics.histogramObserve(MetricKeys.Histogram.SNAPSHOT_SERVICE_VALUE_BYTES, ByteUtil.getSize(value),
-            db.getDbName());
   }
 
   @Override
