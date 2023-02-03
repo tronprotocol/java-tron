@@ -383,7 +383,8 @@ rebuildManifest() {
     $JAVACMD -jar $ARCHIVE_JAR -d $REBUILD_DIR -m $REBUILD_MANIFEST_SIZE -b $REBUILD_BATCH_SIZE
   else
     echo 'info: download the rebuild manifest plugin from the github'
-    download $RELEASE_URL/download/GreatVoyage-v4.3.0/$ARCHIVE_JAR $ARCHIVE_JAR
+    local latest=$(`echo getLatestReleaseVersion`)
+    download $RELEASE_URL/download/GreatVoyage-v"$latest"/$ARCHIVE_JAR $ARCHIVE_JAR
     if [[ $download == 0 ]]; then
       echo 'info: download success, rebuild manifest'
       $JAVACMD -jar $ARCHIVE_JAR $REBUILD_DIR -m $REBUILD_MANIFEST_SIZE -b $REBUILD_BATCH_SIZE
@@ -541,14 +542,12 @@ while [ -n "$1" ]; do
   --run)
     if [[ $ALL_OPT_LENGTH -eq 1 ]]; then
       restart
-      exit
     fi
     RUN=true
     shift 1
     ;;
   --stop)
     stopService
-    exit
     ;;
   FullNode)
     RUN=true
@@ -597,7 +596,6 @@ if [[ $QUICK_START == true ]]; then
       restart
     fi
   fi
-  exit
 fi
 
 if [[ $UPGRADE == true ]]; then
@@ -614,13 +612,11 @@ if [[ $DOWNLOAD == true ]]; then
   fi
 fi
 
-if [[ $ALL_OPT_LENGTH -eq 0 ]]; then
+if [[ $ALL_OPT_LENGTH -eq 0 || $ALL_OPT_LENGTH -gt 0 ]]; then
   restart
-  exit
 fi
 
 if [[ $RUN == true ]]; then
   restart
-  exit
 fi
 
