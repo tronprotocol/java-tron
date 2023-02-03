@@ -95,8 +95,7 @@ public class MaintenanceManager {
     if (dynamicPropertiesStore.useNewRewardAlgorithm()) {
       long curCycle = dynamicPropertiesStore.getCurrentCycleNumber();
       consensusDelegate.getAllWitnesses().forEach(witness -> {
-        delegationStore.accumulateWitnessVi(curCycle, witness.createDbKey(),
-            witness.getVoteCount());
+        delegationStore.accumulateWitnessVi(curCycle, witness.createDbKey(), witness.getVoteCount());
       });
     }
 

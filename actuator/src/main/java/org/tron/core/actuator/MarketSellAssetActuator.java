@@ -181,8 +181,8 @@ public class MarketSellAssetActuator extends AbstractActuator {
     }
 
 
-    logger.info("stress-test: ALLOW_MARKET_TRANSACTION: {}", dynamicStore.getAllowMarketTransaction());
-    dynamicStore.saveAllowMarketTransaction(1L);
+    //logger.info("stress-test: ALLOW_MARKET_TRANSACTION: {}", dynamicStore.getAllowMarketTransaction());
+    //dynamicStore.saveAllowMarketTransaction(1L);
     if (!dynamicStore.supportAllowMarketTransaction()) {
       throw new ContractValidateException("Not support Market Transaction, need to be opened by"
           + " the committee");
