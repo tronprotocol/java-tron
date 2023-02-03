@@ -334,8 +334,8 @@ public class SnapshotManager implements RevokingDatabase {
     List<Snapshot> snapshots = new ArrayList<>();
 
     SnapshotRoot root = (SnapshotRoot) db.getHead().getRoot();
-    final Histogram.Timer flushTimer = Metrics.histogramStartTimer(
-            MetricKeys.Histogram.CHECKPOINT_LATENCY, root.getDbName());
+    Histogram.Timer flushTimer = Metrics.histogramStartTimer(
+            MetricKeys.Histogram.CHECKPOINT_LATENCY,root.getDbName());
     Snapshot next = root;
     for (int i = 0; i < flushCount; ++i) {
       next = next.getNext();
