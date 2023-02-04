@@ -73,6 +73,7 @@ public class DposTask {
     logger.info("stress-test: DPosMiner");
     produceThread = new Thread(runnable, "DPosMiner");
     produceThread.start();
+    logger.info("stress-test: DPoS task started.");
     logger.info("DPoS task started.");
   }
 
