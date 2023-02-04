@@ -41,13 +41,21 @@ public class DposSlot {
     }
     long interval = BLOCK_PRODUCED_INTERVAL;
     if (consensusDelegate.getLatestBlockHeaderNumber() == 0) {
-      return dposService.getGenesisBlockTime() + slot * interval;
+      logger.info("stress-test: consensusDelegate.getLatestBlockHeaderNumber(): {}", consensusDelegate.getLatestBlockHeaderNumber());
+      long l = dposService.getGenesisBlockTime() + slot * interval;
+      logger.info("stress-test: dposService.getGenesisBlockTime(): {}",  dposService.getGenesisBlockTime() + slot * interval);
+      return l;
     }
+
     if (consensusDelegate.lastHeadBlockIsMaintenance()) {
+      logger.info("stress-test: consensusDelegate.lastHeadBlockIsMaintenance(): {}", consensusDelegate.lastHeadBlockIsMaintenance());
       slot += consensusDelegate.getMaintenanceSkipSlots();
+      logger.info("stress-test: slot: {}", slot);
     }
     long time = consensusDelegate.getLatestBlockHeaderTimestamp();
+    logger.info("stress-test: consensusDelegate.getLatestBlockHeaderTimestamp: {}", time);
     time = time - ((time - dposService.getGenesisBlockTime()) % interval);
+    logger.info("stress-test: time + interval * slot: {}", time + interval * slot);
     return time + interval * slot;
   }
 

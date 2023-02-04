@@ -51,7 +51,9 @@ public class DposTask {
           if (dposService.isNeedSyncCheck()) {
             logger.info("stress-test: isNeedSyncCheck");
             Thread.sleep(1000);
-            dposService.setNeedSyncCheck(dposSlot.getTime(1) < System.currentTimeMillis());
+            long systemTime = System.currentTimeMillis();
+            logger.info("stress-test: System.currentTimeMillis: {}", systemTime);
+            dposService.setNeedSyncCheck(dposSlot.getTime(1) < systemTime);
           } else {
             logger.info("stress-test: isNeedSyncCheck else");
             long time =
