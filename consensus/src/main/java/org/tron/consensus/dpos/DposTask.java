@@ -47,10 +47,13 @@ public class DposTask {
     Runnable runnable = () -> {
       while (isRunning) {
         try {
+          logger.info("stress-test");
           if (dposService.isNeedSyncCheck()) {
+            logger.info("stress-test: isNeedSyncCheck");
             Thread.sleep(1000);
             dposService.setNeedSyncCheck(dposSlot.getTime(1) < System.currentTimeMillis());
           } else {
+            logger.info("stress-test: isNeedSyncCheck else");
             long time =
                 BLOCK_PRODUCED_INTERVAL - System.currentTimeMillis() % BLOCK_PRODUCED_INTERVAL;
             Thread.sleep(time);
@@ -67,6 +70,7 @@ public class DposTask {
         }
       }
     };
+    logger.info("stress-test: DPosMiner");
     produceThread = new Thread(runnable, "DPosMiner");
     produceThread.start();
     logger.info("DPoS task started.");
