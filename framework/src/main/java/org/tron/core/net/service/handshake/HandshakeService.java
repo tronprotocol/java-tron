@@ -63,12 +63,12 @@ public class HandshakeService {
 
     long headBlockNum = chainBaseManager.getHeadBlockNum();
     long lowestBlockNum = msg.getLowestBlockNum();
-    if (lowestBlockNum > headBlockNum) {
-      logger.info("Peer {} miss block, lowestBlockNum:{}, headBlockNum:{}",
-              peer.getInetSocketAddress(), lowestBlockNum, headBlockNum);
-      peer.disconnect(ReasonCode.LIGHT_NODE_SYNC_FAIL);
-      return;
-    }
+//    if (lowestBlockNum > headBlockNum) {
+//      logger.info("Peer {} miss block, lowestBlockNum:{}, headBlockNum:{}",
+//              peer.getInetSocketAddress(), lowestBlockNum, headBlockNum);
+//      peer.disconnect(ReasonCode.LIGHT_NODE_SYNC_FAIL);
+//      return;
+//    }
 
     if (msg.getVersion() != Args.getInstance().getNodeP2pVersion()) {
       logger.info("Peer {} different p2p version, peer->{}, me->{}",
