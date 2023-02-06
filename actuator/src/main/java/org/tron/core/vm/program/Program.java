@@ -36,6 +36,7 @@ import org.tron.common.utils.BIUtil;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FastByteComparisons;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
 import org.tron.common.utils.WalletUtil;
 import org.tron.core.ChainBaseManager;
@@ -2235,7 +2236,7 @@ public class Program {
       contractState.updateContractState(getContextAddress(), contractStateCapsule);
     } else {
       long oldEnergyFactor = contractStateCapsule.getEnergyFactor();
-      String contractAddress = Base58.encode(getContextAddress());
+      String contractAddress = StringUtil.encode58Check(getContextAddress());
       if (contractStateCapsule.getEnergyUsage() > VMConfig.getDynamicEnergyThreshold() / 10) {
         Metrics.gaugeSet(MetricKeys.Gauge.CONTRACT_USAGE,
             contractStateCapsule.getEnergyUsage(), contractAddress);
