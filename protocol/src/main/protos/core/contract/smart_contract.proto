@@ -62,6 +62,7 @@ message ContractState {
   int64 energy_usage = 1;
   int64 energy_factor = 2;
   int64 update_cycle = 3;
+  int64 actual_energy_usage = 10;
 }
 
 message CreateSmartContract {

@@ -52,6 +52,18 @@ public class ContractStateCapsule implements ProtoCapsule<ContractState> {
     setEnergyUsage(getEnergyUsage() + toAdd);
   }
 
+  public long getEnergyActualUsage() {
+    return this.contractState.getActualEnergyUsage();
+  }
+
+  public void setEnergyActualUsage(long value) {
+    this.contractState = this.contractState.toBuilder().setActualEnergyUsage(value).build();
+  }
+
+  public void addEnergyActualUsage(long toAdd) {
+    setEnergyActualUsage(getEnergyActualUsage() + toAdd);
+  }
+
   public long getEnergyFactor() {
     return this.contractState.getEnergyFactor();
   }

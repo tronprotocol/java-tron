@@ -33,7 +33,6 @@ import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.BIUtil;
-import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FastByteComparisons;
 import org.tron.common.utils.StringUtil;
@@ -2237,9 +2236,16 @@ public class Program {
     } else {
       long oldEnergyFactor = contractStateCapsule.getEnergyFactor();
       String contractAddress = StringUtil.encode58Check(getContextAddress());
-      if (contractStateCapsule.getEnergyUsage() > VMConfig.getDynamicEnergyThreshold() / 10) {
+
+      // Add metrics info
+      if (contractStateCapsule.getEnergyFactor() > 0) {
         Metrics.gaugeSet(MetricKeys.Gauge.CONTRACT_USAGE,
-            contractStateCapsule.getEnergyUsage(), contractAddress);
+            contractStateCapsule.getEnergyUsage(), contractAddress, "energy");
+        Metrics.gaugeSet(MetricKeys.Gauge.CONTRACT_USAGE,
+            contractStateCapsule.getEnergyActualUsage(), contractAddress, "total");
+      } else if (contractStateCapsule.getEnergyUsage() > VMConfig.getDynamicEnergyThreshold() / 10) {
+        Metrics.gaugeSet(MetricKeys.Gauge.CONTRACT_USAGE,
+            contractStateCapsule.getEnergyUsage(), contractAddress, "energy");
       }
 
       if (contractStateCapsule.catchUpToCycle(
@@ -2264,6 +2270,14 @@ public class Program {
         contractState.getContractState(getContextAddress());
 
     contractStateCapsule.addEnergyUsage(value);
+    contractState.updateContractState(getContextAddress(), contractStateCapsule);
+  }
+
+  public void addContextContractActualUsage(long value) {
+    ContractStateCapsule contractStateCapsule =
+        contractState.getContractState(getContextAddress());
+
+    contractStateCapsule.addEnergyActualUsage(value);
     contractState.updateContractState(getContextAddress(), contractStateCapsule);
   }
 

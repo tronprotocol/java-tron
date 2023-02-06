@@ -72,6 +72,7 @@ public class VM {
               }
 
               program.spendEnergyWithPenalty(energy, penalty, opName);
+              program.addContextContractActualUsage(energy);
             } else {
               program.spendEnergy(energy, opName);
             }
