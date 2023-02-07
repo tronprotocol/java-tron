@@ -147,7 +147,7 @@ public class PeerConnection {
 
   public void setChannel(Channel channel) {
     this.channel = channel;
-    if (relayNodes.contains(channel.getInetSocketAddress())) {
+    if (relayNodes.stream().anyMatch(n -> n.getAddress() == channel.getInetAddress())) {
       this.isRelayPeer = true;
     }
     this.nodeStatistics = TronStatsManager.getNodeStatistics(channel.getInetAddress());
