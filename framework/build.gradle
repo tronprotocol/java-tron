@@ -48,7 +48,7 @@ dependencies {
 
     compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.69'
 
-    compile group: 'io.github.tronprotocol', name: 'libp2p', version: '0.1.1'
+    compile group: 'io.github.tronprotocol', name: 'libp2p', version: '0.1.2'
 
     compile group: 'com.typesafe', name: 'config', version: '1.3.2'
 

@@ -1,5 +1,6 @@
 package org.tron.core.net;
 
+import io.netty.util.internal.StringUtil;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
@@ -138,14 +139,25 @@ public class TronNetService {
     config.setActiveNodes(parameter.getActiveNodes());
     config.setTrustNodes(parameter.getPassiveNodes());
     config.getActiveNodes().forEach(n -> config.getTrustNodes().add(n.getAddress()));
-    config.setMaxConnections(parameter.getMaxConnections());
-    config.setMinConnections(parameter.getMinConnections());
+    int maxConnections = parameter.getMaxConnections();
+    int minConnections = parameter.getMinConnections();
+    int minActiveConnections = parameter.getMinActiveConnections();
+    if (minConnections > maxConnections) {
+      minConnections = maxConnections;
+    }
+    if (minActiveConnections > minConnections) {
+      minActiveConnections = minConnections;
+    }
+    config.setMaxConnections(maxConnections);
+    config.setMinConnections(minConnections);
+    config.setMinActiveConnections(minActiveConnections);
+
     config.setMaxConnectionsWithSameIp(parameter.getMaxConnectionsWithSameIp());
     config.setPort(parameter.getNodeListenPort());
     config.setVersion(parameter.getNodeP2pVersion());
     config.setDisconnectionPolicyEnable(parameter.isOpenFullTcpDisconnect());
     config.setDiscoverEnable(parameter.isNodeDiscoveryEnable());
-    if (config.getIp() == null) {
+    if (StringUtil.isNullOrEmpty(config.getIp())) {
       config.setIp(parameter.getNodeExternalIp());
     }
     return config;
