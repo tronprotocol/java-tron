@@ -70,7 +70,7 @@ public class BandWidthRuntimeWithCheckTest extends BaseTest {
   private static boolean init;
 
   static {
-    dbPath = "output_BandWidthRuntimeTest_test";
+    dbPath = "output_bandwidth_runtime_with_check_test";
     Args.setParam(
         new String[]{
             "--output-directory", dbPath,

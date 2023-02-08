@@ -8,9 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.tron.api.WalletGrpc;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
@@ -34,9 +32,6 @@ public class LiteFullNodeToolTest {
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private Application appTest;
   private String databaseDir;
-
-  @Rule
-  public ExpectedException thrown = ExpectedException.none();
 
   private static final String DB_PATH = "output_lite_fn";
 

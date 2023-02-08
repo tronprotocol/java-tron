@@ -19,6 +19,7 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.runtime.RuntimeImpl;
@@ -56,8 +57,9 @@ public class BandWidthRuntimeTest extends BaseTest {
   private static final String TriggerOwnerTwoAddress = "TPMBUANrTwwQAPwShn7ZZjTJz1f3F8jknj";
   private static boolean init;
 
-  static {
-    dbPath = "output_BandWidthRuntimeTest_test";
+  @BeforeClass
+  public static void init() {
+    dbPath = "output_bandwidth_runtime_test";
     Args.setParam(
         new String[]{
             "--output-directory", dbPath,
@@ -73,7 +75,7 @@ public class BandWidthRuntimeTest extends BaseTest {
    * Init data.
    */
   @Before
-  public void init() {
+  public void before() {
     if (init) {
       return;
     }
