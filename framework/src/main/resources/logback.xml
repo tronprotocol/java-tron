@@ -59,7 +59,6 @@
     <!-- (the smaller value -> flush occurs often) -->
     <queueSize>100</queueSize>
     <includeCallerData>true</includeCallerData>
-    <appender-ref ref="DB"/>
     <appender-ref ref="FILE"/>
   </appender>
 
