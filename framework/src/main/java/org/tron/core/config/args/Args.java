@@ -1006,9 +1006,6 @@ public class Args extends CommonParameter {
         .getBoolean(Constant.METRICS_PROMETHEUS_ENABLE);
     PARAMETER.metricsPrometheusPort = config.hasPath(Constant.METRICS_PROMETHEUS_PORT) ? config
         .getInt(Constant.METRICS_PROMETHEUS_PORT) : 9527;
-
-    // lite fullnode params
-    PARAMETER.setLiteFullNode(checkIsLiteFullNode());
     PARAMETER.setOpenHistoryQueryWhenLiteFN(
         config.hasPath(Constant.NODE_OPEN_HISTORY_QUERY_WHEN_LITEFN)
             && config.getBoolean(Constant.NODE_OPEN_HISTORY_QUERY_WHEN_LITEFN));
@@ -1504,19 +1501,6 @@ public class Args extends CommonParameter {
 
   public static void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {
     PARAMETER.fullNodeAllowShieldedTransactionArgs = fullNodeAllowShieldedTransaction;
-  }
-
-  /**
-   * set isLiteFullNode=true when this node is a lite fullnode.
-   */
-  public static boolean checkIsLiteFullNode() {
-    String infoFile = Paths.get(PARAMETER.outputDirectory,
-        PARAMETER.storage.getDbDirectory(), Constant.INFO_FILE_NAME).toString();
-    if (FileUtil.isExists(infoFile)) {
-      String value = PropUtil.readProperty(infoFile, Constant.SPLIT_BLOCK_NUM);
-      return !"".equals(value) && Long.parseLong(value) > 1;
-    }
-    return false;
   }
 
   private static void witnessAddressCheck(Config config) {

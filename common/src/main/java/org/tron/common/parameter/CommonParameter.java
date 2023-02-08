@@ -8,6 +8,8 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+
+import com.google.common.annotations.VisibleForTesting;
 import lombok.Getter;
 import lombok.Setter;
 import org.quartz.CronExpression;
@@ -525,10 +527,6 @@ public class CommonParameter {
   @Getter
   @Setter
   public boolean openHistoryQueryWhenLiteFN = false;
-
-  @Getter
-  @Setter
-  public boolean isLiteFullNode = false;
 
   @Getter
   @Setter
