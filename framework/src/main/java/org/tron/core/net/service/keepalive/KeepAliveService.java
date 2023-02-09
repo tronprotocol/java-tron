@@ -35,6 +35,7 @@ public class KeepAliveService {
           long lastSendTime = p.getChannel().getLastSendTime();
           if (p.getChannel().waitForPong) {
             if (now - pingSent > PING_TIMEOUT) {
+              logger.warn("Peer {} receive pong timeout", p.getInetSocketAddress());
               p.disconnect(Protocol.ReasonCode.TIME_OUT);
             }
           } else {
