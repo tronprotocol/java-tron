@@ -450,7 +450,7 @@ public class Manager {
         .initStore(chainBaseManager.getWitnessStore(), chainBaseManager.getDelegationStore(),
             chainBaseManager.getDynamicPropertiesStore(), chainBaseManager.getAccountStore());
     accountStateCallBack.setChainBaseManager(chainBaseManager);
-    worldStateCallBack.setChainBaseManager(chainBaseManager);
+    worldStateCallBack.init(chainBaseManager);
     trieService.setChainBaseManager(chainBaseManager);
     revokingStore.disable();
     revokingStore.check();
@@ -2084,8 +2084,10 @@ public class Manager {
           cumulativeLogCount += transactionInfo.getLogCount();
         }
       } else {
-        logger.error("PostBlockTrigger blockNum = {} has no transactions or {}.", newBlock.getNum(),
-            "the sizes of transactionInfoList and transactionCapsuleList are not equal");
+        if (newBlock.getNum() != 0) {
+          logger.error("PostBlockTrigger blockNum = {} has no transactions or {}.", newBlock.getNum(),
+              "the sizes of transactionInfoList and transactionCapsuleList are not equal");
+        }
         for (TransactionCapsule e : newBlock.getTransactions()) {
           postTransactionTrigger(e, newBlock);
         }

@@ -37,7 +37,6 @@ dependencies {
 
     compile group: leveldbGroup, name: leveldbName, version: leveldbVersion
     compile "org.fusesource.jansi:jansi:$jansiVersion"
-    compile group: 'org.rocksdb', name: 'rocksdbjni', version: '5.15.10'
     compile group: 'com.typesafe', name: 'config', version: '1.3.2'
     compile 'com.github.tronprotocol:zksnark-java-sdk:master-SNAPSHOT'
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.10.3'
@@ -46,6 +45,11 @@ dependencies {
     compile project(":common")
     compile project(":crypto")
     compile 'org.reflections:reflections:0.9.11'
+
+    compile group: 'io.github.tronprotocol', name: 'state-tire-jdk8', version: '0.0.1'
+
+    compile group: 'org.rocksdb', name: 'rocksdbjni', version: '5.15.10'
+
 }
 
 

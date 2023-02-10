@@ -9,19 +9,22 @@ import java.util.concurrent.LinkedBlockingQueue;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.MerkleStorage;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.Hash;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.state.trie.TrieReserveImpl;
 
 @Slf4j(topic = "State")
 @Component
 public class WorldStateCallBack extends WorldStateCallBackUtils {
 
   private BlockCapsule blockCapsule;
-  private volatile TrieReserveImpl trie;
+  private volatile MerkleStorage merkleStorage;
+  private volatile MerklePatriciaTrie<Bytes, Bytes> trie;
 
   long cost = 0;
 
@@ -47,7 +50,9 @@ public class WorldStateCallBack extends WorldStateCallBackUtils {
           }
 
           try {
-            trie.put(Hash.encodeElement(trieEntry.getKey()), trieEntry.getData());
+            if (trieEntry.getData() != null && trieEntry.getData().length != 0) {
+              trie.put(Bytes.wrap(trieEntry.getKey()), Bytes.wrap(trieEntry.getData()));
+            }
           } catch (Exception e) {
             logger.error("state update failed, put trie entry failed, err: {}", e.getMessage());
             System.exit(-1);
@@ -62,6 +67,11 @@ public class WorldStateCallBack extends WorldStateCallBackUtils {
     if (this.allowGenerateRoot) {
       executorService.submit(updateService);
     }
+  }
+
+  public void init(ChainBaseManager chainBaseManager) {
+    this.chainBaseManager = chainBaseManager;
+    this.merkleStorage = chainBaseManager.getMptStoreV2().getMerkleStorage();
   }
 
   public void preExeTrans() {
@@ -94,7 +104,9 @@ public class WorldStateCallBack extends WorldStateCallBackUtils {
     if (Arrays.equals(Internal.EMPTY_BYTE_ARRAY, rootHash)) {
       rootHash = Hash.EMPTY_TRIE_HASH;
     }
-    trie = new TrieReserveImpl(worldStateTrieStore, rootHash);
+
+//    merkleStorage = new KeyValueMerkleStorage(chainBaseManager.getMptStoreV2().getKeyValueStore());
+    trie = chainBaseManager.getMptStoreV2().getTrie(rootHash);
   }
 
   public void executePushFinish() {
@@ -113,7 +125,9 @@ public class WorldStateCallBack extends WorldStateCallBackUtils {
       }
     }
 
-    byte[] newRoot = trie.getRootHash();
+    trie.commit(merkleStorage::put);
+    byte[] newRoot = trie.getRootHash().toArray();
+    merkleStorage.commit();
     if (ArrayUtils.isEmpty(newRoot)) {
       newRoot = Hash.EMPTY_TRIE_HASH;
     }
@@ -128,13 +142,16 @@ public class WorldStateCallBack extends WorldStateCallBackUtils {
     if (!exe()) {
       return;
     }
-    trie = new TrieReserveImpl(worldStateTrieStore, Hash.EMPTY_TRIE_HASH);
+//    merkleStorage = new KeyValueMerkleStorage(chainBaseManager.getMptStoreV2().getKeyValueStore());
+    trie = chainBaseManager.getMptStoreV2().getTrie(Hash.EMPTY_TRIE_HASH);
     for (TrieEntry trieEntry : trieEntryList) {
-      trie.put(Hash.encodeElement(trieEntry.getKey()), trieEntry.getData());
+      trie.put(Bytes.wrap(trieEntry.getKey()), Bytes.wrap(trieEntry.getData()));
     }
     trieEntryList.clear();
 
-    byte[] newRoot = trie.getRootHash();
+    trie.commit(merkleStorage::put);
+    byte[] newRoot = trie.getRootHash().toArray();
+    merkleStorage.commit();
     if (ArrayUtils.isEmpty(newRoot)) {
       newRoot = Hash.EMPTY_TRIE_HASH;
     }

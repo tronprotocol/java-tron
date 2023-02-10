@@ -4,7 +4,11 @@ import com.google.common.primitives.Longs;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
+
 import lombok.Getter;
+import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
@@ -18,14 +22,13 @@ import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.StorageRowCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.state.trie.TrieReserveImpl;
 import org.tron.core.store.DynamicPropertiesStore;
 
 public class WorldStateQueryInstance {
 
   public static byte[] DELETE = Hash.EMPTY_TRIE_HASH;
 
-  private TrieReserveImpl trieImpl;
+  private MerklePatriciaTrie<Bytes, Bytes> trieImpl;
 
   @Getter
   private byte[] rootHash;
@@ -34,7 +37,7 @@ public class WorldStateQueryInstance {
 
   public WorldStateQueryInstance(byte[] rootHash, ChainBaseManager chainBaseManager) {
     this.rootHash = rootHash;
-    this.trieImpl = new TrieReserveImpl(chainBaseManager.getWorldStateTrieStore(), rootHash);
+    this.trieImpl = chainBaseManager.getMptStoreV2().getTrie(rootHash);
     this.worldStateGenesis = chainBaseManager.getWorldStateGenesis();
   }
 
@@ -178,7 +181,11 @@ public class WorldStateQueryInstance {
 
   private byte[] get(StateType type, byte[] key) {
     byte[] encodeKey = encodeKey(type.value(), key);
-    byte[] value = trieImpl.get(encodeKey);
+    Optional<Bytes> op = trieImpl.get(Bytes.wrap(encodeKey));
+    byte[] value = null;
+    if (op.isPresent()) {
+      value = op.get().toArray();  // todo
+    }
     if (Arrays.equals(value, DELETE)) {
       return null;
     }
@@ -190,6 +197,6 @@ public class WorldStateQueryInstance {
 
   private byte[] encodeKey(byte prefix, byte[] key) {
     byte[] p = new byte[]{prefix};
-    return Hash.encodeElement(ByteUtil.merge(p, key));
+    return ByteUtil.merge(p, key);
   }
 }
