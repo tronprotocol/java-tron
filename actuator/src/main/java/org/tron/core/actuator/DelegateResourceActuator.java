@@ -1,5 +1,7 @@
 package org.tron.core.actuator;
 
+import static org.tron.common.prometheus.MetricKeys.Counter.STAKE_INCREMENT;
+import static org.tron.common.prometheus.MetricKeys.Histogram.STAKE_AGGREGATE;
 import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_PERIOD;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
@@ -10,6 +12,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
@@ -70,6 +73,9 @@ public class DelegateResourceActuator extends AbstractActuator {
 
         ownerCapsule.addDelegatedFrozenV2BalanceForBandwidth(delegateBalance);
         ownerCapsule.addFrozenBalanceForBandwidthV2(-delegateBalance);
+        Metrics.counterInc(STAKE_INCREMENT, delegateBalance, "v2", "delegateResource", "net");
+        Metrics.histogramObserve(STAKE_AGGREGATE, delegateBalance,
+            "v2", "delegateResource", "net");
         break;
       case ENERGY:
         delegateResource(ownerAddress, receiverAddress, false,
@@ -77,6 +83,9 @@ public class DelegateResourceActuator extends AbstractActuator {
 
         ownerCapsule.addDelegatedFrozenV2BalanceForEnergy(delegateBalance);
         ownerCapsule.addFrozenBalanceForEnergyV2(-delegateBalance);
+        Metrics.counterInc(STAKE_INCREMENT, delegateBalance, "v2", "delegateResource", "energy");
+        Metrics.histogramObserve(STAKE_AGGREGATE, delegateBalance,
+            "v2", "delegateResource", "energy");
         break;
       default:
         logger.debug("Resource Code Error.");

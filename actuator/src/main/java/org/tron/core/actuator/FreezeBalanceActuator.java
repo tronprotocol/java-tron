@@ -1,5 +1,8 @@
 package org.tron.core.actuator;
 
+import static org.tron.common.prometheus.MetricKeys.Counter.STAKE_INCREMENT;
+import static org.tron.common.prometheus.MetricKeys.Gauge.TOTAL_RESOURCE_WEIGHT;
+import static org.tron.common.prometheus.MetricKeys.Histogram.STAKE_AGGREGATE;
 import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
@@ -16,6 +19,7 @@ import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
@@ -72,6 +76,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
     long newBalance = accountCapsule.getBalance() - freezeBalanceContract.getFrozenBalance();
 
     long frozenBalance = freezeBalanceContract.getFrozenBalance();
+
     long expireTime = now + duration;
     byte[] ownerAddress = freezeBalanceContract.getOwnerAddress().toByteArray();
     byte[] receiverAddress = freezeBalanceContract.getReceiverAddress().toByteArray();
@@ -92,6 +97,8 @@ public class FreezeBalanceActuator extends AbstractActuator {
           long newNetWeight = accountCapsule.getFrozenBalance() / TRX_PRECISION;
           increment = newNetWeight - oldNetWeight;
         }
+        Metrics.counterInc(STAKE_INCREMENT, frozenBalance, "v1", "freezeBalance", "net");
+        Metrics.histogramObserve(STAKE_AGGREGATE, frozenBalance, "v1", "freezeBalance", "net");
         addTotalWeight(BANDWIDTH, dynamicStore, frozenBalance, increment);
         break;
       case ENERGY:
@@ -108,6 +115,8 @@ public class FreezeBalanceActuator extends AbstractActuator {
           long newEnergyWeight = accountCapsule.getEnergyFrozenBalance() / TRX_PRECISION;
           increment = newEnergyWeight - oldEnergyWeight;
         }
+        Metrics.counterInc(STAKE_INCREMENT, frozenBalance, "v1", "freezeBalance", "energy");
+        Metrics.histogramObserve(STAKE_AGGREGATE, frozenBalance, "v1", "freezeBalance", "energy");
         addTotalWeight(ENERGY, dynamicStore, frozenBalance, increment);
         break;
       case TRON_POWER:

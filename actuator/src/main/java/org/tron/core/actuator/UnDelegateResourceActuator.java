@@ -1,5 +1,7 @@
 package org.tron.core.actuator;
 
+import static org.tron.common.prometheus.MetricKeys.Counter.STAKE_INCREMENT;
+import static org.tron.common.prometheus.MetricKeys.Histogram.STAKE_AGGREGATE;
 import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
@@ -11,6 +13,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
@@ -91,6 +94,10 @@ public class UnDelegateResourceActuator extends AbstractActuator {
           long newNetUsage = receiverCapsule.getNetUsage() - transferUsage;
           receiverCapsule.setNetUsage(newNetUsage);
           receiverCapsule.setLatestConsumeTime(now);
+          Metrics.counterInc(STAKE_INCREMENT, unDelegateBalance,
+              "v2", "unDelegateResource", "net");
+          Metrics.histogramObserve(STAKE_AGGREGATE, unDelegateBalance,
+              "v2", "unDelegateResource", "net");
           break;
         case ENERGY:
           EnergyProcessor energyProcessor = new EnergyProcessor(dynamicStore, accountStore);
@@ -114,6 +121,10 @@ public class UnDelegateResourceActuator extends AbstractActuator {
           long newEnergyUsage = receiverCapsule.getEnergyUsage() - transferUsage;
           receiverCapsule.setEnergyUsage(newEnergyUsage);
           receiverCapsule.setLatestConsumeTimeForEnergy(now);
+          Metrics.counterInc(STAKE_INCREMENT, unDelegateBalance,
+              "v2", "unDelegateResource", "energy");
+          Metrics.histogramObserve(STAKE_AGGREGATE, unDelegateBalance,
+              "v2", "unDelegateResource", "energy");
           break;
         default:
           //this should never happen

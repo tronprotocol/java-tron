@@ -5,12 +5,23 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j(topic = "metrics")
 public class MetricLabels {
 
+  /**
+   * label values
+   */
   public static final String SUCCESS = "success";
   public static final String FAIL = "fail";
   public static final String ALL = "all";
   public static final String UNDEFINED = "undefined";
   public static final String BLOCK = "block";
   public static final String TRX = "trx";
+
+  /**
+   * label keys
+   */
+  public static final String STAKE_VERSION = "version";
+  public static final String RESOURCE_TYPE = "resource";
+  public static final String CONTRACT_TYPE = "contract";
+  public static final String RECOVERY_TYPE = "recovery";
 
   private MetricLabels() {
     throw new IllegalStateException("MetricsLabels");

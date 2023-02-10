@@ -20,6 +20,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.utils.AssetUtil;
 import org.tron.core.store.AssetIssueStore;
@@ -42,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import static org.tron.common.prometheus.MetricKeys.Histogram.RESOURCE_RECOVERY;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.ChainConstant.WINDOW_SIZE_MS;
 import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
@@ -1057,6 +1059,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   public void setNetUsage(long netUsage) {
     this.account = this.account.toBuilder()
         .setNetUsage(netUsage).build();
+    Metrics.histogramObserve(RESOURCE_RECOVERY, netUsage, "net", "usage");
   }
 
   public AccountResource getAccountResource() {
@@ -1154,6 +1157,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .setAccountResource(
             this.account.getAccountResource().toBuilder().setEnergyUsage(energyUsage).build())
         .build();
+    Metrics.histogramObserve(RESOURCE_RECOVERY, energyUsage, "energy", "usage");
   }
 
   public long getAllFrozenBalanceForEnergy() {
@@ -1365,6 +1369,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       this.account = this.account.toBuilder().setAccountResource(this.account.getAccountResource()
               .toBuilder().setEnergyWindowSize(newWindowSize).build()).build();
     }
+    String resource = BANDWIDTH == resourceCode ? "net" : "energy";
+    Metrics.histogramObserve(RESOURCE_RECOVERY, newWindowSize, resource, "window");
   }
 
   public long getWindowSize(ResourceCode resourceCode) {

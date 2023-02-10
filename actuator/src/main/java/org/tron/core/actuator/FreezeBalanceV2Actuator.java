@@ -1,8 +1,18 @@
 package org.tron.core.actuator;
 
+import static org.tron.common.prometheus.MetricKeys.Counter.STAKE_INCREMENT;
+import static org.tron.common.prometheus.MetricKeys.Gauge.TOTAL_RESOURCE_WEIGHT;
+import static org.tron.common.prometheus.MetricKeys.Histogram.STAKE_AGGREGATE;
+import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
+import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
+
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
@@ -14,13 +24,6 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.BalanceContract.FreezeBalanceV2Contract;
-
-import java.util.Objects;
-
-import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
-import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
-import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
-import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 
 @Slf4j(topic = "actuator")
 public class FreezeBalanceV2Actuator extends AbstractActuator {
@@ -56,19 +59,24 @@ public class FreezeBalanceV2Actuator extends AbstractActuator {
 
     long newBalance = accountCapsule.getBalance() - freezeBalanceV2Contract.getFrozenBalance();
     long frozenBalance = freezeBalanceV2Contract.getFrozenBalance();
-
     switch (freezeBalanceV2Contract.getResource()) {
       case BANDWIDTH:
         long oldNetWeight = accountCapsule.getFrozenV2BalanceWithDelegated(BANDWIDTH) / TRX_PRECISION;
         accountCapsule.addFrozenBalanceForBandwidthV2(frozenBalance);
         long newNetWeight = accountCapsule.getFrozenV2BalanceWithDelegated(BANDWIDTH) / TRX_PRECISION;
         dynamicStore.addTotalNetWeight(newNetWeight - oldNetWeight);
+        Metrics.counterInc(STAKE_INCREMENT, frozenBalance, "v2", "freezeBalance", "net");
+        Metrics.histogramObserve(STAKE_AGGREGATE, frozenBalance,
+            "v2", "freezeBalance", "net");
         break;
       case ENERGY:
         long oldEnergyWeight = accountCapsule.getFrozenV2BalanceWithDelegated(ENERGY) / TRX_PRECISION;
         accountCapsule.addFrozenBalanceForEnergyV2(frozenBalance);
         long newEnergyWeight = accountCapsule.getFrozenV2BalanceWithDelegated(ENERGY) / TRX_PRECISION;
         dynamicStore.addTotalEnergyWeight(newEnergyWeight - oldEnergyWeight);
+        Metrics.counterInc(STAKE_INCREMENT, frozenBalance, "v2", "freezeBalance", "energy");
+        Metrics.histogramObserve(STAKE_AGGREGATE, frozenBalance,
+            "v2", "freezeBalance", "energy");
         break;
       case TRON_POWER:
         long oldTPWeight = accountCapsule.getTronPowerFrozenV2Balance() / TRX_PRECISION;

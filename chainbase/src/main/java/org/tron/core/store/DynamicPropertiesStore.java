@@ -1,5 +1,7 @@
 package org.tron.core.store;
 
+import static org.tron.common.prometheus.MetricKeys.Gauge.TOTAL_RESOURCE_WEIGHT;
+
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
 import java.util.Optional;
@@ -11,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BytesCapsule;
@@ -2221,6 +2224,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     if (allowNewReward()) {
       totalNetWeight = Math.max(0, totalNetWeight);
     }
+    String version = supportUnfreezeDelay() ? "v2" : "v1";
+    Metrics.gaugeSet(TOTAL_RESOURCE_WEIGHT, totalNetWeight, version, "net");
     saveTotalNetWeight(totalNetWeight);
   }
 
@@ -2231,6 +2236,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     if (allowNewReward()) {
       totalEnergyWeight = Math.max(0, totalEnergyWeight);
     }
+    String version = supportUnfreezeDelay() ? "v2" : "v1";
+    Metrics.gaugeSet(TOTAL_RESOURCE_WEIGHT, totalEnergyWeight, version, "energy");
     saveTotalEnergyWeight(totalEnergyWeight);
   }
 

@@ -1,5 +1,8 @@
 package org.tron.core.actuator;
 
+import static org.tron.common.prometheus.MetricKeys.Counter.STAKE_INCREMENT;
+import static org.tron.common.prometheus.MetricKeys.Gauge.TOTAL_RESOURCE_WEIGHT;
+import static org.tron.common.prometheus.MetricKeys.Histogram.STAKE_AGGREGATE;
 import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
@@ -13,6 +16,7 @@ import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
@@ -99,11 +103,17 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           unfreezeBalance = delegatedResourceCapsule.getFrozenBalanceForBandwidth();
           delegatedResourceCapsule.setFrozenBalanceForBandwidth(0, 0);
           accountCapsule.addDelegatedFrozenBalanceForBandwidth(-unfreezeBalance);
+          Metrics.counterInc(STAKE_INCREMENT, unfreezeBalance, "v1", "unfreezeBalance", "net");
+          Metrics.histogramObserve(STAKE_AGGREGATE, unfreezeBalance,
+              "v1", "unfreezeBalance", "net");
           break;
         case ENERGY:
           unfreezeBalance = delegatedResourceCapsule.getFrozenBalanceForEnergy();
           delegatedResourceCapsule.setFrozenBalanceForEnergy(0, 0);
           accountCapsule.addDelegatedFrozenBalanceForEnergy(-unfreezeBalance);
+          Metrics.counterInc(STAKE_INCREMENT, unfreezeBalance, "v1", "unfreezeBalance", "energy");
+          Metrics.histogramObserve(STAKE_AGGREGATE, unfreezeBalance,
+              "v1", "unfreezeBalance", "energy");
           break;
         default:
           //this should never happen

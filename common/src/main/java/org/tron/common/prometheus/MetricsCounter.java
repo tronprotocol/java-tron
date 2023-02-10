@@ -1,5 +1,9 @@
 package org.tron.common.prometheus;
 
+import static org.tron.common.prometheus.MetricLabels.CONTRACT_TYPE;
+import static org.tron.common.prometheus.MetricLabels.RESOURCE_TYPE;
+import static org.tron.common.prometheus.MetricLabels.STAKE_VERSION;
+
 import io.prometheus.client.Counter;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,8 +20,10 @@ class MetricsCounter {
     init(MetricKeys.Counter.BLOCK_FORK, "tron  block fork info .", "type");
     init(MetricKeys.Counter.P2P_ERROR, "tron p2p error  info .", "type");
     init(MetricKeys.Counter.P2P_DISCONNECT, "tron p2p disconnect .", "type");
-    init(MetricKeys.Counter.INTERNAL_SERVICE_FAIL, "internal Service fail.",
-        "class", "method");
+    init(MetricKeys.Counter.INTERNAL_SERVICE_FAIL, "internal Service fail.", "class", "method");
+
+    init(MetricKeys.Counter.STAKE_INCREMENT, "stake increment info .",
+        STAKE_VERSION, CONTRACT_TYPE, RESOURCE_TYPE);
   }
 
   private MetricsCounter() {
