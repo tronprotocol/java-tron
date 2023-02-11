@@ -1,7 +1,10 @@
 package org.tron.core.actuator;
 
-import static org.tron.common.prometheus.MetricKeys.Counter.STAKE_INCREMENT;
-import static org.tron.common.prometheus.MetricKeys.Histogram.STAKE_AGGREGATE;
+import static org.tron.common.prometheus.MetricKeys.Histogram.STAKE_HISTOGRAM;
+import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_DELEGATE;
+import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_ENERGY;
+import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_NET;
+import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_VERSION_V2;
 import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_PERIOD;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
@@ -73,9 +76,8 @@ public class DelegateResourceActuator extends AbstractActuator {
 
         ownerCapsule.addDelegatedFrozenV2BalanceForBandwidth(delegateBalance);
         ownerCapsule.addFrozenBalanceForBandwidthV2(-delegateBalance);
-        Metrics.counterInc(STAKE_INCREMENT, delegateBalance, "v2", "delegateResource", "net");
-        Metrics.histogramObserve(STAKE_AGGREGATE, delegateBalance,
-            "v2", "delegateResource", "net");
+        Metrics.histogramObserve(STAKE_HISTOGRAM, delegateBalance,
+            STAKE_VERSION_V2, STAKE_DELEGATE, STAKE_NET);
         break;
       case ENERGY:
         delegateResource(ownerAddress, receiverAddress, false,
@@ -83,9 +85,8 @@ public class DelegateResourceActuator extends AbstractActuator {
 
         ownerCapsule.addDelegatedFrozenV2BalanceForEnergy(delegateBalance);
         ownerCapsule.addFrozenBalanceForEnergyV2(-delegateBalance);
-        Metrics.counterInc(STAKE_INCREMENT, delegateBalance, "v2", "delegateResource", "energy");
-        Metrics.histogramObserve(STAKE_AGGREGATE, delegateBalance,
-            "v2", "delegateResource", "energy");
+        Metrics.histogramObserve(STAKE_HISTOGRAM, delegateBalance,
+            STAKE_VERSION_V2, STAKE_DELEGATE, STAKE_ENERGY);
         break;
       default:
         logger.debug("Resource Code Error.");
@@ -190,7 +191,7 @@ public class DelegateResourceActuator extends AbstractActuator {
 
         if (ownerCapsule.getFrozenV2BalanceForEnergy() - remainEnergyUsage < delegateBalance) {
           throw new ContractValidateException(
-                  "delegateBalance must be less than available FreezeEnergyV2 balance");
+              "delegateBalance must be less than available FreezeEnergyV2 balance");
         }
       }
       break;

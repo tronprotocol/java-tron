@@ -1,8 +1,10 @@
 package org.tron.core.actuator;
 
-import static org.tron.common.prometheus.MetricKeys.Counter.STAKE_INCREMENT;
-import static org.tron.common.prometheus.MetricKeys.Gauge.TOTAL_RESOURCE_WEIGHT;
-import static org.tron.common.prometheus.MetricKeys.Histogram.STAKE_AGGREGATE;
+import static org.tron.common.prometheus.MetricKeys.Histogram.STAKE_HISTOGRAM;
+import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_ENERGY;
+import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_FREEZE;
+import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_NET;
+import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_VERSION_V1;
 import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
@@ -87,7 +89,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
         if (!ArrayUtils.isEmpty(receiverAddress)
             && dynamicStore.supportDR()) {
           increment = delegateResource(ownerAddress, receiverAddress, true,
-                  frozenBalance, expireTime);
+              frozenBalance, expireTime);
           accountCapsule.addDelegatedFrozenBalanceForBandwidth(frozenBalance);
         } else {
           long oldNetWeight = accountCapsule.getFrozenBalance() / TRX_PRECISION;
@@ -97,15 +99,15 @@ public class FreezeBalanceActuator extends AbstractActuator {
           long newNetWeight = accountCapsule.getFrozenBalance() / TRX_PRECISION;
           increment = newNetWeight - oldNetWeight;
         }
-        Metrics.counterInc(STAKE_INCREMENT, frozenBalance, "v1", "freezeBalance", "net");
-        Metrics.histogramObserve(STAKE_AGGREGATE, frozenBalance, "v1", "freezeBalance", "net");
+        Metrics.histogramObserve(STAKE_HISTOGRAM, frozenBalance,
+            STAKE_VERSION_V1, STAKE_FREEZE, STAKE_NET);
         addTotalWeight(BANDWIDTH, dynamicStore, frozenBalance, increment);
         break;
       case ENERGY:
         if (!ArrayUtils.isEmpty(receiverAddress)
             && dynamicStore.supportDR()) {
           increment = delegateResource(ownerAddress, receiverAddress, false,
-                  frozenBalance, expireTime);
+              frozenBalance, expireTime);
           accountCapsule.addDelegatedFrozenBalanceForEnergy(frozenBalance);
         } else {
           long oldEnergyWeight = accountCapsule.getEnergyFrozenBalance() / TRX_PRECISION;
@@ -115,8 +117,8 @@ public class FreezeBalanceActuator extends AbstractActuator {
           long newEnergyWeight = accountCapsule.getEnergyFrozenBalance() / TRX_PRECISION;
           increment = newEnergyWeight - oldEnergyWeight;
         }
-        Metrics.counterInc(STAKE_INCREMENT, frozenBalance, "v1", "freezeBalance", "energy");
-        Metrics.histogramObserve(STAKE_AGGREGATE, frozenBalance, "v1", "freezeBalance", "energy");
+        Metrics.histogramObserve(STAKE_HISTOGRAM, frozenBalance,
+            STAKE_VERSION_V1, STAKE_FREEZE, STAKE_ENERGY);
         addTotalWeight(ENERGY, dynamicStore, frozenBalance, increment);
         break;
       case TRON_POWER:
@@ -279,7 +281,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
     if (dynamicStore.supportUnfreezeDelay()) {
       throw new ContractValidateException(
-              "freeze v2 is open, old freeze is closed");
+          "freeze v2 is open, old freeze is closed");
     }
 
     return true;
@@ -296,7 +298,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
   }
 
   private long delegateResource(byte[] ownerAddress, byte[] receiverAddress, boolean isBandwidth,
-      long balance, long expireTime) {
+                                long balance, long expireTime) {
     AccountStore accountStore = chainBaseManager.getAccountStore();
     DynamicPropertiesStore dynamicPropertiesStore = chainBaseManager.getDynamicPropertiesStore();
     DelegatedResourceStore delegatedResourceStore = chainBaseManager.getDelegatedResourceStore();

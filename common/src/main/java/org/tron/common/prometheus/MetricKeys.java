@@ -17,7 +17,6 @@ public class MetricKeys {
     public static final String P2P_ERROR = "tron:p2p_error";
     public static final String P2P_DISCONNECT = "tron:p2p_disconnect";
     public static final String INTERNAL_SERVICE_FAIL = "tron:internal_service_fail";
-    public static final String STAKE_INCREMENT = "tron:stake_c";
 
     private Counter() {
       throw new IllegalStateException("Counter");
@@ -41,7 +40,6 @@ public class MetricKeys {
     public static final String CONTRACT_USAGE = "tron:contract_usage_g";
 
     public static final String TOTAL_RESOURCE_WEIGHT = "tron:total_resource_g";
-    public static final String VOTE_NUMBER = "tron:vote_number_g";
 
     private Gauge() {
       throw new IllegalStateException("Gauge");
@@ -71,8 +69,7 @@ public class MetricKeys {
     public static final String BLOCK_FETCH_LATENCY = "tron:block_fetch_latency_seconds";
     public static final String BLOCK_RECEIVE_DELAY = "tron:block_receive_delay_seconds";
 
-    public static final String RESOURCE_RECOVERY = "tron:resource_h";
-    public static final String STAKE_AGGREGATE = "tron:stake_h";
+    public static final String STAKE_HISTOGRAM = "tron:stake_h";
 
     private Histogram() {
       throw new IllegalStateException("Histogram");

@@ -1,7 +1,7 @@
 package org.tron.common.prometheus;
 
-import static org.tron.common.prometheus.MetricLabels.RESOURCE_TYPE;
-import static org.tron.common.prometheus.MetricLabels.STAKE_VERSION;
+import static org.tron.common.prometheus.MetricLabels.LABEL_RESOURCE_TYPE;
+import static org.tron.common.prometheus.MetricLabels.LABEL_STAKE_VERSION;
 
 import io.prometheus.client.Gauge;
 import java.util.Map;
@@ -28,9 +28,7 @@ class MetricsGauge {
     init(MetricKeys.Gauge.CONTRACT_USAGE, "tron contract energy usage.", "contract", "type");
 
     init(MetricKeys.Gauge.TOTAL_RESOURCE_WEIGHT, "tron stake total resource weight.",
-        STAKE_VERSION, RESOURCE_TYPE);
-    init(MetricKeys.Gauge.VOTE_NUMBER, "tron number of votes .", STAKE_VERSION);
-
+        LABEL_STAKE_VERSION, LABEL_RESOURCE_TYPE);
   }
 
   private MetricsGauge() {

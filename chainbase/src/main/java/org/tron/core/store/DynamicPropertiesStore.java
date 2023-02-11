@@ -1,6 +1,10 @@
 package org.tron.core.store;
 
 import static org.tron.common.prometheus.MetricKeys.Gauge.TOTAL_RESOURCE_WEIGHT;
+import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_ENERGY;
+import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_NET;
+import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_VERSION_V1;
+import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_VERSION_V2;
 
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
@@ -405,6 +409,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getTotalTronPowerWeight();
     } catch (IllegalArgumentException e) {
       this.saveTotalTronPowerWeight(0L);
+    }
+
+    try {
+      this.getTotalVoteWeight();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalVoteWeight(0L);
     }
 
     try {
@@ -1271,6 +1281,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found TOTAL_TRON_POWER_WEIGHT"));
+  }
+
+  public void saveTotalVoteWeight(long weight) {
+    this.put(DynamicResourceProperties.TOTAL_VOTE_WEIGHT,
+        new BytesCapsule(ByteArray.fromLong(weight)));
+  }
+
+  public long getTotalVoteWeight() {
+    return Optional.ofNullable(getUnchecked(DynamicResourceProperties.TOTAL_VOTE_WEIGHT))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_VOTE_WEIGHT"));
   }
 
   public void saveTotalNetLimit(long totalNetLimit) {
@@ -2224,8 +2247,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     if (allowNewReward()) {
       totalNetWeight = Math.max(0, totalNetWeight);
     }
-    String version = supportUnfreezeDelay() ? "v2" : "v1";
-    Metrics.gaugeSet(TOTAL_RESOURCE_WEIGHT, totalNetWeight, version, "net");
+    String version = supportUnfreezeDelay() ? STAKE_VERSION_V2 : STAKE_VERSION_V1;
+    Metrics.gaugeSet(TOTAL_RESOURCE_WEIGHT, totalNetWeight, version, STAKE_NET);
     saveTotalNetWeight(totalNetWeight);
   }
 
@@ -2236,8 +2259,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     if (allowNewReward()) {
       totalEnergyWeight = Math.max(0, totalEnergyWeight);
     }
-    String version = supportUnfreezeDelay() ? "v2" : "v1";
-    Metrics.gaugeSet(TOTAL_RESOURCE_WEIGHT, totalEnergyWeight, version, "energy");
+    String version = supportUnfreezeDelay() ? STAKE_VERSION_V2 : STAKE_VERSION_V1;
+    Metrics.gaugeSet(TOTAL_RESOURCE_WEIGHT, totalEnergyWeight, version, STAKE_ENERGY);
     saveTotalEnergyWeight(totalEnergyWeight);
   }
 
@@ -2250,6 +2273,16 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
     saveTotalTronPowerWeight(totalWeight);
   }
+
+  public void addTotalVoteWeight(long amount) {
+    long totalWeight = getTotalVoteWeight();
+    totalWeight += amount;
+    if (allowNewReward()) {
+      totalWeight = Math.max(0, totalWeight);
+    }
+    saveTotalVoteWeight(totalWeight);
+  }
+
 
   public void addTotalCreateAccountCost(long fee) {
     long newValue = getTotalCreateAccountCost() + fee;
@@ -2782,6 +2815,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     private static final byte[] TOTAL_ENERGY_AVERAGE_TIME = "TOTAL_ENERGY_AVERAGE_TIME".getBytes();
     private static final byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
     private static final byte[] TOTAL_TRON_POWER_WEIGHT = "TOTAL_TRON_POWER_WEIGHT".getBytes();
+    private static final byte[] TOTAL_VOTE_WEIGHT = "TOTAL_VOTE_WEIGHT".getBytes();
     private static final byte[] TOTAL_ENERGY_LIMIT = "TOTAL_ENERGY_LIMIT".getBytes();
     private static final byte[] BLOCK_ENERGY_USAGE = "BLOCK_ENERGY_USAGE".getBytes();
     private static final byte[] ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER =

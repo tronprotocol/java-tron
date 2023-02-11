@@ -1,8 +1,10 @@
 package org.tron.core.actuator;
 
-import static org.tron.common.prometheus.MetricKeys.Counter.STAKE_INCREMENT;
-import static org.tron.common.prometheus.MetricKeys.Gauge.TOTAL_RESOURCE_WEIGHT;
-import static org.tron.common.prometheus.MetricKeys.Histogram.STAKE_AGGREGATE;
+import static org.tron.common.prometheus.MetricKeys.Histogram.STAKE_HISTOGRAM;
+import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_ENERGY;
+import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_NET;
+import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_UNFREEZE;
+import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_VERSION_V1;
 import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
@@ -43,7 +45,7 @@ import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
 public class UnfreezeBalanceActuator extends AbstractActuator {
 
   private static final String INVALID_RESOURCE_CODE =
-          "ResourceCode error.valid ResourceCode[BANDWIDTH、Energy]";
+      "ResourceCode error.valid ResourceCode[BANDWIDTH、Energy]";
 
   public UnfreezeBalanceActuator() {
     super(ContractType.UnfreezeBalanceContract, UnfreezeBalanceContract.class);
@@ -103,17 +105,15 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           unfreezeBalance = delegatedResourceCapsule.getFrozenBalanceForBandwidth();
           delegatedResourceCapsule.setFrozenBalanceForBandwidth(0, 0);
           accountCapsule.addDelegatedFrozenBalanceForBandwidth(-unfreezeBalance);
-          Metrics.counterInc(STAKE_INCREMENT, unfreezeBalance, "v1", "unfreezeBalance", "net");
-          Metrics.histogramObserve(STAKE_AGGREGATE, unfreezeBalance,
-              "v1", "unfreezeBalance", "net");
+          Metrics.histogramObserve(STAKE_HISTOGRAM, unfreezeBalance,
+              STAKE_VERSION_V1, STAKE_UNFREEZE, STAKE_NET);
           break;
         case ENERGY:
           unfreezeBalance = delegatedResourceCapsule.getFrozenBalanceForEnergy();
           delegatedResourceCapsule.setFrozenBalanceForEnergy(0, 0);
           accountCapsule.addDelegatedFrozenBalanceForEnergy(-unfreezeBalance);
-          Metrics.counterInc(STAKE_INCREMENT, unfreezeBalance, "v1", "unfreezeBalance", "energy");
-          Metrics.histogramObserve(STAKE_AGGREGATE, unfreezeBalance,
-              "v1", "unfreezeBalance", "energy");
+          Metrics.histogramObserve(STAKE_HISTOGRAM, unfreezeBalance,
+              STAKE_VERSION_V1, STAKE_UNFREEZE, STAKE_ENERGY);
           break;
         default:
           //this should never happen
@@ -126,8 +126,8 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           (receiverCapsule != null && receiverCapsule.getType() != AccountType.Contract)) {
         switch (unfreezeBalanceContract.getResource()) {
           case BANDWIDTH:
-            long oldNetWeight = receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth() / 
-                    TRX_PRECISION;
+            long oldNetWeight = receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth() /
+                TRX_PRECISION;
             if (dynamicStore.getAllowTvmSolidity059() == 1
                 && receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
                 < unfreezeBalance) {
@@ -136,13 +136,13 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
             } else {
               receiverCapsule.addAcquiredDelegatedFrozenBalanceForBandwidth(-unfreezeBalance);
             }
-            long newNetWeight = receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth() / 
-                    TRX_PRECISION;
+            long newNetWeight = receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth() /
+                TRX_PRECISION;
             decrease = newNetWeight - oldNetWeight;
             break;
           case ENERGY:
-            long oldEnergyWeight = receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy() / 
-                    TRX_PRECISION;
+            long oldEnergyWeight = receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy() /
+                TRX_PRECISION;
             if (dynamicStore.getAllowTvmSolidity059() == 1
                 && receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy() < unfreezeBalance) {
               oldEnergyWeight = unfreezeBalance / TRX_PRECISION;
@@ -150,8 +150,8 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
             } else {
               receiverCapsule.addAcquiredDelegatedFrozenBalanceForEnergy(-unfreezeBalance);
             }
-            long newEnergyWeight = receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy() / 
-                    TRX_PRECISION;
+            long newEnergyWeight = receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy() /
+                TRX_PRECISION;
             decrease = newEnergyWeight - oldEnergyWeight;
             break;
           default:
@@ -249,7 +249,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       }
 
     }
-    
+
     long weight = dynamicStore.allowNewReward() ? decrease : -unfreezeBalance / TRX_PRECISION;
     switch (unfreezeBalanceContract.getResource()) {
       case BANDWIDTH:

@@ -1,9 +1,8 @@
 package org.tron.common.prometheus;
 
-import static org.tron.common.prometheus.MetricLabels.CONTRACT_TYPE;
-import static org.tron.common.prometheus.MetricLabels.RECOVERY_TYPE;
-import static org.tron.common.prometheus.MetricLabels.RESOURCE_TYPE;
-import static org.tron.common.prometheus.MetricLabels.STAKE_VERSION;
+import static org.tron.common.prometheus.MetricLabels.LABEL_CONTRACT_TYPE;
+import static org.tron.common.prometheus.MetricLabels.LABEL_RESOURCE_TYPE;
+import static org.tron.common.prometheus.MetricLabels.LABEL_STAKE_VERSION;
 
 import io.prometheus.client.Histogram;
 import java.util.Map;
@@ -52,11 +51,8 @@ public class MetricsHistogram {
     init(MetricKeys.Histogram.BLOCK_RECEIVE_DELAY,
         "receive block delay time, receiveTime - blockTime.");
 
-    init(MetricKeys.Histogram.RESOURCE_RECOVERY, "resource recovery .",
-        RESOURCE_TYPE, RECOVERY_TYPE);
-
-    init(MetricKeys.Histogram.STAKE_AGGREGATE, "stake net aggregate.",
-        STAKE_VERSION, CONTRACT_TYPE, RESOURCE_TYPE);
+    init(MetricKeys.Histogram.STAKE_HISTOGRAM, "stake net aggregate.",
+        LABEL_STAKE_VERSION, LABEL_CONTRACT_TYPE, LABEL_RESOURCE_TYPE);
   }
 
   private MetricsHistogram() {

@@ -43,7 +43,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static org.tron.common.prometheus.MetricKeys.Histogram.RESOURCE_RECOVERY;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.ChainConstant.WINDOW_SIZE_MS;
 import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
@@ -1059,7 +1058,6 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   public void setNetUsage(long netUsage) {
     this.account = this.account.toBuilder()
         .setNetUsage(netUsage).build();
-    Metrics.histogramObserve(RESOURCE_RECOVERY, netUsage, "net", "usage");
   }
 
   public AccountResource getAccountResource() {
@@ -1157,7 +1155,6 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .setAccountResource(
             this.account.getAccountResource().toBuilder().setEnergyUsage(energyUsage).build())
         .build();
-    Metrics.histogramObserve(RESOURCE_RECOVERY, energyUsage, "energy", "usage");
   }
 
   public long getAllFrozenBalanceForEnergy() {
@@ -1369,8 +1366,6 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       this.account = this.account.toBuilder().setAccountResource(this.account.getAccountResource()
               .toBuilder().setEnergyWindowSize(newWindowSize).build()).build();
     }
-    String resource = BANDWIDTH == resourceCode ? "net" : "energy";
-    Metrics.histogramObserve(RESOURCE_RECOVERY, newWindowSize, resource, "window");
   }
 
   public long getWindowSize(ResourceCode resourceCode) {

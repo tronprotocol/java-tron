@@ -1,5 +1,9 @@
 package org.tron.core.actuator;
 
+import static org.tron.common.prometheus.MetricKeys.Histogram.STAKE_HISTOGRAM;
+import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_NET;
+import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_VERSION_V2;
+import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_WITHDRAW;
 import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
 import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 
@@ -10,6 +14,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
@@ -61,6 +66,8 @@ public class WithdrawExpireUnfreezeActuator extends AbstractActuator {
     accountCapsule.addAllUnfrozenV2(newUnFreezeList);
     accountStore.put(accountCapsule.createDbKey(), accountCapsule);
     ret.setWithdrawExpireAmount(totalWithdrawUnfreeze);
+    Metrics.histogramObserve(STAKE_HISTOGRAM, totalWithdrawUnfreeze,
+        STAKE_VERSION_V2, STAKE_WITHDRAW, STAKE_NET);
     ret.setStatus(fee, code.SUCESS);
     return true;
   }

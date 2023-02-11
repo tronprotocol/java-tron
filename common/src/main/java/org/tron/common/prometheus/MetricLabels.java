@@ -18,10 +18,9 @@ public class MetricLabels {
   /**
    * label keys
    */
-  public static final String STAKE_VERSION = "version";
-  public static final String RESOURCE_TYPE = "resource";
-  public static final String CONTRACT_TYPE = "contract";
-  public static final String RECOVERY_TYPE = "recovery";
+  public static final String LABEL_STAKE_VERSION = "version";
+  public static final String LABEL_RESOURCE_TYPE = "resource";
+  public static final String LABEL_CONTRACT_TYPE = "contract";
 
   private MetricLabels() {
     throw new IllegalStateException("MetricsLabels");
@@ -81,6 +80,17 @@ public class MetricLabels {
   public static class Histogram {
     public static final String TRAFFIC_IN = "in";
     public static final String TRAFFIC_OUT = "out";
+    public static final String STAKE_VERSION_V1 = "v1";
+    public static final String STAKE_VERSION_V2 = "v2";
+    public static final String STAKE_FREEZE = "freeze";
+    public static final String STAKE_UNFREEZE = "unfreeze";
+    public static final String STAKE_DELEGATE = "delegate";
+    public static final String STAKE_UNDELEGATE = "undelegate";
+    public static final String STAKE_WITHDRAW = "withdraw";
+    public static final String STAKE_NET = "net";
+    public static final String STAKE_ENERGY = "energy";
+    public static final String STAKE_POWER = "power";
+
 
     private Histogram() {
       throw new IllegalStateException("Histogram");

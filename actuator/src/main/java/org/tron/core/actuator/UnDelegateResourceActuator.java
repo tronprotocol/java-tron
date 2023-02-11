@@ -1,7 +1,10 @@
 package org.tron.core.actuator;
 
-import static org.tron.common.prometheus.MetricKeys.Counter.STAKE_INCREMENT;
-import static org.tron.common.prometheus.MetricKeys.Histogram.STAKE_AGGREGATE;
+import static org.tron.common.prometheus.MetricKeys.Histogram.STAKE_HISTOGRAM;
+import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_ENERGY;
+import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_NET;
+import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_UNDELEGATE;
+import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_VERSION_V2;
 import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
@@ -94,10 +97,8 @@ public class UnDelegateResourceActuator extends AbstractActuator {
           long newNetUsage = receiverCapsule.getNetUsage() - transferUsage;
           receiverCapsule.setNetUsage(newNetUsage);
           receiverCapsule.setLatestConsumeTime(now);
-          Metrics.counterInc(STAKE_INCREMENT, unDelegateBalance,
-              "v2", "unDelegateResource", "net");
-          Metrics.histogramObserve(STAKE_AGGREGATE, unDelegateBalance,
-              "v2", "unDelegateResource", "net");
+          Metrics.histogramObserve(STAKE_HISTOGRAM, unDelegateBalance,
+              STAKE_VERSION_V2, STAKE_UNDELEGATE, STAKE_NET);
           break;
         case ENERGY:
           EnergyProcessor energyProcessor = new EnergyProcessor(dynamicStore, accountStore);
@@ -121,10 +122,8 @@ public class UnDelegateResourceActuator extends AbstractActuator {
           long newEnergyUsage = receiverCapsule.getEnergyUsage() - transferUsage;
           receiverCapsule.setEnergyUsage(newEnergyUsage);
           receiverCapsule.setLatestConsumeTimeForEnergy(now);
-          Metrics.counterInc(STAKE_INCREMENT, unDelegateBalance,
-              "v2", "unDelegateResource", "energy");
-          Metrics.histogramObserve(STAKE_AGGREGATE, unDelegateBalance,
-              "v2", "unDelegateResource", "energy");
+          Metrics.histogramObserve(STAKE_HISTOGRAM, unDelegateBalance,
+              STAKE_VERSION_V2, STAKE_UNDELEGATE, STAKE_ENERGY);
           break;
         default:
           //this should never happen

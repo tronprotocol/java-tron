@@ -1,8 +1,11 @@
 package org.tron.core.actuator;
 
-import static org.tron.common.prometheus.MetricKeys.Counter.STAKE_INCREMENT;
-import static org.tron.common.prometheus.MetricKeys.Gauge.TOTAL_RESOURCE_WEIGHT;
-import static org.tron.common.prometheus.MetricKeys.Histogram.STAKE_AGGREGATE;
+import static org.tron.common.prometheus.MetricKeys.Histogram.STAKE_HISTOGRAM;
+import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_ENERGY;
+import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_FREEZE;
+import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_NET;
+import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_POWER;
+import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_VERSION_V2;
 import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
@@ -65,24 +68,24 @@ public class FreezeBalanceV2Actuator extends AbstractActuator {
         accountCapsule.addFrozenBalanceForBandwidthV2(frozenBalance);
         long newNetWeight = accountCapsule.getFrozenV2BalanceWithDelegated(BANDWIDTH) / TRX_PRECISION;
         dynamicStore.addTotalNetWeight(newNetWeight - oldNetWeight);
-        Metrics.counterInc(STAKE_INCREMENT, frozenBalance, "v2", "freezeBalance", "net");
-        Metrics.histogramObserve(STAKE_AGGREGATE, frozenBalance,
-            "v2", "freezeBalance", "net");
+        Metrics.histogramObserve(STAKE_HISTOGRAM, frozenBalance,
+            STAKE_VERSION_V2, STAKE_FREEZE, STAKE_NET);
         break;
       case ENERGY:
         long oldEnergyWeight = accountCapsule.getFrozenV2BalanceWithDelegated(ENERGY) / TRX_PRECISION;
         accountCapsule.addFrozenBalanceForEnergyV2(frozenBalance);
         long newEnergyWeight = accountCapsule.getFrozenV2BalanceWithDelegated(ENERGY) / TRX_PRECISION;
         dynamicStore.addTotalEnergyWeight(newEnergyWeight - oldEnergyWeight);
-        Metrics.counterInc(STAKE_INCREMENT, frozenBalance, "v2", "freezeBalance", "energy");
-        Metrics.histogramObserve(STAKE_AGGREGATE, frozenBalance,
-            "v2", "freezeBalance", "energy");
+        Metrics.histogramObserve(STAKE_HISTOGRAM, frozenBalance,
+            STAKE_VERSION_V2, STAKE_FREEZE, STAKE_ENERGY);
         break;
       case TRON_POWER:
         long oldTPWeight = accountCapsule.getTronPowerFrozenV2Balance() / TRX_PRECISION;
         accountCapsule.addFrozenForTronPowerV2(frozenBalance);
         long newTPWeight = accountCapsule.getTronPowerFrozenV2Balance() / TRX_PRECISION;
         dynamicStore.addTotalTronPowerWeight(newTPWeight - oldTPWeight);
+        Metrics.histogramObserve(STAKE_HISTOGRAM, frozenBalance,
+            STAKE_VERSION_V2, STAKE_FREEZE, STAKE_POWER);
         break;
       default:
         logger.debug("Resource Code Error.");
