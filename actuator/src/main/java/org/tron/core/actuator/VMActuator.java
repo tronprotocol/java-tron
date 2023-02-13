@@ -130,7 +130,7 @@ public class VMActuator implements Actuator2 {
       ConfigLoader.load(context.getStoreFactory());
     } else {
       ConfigLoader.load(context.getStoreFactory(),
-          context.getBlockCap().getStateRoot());
+          context.getBlockCap().getArchiveRoot());
     }
     // Warm up registry class
     OperationRegistry.init();
@@ -154,7 +154,7 @@ public class VMActuator implements Actuator2 {
     } else {
       // todo: review
       rootRepository = RepositoryStateImpl.createRoot(context.getStoreFactory(),
-          context.getBlockCap().getStateRoot());
+          context.getBlockCap().getArchiveRoot());
     }
 
     enableEventListener = context.isEventPluginLoaded();

@@ -1,8 +1,10 @@
 package org.tron.core.state;
 
 import io.prometheus.client.Histogram;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tuweni.bytes.Bytes32;
@@ -27,31 +29,34 @@ public class WorldStateCallBack extends WorldStateCallBackUtils {
   private ChainBaseManager chainBaseManager;
 
   private final LinkedBlockingQueue<TrieEntry> queue = new LinkedBlockingQueue<>();
-  private boolean updateServiceRunning;
+  private ExecutorService executorService = Executors.newSingleThreadExecutor();
 
   private final Runnable updateService =
       () -> {
-        while (updateServiceRunning) {
-          try {
-            TrieEntry trieEntry  = queue.poll(10, TimeUnit.MILLISECONDS);
-            if (trieEntry != null) {
-              try {
-                trie.put(trieEntry.getKey(), trieEntry.getData());
-              } catch (MerkleTrieException e) {
-                logger.error(
-                        "put trie entry failed, key: {}, value: {}, err: {}",
-                        StringUtil.createReadableString(trieEntry.getKey().toArray()),
-                        StringUtil.createReadableString(trieEntry.getData().toArrayUnsafe()),
-                        e.getMessage());
-                System.exit(-1);
-              }
-
+        while (true) {
+          TrieEntry trieEntry;
+          trieEntry = queue.peek();
+          if (trieEntry == null) {
+            try {
+              Thread.sleep(5);
+              continue;
+            } catch (InterruptedException e) {
+              logger.error("state update failed, get trie entry failed, err: {}", e.getMessage());
+              System.exit(-1);
             }
-          } catch (InterruptedException e) {
-            logger.error("state update failed, get trie entry failed, err: {}", e.getMessage());
-            System.exit(-1);
           }
 
+          try {
+            trie.put(trieEntry.getKey(), trieEntry.getData());
+          } catch (MerkleTrieException e) {
+            logger.error(
+                    "put trie entry failed, key: {}, value: {}, err: {}",
+                    StringUtil.createReadableString(trieEntry.getKey().toArray()),
+                    StringUtil.createReadableString(trieEntry.getData().toArrayUnsafe()),
+                    e.getMessage());
+            System.exit(-1);
+          }
+          queue.poll();
         }
       };
 
@@ -59,8 +64,7 @@ public class WorldStateCallBack extends WorldStateCallBackUtils {
     this.execute = true;
     this.allowGenerateRoot = CommonParameter.getInstance().getStorage().isAllowStateRoot();
     if (this.allowGenerateRoot) {
-      this.updateServiceRunning = true;
-      new Thread(updateService).start();
+      executorService.submit(updateService);
     }
   }
 
@@ -82,7 +86,7 @@ public class WorldStateCallBack extends WorldStateCallBackUtils {
     try {
       BlockCapsule parentBlockCapsule =
           chainBaseManager.getBlockById(blockCapsule.getParentBlockId());
-      Bytes32 rootHash = parentBlockCapsule.getStateRoot();
+      Bytes32 rootHash = parentBlockCapsule.getArchiveRoot();
       trie = new TrieImpl2(worldStateTrieStore, rootHash);
     } catch (Exception e) {
       throw new MerkleTrieException(e.getMessage());
@@ -102,7 +106,7 @@ public class WorldStateCallBack extends WorldStateCallBackUtils {
       trieEntryList.clear();
       while (queue.size() != 0) {
         try {
-          Thread.sleep(5);
+          Thread.sleep(10);
         } catch (InterruptedException e) {
           logger.error("Fatal error, {}", e.getMessage());
         }
@@ -114,7 +118,7 @@ public class WorldStateCallBack extends WorldStateCallBackUtils {
         logger.error("executePushFinish failed, trie root hash is null");
         System.exit(-1);
       }
-      blockCapsule.setStateRoot(newRoot.toArray());
+      blockCapsule.setArchiveRoot(newRoot.toArray());
       execute = false;
     } finally {
       Metrics.histogramObserve(timer);
@@ -138,7 +142,7 @@ public class WorldStateCallBack extends WorldStateCallBackUtils {
       logger.error("initGenesis failed, trie root hash is null");
       System.exit(-1);
     }
-    blockCapsule.setStateRoot(newRoot.toArray());
+    blockCapsule.setArchiveRoot(newRoot.toArray());
     execute = false;
   }
 
@@ -164,7 +168,7 @@ public class WorldStateCallBack extends WorldStateCallBackUtils {
   }
 
   public void stopUpdateService() {
-    updateServiceRunning = false;
+    executorService.shutdown();
   }
 
 }
