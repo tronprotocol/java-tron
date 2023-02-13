@@ -2082,7 +2082,8 @@ public class Manager {
     List<TransactionCapsule> transactionCapsuleList = newBlock.getTransactions();
 
     // need to set eth compatible data from transactionInfoList
-    if (EventPluginLoader.getInstance().isTransactionLogTriggerEthCompatible()) {
+    if (EventPluginLoader.getInstance().isTransactionLogTriggerEthCompatible()
+          && newBlock.getNum() != 0) {
       TransactionInfoList transactionInfoList = TransactionInfoList.newBuilder().build();
       TransactionInfoList.Builder transactionInfoListBuilder = TransactionInfoList.newBuilder();
 
@@ -2119,7 +2120,8 @@ public class Manager {
           cumulativeLogCount += transactionInfo.getLogCount();
         }
       } else {
-        logger.error("PostBlockTrigger blockNum = {} has no transactions or {}.", newBlock.getNum(),
+        logger.error("PostBlockTrigger blockNum = {} has no transactions or {}.",
+            newBlock.getNum(),
             "the sizes of transactionInfoList and transactionCapsuleList are not equal");
         for (TransactionCapsule e : newBlock.getTransactions()) {
           postTransactionTrigger(e, newBlock);
