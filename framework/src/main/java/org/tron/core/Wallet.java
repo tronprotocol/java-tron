@@ -2635,10 +2635,11 @@ public class Wallet {
     NodeList.Builder nodeListBuilder = NodeList.newBuilder();
     TronNetService.getP2pService().getConnectableNodes().forEach(node -> {
       nodeListBuilder.addNodes(Node.newBuilder().setAddress(
-              Address.newBuilder()
-                      .setHost(ByteString
-                              .copyFrom(ByteArray.fromString(node.getHost())))
-                      .setPort(node.getPort())));
+          Address.newBuilder()
+              .setHost(ByteString
+                  .copyFrom(ByteArray.fromString(
+                      node.getPreferInetSocketAddress().getAddress().getHostAddress())))
+              .setPort(node.getPort())));
     });
     return nodeListBuilder.build();
   }

@@ -4,6 +4,7 @@ import io.netty.util.internal.StringUtil;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -139,6 +140,7 @@ public class TronNetService {
     config.setActiveNodes(parameter.getActiveNodes());
     config.setTrustNodes(parameter.getPassiveNodes());
     config.getActiveNodes().forEach(n -> config.getTrustNodes().add(n.getAddress()));
+    parameter.getFastForwardNodes().forEach(f -> config.getTrustNodes().add(f.getAddress()));
     int maxConnections = parameter.getMaxConnections();
     int minConnections = parameter.getMinConnections();
     int minActiveConnections = parameter.getMinActiveConnections();
@@ -154,11 +156,15 @@ public class TronNetService {
 
     config.setMaxConnectionsWithSameIp(parameter.getMaxConnectionsWithSameIp());
     config.setPort(parameter.getNodeListenPort());
-    config.setVersion(parameter.getNodeP2pVersion());
+    config.setNetworkId(parameter.getNodeP2pVersion());
     config.setDisconnectionPolicyEnable(parameter.isOpenFullTcpDisconnect());
     config.setDiscoverEnable(parameter.isNodeDiscoveryEnable());
     if (StringUtil.isNullOrEmpty(config.getIp())) {
       config.setIp(parameter.getNodeExternalIp());
+    }
+    config.setTreeUrls(parameter.getDnsTreeUrls());
+    if (Objects.nonNull(parameter.getDnsPublishConfig())) {
+      config.setPublishConfig(parameter.getDnsPublishConfig());
     }
     return config;
   }

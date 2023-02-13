@@ -59,7 +59,7 @@ public class KeepAliveService {
     if (message.getType().equals(MessageTypes.P2P_PING)) {
       peer.sendMessage(new PongMessage());
     } else {
-      peer.getChannel().updateLatency(System.currentTimeMillis() - peer.getChannel().pingSent);
+      peer.getChannel().updateAvgLatency(System.currentTimeMillis() - peer.getChannel().pingSent);
       peer.getChannel().waitForPong = false;
     }
   }

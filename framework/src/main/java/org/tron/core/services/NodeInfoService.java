@@ -140,7 +140,7 @@ public class NodeInfoService {
       PeerInfo peerInfo = new PeerInfo();
       peerInfo.setHeadBlockWeBothHave(peerConnection.getBlockBothHave().getString());
       peerInfo.setActive(peerConnection.getChannel().isActive());
-      peerInfo.setAvgLatency(peerConnection.getChannel().getLatency());
+      peerInfo.setAvgLatency(peerConnection.getChannel().getAvgLatency());
       peerInfo.setBlockInPorcSize(peerConnection.getSyncBlockInProcess().size());
       peerInfo.setConnectTime(channel.getStartTime());
       peerInfo.setDisconnectTimes(nodeStatistics.getDisconnectTimes());

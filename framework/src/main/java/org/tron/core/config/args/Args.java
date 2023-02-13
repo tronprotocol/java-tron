@@ -76,7 +76,11 @@ import org.tron.core.exception.CipherException;
 import org.tron.core.store.AccountStore;
 import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
+import org.tron.p2p.dns.update.DnsType;
+import org.tron.p2p.dns.update.PublishConfig;
 import org.tron.program.Version;
+
+import software.amazon.awssdk.regions.Region;
 
 @Slf4j(topic = "app")
 @NoArgsConstructor
@@ -142,6 +146,8 @@ public class Args extends CommonParameter {
     PARAMETER.nodeDiscoveryPingTimeout = 15000;
     PARAMETER.nodeP2pPingInterval = 0L;
     PARAMETER.nodeP2pVersion = 0;
+    PARAMETER.dnsTreeUrls = new ArrayList<>();
+    PARAMETER.dnsPublishConfig = null;
     PARAMETER.rpcPort = 0;
     PARAMETER.rpcOnSolidityPort = 0;
     PARAMETER.rpcOnPBFTPort = 0;
@@ -636,6 +642,11 @@ public class Args extends CommonParameter {
     PARAMETER.nodeP2pVersion =
         config.hasPath(Constant.NODE_P2P_VERSION)
             ? config.getInt(Constant.NODE_P2P_VERSION) : 0;
+
+    PARAMETER.dnsTreeUrls = config.hasPath(Constant.NODE_DNS_TREE_URLS) ? config.getStringList(
+        Constant.NODE_DNS_TREE_URLS) : new ArrayList<>();
+
+    PARAMETER.dnsPublishConfig = loadDnsPublishConfig(config);
 
     PARAMETER.rpcPort =
         config.hasPath(Constant.NODE_RPC_PORT)
@@ -1272,6 +1283,82 @@ public class Args extends CommonParameter {
     }
 
     return eventPluginConfig;
+  }
+
+  public static PublishConfig loadDnsPublishConfig(final com.typesafe.config.Config config) {
+    PublishConfig publishConfig = new PublishConfig();
+    if (config.hasPath(Constant.NODE_DNS_PUBLISH)) {
+      publishConfig.setDnsPublishEnable(config.getBoolean(Constant.NODE_DNS_PUBLISH));
+    }
+
+    if (publishConfig.isDnsPublishEnable()) {
+      if (config.hasPath(Constant.NODE_DNS_DOMAIN)) {
+        publishConfig.setDnsDomain(config.getString(Constant.NODE_DNS_DOMAIN));
+      } else {
+        logger.error("Check {}, must not be null", Constant.NODE_DNS_DOMAIN);
+        return null;
+      }
+
+      if (config.hasPath(Constant.NODE_DNS_PRIVATE)) {
+        publishConfig.setDnsPrivate(config.getString(Constant.NODE_DNS_PRIVATE));
+      } else {
+        logger.error("Check {}, must not be null", Constant.NODE_DNS_PRIVATE);
+        return null;
+      }
+
+      if (config.hasPath(Constant.NODE_DNS_KNOWN_URLS)) {
+        publishConfig.setKnownTreeUrls(config.getStringList(Constant.NODE_DNS_KNOWN_URLS));
+      }
+
+      if (config.hasPath(Constant.NODE_DNS_SERVER_TYPE)) {
+        String serverType = config.getString(Constant.NODE_DNS_SERVER_TYPE);
+        if (!serverType.equalsIgnoreCase("aws") && !serverType.equalsIgnoreCase("aliyun")) {
+          logger.error("Check {}, must be aws or aliyun", Constant.NODE_DNS_SERVER_TYPE);
+          return null;
+        }
+        if (serverType.equalsIgnoreCase("aws")) {
+          publishConfig.setDnsType(DnsType.AwsRoute53);
+        } else {
+          publishConfig.setDnsType(DnsType.AliYun);
+        }
+      } else {
+        logger.error("Check {}, must not be null", Constant.NODE_DNS_SERVER_TYPE);
+        return null;
+      }
+
+      if (config.hasPath(Constant.NODE_DNS_ACCESS_KEY_ID)) {
+        publishConfig.setAccessKeyId(config.getString(Constant.NODE_DNS_ACCESS_KEY_ID));
+      } else {
+        logger.error("Check {}, must not be null", Constant.NODE_DNS_ACCESS_KEY_ID);
+        return null;
+      }
+      if (config.hasPath(Constant.NODE_DNS_ACCESS_KEY_SECRET)) {
+        publishConfig.setAccessKeySecret(config.getString(Constant.NODE_DNS_ACCESS_KEY_SECRET));
+      } else {
+        logger.error("Check {}, must not be null", Constant.NODE_DNS_ACCESS_KEY_SECRET);
+        return null;
+      }
+
+      if (publishConfig.getDnsType() == DnsType.AwsRoute53) {
+        if (!config.hasPath(Constant.NODE_DNS_AWS_REGION)) {
+          logger.error("Check {}, must not be null", Constant.NODE_DNS_AWS_REGION);
+          return null;
+        } else {
+          publishConfig.setAwsRegion(Region.of(config.getString(Constant.NODE_DNS_AWS_REGION)));
+        }
+        if (config.hasPath(Constant.NODE_DNS_AWS_HOST_ZONE_ID)) {
+          publishConfig.setAwsHostZoneId(config.getString(Constant.NODE_DNS_AWS_HOST_ZONE_ID));
+        }
+      } else {
+        if (!config.hasPath(Constant.NODE_DNS_ALIYUN_ENDPOINT)) {
+          logger.error("Check {}, must not be null", Constant.NODE_DNS_ALIYUN_ENDPOINT);
+          return null;
+        } else {
+          publishConfig.setAliDnsEndpoint(config.getString(Constant.NODE_DNS_ALIYUN_ENDPOINT));
+        }
+      }
+    }
+    return publishConfig;
   }
 
   private static TriggerConfig createTriggerConfig(ConfigObject triggerObject) {
