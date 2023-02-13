@@ -511,8 +511,11 @@ public class Manager {
 
     long headNum = chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     logger.info("Current headNum is: {}.", headNum);
-    int nodeType = chainBaseManager.getCommonStore().getNodeType();
-    logger.info("Node type is: {}.", Constant.NODE_TYPE_LIGHT_NODE == nodeType ? "lite" : "full");
+    boolean isLite = chainBaseManager.isLiteNode();
+    logger.info("Node type is: {}.", isLite ? "lite" : "full");
+    if (isLite) {
+      logger.info("Lite node lowestNum: {}", chainBaseManager.getLowestBlockNum());
+    }
     revokingStore.enable();
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
