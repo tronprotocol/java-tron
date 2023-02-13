@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.tron.common.utils.ByteArray;
@@ -59,6 +60,9 @@ import static org.tron.protos.contract.Common.ResourceCode;
 public class AccountCapsule implements ProtoCapsule<Account>, Comparable<AccountCapsule> {
 
   private Account account;
+
+  @Getter
+  @Setter
   private boolean flag = false;
 
   @Getter

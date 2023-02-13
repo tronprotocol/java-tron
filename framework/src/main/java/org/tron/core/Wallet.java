@@ -4560,7 +4560,7 @@ public class Wallet {
     }
 
     try {
-      return chainBaseManager.getBlockByNum(blockNumber).getStateRoot();
+      return chainBaseManager.getBlockByNum(blockNumber).getArchiveRoot();
     } catch (ItemNotFoundException | BadItemException e) {
       throw new IllegalArgumentException("block not found, block number: " + blockNumber);
     }

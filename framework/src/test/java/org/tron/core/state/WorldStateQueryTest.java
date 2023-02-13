@@ -93,7 +93,7 @@ public class WorldStateQueryTest {
     Thread.sleep(3000);
     blockCapsules = chainBaseManager.getBlockStore().getBlockByLatestNum(1);
     blockCapsule = blockCapsules.get(0);
-    Bytes32 rootHash = blockCapsule.getStateRoot();
+    Bytes32 rootHash = blockCapsule.getArchiveRoot();
     WorldStateQueryInstance worldStateQueryInstance = new WorldStateQueryInstance(rootHash, chainBaseManager);
     checkAccount(worldStateQueryInstance);
 
@@ -106,7 +106,7 @@ public class WorldStateQueryTest {
 
     blockCapsules = chainBaseManager.getBlockStore().getBlockByLatestNum(1);
     blockCapsule = blockCapsules.get(0);
-    rootHash = blockCapsule.getStateRoot();
+    rootHash = blockCapsule.getArchiveRoot();
     worldStateQueryInstance = new WorldStateQueryInstance(rootHash, chainBaseManager);
     checkAccount(worldStateQueryInstance);
   }
@@ -124,7 +124,7 @@ public class WorldStateQueryTest {
     Thread.sleep(3000);
     blockCapsules = chainBaseManager.getBlockStore().getBlockByLatestNum(1);
     blockCapsule = blockCapsules.get(0);
-    Bytes32 rootHash = blockCapsule.getStateRoot();
+    Bytes32 rootHash = blockCapsule.getArchiveRoot();
     WorldStateQueryInstance worldStateQueryInstance = new WorldStateQueryInstance(rootHash, chainBaseManager);
     Assert.assertArrayEquals(chainBaseManager.getContractStore().get(contractAddress).getData(),
         worldStateQueryInstance.getContract(contractAddress).getData());
@@ -139,7 +139,7 @@ public class WorldStateQueryTest {
 
     blockCapsules = chainBaseManager.getBlockStore().getBlockByLatestNum(1);
     blockCapsule = blockCapsules.get(0);
-    rootHash = blockCapsule.getStateRoot();
+    rootHash = blockCapsule.getArchiveRoot();
     worldStateQueryInstance = new WorldStateQueryInstance(rootHash, chainBaseManager);
     ContractCapsule contractCapsule = worldStateQueryInstance.getContract(contractAddress);
 

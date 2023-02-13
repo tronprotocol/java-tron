@@ -514,7 +514,7 @@ message BlockHeader {
   }
   raw raw_data = 1;
   bytes witness_signature = 2;
-  bytes state_root = 3;
+  bytes archive_root = 3;
 }
 
 // block

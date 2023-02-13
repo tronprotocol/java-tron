@@ -1,7 +1,11 @@
 package org.tron.core.state;
 
-import java.util.Arrays;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+
+import com.google.common.collect.Maps;
+import com.google.common.primitives.Longs;
 import lombok.Getter;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -54,7 +58,31 @@ public class WorldStateQueryInstance {
 
   public AccountCapsule getAccount(byte[] address) {
     byte[] value = get(StateType.Account, address);
-    return Objects.nonNull(value) ? new AccountCapsule(value) : null;
+    AccountCapsule accountCapsule = null;
+    if (Objects.nonNull(value)) {
+      accountCapsule = new AccountCapsule(value);
+      accountCapsule.setFlag(true);
+    }
+    return accountCapsule;
+  }
+
+  public AccountCapsule getAccount(byte[] address, byte[] tokenId) {
+    long balance = Optional
+        .ofNullable(getAccountAsset(address, tokenId))
+        .orElse(0L);
+    AccountCapsule accountCapsule = getAccount(address);
+    if (Objects.nonNull(accountCapsule)) {
+      accountCapsule.setInstance(
+          accountCapsule.getInstance().toBuilder()
+              .putAssetV2(ByteArray.toStr(tokenId), balance).build());
+    }
+    return accountCapsule;
+  }
+
+  public Long getAccountAsset(byte[] address, byte[] tokenId) {
+    byte[] value = get(StateType.AccountAsset,
+        com.google.common.primitives.Bytes.concat(address, tokenId));
+    return Objects.nonNull(value) ? Longs.fromByteArray(value) : null;
   }
 
   // contract
