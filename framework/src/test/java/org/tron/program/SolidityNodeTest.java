@@ -21,7 +21,7 @@ public class SolidityNodeTest {
   private static TronApplicationContext context;
 
   private static RpcApiService rpcApiService;
-  private static String dbPath = "output_witness_test";
+  private static String dbPath = "output_sn_test";
 
   static {
     Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);

@@ -67,7 +67,7 @@ public class BandWidthRuntimeOutOfTimeWithCheckTest extends BaseTest {
   private static final String TriggerOwnerAddress = "TCSgeWapPJhCqgWRxXCKb6jJ5AgNWSGjPA";
 
   static {
-    dbPath = "output_BandWidthRuntimeOutOfTimeTest_test";
+    dbPath = "output_bandwidth_runtime_out_of_time_with_check_test";
     Args.setParam(
         new String[]{
             "--output-directory", dbPath,
