@@ -1351,8 +1351,8 @@ public class Args extends CommonParameter {
           PARAMETER.nodeDiscoveryBindIp = s.getLocalAddress().getHostAddress();
           logger.info("UDP local bound to: {}", PARAMETER.nodeDiscoveryBindIp);
         } catch (IOException e) {
-          logger.warn("Can't get bind IP. Fall back to 0.0.0.0: " + e);
-          PARAMETER.nodeDiscoveryBindIp = "0.0.0.0";
+          logger.warn("Can't get bind IP. Fall back to 127.0.0.1: " + e);
+          PARAMETER.nodeDiscoveryBindIp = "127.0.0.1";
         }
       }
     } else {
