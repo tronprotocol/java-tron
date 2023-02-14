@@ -108,6 +108,10 @@ public class ConsensusDelegate {
     return witnessStore.getAllWitnesses();
   }
 
+  public List<WitnessCapsule> getWitnessStandby() {
+    return witnessStore.getWitnessStandby();
+  }
+
   public List<WitnessCapsule> updateWitnessStandby(List<WitnessCapsule> all) {
     return witnessStore.updateWitnessStandby(all);
   }
