@@ -1,11 +1,11 @@
 package org.tron.core.actuator;
 
 import static org.tron.common.prometheus.MetricKeys.Histogram.STAKE_HISTOGRAM;
-import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_ENERGY;
-import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_NET;
-import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_POWER;
+import static org.tron.common.prometheus.MetricLabels.STAKE_ENERGY;
+import static org.tron.common.prometheus.MetricLabels.STAKE_NET;
+import static org.tron.common.prometheus.MetricLabels.STAKE_POWER;
 import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_UNFREEZE;
-import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_VERSION_V2;
+import static org.tron.common.prometheus.MetricLabels.STAKE_VERSION_V2;
 import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
 import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;

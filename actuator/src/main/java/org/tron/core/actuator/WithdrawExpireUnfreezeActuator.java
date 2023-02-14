@@ -1,8 +1,8 @@
 package org.tron.core.actuator;
 
 import static org.tron.common.prometheus.MetricKeys.Histogram.STAKE_HISTOGRAM;
-import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_NET;
-import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_VERSION_V2;
+import static org.tron.common.prometheus.MetricLabels.STAKE_NET;
+import static org.tron.common.prometheus.MetricLabels.STAKE_VERSION_V2;
 import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_WITHDRAW;
 import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
 import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;

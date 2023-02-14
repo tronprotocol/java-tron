@@ -1,9 +1,8 @@
 package org.tron.consensus.dpos;
 
 import static org.tron.common.prometheus.MetricKeys.Gauge.TOTAL_RESOURCE_WEIGHT;
-import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_NET;
-import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_VERSION_V1;
-import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_VERSION_V2;
+import static org.tron.common.prometheus.MetricLabels.STAKE_VERSION_V1;
+import static org.tron.common.prometheus.MetricLabels.STAKE_VOTE;
 import static org.tron.common.utils.WalletUtil.getAddressStringList;
 
 import com.google.common.collect.Maps;
@@ -184,12 +183,12 @@ public class MaintenanceManager {
         delegationStore.setWitnessVote(nextCycle, witness.createDbKey(), witness.getVoteCount());
       });
       consensusDelegate.updateWitnessStandby(all);
-      if (dynamicPropertiesStore.getTotalVoteWeight() == 0) {
-        long totalVote = consensusDelegate.getWitnessStandby().stream()
-            .mapToLong(WitnessCapsule::getVoteCount).sum();
-        dynamicPropertiesStore.saveTotalVoteWeight(totalVote);
-        Metrics.gaugeSet(TOTAL_RESOURCE_WEIGHT, totalVote, STAKE_VERSION_V1, STAKE_NET);
-      }
+
+
+      long totalVote = consensusDelegate.getWitnessStandby().stream()
+          .mapToLong(WitnessCapsule::getVoteCount).sum();
+      dynamicPropertiesStore.saveTotalVoteWeight(totalVote);
+      Metrics.gaugeSet(TOTAL_RESOURCE_WEIGHT, totalVote, STAKE_VERSION_V1, STAKE_VOTE);
     }
   }
 

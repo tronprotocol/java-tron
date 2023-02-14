@@ -1,10 +1,10 @@
 package org.tron.core.store;
 
 import static org.tron.common.prometheus.MetricKeys.Gauge.TOTAL_RESOURCE_WEIGHT;
-import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_ENERGY;
-import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_NET;
-import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_VERSION_V1;
-import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_VERSION_V2;
+import static org.tron.common.prometheus.MetricLabels.STAKE_ENERGY;
+import static org.tron.common.prometheus.MetricLabels.STAKE_NET;
+import static org.tron.common.prometheus.MetricLabels.STAKE_VERSION_V1;
+import static org.tron.common.prometheus.MetricLabels.STAKE_VERSION_V2;
 
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
