@@ -32,7 +32,6 @@ import org.tron.core.net.message.handshake.HelloMessage;
 import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.store.WitnessScheduleStore;
-import org.tron.p2p.P2pConfig;
 import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol;
 
@@ -171,8 +170,11 @@ public class RelayService {
   }
 
   private void connect() {
-    fastForwardNodes.forEach(address ->
-            TronNetService.getP2pConfig().getActiveNodes().add(address));
+    for (InetSocketAddress fastForwardNode : fastForwardNodes) {
+      if (!TronNetService.getP2pConfig().getActiveNodes().contains(fastForwardNode)) {
+        TronNetService.getP2pConfig().getActiveNodes().add(fastForwardNode);
+      }
+    }
   }
 
   private void disconnect() {
