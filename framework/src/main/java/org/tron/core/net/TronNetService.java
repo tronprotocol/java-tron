@@ -166,6 +166,8 @@ public class TronNetService {
     if (StringUtil.isNullOrEmpty(config.getIp()) && StringUtil.isNullOrEmpty(config.getIpv6())) {
       config.setIp(parameter.getNodeExternalIp());
     }
+    logger.debug("Local ipv4: {}", config.getIp());
+    logger.debug("Local ipv6: {}", config.getIpv6());
     config.setTreeUrls(parameter.getDnsTreeUrls());
     if (Objects.nonNull(parameter.getDnsPublishConfig())) {
       config.setPublishConfig(parameter.getDnsPublishConfig());
