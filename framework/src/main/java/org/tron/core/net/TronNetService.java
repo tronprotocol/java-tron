@@ -74,7 +74,7 @@ public class TronNetService {
   private static void setP2pConfig(P2pConfig config) {
     TronNetService.p2pConfig = config;
   }
-  
+
   public void start() {
     try {
       init = true;
@@ -136,7 +136,9 @@ public class TronNetService {
         seeds.add(inetSocketAddress);
       }
     }
-
+    for (InetSocketAddress inetSocketAddress : seeds) {
+      logger.debug("Seed InetSocketAddress: {}", inetSocketAddress);
+    }
     P2pConfig config = new P2pConfig();
     config.setSeedNodes(seeds);
     config.setActiveNodes(parameter.getActiveNodes());
