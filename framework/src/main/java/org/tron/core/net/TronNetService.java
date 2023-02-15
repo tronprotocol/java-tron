@@ -139,6 +139,7 @@ public class TronNetService {
     config.setActiveNodes(parameter.getActiveNodes());
     config.setTrustNodes(parameter.getPassiveNodes());
     config.getActiveNodes().forEach(n -> config.getTrustNodes().add(n.getAddress()));
+    parameter.getFastForwardNodes().forEach(f -> config.getTrustNodes().add(f.getAddress()));
     int maxConnections = parameter.getMaxConnections();
     int minConnections = parameter.getMinConnections();
     int minActiveConnections = parameter.getMinActiveConnections();
