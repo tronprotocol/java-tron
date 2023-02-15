@@ -26,16 +26,25 @@
       <maxHistory>7</maxHistory>
       <totalSizeCap>50GB</totalSizeCap>
     </rollingPolicy>
-    <encoder class="org.tron.common.log.layout.MultiLayoutPattern">
+    <encoder>
       <pattern>%d{HH:mm:ss.SSS} %-5level [%t] [%c{1}]\(%F:%L\) %m%n</pattern>
-      <rule>
-        <logger>LEVELDB</logger>
-        <pattern>%d{HH:mm:ss.SSS} %m%n</pattern>
-      </rule>
-      <rule>
-        <logger>ROCKSDB</logger>
-        <pattern>%d{HH:mm:ss.SSS} %m%n</pattern>
-      </rule>
+    </encoder>
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>TRACE</level>
+    </filter>
+  </appender>
+
+  <appender name="DB" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <File>./logs/db/db.log</File>
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <fileNamePattern>./logs/db/db-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+      <maxFileSize>500MB</maxFileSize>
+      <maxHistory>7</maxHistory>
+      <totalSizeCap>50GB</totalSizeCap>
+    </rollingPolicy>
+    <encoder charset="UTF-8">
+      <pattern>%d{HH:mm:ss.SSS} %m%n</pattern>
+      <charset>UTF-8</charset>
     </encoder>
     <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
       <level>TRACE</level>
@@ -77,8 +86,12 @@
   <logger level="INFO" name="DB"/>
   <logger level="INFO" name="capsule"/>
   <logger level="INFO" name="VM"/>
-  <logger level="INFO" name="LEVELDB"/>
-  <logger level="INFO" name="ROCKSDB"/>
+  <logger level="INFO" name="LEVELDB" additivity="false">
+    <appender-ref ref="DB"/>
+  </logger>
+  <logger level="INFO" name="ROCKSDB" additivity="false" >
+    <appender-ref ref="DB"/>
+  </logger>
   <logger level="INFO" name="tool" additivity="false">
     <appender-ref ref="CONSOLE"/>
   </logger>
