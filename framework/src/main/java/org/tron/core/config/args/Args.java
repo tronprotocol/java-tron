@@ -1186,21 +1186,24 @@ public class Args extends CommonParameter {
   }
 
   private static List<InetSocketAddress> getInetSocketAddress(
-          final com.typesafe.config.Config config, String path) {
+      final com.typesafe.config.Config config, String path) {
     List<InetSocketAddress> ret = new ArrayList<>();
     if (!config.hasPath(path)) {
       return ret;
     }
     List<String> list = config.getStringList(path);
     for (String configString : list) {
-      String[] sz = configString.split(":");
-      String ip = sz[0];
-      int port = Integer.parseInt(sz[1]);
+      InetSocketAddress inetSocketAddress = parseInetSocketAddress(configString);
+      if (inetSocketAddress == null) {
+        continue;
+      }
+      String ip = inetSocketAddress.getAddress().getHostAddress();
+      int port = inetSocketAddress.getPort();
       if (!(PARAMETER.nodeDiscoveryBindIp.equals(ip)
           || PARAMETER.nodeExternalIp.equals(ip)
           || Constant.LOCAL_HOST.equals(ip))
           || PARAMETER.nodeListenPort != port) {
-        ret.add(new InetSocketAddress(ip, port));
+        ret.add(inetSocketAddress);
       }
     }
     return ret;
@@ -1611,6 +1614,17 @@ public class Args extends CommonParameter {
       return this.outputDirectory + File.separator;
     }
     return this.outputDirectory;
+  }
+
+  public static InetSocketAddress parseInetSocketAddress(String para) {
+    InetSocketAddress address = null;
+    int index = para.lastIndexOf(":");
+    if (index > 0) {
+      String host = para.substring(0, index);
+      int port = Integer.parseInt(para.substring(index + 1));
+      address = new InetSocketAddress(host, port);
+    }
+    return address;
   }
 }
 

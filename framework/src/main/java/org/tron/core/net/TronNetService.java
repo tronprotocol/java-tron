@@ -131,8 +131,10 @@ public class TronNetService {
     List<InetSocketAddress> seeds = new ArrayList<>();
     seeds.addAll(nodePersistService.dbRead());
     for (String s : parameter.getSeedNode().getIpList()) {
-      String[] sz = s.split(":");
-      seeds.add(new InetSocketAddress(sz[0], Integer.parseInt(sz[1])));
+      InetSocketAddress inetSocketAddress = Args.parseInetSocketAddress(s);
+      if (inetSocketAddress != null) {
+        seeds.add(inetSocketAddress);
+      }
     }
 
     P2pConfig config = new P2pConfig();
