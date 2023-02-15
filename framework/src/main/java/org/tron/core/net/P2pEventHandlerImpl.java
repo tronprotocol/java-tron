@@ -221,8 +221,13 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
           code = Protocol.ReasonCode.UNKNOWN;
           break;
       }
-      logger.warn("Message from {} process failed, {} \n type: {}, detail: {}",
-              peer.getInetSocketAddress(), msg, type, ex.getMessage());
+      if (type.equals(P2pException.TypeEnum.BAD_MESSAGE)) {
+        logger.error("Message from {} process failed, {} \n type: {}",
+            peer.getInetSocketAddress(), msg, type, ex);
+      } else {
+        logger.warn("Message from {} process failed, {} \n type: {}, detail: {}",
+            peer.getInetSocketAddress(), msg, type, ex.getMessage());
+      }
     } else {
       code = Protocol.ReasonCode.UNKNOWN;
       logger.warn("Message from {} process failed, {}",
