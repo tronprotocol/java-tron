@@ -50,7 +50,7 @@ public class SyncService {
   private Map<BlockMessage, PeerConnection> blockJustReceived = new ConcurrentHashMap<>();
 
   private long blockCacheTimeout = Args.getInstance().getBlockCacheTimeout();
-  private Cache<BlockId, Long> requestBlockIds = CacheBuilder.newBuilder().maximumSize(10_000)
+  private Cache<BlockId, PeerConnection> requestBlockIds = CacheBuilder.newBuilder().maximumSize(10_000)
       .expireAfterWrite(blockCacheTimeout, TimeUnit.MINUTES).initialCapacity(10_000)
       .recordStats().build();
 
@@ -138,13 +138,16 @@ public class SyncService {
 
   public void onDisconnect(PeerConnection peer) {
     if (!peer.getSyncBlockRequested().isEmpty()) {
-      peer.getSyncBlockRequested().keySet().forEach(blockId -> invalid(blockId));
+      peer.getSyncBlockRequested().keySet().forEach(blockId -> invalid(blockId, peer));
     }
   }
 
-  private void invalid(BlockId blockId) {
-    requestBlockIds.invalidate(blockId);
-    fetchFlag = true;
+  private void invalid(BlockId blockId, PeerConnection peerConnection) {
+    PeerConnection p = requestBlockIds.getIfPresent(blockId);
+    if (peerConnection.equals(p)) {
+      requestBlockIds.invalidate(blockId);
+      fetchFlag = true;
+    }
   }
 
   private LinkedList<BlockId> getBlockChainSummary(PeerConnection peer) throws P2pException {
@@ -209,7 +212,7 @@ public class SyncService {
           }
           for (BlockId blockId : peer.getSyncBlockToFetch()) {
             if (requestBlockIds.getIfPresent(blockId) == null) {
-              requestBlockIds.put(blockId, System.currentTimeMillis());
+              requestBlockIds.put(blockId, peer);
               peer.getSyncBlockRequested().put(blockId, System.currentTimeMillis());
               send.get(peer).add(blockId);
               if (send.get(peer).size() >= MAX_BLOCK_FETCH_PER_PEER) {
@@ -243,7 +246,7 @@ public class SyncService {
         synchronized (tronNetDelegate.getBlockLock()) {
           if (peerConnection.isDisconnect()) {
             blockWaitToProcess.remove(msg);
-            invalid(msg.getBlockId());
+            invalid(msg.getBlockId(), peerConnection);
             return;
           }
           final boolean[] isFound = {false};
