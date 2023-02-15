@@ -50,7 +50,8 @@ public class SyncService {
   private Map<BlockMessage, PeerConnection> blockJustReceived = new ConcurrentHashMap<>();
 
   private long blockCacheTimeout = Args.getInstance().getBlockCacheTimeout();
-  private Cache<BlockId, PeerConnection> requestBlockIds = CacheBuilder.newBuilder().maximumSize(10_000)
+  private Cache<BlockId, PeerConnection> requestBlockIds = CacheBuilder.newBuilder()
+      .maximumSize(10_000)
       .expireAfterWrite(blockCacheTimeout, TimeUnit.MINUTES).initialCapacity(10_000)
       .recordStats().build();
 
