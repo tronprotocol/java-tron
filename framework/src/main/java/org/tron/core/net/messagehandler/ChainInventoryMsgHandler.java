@@ -80,14 +80,15 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
       } catch (NoSuchElementException e) {
         logger.warn("Process ChainInventoryMessage failed, peer {}, isDisconnect:{}",
                 peer.getInetAddress(), peer.isDisconnect());
+        peer.setFetchAble(true);
         return;
       }
     }
 
+    peer.setFetchAble(true);
     if ((chainInventoryMessage.getRemainNum() == 0 && !peer.getSyncBlockToFetch().isEmpty())
         || (chainInventoryMessage.getRemainNum() != 0
         && peer.getSyncBlockToFetch().size() > NetConstants.SYNC_FETCH_BATCH_NUM)) {
-      peer.setFetchAble(true);
       syncService.setFetchFlag(true);
     } else {
       syncService.syncNext(peer);
