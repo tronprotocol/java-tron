@@ -67,6 +67,10 @@ public class PeerConnection {
   @Setter
   private volatile boolean isRelayPeer;
 
+  @Setter
+  @Getter
+  private volatile boolean fetchAble;
+
   @Getter
   @Setter
   private ByteString address;
