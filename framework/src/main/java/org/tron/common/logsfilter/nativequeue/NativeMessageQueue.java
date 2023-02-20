@@ -29,6 +29,7 @@ public class NativeMessageQueue {
   public boolean start(int bindPort, int sendQueueLength) {
     context = new ZContext();
     publisher = context.createSocket(SocketType.PUB);
+    publisher.setSendTimeOut(1000);
 
     if (Objects.isNull(publisher)) {
       return false;
