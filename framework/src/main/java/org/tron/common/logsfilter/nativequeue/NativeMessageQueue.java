@@ -11,6 +11,7 @@ public class NativeMessageQueue {
 
   private static final int DEFAULT_BIND_PORT = 5555;
   private static final int DEFAULT_QUEUE_LENGTH = 1000;
+  private static final int ZMQ_SEND_TIME_OUT = 1_000;
   private static NativeMessageQueue instance;
   private ZContext context = null;
   private ZMQ.Socket publisher = null;
@@ -29,7 +30,7 @@ public class NativeMessageQueue {
   public boolean start(int bindPort, int sendQueueLength) {
     context = new ZContext();
     publisher = context.createSocket(SocketType.PUB);
-    publisher.setSendTimeOut(1000);
+    publisher.setSendTimeOut(ZMQ_SEND_TIME_OUT);
 
     if (Objects.isNull(publisher)) {
       return false;
