@@ -30,12 +30,11 @@ public class NativeMessageQueue {
   public boolean start(int bindPort, int sendQueueLength) {
     context = new ZContext();
     publisher = context.createSocket(SocketType.PUB);
-    publisher.setSendTimeOut(ZMQ_SEND_TIME_OUT);
 
     if (Objects.isNull(publisher)) {
       return false;
     }
-
+    publisher.setSendTimeOut(ZMQ_SEND_TIME_OUT);
     if (bindPort == 0 || bindPort < 0) {
       bindPort = DEFAULT_BIND_PORT;
     }
