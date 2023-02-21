@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -174,7 +175,7 @@ public class Manager {
   private static final int SLEEP_FOR_WAIT_LOCK = 10;
   private static final int NO_BLOCK_WAITING_LOCK = 0;
   private final int shieldedTransInPendingMaxCounts =
-      Args.getInstance().getShieldedTransInPendingMaxCounts();
+          Args.getInstance().getShieldedTransInPendingMaxCounts();
   @Getter
   @Setter
   public boolean eventPluginLoaded = false;
@@ -209,8 +210,8 @@ public class Manager {
   private BlockingQueue<TransactionCapsule> pushTransactionQueue = new LinkedBlockingQueue<>();
   @Getter
   private Cache<Sha256Hash, Boolean> transactionIdCache = CacheBuilder
-      .newBuilder().maximumSize(TX_ID_CACHE_SIZE)
-      .expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
+          .newBuilder().maximumSize(TX_ID_CACHE_SIZE)
+          .expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
   @Autowired
   private AccountStateCallBack accountStateCallBack;
   @Autowired
@@ -230,7 +231,7 @@ public class Manager {
   private AtomicInteger shieldedTransInPendingCounts = new AtomicInteger(0);
   // transactions popped
   private List<TransactionCapsule> poppedTransactions =
-      Collections.synchronizedList(Lists.newArrayList());
+          Collections.synchronizedList(Lists.newArrayList());
   // the capacity is equal to Integer.MAX_VALUE default
   private BlockingQueue<TransactionCapsule> rePushTransactions;
   private BlockingQueue<TriggerCapsule> triggerCapsuleQueue;
@@ -562,11 +563,18 @@ public class Manager {
     if (chainBaseManager.containBlock(genesisBlock.getBlockId())) {
       Args.getInstance().setChainId(genesisBlock.getBlockId().toString());
     } else {
-      if (chainBaseManager.hasBlocks()) {
+      if (chainBaseManager.hasBlocks() && !Args.getInstance().isStressTest) {
         logger.error(
             "Genesis block modify, please delete database directory({}) and restart.",
             Args.getInstance().getOutputDirectory());
         System.exit(1);
+      } else if (Args.getInstance().isStressTest) {
+        this.initAccount();
+        this.initWitness();
+        List<ByteString> srList = new ArrayList<>();
+        Args.getInstance().getGenesisBlock().getWitnesses().forEach(
+            witnessCapsule -> srList.add(ByteString.copyFrom(witnessCapsule.getAddress())));
+        consensus.updateWitness(srList);
       } else {
         logger.info("Create genesis block.");
         Args.getInstance().setChainId(genesisBlock.getBlockId().toString());
@@ -870,14 +878,14 @@ public class Manager {
     } finally {
       if (pushTransactionQueue.remove(trx)) {
         Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, -1,
-            MetricLabels.Gauge.QUEUE_QUEUED);
+                MetricLabels.Gauge.QUEUE_QUEUED);
       }
     }
     return true;
   }
 
   public void consumeMultiSignFee(TransactionCapsule trx, TransactionTrace trace)
-      throws AccountResourceInsufficientException {
+          throws AccountResourceInsufficientException {
     if (trx.getInstance().getSignatureCount() > 1) {
       long fee = getDynamicPropertiesStore().getMultiSignFee();
 
@@ -897,8 +905,8 @@ public class Manager {
           }
         } catch (BalanceInsufficientException e) {
           throw new AccountResourceInsufficientException(
-              String.format("account %s insufficient balance[%d] to multiSign",
-                  StringUtil.encode58Check(address), fee));
+                  String.format("account %s insufficient balance[%d] to multiSign",
+                          StringUtil.encode58Check(address), fee));
         }
       }
 
@@ -1401,8 +1409,10 @@ public class Manager {
       chainBaseManager.getBalanceTraceStore().initCurrentTransactionBalanceTrace(trxCap);
     }
 
-    validateTapos(trxCap);
-    validateCommon(trxCap);
+    if (!Args.getInstance().isStressTest) {
+      validateTapos(trxCap);
+      validateCommon(trxCap);
+    }
 
     if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
       throw new ContractSizeNotEqualToOneException(

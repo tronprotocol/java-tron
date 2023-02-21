@@ -95,7 +95,8 @@ public class MaintenanceManager {
     if (dynamicPropertiesStore.useNewRewardAlgorithm()) {
       long curCycle = dynamicPropertiesStore.getCurrentCycleNumber();
       consensusDelegate.getAllWitnesses().forEach(witness -> {
-        delegationStore.accumulateWitnessVi(curCycle, witness.createDbKey(), witness.getVoteCount());
+        delegationStore.accumulateWitnessVi(curCycle, witness.createDbKey(),
+            witness.getVoteCount());
       });
     }
 
@@ -194,7 +195,7 @@ public class MaintenanceManager {
   }
 
   private void tryRemoveThePowerOfTheGr() {
-    if (consensusDelegate.getRemoveThePowerOfTheGr() != 1) {
+    if (consensusDelegate.getRemoveThePowerOfTheGr() != 1 || dposService.isStressTest()) {
       return;
     }
     dposService.getGenesisBlock().getWitnesses().forEach(witness -> {
