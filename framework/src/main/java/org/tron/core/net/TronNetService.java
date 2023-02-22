@@ -52,9 +52,6 @@ public class TronNetService {
   @Autowired
   private FetchBlockService fetchBlockService;
 
-  @Autowired
-  private KeepAliveService keepAliveService;
-
   private CommonParameter parameter = Args.getInstance();
 
   @Autowired
@@ -86,7 +83,6 @@ public class TronNetService {
       peerStatusCheck.init();
       transactionsMsgHandler.init();
       fetchBlockService.init();
-      keepAliveService.init();
       nodePersistService.init();
       tronStatsManager.init();
       PeerManager.init();
@@ -104,7 +100,6 @@ public class TronNetService {
     PeerManager.close();
     tronStatsManager.close();
     nodePersistService.close();
-    keepAliveService.close();
     advService.close();
     syncService.close();
     peerStatusCheck.close();
