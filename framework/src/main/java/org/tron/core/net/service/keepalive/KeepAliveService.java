@@ -11,12 +11,6 @@ import org.tron.core.net.peer.PeerConnection;
 @Component
 public class KeepAliveService {
 
-  public void init() {
-  }
-
-  public void close() {
-  }
-
   public void processMessage(PeerConnection peer, TronMessage message) {
     if (message.getType().equals(MessageTypes.P2P_PING)) {
       peer.sendMessage(new PongMessage());
