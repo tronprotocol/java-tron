@@ -54,6 +54,9 @@ public class Storage {
   private static final String ESTIMATED_TRANSACTIONS_CONFIG_KEY =
       "storage.txCache.estimatedTransactions";
   private static final String SNAPSHOT_MAX_FLUSH_COUNT_CONFIG_KEY = "storage.snapshot.maxFlushCount";
+  private static final String DB_AUTO_PRUNE_SWITCH_CONFIG_KEY = "storage.prune.enable";
+  private static final String DB_AUTO_PRUNE_RETAIN_CONFIG_KEY = "storage.prune.retain";
+  private static final String DB_AUTO_PRUNE_BLOCKS_FREQUENCY_CONFIG_KEY = "storage.prune.blocks.frequency";
   private static final String PROPERTIES_CONFIG_KEY = "storage.properties";
   private static final String PROPERTIES_CONFIG_DB_KEY = "storage";
   private static final String PROPERTIES_CONFIG_DEFAULT_KEY = "default";
@@ -91,6 +94,9 @@ public class Storage {
   private static final boolean DEFAULT_CHECKPOINT_SYNC = true;
   private static final int DEFAULT_ESTIMATED_TRANSACTIONS = 1000;
   private static final int DEFAULT_SNAPSHOT_MAX_FLUSH_COUNT = 1;
+  private static final boolean DEFAULT_DB_AUTO_PRUNE_SWITCH = false;
+  private static final int DEFAULT_DB_AUTO_PRUNE_RETAIN = 65536;
+  private static final int DEFAULT_DB_AUTO_PRUNE_BLOCKS_FREQUENCY = 100;
   private Config storage;
 
   /**
@@ -111,6 +117,18 @@ public class Storage {
   @Getter
   @Setter
   private int maxFlushCount;
+
+  @Getter
+  @Setter
+  private boolean dbAutoPrune;
+
+  @Getter
+  @Setter
+  private int dbAutoPruneRetain;
+
+  @Getter
+  @Setter
+  private int dbAutoPruneBlocksFrequency;
 
   /**
    * Index storage directory: /path/to/{indexDirectory}
@@ -180,6 +198,33 @@ public class Storage {
       throw new IllegalArgumentException("MaxFlushCount value must not exceed 500!");
     }
     return maxFlushCountConfig;
+  }
+
+  public static boolean getDbAutoPruneSwitchFromConfig(final Config config) {
+    return config.hasPath(DB_AUTO_PRUNE_SWITCH_CONFIG_KEY)
+        ? config.getBoolean(DB_AUTO_PRUNE_SWITCH_CONFIG_KEY) : DEFAULT_DB_AUTO_PRUNE_SWITCH;
+  }
+
+  public static int getDbAutoPruneRetainFromConfig(final Config config) {
+    if (!config.hasPath(DB_AUTO_PRUNE_RETAIN_CONFIG_KEY)) {
+      return DEFAULT_DB_AUTO_PRUNE_RETAIN;
+    }
+    int dbAutoPruneRetain = config.getInt(DB_AUTO_PRUNE_RETAIN_CONFIG_KEY);
+    if (dbAutoPruneRetain < 65536) {
+      throw new IllegalArgumentException("[storage.prune.retain] value must not be less than 65536!");
+    }
+    return dbAutoPruneRetain;
+  }
+
+  public static int getDbAutoPruneBlocksFrequencyFromConfig(final Config config) {
+    if (!config.hasPath(DB_AUTO_PRUNE_BLOCKS_FREQUENCY_CONFIG_KEY)) {
+      return DEFAULT_DB_AUTO_PRUNE_BLOCKS_FREQUENCY;
+    }
+    int dbAutoPruneBlocksFrequency = config.getInt(DB_AUTO_PRUNE_BLOCKS_FREQUENCY_CONFIG_KEY);
+    if (dbAutoPruneBlocksFrequency < 1) {
+      throw new IllegalArgumentException("[storage.prune.blocks.frequency] value must not be less than 1!");
+    }
+    return dbAutoPruneBlocksFrequency;
   }
 
   public static Boolean getContractParseSwitchFromConfig(final Config config) {

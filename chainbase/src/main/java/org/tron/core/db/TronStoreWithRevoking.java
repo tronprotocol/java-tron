@@ -30,6 +30,7 @@ import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.LevelDB;
 import org.tron.core.db2.common.RocksDB;
 import org.tron.core.db2.common.WrappedByteArray;
+import org.tron.common.storage.prune.ChainDataPruner;
 import org.tron.core.db2.core.Chainbase;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.SnapshotRoot;
@@ -50,6 +51,9 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
 
   @Autowired
   private DbStatService dbStatService;
+
+  @Autowired
+  private ChainDataPruner chainDataPruner;
 
   private DB<byte[], byte[]> db;
 
@@ -98,6 +102,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   private void init() {
     revokingDatabase.add(revokingDB);
     dbStatService.register(db);
+    chainDataPruner.register(db);
   }
 
   @Override
@@ -112,6 +117,11 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   @Override
   public void delete(byte[] key) {
     revokingDB.delete(key);
+  }
+
+  @Override
+  public void deleteFromRoot(byte[] key) {
+    revokingDB.deleteFromRoot(key);
   }
 
   @Override

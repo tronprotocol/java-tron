@@ -514,6 +514,10 @@ public class Args extends CommonParameter {
     PARAMETER.storage.setEstimatedBlockTransactions(
         Storage.getEstimatedTransactionsFromConfig(config));
     PARAMETER.storage.setMaxFlushCount(Storage.getSnapshotMaxFlushCountFromConfig(config));
+    PARAMETER.storage.setDbAutoPrune(Storage.getDbAutoPruneSwitchFromConfig(config));
+    PARAMETER.storage.setDbAutoPruneRetain(Storage.getDbAutoPruneRetainFromConfig(config));
+    PARAMETER.storage.setDbAutoPruneBlocksFrequency(
+        Storage.getDbAutoPruneBlocksFrequencyFromConfig(config));
 
     PARAMETER.storage.setDefaultDbOptions(config);
     PARAMETER.storage.setPropertyMapFromConfig(config);

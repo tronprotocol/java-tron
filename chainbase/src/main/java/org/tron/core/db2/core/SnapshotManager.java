@@ -32,6 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.error.TronDBException;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.WriteOptionsWrapper;
+import org.tron.common.storage.prune.ChainDataPruner;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StorageUtils;
 import org.tron.core.db.RevokingDatabase;
@@ -75,6 +76,9 @@ public class SnapshotManager implements RevokingDatabase {
   private Map<String, ListeningExecutorService> flushServices = new HashMap<>();
 
   private ScheduledExecutorService pruneCheckpointThread = null;
+
+  @Autowired
+  private ChainDataPruner chainDataPruner;
 
   @Autowired
   @Setter
@@ -365,6 +369,7 @@ public class SnapshotManager implements RevokingDatabase {
             checkPointEnd - start,
             System.currentTimeMillis() - checkPointEnd
         );
+        chainDataPruner.onBlockAdd();
       } catch (TronDBException e) {
         logger.error(" Find fatal error, program will be exited soon.", e);
         hitDown = true;

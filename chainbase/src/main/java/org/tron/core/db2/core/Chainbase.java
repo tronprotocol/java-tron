@@ -130,6 +130,11 @@ public class Chainbase implements IRevokingDB {
   }
 
   @Override
+  public synchronized void deleteFromRoot(byte[] key) {
+    head().getRoot().remove(key);
+  }
+
+  @Override
   public byte[] get(byte[] key) throws ItemNotFoundException {
     byte[] value = getUnchecked(key);
     if (value == null) {

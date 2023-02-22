@@ -110,6 +110,11 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
     return get(key);
   }
 
+  @Override
+  public void deleteFromRoot(byte[] key){
+     delete(key);
+  }
+
   public T getUnchecked(byte[] key) {
     return null;
   }

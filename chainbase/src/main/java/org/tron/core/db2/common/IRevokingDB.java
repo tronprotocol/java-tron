@@ -13,6 +13,8 @@ public interface IRevokingDB extends Iterable<Map.Entry<byte[], byte[]>> {
 
   void delete(byte[] key);
 
+  void deleteFromRoot(byte[] key);
+
   boolean has(byte[] key);
 
   byte[] get(byte[] key) throws ItemNotFoundException;

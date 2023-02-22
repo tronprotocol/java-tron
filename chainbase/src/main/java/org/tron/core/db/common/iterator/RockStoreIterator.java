@@ -76,4 +76,21 @@ public final class RockStoreIterator implements DBIterator {
       }
     };
   }
+
+  @Override
+  public void seek(byte[] key) {
+    if (!valid) {
+      throw new NoSuchElementException();
+    }
+    dbIterator.seek(key);
+    first = false;
+  }
+
+  @Override
+  public byte[] key(){
+    if (!valid) {
+      throw new NoSuchElementException();
+    }
+    return dbIterator.key();
+  }
 }

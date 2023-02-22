@@ -22,6 +22,8 @@ public interface ITronChainBase<T> extends Iterable<Entry<byte[], T>>, Quitable 
 
   void delete(byte[] key);
 
+  void deleteFromRoot(byte[] key);
+
   T get(byte[] key) throws InvalidProtocolBufferException, ItemNotFoundException, BadItemException;
 
   T getFromRoot(byte[] key) throws InvalidProtocolBufferException, ItemNotFoundException,
