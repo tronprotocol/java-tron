@@ -81,17 +81,17 @@ $ ./gradlew clean build -x test
 # Running java-tron
 Running java-tron requires `Oracle JDK 1.8` to be installed, other JDK versions are not supported yet. Make sure you operate on `Linux` and `MacOS` operating systems.
 
-Get the mainnet configurate file: [main_net_config.conf](https://github.com/tronprotocol/tron-deployment/blob/master/main_net_config.conf), other network configuration files can be find [here](https://github.com/tronprotocol/tron-deployment).
+Get the mainnet configuration file: [main_net_config.conf](https://github.com/tronprotocol/tron-deployment/blob/master/main_net_config.conf), other network configuration files can be find [here](https://github.com/tronprotocol/tron-deployment).
 ## Hardware Requirements
 Minimum:
 * CPU with 8 cores
 * 16GB RAM
-* 1TB free storage space to sync the Mainnet
+* 2TB free storage space to sync the Mainnet
 
 Recommended:
 * CPU with 16+ cores(32+ cores for a super representative)
 * 32GB+ RAM(64GB+ for a super representative)
-* High Performance SSD with at least 1.5TB free space
+* High Performance SSD with at least 2.5TB free space
 * 100+ MB/s download Internet service
 
 
@@ -174,14 +174,11 @@ Thank you for considering to help out with the source code! If you'd like to con
 * [Wallet-cli](https://github.com/tronprotocol/wallet-cli) TRON network wallet using command line.
 * [TIP](https://github.com/tronprotocol/tips) TRON Improvement Proposal (TIP) describes standards for the TRON network.
 * [TP](https://github.com/tronprotocol/tips/tree/master/tp) TRON Protocol (TP) describes standards already implemented in TRON network but not published as a TIP.
-
+# Integrity Check
+* After January 3, 2023， releases are signed the gpg key:
+  ```
+  pub: 1254 F859 D2B1 BD9F 66E7 107D F859 BCB4 4A28 290B
+  uid: build@tron.network
+  ```
 # License
 java-tron is released under the [LGPLv3 license](https://github.com/tronprotocol/java-tron/blob/master/LICENSE).
-
-
-
-The minimum hardware requirements are `CPU with 8 cores`,`16GB RAM` and `1TB free storage space` to sync the Mainnet, the recommended hardware requirements:
-* CPU with 16+ cores(32+ cores for a super representative)
-* 32+ GB RAM(64+ GB for a super representative)
-* High Performance SSD with at least 1.5TB free space
-* 100+ MB/s download Internet service

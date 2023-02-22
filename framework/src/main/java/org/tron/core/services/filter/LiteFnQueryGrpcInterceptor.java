@@ -8,12 +8,16 @@ import io.grpc.ServerCallHandler;
 import io.grpc.ServerInterceptor;
 import io.grpc.Status;
 import java.util.Set;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.core.ChainBaseManager;
 
 @Component
 public class LiteFnQueryGrpcInterceptor implements ServerInterceptor {
-
+  @Autowired
+  private ChainBaseManager chainBaseManager;
   private static final Set<String> filterMethods = Sets.newHashSet();
 
   // for test
@@ -75,13 +79,9 @@ public class LiteFnQueryGrpcInterceptor implements ServerInterceptor {
   @Override
   public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call,
       Metadata headers, ServerCallHandler<ReqT, RespT> next) {
-    boolean shouldBeFiltered = false;
-    if (CommonParameter.getInstance().isLiteFullNode
+    if (chainBaseManager.isLiteNode()
             && !CommonParameter.getInstance().openHistoryQueryWhenLiteFN
             && filterMethods.contains(call.getMethodDescriptor().getFullMethodName())) {
-      shouldBeFiltered = true;
-    }
-    if (shouldBeFiltered) {
       call.close(Status.UNAVAILABLE
               .withDescription("this API is closed because this node is a lite fullnode"), headers);
       return new ServerCall.Listener<ReqT>() {};

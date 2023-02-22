@@ -511,8 +511,11 @@ public class Manager {
 
     long headNum = chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     logger.info("Current headNum is: {}.", headNum);
-    int nodeType = chainBaseManager.getCommonStore().getNodeType();
-    logger.info("Node type is: {}.", Constant.NODE_TYPE_LIGHT_NODE == nodeType ? "lite" : "full");
+    boolean isLite = chainBaseManager.isLiteNode();
+    logger.info("Node type is: {}.", isLite ? "lite" : "full");
+    if (isLite) {
+      logger.info("Lite node lowestNum: {}", chainBaseManager.getLowestBlockNum());
+    }
     revokingStore.enable();
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
@@ -2082,7 +2085,8 @@ public class Manager {
     List<TransactionCapsule> transactionCapsuleList = newBlock.getTransactions();
 
     // need to set eth compatible data from transactionInfoList
-    if (EventPluginLoader.getInstance().isTransactionLogTriggerEthCompatible()) {
+    if (EventPluginLoader.getInstance().isTransactionLogTriggerEthCompatible()
+          && newBlock.getNum() != 0) {
       TransactionInfoList transactionInfoList = TransactionInfoList.newBuilder().build();
       TransactionInfoList.Builder transactionInfoListBuilder = TransactionInfoList.newBuilder();
 
@@ -2119,7 +2123,8 @@ public class Manager {
           cumulativeLogCount += transactionInfo.getLogCount();
         }
       } else {
-        logger.error("PostBlockTrigger blockNum = {} has no transactions or {}.", newBlock.getNum(),
+        logger.error("PostBlockTrigger blockNum = {} has no transactions or {}.",
+            newBlock.getNum(),
             "the sizes of transactionInfoList and transactionCapsuleList are not equal");
         for (TransactionCapsule e : newBlock.getTransactions()) {
           postTransactionTrigger(e, newBlock);
