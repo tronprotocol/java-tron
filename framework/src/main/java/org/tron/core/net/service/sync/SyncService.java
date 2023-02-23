@@ -117,7 +117,7 @@ public class SyncService {
       peer.setSyncChainRequested(new Pair<>(chainSummary, System.currentTimeMillis()));
       peer.sendMessage(new SyncBlockChainMessage(chainSummary));
     } catch (Exception e) {
-      logger.warn("Peer {} sync failed, reason: {}", peer.getInetAddress(), e.getMessage());
+      logger.error("Peer {} sync failed, reason: {}", peer.getInetAddress(), e);
       peer.disconnect(ReasonCode.SYNC_FAIL);
     }
   }
@@ -191,7 +191,7 @@ public class SyncService {
 
     while (low <= realHigh) {
       if (low <= highNoFork) {
-        summary.offer(tronNetDelegate.getBlockIdByNum(low));
+        summary.offer(getBlockIdByNum(low));
       } else if (low <= high) {
         summary.offer(forkList.get((int) (low - highNoFork - 1)));
       } else {
@@ -201,6 +201,14 @@ public class SyncService {
     }
 
     return summary;
+  }
+
+  private BlockId getBlockIdByNum(long num) throws P2pException {
+    BlockId head = tronNetDelegate.getHeadBlockId();
+    if (num == head.getNum()) {
+      return head;
+    }
+    return tronNetDelegate.getBlockIdByNum(num);
   }
 
   private void startFetchSyncBlock() {

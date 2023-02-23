@@ -30,9 +30,9 @@ subprojects {
 
     repositories {
         mavenLocal()
-        maven { url 'https://jitpack.io' }
         mavenCentral()
         maven { url 'https://repo.spring.io/plugins-release' }
+        maven { url 'https://jitpack.io' }
     }
 
     dependencies {
@@ -81,4 +81,3 @@ task copyToParent(type: Copy) {
 }
 
 build.finalizedBy(copyToParent)
-
