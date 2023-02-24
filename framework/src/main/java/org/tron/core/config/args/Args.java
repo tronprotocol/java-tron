@@ -80,8 +80,6 @@ import org.tron.p2p.dns.update.DnsType;
 import org.tron.p2p.dns.update.PublishConfig;
 import org.tron.program.Version;
 
-import software.amazon.awssdk.regions.Region;
-
 @Slf4j(topic = "app")
 @NoArgsConstructor
 @Component
@@ -1350,7 +1348,7 @@ public class Args extends CommonParameter {
           logger.error("Check {}, must not be null", Constant.NODE_DNS_AWS_REGION);
           return null;
         } else {
-          publishConfig.setAwsRegion(Region.of(config.getString(Constant.NODE_DNS_AWS_REGION)));
+          publishConfig.setAwsRegion(config.getString(Constant.NODE_DNS_AWS_REGION));
         }
         if (config.hasPath(Constant.NODE_DNS_AWS_HOST_ZONE_ID)) {
           publishConfig.setAwsHostZoneId(config.getString(Constant.NODE_DNS_AWS_HOST_ZONE_ID));

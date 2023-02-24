@@ -48,8 +48,6 @@ dependencies {
 
     compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.69'
 
-    compile group: 'software.amazon.awssdk', name: 'regions', version: '2.18.41'
-
     compile group: 'com.typesafe', name: 'config', version: '1.3.2'
 
     compile "com.cedarsoftware:java-util:1.8.0"
