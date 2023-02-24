@@ -52,12 +52,14 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.BIUtil;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.config.Parameter;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.vm.config.VMConfig;
@@ -944,10 +946,14 @@ public class PrecompiledContracts {
             long totalWeight = 0L;
             List<byte[]> executedSignList = new ArrayList<>();
             for (byte[] sign : signatures) {
+              byte[] recoveredAddr = recoverAddrBySign(sign, hash);
+
+              if (ForkController.instance().pass(Parameter.ForkBlockVersionEnum.VERSION_4_7_1)) {
+                sign = recoveredAddr;
+              }
               if (ByteArray.matrixContains(executedSignList, sign)) {
                 continue;
               }
-              byte[] recoveredAddr = recoverAddrBySign(sign, hash);
               long weight = TransactionCapsule.getWeight(permission, recoveredAddr);
               if (weight == 0) {
                 //incorrect sign
