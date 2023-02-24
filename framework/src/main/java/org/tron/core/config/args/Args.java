@@ -178,6 +178,7 @@ public class Args extends CommonParameter {
     PARAMETER.estimateEnergyMaxRetry = 3;
     PARAMETER.receiveTcpMinDataLength = 2048;
     PARAMETER.isOpenFullTcpDisconnect = false;
+    PARAMETER.nodeDetectEnable = false;
     PARAMETER.supportConstant = false;
     PARAMETER.debug = false;
     PARAMETER.minTimeRatio = 0.0;
@@ -819,8 +820,13 @@ public class Args extends CommonParameter {
 
     PARAMETER.receiveTcpMinDataLength = config.hasPath(Constant.NODE_RECEIVE_TCP_MIN_DATA_LENGTH)
         ? config.getLong(Constant.NODE_RECEIVE_TCP_MIN_DATA_LENGTH) : 2048;
+
     PARAMETER.isOpenFullTcpDisconnect = config.hasPath(Constant.NODE_IS_OPEN_FULL_TCP_DISCONNECT)
         && config.getBoolean(Constant.NODE_IS_OPEN_FULL_TCP_DISCONNECT);
+
+    PARAMETER.nodeDetectEnable = config.hasPath(Constant.NODE_DETECT_ENABLE)
+            && config.getBoolean(Constant.NODE_DETECT_ENABLE);
+
     PARAMETER.maxTransactionPendingSize = config.hasPath(Constant.NODE_MAX_TRANSACTION_PENDING_SIZE)
         ? config.getInt(Constant.NODE_MAX_TRANSACTION_PENDING_SIZE) : 2000;
 
@@ -1569,6 +1575,8 @@ public class Args extends CommonParameter {
     logger.info("Max connection with same IP: {}", parameter.getMaxConnectionsWithSameIp());
     logger.info("Solidity threads: {}", parameter.getSolidityThreads());
     logger.info("Trx reference block: {}", parameter.getTrxReferenceBlock());
+    logger.info("Open full tcp disconnect: {}", parameter.isOpenFullTcpDisconnect());
+    logger.info("Node detect enable: {}", parameter.isNodeDetectEnable());
     logger.info("************************ Backup config ************************");
     logger.info("Backup priority: {}", parameter.getBackupPriority());
     logger.info("Backup listen port: {}", parameter.getBackupPort());

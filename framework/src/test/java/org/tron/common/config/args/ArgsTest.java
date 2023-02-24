@@ -30,5 +30,6 @@ public class ArgsTest {
     Assert.assertEquals(Args.getInstance().getNodeDiscoveryPingTimeout(), 15_000);
     Assert.assertEquals(Args.getInstance().getMaxFastForwardNum(), 3);
     Assert.assertEquals(Args.getInstance().getBlockCacheTimeout(), 60);
+    Assert.assertEquals(Args.getInstance().isNodeDetectEnable(), false);
   }
 }

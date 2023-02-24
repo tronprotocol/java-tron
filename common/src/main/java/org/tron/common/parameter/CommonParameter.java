@@ -330,6 +330,9 @@ public class CommonParameter {
   public boolean isOpenFullTcpDisconnect;
   @Getter
   @Setter
+  public boolean nodeDetectEnable;
+  @Getter
+  @Setter
   public int allowMultiSign;
   @Getter
   @Setter

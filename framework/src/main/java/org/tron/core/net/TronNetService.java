@@ -157,6 +157,7 @@ public class TronNetService {
     config.setPort(parameter.getNodeListenPort());
     config.setNetworkId(parameter.getNodeP2pVersion());
     config.setDisconnectionPolicyEnable(parameter.isOpenFullTcpDisconnect());
+    config.setNodeDetectEnable(parameter.isNodeDetectEnable());
     config.setDiscoverEnable(parameter.isNodeDiscoveryEnable());
     if (StringUtil.isNullOrEmpty(config.getIp()) && StringUtil.isNullOrEmpty(config.getIpv6())) {
       config.setIp(parameter.getNodeExternalIp());
