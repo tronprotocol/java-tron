@@ -52,20 +52,20 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.BIUtil;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.config.Parameter;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
+import org.tron.core.vm.program.Program.OutOfTimeException;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.utils.FreezeV2Util;
+import org.tron.core.vm.utils.MUtil;
 import org.tron.core.vm.utils.VoteRewardUtil;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Permission;
@@ -948,11 +948,12 @@ public class PrecompiledContracts {
             for (byte[] sign : signatures) {
               byte[] recoveredAddr = recoverAddrBySign(sign, hash);
 
-              if (ForkController.instance().pass(Parameter.ForkBlockVersionEnum.VERSION_4_7_1)) {
-                sign = recoveredAddr;
-              }
-              if (ByteArray.matrixContains(executedSignList, sign)) {
-                continue;
+              sign = merge(recoveredAddr, sign);
+              if (ByteArray.matrixContains(executedSignList, recoveredAddr)) {
+                if (ByteArray.matrixContains(executedSignList, sign)) {
+                  continue;
+                }
+                MUtil.checkCPUTime();
               }
               long weight = TransactionCapsule.getWeight(permission, recoveredAddr);
               if (weight == 0) {
@@ -961,6 +962,7 @@ public class PrecompiledContracts {
               }
               totalWeight += weight;
               executedSignList.add(sign);
+              executedSignList.add(recoveredAddr);
             }
 
             if (totalWeight >= permission.getThreshold()) {
@@ -968,6 +970,9 @@ public class PrecompiledContracts {
             }
           }
         } catch (Throwable t) {
+          if (t instanceof OutOfTimeException) {
+            throw t;
+          }
           logger.info("ValidateMultiSign error:{}", t.getMessage());
         }
       }
