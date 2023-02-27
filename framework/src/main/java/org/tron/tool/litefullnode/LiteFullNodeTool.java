@@ -41,9 +41,6 @@ import org.tron.tool.litefullnode.iterator.DBIterator;
 @Slf4j(topic = "tool")
 public class LiteFullNodeTool {
 
-  private static final byte[] DB_KEY_LOWEST_BLOCK_NUM = "lowest_block_num".getBytes();
-  private static final byte[] DB_KEY_NODE_TYPE = "node_type".getBytes();
-
   private static final long START_TIME = System.currentTimeMillis() / 1000;
 
   private static long RECENT_BLKS = 65536;
@@ -57,7 +54,6 @@ public class LiteFullNodeTool {
   private static final String BLOCK_DB_NAME = "block";
   private static final String BLOCK_INDEX_DB_NAME = "block-index";
   private static final String TRANS_DB_NAME = "trans";
-  private static final String COMMON_DB_NAME = "common";
   private static final String TRANSACTION_RET_DB_NAME = "transactionRetStore";
   private static final String TRANSACTION_HISTORY_DB_NAME = "transactionHistoryStore";
   private static final String PROPERTIES_DB_NAME = "properties";
@@ -328,10 +324,6 @@ public class LiteFullNodeTool {
         throw new RuntimeException(e.getMessage());
       }
     }
-
-    DBInterface destCommonDb = DbTool.getDB(snapshotDir, COMMON_DB_NAME);
-    destCommonDb.put(DB_KEY_NODE_TYPE, ByteArray.fromInt(Constant.NODE_TYPE_LIGHT_NODE));
-    destCommonDb.put(DB_KEY_LOWEST_BLOCK_NUM, ByteArray.fromLong(startIndex));
     // copy engine.properties for block、block-index、trans from source if exist
     copyEngineIfExist(sourceDir, snapshotDir, BLOCK_DB_NAME, BLOCK_INDEX_DB_NAME, TRANS_DB_NAME);
   }
@@ -487,14 +479,6 @@ public class LiteFullNodeTool {
   private void deleteSnapshotFlag(String databaseDir) throws IOException, RocksDBException {
     logger.info("Delete the info file from {}.", databaseDir);
     Files.delete(Paths.get(databaseDir, INFO_FILE_NAME));
-    if (!isLite(databaseDir)) {
-      DBInterface destCommonDb = DbTool.getDB(databaseDir, COMMON_DB_NAME);
-      destCommonDb.delete(DB_KEY_NODE_TYPE);
-      destCommonDb.delete(DB_KEY_LOWEST_BLOCK_NUM);
-      logger.info("Deleted {} and {} from {} to identify this node is a real fullnode.",
-          "node_type", "lowest_block_num", COMMON_DB_NAME);
-    }
-
   }
 
   private void hasEnoughBlock(String sourceDir) throws RocksDBException, IOException {

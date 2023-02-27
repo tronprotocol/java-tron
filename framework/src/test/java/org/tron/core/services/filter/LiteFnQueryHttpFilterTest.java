@@ -23,6 +23,7 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.FileUtil;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -40,7 +41,9 @@ public class LiteFnQueryHttpFilterTest {
   private Application appTest;
   private CloseableHttpClient httpClient = HttpClients.createDefault();
 
-  private String dbPath = "output_grpc_filter_test";
+  private String dbPath = "output_http_filter_test";
+
+  private ChainBaseManager chainBaseManager;
 
   /**
    * init dependencies.
@@ -57,6 +60,7 @@ public class LiteFnQueryHttpFilterTest {
             .getBean(HttpApiOnSolidityService.class);
     HttpApiOnPBFTService httpApiOnPBFTService = context
             .getBean(HttpApiOnPBFTService.class);
+    chainBaseManager = context.getBean(ChainBaseManager.class);
     appTest.addService(httpApiService);
     appTest.addService(httpApiOnSolidityService);
     appTest.addService(httpApiOnPBFTService);
@@ -94,21 +98,21 @@ public class LiteFnQueryHttpFilterTest {
       }
       String url = String.format("http://%s:%d%s", ip, fullHttpPort, urlPath);
       // test lite fullnode with history query closed
-      Args.getInstance().setLiteFullNode(true);
+      chainBaseManager.setNodeType(ChainBaseManager.NodeType.LITE);
       Args.getInstance().setOpenHistoryQueryWhenLiteFN(false);
       String response = sendGetRequest(url);
       Assert.assertEquals("this API is closed because this node is a lite fullnode",
               response);
 
       // test lite fullnode with history query opened
-      Args.getInstance().setLiteFullNode(false);
+      chainBaseManager.setNodeType(ChainBaseManager.NodeType.FULL);
       Args.getInstance().setOpenHistoryQueryWhenLiteFN(true);
       response = sendGetRequest(url);
       Assert.assertNotEquals("this API is closed because this node is a lite fullnode",
               response);
 
       // test normal fullnode
-      Args.getInstance().setLiteFullNode(false);
+      chainBaseManager.setNodeType(ChainBaseManager.NodeType.FULL);
       Args.getInstance().setOpenHistoryQueryWhenLiteFN(true);
       response = sendGetRequest(url);
       Assert.assertNotEquals("this API is closed because this node is a lite fullnode",
