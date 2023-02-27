@@ -214,7 +214,8 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
                     .map(
                         rootChild ->
                             CompletableFuture.runAsync(
-                                () -> rootChild.accept(new AllNodesVisitor<>(nodeConsumer)),
+                                () -> rootChild.accept(new AllNodesVisitor<>(nodeConsumer, executorService)),
+                                //() -> rootChild.accept(new AllNodesVisitor<>(nodeConsumer)),
                                 executorService)))
                 .collect(Collectors.collectingAndThen(
                         Collectors.toSet(),
