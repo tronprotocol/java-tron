@@ -352,7 +352,7 @@ public class DbLite implements Callable<Integer> {
     }
   }
 
-  private long getLatestBlockHeaderNum(String databaseDir) throws IOException, RocksDBException {
+  public long getLatestBlockHeaderNum(String databaseDir) throws IOException, RocksDBException {
     // query latest_block_header_number from checkpoint first
     final String latestBlockHeaderNumber = "latest_block_header_number";
     List<String> cpList = getCheckpointV2List(databaseDir);
@@ -661,7 +661,7 @@ public class DbLite implements Callable<Integer> {
     return getSecondBlock(databaseDir) > 1;
   }
 
-  private long getSecondBlock(String databaseDir) throws RocksDBException, IOException {
+  public long getSecondBlock(String databaseDir) throws RocksDBException, IOException {
     long num = 0;
     DBInterface sourceBlockIndexDb = DbTool.getDB(databaseDir, BLOCK_INDEX_DB_NAME);
     DBIterator iterator = sourceBlockIndexDb.iterator();
