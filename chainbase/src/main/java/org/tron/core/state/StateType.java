@@ -58,4 +58,8 @@ public enum StateType {
     return Bytes.concat(p, key);
   }
 
+  public static byte[] decodeKey(byte[] key) {
+    return Arrays.copyOfRange(key, 1, key.length);
+  }
+
 }

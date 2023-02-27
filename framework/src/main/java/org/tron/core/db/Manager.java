@@ -578,6 +578,7 @@ public class Manager {
         System.exit(1);
       } else {
         logger.info("Create genesis block.");
+        worldStateCallBack.setExecute(true);
         Args.getInstance().setChainId(genesisBlock.getBlockId().toString());
         // init Dynamic Properties Store
         chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(0);
@@ -591,7 +592,7 @@ public class Manager {
         this.updateRecentBlock(genesisBlock);
         initAccountHistoryBalance();
         // init genesis state
-        worldStateCallBack.initGenesis(genesisBlock, chainBaseManager.getWorldStateTrieStore());
+        worldStateCallBack.initGenesis(genesisBlock);
 
         chainBaseManager.getBlockStore().put(genesisBlock.getBlockId().getBytes(), genesisBlock);
         chainBaseManager.getBlockIndexStore().put(genesisBlock.getBlockId());
@@ -1016,18 +1017,19 @@ public class Manager {
       ValidateScheduleException, ReceiptCheckErrException, VMIllegalException,
       TooBigTransactionResultException, ZksnarkException, BadBlockException, EventBloomException {
     try {
+      worldStateCallBack.preExecute(block);
       processBlock(block, txs);
+      updateFork(block);
+      worldStateCallBack.executePushFinish();
+      chainBaseManager.getBlockStore().put(block.getBlockId().getBytes(), block);
+      chainBaseManager.getBlockIndexStore().put(block.getBlockId());
+      if (block.getTransactions().size() != 0) {
+        chainBaseManager.getTransactionRetStore()
+                .put(ByteArray.fromLong(block.getNum()), block.getResult());
+      }
     } finally {
       worldStateCallBack.exceptionFinish();
     }
-    chainBaseManager.getBlockStore().put(block.getBlockId().getBytes(), block);
-    chainBaseManager.getBlockIndexStore().put(block.getBlockId());
-    if (block.getTransactions().size() != 0) {
-      chainBaseManager.getTransactionRetStore()
-          .put(ByteArray.fromLong(block.getNum()), block.getResult());
-    }
-
-    updateFork(block);
     if (System.currentTimeMillis() - block.getTimeStamp() >= 60_000) {
       revokingStore.setMaxFlushCount(maxFlushCount);
       if (Args.getInstance().getShutdownBlockTime() != null
@@ -1725,7 +1727,6 @@ public class Manager {
         new TransactionRetCapsule(block);
     try {
       merkleContainer.resetCurrentMerkleTree();
-      worldStateCallBack.preExecute(block, chainBaseManager.getWorldStateTrieStore());
       accountStateCallBack.preExecute(block);
       List<TransactionInfo> results = new ArrayList<>();
       long num = block.getNum();
@@ -1782,7 +1783,6 @@ public class Manager {
       chainBaseManager.getSectionBloomStore().write(block.getNum());
       block.setBloom(blockBloom);
     }
-    worldStateCallBack.executePushFinish();
   }
 
   private void payReward(BlockCapsule block) {

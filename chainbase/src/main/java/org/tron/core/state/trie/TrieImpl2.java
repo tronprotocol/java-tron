@@ -4,9 +4,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
-
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tuweni.bytes.Bytes;
@@ -137,6 +137,14 @@ public class TrieImpl2 implements Trie<Bytes> {
   @Override
   public void clear() {
     throw new RuntimeException("Not implemented yet");
+  }
+
+  public  Map<Bytes32, Bytes> entriesFrom(Bytes32 startKeyHash, int limit) {
+    return trie.entriesFrom(startKeyHash, limit);
+  }
+
+  public Map<Bytes32, Bytes> entriesFrom(final Function<Node<Bytes>, Map<Bytes32, Bytes>> handler) {
+    return trie.entriesFrom(handler);
   }
 
   @Override

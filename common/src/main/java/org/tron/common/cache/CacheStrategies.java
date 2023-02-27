@@ -14,6 +14,7 @@ import static org.tron.common.cache.CacheType.storageRow;
 import static org.tron.common.cache.CacheType.votes;
 import static org.tron.common.cache.CacheType.witness;
 import static org.tron.common.cache.CacheType.witnessSchedule;
+import static org.tron.common.cache.CacheType.worldStateQueryInstance;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -35,7 +36,7 @@ public class CacheStrategies {
       String.format(PATTERNS, 100, 100, "30s", CPUS);
   private static final List<CacheType> CACHE_SMALL_DBS = Arrays.asList(recentBlock, witness,
       witnessSchedule, delegatedResource, delegatedResourceAccountIndex,
-      votes, abi);
+      votes, abi, worldStateQueryInstance);
   private static final String CACHE_STRATEGY_NORMAL_DEFAULT =
       String.format(PATTERNS, 500, 500, "30s", CPUS);
   private static final List<CacheType> CACHE_NORMAL_DBS = Arrays.asList(code, contract,

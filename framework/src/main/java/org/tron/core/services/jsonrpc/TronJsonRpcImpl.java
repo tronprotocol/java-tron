@@ -369,6 +369,34 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     return ByteArray.toJsonHex(balance);
   }
 
+  @Override
+  public Map<String, Long> getToken10(String address, String blockNumOrTag)
+          throws JsonRpcInvalidParamsException {
+    byte[] addressData = addressCompatibleToByteArray(address);
+    Account reply;
+    if (EARLIEST_STR.equalsIgnoreCase(blockNumOrTag)
+            || PENDING_STR.equalsIgnoreCase(blockNumOrTag)) {
+      throw new JsonRpcInvalidParamsException(TAG_NOT_SUPPORT_ERROR);
+    } else if (LATEST_STR.equalsIgnoreCase(blockNumOrTag)) {
+      Account account = Account.newBuilder().setAddress(ByteString.copyFrom(addressData)).build();
+      reply = wallet.getAccount(account);
+    } else {
+      BigInteger blockNumber;
+      try {
+        blockNumber = ByteArray.hexToBigInteger(blockNumOrTag);
+      } catch (Exception e) {
+        throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
+      }
+      reply = wallet.getAccountToken10(addressData, blockNumber.longValue());
+    }
+
+    Map<String, Long> token10s =  new HashMap<>();
+    if (reply != null) {
+      token10s = reply.getAssetV2Map();
+    }
+    return token10s;
+  }
+
   private void callTriggerConstantContract(byte[] ownerAddressByte, byte[] contractAddressByte,
       long value, byte[] data, TransactionExtention.Builder trxExtBuilder,
       Return.Builder retBuilder, long blockNumber)

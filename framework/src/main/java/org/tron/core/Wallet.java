@@ -192,8 +192,8 @@ import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.StoreFactory;
-import org.tron.core.vm.program.Storage;
 import org.tron.core.vm.program.Program;
+import org.tron.core.vm.program.Storage;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder.ShieldedTRC20ParametersType;
 import org.tron.core.zen.ZenTransactionBuilder;
@@ -343,6 +343,18 @@ public class Wallet {
     return accountCapsule.getInstance();
   }
 
+
+  public Account getAccount(byte[] address, long blockNumber) {
+    Bytes32 rootHash = getRootHashByNumber(blockNumber);
+    WorldStateQueryInstance worldStateQueryInstance = initWorldStateQueryInstance(rootHash);
+    AccountCapsule accountCapsule = worldStateQueryInstance.getAccount(address);
+    if (accountCapsule == null) {
+      return null;
+    }
+    return accountCapsule.getInstance();
+  }
+
+
   private void sortFrozenV2List(AccountCapsule accountCapsule) {
     List<FreezeV2> oldFreezeV2List = accountCapsule.getFrozenV2List();
     accountCapsule.clearFrozenV2();
@@ -363,13 +375,14 @@ public class Wallet {
     }
   }
 
-  public Account getAccount(byte[] address, long blockNumber) {
+  public Account getAccountToken10(byte[] address, long blockNumber) {
     Bytes32 rootHash = getRootHashByNumber(blockNumber);
     WorldStateQueryInstance worldStateQueryInstance = initWorldStateQueryInstance(rootHash);
     AccountCapsule accountCapsule = worldStateQueryInstance.getAccount(address);
     if (accountCapsule == null) {
       return null;
     }
+    accountCapsule.importAllAsset();
     return accountCapsule.getInstance();
   }
 
@@ -4567,7 +4580,7 @@ public class Wallet {
   }
 
   private WorldStateQueryInstance initWorldStateQueryInstance(Bytes32 rootHash) {
-    return new WorldStateQueryInstance(rootHash, chainBaseManager);
+    return ChainBaseManager.fetch(rootHash);
   }
 }
 

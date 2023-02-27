@@ -1,16 +1,22 @@
 package org.tron.core.state;
 
+import static org.tron.core.state.WorldStateCallBackUtils.fix32;
+
+import com.google.common.primitives.Longs;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 
-import com.google.common.collect.Maps;
-import com.google.common.primitives.Longs;
 import lombok.Getter;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
+import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -25,6 +31,7 @@ import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.state.trie.TrieImpl2;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.protos.Protocol;
 
 public class WorldStateQueryInstance {
 
@@ -34,6 +41,9 @@ public class WorldStateQueryInstance {
   private final Bytes32 rootHash;
 
   public static final byte[] DELETE = UInt256.ZERO.toArray();
+  public static final int ADDRESS_SIZE = DecodeUtil.ADDRESS_SIZE >> 1;
+  public static final Bytes MAX_ASSET_ID = Bytes.ofUnsignedLong(Long.MAX_VALUE);
+  public static final Bytes MIN_ASSET_ID = Bytes.ofUnsignedLong(0);
 
   private final WorldStateGenesis worldStateGenesis;
 
@@ -61,28 +71,62 @@ public class WorldStateQueryInstance {
     AccountCapsule accountCapsule = null;
     if (Objects.nonNull(value)) {
       accountCapsule = new AccountCapsule(value);
-      accountCapsule.setFlag(true);
-    }
-    return accountCapsule;
-  }
-
-  public AccountCapsule getAccount(byte[] address, byte[] tokenId) {
-    long balance = Optional
-        .ofNullable(getAccountAsset(address, tokenId))
-        .orElse(0L);
-    AccountCapsule accountCapsule = getAccount(address);
-    if (Objects.nonNull(accountCapsule)) {
-      accountCapsule.setInstance(
-          accountCapsule.getInstance().toBuilder()
-              .putAssetV2(ByteArray.toStr(tokenId), balance).build());
+      accountCapsule.setRoot(rootHash);
     }
     return accountCapsule;
   }
 
   public Long getAccountAsset(byte[] address, byte[] tokenId) {
-    byte[] value = get(StateType.AccountAsset,
-        com.google.common.primitives.Bytes.concat(address, tokenId));
-    return Objects.nonNull(value) ? Longs.fromByteArray(value) : null;
+    byte[] key = com.google.common.primitives.Bytes.concat(address, tokenId);
+    byte[] encodeKey = StateType.encodeKey(StateType.AccountAsset, key);
+    Bytes value = trieImpl.get(fix32(encodeKey));
+    if (Objects.nonNull(value)) {
+      if (Objects.equals(value, UInt256.ZERO)) {
+        return null;
+      }
+      return value.toLong();
+    }
+    byte[] v = worldStateGenesis.get(StateType.AccountAsset, key);
+    return Objects.nonNull(v) ? Longs.fromByteArray(v) : null;
+  }
+
+  public long getAccountAsset(Protocol.Account account, byte[] tokenId) {
+    Long amount = getAccountAsset(account.getAddress().toByteArray(), tokenId);
+    return amount == null ? 0 : amount;
+  }
+
+  public boolean hasAssetV2(Protocol.Account account, byte[] tokenId) {
+    return getAccountAsset(account.getAddress().toByteArray(), tokenId) != null;
+  }
+
+  public Map<String, Long>  importAllAsset(Protocol.Account account) {
+    Map<String, Long> assets = new HashMap<>();
+    Map<Bytes, Bytes> genesis = worldStateGenesis.prefixQuery(StateType.AccountAsset,
+            account.getAddress().toByteArray());
+    genesis.forEach((k, v) -> assets.put(
+            ByteArray.toStr(k.slice(ADDRESS_SIZE).toArray()),
+            v.toLong())
+    );
+    Bytes address =  Bytes.of(account.getAddress().toByteArray());
+    Bytes32 min = fix32(Bytes.wrap(Bytes.of(StateType.AccountAsset.value()), address,
+            MIN_ASSET_ID));
+
+    Bytes32 max = fix32(Bytes.wrap(Bytes.of(StateType.AccountAsset.value()), address,
+            MAX_ASSET_ID));
+
+    final RangeStorageEntriesCollector collector = RangeStorageEntriesCollector.createCollector(
+            min, max, Integer.MAX_VALUE, Integer.MAX_VALUE);
+    final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
+    TreeMap<Bytes32, Bytes> state = (TreeMap<Bytes32, Bytes>) trieImpl.entriesFrom(
+            root -> RangeStorageEntriesCollector.collectEntries(collector, visitor, root, min));
+    state.forEach((k, v) -> assets.put(
+            String.valueOf(k.slice(Byte.BYTES + ADDRESS_SIZE, Long.BYTES).toLong()),
+            v.toLong())
+    );
+    // remove asset = 0
+    return assets.entrySet().stream().filter(e -> e.getValue() > 0)
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
   }
 
   // contract
@@ -254,5 +298,9 @@ public class WorldStateQueryInstance {
 
   public long getDynamicEnergyMaxFactor() {
     return getDynamicPropertyLong(DynamicPropertiesStore.DYNAMIC_ENERGY_MAX_FACTOR);
+  }
+
+  public boolean supportAllowAssetOptimization() {
+    return getDynamicPropertyLong(DynamicPropertiesStore.ALLOW_ASSET_OPTIMIZATION) == 1L;
   }
 }

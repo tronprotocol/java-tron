@@ -46,7 +46,7 @@ subprojects {
         compile "com.google.code.findbugs:jsr305:3.0.0"
         compile group: 'org.springframework', name: 'spring-context', version: '5.3.18'
         compile group: 'org.springframework', name: 'spring-tx', version: '5.3.18'
-        compile "org.apache.commons:commons-lang3:3.4"
+        compile "org.apache.commons:commons-lang3:3.12.0"
         compile group: 'org.apache.commons', name: 'commons-math', version: '2.2'
         compile "org.apache.commons:commons-collections4:4.1"
         compile group: 'joda-time', name: 'joda-time', version: '2.3'
