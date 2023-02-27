@@ -6,8 +6,6 @@ import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.protobuf.ByteString;
 import java.util.HashMap;
-import java.util.Optional;
-
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
@@ -21,6 +19,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.StorageUtils;
 import org.tron.common.utils.StringUtil;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -58,7 +57,7 @@ public class RepositoryStateImpl implements Repository {
 
   private final long precision = Parameter.ChainConstant.PRECISION;
 
-  private Bytes32 rootHash;
+  private final Bytes32 rootHash;
   private StoreFactory storeFactory;
 
   @Getter
@@ -84,8 +83,7 @@ public class RepositoryStateImpl implements Repository {
   public RepositoryStateImpl(StoreFactory storeFactory, RepositoryStateImpl repository,
                              Bytes32 rootHash) {
     this.rootHash = rootHash;
-    this.worldStateQueryInstance = new WorldStateQueryInstance(rootHash,
-            storeFactory.getChainBaseManager());
+    this.worldStateQueryInstance = ChainBaseManager.fetch(rootHash);
     init(storeFactory, repository);
   }
 
@@ -253,44 +251,6 @@ public class RepositoryStateImpl implements Repository {
 
     if (accountCapsule != null) {
       accountCache.put(key, Value.create(accountCapsule));
-    }
-    return accountCapsule;
-  }
-
-  public AccountCapsule getAccountWithAsset(byte[] address, byte[] tokenId) {
-    AccountCapsule accountCapsule;
-    Key key = new Key(address);
-    if (accountCache.containsKey(key)) {
-      accountCapsule = new AccountCapsule(accountCache.get(key).getValue());
-      fillAsset(accountCapsule, tokenId);
-      accountCache.put(key, Value.create(accountCapsule));
-      return accountCapsule;
-    }
-
-    if (parent != null) {
-      accountCapsule = parent.getAccount(address);
-      fillAsset(accountCapsule, tokenId);
-    } else {
-      accountCapsule = worldStateQueryInstance.getAccount(address, tokenId);
-    }
-
-    if (accountCapsule != null) {
-      accountCache.put(key, Value.create(accountCapsule));
-    }
-    return accountCapsule;
-  }
-
-  private AccountCapsule fillAsset(AccountCapsule accountCapsule, byte[] tokenId) {
-    String tokenIdStr = ByteArray.toStr(tokenId);
-    accountCapsule.setFlag(true);  // skip import asset method
-    if (!accountCapsule.getAssetMapV2().containsKey(tokenIdStr)) {
-      long balance = Optional
-          .ofNullable(worldStateQueryInstance.getAccountAsset(
-              accountCapsule.getAddress().toByteArray(), tokenId))
-          .orElse(0L);;
-      accountCapsule.setInstance(
-          accountCapsule.getInstance().toBuilder()
-              .putAssetV2(tokenIdStr, balance).build());
     }
     return accountCapsule;
   }
@@ -756,7 +716,7 @@ public class RepositoryStateImpl implements Repository {
   @Override
   public long addTokenBalance(byte[] address, byte[] tokenId, long value) {
     byte[] tokenIdWithoutLeadingZero = ByteUtil.stripLeadingZeroes(tokenId);
-    AccountCapsule accountCapsule = getAccountWithAsset(address, tokenId);
+    AccountCapsule accountCapsule = getAccount(address);
     if (accountCapsule == null) {
       accountCapsule = createAccount(address, Protocol.AccountType.Normal);
     }
@@ -786,7 +746,12 @@ public class RepositoryStateImpl implements Repository {
 
   @Override
   public long getTokenBalance(byte[] address, byte[] tokenId) {
-    return worldStateQueryInstance.getAccountAsset(address, ByteUtil.stripLeadingZeroes(tokenId));
+    AccountCapsule accountCapsule = getAccount(address);
+    if (accountCapsule == null) {
+      return 0;
+    }
+    String tokenStr = new String(ByteUtil.stripLeadingZeroes(tokenId));
+    return accountCapsule.getAssetV2(tokenStr);
   }
 
   @Override

@@ -4,7 +4,6 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import java.util.List;
-
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -45,10 +44,10 @@ public class WorldStateQueryTest {
 
   private static String dbPath = "output-directory-state";
 
-  private ECKey account1Prikey = ECKey.fromPrivate( // TJCnKsPa7y5okkXvQAidZBzqx3QyQ6sxMW
-      ByteArray.fromHexString("D95611A9AF2A2A45359106222ED1AFED48853D9A44DEFF8DC7913F5CBA727366"));
-  private ECKey account2Prikey = ECKey.fromPrivate( // TGehVcNhud84JDCGrNHKVz9jEAVKUpbuiv
-      ByteArray.fromHexString("cba92a516ea09f620a16ff7ee95ce0df1d56550a8babe9964981a7144c8a784a"));
+  private ECKey account1Prikey = ECKey.fromPrivate(ByteArray.fromHexString(
+      "D95611A9AF2A2A45359106222ED1AFED48853D9A44DEFF8DC7913F5CBA727366"));
+  private ECKey account2Prikey = ECKey.fromPrivate(ByteArray.fromHexString(
+      "cba92a516ea09f620a16ff7ee95ce0df1d56550a8babe9964981a7144c8a784a"));
 
   byte[] contractAddress;
 
@@ -83,7 +82,8 @@ public class WorldStateQueryTest {
   @Test
   public void testTransfer() throws InterruptedException {
     manager.initGenesis();
-    List<BlockCapsule> blockCapsules = chainBaseManager.getBlockStore().getBlockByLatestNum(1);
+    List<BlockCapsule> blockCapsules = chainBaseManager
+        .getBlockStore().getBlockByLatestNum(1);
     BlockCapsule blockCapsule = blockCapsules.get(0);
     try {
       manager.pushBlock(buildTransferBlock(blockCapsule));
@@ -94,7 +94,7 @@ public class WorldStateQueryTest {
     blockCapsules = chainBaseManager.getBlockStore().getBlockByLatestNum(1);
     blockCapsule = blockCapsules.get(0);
     Bytes32 rootHash = blockCapsule.getArchiveRoot();
-    WorldStateQueryInstance worldStateQueryInstance = new WorldStateQueryInstance(rootHash, chainBaseManager);
+    WorldStateQueryInstance worldStateQueryInstance = ChainBaseManager.fetch(rootHash);
     checkAccount(worldStateQueryInstance);
 
     try {
@@ -107,14 +107,15 @@ public class WorldStateQueryTest {
     blockCapsules = chainBaseManager.getBlockStore().getBlockByLatestNum(1);
     blockCapsule = blockCapsules.get(0);
     rootHash = blockCapsule.getArchiveRoot();
-    worldStateQueryInstance = new WorldStateQueryInstance(rootHash, chainBaseManager);
+    worldStateQueryInstance = ChainBaseManager.fetch(rootHash);
     checkAccount(worldStateQueryInstance);
   }
 
   @Test
   public void testContract() throws InterruptedException {
     manager.initGenesis();
-    List<BlockCapsule> blockCapsules = chainBaseManager.getBlockStore().getBlockByLatestNum(1);
+    List<BlockCapsule> blockCapsules = chainBaseManager
+        .getBlockStore().getBlockByLatestNum(1);
     BlockCapsule blockCapsule = blockCapsules.get(0);
     try {
       manager.pushBlock(buildContractBlock(blockCapsule));
@@ -125,7 +126,7 @@ public class WorldStateQueryTest {
     blockCapsules = chainBaseManager.getBlockStore().getBlockByLatestNum(1);
     blockCapsule = blockCapsules.get(0);
     Bytes32 rootHash = blockCapsule.getArchiveRoot();
-    WorldStateQueryInstance worldStateQueryInstance = new WorldStateQueryInstance(rootHash, chainBaseManager);
+    WorldStateQueryInstance worldStateQueryInstance = ChainBaseManager.fetch(rootHash);
     Assert.assertArrayEquals(chainBaseManager.getContractStore().get(contractAddress).getData(),
         worldStateQueryInstance.getContract(contractAddress).getData());
     checkAccount(worldStateQueryInstance);
@@ -140,7 +141,7 @@ public class WorldStateQueryTest {
     blockCapsules = chainBaseManager.getBlockStore().getBlockByLatestNum(1);
     blockCapsule = blockCapsules.get(0);
     rootHash = blockCapsule.getArchiveRoot();
-    worldStateQueryInstance = new WorldStateQueryInstance(rootHash, chainBaseManager);
+    worldStateQueryInstance = ChainBaseManager.fetch(rootHash);
     ContractCapsule contractCapsule = worldStateQueryInstance.getContract(contractAddress);
 
     Storage storage = new Storage(contractAddress, worldStateQueryInstance);
@@ -154,24 +155,31 @@ public class WorldStateQueryTest {
   }
 
   private void checkAccount(WorldStateQueryInstance worldStateQueryInstance) {
-    AccountCapsule account1Capsule = chainBaseManager.getAccountStore().get(account1Prikey.getAddress());
+    AccountCapsule account1Capsule = chainBaseManager.getAccountStore()
+        .get(account1Prikey.getAddress());
     account1Capsule.clearAsset();
-    AccountCapsule account2Capsule = chainBaseManager.getAccountStore().get(account2Prikey.getAddress());
+    AccountCapsule account2Capsule = chainBaseManager.getAccountStore()
+        .get(account2Prikey.getAddress());
     account2Capsule.clearAsset();
     Assert.assertArrayEquals(account1Capsule.getInstance().toByteArray(),
-        worldStateQueryInstance.getAccount(account1Prikey.getAddress()).getInstance().toByteArray());
+        worldStateQueryInstance.getAccount(account1Prikey.getAddress())
+            .getInstance().toByteArray());
     Assert.assertArrayEquals(account2Capsule.getInstance().toByteArray(),
-        worldStateQueryInstance.getAccount(account2Prikey.getAddress()).getInstance().toByteArray());
+        worldStateQueryInstance.getAccount(account2Prikey.getAddress())
+            .getInstance().toByteArray());
   }
 
   private BlockCapsule buildTransferBlock(BlockCapsule parentBlock) {
-    BalanceContract.TransferContract transferContract = BalanceContract.TransferContract.newBuilder()
+    BalanceContract.TransferContract transferContract = BalanceContract
+        .TransferContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(account1Prikey.getAddress()))
         .setToAddress(ByteString.copyFrom(account2Prikey.getAddress()))
         .setAmount(1).build();
 
-    Protocol.Transaction.raw.Builder transactionBuilder = Protocol.Transaction.raw.newBuilder().addContract(
-        Protocol.Transaction.Contract.newBuilder().setType(ContractType.TransferContract).setParameter(
+    Protocol.Transaction.raw.Builder transactionBuilder = Protocol
+        .Transaction.raw.newBuilder().addContract(
+        Protocol.Transaction.Contract.newBuilder()
+            .setType(ContractType.TransferContract).setParameter(
             Any.pack(transferContract)).build());
     Protocol.Transaction transaction = Protocol.Transaction.newBuilder()
         .setRawData(transactionBuilder.build()).build();
@@ -180,13 +188,13 @@ public class WorldStateQueryTest {
 
     BlockCapsule blockCapsule =
         new BlockCapsule(
-            parentBlock.getNum()+1,
+            parentBlock.getNum() + 1,
             Sha256Hash.wrap(parentBlock.getBlockId().getByteString()),
             System.currentTimeMillis(),
             ByteString.copyFrom(
                 ECKey.fromPrivate(
-                    org.tron.common.utils.ByteArray.fromHexString(
-                        Args.getLocalWitnesses().getPrivateKey()))
+                        org.tron.common.utils.ByteArray.fromHexString(
+                            Args.getLocalWitnesses().getPrivateKey()))
                     .getAddress()));
     blockCapsule.addTransaction(transactionCapsule);
     blockCapsule.setMerkleRoot();
@@ -201,16 +209,16 @@ public class WorldStateQueryTest {
     long consumeUserResourcePercent = 0L;
     String contractName = "increment";
     String ABI = "[]";
-    String code = "60806040526000805534801561001457600080fd5b50610181806100246000396000f3fe608060" +
-        "405234801561001057600080fd5b50600436106100415760003560e01c806342cbb15c146100465780636d4c" +
-        "e63c14610064578063d09de08a14610082575b600080fd5b61004e61008c565b60405161005b91906100cd56" +
-        "5b60405180910390f35b61006c610094565b60405161007991906100cd565b60405180910390f35b61008a61" +
-        "009d565b005b600043905090565b60008054905090565b60016000546100ac9190610117565b600081905550" +
-        "565b6000819050919050565b6100c7816100b4565b82525050565b60006020820190506100e2600083018461" +
-        "00be565b92915050565b7f4e487b710000000000000000000000000000000000000000000000000000000060" +
-        "0052601160045260246000fd5b6000610122826100b4565b915061012d836100b4565b925082820190508082" +
-        "1115610145576101446100e8565b5b9291505056fea26469706673582212207c5e242c88722ac1f7f5f1ea67" +
-        "0cf1a784cad42b058651ceaf6fe0fc10ebff8264736f6c63430008110033";
+    String code = "60806040526000805534801561001457600080fd5b50610181806100246000396000f3fe608060"
+        + "405234801561001057600080fd5b50600436106100415760003560e01c806342cbb15c146100465780636d4c"
+        + "e63c14610064578063d09de08a14610082575b600080fd5b61004e61008c565b60405161005b91906100cd56"
+        + "5b60405180910390f35b61006c610094565b60405161007991906100cd565b60405180910390f35b61008a61"
+        + "009d565b005b600043905090565b60008054905090565b60016000546100ac9190610117565b600081905550"
+        + "565b6000819050919050565b6100c7816100b4565b82525050565b60006020820190506100e2600083018461"
+        + "00be565b92915050565b7f4e487b710000000000000000000000000000000000000000000000000000000060"
+        + "0052601160045260246000fd5b6000610122826100b4565b915061012d836100b4565b925082820190508082"
+        + "1115610145576101446100e8565b5b9291505056fea26469706673582212207c5e242c88722ac1f7f5f1ea67"
+        + "0cf1a784cad42b058651ceaf6fe0fc10ebff8264736f6c63430008110033";
     String libraryAddressPair = null;
     Protocol.Transaction transaction = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         contractName, account1Prikey.getAddress(), ABI, code, value, feeLimit,
@@ -218,18 +226,19 @@ public class WorldStateQueryTest {
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
     transactionCapsule.setResultCode(Protocol.Transaction.Result.contractResult.SUCCESS);
 
-    transactionCapsule = setAndSignTx(transactionCapsule.getInstance(), parentBlock, account1Prikey);
+    transactionCapsule = setAndSignTx(transactionCapsule.getInstance(),
+        parentBlock, account1Prikey);
 
 
     BlockCapsule blockCapsule =
         new BlockCapsule(
-            parentBlock.getNum()+1,
+            parentBlock.getNum() + 1,
             Sha256Hash.wrap(parentBlock.getBlockId().getByteString()),
             System.currentTimeMillis(),
             ByteString.copyFrom(
                 ECKey.fromPrivate(
-                    org.tron.common.utils.ByteArray.fromHexString(
-                        Args.getLocalWitnesses().getPrivateKey()))
+                        org.tron.common.utils.ByteArray.fromHexString(
+                            Args.getLocalWitnesses().getPrivateKey()))
                     .getAddress()));
     blockCapsule.addTransaction(transactionCapsule);
     blockCapsule.setMerkleRoot();
@@ -249,17 +258,18 @@ public class WorldStateQueryTest {
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
     transactionCapsule.setResultCode(Protocol.Transaction.Result.contractResult.SUCCESS);
 
-    transactionCapsule = setAndSignTx(transactionCapsule.getInstance(), parentBlock, account1Prikey);
+    transactionCapsule = setAndSignTx(transactionCapsule.getInstance(),
+        parentBlock, account1Prikey);
 
     BlockCapsule blockCapsule =
         new BlockCapsule(
-            parentBlock.getNum()+1,
+            parentBlock.getNum() + 1,
             Sha256Hash.wrap(parentBlock.getBlockId().getByteString()),
             System.currentTimeMillis(),
             ByteString.copyFrom(
                 ECKey.fromPrivate(
-                    org.tron.common.utils.ByteArray.fromHexString(
-                        Args.getLocalWitnesses().getPrivateKey()))
+                        org.tron.common.utils.ByteArray.fromHexString(
+                            Args.getLocalWitnesses().getPrivateKey()))
                     .getAddress()));
     blockCapsule.addTransaction(transactionCapsule);
     blockCapsule.setMerkleRoot();
@@ -268,11 +278,13 @@ public class WorldStateQueryTest {
     return blockCapsule;
   }
 
-  private TransactionCapsule setAndSignTx(Protocol.Transaction transaction, BlockCapsule parentBlock, ECKey account) {
+  private TransactionCapsule setAndSignTx(Protocol.Transaction transaction,
+                                          BlockCapsule parentBlock, ECKey account) {
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
     transactionCapsule.setReference(parentBlock.getNum(), parentBlock.getBlockId().getBytes());
-    transactionCapsule.setExpiration(parentBlock.getTimeStamp() + 60*60*1000);
-    return new TransactionCapsule(PublicMethod.signTransaction(account, transactionCapsule.getInstance()));
+    transactionCapsule.setExpiration(parentBlock.getTimeStamp() + 60 * 60 * 1000);
+    return new TransactionCapsule(PublicMethod.signTransaction(account,
+        transactionCapsule.getInstance()));
   }
 
 }

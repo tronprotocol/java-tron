@@ -1,11 +1,6 @@
 package org.tron.core.state;
 
 import io.prometheus.client.Histogram;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
@@ -13,8 +8,6 @@ import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.Metrics;
-import org.tron.common.utils.StringUtil;
-import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.state.trie.TrieImpl2;
 
@@ -25,59 +18,28 @@ public class WorldStateCallBack extends WorldStateCallBackUtils {
   private BlockCapsule blockCapsule;
   private volatile TrieImpl2 trie;
 
-  @Setter
-  private ChainBaseManager chainBaseManager;
-
-  private final LinkedBlockingQueue<TrieEntry> queue = new LinkedBlockingQueue<>();
-  private ExecutorService executorService = Executors.newSingleThreadExecutor();
-
-  private final Runnable updateService =
-      () -> {
-        while (true) {
-          TrieEntry trieEntry;
-          trieEntry = queue.peek();
-          if (trieEntry == null) {
-            try {
-              Thread.sleep(5);
-              continue;
-            } catch (InterruptedException e) {
-              logger.error("state update failed, get trie entry failed, err: {}", e.getMessage());
-              System.exit(-1);
-            }
-          }
-
-          try {
-            trie.put(trieEntry.getKey(), trieEntry.getData());
-          } catch (MerkleTrieException e) {
-            logger.error(
-                    "put trie entry failed, key: {}, value: {}, err: {}",
-                    StringUtil.createReadableString(trieEntry.getKey().toArray()),
-                    StringUtil.createReadableString(trieEntry.getData().toArrayUnsafe()),
-                    e.getMessage());
-            System.exit(-1);
-          }
-          queue.poll();
-        }
-      };
-
   public WorldStateCallBack() {
     this.execute = true;
     this.allowGenerateRoot = CommonParameter.getInstance().getStorage().isAllowStateRoot();
-    if (this.allowGenerateRoot) {
-      executorService.submit(updateService);
+  }
+
+  private void clear() {
+    if (!exe()) {
+      return;
     }
+    trieEntryList.forEach(trie::put);
+    trieEntryList.clear();
   }
 
   public void preExeTrans() {
-    trieEntryList.clear();
+    clear();
   }
 
   public void exeTransFinish() {
-    queue.addAll(trieEntryList.values());
-    trieEntryList.clear();
+    clear();
   }
 
-  public void preExecute(BlockCapsule blockCapsule, WorldStateTrieStore worldStateTrieStore) {
+  public void preExecute(BlockCapsule blockCapsule) {
     this.blockCapsule = blockCapsule;
     this.execute = true;
     if (!exe()) {
@@ -87,37 +49,23 @@ public class WorldStateCallBack extends WorldStateCallBackUtils {
       BlockCapsule parentBlockCapsule =
           chainBaseManager.getBlockById(blockCapsule.getParentBlockId());
       Bytes32 rootHash = parentBlockCapsule.getArchiveRoot();
-      trie = new TrieImpl2(worldStateTrieStore, rootHash);
+      trie = new TrieImpl2(chainBaseManager.getWorldStateTrieStore(), rootHash);
     } catch (Exception e) {
       throw new MerkleTrieException(e.getMessage());
     }
-
   }
 
   public void executePushFinish() {
+    if (!exe()) {
+      return;
+    }
     final Histogram.Timer timer =
             Metrics.histogramStartTimer(MetricKeys.Histogram.BLOCK_WORLD_STATE_LATENCY);
     try {
-      if (!exe()) {
-        return;
-      }
-      // update state after processTx
-      queue.addAll(trieEntryList.values());
-      trieEntryList.clear();
-      while (queue.size() != 0) {
-        try {
-          Thread.sleep(10);
-        } catch (InterruptedException e) {
-          logger.error("Fatal error, {}", e.getMessage());
-        }
-      }
+      clear();
       trie.commit();
       trie.flush();
       Bytes32 newRoot = trie.getRootHashByte32();
-      if (newRoot.isZero()) {
-        logger.error("executePushFinish failed, trie root hash is null");
-        System.exit(-1);
-      }
       blockCapsule.setArchiveRoot(newRoot.toArray());
       execute = false;
     } finally {
@@ -125,50 +73,24 @@ public class WorldStateCallBack extends WorldStateCallBackUtils {
     }
   }
 
-  public void initGenesis(BlockCapsule blockCapsule, WorldStateTrieStore worldStateTrieStore) {
+  public void initGenesis(BlockCapsule blockCapsule) {
     if (!exe()) {
       return;
     }
-    trie = new TrieImpl2(worldStateTrieStore);
-    for (TrieEntry trieEntry : trieEntryList.values()) {
-      trie.put(trieEntry.getKey(), trieEntry.getData());
-    }
-    trieEntryList.clear();
+    trie = new TrieImpl2(chainBaseManager.getWorldStateTrieStore());
+    clear();
     trie.commit();
     trie.flush();
-
     Bytes32 newRoot = trie.getRootHashByte32();
-    if (newRoot.isZero()) {
-      logger.error("initGenesis failed, trie root hash is null");
-      System.exit(-1);
-    }
     blockCapsule.setArchiveRoot(newRoot.toArray());
     execute = false;
   }
-
-  /**
-   * As this root can not be consensused now,
-   * ignore this logic when generate block.
-   */
-//  public void executeGenerateFinish() {
-//    if (!exe()) {
-//      return;
-//    }
-//    //
-//    byte[] newRoot = trie.getRootHash();
-//    if (ArrayUtils.isEmpty(newRoot)) {
-//      newRoot = Hash.EMPTY_TRIE_HASH;
-//    }
-//    blockCapsule.setStateRoot(newRoot);
-//    execute = false;
-//  }
 
   public void exceptionFinish() {
     execute = false;
   }
 
   public void stopUpdateService() {
-    executorService.shutdown();
   }
 
 }

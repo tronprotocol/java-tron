@@ -129,8 +129,7 @@ public class VMActuator implements Actuator2 {
     if (!stateQuery) {
       ConfigLoader.load(context.getStoreFactory());
     } else {
-      ConfigLoader.load(context.getStoreFactory(),
-          context.getBlockCap().getArchiveRoot());
+      ConfigLoader.load(context.getBlockCap().getArchiveRoot());
     }
     // Warm up registry class
     OperationRegistry.init();

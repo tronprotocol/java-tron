@@ -29,6 +29,7 @@ import org.tron.core.db2.common.DB;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.LevelDB;
 import org.tron.core.db2.common.RocksDB;
+import org.tron.core.db2.common.Value;
 import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.db2.core.Chainbase;
 import org.tron.core.db2.core.ITronChainBase;
@@ -114,20 +115,23 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     if (Objects.isNull(key) || Objects.isNull(item)) {
       return;
     }
-
-    revokingDB.put(key, item.getData());
-    // todo: optimize, minimize the ops
+    byte[] value = item.getData();
+    revokingDB.put(key, value);
     if (worldStateCallBackUtils != null) {
-      worldStateCallBackUtils.callBack(type, key, item);
+      worldStateCallBackUtils.callBack(type, key,
+              value,
+              Value.Operator.PUT);
     }
   }
 
   @Override
   public void delete(byte[] key) {
-    revokingDB.delete(key);
     if (worldStateCallBackUtils != null) {
-      worldStateCallBackUtils.callBack(type, key, null);
+      worldStateCallBackUtils.callBack(type, key,
+              StateType.Account == type ? revokingDB.getUnchecked(key) : null,
+              Value.Operator.DELETE);
     }
+    revokingDB.delete(key);
   }
 
   @Override

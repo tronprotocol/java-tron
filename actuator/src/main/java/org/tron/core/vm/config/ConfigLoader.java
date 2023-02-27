@@ -5,7 +5,7 @@ import static org.tron.core.capsule.ReceiptCapsule.checkForEnergyLimit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tuweni.bytes.Bytes32;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.common.utils.ByteArray;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.state.WorldStateQueryInstance;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.StoreFactory;
@@ -45,10 +45,9 @@ public class ConfigLoader {
     }
   }
 
-  public static void load(StoreFactory storeFactory, Bytes32 rootHash) {
+  public static void load(Bytes32 rootHash) {
     if (!disable) {
-      WorldStateQueryInstance wq = new WorldStateQueryInstance(rootHash,
-              storeFactory.getChainBaseManager());
+      WorldStateQueryInstance wq = ChainBaseManager.fetch(rootHash);
       VMConfig.setVmTrace(CommonParameter.getInstance().isVmTrace());
 
       long blockNum = wq.getLatestBlockHeaderNumber();

@@ -172,7 +172,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_ACCOUNT_ASSET_OPTIMIZATION =
       "ALLOW_ACCOUNT_ASSET_OPTIMIZATION".getBytes();
 
-  private static final byte[] ALLOW_ASSET_OPTIMIZATION =
+  public static final byte[] ALLOW_ASSET_OPTIMIZATION =
       "ALLOW_ASSET_OPTIMIZATION".getBytes();
 
 

@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,12 +16,15 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.tuweni.bytes.Bytes;
 import org.rocksdb.BlockBasedTableConfig;
 import org.rocksdb.BloomFilter;
 import org.rocksdb.ComparatorOptions;
 import org.rocksdb.LRUCache;
 import org.rocksdb.Options;
+import org.rocksdb.ReadOptions;
 import org.rocksdb.RocksDBException;
+import org.rocksdb.RocksIterator;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.FileUtil;
@@ -116,6 +120,25 @@ public class WorldStateGenesis {
     }
   }
 
+  public Map<Bytes, Bytes> prefixQuery(StateType type, byte[] key) {
+    if (!allowStateRoot) {
+      throw new IllegalStateException("StateRoot is not allowed.");
+    }
+    if (!inited) {
+      throw new IllegalStateException("StateRoot is not inited.");
+    }
+
+    if (stateGenesisHeight == 0) {
+      return Collections.emptyMap();
+    }
+
+    if (stateGenesisHeight > genesisHeight) {
+      return genesisDBs.get(type).prefixQuery(key);
+    } else {
+      throw new IllegalStateException("stateGenesis is not available.");
+    }
+  }
+
   private void tryInitGenesis() {
     if ((this.stateGenesisHeight = tryFindStateGenesisHeight()) > -1) {
       return;
@@ -206,6 +229,8 @@ public class WorldStateGenesis {
   interface DB extends Closeable {
     byte[] get(byte[] key) throws RocksDBException;
 
+    Map<Bytes, Bytes> prefixQuery(byte[] key);
+
     String name();
   }
 
@@ -226,6 +251,22 @@ public class WorldStateGenesis {
     @Override
     public byte[] get(byte[] key) throws RocksDBException {
       return this.rocksDB.get(key);
+    }
+
+    @Override
+    public Map<Bytes, Bytes> prefixQuery(byte[] key) {
+      try (ReadOptions readOptions = new ReadOptions().setFillCache(false)) {
+        RocksIterator iterator = this.rocksDB.newIterator(readOptions);
+        Map<Bytes, Bytes> result = new HashMap<>();
+        for (iterator.seek(key); iterator.isValid(); iterator.next()) {
+          if (com.google.common.primitives.Bytes.indexOf(iterator.key(), key) == 0) {
+            result.put(Bytes.wrap(iterator.key()), Bytes.wrap(iterator.value()));
+          } else {
+            return result;
+          }
+        }
+        return result;
+      }
     }
 
     @Override
