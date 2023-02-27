@@ -14,14 +14,22 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
+import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
 public class AllNodesVisitor<V> implements NodeVisitor<V> {
 
   private final Consumer<Node<V>> handler;
 
+  private ExecutorService executorService;
+
   AllNodesVisitor(final Consumer<Node<V>> handler) {
     this.handler = handler;
+  }
+
+  AllNodesVisitor(final Consumer<Node<V>> handler, ExecutorService executorService) {
+    this.handler = handler;
+    this.executorService = executorService;
   }
 
   @Override
@@ -33,7 +41,16 @@ public class AllNodesVisitor<V> implements NodeVisitor<V> {
   @Override
   public void visit(final BranchNode<V> branchNode) {
     handler.accept(branchNode);
-    branchNode.getChildren().forEach(this::acceptAndUnload);
+    if (executorService == null) {
+      branchNode.getChildren().forEach(this::acceptAndUnload);
+    } else {
+      branchNode.getChildren().forEach(child-> {
+        executorService.submit( () -> {
+          child.accept(this);
+          child.unload();
+        });
+      });
+    }
   }
 
   @Override

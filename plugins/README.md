@@ -135,3 +135,39 @@ Execute move command.
   java -jar Toolkit.jar db mv -c main_net_config.conf -d /data/tron/output-directory
 ```
 
+
+## DB Prune
+
+Prune tool is only used for pruning the MPT data for archive node. When a Fullnode sets `stateRoot.switch = true`, 
+it is a archive node and will store the history data in `stateGenesis.directory(default: output-directory/state-genesis/world-state-trie)`, 
+the data volume of this database grows fast and may reach terabyte levels in a few months.
+But not all the archive node want to reserve the whole history data, some may only want to reserve recently history data like three month, 
+this tool can split the trie data and generate a new database which only contain the latest MPT as you specified.
+When prune finished, you shoud replace the `state-genesis` by `state-directory-pruned`, 
+prune may take a long time depend on the number of MPT that you want reserved.
+
+
+
+### Available parameters:
+
+- `-c | --config`: config file, Default: config.conf.
+- `-d | --output-directory`: src output directory, Default: output-directory.
+- `-p | --state-directory-pruned`: pruned state directory, Default: state-genesis-pruned.
+- `-n | --number-reserved`: the number of recent trie data should be reserved.
+- `-k | --check`: the switch whether check the data correction after prune
+- `-h | --help`: provide the help info
+
+### Examples:
+
+Execute move command.
+```shell script
+# full command
+  java -jar Toolkit.jar db prune [-hk] [-c=<config>] -n=<reserveNumber>
+                                 [-p=<prunedDir>] [-d=<srcDirectory>]
+# 1. split and get pruned data
+  java -jar Toolkit.jar db prune -d ./output-directory -p ./state-genesis-pruned -c ./config.conf -n 1 -k
+# 2. mv the prev state db away
+  mv ./output-directory/state-genesis /backup
+# 3. replace and rename the pruned dir 
+  mv ./state-genesis-pruned ./output-directory/state-genesis
+```
