@@ -1,5 +1,6 @@
 package org.tron.common.logsfilter;
 
+import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,16 +16,24 @@ public class FilterQuery {
   public static final String LATEST = "latest";
   @Getter
   @Setter
-  private long fromBlock;
+  private long fromBlock = EARLIEST_BLOCK_NUM;
   @Getter
   @Setter
-  private long toBlock;
+  private long toBlock = LATEST_BLOCK_NUM;
   @Getter
   @Setter
-  private List<String> contractAddressList;
+  private List<String> contractAddressList = new ArrayList<>();
   @Getter
   @Setter
-  private List<String> contractTopicList;
+  private List<String> contractTopicList = new ArrayList<>();
+
+  @Getter
+  @Setter
+  private String name = "";
+
+  @Getter
+  @Setter
+  private String disable;
 
   public static long parseFromBlockNumber(String blockNum) {
     long number = 0;
@@ -58,13 +67,18 @@ public class FilterQuery {
 
   @Override
   public String toString() {
-    return new StringBuilder().append("fromBlock: ")
+    return new StringBuilder()
+        .append("name: ")
+        .append(name)
+        .append(", fromBlock: ")
         .append(fromBlock)
         .append(", toBlock: ")
         .append(toBlock)
         .append(", contractAddress: ")
         .append(contractAddressList)
         .append(", contractTopics: ")
-        .append(contractTopicList).toString();
+        .append(contractTopicList)
+        .append(", disable: ")
+        .append(disable).toString();
   }
 }

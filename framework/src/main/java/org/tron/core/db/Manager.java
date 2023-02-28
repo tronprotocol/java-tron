@@ -44,12 +44,14 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.quartz.CronExpression;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.bloom.Bloom;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.FilterQuery;
+import org.tron.common.logsfilter.capsule.BlockContractLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.BlockFilterCapsule;
 import org.tron.common.logsfilter.capsule.BlockLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.ContractTriggerCapsule;
@@ -58,6 +60,7 @@ import org.tron.common.logsfilter.capsule.LogsFilterCapsule;
 import org.tron.common.logsfilter.capsule.SolidityTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TransactionLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TriggerCapsule;
+import org.tron.common.logsfilter.trigger.BlockContractLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
@@ -1296,6 +1299,7 @@ public class Manager {
               // if event subscribe is enabled, post solidity trigger to queue
               postSolidityTrigger(oldSolidNum,
                       getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+          postBlockContractLogTrigger(newBlock);
             } catch (Throwable throwable) {
               logger.error(throwable.getMessage(), throwable);
               khaosDb.removeBlk(block.getBlockId());
@@ -2012,14 +2016,10 @@ public class Manager {
       if (!eventPluginLoaded) {
         logger.error("Failed to load eventPlugin.");
       }
-
-      FilterQuery eventFilter = Args.getInstance().getEventFilter();
-      if (!Objects.isNull(eventFilter)) {
-        EventPluginLoader.getInstance().setFilterQuery(eventFilter);
-      }
+      EventPluginLoader.getInstance().getFilterQuery();
 
     } catch (Exception e) {
-      logger.error("{}", e);
+      logger.error("startEventSubscribing error:{}", e.toString(), e);
     }
   }
 
@@ -2349,6 +2349,19 @@ public class Manager {
     long value = getPendingTransactions().size() + getRePushTransactions().size()
         + getPoppedTransactions().size();
     return value;
+  }
+
+  private void postBlockContractLogTrigger(final BlockCapsule blockCapsule) {
+    if (!eventPluginLoaded || !EventPluginLoader.getInstance().isBlockContractLogTriggerEnable()) {
+      return;
+    }
+    BlockContractLogTriggerCapsule blockContractLogTriggerCapsule =
+        new BlockContractLogTriggerCapsule(blockCapsule, getDynamicPropertiesStore()
+        .getLatestSolidifiedBlockNum());
+
+    if (!triggerCapsuleQueue.offer(blockContractLogTriggerCapsule)) {
+      logger.info("too many triggers, BlockContractLog trigger lost: {}", blockCapsule.getBlockId());
+    }
   }
 
   private void initLiteNode() {
