@@ -241,6 +241,9 @@ public class Manager {
   @Getter
   private volatile long latestSolidityNumShutDown;
   @Getter
+  private long lastUsedSolidityNum = -1;
+  private boolean useSolidity = false;
+  @Getter
   private int maxFlushCount;
 
   @Getter
@@ -525,12 +528,18 @@ public class Manager {
       Thread triggerCapsuleProcessThread = new Thread(triggerCapsuleProcessLoop);
       triggerCapsuleProcessThread.setDaemon(true);
       triggerCapsuleProcessThread.start();
+      if (eventPluginLoaded) {
+        useSolidity = EventPluginLoader.getInstance().isBlockLogTriggerSolidified()
+            | EventPluginLoader.getInstance().isTransactionLogTriggerEnable()
+            | EventPluginLoader.getInstance().isTransactionLogTriggerSolidified();
+      }
     }
 
     // start json rpc filter process
     if (CommonParameter.getInstance().isJsonRpcFilterEnabled()) {
       Thread filterProcessThread = new Thread(filterProcessLoop);
       filterProcessThread.start();
+      useSolidity |= CommonParameter.getInstance().isJsonRpcHttpSolidityNodeEnable();
     }
 
     //initStoreFactory
@@ -2027,17 +2036,11 @@ public class Manager {
       return;
     }
 
-    BlockCapsule blockCapsule;
-    try {
-      blockCapsule = chainBaseManager.getBlockByNum(latestSolidifiedBlockNumber);
-    } catch (Exception e) {
-      logger.error("PostSolidityFilter getBlockByNum = {} except, {}.",
-          latestSolidifiedBlockNumber, e.getMessage());
-      return;
+    List<BlockCapsule> capsuleList = getCrossBlockCapsule(latestSolidifiedBlockNumber);
+    for (BlockCapsule blockCapsule : capsuleList) {
+      postBlockFilter(blockCapsule, true);
+      postLogsFilter(blockCapsule, true, false);
     }
-
-    postBlockFilter(blockCapsule, true);
-    postLogsFilter(blockCapsule, true, false);
   }
 
   private void postSolidityTrigger(final long oldSolidNum, final long latestSolidifiedBlockNumber) {
@@ -2054,27 +2057,26 @@ public class Manager {
     }
 
     if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityTriggerEnable()) {
-      SolidityTriggerCapsule solidityTriggerCapsule
-          = new SolidityTriggerCapsule(latestSolidifiedBlockNumber);
-
-      BlockCapsule blockCapsule;
-      try {
-        blockCapsule = chainBaseManager.getBlockByNum(latestSolidifiedBlockNumber);
+      List<BlockCapsule> capsuleList = getCrossBlockCapsule(latestSolidifiedBlockNumber);
+      for(BlockCapsule blockCapsule : capsuleList){
+        SolidityTriggerCapsule solidityTriggerCapsule
+            = new SolidityTriggerCapsule(latestSolidifiedBlockNumber);
         solidityTriggerCapsule.setTimeStamp(blockCapsule.getTimeStamp());
-      } catch (Exception e) {
-        logger.error("PostSolidityTrigger getBlockByNum = {} except, {}.",
-            latestSolidifiedBlockNumber, e.getMessage());
-      }
 
-      boolean result = triggerCapsuleQueue.offer(solidityTriggerCapsule);
-      if (!result) {
-        logger.info("Too many trigger, lost solidified trigger, block number: {}.",
-            latestSolidifiedBlockNumber);
+        boolean result = triggerCapsuleQueue.offer(solidityTriggerCapsule);
+        if (!result) {
+          logger.info("Too many trigger, lost solidified trigger, block number: {}.",
+              latestSolidifiedBlockNumber);
+        }
       }
     }
 
     if (CommonParameter.getInstance().isJsonRpcHttpSolidityNodeEnable()) {
       postSolidityFilter(oldSolidNum, latestSolidifiedBlockNumber);
+    }
+
+    if (useSolidity) {
+      lastUsedSolidityNum = latestSolidifiedBlockNumber;
     }
   }
 
@@ -2184,7 +2186,6 @@ public class Manager {
   }
 
   private void postBlockTrigger(final BlockCapsule blockCapsule) {
-    BlockCapsule newBlock = blockCapsule;
 
     // post block and logs for jsonrpc
     if (CommonParameter.getInstance().isJsonRpcHttpFullNodeEnable()) {
@@ -2193,44 +2194,54 @@ public class Manager {
     }
 
     // process block trigger
+    long solidityBlkNum = getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
     if (eventPluginLoaded && EventPluginLoader.getInstance().isBlockLogTriggerEnable()) {
+      List<BlockCapsule> capsuleList = new ArrayList<>();
       if (EventPluginLoader.getInstance().isBlockLogTriggerSolidified()) {
-        long solidityBlkNum = getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
-        try {
-          newBlock = chainBaseManager
-              .getBlockByNum(solidityBlkNum);
-        } catch (Exception e) {
-          logger.error("PostBlockTrigger getBlockByNum blkNum = {} except, error is {}.",
-              solidityBlkNum, e.getMessage());
-        }
+        capsuleList = getCrossBlockCapsule(solidityBlkNum);
+      } else {
+        capsuleList.add(blockCapsule);
       }
 
-      BlockLogTriggerCapsule blockLogTriggerCapsule = new BlockLogTriggerCapsule(newBlock);
-      blockLogTriggerCapsule.setLatestSolidifiedBlockNumber(getDynamicPropertiesStore()
-          .getLatestSolidifiedBlockNum());
-      if (!triggerCapsuleQueue.offer(blockLogTriggerCapsule)) {
-        logger.info("Too many triggers, block trigger lost: {}.", newBlock.getBlockId());
+      for (BlockCapsule capsule : capsuleList) {
+        BlockLogTriggerCapsule blockLogTriggerCapsule = new BlockLogTriggerCapsule(capsule);
+        blockLogTriggerCapsule.setLatestSolidifiedBlockNumber(getDynamicPropertiesStore()
+            .getLatestSolidifiedBlockNum());
+        if (!triggerCapsuleQueue.offer(blockLogTriggerCapsule)) {
+          logger.info("Too many triggers, block trigger lost: {}.", capsule.getBlockId());
+        }
       }
     }
 
     // process transaction trigger
     if (eventPluginLoaded && EventPluginLoader.getInstance().isTransactionLogTriggerEnable()) {
-      // set newBlock
+      List<BlockCapsule> capsuleList = new ArrayList<>();
       if (EventPluginLoader.getInstance().isTransactionLogTriggerSolidified()) {
-        long solidityBlkNum = getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
-        try {
-          newBlock = chainBaseManager.getBlockByNum(solidityBlkNum);
-        } catch (Exception e) {
-          logger.error("PostBlockTrigger getBlockByNum blkNum = {} except, error is {}.",
-              solidityBlkNum, e.getMessage());
-        }
+        capsuleList = getCrossBlockCapsule(solidityBlkNum);
       } else {
         // need to reset block
-        newBlock = blockCapsule;
+        capsuleList.add(blockCapsule);
       }
 
-      processTransactionTrigger(newBlock);
+      for (BlockCapsule capsule : capsuleList) {
+        processTransactionTrigger(capsule);
+      }
     }
+  }
+
+  private List<BlockCapsule> getCrossBlockCapsule(long solidityBlkNum) {
+    List<BlockCapsule> capsuleList = new ArrayList<>();
+    long start = lastUsedSolidityNum < 0 ? (solidityBlkNum - 1) : lastUsedSolidityNum;
+    for (long i = start + 1; i <= solidityBlkNum; i++) {
+      try {
+        BlockCapsule capsule = chainBaseManager.getBlockByNum(solidityBlkNum);
+        capsuleList.add(capsule);
+      } catch (Exception e) {
+        logger.error("GetCrossBlockCapsule getBlockByNum blkNum = {} except, error is {}.",
+            solidityBlkNum, e.getMessage());
+      }
+    }
+    return capsuleList;
   }
 
   // return energyUsageTotal of the current transaction
