@@ -14,6 +14,7 @@ public class EventPluginConfig {
   public static final String SOLIDITY_TRIGGER_NAME = "solidity";
   public static final String SOLIDITY_EVENT_NAME = "solidityevent";
   public static final String SOLIDITY_LOG_NAME = "soliditylog";
+  public static final String BLOCK_CONTRACTLOG_TRIGGER_NAME = "blockcontractlog";
 
   @Getter
   @Setter

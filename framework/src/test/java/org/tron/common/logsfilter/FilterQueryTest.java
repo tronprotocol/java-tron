@@ -56,7 +56,7 @@ public class FilterQueryTest {
     capsule.getContractEventTrigger().setTopicMap(topMap);
 
     {
-      Assert.assertEquals(true, matchFilter(capsule.getContractEventTrigger()));
+      Assert.assertEquals(true, !matchFilter(capsule.getContractEventTrigger()).isEmpty());
     }
 
     {
@@ -64,7 +64,7 @@ public class FilterQueryTest {
       filterQuery.setFromBlock(1);
       filterQuery.setToBlock(100);
       EventPluginLoader.getInstance().setFilterQuery(filterQuery);
-      Assert.assertEquals(false, matchFilter(capsule.getContractEventTrigger()));
+      Assert.assertEquals(false, !matchFilter(capsule.getContractEventTrigger()).isEmpty());
     }
 
     {
@@ -72,7 +72,7 @@ public class FilterQueryTest {
       filterQuery.setFromBlock(133);
       filterQuery.setToBlock(190);
       EventPluginLoader.getInstance().setFilterQuery(filterQuery);
-      Assert.assertEquals(false, matchFilter(capsule.getContractEventTrigger()));
+      Assert.assertEquals(false, !matchFilter(capsule.getContractEventTrigger()).isEmpty());
     }
 
     {
@@ -82,7 +82,7 @@ public class FilterQueryTest {
       filterQuery.setContractAddressList(Arrays.asList(addrList));
       filterQuery.setContractTopicList(Arrays.asList(topList));
       EventPluginLoader.getInstance().setFilterQuery(filterQuery);
-      Assert.assertEquals(true, matchFilter(capsule.getContractEventTrigger()));
+      Assert.assertEquals(true, !matchFilter(capsule.getContractEventTrigger()).isEmpty());
     }
   }
 }
