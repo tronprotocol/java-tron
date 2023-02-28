@@ -940,6 +940,9 @@ public class Wallet {
   }
 
   public DelegatedResourceAccountIndex getDelegatedResourceAccountIndex(ByteString address) {
+    if (address == null || address.size() != DecodeUtil.ADDRESS_SIZE / 2) {
+      return DelegatedResourceAccountIndex.getDefaultInstance();
+    }
     DelegatedResourceAccountIndexCapsule accountIndexCapsule =
         chainBaseManager.getDelegatedResourceAccountIndexStore().getIndex(address.toByteArray());
     if (accountIndexCapsule != null) {
@@ -950,6 +953,9 @@ public class Wallet {
   }
 
   public DelegatedResourceAccountIndex getDelegatedResourceAccountIndexV2(ByteString address) {
+    if (address == null || address.size() != DecodeUtil.ADDRESS_SIZE / 2) {
+      return DelegatedResourceAccountIndex.getDefaultInstance();
+    }
     DelegatedResourceAccountIndexCapsule accountIndexCapsule = chainBaseManager
         .getDelegatedResourceAccountIndexStore().getV2Index(address.toByteArray());
     if (accountIndexCapsule != null) {
