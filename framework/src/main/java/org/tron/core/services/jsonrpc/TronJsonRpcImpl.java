@@ -413,13 +413,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
     TransactionCapsule trxCap = wallet.createTransactionCapsule(triggerContract,
         ContractType.TriggerSmartContract);
-    Transaction trx;
-    if (blockNumber == -1) {
-      trx = wallet.triggerConstantContract(triggerContract, trxCap, trxExtBuilder, retBuilder);
-    } else {
-      trx = wallet.triggerStateConstantContract(
+    Transaction trx  = wallet.triggerConstantContract(
           triggerContract, trxCap, trxExtBuilder, retBuilder, blockNumber);
-    }
 
     trxExtBuilder.setTransaction(trx);
     trxExtBuilder.setTxid(trxCap.getTransactionId().getByteString());
@@ -835,15 +830,14 @@ public class TronJsonRpcImpl implements TronJsonRpc {
         } catch (ClassCastException e) {
           throw new JsonRpcInvalidParamsException(JSON_ERROR);
         }
-
-        if (getBlockByJsonHash(blockNumOrTag) == null) {
+        Block block = getBlockByJsonHash(blockNumOrTag);
+        if (block == null) {
           throw new JsonRpcInternalException(NO_BLOCK_HEADER_BY_HASH);
         }
+        blockNumOrTag = ByteArray.toJsonHex(block.getBlockHeader().getRawData().getNumber());
       } else {
         throw new JsonRpcInvalidRequestException(JSON_ERROR);
       }
-
-      blockNumOrTag = LATEST_STR;
     } else if (blockParamObj instanceof String) {
       blockNumOrTag = (String) blockParamObj;
     } else {

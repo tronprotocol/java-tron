@@ -5,10 +5,8 @@ import lombok.Getter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.ChainBaseManager;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.CommonStore;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TronMessage;
 import org.tron.p2p.discover.Node;
@@ -56,24 +54,16 @@ public class HelloMessage extends TronMessage {
         .setHash(hid.getByteString())
         .setNumber(hid.getNum())
         .build();
-
-    CommonStore commonStore = chainBaseManager.getCommonStore();
-    long lowestBlockNum = 0;
-    int nodeType = commonStore.getNodeType();
-    if (nodeType == Constant.NODE_TYPE_LIGHT_NODE) {
-      lowestBlockNum = commonStore.getLowestBlockNum();
-    }
-
     Builder builder = Protocol.HelloMessage.newBuilder();
-
     builder.setFrom(fromEndpoint);
     builder.setVersion(Args.getInstance().getNodeP2pVersion());
     builder.setTimestamp(timestamp);
     builder.setGenesisBlockId(gBlockId);
     builder.setSolidBlockId(sBlockId);
     builder.setHeadBlockId(hBlockId);
-    builder.setNodeType(nodeType);
-    builder.setLowestBlockNum(lowestBlockNum);
+    builder.setNodeType(chainBaseManager.getNodeType().getType());
+    builder.setLowestBlockNum(chainBaseManager.isLiteNode()
+        ? chainBaseManager.getLowestBlockNum() : 0);
 
     this.helloMessage = builder.build();
     this.type = MessageTypes.P2P_HELLO.asByte();

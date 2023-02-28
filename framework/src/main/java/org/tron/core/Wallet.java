@@ -940,6 +940,9 @@ public class Wallet {
   }
 
   public DelegatedResourceAccountIndex getDelegatedResourceAccountIndex(ByteString address) {
+    if (address == null || address.size() != DecodeUtil.ADDRESS_SIZE / 2) {
+      return DelegatedResourceAccountIndex.getDefaultInstance();
+    }
     DelegatedResourceAccountIndexCapsule accountIndexCapsule =
         chainBaseManager.getDelegatedResourceAccountIndexStore().getIndex(address.toByteArray());
     if (accountIndexCapsule != null) {
@@ -950,6 +953,9 @@ public class Wallet {
   }
 
   public DelegatedResourceAccountIndex getDelegatedResourceAccountIndexV2(ByteString address) {
+    if (address == null || address.size() != DecodeUtil.ADDRESS_SIZE / 2) {
+      return DelegatedResourceAccountIndex.getDefaultInstance();
+    }
     DelegatedResourceAccountIndexCapsule accountIndexCapsule = chainBaseManager
         .getDelegatedResourceAccountIndexStore().getV2Index(address.toByteArray());
     if (accountIndexCapsule != null) {
@@ -2863,7 +2869,7 @@ public class Wallet {
         triggerSmartContract.getData().toByteArray());
 
     if (isConstant(abi, selector)) {
-      return callConstantContract(trxCap, builder, retBuilder);
+      return callConstantContract(trxCap, builder, retBuilder, -1);
     } else {
       return trxCap.getInstance();
     }
@@ -2988,6 +2994,12 @@ public class Wallet {
   public Transaction triggerConstantContract(TriggerSmartContract triggerSmartContract,
       TransactionCapsule trxCap, Builder builder, Return.Builder retBuilder)
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
+    return triggerConstantContract(triggerSmartContract, trxCap, builder, retBuilder, -1);
+  }
+
+  public Transaction triggerConstantContract(TriggerSmartContract triggerSmartContract,
+      TransactionCapsule trxCap, Builder builder, Return.Builder retBuilder, long blockNum)
+      throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
     if (triggerSmartContract.getContractAddress().isEmpty()) { // deploy contract
       CreateSmartContract.Builder deployBuilder = CreateSmartContract.newBuilder();
@@ -3006,17 +3018,25 @@ public class Wallet {
       trxCap = createTransactionCapsule(deployBuilder.build(), ContractType.CreateSmartContract);
       trxCap.setFeeLimit(feeLimit);
     } else { // call contract
-      ContractStore contractStore = chainBaseManager.getContractStore();
+      ContractCapsule contractCapsule;
       byte[] contractAddress = triggerSmartContract.getContractAddress().toByteArray();
-      if (contractStore.get(contractAddress) == null) {
+      if (blockNum == -1) {
+        ContractStore contractStore = chainBaseManager.getContractStore();
+        contractCapsule = contractStore.get(contractAddress);
+      } else {
+        Bytes32 rootHash = getRootHashByNumber(blockNum);
+        WorldStateQueryInstance worldStateQueryInstance = initWorldStateQueryInstance(rootHash);
+        contractCapsule = worldStateQueryInstance.getContract(contractAddress);
+      }
+      if (contractCapsule == null) {
         throw new ContractValidateException("Smart contract is not exist.");
       }
     }
-    return callConstantContract(trxCap, builder, retBuilder);
+    return callConstantContract(trxCap, builder, retBuilder, blockNum);
   }
 
   public Transaction callConstantContract(TransactionCapsule trxCap,
-      Builder builder, Return.Builder retBuilder)
+      Builder builder, Return.Builder retBuilder, long blockNum)
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
     if (!Args.getInstance().isSupportConstant()) {
@@ -3024,12 +3044,21 @@ public class Wallet {
     }
 
     Block headBlock;
-    List<BlockCapsule> blockCapsuleList = chainBaseManager.getBlockStore()
-        .getBlockByLatestNum(1);
-    if (CollectionUtils.isEmpty(blockCapsuleList)) {
-      throw new HeaderNotFound("latest block not found");
+    if (blockNum == -1) {
+      List<BlockCapsule> blockCapsuleList = chainBaseManager.getBlockStore()
+              .getBlockByLatestNum(1);
+      if (CollectionUtils.isEmpty(blockCapsuleList)) {
+        throw new HeaderNotFound("latest block not found");
+      } else {
+        headBlock = blockCapsuleList.get(0).getInstance();
+      }
     } else {
-      headBlock = blockCapsuleList.get(0).getInstance();
+      try {
+        headBlock = chainBaseManager.getBlockByNum(blockNum).getInstance();
+      } catch (ItemNotFoundException | BadItemException e) {
+        logger.error("Block not found, number: {}, err: {}", blockNum, e.getMessage());
+        throw new HeaderNotFound(String.format("Block not found, number: %d", blockNum));
+      }
     }
 
     TransactionContext context = new TransactionContext(new BlockCapsule(headBlock), trxCap,
@@ -3095,6 +3124,13 @@ public class Wallet {
   public SmartContract getContract(byte[] address, long blockNumber) {
     Bytes32 rootHash = getRootHashByNumber(blockNumber);
     WorldStateQueryInstance worldStateQueryInstance = initWorldStateQueryInstance(rootHash);
+    AccountCapsule accountCapsule = worldStateQueryInstance.getAccount(address);
+    if (accountCapsule == null) {
+      logger.error(
+              "Get contract failed, the account does not exist or the account "
+                      + "does not have a code hash!");
+      return null;
+    }
     ContractCapsule contractCapsule = worldStateQueryInstance.getContract(address);
     if (contractCapsule == null) {
       return null;
@@ -4475,88 +4511,6 @@ public class Wallet {
     storage.setContractVersion(contractCapsule.getInstance().getVersion());
     DataWord value = storage.getValue(new DataWord(ByteArray.fromHexString(storageIdx)));
     return value == null ? new byte[32] : value.getData();
-  }
-
-  public Transaction triggerStateConstantContract(TriggerSmartContract triggerSmartContract,
-                                             TransactionCapsule trxCap, Builder builder,
-                                                  Return.Builder retBuilder, long blockNumber)
-      throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
-
-    if (triggerSmartContract.getContractAddress().isEmpty()) { // deploy contract
-      CreateSmartContract.Builder deployBuilder = CreateSmartContract.newBuilder();
-      deployBuilder.setOwnerAddress(triggerSmartContract.getOwnerAddress());
-      deployBuilder.setNewContract(SmartContract.newBuilder()
-          .setOriginAddress(triggerSmartContract.getOwnerAddress())
-          .setBytecode(triggerSmartContract.getData())
-          .setCallValue(triggerSmartContract.getCallValue())
-          .setConsumeUserResourcePercent(100)
-          .setOriginEnergyLimit(1)
-          .build()
-      );
-      deployBuilder.setCallTokenValue(triggerSmartContract.getCallTokenValue());
-      deployBuilder.setTokenId(triggerSmartContract.getTokenId());
-      trxCap = createTransactionCapsule(deployBuilder.build(), ContractType.CreateSmartContract);
-    } else { // call contract
-      ContractStore contractStore = chainBaseManager.getContractStore();
-      byte[] contractAddress = triggerSmartContract.getContractAddress().toByteArray();
-      if (contractStore.get(contractAddress) == null) {
-        throw new ContractValidateException("Smart contract is not exist.");
-      }
-    }
-    return callStateConstantContract(trxCap, builder, retBuilder, blockNumber);
-  }
-
-  public Transaction callStateConstantContract(TransactionCapsule trxCap,
-      Builder builder, Return.Builder retBuilder, long blockNumber)
-      throws ContractValidateException, ContractExeException, HeaderNotFound {
-
-    if (!Args.getInstance().isSupportConstant()) {
-      throw new ContractValidateException("this node does not support constant");
-    }
-
-    Block headBlock = null;
-    try {
-      headBlock = chainBaseManager.getBlockByNum(blockNumber).getInstance();
-    } catch (ItemNotFoundException | BadItemException e) {
-      logger.error("Block not found, number: {}, err: {}", blockNumber, e.getMessage());
-      throw new HeaderNotFound();
-    }
-
-    TransactionContext context = new TransactionContext(new BlockCapsule(headBlock), trxCap,
-        StoreFactory.getInstance(), true, false);
-    VMActuator vmActuator = new VMActuator(true);
-
-    vmActuator.validate(context);
-    vmActuator.execute(context);
-
-    ProgramResult result = context.getProgramResult();
-    if (result.getException() != null) {
-      RuntimeException e = result.getException();
-      logger.warn("Constant call has an error {}", e.getMessage());
-      throw e;
-    }
-
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-    builder.setEnergyUsed(result.getEnergyUsed());
-    builder.addConstantResult(ByteString.copyFrom(result.getHReturn()));
-    result.getLogInfoList().forEach(logInfo ->
-        builder.addLogs(LogInfo.buildLog(logInfo)));
-    result.getInternalTransactions().forEach(it ->
-        builder.addInternalTransactions(TransactionUtil.buildInternalTransaction(it)));
-    ret.setStatus(0, code.SUCESS);
-    if (StringUtils.isNoneEmpty(result.getRuntimeError())) {
-      ret.setStatus(0, code.FAILED);
-      retBuilder
-          .setMessage(ByteString.copyFromUtf8(result.getRuntimeError()))
-          .build();
-    }
-    if (result.isRevert()) {
-      ret.setStatus(0, code.FAILED);
-      retBuilder.setMessage(ByteString.copyFromUtf8("REVERT opcode executed"))
-          .build();
-    }
-    trxCap.setResult(ret);
-    return trxCap.getInstance();
   }
 
   private Bytes32 getRootHashByNumber(long blockNumber) {
