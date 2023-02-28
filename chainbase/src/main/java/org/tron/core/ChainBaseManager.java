@@ -4,6 +4,7 @@ import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERV
 
 import com.google.protobuf.ByteString;
 import java.util.List;
+import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -236,6 +237,14 @@ public class ChainBaseManager {
   @Autowired
   private DbStatService dbStatService;
 
+  @Getter
+  @Setter
+  private NodeType nodeType;
+
+  @Getter
+  @Setter
+  private long lowestBlockNum = -1; // except num = 0.
+
   public void closeOneStore(ITronChainBase database) {
     logger.info("******** Begin to close {}. ********",  database.getName());
     try {
@@ -413,6 +422,29 @@ public class ChainBaseManager {
     chainBaseManager = manager;
     AssetUtil.setAccountAssetStore(manager.getAccountAssetStore());
     AssetUtil.setDynamicPropertiesStore(manager.getDynamicPropertiesStore());
+  }
+
+  @PostConstruct
+  private void init() {
+    this.lowestBlockNum = this.blockIndexStore.getLimitNumber(1, 1).stream()
+            .map(BlockId::getNum).findFirst().orElse(0L);
+    this.nodeType = getLowestBlockNum() > 1 ? NodeType.LITE : NodeType.FULL;
+  }
+
+  public boolean isLiteNode() {
+    return getNodeType() == NodeType.LITE;
+  }
+
+  public enum  NodeType  {
+    FULL(0),
+    LITE(1);
+
+    @Getter
+    private final int type;
+
+    NodeType(int type) {
+      this.type = type;
+    }
   }
 }
 
