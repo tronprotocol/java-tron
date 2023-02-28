@@ -20,6 +20,7 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.FileUtil;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -42,6 +43,7 @@ public class LiteFnQueryGrpcInterceptorTest {
   private RpcApiServiceOnSolidity rpcApiServiceOnSolidity;
   private RpcApiServiceOnPBFT rpcApiServiceOnPBFT;
   private Application appTest;
+  private ChainBaseManager chainBaseManager;
 
   private String dbPath = "output_grpc_filter_test";
 
@@ -73,6 +75,7 @@ public class LiteFnQueryGrpcInterceptorTest {
     rpcApiService = context.getBean(RpcApiService.class);
     rpcApiServiceOnSolidity = context.getBean(RpcApiServiceOnSolidity.class);
     rpcApiServiceOnPBFT = context.getBean(RpcApiServiceOnPBFT.class);
+    chainBaseManager = context.getBean(ChainBaseManager.class);
     appTest = ApplicationFactory.create(context);
     appTest.addService(rpcApiService);
     appTest.addService(rpcApiServiceOnSolidity);
@@ -101,7 +104,7 @@ public class LiteFnQueryGrpcInterceptorTest {
   @Test
   public void testGrpcApiThrowStatusRuntimeException() {
     final GrpcAPI.NumberMessage message = GrpcAPI.NumberMessage.newBuilder().setNum(0).build();
-    Args.getInstance().setLiteFullNode(true);
+    chainBaseManager.setNodeType(ChainBaseManager.NodeType.LITE);
     thrown.expect(StatusRuntimeException.class);
     thrown.expectMessage("UNAVAILABLE: this API is closed because this node is a lite fullnode");
     blockingStubFull.getBlockByNum(message);
@@ -110,7 +113,7 @@ public class LiteFnQueryGrpcInterceptorTest {
   @Test
   public void testpBFTGrpcApiThrowStatusRuntimeException() {
     final GrpcAPI.NumberMessage message = GrpcAPI.NumberMessage.newBuilder().setNum(0).build();
-    Args.getInstance().setLiteFullNode(true);
+    chainBaseManager.setNodeType(ChainBaseManager.NodeType.LITE);
     thrown.expect(StatusRuntimeException.class);
     thrown.expectMessage("UNAVAILABLE: this API is closed because this node is a lite fullnode");
     blockingStubpBFT.getBlockByNum(message);
@@ -119,7 +122,7 @@ public class LiteFnQueryGrpcInterceptorTest {
   @Test
   public void testGrpcInterceptor() {
     GrpcAPI.NumberMessage message = GrpcAPI.NumberMessage.newBuilder().setNum(0).build();
-    Args.getInstance().setLiteFullNode(false);
+    chainBaseManager.setNodeType(ChainBaseManager.NodeType.FULL);
     Assert.assertNotNull(blockingStubFull.getBlockByNum(message));
   }
 }
