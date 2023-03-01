@@ -60,7 +60,6 @@
     <queueSize>100</queueSize>
     <includeCallerData>true</includeCallerData>
     <appender-ref ref="FILE"/>
-    <appender-ref ref="DB"/>
   </appender>
 
   <root level="INFO">
