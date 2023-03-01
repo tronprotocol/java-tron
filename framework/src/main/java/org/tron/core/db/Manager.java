@@ -2061,11 +2061,16 @@ public class Manager {
 
     if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityTriggerEnable()) {
       List<BlockCapsule> capsuleList = getCrossBlockCapsule(latestSolidifiedBlockNumber);
-      for(BlockCapsule blockCapsule : capsuleList){
+      long solidifiedTime = -1;
+      if (!capsuleList.isEmpty()) {
+        solidifiedTime = capsuleList.get(capsuleList.size() - 1).getTimeStamp();
+      }
+      for (BlockCapsule blockCapsule : capsuleList) {
         SolidityTriggerCapsule solidityTriggerCapsule
-            = new SolidityTriggerCapsule(latestSolidifiedBlockNumber);
-        solidityTriggerCapsule.setTimeStamp(blockCapsule.getTimeStamp());
-
+            = new SolidityTriggerCapsule(blockCapsule.getNum());//unique key
+        if (solidifiedTime >= 0) {
+          solidityTriggerCapsule.setTimeStamp(solidifiedTime);
+        }
         boolean result = triggerCapsuleQueue.offer(solidityTriggerCapsule);
         if (!result) {
           logger.info("Too many trigger, lost solidified trigger, block number: {}.",
