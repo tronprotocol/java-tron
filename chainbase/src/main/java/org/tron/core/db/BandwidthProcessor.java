@@ -102,8 +102,10 @@ public class BandwidthProcessor extends ResourceProcessor {
     }
 
     long bytesSize;
+    boolean supportVM = chainBaseManager.getDynamicPropertiesStore().supportVM();
+    long transactionFee = chainBaseManager.getDynamicPropertiesStore().getTransactionFee();
 
-    if (chainBaseManager.getDynamicPropertiesStore().supportVM()) {
+    if (supportVM) {
       bytesSize = trx.getInstance().toBuilder().clearRet().build().getSerializedSize();
     } else {
       bytesSize = trx.getSerializedSize();
@@ -113,7 +115,7 @@ public class BandwidthProcessor extends ResourceProcessor {
       if (contract.getType() == ShieldedTransferContract) {
         continue;
       }
-      if (chainBaseManager.getDynamicPropertiesStore().supportVM()) {
+      if (supportVM) {
         bytesSize += Constant.MAX_RESULT_SIZE_IN_TX;
       }
 
@@ -144,11 +146,11 @@ public class BandwidthProcessor extends ResourceProcessor {
         continue;
       }
 
-      if (useTransactionFee(accountCapsule, bytesSize, trace)) {
+      if (useTransactionFee(accountCapsule, bytesSize, trace, transactionFee)) {
         continue;
       }
 
-      long fee = chainBaseManager.getDynamicPropertiesStore().getTransactionFee() * bytesSize;
+      long fee = transactionFee * bytesSize;
       throw new AccountResourceInsufficientException(
           String.format(
               "account [%s] has insufficient bandwidth[%d] and balance[%d] to create new account",
@@ -157,8 +159,8 @@ public class BandwidthProcessor extends ResourceProcessor {
   }
 
   private boolean useTransactionFee(AccountCapsule accountCapsule, long bytes,
-      TransactionTrace trace) {
-    long fee = chainBaseManager.getDynamicPropertiesStore().getTransactionFee() * bytes;
+      TransactionTrace trace, long transactionFee) {
+    long fee = transactionFee * bytes;
     if (consumeFeeForBandwidth(accountCapsule, fee)) {
       trace.setNetBill(0, fee);
       chainBaseManager.getDynamicPropertiesStore().addTotalTransactionCost(fee);
@@ -311,7 +313,8 @@ public class BandwidthProcessor extends ResourceProcessor {
 
     long freeAssetNetUsage;
     long latestAssetOperationTime;
-    if (chainBaseManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+    long allowSameTokenName = chainBaseManager.getDynamicPropertiesStore().getAllowSameTokenName();
+    if (allowSameTokenName == 0) {
       freeAssetNetUsage = accountCapsule
           .getFreeAssetNetUsage(tokenName);
       latestAssetOperationTime = accountCapsule
@@ -376,7 +379,7 @@ public class BandwidthProcessor extends ResourceProcessor {
     assetIssueCapsule.setPublicLatestFreeNetTime(publicLatestFreeNetTime);
 
     accountCapsule.setLatestOperationTime(latestOperationTime);
-    if (chainBaseManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+    if (allowSameTokenName == 0) {
       accountCapsule.putLatestAssetOperationTimeMap(tokenName,
           latestAssetOperationTime);
       accountCapsule.putFreeAssetNetUsage(tokenName, newFreeAssetNetUsage);

@@ -1331,6 +1331,10 @@ public class Manager {
   }
 
   public void updateDynamicProperties(BlockCapsule block) {
+    long  latestBlockHeaderNumber =
+        chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+    long  latestSolidifiedBlockNum =
+        chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
 
     chainBaseManager.getDynamicPropertiesStore()
         .saveLatestBlockHeaderHash(block.getBlockId().getByteString());
@@ -1339,14 +1343,8 @@ public class Manager {
         .saveLatestBlockHeaderNumber(block.getNum());
     chainBaseManager.getDynamicPropertiesStore()
         .saveLatestBlockHeaderTimestamp(block.getTimeStamp());
-    revokingStore.setMaxSize((int) (
-        chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
-            - chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum()
-            + 1));
-    khaosDb.setMaxSize((int)
-        (chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
-            - chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum()
-            + 1));
+    revokingStore.setMaxSize((int) (latestBlockHeaderNumber - latestSolidifiedBlockNum + 1));
+    khaosDb.setMaxSize((int) (latestBlockHeaderNumber - latestSolidifiedBlockNum + 1));
     Metrics.gaugeSet(MetricKeys.Gauge.HEADER_HEIGHT, block.getNum());
     Metrics.gaugeSet(MetricKeys.Gauge.HEADER_TIME, block.getTimeStamp());
   }
@@ -1767,6 +1765,8 @@ public class Manager {
   }
 
   private void payReward(BlockCapsule block) {
+    long transactionFeePool =
+        chainBaseManager.getDynamicPropertiesStore().getTransactionFeePool();
     WitnessCapsule witnessCapsule =
         chainBaseManager.getWitnessStore().getUnchecked(block.getInstance().getBlockHeader()
             .getRawData().getWitnessAddress().toByteArray());
@@ -1777,13 +1777,12 @@ public class Manager {
 
       if (chainBaseManager.getDynamicPropertiesStore().supportTransactionFeePool()) {
         long transactionFeeReward = Math
-            .floorDiv(chainBaseManager.getDynamicPropertiesStore().getTransactionFeePool(),
+            .floorDiv(transactionFeePool,
                 Constant.TRANSACTION_FEE_POOL_PERIOD);
         mortgageService.payTransactionFeeReward(witnessCapsule.getAddress().toByteArray(),
             transactionFeeReward);
         chainBaseManager.getDynamicPropertiesStore().saveTransactionFeePool(
-            chainBaseManager.getDynamicPropertiesStore().getTransactionFeePool()
-                - transactionFeeReward);
+            transactionFeePool - transactionFeeReward);
       }
     } else {
       byte[] witness = block.getWitnessAddress().toByteArray();
@@ -1793,12 +1792,10 @@ public class Manager {
 
       if (chainBaseManager.getDynamicPropertiesStore().supportTransactionFeePool()) {
         long transactionFeeReward = Math
-            .floorDiv(chainBaseManager.getDynamicPropertiesStore().getTransactionFeePool(),
-                Constant.TRANSACTION_FEE_POOL_PERIOD);
+            .floorDiv(transactionFeePool, Constant.TRANSACTION_FEE_POOL_PERIOD);
         account.setAllowance(account.getAllowance() + transactionFeeReward);
-        chainBaseManager.getDynamicPropertiesStore().saveTransactionFeePool(
-            chainBaseManager.getDynamicPropertiesStore().getTransactionFeePool()
-                - transactionFeeReward);
+        chainBaseManager.getDynamicPropertiesStore()
+            .saveTransactionFeePool(transactionFeePool - transactionFeeReward);
       }
 
       getAccountStore().put(account.createDbKey(), account);
@@ -1881,13 +1878,13 @@ public class Manager {
   }
 
   public long getSyncBeginNumber() {
+    long latestBlockHeaderNumber =
+        chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     logger.info("HeadNumber: {}, syncBeginNumber: {}, solidBlockNumber: {}.",
-        chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
-        chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
-            - revokingStore.size(),
+        latestBlockHeaderNumber,
+        latestBlockHeaderNumber - revokingStore.size(),
         chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
-    return chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
-        - revokingStore.size();
+    return latestBlockHeaderNumber - revokingStore.size();
   }
 
   public AssetIssueStore getAssetIssueStore() {
@@ -2197,10 +2194,10 @@ public class Manager {
       postLogsFilter(blockCapsule, false, false);
     }
 
+    long solidityBlkNum = getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
     // process block trigger
     if (eventPluginLoaded && EventPluginLoader.getInstance().isBlockLogTriggerEnable()) {
       if (EventPluginLoader.getInstance().isBlockLogTriggerSolidified()) {
-        long solidityBlkNum = getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
         try {
           newBlock = chainBaseManager
               .getBlockByNum(solidityBlkNum);
@@ -2222,7 +2219,6 @@ public class Manager {
     if (eventPluginLoaded && EventPluginLoader.getInstance().isTransactionLogTriggerEnable()) {
       // set newBlock
       if (EventPluginLoader.getInstance().isTransactionLogTriggerSolidified()) {
-        long solidityBlkNum = getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
         try {
           newBlock = chainBaseManager.getBlockByNum(solidityBlkNum);
         } catch (Exception e) {
