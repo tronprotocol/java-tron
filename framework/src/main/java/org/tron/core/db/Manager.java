@@ -2063,7 +2063,10 @@ public class Manager {
       List<BlockCapsule> capsuleList = getCrossBlockCapsule(latestSolidifiedBlockNumber);
       long solidifiedTime = -1;
       if (!capsuleList.isEmpty()) {
-        solidifiedTime = capsuleList.get(capsuleList.size() - 1).getTimeStamp();
+        BlockCapsule blockCapsule = capsuleList.get(capsuleList.size() - 1);
+        if (blockCapsule.getNum() == latestSolidifiedBlockNumber) {
+          solidifiedTime = blockCapsule.getTimeStamp();
+        }
       }
       for (BlockCapsule blockCapsule : capsuleList) {
         SolidityTriggerCapsule solidityTriggerCapsule
@@ -2074,7 +2077,7 @@ public class Manager {
         boolean result = triggerCapsuleQueue.offer(solidityTriggerCapsule);
         if (!result) {
           logger.info("Too many trigger, lost solidified trigger, block number: {}.",
-              latestSolidifiedBlockNumber);
+              blockCapsule.getNum());
         }
       }
     }
