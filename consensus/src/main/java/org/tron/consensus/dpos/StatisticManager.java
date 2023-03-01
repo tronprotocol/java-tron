@@ -38,18 +38,20 @@ public class StatisticManager {
     if (blockNum != 1) {
       slot = dposSlot.getSlot(blockTime);
     }
-    for (int i = 1; i < slot; ++i) {
-      byte[] witness = dposSlot.getScheduledWitness(i).toByteArray();
-      wc = consensusDelegate.getWitness(witness);
-      wc.setTotalMissed(wc.getTotalMissed() + 1);
-      Metrics.counterInc(MetricKeys.Counter.MINER, 1, StringUtil.encode58Check(wc.getAddress()
-              .toByteArray()),
-          MetricLabels.Counter.MINE_MISS);
-      consensusDelegate.saveWitness(wc);
-      logger.info("Current block: {}, witness: {}, totalMissed: {}", blockNum,
-          StringUtil.encode58Check(wc.getAddress()
-              .toByteArray()), wc.getTotalMissed());
-      consensusDelegate.applyBlock(false);
+    if (!dposSlot.getDposService().isStressTest() || slot < 5) {
+      for (int i = 1; i < slot; ++i) {
+        byte[] witness = dposSlot.getScheduledWitness(i).toByteArray();
+        wc = consensusDelegate.getWitness(witness);
+        wc.setTotalMissed(wc.getTotalMissed() + 1);
+        Metrics.counterInc(MetricKeys.Counter.MINER, 1, StringUtil.encode58Check(wc.getAddress()
+                .toByteArray()),
+            MetricLabels.Counter.MINE_MISS);
+        consensusDelegate.saveWitness(wc);
+        logger.info("Current block: {}, witness: {}, totalMissed: {}", blockNum,
+            StringUtil.encode58Check(wc.getAddress()
+                .toByteArray()), wc.getTotalMissed());
+        consensusDelegate.applyBlock(false);
+      }
     }
     consensusDelegate.applyBlock(true);
   }

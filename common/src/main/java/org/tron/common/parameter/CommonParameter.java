@@ -586,6 +586,10 @@ public class CommonParameter {
 
   @Getter
   @Setter
+  public boolean isStressTest = true;
+
+  @Getter
+  @Setter
   public long unfreezeDelayDays = 0L;
 
   @Getter

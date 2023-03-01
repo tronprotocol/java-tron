@@ -194,7 +194,7 @@ public class MaintenanceManager {
   }
 
   private void tryRemoveThePowerOfTheGr() {
-    if (consensusDelegate.getRemoveThePowerOfTheGr() != 1) {
+    if (consensusDelegate.getRemoveThePowerOfTheGr() != 1 || dposService.isStressTest()) {
       return;
     }
     dposService.getGenesisBlock().getWitnesses().forEach(witness -> {

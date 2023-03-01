@@ -221,6 +221,7 @@ public class Args extends CommonParameter {
     PARAMETER.allowNewRewardAlgorithm = 0;
     PARAMETER.allowNewReward = 0;
     PARAMETER.memoFee = 0;
+    PARAMETER.isStressTest = true;
   }
 
   /**
@@ -1027,6 +1028,9 @@ public class Args extends CommonParameter {
     PARAMETER.allowAssetOptimization = config
         .hasPath(Constant.ALLOW_ASSET_OPTIMIZATION) ? config
         .getInt(Constant.ALLOW_ASSET_OPTIMIZATION) : 0;
+
+    PARAMETER.isStressTest = config.hasPath(Constant.IS_STRESS_TEST) ? config
+        .getBoolean(Constant.IS_STRESS_TEST) : true;
 
     PARAMETER.disabledApiList =
         config.hasPath(Constant.NODE_DISABLED_API_LIST)
