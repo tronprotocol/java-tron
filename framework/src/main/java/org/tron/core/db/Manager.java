@@ -1881,13 +1881,13 @@ public class Manager {
   }
 
   public long getSyncBeginNumber() {
+    long latestBlockHeaderNumber =
+        chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     logger.info("HeadNumber: {}, syncBeginNumber: {}, solidBlockNumber: {}.",
-        chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
-        chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
-            - revokingStore.size(),
+        latestBlockHeaderNumber,
+        latestBlockHeaderNumber - revokingStore.size(),
         chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
-    return chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
-        - revokingStore.size();
+    return latestBlockHeaderNumber - revokingStore.size();
   }
 
   public AssetIssueStore getAssetIssueStore() {

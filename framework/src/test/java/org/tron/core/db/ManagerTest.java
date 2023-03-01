@@ -931,4 +931,12 @@ public class ManagerTest extends BlockGenerate {
     blockCapsule.sign(ByteArray.fromHexString(addressToProvateKeys.get(witnessAddress)));
     return blockCapsule;
   }
+
+  @Test
+  public void testGetSyncBeginNumber() {
+    chainManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(1234L);
+    long syncBeginNumber = dbManager.getSyncBeginNumber();
+    Assert.assertEquals(1234L, syncBeginNumber);
+  }
+
 }
