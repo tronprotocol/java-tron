@@ -2232,9 +2232,9 @@ public class Manager {
   private List<BlockCapsule> getCrossBlockCapsule(long solidityBlkNum) {
     List<BlockCapsule> capsuleList = new ArrayList<>();
     long start = lastUsedSolidityNum < 0 ? (solidityBlkNum - 1) : lastUsedSolidityNum;
-    for (long i = start + 1; i <= solidityBlkNum; i++) {
+    for (long blockNum = start + 1; blockNum <= solidityBlkNum; blockNum++) {
       try {
-        BlockCapsule capsule = chainBaseManager.getBlockByNum(solidityBlkNum);
+        BlockCapsule capsule = chainBaseManager.getBlockByNum(blockNum);
         capsuleList.add(capsule);
       } catch (Exception e) {
         logger.error("GetCrossBlockCapsule getBlockByNum blkNum = {} except, error is {}.",
