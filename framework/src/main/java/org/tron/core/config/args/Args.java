@@ -24,7 +24,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URL;
-import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,9 +63,7 @@ import org.tron.common.parameter.RateLimiterInitialization;
 import org.tron.common.setting.RocksDbSettings;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.LocalWitnesses;
-import org.tron.common.utils.PropUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.Configuration;
@@ -1289,7 +1286,7 @@ public class Args extends CommonParameter {
     return eventPluginConfig;
   }
 
-  public static PublishConfig loadDnsPublishConfig(final com.typesafe.config.Config config) {
+  private static PublishConfig loadDnsPublishConfig(final com.typesafe.config.Config config) {
     PublishConfig publishConfig = new PublishConfig();
     if (config.hasPath(Constant.NODE_DNS_PUBLISH)) {
       publishConfig.setDnsPublishEnable(config.getBoolean(Constant.NODE_DNS_PUBLISH));
@@ -1299,19 +1296,23 @@ public class Args extends CommonParameter {
       if (config.hasPath(Constant.NODE_DNS_DOMAIN)) {
         publishConfig.setDnsDomain(config.getString(Constant.NODE_DNS_DOMAIN));
       } else {
-        logger.error("Check {}, must not be null", Constant.NODE_DNS_DOMAIN);
+        logEmptyError(Constant.NODE_DNS_DOMAIN);
         return null;
       }
 
       if (config.hasPath(Constant.NODE_DNS_PRIVATE)) {
         publishConfig.setDnsPrivate(config.getString(Constant.NODE_DNS_PRIVATE));
       } else {
-        logger.error("Check {}, must not be null", Constant.NODE_DNS_PRIVATE);
+        logEmptyError(Constant.NODE_DNS_PRIVATE);
         return null;
       }
 
       if (config.hasPath(Constant.NODE_DNS_KNOWN_URLS)) {
         publishConfig.setKnownTreeUrls(config.getStringList(Constant.NODE_DNS_KNOWN_URLS));
+      }
+
+      if (config.hasPath(Constant.NODE_DNS_STATIC_NODES)) {
+        publishConfig.setStaticNodes(getInetSocketAddress(config, Constant.NODE_DNS_STATIC_NODES));
       }
 
       if (config.hasPath(Constant.NODE_DNS_SERVER_TYPE)) {
@@ -1326,26 +1327,26 @@ public class Args extends CommonParameter {
           publishConfig.setDnsType(DnsType.AliYun);
         }
       } else {
-        logger.error("Check {}, must not be null", Constant.NODE_DNS_SERVER_TYPE);
+        logEmptyError(Constant.NODE_DNS_SERVER_TYPE);
         return null;
       }
 
       if (config.hasPath(Constant.NODE_DNS_ACCESS_KEY_ID)) {
         publishConfig.setAccessKeyId(config.getString(Constant.NODE_DNS_ACCESS_KEY_ID));
       } else {
-        logger.error("Check {}, must not be null", Constant.NODE_DNS_ACCESS_KEY_ID);
+        logEmptyError(Constant.NODE_DNS_ACCESS_KEY_ID);
         return null;
       }
       if (config.hasPath(Constant.NODE_DNS_ACCESS_KEY_SECRET)) {
         publishConfig.setAccessKeySecret(config.getString(Constant.NODE_DNS_ACCESS_KEY_SECRET));
       } else {
-        logger.error("Check {}, must not be null", Constant.NODE_DNS_ACCESS_KEY_SECRET);
+        logEmptyError(Constant.NODE_DNS_ACCESS_KEY_SECRET);
         return null;
       }
 
       if (publishConfig.getDnsType() == DnsType.AwsRoute53) {
         if (!config.hasPath(Constant.NODE_DNS_AWS_REGION)) {
-          logger.error("Check {}, must not be null", Constant.NODE_DNS_AWS_REGION);
+          logEmptyError(Constant.NODE_DNS_AWS_REGION);
           return null;
         } else {
           publishConfig.setAwsRegion(config.getString(Constant.NODE_DNS_AWS_REGION));
@@ -1355,7 +1356,7 @@ public class Args extends CommonParameter {
         }
       } else {
         if (!config.hasPath(Constant.NODE_DNS_ALIYUN_ENDPOINT)) {
-          logger.error("Check {}, must not be null", Constant.NODE_DNS_ALIYUN_ENDPOINT);
+          logEmptyError(Constant.NODE_DNS_ALIYUN_ENDPOINT);
           return null;
         } else {
           publishConfig.setAliDnsEndpoint(config.getString(Constant.NODE_DNS_ALIYUN_ENDPOINT));
@@ -1363,6 +1364,10 @@ public class Args extends CommonParameter {
       }
     }
     return publishConfig;
+  }
+
+  private static void logEmptyError(String arg) {
+    logger.error("Check {}, must not be null", arg);
   }
 
   private static TriggerConfig createTriggerConfig(ConfigObject triggerObject) {
@@ -1627,8 +1632,12 @@ public class Args extends CommonParameter {
     int index = para.lastIndexOf(":");
     if (index > 0) {
       String host = para.substring(0, index);
-      int port = Integer.parseInt(para.substring(index + 1));
-      address = new InetSocketAddress(host, port);
+      try {
+        int port = Integer.parseInt(para.substring(index + 1));
+        address = new InetSocketAddress(host, port);
+      } catch (RuntimeException e) {
+        logger.error("Invalid inetSocketAddress: {}", para);
+      }
     }
     return address;
   }

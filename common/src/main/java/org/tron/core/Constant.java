@@ -109,6 +109,7 @@ public class Constant {
   public static final String NODE_DNS_DOMAIN = "node.dns.dnsDomain";
   public static final String NODE_DNS_PRIVATE = "node.dns.dnsPrivate";
   public static final String NODE_DNS_KNOWN_URLS = "node.dns.knownUrls";
+  public static final String NODE_DNS_STATIC_NODES = "node.dns.staticNodes";
   public static final String NODE_DNS_SERVER_TYPE = "node.dns.serverType";
   public static final String NODE_DNS_ACCESS_KEY_ID = "node.dns.accessKeyId";
   public static final String NODE_DNS_ACCESS_KEY_SECRET = "node.dns.accessKeySecret";
