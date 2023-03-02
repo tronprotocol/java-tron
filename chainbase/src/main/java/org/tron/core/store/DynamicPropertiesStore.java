@@ -19,6 +19,7 @@ import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.state.WorldStateCallBackUtils;
 
 @Slf4j(topic = "DB")
 @Component
@@ -207,8 +208,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       "ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID".getBytes();
 
   @Autowired
-  private DynamicPropertiesStore(@Value("properties") String dbName) {
+  private DynamicPropertiesStore(@Value("properties") String dbName,
+                                 @Autowired WorldStateCallBackUtils worldStateCallBackUtils) {
     super(dbName);
+    this.worldStateCallBackUtils = worldStateCallBackUtils;
 
     try {
       this.getTotalSignNum();
