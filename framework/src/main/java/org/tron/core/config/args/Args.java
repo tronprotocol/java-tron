@@ -1317,11 +1317,11 @@ public class Args extends CommonParameter {
 
       if (config.hasPath(Constant.NODE_DNS_SERVER_TYPE)) {
         String serverType = config.getString(Constant.NODE_DNS_SERVER_TYPE);
-        if (!serverType.equalsIgnoreCase("aws") && !serverType.equalsIgnoreCase("aliyun")) {
+        if (!"aws".equalsIgnoreCase(serverType) && !"aliyun".equalsIgnoreCase(serverType)) {
           logger.error("Check {}, must be aws or aliyun", Constant.NODE_DNS_SERVER_TYPE);
           return null;
         }
-        if (serverType.equalsIgnoreCase("aws")) {
+        if ("aws".equalsIgnoreCase(serverType)) {
           publishConfig.setDnsType(DnsType.AwsRoute53);
         } else {
           publishConfig.setDnsType(DnsType.AliYun);
