@@ -2244,7 +2244,9 @@ public class Manager {
   private List<BlockCapsule> geContinuousBlockCapsule(long solidityBlkNum) {
     List<BlockCapsule> capsuleList = new ArrayList<>();
     long start = lastUsedSolidityNum < 0 ? (solidityBlkNum - 1) : lastUsedSolidityNum;
-    logger.info("Continuous block start:{}, end:{}", start +1, solidityBlkNum);
+    if (solidityBlkNum - start > 1) {
+      logger.info("Continuous block start:{}, end:{}", start + 1, solidityBlkNum);
+    }
     for (long blockNum = start + 1; blockNum <= solidityBlkNum; blockNum++) {
       try {
         BlockCapsule capsule = chainBaseManager.getBlockByNum(blockNum);
