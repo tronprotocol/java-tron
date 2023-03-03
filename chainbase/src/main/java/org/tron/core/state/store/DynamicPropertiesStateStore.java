@@ -45,7 +45,7 @@ public class DynamicPropertiesStateStore extends DynamicPropertiesStore implemen
   @Override
   public BytesCapsule getUnchecked(byte[] key) {
     throwIfNotInit();
-    return worldStateQueryInstance.getDynamicProperty(key);
+    return worldStateQueryInstance.getDelegation(key);
   }
 
   @Override
