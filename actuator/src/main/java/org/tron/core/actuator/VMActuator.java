@@ -134,20 +134,10 @@ public class VMActuator implements Actuator2 {
     // Warm up registry class
     OperationRegistry.init();
     trx = context.getTrxCap().getInstance();
-
-    //Prepare Repository
-    if (!stateQuery) {
-      rootRepository = RepositoryImpl.createRoot(context.getStoreFactory());
-    } else {
-      // todo: review
-      rootRepository = RepositoryStateImpl.createRoot(context.getStoreFactory(),
-              context.getBlockCap().getArchiveRoot());
-    }
-
     // If tx`s fee limit is set, use it to calc max energy limit for constant call
     if (isConstantCall && trx.getRawData().getFeeLimit() > 0) {
       maxEnergyLimit = Math.min(maxEnergyLimit, trx.getRawData().getFeeLimit()
-          / rootRepository
+          / context.getStoreFactory().getChainBaseManager()
           .getDynamicPropertiesStore().getEnergyFee());
     }
     blockCap = context.getBlockCap();
@@ -157,6 +147,15 @@ public class VMActuator implements Actuator2 {
     }
     //Route Type
     ContractType contractType = this.trx.getRawData().getContract(0).getType();
+    //Prepare Repository
+    if (!stateQuery) {
+      rootRepository = RepositoryImpl.createRoot(context.getStoreFactory());
+    } else {
+      // todo: review
+      rootRepository = RepositoryStateImpl.createRoot(context.getStoreFactory(),
+          context.getBlockCap().getArchiveRoot());
+    }
+
     enableEventListener = context.isEventPluginLoaded();
 
     //set executorType type
