@@ -85,6 +85,9 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     type = StateType.get(getDbName());
   }
 
+  protected TronStoreWithRevoking() {
+  }
+
   protected org.iq80.leveldb.Options getOptionsByDbNameForLevelDB(String dbName) {
     return StorageUtils.getOptionsByDbName(dbName);
   }
@@ -117,20 +120,14 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     }
     byte[] value = item.getData();
     revokingDB.put(key, value);
-    if (worldStateCallBackUtils != null) {
-      worldStateCallBackUtils.callBack(type, key,
-              value,
-              Value.Operator.PUT);
-    }
+    worldStateCallBackUtils.callBack(type, key, value, Value.Operator.PUT);
   }
 
   @Override
   public void delete(byte[] key) {
-    if (worldStateCallBackUtils != null) {
-      worldStateCallBackUtils.callBack(type, key,
-              StateType.Account == type ? revokingDB.getUnchecked(key) : null,
-              Value.Operator.DELETE);
-    }
+    worldStateCallBackUtils.callBack(type, key,
+            StateType.Account == type ? revokingDB.getUnchecked(key) : null,
+            Value.Operator.DELETE);
     revokingDB.delete(key);
   }
 
