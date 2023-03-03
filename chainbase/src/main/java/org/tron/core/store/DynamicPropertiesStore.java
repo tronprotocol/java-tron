@@ -946,6 +946,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
   }
 
+  protected DynamicPropertiesStore () {
+    super();
+  }
+
   public String intArrayToString(int[] a) {
     StringBuilder sb = new StringBuilder();
     for (int i : a) {

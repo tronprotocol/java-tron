@@ -33,7 +33,11 @@ import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter;
 import org.tron.core.db.TransactionTrace;
+import org.tron.core.exception.StoreException;
 import org.tron.core.state.WorldStateQueryInstance;
+import org.tron.core.state.store.AssetIssueV2StateStore;
+import org.tron.core.state.store.DelegationStateStore;
+import org.tron.core.state.store.DynamicPropertiesStateStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
@@ -41,6 +45,7 @@ import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.config.VMConfig;
+import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.Storage;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
@@ -63,6 +68,10 @@ public class RepositoryStateImpl implements Repository {
   @Getter
   private final WorldStateQueryInstance worldStateQueryInstance;
 
+  private final AssetIssueV2StateStore assetIssueV2StateStore;
+  private final DelegationStateStore delegationStateStore;
+  private final DynamicPropertiesStateStore dynamicPropertiesStateStore;
+
   private Repository parent = null;
 
   private final HashMap<Key, Value<Account>> accountCache = new HashMap<>();
@@ -84,6 +93,10 @@ public class RepositoryStateImpl implements Repository {
                              Bytes32 rootHash) {
     this.rootHash = rootHash;
     this.worldStateQueryInstance = ChainBaseManager.fetch(rootHash);
+    this.assetIssueV2StateStore = new AssetIssueV2StateStore();
+    this.delegationStateStore = new DelegationStateStore();
+    this.dynamicPropertiesStateStore = new DynamicPropertiesStateStore();
+
     init(storeFactory, repository);
   }
 
@@ -96,6 +109,9 @@ public class RepositoryStateImpl implements Repository {
       this.storeFactory = storeFactory;
     }
     this.parent = parent;
+    assetIssueV2StateStore.init(this.worldStateQueryInstance);
+    delegationStateStore.init(this.worldStateQueryInstance);
+    dynamicPropertiesStateStore.init(this.worldStateQueryInstance);
   }
 
   @Override
@@ -198,22 +214,22 @@ public class RepositoryStateImpl implements Repository {
 
   @Override
   public AssetIssueV2Store getAssetIssueV2Store() {
-    throw new UnsupportedOperationException();
+    return  assetIssueV2StateStore;
   }
 
   @Override
   public AssetIssueStore getAssetIssueStore() {
-    throw new UnsupportedOperationException();
+    return  assetIssueV2StateStore;
   }
 
   @Override
   public DynamicPropertiesStore getDynamicPropertiesStore() {
-    throw new UnsupportedOperationException();
+    return dynamicPropertiesStateStore;
   }
 
   @Override
   public DelegationStore getDelegationStore() {
-    throw new UnsupportedOperationException();
+    return delegationStateStore;
   }
 
   @Override
@@ -761,7 +777,11 @@ public class RepositoryStateImpl implements Repository {
 
   @Override
   public BlockCapsule getBlockByNum(long num) {
-    throw new UnsupportedOperationException();
+    try {
+      return ChainBaseManager.getInstance().getBlockByNum(num);
+    } catch (StoreException e) {
+      throw new Program.IllegalOperationException("cannot find block num");
+    }
   }
 
   // new recover method, use personal window size.
@@ -942,7 +962,6 @@ public class RepositoryStateImpl implements Repository {
     }));
   }
 
-  // todo: check whether replace getDynamicPropertiesStore to worldStateQuery
   @Override
   public AccountCapsule createNormalAccount(byte[] address) {
     boolean withDefaultPermission =

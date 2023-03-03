@@ -85,6 +85,9 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     type = StateType.get(getDbName());
   }
 
+  protected TronStoreWithRevoking() {
+  }
+
   protected org.iq80.leveldb.Options getOptionsByDbNameForLevelDB(String dbName) {
     return StorageUtils.getOptionsByDbName(dbName);
   }
