@@ -6,6 +6,7 @@ import java.util.Map;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.store.AccountAssetStore;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 
 public class AssetUtil {
@@ -14,7 +15,7 @@ public class AssetUtil {
 
   private static DynamicPropertiesStore dynamicPropertiesStore;
 
-  public static boolean hasAssetV2(Account account, byte[] key) {
+  public static boolean hasAssetV2(Protocol.AccountOrBuilder account, byte[] key) {
     if (!account.getAssetV2Map().isEmpty()
         && account.getAssetV2Map().containsKey(ByteArray.toStr(key))) {
       return true;
