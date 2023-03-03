@@ -2039,7 +2039,7 @@ public class Manager {
       return;
     }
 
-    List<BlockCapsule> capsuleList = getCrossBlockCapsule(latestSolidifiedBlockNumber);
+    List<BlockCapsule> capsuleList = geContinuousBlockCapsule(latestSolidifiedBlockNumber);
     for (BlockCapsule blockCapsule : capsuleList) {
       postBlockFilter(blockCapsule, true);
       postLogsFilter(blockCapsule, true, false);
@@ -2060,7 +2060,7 @@ public class Manager {
     }
 
     if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityTriggerEnable()) {
-      List<BlockCapsule> capsuleList = getCrossBlockCapsule(latestSolidifiedBlockNumber);
+      List<BlockCapsule> capsuleList = geContinuousBlockCapsule(latestSolidifiedBlockNumber);
       long solidifiedTime = -1;
       if (!capsuleList.isEmpty()) {
         BlockCapsule blockCapsule = capsuleList.get(capsuleList.size() - 1);
@@ -2211,15 +2211,14 @@ public class Manager {
     if (eventPluginLoaded && EventPluginLoader.getInstance().isBlockLogTriggerEnable()) {
       List<BlockCapsule> capsuleList = new ArrayList<>();
       if (EventPluginLoader.getInstance().isBlockLogTriggerSolidified()) {
-        capsuleList = getCrossBlockCapsule(solidityBlkNum);
+        capsuleList = geContinuousBlockCapsule(solidityBlkNum);
       } else {
         capsuleList.add(blockCapsule);
       }
 
       for (BlockCapsule capsule : capsuleList) {
         BlockLogTriggerCapsule blockLogTriggerCapsule = new BlockLogTriggerCapsule(capsule);
-        blockLogTriggerCapsule.setLatestSolidifiedBlockNumber(getDynamicPropertiesStore()
-            .getLatestSolidifiedBlockNum());
+        blockLogTriggerCapsule.setLatestSolidifiedBlockNumber(solidityBlkNum);
         if (!triggerCapsuleQueue.offer(blockLogTriggerCapsule)) {
           logger.info("Too many triggers, block trigger lost: {}.", capsule.getBlockId());
         }
@@ -2230,7 +2229,7 @@ public class Manager {
     if (eventPluginLoaded && EventPluginLoader.getInstance().isTransactionLogTriggerEnable()) {
       List<BlockCapsule> capsuleList = new ArrayList<>();
       if (EventPluginLoader.getInstance().isTransactionLogTriggerSolidified()) {
-        capsuleList = getCrossBlockCapsule(solidityBlkNum);
+        capsuleList = geContinuousBlockCapsule(solidityBlkNum);
       } else {
         // need to reset block
         capsuleList.add(blockCapsule);
@@ -2242,9 +2241,10 @@ public class Manager {
     }
   }
 
-  private List<BlockCapsule> getCrossBlockCapsule(long solidityBlkNum) {
+  private List<BlockCapsule> geContinuousBlockCapsule(long solidityBlkNum) {
     List<BlockCapsule> capsuleList = new ArrayList<>();
     long start = lastUsedSolidityNum < 0 ? (solidityBlkNum - 1) : lastUsedSolidityNum;
+    logger.info("Continuous block start:{}, end:{}", start +1, solidityBlkNum);
     for (long blockNum = start + 1; blockNum <= solidityBlkNum; blockNum++) {
       try {
         BlockCapsule capsule = chainBaseManager.getBlockByNum(blockNum);
