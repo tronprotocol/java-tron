@@ -25,7 +25,6 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.StorageUtils;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
-import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
@@ -582,8 +581,7 @@ public class VMActuator implements Actuator2 {
       long now = rootRepository.getHeadSlot();
       EnergyProcessor energyProcessor =
           new EnergyProcessor(
-              rootRepository.getDynamicPropertiesStore(),
-              ChainBaseManager.getInstance().getAccountStore());
+              rootRepository.getDynamicPropertiesStore(), rootRepository.getAccountStore());
       energyProcessor.updateUsage(account);
       account.setLatestConsumeTimeForEnergy(now);
       receipt.setCallerEnergyUsage(account.getEnergyUsage());
@@ -744,8 +742,7 @@ public class VMActuator implements Actuator2 {
       long now = rootRepository.getHeadSlot();
       EnergyProcessor energyProcessor =
           new EnergyProcessor(
-              rootRepository.getDynamicPropertiesStore(),
-              ChainBaseManager.getInstance().getAccountStore());
+              rootRepository.getDynamicPropertiesStore(), rootRepository.getAccountStore());
       energyProcessor.updateUsage(creator);
       creator.setLatestConsumeTimeForEnergy(now);
       receipt.setOriginEnergyUsage(creator.getEnergyUsage());

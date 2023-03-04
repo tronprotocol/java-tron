@@ -2,6 +2,7 @@ package org.tron.core.db;
 
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Commons;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -31,6 +32,20 @@ abstract class ResourceProcessor {
     this.windowSize = ChainConstant.WINDOW_SIZE_MS / BLOCK_PRODUCED_INTERVAL;
     this.averageWindowSize =
         AdaptiveResourceLimitConstants.PERIODS_MS / BLOCK_PRODUCED_INTERVAL;
+  }
+
+  public long getHeadSlot() {
+    return (dynamicPropertiesStore.getLatestBlockHeaderTimestamp()
+            - Long.parseLong(CommonParameter.getInstance()
+            .getGenesisBlock().getTimestamp()))
+            / BLOCK_PRODUCED_INTERVAL;
+  }
+
+  public static long getHeadSlot(DynamicPropertiesStore dynamicPropertiesStore) {
+    return (dynamicPropertiesStore.getLatestBlockHeaderTimestamp()
+            - Long.parseLong(CommonParameter.getInstance()
+            .getGenesisBlock().getTimestamp()))
+            / BLOCK_PRODUCED_INTERVAL;
   }
 
   abstract void consume(TransactionCapsule trx, TransactionTrace trace)

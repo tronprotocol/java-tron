@@ -35,6 +35,7 @@ import org.tron.core.config.Parameter;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.StoreException;
 import org.tron.core.state.WorldStateQueryInstance;
+import org.tron.core.state.store.AccountStateStore;
 import org.tron.core.state.store.AssetIssueV2StateStore;
 import org.tron.core.state.store.DelegationStateStore;
 import org.tron.core.state.store.DynamicPropertiesStateStore;
@@ -68,6 +69,7 @@ public class RepositoryStateImpl implements Repository {
   @Getter
   private final WorldStateQueryInstance worldStateQueryInstance;
 
+  private final AccountStateStore accountStateStore;
   private final AssetIssueV2StateStore assetIssueV2StateStore;
   private final DelegationStateStore delegationStateStore;
   private final DynamicPropertiesStateStore dynamicPropertiesStateStore;
@@ -93,6 +95,7 @@ public class RepositoryStateImpl implements Repository {
                              Bytes32 rootHash) {
     this.rootHash = rootHash;
     this.worldStateQueryInstance = ChainBaseManager.fetch(rootHash);
+    this.accountStateStore = new AccountStateStore();
     this.assetIssueV2StateStore = new AssetIssueV2StateStore();
     this.delegationStateStore = new DelegationStateStore();
     this.dynamicPropertiesStateStore = new DynamicPropertiesStateStore();
@@ -109,6 +112,7 @@ public class RepositoryStateImpl implements Repository {
       this.storeFactory = storeFactory;
     }
     this.parent = parent;
+    accountStateStore.init(this.worldStateQueryInstance);
     assetIssueV2StateStore.init(this.worldStateQueryInstance);
     delegationStateStore.init(this.worldStateQueryInstance);
     dynamicPropertiesStateStore.init(this.worldStateQueryInstance);
@@ -210,6 +214,11 @@ public class RepositoryStateImpl implements Repository {
       assetIssueCache.put(key, Value.create(assetIssueCapsule));
     }
     return assetIssueCapsule;
+  }
+
+  @Override
+  public AccountStore getAccountStore() {
+    return accountStateStore;
   }
 
   @Override
