@@ -2,6 +2,7 @@ package org.tron.core.state.store;
 
 import lombok.Getter;
 import org.rocksdb.DirectComparator;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.db2.core.Chainbase;
@@ -11,6 +12,7 @@ import org.tron.core.store.DynamicPropertiesStore;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
 
 public class DynamicPropertiesStateStore extends DynamicPropertiesStore implements StateStore {
 
@@ -29,6 +31,18 @@ public class DynamicPropertiesStateStore extends DynamicPropertiesStore implemen
   @Override
   public String getDbName() {
     return worldStateQueryInstance.getRootHash().toHexString();
+  }
+
+  @Override
+  public long getCurrentCycleNumber() {
+    try {
+      return Optional.ofNullable(getUnchecked(CURRENT_CYCLE_NUMBER))
+          .map(BytesCapsule::getData)
+          .map(ByteArray::toLong)
+          .orElse(0L);
+    } catch (Exception e) {
+      return 0L;
+    }
   }
 
   @Override

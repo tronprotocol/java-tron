@@ -2,6 +2,7 @@ package org.tron.common.runtime.vm;
 
 import java.util.Collections;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 import org.testng.Assert;
@@ -15,6 +16,8 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.state.WorldStateCallBack;
+import org.tron.core.state.trie.TrieImpl2;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
@@ -23,6 +26,7 @@ import org.tron.core.vm.program.invoke.ProgramInvoke;
 import org.tron.core.vm.program.invoke.ProgramInvokeFactory;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
+import org.tron.core.vm.repository.RepositoryStateImpl;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.utils.AbiUtil;
@@ -75,10 +79,16 @@ public class RewardBalanceTest extends VMTestBase {
     }
   */
 
+  private WorldStateCallBack worldStateCallBack;
+
   @Test
   public void testRewardBalance()
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException,
       ContractValidateException {
+    // state query test init
+    worldStateCallBack = context.getBean(WorldStateCallBack.class);
+    TrieImpl2 trie = worldStateCallBack.getTrie();
+
     ConfigLoader.disable = true;
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
@@ -176,6 +186,10 @@ public class RewardBalanceTest extends VMTestBase {
         "0000000000000000000000000000000000000000000000000000000000000000");
     repository.commit();
 
+    // test state query
+    testStateQuery(trie, storeFactory, blockCap,
+        new DataWord(Base58.decode(nonexistentAccount)), rootInternalTransaction, trx);
+
     // trigger deployed contract
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(factoryAddressStr));
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
@@ -193,6 +207,10 @@ public class RewardBalanceTest extends VMTestBase {
     Assert.assertEquals(Hex.toHexString(result),
         "0000000000000000000000000000000000000000000000000000000000000000");
     repository.commit();
+
+    // test state query
+    testStateQuery(trie, storeFactory, blockCap,
+        new DataWord(Base58.decode(factoryAddressStr)), rootInternalTransaction, trx);
 
     // trigger deployed contract
     String witnessAccount = "27Ssb1WE8FArwJVRRb8Dwy3ssVGuLY8L3S1";
@@ -213,6 +231,10 @@ public class RewardBalanceTest extends VMTestBase {
         "0000000000000000000000000000000000000000000000000000000000000000");
     repository.commit();
 
+    // test state query
+    testStateQuery(trie, storeFactory, blockCap,
+        new DataWord(Base58.decode(witnessAccount)), rootInternalTransaction, trx);
+
     // Trigger contract method: nullAddressTest(address)
     methodByAddr = "nullAddressTest()";
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
@@ -231,6 +253,10 @@ public class RewardBalanceTest extends VMTestBase {
     Assert.assertEquals(Hex.toHexString(result),
         "0000000000000000000000000000000000000000000000000000000000000000");
     repository.commit();
+
+    // test state query
+    testStateQuery(trie, storeFactory, blockCap,
+        DataWord.ZERO(), rootInternalTransaction, trx);
 
     // Trigger contract method: localContractAddrTest()
     methodByAddr = "localContractAddrTest()";
@@ -251,7 +277,34 @@ public class RewardBalanceTest extends VMTestBase {
         "0000000000000000000000000000000000000000000000000000000000000000");
     repository.commit();
 
+    // test state query
+    testStateQuery(trie, storeFactory, blockCap,
+        new DataWord(Base58.decode(factoryAddressStr)), rootInternalTransaction, trx);
+
+
     ConfigLoader.disable = false;
+  }
+
+  private void testStateQuery(TrieImpl2 trie, StoreFactory storeFactory,
+                              BlockCapsule blockCap, DataWord address,
+                              InternalTransaction rootInternalTransaction,
+                              Transaction trx) throws ContractValidateException {
+
+    worldStateCallBack.clear();
+    trie.commit();
+    trie.flush();
+    byte[] root = trie.getRootHash();
+    Repository repositoryState = RepositoryStateImpl.createRoot(storeFactory, Bytes32.wrap(root));
+    ProgramInvoke programInvoke = ProgramInvokeFactory
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
+            0, 0, blockCap.getInstance(), repositoryState, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
+    Program program = new Program(null, null, programInvoke, rootInternalTransaction);
+    byte[] result = program.getRewardBalance(address)
+        .getData();
+    Assert.assertEquals(Hex.toHexString(result),
+        "0000000000000000000000000000000000000000000000000000000000000000");
   }
 }
 

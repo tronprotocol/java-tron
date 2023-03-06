@@ -119,7 +119,7 @@ public class LiteFullNodeToolTest {
   }
 
   private void testTools(String dbType, int checkpointVersion) {
-    dbPath = String.format("%s_%s", dbPath, dbType);
+    dbPath = String.format("%s_%s_%d", dbPath, dbType, checkpointVersion);
     init();
     final String[] argsForSnapshot =
         new String[]{"-o", "split", "-t", "snapshot", "--fn-data-path",
