@@ -425,8 +425,9 @@ public class Trie2Test {
             v.toLong())
     );
   }
+
   @Test
-  public void testRange2 () {
+  public void testRange2() {
     TrieImpl2 trie = new TrieImpl2();
     trie.put(Bytes.fromHexString("0x1445584348414e47455f42414c414e43455f4c494d4954"), Bytes32.ZERO);
     trie.put(Bytes.fromHexString("0x144d454d4f5f4645455f484953544f5259"), Bytes32.ZERO);
@@ -487,7 +488,7 @@ public class Trie2Test {
     trie.entriesFrom(min, max).forEach((k, v) -> assets.put(
             k.slice(Byte.BYTES + ADDRESS_SIZE, Long.BYTES).toLong(),
             v.toLong()));
-   Assert.assertEquals(Bytes.fromHexString("0x0000000000000009").toLong(),
+    Assert.assertEquals(Bytes.fromHexString("0x0000000000000009").toLong(),
            assets.get(tokenId).longValue());
 
     min = fix32(Bytes.wrap(Bytes.of(StateType.AccountAsset.value()),
