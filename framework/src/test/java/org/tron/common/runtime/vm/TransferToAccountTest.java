@@ -1,5 +1,6 @@
 package org.tron.common.runtime.vm;
 
+import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +35,10 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.state.StateType;
+import org.tron.core.state.WorldStateCallBack;
+import org.tron.core.state.WorldStateQueryInstance;
+import org.tron.core.state.trie.TrieImpl2;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.EnergyCost;
 import org.tron.core.vm.repository.RepositoryImpl;
@@ -63,6 +68,7 @@ public class TransferToAccountTest {
   private static Application appT;
   private static RepositoryImpl repository;
   private static AccountCapsule ownerCapsule;
+  private static WorldStateCallBack worldStateCallBack;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
@@ -83,6 +89,7 @@ public class TransferToAccountTest {
             AccountType.AssetIssue);
 
     ownerCapsule.setBalance(1000_1000_1000L);
+    worldStateCallBack = context.getBean(WorldStateCallBack.class);
   }
 
   /**
@@ -141,15 +148,29 @@ public class TransferToAccountTest {
   public void TransferTokenTest()
       throws ContractExeException, ReceiptCheckErrException,
       VMIllegalException, ContractValidateException {
+    worldStateCallBack.setExecute(true);
+    // open account asset optimize
+    // chainBaseManager.getDynamicPropertiesStore().setAllowAssetOptimization(1);
+
+    TrieImpl2 trie = worldStateCallBack.getTrie();
     //  1. Test deploy with tokenValue and tokenId */
     long id = createAsset("testToken1");
     byte[] contractAddress = deployTransferContract(id);
     repository.commit();
+
+    WorldStateQueryInstance worldStateQueryInstance = flushTrieAndGetQueryInstance(trie);
     Assert.assertEquals(100,
         chainBaseManager.getAccountStore()
             .get(contractAddress).getAssetV2MapForTest().get(String.valueOf(id)).longValue());
+    Assert.assertEquals(100,
+        worldStateQueryInstance.getAccount(contractAddress)
+            .getAssetV2MapForTest().get(String.valueOf(id)).longValue());
+//    Assert.assertEquals(100,
+//        worldStateQueryInstance.getAccountAsset(contractAddress, Longs.toByteArray(id)).longValue());
     Assert.assertEquals(1000,
         chainBaseManager.getAccountStore().get(contractAddress).getBalance());
+    Assert.assertEquals(1000,
+        worldStateQueryInstance.getAccount(contractAddress).getBalance());
 
     String selectorStr = "transferTokenTo(address,trcToken,uint256)";
 
@@ -168,12 +189,19 @@ public class TransferToAccountTest {
             triggerCallValue, feeLimit, tokenValue, id);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction, dbManager, null);
 
+    worldStateQueryInstance = flushTrieAndGetQueryInstance(trie);
     Assert.assertNull(runtime.getRuntimeError());
     Assert.assertEquals(9,
         chainBaseManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getAssetV2MapForTest()
             .get(String.valueOf(id)).longValue());
+    Assert.assertEquals(9,
+        worldStateQueryInstance.getAccount(Hex.decode(TRANSFER_TO)).getAssetV2MapForTest()
+            .get(String.valueOf(id)).longValue());
     Assert.assertEquals(100 + tokenValue - 9,
         chainBaseManager.getAccountStore().get(contractAddress)
+            .getAssetV2MapForTest().get(String.valueOf(id)).longValue());
+    Assert.assertEquals(100 + tokenValue - 9,
+        worldStateQueryInstance.getAccount(contractAddress)
             .getAssetV2MapForTest().get(String.valueOf(id)).longValue());
     long energyCostWhenExist = runtime.getResult().getEnergyUsed();
 
@@ -188,12 +216,19 @@ public class TransferToAccountTest {
             triggerCallValue, feeLimit, tokenValue, id);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction, dbManager, null);
 
+    worldStateQueryInstance = flushTrieAndGetQueryInstance(trie);
     Assert.assertNull(runtime.getRuntimeError());
     Assert.assertEquals(100 + tokenValue * 2 - 18,
         chainBaseManager.getAccountStore().get(contractAddress).getAssetV2MapForTest()
             .get(String.valueOf(id)).longValue());
+    Assert.assertEquals(100 + tokenValue * 2 - 18,
+        worldStateQueryInstance.getAccount(contractAddress).getAssetV2MapForTest()
+            .get(String.valueOf(id)).longValue());
     Assert.assertEquals(9,
         chainBaseManager.getAccountStore().get(ecKey.getAddress()).getAssetV2MapForTest()
+            .get(String.valueOf(id)).longValue());
+    Assert.assertEquals(9,
+        worldStateQueryInstance.getAccount(ecKey.getAddress()).getAssetV2MapForTest()
             .get(String.valueOf(id)).longValue());
     long energyCostWhenNonExist = runtime.getResult().getEnergyUsed();
     //4.Test Energy
@@ -210,9 +245,13 @@ public class TransferToAccountTest {
             input,
             triggerCallValue, feeLimit, 0, 0);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction, dbManager, null);
+
+    worldStateQueryInstance = flushTrieAndGetQueryInstance(trie);
     Assert.assertNull(runtime.getRuntimeError());
     Assert.assertEquals(19,
         chainBaseManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getBalance());
+    Assert.assertEquals(19,
+        worldStateQueryInstance.getAccount(Hex.decode(TRANSFER_TO)).getBalance());
     energyCostWhenExist = runtime.getResult().getEnergyUsed();
 
     //6. Test  transfer Trx with non-exsit account
@@ -226,9 +265,13 @@ public class TransferToAccountTest {
             input,
             triggerCallValue, feeLimit, 0, 0);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction, dbManager, null);
+
+    worldStateQueryInstance = flushTrieAndGetQueryInstance(trie);
     Assert.assertNull(runtime.getRuntimeError());
     Assert.assertEquals(9,
         chainBaseManager.getAccountStore().get(ecKey.getAddress()).getBalance());
+    Assert.assertEquals(9,
+        worldStateQueryInstance.getAccount(ecKey.getAddress()).getBalance());
     energyCostWhenNonExist = runtime.getResult().getEnergyUsed();
 
     //7.test energy
@@ -323,5 +366,12 @@ public class TransferToAccountTest {
             feeLimit, consumeUserResourcePercent, null, tokenValue, tokenId,
             repository, null);
     return contractAddress;
+  }
+
+  private WorldStateQueryInstance flushTrieAndGetQueryInstance(TrieImpl2 trie) {
+    worldStateCallBack.clear();
+    trie.commit();
+    trie.flush();
+    return new WorldStateQueryInstance(trie.getRootHashByte32(), chainBaseManager);
   }
 }

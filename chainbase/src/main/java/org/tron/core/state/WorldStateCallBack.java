@@ -1,6 +1,7 @@
 package org.tron.core.state;
 
 import io.prometheus.client.Histogram;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.Metrics;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.state.trie.TrieImpl2;
 
@@ -16,6 +18,8 @@ import org.tron.core.state.trie.TrieImpl2;
 public class WorldStateCallBack extends WorldStateCallBackUtils {
 
   private BlockCapsule blockCapsule;
+
+  @Getter
   private volatile TrieImpl2 trie;
 
   public WorldStateCallBack() {
@@ -23,7 +27,7 @@ public class WorldStateCallBack extends WorldStateCallBackUtils {
     this.allowGenerateRoot = CommonParameter.getInstance().getStorage().isAllowStateRoot();
   }
 
-  private void clear() {
+  public void clear() {
     if (!exe()) {
       return;
     }
