@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import lombok.Getter;
@@ -15,7 +16,9 @@ import org.hyperledger.besu.ethereum.trie.KeyValueMerkleStorage;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.MerkleStorage;
 import org.hyperledger.besu.ethereum.trie.Node;
+import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.hyperledger.besu.storage.InMemoryKeyValueStorage;
 import org.hyperledger.besu.storage.KeyValueStorage;
 import org.hyperledger.besu.storage.RocksDBConfiguration;
@@ -139,8 +142,13 @@ public class TrieImpl2 implements Trie<Bytes> {
     throw new RuntimeException("Not implemented yet");
   }
 
-  public  Map<Bytes32, Bytes> entriesFrom(Bytes32 startKeyHash, int limit) {
-    return trie.entriesFrom(startKeyHash, limit);
+  public  TreeMap<Bytes32, Bytes> entriesFrom(Bytes32 startKeyHash, Bytes32 endKeyHash) {
+    final RangeStorageEntriesCollector collector = RangeStorageEntriesCollector.createCollector(
+            startKeyHash, endKeyHash, Integer.MAX_VALUE, Integer.MAX_VALUE);
+    final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
+    return (TreeMap<Bytes32, Bytes>)
+           this.entriesFrom(root -> RangeStorageEntriesCollector.collectEntries(collector, visitor,
+                    root, startKeyHash));
   }
 
   public Map<Bytes32, Bytes> entriesFrom(final Function<Node<Bytes>, Map<Bytes32, Bytes>> handler) {

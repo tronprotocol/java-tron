@@ -39,8 +39,6 @@ import org.hyperledger.besu.ethereum.trie.BranchNode;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.LeafNode;
 import org.hyperledger.besu.ethereum.trie.MerkleStorage;
-import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
-import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.hyperledger.besu.storage.KeyValueStorage;
 import org.hyperledger.besu.storage.RocksDBConfiguration;
 import org.hyperledger.besu.storage.RocksDBConfigurationBuilder;
@@ -395,12 +393,8 @@ public class Trie2Test {
     Bytes32 max = fix32(Bytes.wrap(Bytes.of(StateType.AccountAsset.value()), add1,
         Bytes.ofUnsignedLong(Long.MAX_VALUE)));
 
-    final RangeStorageEntriesCollector collector = RangeStorageEntriesCollector.createCollector(
-        min, max, Integer.MAX_VALUE, Integer.MAX_VALUE);
-    final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
-    TreeMap<Bytes32, Bytes> asset = (TreeMap<Bytes32, Bytes>)
-        new TrieImpl2(trie.getMerkleStorage(), hash).entriesFrom(root ->
-            RangeStorageEntriesCollector.collectEntries(collector, visitor, root, min));
+    TreeMap<Bytes32, Bytes> asset = new TrieImpl2(trie.getMerkleStorage(), hash)
+            .entriesFrom(min, max);
 
     Map<String, Long> assets = new TreeMap<>();
     assets.put(String.valueOf(asset1.toLong()), 5L);
@@ -422,12 +416,7 @@ public class Trie2Test {
 
     trie.commit();
     trie.flush();
-
-
-    asset = (TreeMap<Bytes32, Bytes>)
-        trie.entriesFrom(root ->
-            RangeStorageEntriesCollector.collectEntries(collector, visitor, root, min));
-
+    asset =trie.entriesFrom(min, max);
     actual.clear();
 
     asset.forEach((k, v) ->
@@ -436,5 +425,24 @@ public class Trie2Test {
     );
   }
 
+  @Test
+  public void testEqual() throws IOException {
+    TrieImpl2 trie = new TrieImpl2(folder.newFolder().toPath().toString());
+    TrieImpl2 trie2 = new TrieImpl2(folder.newFolder().toPath().toString());
+    Bytes k1 = Bytes.fromHexString("41548794500882809695a8a687866e76d4271a1abc");
+    Bytes k2 = Bytes.fromHexString("41548794500882809695a8a687866e76d4271a3456");
+    Bytes v1 = Bytes32.random();
+    Bytes v2 = Bytes32.random();
+    trie.put(k1, v1);
+    trie.put(k2, v2);
+    trie2.put(k2, v2);
+    trie2.put(k1, v1);
+    Assert.assertEquals(trie2, trie);
+    Assert.assertEquals(trie.hashCode(), trie2.hashCode());
+    Assert.assertEquals(trie.toString(), trie2.toString());
+    trie.commit();
+    TrieImpl2 trie3 = new TrieImpl2(trie.getMerkleStorage(), trie2.getRootHashByte32());
+    Assert.assertEquals(trie3, trie);
+  }
 
 }

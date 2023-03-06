@@ -13,8 +13,6 @@ import lombok.Getter;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
-import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.core.ChainBaseManager;
@@ -113,12 +111,7 @@ public class WorldStateQueryInstance {
 
     Bytes32 max = fix32(Bytes.wrap(Bytes.of(StateType.AccountAsset.value()), address,
             MAX_ASSET_ID));
-
-    final RangeStorageEntriesCollector collector = RangeStorageEntriesCollector.createCollector(
-            min, max, Integer.MAX_VALUE, Integer.MAX_VALUE);
-    final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
-    TreeMap<Bytes32, Bytes> state = (TreeMap<Bytes32, Bytes>) trieImpl.entriesFrom(
-            root -> RangeStorageEntriesCollector.collectEntries(collector, visitor, root, min));
+    TreeMap<Bytes32, Bytes> state = trieImpl.entriesFrom(min, max);
     state.forEach((k, v) -> assets.put(
             String.valueOf(k.slice(Byte.BYTES + ADDRESS_SIZE, Long.BYTES).toLong()),
             v.toLong())
