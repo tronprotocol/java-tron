@@ -9,6 +9,8 @@ import org.tron.protos.Protocol;
 
 public interface Repository {
 
+  AccountStore getAccountStore();
+
   AssetIssueCapsule getAssetIssue(byte[] tokenId);
 
   AssetIssueV2Store getAssetIssueV2Store();
