@@ -15,11 +15,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessageV3;
 
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -370,7 +366,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public Map<String, Long> getToken10(String address, String blockNumOrTag)
+  public Map<String, String> getToken10(String address, String blockNumOrTag)
           throws JsonRpcInvalidParamsException {
     byte[] addressData = addressCompatibleToByteArray(address);
     Account reply;
@@ -390,9 +386,10 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       reply = wallet.getAccountToken10(addressData, blockNumber.longValue());
     }
 
-    Map<String, Long> token10s =  new HashMap<>();
+    Map<String, String> token10s =  new TreeMap<>();
     if (reply != null) {
-      token10s = reply.getAssetV2Map();
+      reply.getAssetV2Map().forEach((k, v) -> token10s.put(ByteArray.toJsonHex(k),
+             ByteArray.toJsonHex(v)));
     }
     return token10s;
   }

@@ -94,7 +94,7 @@ public interface TronJsonRpc {
   @JsonRpcErrors({
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
   })
-  Map<String, Long> getToken10(String address, String blockNumOrTag)
+  Map<String, String> getToken10(String address, String blockNumOrTag)
           throws JsonRpcInvalidParamsException;
 
   @JsonRpcMethod("eth_getStorageAt")
