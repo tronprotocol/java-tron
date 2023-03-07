@@ -107,6 +107,8 @@ public class Constant {
   public static final String NODE_DNS_TREE_URLS = "node.dns.treeUrls";
   public static final String NODE_DNS_PUBLISH = "node.dns.publish";
   public static final String NODE_DNS_DOMAIN = "node.dns.dnsDomain";
+  public static final String NODE_DNS_CHANGE_THRESHOLD = "node.dns.changeThreshold";
+  public static final String NODE_DNS_MAX_MERGE_SIZE = "node.dns.maxMergeSize";
   public static final String NODE_DNS_PRIVATE = "node.dns.dnsPrivate";
   public static final String NODE_DNS_KNOWN_URLS = "node.dns.knownUrls";
   public static final String NODE_DNS_STATIC_NODES = "node.dns.staticNodes";

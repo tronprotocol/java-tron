@@ -820,7 +820,7 @@ public class Args extends CommonParameter {
         && config.getBoolean(Constant.NODE_IS_OPEN_FULL_TCP_DISCONNECT);
 
     PARAMETER.nodeDetectEnable = config.hasPath(Constant.NODE_DETECT_ENABLE)
-            && config.getBoolean(Constant.NODE_DETECT_ENABLE);
+          && config.getBoolean(Constant.NODE_DETECT_ENABLE);
 
     PARAMETER.maxTransactionPendingSize = config.hasPath(Constant.NODE_MAX_TRANSACTION_PENDING_SIZE)
         ? config.getInt(Constant.NODE_MAX_TRANSACTION_PENDING_SIZE) : 2000;
@@ -871,7 +871,6 @@ public class Args extends CommonParameter {
     PARAMETER.allowMarketTransaction =
         config.hasPath(Constant.COMMITTEE_ALLOW_MARKET_TRANSACTION) ? config
             .getInt(Constant.COMMITTEE_ALLOW_MARKET_TRANSACTION) : 0;
-
 
     PARAMETER.allowTransactionFeePool =
         config.hasPath(Constant.COMMITTEE_ALLOW_TRANSACTION_FEE_POOL) ? config
@@ -1298,6 +1297,25 @@ public class Args extends CommonParameter {
       } else {
         logEmptyError(Constant.NODE_DNS_DOMAIN);
         return null;
+      }
+
+      if (config.hasPath(Constant.NODE_DNS_CHANGE_THRESHOLD)) {
+        double changeThreshold = config.getDouble(Constant.NODE_DNS_CHANGE_THRESHOLD);
+        if (changeThreshold > 0) {
+          publishConfig.setChangeThreshold(changeThreshold);
+        } else {
+          logger.error("Check {}, should be bigger than 0, default 0.1",
+              Constant.NODE_DNS_CHANGE_THRESHOLD);
+        }
+      }
+
+      if (config.hasPath(Constant.NODE_DNS_MAX_MERGE_SIZE)) {
+        int maxMergeSize = config.getInt(Constant.NODE_DNS_MAX_MERGE_SIZE);
+        if (maxMergeSize >= 1 && maxMergeSize <= 5) {
+          publishConfig.setChangeThreshold(maxMergeSize);
+        } else {
+          logger.error("Check {}, should be [1~5], default 5", Constant.NODE_DNS_MAX_MERGE_SIZE);
+        }
       }
 
       if (config.hasPath(Constant.NODE_DNS_PRIVATE)) {
