@@ -25,7 +25,6 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.StorageUtils;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
-import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
@@ -52,6 +51,7 @@ import org.tron.core.vm.program.invoke.ProgramInvoke;
 import org.tron.core.vm.program.invoke.ProgramInvokeFactory;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
+import org.tron.core.vm.repository.RepositoryStateImpl;
 import org.tron.core.vm.utils.MUtil;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Block;
@@ -116,15 +116,29 @@ public class VMActuator implements Actuator2 {
       throw new RuntimeException("TransactionContext is null");
     }
 
-    // Load Config
-    ConfigLoader.load(context.getStoreFactory());
     // Warm up registry class
     OperationRegistry.init();
     trx = context.getTrxCap().getInstance();
+
+    // check whether is state query
+    boolean stateQuery = context.getBlockCap() != null
+            && context.getBlockCap().getNum() < context.getStoreFactory()
+            .getChainBaseManager().getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+
+    //TODO  Prepare Repository is before Load Config
+    if (!stateQuery) {
+      rootRepository = RepositoryImpl.createRoot(context.getStoreFactory());
+    } else {
+      rootRepository = RepositoryStateImpl.createRoot(context.getStoreFactory(),
+              context.getBlockCap().getArchiveRoot());
+    }
+    // Load Config
+    ConfigLoader.load(rootRepository);
+
     // If tx`s fee limit is set, use it to calc max energy limit for constant call
     if (isConstantCall && trx.getRawData().getFeeLimit() > 0) {
       maxEnergyLimit = Math.min(maxEnergyLimit, trx.getRawData().getFeeLimit()
-          / context.getStoreFactory().getChainBaseManager()
+          / rootRepository
           .getDynamicPropertiesStore().getEnergyFee());
     }
     blockCap = context.getBlockCap();
@@ -134,9 +148,6 @@ public class VMActuator implements Actuator2 {
     }
     //Route Type
     ContractType contractType = this.trx.getRawData().getContract(0).getType();
-    //Prepare Repository
-    rootRepository = RepositoryImpl.createRoot(context.getStoreFactory());
-
     enableEventListener = context.isEventPluginLoaded();
 
     //set executorType type
@@ -564,7 +575,7 @@ public class VMActuator implements Actuator2 {
       EnergyProcessor energyProcessor =
           new EnergyProcessor(
               rootRepository.getDynamicPropertiesStore(),
-              ChainBaseManager.getInstance().getAccountStore());
+              rootRepository.getAccountStore());
       energyProcessor.updateUsage(account);
       account.setLatestConsumeTimeForEnergy(now);
       receipt.setCallerEnergyUsage(account.getEnergyUsage());
@@ -726,7 +737,7 @@ public class VMActuator implements Actuator2 {
       EnergyProcessor energyProcessor =
           new EnergyProcessor(
               rootRepository.getDynamicPropertiesStore(),
-              ChainBaseManager.getInstance().getAccountStore());
+              rootRepository.getAccountStore());
       energyProcessor.updateUsage(creator);
       creator.setLatestConsumeTimeForEnergy(now);
       receipt.setOriginEnergyUsage(creator.getEnergyUsage());

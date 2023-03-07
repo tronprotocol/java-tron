@@ -5,7 +5,7 @@ import static org.tron.core.capsule.ReceiptCapsule.checkForEnergyLimit;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.StoreFactory;
+import org.tron.core.vm.repository.Repository;
 
 @Slf4j(topic = "VMConfigLoader")
 public class ConfigLoader {
@@ -13,9 +13,9 @@ public class ConfigLoader {
   //only for unit test
   public static boolean disable = false;
 
-  public static void load(StoreFactory storeFactory) {
+  public static void load(Repository repository) {
     if (!disable) {
-      DynamicPropertiesStore ds = storeFactory.getChainBaseManager().getDynamicPropertiesStore();
+      DynamicPropertiesStore ds = repository.getDynamicPropertiesStore();
       VMConfig.setVmTrace(CommonParameter.getInstance().isVmTrace());
       if (ds != null) {
         VMConfig.initVmHardFork(checkForEnergyLimit(ds));

@@ -2,15 +2,23 @@ package org.tron.core;
 
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
+import com.google.common.cache.CacheLoader;
 import com.google.protobuf.ByteString;
 import java.util.List;
 import javax.annotation.PostConstruct;
+import java.util.concurrent.ExecutionException;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.cache.CacheManager;
+import org.tron.common.cache.CacheType;
+import org.tron.common.cache.TronCache;
 import org.tron.common.storage.metric.DbStatService;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Sha256Hash;
@@ -34,6 +42,9 @@ import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.service.MortgageService;
+import org.tron.core.state.WorldStateGenesis;
+import org.tron.core.state.WorldStateQueryInstance;
+import org.tron.core.state.WorldStateTrieStore;
 import org.tron.core.store.AbiStore;
 import org.tron.core.store.AccountAssetStore;
 import org.tron.core.store.AccountIdIndexStore;
@@ -245,6 +256,16 @@ public class ChainBaseManager {
   @Setter
   private long lowestBlockNum = -1; // except num = 0.
 
+  @Autowired
+  @Getter
+  private WorldStateTrieStore worldStateTrieStore;
+
+  @Autowired
+  @Getter
+  private WorldStateGenesis worldStateGenesis;
+
+  private static TronCache<Bytes32, WorldStateQueryInstance> cache;
+
   public void closeOneStore(ITronChainBase database) {
     logger.info("******** Begin to close {}. ********",  database.getName());
     try {
@@ -420,6 +441,14 @@ public class ChainBaseManager {
 
   public static synchronized void init(ChainBaseManager manager) {
     chainBaseManager = manager;
+    cache = CacheManager.allocate(CacheType.worldStateQueryInstance,
+            new CacheLoader<Bytes32, WorldStateQueryInstance>() {
+            @Override
+            public WorldStateQueryInstance load(@NotNull Bytes32 key) throws Exception {
+              return new WorldStateQueryInstance(key, chainBaseManager);
+            }
+          });
+
     AssetUtil.setAccountAssetStore(manager.getAccountAssetStore());
     AssetUtil.setDynamicPropertiesStore(manager.getDynamicPropertiesStore());
   }
@@ -444,6 +473,17 @@ public class ChainBaseManager {
 
     NodeType(int type) {
       this.type = type;
+    }
+  }
+
+  public static WorldStateQueryInstance fetch(Bytes32 root) {
+    try {
+      if (root == null || root.isEmpty()) {
+        throw new IllegalStateException("root can not be empty");
+      }
+      return cache.get(root);
+    } catch (ExecutionException e) {
+      throw new MerkleTrieException("fetch worldStateQueryInstance", e);
     }
   }
 }

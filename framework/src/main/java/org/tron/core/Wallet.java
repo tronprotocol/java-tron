@@ -54,6 +54,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.util.encoders.DecoderException;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -105,6 +106,7 @@ import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.ProgramResult;
+import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
@@ -179,6 +181,7 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.adv.TransactionMessage;
+import org.tron.core.state.WorldStateQueryInstance;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AccountTraceStore;
@@ -190,6 +193,7 @@ import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.program.Program;
+import org.tron.core.vm.program.Storage;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder.ShieldedTRC20ParametersType;
 import org.tron.core.zen.ZenTransactionBuilder;
@@ -339,6 +343,18 @@ public class Wallet {
     return accountCapsule.getInstance();
   }
 
+  // for state query, notice ,not same with  @see getAccount(account)
+  public Account getAccount(byte[] address, long blockNumber) {
+    Bytes32 rootHash = getRootHashByNumber(blockNumber);
+    WorldStateQueryInstance worldStateQueryInstance = initWorldStateQueryInstance(rootHash);
+    AccountCapsule accountCapsule = worldStateQueryInstance.getAccount(address);
+    if (accountCapsule == null) {
+      return null;
+    }
+    return accountCapsule.getInstance();
+  }
+
+
   private void sortFrozenV2List(AccountCapsule accountCapsule) {
     List<FreezeV2> oldFreezeV2List = accountCapsule.getFrozenV2List();
     accountCapsule.clearFrozenV2();
@@ -357,6 +373,18 @@ public class Wallet {
         accountCapsule.updateFrozenV2List(i, optional.get());
       }
     }
+  }
+
+  // // for state query
+  public Account getAccountToken10(byte[] address, long blockNumber) {
+    Bytes32 rootHash = getRootHashByNumber(blockNumber);
+    WorldStateQueryInstance worldStateQueryInstance = initWorldStateQueryInstance(rootHash);
+    AccountCapsule accountCapsule = worldStateQueryInstance.getAccount(address);
+    if (accountCapsule == null) {
+      return null;
+    }
+    accountCapsule.importAllAsset();
+    return accountCapsule.getInstance();
   }
 
   public Account getAccountById(Account account) {
@@ -2842,7 +2870,7 @@ public class Wallet {
         triggerSmartContract.getData().toByteArray());
 
     if (isConstant(abi, selector)) {
-      return callConstantContract(trxCap, builder, retBuilder);
+      return callConstantContract(trxCap, builder, retBuilder, -1);
     } else {
       return trxCap.getInstance();
     }
@@ -2967,6 +2995,12 @@ public class Wallet {
   public Transaction triggerConstantContract(TriggerSmartContract triggerSmartContract,
       TransactionCapsule trxCap, Builder builder, Return.Builder retBuilder)
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
+    return triggerConstantContract(triggerSmartContract, trxCap, builder, retBuilder, -1);
+  }
+
+  public Transaction triggerConstantContract(TriggerSmartContract triggerSmartContract,
+      TransactionCapsule trxCap, Builder builder, Return.Builder retBuilder, long blockNum)
+      throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
     if (triggerSmartContract.getContractAddress().isEmpty()) { // deploy contract
       CreateSmartContract.Builder deployBuilder = CreateSmartContract.newBuilder();
@@ -2985,17 +3019,25 @@ public class Wallet {
       trxCap = createTransactionCapsule(deployBuilder.build(), ContractType.CreateSmartContract);
       trxCap.setFeeLimit(feeLimit);
     } else { // call contract
-      ContractStore contractStore = chainBaseManager.getContractStore();
+      ContractCapsule contractCapsule;
       byte[] contractAddress = triggerSmartContract.getContractAddress().toByteArray();
-      if (contractStore.get(contractAddress) == null) {
+      if (blockNum == -1) {
+        ContractStore contractStore = chainBaseManager.getContractStore();
+        contractCapsule = contractStore.get(contractAddress);
+      } else {
+        Bytes32 rootHash = getRootHashByNumber(blockNum);
+        WorldStateQueryInstance worldStateQueryInstance = initWorldStateQueryInstance(rootHash);
+        contractCapsule = worldStateQueryInstance.getContract(contractAddress);
+      }
+      if (contractCapsule == null) {
         throw new ContractValidateException("Smart contract is not exist.");
       }
     }
-    return callConstantContract(trxCap, builder, retBuilder);
+    return callConstantContract(trxCap, builder, retBuilder, blockNum);
   }
 
   public Transaction callConstantContract(TransactionCapsule trxCap,
-      Builder builder, Return.Builder retBuilder)
+      Builder builder, Return.Builder retBuilder, long blockNum)
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
     if (!Args.getInstance().isSupportConstant()) {
@@ -3003,12 +3045,21 @@ public class Wallet {
     }
 
     Block headBlock;
-    List<BlockCapsule> blockCapsuleList = chainBaseManager.getBlockStore()
-        .getBlockByLatestNum(1);
-    if (CollectionUtils.isEmpty(blockCapsuleList)) {
-      throw new HeaderNotFound("latest block not found");
+    if (blockNum == -1) {
+      List<BlockCapsule> blockCapsuleList = chainBaseManager.getBlockStore()
+              .getBlockByLatestNum(1);
+      if (CollectionUtils.isEmpty(blockCapsuleList)) {
+        throw new HeaderNotFound("latest block not found");
+      } else {
+        headBlock = blockCapsuleList.get(0).getInstance();
+      }
     } else {
-      headBlock = blockCapsuleList.get(0).getInstance();
+      try {
+        headBlock = chainBaseManager.getBlockByNum(blockNum).getInstance();
+      } catch (ItemNotFoundException | BadItemException e) {
+        logger.error("Block not found, number: {}, err: {}", blockNum, e.getMessage());
+        throw new HeaderNotFound(String.format("Block not found, number: %d", blockNum));
+      }
     }
 
     TransactionContext context = new TransactionContext(new BlockCapsule(headBlock), trxCap,
@@ -3069,6 +3120,23 @@ public class Wallet {
       return contractCapsule.getInstance();
     }
     return null;
+  }
+  // // for state query
+  public SmartContract getContract(byte[] address, long blockNumber) {
+    Bytes32 rootHash = getRootHashByNumber(blockNumber);
+    WorldStateQueryInstance worldStateQueryInstance = initWorldStateQueryInstance(rootHash);
+    AccountCapsule accountCapsule = worldStateQueryInstance.getAccount(address);
+    if (accountCapsule == null) {
+      logger.error(
+              "Get contract failed, the account does not exist or the account "
+                      + "does not have a code hash!");
+      return null;
+    }
+    ContractCapsule contractCapsule = worldStateQueryInstance.getContract(address);
+    if (contractCapsule == null) {
+      return null;
+    }
+    return contractCapsule.getInstance();
   }
 
   /**
@@ -4422,5 +4490,53 @@ public class Wallet {
     }
     return null;
   }
+  // for state query
+  public byte[] getCode(byte[] address, long blockNumber) {
+    Bytes32 rootHash = getRootHashByNumber(blockNumber);
+    WorldStateQueryInstance worldStateQueryInstance = initWorldStateQueryInstance(rootHash);
+    CodeCapsule codeCapsule = worldStateQueryInstance.getCode(address);
+    if (codeCapsule == null) {
+      return null;
+    }
+    return codeCapsule.getInstance();
+  }
+
+  public byte[] getStorageAt(byte[] address, String storageIdx, long blockNumber) {
+    Bytes32 rootHash = getRootHashByNumber(blockNumber);
+    WorldStateQueryInstance worldStateQueryInstance = initWorldStateQueryInstance(rootHash);
+    ContractCapsule contractCapsule = worldStateQueryInstance.getContract(address);
+    if (contractCapsule == null) {
+      return null;
+    }
+    Storage storage = new Storage(address, worldStateQueryInstance);
+    storage.setContractVersion(contractCapsule.getInstance().getVersion());
+    DataWord value = storage.getValue(new DataWord(ByteArray.fromHexString(storageIdx)));
+    return value == null ? new byte[32] : value.getData();
+  }
+
+  private Bytes32 getRootHashByNumber(long blockNumber) {
+    if (!CommonParameter.getInstance().getStorage().isAllowStateRoot()) {
+      throw new IllegalArgumentException("Unsupported query, this is not a archive node");
+    }
+    long stateStartHeight = chainBaseManager.getWorldStateGenesis().getStateGenesisHeight();
+    if (blockNumber < stateStartHeight) {
+      throw new IllegalArgumentException(
+          "block number is lower than state genesis height, genesis height: " + stateStartHeight);
+    }
+    if (blockNumber > chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()) {
+      throw new IllegalArgumentException("block number is larger than current header");
+    }
+
+    try {
+      return chainBaseManager.getBlockByNum(blockNumber).getArchiveRoot();
+    } catch (ItemNotFoundException | BadItemException e) {
+      throw new IllegalArgumentException("block not found, block number: " + blockNumber);
+    }
+  }
+
+  private WorldStateQueryInstance initWorldStateQueryInstance(Bytes32 rootHash) {
+    return ChainBaseManager.fetch(rootHash);
+  }
+  // for state query
 }
 

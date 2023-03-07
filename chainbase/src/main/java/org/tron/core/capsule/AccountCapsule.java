@@ -15,11 +15,26 @@
 
 package org.tron.core.capsule;
 
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.core.config.Parameter.ChainConstant.WINDOW_SIZE_MS;
+import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
+import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
+import static org.tron.protos.contract.Common.ResourceCode.TRON_POWER;
+import static org.tron.protos.contract.Common.ResourceCode;
+
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import java.util.Objects;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.tuweni.bytes.Bytes32;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.utils.AssetUtil;
 import org.tron.core.store.AssetIssueStore;
@@ -27,8 +42,8 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.Account.Builder;
-import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.Account.FreezeV2;
+import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.Account.UnFreezeV2;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Key;
@@ -38,22 +53,22 @@ import org.tron.protos.Protocol.Vote;
 import org.tron.protos.contract.AccountContract.AccountCreateContract;
 import org.tron.protos.contract.AccountContract.AccountUpdateContract;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-
-import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
-import static org.tron.core.config.Parameter.ChainConstant.WINDOW_SIZE_MS;
-import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
-import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
-import static org.tron.protos.contract.Common.ResourceCode.TRON_POWER;
-import static org.tron.protos.contract.Common.ResourceCode;
 
 @Slf4j(topic = "capsule")
 public class AccountCapsule implements ProtoCapsule<Account>, Comparable<AccountCapsule> {
 
   private Account account;
+
+  @Getter
+  @Setter
   private boolean flag = false;
+
+  @Getter
+  private Set<String> dirtyAssetSet = Sets.newHashSet();
+
+  @Getter
+  @Setter
+  private Bytes32 root = Bytes32.ZERO;
 
   /**
    * get account from bytes data.
@@ -738,6 +753,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
           .putAsset(nameKey, Math.addExact(currentAmount, amount))
           .putAssetV2(tokenID, Math.addExact(currentAmount, amount))
           .build();
+      dirtyAssetSet.add(tokenID);
     }
     //key is token id
     if (dynamicPropertiesStore.getAllowSameTokenName() == 1) {
@@ -750,6 +766,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       this.account = this.account.toBuilder()
           .putAssetV2(tokenIDStr, Math.addExact(currentAmount, amount))
           .build();
+      dirtyAssetSet.add(tokenIDStr);
     }
     return true;
   }
@@ -782,6 +799,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
                 .putAsset(nameKey, Math.subtractExact(currentAmount, amount))
                 .putAssetV2(tokenID, Math.subtractExact(currentAmount, amount))
                 .build();
+        dirtyAssetSet.add(tokenID);
         return true;
       }
     }
@@ -794,6 +812,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         this.account = this.account.toBuilder()
                 .putAssetV2(tokenID, Math.subtractExact(currentAmount, amount))
                 .build();
+        dirtyAssetSet.add(tokenID);
         return true;
       }
     }
@@ -825,13 +844,15 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public boolean addAssetV2(byte[] key, long value) {
-    if (AssetUtil.hasAssetV2(this.account, key)) {
+    if (AssetUtil.hasAssetV2(this.account, key, root)) {
       return false;
     }
 
+    String keyStr = ByteArray.toStr(key);
     this.account = this.account.toBuilder()
-        .putAssetV2(ByteArray.toStr(key), value)
+        .putAssetV2(keyStr, value)
         .build();
+    dirtyAssetSet.add(keyStr);
     return true;
   }
 
@@ -1326,12 +1347,12 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public void importAsset(byte[] key) {
-    this.account = AssetUtil.importAsset(this.account, key);
+    this.account = AssetUtil.importAssetV2(this.account, key, root);
   }
 
   public void importAllAsset() {
     if (!flag) {
-      this.account = AssetUtil.importAllAsset(this.account);
+      this.account = AssetUtil.importAllAsset(this.account, root);
       flag = true;
     }
   }

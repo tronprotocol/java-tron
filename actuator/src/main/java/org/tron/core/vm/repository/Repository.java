@@ -9,6 +9,12 @@ import org.tron.protos.Protocol;
 
 public interface Repository {
 
+  byte[] TOTAL_NET_WEIGHT = "TOTAL_NET_WEIGHT".getBytes();
+  byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
+  byte[] TOTAL_TRON_POWER_WEIGHT = "TOTAL_TRON_POWER_WEIGHT".getBytes();
+
+  AccountStore getAccountStore();
+
   AssetIssueCapsule getAssetIssue(byte[] tokenId);
 
   AssetIssueV2Store getAssetIssueV2Store();

@@ -24,6 +24,14 @@ public class CacheManager {
     return cache;
   }
 
+  public  static <K, V> TronCache<K, V> allocate(CacheType name,
+                                                 CacheLoader<K, V> loader) {
+    TronCache<K, V> cache = new TronCache<>(name, CommonParameter.getInstance()
+            .getStorage().getCacheStrategy(name), loader);
+    CACHES.put(name, cache);
+    return cache;
+  }
+
   public  static <K, V> TronCache<K, V> allocate(CacheType name, String strategy,
                                                  CacheLoader<K, V> loader) {
     TronCache<K, V> cache = new TronCache<>(name, strategy, loader);

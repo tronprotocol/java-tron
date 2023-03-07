@@ -19,8 +19,11 @@ public enum CacheType {
   properties("properties"),
   delegation("delegation"),
   storageRow("storage-row"),
-  account("account");
+  account("account"),
   // for leveldb or rocksdb cache
+
+  // archive node
+  worldStateQueryInstance("worldStateQueryInstance");
 
   public final String type;
 
