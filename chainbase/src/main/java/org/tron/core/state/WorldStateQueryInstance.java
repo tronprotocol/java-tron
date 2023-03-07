@@ -28,7 +28,6 @@ import org.tron.core.capsule.StorageRowCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.state.trie.TrieImpl2;
-import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol;
 
 public class WorldStateQueryInstance {
@@ -42,6 +41,8 @@ public class WorldStateQueryInstance {
   public static final int ADDRESS_SIZE = DecodeUtil.ADDRESS_SIZE >> 1;
   public static final Bytes MAX_ASSET_ID = Bytes.ofUnsignedLong(Long.MAX_VALUE);
   public static final Bytes MIN_ASSET_ID = Bytes.ofUnsignedLong(0);
+  private static final byte[] ALLOW_ASSET_OPTIMIZATION =
+          "ALLOW_ASSET_OPTIMIZATION".getBytes();
 
   private final WorldStateGenesis worldStateGenesis;
 
@@ -196,104 +197,7 @@ public class WorldStateQueryInstance {
     return ByteArray.toLong(getDynamicProperty(key).getData());
   }
 
-  public long getLatestBlockHeaderNumber() {
-    return getDynamicPropertyLong(DynamicPropertiesStore.LATEST_BLOCK_HEADER_NUMBER);
-  }
-
-  public long getLatestBlockHeaderTimestamp() {
-    return getDynamicPropertyLong(DynamicPropertiesStore.LATEST_BLOCK_HEADER_TIMESTAMP);
-  }
-
-  public long getAllowTvmTransferTrc10() {
-    return getDynamicPropertyLong(DynamicPropertiesStore.ALLOW_TVM_TRANSFER_TRC10);
-  }
-
-  public long getAllowMultiSign() {
-    return getDynamicPropertyLong(DynamicPropertiesStore.ALLOW_MULTI_SIGN);
-  }
-
-  public long getAllowTvmConstantinople() {
-    return getDynamicPropertyLong(DynamicPropertiesStore.ALLOW_TVM_CONSTANTINOPLE);
-  }
-
-  public long getAllowTvmSolidity059() {
-    return getDynamicPropertyLong(DynamicPropertiesStore.ALLOW_TVM_SOLIDITY_059);
-  }
-
-  public long getAllowShieldedTRC20Transaction() {
-    return getDynamicPropertyLong(DynamicPropertiesStore.ALLOW_SHIELDED_TRC20_TRANSACTION);
-  }
-
-  public long getAllowTvmIstanbul() {
-    return getDynamicPropertyLong(DynamicPropertiesStore.ALLOW_TVM_ISTANBUL);
-  }
-
-  public long getAllowTvmFreeze() {
-    return getDynamicPropertyLong(DynamicPropertiesStore.ALLOW_TVM_FREEZE);
-  }
-
-  public long getAllowTvmVote() {
-    return getDynamicPropertyLong(DynamicPropertiesStore.ALLOW_TVM_VOTE);
-  }
-
-  public long getAllowTvmLondon() {
-    return getDynamicPropertyLong(DynamicPropertiesStore.ALLOW_TVM_LONDON);
-  }
-
-  public long getAllowTvmCompatibleEvm() {
-    return getDynamicPropertyLong(DynamicPropertiesStore.ALLOW_TVM_COMPATIBLE_EVM);
-  }
-
-  public long getAllowHigherLimitForMaxCpuTimeOfOneTx() {
-    return getDynamicPropertyLong(
-            DynamicPropertiesStore.ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX);
-  }
-
-  public long getTotalEnergyCurrentLimit() {
-    return getDynamicPropertyLong(
-            DynamicPropertiesStore.DynamicResourceProperties.TOTAL_ENERGY_CURRENT_LIMIT);
-  }
-
-  public long getTotalEnergyWeight() {
-    return getDynamicPropertyLong(
-            DynamicPropertiesStore.DynamicResourceProperties.TOTAL_ENERGY_WEIGHT);
-  }
-
-  public long getTotalNetWeight() {
-    return getDynamicPropertyLong(
-            DynamicPropertiesStore.DynamicResourceProperties.TOTAL_NET_WEIGHT);
-  }
-
-  public long getTotalTronPowerWeight() {
-    return getDynamicPropertyLong(
-            DynamicPropertiesStore.DynamicResourceProperties.TOTAL_TRON_POWER_WEIGHT);
-  }
-
-  public boolean supportUnfreezeDelay() {
-    return getDynamicPropertyLong(DynamicPropertiesStore.UNFREEZE_DELAY_DAYS) > 0;
-  }
-
-  public long getAllowOptimizedReturnValueOfChainId() {
-    return getDynamicPropertyLong(DynamicPropertiesStore.ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID);
-  }
-
-  public long getAllowDynamicEnergy() {
-    return getDynamicPropertyLong(DynamicPropertiesStore.ALLOW_DYNAMIC_ENERGY);
-  }
-
-  public long getDynamicEnergyThreshold() {
-    return getDynamicPropertyLong(DynamicPropertiesStore.DYNAMIC_ENERGY_THRESHOLD);
-  }
-
-  public long getDynamicEnergyIncreaseFactor() {
-    return getDynamicPropertyLong(DynamicPropertiesStore.DYNAMIC_ENERGY_INCREASE_FACTOR);
-  }
-
-  public long getDynamicEnergyMaxFactor() {
-    return getDynamicPropertyLong(DynamicPropertiesStore.DYNAMIC_ENERGY_MAX_FACTOR);
-  }
-
   public boolean supportAllowAssetOptimization() {
-    return getDynamicPropertyLong(DynamicPropertiesStore.ALLOW_ASSET_OPTIMIZATION) == 1L;
+    return getDynamicPropertyLong(ALLOW_ASSET_OPTIMIZATION) == 1L;
   }
 }

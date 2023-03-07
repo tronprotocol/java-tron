@@ -66,13 +66,11 @@ public class DynamicPropertiesStateStore extends DynamicPropertiesStore implemen
   //****  Unsupported Operation For StateDB
 
   protected org.iq80.leveldb.Options getOptionsByDbNameForLevelDB(String dbName) {
-    throwIfError();
-    return null;
+    throw new UnsupportedOperationException();
   }
 
   protected DirectComparator getDirectComparator() {
-    throwIfError();
-    return null;
+    throw new UnsupportedOperationException();
   }
 
   @Override

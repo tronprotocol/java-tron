@@ -115,33 +115,24 @@ public class VMActuator implements Actuator2 {
       throw new RuntimeException("TransactionContext is null");
     }
 
-    // check whether is state query
-    boolean stateQuery = false;
-    if (context.getBlockCap() != null) {
-      if (context.getBlockCap().getNum() < context.getStoreFactory()
-          .getChainBaseManager().getDynamicPropertiesStore().getLatestBlockHeaderNumber()) {
-        stateQuery = true;
-      }
-    }
-
-    // Load Config
-    if (!stateQuery) {
-      ConfigLoader.load(context.getStoreFactory());
-    } else {
-      ConfigLoader.load(context.getBlockCap().getArchiveRoot());
-    }
     // Warm up registry class
     OperationRegistry.init();
     trx = context.getTrxCap().getInstance();
+
+    // check whether is state query
+    boolean stateQuery = context.getBlockCap() != null
+            && context.getBlockCap().getNum() < context.getStoreFactory()
+            .getChainBaseManager().getDynamicPropertiesStore().getLatestBlockHeaderNumber();
 
     //Prepare Repository
     if (!stateQuery) {
       rootRepository = RepositoryImpl.createRoot(context.getStoreFactory());
     } else {
-      // todo: review
       rootRepository = RepositoryStateImpl.createRoot(context.getStoreFactory(),
               context.getBlockCap().getArchiveRoot());
     }
+    // Load Config
+    ConfigLoader.load(rootRepository);
 
     // If tx`s fee limit is set, use it to calc max energy limit for constant call
     if (isConstantCall && trx.getRawData().getFeeLimit() > 0) {

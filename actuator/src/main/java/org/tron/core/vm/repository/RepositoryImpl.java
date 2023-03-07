@@ -76,9 +76,6 @@ import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 public class RepositoryImpl implements Repository {
 
   private final long precision = Parameter.ChainConstant.PRECISION;
-  private static final byte[] TOTAL_NET_WEIGHT = "TOTAL_NET_WEIGHT".getBytes();
-  private static final byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
-  private static final byte[] TOTAL_TRON_POWER_WEIGHT = "TOTAL_TRON_POWER_WEIGHT".getBytes();
 
   private StoreFactory storeFactory;
   @Getter

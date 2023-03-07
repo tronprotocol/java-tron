@@ -70,13 +70,11 @@ public class AccountStateStore extends AccountStore implements StateStore {
   }
 
   protected org.iq80.leveldb.Options getOptionsByDbNameForLevelDB(String dbName) {
-    throwIfError();
-    return null;
+    throw new UnsupportedOperationException();
   }
 
   protected DirectComparator getDirectComparator() {
-    throwIfError();
-    return null;
+    throw new UnsupportedOperationException();
   }
 
   @Override

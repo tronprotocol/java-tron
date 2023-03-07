@@ -416,7 +416,7 @@ public class Trie2Test {
 
     trie.commit();
     trie.flush();
-    asset =trie.entriesFrom(min, max);
+    asset = trie.entriesFrom(min, max);
     actual.clear();
 
     asset.forEach((k, v) ->

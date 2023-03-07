@@ -69,13 +69,11 @@ public class AssetIssueV2StateStore extends AssetIssueV2Store implements StateSt
   //****  Unsupported Operation For StateDB
 
   protected org.iq80.leveldb.Options getOptionsByDbNameForLevelDB(String dbName) {
-    throwIfError();
-    return null;
+    throw new UnsupportedOperationException();
   }
 
   protected DirectComparator getDirectComparator() {
-    throwIfError();
-    return null;
+    throw new UnsupportedOperationException();
   }
 
   @Override

@@ -42,28 +42,27 @@ public class WorldStateCallBackUtils {
       add(type, key, WorldStateQueryInstance.DELETE);
       return;
     }
-    if (type == StateType.Account) {
-      if (chainBaseManager.getDynamicPropertiesStore()
+    if (type == StateType.Account && chainBaseManager.getDynamicPropertiesStore()
               .getAllowAccountAssetOptimizationFromRoot() == 1) {
-        // @see org.tron.core.db2.core.SnapshotRoot#put(byte[] key, byte[] value)
-        AccountCapsule accountCapsule = new AccountCapsule(value);
-        if (accountCapsule.getAssetOptimized()) {
-          accountCapsule.getDirtyAssetSet().forEach(tokenId -> addFix32(
-                  StateType.AccountAsset, com.google.common.primitives.Bytes.concat(key,
-                          Longs.toByteArray(Long.parseLong(tokenId))),
-                  Longs.toByteArray(accountCapsule.getAssetV2(tokenId))));
-        } else {
-          accountCapsule.getAssetMapV2().forEach((tokenId, amount) -> addFix32(
-                  StateType.AccountAsset, com.google.common.primitives.Bytes.concat(key,
-                          Longs.toByteArray(Long.parseLong(tokenId))),
-                  Longs.toByteArray(amount)));
-          accountCapsule.setAssetOptimized(true);
-        }
-        value = accountCapsule.getInstance().toBuilder()
-                .clearAsset()
-                .clearAssetV2()
-                .build().toByteArray();
+      // @see org.tron.core.db2.core.SnapshotRoot#put(byte[] key, byte[] value)
+      AccountCapsule accountCapsule = new AccountCapsule(value);
+      if (accountCapsule.getAssetOptimized()) {
+        accountCapsule.getDirtyAssetSet().forEach(tokenId -> addFix32(
+                StateType.AccountAsset, com.google.common.primitives.Bytes.concat(key,
+                        Longs.toByteArray(Long.parseLong(tokenId))),
+                Longs.toByteArray(accountCapsule.getAssetV2(tokenId))));
+      } else {
+        accountCapsule.getAssetMapV2().forEach((tokenId, amount) -> addFix32(
+                StateType.AccountAsset, com.google.common.primitives.Bytes.concat(key,
+                        Longs.toByteArray(Long.parseLong(tokenId))),
+                Longs.toByteArray(amount)));
+        accountCapsule.setAssetOptimized(true);
       }
+      value = accountCapsule.getInstance().toBuilder()
+              .clearAsset()
+              .clearAssetV2()
+              .build().toByteArray();
+
     }
     add(type, key, value);
   }

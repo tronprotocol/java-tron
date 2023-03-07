@@ -6,6 +6,7 @@ import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.protobuf.ByteString;
 import java.util.HashMap;
+import java.util.Optional;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
@@ -831,17 +832,16 @@ public class RepositoryStateImpl implements Repository {
       return 0;
     }
     long energyWeight = frozeBalance / 1_000_000L;
-    long totalEnergyLimit = getWorldStateQueryInstance().getTotalEnergyCurrentLimit();
-    long totalEnergyWeight = getWorldStateQueryInstance().getTotalEnergyWeight();
+    long totalEnergyLimit = getDynamicPropertiesStore().getTotalEnergyCurrentLimit();
+    long totalEnergyWeight = getDynamicPropertiesStore().getTotalEnergyWeight();
 
     assert totalEnergyWeight > 0;
 
     return (long) (energyWeight * ((double) totalEnergyLimit / totalEnergyWeight));
   }
 
-  @Override
   public long getHeadSlot() {
-    return getSlotByTimestampMs(getWorldStateQueryInstance().getLatestBlockHeaderTimestamp());
+    return getSlotByTimestampMs(getDynamicPropertiesStore().getLatestBlockHeaderTimestamp());
   }
 
   @Override
@@ -893,7 +893,7 @@ public class RepositoryStateImpl implements Repository {
         if (deposit != null) {
           deposit.putContractState(key, value);
         } else {
-         throw new UnsupportedOperationException();
+          throw new UnsupportedOperationException();
         }
       }
     }));
@@ -1009,35 +1009,47 @@ public class RepositoryStateImpl implements Repository {
 
   @Override
   public void saveTotalNetWeight(long totalNetWeight) {
-    updateDynamicProperty(DynamicPropertiesStore.DynamicResourceProperties.TOTAL_NET_WEIGHT,
-        new BytesCapsule(ByteArray.fromLong(totalNetWeight)));
+    updateDynamicProperty(TOTAL_NET_WEIGHT,
+            new BytesCapsule(ByteArray.fromLong(totalNetWeight)));
   }
 
   @Override
   public void saveTotalEnergyWeight(long totalEnergyWeight) {
-    updateDynamicProperty(DynamicPropertiesStore.DynamicResourceProperties.TOTAL_ENERGY_WEIGHT,
-        new BytesCapsule(ByteArray.fromLong(totalEnergyWeight)));
+    updateDynamicProperty(TOTAL_ENERGY_WEIGHT,
+            new BytesCapsule(ByteArray.fromLong(totalEnergyWeight)));
   }
 
   @Override
   public void saveTotalTronPowerWeight(long totalTronPowerWeight) {
-    updateDynamicProperty(DynamicPropertiesStore.DynamicResourceProperties.TOTAL_TRON_POWER_WEIGHT,
+    updateDynamicProperty(TOTAL_TRON_POWER_WEIGHT,
             new BytesCapsule(ByteArray.fromLong(totalTronPowerWeight)));
   }
 
   @Override
   public long getTotalNetWeight() {
-    return worldStateQueryInstance.getTotalNetWeight();
+    return Optional.ofNullable(getDynamicProperty(TOTAL_NET_WEIGHT))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(
+                    () -> new IllegalArgumentException("not found TOTAL_NET_WEIGHT"));
   }
 
   @Override
   public long getTotalEnergyWeight() {
-    return worldStateQueryInstance.getTotalEnergyWeight();
+    return Optional.ofNullable(getDynamicProperty(TOTAL_ENERGY_WEIGHT))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(
+                    () -> new IllegalArgumentException("not found TOTAL_ENERGY_WEIGHT"));
   }
 
   @Override
   public long getTotalTronPowerWeight() {
-    return worldStateQueryInstance.getTotalTronPowerWeight();
+    return Optional.ofNullable(getDynamicProperty(TOTAL_TRON_POWER_WEIGHT))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(
+                    () -> new IllegalArgumentException("not found TOTAL_TRON_POWER_WEIGHT"));
   }
 
 }
