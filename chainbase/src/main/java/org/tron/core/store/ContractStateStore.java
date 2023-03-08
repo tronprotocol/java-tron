@@ -1,7 +1,5 @@
 package org.tron.core.store;
 
-import java.util.Objects;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,15 +19,6 @@ public class ContractStateStore extends TronStoreWithRevoking<ContractStateCapsu
   @Override
   public ContractStateCapsule get(byte[] key) {
     return getUnchecked(key);
-  }
-
-  @Override
-  public void put(byte[] key, ContractStateCapsule item) {
-    if (Objects.isNull(key) || Objects.isNull(item)) {
-      return;
-    }
-
-    revokingDB.put(key, item.getData());
   }
 
 }

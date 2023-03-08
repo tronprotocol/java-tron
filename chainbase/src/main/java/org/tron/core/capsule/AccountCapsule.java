@@ -18,8 +18,11 @@ package org.tron.core.capsule;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.tuweni.bytes.Bytes32;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.utils.AssetUtil;
 import org.tron.core.store.AssetIssueStore;
@@ -54,6 +57,10 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
 
   private Account account;
   private boolean flag = false;
+
+  @Getter
+  @Setter
+  private Bytes32 root = Bytes32.ZERO;
 
   /**
    * get account from bytes data.
@@ -825,7 +832,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public boolean addAssetV2(byte[] key, long value) {
-    if (AssetUtil.hasAssetV2(this.account, key)) {
+    if (AssetUtil.hasAssetV2(this.account, key, root)) {
       return false;
     }
 
@@ -1326,12 +1333,12 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public void importAsset(byte[] key) {
-    this.account = AssetUtil.importAsset(this.account, key);
+    this.account = AssetUtil.importAssetV2(this.account, key, root);
   }
 
   public void importAllAsset() {
     if (!flag) {
-      this.account = AssetUtil.importAllAsset(this.account);
+      this.account = AssetUtil.importAllAsset(this.account, root);
       flag = true;
     }
   }

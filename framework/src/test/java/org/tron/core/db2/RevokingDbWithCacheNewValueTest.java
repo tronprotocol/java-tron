@@ -26,6 +26,7 @@ import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.db2.SnapshotRootTest.ProtoCapsuleTest;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
+import org.tron.core.state.WorldStateCallBack;
 
 @Slf4j
 public class RevokingDbWithCacheNewValueTest {
@@ -472,6 +473,7 @@ public class RevokingDbWithCacheNewValueTest {
 
     protected TestRevokingTronStore(String dbName) {
       super(dbName);
+      this.worldStateCallBackUtils = new WorldStateCallBack();
     }
 
     @Override

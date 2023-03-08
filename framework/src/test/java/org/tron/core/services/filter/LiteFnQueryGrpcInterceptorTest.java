@@ -20,6 +20,7 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.PublicMethod;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
@@ -56,6 +57,9 @@ public class LiteFnQueryGrpcInterceptorTest {
   @Before
   public void init() {
     Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
+    Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setRpcOnSolidityPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setRpcOnPBFTPort(PublicMethod.chooseRandomPort());
     String fullnode = String.format("%s:%d", Args.getInstance().getNodeDiscoveryBindIp(),
             Args.getInstance().getRpcPort());
     String pBFTNode = String.format("%s:%d", Args.getInstance().getNodeDiscoveryBindIp(),

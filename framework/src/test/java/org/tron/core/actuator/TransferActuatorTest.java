@@ -9,6 +9,7 @@ import java.io.File;
 import java.util.Date;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -18,6 +19,7 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -30,6 +32,8 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.state.WorldStateCallBack;
+import org.tron.core.state.WorldStateQueryInstance;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol.AccountType;
@@ -53,6 +57,8 @@ public class TransferActuatorTest {
   private static final String To_ACCOUNT_INVALID;
   private static Manager dbManager;
   private static TronApplicationContext context;
+  private static final WorldStateCallBack worldStateCallBack;
+  private static final ChainBaseManager chainBaseManager;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
@@ -64,6 +70,8 @@ public class TransferActuatorTest {
     OWNER_NO_BALANCE = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3433";
     To_ACCOUNT_INVALID =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3422";
+    worldStateCallBack = context.getBean(WorldStateCallBack.class);
+    chainBaseManager = context.getBean(ChainBaseManager.class);
   }
 
   /**
@@ -97,6 +105,7 @@ public class TransferActuatorTest {
    */
   @Before
   public void createCapsule() {
+    worldStateCallBack.setExecute(true);
     AccountCapsule ownerCapsule =
         new AccountCapsule(
             ByteString.copyFromUtf8("owner"),
@@ -111,6 +120,11 @@ public class TransferActuatorTest {
             TO_BALANCE);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
     dbManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
+  }
+
+  @After
+  public void reset() {
+    worldStateCallBack.setExecute(false);
   }
 
   private Any getContract(long count, byte[] address) {
@@ -157,6 +171,12 @@ public class TransferActuatorTest {
 
       Assert.assertEquals(owner.getBalance(), OWNER_BALANCE - AMOUNT - TRANSFER_FEE);
       Assert.assertEquals(toAccount.getBalance(), TO_BALANCE + AMOUNT);
+
+      WorldStateQueryInstance queryInstance = getQueryInstance();
+      Assert.assertEquals(owner.getBalance(),
+              queryInstance.getAccount(owner.createDbKey()).getBalance());
+      Assert.assertEquals(toAccount.getBalance(),
+              queryInstance.getAccount(toAccount.createDbKey()).getBalance());
       Assert.assertTrue(true);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
@@ -183,6 +203,11 @@ public class TransferActuatorTest {
 
       Assert.assertEquals(owner.getBalance(), 0);
       Assert.assertEquals(toAccount.getBalance(), TO_BALANCE + OWNER_BALANCE);
+      WorldStateQueryInstance queryInstance = getQueryInstance();
+      Assert.assertEquals(owner.getBalance(),
+              queryInstance.getAccount(owner.createDbKey()).getBalance());
+      Assert.assertEquals(toAccount.getBalance(),
+              queryInstance.getAccount(toAccount.createDbKey()).getBalance());
       Assert.assertTrue(true);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
@@ -548,6 +573,16 @@ public class TransferActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e.getMessage().contains("Cannot transfer"));
     }
+  }
+
+  private WorldStateQueryInstance getQueryInstance() {
+    Assert.assertNotNull(worldStateCallBack.getTrie());
+    worldStateCallBack.clear();
+    worldStateCallBack.getTrie().commit();
+    worldStateCallBack.getTrie().flush();
+    return new WorldStateQueryInstance(
+            worldStateCallBack.getTrie().getRootHashByte32(),
+            chainBaseManager);
   }
 
 }

@@ -14,6 +14,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TvmTestUtils;
+import org.tron.common.runtime.VmStateTestUtil;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StringUtil;
@@ -34,9 +35,13 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.state.WorldStateCallBack;
+import org.tron.core.state.WorldStateQueryInstance;
+import org.tron.core.state.trie.TrieImpl2;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.EnergyCost;
 import org.tron.core.vm.repository.RepositoryImpl;
+import org.tron.core.vm.repository.RepositoryStateImpl;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
@@ -62,7 +67,9 @@ public class TransferToAccountTest {
   private static TronApplicationContext context;
   private static Application appT;
   private static RepositoryImpl repository;
+  private static RepositoryStateImpl repositoryState;
   private static AccountCapsule ownerCapsule;
+  private static WorldStateCallBack worldStateCallBack;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
@@ -83,6 +90,7 @@ public class TransferToAccountTest {
             AccountType.AssetIssue);
 
     ownerCapsule.setBalance(1000_1000_1000L);
+    worldStateCallBack = context.getBean(WorldStateCallBack.class);
   }
 
   /**
@@ -141,15 +149,26 @@ public class TransferToAccountTest {
   public void TransferTokenTest()
       throws ContractExeException, ReceiptCheckErrException,
       VMIllegalException, ContractValidateException {
+    worldStateCallBack.setExecute(true);
+    // open account asset optimize
+    chainBaseManager.getDynamicPropertiesStore().setAllowAssetOptimization(1);
+
     //  1. Test deploy with tokenValue and tokenId */
     long id = createAsset("testToken1");
     byte[] contractAddress = deployTransferContract(id);
     repository.commit();
+
+    WorldStateQueryInstance worldStateQueryInstance = flushTrieAndGetQueryInstance();
     Assert.assertEquals(100,
         chainBaseManager.getAccountStore()
             .get(contractAddress).getAssetV2MapForTest().get(String.valueOf(id)).longValue());
+    Assert.assertEquals(100,
+        worldStateQueryInstance.getAccount(contractAddress)
+            .getAssetV2MapForTest().get(String.valueOf(id)).longValue());
     Assert.assertEquals(1000,
         chainBaseManager.getAccountStore().get(contractAddress).getBalance());
+    Assert.assertEquals(1000,
+        worldStateQueryInstance.getAccount(contractAddress).getBalance());
 
     String selectorStr = "transferTokenTo(address,trcToken,uint256)";
 
@@ -166,14 +185,22 @@ public class TransferToAccountTest {
         .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), contractAddress,
             input,
             triggerCallValue, feeLimit, tokenValue, id);
+    VmStateTestUtil.runConstantCall(chainBaseManager, worldStateCallBack, transaction);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction, dbManager, null);
 
+    worldStateQueryInstance = flushTrieAndGetQueryInstance();
     Assert.assertNull(runtime.getRuntimeError());
     Assert.assertEquals(9,
         chainBaseManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getAssetV2MapForTest()
             .get(String.valueOf(id)).longValue());
+    Assert.assertEquals(9,
+        worldStateQueryInstance.getAccount(Hex.decode(TRANSFER_TO)).getAssetV2MapForTest()
+            .get(String.valueOf(id)).longValue());
     Assert.assertEquals(100 + tokenValue - 9,
         chainBaseManager.getAccountStore().get(contractAddress)
+            .getAssetV2MapForTest().get(String.valueOf(id)).longValue());
+    Assert.assertEquals(100 + tokenValue - 9,
+        worldStateQueryInstance.getAccount(contractAddress)
             .getAssetV2MapForTest().get(String.valueOf(id)).longValue());
     long energyCostWhenExist = runtime.getResult().getEnergyUsed();
 
@@ -188,12 +215,19 @@ public class TransferToAccountTest {
             triggerCallValue, feeLimit, tokenValue, id);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction, dbManager, null);
 
+    worldStateQueryInstance = flushTrieAndGetQueryInstance();
     Assert.assertNull(runtime.getRuntimeError());
     Assert.assertEquals(100 + tokenValue * 2 - 18,
         chainBaseManager.getAccountStore().get(contractAddress).getAssetV2MapForTest()
             .get(String.valueOf(id)).longValue());
+    Assert.assertEquals(100 + tokenValue * 2 - 18,
+        worldStateQueryInstance.getAccount(contractAddress).getAssetV2MapForTest()
+            .get(String.valueOf(id)).longValue());
     Assert.assertEquals(9,
         chainBaseManager.getAccountStore().get(ecKey.getAddress()).getAssetV2MapForTest()
+            .get(String.valueOf(id)).longValue());
+    Assert.assertEquals(9,
+        worldStateQueryInstance.getAccount(ecKey.getAddress()).getAssetV2MapForTest()
             .get(String.valueOf(id)).longValue());
     long energyCostWhenNonExist = runtime.getResult().getEnergyUsed();
     //4.Test Energy
@@ -209,10 +243,16 @@ public class TransferToAccountTest {
         .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), contractAddress,
             input,
             triggerCallValue, feeLimit, 0, 0);
+    // test state call
+    VmStateTestUtil.runConstantCall(chainBaseManager, worldStateCallBack, transaction);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction, dbManager, null);
+
+    worldStateQueryInstance = flushTrieAndGetQueryInstance();
     Assert.assertNull(runtime.getRuntimeError());
     Assert.assertEquals(19,
         chainBaseManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getBalance());
+    Assert.assertEquals(19,
+        worldStateQueryInstance.getAccount(Hex.decode(TRANSFER_TO)).getBalance());
     energyCostWhenExist = runtime.getResult().getEnergyUsed();
 
     //6. Test  transfer Trx with non-exsit account
@@ -225,10 +265,15 @@ public class TransferToAccountTest {
         .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), contractAddress,
             input,
             triggerCallValue, feeLimit, 0, 0);
+    VmStateTestUtil.runConstantCall(chainBaseManager, worldStateCallBack, transaction);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction, dbManager, null);
+
+    worldStateQueryInstance = flushTrieAndGetQueryInstance();
     Assert.assertNull(runtime.getRuntimeError());
     Assert.assertEquals(9,
         chainBaseManager.getAccountStore().get(ecKey.getAddress()).getBalance());
+    Assert.assertEquals(9,
+        worldStateQueryInstance.getAccount(ecKey.getAddress()).getBalance());
     energyCostWhenNonExist = runtime.getResult().getEnergyUsed();
 
     //7.test energy
@@ -244,6 +289,8 @@ public class TransferToAccountTest {
         .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), contractAddress,
             input,
             triggerCallValue, feeLimit, 0, 0);
+    Assert.assertTrue(VmStateTestUtil.runConstantCall(
+        chainBaseManager, worldStateCallBack, transaction).getRuntimeError().contains("failed"));
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction, dbManager, null);
     Assert.assertTrue(runtime.getRuntimeError().contains("failed"));
 
@@ -260,6 +307,7 @@ public class TransferToAccountTest {
         .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), contractAddress,
             triggerData,
             triggerCallValue, feeLimit, tokenValue, id);
+    VmStateTestUtil.runConstantCall(chainBaseManager, worldStateCallBack, transaction);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction, dbManager, null);
 
     Assert.assertEquals("endowment out of long range", runtime.getRuntimeError());
@@ -318,10 +366,21 @@ public class TransferToAccountTest {
     long tokenValue = 100;
     long tokenId = id;
 
+    // test state deploy contract
+    Transaction tx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
+        contractName, address, ABI, code, value,
+        feeLimit, consumeUserResourcePercent, tokenValue, tokenId, null);
+    VmStateTestUtil.runConstantCall(chainBaseManager, worldStateCallBack, tx);
+
     byte[] contractAddress = TvmTestUtils
         .deployContractWholeProcessReturnContractAddress(contractName, address, ABI, code, value,
             feeLimit, consumeUserResourcePercent, null, tokenValue, tokenId,
             repository, null);
     return contractAddress;
+  }
+
+  private WorldStateQueryInstance flushTrieAndGetQueryInstance() {
+    TrieImpl2 trie = VmStateTestUtil.flushTrie(worldStateCallBack);
+    return new WorldStateQueryInstance(trie.getRootHashByte32(), chainBaseManager);
   }
 }

@@ -2,6 +2,8 @@ package org.tron.common.utils;
 
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
+import java.util.Random;
+
 import org.tron.api.GrpcAPI;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
@@ -102,4 +104,13 @@ public class PublicMethod {
     }
     return response;
   }
+
+  public static int chooseRandomPort(int min, int max) {
+    return new Random().nextInt(max - min + 1) + min;
+  }
+
+  public static int chooseRandomPort() {
+    return new Random().nextInt(65530 - 1024) + 1024;
+  }
+
 }

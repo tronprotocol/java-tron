@@ -26,6 +26,10 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
     super(dbName);
   }
 
+  protected DelegationStore() {
+    super();
+  }
+
   @Override
   public BytesCapsule get(byte[] key) {
     byte[] value = revokingDB.getUnchecked(key);
