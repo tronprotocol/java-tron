@@ -27,7 +27,13 @@ import org.junit.rules.TemporaryFolder;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -172,7 +178,7 @@ public class StoredMerklePatriciaTrieTest extends AbstractMerklePatriciaTrieTest
     Random r = new SecureRandom();
     List<Bytes> rl = new ArrayList<>();
     for (int i =1 ; i<= 1000; i++) {
-      byte[] array = new byte[i%256];
+      byte[] array = new byte[i%256 + 8];
       r.nextBytes(array);
       Bytes bytes = Bytes.wrap(array);
       rl.add(bytes);

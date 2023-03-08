@@ -26,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -215,7 +216,7 @@ public class Trie2Test {
     Random r = new SecureRandom();
     List<Bytes> rl = new ArrayList<>();
     for (int i = 1; i <= 1000; i++) {
-      byte[] array = new byte[i % 256];
+      byte[] array = new byte[i % 256 + 8];
       r.nextBytes(array);
       Bytes bytes = Bytes.wrap(array);
       rl.add(bytes);
@@ -423,6 +424,99 @@ public class Trie2Test {
         actual.put(String.valueOf(k.slice(Byte.BYTES + ADDRESS_SIZE, Long.BYTES).toLong()),
             v.toLong())
     );
+  }
+  @Test
+  public void testRange2 () {
+    TrieImpl2 trie = new TrieImpl2();
+    trie.put(Bytes.fromHexString("0x1445584348414e47455f42414c414e43455f4c494d4954"), Bytes32.ZERO);
+    trie.put(Bytes.fromHexString("0x144d454d4f5f4645455f484953544f5259"), Bytes32.ZERO);
+    trie.put(Bytes.fromHexString("0x01a0b070b2b58f4328e293dc9d6012f59c263d3a1df6"), Bytes32.ZERO);
+    trie.put(Bytes.fromHexString("0x01a025a3aae39b24a257f95769c701e8d6978ebe9fc5"), Bytes32.ZERO);
+    trie.put(Bytes.fromHexString("0x18a08beaa1a8e2d45367af7bae7c490b9932a4fa4301"), Bytes32.ZERO);
+    trie.put(Bytes.fromHexString("0x01a0ec6525979a351a54fa09fea64beb4cce33ffbb7a"), Bytes32.ZERO);
+    trie.put(Bytes.fromHexString("0x04"), Bytes32.random());
+    trie.put(Bytes.fromHexString("0x01a05430a3f089154e9e182ddd6fe136a62321af22a7"), Bytes32.ZERO);
+    trie.put(Bytes.fromHexString("0x14544f54414c5f4e45545f4c494d4954"), Bytes32.ZERO);
+    trie.put(Bytes.fromHexString("0x01a00a9309758508413039e4bc5a3d113f3ecc55031d"), Bytes32.ZERO);
+    trie.put(Bytes.fromHexString("0x01a0fab5fbf6afb681e4e37e9d33bddb7e923d6132e5"), Bytes32.ZERO);
+    trie.put(Bytes.fromHexString("0x034465766163636f756e74"), Bytes32.random());
+    trie.put(Bytes.fromHexString("0x01a08beaa1a8e2d45367af7bae7c490b9932a4fa4301"), Bytes32.ZERO);
+    trie.put(Bytes.fromHexString("0x18a06a17a49648a8ad32055c06f60fa14ae46df94cc1"), Bytes32.ZERO);
+    trie.put(Bytes.fromHexString("0x01a0807337f180b62a77576377c1d0c9c24df5c0dd62"), Bytes32.ZERO);
+    trie.put(Bytes.fromHexString("0x18a05430a3f089154e9e182ddd6fe136a62321af22a7"), Bytes32.ZERO);
+    trie.put(Bytes.fromHexString("0x03426c61636b686f6c65"), Bytes32.random());
+    trie.put(Bytes.fromHexString("0x035a696f6e"), Bytes32.random());
+    trie.put(Bytes.fromHexString("0x0353756e"), Bytes32.random());
+    trie.put(Bytes.fromHexString("0x18a014eebe4d30a6acb505c8b00b218bdc4733433c68"), Bytes32.ZERO);
+    trie.put(Bytes.fromHexString("0x18a00a9309758508413039e4bc5a3d113f3ecc55031d"), Bytes32.ZERO);
+    trie.put(Bytes.fromHexString("0x18a0807337f180b62a77576377c1d0c9c24df5c0dd62"), Bytes32.ZERO);
+    trie.put(Bytes.fromHexString("0x01a06a17a49648a8ad32055c06f60fa14ae46df94cc1"), Bytes32.ZERO);
+    trie.put(Bytes.fromHexString(
+            "0x02a0f9490505f11ffb8d7e3df9789e63ab8709cf457200000000000f42410000"),
+            Bytes.fromHexString("0x0000000000000064"));
+    trie.put(Bytes.fromHexString("0x07a0f9490505f11ffb8d7e3df9789e63ab8709cf4572"), Bytes32.ZERO);
+    trie.put(Bytes.fromHexString("0x08a0f9490505f11ffb8d7e3df9789e63ab8709cf4572"), Bytes32.ZERO);
+    trie.put(Bytes.fromHexString("0x0531303030303031"), Bytes32.ZERO);
+    trie.put(Bytes.fromHexString("0x14414c4c4f575f54564d5f5452414e534645525f5452433130"),
+            Bytes32.ZERO);
+    trie.put(Bytes.fromHexString(
+            "0x02a0abd4b9367799eaa3197fecb144eb71de1e049abc00000000000f42410000"),
+            Bytes.fromHexString("0x0000000005f5e09c"));
+    trie.put(Bytes.fromHexString("0x14414c4c4f575f41535345545f4f5054494d495a4154494f4e"),
+            Bytes.fromHexString("0x0000000000000001"));
+    trie.put(Bytes.fromHexString(
+            "0x02a0f9490505f11ffb8d7e3df9789e63ab8709cf457200000000000f42410000"),
+            Bytes.fromHexString("0x0000000000000063"));
+    trie.put(Bytes.fromHexString(
+            "0x02a0548794500882809695a8a687866e76d4271a1abc00000000000f42410000"),
+            Bytes.fromHexString("0x0000000000000009"));
+    trie.put(Bytes.fromHexString(
+            "0x02a0abd4b9367799eaa3197fecb144eb71de1e049abc00000000000f42410000"),
+            Bytes.fromHexString("0x0000000005f5e094"));
+
+    long tokenId = Bytes.fromHexString("0x00000000000f4241").toLong();
+
+    Bytes32 min = fix32(Bytes.wrap(Bytes.of(StateType.AccountAsset.value()),
+            Bytes.fromHexString("0xa0548794500882809695a8a687866e76d4271a1abc"),
+            Bytes.ofUnsignedLong(0)));
+
+    Bytes32 max = fix32(Bytes.wrap(Bytes.of(StateType.AccountAsset.value()),
+            Bytes.fromHexString("0xa0548794500882809695a8a687866e76d4271a1abc"),
+            Bytes.ofUnsignedLong(Long.MAX_VALUE)));
+    Map<Long, Long> assets = new HashMap<>();
+    trie.entriesFrom(min, max).forEach((k, v) -> assets.put(
+            k.slice(Byte.BYTES + ADDRESS_SIZE, Long.BYTES).toLong(),
+            v.toLong()));
+   Assert.assertEquals(Bytes.fromHexString("0x0000000000000009").toLong(),
+           assets.get(tokenId).longValue());
+
+    min = fix32(Bytes.wrap(Bytes.of(StateType.AccountAsset.value()),
+            Bytes.fromHexString("0xa0f9490505f11ffb8d7e3df9789e63ab8709cf4572"),
+            Bytes.ofUnsignedLong(0)));
+
+    max = fix32(Bytes.wrap(Bytes.of(StateType.AccountAsset.value()),
+            Bytes.fromHexString("0xa0f9490505f11ffb8d7e3df9789e63ab8709cf4572"),
+            Bytes.ofUnsignedLong(Long.MAX_VALUE)));
+    assets.clear();
+    trie.entriesFrom(min, max).forEach((k, v) -> assets.put(
+            k.slice(Byte.BYTES + ADDRESS_SIZE, Long.BYTES).toLong(),
+            v.toLong()));
+    Assert.assertEquals(Bytes.fromHexString("0x0000000000000063").toLong(),
+            assets.get(tokenId).longValue());
+
+    min = fix32(Bytes.wrap(Bytes.of(StateType.AccountAsset.value()),
+            Bytes.fromHexString("a0abd4b9367799eaa3197fecb144eb71de1e049abc"),
+            Bytes.ofUnsignedLong(0)));
+
+    max = fix32(Bytes.wrap(Bytes.of(StateType.AccountAsset.value()),
+            Bytes.fromHexString("a0abd4b9367799eaa3197fecb144eb71de1e049abc"),
+            Bytes.ofUnsignedLong(Long.MAX_VALUE)));
+    assets.clear();
+    trie.entriesFrom(min, max).forEach((k, v) -> assets.put(
+            k.slice(Byte.BYTES + ADDRESS_SIZE, Long.BYTES).toLong(),
+            v.toLong()));
+    Assert.assertEquals(Bytes.fromHexString("0x0000000005f5e094").toLong(),
+            assets.get(tokenId).longValue());
   }
 
   @Test
