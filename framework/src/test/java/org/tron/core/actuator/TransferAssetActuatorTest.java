@@ -22,12 +22,16 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
+import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.FileUtil;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -39,6 +43,8 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.state.WorldStateCallBack;
+import org.tron.core.state.WorldStateQueryInstance;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.repository.RepositoryImpl;
@@ -70,6 +76,11 @@ public class TransferAssetActuatorTest extends BaseTest {
   private static final int VOTE_SCORE = 2;
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
+  private static TronApplicationContext context;
+  private static Manager dbManager;
+  private static Any contract;
+  private static final WorldStateCallBack worldStateCallBack;
+  private static final ChainBaseManager chainBaseManager;
 
   static {
     dbPath = "output_transferasset_test";
@@ -81,6 +92,8 @@ public class TransferAssetActuatorTest extends BaseTest {
             + "B56446E617E924805E4D6CA021D341FEF6E21234";
     ownerAsset_ADDRESS =
             Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049010";
+    worldStateCallBack = context.getBean(WorldStateCallBack.class);
+    chainBaseManager = context.getBean(ChainBaseManager.class);
   }
 
   /**
@@ -88,6 +101,7 @@ public class TransferAssetActuatorTest extends BaseTest {
    */
   @Before
   public void createCapsule() {
+    worldStateCallBack.setExecute(true);
     AccountCapsule toAccountCapsule =
             new AccountCapsule(
                     ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)),
@@ -95,6 +109,11 @@ public class TransferAssetActuatorTest extends BaseTest {
                     AccountType.Normal);
     dbManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
 
+  }
+
+  @After
+  public void reset() {
+    worldStateCallBack.setExecute(false);
   }
 
   private boolean isNullOrZero(Long value) {
@@ -293,6 +312,21 @@ public class TransferAssetActuatorTest extends BaseTest {
               toAccount.getAssetV2MapForTest().get(String.valueOf(tokenIdNum)).longValue(),
               100L);
 
+      WorldStateQueryInstance queryInstance = getQueryInstance();
+      Assert.assertEquals(OWNER_ASSET_BALANCE - 100,
+              queryInstance.getAccount(owner.createDbKey()).getAssetV2MapForTest()
+                      .get(String.valueOf(tokenIdNum)).longValue());
+      Assert.assertEquals(100L,
+              queryInstance.getAccount(toAccount.createDbKey()).getAssetV2MapForTest()
+                      .get(String.valueOf(tokenIdNum)).longValue());
+
+      Assert.assertEquals(OWNER_ASSET_BALANCE - 100,
+              queryInstance.getAccount(owner.createDbKey()).getAssetV2(
+                      String.valueOf(tokenIdNum)));
+      Assert.assertEquals(100L,
+              queryInstance.getAccount(toAccount.createDbKey()).getAssetV2(
+                      String.valueOf(tokenIdNum)));
+
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -329,6 +363,21 @@ public class TransferAssetActuatorTest extends BaseTest {
       Assert.assertEquals(
               toAccount.getInstance().getAssetV2Map().get(String.valueOf(tokenIdNum)).longValue(),
               100L);
+
+      WorldStateQueryInstance queryInstance = getQueryInstance();
+      Assert.assertEquals(OWNER_ASSET_BALANCE - 100,
+              queryInstance.getAccount(owner.createDbKey()).getAssetV2MapForTest()
+                      .get(String.valueOf(tokenIdNum)).longValue());
+      Assert.assertEquals(100L,
+              queryInstance.getAccount(toAccount.createDbKey()).getAssetV2MapForTest()
+                      .get(String.valueOf(tokenIdNum)).longValue());
+
+      Assert.assertEquals(OWNER_ASSET_BALANCE - 100,
+              queryInstance.getAccount(owner.createDbKey()).getAssetV2(
+                      String.valueOf(tokenIdNum)));
+      Assert.assertEquals(100L,
+              queryInstance.getAccount(toAccount.createDbKey()).getAssetV2(
+                      String.valueOf(tokenIdNum)));
 
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
@@ -367,6 +416,22 @@ public class TransferAssetActuatorTest extends BaseTest {
       Assert.assertEquals(
               toAccount.getAssetV2MapForTest().get(String.valueOf(tokenIdNum)).longValue(),
               OWNER_ASSET_BALANCE);
+
+      WorldStateQueryInstance queryInstance = getQueryInstance();
+      Assert.assertEquals(0L,
+              queryInstance.getAccount(owner.createDbKey()).getAssetV2MapForTest()
+                      .get(String.valueOf(tokenIdNum)).longValue());
+      Assert.assertEquals(OWNER_ASSET_BALANCE,
+              queryInstance.getAccount(toAccount.createDbKey()).getAssetV2MapForTest()
+                      .get(String.valueOf(tokenIdNum)).longValue());
+
+      Assert.assertEquals(0L,
+              queryInstance.getAccount(owner.createDbKey()).getAssetV2(
+                      String.valueOf(tokenIdNum)));
+      Assert.assertEquals(OWNER_ASSET_BALANCE,
+              queryInstance.getAccount(toAccount.createDbKey()).getAssetV2(
+                      String.valueOf(tokenIdNum)));
+
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -406,6 +471,21 @@ public class TransferAssetActuatorTest extends BaseTest {
       Assert.assertEquals(
               toAccount.getAssetV2MapForTest().get(String.valueOf(tokenIdNum)).longValue(),
               OWNER_ASSET_BALANCE);
+      WorldStateQueryInstance queryInstance = getQueryInstance();
+      Assert.assertEquals(0L,
+              queryInstance.getAccount(owner.createDbKey()).getAssetV2MapForTest()
+                      .get(String.valueOf(tokenIdNum)).longValue());
+      Assert.assertEquals(OWNER_ASSET_BALANCE,
+              queryInstance.getAccount(toAccount.createDbKey()).getAssetV2MapForTest()
+                      .get(String.valueOf(tokenIdNum)).longValue());
+
+      Assert.assertEquals(0L,
+              queryInstance.getAccount(owner.createDbKey()).getAssetV2(
+                      String.valueOf(tokenIdNum)));
+      Assert.assertEquals(OWNER_ASSET_BALANCE,
+              queryInstance.getAccount(toAccount.createDbKey()).getAssetV2(
+                      String.valueOf(tokenIdNum)));
+
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -442,6 +522,20 @@ public class TransferAssetActuatorTest extends BaseTest {
       Assert.assertEquals(
               toAccount.getAssetV2MapForTest().get(String.valueOf(tokenIdNum)).longValue(),
               OWNER_ASSET_BALANCE);
+      WorldStateQueryInstance queryInstance = getQueryInstance();
+      Assert.assertEquals(0L,
+              queryInstance.getAccount(owner.createDbKey()).getAssetV2MapForTest()
+                      .get(String.valueOf(tokenIdNum)).longValue());
+      Assert.assertEquals(OWNER_ASSET_BALANCE,
+              queryInstance.getAccount(toAccount.createDbKey()).getAssetV2MapForTest()
+                      .get(String.valueOf(tokenIdNum)).longValue());
+
+      Assert.assertEquals(0L,
+              queryInstance.getAccount(owner.createDbKey()).getAssetV2(
+                      String.valueOf(tokenIdNum)));
+      Assert.assertEquals(OWNER_ASSET_BALANCE,
+              queryInstance.getAccount(toAccount.createDbKey()).getAssetV2(
+                      String.valueOf(tokenIdNum)));
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -1432,10 +1526,34 @@ public class TransferAssetActuatorTest extends BaseTest {
       Assert.assertEquals(
               toAccount.getInstance().getAssetV2Map().get(String.valueOf(tokenIdNum)).longValue(),
               100L);
+      WorldStateQueryInstance queryInstance = getQueryInstance();
+      Assert.assertEquals(OWNER_ASSET_BALANCE - 100,
+              queryInstance.getAccount(owner.createDbKey()).getAssetV2MapForTest()
+                      .get(String.valueOf(tokenIdNum)).longValue());
+      Assert.assertEquals(100L,
+              queryInstance.getAccount(toAccount.createDbKey()).getAssetV2MapForTest()
+                      .get(String.valueOf(tokenIdNum)).longValue());
+
+      Assert.assertEquals(OWNER_ASSET_BALANCE - 100,
+              queryInstance.getAccount(owner.createDbKey()).getAssetV2(
+                      String.valueOf(tokenIdNum)));
+      Assert.assertEquals(100L,
+              queryInstance.getAccount(toAccount.createDbKey()).getAssetV2(
+                      String.valueOf(tokenIdNum)));
     } catch (ContractValidateException e) {
       Assert.assertTrue(e.getMessage().contains("Cannot transfer"));
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
+  }
+
+
+  private WorldStateQueryInstance getQueryInstance() {
+    Assert.assertNotNull(worldStateCallBack.getTrie());
+    worldStateCallBack.clear();
+    worldStateCallBack.getTrie().commit();
+    worldStateCallBack.getTrie().flush();
+    return new WorldStateQueryInstance(worldStateCallBack.getTrie().getRootHashByte32(),
+            chainBaseManager);
   }
 }

@@ -7,11 +7,15 @@ import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.FileUtil;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -22,6 +26,9 @@ import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.state.WorldStateCallBack;
+import org.tron.core.state.WorldStateQueryInstance;
+import org.tron.core.state.store.DynamicPropertiesStateStore;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.Protocol.Vote;
@@ -38,6 +45,11 @@ public class UnfreezeBalanceActuatorTest extends BaseTest {
   private static final String OWNER_ACCOUNT_INVALID;
   private static final long initBalance = 10_000_000_000L;
   private static final long frozenBalance = 1_000_000_000L;
+  private static final long smallTatalResource = 100L;
+  private static Manager dbManager;
+  private static TronApplicationContext context;
+  private static final WorldStateCallBack worldStateCallBack;
+  private static final ChainBaseManager chainBaseManager;
 
   static {
     dbPath = "output_unfreeze_balance_test";
@@ -46,6 +58,8 @@ public class UnfreezeBalanceActuatorTest extends BaseTest {
     RECEIVER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
     OWNER_ACCOUNT_INVALID =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3456";
+    worldStateCallBack = context.getBean(WorldStateCallBack.class);
+    chainBaseManager = context.getBean(ChainBaseManager.class);
   }
 
   /**
@@ -53,6 +67,7 @@ public class UnfreezeBalanceActuatorTest extends BaseTest {
    */
   @Before
   public void createAccountCapsule() {
+    worldStateCallBack.setExecute(true);
     AccountCapsule ownerCapsule = new AccountCapsule(ByteString.copyFromUtf8("owner"),
         ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), AccountType.Normal,
         initBalance);
@@ -62,6 +77,11 @@ public class UnfreezeBalanceActuatorTest extends BaseTest {
         ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS)), AccountType.Normal,
         initBalance);
     dbManager.getAccountStore().put(receiverCapsule.getAddress().toByteArray(), receiverCapsule);
+  }
+
+  @After
+  public void reset() {
+    worldStateCallBack.setExecute(false);
   }
 
   private Any getContractForBandwidth(String ownerAddress) {
@@ -131,10 +151,23 @@ public class UnfreezeBalanceActuatorTest extends BaseTest {
       Assert.assertEquals(owner.getBalance(), initBalance + frozenBalance);
       Assert.assertEquals(owner.getFrozenBalance(), 0);
       Assert.assertEquals(owner.getTronPower(), 0L);
+      WorldStateQueryInstance queryInstance = getQueryInstance();
+      Assert.assertEquals(owner.getBalance(),
+              queryInstance.getAccount(owner.createDbKey()).getBalance());
+      Assert.assertEquals(owner.getFrozenBalance(),
+              queryInstance.getAccount(owner.createDbKey()).getFrozenBalance());
+      Assert.assertEquals(owner.getTronPower(),
+              queryInstance.getAccount(owner.createDbKey()).getTronPower());
+
 
       long totalNetWeightAfter = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
       Assert.assertEquals(totalNetWeightBefore,
           totalNetWeightAfter + frozenBalance / 1000_000L);
+
+      DynamicPropertiesStateStore stateStore = new DynamicPropertiesStateStore();
+      stateStore.init(queryInstance);
+      Assert.assertEquals(totalNetWeightBefore,
+              stateStore.getTotalNetWeight() + frozenBalance / 1000_000L);
 
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
@@ -203,6 +236,10 @@ public class UnfreezeBalanceActuatorTest extends BaseTest {
       actuator1.validate();
       actuator1.execute(ret1);
       long afterWeight1 = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
+      WorldStateQueryInstance queryInstance = getQueryInstance();
+      DynamicPropertiesStateStore stateStore = new DynamicPropertiesStateStore();
+      stateStore.init(queryInstance);
+      Assert.assertEquals(1, stateStore.getTotalNetWeight());
       Assert.assertEquals(1, afterWeight1);
       Assert.assertEquals(ret1.getInstance().getRet(), code.SUCESS);
     } catch (ContractValidateException e) {
@@ -221,6 +258,10 @@ public class UnfreezeBalanceActuatorTest extends BaseTest {
       actuator.validate();
       actuator.execute(ret);
       long afterWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
+      WorldStateQueryInstance queryInstance = getQueryInstance();
+      DynamicPropertiesStateStore stateStore = new DynamicPropertiesStateStore();
+      stateStore.init(queryInstance);
+      Assert.assertEquals(0, stateStore.getTotalNetWeight());
       Assert.assertEquals(0, afterWeight);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
     } catch (ContractValidateException e) {
@@ -336,6 +377,17 @@ public class UnfreezeBalanceActuatorTest extends BaseTest {
       Assert.assertEquals(0L, ownerResult.getTronPower());
       Assert.assertEquals(0L, ownerResult.getDelegatedFrozenBalanceForBandwidth());
       Assert.assertEquals(0L, receiverResult.getAllFrozenBalanceForBandwidth());
+      WorldStateQueryInstance queryInstance = getQueryInstance();
+      Assert.assertEquals(initBalance + frozenBalance, queryInstance
+              .getAccount(ByteArray.fromHexString(OWNER_ADDRESS)).getBalance());
+      Assert.assertEquals(0L, queryInstance
+              .getAccount(ByteArray.fromHexString(OWNER_ADDRESS)).getTronPower());
+      Assert.assertEquals(0L, queryInstance
+              .getAccount(ByteArray.fromHexString(OWNER_ADDRESS))
+              .getDelegatedFrozenBalanceForBandwidth());
+      Assert.assertEquals(0L, queryInstance
+              .getAccount(ByteArray.fromHexString(RECEIVER_ADDRESS))
+              .getAllFrozenBalanceForBandwidth());
 
       //check DelegatedResourceAccountIndex
       DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsuleOwner = dbManager
@@ -347,6 +399,20 @@ public class UnfreezeBalanceActuatorTest extends BaseTest {
 
       DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsuleReceiver = dbManager
           .getDelegatedResourceAccountIndexStore().get(ByteArray.fromHexString(RECEIVER_ADDRESS));
+      Assert.assertEquals(0,
+          delegatedResourceAccountIndexCapsuleReceiver.getToAccountsList().size());
+      Assert.assertEquals(0,
+          delegatedResourceAccountIndexCapsuleReceiver.getFromAccountsList().size());
+
+      delegatedResourceAccountIndexCapsuleOwner = queryInstance
+          .getDelegatedResourceAccountIndex(ByteArray.fromHexString(OWNER_ADDRESS));
+      Assert.assertEquals(0,
+          delegatedResourceAccountIndexCapsuleOwner.getFromAccountsList().size());
+      Assert.assertEquals(0,
+          delegatedResourceAccountIndexCapsuleOwner.getToAccountsList().size());
+
+      delegatedResourceAccountIndexCapsuleReceiver = queryInstance
+          .getDelegatedResourceAccountIndex(ByteArray.fromHexString(RECEIVER_ADDRESS));
       Assert.assertEquals(0,
           delegatedResourceAccountIndexCapsuleReceiver.getToAccountsList().size());
       Assert.assertEquals(0,
@@ -1206,6 +1272,15 @@ public class UnfreezeBalanceActuatorTest extends BaseTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
     }
+  }
+
+  private WorldStateQueryInstance getQueryInstance() {
+    Assert.assertNotNull(worldStateCallBack.getTrie());
+    worldStateCallBack.clear();
+    worldStateCallBack.getTrie().commit();
+    worldStateCallBack.getTrie().flush();
+    return new WorldStateQueryInstance(worldStateCallBack.getTrie().getRootHashByte32(),
+            chainBaseManager);
   }
 
 }

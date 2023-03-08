@@ -26,6 +26,7 @@ import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
+import org.tron.common.runtime.VmStateTestUtil;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StringUtil;
@@ -33,6 +34,7 @@ import org.tron.common.utils.WalletUtil;
 import org.tron.common.utils.client.utils.AbiUtil;
 import org.tron.common.utils.client.utils.DataWord;
 import org.tron.consensus.dpos.MaintenanceManager;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -43,6 +45,7 @@ import org.tron.core.consensus.ConsensusService;
 import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.service.MortgageService;
+import org.tron.core.state.WorldStateCallBack;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
@@ -272,6 +275,8 @@ public class VoteTest {
   private static MortgageService mortgageService;
   private static byte[] owner;
   private static Repository rootRepository;
+  private static ChainBaseManager chainBaseManager;
+  private static WorldStateCallBack worldStateCallBack;
 
   @Before
   public void init() throws Exception {
@@ -282,6 +287,9 @@ public class VoteTest {
     manager = context.getBean(Manager.class);
     maintenanceManager = context.getBean(MaintenanceManager.class);
     consensusService = context.getBean(ConsensusService.class);
+    chainBaseManager = context.getBean(ChainBaseManager.class);
+    worldStateCallBack = context.getBean(WorldStateCallBack.class);
+    worldStateCallBack.setExecute(true);
     consensusService.start();
     mortgageService = context.getBean(MortgageService.class);
     owner = Hex.decode(Wallet.getAddressPreFixString()
@@ -348,6 +356,8 @@ public class VoteTest {
     TransactionCapsule trxCap = new TransactionCapsule(
         TvmTestUtils.generateTriggerSmartContractAndGetTransaction(
             owner, contractAddr, Hex.decode(hexInput), 0, fee));
+    VmStateTestUtil.runConstantCall(
+        chainBaseManager, worldStateCallBack, trxCap.getInstance());
     TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
         new RuntimeImpl());
     trxCap.setTrxTrace(trace);

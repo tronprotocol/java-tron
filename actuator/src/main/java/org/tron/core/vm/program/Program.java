@@ -35,7 +35,6 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FastByteComparisons;
 import org.tron.common.utils.Utils;
 import org.tron.common.utils.WalletUtil;
-import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -552,7 +551,8 @@ public class Program {
             });
 
     // merge usage
-    BandwidthProcessor bandwidthProcessor = new BandwidthProcessor(ChainBaseManager.getInstance());
+    BandwidthProcessor bandwidthProcessor = new BandwidthProcessor(repo.getDynamicPropertiesStore()
+            , repo.getAccountStore(), repo.getAssetIssueStore(), repo.getAssetIssueV2Store());
     bandwidthProcessor.updateUsageForDelegated(ownerCapsule);
     ownerCapsule.setLatestConsumeTime(now);
     if (ownerCapsule.getNetUsage() > 0) {
@@ -569,7 +569,7 @@ public class Program {
 
     EnergyProcessor energyProcessor =
         new EnergyProcessor(
-            repo.getDynamicPropertiesStore(), ChainBaseManager.getInstance().getAccountStore());
+            repo.getDynamicPropertiesStore(), repo.getAccountStore());
     energyProcessor.updateUsage(ownerCapsule);
     ownerCapsule.setLatestConsumeTimeForEnergy(now);
     if (ownerCapsule.getEnergyUsage() > 0) {

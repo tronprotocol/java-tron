@@ -11,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
-import org.tron.core.ChainBaseManager;
 import org.tron.core.actuator.ActuatorConstant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
@@ -54,7 +53,9 @@ public class DelegateResourceProcessor {
 
     switch (param.getResourceType()) {
       case BANDWIDTH: {
-        BandwidthProcessor processor = new BandwidthProcessor(ChainBaseManager.getInstance());
+        BandwidthProcessor processor = new BandwidthProcessor(dynamicStore,
+                repo.getAccountStore(),  repo.getAssetIssueStore(),
+                repo.getAssetIssueV2Store());
         processor.updateUsageForDelegated(ownerCapsule);
 
         long netUsage = (long) (ownerCapsule.getNetUsage() * TRX_PRECISION * ((double)
@@ -74,8 +75,7 @@ public class DelegateResourceProcessor {
       }
       break;
       case ENERGY: {
-        EnergyProcessor processor =
-            new EnergyProcessor(dynamicStore, ChainBaseManager.getInstance().getAccountStore());
+        EnergyProcessor processor = new EnergyProcessor(dynamicStore, repo.getAccountStore());
         processor.updateUsage(ownerCapsule);
 
         long energyUsage = (long) (ownerCapsule.getEnergyUsage() * TRX_PRECISION * ((double)

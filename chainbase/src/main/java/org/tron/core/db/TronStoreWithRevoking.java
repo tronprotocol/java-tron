@@ -29,12 +29,15 @@ import org.tron.core.db2.common.DB;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.LevelDB;
 import org.tron.core.db2.common.RocksDB;
+import org.tron.core.db2.common.Value;
 import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.db2.core.Chainbase;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.SnapshotRoot;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.state.StateType;
+import org.tron.core.state.WorldStateCallBackUtils;
 
 
 @Slf4j(topic = "DB")
@@ -53,6 +56,11 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
 
   @Getter
   private final DB<byte[], byte[]> db;
+
+  private StateType type;
+
+  @Autowired
+  protected WorldStateCallBackUtils worldStateCallBackUtils;
 
   protected TronStoreWithRevoking(String dbName) {
     String dbEngine = CommonParameter.getInstance().getStorage().getDbEngine();
@@ -75,6 +83,10 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
       throw new RuntimeException(String.format("db engine %s is error", dbEngine));
     }
     this.revokingDB = new Chainbase(new SnapshotRoot(this.db));
+    type = StateType.get(getDbName());
+  }
+
+  protected TronStoreWithRevoking() {
   }
 
   protected org.iq80.leveldb.Options getOptionsByDbNameForLevelDB(String dbName) {
@@ -88,11 +100,12 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   protected TronStoreWithRevoking(DB<byte[], byte[]> db) {
     this.db = db;
     this.revokingDB = new Chainbase(new SnapshotRoot(db));
+    type = StateType.get(getDbName());
   }
 
   @Override
   public String getDbName() {
-    return null;
+    return db.getDbName();
   }
 
   @PostConstruct
@@ -106,12 +119,16 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     if (Objects.isNull(key) || Objects.isNull(item)) {
       return;
     }
-
-    revokingDB.put(key, item.getData());
+    byte[] value = item.getData();
+    revokingDB.put(key, value);
+    worldStateCallBackUtils.callBack(type, key, value, Value.Operator.PUT);
   }
 
   @Override
   public void delete(byte[] key) {
+    worldStateCallBackUtils.callBack(type, key,
+            StateType.Account == type ? revokingDB.getUnchecked(key) : null,
+            Value.Operator.DELETE);
     revokingDB.delete(key);
   }
 

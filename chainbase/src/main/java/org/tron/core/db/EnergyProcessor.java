@@ -1,11 +1,9 @@
 package org.tron.core.db;
 
 import static java.lang.Long.max;
-import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.AdaptiveResourceLimitConstants;
@@ -22,13 +20,6 @@ public class EnergyProcessor extends ResourceProcessor {
 
   public EnergyProcessor(DynamicPropertiesStore dynamicPropertiesStore, AccountStore accountStore) {
     super(dynamicPropertiesStore, accountStore);
-  }
-
-  public static long getHeadSlot(DynamicPropertiesStore dynamicPropertiesStore) {
-    return (dynamicPropertiesStore.getLatestBlockHeaderTimestamp() -
-        Long.parseLong(CommonParameter.getInstance()
-            .getGenesisBlock().getTimestamp()))
-        / BLOCK_PRODUCED_INTERVAL;
   }
 
   public void updateUsage(AccountCapsule accountCapsule) {
@@ -180,11 +171,6 @@ public class EnergyProcessor extends ResourceProcessor {
 
     return max(energyLimit - newEnergyUsage, 0); // us
   }
-
-  private long getHeadSlot() {
-    return getHeadSlot(dynamicPropertiesStore);
-  }
-
 
 }
 

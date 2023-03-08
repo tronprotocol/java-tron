@@ -12,6 +12,7 @@ import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.DelegationStore;
@@ -44,6 +45,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   @Override
   public AssetIssueCapsule getAssetIssue(byte[] tokenId) {
     return repository.getAssetIssue(tokenId);
+  }
+
+  @Override
+  public AccountStore getAccountStore() {
+    return repository.getAccountStore();
   }
 
   @Override

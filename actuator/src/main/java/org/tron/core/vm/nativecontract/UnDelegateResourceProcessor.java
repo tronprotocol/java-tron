@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
-import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
@@ -101,7 +100,9 @@ public class UnDelegateResourceProcessor {
     if (receiverCapsule != null) {
       switch (param.getResourceType()) {
         case BANDWIDTH:
-          BandwidthProcessor bandwidthProcessor = new BandwidthProcessor(ChainBaseManager.getInstance());
+          BandwidthProcessor bandwidthProcessor = new BandwidthProcessor(dynamicStore,
+                  repo.getAccountStore(),  repo.getAssetIssueStore(),
+                  repo.getAssetIssueV2Store());
           bandwidthProcessor.updateUsageForDelegated(receiverCapsule);
 
           if (receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth()
@@ -124,8 +125,8 @@ public class UnDelegateResourceProcessor {
           receiverCapsule.setLatestConsumeTime(now);
           break;
         case ENERGY:
-          EnergyProcessor energyProcessor =
-              new EnergyProcessor(dynamicStore, ChainBaseManager.getInstance().getAccountStore());
+          EnergyProcessor energyProcessor = new EnergyProcessor(dynamicStore,
+                  repo.getAccountStore());
           energyProcessor.updateUsage(receiverCapsule);
 
           if (receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy()
@@ -164,7 +165,9 @@ public class UnDelegateResourceProcessor {
         ownerCapsule.addDelegatedFrozenV2BalanceForBandwidth(-unDelegateBalance);
         ownerCapsule.addFrozenBalanceForBandwidthV2(unDelegateBalance);
 
-        BandwidthProcessor processor = new BandwidthProcessor(ChainBaseManager.getInstance());
+        BandwidthProcessor processor = new BandwidthProcessor(dynamicStore,
+                 repo.getAccountStore(),  repo.getAssetIssueStore(),
+                 repo.getAssetIssueV2Store());
         if (Objects.nonNull(receiverCapsule) && transferUsage > 0) {
           ownerCapsule.setNetUsage(processor.unDelegateIncrease(ownerCapsule, receiverCapsule,
               transferUsage, BANDWIDTH, now));
@@ -179,7 +182,7 @@ public class UnDelegateResourceProcessor {
         ownerCapsule.addFrozenBalanceForEnergyV2(unDelegateBalance);
 
         EnergyProcessor processor =
-            new EnergyProcessor(dynamicStore, ChainBaseManager.getInstance().getAccountStore());
+            new EnergyProcessor(dynamicStore, repo.getAccountStore());
         if (Objects.nonNull(receiverCapsule) && transferUsage > 0) {
           ownerCapsule.setEnergyUsage(processor.unDelegateIncrease(ownerCapsule, receiverCapsule,
               transferUsage, ENERGY, now));

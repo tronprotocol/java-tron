@@ -3,12 +3,15 @@ package org.tron.core.actuator;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -17,6 +20,8 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.state.WorldStateCallBack;
+import org.tron.core.state.WorldStateQueryInstance;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.AccountType;
@@ -34,6 +39,11 @@ public class UnfreezeAssetActuatorTest extends BaseTest {
   private static final long initBalance = 10_000_000_000L;
   private static final long frozenBalance = 1_000_000_000L;
   private static final String assetName = "testCoin";
+  private static final String assetID = "123456";
+  private static Manager dbManager;
+  private static TronApplicationContext context;
+  private static final WorldStateCallBack worldStateCallBack;
+  private static final ChainBaseManager chainBaseManager;
 
   static {
     dbPath = "output_unfreeze_asset_test";
@@ -41,6 +51,8 @@ public class UnfreezeAssetActuatorTest extends BaseTest {
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     OWNER_ACCOUNT_INVALID =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3456";
+    worldStateCallBack = context.getBean(WorldStateCallBack.class);
+    chainBaseManager = context.getBean(ChainBaseManager.class);
   }
 
   /**
@@ -48,10 +60,16 @@ public class UnfreezeAssetActuatorTest extends BaseTest {
    */
   @Before
   public void createAccountCapsule() {
+    worldStateCallBack.setExecute(true);
   }
 
   @Before
   public void createAsset() {
+  }
+
+  @After
+  public void reset() {
+    worldStateCallBack.setExecute(false);
   }
 
   private Any getContract(String ownerAddress) {
@@ -243,7 +261,13 @@ public class UnfreezeAssetActuatorTest extends BaseTest {
       //V2
       Assert.assertEquals(owner.getAssetV2MapForTest().get(String.valueOf(tokenId)).longValue(),
           frozenBalance);
+      WorldStateQueryInstance queryInstance = getQueryInstance();
+      Assert.assertEquals(frozenBalance,
+              queryInstance.getAccount(owner.createDbKey()).getAssetV2MapForTest()
+                      .get(String.valueOf(tokenId)).longValue());
       Assert.assertEquals(owner.getFrozenSupplyCount(), 1);
+      Assert.assertEquals(1,
+              queryInstance.getAccount(owner.createDbKey()).getFrozenSupplyCount());
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -398,5 +422,14 @@ public class UnfreezeAssetActuatorTest extends BaseTest {
 
     actuatorTest.setNullDBManagerMsg("No account store or dynamic store!");
     actuatorTest.nullDBManger();
+  }
+
+  private WorldStateQueryInstance getQueryInstance() {
+    Assert.assertNotNull(worldStateCallBack.getTrie());
+    worldStateCallBack.clear();
+    worldStateCallBack.getTrie().commit();
+    worldStateCallBack.getTrie().flush();
+    return new WorldStateQueryInstance(worldStateCallBack.getTrie().getRootHashByte32(),
+            chainBaseManager);
   }
 }

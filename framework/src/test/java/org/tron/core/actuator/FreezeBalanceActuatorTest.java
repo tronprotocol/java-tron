@@ -7,6 +7,8 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,6 +27,9 @@ import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.state.WorldStateCallBack;
+import org.tron.core.state.WorldStateQueryInstance;
+import org.tron.core.state.store.DynamicPropertiesStateStore;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
@@ -39,6 +44,10 @@ public class FreezeBalanceActuatorTest extends BaseTest {
   private static final String OWNER_ADDRESS_INVALID = "aaaa";
   private static final String OWNER_ACCOUNT_INVALID;
   private static final long initBalance = 10_000_000_000L;
+  private static Manager dbManager;
+  private static TronApplicationContext context;
+  private static WorldStateCallBack worldStateCallBack;
+  private static ChainBaseManager chainBaseManager;
 
   static {
     dbPath = "output_freeze_balance_test";
@@ -47,6 +56,8 @@ public class FreezeBalanceActuatorTest extends BaseTest {
     RECEIVER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
     OWNER_ACCOUNT_INVALID =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3456";
+    worldStateCallBack = context.getBean(WorldStateCallBack.class);
+    chainBaseManager = context.getBean(ChainBaseManager.class);
   }
 
   /**
@@ -54,6 +65,7 @@ public class FreezeBalanceActuatorTest extends BaseTest {
    */
   @Before
   public void createAccountCapsule() {
+    worldStateCallBack.setExecute(true);
     AccountCapsule ownerCapsule =
         new AccountCapsule(
             ByteString.copyFromUtf8("owner"),
@@ -69,6 +81,11 @@ public class FreezeBalanceActuatorTest extends BaseTest {
             AccountType.Normal,
             initBalance);
     dbManager.getAccountStore().put(receiverCapsule.getAddress().toByteArray(), receiverCapsule);
+  }
+
+  @After
+  public void reset() {
+    worldStateCallBack.setExecute(false);
   }
 
   private Any getContractForBandwidth(String ownerAddress, long frozenBalance, long duration) {
@@ -145,6 +162,14 @@ public class FreezeBalanceActuatorTest extends BaseTest {
           - TRANSFER_FEE);
       Assert.assertEquals(owner.getFrozenBalance(), frozenBalance);
       Assert.assertEquals(frozenBalance, owner.getTronPower());
+
+      WorldStateQueryInstance queryInstance = getQueryInstance();
+      owner = queryInstance.getAccount(ByteArray.fromHexString(OWNER_ADDRESS));
+      Assert.assertEquals(owner.getBalance(), initBalance - frozenBalance
+              - TRANSFER_FEE);
+      Assert.assertEquals(owner.getFrozenBalance(), frozenBalance);
+      Assert.assertEquals(frozenBalance, owner.getTronPower());
+
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -173,6 +198,14 @@ public class FreezeBalanceActuatorTest extends BaseTest {
       Assert.assertEquals(0L, owner.getFrozenBalance());
       Assert.assertEquals(frozenBalance, owner.getEnergyFrozenBalance());
       Assert.assertEquals(frozenBalance, owner.getTronPower());
+      WorldStateQueryInstance queryInstance = getQueryInstance();
+      owner = queryInstance.getAccount(ByteArray.fromHexString(OWNER_ADDRESS));
+      Assert.assertEquals(owner.getBalance(), initBalance - frozenBalance
+              - TRANSFER_FEE);
+      Assert.assertEquals(0L, owner.getFrozenBalance());
+      Assert.assertEquals(frozenBalance, owner.getEnergyFrozenBalance());
+      Assert.assertEquals(frozenBalance, owner.getTronPower());
+
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -237,8 +270,20 @@ public class FreezeBalanceActuatorTest extends BaseTest {
       Assert.assertEquals(frozenBalance, owner.getDelegatedFrozenBalanceForBandwidth());
       Assert.assertEquals(frozenBalance, owner.getTronPower());
 
+      WorldStateQueryInstance queryInstance = getQueryInstance();
+      owner = queryInstance.getAccount(ByteArray.fromHexString(OWNER_ADDRESS));
+      Assert.assertEquals(owner.getBalance(), initBalance - frozenBalance - TRANSFER_FEE);
+      Assert.assertEquals(0L, owner.getFrozenBalance());
+      Assert.assertEquals(frozenBalance, owner.getDelegatedFrozenBalanceForBandwidth());
+      Assert.assertEquals(frozenBalance, owner.getTronPower());
+
       AccountCapsule receiver =
           dbManager.getAccountStore().get(ByteArray.fromHexString(RECEIVER_ADDRESS));
+      Assert.assertEquals(frozenBalance, receiver.getAcquiredDelegatedFrozenBalanceForBandwidth());
+      Assert.assertEquals(0L, receiver.getAcquiredDelegatedFrozenBalanceForEnergy());
+      Assert.assertEquals(0L, receiver.getTronPower());
+
+      receiver = queryInstance.getAccount(ByteArray.fromHexString(RECEIVER_ADDRESS));
       Assert.assertEquals(frozenBalance, receiver.getAcquiredDelegatedFrozenBalanceForBandwidth());
       Assert.assertEquals(0L, receiver.getAcquiredDelegatedFrozenBalanceForEnergy());
       Assert.assertEquals(0L, receiver.getTronPower());
@@ -249,8 +294,19 @@ public class FreezeBalanceActuatorTest extends BaseTest {
                   ByteArray.fromHexString(RECEIVER_ADDRESS)));
 
       Assert.assertEquals(frozenBalance, delegatedResourceCapsule.getFrozenBalanceForBandwidth());
+
+      delegatedResourceCapsule = queryInstance.getDelegatedResource(DelegatedResourceCapsule
+              .createDbKey(ByteArray.fromHexString(OWNER_ADDRESS),
+                      ByteArray.fromHexString(RECEIVER_ADDRESS)));
+      Assert.assertEquals(frozenBalance, delegatedResourceCapsule.getFrozenBalanceForBandwidth());
+
       long totalNetWeightAfter = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
       Assert.assertEquals(totalNetWeightBefore + frozenBalance / 1000_000L, totalNetWeightAfter);
+
+      DynamicPropertiesStateStore stateStore = new DynamicPropertiesStateStore();
+      stateStore.init(queryInstance);
+      Assert.assertEquals(totalNetWeightBefore + frozenBalance / 1000_000L,
+              stateStore.getTotalNetWeight());
 
       //check DelegatedResourceAccountIndex
       DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsuleOwner = dbManager
@@ -262,6 +318,17 @@ public class FreezeBalanceActuatorTest extends BaseTest {
           delegatedResourceAccountIndexCapsuleOwner.getToAccountsList()
               .contains(ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS))));
 
+      delegatedResourceAccountIndexCapsuleOwner = queryInstance.getDelegatedResourceAccountIndex(
+              ByteArray.fromHexString(OWNER_ADDRESS));
+
+      Assert.assertEquals(0,
+              delegatedResourceAccountIndexCapsuleOwner.getFromAccountsList().size());
+      Assert.assertEquals(1,
+              delegatedResourceAccountIndexCapsuleOwner.getToAccountsList().size());
+      Assert.assertEquals(true,
+              delegatedResourceAccountIndexCapsuleOwner.getToAccountsList()
+                      .contains(ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS))));
+
       DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsuleReceiver = dbManager
           .getDelegatedResourceAccountIndexStore().get(ByteArray.fromHexString(RECEIVER_ADDRESS));
       Assert
@@ -271,6 +338,15 @@ public class FreezeBalanceActuatorTest extends BaseTest {
               delegatedResourceAccountIndexCapsuleReceiver.getFromAccountsList().size());
       Assert.assertEquals(true,
           delegatedResourceAccountIndexCapsuleReceiver.getFromAccountsList()
+              .contains(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS))));
+
+      delegatedResourceAccountIndexCapsuleReceiver = queryInstance.getDelegatedResourceAccountIndex(
+              ByteArray.fromHexString(RECEIVER_ADDRESS));
+      Assert.assertEquals(0,
+              delegatedResourceAccountIndexCapsuleReceiver.getToAccountsList().size());
+      Assert.assertEquals(1,
+              delegatedResourceAccountIndexCapsuleReceiver.getFromAccountsList().size());
+      Assert.assertTrue(delegatedResourceAccountIndexCapsuleReceiver.getFromAccountsList()
               .contains(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS))));
 
 
@@ -790,5 +866,13 @@ public class FreezeBalanceActuatorTest extends BaseTest {
     }
   }
 
+  private WorldStateQueryInstance getQueryInstance() {
+    Assert.assertNotNull(worldStateCallBack.getTrie());
+    worldStateCallBack.clear();
+    worldStateCallBack.getTrie().commit();
+    worldStateCallBack.getTrie().flush();
+    return new WorldStateQueryInstance(worldStateCallBack.getTrie().getRootHashByte32(),
+            chainBaseManager);
+  }
 
 }
