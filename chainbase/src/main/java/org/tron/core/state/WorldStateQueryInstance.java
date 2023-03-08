@@ -75,8 +75,9 @@ public class WorldStateQueryInstance {
     return accountCapsule;
   }
 
-  public Long getAccountAsset(byte[] address, byte[] tokenId) {
-    byte[] key = com.google.common.primitives.Bytes.concat(address, tokenId);
+  public Long getAccountAsset(byte[] address, long tokenId) {
+    byte[] key = com.google.common.primitives.Bytes.concat(address,
+            Bytes.ofUnsignedLong(tokenId).toArray());
     byte[] encodeKey = StateType.encodeKey(StateType.AccountAsset, key);
     Bytes value = trieImpl.get(fix32(encodeKey));
     if (Objects.nonNull(value)) {
@@ -89,12 +90,12 @@ public class WorldStateQueryInstance {
     return Objects.nonNull(v) ? Longs.fromByteArray(v) : null;
   }
 
-  public long getAccountAsset(Protocol.Account account, byte[] tokenId) {
+  public long getAccountAsset(Protocol.Account account, long tokenId) {
     Long amount = getAccountAsset(account.getAddress().toByteArray(), tokenId);
     return amount == null ? 0 : amount;
   }
 
-  public boolean hasAssetV2(Protocol.Account account, byte[] tokenId) {
+  public boolean hasAssetV2(Protocol.Account account, long tokenId) {
     return getAccountAsset(account.getAddress().toByteArray(), tokenId) != null;
   }
 

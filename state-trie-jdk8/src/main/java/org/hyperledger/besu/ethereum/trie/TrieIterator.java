@@ -80,8 +80,14 @@ public class TrieIterator<V> implements PathNodeVisitor<V> {
   public Node<V> visit(final LeafNode<V> node, final Bytes path) {
     paths.push(node.getPath());
     state = State.CONTINUE;
-    state = leafHandler.onLeaf(keyHash(), node);
-    paths.pop();
+    try {
+      state = leafHandler.onLeaf(keyHash(), node);
+    } catch (Exception e) {
+      state = State.STOP;
+      return null;
+    } finally {
+      paths.pop();
+    }
     return node;
   }
 
