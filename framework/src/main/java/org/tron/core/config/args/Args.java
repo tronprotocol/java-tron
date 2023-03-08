@@ -915,11 +915,11 @@ public class Args extends CommonParameter {
             .getInt(Constant.NODE_VALID_CONTRACT_PROTO_THREADS)
             : Runtime.getRuntime().availableProcessors();
 
-    PARAMETER.activeNodes = getInetSocketAddress(config, Constant.NODE_ACTIVE);
+    PARAMETER.activeNodes = getInetSocketAddress(config, Constant.NODE_ACTIVE, true);
 
     PARAMETER.passiveNodes = getInetAddress(config, Constant.NODE_PASSIVE);
 
-    PARAMETER.fastForwardNodes = getInetSocketAddress(config, Constant.NODE_FAST_FORWARD);
+    PARAMETER.fastForwardNodes = getInetSocketAddress(config, Constant.NODE_FAST_FORWARD, true);
 
     PARAMETER.maxFastForwardNum = config.hasPath(Constant.NODE_MAX_FAST_FORWARD_NUM) ? config
             .getInt(Constant.NODE_MAX_FAST_FORWARD_NUM) : 3;
@@ -1186,7 +1186,7 @@ public class Args extends CommonParameter {
   }
 
   private static List<InetSocketAddress> getInetSocketAddress(
-      final com.typesafe.config.Config config, String path) {
+      final com.typesafe.config.Config config, String path, boolean filter) {
     List<InetSocketAddress> ret = new ArrayList<>();
     if (!config.hasPath(path)) {
       return ret;
@@ -1199,10 +1199,14 @@ public class Args extends CommonParameter {
       }
       String ip = inetSocketAddress.getAddress().getHostAddress();
       int port = inetSocketAddress.getPort();
-      if (!(PARAMETER.nodeDiscoveryBindIp.equals(ip)
-          || PARAMETER.nodeExternalIp.equals(ip)
-          || Constant.LOCAL_HOST.equals(ip))
-          || PARAMETER.nodeListenPort != port) {
+      if (filter) {
+        if (!(PARAMETER.nodeDiscoveryBindIp.equals(ip)
+            || PARAMETER.nodeExternalIp.equals(ip)
+            || Constant.LOCAL_HOST.equals(ip))
+            || PARAMETER.nodeListenPort != port) {
+          ret.add(inetSocketAddress);
+        }
+      } else {
         ret.add(inetSocketAddress);
       }
     }
@@ -1330,7 +1334,8 @@ public class Args extends CommonParameter {
       }
 
       if (config.hasPath(Constant.NODE_DNS_STATIC_NODES)) {
-        publishConfig.setStaticNodes(getInetSocketAddress(config, Constant.NODE_DNS_STATIC_NODES));
+        publishConfig.setStaticNodes(
+            getInetSocketAddress(config, Constant.NODE_DNS_STATIC_NODES, false));
       }
 
       if (config.hasPath(Constant.NODE_DNS_SERVER_TYPE)) {
