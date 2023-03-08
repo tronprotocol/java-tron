@@ -30,7 +30,8 @@ public class AssetUtil {
       byte[] dbKey = Bytes.concat(account.getAddress().toByteArray(), key);
       return accountAssetStore.get(dbKey) != null;
     }
-    return ChainBaseManager.fetch(root).hasAssetV2(account, key);
+    return ChainBaseManager.fetch(root).hasAssetV2(account,
+            Long.valueOf(ByteArray.toStr(key)));
   }
 
   public static Account importAssetV2(Account account, byte[] key, Bytes32 root) {
@@ -49,7 +50,8 @@ public class AssetUtil {
     if (Bytes32.ZERO.equals(root)) {
       balance = accountAssetStore.getBalance(account, key);
     } else {
-      balance = ChainBaseManager.fetch(root).getAccountAsset(account, key);
+      balance = ChainBaseManager.fetch(root).getAccountAsset(account,
+              Long.valueOf(ByteArray.toStr(key)));
     }
 
     Map<String, Long> map = new HashMap<>(account.getAssetV2Map());

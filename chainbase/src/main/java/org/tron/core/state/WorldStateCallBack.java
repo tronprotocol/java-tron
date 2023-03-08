@@ -1,6 +1,8 @@
 package org.tron.core.state;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.prometheus.client.Histogram;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
@@ -16,6 +18,9 @@ import org.tron.core.state.trie.TrieImpl2;
 public class WorldStateCallBack extends WorldStateCallBackUtils {
 
   private BlockCapsule blockCapsule;
+
+  @Getter
+  @VisibleForTesting
   private volatile TrieImpl2 trie;
 
   public WorldStateCallBack() {
@@ -23,7 +28,8 @@ public class WorldStateCallBack extends WorldStateCallBackUtils {
     this.allowGenerateRoot = CommonParameter.getInstance().getStorage().isAllowStateRoot();
   }
 
-  private void clear() {
+  @VisibleForTesting
+  public void clear() {
     if (!exe()) {
       return;
     }
