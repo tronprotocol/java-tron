@@ -2232,7 +2232,7 @@ public class Manager {
         BlockCapsule capsule = chainBaseManager.getBlockByNum(blockNum);
         capsuleList.add(capsule);
       } catch (Exception e) {
-        logger.error("GetCrossBlockCapsule getBlockByNum blkNum = {} except, error is {}.",
+        logger.error("GetContinuousBlockCapsule getBlockByNum blkNum = {} except, error is {}.",
             solidityBlkNum, e.getMessage());
       }
     }
