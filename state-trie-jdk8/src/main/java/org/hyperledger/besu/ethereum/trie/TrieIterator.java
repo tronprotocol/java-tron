@@ -82,7 +82,7 @@ public class TrieIterator<V> implements PathNodeVisitor<V> {
     state = State.CONTINUE;
     try {
       state = leafHandler.onLeaf(keyHash(), node);
-    } catch (Exception e) {
+    } catch (IllegalArgumentException e) {
       state = State.STOP;
       return null;
     } finally {
