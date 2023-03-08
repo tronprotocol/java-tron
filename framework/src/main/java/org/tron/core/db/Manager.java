@@ -578,6 +578,7 @@ public class Manager {
         System.exit(1);
       } else {
         logger.info("Create genesis block.");
+        worldStateCallBack.setExecute(true);
         Args.getInstance().setChainId(genesisBlock.getBlockId().toString());
         // init Dynamic Properties Store
         chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(0);
