@@ -242,7 +242,6 @@ public class Manager {
   private volatile long latestSolidityNumShutDown;
   @Getter
   private long lastUsedSolidityNum = -1;
-  private boolean useSolidity = false;
   @Getter
   private int maxFlushCount;
 
@@ -531,18 +530,12 @@ public class Manager {
       Thread triggerCapsuleProcessThread = new Thread(triggerCapsuleProcessLoop);
       triggerCapsuleProcessThread.setDaemon(true);
       triggerCapsuleProcessThread.start();
-      if (eventPluginLoaded) {
-        useSolidity = EventPluginLoader.getInstance().isBlockLogTriggerSolidified()
-            | EventPluginLoader.getInstance().isTransactionLogTriggerEnable()
-            | EventPluginLoader.getInstance().isTransactionLogTriggerSolidified();
-      }
     }
 
     // start json rpc filter process
     if (CommonParameter.getInstance().isJsonRpcFilterEnabled()) {
       Thread filterProcessThread = new Thread(filterProcessLoop);
       filterProcessThread.start();
-      useSolidity |= CommonParameter.getInstance().isJsonRpcHttpSolidityNodeEnable();
     }
 
     //initStoreFactory
@@ -2039,7 +2032,7 @@ public class Manager {
       return;
     }
 
-    List<BlockCapsule> capsuleList = geContinuousBlockCapsule(latestSolidifiedBlockNumber);
+    List<BlockCapsule> capsuleList = getContinuousBlockCapsule(latestSolidifiedBlockNumber);
     for (BlockCapsule blockCapsule : capsuleList) {
       postBlockFilter(blockCapsule, true);
       postLogsFilter(blockCapsule, true, false);
@@ -2060,20 +2053,11 @@ public class Manager {
     }
 
     if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityTriggerEnable()) {
-      List<BlockCapsule> capsuleList = geContinuousBlockCapsule(latestSolidifiedBlockNumber);
-      long solidifiedTime = -1;
-      if (!capsuleList.isEmpty()) {
-        BlockCapsule blockCapsule = capsuleList.get(capsuleList.size() - 1);
-        if (blockCapsule.getNum() == latestSolidifiedBlockNumber) {
-          solidifiedTime = blockCapsule.getTimeStamp();
-        }
-      }
+      List<BlockCapsule> capsuleList = getContinuousBlockCapsule(latestSolidifiedBlockNumber);
       for (BlockCapsule blockCapsule : capsuleList) {
         SolidityTriggerCapsule solidityTriggerCapsule
             = new SolidityTriggerCapsule(blockCapsule.getNum());//unique key
-        if (solidifiedTime >= 0) {
-          solidityTriggerCapsule.setTimeStamp(solidifiedTime);
-        }
+        solidityTriggerCapsule.setTimeStamp(blockCapsule.getTimeStamp());
         boolean result = triggerCapsuleQueue.offer(solidityTriggerCapsule);
         if (!result) {
           logger.info("Too many trigger, lost solidified trigger, block number: {}.",
@@ -2085,10 +2069,7 @@ public class Manager {
     if (CommonParameter.getInstance().isJsonRpcHttpSolidityNodeEnable()) {
       postSolidityFilter(oldSolidNum, latestSolidifiedBlockNumber);
     }
-
-    if (useSolidity) {
-      lastUsedSolidityNum = latestSolidifiedBlockNumber;
-    }
+    lastUsedSolidityNum = latestSolidifiedBlockNumber;
   }
 
   private void processTransactionTrigger(BlockCapsule newBlock) {
@@ -2199,7 +2180,6 @@ public class Manager {
   }
 
   private void postBlockTrigger(final BlockCapsule blockCapsule) {
-
     // post block and logs for jsonrpc
     if (CommonParameter.getInstance().isJsonRpcHttpFullNodeEnable()) {
       postBlockFilter(blockCapsule, false);
@@ -2211,7 +2191,7 @@ public class Manager {
     if (eventPluginLoaded && EventPluginLoader.getInstance().isBlockLogTriggerEnable()) {
       List<BlockCapsule> capsuleList = new ArrayList<>();
       if (EventPluginLoader.getInstance().isBlockLogTriggerSolidified()) {
-        capsuleList = geContinuousBlockCapsule(solidityBlkNum);
+        capsuleList = getContinuousBlockCapsule(solidityBlkNum);
       } else {
         capsuleList.add(blockCapsule);
       }
@@ -2229,7 +2209,7 @@ public class Manager {
     if (eventPluginLoaded && EventPluginLoader.getInstance().isTransactionLogTriggerEnable()) {
       List<BlockCapsule> capsuleList = new ArrayList<>();
       if (EventPluginLoader.getInstance().isTransactionLogTriggerSolidified()) {
-        capsuleList = geContinuousBlockCapsule(solidityBlkNum);
+        capsuleList = getContinuousBlockCapsule(solidityBlkNum);
       } else {
         // need to reset block
         capsuleList.add(blockCapsule);
@@ -2241,13 +2221,13 @@ public class Manager {
     }
   }
 
-  private List<BlockCapsule> geContinuousBlockCapsule(long solidityBlkNum) {
+  private List<BlockCapsule> getContinuousBlockCapsule(long solidityBlkNum) {
     List<BlockCapsule> capsuleList = new ArrayList<>();
-    long start = lastUsedSolidityNum < 0 ? (solidityBlkNum - 1) : lastUsedSolidityNum;
-    if (solidityBlkNum - start > 1) {
-      logger.info("Continuous block start:{}, end:{}", start + 1, solidityBlkNum);
+    long start = lastUsedSolidityNum < 0 ? solidityBlkNum : (lastUsedSolidityNum + 1);
+    if (solidityBlkNum > start) {
+      logger.info("Continuous block start:{}, end:{}", start, solidityBlkNum);
     }
-    for (long blockNum = start + 1; blockNum <= solidityBlkNum; blockNum++) {
+    for (long blockNum = start; blockNum <= solidityBlkNum; blockNum++) {
       try {
         BlockCapsule capsule = chainBaseManager.getBlockByNum(blockNum);
         capsuleList.add(capsule);
