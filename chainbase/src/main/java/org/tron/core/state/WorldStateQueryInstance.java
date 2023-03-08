@@ -173,6 +173,7 @@ public class WorldStateQueryInstance {
     return Objects.nonNull(value) ? new BytesCapsule(value) : null;
   }
 
+  // TODO prefix query
   public DelegatedResourceAccountIndexCapsule getDelegatedResourceAccountIndex(byte[] key) {
     byte[] value = get(StateType.DelegatedResourceAccountIndex, key);
     return Objects.nonNull(value) ? new DelegatedResourceAccountIndexCapsule(value) : null;
