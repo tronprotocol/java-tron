@@ -159,11 +159,14 @@ public class TronNetService {
     config.setDisconnectionPolicyEnable(parameter.isOpenFullTcpDisconnect());
     config.setNodeDetectEnable(parameter.isNodeDetectEnable());
     config.setDiscoverEnable(parameter.isNodeDiscoveryEnable());
-    if (StringUtil.isNullOrEmpty(config.getIp()) && StringUtil.isNullOrEmpty(config.getIpv6())) {
+    if (StringUtil.isNullOrEmpty(config.getIp())) {
       config.setIp(parameter.getNodeExternalIp());
     }
-    logger.debug("Local ipv4: {}", config.getIp());
-    logger.debug("Local ipv6: {}", config.getIpv6());
+    if (!parameter.nodeEnableIpv6) {
+      config.setIpv6(null);
+    }
+    logger.info("Local ipv4: {}", config.getIp());
+    logger.info("Local ipv6: {}", config.getIpv6());
     config.setTreeUrls(parameter.getDnsTreeUrls());
     if (Objects.nonNull(parameter.getDnsPublishConfig())) {
       config.setPublishConfig(parameter.getDnsPublishConfig());

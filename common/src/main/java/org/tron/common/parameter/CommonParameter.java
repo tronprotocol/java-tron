@@ -191,6 +191,9 @@ public class CommonParameter {
   public String p2pNodeId;
   @Getter
   @Setter
+  public boolean nodeEnableIpv6 = false;
+  @Getter
+  @Setter
   public List<String> dnsTreeUrls;
   @Getter
   @Setter

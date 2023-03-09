@@ -141,6 +141,7 @@ public class Args extends CommonParameter {
     PARAMETER.nodeDiscoveryPingTimeout = 15000;
     PARAMETER.nodeP2pPingInterval = 0L;
     PARAMETER.nodeP2pVersion = 0;
+    PARAMETER.nodeEnableIpv6 = false;
     PARAMETER.dnsTreeUrls = new ArrayList<>();
     PARAMETER.dnsPublishConfig = null;
     PARAMETER.rpcPort = 0;
@@ -638,6 +639,9 @@ public class Args extends CommonParameter {
     PARAMETER.nodeP2pVersion =
         config.hasPath(Constant.NODE_P2P_VERSION)
             ? config.getInt(Constant.NODE_P2P_VERSION) : 0;
+
+    PARAMETER.nodeEnableIpv6 =
+        config.hasPath(Constant.NODE_ENABLE_IPV6) && config.getBoolean(Constant.NODE_ENABLE_IPV6);
 
     PARAMETER.dnsTreeUrls = config.hasPath(Constant.NODE_DNS_TREE_URLS) ? config.getStringList(
         Constant.NODE_DNS_TREE_URLS) : new ArrayList<>();

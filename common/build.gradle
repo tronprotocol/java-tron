@@ -53,7 +53,7 @@ dependencies {
     compile 'org.aspectj:aspectjrt:1.8.13'
     compile 'org.aspectj:aspectjweaver:1.8.13'
     compile 'org.aspectj:aspectjtools:1.8.13'
-    compile group: 'com.github.tronprotocol', name: 'libp2p', version: 'test-v0.2.12'
+    compile group: 'com.github.tronprotocol', name: 'libp2p', version: 'test-v0.2.13'
     compile project(":protocol")
 }
 

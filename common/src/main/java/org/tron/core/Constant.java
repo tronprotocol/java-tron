@@ -103,7 +103,7 @@ public class Constant {
 
   public static final String NODE_P2P_PING_INTERVAL = "node.p2p.pingInterval";
   public static final String NODE_P2P_VERSION = "node.p2p.version";
-
+  public static final String NODE_ENABLE_IPV6  = "node.enableIpv6";
   public static final String NODE_DNS_TREE_URLS = "node.dns.treeUrls";
   public static final String NODE_DNS_PUBLISH = "node.dns.publish";
   public static final String NODE_DNS_DOMAIN = "node.dns.dnsDomain";
