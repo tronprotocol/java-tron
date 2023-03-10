@@ -474,6 +474,7 @@ public class Manager {
     chainBaseManager.setMerkleContainer(getMerkleContainer());
     chainBaseManager.setMortgageService(mortgageService);
     this.initGenesis();
+    worldStateCallBack.setExecute(false);
     try {
       this.khaosDb.start(chainBaseManager.getBlockById(
           getDynamicPropertiesStore().getLatestBlockHeaderHash()));
@@ -563,7 +564,6 @@ public class Manager {
     }
 
     maxFlushCount = CommonParameter.getInstance().getStorage().getMaxFlushCount();
-    worldStateCallBack.setExecute(false);
   }
 
   /**
