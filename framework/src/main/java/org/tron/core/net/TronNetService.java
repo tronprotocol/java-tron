@@ -1,12 +1,12 @@
 package org.tron.core.net;
 
-import io.netty.util.internal.StringUtil;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
@@ -19,7 +19,6 @@ import org.tron.core.net.peer.PeerManager;
 import org.tron.core.net.peer.PeerStatusCheck;
 import org.tron.core.net.service.adv.AdvService;
 import org.tron.core.net.service.fetchblock.FetchBlockService;
-import org.tron.core.net.service.keepalive.KeepAliveService;
 import org.tron.core.net.service.nodepersist.NodePersistService;
 import org.tron.core.net.service.relay.RelayService;
 import org.tron.core.net.service.statistics.TronStatsManager;
@@ -159,8 +158,11 @@ public class TronNetService {
     config.setDisconnectionPolicyEnable(parameter.isOpenFullTcpDisconnect());
     config.setNodeDetectEnable(parameter.isNodeDetectEnable());
     config.setDiscoverEnable(parameter.isNodeDiscoveryEnable());
-    if (StringUtil.isNullOrEmpty(config.getIp())) {
+    if (StringUtils.isEmpty(config.getIp())) {
       config.setIp(parameter.getNodeExternalIp());
+    }
+    if (StringUtils.isNotEmpty(config.getIpv6())) {
+      config.getActiveNodes().remove(new InetSocketAddress(config.getIpv6(), config.getPort()));
     }
     if (!parameter.nodeEnableIpv6) {
       config.setIpv6(null);

@@ -1320,7 +1320,7 @@ public class Args extends CommonParameter {
       if (config.hasPath(Constant.NODE_DNS_MAX_MERGE_SIZE)) {
         int maxMergeSize = config.getInt(Constant.NODE_DNS_MAX_MERGE_SIZE);
         if (maxMergeSize >= 1 && maxMergeSize <= 5) {
-          publishConfig.setChangeThreshold(maxMergeSize);
+          publishConfig.setMaxMergeSize(maxMergeSize);
         } else {
           logger.error("Check {}, should be [1~5], default 5", Constant.NODE_DNS_MAX_MERGE_SIZE);
         }
