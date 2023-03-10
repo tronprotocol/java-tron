@@ -138,6 +138,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   private static final String JSON_ERROR = "invalid json request";
   private static final String BLOCK_NUM_ERROR = "invalid block number";
   private static final String TAG_NOT_SUPPORT_ERROR = "TAG [earliest | pending] not supported";
+  private static final String QUANTITY_NOT_SUPPORT_ERROR =
+      "QUANTITY not supported, just support TAG as latest";
   private static final String NO_BLOCK_HEADER = "header not found";
   private static final String NO_BLOCK_HEADER_BY_HASH = "header for hash not found";
 
@@ -149,6 +151,9 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   private final NodeInfoService nodeInfoService;
   private final Wallet wallet;
   private final Manager manager;
+
+  private final boolean allowStateRoot = CommonParameter.getInstance().getStorage()
+      .isAllowStateRoot();
 
   public TronJsonRpcImpl(NodeInfoService nodeInfoService, Wallet wallet, Manager manager) {
     this.nodeInfoService = nodeInfoService;
@@ -358,7 +363,11 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       } catch (Exception e) {
         throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
       }
-      reply = wallet.getAccount(addressData, blockNumber.longValue());
+      if (allowStateRoot) {
+        reply = wallet.getAccount(addressData, blockNumber.longValue());
+      } else {
+        throw new JsonRpcInvalidParamsException(QUANTITY_NOT_SUPPORT_ERROR);
+      }
     }
 
     long balance = 0;
@@ -386,7 +395,11 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       } catch (Exception e) {
         throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
       }
-      reply = wallet.getAccountToken10(addressData, blockNumber.longValue());
+      if (allowStateRoot) {
+        reply = wallet.getAccountToken10(addressData, blockNumber.longValue());
+      } else {
+        throw new JsonRpcInvalidParamsException(QUANTITY_NOT_SUPPORT_ERROR);
+      }
     }
 
     Map<String, String> token10s =  new TreeMap<>();
@@ -537,8 +550,12 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       } catch (Exception e) {
         throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
       }
-      byte[] value = wallet.getStorageAt(addressByte, storageIdx, blockNumber.longValue());
-      return ByteArray.toJsonHex(value == null ? new byte[32] : value);
+      if (allowStateRoot) {
+        byte[] value = wallet.getStorageAt(addressByte, storageIdx, blockNumber.longValue());
+        return ByteArray.toJsonHex(value == null ? new byte[32] : value);
+      } else {
+        throw new JsonRpcInvalidParamsException(QUANTITY_NOT_SUPPORT_ERROR);
+      }
     }
   }
 
@@ -567,8 +584,12 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       } catch (Exception e) {
         throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
       }
-      byte[] code = wallet.getCode(addressData, blockNumber.longValue());
-      return code != null ? ByteArray.toJsonHex(code) : "0x";
+      if (allowStateRoot) {
+        byte[] code = wallet.getCode(addressData, blockNumber.longValue());
+        return code != null ? ByteArray.toJsonHex(code) : "0x";
+      } else {
+        throw new JsonRpcInvalidParamsException(QUANTITY_NOT_SUPPORT_ERROR);
+      }
     }
   }
 
@@ -861,11 +882,15 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       } catch (Exception e) {
         throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
       }
-      byte[] addressData = addressCompatibleToByteArray(transactionCall.getFrom());
-      byte[] contractAddressData = addressCompatibleToByteArray(transactionCall.getTo());
+      if (allowStateRoot) {
+        byte[] addressData = addressCompatibleToByteArray(transactionCall.getFrom());
+        byte[] contractAddressData = addressCompatibleToByteArray(transactionCall.getTo());
 
-      return call(addressData, contractAddressData, transactionCall.parseValue(),
-          ByteArray.fromHexString(transactionCall.getData()), blockNumber);
+        return call(addressData, contractAddressData, transactionCall.parseValue(),
+            ByteArray.fromHexString(transactionCall.getData()), blockNumber);
+      } else {
+        throw new JsonRpcInvalidParamsException(QUANTITY_NOT_SUPPORT_ERROR);
+      }
     }
   }
 
