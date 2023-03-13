@@ -593,6 +593,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       StorageRowStore store = manager.getStorageRowStore();
       Storage storage = new Storage(addressByte, store);
       storage.setContractVersion(smartContract.getVersion());
+      storage.generateAddrHash(smartContract.getTrxHash().toByteArray());
 
       DataWord value = storage.getValue(new DataWord(ByteArray.fromHexString(storageIdx)));
       return ByteArray.toJsonHex(value == null ? new byte[32] : value.getData());
