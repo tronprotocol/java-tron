@@ -1,9 +1,11 @@
 package org.tron.core.net;
 
+import java.net.Inet4Address;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -25,6 +27,7 @@ import org.tron.core.net.service.statistics.TronStatsManager;
 import org.tron.core.net.service.sync.SyncService;
 import org.tron.p2p.P2pConfig;
 import org.tron.p2p.P2pService;
+import org.tron.p2p.utils.NetUtil;
 
 @Slf4j(topic = "net")
 @Component
@@ -121,6 +124,17 @@ public class TronNetService {
     return advService.fastBroadcastTransaction(msg);
   }
 
+  private boolean hasIpv4Stack() {
+    Set<String> ipSet = NetUtil.getAllLocalAddress();
+    for (String ip : ipSet) {
+      InetSocketAddress inetSocketAddress = new InetSocketAddress(ip, 10000);
+      if (inetSocketAddress.getAddress() instanceof Inet4Address) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private P2pConfig getConfig() {
     List<InetSocketAddress> seeds = new ArrayList<>();
     seeds.addAll(nodePersistService.dbRead());
@@ -158,7 +172,7 @@ public class TronNetService {
     config.setDisconnectionPolicyEnable(parameter.isOpenFullTcpDisconnect());
     config.setNodeDetectEnable(parameter.isNodeDetectEnable());
     config.setDiscoverEnable(parameter.isNodeDiscoveryEnable());
-    if (StringUtils.isEmpty(config.getIp())) {
+    if (StringUtils.isEmpty(config.getIp()) && hasIpv4Stack()) {
       config.setIp(parameter.getNodeExternalIp());
     }
     if (StringUtils.isNotEmpty(config.getIpv6())) {
