@@ -859,6 +859,9 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       } else {
         throw new JsonRpcInvalidRequestException(JSON_ERROR);
       }
+      if (!allowStateRoot) {
+        blockNumOrTag = LATEST_STR;
+      }
     } else if (blockParamObj instanceof String) {
       blockNumOrTag = (String) blockParamObj;
     } else {
