@@ -1,7 +1,9 @@
 package org.tron.core.net;
 
 import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -127,8 +129,14 @@ public class TronNetService {
   private boolean hasIpv4Stack() {
     Set<String> ipSet = NetUtil.getAllLocalAddress();
     for (String ip : ipSet) {
-      InetSocketAddress inetSocketAddress = new InetSocketAddress(ip, 10000);
-      if (inetSocketAddress.getAddress() instanceof Inet4Address) {
+      InetAddress inetAddress;
+      try {
+        inetAddress = InetAddress.getByName(ip);
+      } catch (UnknownHostException e) {
+        logger.warn("Get inet address failed, {}", e.getMessage());
+        continue;
+      }
+      if (inetAddress instanceof Inet4Address) {
         return true;
       }
     }
@@ -139,7 +147,7 @@ public class TronNetService {
     List<InetSocketAddress> seeds = new ArrayList<>();
     seeds.addAll(nodePersistService.dbRead());
     for (String s : parameter.getSeedNode().getIpList()) {
-      InetSocketAddress inetSocketAddress = Args.parseInetSocketAddress(s);
+      InetSocketAddress inetSocketAddress = NetUtil.parseInetSocketAddress(s);
       if (inetSocketAddress != null) {
         seeds.add(inetSocketAddress);
       }

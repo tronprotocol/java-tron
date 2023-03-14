@@ -75,6 +75,7 @@ import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
 import org.tron.p2p.dns.update.DnsType;
 import org.tron.p2p.dns.update.PublishConfig;
+import org.tron.p2p.utils.NetUtil;
 import org.tron.program.Version;
 
 @Slf4j(topic = "app")
@@ -1197,7 +1198,7 @@ public class Args extends CommonParameter {
     }
     List<String> list = config.getStringList(path);
     for (String configString : list) {
-      InetSocketAddress inetSocketAddress = parseInetSocketAddress(configString);
+      InetSocketAddress inetSocketAddress = NetUtil.parseInetSocketAddress(configString);
       if (inetSocketAddress == null) {
         continue;
       }
@@ -1218,17 +1219,16 @@ public class Args extends CommonParameter {
   }
 
   private static List<InetAddress> getInetAddress(
-          final com.typesafe.config.Config config, String path) {
+      final com.typesafe.config.Config config, String path) {
     List<InetAddress> ret = new ArrayList<>();
     if (!config.hasPath(path)) {
       return ret;
     }
     List<String> list = config.getStringList(path);
     for (String configString : list) {
-      try {
-        ret.add(InetAddress.getByName(configString.split(":")[0]));
-      } catch (Exception e) {
-        logger.warn("Get inet address failed, {}", e.getMessage());
+      InetSocketAddress inetSocketAddress = NetUtil.parseInetSocketAddress(configString);
+      if (inetSocketAddress != null) {
+        ret.add(inetSocketAddress.getAddress());
       }
     }
     return ret;
@@ -1652,21 +1652,6 @@ public class Args extends CommonParameter {
       return this.outputDirectory + File.separator;
     }
     return this.outputDirectory;
-  }
-
-  public static InetSocketAddress parseInetSocketAddress(String para) {
-    InetSocketAddress address = null;
-    int index = para.lastIndexOf(":");
-    if (index > 0) {
-      String host = para.substring(0, index);
-      try {
-        int port = Integer.parseInt(para.substring(index + 1));
-        address = new InetSocketAddress(host, port);
-      } catch (RuntimeException e) {
-        logger.error("Invalid inetSocketAddress: {}", para);
-      }
-    }
-    return address;
   }
 }
 
