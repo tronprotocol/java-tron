@@ -4,7 +4,6 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -144,14 +143,8 @@ public class TronNetService {
   }
 
   private P2pConfig getConfig() {
-    List<InetSocketAddress> seeds = new ArrayList<>();
+    List<InetSocketAddress> seeds = parameter.getSeedNode().getAddressList();
     seeds.addAll(nodePersistService.dbRead());
-    for (String s : parameter.getSeedNode().getIpList()) {
-      InetSocketAddress inetSocketAddress = NetUtil.parseInetSocketAddress(s);
-      if (inetSocketAddress != null) {
-        seeds.add(inetSocketAddress);
-      }
-    }
     for (InetSocketAddress inetSocketAddress : seeds) {
       logger.debug("Seed InetSocketAddress: {}", inetSocketAddress);
     }

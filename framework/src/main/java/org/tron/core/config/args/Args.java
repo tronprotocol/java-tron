@@ -523,9 +523,7 @@ public class Args extends CommonParameter {
     PARAMETER.storage.setCacheStrategies(config);
 
     PARAMETER.seedNode = new SeedNode();
-    PARAMETER.seedNode.setIpList(Optional.ofNullable(PARAMETER.seedNodes)
-        .filter(seedNode -> 0 != seedNode.size())
-        .orElse(config.getStringList(Constant.SEED_NODE_IP_LIST)));
+    PARAMETER.seedNode.setAddressList(loadSeeds(config));
 
     if (config.hasPath(Constant.GENESIS_BLOCK)) {
       PARAMETER.genesisBlock = new GenesisBlock();
@@ -1202,9 +1200,9 @@ public class Args extends CommonParameter {
       if (inetSocketAddress == null) {
         continue;
       }
-      String ip = inetSocketAddress.getAddress().getHostAddress();
-      int port = inetSocketAddress.getPort();
       if (filter) {
+        String ip = inetSocketAddress.getAddress().getHostAddress();
+        int port = inetSocketAddress.getPort();
         if (!(PARAMETER.nodeDiscoveryBindIp.equals(ip)
             || PARAMETER.nodeExternalIp.equals(ip)
             || Constant.LOCAL_HOST.equals(ip))
@@ -1291,6 +1289,22 @@ public class Args extends CommonParameter {
     }
 
     return eventPluginConfig;
+  }
+
+  private static List<InetSocketAddress> loadSeeds(final com.typesafe.config.Config config) {
+    List<InetSocketAddress> inetSocketAddressList = new ArrayList<>();
+    if (PARAMETER.seedNodes != null && !PARAMETER.seedNodes.isEmpty()) {
+      for (String s : PARAMETER.seedNodes) {
+        InetSocketAddress inetSocketAddress = NetUtil.parseInetSocketAddress(s);
+        if (inetSocketAddress != null) {
+          inetSocketAddressList.add(inetSocketAddress);
+        }
+      }
+    } else {
+      inetSocketAddressList = getInetSocketAddress(config, Constant.SEED_NODE_IP_LIST, false);
+    }
+
+    return inetSocketAddressList;
   }
 
   private static PublishConfig loadDnsPublishConfig(final com.typesafe.config.Config config) {
@@ -1598,7 +1612,7 @@ public class Args extends CommonParameter {
     logger.info("Passive node size: {}", parameter.getPassiveNodes().size());
     logger.info("FastForward node size: {}", parameter.getFastForwardNodes().size());
     logger.info("FastForward node number: {}", parameter.getMaxFastForwardNum());
-    logger.info("Seed node size: {}", parameter.getSeedNode().getIpList().size());
+    logger.info("Seed node size: {}", parameter.getSeedNode().getAddressList().size());
     logger.info("Max connection: {}", parameter.getMaxConnections());
     logger.info("Min connection: {}", parameter.getMinConnections());
     logger.info("Min active connection: {}", parameter.getMinActiveConnections());
