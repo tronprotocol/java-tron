@@ -583,7 +583,7 @@ public class Wallet {
           .setMessage(ByteString.copyFromUtf8("Transaction expired"))
           .build();
     } catch (Exception e) {
-      logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage(), e);
       return builder.setResult(false).setCode(response_code.OTHER_ERROR)
           .setMessage(ByteString.copyFromUtf8("Error: " + e.getMessage()))
           .build();
