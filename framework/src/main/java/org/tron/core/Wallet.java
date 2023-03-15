@@ -2642,10 +2642,10 @@ public class Wallet {
     if (!Args.getInstance().p2pDisable) {
       TronNetService.getP2pService().getConnectableNodes().forEach(node -> {
         nodeListBuilder.addNodes(Node.newBuilder().setAddress(
-                Address.newBuilder()
-                        .setHost(ByteString
-                                .copyFrom(ByteArray.fromString(node.getHost())))
-                        .setPort(node.getPort())));
+            Address.newBuilder()
+                .setHost(ByteString
+                    .copyFrom(ByteArray.fromString(node.getHost())))
+                .setPort(node.getPort())));
       });
     }
     return nodeListBuilder.build();

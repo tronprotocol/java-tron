@@ -406,7 +406,7 @@ public class CommonParameter {
   @Getter
   @Setter
   @Parameter(names = {"--p2p-disable"}, description = "Switch for p2p module initialization. "
-          + "(defalut: false)", arity = 1)
+      + "(defalut: false)", arity = 1)
   public boolean p2pDisable = false;
   @Getter
   @Setter
