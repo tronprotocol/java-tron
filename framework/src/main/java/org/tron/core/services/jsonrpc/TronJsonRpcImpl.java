@@ -15,13 +15,13 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessageV3;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -33,6 +33,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.EstimateEnergyMessage;
 import org.tron.api.GrpcAPI.Return;
@@ -46,6 +48,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -94,6 +97,7 @@ import org.tron.protos.contract.SmartContractOuterClass.SmartContractDataWrapper
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 @Slf4j(topic = "API")
+@Component
 public class TronJsonRpcImpl implements TronJsonRpc {
 
   public enum RequestSource {
@@ -155,7 +159,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   private final boolean allowStateRoot = CommonParameter.getInstance().getStorage()
       .isAllowStateRoot();
 
-  public TronJsonRpcImpl(NodeInfoService nodeInfoService, Wallet wallet, Manager manager) {
+  public TronJsonRpcImpl(@Autowired NodeInfoService nodeInfoService,
+                         @Autowired Wallet wallet,  @Autowired Manager manager) {
     this.nodeInfoService = nodeInfoService;
     this.wallet = wallet;
     this.manager = manager;
@@ -378,7 +383,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public Map<String, String> getToken10(String address, String blockNumOrTag)
+  public List<Token10Result> getToken10(String address, String blockNumOrTag)
           throws JsonRpcInvalidParamsException {
     byte[] addressData = addressCompatibleToByteArray(address);
     Account reply;
@@ -396,18 +401,65 @@ public class TronJsonRpcImpl implements TronJsonRpc {
         throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
       }
       if (allowStateRoot) {
-        reply = wallet.getAccountToken10(addressData, blockNumber.longValue());
+        reply = wallet.getAccountToken10(addressData, -1, blockNumber.longValue());
       } else {
         throw new JsonRpcInvalidParamsException(QUANTITY_NOT_SUPPORT_ERROR);
       }
     }
 
-    Map<String, String> token10s =  new TreeMap<>();
+    List<Token10Result> token10s =  new ArrayList<>();
     if (reply != null) {
-      reply.getAssetV2Map().forEach((k, v) -> token10s.put(ByteArray.toJsonHex(k),
-             ByteArray.toJsonHex(v)));
+      reply.getAssetV2Map().entrySet().stream().filter(e -> e.getValue() > 0).map(e ->
+              new Token10Result(ByteArray.toJsonHex(Long.parseUnsignedLong(e.getKey())),
+                      ByteArray.toJsonHex(e.getValue()))).forEach(token10s::add);
     }
     return token10s;
+  }
+
+  @Override
+  public Token10Result getToken10ById(String address, String tokenId, String blockNumOrTag)
+          throws JsonRpcInvalidParamsException {
+
+    long tokenNum;
+    String tokenStr;
+    try {
+      tokenNum = ByteArray.hexToBigInteger(tokenId).longValue();
+      if (tokenNum < Constant.TOKEN_NUM_START
+              || tokenNum > manager.getDynamicPropertiesStore().getTokenIdNum()) {
+        throw new JsonRpcInvalidParamsException("invalid token id");
+      }
+      tokenStr = Long.toString(tokenNum);
+    } catch (Exception e) {
+      throw new JsonRpcInvalidParamsException("invalid token id");
+    }
+
+    byte[] addressData = addressCompatibleToByteArray(address);
+    Account reply;
+    if (EARLIEST_STR.equalsIgnoreCase(blockNumOrTag)
+            || PENDING_STR.equalsIgnoreCase(blockNumOrTag)) {
+      throw new JsonRpcInvalidParamsException(TAG_NOT_SUPPORT_ERROR);
+    } else if (LATEST_STR.equalsIgnoreCase(blockNumOrTag)) {
+      Account account = Account.newBuilder().setAddress(ByteString.copyFrom(addressData)).build();
+      reply = wallet.getAccount(account);
+    } else {
+      BigInteger blockNumber;
+      try {
+        blockNumber = ByteArray.hexToBigInteger(blockNumOrTag);
+      } catch (Exception e) {
+        throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
+      }
+      if (allowStateRoot) {
+        reply = wallet.getAccountToken10(addressData, tokenNum, blockNumber.longValue());
+      } else {
+        throw new JsonRpcInvalidParamsException(QUANTITY_NOT_SUPPORT_ERROR);
+      }
+    }
+
+    long amt = 0;
+    if (reply != null) {
+      amt = reply.getAssetV2Map().getOrDefault(tokenStr, 0L);
+    }
+    return new Token10Result(tokenId, ByteArray.toJsonHex(amt));
   }
 
   private void callTriggerConstantContract(byte[] ownerAddressByte, byte[] contractAddressByte,
