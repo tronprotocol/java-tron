@@ -142,13 +142,24 @@ public class TrieImpl2 implements Trie<Bytes> {
     throw new RuntimeException("Not implemented yet");
   }
 
+  /**
+   * NOTE: This is an exact range query.
+   *
+   * @see RangeStorageEntriesCollector#onLeaf(Bytes32, Node)
+   * @code {eth/protocols/snap/handler.go:283}
+   * @link https://github.com/hyperledger/besu/issues/5222
+   * @param startKeyHash start,include
+   * @param endKeyHash end,include
+   * @return exact range query.
+   */
   public  TreeMap<Bytes32, Bytes> entriesFrom(Bytes32 startKeyHash, Bytes32 endKeyHash) {
     final RangeStorageEntriesCollector collector = RangeStorageEntriesCollector.createCollector(
             startKeyHash, endKeyHash, Integer.MAX_VALUE, Integer.MAX_VALUE);
     final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
-    return (TreeMap<Bytes32, Bytes>)
-           this.entriesFrom(root -> RangeStorageEntriesCollector.collectEntries(collector, visitor,
+    final TreeMap<Bytes32, Bytes> origin = (TreeMap<Bytes32, Bytes>)
+            this.entriesFrom(root -> RangeStorageEntriesCollector.collectEntries(collector, visitor,
                     root, startKeyHash));
+    return new TreeMap<>(origin.subMap(startKeyHash, true, endKeyHash, true));
   }
 
   public Map<Bytes32, Bytes> entriesFrom(final Function<Node<Bytes>, Map<Bytes32, Bytes>> handler) {

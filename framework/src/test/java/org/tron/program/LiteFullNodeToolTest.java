@@ -5,7 +5,6 @@ import io.grpc.ManagedChannelBuilder;
 import java.io.File;
 import java.nio.file.Paths;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -23,7 +22,6 @@ import org.tron.common.utils.Utils;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
-import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.tool.litefullnode.LiteFullNodeTool;
 
 public class LiteFullNodeToolTest {
@@ -32,6 +30,7 @@ public class LiteFullNodeToolTest {
 
   private TronApplicationContext context;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private ManagedChannel channelFull;
   private Application appTest;
 
   private String databaseDir;
@@ -48,14 +47,13 @@ public class LiteFullNodeToolTest {
     context = new TronApplicationContext(DefaultConfig.class);
     appTest = ApplicationFactory.create(context);
     appTest.addService(context.getBean(RpcApiService.class));
-    appTest.addService(context.getBean(RpcApiServiceOnSolidity.class));
     appTest.initServices(Args.getInstance());
     appTest.startServices();
     appTest.startup();
 
     String fullnode = String.format("%s:%d", "127.0.0.1",
             Args.getInstance().getRpcPort());
-    ManagedChannel channelFull = ManagedChannelBuilder.forTarget(fullnode)
+    channelFull = ManagedChannelBuilder.forTarget(fullnode)
             .usePlaintext(true)
             .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
@@ -79,6 +77,7 @@ public class LiteFullNodeToolTest {
    * shutdown the fullnode.
    */
   public void shutdown() {
+    channelFull.shutdownNow();
     appTest.shutdownServices();
     appTest.shutdown();
     context.destroy();
@@ -87,6 +86,7 @@ public class LiteFullNodeToolTest {
   public void init() {
     destroy(dbPath); // delete if prev failed
     Args.setParam(new String[]{"-d", dbPath, "-w"}, "config-localtest.conf");
+    Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
     // allow account root
     Args.getInstance().setAllowAccountStateRoot(1);
     databaseDir = Args.getInstance().getStorage().getDbDirectory();
