@@ -460,64 +460,152 @@ public class Trie2Test {
     trie.put(Bytes.fromHexString("0x0531303030303031"), Bytes32.ZERO);
     trie.put(Bytes.fromHexString("0x14414c4c4f575f54564d5f5452414e534645525f5452433130"),
             Bytes32.ZERO);
+    trie.put(Bytes.fromHexString("0x14414c4c4f575f41535345545f4f5054494d495a4154494f4e"),
+            Bytes.fromHexString("0x0000000000000001"));
+
     trie.put(Bytes.fromHexString(
             "0x02a0abd4b9367799eaa3197fecb144eb71de1e049abc00000000000f42410000"),
             Bytes.fromHexString("0x0000000005f5e09c"));
-    trie.put(Bytes.fromHexString("0x14414c4c4f575f41535345545f4f5054494d495a4154494f4e"),
-            Bytes.fromHexString("0x0000000000000001"));
+    trie.put(Bytes.fromHexString(
+            "0x02a0abd4b9367799eaa3197fecb144eb71de1e049abc00000000000f42420000"),
+            Bytes.fromHexString("0x000000000000009c"));
     trie.put(Bytes.fromHexString(
             "0x02a0f9490505f11ffb8d7e3df9789e63ab8709cf457200000000000f42410000"),
             Bytes.fromHexString("0x0000000000000063"));
+    trie.put(Bytes.fromHexString(
+            "0x02a0f9490505f11ffb8d7e3df9789e63ab8709cf457200000000000f42510000"),
+            Bytes.fromHexString("0x0000000000000049"));
     trie.put(Bytes.fromHexString(
             "0x02a0548794500882809695a8a687866e76d4271a1abc00000000000f42410000"),
             Bytes.fromHexString("0x0000000000000009"));
     trie.put(Bytes.fromHexString(
             "0x02a0abd4b9367799eaa3197fecb144eb71de1e049abc00000000000f42410000"),
             Bytes.fromHexString("0x0000000005f5e094"));
+    trie.put(Bytes.fromHexString(
+            "0x02a03c612889142e98bb2f4bc40af2d2b77730baff7a00000000000f55780000"),
+            Bytes.fromHexString("0x01"));
 
-    long tokenId = Bytes.fromHexString("0x00000000000f4241").toLong();
-
+    Map<Long, Long> assets = new HashMap<>();
+    // 1. address is before head, not exit
     Bytes32 min = fix32(Bytes.wrap(Bytes.of(StateType.AccountAsset.value()),
-            Bytes.fromHexString("0xa0548794500882809695a8a687866e76d4271a1abc"),
+            Bytes.fromHexString("413c6120b82a61d0e0bb0c4d4ebfae56cb664ba5a6"),
             Bytes.ofUnsignedLong(0)));
 
     Bytes32 max = fix32(Bytes.wrap(Bytes.of(StateType.AccountAsset.value()),
+            Bytes.fromHexString("413c6120b82a61d0e0bb0c4d4ebfae56cb664ba5a6"),
+            Bytes.ofUnsignedLong(Long.MAX_VALUE)));
+
+    trie.entriesFrom(min, max).forEach((k, v) -> assets.put(
+            k.slice(Byte.BYTES + ADDRESS_SIZE, Long.BYTES).toLong(),
+            v.toLong()));
+    Assert.assertTrue(assets.isEmpty());
+
+    // 2. address is head
+    min = fix32(Bytes.wrap(Bytes.of(StateType.AccountAsset.value()),
+            Bytes.fromHexString("0xa03c612889142e98bb2f4bc40af2d2b77730baff7a"),
+            Bytes.ofUnsignedLong(0)));
+
+    max = fix32(Bytes.wrap(Bytes.of(StateType.AccountAsset.value()),
+            Bytes.fromHexString("0xa03c612889142e98bb2f4bc40af2d2b77730baff7a"),
+            Bytes.ofUnsignedLong(Long.MAX_VALUE)));
+    trie.entriesFrom(min, max).forEach((k, v) -> assets.put(
+            k.slice(Byte.BYTES + ADDRESS_SIZE, Long.BYTES).toLong(),
+            v.toLong()));
+    Assert.assertEquals(Bytes.fromHexString("0x01").toLong(),
+            assets.get(Bytes.fromHexString("0x00000000000f5578").toLong()).longValue());
+    Assert.assertEquals(1, assets.size());
+    assets.clear();
+
+    // 3. address is second
+    min = fix32(Bytes.wrap(Bytes.of(StateType.AccountAsset.value()),
+            Bytes.fromHexString("0xa0548794500882809695a8a687866e76d4271a1abc"),
+            Bytes.ofUnsignedLong(0)));
+
+    max = fix32(Bytes.wrap(Bytes.of(StateType.AccountAsset.value()),
             Bytes.fromHexString("0xa0548794500882809695a8a687866e76d4271a1abc"),
             Bytes.ofUnsignedLong(Long.MAX_VALUE)));
-    Map<Long, Long> assets = new HashMap<>();
     trie.entriesFrom(min, max).forEach((k, v) -> assets.put(
             k.slice(Byte.BYTES + ADDRESS_SIZE, Long.BYTES).toLong(),
             v.toLong()));
     Assert.assertEquals(Bytes.fromHexString("0x0000000000000009").toLong(),
-           assets.get(tokenId).longValue());
+           assets.get(Bytes.fromHexString("0x00000000000f4241").toLong()).longValue());
+    Assert.assertEquals(1, assets.size());
+    assets.clear();
+
+    // 4. address is inside, not exit
 
     min = fix32(Bytes.wrap(Bytes.of(StateType.AccountAsset.value()),
-            Bytes.fromHexString("0xa0f9490505f11ffb8d7e3df9789e63ab8709cf4572"),
+            Bytes.fromHexString("0xa08c6120b82a61d0e0bb0c4d4ebfae56cb664ba5a8"),
             Bytes.ofUnsignedLong(0)));
 
     max = fix32(Bytes.wrap(Bytes.of(StateType.AccountAsset.value()),
-            Bytes.fromHexString("0xa0f9490505f11ffb8d7e3df9789e63ab8709cf4572"),
+            Bytes.fromHexString("0xa08c6120b82a61d0e0bb0c4d4ebfae56cb664ba5a8"),
             Bytes.ofUnsignedLong(Long.MAX_VALUE)));
-    assets.clear();
     trie.entriesFrom(min, max).forEach((k, v) -> assets.put(
             k.slice(Byte.BYTES + ADDRESS_SIZE, Long.BYTES).toLong(),
             v.toLong()));
-    Assert.assertEquals(Bytes.fromHexString("0x0000000000000063").toLong(),
-            assets.get(tokenId).longValue());
+    Assert.assertTrue(assets.isEmpty());
+
+    // 5. address is third
 
     min = fix32(Bytes.wrap(Bytes.of(StateType.AccountAsset.value()),
-            Bytes.fromHexString("a0abd4b9367799eaa3197fecb144eb71de1e049abc"),
+            Bytes.fromHexString("0xa0abd4b9367799eaa3197fecb144eb71de1e049abc"),
             Bytes.ofUnsignedLong(0)));
 
     max = fix32(Bytes.wrap(Bytes.of(StateType.AccountAsset.value()),
-            Bytes.fromHexString("a0abd4b9367799eaa3197fecb144eb71de1e049abc"),
+            Bytes.fromHexString("0xa0abd4b9367799eaa3197fecb144eb71de1e049abc"),
             Bytes.ofUnsignedLong(Long.MAX_VALUE)));
-    assets.clear();
     trie.entriesFrom(min, max).forEach((k, v) -> assets.put(
             k.slice(Byte.BYTES + ADDRESS_SIZE, Long.BYTES).toLong(),
             v.toLong()));
     Assert.assertEquals(Bytes.fromHexString("0x0000000005f5e094").toLong(),
-            assets.get(tokenId).longValue());
+            assets.get(Bytes.fromHexString("0x00000000000f4241").toLong()).longValue());
+    Assert.assertEquals(Bytes.fromHexString("0x000000000000009c").toLong(),
+            assets.get(Bytes.fromHexString("0x00000000000f4242").toLong()).longValue());
+    Assert.assertEquals(2, assets.size());
+    assets.clear();
+
+    // 6. address is last
+    min = fix32(Bytes.wrap(Bytes.of(StateType.AccountAsset.value()),
+            Bytes.fromHexString("0xa0f9490505f11ffb8d7e3df9789e63ab8709cf4572"),
+            Bytes.ofUnsignedLong(0)));
+
+    max = fix32(Bytes.wrap(Bytes.of(StateType.AccountAsset.value()),
+            Bytes.fromHexString("0xa0f9490505f11ffb8d7e3df9789e63ab8709cf4572"),
+            Bytes.ofUnsignedLong(Long.MAX_VALUE)));
+    trie.entriesFrom(min, max).forEach((k, v) -> assets.put(
+            k.slice(Byte.BYTES + ADDRESS_SIZE, Long.BYTES).toLong(),
+            v.toLong()));
+    Assert.assertEquals(Bytes.fromHexString("0x0000000000000063").toLong(),
+            assets.get(Bytes.fromHexString("0x00000000000f4241").toLong()).longValue());
+    Assert.assertEquals(Bytes.fromHexString("0x0000000000000049").toLong(),
+            assets.get(Bytes.fromHexString("0x00000000000f4251").toLong()).longValue());
+    Assert.assertEquals(2, assets.size());
+    assets.clear();
+
+    // 7. address is after last, not exit
+    min = fix32(Bytes.wrap(Bytes.of(StateType.AccountAsset.value()),
+            Bytes.fromHexString("0xa1f9490505f11ffb8d7e3df9789e63ab8709cf4572"),
+            Bytes.ofUnsignedLong(0)));
+
+    max = fix32(Bytes.wrap(Bytes.of(StateType.AccountAsset.value()),
+            Bytes.fromHexString("0xa1f9490505f11ffb8d7e3df9789e63ab8709cf4572"),
+            Bytes.ofUnsignedLong(Long.MAX_VALUE)));
+    trie.entriesFrom(min, max).forEach((k, v) -> assets.put(
+            k.slice(Byte.BYTES + ADDRESS_SIZE, Long.BYTES).toLong(),
+            v.toLong()));
+    Assert.assertTrue(assets.isEmpty());
+
+    // 8. not fix32,should not error
+    min = fix32(Bytes.wrap(Bytes.of(StateType.Witness.value()),
+            Bytes.fromHexString("0xa0")));
+
+    max = fix32(Bytes.wrap(Bytes.of(StateType.Witness.value()),
+            Bytes.fromHexString("0xa1")));
+    trie.entriesFrom(min, max).forEach((k, v) -> assets.put(
+            k.slice(Byte.BYTES + ADDRESS_SIZE, Long.BYTES).toLong(),
+            v.toLong()));
+    Assert.assertTrue(assets.isEmpty());
   }
 
   @Test

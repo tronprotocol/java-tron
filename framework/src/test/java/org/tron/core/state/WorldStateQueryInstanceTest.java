@@ -9,6 +9,7 @@ import java.io.File;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -32,6 +33,7 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.state.trie.TrieImpl2;
+import org.tron.protos.Protocol;
 import org.tron.protos.contract.SmartContractOuterClass;
 
 public class WorldStateQueryInstanceTest {
@@ -98,8 +100,25 @@ public class WorldStateQueryInstanceTest {
     trieImpl2.flush();
     byte[] root = trieImpl2.getRootHash();
     worldStateQueryInstance = new WorldStateQueryInstance(Bytes32.wrap(root), chainBaseManager);
-    Assert.assertEquals(amount,
-        worldStateQueryInstance.getAccountAsset(address, tokenId).longValue());
+    Assert.assertEquals(amount, worldStateQueryInstance.getAccountAsset(
+            Protocol.Account.newBuilder().setAddress(ByteString.copyFrom(address)).build(),
+            tokenId));
+    Assert.assertEquals(worldStateQueryInstance.getRootHash(),trieImpl2.getRootHashByte32());
+    trieImpl2.put(
+        fix32(StateType.encodeKey(StateType.AccountAsset,
+            com.google.common.primitives.Bytes.concat(address, Longs.toByteArray(tokenId)))),
+        UInt256.ZERO);
+    trieImpl2.commit();
+    trieImpl2.flush();
+    worldStateQueryInstance = new WorldStateQueryInstance(trieImpl2.getRootHashByte32(),
+            chainBaseManager);
+    Assert.assertEquals(0, worldStateQueryInstance.getAccountAsset(
+            Protocol.Account.newBuilder().setAddress(ByteString.copyFrom(address)).build(),
+            tokenId));
+    Assert.assertFalse(worldStateQueryInstance.hasAssetV2(
+            Protocol.Account.newBuilder().setAddress(ByteString.copyFrom(address)).build(),
+            tokenId));
+
   }
 
   private void testGetContractState() {
@@ -149,7 +168,8 @@ public class WorldStateQueryInstanceTest {
   }
 
   private void testGetWitness() {
-    byte[] value = new WitnessCapsule(ByteString.copyFrom(ecKey.getPubKey()), "http://").getData();
+    byte[] value = new WitnessCapsule(ByteString.copyFrom(ecKey.getPubKey()), "http://")
+        .getData();
     trieImpl2.put(StateType.encodeKey(StateType.Witness, address), Bytes.wrap(value));
     trieImpl2.commit();
     trieImpl2.flush();
@@ -211,6 +231,12 @@ public class WorldStateQueryInstanceTest {
     byte[] root = trieImpl2.getRootHash();
     worldStateQueryInstance = new WorldStateQueryInstance(Bytes32.wrap(root), chainBaseManager);
     Assert.assertArrayEquals(value, worldStateQueryInstance.getDynamicProperty(key).getData());
+    try {
+      worldStateQueryInstance.getDynamicProperty("not-key".getBytes());
+      Assert.fail();
+    } catch (Exception e) {
+      Assert.assertTrue(e instanceof IllegalArgumentException);
+    }
   }
 
   private void testGetDynamicPropertyLong() {
