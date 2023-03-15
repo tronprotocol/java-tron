@@ -3,7 +3,10 @@ package org.tron.core.state;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -23,17 +26,22 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.WalletUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.core.services.RpcApiService;
-import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
+import org.tron.core.exception.JsonRpcInternalException;
+import org.tron.core.exception.JsonRpcInvalidParamsException;
+import org.tron.core.exception.JsonRpcInvalidRequestException;
+import org.tron.core.services.jsonrpc.TronJsonRpc;
+import org.tron.core.services.jsonrpc.types.CallArguments;
 import org.tron.core.vm.program.Storage;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.BalanceContract;
 
 public class WorldStateQueryTest {
@@ -43,6 +51,9 @@ public class WorldStateQueryTest {
   private static Manager manager;
 
   private static String dbPath = "output-directory-state";
+  private static TronJsonRpc tronJsonRpc;
+  private static final long TOKEN_ID1 = 1000001L;
+  private static final long TOKEN_ID2 = 1000002L;
 
   private ECKey account1Prikey = ECKey.fromPrivate(ByteArray.fromHexString(
       "D95611A9AF2A2A45359106222ED1AFED48853D9A44DEFF8DC7913F5CBA727366"));
@@ -56,6 +67,9 @@ public class WorldStateQueryTest {
    */
   @BeforeClass
   public static void init() {
+    if (FileUtil.isExists(dbPath)) {
+      FileUtil.deleteDir(new File(dbPath));
+    }
     Args.setParam(new String[]{"-d", dbPath}, "config-localtest.conf");
     // allow account root
     Args.getInstance().setAllowAccountStateRoot(1);
@@ -63,24 +77,71 @@ public class WorldStateQueryTest {
     Args.getInstance().dbBackupConfig = DbBackupConfig.getInstance();
     context = new TronApplicationContext(DefaultConfig.class);
     appTest = ApplicationFactory.create(context);
-    appTest.addService(context.getBean(RpcApiService.class));
-    appTest.addService(context.getBean(RpcApiServiceOnSolidity.class));
     appTest.initServices(Args.getInstance());
     appTest.startServices();
     appTest.startup();
     chainBaseManager = context.getBean(ChainBaseManager.class);
     manager = context.getBean(Manager.class);
+    tronJsonRpc = context.getBean(TronJsonRpc.class);
   }
 
   @AfterClass
-  public static void destory() {
+  public static void destroy() {
     appTest.shutdown();
     Args.clearParam();
     FileUtil.deleteDir(new File(dbPath));
   }
 
+  public void createAsset() {
+    Assert.assertEquals(TOKEN_ID1,manager.getDynamicPropertiesStore().getTokenIdNum() + 1);
+    manager.getDynamicPropertiesStore().saveTokenIdNum(TOKEN_ID1);
+    AssetIssueContractOuterClass.AssetIssueContract assetIssueContract =
+            AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+                    .setOwnerAddress(ByteString.copyFrom(account1Prikey.getAddress()))
+                    .setName(ByteString.copyFrom(ByteArray.fromString("token1")))
+                    .setId(Long.toString(TOKEN_ID1))
+                    .setTotalSupply(10)
+                    .setTrxNum(10)
+                    .setNum(1)
+                    .setStartTime(1)
+                    .setEndTime(2)
+                    .setVoteScore(2)
+                    .setDescription(ByteString.copyFrom(ByteArray.fromString("token1")))
+                    .setUrl(ByteString.copyFrom(ByteArray.fromString("https://tron.network")))
+                    .build();
+    AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
+    manager.getAssetIssueV2Store()
+            .put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
+
+    Assert.assertEquals(TOKEN_ID2,manager.getDynamicPropertiesStore().getTokenIdNum() + 1);
+    manager.getDynamicPropertiesStore().saveTokenIdNum(TOKEN_ID2);
+    AssetIssueContractOuterClass.AssetIssueContract assetIssueContract2 =
+            AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+                    .setOwnerAddress(ByteString.copyFrom(account1Prikey.getAddress()))
+                    .setName(ByteString.copyFrom(ByteArray.fromString("token2")))
+                    .setId(Long.toString(TOKEN_ID2))
+                    .setTotalSupply(10)
+                    .setTrxNum(10)
+                    .setNum(1)
+                    .setStartTime(1)
+                    .setEndTime(2)
+                    .setVoteScore(2)
+                    .setDescription(ByteString.copyFrom(ByteArray.fromString("token2")))
+                    .setUrl(ByteString.copyFrom(ByteArray.fromString("https://tron.network")))
+                    .build();
+    AssetIssueCapsule assetIssueCapsule2 = new AssetIssueCapsule(assetIssueContract2);
+    manager.getAssetIssueV2Store()
+            .put(assetIssueCapsule2.createDbV2Key(), assetIssueCapsule2);
+    AccountCapsule ownerCapsule = manager.getAccountStore()
+            .get(account1Prikey.getAddress());
+    ownerCapsule.addAssetV2(Long.toString(TOKEN_ID1).getBytes(), 1000);
+    ownerCapsule.addAssetV2(Long.toString(TOKEN_ID2).getBytes(), 5000);
+    manager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
+
+  }
+
   @Test
-  public void testTransfer() throws InterruptedException {
+  public void testTransfer() throws InterruptedException, JsonRpcInvalidParamsException {
     manager.initGenesis();
     List<BlockCapsule> blockCapsules = chainBaseManager
         .getBlockStore().getBlockByLatestNum(1);
@@ -95,7 +156,7 @@ public class WorldStateQueryTest {
     blockCapsule = blockCapsules.get(0);
     Bytes32 rootHash = blockCapsule.getArchiveRoot();
     WorldStateQueryInstance worldStateQueryInstance = ChainBaseManager.fetch(rootHash);
-    checkAccount(worldStateQueryInstance);
+    checkAccount(worldStateQueryInstance, blockCapsule.getNum());
 
     try {
       manager.pushBlock(buildTransferBlock(blockCapsule));
@@ -108,11 +169,45 @@ public class WorldStateQueryTest {
     blockCapsule = blockCapsules.get(0);
     rootHash = blockCapsule.getArchiveRoot();
     worldStateQueryInstance = ChainBaseManager.fetch(rootHash);
-    checkAccount(worldStateQueryInstance);
+    checkAccount(worldStateQueryInstance, blockCapsule.getNum());
   }
 
   @Test
-  public void testContract() throws InterruptedException {
+  public void testTransferAsset() throws InterruptedException, JsonRpcInvalidParamsException {
+    createAsset();
+    manager.initGenesis();
+    List<BlockCapsule> blockCapsules = chainBaseManager
+            .getBlockStore().getBlockByLatestNum(1);
+    BlockCapsule blockCapsule = blockCapsules.get(0);
+    try {
+      manager.pushBlock(buildTransferAssetBlock(blockCapsule));
+    } catch (Exception e) {
+      Assert.fail(e.getMessage());
+    }
+    Thread.sleep(3000);
+    blockCapsules = chainBaseManager.getBlockStore().getBlockByLatestNum(1);
+    blockCapsule = blockCapsules.get(0);
+    Bytes32 rootHash = blockCapsule.getArchiveRoot();
+    WorldStateQueryInstance worldStateQueryInstance = ChainBaseManager.fetch(rootHash);
+    checkAccount(worldStateQueryInstance, blockCapsule.getNum());
+
+    try {
+      manager.pushBlock(buildTransferAssetBlock(blockCapsule));
+    } catch (Exception e) {
+      Assert.fail(e.getMessage());
+    }
+    Thread.sleep(3000);
+
+    blockCapsules = chainBaseManager.getBlockStore().getBlockByLatestNum(1);
+    blockCapsule = blockCapsules.get(0);
+    rootHash = blockCapsule.getArchiveRoot();
+    worldStateQueryInstance = ChainBaseManager.fetch(rootHash);
+    checkAccount(worldStateQueryInstance, blockCapsule.getNum());
+  }
+
+  @Test
+  public void testContract() throws InterruptedException, JsonRpcInvalidParamsException,
+          JsonRpcInvalidRequestException, JsonRpcInternalException {
     manager.initGenesis();
     List<BlockCapsule> blockCapsules = chainBaseManager
         .getBlockStore().getBlockByLatestNum(1);
@@ -129,7 +224,7 @@ public class WorldStateQueryTest {
     WorldStateQueryInstance worldStateQueryInstance = ChainBaseManager.fetch(rootHash);
     Assert.assertArrayEquals(chainBaseManager.getContractStore().get(contractAddress).getData(),
         worldStateQueryInstance.getContract(contractAddress).getData());
-    checkAccount(worldStateQueryInstance);
+    checkAccount(worldStateQueryInstance, blockCapsule.getNum());
 
     try {
       manager.pushBlock(buildTriggerBlock(blockCapsule));
@@ -151,22 +246,104 @@ public class WorldStateQueryTest {
 
     DataWord value2 = storage.getValue(new DataWord(ByteArray.fromHexString("0")));
     Assert.assertArrayEquals(value1.getData(), value2.getData());
-    checkAccount(worldStateQueryInstance);
+    checkAccount(worldStateQueryInstance, blockCapsule.getNum());
+    Assert.assertEquals(tronJsonRpc.getABIOfSmartContract(ByteArray.toHexString(contractAddress),
+            ByteArray.toJsonHex(blockCapsule.getNum())),
+            tronJsonRpc.getABIOfSmartContract(ByteArray.toHexString(contractAddress),
+                    "latest"));
+
+    Assert.assertEquals(tronJsonRpc.getStorageAt(ByteArray.toHexString(contractAddress),
+                    "0x0", ByteArray.toJsonHex(blockCapsule.getNum())),
+            tronJsonRpc.getStorageAt(ByteArray.toHexString(contractAddress),
+                    "0x0", "latest"));
+
+    byte[] triggerData = TvmTestUtils.parseAbi("increment()", null);
+    CallArguments callArguments = new CallArguments();
+    callArguments.setFrom(ByteArray.toHexString(account1Prikey.getAddress()));
+    callArguments.setTo(ByteArray.toHexString(contractAddress));
+    callArguments.setGas("0x0");
+    callArguments.setGasPrice("0x0");
+    callArguments.setValue("0x0");
+    callArguments.setData(ByteArray.toHexString(triggerData));
+
+    Assert.assertEquals(tronJsonRpc.getCall(callArguments, ByteArray.toJsonHex(
+            blockCapsule.getNum())), tronJsonRpc.getCall(callArguments, "latest"));
+
+
   }
 
-  private void checkAccount(WorldStateQueryInstance worldStateQueryInstance) {
+  private void checkAccount(WorldStateQueryInstance worldStateQueryInstance, long blockNum)
+          throws JsonRpcInvalidParamsException {
     AccountCapsule account1Capsule = chainBaseManager.getAccountStore()
         .get(account1Prikey.getAddress());
-    account1Capsule.clearAsset();
     AccountCapsule account2Capsule = chainBaseManager.getAccountStore()
         .get(account2Prikey.getAddress());
-    account2Capsule.clearAsset();
     Assert.assertArrayEquals(account1Capsule.getInstance().toByteArray(),
         worldStateQueryInstance.getAccount(account1Prikey.getAddress())
             .getInstance().toByteArray());
     Assert.assertArrayEquals(account2Capsule.getInstance().toByteArray(),
         worldStateQueryInstance.getAccount(account2Prikey.getAddress())
             .getInstance().toByteArray());
+    Assert.assertEquals(tronJsonRpc.getTrxBalance(
+            ByteArray.toHexString(account1Prikey.getAddress()),
+            ByteArray.toJsonHex(blockNum)),
+            tronJsonRpc.getTrxBalance(
+                    ByteArray.toHexString(account1Prikey.getAddress()), "latest"));
+
+    Assert.assertEquals(tronJsonRpc.getToken10(
+                    ByteArray.toHexString(account1Prikey.getAddress()),
+                    ByteArray.toJsonHex(blockNum)),
+            tronJsonRpc.getToken10(
+                    ByteArray.toHexString(account1Prikey.getAddress()), "latest"));
+
+    Assert.assertEquals(tronJsonRpc.getToken10(
+                    ByteArray.toHexString(account2Prikey.getAddress()),
+                    ByteArray.toJsonHex(blockNum)),
+            tronJsonRpc.getToken10(
+                    ByteArray.toHexString(account2Prikey.getAddress()), "latest"));
+
+    Map<String, Long> asset = new HashMap<>();
+    for (TronJsonRpc.Token10Result t : tronJsonRpc.getToken10(
+            ByteArray.toHexString(account2Prikey.getAddress()), "latest")) {
+      asset.put(Long.toString(ByteArray.jsonHexToLong(t.getKey())),
+              ByteArray.jsonHexToLong(t.getValue()));
+    }
+    Assert.assertEquals(account2Capsule.getAssetMapV2(), asset);
+
+    Assert.assertEquals(tronJsonRpc.getToken10(
+            ByteArray.toHexString(account1Prikey.getAddress()), "latest"),
+            tronJsonRpc.getToken10(
+            ByteArray.toHexString(account1Prikey.getAddress()), ByteArray.toJsonHex(blockNum)));
+
+    Assert.assertEquals(tronJsonRpc.getToken10ById(ByteArray.toHexString(
+            account2Prikey.getAddress()), ByteArray.toJsonHex(TOKEN_ID1),
+                    ByteArray.toJsonHex(blockNum)),
+            tronJsonRpc.getToken10ById(ByteArray.toHexString(
+                    account2Prikey.getAddress()), ByteArray.toJsonHex(TOKEN_ID1),
+                    "latest"));
+
+    Assert.assertEquals(tronJsonRpc.getToken10ById(ByteArray.toHexString(
+                            account2Prikey.getAddress()), ByteArray.toJsonHex(TOKEN_ID2),
+                    ByteArray.toJsonHex(blockNum)),
+            tronJsonRpc.getToken10ById(ByteArray.toHexString(
+                            account2Prikey.getAddress()), ByteArray.toJsonHex(TOKEN_ID2),
+                    "latest"));
+
+    Assert.assertEquals(account2Capsule.getAssetV2(Long.toString(TOKEN_ID2)),
+            ByteArray.jsonHexToLong(tronJsonRpc.getToken10ById(ByteArray.toHexString(
+                    account2Prikey.getAddress()), ByteArray.toJsonHex(TOKEN_ID2),
+            ByteArray.toJsonHex(blockNum)).getValue()));
+
+    List<TronJsonRpc.Token10Result> list = new ArrayList<>();
+    list.add(tronJsonRpc.getToken10ById(ByteArray.toHexString(
+                            account1Prikey.getAddress()), ByteArray.toJsonHex(TOKEN_ID1),
+                    ByteArray.toJsonHex(blockNum)));
+    list.add(tronJsonRpc.getToken10ById(ByteArray.toHexString(
+                    account1Prikey.getAddress()), ByteArray.toJsonHex(TOKEN_ID2),
+            ByteArray.toJsonHex(blockNum)));
+
+    Assert.assertEquals(list, tronJsonRpc.getToken10(
+            ByteArray.toHexString(account1Prikey.getAddress()), ByteArray.toJsonHex(blockNum)));
   }
 
   private BlockCapsule buildTransferBlock(BlockCapsule parentBlock) {
@@ -201,6 +378,39 @@ public class WorldStateQueryTest {
     blockCapsule.sign(
         ByteArray.fromHexString(Args.getLocalWitnesses().getPrivateKey()));
     return blockCapsule;
+  }
+
+  private BlockCapsule buildTransferAssetBlock(BlockCapsule parentBlock) {
+    TransactionCapsule transactionCapsule = buildTransferAsset(TOKEN_ID1, 5, parentBlock);
+    TransactionCapsule transactionCapsule2 = buildTransferAsset(TOKEN_ID2, 10, parentBlock);
+    BlockCapsule blockCapsule = new BlockCapsule(parentBlock.getNum() + 1,
+            Sha256Hash.wrap(parentBlock.getBlockId().getByteString()), System.currentTimeMillis(),
+            ByteString.copyFrom(ECKey.fromPrivate(ByteArray.fromHexString(
+                    Args.getLocalWitnesses().getPrivateKey())).getAddress()));
+    blockCapsule.addTransaction(transactionCapsule);
+    blockCapsule.addTransaction(transactionCapsule2);
+    blockCapsule.setMerkleRoot();
+    blockCapsule.sign(ByteArray.fromHexString(Args.getLocalWitnesses().getPrivateKey()));
+    return blockCapsule;
+  }
+
+  private TransactionCapsule buildTransferAsset(long token, long amt, BlockCapsule parentBlock) {
+    AssetIssueContractOuterClass.TransferAssetContract transferAssetContract =
+            AssetIssueContractOuterClass.TransferAssetContract.newBuilder()
+                    .setAssetName(ByteString.copyFrom(Long.toString(token).getBytes()))
+                    .setOwnerAddress(ByteString.copyFrom(account1Prikey.getAddress()))
+                    .setToAddress(ByteString.copyFrom(account2Prikey.getAddress()))
+                    .setAmount(amt)
+                    .build();
+
+    Protocol.Transaction.raw.Builder transactionBuilder = Protocol.Transaction.raw.newBuilder()
+            .addContract(Protocol.Transaction.Contract.newBuilder()
+                    .setType(ContractType.TransferAssetContract)
+                    .setParameter(Any.pack(transferAssetContract))
+                    .build());
+    Protocol.Transaction transaction = Protocol.Transaction.newBuilder()
+            .setRawData(transactionBuilder.build()).build();
+    return setAndSignTx(transaction, parentBlock, account1Prikey);
   }
 
   private BlockCapsule buildContractBlock(BlockCapsule parentBlock) {
