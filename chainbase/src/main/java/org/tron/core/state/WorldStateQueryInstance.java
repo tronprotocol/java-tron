@@ -86,7 +86,9 @@ public class WorldStateQueryInstance {
       }
       return value.toLong();
     }
-    byte[] v = worldStateGenesis.get(StateType.AccountAsset, key);
+    byte[] v = worldStateGenesis.get(StateType.AccountAsset,
+            com.google.common.primitives.Bytes.concat(address,
+            Long.toString(tokenId).getBytes()));
     return Objects.nonNull(v) ? Longs.fromByteArray(v) : null;
   }
 
