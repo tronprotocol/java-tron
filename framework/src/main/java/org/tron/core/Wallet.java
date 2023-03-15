@@ -375,14 +375,18 @@ public class Wallet {
     }
   }
 
-  public Account getAccountToken10(byte[] address, long blockNumber) {
+  public Account getAccountToken10(byte[] address, long tokenId, long blockNumber) {
     Bytes32 rootHash = getRootHashByNumber(blockNumber);
     WorldStateQueryInstance worldStateQueryInstance = initWorldStateQueryInstance(rootHash);
     AccountCapsule accountCapsule = worldStateQueryInstance.getAccount(address);
     if (accountCapsule == null) {
       return null;
     }
-    accountCapsule.importAllAsset();
+    if (tokenId == -1) {
+      accountCapsule.importAllAsset();
+    } else {
+      accountCapsule.importAsset(String.valueOf(tokenId).getBytes());
+    }
     return accountCapsule.getInstance();
   }
 

@@ -7,9 +7,9 @@ import com.googlecode.jsonrpc4j.JsonRpcErrors;
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -90,12 +90,19 @@ public interface TronJsonRpc {
   String getTrxBalance(String address, String blockNumOrTag) throws JsonRpcInvalidParamsException;
 
 
-  @JsonRpcMethod("tron_getToken10")
+  @JsonRpcMethod("tron_getAssets")
   @JsonRpcErrors({
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
   })
-  Map<String, String> getToken10(String address, String blockNumOrTag)
-          throws JsonRpcInvalidParamsException;
+  List<Token10Result> getToken10(String address, String blockNumOrTag)
+      throws JsonRpcInvalidParamsException;
+
+  @JsonRpcMethod("tron_getAssetById")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
+  })
+  Token10Result getToken10ById(String address, String tokenId, String blockNumOrTag)
+      throws JsonRpcInvalidParamsException;
 
   @JsonRpcMethod("eth_getStorageAt")
   @JsonRpcErrors({
@@ -472,6 +479,21 @@ public interface TronJsonRpc {
         topics[i] = ByteArray.toJsonHex(topicList.get(i).getData());
       }
       this.removed = removed;
+    }
+  }
+
+  @AllArgsConstructor
+  @JsonPropertyOrder
+  @EqualsAndHashCode
+  class Token10Result {
+    @Getter
+    private final String key;
+    @Getter
+    private final String value;
+
+    @Override
+    public String toString() {
+      return JSONObject.toJSONString(this);
     }
   }
 }
