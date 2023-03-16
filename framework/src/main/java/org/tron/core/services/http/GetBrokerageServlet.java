@@ -8,7 +8,7 @@ import org.bouncycastle.util.encoders.DecoderException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.db.Manager;
-
+import org.tron.common.utils.DecodeUtil;
 
 @Component
 @Slf4j(topic = "API")
@@ -22,7 +22,7 @@ public class GetBrokerageServlet extends RateLimiterServlet {
       int value = 0;
       byte[] address = Util.getAddress(request);
       long cycle = manager.getDynamicPropertiesStore().getCurrentCycleNumber();
-      if (address != null) {
+      if (address != null && DecodeUtil.addressValid(address)) {
         value = manager.getDelegationStore().getBrokerage(cycle, address);
       }
       response.getWriter().println("{\"brokerage\": " + value + "}");
