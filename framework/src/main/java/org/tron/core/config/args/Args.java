@@ -1307,7 +1307,7 @@ public class Args extends CommonParameter {
     return inetSocketAddressList;
   }
 
-  private static PublishConfig loadDnsPublishConfig(final com.typesafe.config.Config config) {
+  public static PublishConfig loadDnsPublishConfig(final com.typesafe.config.Config config) {
     PublishConfig publishConfig = new PublishConfig();
     if (config.hasPath(Constant.NODE_DNS_PUBLISH)) {
       publishConfig.setDnsPublishEnable(config.getBoolean(Constant.NODE_DNS_PUBLISH));

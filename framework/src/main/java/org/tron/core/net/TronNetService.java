@@ -131,8 +131,7 @@ public class TronNetService {
     return advService.fastBroadcastTransaction(msg);
   }
 
-  private boolean hasIpv4Stack() {
-    Set<String> ipSet = NetUtil.getAllLocalAddress();
+  public static boolean hasIpv4Stack(Set<String> ipSet) {
     for (String ip : ipSet) {
       InetAddress inetAddress;
       try {
@@ -179,7 +178,7 @@ public class TronNetService {
     config.setDisconnectionPolicyEnable(parameter.isOpenFullTcpDisconnect());
     config.setNodeDetectEnable(parameter.isNodeDetectEnable());
     config.setDiscoverEnable(parameter.isNodeDiscoveryEnable());
-    if (StringUtils.isEmpty(config.getIp()) && hasIpv4Stack()) {
+    if (StringUtils.isEmpty(config.getIp()) && hasIpv4Stack(NetUtil.getAllLocalAddress())) {
       config.setIp(parameter.getNodeExternalIp());
     }
     if (StringUtils.isNotEmpty(config.getIpv6())) {
