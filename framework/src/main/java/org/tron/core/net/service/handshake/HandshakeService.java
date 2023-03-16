@@ -11,6 +11,7 @@ import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.handshake.HelloMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
+import org.tron.core.net.service.effective.EffectiveService;
 import org.tron.core.net.service.relay.RelayService;
 import org.tron.p2p.discover.Node;
 import org.tron.protos.Protocol.ReasonCode;
@@ -21,6 +22,9 @@ public class HandshakeService {
 
   @Autowired
   private RelayService relayService;
+
+  @Autowired
+  private EffectiveService effectiveService;
 
   @Autowired
   private ChainBaseManager chainBaseManager;
@@ -96,6 +100,23 @@ public class HandshakeService {
               chainBaseManager.getSolidBlockId().getString());
       peer.disconnect(ReasonCode.FORKED);
       return;
+    }
+
+    if (peer.getInetSocketAddress().equals(effectiveService.getCur())) {
+      if (effectiveService.isIsolateLand()
+          && msg.getSolidBlockId().getNum() <= chainBaseManager.getSolidBlockId().getNum()) {
+        logger.info("Peer's solid block {} is below than we, peer->{}, me->{}",
+            peer.getInetSocketAddress(),
+            msg.getSolidBlockId().getNum(),
+            chainBaseManager.getSolidBlockId().getNum());
+        peer.disconnect(ReasonCode.UNKNOWN);
+        return;
+      } else {
+        logger.info("Success to find effective node {} at times {}",
+            peer.getInetSocketAddress(), effectiveService.getCount());
+        effectiveService.setFound(true);
+        effectiveService.resetCount();
+      }
     }
 
     peer.setHelloMessageReceive(msg);
