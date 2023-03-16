@@ -7,13 +7,16 @@ import org.hyperledger.besu.storage.RocksDBConfigurationBuilder;
 import org.hyperledger.besu.storage.RocksDBKeyValueStorage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.FileUtil;
+import org.tron.core.state.annotation.NeedWorldStateTrieStoreCondition;
 
 
 @Slf4j(topic = "State")
 @Component
+@Conditional(NeedWorldStateTrieStoreCondition.class)
 public class WorldStateTrieStore extends RocksDBKeyValueStorage {
 
   @Autowired
