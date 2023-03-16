@@ -221,6 +221,8 @@ public class Args extends CommonParameter {
     PARAMETER.allowNewRewardAlgorithm = 0;
     PARAMETER.allowNewReward = 0;
     PARAMETER.memoFee = 0;
+    PARAMETER.rateLimiterGlobalQps = 3000;
+    PARAMETER.rateLimiterGlobalIpQps = 30;
   }
 
   /**
@@ -926,6 +928,14 @@ public class Args extends CommonParameter {
     if (PARAMETER.isWitness()) {
       PARAMETER.fullNodeAllowShieldedTransactionArgs = true;
     }
+
+    PARAMETER.rateLimiterGlobalQps =
+        config.hasPath(Constant.RATE_LIMITER_GLOBAL_QPS) ? config
+            .getInt(Constant.RATE_LIMITER_GLOBAL_QPS) : 3000;
+
+    PARAMETER.rateLimiterGlobalIpQps =
+        config.hasPath(Constant.RATE_LIMITER_GLOBAL_IP_QPS) ? config
+            .getInt(Constant.RATE_LIMITER_GLOBAL_IP_QPS) : 30;
 
     PARAMETER.rateLimiterInitialization =
         config.hasPath(Constant.RATE_LIMITER) ? getRateLimiterFromConfig(config)
