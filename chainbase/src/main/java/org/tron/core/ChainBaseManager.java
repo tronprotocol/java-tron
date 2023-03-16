@@ -245,7 +245,7 @@ public class ChainBaseManager {
   @Getter
   private SectionBloomStore sectionBloomStore;
 
-  @Autowired
+  @Autowired(required = false)
   @Getter
   private WorldStateTrieStore worldStateTrieStore;
 

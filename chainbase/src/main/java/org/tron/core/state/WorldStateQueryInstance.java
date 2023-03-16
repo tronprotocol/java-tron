@@ -102,7 +102,7 @@ public class WorldStateQueryInstance {
   }
 
   public Map<String, Long>  importAllAsset(Protocol.Account account) {
-    Map<String, Long> assets = new HashMap<>();
+    Map<String, Long> assets = new TreeMap<>();
     Map<Bytes, Bytes> genesis = worldStateGenesis.prefixQuery(StateType.AccountAsset,
             account.getAddress().toByteArray());
     genesis.forEach((k, v) -> assets.put(
@@ -121,9 +121,8 @@ public class WorldStateQueryInstance {
             v.toLong())
     );
     // remove asset = 0
-    return assets.entrySet().stream().filter(e -> e.getValue() > 0)
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
+    assets.entrySet().removeIf(e -> e.getValue() <= 0);
+    return assets;
   }
 
   // contract
