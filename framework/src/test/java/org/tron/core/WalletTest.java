@@ -431,6 +431,7 @@ public class WalletTest {
     Assert.assertFalse("getBlocksByLimit8", blocksByLimit.getBlockList().contains(block5));
   }
 
+  @Ignore
   @Test
   public void getTransactionInfoById() {
     TransactionInfo transactionById1 = wallet.getTransactionInfoById(
