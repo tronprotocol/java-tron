@@ -66,7 +66,8 @@ public class TransactionUtil {
   private static final int MAX_TOKEN_ABBR_NAME_LEN = 5;
   private static final int MAX_ASSET_DESCRIPTION_LEN = 200;
   private static final int MAX_URL_LEN = 256;
-
+  private static final int TRANSACTION_ID_LEN = 32;
+  
   @Autowired
   private ChainBaseManager chainBaseManager;
 
@@ -92,6 +93,10 @@ public class TransactionUtil {
 
   public static boolean validTokenAbbrName(byte[] abbrName) {
     return validReadableBytes(abbrName, MAX_TOKEN_ABBR_NAME_LEN);
+  }
+
+  public static boolean validTransactionId(byte[] transactionId) {
+    return validBytes(transactionId, TRANSACTION_ID_LEN, false);
   }
 
   private static boolean validBytes(byte[] bytes, int maxLength, boolean allowEmpty) {

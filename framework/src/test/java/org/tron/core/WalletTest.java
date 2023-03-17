@@ -435,35 +435,35 @@ public class WalletTest {
   public void getTransactionInfoById() {
     TransactionInfo transactionById1 = wallet.getTransactionInfoById(
         ByteString
-            .copyFrom(transaction1.getRawData().toByteArray()));
+            .copyFrom(new TransactionCapsule(transaction1).getTransactionId().getBytes()));
     assertEquals("gettransactioninfobyid",
         ByteString.copyFrom(transactionById1.getId().toByteArray()),
         ByteString.copyFrom(transaction1.getRawData().toByteArray()));
 
     TransactionInfo transactionById2 = wallet.getTransactionInfoById(
         ByteString
-            .copyFrom(transaction2.getRawData().toByteArray()));
+            .copyFrom(new TransactionCapsule(transaction2).getTransactionId().getBytes()));
     assertEquals("gettransactioninfobyid",
         ByteString.copyFrom(transactionById2.getId().toByteArray()),
         ByteString.copyFrom(transaction2.getRawData().toByteArray()));
 
     TransactionInfo transactionById3 = wallet.getTransactionInfoById(
         ByteString
-            .copyFrom(transaction3.getRawData().toByteArray()));
+            .copyFrom(new TransactionCapsule(transaction3).getTransactionId().getBytes()));
     assertEquals("gettransactioninfobyid",
         ByteString.copyFrom(transactionById3.getId().toByteArray()),
         ByteString.copyFrom(transaction3.getRawData().toByteArray()));
 
     TransactionInfo transactionById4 = wallet.getTransactionInfoById(
         ByteString
-            .copyFrom(transaction4.getRawData().toByteArray()));
+            .copyFrom(new TransactionCapsule(transaction4).getTransactionId().getBytes()));
     assertEquals("gettransactioninfobyid",
         ByteString.copyFrom(transactionById4.getId().toByteArray()),
         ByteString.copyFrom(transaction4.getRawData().toByteArray()));
 
     TransactionInfo transactionById5 = wallet.getTransactionInfoById(
         ByteString
-            .copyFrom(transaction5.getRawData().toByteArray()));
+            .copyFrom(new TransactionCapsule(transaction5).getTransactionId().getBytes()));
     assertEquals("gettransactioninfobyid",
         ByteString.copyFrom(transactionById5.getId().toByteArray()),
         ByteString.copyFrom(transaction5.getRawData().toByteArray()));

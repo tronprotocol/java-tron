@@ -7,8 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.DecoderException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.core.db.Manager;
-
 
 @Component
 @Slf4j(topic = "API")
@@ -21,7 +21,7 @@ public class GetRewardServlet extends RateLimiterServlet {
     try {
       long value = 0;
       byte[] address = Util.getAddress(request);
-      if (address != null) {
+      if (address != null && DecodeUtil.addressValid(address)) {
         value = manager.getMortgageService().queryReward(address);
       }
       response.getWriter().println("{\"reward\": " + value + "}");
