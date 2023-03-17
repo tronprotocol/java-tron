@@ -9,6 +9,7 @@ import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
+import org.tron.core.utils.TransactionUtil;
 
 
 @Component
@@ -22,7 +23,10 @@ public class GetTransactionFromPendingServlet extends RateLimiterServlet {
     try {
       boolean visible = Util.getVisible(request);
       String input = request.getParameter("value");
-      TransactionCapsule reply = manager.getTxFromPending(input);
+      TransactionCapsule reply = null;
+      if (input != null && TransactionUtil.validTransactionId(ByteArray.fromHexString(input))) {
+        reply = manager.getTxFromPending(input);
+      }
       if (reply != null) {
         response.getWriter().println(Util.printTransaction(reply.getInstance(), visible));
       } else {
