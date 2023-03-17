@@ -5,6 +5,7 @@ import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -60,7 +61,7 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
 
   @PostConstruct
   protected void init() {
-    dbStatService.register(dbSource);
+    dbStatService.register(dbName, dbSource);
   }
 
   protected TronDatabase() {
@@ -94,6 +95,9 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
    */
   @Override
   public void close() {
+    if (Objects.nonNull(dbStatService)) {
+      dbStatService.unregisterDbSource(dbName);
+    }
     dbSource.closeDB();
   }
 

@@ -97,7 +97,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   @PostConstruct
   private void init() {
     revokingDatabase.add(revokingDB);
-    dbStatService.register(db);
+    dbStatService.register(db.getDbName(), db);
   }
 
   @Override
@@ -181,6 +181,9 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
 
   @Override
   public void close() {
+    if (Objects.nonNull(dbStatService)) {
+      dbStatService.unregisterDb(db.getDbName());
+    }
     revokingDB.close();
   }
 
