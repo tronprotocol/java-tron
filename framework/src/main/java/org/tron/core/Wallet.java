@@ -747,6 +747,14 @@ public class Wallet {
   }
 
   public DelegatedResourceList getDelegatedResource(ByteString fromAddress, ByteString toAddress) {
+    if (fromAddress == null || toAddress == null) {
+      return null;
+    }
+    if (!DecodeUtil.addressValid(fromAddress.toByteArray()) || 
+    !DecodeUtil.addressValid(toAddress.toByteArray())) {
+      return null;
+    }
+
     DelegatedResourceList.Builder builder = DelegatedResourceList.newBuilder();
     byte[] dbKey = DelegatedResourceCapsule
         .createDbKey(fromAddress.toByteArray(), toAddress.toByteArray());
@@ -760,6 +768,14 @@ public class Wallet {
 
   public DelegatedResourceList getDelegatedResourceV2(
           ByteString fromAddress, ByteString toAddress) {
+    if (fromAddress == null || toAddress == null) {
+      return null;
+    }
+    if (!DecodeUtil.addressValid(fromAddress.toByteArray()) || 
+    !DecodeUtil.addressValid(toAddress.toByteArray())) {
+      return null;
+    }
+
     DelegatedResourceList.Builder builder = DelegatedResourceList.newBuilder();
     byte[] dbKey = DelegatedResourceCapsule
         .createDbKeyV2(fromAddress.toByteArray(), toAddress.toByteArray(), false);
@@ -780,6 +796,10 @@ public class Wallet {
 
   public GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage getCanWithdrawUnfreezeAmount(
           ByteString ownerAddress, long timestamp) {
+    if (ownerAddress == null || !DecodeUtil.addressValid(ownerAddress.toByteArray())) {
+      return null;
+    }
+
     GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage.Builder builder =
             GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage.newBuilder();
     long canWithdrawUnfreezeAmount;
@@ -814,6 +834,10 @@ public class Wallet {
   public GrpcAPI.CanDelegatedMaxSizeResponseMessage getCanDelegatedMaxSize(
           ByteString ownerAddress,
           int resourceType) {
+    if (ownerAddress == null || !DecodeUtil.addressValid(ownerAddress.toByteArray())) {
+      return null;
+    }
+
     long canDelegatedMaxSize = 0L;
     GrpcAPI.CanDelegatedMaxSizeResponseMessage.Builder builder =
           GrpcAPI.CanDelegatedMaxSizeResponseMessage.newBuilder();
@@ -832,6 +856,10 @@ public class Wallet {
 
   public GrpcAPI.GetAvailableUnfreezeCountResponseMessage getAvailableUnfreezeCount(
           ByteString ownerAddress) {
+    if (ownerAddress == null || !DecodeUtil.addressValid(ownerAddress.toByteArray())) {
+      return null;
+    }
+
     long getAvailableUnfreezeCount;
     GrpcAPI.GetAvailableUnfreezeCountResponseMessage.Builder builder =
             GrpcAPI.GetAvailableUnfreezeCountResponseMessage.newBuilder();
@@ -1362,7 +1390,7 @@ public class Wallet {
   }
 
   public AssetIssueList getAssetIssueByAccount(ByteString accountAddress) {
-    if (accountAddress == null || accountAddress.isEmpty()) {
+    if (accountAddress == null || !DecodeUtil.addressValid(accountAddress.toByteArray())) {
       return null;
     }
 
@@ -1440,9 +1468,10 @@ public class Wallet {
   }
 
   public AccountResourceMessage getAccountResource(ByteString accountAddress) {
-    if (accountAddress == null || accountAddress.isEmpty()) {
+    if (accountAddress == null || !DecodeUtil.addressValid(accountAddress.toByteArray())) {
       return null;
     }
+
     AccountResourceMessage.Builder builder = AccountResourceMessage.newBuilder();
     AccountCapsule accountCapsule =
         chainBaseManager.getAccountStore().get(accountAddress.toByteArray());
@@ -1503,6 +1532,9 @@ public class Wallet {
   public AssetIssueContract getAssetIssueByName(ByteString assetName)
       throws NonUniqueObjectException {
     if (assetName == null || assetName.isEmpty()) {
+      return null;
+    }
+    if (!org.tron.core.utils.TransactionUtil.validAssetName(assetName.toByteArray())) {
       return null;
     }
 
@@ -1571,6 +1603,9 @@ public class Wallet {
     if (assetName == null || assetName.isEmpty()) {
       return null;
     }
+    if (!org.tron.core.utils.TransactionUtil.validAssetName(assetName.toByteArray())) {
+      return null;
+    }
 
     List<AssetIssueCapsule> assetIssueCapsuleList =
         getAssetIssueStoreFinal(chainBaseManager.getDynamicPropertiesStore(),
@@ -1594,6 +1629,10 @@ public class Wallet {
     if (assetId == null || assetId.isEmpty()) {
       return null;
     }
+    if (assetId.length() > 30 || !TransactionUtil.isNumber(assetId.getBytes())) {
+      return null;
+    }
+
     AssetIssueCapsule assetIssueCapsule = chainBaseManager.getAssetIssueV2Store()
         .get(ByteArray.fromString(assetId));
     if (assetIssueCapsule != null) {
@@ -1619,9 +1658,10 @@ public class Wallet {
   }
 
   public Block getBlockById(ByteString blockId) {
-    if (Objects.isNull(blockId)) {
+    if (Objects.isNull(blockId) || blockId.size() != 32) {
       return null;
     }
+
     Block block = null;
     try {
       block = chainBaseManager.getBlockStore().get(blockId.toByteArray()).getInstance();
@@ -1649,9 +1689,13 @@ public class Wallet {
   }
 
   public Transaction getTransactionById(ByteString transactionId) {
-    if (Objects.isNull(transactionId)) {
+    if (Objects.isNull(transactionId) || transactionId.toByteArray() == null) {
       return null;
     }
+    if (!org.tron.core.utils.TransactionUtil.validTransactionId(transactionId.toByteArray())) {
+      return null;
+    }
+
     TransactionCapsule transactionCapsule = null;
     try {
       transactionCapsule = chainBaseManager.getTransactionStore()
@@ -1681,9 +1725,13 @@ public class Wallet {
   }
 
   public TransactionInfo getTransactionInfoById(ByteString transactionId) {
-    if (Objects.isNull(transactionId)) {
+    if (Objects.isNull(transactionId) || transactionId.toByteArray() == null) {
       return null;
     }
+    if (!org.tron.core.utils.TransactionUtil.validTransactionId(transactionId.toByteArray())) {
+      return null;
+    }
+
     TransactionInfoCapsule transactionInfoCapsule;
     try {
       transactionInfoCapsule = chainBaseManager.getTransactionRetStore()
@@ -2650,8 +2698,10 @@ public class Wallet {
   }
 
   public MarketOrder getMarketOrderById(ByteString orderId) {
-
     if (orderId == null || orderId.isEmpty()) {
+      return null;
+    }
+    if (orderId.size() != 32) {
       return null;
     }
 
@@ -3051,6 +3101,9 @@ public class Wallet {
 
   public SmartContract getContract(GrpcAPI.BytesMessage bytesMessage) {
     byte[] address = bytesMessage.getValue().toByteArray();
+    if (!DecodeUtil.addressValid(address)) {
+      return null;
+    }
     AccountCapsule accountCapsule = chainBaseManager.getAccountStore().get(address);
     if (accountCapsule == null) {
       logger.error(
@@ -3080,6 +3133,9 @@ public class Wallet {
    */
   public SmartContractDataWrapper getContractInfo(GrpcAPI.BytesMessage bytesMessage) {
     byte[] address = bytesMessage.getValue().toByteArray();
+    if (!DecodeUtil.addressValid(address)) {
+      return null;
+    }
     AccountCapsule accountCapsule = chainBaseManager.getAccountStore().get(address);
     if (accountCapsule == null) {
       logger.error(
