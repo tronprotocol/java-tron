@@ -109,7 +109,7 @@ public class HandshakeService {
             peer.getInetSocketAddress(),
             msg.getSolidBlockId().getNum(),
             chainBaseManager.getSolidBlockId().getNum());
-        peer.disconnect(ReasonCode.UNKNOWN);
+        peer.disconnect(ReasonCode.BELOW_THAN_ME);
         return;
       } else {
         logger.info("Success to find effective node {} at times {}",

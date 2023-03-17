@@ -1,6 +1,5 @@
 package org.tron.core.net.service.effective;
 
-
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -36,8 +35,8 @@ public class EffectiveService {
       .maximumSize(1000)
       .expireAfterWrite(10, TimeUnit.MINUTES).build();
   @Getter
-  private InetSocketAddress cur = null;
-  private final AtomicInteger tryCount = new AtomicInteger(0);
+  private InetSocketAddress cur;
+  private final AtomicInteger count = new AtomicInteger(0);
   @Setter
   private boolean found = false;
 
@@ -64,10 +63,9 @@ public class EffectiveService {
   }
 
   public boolean isIsolateLand() {
-    int count = (int) tronNetDelegate.getActivePeer().stream()
+    return (int) tronNetDelegate.getActivePeer().stream()
         .filter(PeerConnection::isNeedSyncFromUs)
-        .count();
-    return count == tronNetDelegate.getActivePeer().size();
+        .count() == tronNetDelegate.getActivePeer().size();
   }
 
   private synchronized void findEffectiveNode() throws InterruptedException {
@@ -84,8 +82,8 @@ public class EffectiveService {
       return;
     }
 
-    //hashcode of PeerConnection = hashcode of InetSocketAddress
-    if (cur != null && tronNetDelegate.getActivePeer().contains(cur)) {
+    if (cur != null && tronNetDelegate.getActivePeer().stream()
+        .anyMatch(p -> p.getInetSocketAddress().equals(cur))) {
       // we encounter no effective connection again, so we disconnect with last used node
       disconnect();
       return;
@@ -104,32 +102,31 @@ public class EffectiveService {
             .contains(node.getPreferInetSocketAddress()))
         .findFirst();
     if (!chosenNode.isPresent()) {
-      logger.warn("Failed to find effective node, have tried {} times", tryCount.get());
+      logger.warn("Failed to find effective node, have tried {} times", count.get());
       resetCount();
       return;
     }
 
-    tryCount.incrementAndGet();
+    count.incrementAndGet();
     nodesCache.put(chosenNode.get().getPreferInetSocketAddress(), true);
     cur = new InetSocketAddress(chosenNode.get().getPreferInetSocketAddress().getAddress(),
         chosenNode.get().getPreferInetSocketAddress().getPort());
 
-    logger.info("Try to get effective connection by using {} at times {}", cur,
-        tryCount.get());
+    logger.info("Try to get effective connection by using {} at times {}", cur, count.get());
     TronNetService.getP2pService().connect(chosenNode.get(), future -> {
       if (future.isCancelled()) {
         // Connection attempt cancelled by user
+        logger.warn("Channel {} has been cancelled by user", cur);
       } else if (!future.isSuccess()) {
         // You might get a NullPointerException here because the future might not be completed yet.
-        logger.warn("Connect to chosen peer {} fail, cause:{}",
-            chosenNode.get().getPreferInetSocketAddress(), future.cause().getMessage());
+        logger.warn("Connect to chosen peer {} fail, cause:{}", cur, future.cause().getMessage());
         future.channel().close();
 
         findEffectiveNode();
       } else {
         // Connection established successfully
         future.channel().closeFuture().addListener((ChannelFutureListener) closeFuture -> {
-          logger.info("Close chosen channel:{}", chosenNode.get().getPreferInetSocketAddress());
+          logger.info("Close chosen channel:{}", cur);
           if (isIsolateLand()) {
             findEffectiveNode();
           }
@@ -139,17 +136,17 @@ public class EffectiveService {
   }
 
   public void resetCount() {
-    tryCount.set(0);
+    count.set(0);
   }
 
   public int getCount() {
-    return tryCount.get();
+    return count.get();
   }
 
   private void disconnect() {
     tronNetDelegate.getActivePeer().forEach(p -> {
       if (p.getInetSocketAddress().equals(cur)) {
-        p.disconnect(ReasonCode.UNKNOWN);
+        p.disconnect(ReasonCode.BELOW_THAN_ME);
       }
     });
   }
