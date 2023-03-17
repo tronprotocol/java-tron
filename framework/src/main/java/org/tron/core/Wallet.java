@@ -3011,7 +3011,8 @@ public class Wallet {
       headBlock = blockCapsuleList.get(0).getInstance();
     }
 
-    TransactionContext context = new TransactionContext(new BlockCapsule(headBlock), trxCap,
+    BlockCapsule headBlockCapsule = new BlockCapsule(headBlock);
+    TransactionContext context = new TransactionContext(headBlockCapsule, trxCap,
         StoreFactory.getInstance(), true, false);
     VMActuator vmActuator = new VMActuator(true);
 
@@ -3027,6 +3028,9 @@ public class Wallet {
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     builder.setEnergyUsed(result.getEnergyUsed());
+    builder.setEnergyPenalty(result.getEnergyPenaltyTotal());
+    builder.setBlockNumber(headBlockCapsule.getNum());
+    builder.setBlockHash(ByteString.copyFrom(headBlockCapsule.getBlockId().getBytes()));
     builder.setEnergyPenalty(result.getEnergyPenaltyTotal());
     builder.addConstantResult(ByteString.copyFrom(result.getHReturn()));
     result.getLogInfoList().forEach(logInfo ->
