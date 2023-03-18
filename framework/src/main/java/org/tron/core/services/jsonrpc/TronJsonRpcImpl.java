@@ -17,6 +17,7 @@ import com.google.protobuf.GeneratedMessageV3;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -413,6 +414,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
               new Token10Result(ByteArray.toJsonHex(Long.parseUnsignedLong(e.getKey())),
                       ByteArray.toJsonHex(e.getValue()))).forEach(token10s::add);
     }
+    token10s.sort(Comparator.comparing(Token10Result::getKey));
     return token10s;
   }
 
