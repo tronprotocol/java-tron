@@ -1066,5 +1066,17 @@ public class WalletTest {
       Assert.assertTrue(true);
     }
   }
+
+  @Test
+  public void testListNodes() {
+    try {
+      GrpcAPI.NodeList nodeList = wallet.listNodes();
+    } catch (Exception e) {
+      Assert.assertTrue(e instanceof NullPointerException);
+    }
+    Args.getInstance().setP2pDisable(true);
+    GrpcAPI.NodeList nodeList = wallet.listNodes();
+    Assert.assertTrue(nodeList.getNodesList().size() == 0);
+  }
 }
 
