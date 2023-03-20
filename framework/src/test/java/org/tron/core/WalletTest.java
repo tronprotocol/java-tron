@@ -28,6 +28,7 @@ import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import io.grpc.ManagedChannelBuilder;
 import java.io.File;
 import java.util.Arrays;
 
@@ -45,6 +46,9 @@ import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.ProposalList;
+import org.tron.api.WalletGrpc;
+import org.tron.common.application.Application;
+import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
@@ -71,6 +75,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.NonUniqueObjectException;
+import org.tron.core.services.RpcApiService;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.ProposalUtil.ProposalType;
 import org.tron.core.utils.TransactionUtil;
@@ -91,6 +96,7 @@ import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.Common;
 import org.tron.protos.contract.SmartContractOuterClass;
+import stest.tron.wallet.common.client.Configuration;
 
 
 @Slf4j
@@ -152,6 +158,11 @@ public class WalletTest {
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     RECEIVER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
+    Application appTest = ApplicationFactory.create(context);
+    appTest.addService(context.getBean(RpcApiService.class));
+    appTest.initServices(Args.getInstance());
+    appTest.startServices();
+    appTest.startup();
   }
 
   @BeforeClass
@@ -1077,6 +1088,18 @@ public class WalletTest {
     Args.getInstance().setP2pDisable(true);
     GrpcAPI.NodeList nodeList = wallet.listNodes();
     Assert.assertTrue(nodeList.getNodesList().size() == 0);
+  }
+
+  @Test
+  public void listNodesTest() {
+    WalletGrpc.WalletBlockingStub walletStub = WalletGrpc
+        .newBlockingStub(ManagedChannelBuilder.forTarget(Configuration
+            .getByPath("testng.conf")
+            .getStringList("fullnode.ip.list").get(0))
+            .usePlaintext(true)
+            .build());
+    Assert.assertTrue(walletStub.listNodes(GrpcAPI.EmptyMessage.getDefaultInstance())
+        .getNodesList().size() == 0);
   }
 }
 
