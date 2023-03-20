@@ -1033,9 +1033,6 @@ public class Args extends CommonParameter {
         .hasPath(Constant.ALLOW_ASSET_OPTIMIZATION) ? config
         .getInt(Constant.ALLOW_ASSET_OPTIMIZATION) : 0;
 
-    PARAMETER.isStressTest = config.hasPath(Constant.IS_STRESS_TEST) ? config
-        .getBoolean(Constant.IS_STRESS_TEST) : true;
-
     PARAMETER.disabledApiList =
         config.hasPath(Constant.NODE_DISABLED_API_LIST)
             ? config.getStringList(Constant.NODE_DISABLED_API_LIST)
