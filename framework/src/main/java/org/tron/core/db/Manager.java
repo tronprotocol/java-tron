@@ -724,7 +724,7 @@ public class Manager {
               exitCount, blockTime));
     }
 
-    if (exitHeight == headNum) {
+    if (exitHeight == headNum && (!Args.getInstance().isP2pDisable())) {
       logger.info("Auto-stop hit: shutDownBlockHeight: {}, currentHeaderNum: {}, exit now",
           exitHeight, headNum);
       System.exit(0);
