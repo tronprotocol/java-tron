@@ -4,6 +4,8 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
 import java.io.File;
+import java.util.concurrent.TimeUnit;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -20,6 +22,7 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.PublicMethod;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
@@ -38,7 +41,6 @@ public class LiteFnQueryGrpcInterceptorTest {
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubpBFT = null;
-  private DatabaseGrpc.DatabaseBlockingStub databaseBlockingStub = null;
   private RpcApiService rpcApiService;
   private RpcApiServiceOnSolidity rpcApiServiceOnSolidity;
   private RpcApiServiceOnPBFT rpcApiServiceOnPBFT;
@@ -56,6 +58,9 @@ public class LiteFnQueryGrpcInterceptorTest {
   @Before
   public void init() {
     Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
+    Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setRpcOnSolidityPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setRpcOnPBFTPort(PublicMethod.chooseRandomPort());
     String fullnode = String.format("%s:%d", Args.getInstance().getNodeDiscoveryBindIp(),
             Args.getInstance().getRpcPort());
     String pBFTNode = String.format("%s:%d", Args.getInstance().getNodeDiscoveryBindIp(),
@@ -71,7 +76,6 @@ public class LiteFnQueryGrpcInterceptorTest {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelFull);
     blockingStubpBFT = WalletSolidityGrpc.newBlockingStub(channelpBFT);
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelFull);
-    databaseBlockingStub = DatabaseGrpc.newBlockingStub(channelFull);
     rpcApiService = context.getBean(RpcApiService.class);
     rpcApiServiceOnSolidity = context.getBean(RpcApiServiceOnSolidity.class);
     rpcApiServiceOnPBFT = context.getBean(RpcApiServiceOnPBFT.class);
@@ -89,7 +93,13 @@ public class LiteFnQueryGrpcInterceptorTest {
    * destroy the context.
    */
   @After
-  public void destroy() {
+  public void destroy() throws InterruptedException {
+    if (channelFull != null) {
+      channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+    if (channelpBFT != null) {
+      channelpBFT.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
     Args.clearParam();
     appTest.shutdownServices();
     appTest.shutdown();
