@@ -16,6 +16,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.peer.PeerConnection;
@@ -25,8 +26,11 @@ import org.tron.protos.Protocol.ReasonCode;
 
 @Slf4j(topic = "net")
 @Component
-public class EffectiveService {
+public class EffectiveCheckService {
 
+  @Getter
+  private final boolean isEffectiveCheck = CommonParameter.getInstance()
+      .isNodeEffectiveCheckEnable();
   @Autowired
   private TronNetDelegate tronNetDelegate;
 
@@ -39,43 +43,46 @@ public class EffectiveService {
   private final AtomicInteger count = new AtomicInteger(0);
   @Setter
   private boolean found = false;
-
-  private final ScheduledExecutorService executor = Executors
-      .newSingleThreadScheduledExecutor(
-          new ThreadFactoryBuilder().setNameFormat("effective-thread-%d").build());
+  private ScheduledExecutorService executor = null;
 
   public void init() {
-    executor.scheduleWithFixedDelay(() -> {
-      try {
-        findEffectiveNode();
-      } catch (Exception e) {
-        logger.error("Check effective connection processing failed", e);
-      }
-    }, 1 * 60, 5, TimeUnit.SECONDS);
-  }
-
-  public void close() {
-    try {
-      executor.shutdownNow();
-    } catch (Exception e) {
-      logger.error("Exception in shutdown effective service worker, {}", e.getMessage());
+    if (isEffectiveCheck) {
+      executor = Executors.newSingleThreadScheduledExecutor(
+          new ThreadFactoryBuilder().setNameFormat("effective-thread-%d").build());
+      executor.scheduleWithFixedDelay(() -> {
+        try {
+          findEffectiveNode();
+        } catch (Exception e) {
+          logger.error("Check effective connection processing failed", e);
+        }
+      }, 1 * 60, 5, TimeUnit.SECONDS);
     }
   }
 
-  public boolean isIsolateLand() {
+  public void close() {
+    if (executor != null) {
+      try {
+        executor.shutdown();
+      } catch (Exception e) {
+        logger.error("Exception in shutdown effective service worker, {}", e.getMessage());
+      }
+    }
+  }
+
+  public boolean haveEffectiveConnection() {
     return (int) tronNetDelegate.getActivePeer().stream()
         .filter(PeerConnection::isNeedSyncFromUs)
-        .count() == tronNetDelegate.getActivePeer().size();
+        .count() != tronNetDelegate.getActivePeer().size();
   }
 
   private synchronized void findEffectiveNode() throws InterruptedException {
-    if (!isIsolateLand()) {
+    if (haveEffectiveConnection()) {
       resetCount();
       return;
     }
     if (found) {
       Thread.sleep(10_000);//wait found node to sync
-      if (isIsolateLand()) {
+      if (!haveEffectiveConnection()) {
         found = false;
         disconnect();
       }
@@ -127,7 +134,7 @@ public class EffectiveService {
         // Connection established successfully
         future.channel().closeFuture().addListener((ChannelFutureListener) closeFuture -> {
           logger.info("Close chosen channel:{}", cur);
-          if (isIsolateLand()) {
+          if (!haveEffectiveConnection()) {
             findEffectiveNode();
           }
         });

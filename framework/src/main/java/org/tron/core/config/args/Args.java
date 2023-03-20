@@ -124,6 +124,7 @@ public class Args extends CommonParameter {
     PARAMETER.needSyncCheck = false;
     PARAMETER.nodeDiscoveryEnable = false;
     PARAMETER.nodeDiscoveryPersist = false;
+    PARAMETER.nodeEffectiveCheckEnable = true;
     PARAMETER.nodeConnectionTimeout = 2000;
     PARAMETER.activeNodes = new ArrayList<>();
     PARAMETER.passiveNodes = new ArrayList<>();
@@ -553,6 +554,10 @@ public class Args extends CommonParameter {
     PARAMETER.nodeDiscoveryPersist =
         config.hasPath(Constant.NODE_DISCOVERY_PERSIST)
             && config.getBoolean(Constant.NODE_DISCOVERY_PERSIST);
+
+    PARAMETER.nodeEffectiveCheckEnable =
+        config.hasPath(Constant.NODE_ENABLE_EFFECTIVE_CHECK)
+            && config.getBoolean(Constant.NODE_ENABLE_EFFECTIVE_CHECK);
 
     PARAMETER.nodeConnectionTimeout =
         config.hasPath(Constant.NODE_CONNECTION_TIMEOUT)

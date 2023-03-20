@@ -21,7 +21,7 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
 import org.tron.core.net.peer.PeerStatusCheck;
 import org.tron.core.net.service.adv.AdvService;
-import org.tron.core.net.service.effective.EffectiveService;
+import org.tron.core.net.service.effective.EffectiveCheckService;
 import org.tron.core.net.service.fetchblock.FetchBlockService;
 import org.tron.core.net.service.nodepersist.NodePersistService;
 import org.tron.core.net.service.relay.RelayService;
@@ -71,7 +71,7 @@ public class TronNetService {
   private RelayService relayService;
 
   @Autowired
-  private EffectiveService effectiveService;
+  private EffectiveCheckService effectiveCheckService;
 
   private volatile boolean init;
 
@@ -94,7 +94,7 @@ public class TronNetService {
       tronStatsManager.init();
       PeerManager.init();
       relayService.init();
-      effectiveService.init();
+      effectiveCheckService.init();
       logger.info("Net service start successfully");
     } catch (Exception e) {
       logger.error("Net service start failed", e);
@@ -115,7 +115,7 @@ public class TronNetService {
     fetchBlockService.close();
     p2pService.close();
     relayService.close();
-    effectiveService.close();
+    effectiveCheckService.close();
     logger.info("Net service closed successfully");
   }
 
