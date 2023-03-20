@@ -19,6 +19,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 import lombok.extern.slf4j.Slf4j;
+import java.nio.charset.StandardCharsets;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 
@@ -79,5 +80,10 @@ public class ByteArrayTest {
     byte[] bss = new byte[]{8, 9, 12, 13, 14, 15, 16};
     assertEquals("ByteArray.toHexString is not equals Hex.toHexString", ByteArray.toHexString(bss),
         Hex.toHexString(bss));
+  }
+  @Test
+  public void testCompare() {
+    FastByteComparisons.isEqual("123".getBytes(StandardCharsets.UTF_8),
+            "123".getBytes(StandardCharsets.UTF_8));
   }
 }

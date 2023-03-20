@@ -24,9 +24,9 @@ if (isWindows()) {
     }
 } else {
     ext {
-        leveldbGroup = "org.fusesource.leveldbjni"
+        leveldbGroup = "io.github.tronprotocol"
         leveldbName = "leveldbjni-all"
-        leveldbVersion = "1.8"
+        leveldbVersion = "1.18.3"
     }
 }
 
