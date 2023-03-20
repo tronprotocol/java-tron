@@ -99,6 +99,7 @@ public class Args extends CommonParameter {
 
 
   public static void clearParam() {
+    PARAMETER.isStressTest = true;
     PARAMETER.outputDirectory = "output-directory";
     PARAMETER.help = false;
     PARAMETER.witness = false;
@@ -222,10 +223,6 @@ public class Args extends CommonParameter {
     PARAMETER.allowNewReward = 0;
     PARAMETER.memoFee = 0;
     PARAMETER.p2pDisable = false;
-
-
-
-    PARAMETER.isStressTest = true;
   }
 
   /**
