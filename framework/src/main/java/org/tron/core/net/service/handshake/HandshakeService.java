@@ -104,7 +104,7 @@ public class HandshakeService {
 
     if (effectiveCheckService.isEffectiveCheck() &&
         peer.getInetSocketAddress().equals(effectiveCheckService.getCur())) {
-      if (!effectiveCheckService.haveEffectiveConnection()
+      if (effectiveCheckService.isIsolateLand()
           && msg.getSolidBlockId().getNum() <= chainBaseManager.getSolidBlockId().getNum()) {
         logger.info("Peer's solid block {} is below than we, peer->{}, me->{}",
             peer.getInetSocketAddress(),
@@ -113,10 +113,8 @@ public class HandshakeService {
         peer.disconnect(ReasonCode.BELOW_THAN_ME);
         return;
       } else {
-        logger.info("Success to find effective node {} at times {}",
-            peer.getInetSocketAddress(), effectiveCheckService.getCount());
-        effectiveCheckService.setFound(true);
-        effectiveCheckService.resetCount();
+        logger.info("Success to find effective node {}", peer.getInetSocketAddress());
+        peer.setNeedSyncFromUs(false);
       }
     }
 

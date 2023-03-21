@@ -12,16 +12,14 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.parameter.CommonParameter;
+import org.tron.core.config.args.Args;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.p2p.discover.Node;
-import org.tron.p2p.utils.NetUtil;
 import org.tron.protos.Protocol.ReasonCode;
 
 @Slf4j(topic = "net")
@@ -29,8 +27,7 @@ import org.tron.protos.Protocol.ReasonCode;
 public class EffectiveCheckService {
 
   @Getter
-  private final boolean isEffectiveCheck = CommonParameter.getInstance()
-      .isNodeEffectiveCheckEnable();
+  private final boolean isEffectiveCheck = Args.getInstance().isNodeEffectiveCheckEnable();
   @Autowired
   private TronNetDelegate tronNetDelegate;
 
@@ -41,8 +38,6 @@ public class EffectiveCheckService {
   @Getter
   private InetSocketAddress cur;
   private final AtomicInteger count = new AtomicInteger(0);
-  @Setter
-  private boolean found = false;
   private ScheduledExecutorService executor = null;
 
   public void init() {
@@ -55,7 +50,9 @@ public class EffectiveCheckService {
         } catch (Exception e) {
           logger.error("Check effective connection processing failed", e);
         }
-      }, 1 * 60, 5, TimeUnit.SECONDS);
+      }, 60, 5, TimeUnit.SECONDS);
+    } else {
+      logger.warn("EffectiveCheckService is disabled");
     }
   }
 
@@ -69,23 +66,19 @@ public class EffectiveCheckService {
     }
   }
 
-  public boolean haveEffectiveConnection() {
+  public boolean isIsolateLand() {
     return (int) tronNetDelegate.getActivePeer().stream()
         .filter(PeerConnection::isNeedSyncFromUs)
-        .count() != tronNetDelegate.getActivePeer().size();
+        .count() == tronNetDelegate.getActivePeer().size();
   }
 
-  private synchronized void findEffectiveNode() throws InterruptedException {
-    if (haveEffectiveConnection()) {
-      resetCount();
-      return;
-    }
-    if (found) {
-      Thread.sleep(10_000);//wait found node to sync
-      if (!haveEffectiveConnection()) {
-        found = false;
-        disconnect();
+  //try to find node which we can sync from
+  private synchronized void findEffectiveNode() {
+    if (!isIsolateLand()) {
+      if (count.get() > 0) {
+        logger.info("Success to verify effective node {}", cur);
       }
+      resetCount();
       return;
     }
 
@@ -97,11 +90,6 @@ public class EffectiveCheckService {
     }
 
     List<Node> tableNodes = TronNetService.getP2pService().getAllNodes();
-    for (Node node : tableNodes) {
-      if (node.getId() == null) {
-        node.setId(NetUtil.getNodeId());
-      }
-    }
 
     Optional<Node> chosenNode = tableNodes.stream()
         .filter(node -> nodesCache.getIfPresent(node.getPreferInetSocketAddress()) == null)
@@ -109,8 +97,7 @@ public class EffectiveCheckService {
             .contains(node.getPreferInetSocketAddress()))
         .findFirst();
     if (!chosenNode.isPresent()) {
-      logger.warn("Failed to find effective node, have tried {} times", count.get());
-      resetCount();
+      logger.warn("No available node to choose");
       return;
     }
 
@@ -119,7 +106,7 @@ public class EffectiveCheckService {
     cur = new InetSocketAddress(chosenNode.get().getPreferInetSocketAddress().getAddress(),
         chosenNode.get().getPreferInetSocketAddress().getPort());
 
-    logger.info("Try to get effective connection by using {} at times {}", cur, count.get());
+    logger.info("Try to get effective connection by using {} at seq {}", cur, count.get());
     TronNetService.getP2pService().connect(chosenNode.get(), future -> {
       if (future.isCancelled()) {
         // Connection attempt cancelled by user
@@ -134,7 +121,7 @@ public class EffectiveCheckService {
         // Connection established successfully
         future.channel().closeFuture().addListener((ChannelFutureListener) closeFuture -> {
           logger.info("Close chosen channel:{}", cur);
-          if (!haveEffectiveConnection()) {
+          if (isIsolateLand()) {
             findEffectiveNode();
           }
         });
@@ -142,12 +129,8 @@ public class EffectiveCheckService {
     });
   }
 
-  public void resetCount() {
+  private void resetCount() {
     count.set(0);
-  }
-
-  public int getCount() {
-    return count.get();
   }
 
   private void disconnect() {

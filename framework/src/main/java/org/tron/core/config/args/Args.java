@@ -556,8 +556,8 @@ public class Args extends CommonParameter {
             && config.getBoolean(Constant.NODE_DISCOVERY_PERSIST);
 
     PARAMETER.nodeEffectiveCheckEnable =
-        config.hasPath(Constant.NODE_ENABLE_EFFECTIVE_CHECK)
-            && config.getBoolean(Constant.NODE_ENABLE_EFFECTIVE_CHECK);
+        !config.hasPath(Constant.NODE_ENABLE_EFFECTIVE_CHECK)
+            || config.getBoolean(Constant.NODE_ENABLE_EFFECTIVE_CHECK);
 
     PARAMETER.nodeConnectionTimeout =
         config.hasPath(Constant.NODE_CONNECTION_TIMEOUT)
