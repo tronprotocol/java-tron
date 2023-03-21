@@ -1736,14 +1736,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void listNodes(EmptyMessage request, StreamObserver<NodeList> responseObserver) {
-      NodeList.Builder nodeListBuilder = NodeList.newBuilder();
-      TronNetService.getP2pService().getConnectableNodes().forEach(node -> {
-        nodeListBuilder.addNodes(Node.newBuilder().setAddress(
-                Address.newBuilder()
-                        .setHost(ByteString.copyFrom(ByteArray.fromString(node.getHost())))
-                        .setPort(node.getPort())));
-      });
-      responseObserver.onNext(nodeListBuilder.build());
+      responseObserver.onNext(wallet.listNodes());
       responseObserver.onCompleted();
     }
 
