@@ -30,6 +30,7 @@ public class CommonParameter {
   public static CommonParameter PARAMETER = new CommonParameter();
   @Setter
   public static boolean ENERGY_LIMIT_HARD_FORK = false;
+  @Getter
   @Parameter(names = {"-c", "--config"}, description = "Config file (default:config.conf)")
   public String shellConfFileName = "";
   @Getter
@@ -607,6 +608,10 @@ public class CommonParameter {
   @Getter
   @Setter
   public long dynamicEnergyMaxFactor = 0L;
+
+  @Getter
+  @Setter
+  public boolean dynamicConfigEnable;
 
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));

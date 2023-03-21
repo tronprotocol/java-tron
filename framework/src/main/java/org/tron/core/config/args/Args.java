@@ -221,6 +221,7 @@ public class Args extends CommonParameter {
     PARAMETER.allowNewRewardAlgorithm = 0;
     PARAMETER.allowNewReward = 0;
     PARAMETER.memoFee = 0;
+    PARAMETER.dynamicConfigEnable = false;
   }
 
   /**
@@ -1122,6 +1123,9 @@ public class Args extends CommonParameter {
           Math.max(PARAMETER.dynamicEnergyMaxFactor, 0);
     }
 
+    PARAMETER.dynamicConfigEnable = config.hasPath(Constant.DYNAMIC_CONFIG_ENABLE)
+        && config.getBoolean(Constant.DYNAMIC_CONFIG_ENABLE);
+
     logConfig();
   }
 
@@ -1174,7 +1178,7 @@ public class Args extends CommonParameter {
     return initialization;
   }
 
-  private static List<InetSocketAddress> getInetSocketAddress(
+  public static List<InetSocketAddress> getInetSocketAddress(
           final com.typesafe.config.Config config, String path) {
     List<InetSocketAddress> ret = new ArrayList<>();
     if (!config.hasPath(path)) {
@@ -1195,7 +1199,7 @@ public class Args extends CommonParameter {
     return ret;
   }
 
-  private static List<InetAddress> getInetAddress(
+  public static List<InetAddress> getInetAddress(
           final com.typesafe.config.Config config, String path) {
     List<InetAddress> ret = new ArrayList<>();
     if (!config.hasPath(path)) {
