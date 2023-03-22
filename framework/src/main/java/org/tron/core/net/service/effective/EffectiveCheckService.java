@@ -39,6 +39,7 @@ public class EffectiveCheckService {
   private InetSocketAddress cur;
   private final AtomicInteger count = new AtomicInteger(0);
   private ScheduledExecutorService executor = null;
+  private boolean isRunning = false;
 
   public void init() {
     if (isEffectiveCheck) {
@@ -50,7 +51,7 @@ public class EffectiveCheckService {
         } catch (Exception e) {
           logger.error("Check effective connection processing failed", e);
         }
-      }, 60, 5, TimeUnit.SECONDS);
+      }, 60, 2, TimeUnit.SECONDS);
     } else {
       logger.warn("EffectiveCheckService is disabled");
     }
@@ -73,7 +74,7 @@ public class EffectiveCheckService {
   }
 
   //try to find node which we can sync from
-  private synchronized void findEffectiveNode() {
+  private void findEffectiveNode() {
     if (!isIsolateLand()) {
       if (count.get() > 0) {
         logger.info("Success to verify effective node {}", cur);
@@ -82,14 +83,21 @@ public class EffectiveCheckService {
       return;
     }
 
+    if (isRunning) {
+      logger.info("Thread is running");
+      return;
+    }
+    isRunning = true;
+
     if (cur != null && tronNetDelegate.getActivePeer().stream()
         .anyMatch(p -> p.getInetSocketAddress().equals(cur))) {
       // we encounter no effective connection again, so we disconnect with last used node
       disconnect();
+      isRunning = false;
       return;
     }
 
-    List<Node> tableNodes = TronNetService.getP2pService().getAllNodes();
+    List<Node> tableNodes = TronNetService.getP2pService().getConnectableNodes();
 
     Optional<Node> chosenNode = tableNodes.stream()
         .filter(node -> nodesCache.getIfPresent(node.getPreferInetSocketAddress()) == null)
@@ -110,17 +118,20 @@ public class EffectiveCheckService {
     TronNetService.getP2pService().connect(chosenNode.get(), future -> {
       if (future.isCancelled()) {
         // Connection attempt cancelled by user
+        isRunning = false;
         logger.warn("Channel {} has been cancelled by user", cur);
       } else if (!future.isSuccess()) {
         // You might get a NullPointerException here because the future might not be completed yet.
         logger.warn("Connect to chosen peer {} fail, cause:{}", cur, future.cause().getMessage());
         future.channel().close();
 
+        isRunning = false;
         findEffectiveNode();
       } else {
         // Connection established successfully
         future.channel().closeFuture().addListener((ChannelFutureListener) closeFuture -> {
           logger.info("Close chosen channel:{}", cur);
+          isRunning = false;
           if (isIsolateLand()) {
             findEffectiveNode();
           }
@@ -134,6 +145,7 @@ public class EffectiveCheckService {
   }
 
   private void disconnect() {
+    logger.info("Disconnect with {}", cur);
     tronNetDelegate.getActivePeer().forEach(p -> {
       if (p.getInetSocketAddress().equals(cur)) {
         p.disconnect(ReasonCode.BELOW_THAN_ME);
