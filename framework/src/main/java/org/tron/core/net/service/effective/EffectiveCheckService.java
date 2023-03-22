@@ -98,7 +98,6 @@ public class EffectiveCheckService {
     }
 
     List<Node> tableNodes = TronNetService.getP2pService().getConnectableNodes();
-
     Optional<Node> chosenNode = tableNodes.stream()
         .filter(node -> nodesCache.getIfPresent(node.getPreferInetSocketAddress()) == null)
         .filter(node -> !TronNetService.getP2pConfig().getActiveNodes()
@@ -106,6 +105,7 @@ public class EffectiveCheckService {
         .findFirst();
     if (!chosenNode.isPresent()) {
       logger.warn("No available node to choose");
+      isRunning = false;
       return;
     }
 
