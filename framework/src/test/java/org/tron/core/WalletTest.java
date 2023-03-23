@@ -140,6 +140,12 @@ public class WalletTest {
   private static Transaction transaction4;
   private static Transaction transaction5;
   private static Transaction transaction6;
+  private static TransactionCapsule transactionCapsule1;
+  private static TransactionCapsule transactionCapsule2;
+  private static TransactionCapsule transactionCapsule3;
+  private static TransactionCapsule transactionCapsule4;
+  private static TransactionCapsule transactionCapsule5;
+  private static TransactionCapsule transactionCapsule6;
   private static AssetIssueCapsule Asset1;
 
   private static Manager dbManager;
@@ -206,43 +212,44 @@ public class WalletTest {
     transaction1 = getBuildTransaction(
         getBuildTransferContract(ACCOUNT_ADDRESS_ONE, ACCOUNT_ADDRESS_TWO),
         TRANSACTION_TIMESTAMP_ONE, BLOCK_NUM_ONE);
-    addTransactionToStore(transaction1);
+    transactionCapsule1 = addTransactionToStore(transaction1);
 
     transaction2 = getBuildTransaction(
         getBuildTransferContract(ACCOUNT_ADDRESS_TWO, ACCOUNT_ADDRESS_THREE),
         TRANSACTION_TIMESTAMP_TWO, BLOCK_NUM_TWO);
-    addTransactionToStore(transaction2);
+    transactionCapsule2 = addTransactionToStore(transaction2);
 
     transaction3 = getBuildTransaction(
         getBuildTransferContract(ACCOUNT_ADDRESS_THREE, ACCOUNT_ADDRESS_FOUR),
         TRANSACTION_TIMESTAMP_THREE, BLOCK_NUM_THREE);
-    addTransactionToStore(transaction3);
+    transactionCapsule3 = addTransactionToStore(transaction3);
 
     transaction4 = getBuildTransaction(
         getBuildTransferContract(ACCOUNT_ADDRESS_FOUR, ACCOUNT_ADDRESS_FIVE),
         TRANSACTION_TIMESTAMP_FOUR, BLOCK_NUM_FOUR);
-    addTransactionToStore(transaction4);
+    transactionCapsule4 = addTransactionToStore(transaction4);
 
     transaction5 = getBuildTransaction(
         getBuildTransferContract(ACCOUNT_ADDRESS_FIVE, ACCOUNT_ADDRESS_ONE),
         TRANSACTION_TIMESTAMP_FIVE, BLOCK_NUM_FIVE);
-    addTransactionToStore(transaction5);
+    transactionCapsule5 = addTransactionToStore(transaction5);
 
     transaction6 = getBuildTransaction(
         getBuildTransferContract(ACCOUNT_ADDRESS_ONE, ACCOUNT_ADDRESS_SIX),
         TRANSACTION_TIMESTAMP_FIVE, BLOCK_NUM_FIVE);
-    addTransactionToStore(transaction5);
+    transactionCapsule6 = addTransactionToStore(transaction5);
   }
 
-  private static void addTransactionToStore(Transaction transaction) {
+  private static TransactionCapsule addTransactionToStore(Transaction transaction) {
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
     chainBaseManager.getTransactionStore()
         .put(transactionCapsule.getTransactionId().getBytes(), transactionCapsule);
+    return transactionCapsule;
   }
 
-  private static void addTransactionInfoToStore(Transaction transaction) {
+  private static void addTransactionInfoToStore(Transaction transaction, byte[] trxId) {
+    TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
     TransactionInfoCapsule transactionInfo = new TransactionInfoCapsule();
-    byte[] trxId = transaction.getRawData().toByteArray();
     transactionInfo.setId(trxId);
     chainBaseManager.getTransactionHistoryStore().put(trxId, transactionInfo);
   }
@@ -273,27 +280,27 @@ public class WalletTest {
     block1 = getBuildBlock(BLOCK_TIMESTAMP_ONE, BLOCK_NUM_ONE, BLOCK_WITNESS_ONE,
         ACCOUNT_ADDRESS_ONE, transaction1, transaction2);
     addBlockToStore(block1);
-    addTransactionInfoToStore(transaction1);
+    addTransactionInfoToStore(transaction1, transactionCapsule1.getTransactionId().getBytes());
 
     block2 = getBuildBlock(BLOCK_TIMESTAMP_TWO, BLOCK_NUM_TWO, BLOCK_WITNESS_TWO,
         ACCOUNT_ADDRESS_TWO, transaction2, transaction3);
     addBlockToStore(block2);
-    addTransactionInfoToStore(transaction2);
+    addTransactionInfoToStore(transaction2, transactionCapsule2.getTransactionId().getBytes());
 
     block3 = getBuildBlock(BLOCK_TIMESTAMP_THREE, BLOCK_NUM_THREE, BLOCK_WITNESS_THREE,
         ACCOUNT_ADDRESS_THREE, transaction2, transaction4);
     addBlockToStore(block3);
-    addTransactionInfoToStore(transaction3);
+    addTransactionInfoToStore(transaction3,transactionCapsule3.getTransactionId().getBytes());
 
     block4 = getBuildBlock(BLOCK_TIMESTAMP_FOUR, BLOCK_NUM_FOUR, BLOCK_WITNESS_FOUR,
         ACCOUNT_ADDRESS_FOUR, transaction4, transaction5);
     addBlockToStore(block4);
-    addTransactionInfoToStore(transaction4);
+    addTransactionInfoToStore(transaction4, transactionCapsule4.getTransactionId().getBytes());
 
     block5 = getBuildBlock(BLOCK_TIMESTAMP_FIVE, BLOCK_NUM_FIVE, BLOCK_WITNESS_FIVE,
         ACCOUNT_ADDRESS_FIVE, transaction5, transaction3);
     addBlockToStore(block5);
-    addTransactionInfoToStore(transaction5);
+    addTransactionInfoToStore(transaction5, transactionCapsule5.getTransactionId().getBytes());
   }
 
   private static void addBlockToStore(Block block) {
@@ -431,43 +438,42 @@ public class WalletTest {
     Assert.assertFalse("getBlocksByLimit8", blocksByLimit.getBlockList().contains(block5));
   }
 
-  @Ignore
   @Test
   public void getTransactionInfoById() {
     TransactionInfo transactionById1 = wallet.getTransactionInfoById(
         ByteString
-            .copyFrom(transaction1.getRawData().toByteArray()));
+            .copyFrom(transactionCapsule1.getTransactionId().getBytes()));
     assertEquals("gettransactioninfobyid",
         ByteString.copyFrom(transactionById1.getId().toByteArray()),
-        ByteString.copyFrom(transaction1.getRawData().toByteArray()));
+        ByteString.copyFrom(transactionCapsule1.getTransactionId().getBytes()));
 
     TransactionInfo transactionById2 = wallet.getTransactionInfoById(
         ByteString
-            .copyFrom(transaction2.getRawData().toByteArray()));
+            .copyFrom(transactionCapsule2.getTransactionId().getBytes()));
     assertEquals("gettransactioninfobyid",
         ByteString.copyFrom(transactionById2.getId().toByteArray()),
-        ByteString.copyFrom(transaction2.getRawData().toByteArray()));
+        ByteString.copyFrom(transactionCapsule2.getTransactionId().getBytes()));
 
     TransactionInfo transactionById3 = wallet.getTransactionInfoById(
         ByteString
-            .copyFrom(transaction3.getRawData().toByteArray()));
+            .copyFrom(transactionCapsule3.getTransactionId().getBytes()));
     assertEquals("gettransactioninfobyid",
         ByteString.copyFrom(transactionById3.getId().toByteArray()),
-        ByteString.copyFrom(transaction3.getRawData().toByteArray()));
+        ByteString.copyFrom(transactionCapsule3.getTransactionId().getBytes()));
 
     TransactionInfo transactionById4 = wallet.getTransactionInfoById(
         ByteString
-            .copyFrom(transaction4.getRawData().toByteArray()));
+            .copyFrom(transactionCapsule4.getTransactionId().getBytes()));
     assertEquals("gettransactioninfobyid",
         ByteString.copyFrom(transactionById4.getId().toByteArray()),
-        ByteString.copyFrom(transaction4.getRawData().toByteArray()));
+        ByteString.copyFrom(transactionCapsule4.getTransactionId().getBytes()));
 
     TransactionInfo transactionById5 = wallet.getTransactionInfoById(
         ByteString
-            .copyFrom(transaction5.getRawData().toByteArray()));
+            .copyFrom(transactionCapsule5.getTransactionId().getBytes()));
     assertEquals("gettransactioninfobyid",
         ByteString.copyFrom(transactionById5.getId().toByteArray()),
-        ByteString.copyFrom(transaction5.getRawData().toByteArray()));
+        ByteString.copyFrom(transactionCapsule5.getTransactionId().getBytes()));
   }
 
   @Ignore
