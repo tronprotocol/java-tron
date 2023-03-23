@@ -3,7 +3,9 @@ package org.tron.plugins.utils.db;
 import com.google.common.collect.Streams;
 import java.io.IOException;
 import org.iq80.leveldb.DB;
+import org.iq80.leveldb.DBException;
 import org.iq80.leveldb.ReadOptions;
+import org.rocksdb.RocksDBException;
 
 
 public class LevelDBImpl implements DBInterface {
@@ -43,4 +45,10 @@ public class LevelDBImpl implements DBInterface {
   public void close() throws IOException {
     leveldb.close();
   }
+
+  @Override
+  public void compactRange(byte[] begin, byte[] end) throws DBException, RocksDBException {
+    leveldb.compactRange(begin, end);
+  }
+
 }

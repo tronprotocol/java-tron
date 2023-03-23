@@ -35,8 +35,8 @@ dependencies {
     compile group: 'me.tongfei', name: 'progressbar', version: '0.9.3'
     compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.69'
     compile group: 'org.rocksdb', name: 'rocksdbjni', version: '5.15.10'
-    compile 'io.github.tronprotocol:leveldbjni-all:1.18.3'
-    compile 'io.github.tronprotocol:leveldb:1.18.3'
+    compile 'com.halibobor:leveldbjni-all:1.18.3'
+    compile 'com.halibobor:leveldb:1.18.3'
     compile project(":protocol")
 }
 

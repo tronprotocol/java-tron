@@ -24,7 +24,7 @@ if (isWindows()) {
     }
 } else {
     ext {
-        leveldbGroup = "io.github.tronprotocol"
+        leveldbGroup = "com.halibobor"
         leveldbName = "leveldbjni-all"
         leveldbVersion = "1.18.3"
     }
