@@ -2243,6 +2243,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   //The unit is trx
   public void addTotalNetWeight(long amount) {
     long totalNetWeight = getTotalNetWeight();
+    logger.info("totalNetWeight:{}", totalNetWeight);
     totalNetWeight += amount;
     if (allowNewReward()) {
       totalNetWeight = Math.max(0, totalNetWeight);
@@ -2255,6 +2256,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   //The unit is trx
   public void addTotalEnergyWeight(long amount) {
     long totalEnergyWeight = getTotalEnergyWeight();
+    logger.info("totalEnergyWeight:{}", totalEnergyWeight);
     totalEnergyWeight += amount;
     if (allowNewReward()) {
       totalEnergyWeight = Math.max(0, totalEnergyWeight);
