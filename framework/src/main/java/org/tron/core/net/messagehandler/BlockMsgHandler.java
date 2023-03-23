@@ -104,14 +104,20 @@ public class BlockMsgHandler implements TronMsgHandler {
     Item item = new Item(msg.getBlockId(), InventoryType.BLOCK);
     if (!peer.getSyncBlockRequested().containsKey(msg.getBlockId()) && !peer.getAdvInvRequest()
             .containsKey(item)) {
+      logger.error("Receive bad block {} from peer {}, with no request",
+              msg.getBlockId(), peer.getInetSocketAddress());
       throw new P2pException(TypeEnum.BAD_MESSAGE, "no request");
     }
     BlockCapsule blockCapsule = msg.getBlockCapsule();
     if (blockCapsule.getInstance().getSerializedSize() > maxBlockSize) {
+      logger.error("Receive bad block {} from peer {}, block size over limit",
+              msg.getBlockId(), peer.getInetSocketAddress());
       throw new P2pException(TypeEnum.BAD_MESSAGE, "block size over limit");
     }
     long gap = blockCapsule.getTimeStamp() - System.currentTimeMillis();
     if (gap >= BLOCK_PRODUCED_INTERVAL) {
+      logger.error("Receive bad block {} from peer {}, block time error",
+              msg.getBlockId(), peer.getInetSocketAddress());
       throw new P2pException(TypeEnum.BAD_MESSAGE, "block time error");
     }
   }

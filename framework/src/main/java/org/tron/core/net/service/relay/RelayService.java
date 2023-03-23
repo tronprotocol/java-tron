@@ -171,8 +171,11 @@ public class RelayService {
   }
 
   private void connect() {
-    fastForwardNodes.forEach(address ->
-            TronNetService.getP2pConfig().getActiveNodes().add(address));
+    for (InetSocketAddress fastForwardNode : fastForwardNodes) {
+      if (!TronNetService.getP2pConfig().getActiveNodes().contains(fastForwardNode)) {
+        TronNetService.getP2pConfig().getActiveNodes().add(fastForwardNode);
+      }
+    }
   }
 
   private void disconnect() {
