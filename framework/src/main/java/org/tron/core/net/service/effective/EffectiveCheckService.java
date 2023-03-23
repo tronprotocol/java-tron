@@ -5,8 +5,10 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.netty.channel.ChannelFutureListener;
 import java.net.InetSocketAddress;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -33,7 +35,7 @@ public class EffectiveCheckService {
 
   private final Cache<InetSocketAddress, Boolean> nodesCache = CacheBuilder.newBuilder()
       .initialCapacity(100)
-      .maximumSize(1000)
+      .maximumSize(10000)
       .expireAfterWrite(10, TimeUnit.MINUTES).build();
   @Getter
   private InetSocketAddress cur;
@@ -53,7 +55,7 @@ public class EffectiveCheckService {
         }
       }, 60, 2, TimeUnit.SECONDS);
     } else {
-      logger.warn("EffectiveCheckService is disabled");
+      logger.info("EffectiveCheckService is disabled");
     }
   }
 
@@ -98,8 +100,11 @@ public class EffectiveCheckService {
     }
 
     List<Node> tableNodes = TronNetService.getP2pService().getConnectableNodes();
+    Set<InetSocketAddress> usedAddressSet = new HashSet<>();
+    tronNetDelegate.getActivePeer().forEach(p -> usedAddressSet.add(p.getInetSocketAddress()));
     Optional<Node> chosenNode = tableNodes.stream()
         .filter(node -> nodesCache.getIfPresent(node.getPreferInetSocketAddress()) == null)
+        .filter(node -> !usedAddressSet.contains(node.getPreferInetSocketAddress()))
         .filter(node -> !TronNetService.getP2pConfig().getActiveNodes()
             .contains(node.getPreferInetSocketAddress()))
         .findFirst();

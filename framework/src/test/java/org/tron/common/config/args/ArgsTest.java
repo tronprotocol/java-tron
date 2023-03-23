@@ -31,6 +31,6 @@ public class ArgsTest {
     Assert.assertEquals(Args.getInstance().getMaxFastForwardNum(), 3);
     Assert.assertEquals(Args.getInstance().getBlockCacheTimeout(), 60);
     Assert.assertEquals(Args.getInstance().isNodeDetectEnable(), false);
-    Assert.assertTrue(Args.getInstance().isNodeEffectiveCheckEnable());
+    Assert.assertFalse(Args.getInstance().isNodeEffectiveCheckEnable());
   }
 }

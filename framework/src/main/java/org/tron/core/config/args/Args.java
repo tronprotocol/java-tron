@@ -124,7 +124,7 @@ public class Args extends CommonParameter {
     PARAMETER.needSyncCheck = false;
     PARAMETER.nodeDiscoveryEnable = false;
     PARAMETER.nodeDiscoveryPersist = false;
-    PARAMETER.nodeEffectiveCheckEnable = true;
+    PARAMETER.nodeEffectiveCheckEnable = false;
     PARAMETER.nodeConnectionTimeout = 2000;
     PARAMETER.activeNodes = new ArrayList<>();
     PARAMETER.passiveNodes = new ArrayList<>();
@@ -556,8 +556,8 @@ public class Args extends CommonParameter {
             && config.getBoolean(Constant.NODE_DISCOVERY_PERSIST);
 
     PARAMETER.nodeEffectiveCheckEnable =
-        !config.hasPath(Constant.NODE_ENABLE_EFFECTIVE_CHECK)
-            || config.getBoolean(Constant.NODE_ENABLE_EFFECTIVE_CHECK);
+        config.hasPath(Constant.NODE_EFFECTIVE_CHECK_ENABLE)
+            && config.getBoolean(Constant.NODE_EFFECTIVE_CHECK_ENABLE);
 
     PARAMETER.nodeConnectionTimeout =
         config.hasPath(Constant.NODE_CONNECTION_TIMEOUT)
@@ -1612,6 +1612,7 @@ public class Args extends CommonParameter {
     logger.info("Bind IP: {}", parameter.getNodeDiscoveryBindIp());
     logger.info("External IP: {}", parameter.getNodeExternalIp());
     logger.info("Listen port: {}", parameter.getNodeListenPort());
+    logger.info("Node ipv6 enable: {}", parameter.isNodeEnableIpv6());
     logger.info("Discover enable: {}", parameter.isNodeDiscoveryEnable());
     logger.info("Active node size: {}", parameter.getActiveNodes().size());
     logger.info("Passive node size: {}", parameter.getPassiveNodes().size());
@@ -1626,6 +1627,7 @@ public class Args extends CommonParameter {
     logger.info("Trx reference block: {}", parameter.getTrxReferenceBlock());
     logger.info("Open full tcp disconnect: {}", parameter.isOpenFullTcpDisconnect());
     logger.info("Node detect enable: {}", parameter.isNodeDetectEnable());
+    logger.info("Node effective check enable: {}", parameter.isNodeEffectiveCheckEnable());
     logger.info("************************ Backup config ************************");
     logger.info("Backup priority: {}", parameter.getBackupPriority());
     logger.info("Backup listen port: {}", parameter.getBackupPort());
