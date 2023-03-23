@@ -61,7 +61,7 @@ public class ApplicationImpl implements Application {
    * start up the app.
    */
   public void startup() {
-    if (!Args.getInstance().isSolidityNode()) {
+    if ((!Args.getInstance().isSolidityNode()) && (!Args.getInstance().isP2pDisable())) {
       tronNetService.start();
     }
     consensusService.start();
@@ -72,7 +72,7 @@ public class ApplicationImpl implements Application {
   @Override
   public void shutdown() {
     logger.info("******** start to shutdown ********");
-    if (!Args.getInstance().isSolidityNode()) {
+    if (!Args.getInstance().isSolidityNode() && (!Args.getInstance().p2pDisable)) {
       tronNetService.close();
     }
     consensusService.stop();
