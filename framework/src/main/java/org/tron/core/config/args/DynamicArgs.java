@@ -46,12 +46,15 @@ public class DynamicArgs {
         confFile = parameter.getShellConfFileName();
       } else  {
         confFile = Constant.TESTNET_CONF;
-        //
         //logger.warn("Configuration path is required!");
         //return;
       }
 
       File confDir = new File(confFile);
+      if (!confDir.exists()) {
+        logger.warn("Configuration path is required! No such file {}", confFile);
+        return;
+      }
       confFileName = confDir.getName();
       if (confFile.contains(File.separator)) {
         path = FileSystems.getDefault().getPath(confDir.getPath()).getParent();
@@ -60,10 +63,10 @@ public class DynamicArgs {
         path = FileSystems.getDefault().getPath(directory.getAbsolutePath());
       }
 
-      logger.info("confDirString = {}", confDir);
+      logger.debug("confDirString = {}", confDir);
       watchService = FileSystems.getDefault().newWatchService();
       path.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY);
-      logger.info("watch path : {}", path.toString());
+      logger.debug("watch path : {}", path.toString());
     } catch (Exception e) {
       logger.error("Exception caught when register the watch key", e.getCause());
       return;
@@ -77,27 +80,28 @@ public class DynamicArgs {
           final Path changed = (Path)event.context();
           if (changed.endsWith(confFileName)) {
             reload();
-            logger.info("Config was modify and we reload it");
+            logger.info("The configuration was modified and we reloaded it");
           }
           changeCount++;
         }
-        logger.info("change count : {}", changeCount);
+        logger.debug("change count : {}", changeCount);
 
         boolean valid = wk.reset();
         if (!valid) {
           path.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY);
         }
       } catch (InterruptedException e) {
-        logger.warn("");
+        logger.warn("WatchService was interrupted");
         break;
       } catch (IOException e) {
+        logger.error("Exception caught when register the watch key", e.getCause());
         break;
       }
     }
   }
 
   public void reload() {
-    logger.info("reloading ... ");
+    logger.debug("Reloading ... ");
     Config config = Configuration.getByFileName(parameter.getShellConfFileName(),
         Constant.TESTNET_CONF);
 
@@ -116,7 +120,6 @@ public class DynamicArgs {
         Args.getInetSocketAddress(config, Constant.NODE_ACTIVE);
     parameter.setActiveNodes(newActiveNodes);
     parameter.getActiveNodes().forEach(n -> {
-      logger.info("active node : {}", n.toString());
       if (!lastActiveNodes.contains(n)) {
         TronNetService.getP2pConfig().getActiveNodes().add(n);
         if (!TronNetService.getP2pConfig().getTrustNodes().contains(n.getAddress())) {
@@ -131,6 +134,8 @@ public class DynamicArgs {
         TronNetService.getP2pConfig().getTrustNodes().remove(ln.getAddress());
       }
     });
+    logger.debug("p2p active nodes : {}",
+        TronNetService.getP2pConfig().getActiveNodes().toString());
   }
 
   private void updateTrustNodes(Config config) {
@@ -142,7 +147,6 @@ public class DynamicArgs {
     List<InetAddress> newPassiveNodes = Args.getInetAddress(config, Constant.NODE_PASSIVE);
     parameter.setPassiveNodes(newPassiveNodes);
     parameter.getPassiveNodes().forEach(n -> {
-      logger.info("passive node : {}", n.toString());
       if (!lastPassiveNodes.contains(n)
           || !TronNetService.getP2pConfig().getTrustNodes().contains(n)) {
         TronNetService.getP2pConfig().getTrustNodes().add(n);
@@ -154,6 +158,7 @@ public class DynamicArgs {
         TronNetService.getP2pConfig().getTrustNodes().remove(ln);
       }
     });
+    logger.debug("p2p trust nodes : {}", TronNetService.getP2pConfig().getTrustNodes().toString());
   }
 
   public void close() {
