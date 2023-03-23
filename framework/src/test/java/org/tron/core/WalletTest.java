@@ -22,18 +22,21 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static stest.tron.wallet.common.client.utils.PublicMethed.decode58Check;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
+import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -47,19 +50,31 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Utils;
+import org.tron.core.actuator.DelegateResourceActuator;
+import org.tron.core.actuator.FreezeBalanceActuator;
+import org.tron.core.actuator.UnfreezeBalanceV2Actuator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.CodeCapsule;
+import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
-import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.Manager;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.ProposalUtil.ProposalType;
 import org.tron.core.utils.TransactionUtil;
+import org.tron.core.vm.program.Program;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Block;
@@ -72,7 +87,10 @@ import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
+import org.tron.protos.contract.Common;
+import org.tron.protos.contract.SmartContractOuterClass;
 
 
 @Slf4j
@@ -124,18 +142,61 @@ public class WalletTest {
   private static Transaction transaction6;
   private static AssetIssueCapsule Asset1;
 
+  private static Manager dbManager;
+  private static final String OWNER_ADDRESS;
+  private static final String RECEIVER_ADDRESS;
+  private static final long initBalance = 43_200_000_000L;
+
   static {
     Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
+    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+    RECEIVER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
   }
 
   @BeforeClass
   public static void init() {
     wallet = context.getBean(Wallet.class);
     chainBaseManager = context.getBean(ChainBaseManager.class);
+    dbManager = context.getBean(Manager.class);
     initTransaction();
     initBlock();
     chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(5);
+    chainBaseManager.getDelegatedResourceStore().reset();
+  }
+
+  @Before
+  public void createAccountCapsule() {
+    AccountCapsule ownerCapsule =
+        new AccountCapsule(
+            ByteString.copyFromUtf8("owner"),
+            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+            AccountType.Normal,
+            initBalance);
+    dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
+
+    AccountCapsule receiverCapsule =
+        new AccountCapsule(
+            ByteString.copyFromUtf8("receiver"),
+            ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS)),
+            AccountType.Normal,
+            initBalance);
+    dbManager.getAccountStore().put(receiverCapsule.getAddress().toByteArray(), receiverCapsule);
+
+    byte[] dbKey = DelegatedResourceCapsule.createDbKey(
+        ByteArray.fromHexString(OWNER_ADDRESS),
+        ByteArray.fromHexString(RECEIVER_ADDRESS));
+    byte[] dbKeyV2 = DelegatedResourceCapsule.createDbKeyV2(
+        ByteArray.fromHexString(OWNER_ADDRESS),
+        ByteArray.fromHexString(RECEIVER_ADDRESS),
+        false);
+    chainBaseManager.getDelegatedResourceStore().delete(dbKey);
+    chainBaseManager.getDelegatedResourceStore().delete(dbKeyV2);
+    chainBaseManager.getDelegatedResourceAccountIndexStore()
+        .delete(ByteArray.fromHexString(OWNER_ADDRESS));
+
+    dbManager.getDynamicPropertiesStore().saveAllowDelegateResource(1);
+    dbManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(0L);
   }
 
   /**
@@ -551,6 +612,459 @@ public class WalletTest {
     });
 
     System.out.printf(builder.build().toString());
+  }
+
+  @Test
+  public void testGetDelegatedResource() {
+    long frozenBalance = 1_000_000_000L;
+    long duration = 3;
+    FreezeBalanceActuator actuator = new FreezeBalanceActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(
+        getDelegatedContractForCpu(OWNER_ADDRESS, RECEIVER_ADDRESS, frozenBalance, duration));
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+
+      GrpcAPI.DelegatedResourceList delegatedResourceList = wallet.getDelegatedResource(
+          ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+          ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS)));
+
+      Assert.assertEquals(1L, delegatedResourceList.getDelegatedResourceCount());
+      Assert.assertEquals(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+          delegatedResourceList.getDelegatedResource(0).getFrom());
+      Assert.assertEquals(ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS)),
+          delegatedResourceList.getDelegatedResource(0).getTo());
+      Assert.assertEquals(frozenBalance,
+          delegatedResourceList.getDelegatedResource(0).getFrozenBalanceForEnergy());
+      Assert.assertEquals(0L,
+          delegatedResourceList.getDelegatedResource(0).getFrozenBalanceForBandwidth());
+      Assert.assertEquals(0L,
+          delegatedResourceList.getDelegatedResource(0).getExpireTimeForBandwidth());
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } catch (Exception e) {
+      Assert.assertEquals(false, true);
+    }
+  }
+
+
+  @Test
+  public void testGetDelegatedResourceAccountIndex() {
+    long frozenBalance = 1_000_000_000L;
+    long duration = 3;
+    FreezeBalanceActuator actuator = new FreezeBalanceActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(
+        getDelegatedContractForCpu(OWNER_ADDRESS, RECEIVER_ADDRESS, frozenBalance, duration));
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+
+      Protocol.DelegatedResourceAccountIndex delegatedResourceAccountIndex =
+          wallet.getDelegatedResourceAccountIndex(
+              ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)));
+
+      Assert.assertEquals(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+          delegatedResourceAccountIndex.getAccount());
+      Assert.assertEquals(1L, delegatedResourceAccountIndex.getToAccountsCount());
+      Assert.assertEquals(ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS)),
+          delegatedResourceAccountIndex.getToAccounts(0));
+    } catch (ContractValidateException | ContractExeException e) {
+      Assert.fail(e.getMessage());
+    }
+  }
+
+  private Any getDelegatedContractForCpu(String ownerAddress, String receiverAddress,
+                                         long frozenBalance,
+                                         long duration) {
+    return Any.pack(
+        BalanceContract.FreezeBalanceContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
+            .setReceiverAddress(ByteString.copyFrom(ByteArray.fromHexString(receiverAddress)))
+            .setFrozenBalance(frozenBalance)
+            .setFrozenDuration(duration)
+            .setResource(Common.ResourceCode.ENERGY)
+            .build());
+  }
+
+  private void freezeBandwidthForOwner() {
+    AccountCapsule ownerCapsule =
+        dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    ownerCapsule.addFrozenBalanceForBandwidthV2(initBalance);
+    ownerCapsule.setNetUsage(0L);
+    ownerCapsule.setEnergyUsage(0L);
+    dbManager.getDynamicPropertiesStore().saveTotalNetWeight(0L);
+    dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(0L);
+    dbManager.getDynamicPropertiesStore().addTotalNetWeight(initBalance / TRX_PRECISION);
+    dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
+  }
+
+  private void freezeCpuForOwner() {
+    AccountCapsule ownerCapsule =
+        dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    ownerCapsule.addFrozenBalanceForEnergyV2(initBalance);
+    ownerCapsule.setNetUsage(0L);
+    ownerCapsule.setEnergyUsage(0L);
+    dbManager.getDynamicPropertiesStore().saveTotalNetWeight(0L);
+    dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(0L);
+    dbManager.getDynamicPropertiesStore().addTotalEnergyWeight(initBalance / TRX_PRECISION);
+    dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
+  }
+
+  private Any getDelegateContractForBandwidth(String ownerAddress, String receiveAddress,
+                                              long unfreezeBalance) {
+    return getLockedDelegateContractForBandwidth(ownerAddress, receiveAddress,
+        unfreezeBalance, false);
+  }
+
+  private Any getLockedDelegateContractForBandwidth(String ownerAddress, String receiveAddress,
+                                                    long unfreezeBalance, boolean lock) {
+    return Any.pack(BalanceContract.DelegateResourceContract.newBuilder()
+        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
+        .setReceiverAddress(ByteString.copyFrom(ByteArray.fromHexString(receiveAddress)))
+        .setBalance(unfreezeBalance)
+        .setResource(Common.ResourceCode.BANDWIDTH)
+        .setLock(lock)
+        .build());
+  }
+
+  @Test
+  public void testGetDelegatedResourceV2() {
+    dbManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(1L);
+    freezeBandwidthForOwner();
+
+    long delegateBalance = 1_000_000_000L;
+    DelegateResourceActuator actuator = new DelegateResourceActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(
+        getDelegateContractForBandwidth(OWNER_ADDRESS, RECEIVER_ADDRESS, delegateBalance));
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertEquals(Transaction.Result.code.SUCESS, ret.getInstance().getRet());
+
+      GrpcAPI.DelegatedResourceList delegatedResourceList = wallet.getDelegatedResourceV2(
+          ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+          ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS)));
+
+      Assert.assertEquals(1L, delegatedResourceList.getDelegatedResourceCount());
+      Assert.assertEquals(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+          delegatedResourceList.getDelegatedResource(0).getFrom());
+      Assert.assertEquals(ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS)),
+          delegatedResourceList.getDelegatedResource(0).getTo());
+      Assert.assertEquals(delegateBalance,
+          delegatedResourceList.getDelegatedResource(0).getFrozenBalanceForBandwidth());
+      Assert.assertEquals(0L,
+          delegatedResourceList.getDelegatedResource(0).getExpireTimeForBandwidth());
+      Assert.assertEquals(0L,
+          delegatedResourceList.getDelegatedResource(0).getFrozenBalanceForEnergy());
+      Assert.assertEquals(0L,
+          delegatedResourceList.getDelegatedResource(0).getExpireTimeForEnergy());
+
+    } catch (ContractValidateException | ContractExeException e) {
+      Assert.fail(e.getMessage());
+    }
+  }
+
+  @Test
+  public void testGetDelegatedResourceAccountIndexV2() {
+    dbManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(1L);
+    freezeBandwidthForOwner();
+
+    long delegateBalance = 1_000_000_000L;
+    DelegateResourceActuator actuator = new DelegateResourceActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(
+        getDelegateContractForBandwidth(OWNER_ADDRESS, RECEIVER_ADDRESS, delegateBalance));
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertEquals(Transaction.Result.code.SUCESS, ret.getInstance().getRet());
+
+      Protocol.DelegatedResourceAccountIndex delegatedResourceAccountIndex =
+          wallet.getDelegatedResourceAccountIndexV2(
+              ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)));
+
+      Assert.assertEquals(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+          delegatedResourceAccountIndex.getAccount());
+      Assert.assertEquals(1L, delegatedResourceAccountIndex.getToAccountsCount());
+      Assert.assertEquals(ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS)),
+          delegatedResourceAccountIndex.getToAccounts(0));
+
+    } catch (ContractValidateException | ContractExeException e) {
+      Assert.fail(e.getMessage());
+    }
+  }
+
+  @Test
+  public void testGetCanDelegatedMaxSizeBandWidth() {
+    freezeBandwidthForOwner();
+
+    GrpcAPI.CanDelegatedMaxSizeResponseMessage message = wallet.getCanDelegatedMaxSize(
+        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+        Common.ResourceCode.BANDWIDTH.getNumber());
+    Assert.assertEquals(initBalance - 280L, message.getMaxSize());
+
+  }
+
+  @Test
+  public void testGetCanDelegatedMaxSizeEnergy() {
+    freezeCpuForOwner();
+
+    GrpcAPI.CanDelegatedMaxSizeResponseMessage message = wallet.getCanDelegatedMaxSize(
+        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+        Common.ResourceCode.ENERGY.getNumber());
+    Assert.assertEquals(initBalance, message.getMaxSize());
+
+  }
+
+  private Any getContractForBandwidthV2(String ownerAddress, long unfreezeBalance) {
+    return Any.pack(
+        BalanceContract.UnfreezeBalanceV2Contract.newBuilder()
+            .setOwnerAddress(
+                ByteString.copyFrom(ByteArray.fromHexString(ownerAddress))
+            )
+            .setUnfreezeBalance(unfreezeBalance)
+            .setResource(Common.ResourceCode.BANDWIDTH)
+            .build()
+    );
+  }
+
+  @Test
+  public void testGetAvailableUnfreezeCount() {
+    dbManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(1L);
+
+    long frozenBalance = 43_200_000_00L;
+    long now = System.currentTimeMillis();
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
+    dbManager.getDynamicPropertiesStore().saveTotalNetWeight(1000);
+
+    AccountCapsule accountCapsule = dbManager.getAccountStore()
+        .get(ByteArray.fromHexString(OWNER_ADDRESS));
+    accountCapsule.addFrozenBalanceForBandwidthV2(frozenBalance);
+    long unfreezeBalance = frozenBalance - 100;
+
+    Assert.assertEquals(frozenBalance, accountCapsule.getFrozenV2BalanceForBandwidth());
+    Assert.assertEquals(frozenBalance, accountCapsule.getTronPower());
+    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+
+    UnfreezeBalanceV2Actuator actuator = new UnfreezeBalanceV2Actuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContractForBandwidthV2(OWNER_ADDRESS, unfreezeBalance));
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertEquals(Transaction.Result.code.SUCESS, ret.getInstance().getRet());
+
+      GrpcAPI.GetAvailableUnfreezeCountResponseMessage message =
+          wallet.getAvailableUnfreezeCount(
+              ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)));
+      Assert.assertEquals(31, message.getCount());
+    } catch (Exception e) {
+      Assert.fail(e.getMessage());
+    }
+  }
+
+  @Test
+  public void testGetCanWithdrawUnfreezeAmount() {
+    long now = System.currentTimeMillis();
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
+    byte[] address = ByteArray.fromHexString(OWNER_ADDRESS);
+
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
+    Protocol.Account.UnFreezeV2 unFreezeV2_1 = Protocol.Account.UnFreezeV2.newBuilder()
+        .setType(BANDWIDTH).setUnfreezeAmount(16_000_000L).setUnfreezeExpireTime(1).build();
+    Protocol.Account.UnFreezeV2 unFreezeV2_2 = Protocol.Account.UnFreezeV2.newBuilder()
+        .setType(ENERGY).setUnfreezeAmount(16_000_000L).setUnfreezeExpireTime(1).build();
+    Protocol.Account.UnFreezeV2 unFreezeV2_3 = Protocol.Account.UnFreezeV2.newBuilder()
+        .setType(ENERGY).setUnfreezeAmount(0).setUnfreezeExpireTime(Long.MAX_VALUE).build();
+    accountCapsule.addUnfrozenV2(unFreezeV2_1);
+    accountCapsule.addUnfrozenV2(unFreezeV2_2);
+    accountCapsule.addUnfrozenV2(unFreezeV2_3);
+    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+
+    GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage message =
+        wallet.getCanWithdrawUnfreezeAmount(
+            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+            System.currentTimeMillis());
+    Assert.assertEquals(16_000_000L * 2, message.getAmount());
+  }
+
+  @Test
+  public void testGetMemoFeePrices() {
+    String memeFeeList = wallet.getMemoFeePrices();
+    Assert.assertEquals("0:0", memeFeeList);
+  }
+
+  @Test
+  public void testGetChainParameters() {
+    Protocol.ChainParameters params = wallet.getChainParameters();
+    //getTotalEnergyAverageUsage & getTotalEnergyCurrentLimit have not ProposalType.
+    Assert.assertEquals(ProposalType.values().length + 2, params.getChainParameterCount());
+  }
+
+  @Test
+  public void testGetAccountById() {
+    AccountCapsule ownerCapsule =
+        dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    ownerCapsule.setAccountId(ByteString.copyFromUtf8("1001").toByteArray());
+    chainBaseManager.getAccountIdIndexStore().put(ownerCapsule);
+    Protocol.Account account = wallet.getAccountById(
+        Protocol.Account.newBuilder().setAccountId(ByteString.copyFromUtf8("1001")).build());
+    Assert.assertEquals(ownerCapsule.getAddress(),account.getAddress());
+  }
+
+  @Test
+  public void testGetAccountResource() {
+    GrpcAPI.AccountResourceMessage accountResource =
+        wallet.getAccountResource(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)));
+    Assert.assertEquals(
+        chainBaseManager.getDynamicPropertiesStore().getFreeNetLimit(),
+        accountResource.getFreeNetLimit());
+    Assert.assertEquals(0, accountResource.getFreeNetUsed());
+  }
+
+  @Test
+  public void testGetAssetIssueByName() {
+    String assetName = "My_asset";
+    String id = "10001";
+    AssetIssueCapsule assetCapsule = new AssetIssueCapsule(ByteArray.fromHexString(OWNER_ADDRESS),
+        id,assetName,"abbr", 1_000_000_000_000L,6);
+    chainBaseManager.getAssetIssueStore().put(assetCapsule.createDbKey(), assetCapsule);
+    chainBaseManager.getAssetIssueV2Store().put(assetCapsule.createDbV2Key(), assetCapsule);
+    try {
+      AssetIssueContract assetIssue =
+          wallet.getAssetIssueByName(ByteString.copyFromUtf8(assetName));
+      Assert.assertEquals(ByteString.copyFromUtf8(assetName),assetIssue.getName());
+      Assert.assertEquals(id,assetIssue.getId());
+      chainBaseManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+      assetIssue = wallet.getAssetIssueByName(ByteString.copyFromUtf8(assetName));
+      Assert.assertEquals(ByteString.copyFromUtf8(assetName),assetIssue.getName());
+      Assert.assertEquals(id,assetIssue.getId());
+    } catch (NonUniqueObjectException e) {
+      Assert.fail(e.getMessage());
+    }
+    chainBaseManager.getAssetIssueStore().delete(assetCapsule.createDbKey());
+    chainBaseManager.getAssetIssueV2Store().delete(assetCapsule.createDbV2Key());
+    chainBaseManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+  }
+
+  @Test
+  @SneakyThrows
+  public void testEstimateEnergy() {
+    dbManager.getDynamicPropertiesStore().put("ALLOW_TVM_TRANSFER_TRC10".getBytes(),
+        new BytesCapsule(ByteArray.fromHexString("0x01")));
+    String contractAddress = "0x1A622D84ed49f01045f5f1a5AfcEb9c57e9cC3ca";
+
+    SmartContractOuterClass.SmartContract smartContract =
+        SmartContractOuterClass.SmartContract.newBuilder().build();
+    ContractCapsule capsule = new ContractCapsule(smartContract);
+    dbManager.getContractStore().put(ByteArray.fromHexString(contractAddress), capsule);
+
+    String codeString = "608060405234801561001057600080fd5b50d3801561001d57600080fd5b50d28015"
+        + "61002a57600080fd5b50600436106100495760003560e01c806385bb7d69146100555761004a565b5b61"
+        + "0052610073565b50005b61005d610073565b60405161006a91906100b9565b60405180910390f35b6000"
+        + "80600090505b60028110156100a657808261009091906100d4565b915060018161009f91906100d4565b"
+        + "905061007b565b5090565b6100b38161012a565b82525050565b60006020820190506100ce6000830184"
+        + "6100aa565b92915050565b60006100df8261012a565b91506100ea8361012a565b9250827fffffffffff"
+        + "ffffffffffffffffffffffffffffffffffffffffffffffffffffff0382111561011f5761011e61013456"
+        + "5b5b828201905092915050565b6000819050919050565b7f4e487b710000000000000000000000000000"
+        + "0000000000000000000000000000600052601160045260246000fdfea26474726f6e58221220f3d01983"
+        + "23c67293b97323c101e294e6d2cac7fb29555292675277e11c275a4b64736f6c63430008060033";
+    CodeCapsule codeCapsule = new CodeCapsule(ByteArray.fromHexString(codeString));
+    dbManager.getCodeStore().put(ByteArray.fromHexString(contractAddress), codeCapsule);
+
+    SmartContractOuterClass.TriggerSmartContract contract =
+        SmartContractOuterClass.TriggerSmartContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setContractAddress(ByteString.copyFrom(
+                ByteArray.fromHexString(
+                    contractAddress)))
+            .build();
+    TransactionCapsule trxCap = wallet.createTransactionCapsule(contract,
+        ContractType.TriggerSmartContract);
+
+    GrpcAPI.TransactionExtention.Builder trxExtBuilder = GrpcAPI.TransactionExtention.newBuilder();
+    GrpcAPI.Return.Builder retBuilder = GrpcAPI.Return.newBuilder();
+    GrpcAPI.EstimateEnergyMessage.Builder estimateBuilder
+        = GrpcAPI.EstimateEnergyMessage.newBuilder();
+
+    Args.getInstance().setEstimateEnergy(false);
+    try {
+      wallet.estimateEnergy(
+          contract, trxCap, trxExtBuilder, retBuilder, estimateBuilder);
+      Assert.fail();
+    } catch (ContractValidateException exception) {
+      assertEquals("this node does not support estimate energy", exception.getMessage());
+    }
+
+    Args.getInstance().setEstimateEnergy(true);
+
+    wallet.estimateEnergy(
+        contract, trxCap, trxExtBuilder, retBuilder, estimateBuilder);
+    GrpcAPI.EstimateEnergyMessage message = estimateBuilder.build();
+    Assert.assertTrue(message.getEnergyRequired() > 0);
+  }
+
+  @Test
+  @SneakyThrows
+  public void testEstimateEnergyOutOfTime() {
+    dbManager.getDynamicPropertiesStore().put("ALLOW_TVM_TRANSFER_TRC10".getBytes(),
+        new BytesCapsule(ByteArray.fromHexString("0x01")));
+
+    String contractAddress = "0x1A622D84ed49f01045f5f1a5AfcEb9c57e9cC3ca";
+
+    SmartContractOuterClass.SmartContract smartContract =
+        SmartContractOuterClass.SmartContract.newBuilder().build();
+    ContractCapsule capsule = new ContractCapsule(smartContract);
+    dbManager.getContractStore().put(ByteArray.fromHexString(contractAddress), capsule);
+
+    String codeString = "608060405234801561001057600080fd5b50d3801561001d57600080fd5b50d28015"
+        + "61002a57600080fd5b50600436106100495760003560e01c806385bb7d69146100555761004a565b5b61"
+        + "0052610073565b50005b61005d610073565b60405161006a91906100ae565b60405180910390f35b6000"
+        + "80600090505b64e8d4a5100081101561009b57808261009491906100c9565b915061007b565b5090565b"
+        + "6100a88161011f565b82525050565b60006020820190506100c3600083018461009f565b92915050565b"
+        + "60006100d48261011f565b91506100df8361011f565b9250827fffffffffffffffffffffffffffffffff"
+        + "ffffffffffffffffffffffffffffffff0382111561011457610113610129565b5b828201905092915050"
+        + "565b6000819050919050565b7f4e487b7100000000000000000000000000000000000000000000000000"
+        + "000000600052601160045260246000fdfea26474726f6e58221220a7e1a6e6d17684029015a0b593b634"
+        + "40f77e7eb8abd4297a3063e59f28086bf464736f6c63430008060033";
+    CodeCapsule codeCapsule = new CodeCapsule(ByteArray.fromHexString(codeString));
+    dbManager.getCodeStore().put(ByteArray.fromHexString(contractAddress), codeCapsule);
+
+    SmartContractOuterClass.TriggerSmartContract contract =
+        SmartContractOuterClass.TriggerSmartContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setContractAddress(ByteString.copyFrom(
+                ByteArray.fromHexString(
+                    contractAddress)))
+            .build();
+    TransactionCapsule trxCap = wallet.createTransactionCapsule(contract,
+        ContractType.TriggerSmartContract);
+
+    GrpcAPI.TransactionExtention.Builder trxExtBuilder = GrpcAPI.TransactionExtention.newBuilder();
+    GrpcAPI.Return.Builder retBuilder = GrpcAPI.Return.newBuilder();
+    GrpcAPI.EstimateEnergyMessage.Builder estimateBuilder
+        = GrpcAPI.EstimateEnergyMessage.newBuilder();
+
+    Args.getInstance().setEstimateEnergy(true);
+
+    try {
+      wallet.estimateEnergy(
+          contract, trxCap, trxExtBuilder, retBuilder, estimateBuilder);
+      Assert.fail("EstimateEnergy should throw exception!");
+    } catch (Program.OutOfTimeException ignored) {
+      Assert.assertTrue(true);
+    }
   }
 }
 
