@@ -34,6 +34,10 @@ public class DbStatService {
     if (Metrics.enabled()) {
       try {
         statExecutor.shutdown();
+        statExecutor.awaitTermination(1, TimeUnit.SECONDS);
+      } catch (InterruptedException e){
+        logger.warn("Shutdown DbStatExecutor interrupted!");
+        Thread.currentThread().interrupt();
       } catch (Exception e) {
         logger.error("{}", e.getMessage());
       }

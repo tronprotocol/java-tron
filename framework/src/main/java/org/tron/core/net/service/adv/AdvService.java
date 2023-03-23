@@ -104,6 +104,12 @@ public class AdvService {
   public void close() {
     spreadExecutor.shutdown();
     fetchExecutor.shutdown();
+    try {
+      fetchExecutor.awaitTermination(1, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      logger.warn("Shutdown fetchExecutor interrupted");
+      Thread.currentThread().interrupt();
+    }
   }
 
   public synchronized void addInvToCache(Item item) {

@@ -54,6 +54,12 @@ public class TransactionsMsgHandler implements TronMsgHandler {
 
   public void close() {
     smartContractExecutor.shutdown();
+    try {
+      smartContractExecutor.awaitTermination(1, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      logger.warn("Shutdown smartContractExecutor interrupted");
+      Thread.currentThread().interrupt();
+    }
   }
 
   public boolean isBusy() {

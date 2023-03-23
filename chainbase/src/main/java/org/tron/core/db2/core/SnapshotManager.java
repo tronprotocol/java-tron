@@ -288,6 +288,12 @@ public class SnapshotManager implements RevokingDatabase {
     logger.info("******** End to pop revokingDb. ********");
     if (pruneCheckpointThread != null) {
       pruneCheckpointThread.shutdown();
+      try {
+        pruneCheckpointThread.awaitTermination(1, TimeUnit.SECONDS);
+      } catch (InterruptedException e) {
+        logger.warn("Shutdown pruneCheckpointThread interrupted!");
+        Thread.currentThread().interrupt();
+      }
     }
   }
 

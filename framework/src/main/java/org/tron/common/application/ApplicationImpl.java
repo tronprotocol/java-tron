@@ -71,15 +71,15 @@ public class ApplicationImpl implements Application {
       tronNetService.close();
     }
     consensusService.stop();
+    dbManager.stopRePushThread();
+    dbManager.stopRePushTriggerThread();
+    EventPluginLoader.getInstance().stopPlugin();
+    dbManager.stopFilterProcessThread();
     synchronized (dbManager.getRevokingStore()) {
       dbManager.getSession().reset();
       closeRevokingStore();
       closeAllStore();
     }
-    dbManager.stopRePushThread();
-    dbManager.stopRePushTriggerThread();
-    EventPluginLoader.getInstance().stopPlugin();
-    dbManager.stopFilterProcessThread();
     logger.info("******** end to shutdown ********");
     FullNode.shutDownSign = true;
   }

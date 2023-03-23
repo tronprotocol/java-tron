@@ -249,6 +249,8 @@ public class Manager {
   private AtomicInteger blockWaitLock = new AtomicInteger(0);
   private Object transactionLock = new Object();
 
+  private ExecutorService rePushSingleThreadExecutor;
+
   /**
    * Cycle thread to rePush Transactions
    */
@@ -425,6 +427,13 @@ public class Manager {
 
   public void stopRePushThread() {
     isRunRePushThread = false;
+    rePushSingleThreadExecutor.shutdown();
+    try {
+      rePushSingleThreadExecutor.awaitTermination(1, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      logger.warn("Shutdown rePushSingleThreadExecutor interrupted!");
+      Thread.currentThread().interrupt();
+    }
   }
 
   public void stopRePushTriggerThread() {
@@ -519,9 +528,8 @@ public class Manager {
     revokingStore.enable();
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
-    Thread rePushThread = new Thread(rePushLoop);
-    rePushThread.setDaemon(true);
-    rePushThread.start();
+    rePushSingleThreadExecutor = Executors.newSingleThreadExecutor();
+    rePushSingleThreadExecutor.execute(rePushLoop);
     // add contract event listener for subscribing
     if (Args.getInstance().isEventSubscribe()) {
       startEventSubscribing();

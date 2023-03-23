@@ -6,6 +6,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
@@ -27,22 +30,25 @@ public class NodePersistService {
 
   private ChainBaseManager chainBaseManager = ChainBaseManager.getInstance();
 
-  private Timer nodePersistTaskTimer = new Timer("NodePersistTaskTimer");
+  private ScheduledExecutorService nodePersistExecutor;
 
   public void init() {
     if (isNodePersist) {
-      nodePersistTaskTimer.scheduleAtFixedRate(new TimerTask() {
-        @Override
-        public void run() {
-          dbWrite();
-        }
-      }, DB_COMMIT_RATE, DB_COMMIT_RATE);
+      nodePersistExecutor = Executors.newSingleThreadScheduledExecutor();
+      nodePersistExecutor.scheduleAtFixedRate(() -> dbWrite(), DB_COMMIT_RATE, DB_COMMIT_RATE,
+          TimeUnit.MILLISECONDS);
     }
   }
 
   public void close() {
     try {
-      nodePersistTaskTimer.cancel();
+      if (isNodePersist) {
+        nodePersistExecutor.shutdown();
+        nodePersistExecutor.awaitTermination(1, TimeUnit.SECONDS);
+      }
+    } catch (InterruptedException e) {
+      logger.warn("Shutdown nodePersistExecutor interrupted!");
+      Thread.currentThread().interrupt();
     } catch (Exception e) {
       logger.error("Close nodePersistTaskTimer failed", e);
     }

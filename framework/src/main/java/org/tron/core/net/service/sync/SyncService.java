@@ -92,6 +92,12 @@ public class SyncService {
   public void close() {
     fetchExecutor.shutdown();
     blockHandleExecutor.shutdown();
+    try {
+      blockHandleExecutor.awaitTermination(2, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      logger.warn("Shutdown blockHandleExecutor interrupted");
+      Thread.currentThread().interrupt();
+    }
   }
 
   public void startSync(PeerConnection peer) {

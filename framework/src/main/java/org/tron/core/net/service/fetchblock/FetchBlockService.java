@@ -62,6 +62,12 @@ public class FetchBlockService {
 
   public void close() {
     fetchBlockWorkerExecutor.shutdown();
+    try {
+      fetchBlockWorkerExecutor.awaitTermination(2, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      logger.warn("Shutdown fetchBlockWorkerExecutor interrupted");
+      Thread.currentThread().interrupt();
+    }
   }
 
   public void fetchBlock(List<Sha256Hash> sha256HashList, PeerConnection peer) {

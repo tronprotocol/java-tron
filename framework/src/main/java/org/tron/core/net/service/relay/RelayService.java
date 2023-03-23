@@ -97,6 +97,12 @@ public class RelayService {
 
   public void close() {
     executorService.shutdown();
+    try {
+      executorService.awaitTermination(1, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      logger.warn("Shutdown fastForwardAddExecutor interrupted!");
+      Thread.currentThread().interrupt();
+    }
   }
 
   public void fillHelloMessage(HelloMessage message, Channel channel) {

@@ -3,6 +3,10 @@ package org.tron.consensus.dpos;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import com.google.protobuf.ByteString;
+import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
@@ -34,7 +38,8 @@ public class DposTask {
   @Setter
   private DposService dposService;
 
-  private Thread produceThread;
+  private ExecutorService dposSingleThreadExecutor;
+
 
   private volatile boolean isRunning = true;
 
@@ -43,8 +48,9 @@ public class DposTask {
     if (!dposService.isEnable() || StringUtils.isEmpty(dposService.getMiners())) {
       return;
     }
-
+    dposSingleThreadExecutor = Executors.newSingleThreadExecutor();
     Runnable runnable = () -> {
+      Thread.currentThread().setName("DPosMiner");
       while (isRunning) {
         try {
           if (dposService.isNeedSyncCheck()) {
@@ -67,15 +73,21 @@ public class DposTask {
         }
       }
     };
-    produceThread = new Thread(runnable, "DPosMiner");
-    produceThread.start();
+    dposSingleThreadExecutor.execute(runnable);
     logger.info("DPoS task started.");
   }
 
   public void stop() {
     isRunning = false;
-    if (produceThread != null) {
-      produceThread.interrupt();
+    if (Objects.isNull(dposSingleThreadExecutor)) {
+      return;
+    }
+    dposSingleThreadExecutor.shutdown();
+    try {
+      dposSingleThreadExecutor.awaitTermination(4, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      logger.warn("Shutdown dpos task interrupted.");
+      Thread.currentThread().interrupt();
     }
     logger.info("DPoS task stopped.");
   }
