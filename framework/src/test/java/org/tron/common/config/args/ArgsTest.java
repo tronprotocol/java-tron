@@ -13,8 +13,8 @@ public class ArgsTest {
 
   @Before
   public void init() {
-    Args.setParam(new String[]{"--output-directory", "output-directory", "--debug"},
-        Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", "output-directory", "--p2p-disable", "true",
+        "--debug"}, Constant.TEST_CONF);
   }
 
   @After
@@ -31,5 +31,6 @@ public class ArgsTest {
     Assert.assertEquals(Args.getInstance().getMaxFastForwardNum(), 3);
     Assert.assertEquals(Args.getInstance().getBlockCacheTimeout(), 60);
     Assert.assertEquals(Args.getInstance().isNodeDetectEnable(), false);
+    Assert.assertEquals(Args.getInstance().p2pDisable, true);
   }
 }

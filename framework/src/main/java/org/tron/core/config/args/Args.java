@@ -225,6 +225,7 @@ public class Args extends CommonParameter {
     PARAMETER.allowNewRewardAlgorithm = 0;
     PARAMETER.allowNewReward = 0;
     PARAMETER.memoFee = 0;
+    PARAMETER.p2pDisable = false;
   }
 
   /**
