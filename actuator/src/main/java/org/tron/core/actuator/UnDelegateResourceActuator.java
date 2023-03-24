@@ -180,7 +180,8 @@ public class UnDelegateResourceActuator extends AbstractActuator {
         //this should never happen
         break;
     }
-    logger.info("undelegate resource detail:{},{},{}", ownerCapsule.getAddress(),
+    logger.info("undelegate resource detail:{},{},{}",
+        StringUtil.createReadableString(ownerCapsule.getAddress()),
         ownerCapsule.getType(), unDelegateBalance);
     if (unlockResource.getFrozenBalanceForBandwidth() == 0
         && unlockResource.getFrozenBalanceForEnergy() == 0) {

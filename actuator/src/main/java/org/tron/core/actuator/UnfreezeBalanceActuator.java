@@ -302,7 +302,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
 
     accountStore.put(ownerAddress, accountCapsule);
     logger.info("unfreezeV1 detail:{},{},{}",
-        accountCapsule.getAddress(),
+        StringUtil.createReadableString(accountCapsule.getAddress()),
         accountCapsule.getType(),
         unfreezeBalance);
     ret.setUnfreezeAmount(unfreezeBalance);

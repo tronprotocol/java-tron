@@ -2243,26 +2243,26 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   //The unit is trx
   public void addTotalNetWeight(long amount) {
     long totalNetWeight = getTotalNetWeight();
-    logger.info("totalNetWeight:{}", totalNetWeight);
     totalNetWeight += amount;
     if (allowNewReward()) {
       totalNetWeight = Math.max(0, totalNetWeight);
     }
     String version = supportUnfreezeDelay() ? STAKE_VERSION_V2 : STAKE_VERSION_V1;
     Metrics.gaugeSet(TOTAL_RESOURCE_WEIGHT, totalNetWeight, version, STAKE_NET);
+    logger.info("totalNetWeight:{}", totalNetWeight);
     saveTotalNetWeight(totalNetWeight);
   }
 
   //The unit is trx
   public void addTotalEnergyWeight(long amount) {
     long totalEnergyWeight = getTotalEnergyWeight();
-    logger.info("totalEnergyWeight:{}", totalEnergyWeight);
     totalEnergyWeight += amount;
     if (allowNewReward()) {
       totalEnergyWeight = Math.max(0, totalEnergyWeight);
     }
     String version = supportUnfreezeDelay() ? STAKE_VERSION_V2 : STAKE_VERSION_V1;
     Metrics.gaugeSet(TOTAL_RESOURCE_WEIGHT, totalEnergyWeight, version, STAKE_ENERGY);
+    logger.info("totalEnergyWeight:{}", totalEnergyWeight);
     saveTotalEnergyWeight(totalEnergyWeight);
   }
 
