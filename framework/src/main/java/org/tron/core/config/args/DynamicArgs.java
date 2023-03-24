@@ -92,6 +92,7 @@ public class DynamicArgs {
         }
       } catch (InterruptedException e) {
         logger.warn("WatchService was interrupted");
+        Thread.currentThread().interrupt();
         break;
       } catch (IOException e) {
         logger.error("Exception caught when register the watch key", e.getCause());
