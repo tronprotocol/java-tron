@@ -223,6 +223,7 @@ public class Args extends CommonParameter {
     PARAMETER.memoFee = 0;
     PARAMETER.rateLimiterGlobalQps = 3000;
     PARAMETER.rateLimiterGlobalIpQps = 30;
+    PARAMETER.p2pDisable = false;
   }
 
   /**
