@@ -91,7 +91,8 @@ public class DelegateResourceActuator extends AbstractActuator {
       default:
         logger.debug("Resource Code Error.");
     }
-    logger.info("delegate resource detail:{},{},{}", ownerCapsule.getAddress(),
+    logger.info("delegate resource detail:{},{},{}",
+        StringUtil.createReadableString(ownerCapsule.getAddress()),
         ownerCapsule.getType(), delegateBalance);
     accountStore.put(ownerCapsule.createDbKey(), ownerCapsule);
 

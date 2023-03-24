@@ -91,7 +91,7 @@ public class FreezeBalanceV2Actuator extends AbstractActuator {
         logger.debug("Resource Code Error.");
     }
     logger.info("freezeV2 detail:{},{},{},{}",
-        accountCapsule.getAddress(),
+        StringUtil.createReadableString(accountCapsule.getAddress()),
         accountCapsule.getType(),
         frozenBalance,
         accountCapsule.getFrozenV2BalanceWithDelegated(BANDWIDTH) +

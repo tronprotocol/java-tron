@@ -99,7 +99,12 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
     }
 
     accountStore.put(ownerAddress, accountCapsule);
-
+    logger.info("unfreezeV2 detail:{},{},{},{}",
+        StringUtil.createReadableString(accountCapsule.getAddress()),
+        accountCapsule.getType(),
+        unfreezeBalance,
+        accountCapsule.getFrozenV2BalanceWithDelegated(BANDWIDTH) +
+            accountCapsule.getFrozenV2BalanceWithDelegated(ENERGY));
     ret.setWithdrawExpireAmount(unfreezeAmount);
     ret.setStatus(fee, code.SUCESS);
     return true;
