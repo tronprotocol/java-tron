@@ -5,6 +5,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.netty.channel.ChannelFutureListener;
 import java.net.InetSocketAddress;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -42,6 +43,7 @@ public class EffectiveCheckService {
   private final AtomicInteger count = new AtomicInteger(0);
   private ScheduledExecutorService executor = null;
   private boolean isRunning = false;
+  private boolean isClosed = false;
 
   public void init() {
     if (isEffectiveCheck) {
@@ -60,6 +62,7 @@ public class EffectiveCheckService {
   }
 
   public void close() {
+    isClosed = true;
     if (executor != null) {
       try {
         executor.shutdown();
@@ -77,6 +80,9 @@ public class EffectiveCheckService {
 
   //try to find node which we can sync from
   private void findEffectiveNode() {
+    if (isClosed) {
+      return;
+    }
     if (!isIsolateLand()) {
       if (count.get() > 0) {
         logger.info("Success to verify effective node {}", cur);
@@ -100,6 +106,7 @@ public class EffectiveCheckService {
     }
 
     List<Node> tableNodes = TronNetService.getP2pService().getConnectableNodes();
+    tableNodes.sort(Comparator.comparingLong(node -> -node.getUpdateTime()));
     Set<InetSocketAddress> usedAddressSet = new HashSet<>();
     tronNetDelegate.getActivePeer().forEach(p -> usedAddressSet.add(p.getInetSocketAddress()));
     Optional<Node> chosenNode = tableNodes.stream()
