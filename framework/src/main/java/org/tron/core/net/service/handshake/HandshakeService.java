@@ -104,8 +104,8 @@ public class HandshakeService {
 
     if (effectiveCheckService.isEffectiveCheck() && effectiveCheckService.isIsolateLand()
         && peer.getInetSocketAddress().equals(effectiveCheckService.getCur())) {
-      if (msg.getSolidBlockId().getNum() <= chainBaseManager.getSolidBlockId().getNum()) {
-        logger.info("Peer's solid block {} is below than we, peer->{}, me->{}",
+      if (msg.getHeadBlockId().getNum() <= chainBaseManager.getHeadBlockId().getNum()) {
+        logger.info("Peer's head block {} is below than we, peer->{}, me->{}",
             peer.getInetSocketAddress(),
             msg.getSolidBlockId().getNum(),
             chainBaseManager.getSolidBlockId().getNum());
