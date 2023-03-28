@@ -221,8 +221,8 @@ public class Args extends CommonParameter {
     PARAMETER.allowNewRewardAlgorithm = 0;
     PARAMETER.allowNewReward = 0;
     PARAMETER.memoFee = 0;
-    PARAMETER.rateLimiterGlobalQps = 3000;
-    PARAMETER.rateLimiterGlobalIpQps = 30;
+    PARAMETER.rateLimiterGlobalQps = 50000;
+    PARAMETER.rateLimiterGlobalIpQps = 10000;
     PARAMETER.p2pDisable = false;
   }
 
@@ -932,11 +932,11 @@ public class Args extends CommonParameter {
 
     PARAMETER.rateLimiterGlobalQps =
         config.hasPath(Constant.RATE_LIMITER_GLOBAL_QPS) ? config
-            .getInt(Constant.RATE_LIMITER_GLOBAL_QPS) : 3000;
+            .getInt(Constant.RATE_LIMITER_GLOBAL_QPS) : 50000;
 
     PARAMETER.rateLimiterGlobalIpQps =
         config.hasPath(Constant.RATE_LIMITER_GLOBAL_IP_QPS) ? config
-            .getInt(Constant.RATE_LIMITER_GLOBAL_IP_QPS) : 30;
+            .getInt(Constant.RATE_LIMITER_GLOBAL_IP_QPS) : 10000;
 
     PARAMETER.rateLimiterInitialization =
         config.hasPath(Constant.RATE_LIMITER) ? getRateLimiterFromConfig(config)
@@ -1490,6 +1490,8 @@ public class Args extends CommonParameter {
     logger.info("Max connection with same IP: {}", parameter.getMaxConnectionsWithSameIp());
     logger.info("Solidity threads: {}", parameter.getSolidityThreads());
     logger.info("Trx reference block: {}", parameter.getTrxReferenceBlock());
+    logger.info("Rate limiter global qps: {}", parameter.getRateLimiterGlobalQps());
+    logger.info("Rate limiter global ip qps: {}", parameter.getRateLimiterGlobalIpQps());
     logger.info("************************ Backup config ************************");
     logger.info("Backup priority: {}", parameter.getBackupPriority());
     logger.info("Backup listen port: {}", parameter.getBackupPort());
