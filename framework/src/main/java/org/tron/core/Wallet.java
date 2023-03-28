@@ -648,18 +648,6 @@ public class Wallet {
     return tswBuilder.build();
   }
 
-  public byte[] pass2Key(byte[] passPhrase) {
-    return Sha256Hash.hash(CommonParameter
-        .getInstance().isECKeyCryptoEngine(), passPhrase);
-  }
-
-  public byte[] createAddress(byte[] passPhrase) {
-    byte[] privateKey = pass2Key(passPhrase);
-    SignInterface ecKey = SignUtils.fromPrivate(privateKey,
-        Args.getInstance().isECKeyCryptoEngine());
-    return ecKey.getAddress();
-  }
-
   public Block getNowBlock() {
     List<BlockCapsule> blockList = chainBaseManager.getBlockStore().getBlockByLatestNum(1);
     if (CollectionUtils.isEmpty(blockList)) {
