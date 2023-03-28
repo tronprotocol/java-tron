@@ -40,12 +40,14 @@ import org.tron.core.net.message.handshake.HelloMessage;
 import org.tron.core.net.message.keepalive.PingMessage;
 import org.tron.core.net.message.keepalive.PongMessage;
 import org.tron.core.net.service.adv.AdvService;
+import org.tron.core.net.service.effective.EffectiveCheckService;
 import org.tron.core.net.service.statistics.NodeStatistics;
 import org.tron.core.net.service.statistics.PeerStatistics;
 import org.tron.core.net.service.statistics.TronStatsManager;
 import org.tron.core.net.service.sync.SyncService;
 import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.ReasonCode;
 
 @Slf4j(topic = "net")
 @Component
@@ -87,6 +89,9 @@ public class PeerConnection {
 
   @Autowired
   private AdvService advService;
+
+  @Autowired
+  private EffectiveCheckService effectiveCheckService;
 
   @Setter
   @Getter
@@ -182,6 +187,12 @@ public class PeerConnection {
       needSyncFromUs = false;
       syncService.startSync(this);
     } else {
+      if (getInetSocketAddress().equals(effectiveCheckService.getCur())) {
+        logger.info("Peer's head block {} is below than we, peer->{}, me->{}",
+            getInetSocketAddress(), peerHeadBlockNum, headBlockNum);
+        disconnect(ReasonCode.BELOW_THAN_ME);
+        return;
+      }
       needSyncFromPeer = false;
       if (peerHeadBlockNum == headBlockNum) {
         needSyncFromUs = false;

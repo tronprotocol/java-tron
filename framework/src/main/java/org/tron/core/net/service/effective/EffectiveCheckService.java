@@ -3,7 +3,6 @@ package org.tron.core.net.service.effective;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import io.netty.channel.ChannelFutureListener;
 import java.net.InetSocketAddress;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -142,16 +141,19 @@ public class EffectiveCheckService {
         triggerNext();
       } else {
         // Connection established successfully
-        future.channel().closeFuture().addListener((ChannelFutureListener) closeFuture -> {
-          logger.info("Close chosen channel:{}", cur);
-          cur = null;
-          triggerNext();
-        });
       }
     });
   }
 
   private void resetCount() {
     count.set(0);
+  }
+
+  public void onDisconnect(InetSocketAddress inetSocketAddress) {
+    if (inetSocketAddress.equals(cur)) {
+      logger.warn("Close chosen peer: {}", cur);
+      cur = null;
+      triggerNext();
+    }
   }
 }
