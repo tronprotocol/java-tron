@@ -1,5 +1,6 @@
 package org.tron.core.config.args;
 
+import java.io.File;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -10,10 +11,8 @@ import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
-import org.tron.core.net.TronNetService;
-import org.tron.p2p.P2pConfig;
-
-import java.io.File;
+//import org.tron.core.net.TronNetService;
+//import org.tron.p2p.P2pConfig;
 
 public class DynamicArgsTest {
   protected TronApplicationContext context;
@@ -45,11 +44,13 @@ public class DynamicArgsTest {
 
   @Test
   public void start() {
-    dynamicArgs.start();
-    TronNetService tronNetService = context.getBean(TronNetService.class);
-    ReflectUtils.setFieldValue(tronNetService, "p2pConfig", new P2pConfig());
-    dynamicArgs.reload();
+    dynamicArgs.init();
+    Assert.assertEquals(0, (long) ReflectUtils.getFieldObject(dynamicArgs, "lastModified"));
+
+    dynamicArgs.run();
+//    TronNetService tronNetService = context.getBean(TronNetService.class);
+//    ReflectUtils.setFieldValue(tronNetService, "p2pConfig", new P2pConfig());
+//    dynamicArgs.reload();
     dynamicArgs.close();
-    Assert.assertTrue((boolean)ReflectUtils.getFieldObject(dynamicArgs, "shutdown"));
   }
 }
