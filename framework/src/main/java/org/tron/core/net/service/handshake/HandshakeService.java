@@ -11,7 +11,6 @@ import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.handshake.HelloMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
-import org.tron.core.net.service.effective.EffectiveCheckService;
 import org.tron.core.net.service.relay.RelayService;
 import org.tron.p2p.discover.Node;
 import org.tron.protos.Protocol.ReasonCode;
@@ -22,9 +21,6 @@ public class HandshakeService {
 
   @Autowired
   private RelayService relayService;
-
-  @Autowired
-  private EffectiveCheckService effectiveCheckService;
 
   @Autowired
   private ChainBaseManager chainBaseManager;
