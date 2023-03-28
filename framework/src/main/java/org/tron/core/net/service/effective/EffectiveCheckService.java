@@ -52,7 +52,7 @@ public class EffectiveCheckService {
         } catch (Exception e) {
           logger.error("Check effective connection processing failed", e);
         }
-      }, 60 * 1000, 200, TimeUnit.MILLISECONDS);
+      }, 60 , 5, TimeUnit.SECONDS);
     } else {
       logger.info("EffectiveCheckService is disabled");
     }
