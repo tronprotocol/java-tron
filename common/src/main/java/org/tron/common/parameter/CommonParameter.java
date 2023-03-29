@@ -618,6 +618,10 @@ public class CommonParameter {
   @Setter
   public boolean dynamicConfigEnable;
 
+  @Getter
+  @Setter
+  public long dynamicConfigCheckInterval;
+
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));
     return 5.0;

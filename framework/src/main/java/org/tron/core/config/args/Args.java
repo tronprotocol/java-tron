@@ -223,6 +223,7 @@ public class Args extends CommonParameter {
     PARAMETER.memoFee = 0;
     PARAMETER.p2pDisable = false;
     PARAMETER.dynamicConfigEnable = false;
+    PARAMETER.dynamicConfigCheckInterval = 600;
   }
 
   /**
@@ -1126,6 +1127,15 @@ public class Args extends CommonParameter {
 
     PARAMETER.dynamicConfigEnable = config.hasPath(Constant.DYNAMIC_CONFIG_ENABLE)
         && config.getBoolean(Constant.DYNAMIC_CONFIG_ENABLE);
+    if (config.hasPath(Constant.DYNAMIC_CONFIG_CHECK_INTERVAL)) {
+      PARAMETER.dynamicConfigCheckInterval
+          = config.getLong(Constant.DYNAMIC_CONFIG_CHECK_INTERVAL);
+      if (PARAMETER.dynamicConfigCheckInterval <= 0) {
+        PARAMETER.dynamicConfigCheckInterval = 600;
+      }
+    } else {
+      PARAMETER.dynamicConfigCheckInterval = 600;
+    }
 
     logConfig();
   }

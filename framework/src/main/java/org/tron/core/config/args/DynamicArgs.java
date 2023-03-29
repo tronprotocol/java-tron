@@ -31,19 +31,19 @@ public class DynamicArgs {
   public void init() {
     if (parameter.isDynamicConfigEnable()) {
       File config = getConfigFile();
-      if (config != null) {
-        lastModified = config.lastModified();
-      } else {
+      if (config == null) {
         return;
       }
+      lastModified = config.lastModified();
       logger.info("Start the dynamic loading configuration service");
+      long checkInterval = parameter.getDynamicConfigCheckInterval();
       reloadExecutor.scheduleWithFixedDelay(() -> {
         try {
           run();
         } catch (Exception e) {
           logger.error("Exception caught when reloading configuration", e);
         }
-      }, 100, 10, TimeUnit.SECONDS);
+      }, 10, checkInterval, TimeUnit.SECONDS);
     }
   }
 
@@ -108,7 +108,7 @@ public class DynamicArgs {
   }
 
   public void close() {
-    logger.info("Closing the dynamic loading configuration service ...");
+    logger.info("Closing the dynamic loading configuration service");
     reloadExecutor.shutdown();
   }
 }

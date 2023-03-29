@@ -11,8 +11,8 @@ import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
-//import org.tron.core.net.TronNetService;
-//import org.tron.p2p.P2pConfig;
+import org.tron.core.net.TronNetService;
+import org.tron.p2p.P2pConfig;
 
 public class DynamicArgsTest {
   protected TronApplicationContext context;
@@ -39,7 +39,7 @@ public class DynamicArgsTest {
   public void get() {
     CommonParameter parameter = Args.getInstance();
     Assert.assertFalse(parameter.isDynamicConfigEnable());
-
+    Assert.assertEquals(600, parameter.getDynamicConfigCheckInterval());
   }
 
   @Test
@@ -47,10 +47,23 @@ public class DynamicArgsTest {
     dynamicArgs.init();
     Assert.assertEquals(0, (long) ReflectUtils.getFieldObject(dynamicArgs, "lastModified"));
 
-    dynamicArgs.run();
-//    TronNetService tronNetService = context.getBean(TronNetService.class);
-//    ReflectUtils.setFieldValue(tronNetService, "p2pConfig", new P2pConfig());
-//    dynamicArgs.reload();
+    TronNetService tronNetService = context.getBean(TronNetService.class);
+    ReflectUtils.setFieldValue(tronNetService, "p2pConfig", new P2pConfig());
+    File config = new File(Constant.TESTNET_CONF);
+    if (!config.exists()) {
+      try {
+        config.createNewFile();
+      } catch (Exception e) {
+        return;
+      }
+      dynamicArgs.run();
+      try {
+        config.delete();
+      } catch (Exception e) {
+        return;
+      }
+    }
+
     dynamicArgs.close();
   }
 }

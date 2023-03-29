@@ -344,5 +344,6 @@ public class Constant {
 
   public static final String BLOCK_CACHE_TIMEOUT = "node.blockCacheTimeout";
 
-  public static final String DYNAMIC_CONFIG_ENABLE = "dynamicConfigEnable";
+  public static final String DYNAMIC_CONFIG_ENABLE = "node.dynamicConfig.enable";
+  public static final String DYNAMIC_CONFIG_CHECK_INTERVAL = "node.dynamicConfig.checkInterval";
 }
