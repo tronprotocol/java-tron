@@ -40,7 +40,6 @@ import org.tron.core.net.message.handshake.HelloMessage;
 import org.tron.core.net.message.keepalive.PingMessage;
 import org.tron.core.net.message.keepalive.PongMessage;
 import org.tron.core.net.service.adv.AdvService;
-import org.tron.core.net.service.effective.EffectiveCheckService;
 import org.tron.core.net.service.statistics.NodeStatistics;
 import org.tron.core.net.service.statistics.PeerStatistics;
 import org.tron.core.net.service.statistics.TronStatsManager;
