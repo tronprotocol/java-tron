@@ -1323,11 +1323,11 @@ public class Args extends CommonParameter {
     }
 
     if (publishConfig.isDnsPublishEnable()) {
-      if (config.hasPath(Constant.NODE_DNS_DOMAIN)) {
+      if (config.hasPath(Constant.NODE_DNS_DOMAIN) && StringUtils.isNotEmpty(
+          config.getString(Constant.NODE_DNS_DOMAIN))) {
         publishConfig.setDnsDomain(config.getString(Constant.NODE_DNS_DOMAIN));
       } else {
         logEmptyError(Constant.NODE_DNS_DOMAIN);
-        return null;
       }
 
       if (config.hasPath(Constant.NODE_DNS_CHANGE_THRESHOLD)) {
@@ -1349,11 +1349,11 @@ public class Args extends CommonParameter {
         }
       }
 
-      if (config.hasPath(Constant.NODE_DNS_PRIVATE)) {
+      if (config.hasPath(Constant.NODE_DNS_PRIVATE) && StringUtils.isNotEmpty(
+          config.getString(Constant.NODE_DNS_PRIVATE))) {
         publishConfig.setDnsPrivate(config.getString(Constant.NODE_DNS_PRIVATE));
       } else {
         logEmptyError(Constant.NODE_DNS_PRIVATE);
-        return null;
       }
 
       if (config.hasPath(Constant.NODE_DNS_KNOWN_URLS)) {
@@ -1365,11 +1365,12 @@ public class Args extends CommonParameter {
             getInetSocketAddress(config, Constant.NODE_DNS_STATIC_NODES, false));
       }
 
-      if (config.hasPath(Constant.NODE_DNS_SERVER_TYPE)) {
+      if (config.hasPath(Constant.NODE_DNS_SERVER_TYPE) && StringUtils.isNotEmpty(
+          config.getString(Constant.NODE_DNS_SERVER_TYPE))) {
         String serverType = config.getString(Constant.NODE_DNS_SERVER_TYPE);
         if (!"aws".equalsIgnoreCase(serverType) && !"aliyun".equalsIgnoreCase(serverType)) {
-          logger.error("Check {}, must be aws or aliyun", Constant.NODE_DNS_SERVER_TYPE);
-          return null;
+          throw new IllegalArgumentException(
+              String.format("Check %s, must be aws or aliyun", Constant.NODE_DNS_SERVER_TYPE));
         }
         if ("aws".equalsIgnoreCase(serverType)) {
           publishConfig.setDnsType(DnsType.AwsRoute53);
@@ -1378,38 +1379,37 @@ public class Args extends CommonParameter {
         }
       } else {
         logEmptyError(Constant.NODE_DNS_SERVER_TYPE);
-        return null;
       }
 
-      if (config.hasPath(Constant.NODE_DNS_ACCESS_KEY_ID)) {
+      if (config.hasPath(Constant.NODE_DNS_ACCESS_KEY_ID) && StringUtils.isNotEmpty(
+          config.getString(Constant.NODE_DNS_ACCESS_KEY_ID))) {
         publishConfig.setAccessKeyId(config.getString(Constant.NODE_DNS_ACCESS_KEY_ID));
       } else {
         logEmptyError(Constant.NODE_DNS_ACCESS_KEY_ID);
-        return null;
       }
-      if (config.hasPath(Constant.NODE_DNS_ACCESS_KEY_SECRET)) {
+      if (config.hasPath(Constant.NODE_DNS_ACCESS_KEY_SECRET) && StringUtils.isNotEmpty(
+          config.getString(Constant.NODE_DNS_ACCESS_KEY_SECRET))) {
         publishConfig.setAccessKeySecret(config.getString(Constant.NODE_DNS_ACCESS_KEY_SECRET));
       } else {
         logEmptyError(Constant.NODE_DNS_ACCESS_KEY_SECRET);
-        return null;
       }
 
       if (publishConfig.getDnsType() == DnsType.AwsRoute53) {
-        if (!config.hasPath(Constant.NODE_DNS_AWS_REGION)) {
-          logEmptyError(Constant.NODE_DNS_AWS_REGION);
-          return null;
-        } else {
+        if (config.hasPath(Constant.NODE_DNS_AWS_REGION) && StringUtils.isNotEmpty(
+            config.getString(Constant.NODE_DNS_AWS_REGION))) {
           publishConfig.setAwsRegion(config.getString(Constant.NODE_DNS_AWS_REGION));
+        } else {
+          logEmptyError(Constant.NODE_DNS_AWS_REGION);
         }
         if (config.hasPath(Constant.NODE_DNS_AWS_HOST_ZONE_ID)) {
           publishConfig.setAwsHostZoneId(config.getString(Constant.NODE_DNS_AWS_HOST_ZONE_ID));
         }
       } else {
-        if (!config.hasPath(Constant.NODE_DNS_ALIYUN_ENDPOINT)) {
-          logEmptyError(Constant.NODE_DNS_ALIYUN_ENDPOINT);
-          return null;
-        } else {
+        if (config.hasPath(Constant.NODE_DNS_ALIYUN_ENDPOINT) && StringUtils.isNotEmpty(
+            config.getString(Constant.NODE_DNS_ALIYUN_ENDPOINT))) {
           publishConfig.setAliDnsEndpoint(config.getString(Constant.NODE_DNS_ALIYUN_ENDPOINT));
+        } else {
+          logEmptyError(Constant.NODE_DNS_ALIYUN_ENDPOINT);
         }
       }
     }
@@ -1417,7 +1417,7 @@ public class Args extends CommonParameter {
   }
 
   private static void logEmptyError(String arg) {
-    logger.error("Check {}, must not be null", arg);
+    throw new IllegalArgumentException(String.format("Check %s, must not be null or empty", arg));
   }
 
   private static TriggerConfig createTriggerConfig(ConfigObject triggerObject) {
