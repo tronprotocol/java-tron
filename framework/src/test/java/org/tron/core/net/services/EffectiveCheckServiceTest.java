@@ -1,0 +1,44 @@
+package org.tron.core.net.services;
+
+import java.io.File;
+import java.net.InetSocketAddress;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.tron.common.application.TronApplicationContext;
+import org.tron.common.utils.FileUtil;
+import org.tron.core.Constant;
+import org.tron.core.config.DefaultConfig;
+import org.tron.core.config.args.Args;
+import org.tron.core.net.service.effective.EffectiveCheckService;
+
+public class EffectiveCheckServiceTest {
+
+  protected TronApplicationContext context;
+  private EffectiveCheckService service;
+  private String dbPath = "output-effective-service-test";
+
+  @Before
+  public void init() {
+    Args.setParam(new String[] {"--output-directory", dbPath, "--debug"},
+        Constant.TEST_CONF);
+    context = new TronApplicationContext(DefaultConfig.class);
+    service = context.getBean(EffectiveCheckService.class);
+  }
+
+  @After
+  public void destroy() {
+    Args.clearParam();
+    FileUtil.deleteDir(new File(dbPath));
+  }
+
+  @Test
+  public void testFind() {
+    service.triggerNext();
+    Assert.assertNull(service.getCur());
+    service.setCur(new InetSocketAddress("192.168.10.100", 12345));
+    service.triggerNext();
+    Assert.assertNotNull(service.getCur());
+  }
+}

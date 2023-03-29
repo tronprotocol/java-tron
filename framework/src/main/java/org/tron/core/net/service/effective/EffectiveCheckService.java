@@ -14,6 +14,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -38,15 +39,15 @@ public class EffectiveCheckService {
       .maximumSize(10000)
       .expireAfterWrite(20, TimeUnit.MINUTES).build();
   @Getter
+  @Setter
   private volatile InetSocketAddress cur;
   private final AtomicInteger count = new AtomicInteger(0);
-  private ScheduledExecutorService executor = null;
+  private ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(
+      new ThreadFactoryBuilder().setNameFormat("effective-thread-%d").build());
   private long MAX_HANDSHAKE_TIME = 60_000;
 
   public void init() {
     if (isEffectiveCheck) {
-      executor = Executors.newSingleThreadScheduledExecutor(
-          new ThreadFactoryBuilder().setNameFormat("effective-thread-%d").build());
       executor.scheduleWithFixedDelay(() -> {
         try {
           findEffectiveNode();
@@ -59,7 +60,7 @@ public class EffectiveCheckService {
     }
   }
 
-  private void triggerNext() {
+  public void triggerNext() {
     try {
       executor.submit(this::findEffectiveNode);
     } catch (Exception e) {
