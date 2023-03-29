@@ -475,6 +475,8 @@ public class Manager {
     chainBaseManager.setMortgageService(mortgageService);
     this.initGenesis();
     worldStateCallBack.setExecute(false);
+    // worldState init, before khasoDb init
+    worldStateGenesis.init(chainBaseManager);
     try {
       this.khaosDb.start(chainBaseManager.getBlockById(
           getDynamicPropertiesStore().getLatestBlockHeaderHash()));
@@ -521,8 +523,6 @@ public class Manager {
 
     // init liteFullNode
     initLiteNode();
-    // init worldState
-    worldStateGenesis.init(chainBaseManager);
     long headNum = chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     logger.info("Current headNum is: {}.", headNum);
     boolean isLite = chainBaseManager.isLiteNode();
