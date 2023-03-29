@@ -22,6 +22,7 @@ import org.tron.core.Constant;
 import org.tron.core.config.args.Overlay;
 import org.tron.core.config.args.SeedNode;
 import org.tron.core.config.args.Storage;
+import org.tron.p2p.dns.update.PublishConfig;
 
 public class CommonParameter {
 
@@ -188,6 +189,16 @@ public class CommonParameter {
   @Getter
   @Setter
   public String p2pNodeId;
+  @Getter
+  @Setter
+  public boolean nodeEnableIpv6 = false;
+  @Getter
+  @Setter
+  public List<String> dnsTreeUrls;
+  @Getter
+  @Setter
+  public PublishConfig dnsPublishConfig;
+
   //If you are running a solidity node for java tron, this flag is set to true
   @Getter
   @Setter
@@ -320,6 +331,9 @@ public class CommonParameter {
   @Getter
   @Setter
   public boolean isOpenFullTcpDisconnect;
+  @Getter
+  @Setter
+  public boolean nodeDetectEnable;
   @Getter
   @Setter
   public int allowMultiSign;

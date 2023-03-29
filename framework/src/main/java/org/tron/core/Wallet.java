@@ -2644,7 +2644,8 @@ public class Wallet {
         nodeListBuilder.addNodes(Node.newBuilder().setAddress(
             Address.newBuilder()
                 .setHost(ByteString
-                    .copyFrom(ByteArray.fromString(node.getHost())))
+                    .copyFrom(ByteArray.fromString(
+                        node.getPreferInetSocketAddress().getAddress().getHostAddress())))
                 .setPort(node.getPort())));
       });
     }
