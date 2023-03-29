@@ -1202,9 +1202,6 @@ public class Args extends CommonParameter {
     List<String> list = config.getStringList(path);
     for (String configString : list) {
       InetSocketAddress inetSocketAddress = NetUtil.parseInetSocketAddress(configString);
-      if (inetSocketAddress == null) {
-        continue;
-      }
       if (filter) {
         String ip = inetSocketAddress.getAddress().getHostAddress();
         int port = inetSocketAddress.getPort();
@@ -1230,9 +1227,7 @@ public class Args extends CommonParameter {
     List<String> list = config.getStringList(path);
     for (String configString : list) {
       InetSocketAddress inetSocketAddress = NetUtil.parseInetSocketAddress(configString);
-      if (inetSocketAddress != null) {
-        ret.add(inetSocketAddress.getAddress());
-      }
+      ret.add(inetSocketAddress.getAddress());
     }
     return ret;
   }
@@ -1301,9 +1296,7 @@ public class Args extends CommonParameter {
     if (PARAMETER.seedNodes != null && !PARAMETER.seedNodes.isEmpty()) {
       for (String s : PARAMETER.seedNodes) {
         InetSocketAddress inetSocketAddress = NetUtil.parseInetSocketAddress(s);
-        if (inetSocketAddress != null) {
-          inetSocketAddressList.add(inetSocketAddress);
-        }
+        inetSocketAddressList.add(inetSocketAddress);
       }
     } else {
       inetSocketAddressList = getInetSocketAddress(config, Constant.SEED_NODE_IP_LIST, false);

@@ -11,6 +11,7 @@ import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.handshake.HelloMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
+import org.tron.core.net.service.effective.EffectiveCheckService;
 import org.tron.core.net.service.relay.RelayService;
 import org.tron.p2p.discover.Node;
 import org.tron.protos.Protocol.ReasonCode;
@@ -21,6 +22,9 @@ public class HandshakeService {
 
   @Autowired
   private RelayService relayService;
+
+  @Autowired
+  private EffectiveCheckService effectiveCheckService;
 
   @Autowired
   private ChainBaseManager chainBaseManager;
@@ -95,6 +99,15 @@ public class HandshakeService {
               msg.getSolidBlockId().getString(),
               chainBaseManager.getSolidBlockId().getString());
       peer.disconnect(ReasonCode.FORKED);
+      return;
+    }
+
+    if (msg.getHeadBlockId().getNum() < chainBaseManager.getHeadBlockId().getNum()
+        && peer.getInetSocketAddress().equals(effectiveCheckService.getCur())) {
+      logger.info("Peer's head block {} is below than we, peer->{}, me->{}",
+          peer.getInetSocketAddress(), msg.getHeadBlockId().getNum(),
+          chainBaseManager.getHeadBlockId().getNum());
+      peer.disconnect(ReasonCode.BELOW_THAN_ME);
       return;
     }
 

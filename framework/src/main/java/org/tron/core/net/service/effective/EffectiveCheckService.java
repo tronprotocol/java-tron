@@ -38,9 +38,10 @@ public class EffectiveCheckService {
       .maximumSize(10000)
       .expireAfterWrite(20, TimeUnit.MINUTES).build();
   @Getter
-  private InetSocketAddress cur;
+  private volatile InetSocketAddress cur;
   private final AtomicInteger count = new AtomicInteger(0);
   private ScheduledExecutorService executor = null;
+  private long MAX_HANDSHAKE_TIME = 60_000;
 
   public void init() {
     if (isEffectiveCheck) {
@@ -52,7 +53,7 @@ public class EffectiveCheckService {
         } catch (Exception e) {
           logger.error("Check effective connection processing failed", e);
         }
-      }, 60 , 5, TimeUnit.SECONDS);
+      }, 60, 5, TimeUnit.SECONDS);
     } else {
       logger.info("EffectiveCheckService is disabled");
     }
@@ -93,18 +94,15 @@ public class EffectiveCheckService {
     }
 
     if (cur != null) {
-      if (tronNetDelegate.getActivePeer().stream()
-          .anyMatch(p -> p.getInetSocketAddress().equals(cur))) {
-        // we encounter no effective connection again, so we disconnect with last used node
-        logger.info("Disconnect with {}", cur);
-        tronNetDelegate.getActivePeer().forEach(p -> {
-          if (p.getInetSocketAddress().equals(cur)) {
-            p.disconnect(ReasonCode.BELOW_THAN_ME);
-          }
-        });
-      } else {
-        logger.info("Thread is running");
-      }
+      tronNetDelegate.getActivePeer().forEach(p -> {
+        if (p.getInetSocketAddress().equals(cur)
+            && System.currentTimeMillis() - p.getChannel().getStartTime() >= MAX_HANDSHAKE_TIME) {
+          // we encounter no effective connection again, so we disconnect with last used node
+          logger.info("Disconnect with {}", cur);
+          p.disconnect(ReasonCode.BELOW_THAN_ME);
+        }
+      });
+      logger.info("Thread is running");
       return;
     }
 

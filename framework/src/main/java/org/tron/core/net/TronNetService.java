@@ -150,9 +150,7 @@ public class TronNetService {
   private P2pConfig getConfig() {
     List<InetSocketAddress> seeds = parameter.getSeedNode().getAddressList();
     seeds.addAll(nodePersistService.dbRead());
-    for (InetSocketAddress inetSocketAddress : seeds) {
-      logger.debug("Seed InetSocketAddress: {}", inetSocketAddress);
-    }
+    logger.debug("Seed InetSocketAddress: {}", seeds);
     P2pConfig config = new P2pConfig();
     config.getSeedNodes().addAll(seeds);
     config.getActiveNodes().addAll(parameter.getActiveNodes());
