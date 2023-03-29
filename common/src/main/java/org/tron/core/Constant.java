@@ -103,6 +103,22 @@ public class Constant {
 
   public static final String NODE_P2P_PING_INTERVAL = "node.p2p.pingInterval";
   public static final String NODE_P2P_VERSION = "node.p2p.version";
+  public static final String NODE_ENABLE_IPV6  = "node.enableIpv6";
+  public static final String NODE_DNS_TREE_URLS = "node.dns.treeUrls";
+  public static final String NODE_DNS_PUBLISH = "node.dns.publish";
+  public static final String NODE_DNS_DOMAIN = "node.dns.dnsDomain";
+  public static final String NODE_DNS_CHANGE_THRESHOLD = "node.dns.changeThreshold";
+  public static final String NODE_DNS_MAX_MERGE_SIZE = "node.dns.maxMergeSize";
+  public static final String NODE_DNS_PRIVATE = "node.dns.dnsPrivate";
+  public static final String NODE_DNS_KNOWN_URLS = "node.dns.knownUrls";
+  public static final String NODE_DNS_STATIC_NODES = "node.dns.staticNodes";
+  public static final String NODE_DNS_SERVER_TYPE = "node.dns.serverType";
+  public static final String NODE_DNS_ACCESS_KEY_ID = "node.dns.accessKeyId";
+  public static final String NODE_DNS_ACCESS_KEY_SECRET = "node.dns.accessKeySecret";
+  public static final String NODE_DNS_ALIYUN_ENDPOINT = "node.dns.aliyunDnsEndpoint";
+  public static final String NODE_DNS_AWS_REGION = "node.dns.awsRegion";
+  public static final String NODE_DNS_AWS_HOST_ZONE_ID = "node.dns.awsHostZoneId";
+
   public static final String NODE_RPC_PORT = "node.rpc.port";
   public static final String NODE_RPC_SOLIDITY_PORT = "node.rpc.solidityPort";
   public static final String NODE_RPC_PBFT_PORT = "node.rpc.PBFTPort";
@@ -175,6 +191,8 @@ public class Constant {
 
   public static final String NODE_IS_OPEN_FULL_TCP_DISCONNECT = "node.isOpenFullTcpDisconnect";
 
+  public static final String NODE_DETECT_ENABLE = "node.nodeDetectEnable";
+
   public static final String NODE_MAX_TRANSACTION_PENDING_SIZE = "node.maxTransactionPendingSize";
 
   public static final String NODE_PENDING_TRANSACTION_TIMEOUT = "node.pendingTransactionTimeout";
@@ -234,6 +252,10 @@ public class Constant {
   public static final String NODE_SHIELDED_TRANS_IN_PENDING_MAX_COUNTS = "node.shieldedTransInPendingMaxCounts";
 
   public static final String RATE_LIMITER = "rate.limiter";
+
+  public static final String RATE_LIMITER_GLOBAL_QPS = "rate.limiter.global.qps";
+
+  public static final String RATE_LIMITER_GLOBAL_IP_QPS = "rate.limiter.global.ip.qps";
 
   public static final String COMMITTEE_CHANGED_DELEGATION = "committee.changedDelegation";
 

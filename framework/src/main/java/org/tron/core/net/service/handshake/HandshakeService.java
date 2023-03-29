@@ -100,7 +100,7 @@ public class HandshakeService {
 
     peer.setHelloMessageReceive(msg);
 
-    peer.getChannel().updateLatency(
+    peer.getChannel().updateAvgLatency(
             System.currentTimeMillis() - peer.getChannel().getStartTime());
     PeerManager.sortPeers();
     peer.onConnect();
@@ -108,8 +108,9 @@ public class HandshakeService {
 
   private void sendHelloMessage(PeerConnection peer, long time) {
     Node node = new Node(TronNetService.getP2pConfig().getNodeID(),
-            TronNetService.getP2pConfig().getIp(),
-            TronNetService.getP2pConfig().getPort());
+        TronNetService.getP2pConfig().getIp(),
+        TronNetService.getP2pConfig().getIpv6(),
+        TronNetService.getP2pConfig().getPort());
     HelloMessage message = new HelloMessage(node, time, ChainBaseManager.getChainBaseManager());
     relayService.fillHelloMessage(message, peer.getChannel());
     peer.sendMessage(message);
