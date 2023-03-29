@@ -86,7 +86,7 @@ public class DynamicArgs {
 
   private void updateActiveNodes(Config config) {
     List<InetSocketAddress> newActiveNodes =
-        Args.getInetSocketAddress(config, Constant.NODE_ACTIVE);
+        Args.getInetSocketAddress(config, Constant.NODE_ACTIVE, true);
     parameter.setActiveNodes(newActiveNodes);
     List<InetSocketAddress> activeNodes = TronNetService.getP2pConfig().getActiveNodes();
     activeNodes.clear();
