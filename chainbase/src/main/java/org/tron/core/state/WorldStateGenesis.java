@@ -17,6 +17,7 @@ import javax.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.rocksdb.BlockBasedTableConfig;
 import org.rocksdb.BloomFilter;
 import org.rocksdb.ComparatorOptions;
@@ -32,6 +33,8 @@ import org.tron.common.utils.MarketOrderPriceComparatorForRockDB;
 import org.tron.common.utils.PropUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.db.BlockStore;
+import org.tron.core.exception.HeaderNotFound;
 
 @Component("worldStateGenesis")
 @Slf4j(topic = "DB")
@@ -145,8 +148,30 @@ public class WorldStateGenesis {
     }
     // copy state db
     initGenesis();
+    // reset root
+    resetArchiveRoot();
     // init genesis properties
     initGenesisProperties();
+  }
+
+  public void resetArchiveRoot() {
+    BlockStore blockStore = chainBaseManager.getBlockStore();
+    BlockCapsule blockCapsule = null;
+    try {
+      blockCapsule = chainBaseManager.getHead();
+      if (blockCapsule.getNum() == genesisHeight) {
+        logger.debug("skip reset archive root in case of the head is 0");
+        return;
+      }
+    } catch (HeaderNotFound e) {
+      logger.error("reset archive root failed, err: {}", e.getMessage());
+      System.exit(1);
+    }
+    logger.info("reset archive root, number: {}, prev root: {}",
+        blockCapsule.getNum(),
+        blockCapsule.getArchiveRoot());
+    blockCapsule.setArchiveRoot(Bytes32.ZERO.toArray());
+    blockStore.put(blockCapsule.getBlockId().getBytes(), blockCapsule);
   }
 
   private void initGenesisDBs() {
@@ -279,7 +304,7 @@ public class WorldStateGenesis {
         if (MARKET_PAIR_PRICE_TO_ORDER.equalsIgnoreCase(db.getFileName().toString())) {
           options.setComparator(new MarketOrderPriceComparatorForRockDB(new ComparatorOptions()));
         }
-        return  org.rocksdb.RocksDB.openReadOnly(options, db.toString());
+        return org.rocksdb.RocksDB.openReadOnly(options, db.toString());
       }
     }
 
