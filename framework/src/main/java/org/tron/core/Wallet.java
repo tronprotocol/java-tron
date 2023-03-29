@@ -2639,14 +2639,16 @@ public class Wallet {
 
   public NodeList listNodes() {
     NodeList.Builder nodeListBuilder = NodeList.newBuilder();
-    TronNetService.getP2pService().getConnectableNodes().forEach(node -> {
-      nodeListBuilder.addNodes(Node.newBuilder().setAddress(
-          Address.newBuilder()
-              .setHost(ByteString
-                  .copyFrom(ByteArray.fromString(
-                      node.getPreferInetSocketAddress().getAddress().getHostAddress())))
-              .setPort(node.getPort())));
-    });
+    if (!Args.getInstance().p2pDisable) {
+      TronNetService.getP2pService().getConnectableNodes().forEach(node -> {
+        nodeListBuilder.addNodes(Node.newBuilder().setAddress(
+            Address.newBuilder()
+                .setHost(ByteString
+                    .copyFrom(ByteArray.fromString(
+                        node.getPreferInetSocketAddress().getAddress().getHostAddress())))
+                .setPort(node.getPort())));
+      });
+    }
     return nodeListBuilder.build();
   }
 

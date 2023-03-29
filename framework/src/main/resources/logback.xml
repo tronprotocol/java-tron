@@ -60,7 +60,6 @@
     <queueSize>100</queueSize>
     <includeCallerData>true</includeCallerData>
     <appender-ref ref="FILE"/>
-    <appender-ref ref="DB"/>
   </appender>
 
   <root level="INFO">
@@ -76,7 +75,7 @@
   </root>
 
   <logger level="INFO" name="app"/>
-  <logger level="DEBUG" name="net"/>
+  <logger level="INFO" name="net"/>
   <logger level="INFO" name="backup"/>
   <logger level="INFO" name="discover"/>
   <logger level="INFO" name="crypto"/>

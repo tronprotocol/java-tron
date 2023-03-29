@@ -81,3 +81,11 @@ task copyToParent(type: Copy) {
 }
 
 build.finalizedBy(copyToParent)
+
+gradle.buildFinished {
+    if (project.hasProperty('cleanSubBuild')) {
+        subprojects {
+            buildDir.deleteDir()
+        }
+    }
+}

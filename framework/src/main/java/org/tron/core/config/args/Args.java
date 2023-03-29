@@ -226,6 +226,9 @@ public class Args extends CommonParameter {
     PARAMETER.allowNewRewardAlgorithm = 0;
     PARAMETER.allowNewReward = 0;
     PARAMETER.memoFee = 0;
+    PARAMETER.rateLimiterGlobalQps = 50000;
+    PARAMETER.rateLimiterGlobalIpQps = 10000;
+    PARAMETER.p2pDisable = false;
   }
 
   /**
@@ -946,6 +949,14 @@ public class Args extends CommonParameter {
       PARAMETER.fullNodeAllowShieldedTransactionArgs = true;
     }
 
+    PARAMETER.rateLimiterGlobalQps =
+        config.hasPath(Constant.RATE_LIMITER_GLOBAL_QPS) ? config
+            .getInt(Constant.RATE_LIMITER_GLOBAL_QPS) : 50000;
+
+    PARAMETER.rateLimiterGlobalIpQps =
+        config.hasPath(Constant.RATE_LIMITER_GLOBAL_IP_QPS) ? config
+            .getInt(Constant.RATE_LIMITER_GLOBAL_IP_QPS) : 10000;
+
     PARAMETER.rateLimiterInitialization =
         config.hasPath(Constant.RATE_LIMITER) ? getRateLimiterFromConfig(config)
             : new RateLimiterInitialization();
@@ -1621,6 +1632,8 @@ public class Args extends CommonParameter {
     logger.info("Open full tcp disconnect: {}", parameter.isOpenFullTcpDisconnect());
     logger.info("Node detect enable: {}", parameter.isNodeDetectEnable());
     logger.info("Node effective check enable: {}", parameter.isNodeEffectiveCheckEnable());
+    logger.info("Rate limiter global qps: {}", parameter.getRateLimiterGlobalQps());
+    logger.info("Rate limiter global ip qps: {}", parameter.getRateLimiterGlobalIpQps());
     logger.info("************************ Backup config ************************");
     logger.info("Backup priority: {}", parameter.getBackupPriority());
     logger.info("Backup listen port: {}", parameter.getBackupPort());
