@@ -15,6 +15,7 @@ import org.tron.core.Constant;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 import org.tron.p2p.discover.Node;
+import org.tron.p2p.dns.update.DnsType;
 import org.tron.p2p.dns.update.PublishConfig;
 import org.tron.p2p.utils.NetUtil;
 import org.tron.protos.Discover.Endpoint;
@@ -79,7 +80,8 @@ public class NodeTest {
   public void testPublishConfig() {
     Config config = Configuration.getByFileName(Constant.TEST_CONF, Constant.TEST_CONF);
     PublishConfig publishConfig = Args.loadDnsPublishConfig(config);
-    assert publishConfig != null;
-    Assert.assertFalse(publishConfig.isDnsPublishEnable());
+    Assert.assertTrue(publishConfig.isDnsPublishEnable());
+    Assert.assertEquals(5, publishConfig.getMaxMergeSize());
+    Assert.assertEquals(DnsType.AwsRoute53, publishConfig.getDnsType());
   }
 }
