@@ -412,6 +412,12 @@ public class CommonParameter {
   @Setter
   public RateLimiterInitialization rateLimiterInitialization;
   @Getter
+  @Setter
+  public int rateLimiterGlobalQps;
+  @Getter
+  @Setter
+  public int rateLimiterGlobalIpQps;
+  @Getter
   public DbBackupConfig dbBackupConfig;
   @Getter
   public RocksDbSettings rocksDBCustomSettings;
