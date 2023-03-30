@@ -1,7 +1,5 @@
 package org.tron.common.parameter;
 
-import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
-
 import com.beust.jcommander.Parameter;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -9,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import com.google.common.annotations.VisibleForTesting;
 import lombok.Getter;
 import lombok.Setter;
 import org.quartz.CronExpression;
@@ -142,6 +139,9 @@ public class CommonParameter {
   @Getter
   @Setter
   public boolean nodeDiscoveryPersist;
+  @Getter
+  @Setter
+  public boolean nodeEffectiveCheckEnable;
   @Getter
   @Setter
   public int nodeConnectionTimeout;

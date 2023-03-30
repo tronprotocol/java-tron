@@ -21,6 +21,7 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
 import org.tron.core.net.peer.PeerStatusCheck;
 import org.tron.core.net.service.adv.AdvService;
+import org.tron.core.net.service.effective.EffectiveCheckService;
 import org.tron.core.net.service.fetchblock.FetchBlockService;
 import org.tron.core.net.service.nodepersist.NodePersistService;
 import org.tron.core.net.service.relay.RelayService;
@@ -69,6 +70,9 @@ public class TronNetService {
   @Autowired
   private RelayService relayService;
 
+  @Autowired
+  private EffectiveCheckService effectiveCheckService;
+
   private volatile boolean init;
 
   private static void setP2pConfig(P2pConfig config) {
@@ -90,6 +94,7 @@ public class TronNetService {
       tronStatsManager.init();
       PeerManager.init();
       relayService.init();
+      effectiveCheckService.init();
       logger.info("Net service start successfully");
     } catch (Exception e) {
       logger.error("Net service start failed", e);
@@ -108,6 +113,7 @@ public class TronNetService {
     peerStatusCheck.close();
     transactionsMsgHandler.close();
     fetchBlockService.close();
+    effectiveCheckService.close();
     p2pService.close();
     relayService.close();
     logger.info("Net service closed successfully");
@@ -144,13 +150,11 @@ public class TronNetService {
   private P2pConfig getConfig() {
     List<InetSocketAddress> seeds = parameter.getSeedNode().getAddressList();
     seeds.addAll(nodePersistService.dbRead());
-    for (InetSocketAddress inetSocketAddress : seeds) {
-      logger.debug("Seed InetSocketAddress: {}", inetSocketAddress);
-    }
+    logger.debug("Seed InetSocketAddress: {}", seeds);
     P2pConfig config = new P2pConfig();
-    config.setSeedNodes(seeds);
-    config.setActiveNodes(parameter.getActiveNodes());
-    config.setTrustNodes(parameter.getPassiveNodes());
+    config.getSeedNodes().addAll(seeds);
+    config.getActiveNodes().addAll(parameter.getActiveNodes());
+    config.getTrustNodes().addAll(parameter.getPassiveNodes());
     config.getActiveNodes().forEach(n -> config.getTrustNodes().add(n.getAddress()));
     parameter.getFastForwardNodes().forEach(f -> config.getTrustNodes().add(f.getAddress()));
     int maxConnections = parameter.getMaxConnections();

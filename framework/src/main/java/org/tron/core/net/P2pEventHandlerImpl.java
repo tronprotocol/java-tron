@@ -28,6 +28,7 @@ import org.tron.core.net.messagehandler.SyncBlockChainMsgHandler;
 import org.tron.core.net.messagehandler.TransactionsMsgHandler;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
+import org.tron.core.net.service.effective.EffectiveCheckService;
 import org.tron.core.net.service.handshake.HandshakeService;
 import org.tron.core.net.service.keepalive.KeepAliveService;
 import org.tron.p2p.P2pEventHandler;
@@ -78,6 +79,9 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
   @Autowired
   private KeepAliveService keepAliveService;
 
+  @Autowired
+  private EffectiveCheckService effectiveCheckService;
+
   private byte MESSAGE_MAX_TYPE = 127;
 
   public P2pEventHandlerImpl() {
@@ -102,6 +106,7 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
     if (peerConnection != null) {
       peerConnection.onDisconnect();
     }
+    effectiveCheckService.onDisconnect(channel.getInetSocketAddress());
   }
 
   @Override
