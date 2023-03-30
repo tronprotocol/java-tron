@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.metric.DbStatService;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Sha256Hash;
@@ -241,8 +242,6 @@ public class ChainBaseManager {
   @Setter
   private NodeType nodeType;
 
-  @Getter
-  @Setter
   private long lowestBlockNum = -1; // except num = 0.
 
   public void closeOneStore(ITronChainBase database) {
@@ -429,6 +428,15 @@ public class ChainBaseManager {
     this.lowestBlockNum = this.blockIndexStore.getLimitNumber(1, 1).stream()
             .map(BlockId::getNum).findFirst().orElse(0L);
     this.nodeType = getLowestBlockNum() > 1 ? NodeType.LITE : NodeType.FULL;
+  }
+
+  public long getLowestBlockNum(){
+    if(isLiteNode() && CommonParameter.getInstance().getStorage().isDbAutoPrune()) {
+      return this.blockIndexStore.getLimitNumber(1, 1).stream()
+          .map(BlockId::getNum).findFirst().orElseThrow(
+              () -> new IllegalArgumentException("LowestBlockNum not found!"));
+    }
+    return lowestBlockNum;
   }
 
   public boolean isLiteNode() {
