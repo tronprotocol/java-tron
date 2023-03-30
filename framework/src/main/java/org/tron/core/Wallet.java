@@ -796,6 +796,9 @@ public class Wallet {
 
   public GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage getCanWithdrawUnfreezeAmount(
           ByteString ownerAddress, long timestamp) {
+    if (timestamp < 0) {
+      return null;
+    }
     if (ownerAddress == null || !DecodeUtil.addressValid(ownerAddress.toByteArray())) {
       return null;
     }
@@ -845,6 +848,8 @@ public class Wallet {
       canDelegatedMaxSize = this.calcCanDelegatedBandWidthMaxSize(ownerAddress);
     } else if (Common.ResourceCode.ENERGY.getNumber() == resourceType) {
       canDelegatedMaxSize = this.calcCanDelegatedEnergyMaxSize(ownerAddress);
+    } else {
+      return null;
     }
 
     if (canDelegatedMaxSize < TRX_PRECISION) {
@@ -1629,7 +1634,8 @@ public class Wallet {
     if (assetId == null || assetId.isEmpty()) {
       return null;
     }
-    if (assetId.length() > 30 || !TransactionUtil.isNumber(assetId.getBytes())) {
+    if (assetId.length() > String.valueOf(Long.MAX_VALUE).length()*2
+        || !TransactionUtil.isNumber(assetId.getBytes())) {
       return null;
     }
 
@@ -1658,7 +1664,10 @@ public class Wallet {
   }
 
   public Block getBlockById(ByteString blockId) {
-    if (Objects.isNull(blockId) || blockId.size() != 32) {
+    if (Objects.isNull(blockId)) {
+      return null;
+    }
+    if (!org.tron.core.utils.TransactionUtil.validBlockID(blockId.toByteArray())) {
       return null;
     }
 

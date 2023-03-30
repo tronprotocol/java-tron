@@ -67,6 +67,7 @@ public class TransactionUtil {
   private static final int MAX_ASSET_DESCRIPTION_LEN = 200;
   private static final int MAX_URL_LEN = 256;
   private static final int TRANSACTION_ID_LEN = 32;
+  private static final int BLOCK_ID_LEN = 32;
   
   @Autowired
   private ChainBaseManager chainBaseManager;
@@ -96,7 +97,11 @@ public class TransactionUtil {
   }
 
   public static boolean validTransactionId(byte[] transactionId) {
-    return validBytes(transactionId, TRANSACTION_ID_LEN, false);
+    return validBytesWithFixedLength(transactionId, TRANSACTION_ID_LEN);
+  }
+
+  public static boolean validBlockID(byte[] blockId) {
+    return validBytesWithFixedLength(blockId, TRANSACTION_ID_LEN);
   }
 
   private static boolean validBytes(byte[] bytes, int maxLength, boolean allowEmpty) {
@@ -104,6 +109,13 @@ public class TransactionUtil {
       return allowEmpty;
     }
     return bytes.length <= maxLength;
+  }
+
+  private static boolean validBytesWithFixedLength(byte[] bytes, int requiredLength) {
+    if (ArrayUtils.isEmpty(bytes)) {
+      return false;
+    }
+    return bytes.length == requiredLength;
   }
 
   private static boolean validReadableBytes(byte[] bytes, int maxLength) {
