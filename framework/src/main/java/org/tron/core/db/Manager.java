@@ -1492,6 +1492,7 @@ public class Manager {
       trxCap.setTrxTrace(null);
     }
     long cost = System.currentTimeMillis() - start;
+
     if (cost > 100) {
       String type = "broadcast";
       if (Objects.nonNull(blockCap)) {
@@ -1500,6 +1501,10 @@ public class Manager {
       logger.info("Process transaction {} cost {} ms during {}, {}",
              Hex.toHexString(transactionInfo.getId()), cost, type, contract.getType().name());
     }
+
+    logger.info("Process transaction {} cost {} ms during {}, {}",
+            Hex.toHexString(transactionInfo.getId()), cost, "stress-test", contract.getType().name());
+
     Metrics.histogramObserve(requestTimer);
     return transactionInfo.getInstance();
   }
