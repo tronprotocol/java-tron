@@ -149,8 +149,8 @@ public class TronNetService {
     }
     P2pConfig config = new P2pConfig();
     config.setSeedNodes(seeds);
-    config.getActiveNodes().addAll(parameter.getActiveNodes());
-    config.getTrustNodes().addAll(parameter.getPassiveNodes());
+    config.setActiveNodes(parameter.getActiveNodes());
+    config.setTrustNodes(parameter.getPassiveNodes());
     config.getActiveNodes().forEach(n -> config.getTrustNodes().add(n.getAddress()));
     parameter.getFastForwardNodes().forEach(f -> config.getTrustNodes().add(f.getAddress()));
     int maxConnections = parameter.getMaxConnections();
