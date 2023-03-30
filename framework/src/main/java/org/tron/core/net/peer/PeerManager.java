@@ -89,7 +89,7 @@ public class PeerManager {
   }
 
   public static synchronized void sortPeers() {
-    peers.sort(Comparator.comparingDouble(c -> c.getChannel().getLatency()));
+    peers.sort(Comparator.comparingDouble(c -> c.getChannel().getAvgLatency()));
   }
 
   public static PeerConnection getPeerConnection(Channel channel) {

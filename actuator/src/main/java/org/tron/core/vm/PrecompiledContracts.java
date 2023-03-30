@@ -62,8 +62,10 @@ import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
+import org.tron.core.vm.program.Program.OutOfTimeException;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.utils.FreezeV2Util;
+import org.tron.core.vm.utils.MUtil;
 import org.tron.core.vm.utils.VoteRewardUtil;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Permission;
@@ -944,10 +946,15 @@ public class PrecompiledContracts {
             long totalWeight = 0L;
             List<byte[]> executedSignList = new ArrayList<>();
             for (byte[] sign : signatures) {
-              if (ByteArray.matrixContains(executedSignList, sign)) {
-                continue;
-              }
               byte[] recoveredAddr = recoverAddrBySign(sign, hash);
+
+              sign = merge(recoveredAddr, sign);
+              if (ByteArray.matrixContains(executedSignList, recoveredAddr)) {
+                if (ByteArray.matrixContains(executedSignList, sign)) {
+                  continue;
+                }
+                MUtil.checkCPUTime();
+              }
               long weight = TransactionCapsule.getWeight(permission, recoveredAddr);
               if (weight == 0) {
                 //incorrect sign
@@ -955,6 +962,7 @@ public class PrecompiledContracts {
               }
               totalWeight += weight;
               executedSignList.add(sign);
+              executedSignList.add(recoveredAddr);
             }
 
             if (totalWeight >= permission.getThreshold()) {
@@ -962,6 +970,9 @@ public class PrecompiledContracts {
             }
           }
         } catch (Throwable t) {
+          if (t instanceof OutOfTimeException) {
+            throw t;
+          }
           logger.info("ValidateMultiSign error:{}", t.getMessage());
         }
       }

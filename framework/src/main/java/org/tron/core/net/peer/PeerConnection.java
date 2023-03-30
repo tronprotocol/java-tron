@@ -67,6 +67,10 @@ public class PeerConnection {
   @Setter
   private volatile boolean isRelayPeer;
 
+  @Setter
+  @Getter
+  private volatile boolean fetchAble;
+
   @Getter
   @Setter
   private ByteString address;
@@ -147,7 +151,7 @@ public class PeerConnection {
 
   public void setChannel(Channel channel) {
     this.channel = channel;
-    if (relayNodes.contains(channel.getInetSocketAddress())) {
+    if (relayNodes.stream().anyMatch(n -> n.getAddress().equals(channel.getInetAddress()))) {
       this.isRelayPeer = true;
     }
     this.nodeStatistics = TronStatsManager.getNodeStatistics(channel.getInetAddress());
@@ -217,7 +221,7 @@ public class PeerConnection {
             + "blockInProcess:%d\n",
         channel.getInetSocketAddress(),
         (now - channel.getStartTime()) / Constant.ONE_THOUSAND,
-        channel.getLatency(),
+        channel.getAvgLatency(),
         fastForwardBlock != null ? fastForwardBlock.getNum() : blockBothHave.getNum(),
         isNeedSyncFromPeer(),
         isNeedSyncFromUs(),
@@ -286,6 +290,14 @@ public class PeerConnection {
       return false;
     }
 
+    return true;
+  }
+
+  public synchronized boolean checkAndPutAdvInvRequest(Item key, Long value) {
+    if (advInvRequest.containsKey(key)) {
+      return false;
+    }
+    advInvRequest.put(key, value);
     return true;
   }
 

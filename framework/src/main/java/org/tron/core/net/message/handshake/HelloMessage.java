@@ -2,13 +2,12 @@ package org.tron.core.net.message.handshake;
 
 import com.google.protobuf.ByteString;
 import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.ChainBaseManager;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.CommonStore;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TronMessage;
 import org.tron.p2p.discover.Node;
@@ -33,11 +32,7 @@ public class HelloMessage extends TronMessage {
 
   public HelloMessage(Node from, long timestamp, ChainBaseManager chainBaseManager) {
 
-    Endpoint fromEndpoint = Endpoint.newBuilder()
-        .setNodeId(ByteString.copyFrom(from.getId()))
-        .setPort(from.getPort())
-        .setAddress(ByteString.copyFrom(ByteArray.fromString(from.getHost())))
-        .build();
+    Endpoint fromEndpoint = getEndpointFromNode(from);
 
     BlockCapsule.BlockId gid = chainBaseManager.getGenesisBlockId();
     Protocol.HelloMessage.BlockId gBlockId = Protocol.HelloMessage.BlockId.newBuilder()
@@ -56,24 +51,16 @@ public class HelloMessage extends TronMessage {
         .setHash(hid.getByteString())
         .setNumber(hid.getNum())
         .build();
-
-    CommonStore commonStore = chainBaseManager.getCommonStore();
-    long lowestBlockNum = 0;
-    int nodeType = commonStore.getNodeType();
-    if (nodeType == Constant.NODE_TYPE_LIGHT_NODE) {
-      lowestBlockNum = commonStore.getLowestBlockNum();
-    }
-
     Builder builder = Protocol.HelloMessage.newBuilder();
-
     builder.setFrom(fromEndpoint);
     builder.setVersion(Args.getInstance().getNodeP2pVersion());
     builder.setTimestamp(timestamp);
     builder.setGenesisBlockId(gBlockId);
     builder.setSolidBlockId(sBlockId);
     builder.setHeadBlockId(hBlockId);
-    builder.setNodeType(nodeType);
-    builder.setLowestBlockNum(lowestBlockNum);
+    builder.setNodeType(chainBaseManager.getNodeType().getType());
+    builder.setLowestBlockNum(chainBaseManager.isLiteNode()
+        ? chainBaseManager.getLowestBlockNum() : 0);
 
     this.helloMessage = builder.build();
     this.type = MessageTypes.P2P_HELLO.asByte();
@@ -104,7 +91,8 @@ public class HelloMessage extends TronMessage {
   public Node getFrom() {
     Endpoint from = this.helloMessage.getFrom();
     return new Node(from.getNodeId().toByteArray(),
-        ByteArray.toStr(from.getAddress().toByteArray()), from.getPort());
+        ByteArray.toStr(from.getAddress().toByteArray()),
+        ByteArray.toStr(from.getAddressIpv6().toByteArray()), from.getPort());
   }
 
   public BlockCapsule.BlockId getGenesisBlockId() {
@@ -132,7 +120,7 @@ public class HelloMessage extends TronMessage {
     StringBuilder builder = new StringBuilder();
 
     builder.append(super.toString())
-            .append("from: ").append(getFrom().getInetSocketAddress()).append("\n")
+            .append("from: ").append(getFrom().getPreferInetSocketAddress()).append("\n")
             .append("timestamp: ").append(getTimestamp()).append("\n")
             .append("headBlockId: ").append(getHeadBlockId().getString()).append("\n")
             .append("nodeType: ").append(helloMessage.getNodeType()).append("\n")
@@ -174,5 +162,22 @@ public class HelloMessage extends TronMessage {
     }
 
     return true;
+  }
+
+  public static Endpoint getEndpointFromNode(Node node) {
+    Endpoint.Builder builder = Endpoint.newBuilder()
+        .setPort(node.getPort());
+    if (node.getId() != null) {
+      builder.setNodeId(ByteString.copyFrom(node.getId()));
+    }
+    if (StringUtils.isNotEmpty(node.getHostV4())) {
+      builder.setAddress(
+          ByteString.copyFrom(org.tron.p2p.utils.ByteArray.fromString(node.getHostV4())));
+    }
+    if (StringUtils.isNotEmpty(node.getHostV6())) {
+      builder.setAddressIpv6(
+          ByteString.copyFrom(org.tron.p2p.utils.ByteArray.fromString(node.getHostV6())));
+    }
+    return builder.build();
   }
 }

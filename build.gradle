@@ -1,6 +1,16 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'org.owasp:dependency-check-gradle:8.2.0'
+    }
+}
+
 allprojects {
     version = "1.0.0"
     apply plugin: "java"
+    apply plugin: 'org.owasp.dependencycheck'
 }
 
 subprojects {
@@ -8,6 +18,7 @@ subprojects {
     apply plugin: "jacoco"
     apply plugin: "maven"
     apply plugin: "maven-publish"
+    apply plugin: 'org.owasp.dependencycheck'
 
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
@@ -17,6 +28,7 @@ subprojects {
     buildscript {
         repositories {
             mavenCentral()
+            maven { url 'https://jitpack.io' }
             maven {
                 url "https://plugins.gradle.org/m2/"
             }
@@ -31,6 +43,7 @@ subprojects {
         mavenLocal()
         mavenCentral()
         maven { url 'https://repo.spring.io/plugins-release' }
+        maven { url 'https://jitpack.io' }
     }
 
     dependencies {
@@ -80,3 +93,10 @@ task copyToParent(type: Copy) {
 
 build.finalizedBy(copyToParent)
 
+gradle.buildFinished {
+    if (project.hasProperty('cleanSubBuild')) {
+        subprojects {
+            buildDir.deleteDir()
+        }
+    }
+}

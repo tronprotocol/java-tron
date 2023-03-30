@@ -89,7 +89,7 @@ public abstract class BaseNet {
         );
         CommonParameter parameter = Args.getInstance();
         parameter.setNodeListenPort(port);
-        parameter.getSeedNode().getIpList().clear();
+        parameter.getSeedNode().getAddressList().clear();
         parameter.setNodeExternalIp(Constant.LOCAL_HOST);
         context = new TronApplicationContext(DefaultConfig.class);
         appT = ApplicationFactory.create(context);

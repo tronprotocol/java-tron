@@ -1,8 +1,11 @@
 package org.tron.core.vm.utils;
 
+import org.tron.common.utils.ForkController;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.config.Parameter;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.vm.VMUtils;
+import org.tron.core.vm.program.Program.OutOfTimeException;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
 
@@ -54,5 +57,11 @@ public class MUtil {
 
   public static boolean isNotNullOrEmpty(String str) {
     return !isNullOrEmpty(str);
+  }
+
+  public static void checkCPUTime() {
+    if (ForkController.instance().pass(Parameter.ForkBlockVersionEnum.VERSION_4_7_1)) {
+      throw new OutOfTimeException("CPU timeout for 0x0a executing");
+    }
   }
 }

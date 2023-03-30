@@ -913,6 +913,9 @@ public class Wallet {
   }
 
   public DelegatedResourceAccountIndex getDelegatedResourceAccountIndex(ByteString address) {
+    if (address == null || address.size() != DecodeUtil.ADDRESS_SIZE / 2) {
+      return DelegatedResourceAccountIndex.getDefaultInstance();
+    }
     DelegatedResourceAccountIndexCapsule accountIndexCapsule =
         chainBaseManager.getDelegatedResourceAccountIndexStore().getIndex(address.toByteArray());
     if (accountIndexCapsule != null) {
@@ -923,6 +926,9 @@ public class Wallet {
   }
 
   public DelegatedResourceAccountIndex getDelegatedResourceAccountIndexV2(ByteString address) {
+    if (address == null || address.size() != DecodeUtil.ADDRESS_SIZE / 2) {
+      return DelegatedResourceAccountIndex.getDefaultInstance();
+    }
     DelegatedResourceAccountIndexCapsule accountIndexCapsule = chainBaseManager
         .getDelegatedResourceAccountIndexStore().getV2Index(address.toByteArray());
     if (accountIndexCapsule != null) {
@@ -2633,13 +2639,16 @@ public class Wallet {
 
   public NodeList listNodes() {
     NodeList.Builder nodeListBuilder = NodeList.newBuilder();
-    TronNetService.getP2pService().getConnectableNodes().forEach(node -> {
-      nodeListBuilder.addNodes(Node.newBuilder().setAddress(
-              Address.newBuilder()
-                      .setHost(ByteString
-                              .copyFrom(ByteArray.fromString(node.getHost())))
-                      .setPort(node.getPort())));
-    });
+    if (!Args.getInstance().p2pDisable) {
+      TronNetService.getP2pService().getConnectableNodes().forEach(node -> {
+        nodeListBuilder.addNodes(Node.newBuilder().setAddress(
+            Address.newBuilder()
+                .setHost(ByteString
+                    .copyFrom(ByteArray.fromString(
+                        node.getPreferInetSocketAddress().getAddress().getHostAddress())))
+                .setPort(node.getPort())));
+      });
+    }
     return nodeListBuilder.build();
   }
 

@@ -48,8 +48,6 @@ dependencies {
 
     compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.69'
 
-    compile group: 'io.github.tronprotocol', name: 'libp2p', version: '0.1.2'
-
     compile group: 'com.typesafe', name: 'config', version: '1.3.2'
 
     compile "com.cedarsoftware:java-util:1.8.0"
@@ -70,7 +68,9 @@ dependencies {
     compile group: 'com.carrotsearch', name: 'java-sizeof', version: '0.0.5'
 
     compile 'com.googlecode.cqengine:cqengine:2.12.4'
-    compile group: 'com.google.api.grpc', name: 'googleapis-common-protos', version: '0.0.3'
+    // https://mvnrepository.com/artifact/com.google.api.grpc/proto-google-common-protos
+    implementation group: 'com.google.api.grpc', name: 'proto-google-common-protos', version: '2.15.0'
+    //compile group: 'com.google.api.grpc', name: 'googleapis-common-protos', version: '0.0.3'
 
     // http
     compile 'org.eclipse.jetty:jetty-server:9.4.49.v20220914'
