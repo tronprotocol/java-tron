@@ -228,6 +228,8 @@ public class Args extends CommonParameter {
     PARAMETER.rateLimiterGlobalQps = 50000;
     PARAMETER.rateLimiterGlobalIpQps = 10000;
     PARAMETER.p2pDisable = false;
+    PARAMETER.dynamicConfigEnable = false;
+    PARAMETER.dynamicConfigCheckInterval = 600;
   }
 
   /**
@@ -1147,6 +1149,18 @@ public class Args extends CommonParameter {
           Math.max(PARAMETER.dynamicEnergyMaxFactor, 0);
     }
 
+    PARAMETER.dynamicConfigEnable = config.hasPath(Constant.DYNAMIC_CONFIG_ENABLE)
+        && config.getBoolean(Constant.DYNAMIC_CONFIG_ENABLE);
+    if (config.hasPath(Constant.DYNAMIC_CONFIG_CHECK_INTERVAL)) {
+      PARAMETER.dynamicConfigCheckInterval
+          = config.getLong(Constant.DYNAMIC_CONFIG_CHECK_INTERVAL);
+      if (PARAMETER.dynamicConfigCheckInterval <= 0) {
+        PARAMETER.dynamicConfigCheckInterval = 600;
+      }
+    } else {
+      PARAMETER.dynamicConfigCheckInterval = 600;
+    }
+
     logConfig();
   }
 
@@ -1199,7 +1213,7 @@ public class Args extends CommonParameter {
     return initialization;
   }
 
-  private static List<InetSocketAddress> getInetSocketAddress(
+  public static List<InetSocketAddress> getInetSocketAddress(
       final com.typesafe.config.Config config, String path, boolean filter) {
     List<InetSocketAddress> ret = new ArrayList<>();
     if (!config.hasPath(path)) {
@@ -1227,7 +1241,7 @@ public class Args extends CommonParameter {
     return ret;
   }
 
-  private static List<InetAddress> getInetAddress(
+  public static List<InetAddress> getInetAddress(
       final com.typesafe.config.Config config, String path) {
     List<InetAddress> ret = new ArrayList<>();
     if (!config.hasPath(path)) {
