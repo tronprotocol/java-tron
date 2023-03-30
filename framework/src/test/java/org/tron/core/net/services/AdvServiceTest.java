@@ -85,6 +85,7 @@ public class AdvServiceTest {
 
     try {
       peer = context.getBean(PeerConnection.class);
+      Assert.assertFalse(peer.isDisconnect());
       p2pEventHandler = context.getBean(P2pEventHandlerImpl.class);
 
       List<PeerConnection> peers = Lists.newArrayList();
@@ -96,6 +97,9 @@ public class AdvServiceTest {
       service.broadcast(msg);
       Item item = new Item(blockCapsule.getBlockId(), InventoryType.BLOCK);
       Assert.assertNotNull(service.getMessage(item));
+      peer.checkAndPutAdvInvRequest(item, System.currentTimeMillis());
+      boolean res = peer.checkAndPutAdvInvRequest(item, System.currentTimeMillis());
+      Assert.assertFalse(res);
     } catch (NullPointerException e) {
       System.out.println(e);
     }

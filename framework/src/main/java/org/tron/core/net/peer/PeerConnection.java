@@ -293,6 +293,14 @@ public class PeerConnection {
     return true;
   }
 
+  public synchronized boolean checkAndPutAdvInvRequest(Item key, Long value) {
+    if (advInvRequest.containsKey(key)) {
+      return false;
+    }
+    advInvRequest.put(key, value);
+    return true;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (!(o instanceof PeerConnection)) {
