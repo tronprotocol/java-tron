@@ -30,13 +30,13 @@ public class DynamicArgs {
 
   public void init() {
     if (parameter.isDynamicConfigEnable()) {
+      logger.info("Start the dynamic loading configuration service");
+      long checkInterval = parameter.getDynamicConfigCheckInterval();
       File config = getConfigFile();
       if (config == null) {
         return;
       }
       lastModified = config.lastModified();
-      logger.info("Start the dynamic loading configuration service");
-      long checkInterval = parameter.getDynamicConfigCheckInterval();
       reloadExecutor.scheduleWithFixedDelay(() -> {
         try {
           run();

@@ -36,14 +36,11 @@ public class DynamicArgsTest {
   }
 
   @Test
-  public void get() {
-    CommonParameter parameter = Args.getInstance();
-    Assert.assertFalse(parameter.isDynamicConfigEnable());
-    Assert.assertEquals(600, parameter.getDynamicConfigCheckInterval());
-  }
-
-  @Test
   public void start() {
+    CommonParameter parameter = Args.getInstance();
+    Assert.assertTrue(parameter.isDynamicConfigEnable());
+    Assert.assertEquals(600, parameter.getDynamicConfigCheckInterval());
+
     dynamicArgs.init();
     Assert.assertEquals(0, (long) ReflectUtils.getFieldObject(dynamicArgs, "lastModified"));
 
@@ -62,6 +59,11 @@ public class DynamicArgsTest {
       } catch (Exception e) {
         return;
       }
+    }
+    try {
+      dynamicArgs.reload();
+    } catch (Exception e) {
+      // no need to deal with
     }
 
     dynamicArgs.close();
