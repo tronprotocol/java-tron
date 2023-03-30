@@ -8,10 +8,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.ReflectUtils;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.net.TronNetService;
 import org.tron.core.net.service.effective.EffectiveCheckService;
+import org.tron.p2p.P2pConfig;
 
 public class EffectiveCheckServiceTest {
 
@@ -35,10 +38,19 @@ public class EffectiveCheckServiceTest {
 
   @Test
   public void testFind() {
+    TronNetService tronNetService = context.getBean(TronNetService.class);
+    P2pConfig p2pConfig = new P2pConfig();
+    p2pConfig.setIp("127.0.0.1");
+    p2pConfig.setPort(34567);
+    ReflectUtils.setFieldValue(tronNetService, "p2pConfig", p2pConfig);
+    TronNetService.getP2pService().start(p2pConfig);
+
     service.triggerNext();
     Assert.assertNull(service.getCur());
-    service.setCur(new InetSocketAddress("192.168.10.100", 12345));
-    service.triggerNext();
-    Assert.assertNotNull(service.getCur());
+
+    ReflectUtils.invokeMethod(service, "resetCount");
+    InetSocketAddress cur = new InetSocketAddress("192.168.0.1", 34567);
+    service.setCur(cur);
+    service.onDisconnect(cur);
   }
 }

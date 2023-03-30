@@ -1,12 +1,17 @@
 package org.tron.core.net;
 
+import java.util.ArrayList;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.overlay.message.Message;
 import org.tron.core.exception.P2pException;
 import org.tron.core.net.message.MessageTypes;
+import org.tron.core.net.message.adv.FetchInvDataMessage;
+import org.tron.core.net.message.adv.InventoryMessage;
+import org.tron.core.net.message.adv.TransactionsMessage;
 import org.tron.core.net.message.base.DisconnectMessage;
 import org.tron.core.net.service.statistics.MessageStatistics;
+import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.ReasonCode;
 
 public class MessageTest {
@@ -88,6 +93,10 @@ public class MessageTest {
         return null;
       }
     };
+    InventoryMessage message9 = new InventoryMessage(new ArrayList<>(), InventoryType.TRX);
+    FetchInvDataMessage message10 = new FetchInvDataMessage(new ArrayList<>(), InventoryType.TRX);
+    TransactionsMessage message11 = new TransactionsMessage(new ArrayList<>());
+
     messageStatistics.addTcpInMessage(message1);
     messageStatistics.addTcpOutMessage(message1);
     messageStatistics.addTcpInMessage(message2);
@@ -104,9 +113,15 @@ public class MessageTest {
     messageStatistics.addTcpOutMessage(message7);
     messageStatistics.addTcpInMessage(message8);
     messageStatistics.addTcpOutMessage(message8);
+    messageStatistics.addTcpInMessage(message9);
+    messageStatistics.addTcpOutMessage(message9);
+    messageStatistics.addTcpInMessage(message10);
+    messageStatistics.addTcpOutMessage(message10);
+    messageStatistics.addTcpInMessage(message11);
+    messageStatistics.addTcpOutMessage(message11);
 
-    Assert.assertEquals(8, messageStatistics.tronInMessage.getTotalCount());
-    Assert.assertEquals(8, messageStatistics.tronOutMessage.getTotalCount());
+    Assert.assertEquals(11, messageStatistics.tronInMessage.getTotalCount());
+    Assert.assertEquals(11, messageStatistics.tronOutMessage.getTotalCount());
   }
 
 }
