@@ -292,7 +292,7 @@ public class SyncService {
       if (peer.getSyncBlockInProcess().remove(blockId)) {
         if (flag) {
           peer.setBlockBothHave(blockId);
-          if (peer.getSyncBlockToFetch().isEmpty()) {
+          if (peer.getSyncBlockToFetch().isEmpty() && !peer.isFetchAble()) {
             syncNext(peer);
           }
         } else {
