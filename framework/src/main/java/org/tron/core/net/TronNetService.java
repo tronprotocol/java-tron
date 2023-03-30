@@ -1,11 +1,15 @@
 package org.tron.core.net;
 
-import io.netty.util.internal.StringUtil;
+import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
+import java.net.UnknownHostException;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
@@ -17,14 +21,15 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
 import org.tron.core.net.peer.PeerStatusCheck;
 import org.tron.core.net.service.adv.AdvService;
+import org.tron.core.net.service.effective.EffectiveCheckService;
 import org.tron.core.net.service.fetchblock.FetchBlockService;
-import org.tron.core.net.service.keepalive.KeepAliveService;
 import org.tron.core.net.service.nodepersist.NodePersistService;
 import org.tron.core.net.service.relay.RelayService;
 import org.tron.core.net.service.statistics.TronStatsManager;
 import org.tron.core.net.service.sync.SyncService;
 import org.tron.p2p.P2pConfig;
 import org.tron.p2p.P2pService;
+import org.tron.p2p.utils.NetUtil;
 
 @Slf4j(topic = "net")
 @Component
@@ -51,9 +56,6 @@ public class TronNetService {
   @Autowired
   private FetchBlockService fetchBlockService;
 
-  @Autowired
-  private KeepAliveService keepAliveService;
-
   private CommonParameter parameter = Args.getInstance();
 
   @Autowired
@@ -68,12 +70,15 @@ public class TronNetService {
   @Autowired
   private RelayService relayService;
 
+  @Autowired
+  private EffectiveCheckService effectiveCheckService;
+
   private volatile boolean init;
 
   private static void setP2pConfig(P2pConfig config) {
     TronNetService.p2pConfig = config;
   }
-  
+
   public void start() {
     try {
       init = true;
@@ -85,11 +90,11 @@ public class TronNetService {
       peerStatusCheck.init();
       transactionsMsgHandler.init();
       fetchBlockService.init();
-      keepAliveService.init();
       nodePersistService.init();
       tronStatsManager.init();
       PeerManager.init();
       relayService.init();
+      effectiveCheckService.init();
       logger.info("Net service start successfully");
     } catch (Exception e) {
       logger.error("Net service start failed", e);
@@ -103,12 +108,12 @@ public class TronNetService {
     PeerManager.close();
     tronStatsManager.close();
     nodePersistService.close();
-    keepAliveService.close();
     advService.close();
     syncService.close();
     peerStatusCheck.close();
     transactionsMsgHandler.close();
     fetchBlockService.close();
+    effectiveCheckService.close();
     p2pService.close();
     relayService.close();
     logger.info("Net service closed successfully");
@@ -126,18 +131,30 @@ public class TronNetService {
     return advService.fastBroadcastTransaction(msg);
   }
 
-  private P2pConfig getConfig() {
-    List<InetSocketAddress> seeds = new ArrayList<>();
-    seeds.addAll(nodePersistService.dbRead());
-    for (String s : parameter.getSeedNode().getIpList()) {
-      String[] sz = s.split(":");
-      seeds.add(new InetSocketAddress(sz[0], Integer.parseInt(sz[1])));
+  public static boolean hasIpv4Stack(Set<String> ipSet) {
+    for (String ip : ipSet) {
+      InetAddress inetAddress;
+      try {
+        inetAddress = InetAddress.getByName(ip);
+      } catch (UnknownHostException e) {
+        logger.warn("Get inet address failed, {}", e.getMessage());
+        continue;
+      }
+      if (inetAddress instanceof Inet4Address) {
+        return true;
+      }
     }
+    return false;
+  }
 
+  private P2pConfig getConfig() {
+    List<InetSocketAddress> seeds = parameter.getSeedNode().getAddressList();
+    seeds.addAll(nodePersistService.dbRead());
+    logger.debug("Seed InetSocketAddress: {}", seeds);
     P2pConfig config = new P2pConfig();
-    config.setSeedNodes(seeds);
-    config.setActiveNodes(parameter.getActiveNodes());
-    config.setTrustNodes(parameter.getPassiveNodes());
+    config.getSeedNodes().addAll(seeds);
+    config.getActiveNodes().addAll(parameter.getActiveNodes());
+    config.getTrustNodes().addAll(parameter.getPassiveNodes());
     config.getActiveNodes().forEach(n -> config.getTrustNodes().add(n.getAddress()));
     parameter.getFastForwardNodes().forEach(f -> config.getTrustNodes().add(f.getAddress()));
     int maxConnections = parameter.getMaxConnections();
@@ -155,11 +172,24 @@ public class TronNetService {
 
     config.setMaxConnectionsWithSameIp(parameter.getMaxConnectionsWithSameIp());
     config.setPort(parameter.getNodeListenPort());
-    config.setVersion(parameter.getNodeP2pVersion());
+    config.setNetworkId(parameter.getNodeP2pVersion());
     config.setDisconnectionPolicyEnable(parameter.isOpenFullTcpDisconnect());
+    config.setNodeDetectEnable(parameter.isNodeDetectEnable());
     config.setDiscoverEnable(parameter.isNodeDiscoveryEnable());
-    if (StringUtil.isNullOrEmpty(config.getIp())) {
+    if (StringUtils.isEmpty(config.getIp()) && hasIpv4Stack(NetUtil.getAllLocalAddress())) {
       config.setIp(parameter.getNodeExternalIp());
+    }
+    if (StringUtils.isNotEmpty(config.getIpv6())) {
+      config.getActiveNodes().remove(new InetSocketAddress(config.getIpv6(), config.getPort()));
+    }
+    if (!parameter.nodeEnableIpv6) {
+      config.setIpv6(null);
+    }
+    logger.info("Local ipv4: {}", config.getIp());
+    logger.info("Local ipv6: {}", config.getIpv6());
+    config.setTreeUrls(parameter.getDnsTreeUrls());
+    if (Objects.nonNull(parameter.getDnsPublishConfig())) {
+      config.setPublishConfig(parameter.getDnsPublishConfig());
     }
     return config;
   }

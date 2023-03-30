@@ -22,6 +22,7 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.PublicMethod;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -51,6 +52,9 @@ public class RpcApiAccessInterceptorTest {
   @BeforeClass
   public static void init() {
     Args.setParam(new String[] {"-d", dbPath}, Constant.TEST_CONF);
+    Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setRpcOnSolidityPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setRpcOnPBFTPort(PublicMethod.chooseRandomPort());
     String fullNode = String.format("%s:%d", Args.getInstance().getNodeDiscoveryBindIp(),
         Args.getInstance().getRpcPort());
     String solidityNode = String.format("%s:%d", Args.getInstance().getNodeDiscoveryBindIp(),
