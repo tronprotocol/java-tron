@@ -1634,8 +1634,8 @@ public class Wallet {
     if (assetId == null || assetId.isEmpty()) {
       return null;
     }
-    if (assetId.length() > String.valueOf(Long.MAX_VALUE).length()*2
-        || !TransactionUtil.isNumber(assetId.getBytes())) {
+    if (assetId.length() > String.valueOf(Long.MAX_VALUE).length() * 2
+       || !TransactionUtil.isNumber(assetId.getBytes())) {
       return null;
     }
 
