@@ -1634,8 +1634,16 @@ public class Wallet {
     if (assetId == null || assetId.isEmpty()) {
       return null;
     }
-    if (assetId.length() > String.valueOf(Long.MAX_VALUE).length() * 2
-       || !TransactionUtil.isNumber(assetId.getBytes())) {
+    if (!TransactionUtil.isNumber(assetId.getBytes())) {
+      return null;
+    }
+    try {
+      long tokenNum = ByteArray.hexToBigInteger(assetId).longValue();
+      if (tokenNum < Constant.TOKEN_NUM_START
+          || tokenNum > chainBaseManager.getDynamicPropertiesStore().getTokenIdNum()) {
+        return null;
+      }
+    } catch (Exception e) {
       return null;
     }
 
