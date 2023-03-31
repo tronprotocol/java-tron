@@ -841,7 +841,7 @@ public class Wallet {
       return null;
     }
 
-    long canDelegatedMaxSize = 0L;
+    long canDelegatedMaxSize;
     GrpcAPI.CanDelegatedMaxSizeResponseMessage.Builder builder =
           GrpcAPI.CanDelegatedMaxSizeResponseMessage.newBuilder();
     if (Common.ResourceCode.BANDWIDTH.getNumber() == resourceType) {

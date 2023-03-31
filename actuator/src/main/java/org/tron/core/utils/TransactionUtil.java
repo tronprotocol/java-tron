@@ -101,7 +101,7 @@ public class TransactionUtil {
   }
 
   public static boolean validBlockID(byte[] blockId) {
-    return validBytesWithFixedLength(blockId, TRANSACTION_ID_LEN);
+    return validBytesWithFixedLength(blockId, BLOCK_ID_LEN);
   }
 
   private static boolean validBytes(byte[] bytes, int maxLength, boolean allowEmpty) {
