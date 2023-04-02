@@ -2842,7 +2842,7 @@ public class Wallet {
         triggerSmartContract.getData().toByteArray());
 
     if (isConstant(abi, selector)) {
-      return callConstantContract(trxCap, builder, retBuilder);
+      return callConstantContract(trxCap, builder, retBuilder, false);
     } else {
       return trxCap.getInstance();
     }
@@ -2960,12 +2960,18 @@ public class Wallet {
     txExtBuilder.clear();
     txRetBuilder.clear();
     transaction = triggerConstantContract(
-        triggerSmartContract, txCap, txExtBuilder, txRetBuilder);
+        triggerSmartContract, txCap, txExtBuilder, txRetBuilder, true);
     return transaction;
   }
 
   public Transaction triggerConstantContract(TriggerSmartContract triggerSmartContract,
       TransactionCapsule trxCap, Builder builder, Return.Builder retBuilder)
+      throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
+    return triggerConstantContract(triggerSmartContract, trxCap, builder, retBuilder, false);
+  }
+
+  public Transaction triggerConstantContract(TriggerSmartContract triggerSmartContract,
+      TransactionCapsule trxCap, Builder builder, Return.Builder retBuilder, boolean isEstimating)
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
     if (triggerSmartContract.getContractAddress().isEmpty()) { // deploy contract
@@ -2991,11 +2997,11 @@ public class Wallet {
         throw new ContractValidateException("Smart contract is not exist.");
       }
     }
-    return callConstantContract(trxCap, builder, retBuilder);
+    return callConstantContract(trxCap, builder, retBuilder, isEstimating);
   }
 
   public Transaction callConstantContract(TransactionCapsule trxCap,
-      Builder builder, Return.Builder retBuilder)
+      Builder builder, Return.Builder retBuilder, boolean isEstimating)
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
     if (!Args.getInstance().isSupportConstant()) {
@@ -3020,7 +3026,7 @@ public class Wallet {
     vmActuator.execute(context);
 
     ProgramResult result = context.getProgramResult();
-    if (result.getException() != null) {
+    if (!isEstimating && result.getException() != null) {
       RuntimeException e = result.getException();
       logger.warn("Constant call has an error {}", e.getMessage());
       throw e;
