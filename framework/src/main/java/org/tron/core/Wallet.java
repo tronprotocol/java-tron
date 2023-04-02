@@ -3026,7 +3026,8 @@ public class Wallet {
     vmActuator.execute(context);
 
     ProgramResult result = context.getProgramResult();
-    if (!isEstimating && result.getException() != null) {
+    if (!isEstimating && result.getException() != null
+        || result.getException() instanceof Program.OutOfTimeException) {
       RuntimeException e = result.getException();
       logger.warn("Constant call has an error {}", e.getMessage());
       throw e;
