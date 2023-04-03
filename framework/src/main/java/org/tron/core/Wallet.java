@@ -829,7 +829,6 @@ public class Wallet {
             .mapToLong(UnFreezeV2::getUnfreezeAmount)
             .sum();
 
-
     builder.setAmount(canWithdrawUnfreezeAmount);
     return builder.build();
   }
