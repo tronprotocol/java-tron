@@ -41,11 +41,6 @@ public class TriggerSmartContractServlet extends RateLimiterServlet {
     if (StringUtil.isNullOrEmpty(jsonObject.getString(Util.CONTRACT_ADDRESS))) {
       throw new InvalidParameterException(Util.CONTRACT_ADDRESS + " isn't set.");
     }
-    if (!StringUtil.isNullOrEmpty(jsonObject.getString(Util.FUNCTION_SELECTOR))
-        ^ StringUtil.isNullOrEmpty(jsonObject.getString(Util.CALL_DATA))) {
-      throw new InvalidParameterException("Only one of "
-          + Util.FUNCTION_SELECTOR + " and " + Util.CALL_DATA + " can be set.");
-    }
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
