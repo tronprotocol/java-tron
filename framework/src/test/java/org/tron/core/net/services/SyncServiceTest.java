@@ -1,5 +1,8 @@
 package org.tron.core.net.services;
 
+import java.io.File;
+import java.lang.reflect.Field;
+import java.net.InetSocketAddress;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -16,9 +19,6 @@ import org.tron.core.net.peer.TronState;
 import org.tron.core.net.service.sync.SyncService;
 import org.tron.p2p.connection.Channel;
 
-import java.io.File;
-import java.lang.reflect.Field;
-import java.net.InetSocketAddress;
 
 public class SyncServiceTest {
   protected TronApplicationContext context;
@@ -58,7 +58,7 @@ public class SyncServiceTest {
       peer = context.getBean(PeerConnection.class);
       Assert.assertNull(peer.getSyncChainRequested());
       Channel c1 = new Channel();
-      InetSocketAddress a1 =new InetSocketAddress("127.0.0.1", 10001);
+      InetSocketAddress a1 = new InetSocketAddress("127.0.0.1", 10001);
       Field field = c1.getClass().getDeclaredField("inetSocketAddress");
       field.setAccessible(true);
       field.set(c1, a1.getAddress());
