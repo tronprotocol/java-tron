@@ -195,10 +195,11 @@ public class UnfreezeBalanceActuatorTest {
       Assert.assertEquals(totalNetWeightBefore,
           totalNetWeightAfter + frozenBalance / 1000_000L);
 
-      DynamicPropertiesStateStore stateStore = new DynamicPropertiesStateStore();
-      stateStore.init(queryInstance);
-      Assert.assertEquals(totalNetWeightBefore,
-              stateStore.getTotalNetWeight() + frozenBalance / 1000_000L);
+      try (DynamicPropertiesStateStore stateStore = new DynamicPropertiesStateStore()) {
+        stateStore.init(queryInstance);
+        Assert.assertEquals(totalNetWeightBefore,
+                stateStore.getTotalNetWeight() + frozenBalance / 1000_000L);
+      }
 
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);

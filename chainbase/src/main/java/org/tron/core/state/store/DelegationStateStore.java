@@ -55,6 +55,8 @@ public class DelegationStateStore extends DelegationStore implements StateStore 
 
   @Override
   public void close() {
+    this.worldStateQueryInstance = null;
+    init = false;
   }
 
   @Override

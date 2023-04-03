@@ -1,14 +1,11 @@
 package org.tron.core.state;
 
-import static org.tron.core.state.WorldStateCallBackUtils.fix32;
+import static org.tron.core.state.WorldStateCallBack.fix32;
 
 import com.google.common.primitives.Longs;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
-import java.util.stream.Collectors;
-
 import lombok.Getter;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -41,8 +38,6 @@ public class WorldStateQueryInstance {
   public static final int ADDRESS_SIZE = DecodeUtil.ADDRESS_SIZE >> 1;
   public static final Bytes MAX_ASSET_ID = Bytes.ofUnsignedLong(Long.MAX_VALUE);
   public static final Bytes MIN_ASSET_ID = Bytes.ofUnsignedLong(0);
-  private static final byte[] ALLOW_ASSET_OPTIMIZATION =
-          "ALLOW_ASSET_OPTIMIZATION".getBytes();
 
   private final WorldStateGenesis worldStateGenesis;
 
@@ -202,13 +197,5 @@ public class WorldStateQueryInstance {
       return new BytesCapsule(value);
     }
     return null;
-  }
-
-  public long getDynamicPropertyLong(byte[] key) {
-    return ByteArray.toLong(getDynamicProperty(key).getData());
-  }
-
-  public boolean supportAllowAssetOptimization() {
-    return getDynamicPropertyLong(ALLOW_ASSET_OPTIMIZATION) == 1L;
   }
 }

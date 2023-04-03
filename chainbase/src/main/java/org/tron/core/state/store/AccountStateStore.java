@@ -55,6 +55,8 @@ public class AccountStateStore extends AccountStore implements StateStore {
 
   @Override
   public void close() {
+    this.worldStateQueryInstance = null;
+    init = false;
   }
 
   @Override

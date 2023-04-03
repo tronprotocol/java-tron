@@ -1,6 +1,6 @@
 package org.tron.core.state;
 
-import static org.tron.core.state.WorldStateCallBackUtils.fix32;
+import static org.tron.core.state.WorldStateCallBack.fix32;
 
 import com.beust.jcommander.internal.Lists;
 import com.google.common.primitives.Longs;
@@ -86,7 +86,6 @@ public class WorldStateQueryInstanceTest {
     testGetDelegatedResourceAccountIndex();
     testGetVotes();
     testGetDynamicProperty();
-    testGetDynamicPropertyLong();
   }
 
   private void testGetAccountAsset() {
@@ -237,18 +236,6 @@ public class WorldStateQueryInstanceTest {
     } catch (Exception e) {
       Assert.assertTrue(e instanceof IllegalArgumentException);
     }
-  }
-
-  private void testGetDynamicPropertyLong() {
-    byte[] key = "key".getBytes();
-    byte[] value = Longs.toByteArray(12345);
-    trieImpl2.put(StateType.encodeKey(StateType.Properties, key), Bytes.wrap(value));
-    trieImpl2.commit();
-    trieImpl2.flush();
-    byte[] root = trieImpl2.getRootHash();
-    worldStateQueryInstance = new WorldStateQueryInstance(Bytes32.wrap(root), chainBaseManager);
-    Assert.assertEquals(Longs.fromByteArray(value),
-        worldStateQueryInstance.getDynamicPropertyLong(key));
   }
 
 }

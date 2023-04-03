@@ -470,7 +470,7 @@ public class Manager {
     chainBaseManager.setMortgageService(mortgageService);
     this.initGenesis();
     worldStateCallBack.setExecute(false);
-    // worldState init, before khasoDb init
+    // worldState init, before khaosDb init
     worldStateGenesis.init(chainBaseManager);
     try {
       this.khaosDb.start(chainBaseManager.getBlockById(

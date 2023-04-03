@@ -6,6 +6,7 @@ import java.util.Map;
 import org.apache.tuweni.bytes.Bytes32;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.ChainBaseManager;
+import org.tron.core.state.store.DynamicPropertiesStateStore;
 import org.tron.core.store.AccountAssetStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Account;
@@ -89,8 +90,10 @@ public class AssetUtil {
     if (Bytes32.ZERO.equals(root)) {
       return dynamicPropertiesStore.supportAllowAssetOptimization();
     }
-    return ChainBaseManager.fetch(root).supportAllowAssetOptimization();
-
+    try (DynamicPropertiesStateStore store = new DynamicPropertiesStateStore()) {
+      store.init(ChainBaseManager.fetch(root));
+      return store.supportAllowAssetOptimization();
+    }
   }
 
 }

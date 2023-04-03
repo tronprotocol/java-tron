@@ -58,6 +58,8 @@ public class AssetIssueV2StateStore extends AssetIssueV2Store implements StateSt
 
   @Override
   public void close() {
+    this.worldStateQueryInstance = null;
+    init = false;
   }
 
   @Override

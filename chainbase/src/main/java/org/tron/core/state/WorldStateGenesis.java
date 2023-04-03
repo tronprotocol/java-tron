@@ -16,6 +16,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.rocksdb.BlockBasedTableConfig;
@@ -56,8 +57,6 @@ public class WorldStateGenesis {
   private static final String STATE_GENESIS_PROPERTIES = "genesis.properties";
 
   private static final String STATE_GENESIS_HEIGHT = "height";
-  private static final String STATE_GENESIS_HASH = "hash";
-  private static final String STATE_GENESIS_TIME = "time";
 
   private final Map<StateType, DB> genesisDBs = Maps.newConcurrentMap();
 
@@ -65,9 +64,6 @@ public class WorldStateGenesis {
 
   public synchronized void init(ChainBaseManager chainBaseManager) {
     if (!allowStateRoot) {
-      return;
-    }
-    if (inited) {
       return;
     }
     this.chainBaseManager = chainBaseManager;
@@ -221,12 +217,8 @@ public class WorldStateGenesis {
   private void initGenesisProperties() {
     logger.info("State genesis properties init start");
     long height = chainBaseManager.getHeadBlockNum();
-    long time = chainBaseManager.getHeadBlockTimeStamp();
-    BlockCapsule.BlockId hash = chainBaseManager.getHeadBlockId();
     Map<String, String> properties = new HashMap<>();
     properties.put(STATE_GENESIS_HEIGHT, String.valueOf(height));
-    properties.put(STATE_GENESIS_TIME, String.valueOf(time));
-    properties.put(STATE_GENESIS_HASH, hash.toString());
     String genesisFile = new File(stateGenesisPath.toString(), STATE_GENESIS_PROPERTIES).toString();
     PropUtil.writeProperties(genesisFile, properties);
     this.stateGenesisHeight =  height;
@@ -242,7 +234,7 @@ public class WorldStateGenesis {
     }
 
     String height = PropUtil.readProperty(genesisFile.toString(), STATE_GENESIS_HEIGHT);
-    if (height.isEmpty()) {
+    if (StringUtils.isEmpty(height)) {
       return -1;
     }
     long header = Long.parseLong(height);
