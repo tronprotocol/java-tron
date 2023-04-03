@@ -18,7 +18,7 @@
 
 package org.tron.core.tire;
 
-import static org.tron.core.state.WorldStateCallBackUtils.fix32;
+import static org.tron.core.state.WorldStateCallBack.fix32;
 import static org.tron.core.state.WorldStateQueryInstance.ADDRESS_SIZE;
 
 import java.io.IOException;

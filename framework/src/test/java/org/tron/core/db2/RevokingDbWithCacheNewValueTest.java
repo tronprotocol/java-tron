@@ -473,7 +473,7 @@ public class RevokingDbWithCacheNewValueTest {
 
     protected TestRevokingTronStore(String dbName) {
       super(dbName);
-      this.worldStateCallBackUtils = new WorldStateCallBack();
+      this.worldStateCallBack = new WorldStateCallBack();
     }
 
     @Override
