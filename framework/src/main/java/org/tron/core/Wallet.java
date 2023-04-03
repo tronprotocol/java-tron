@@ -3029,7 +3029,7 @@ public class Wallet {
     if (!isEstimating && result.getException() != null
         || result.getException() instanceof Program.OutOfTimeException) {
       RuntimeException e = result.getException();
-      logger.warn("Constant call has an error {}", e.getMessage());
+      logger.warn("Constant call failed for reason: {}", e.getMessage());
       throw e;
     }
 
@@ -3866,7 +3866,7 @@ public class Wallet {
       retBuilder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
           .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
       trxExtBuilder.setResult(retBuilder);
-      logger.warn("When run constant call in VM, have RuntimeException: " + e.getMessage());
+      logger.warn("When run constant call in VM, failed for reason: " + e.getMessage());
     } catch (Exception e) {
       retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
           .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
@@ -4130,7 +4130,7 @@ public class Wallet {
       retBuilder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
           .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
       trxExtBuilder.setResult(retBuilder);
-      logger.warn("When run constant call in VM, have RuntimeException: " + e.getMessage());
+      logger.warn("When run constant call in VM, failed for reason: " + e.getMessage());
     } catch (Exception e) {
       retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
           .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
