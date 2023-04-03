@@ -56,6 +56,8 @@ public class DynamicPropertiesStateStore extends DynamicPropertiesStore implemen
 
   @Override
   public void close() {
+    this.worldStateQueryInstance = null;
+    init = false;
   }
 
   @Override

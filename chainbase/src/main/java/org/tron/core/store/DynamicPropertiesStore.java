@@ -20,7 +20,7 @@ import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.state.WorldStateCallBackUtils;
+import org.tron.core.state.WorldStateCallBack;
 
 @Slf4j(topic = "DB")
 @Component
@@ -219,9 +219,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName,
-                                 @Autowired WorldStateCallBackUtils worldStateCallBackUtils) {
+                                 @Autowired WorldStateCallBack worldStateCallBack) {
     super(dbName);
-    this.worldStateCallBackUtils = worldStateCallBackUtils;
+    this.worldStateCallBack = worldStateCallBack;
 
     try {
       this.getTotalSignNum();

@@ -37,7 +37,7 @@ import org.tron.core.db2.core.SnapshotRoot;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.state.StateType;
-import org.tron.core.state.WorldStateCallBackUtils;
+import org.tron.core.state.WorldStateCallBack;
 
 
 @Slf4j(topic = "DB")
@@ -60,7 +60,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   private StateType type;
 
   @Autowired
-  protected WorldStateCallBackUtils worldStateCallBackUtils;
+  protected WorldStateCallBack worldStateCallBack;
 
   protected TronStoreWithRevoking(String dbName) {
     String dbEngine = CommonParameter.getInstance().getStorage().getDbEngine();
@@ -121,12 +121,12 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     }
     byte[] value = item.getData();
     revokingDB.put(key, value);
-    worldStateCallBackUtils.callBack(type, key, value, Value.Operator.PUT);
+    worldStateCallBack.callBack(type, key, value, Value.Operator.PUT);
   }
 
   @Override
   public void delete(byte[] key) {
-    worldStateCallBackUtils.callBack(type, key,
+    worldStateCallBack.callBack(type, key,
             StateType.Account == type ? revokingDB.getUnchecked(key) : null,
             Value.Operator.DELETE);
     revokingDB.delete(key);

@@ -32,6 +32,7 @@ import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.state.WorldStateCallBack;
 import org.tron.core.state.WorldStateQueryInstance;
+import org.tron.core.state.store.AccountStateStore;
 import org.tron.core.state.trie.TrieImpl2;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.EnergyCost;
@@ -141,6 +142,11 @@ public class TransferToAccountTest extends BaseTest {
     Assert.assertEquals(100,
         worldStateQueryInstance.getAccount(contractAddress)
             .getAssetV2MapForTest().get(String.valueOf(id)).longValue());
+    try (AccountStateStore store = new AccountStateStore()) {
+      store.init(worldStateQueryInstance);
+      Assert.assertEquals(100,
+            store.get(contractAddress).getAssetV2MapForTest().get(String.valueOf(id)).longValue());
+    }
     Assert.assertEquals(1000,
         chainBaseManager.getAccountStore().get(contractAddress).getBalance());
     Assert.assertEquals(1000,
