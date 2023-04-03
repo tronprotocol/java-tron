@@ -2840,7 +2840,7 @@ public class Wallet {
         triggerSmartContract.getData().toByteArray());
 
     if (isConstant(abi, selector)) {
-      return callConstantContract(trxCap, builder, retBuilder);
+      return callConstantContract(trxCap, builder, retBuilder, false);
     } else {
       return trxCap.getInstance();
     }
@@ -2958,12 +2958,18 @@ public class Wallet {
     txExtBuilder.clear();
     txRetBuilder.clear();
     transaction = triggerConstantContract(
-        triggerSmartContract, txCap, txExtBuilder, txRetBuilder);
+        triggerSmartContract, txCap, txExtBuilder, txRetBuilder, true);
     return transaction;
   }
 
   public Transaction triggerConstantContract(TriggerSmartContract triggerSmartContract,
       TransactionCapsule trxCap, Builder builder, Return.Builder retBuilder)
+      throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
+    return triggerConstantContract(triggerSmartContract, trxCap, builder, retBuilder, false);
+  }
+
+  public Transaction triggerConstantContract(TriggerSmartContract triggerSmartContract,
+      TransactionCapsule trxCap, Builder builder, Return.Builder retBuilder, boolean isEstimating)
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
     if (triggerSmartContract.getContractAddress().isEmpty()) { // deploy contract
@@ -2989,11 +2995,11 @@ public class Wallet {
         throw new ContractValidateException("Smart contract is not exist.");
       }
     }
-    return callConstantContract(trxCap, builder, retBuilder);
+    return callConstantContract(trxCap, builder, retBuilder, isEstimating);
   }
 
   public Transaction callConstantContract(TransactionCapsule trxCap,
-      Builder builder, Return.Builder retBuilder)
+      Builder builder, Return.Builder retBuilder, boolean isEstimating)
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
     if (!Args.getInstance().isSupportConstant()) {
@@ -3009,7 +3015,8 @@ public class Wallet {
       headBlock = blockCapsuleList.get(0).getInstance();
     }
 
-    TransactionContext context = new TransactionContext(new BlockCapsule(headBlock), trxCap,
+    BlockCapsule headBlockCapsule = new BlockCapsule(headBlock);
+    TransactionContext context = new TransactionContext(headBlockCapsule, trxCap,
         StoreFactory.getInstance(), true, false);
     VMActuator vmActuator = new VMActuator(true);
 
@@ -3017,7 +3024,8 @@ public class Wallet {
     vmActuator.execute(context);
 
     ProgramResult result = context.getProgramResult();
-    if (result.getException() != null) {
+    if (!isEstimating && result.getException() != null
+        || result.getException() instanceof Program.OutOfTimeException) {
       RuntimeException e = result.getException();
       logger.warn("Constant call has an error {}", e.getMessage());
       throw e;
@@ -3025,6 +3033,9 @@ public class Wallet {
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     builder.setEnergyUsed(result.getEnergyUsed());
+    builder.setEnergyPenalty(result.getEnergyPenaltyTotal());
+    builder.setBlockNumber(headBlockCapsule.getNum());
+    builder.setBlockHash(ByteString.copyFrom(headBlockCapsule.getBlockId().getBytes()));
     builder.setEnergyPenalty(result.getEnergyPenaltyTotal());
     builder.addConstantResult(ByteString.copyFrom(result.getHReturn()));
     result.getLogInfoList().forEach(logInfo ->
