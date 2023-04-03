@@ -3035,7 +3035,6 @@ public class Wallet {
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     builder.setEnergyUsed(result.getEnergyUsed());
-    builder.setEnergyPenalty(result.getEnergyPenaltyTotal());
     builder.setBlockNumber(headBlockCapsule.getNum());
     builder.setBlockHash(ByteString.copyFrom(headBlockCapsule.getBlockId().getBytes()));
     builder.setEnergyPenalty(result.getEnergyPenaltyTotal());
