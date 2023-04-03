@@ -554,6 +554,7 @@ public class Util {
    * Validate parameters for trigger constant and estimate energy
    * - Rule-1: owner address must be set
    * - Rule-2: either contract address is set or call data is set
+   * - Rule-3: if try to deploy, function selector and call data can not be both set
    * @param contract parameters in json format
    * @throws InvalidParameterException if validation is not passed, this kind of exception is thrown
    */
@@ -566,6 +567,12 @@ public class Util {
         && StringUtils.isEmpty(jsonObject.getString(CALL_DATA))) {
       throw new InvalidParameterException("At least one of "
           + CONTRACT_ADDRESS + " and " + CALL_DATA + " must be set.");
+    }
+    if (StringUtils.isEmpty(jsonObject.getString(CONTRACT_ADDRESS))
+        && !StringUtils.isEmpty(jsonObject.getString(FUNCTION_SELECTOR))
+        && !StringUtils.isEmpty(jsonObject.getString(CALL_DATA))) {
+      throw new InvalidParameterException("While trying to deploy, "
+          + FUNCTION_SELECTOR + " and " + CALL_DATA + " can not be both set.");
     }
   }
 
