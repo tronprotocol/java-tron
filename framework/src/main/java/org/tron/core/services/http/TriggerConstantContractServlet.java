@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
 import io.netty.util.internal.StringUtil;
 import java.io.IOException;
-import java.security.InvalidParameterException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -27,33 +26,10 @@ import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 @Slf4j(topic = "API")
 public class TriggerConstantContractServlet extends RateLimiterServlet {
 
-  private final String OWNER_ADDRESS = "owner_address";
-  private final String CONTRACT_ADDRESS = "contract_address";
-  private final String FUNCTION_SELECTOR = "function_selector";
-  private final String FUNCTION_PARAMETER = "parameter";
-  private final String CALL_DATA = "data";
-
   @Autowired
   private Wallet wallet;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
-  }
-
-  protected void validateParameter(String contract) {
-    JSONObject jsonObject = JSONObject.parseObject(contract);
-    if (StringUtil.isNullOrEmpty(jsonObject.getString(OWNER_ADDRESS))) {
-      throw new InvalidParameterException(OWNER_ADDRESS + " isn't set.");
-    }
-    if (StringUtil.isNullOrEmpty(jsonObject.getString(CONTRACT_ADDRESS))
-        && StringUtil.isNullOrEmpty(jsonObject.getString(CALL_DATA))) {
-      throw new InvalidParameterException("At least one of "
-          + CONTRACT_ADDRESS + " and " + CALL_DATA + " must be set.");
-    }
-    if (!StringUtil.isNullOrEmpty(jsonObject.getString(FUNCTION_SELECTOR))
-        ^ StringUtil.isNullOrEmpty(jsonObject.getString(CALL_DATA))) {
-      throw new InvalidParameterException("Only one of "
-          + FUNCTION_SELECTOR + " and " + CALL_DATA + " can be set.");
-    }
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -67,15 +43,15 @@ public class TriggerConstantContractServlet extends RateLimiterServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
       visible = Util.getVisiblePost(contract);
-      validateParameter(contract);
+      Util.validateParameter(contract);
       JsonFormat.merge(contract, build, visible);
       JSONObject jsonObject = JSONObject.parseObject(contract);
 
       boolean isFunctionSelectorSet =
-          !StringUtil.isNullOrEmpty(jsonObject.getString(FUNCTION_SELECTOR));
+          !StringUtil.isNullOrEmpty(jsonObject.getString(Util.FUNCTION_SELECTOR));
       if (isFunctionSelectorSet) {
-        String selector = jsonObject.getString(FUNCTION_SELECTOR);
-        String parameter = jsonObject.getString(FUNCTION_PARAMETER);
+        String selector = jsonObject.getString(Util.FUNCTION_SELECTOR);
+        String parameter = jsonObject.getString(Util.FUNCTION_PARAMETER);
         String data = Util.parseMethod(selector, parameter);
         build.setData(ByteString.copyFrom(ByteArray.fromHexString(data)));
       }
