@@ -8,14 +8,12 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.protobuf.ByteString;
 import io.netty.util.internal.StringUtil;
-
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -2227,7 +2225,10 @@ public class HttpMethed {
     responseContent = HttpMethed.parseResponseContent(response);
     responseContent = HttpMethed.parseStringContent(responseContent.get("block_header").toString());
     responseContent = HttpMethed.parseStringContent(responseContent.get("raw_data").toString());
-    Integer currentBlockNum = Integer.parseInt(responseContent.get("number").toString());
+    Integer currentBlockNum = 0;
+    if (responseContent.containsKey("number")) {
+      currentBlockNum = Integer.parseInt(responseContent.get("number").toString());
+    }
     Integer nextBlockNum = 0;
     Integer times = 0;
     while (nextBlockNum <= currentBlockNum + 1 && times++ <= 10) {
@@ -2236,7 +2237,9 @@ public class HttpMethed {
       responseContent =
           HttpMethed.parseStringContent(responseContent.get("block_header").toString());
       responseContent = HttpMethed.parseStringContent(responseContent.get("raw_data").toString());
-      nextBlockNum = Integer.parseInt(responseContent.get("number").toString());
+      if (responseContent.containsKey("number")) {
+        nextBlockNum = Integer.parseInt(responseContent.get("number").toString());
+      }
       try {
         Thread.sleep(1200);
       } catch (InterruptedException e) {
