@@ -624,68 +624,6 @@ service Wallet {
       }
     };
   }
-  //Warning: do not invoke this interface provided by others.
-  //Please use GetTransactionSign2 instead of this function.
-  rpc GetTransactionSign (TransactionSign) returns (Transaction) {
-    option (google.api.http) = {
-      post: "/wallet/gettransactionsign"
-      body: "*"
-      additional_bindings {
-        get: "/wallet/gettransactionsign"
-      }
-    };
-  };
-  //Warning: do not invoke this interface provided by others.
-  //Use this function instead of GetTransactionSign.
-  rpc GetTransactionSign2 (TransactionSign) returns (TransactionExtention) {
-  };
-  //Warning: do not invoke this interface provided by others.
-  rpc CreateAddress (BytesMessage) returns (BytesMessage) {
-    option (google.api.http) = {
-      post: "/wallet/createaddress"
-      body: "*"
-      additional_bindings {
-        get: "/wallet/createaddress"
-      }
-    };
-  };
-  //Warning: do not invoke this interface provided by others.
-  rpc EasyTransferAsset (EasyTransferAssetMessage) returns (EasyTransferResponse) {
-  };
-  //Warning: do not invoke this interface provided by others.
-  rpc EasyTransferAssetByPrivate (EasyTransferAssetByPrivateMessage) returns (EasyTransferResponse) {
-  };
-  //Warning: do not invoke this interface provided by others.
-  rpc EasyTransfer (EasyTransferMessage) returns (EasyTransferResponse) {
-    option (google.api.http) = {
-      post: "/wallet/easytransfer"
-      body: "*"
-      additional_bindings {
-        get: "/wallet/easytransfer"
-      }
-    };
-  };
-  //Warning: do not invoke this interface provided by others.
-  rpc EasyTransferByPrivate (EasyTransferByPrivateMessage) returns (EasyTransferResponse) {
-    option (google.api.http) = {
-      post: "/wallet/easytransferbyprivate"
-      body: "*"
-      additional_bindings {
-        get: "/wallet/easytransferbyprivate"
-      }
-    };
-  };
-  //Warning: do not invoke this interface provided by others.
-  rpc GenerateAddress (EmptyMessage) returns (AddressPrKeyPairMessage) {
-
-    option (google.api.http) = {
-      post: "/wallet/generateaddress"
-      body: "*"
-      additional_bindings {
-        get: "/wallet/generateaddress"
-      }
-    };
-  }
 
   rpc GetTransactionInfoById (BytesMessage) returns (TransactionInfo) {
     option (google.api.http) = {
@@ -705,10 +643,6 @@ service Wallet {
         get: "/wallet/accountpermissionupdate"
       }
     };
-  }
-
-  rpc AddSign (TransactionSign) returns (TransactionExtention) {
-
   }
 
   rpc GetTransactionSignWeight (Transaction) returns (TransactionSignWeight) {
@@ -964,17 +898,6 @@ service WalletSolidity {
       body: "*"
       additional_bindings {
         get: "/walletsolidity/gettransactioninfobyid"
-      }
-    };
-  }
-
-  //Warning: do not invoke this interface provided by others.
-  rpc GenerateAddress (EmptyMessage) returns (AddressPrKeyPairMessage) {
-    option (google.api.http) = {
-      post: "/walletsolidity/generateaddress"
-      body: "*"
-      additional_bindings {
-        get: "/walletsolidity/generateaddress"
       }
     };
   }
@@ -1269,43 +1192,6 @@ message PaginatedMessage {
   int64 limit = 2;
 }
 
-message EasyTransferMessage {
-  bytes passPhrase = 1;
-  bytes toAddress = 2;
-  int64 amount = 3;
-}
-
-message EasyTransferAssetMessage {
-  bytes passPhrase = 1;
-  bytes toAddress = 2;
-  string assetId = 3;
-  int64 amount = 4;
-}
-
-message EasyTransferByPrivateMessage {
-  bytes privateKey = 1;
-  bytes toAddress = 2;
-  int64 amount = 3;
-}
-
-message EasyTransferAssetByPrivateMessage {
-  bytes privateKey = 1;
-  bytes toAddress = 2;
-  string assetId = 3;
-  int64 amount = 4;
-}
-
-message EasyTransferResponse {
-  Transaction transaction = 1;
-  Return result = 2;
-  bytes txid = 3; //transaction id =  sha256(transaction.rowdata)
-}
-
-message AddressPrKeyPairMessage {
-  string address = 1;
-  string privateKey = 2;
-}
-
 message TransactionExtention {
   Transaction transaction = 1;
   bytes txid = 2; //transaction id =  sha256(transaction.rowdata)
@@ -1315,6 +1201,8 @@ message TransactionExtention {
   repeated TransactionInfo.Log logs = 6;
   repeated InternalTransaction internal_transactions = 7;
   int64 energy_penalty = 8;
+  int64 block_number = 9;
+  bytes block_hash = 10;
 }
 
 message EstimateEnergyMessage {

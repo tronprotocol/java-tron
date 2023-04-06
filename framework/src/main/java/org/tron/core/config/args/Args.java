@@ -570,7 +570,7 @@ public class Args extends CommonParameter {
             : 2000;
 
     if (!config.hasPath(Constant.NODE_FETCH_BLOCK_TIMEOUT)) {
-      PARAMETER.fetchBlockTimeout = 200;
+      PARAMETER.fetchBlockTimeout = 500;
     } else if (config.getInt(Constant.NODE_FETCH_BLOCK_TIMEOUT) > 1000) {
       PARAMETER.fetchBlockTimeout = 1000;
     } else if (config.getInt(Constant.NODE_FETCH_BLOCK_TIMEOUT) < 100) {
