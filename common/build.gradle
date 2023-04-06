@@ -53,7 +53,7 @@ dependencies {
     compile 'org.aspectj:aspectjrt:1.8.13'
     compile 'org.aspectj:aspectjweaver:1.8.13'
     compile 'org.aspectj:aspectjtools:1.8.13'
-    compile group: 'com.github.tronprotocol', name: 'libp2p', version: 'test-grpc-v2-1',{
+    compile group: 'com.github.tronprotocol', name: 'libp2p', version: 'test-grpc-v2-2',{
         exclude group: 'io.grpc', module: 'grpc-context'
         exclude group: 'io.grpc', module: 'grpc-core'
         exclude group: 'io.grpc', module: 'grpc-netty'
