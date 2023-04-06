@@ -71,14 +71,14 @@ public class UnfreezeBalanceV2Processor {
             throw new ContractValidateException("no frozenBalance(TRON_POWER)");
           }
         } else {
-          throw new ContractValidateException("ResourceCode error.valid ResourceCode[BANDWIDTH、ENERGY]");
+          throw new ContractValidateException("Unknown ResourceCode, valid ResourceCode[BANDWIDTH、ENERGY]");
         }
         break;
       default:
         if (dynamicStore.supportAllowNewResourceModel()) {
-          throw new ContractValidateException("ResourceCode error.valid ResourceCode[BANDWIDTH、ENERGY、TRON_POWER]");
+          throw new ContractValidateException("Unknown ResourceCode, valid ResourceCode[BANDWIDTH、ENERGY、TRON_POWER]");
         } else {
-          throw new ContractValidateException("ResourceCode error.valid ResourceCode[BANDWIDTH、ENERGY]");
+          throw new ContractValidateException("Unknown ResourceCode, valid ResourceCode[BANDWIDTH、ENERGY]");
         }
     }
 
