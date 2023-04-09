@@ -50,7 +50,7 @@ public class HttpApiAccessFilterTest {
   @BeforeClass
   public static void init() {
     Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
-    Args.getInstance().setFullNodeAllowShieldedTransactionArgs(false);
+    //Args.getInstance().setFullNodeAllowShieldedTransactionArgs(false);
     context = new TronApplicationContext(DefaultConfig.class);
     appTest = ApplicationFactory.create(context);
     httpApiAccessFilter = context.getBean(HttpApiAccessFilter.class);
