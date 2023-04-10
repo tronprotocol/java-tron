@@ -303,7 +303,7 @@ public class Util {
       } catch (JSONException e) {
         logger.debug("JSONException: {}", e.getMessage());
       } catch (Exception e) {
-        logger.error("", e);
+        logger.warn("{}", contractType, e);
       }
     }
     rawData.put("contract", contracts);

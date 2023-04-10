@@ -338,7 +338,7 @@ public class JsonRpcApiUtil {
             break;
         }
       } else {
-        logger.error("Can't find transaction {} ", hash);
+        logger.warn("Can't find transaction {} ", hash);
       }
     } catch (Exception e) {
       logger.warn("Exception happens when get amount from transactionInfo. Exception = [{}]",

@@ -1609,7 +1609,7 @@ public class Manager {
         toBePacked.add(trx);
         currentSize += trxPackSize;
       } catch (Exception e) {
-        logger.error("Process trx {} failed when generating block {}, {}.", trx.getTransactionId(),
+        logger.warn("Process trx {} failed when generating block {}, {}.", trx.getTransactionId(),
             blockCapsule.getNum(), e.getMessage());
       }
     }
