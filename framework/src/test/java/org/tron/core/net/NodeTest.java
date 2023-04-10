@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.core.Constant;
@@ -89,5 +90,10 @@ public class NodeTest {
     Assert.assertTrue(publishConfig.isDnsPublishEnable());
     Assert.assertEquals(5, publishConfig.getMaxMergeSize());
     Assert.assertEquals(DnsType.AwsRoute53, publishConfig.getDnsType());
+  }
+
+  @After
+  public void destroy() {
+    Args.clearParam();
   }
 }
