@@ -57,7 +57,7 @@ public class TransactionRetStore extends TronStoreWithRevoking<TransactionRetCap
       if (transactionResultInfo.getId().equals(id)) {
         Protocol.ResourceReceipt receipt = transactionResultInfo.getReceipt();
         // If query a result with dirty origin usage in receipt, we just reset it.
-        if (receipt.getEnergyPenaltyTotal() == 0 && receipt.getOriginEnergyUsage() > 0) {
+        if (receipt.getEnergyUsageTotal() == 0 && receipt.getOriginEnergyUsage() > 0) {
           transactionResultInfo =
               transactionResultInfo.toBuilder()
                   .setReceipt(
