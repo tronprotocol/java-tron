@@ -79,7 +79,13 @@ public class NodeTest {
   @Test
   public void testPublishConfig() {
     Config config = Configuration.getByFileName(Constant.TEST_CONF, Constant.TEST_CONF);
-    PublishConfig publishConfig = Args.loadDnsPublishConfig(config);
+
+    PublishConfig publishConfig = new PublishConfig();
+    Assert.assertFalse(publishConfig.isDnsPublishEnable());
+
+    publishConfig.setDnsPublishEnable(true);
+    Assert.assertTrue(publishConfig.isDnsPublishEnable());
+    Args.loadDnsPublishParameters(config, publishConfig);
     Assert.assertTrue(publishConfig.isDnsPublishEnable());
     Assert.assertEquals(5, publishConfig.getMaxMergeSize());
     Assert.assertEquals(DnsType.AwsRoute53, publishConfig.getDnsType());

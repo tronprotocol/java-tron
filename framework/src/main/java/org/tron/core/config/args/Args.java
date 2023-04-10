@@ -1335,7 +1335,12 @@ public class Args extends CommonParameter {
     if (config.hasPath(Constant.NODE_DNS_PUBLISH)) {
       publishConfig.setDnsPublishEnable(config.getBoolean(Constant.NODE_DNS_PUBLISH));
     }
+    loadDnsPublishParameters(config, publishConfig);
+    return publishConfig;
+  }
 
+  public static void loadDnsPublishParameters(final com.typesafe.config.Config config,
+      PublishConfig publishConfig) {
     if (publishConfig.isDnsPublishEnable()) {
       if (config.hasPath(Constant.NODE_DNS_DOMAIN) && StringUtils.isNotEmpty(
           config.getString(Constant.NODE_DNS_DOMAIN))) {
@@ -1427,7 +1432,6 @@ public class Args extends CommonParameter {
         }
       }
     }
-    return publishConfig;
   }
 
   private static void logEmptyError(String arg) {
