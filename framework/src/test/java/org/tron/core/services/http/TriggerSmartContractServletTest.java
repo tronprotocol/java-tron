@@ -32,6 +32,7 @@ public class TriggerSmartContractServletTest {
   private static byte[] ownerAddr = Hex.decode("410000000000000000000000000000000000000000");
   private static byte[] contractAddr = Hex.decode("41000000000000000000000000000000000000dEaD");
   private static TronApplicationContext context;
+  private static Application appT;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -46,7 +47,7 @@ public class TriggerSmartContractServletTest {
     context = new TronApplicationContext(beanFactory);
     context.register(DefaultConfig.class);
     context.refresh();
-    Application appT = ApplicationFactory.create(context);
+    appT = ApplicationFactory.create(context);
 
     // register http service
     FullNodeHttpApiService httpApiService = context.getBean(FullNodeHttpApiService.class);
@@ -73,6 +74,10 @@ public class TriggerSmartContractServletTest {
 
   @AfterClass
   public static void destroy() {
+    Args.clearParam();
+    appT.shutdownServices();
+    appT.shutdown();
+    context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
     } else {
