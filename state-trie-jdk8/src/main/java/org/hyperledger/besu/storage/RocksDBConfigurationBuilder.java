@@ -23,6 +23,7 @@ public class RocksDBConfigurationBuilder {
   public static final int DEFAULT_MAX_BACKGROUND_COMPACTIONS = Runtime.getRuntime().availableProcessors();
   public static final int DEFAULT_BACKGROUND_THREAD_COUNT = 4;
   public static final boolean DEFAULT_IS_HIGH_SPEC = false;
+  public static final boolean DEFAULT_IS_CACHE_INDEX_AND_FILTER = false;
   private Path databaseDir;
   private String label = "blockchain";
   private int maxOpenFiles = DEFAULT_MAX_OPEN_FILES;
@@ -31,6 +32,7 @@ public class RocksDBConfigurationBuilder {
   private int maxBackgroundCompactions = DEFAULT_MAX_BACKGROUND_COMPACTIONS;
   private int backgroundThreadCount = DEFAULT_BACKGROUND_THREAD_COUNT;
   private boolean isHighSpec = DEFAULT_IS_HIGH_SPEC;
+  private boolean cacheIndexAndFilter = DEFAULT_IS_CACHE_INDEX_AND_FILTER;
 
   public RocksDBConfigurationBuilder databaseDir(final Path databaseDir) {
     this.databaseDir = databaseDir;
@@ -72,6 +74,11 @@ public class RocksDBConfigurationBuilder {
     return this;
   }
 
+  public RocksDBConfigurationBuilder isCacheIndexAndFilter(final boolean cacheIndexAndFilter) {
+    this.cacheIndexAndFilter = cacheIndexAndFilter;
+    return this;
+  }
+
   public static RocksDBConfigurationBuilder from(final RocksDBFactoryConfiguration configuration) {
     return new RocksDBConfigurationBuilder()
         .backgroundThreadCount(configuration.getBackgroundThreadCount())
@@ -79,7 +86,8 @@ public class RocksDBConfigurationBuilder {
         .writeBufferSize(configuration.getWriteBufferSize())
         .maxBackgroundCompactions(configuration.getMaxBackgroundCompactions())
         .maxOpenFiles(configuration.getMaxOpenFiles())
-        .isHighSpec(configuration.isHighSpec());
+        .isHighSpec(configuration.isHighSpec())
+        .isCacheIndexAndFilter(configuration.isCacheIndexAndFilter());
   }
 
   public RocksDBConfiguration build() {
@@ -91,6 +99,7 @@ public class RocksDBConfigurationBuilder {
         cacheCapacity,
         writeBufferSize,
         label,
-        isHighSpec);
+        isHighSpec,
+        cacheIndexAndFilter);
   }
 }

@@ -164,7 +164,12 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
 
   private BlockBasedTableConfig createBlockBasedTableConfig(final RocksDBConfiguration config) {
     final LRUCache cache = new LRUCache(config.getCacheCapacity());
-    return new BlockBasedTableConfig().setBlockCache(cache);
+    final BlockBasedTableConfig tableCfg = new BlockBasedTableConfig();
+    tableCfg.setBlockCache(cache);
+    tableCfg.setCacheIndexAndFilterBlocks(config.isCacheIndexAndFilter());
+    tableCfg.setPinL0FilterAndIndexBlocksInCache(config.isCacheIndexAndFilter());
+    tableCfg.setFilter(new BloomFilter(10, false));
+    return tableCfg;
   }
 
   private void throwIfClosed() {
