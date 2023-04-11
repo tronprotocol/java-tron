@@ -73,12 +73,11 @@ public class TriggerSmartContractServletTest {
 
   @AfterClass
   public static void destroy() {
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.error("Release resources failure.");
-    }
+    Args.clearParam();
+    context.destroy();
+    FileUtil.deleteDir(new File(dbPath));
   }
+
 
   @Test
   public void testNormalCall() throws Exception {

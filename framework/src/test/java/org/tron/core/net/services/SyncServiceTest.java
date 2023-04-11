@@ -44,6 +44,7 @@ public class SyncServiceTest {
   @After
   public void destroy() {
     Args.clearParam();
+    context.destroy();
     FileUtil.deleteDir(new File(dbPath));
   }
 
