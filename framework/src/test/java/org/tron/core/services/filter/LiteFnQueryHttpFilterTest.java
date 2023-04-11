@@ -14,9 +14,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.application.Application;
@@ -56,6 +54,7 @@ public class LiteFnQueryHttpFilterTest {
     Args.getInstance().setFullNodeHttpPort(PublicMethod.chooseRandomPort());
     Args.getInstance().setSolidityHttpPort(PublicMethod.chooseRandomPort());
     Args.getInstance().setPBFTHttpPort(PublicMethod.chooseRandomPort());
+
     context = new TronApplicationContext(DefaultConfig.class);
     appTest = ApplicationFactory.create(context);
     FullNodeHttpApiService httpApiService = context
