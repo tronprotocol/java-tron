@@ -53,6 +53,7 @@ dependencies {
     compile 'org.aspectj:aspectjrt:1.8.13'
     compile 'org.aspectj:aspectjweaver:1.8.13'
     compile 'org.aspectj:aspectjtools:1.8.13'
+    compile project(":state-trie-jdk8")
     compile project(":protocol")
 }
 

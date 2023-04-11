@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
+import org.hyperledger.besu.storage.RocksDBConfigurationBuilder;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.Options;
 import org.tron.common.cache.CacheStrategies;
@@ -79,6 +80,12 @@ public class Storage {
   private static final String CACHE_STRATEGIES = "storage.cache.strategies";
 
   private static final String STATE_ROOT_SWITCH_KEY = "storage.stateRoot.switch";
+  private static final String STATE_DB_MAX_OPEN_FILES_KEY = "storage.stateRoot.db.maxOpenFiles";
+  private static final String STATE_DB_WRITE_BUFFER_SIZE_KEY =
+          "storage.stateRoot.db.writeBufferSize";
+  private static final String STATE_DB_CACHE_CAPACITY_KEY = "storage.stateRoot.db.cacheCapacity";
+  private static final String STATE_DB_CACHE_INDEX_AND_FILTER_KEY =
+          "storage.stateRoot.db.cacheIndexAndFilter";
   private static final String STATE_GENESIS_DIRECTORY_KEY = "storage.stateGenesis.directory";
 
   /**
@@ -161,6 +168,10 @@ public class Storage {
 
   @Getter
   private String stateGenesisDirectory = DEFAULT_STATE_GENESIS_DIRECTORY;
+
+  @Getter
+  private final RocksDBConfigurationBuilder stateDbConf = new RocksDBConfigurationBuilder();
+
 
   /**
    * Key: dbName, Value: Property object of that database
@@ -258,15 +269,25 @@ public class Storage {
     return this.cacheStrategies.getOrDefault(dbName, CacheStrategies.getCacheStrategy(dbName));
   }
 
-  public void setAllowStateRoot(final Config config) {
+  public void setStateConfig(final Config config) {
     if (config.hasPath(STATE_ROOT_SWITCH_KEY)) {
       this.allowStateRoot = config.getBoolean(STATE_ROOT_SWITCH_KEY);
     }
-  }
-
-  public  void setStateGenesisDirectory(final Config config) {
     if (config.hasPath(STATE_GENESIS_DIRECTORY_KEY)) {
       this.stateGenesisDirectory = config.getString(STATE_GENESIS_DIRECTORY_KEY);
+    }
+    if (config.hasPath(STATE_DB_MAX_OPEN_FILES_KEY)) {
+      this.stateDbConf.maxOpenFiles(config.getInt(STATE_DB_MAX_OPEN_FILES_KEY));
+    }
+    if (config.hasPath(STATE_DB_CACHE_CAPACITY_KEY)) {
+      this.stateDbConf.cacheCapacity(config.getLong(STATE_DB_CACHE_CAPACITY_KEY));
+    }
+    if (config.hasPath(STATE_DB_WRITE_BUFFER_SIZE_KEY)) {
+      this.stateDbConf.writeBufferSize(config.getLong(STATE_DB_WRITE_BUFFER_SIZE_KEY));
+    }
+    if (config.hasPath(STATE_DB_CACHE_INDEX_AND_FILTER_KEY)) {
+      this.stateDbConf.isCacheIndexAndFilter(
+          config.getBoolean(STATE_DB_CACHE_INDEX_AND_FILTER_KEY));
     }
   }
 

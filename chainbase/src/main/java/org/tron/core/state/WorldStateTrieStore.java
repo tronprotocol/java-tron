@@ -3,7 +3,7 @@ package org.tron.core.state;
 import java.nio.file.Paths;
 import javax.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
-import org.hyperledger.besu.storage.RocksDBConfigurationBuilder;
+import org.hyperledger.besu.storage.RocksDBConfiguration;
 import org.hyperledger.besu.storage.RocksDBKeyValueStorage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,8 +21,7 @@ public class WorldStateTrieStore extends RocksDBKeyValueStorage {
 
   @Autowired
   private WorldStateTrieStore(@Value("world-state-trie") String dbName) {
-    super(new RocksDBConfigurationBuilder().databaseDir(Paths.get(calDbParentPath(),
-            dbName)).build());
+    super(buildConf(dbName));
   }
 
   @PreDestroy
@@ -35,7 +34,7 @@ public class WorldStateTrieStore extends RocksDBKeyValueStorage {
   }
 
 
-  private static String calDbParentPath() {
+  private static RocksDBConfiguration buildConf(String dbName) {
     String stateGenesis = CommonParameter.getInstance().getStorage()
         .getStateGenesisDirectory();
     if (!Paths.get(stateGenesis).isAbsolute()) {
@@ -43,7 +42,8 @@ public class WorldStateTrieStore extends RocksDBKeyValueStorage {
           stateGenesis).toString();
     }
     FileUtil.createDirIfNotExists(stateGenesis);
-    return stateGenesis;
+    return CommonParameter.getInstance().getStorage().getStateDbConf()
+            .databaseDir(Paths.get(stateGenesis, dbName)).build();
   }
 
 }

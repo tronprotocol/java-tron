@@ -26,6 +26,7 @@ public class RocksDBConfiguration {
   private final long cacheCapacity;
   private final long writeBufferSize;
   private final boolean isHighSpec;
+  private final boolean cacheIndexAndFilter;
 
   public RocksDBConfiguration(
       final Path databaseDir,
@@ -35,7 +36,8 @@ public class RocksDBConfiguration {
       final long cacheCapacity,
       final long writeBufferSize,
       final String label,
-      final boolean isHighSpec) {
+      final boolean isHighSpec,
+      final boolean cacheIndexAndFilter) {
     this.maxBackgroundCompactions = maxBackgroundCompactions;
     this.backgroundThreadCount = backgroundThreadCount;
     this.databaseDir = databaseDir;
@@ -44,6 +46,7 @@ public class RocksDBConfiguration {
     this.writeBufferSize = writeBufferSize;
     this.label = label;
     this.isHighSpec = isHighSpec;
+    this.cacheIndexAndFilter = cacheIndexAndFilter;
   }
 
   public Path getDatabaseDir() {
@@ -76,5 +79,9 @@ public class RocksDBConfiguration {
 
   public boolean isHighSpec() {
     return isHighSpec;
+  }
+
+  public boolean isCacheIndexAndFilter() {
+    return cacheIndexAndFilter;
   }
 }
