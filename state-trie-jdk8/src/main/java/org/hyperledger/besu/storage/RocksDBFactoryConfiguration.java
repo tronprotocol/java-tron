@@ -22,6 +22,7 @@ public class RocksDBFactoryConfiguration {
   private final long cacheCapacity;
   private final long writeBufferSize;
   private final boolean isHighSpec;
+  private final boolean isCacheIndexAndFilter;
 
   public RocksDBFactoryConfiguration(
       final int maxOpenFiles,
@@ -29,13 +30,15 @@ public class RocksDBFactoryConfiguration {
       final int backgroundThreadCount,
       final long cacheCapacity,
       final long writeBufferSize,
-      final boolean isHighSpec) {
+      final boolean isHighSpec,
+      final boolean isCacheIndexAndFilter) {
     this.maxBackgroundCompactions = maxBackgroundCompactions;
     this.backgroundThreadCount = backgroundThreadCount;
     this.maxOpenFiles = maxOpenFiles;
     this.cacheCapacity = cacheCapacity;
     this.writeBufferSize = writeBufferSize;
     this.isHighSpec = isHighSpec;
+    this.isCacheIndexAndFilter = isCacheIndexAndFilter;
   }
 
   public int getMaxOpenFiles() {
@@ -60,5 +63,9 @@ public class RocksDBFactoryConfiguration {
 
   public boolean isHighSpec() {
     return isHighSpec;
+  }
+
+  public boolean isCacheIndexAndFilter() {
+    return isCacheIndexAndFilter;
   }
 }

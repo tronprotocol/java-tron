@@ -24,7 +24,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URL;
-import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,9 +63,7 @@ import org.tron.common.parameter.RateLimiterInitialization;
 import org.tron.common.setting.RocksDbSettings;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.LocalWitnesses;
-import org.tron.common.utils.PropUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.Configuration;
@@ -519,8 +516,7 @@ public class Args extends CommonParameter {
     PARAMETER.storage.setPropertyMapFromConfig(config);
     PARAMETER.storage.setCacheStrategies(config);
 
-    PARAMETER.storage.setAllowStateRoot(config);
-    PARAMETER.storage.setStateGenesisDirectory(config);
+    PARAMETER.storage.setStateConfig(config);
 
     PARAMETER.seedNode = new SeedNode();
     PARAMETER.seedNode.setIpList(Optional.ofNullable(PARAMETER.seedNodes)
