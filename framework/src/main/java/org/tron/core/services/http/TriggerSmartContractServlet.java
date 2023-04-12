@@ -60,11 +60,18 @@ public class TriggerSmartContractServlet extends RateLimiterServlet {
 
       boolean isFunctionSelectorSet =
           !StringUtil.isNullOrEmpty(jsonObject.getString(Util.FUNCTION_SELECTOR));
+      boolean isCallDataSet =
+          !StringUtil.isNullOrEmpty(jsonObject.getString(Util.CALL_DATA));
       if (isFunctionSelectorSet) {
         String selector = jsonObject.getString(Util.FUNCTION_SELECTOR);
         String parameter = jsonObject.getString(Util.FUNCTION_PARAMETER);
         String data = Util.parseMethod(selector, parameter);
         build.setData(ByteString.copyFrom(ByteArray.fromHexString(data)));
+      } else if (isCallDataSet) {
+        String data = jsonObject.getString(Util.CALL_DATA);
+        build.setData(ByteString.copyFrom(ByteArray.fromHexString(data)));
+      } else {
+        build.setData(ByteString.copyFrom(new byte[0]));
       }
 
       build.setCallTokenValue(Util.getJsonLongValue(jsonObject, "call_token_value"));

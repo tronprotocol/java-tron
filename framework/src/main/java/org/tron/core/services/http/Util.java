@@ -70,7 +70,7 @@ public class Util {
   public static final String CONTRACT_ADDRESS = "contract_address";
   public static final String FUNCTION_SELECTOR = "function_selector";
   public static final String FUNCTION_PARAMETER = "parameter";
-  public static final String CALL_DATA = "data";
+  public static final String CALL_DATA = "call_data";
 
   public static String printTransactionFee(String transactionFee) {
     JSONObject jsonObject = new JSONObject();
