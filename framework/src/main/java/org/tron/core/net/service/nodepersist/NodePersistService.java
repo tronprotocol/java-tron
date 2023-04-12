@@ -70,7 +70,8 @@ public class NodePersistService {
       List<Node> tableNodes = TronNetService.getP2pService().getTableNodes();
       tableNodes.sort(Comparator.comparingLong(value -> -value.getUpdateTime()));
       for (Node n : tableNodes) {
-        batch.add(new DBNode(n.getHost(), n.getPort()));
+        batch.add(
+            new DBNode(n.getPreferInetSocketAddress().getAddress().getHostAddress(), n.getPort()));
       }
 
       if (batch.size() > MAX_NODES_WRITE_TO_DB) {

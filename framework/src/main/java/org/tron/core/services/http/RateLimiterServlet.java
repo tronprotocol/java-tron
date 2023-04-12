@@ -16,6 +16,7 @@ import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.MetricLabels;
 import org.tron.common.prometheus.Metrics;
 import org.tron.core.config.args.Args;
+import org.tron.core.services.ratelimiter.GlobalRateLimiter;
 import org.tron.core.services.ratelimiter.RateLimiterContainer;
 import org.tron.core.services.ratelimiter.RuntimeData;
 import org.tron.core.services.ratelimiter.adapter.DefaultBaseQqsAdapter;
@@ -91,12 +92,16 @@ public abstract class RateLimiterServlet extends HttpServlet {
   @Override
   protected void service(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
+    
+    RuntimeData runtimeData = new RuntimeData(req);
+    GlobalRateLimiter.acquire(runtimeData);
+
     IRateLimiter rateLimiter = container.get(KEY_PREFIX_HTTP, getClass().getSimpleName());
 
     boolean acquireResource = true;
 
     if (rateLimiter != null) {
-      acquireResource = rateLimiter.acquire(new RuntimeData(req));
+      acquireResource = rateLimiter.acquire(runtimeData);
     }
     String url = Strings.isNullOrEmpty(req.getRequestURI())
         ? MetricLabels.UNDEFINED : req.getRequestURI();

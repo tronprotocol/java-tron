@@ -126,6 +126,8 @@ public class SendCoinShieldTest {
    */
   @BeforeClass
   public static void init() {
+    FileUtil.deleteDir(new File(dbPath));
+
     dbManager = context.getBean(Manager.class);
     wallet = context.getBean(Wallet.class);
     //init energy
