@@ -255,7 +255,7 @@ public class TransactionTrace {
     AccountCapsule origin = accountStore.get(originAccount);
     AccountCapsule caller = accountStore.get(callerAccount);
     if (dynamicPropertiesStore.supportUnfreezeDelay()
-        && receipt.getReceipt().getResult().equals(contractResult.SUCCESS)) {
+        && getRuntimeResult().getException() == null && !getRuntimeResult().isRevert()) {
 
       // just fo caller is not origin, we set the related field for origin account
       if (origin != null && !caller.getAddress().equals(origin.getAddress())) {
