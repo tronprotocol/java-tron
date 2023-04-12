@@ -4,7 +4,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import org.apache.http.HttpResponse;
@@ -21,10 +23,13 @@ import org.slf4j.LoggerFactory;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.ReflectUtils;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.services.interfaceOnPBFT.http.PBFT.HttpApiOnPBFTService;
 import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidityService;
@@ -37,6 +42,7 @@ public class HttpApiAccessFilterTest {
   private static Application appTest;
   private static CloseableHttpClient httpClient = HttpClients.createDefault();
   private static String dbPath = "output_http_api_access_filter_test";
+  private static HttpApiAccessFilter httpApiAccessFilter;
 
   /**
    * init dependencies.
@@ -44,10 +50,10 @@ public class HttpApiAccessFilterTest {
   @BeforeClass
   public static void init() {
     Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
-    Args.getInstance().setFullNodeAllowShieldedTransactionArgs(false);
+    //Args.getInstance().setFullNodeAllowShieldedTransactionArgs(false);
     context = new TronApplicationContext(DefaultConfig.class);
     appTest = ApplicationFactory.create(context);
-
+    httpApiAccessFilter = context.getBean(HttpApiAccessFilter.class);
     FullNodeHttpApiService httpApiService = context
             .getBean(FullNodeHttpApiService.class);
     HttpApiOnSolidityService httpApiOnSolidityService = context
@@ -153,4 +159,31 @@ public class HttpApiAccessFilterTest {
 
     return 0;
   }
+
+  @Test
+  public void testIsDisabled() throws Exception {
+    List<String> list = new ArrayList<>();
+    list.add("getnowblock");
+    CommonParameter.getInstance().setDisabledApiList(list);
+    Method privateMethod = httpApiAccessFilter.getClass()
+            .getDeclaredMethod("isDisabled", String.class);
+    privateMethod.setAccessible(true);
+
+    String url = "/wallet/getnowblock";
+    boolean f = (boolean) privateMethod.invoke(httpApiAccessFilter,url);
+    Assert.assertTrue(f);
+
+    url = "/wallet/a/../b/../getnowblock";
+    f = (boolean) privateMethod.invoke(httpApiAccessFilter,url);
+    Assert.assertTrue(f);
+
+    url = "/wallet/a/b/../getnowblock";
+    f = (boolean) privateMethod.invoke(httpApiAccessFilter,url);
+    Assert.assertTrue(!f);
+
+    url = "/wallet/getblock";
+    f = (boolean) privateMethod.invoke(httpApiAccessFilter,url);
+    Assert.assertTrue(!f);
+  }
+
 }

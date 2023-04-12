@@ -728,7 +728,7 @@ public class WalletTest {
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
         .setReceiverAddress(ByteString.copyFrom(ByteArray.fromHexString(receiveAddress)))
         .setBalance(unfreezeBalance)
-        .setResource(Common.ResourceCode.BANDWIDTH)
+        .setResource(BANDWIDTH)
         .setLock(lock)
         .build());
   }
@@ -753,6 +753,11 @@ public class WalletTest {
           ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
           ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS)));
 
+      Protocol.Account account = Protocol.Account.newBuilder()
+          .setAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS))).build();
+      wallet.getAccount(account);
+      wallet.getProposalList();
+      wallet.getWitnessList();
       Assert.assertEquals(1L, delegatedResourceList.getDelegatedResourceCount());
       Assert.assertEquals(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
           delegatedResourceList.getDelegatedResource(0).getFrom());
@@ -809,7 +814,7 @@ public class WalletTest {
 
     GrpcAPI.CanDelegatedMaxSizeResponseMessage message = wallet.getCanDelegatedMaxSize(
         ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
-        Common.ResourceCode.BANDWIDTH.getNumber());
+        BANDWIDTH.getNumber());
     Assert.assertEquals(initBalance - 280L, message.getMaxSize());
 
   }
@@ -832,7 +837,7 @@ public class WalletTest {
                 ByteString.copyFrom(ByteArray.fromHexString(ownerAddress))
             )
             .setUnfreezeBalance(unfreezeBalance)
-            .setResource(Common.ResourceCode.BANDWIDTH)
+            .setResource(BANDWIDTH)
             .build()
     );
   }
@@ -1065,6 +1070,18 @@ public class WalletTest {
     } catch (Program.OutOfTimeException ignored) {
       Assert.assertTrue(true);
     }
+  }
+
+  @Test
+  public void testListNodes() {
+    try {
+      GrpcAPI.NodeList nodeList = wallet.listNodes();
+    } catch (Exception e) {
+      Assert.assertTrue(e instanceof NullPointerException);
+    }
+    Args.getInstance().setP2pDisable(true);
+    GrpcAPI.NodeList nodeList = wallet.listNodes();
+    Assert.assertTrue(nodeList.getNodesList().size() == 0);
   }
 }
 

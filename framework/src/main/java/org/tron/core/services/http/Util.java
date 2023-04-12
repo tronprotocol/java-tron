@@ -27,7 +27,6 @@ import org.bouncycastle.util.encoders.Hex;
 import org.eclipse.jetty.util.StringUtil;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.BlockList;
-import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionIdList;
@@ -134,12 +133,6 @@ public class Util {
     list.stream().forEach(transactionCapsule -> transactions
         .add(printTransactionToJSON(transactionCapsule.getInstance(), selfType)));
     return transactions;
-  }
-
-  public static String printEasyTransferResponse(EasyTransferResponse response, boolean selfType) {
-    JSONObject jsonResponse = JSONObject.parseObject(JsonFormat.printToString(response, selfType));
-    jsonResponse.put(TRANSACTION, printTransactionToJSON(response.getTransaction(), selfType));
-    return jsonResponse.toJSONString();
   }
 
   public static String printTransaction(Transaction transaction, boolean selfType) {
@@ -310,7 +303,7 @@ public class Util {
       } catch (JSONException e) {
         logger.debug("JSONException: {}", e.getMessage());
       } catch (Exception e) {
-        logger.error("", e);
+        logger.warn("{}", contractType, e);
       }
     }
     rawData.put("contract", contracts);

@@ -41,10 +41,10 @@ import org.tron.core.zen.address.SpendingKey;
 import org.tron.core.zen.note.Note;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Contract;
-import org.tron.protos.Protocol.TransactionSign;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.ShieldContract.PedersenHash;
 import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
+import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 @Slf4j
 public class ShieldedTransferActuatorTest {
@@ -232,11 +232,8 @@ public class ShieldedTransferActuatorTest {
       TransactionCapsule transactionCap = getPublicToShieldedTransaction();
 
       //Add public address sign
-      TransactionSign.Builder transactionSignBuild = TransactionSign.newBuilder();
-      transactionSignBuild.setTransaction(transactionCap.getInstance());
-      transactionSignBuild.setPrivateKey(ByteString.copyFrom(
-          ByteArray.fromHexString(ADDRESS_ONE_PRIVATE_KEY)));
-      transactionCap = transactionUtil.addSign(transactionSignBuild.build());
+      transactionCap = TransactionUtils.addTransactionSign(transactionCap.getInstance(),
+              ADDRESS_ONE_PRIVATE_KEY, dbManager.getAccountStore());
 
       Assert.assertTrue(dbManager.pushTransaction(transactionCap));
     } catch (Exception e) {
@@ -263,11 +260,8 @@ public class ShieldedTransferActuatorTest {
       TransactionCapsule transactionCap = builder.build();
 
       //Add public address sign
-      TransactionSign.Builder transactionSignBuild = TransactionSign.newBuilder();
-      transactionSignBuild.setTransaction(transactionCap.getInstance());
-      transactionSignBuild.setPrivateKey(ByteString.copyFrom(
-          ByteArray.fromHexString(ADDRESS_ONE_PRIVATE_KEY)));
-      transactionCap = transactionUtil.addSign(transactionSignBuild.build());
+      transactionCap = TransactionUtils.addTransactionSign(transactionCap.getInstance(),
+              ADDRESS_ONE_PRIVATE_KEY, dbManager.getAccountStore());
 
       Assert.assertTrue(dbManager.pushTransaction(transactionCap));
     } catch (Exception e) {
@@ -286,11 +280,8 @@ public class ShieldedTransferActuatorTest {
       TransactionCapsule transactionCap = getPublicToShieldedTransaction();
 
       //Add public address sign
-      TransactionSign.Builder transactionSignBuild = TransactionSign.newBuilder();
-      transactionSignBuild.setTransaction(transactionCap.getInstance());
-      transactionSignBuild.setPrivateKey(ByteString.copyFrom(
-          ByteArray.fromHexString(ADDRESS_TWO_PRIVATE_KEY)));
-      transactionUtil.addSign(transactionSignBuild.build());
+      TransactionUtils.addTransactionSign(transactionCap.getInstance(), ADDRESS_TWO_PRIVATE_KEY,
+              dbManager.getAccountStore());
       Assert.assertTrue(false);
     } catch (PermissionException e) {
       Assert.assertTrue(e instanceof PermissionException);
@@ -429,11 +420,8 @@ public class ShieldedTransferActuatorTest {
     try {
       TransactionCapsule transactionCap = getPublicToShieldedTransaction();
       //Add public address sign
-      TransactionSign.Builder transactionSignBuild = TransactionSign.newBuilder();
-      transactionSignBuild.setTransaction(transactionCap.getInstance());
-      transactionSignBuild.setPrivateKey(ByteString.copyFrom(
-          ByteArray.fromHexString(ADDRESS_ONE_PRIVATE_KEY)));
-      transactionCap = transactionUtil.addSign(transactionSignBuild.build());
+      transactionCap = TransactionUtils.addTransactionSign(transactionCap.getInstance(),
+              ADDRESS_ONE_PRIVATE_KEY, dbManager.getAccountStore());
 
       AccountCapsule accountCapsule =
           dbManager.getAccountStore().get(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE));
@@ -1020,11 +1008,8 @@ public class ShieldedTransferActuatorTest {
       TransactionCapsule transactionCapOne = builderOne.build();
 
       //Add public address sign
-      TransactionSign.Builder transactionSignBuild = TransactionSign.newBuilder();
-      transactionSignBuild.setTransaction(transactionCapOne.getInstance());
-      transactionSignBuild.setPrivateKey(ByteString.copyFrom(
-          ByteArray.fromHexString(ADDRESS_ONE_PRIVATE_KEY)));
-      transactionCapOne = transactionUtil.addSign(transactionSignBuild.build());
+      transactionCapOne = TransactionUtils.addTransactionSign(transactionCapOne.getInstance(),
+              ADDRESS_ONE_PRIVATE_KEY, dbManager.getAccountStore());
 
       Assert.assertTrue(dbManager.pushTransaction(transactionCapOne));
       AccountCapsule accountCapsuleOne =

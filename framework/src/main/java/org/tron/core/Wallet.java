@@ -110,6 +110,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
 import org.tron.common.utils.WalletUtil;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
@@ -583,7 +584,7 @@ public class Wallet {
           .setMessage(ByteString.copyFromUtf8("Transaction expired"))
           .build();
     } catch (Exception e) {
-      logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
+      logger.warn("Broadcast transaction {} failed", txID, e);
       return builder.setResult(false).setCode(response_code.OTHER_ERROR)
           .setMessage(ByteString.copyFromUtf8("Error: " + e.getMessage()))
           .build();
@@ -646,18 +647,6 @@ public class Wallet {
 
     tswBuilder.setResult(resultBuilder);
     return tswBuilder.build();
-  }
-
-  public byte[] pass2Key(byte[] passPhrase) {
-    return Sha256Hash.hash(CommonParameter
-        .getInstance().isECKeyCryptoEngine(), passPhrase);
-  }
-
-  public byte[] createAddress(byte[] passPhrase) {
-    byte[] privateKey = pass2Key(passPhrase);
-    SignInterface ecKey = SignUtils.fromPrivate(privateKey,
-        Args.getInstance().isECKeyCryptoEngine());
-    return ecKey.getAddress();
   }
 
   public Block getNowBlock() {
@@ -765,17 +754,24 @@ public class Wallet {
         .createDbKeyV2(fromAddress.toByteArray(), toAddress.toByteArray(), false);
     DelegatedResourceCapsule unlockResource = chainBaseManager.getDelegatedResourceStore()
         .get(dbKey);
-    if (unlockResource != null) {
+    if (nonEmptyResource(unlockResource)) {
       builder.addDelegatedResource(unlockResource.getInstance());
     }
     dbKey = DelegatedResourceCapsule
         .createDbKeyV2(fromAddress.toByteArray(), toAddress.toByteArray(), true);
     DelegatedResourceCapsule lockResource = chainBaseManager.getDelegatedResourceStore()
         .get(dbKey);
-    if (lockResource != null) {
+    if (nonEmptyResource(lockResource)) {
       builder.addDelegatedResource(lockResource.getInstance());
     }
     return builder.build();
+  }
+
+  private boolean nonEmptyResource(DelegatedResourceCapsule resource) {
+    return Objects.nonNull(resource) && !(resource.getExpireTimeForBandwidth() == 0
+        && resource.getExpireTimeForEnergy() == 0
+        && resource.getFrozenBalanceForBandwidth() == 0
+        && resource.getFrozenBalanceForEnergy() == 0);
   }
 
   public GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage getCanWithdrawUnfreezeAmount(
@@ -1713,7 +1709,7 @@ public class Wallet {
       proposalCapsule = chainBaseManager.getProposalStore()
           .get(proposalId.toByteArray());
     } catch (StoreException e) {
-      logger.error(e.getMessage());
+      logger.warn(e.getMessage());
     }
     if (proposalCapsule != null) {
       return proposalCapsule.getInstance();
@@ -2631,7 +2627,7 @@ public class Wallet {
         }
       }
     } catch (BadItemException | ItemNotFoundException e) {
-      logger.error(e.getMessage());
+      logger.warn(e.getMessage());
     }
 
     return transactionInfoList.build();
@@ -2639,13 +2635,16 @@ public class Wallet {
 
   public NodeList listNodes() {
     NodeList.Builder nodeListBuilder = NodeList.newBuilder();
-    TronNetService.getP2pService().getConnectableNodes().forEach(node -> {
-      nodeListBuilder.addNodes(Node.newBuilder().setAddress(
-              Address.newBuilder()
-                      .setHost(ByteString
-                              .copyFrom(ByteArray.fromString(node.getHost())))
-                      .setPort(node.getPort())));
-    });
+    if (!Args.getInstance().p2pDisable) {
+      TronNetService.getP2pService().getConnectableNodes().forEach(node -> {
+        nodeListBuilder.addNodes(Node.newBuilder().setAddress(
+            Address.newBuilder()
+                .setHost(ByteString
+                    .copyFrom(ByteArray.fromString(
+                        node.getPreferInetSocketAddress().getAddress().getHostAddress())))
+                .setPort(node.getPort())));
+      });
+    }
     return nodeListBuilder.build();
   }
 
@@ -2660,7 +2659,7 @@ public class Wallet {
     try {
       return marketOrderStore.get(orderId.toByteArray()).getInstance();
     } catch (ItemNotFoundException e) {
-      logger.error("orderId = " + orderId.toString() + " not found");
+      logger.warn("orderId = {} not found", orderId);
       throw new IllegalStateException("order not found in store");
     }
 
@@ -2696,7 +2695,7 @@ public class Wallet {
             marketOrderListBuilder
                 .addOrders(orderCapsule.getInstance());
           } catch (ItemNotFoundException e) {
-            logger.error("orderId = " + orderId.toString() + " not found");
+            logger.warn("orderId = {} not found", orderId);
             throw new IllegalStateException("order not found in store");
           }
         }
@@ -3063,9 +3062,9 @@ public class Wallet {
     byte[] address = bytesMessage.getValue().toByteArray();
     AccountCapsule accountCapsule = chainBaseManager.getAccountStore().get(address);
     if (accountCapsule == null) {
-      logger.error(
-          "Get contract failed, the account does not exist or the account "
-              + "does not have a code hash!");
+      logger.warn(
+          "Get contract failed, the account {} does not exist or the account "
+              + "does not have a code hash!", StringUtil.encode58Check(address));
       return null;
     }
 
@@ -3092,9 +3091,9 @@ public class Wallet {
     byte[] address = bytesMessage.getValue().toByteArray();
     AccountCapsule accountCapsule = chainBaseManager.getAccountStore().get(address);
     if (accountCapsule == null) {
-      logger.error(
-          "Get contract failed, the account does not exist or the account does not have a code "
-              + "hash!");
+      logger.warn(
+          "Get contract failed, the account {} does not exist or the account does not have a code "
+              + "hash!", StringUtil.encode58Check(address));
       return null;
     }
 
