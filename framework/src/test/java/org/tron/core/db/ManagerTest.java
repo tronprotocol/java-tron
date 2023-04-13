@@ -226,6 +226,13 @@ public class ManagerTest extends BlockGenerate {
       }
     }
 
+    try {
+      chainManager.getBlockIdByNum(-1);
+      Assert.fail();
+    } catch (ItemNotFoundException e) {
+      Assert.assertTrue(true);
+    }
+
     Assert.assertTrue("hasBlocks is error", chainManager.hasBlocks());
   }
 
