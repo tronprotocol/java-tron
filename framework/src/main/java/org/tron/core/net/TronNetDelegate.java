@@ -285,7 +285,7 @@ public class TronNetDelegate {
         logger.error("Process block failed, {}, reason: {}", blockId.getString(), e.getMessage());
         if (e instanceof BadBlockException
                 && ((BadBlockException) e).getType().equals(CALC_MERKLE_ROOT_FAILED)) {
-          throw new P2pException(TypeEnum.CALC_MERKLE_ROOT_FAILED, e);
+          throw new P2pException(TypeEnum.BLOCK_MERKLE_ERROR, e);
         } else {
           throw new P2pException(TypeEnum.BAD_BLOCK, e);
         }
@@ -318,10 +318,10 @@ public class TronNetDelegate {
     try {
       if (!block.validateSignature(dbManager.getDynamicPropertiesStore(),
               dbManager.getAccountStore())) {
-        throw new P2pException(TypeEnum.SIGN_ERROR, "valid signature failed.");
+        throw new P2pException(TypeEnum.BLOCK_SIGN_ERROR, "valid signature failed.");
       }
     } catch (ValidateSignatureException e) {
-      throw new P2pException(TypeEnum.SIGN_ERROR, e);
+      throw new P2pException(TypeEnum.BLOCK_SIGN_ERROR, e);
     }
   }
 

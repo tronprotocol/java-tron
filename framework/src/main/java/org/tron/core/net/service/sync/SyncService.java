@@ -1,8 +1,6 @@
 package org.tron.core.net.service.sync;
 
 import static org.tron.core.config.Parameter.NetConstants.MAX_BLOCK_FETCH_PER_PEER;
-import static org.tron.core.exception.P2pException.TypeEnum.CALC_MERKLE_ROOT_FAILED;
-import static org.tron.core.exception.P2pException.TypeEnum.SIGN_ERROR;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -289,8 +287,8 @@ public class SyncService {
     } catch (P2pException p2pException) {
       logger.error("Process sync block {} failed, type: {}",
               blockId.getString(), p2pException.getType());
-      attackFlag = p2pException.getType().equals(SIGN_ERROR)
-              || p2pException.getType().equals(CALC_MERKLE_ROOT_FAILED);
+      attackFlag = p2pException.getType().equals(TypeEnum.BLOCK_SIGN_ERROR)
+              || p2pException.getType().equals(TypeEnum.BLOCK_MERKLE_ERROR);
       flag = false;
     } catch (Exception e) {
       logger.error("Process sync block {} failed", blockId.getString(), e);

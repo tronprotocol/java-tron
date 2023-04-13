@@ -50,8 +50,8 @@ public class P2pException extends Exception {
     TRX_EXE_FAILED(12, "trx exe failed"),
     DB_ITEM_NOT_FOUND(13, "DB item not found"),
     PROTOBUF_ERROR(14, "protobuf inconsistent"),
-    SIGN_ERROR(15, "sign error"),
-    CALC_MERKLE_ROOT_FAILED(16, "calc merkle root failed"),
+    BLOCK_SIGN_ERROR(15, "block sign error"),
+    BLOCK_MERKLE_ERROR(16, "block merkle error"),
 
     DEFAULT(100, "default exception");
 
