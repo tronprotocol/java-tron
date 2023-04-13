@@ -50,7 +50,7 @@ public class UnDelegateResourceProcessor {
     }
 
     byte[] receiverAddress = param.getReceiverAddress();
-    if (ArrayUtils.isEmpty(receiverAddress) || !DecodeUtil.addressValid(receiverAddress)) {
+    if (!DecodeUtil.addressValid(receiverAddress)) {
       throw new ContractValidateException("Invalid receiverAddress");
     }
     if (Arrays.equals(receiverAddress, ownerAddress)) {
@@ -104,7 +104,9 @@ public class UnDelegateResourceProcessor {
         case BANDWIDTH:
           BandwidthProcessor bandwidthProcessor = new BandwidthProcessor(ChainBaseManager.getInstance());
           bandwidthProcessor.updateUsageForDelegated(receiverCapsule);
-
+          /* For example, in a scenario where a regular account can be upgraded to a contract
+          account through an interface, the account information will be cleared after the
+          contract suicide, and this account will be converted to a regular account in the future */
           if (receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth()
               < unDelegateBalance) {
             // A TVM contract suicide, re-create will produce this situation

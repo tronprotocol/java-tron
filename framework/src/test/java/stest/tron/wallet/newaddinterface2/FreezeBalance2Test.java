@@ -87,7 +87,7 @@ public class FreezeBalance2Test {
     ret1 = freezeBalance2(fromAddress, 999999L, 3L, testKey002);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "Contract validate error : frozenBalance must be more than 1TRX");
+        "Contract validate error : frozenBalance must be greater than or equal to 1 TRX");
     //Freeze failed when freeze duration isn't 3 days.
     ret1 = freezeBalance2(fromAddress, 1000000L, 2L, testKey002);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);

@@ -28,6 +28,8 @@ import static org.tron.core.config.Parameter.DatabaseConstants.MARKET_COUNT_LIMI
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseEnergyFee;
 import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.EARLIEST_STR;
+import static org.tron.core.vm.utils.FreezeV2Util.getV2EnergyUsage;
+import static org.tron.core.vm.utils.FreezeV2Util.getV2NetUsage;
 import static org.tron.protos.contract.Common.ResourceCode;
 
 import com.google.common.collect.ContiguousSet;
@@ -876,14 +878,9 @@ public class Wallet {
     long netUsage = (long) (accountNetUsage * TRX_PRECISION * ((double)
             (dynamicStore.getTotalNetWeight()) / dynamicStore.getTotalNetLimit()));
 
-    long remainNetUsage = netUsage
-            - ownerCapsule.getFrozenBalance()
-            - ownerCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
-            - ownerCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth();
+    long v2NetUsage = getV2NetUsage(ownerCapsule, netUsage);
 
-    remainNetUsage = Math.max(0, remainNetUsage);
-
-    long maxSize = ownerCapsule.getFrozenV2BalanceForBandwidth() - remainNetUsage;
+    long maxSize = ownerCapsule.getFrozenV2BalanceForBandwidth() - v2NetUsage;
     return Math.max(0, maxSize);
   }
 
@@ -901,14 +898,9 @@ public class Wallet {
     long energyUsage = (long) (ownerCapsule.getEnergyUsage() * TRX_PRECISION * ((double)
             (dynamicStore.getTotalEnergyWeight()) / dynamicStore.getTotalEnergyCurrentLimit()));
 
-    long remainEnergyUsage = energyUsage
-            - ownerCapsule.getEnergyFrozenBalance()
-            - ownerCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()
-            - ownerCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy();
+    long v2EnergyUsage = getV2EnergyUsage(ownerCapsule, energyUsage);
 
-    remainEnergyUsage = Math.max(0, remainEnergyUsage);
-
-    long maxSize =  ownerCapsule.getFrozenV2BalanceForEnergy() - remainEnergyUsage;
+    long maxSize =  ownerCapsule.getFrozenV2BalanceForEnergy() - v2EnergyUsage;
     return Math.max(0, maxSize);
   }
 

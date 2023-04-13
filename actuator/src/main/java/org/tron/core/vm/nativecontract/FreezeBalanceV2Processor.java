@@ -37,9 +37,10 @@ public class FreezeBalanceV2Processor {
     if (frozenBalance <= 0) {
       throw new ContractValidateException("FrozenBalance must be positive");
     } else if (frozenBalance < TRX_PRECISION) {
-      throw new ContractValidateException("FrozenBalance must be more than 1TRX");
+      throw new ContractValidateException("FrozenBalance must be greater than or equal to 1 TRX");
     } else if (frozenBalance > ownerCapsule.getBalance()) {
-      throw new ContractValidateException("FrozenBalance must be less than accountBalance");
+      throw new ContractValidateException(
+          "FrozenBalance must be less than or equal to accountBalance");
     }
 
     // validate arg @resourceType

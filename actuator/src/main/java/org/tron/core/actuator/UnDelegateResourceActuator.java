@@ -10,7 +10,6 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
@@ -240,7 +239,7 @@ public class UnDelegateResourceActuator extends AbstractActuator {
     }
 
     byte[] receiverAddress = unDelegateResourceContract.getReceiverAddress().toByteArray();
-    if (ArrayUtils.isEmpty(receiverAddress) || !DecodeUtil.addressValid(receiverAddress)) {
+    if (!DecodeUtil.addressValid(receiverAddress)) {
       throw new ContractValidateException("Invalid receiverAddress");
     }
     if (Arrays.equals(receiverAddress, ownerAddress)) {

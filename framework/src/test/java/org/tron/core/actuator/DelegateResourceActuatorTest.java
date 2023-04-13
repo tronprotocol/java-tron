@@ -179,7 +179,8 @@ public class DelegateResourceActuatorTest {
       actuator.execute(ret);
       Assert.fail("cannot run here.");
     } catch (ContractValidateException e) {
-      Assert.assertEquals("delegateBalance must be less than available FreezeBandwidthV2 balance",
+      Assert.assertEquals(
+          "delegateBalance must be less than or equal to available FreezeBandwidthV2 balance",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.fail();
@@ -193,7 +194,7 @@ public class DelegateResourceActuatorTest {
       Assert.fail("cannot run here.");
     } catch (ContractValidateException e) {
       Assert.assertEquals(
-          "delegateBalance must be less than available FreezeEnergyV2 balance",
+          "delegateBalance must be less than or equal to available FreezeEnergyV2 balance",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.fail(e.getMessage());
@@ -222,7 +223,8 @@ public class DelegateResourceActuatorTest {
       actuator.execute(ret);
       Assert.fail("cannot run here.");
     } catch (ContractValidateException e) {
-      Assert.assertEquals("delegateBalance must be less than available FreezeBandwidthV2 balance",
+      Assert.assertEquals(
+          "delegateBalance must be less than or equal to available FreezeBandwidthV2 balance",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.fail(e.getMessage());
@@ -253,7 +255,7 @@ public class DelegateResourceActuatorTest {
       Assert.fail("cannot run here.");
     } catch (ContractValidateException e) {
       Assert.assertEquals(
-          "delegateBalance must be less than available FreezeEnergyV2 balance",
+          "delegateBalance must be less than or equal to available FreezeEnergyV2 balance",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.fail(e.getMessage());
@@ -512,7 +514,8 @@ public class DelegateResourceActuatorTest {
       actuator.execute(ret);
       Assert.fail("cannot run here.");
     } catch (ContractValidateException e) {
-      Assert.assertEquals("delegateBalance must be more than 1TRX", e.getMessage());
+      Assert.assertEquals("delegateBalance must be greater than or equal to 1 TRX",
+          e.getMessage());
     } catch (ContractExeException e) {
       Assert.fail(e.getMessage());
     }
@@ -550,7 +553,8 @@ public class DelegateResourceActuatorTest {
       actuator.execute(ret);
       Assert.fail("cannot run here.");
     } catch (ContractValidateException e) {
-      Assert.assertEquals("delegateBalance must be less than available FreezeBandwidthV2 balance",
+      Assert.assertEquals(
+          "delegateBalance must be less than or equal to available FreezeBandwidthV2 balance",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.fail(e.getMessage());
