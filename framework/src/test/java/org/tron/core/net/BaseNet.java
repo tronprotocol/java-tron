@@ -97,7 +97,7 @@ public class BaseNet {
       appT.startServices();
       appT.startup();
       try {
-        Thread.sleep(1000);
+        Thread.sleep(2000);
       } catch (InterruptedException e) {
         //ignore
       }
