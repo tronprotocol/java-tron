@@ -14,15 +14,14 @@ import org.apache.http.impl.client.HttpClients;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.PublicMethod;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
@@ -50,8 +49,12 @@ public class LiteFnQueryHttpFilterTest {
    */
   @Before
   public void init() {
-    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
-    //Args.getInstance().setFullNodeAllowShieldedTransactionArgs(false);
+    Args.setParam(new String[]{"-d", dbPath, "--p2p-disable", "true"}, Constant.TEST_CONF);
+    Args.getInstance().setFullNodeAllowShieldedTransactionArgs(false);
+    Args.getInstance().setFullNodeHttpPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setSolidityHttpPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setPBFTHttpPort(PublicMethod.chooseRandomPort());
+
     context = new TronApplicationContext(DefaultConfig.class);
     appTest = ApplicationFactory.create(context);
     FullNodeHttpApiService httpApiService = context
