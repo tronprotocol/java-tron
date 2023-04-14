@@ -3,10 +3,7 @@ package org.tron.core.capsule.utils;
 import com.google.common.primitives.Bytes;
 import java.util.HashMap;
 import java.util.Map;
-import org.apache.tuweni.bytes.Bytes32;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.ChainBaseManager;
-import org.tron.core.state.store.DynamicPropertiesStateStore;
 import org.tron.core.store.AccountAssetStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Account;
@@ -17,63 +14,40 @@ public class AssetUtil {
 
   private static DynamicPropertiesStore dynamicPropertiesStore;
 
-  public static boolean hasAssetV2(Account account, byte[] key, Bytes32 root) {
-    if (account.getAssetV2Map().containsKey(ByteArray.toStr(key))) {
+  public static boolean hasAssetV2(Account account, byte[] key) {
+    if (!account.getAssetV2Map().isEmpty()
+        && account.getAssetV2Map().containsKey(ByteArray.toStr(key))) {
       return true;
     }
-    if (!isAllowAssetOptimization(root)) {
+    if (!isAllowAssetOptimization()) {
       return false;
     }
-    if (!account.getAssetOptimized()) {
-      return false;
-    }
-    if (Bytes32.ZERO.equals(root)) {
-      byte[] dbKey = Bytes.concat(account.getAddress().toByteArray(), key);
-      return accountAssetStore.get(dbKey) != null;
-    }
-    return ChainBaseManager.fetch(root).hasAssetV2(account,
-            Long.valueOf(ByteArray.toStr(key)));
+    byte[] dbKey = Bytes.concat(account.getAddress().toByteArray(), key);
+    return accountAssetStore.get(dbKey) != null;
   }
 
-  public static Account importAssetV2(Account account, byte[] key, Bytes32 root) {
-    String tokenId = ByteArray.toStr(key);
-    if (account.getAssetV2Map().containsKey(tokenId)) {
-      return account;
-    }
-    if (!isAllowAssetOptimization(root)) {
-      return account;
-    }
-    if (!account.getAssetOptimized()) {
+  public static Account importAsset(Account account, byte[] key) {
+    if (!isAllowAssetOptimization()) {
       return account;
     }
 
-    long balance;
-    if (Bytes32.ZERO.equals(root)) {
-      balance = accountAssetStore.getBalance(account, key);
-    } else {
-      balance = ChainBaseManager.fetch(root).getAccountAsset(account,
-              Long.valueOf(ByteArray.toStr(key)));
+    String sKey = ByteArray.toStr(key);
+    if (account.getAssetV2Map().containsKey(sKey)) {
+      return account;
     }
 
-    Map<String, Long> map = new HashMap<>(account.getAssetV2Map());
-    map.put(tokenId, balance);
+    long balance = accountAssetStore.getBalance(account, key);
+    Map<String, Long> map = new HashMap<>();
+    map.putAll(account.getAssetV2Map());
+    map.put(sKey, balance);
     return account.toBuilder().clearAssetV2().putAllAssetV2(map).build();
   }
 
-  public static Account importAllAsset(Account account, Bytes32 root) {
-    if (!isAllowAssetOptimization(root)) {
+  public static Account importAllAsset(Account account) {
+    if (!isAllowAssetOptimization()) {
       return account;
     }
-
-    if (!account.getAssetOptimized()) {
-      return account;
-    }
-    Map<String, Long> map;
-    if (Bytes32.ZERO.equals(root)) {
-      map = accountAssetStore.getAllAssets(account);
-    } else {
-      map =  ChainBaseManager.fetch(root).importAllAsset(account);
-    }
+    Map<String, Long> map = accountAssetStore.getAllAssets(account);
     return account.toBuilder().clearAssetV2().putAllAssetV2(map).build();
   }
 
@@ -86,14 +60,8 @@ public class AssetUtil {
     AssetUtil.dynamicPropertiesStore = dynamicPropertiesStore;
   }
 
-  public static boolean isAllowAssetOptimization(Bytes32 root) {
-    if (Bytes32.ZERO.equals(root)) {
-      return dynamicPropertiesStore.supportAllowAssetOptimization();
-    }
-    try (DynamicPropertiesStateStore store = new DynamicPropertiesStateStore()) {
-      store.init(ChainBaseManager.fetch(root));
-      return store.supportAllowAssetOptimization();
-    }
+  public static boolean isAllowAssetOptimization() {
+    return dynamicPropertiesStore.supportAllowAssetOptimization();
   }
 
 }
