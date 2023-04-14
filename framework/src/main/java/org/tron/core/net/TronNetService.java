@@ -82,8 +82,7 @@ public class TronNetService {
   public void start() {
     try {
       init = true;
-      P2pConfig config = new P2pConfig();
-      setP2pConfig(getConfig(config));
+      setP2pConfig(getConfig());
       p2pService.start(p2pConfig);
       p2pService.register(p2pEventHandler);
       advService.init();
@@ -148,7 +147,12 @@ public class TronNetService {
     return false;
   }
 
-  private P2pConfig getConfig(P2pConfig config) {
+  private P2pConfig getConfig(){
+    P2pConfig config = new P2pConfig();
+    return updateConfig(config);
+  }
+
+  private P2pConfig updateConfig(P2pConfig config) {
     List<InetSocketAddress> seeds = parameter.getSeedNode().getAddressList();
     seeds.addAll(nodePersistService.dbRead());
     logger.debug("Seed InetSocketAddress: {}", seeds);

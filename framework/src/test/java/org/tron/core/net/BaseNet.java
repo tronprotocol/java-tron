@@ -103,9 +103,9 @@ public abstract class BaseNet {
       }
     });
     int tryTimes = 0;
-    while (++tryTimes < 100 && tronNetDelegate == null) {
-      Thread.sleep(3000);
-    }
+    do {
+      Thread.sleep(3000); //coverage consumerInvToSpread,consumerInvToFetch in AdvService.init
+    } while (++tryTimes < 100 && tronNetDelegate == null);
   }
 
   @After
@@ -115,7 +115,7 @@ public abstract class BaseNet {
     for (PeerConnection peer : peerConnections) {
       peer.getChannel().close();
     }
-
+    Args.clearParam();
     context.destroy();
     FileUtil.deleteDir(new File(dbPath));
   }

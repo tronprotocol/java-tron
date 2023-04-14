@@ -42,7 +42,7 @@ public class EffectiveCheckServiceTest {
   public void testNoIpv4() throws Exception {
     TronNetService tronNetService = context.getBean(TronNetService.class);
     Method privateMethod = tronNetService.getClass()
-        .getDeclaredMethod("getConfig", P2pConfig.class);
+        .getDeclaredMethod("updateConfig", P2pConfig.class);
     privateMethod.setAccessible(true);
     P2pConfig config = new P2pConfig();
     config.setIp(null);
