@@ -3127,23 +3127,6 @@ public class Wallet {
     return null;
   }
 
-  public SmartContract getContract(byte[] address, long blockNumber) {
-    Bytes32 rootHash = getRootHashByNumber(blockNumber);
-    WorldStateQueryInstance worldStateQueryInstance = initWorldStateQueryInstance(rootHash);
-    AccountCapsule accountCapsule = worldStateQueryInstance.getAccount(address);
-    if (accountCapsule == null) {
-      logger.error(
-              "Get contract failed, the account does not exist or the account "
-                      + "does not have a code hash!");
-      return null;
-    }
-    ContractCapsule contractCapsule = worldStateQueryInstance.getContract(address);
-    if (contractCapsule == null) {
-      return null;
-    }
-    return contractCapsule.getInstance();
-  }
-
   /**
    * Add a wrapper for smart contract. Current additional information including runtime code for a
    * smart contract.
