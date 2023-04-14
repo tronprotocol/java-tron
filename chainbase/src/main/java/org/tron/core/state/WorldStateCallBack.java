@@ -46,15 +46,15 @@ public class WorldStateCallBack {
       return;
     }
     if (op == Value.Operator.DELETE || ArrayUtils.isEmpty(value)) {
-      if (type == StateType.Account) {
+      if (type == StateType.Account && chainBaseManager.getDynamicPropertiesStore()
+              .getAllowAccountAssetOptimizationFromRoot() == 1) {
         // @see org.tron.core.db2.core.SnapshotRoot#remove(byte[] key)
+        // @see org.tron.core.db2.core.SnapshotRoot#put(byte[] key, byte[] value)
         AccountCapsule accountCapsule = new AccountCapsule(value);
-        if (accountCapsule.getAssetOptimized()) {
-          accountCapsule.getAssetMapV2().keySet().forEach(tokenId -> addFix32(
-                  StateType.AccountAsset, com.google.common.primitives.Bytes.concat(key,
-                          Longs.toByteArray(Long.parseLong(tokenId))),
-                  WorldStateQueryInstance.DELETE));
-        }
+        accountCapsule.getAssetMapV2().keySet().forEach(tokenId -> addFix32(
+                StateType.AccountAsset, com.google.common.primitives.Bytes.concat(key,
+                        Longs.toByteArray(Long.parseLong(tokenId))),
+                WorldStateQueryInstance.DELETE));
       }
       add(type, key, WorldStateQueryInstance.DELETE);
       return;

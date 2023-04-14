@@ -25,6 +25,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.tuweni.bytes.Bytes32;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.utils.AssetUtil;
+import org.tron.core.state.utils.AssetStateUtil;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Account;
@@ -834,7 +835,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public boolean addAssetV2(byte[] key, long value) {
-    if (AssetUtil.hasAssetV2(this.account, key, root)) {
+    if (hasAssetV2(key)) {
       return false;
     }
 
@@ -1335,12 +1336,12 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public void importAsset(byte[] key) {
-    this.account = AssetUtil.importAssetV2(this.account, key, root);
+    this.account = importAssetV2(key);
   }
 
   public void importAllAsset() {
     if (!flag) {
-      this.account = AssetUtil.importAllAsset(this.account, root);
+      this.account = importAllAssetV2();
       flag = true;
     }
   }
@@ -1457,6 +1458,27 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     if (!this.getWindowOptimized(resourceCode)) {
       this.setWindowOptimized(resourceCode, true);
     }
+  }
+
+  private boolean hasAssetV2(byte[] key) {
+    if (Bytes32.ZERO.equals(this.root)) {
+      return AssetUtil.hasAssetV2(this.account, key);
+    }
+    return AssetStateUtil.hasAssetV2(this.account, key, this.root);
+  }
+
+  private Account importAssetV2(byte[] key) {
+    if (Bytes32.ZERO.equals(this.root)) {
+      return AssetUtil.importAsset(this.account, key);
+    }
+    return AssetStateUtil.importAssetV2(this.account, key , this.root);
+  }
+
+  private Account importAllAssetV2() {
+    if (Bytes32.ZERO.equals(root)) {
+      return AssetUtil.importAllAsset(this.account);
+    }
+    return AssetStateUtil.importAllAsset(this.account, this.root);
   }
 
 }

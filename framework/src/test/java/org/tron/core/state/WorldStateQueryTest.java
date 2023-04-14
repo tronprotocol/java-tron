@@ -3,6 +3,7 @@ package org.tron.core.state;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +34,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+import org.tron.core.db2.ISession;
 import org.tron.core.exception.JsonRpcInternalException;
 import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.core.exception.JsonRpcInvalidRequestException;
@@ -61,6 +63,7 @@ public class WorldStateQueryTest {
       "cba92a516ea09f620a16ff7ee95ce0df1d56550a8babe9964981a7144c8a784a"));
 
   byte[] contractAddress;
+  private static WorldStateCallBack worldStateCallBack;
 
   /**
    * init logic.
@@ -71,6 +74,8 @@ public class WorldStateQueryTest {
       FileUtil.deleteDir(new File(dbPath));
     }
     Args.setParam(new String[]{"-d", dbPath}, "config-localtest.conf");
+    // disable p2p
+    Args.getInstance().setP2pDisable(true);
     // allow account root
     Args.getInstance().setAllowAccountStateRoot(1);
     // init dbBackupConfig to avoid NPE
@@ -81,6 +86,11 @@ public class WorldStateQueryTest {
     appTest.startServices();
     appTest.startup();
     chainBaseManager = context.getBean(ChainBaseManager.class);
+    // open account asset optimize
+    worldStateCallBack = context.getBean(WorldStateCallBack.class);
+    worldStateCallBack.setExecute(true);
+    chainBaseManager.getDynamicPropertiesStore().setAllowAssetOptimization(1);
+    worldStateCallBack.setExecute(false);
     manager = context.getBean(Manager.class);
     tronJsonRpc = context.getBean(TronJsonRpc.class);
   }
@@ -278,12 +288,14 @@ public class WorldStateQueryTest {
         .get(account1Prikey.getAddress());
     AccountCapsule account2Capsule = chainBaseManager.getAccountStore()
         .get(account2Prikey.getAddress());
-    Assert.assertArrayEquals(account1Capsule.getInstance().toByteArray(),
-        worldStateQueryInstance.getAccount(account1Prikey.getAddress())
-            .getInstance().toByteArray());
-    Assert.assertArrayEquals(account2Capsule.getInstance().toByteArray(),
-        worldStateQueryInstance.getAccount(account2Prikey.getAddress())
-            .getInstance().toByteArray());
+    Assert.assertEquals(account1Capsule.getBalance(),
+        worldStateQueryInstance.getAccount(account1Prikey.getAddress()).getBalance());
+    Assert.assertEquals(account2Capsule.getBalance(),
+        worldStateQueryInstance.getAccount(account2Prikey.getAddress()).getBalance());
+    Assert.assertEquals(account1Capsule.getAssetMapV2(),
+        worldStateQueryInstance.getAccount(account1Prikey.getAddress()).getAssetMapV2());
+    Assert.assertEquals(account2Capsule.getAssetMapV2(),
+        worldStateQueryInstance.getAccount(account2Prikey.getAddress()).getAssetMapV2());
     Assert.assertEquals(tronJsonRpc.getTrxBalance(
             ByteArray.toHexString(account1Prikey.getAddress()),
             ByteArray.toJsonHex(blockNum)),
@@ -495,6 +507,62 @@ public class WorldStateQueryTest {
     transactionCapsule.setExpiration(parentBlock.getTimeStamp() + 60 * 60 * 1000);
     return new TransactionCapsule(PublicMethod.signTransaction(account,
         transactionCapsule.getInstance()));
+  }
+
+  @Test
+  public void mockSuicide() {
+    worldStateCallBack.setExecute(true);
+    byte[] address = ByteArray.fromHexString("41B68F8AEC4279E8527D678A52BFDFD23B1AA69729");
+    Protocol.Account.Builder builder =  Protocol.Account.newBuilder();
+    builder.setAddress(ByteString.copyFrom(address));
+    builder.setBalance(100L);
+    builder.putAssetV2("1000001", 10);
+    builder.putAssetV2("1000002", 20);
+
+    AccountCapsule capsule = new AccountCapsule(builder.build());
+    try (ISession tmpSession = manager.getRevokingStore().buildSession()) {
+      chainBaseManager.getAccountStore().put(capsule.createDbKey(), capsule);
+      tmpSession.commit();
+    }
+
+    try (ISession tmpSession = manager.getRevokingStore().buildSession()) {
+      chainBaseManager.getAccountStore().delete(capsule.createDbKey());
+      tmpSession.commit();
+    }
+
+    builder =  Protocol.Account.newBuilder();
+    builder.setAddress(ByteString.copyFrom(address));
+    builder.setBalance(200L);
+    builder.putAssetV2("1000003", 30);
+
+    capsule = new AccountCapsule(builder.build());
+    try (ISession tmpSession = manager.getRevokingStore().buildSession()) {
+      chainBaseManager.getAccountStore().put(capsule.createDbKey(), capsule);
+      tmpSession.commit();
+    }
+
+    WorldStateQueryInstance instance =  getQueryInstance();
+    AccountCapsule fromState = instance.getAccount(address);
+    AccountCapsule fromDb = chainBaseManager.getAccountStore().get(address);
+    Assert.assertEquals(fromState.getBalance(), 200L);
+    Assert.assertEquals(fromState.getBalance(), fromDb.getBalance());
+
+    Map<String, Long> assetV2 = new HashMap<>();
+    assetV2.put("1000003", 30L);
+
+    Assert.assertEquals(assetV2, fromDb.getAssetV2MapForTest());
+
+    Assert.assertEquals(assetV2, fromState.getAssetV2MapForTest());
+    worldStateCallBack.setExecute(false);
+  }
+
+  private WorldStateQueryInstance getQueryInstance() {
+    Assert.assertNotNull(worldStateCallBack.getTrie());
+    worldStateCallBack.clear();
+    worldStateCallBack.getTrie().commit();
+    worldStateCallBack.getTrie().flush();
+    return new WorldStateQueryInstance(worldStateCallBack.getTrie().getRootHashByte32(),
+            chainBaseManager);
   }
 
 }
