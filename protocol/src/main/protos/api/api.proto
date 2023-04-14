@@ -1201,8 +1201,6 @@ message TransactionExtention {
   repeated TransactionInfo.Log logs = 6;
   repeated InternalTransaction internal_transactions = 7;
   int64 energy_penalty = 8;
-  int64 block_number = 9;
-  bytes block_hash = 10;
 }
 
 message EstimateEnergyMessage {
