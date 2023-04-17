@@ -4,15 +4,16 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.JsonUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.config.args.Args;
 import org.tron.core.net.TronNetService;
 import org.tron.p2p.discover.Node;
 
@@ -20,18 +21,15 @@ import org.tron.p2p.discover.Node;
 @Component
 public class NodePersistService {
   private static final byte[] DB_KEY_PEERS = "peers".getBytes();
-  private static final long DB_COMMIT_RATE = 1 * 60 * 1000L;
+  private static final long DB_COMMIT_RATE = 60 * 1000L;
   private static final int MAX_NODES_WRITE_TO_DB = 30;
-
-  private boolean isNodePersist = Args.getInstance().isNodeDiscoveryPersist();
-
-  private ChainBaseManager chainBaseManager = ChainBaseManager.getInstance();
-
+  private final boolean isNodePersist = CommonParameter.getInstance().isNodeDiscoveryPersist();
+  private final ChainBaseManager chainBaseManager = ChainBaseManager.getInstance();
   private Timer nodePersistTaskTimer;
 
   public void init() {
-    nodePersistTaskTimer = new Timer("NodePersistTaskTimer");
     if (isNodePersist) {
+      nodePersistTaskTimer = new Timer("NodePersistTaskTimer");
       nodePersistTaskTimer.scheduleAtFixedRate(new TimerTask() {
         @Override
         public void run() {
@@ -42,6 +40,9 @@ public class NodePersistService {
   }
 
   public void close() {
+    if (Objects.isNull(nodePersistTaskTimer)) {
+      return;
+    }
     try {
       nodePersistTaskTimer.cancel();
     } catch (Exception e) {
