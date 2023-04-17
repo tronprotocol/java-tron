@@ -5,17 +5,20 @@ import static org.tron.core.db.TransactionTrace.convertToTronAddress;
 
 import java.util.Arrays;
 import java.util.Collections;
+
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 import org.testng.Assert;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
+import org.tron.common.runtime.VmStateTestUtil;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.WalletUtil;
 import org.tron.common.utils.client.utils.AbiUtil;
 import org.tron.common.utils.client.utils.DataWord;
 import org.tron.core.Wallet;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.JsonRpcInvalidParamsException;
@@ -23,6 +26,7 @@ import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.services.NodeInfoService;
 import org.tron.core.services.jsonrpc.TronJsonRpcImpl;
+import org.tron.core.state.WorldStateCallBack;
 import org.tron.protos.Protocol.Transaction;
 
 
@@ -103,10 +107,15 @@ public class Create2Test extends VMTestBase {
 
   */
 
+  private WorldStateCallBack worldStateCallBack;
+
   @Test
   public void testCreate2()
       throws ContractExeException, ReceiptCheckErrException,
       VMIllegalException, ContractValidateException {
+    worldStateCallBack = context.getBean(WorldStateCallBack.class);
+    worldStateCallBack.setExecute(true);
+
     manager.getDynamicPropertiesStore().saveAllowTvmTransferTrc10(1);
     manager.getDynamicPropertiesStore().saveAllowTvmConstantinople(1);
     manager.getDynamicPropertiesStore().saveAllowTvmIstanbul(0);
@@ -198,6 +207,18 @@ public class Create2Test extends VMTestBase {
     try {
       String res =
           tronJsonRpc.getStorageAt(ByteArray.toHexString(actualContract), "0", "latest");
+      Assert.assertEquals(loop, ByteArray.jsonHexToLong(res));
+    } catch (JsonRpcInvalidParamsException e) {
+      Assert.fail();
+    }
+
+    // test for archive node
+    BlockCapsule blockCapsule =
+        VmStateTestUtil.mockBlock(manager.getChainBaseManager(), worldStateCallBack);
+    try {
+      String res =
+          tronJsonRpc.getStorageAt(ByteArray.toHexString(actualContract), "0",
+              "0x" + Long.toHexString(blockCapsule.getNum()));
       Assert.assertEquals(loop, ByteArray.jsonHexToLong(res));
     } catch (JsonRpcInvalidParamsException e) {
       Assert.fail();
