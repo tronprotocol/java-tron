@@ -22,6 +22,7 @@ import org.tron.protos.Protocol.Proposal;
 @Slf4j
 public class ProposalServiceTest extends BaseTest {
 
+  private static boolean init;
 
   @BeforeClass
   public static void init() {
@@ -32,7 +33,11 @@ public class ProposalServiceTest extends BaseTest {
 
   @Before
   public void before() {
+    if (init) {
+      return;
+    }
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(5);
+    init = true;
   }
 
   @Test

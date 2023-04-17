@@ -65,6 +65,7 @@ public class BandWidthRuntimeOutOfTimeWithCheckTest extends BaseTest {
   private static final String indexDirectory = "index_BandWidthRuntimeOutOfTimeTest_test";
   private static final String OwnerAddress = "TCWHANtDDdkZCTo2T2peyEq3Eg9c2XB7ut";
   private static final String TriggerOwnerAddress = "TCSgeWapPJhCqgWRxXCKb6jJ5AgNWSGjPA";
+  private static boolean init;
 
   static {
     dbPath = "output_bandwidth_runtime_out_of_time_with_check_test";
@@ -85,6 +86,9 @@ public class BandWidthRuntimeOutOfTimeWithCheckTest extends BaseTest {
    */
   @Before
   public void init() {
+    if (init) {
+      return;
+    }
     //init energy
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1526647837000L);
     dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(10_000_000L);
@@ -108,6 +112,7 @@ public class BandWidthRuntimeOutOfTimeWithCheckTest extends BaseTest {
         .put(Commons.decodeFromBase58Check(TriggerOwnerAddress), accountCapsule2);
     dbManager.getDynamicPropertiesStore()
         .saveLatestBlockHeaderTimestamp(System.currentTimeMillis() / 1000);
+    init = true;
   }
 
   @Test

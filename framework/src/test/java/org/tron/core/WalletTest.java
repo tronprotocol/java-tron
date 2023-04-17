@@ -131,6 +131,7 @@ public class WalletTest extends BaseTest {
   private static final String OWNER_ADDRESS;
   private static final String RECEIVER_ADDRESS;
   private static final long initBalance = 43_200_000_000L;
+  private static boolean init;
 
   static {
     dbPath = "output_wallet_test";
@@ -141,11 +142,15 @@ public class WalletTest extends BaseTest {
 
   @Before
   public void before() {
+    initAccountCapsule();
+    if (init) {
+      return;
+    }
     initTransaction();
     initBlock();
-    initAccountCapsule();
     chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(5);
     chainBaseManager.getDelegatedResourceStore().reset();
+    init = true;
   }
 
   /**

@@ -24,6 +24,7 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 public class AssetUpdateHelperTest extends BaseTest {
 
   private static final ByteString assetName = ByteString.copyFrom("assetIssueName".getBytes());
+  private static boolean init;
 
   static {
     dbPath = "output_AssetUpdateHelperTest_test";
@@ -33,7 +34,9 @@ public class AssetUpdateHelperTest extends BaseTest {
 
   @Before
   public void init() {
-
+    if (init) {
+      return;
+    }
     AssetIssueContract contract =
         AssetIssueContract.newBuilder().setName(assetName).setNum(12581).setPrecision(5).build();
     AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(contract);
@@ -70,6 +73,7 @@ public class AssetUpdateHelperTest extends BaseTest {
                 .build());
     chainBaseManager.getAccountStore().put(ByteArray.fromHexString("121212abc"),
         accountCapsule);
+    init = true;
   }
 
   @Test

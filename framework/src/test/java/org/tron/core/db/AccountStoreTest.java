@@ -33,6 +33,7 @@ public class AccountStoreTest extends BaseTest {
   private AssetIssueStore assetIssueStore;
   private static byte[] address = TransactionStoreTest.randomBytes(32);
   private static byte[] accountName = TransactionStoreTest.randomBytes(32);
+  private static boolean init;
 
   static {
     dbPath = "output_AccountStore_test";
@@ -48,6 +49,9 @@ public class AccountStoreTest extends BaseTest {
 
   @Before
   public void init() {
+    if (init) {
+      return;
+    }
     assetIssueStore = chainBaseManager.getAssetIssueStore();
     dynamicPropertiesStore.saveAllowBlackHoleOptimization(1);
     AccountCapsule accountCapsule = new AccountCapsule(ByteString.copyFrom(address),
@@ -55,6 +59,7 @@ public class AccountStoreTest extends BaseTest {
         AccountType.forNumber(1));
 
     accountStore.put(data, accountCapsule);
+    init = true;
   }
 
   @Test

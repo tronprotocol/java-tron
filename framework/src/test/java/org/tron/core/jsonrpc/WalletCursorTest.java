@@ -27,6 +27,7 @@ public class WalletCursorTest extends BaseTest {
   private Wallet wallet;
   @Resource
   private NodeInfoService nodeInfoService;
+  private static boolean init;
 
   static {
     dbPath = "output_wallet_cursor_test";
@@ -38,6 +39,9 @@ public class WalletCursorTest extends BaseTest {
 
   @Before
   public void init() {
+    if (init) {
+      return;
+    }
     AccountCapsule accountCapsule =
         new AccountCapsule(
             ByteString.copyFromUtf8(OWNER_ADDRESS_ACCOUNT_NAME),
@@ -45,6 +49,7 @@ public class WalletCursorTest extends BaseTest {
             Protocol.AccountType.Normal,
             10000_000_000L);
     dbManager.getAccountStore().put(accountCapsule.getAddress().toByteArray(), accountCapsule);
+    init = true;
   }
 
   @Test

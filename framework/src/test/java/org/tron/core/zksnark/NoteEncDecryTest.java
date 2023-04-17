@@ -36,6 +36,7 @@ public class NoteEncDecryTest extends BaseTest {
   private static final int VOTE_SCORE = 2;
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
+  private static boolean init;
   @Resource
   private Wallet wallet;
 
@@ -50,9 +51,13 @@ public class NoteEncDecryTest extends BaseTest {
    */
   @Before
   public void init() {
+    if (init) {
+      return;
+    }
     //give a big value for pool, avoid for
     dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(10_000_000_000L);
     // Args.getInstance().setAllowShieldedTransaction(1);
+    init = true;
   }
 
   /**

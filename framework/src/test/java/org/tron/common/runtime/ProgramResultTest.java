@@ -41,6 +41,7 @@ public class ProgramResultTest extends BaseTest {
   private static final String TRANSFER_TO;
   private static Runtime runtime;
   private static RepositoryImpl repository;
+  private static boolean init;
 
   static {
     dbPath = "output_InternalTransactionComplexTest";
@@ -55,12 +56,16 @@ public class ProgramResultTest extends BaseTest {
    */
   @Before
   public void init() {
+    if (init) {
+      return;
+    }
     repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
     repository.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
     repository.addBalance(Hex.decode(OWNER_ADDRESS), 100000000);
     repository.createAccount(Hex.decode(TRANSFER_TO), AccountType.Normal);
     repository.addBalance(Hex.decode(TRANSFER_TO), 0);
     repository.commit();
+    init = true;
   }
 
   /**
