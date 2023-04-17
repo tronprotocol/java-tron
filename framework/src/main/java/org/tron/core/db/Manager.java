@@ -1,6 +1,7 @@
 package org.tron.core.db;
 
 import static org.tron.common.utils.Commons.adjustBalance;
+import static org.tron.core.exception.BadBlockException.TypeEnum.CALC_MERKLE_ROOT_FAILED;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
 
@@ -1220,8 +1221,8 @@ public class Manager {
             if (!block.calcMerkleRoot().equals(block.getMerkleRoot())) {
               logger.warn("Num: {}, the merkle root doesn't match, expect is {} , actual is {}.",
                   block.getNum(), block.getMerkleRoot(), block.calcMerkleRoot());
-              throw new BadBlockException(String.format("The merkle hash is not validated for %d",
-                  block.getNum()));
+              throw new BadBlockException(CALC_MERKLE_ROOT_FAILED,
+                      String.format("The merkle hash is not validated for %d", block.getNum()));
             }
             consensus.receiveBlock(block);
           }
@@ -1618,7 +1619,7 @@ public class Manager {
         toBePacked.add(trx);
         currentSize += trxPackSize;
       } catch (Exception e) {
-        logger.error("Process trx {} failed when generating block {}, {}.", trx.getTransactionId(),
+        logger.warn("Process trx {} failed when generating block {}, {}.", trx.getTransactionId(),
             blockCapsule.getNum(), e.getMessage());
       }
     }

@@ -33,6 +33,7 @@ public class EffectiveCheckServiceTest {
   @After
   public void destroy() {
     Args.clearParam();
+    context.destroy();
     FileUtil.deleteDir(new File(dbPath));
   }
 
