@@ -747,10 +747,10 @@ public class FreezeV2Test {
     TVMTestResult result = triggerCancelAllUnfreezeV2(callerAddr, contractAddr, SUCCESS, null);
 
     AccountCapsule newOwner = accountStore.get(contractAddr);
-    long newUnfreezeV2Amount = newOwner.getUnfreezingV2Count(now);
+    int newUnfreezeVCount = newOwner.getUnfreezingV2Count(now);
     long newFrozenBalance =
         newOwner.getFrozenV2List().stream().mapToLong(Protocol.Account.FreezeV2::getAmount).sum();
-    Assert.assertEquals(0, newUnfreezeV2Amount);
+    Assert.assertEquals(0, newUnfreezeVCount);
     Assert.assertEquals(expectedWithdrawBalance, newOwner.getBalance() - oldBalance);
     Assert.assertEquals(oldFrozenBalance + oldUnfreezingBalance, newFrozenBalance);
 

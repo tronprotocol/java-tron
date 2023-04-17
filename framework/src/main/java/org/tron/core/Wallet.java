@@ -782,6 +782,10 @@ public class Wallet {
           ByteString ownerAddress, long timestamp) {
     GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage.Builder builder =
             GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage.newBuilder();
+    if (timestamp < 0) {
+      return builder.build();
+    }
+
     long canWithdrawUnfreezeAmount;
 
     AccountStore accountStore = chainBaseManager.getAccountStore();
@@ -844,13 +848,7 @@ public class Wallet {
     }
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
 
-    List<UnFreezeV2> unfrozenV2List = accountCapsule.getInstance().getUnfrozenV2List();
-    long getUsedUnfreezeCount = unfrozenV2List
-            .stream()
-            .filter(unfrozenV2 ->
-                    (unfrozenV2.getUnfreezeAmount() > 0
-                     && unfrozenV2.getUnfreezeExpireTime() > now))
-            .count();
+    long getUsedUnfreezeCount = accountCapsule.getUnfreezingV2Count(now);
     getAvailableUnfreezeCount = UnfreezeBalanceV2Actuator.getUNFREEZE_MAX_TIMES()
             - getUsedUnfreezeCount;
     builder.setCount(getAvailableUnfreezeCount);
@@ -870,18 +868,11 @@ public class Wallet {
     processor.updateUsage(ownerCapsule);
 
     long accountNetUsage = ownerCapsule.getNetUsage();
-    accountNetUsage += org.tron.core.utils.TransactionUtil.estimateConsumeBandWidthSize(
-            ownerCapsule, chainBaseManager);
+    accountNetUsage += org.tron.core.utils.TransactionUtil
+        .estimateConsumeBandWidthSize(ownerCapsule.getBalance());
 
-    long netUsage = (long) (accountNetUsage * TRX_PRECISION * ((double)
-            (dynamicStore.getTotalNetWeight()) / dynamicStore.getTotalNetLimit()));
-
-    long remainNetUsage = netUsage
-            - ownerCapsule.getFrozenBalance()
-            - ownerCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
-            - ownerCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth();
-
-    remainNetUsage = Math.max(0, remainNetUsage);
+    long remainNetUsage = org.tron.core.utils.TransactionUtil.calculateRemainNetUsage(
+        accountNetUsage, ownerCapsule, dynamicStore);
 
     long maxSize = ownerCapsule.getFrozenV2BalanceForBandwidth() - remainNetUsage;
     return Math.max(0, maxSize);
@@ -898,15 +889,8 @@ public class Wallet {
     EnergyProcessor processor = new EnergyProcessor(dynamicStore, accountStore);
     processor.updateUsage(ownerCapsule);
 
-    long energyUsage = (long) (ownerCapsule.getEnergyUsage() * TRX_PRECISION * ((double)
-            (dynamicStore.getTotalEnergyWeight()) / dynamicStore.getTotalEnergyCurrentLimit()));
-
-    long remainEnergyUsage = energyUsage
-            - ownerCapsule.getEnergyFrozenBalance()
-            - ownerCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()
-            - ownerCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy();
-
-    remainEnergyUsage = Math.max(0, remainEnergyUsage);
+    long remainEnergyUsage = org.tron.core.utils.TransactionUtil.calculateRemainEnergyUsage(
+        ownerCapsule, dynamicStore);
 
     long maxSize =  ownerCapsule.getFrozenV2BalanceForEnergy() - remainEnergyUsage;
     return Math.max(0, maxSize);

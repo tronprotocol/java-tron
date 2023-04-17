@@ -39,11 +39,11 @@ import org.tron.api.GrpcAPI.TransactionSignWeight.Result;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
-import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.SignatureFormatException;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Permission.PermissionType;
 import org.tron.protos.Protocol.Transaction;
@@ -52,7 +52,6 @@ import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.TransactionSign;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
-import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.BalanceContract.DelegateResourceContract;
 
 @Slf4j(topic = "capsule")
@@ -269,50 +268,45 @@ public class TransactionUtil {
     return tswBuilder.build();
   }
 
-  public static long consumeBandWidthSize(
-          final TransactionCapsule transactionCapsule,
-          ChainBaseManager chainBaseManager) {
-    long bytesSize;
-
-    boolean supportVM = chainBaseManager.getDynamicPropertiesStore().supportVM();
-    if (supportVM) {
-      bytesSize = transactionCapsule.getInstance().toBuilder().clearRet().build().getSerializedSize();
-    } else {
-      bytesSize = transactionCapsule.getSerializedSize();
-    }
-
-    List<Transaction.Contract> contracts = transactionCapsule.getInstance().getRawData().getContractList();
-    for (Transaction.Contract contract : contracts) {
-      if (contract.getType() == Contract.ContractType.ShieldedTransferContract) {
-        continue;
-      }
-      if (supportVM) {
-        bytesSize += Constant.MAX_RESULT_SIZE_IN_TX;
-      }
-    }
-
-    return bytesSize;
-  }
-
-
-  public static long estimateConsumeBandWidthSize(
-          final AccountCapsule ownerCapsule,
-          ChainBaseManager chainBaseManager) {
+  public static long estimateConsumeBandWidthSize(long balance) {
     DelegateResourceContract.Builder builder = DelegateResourceContract.newBuilder()
-                    .setLock(true)
-                    .setBalance(ownerCapsule.getFrozenV2BalanceForBandwidth());
-    TransactionCapsule fakeTransactionCapsule = new TransactionCapsule(builder.build()
-            , ContractType.DelegateResourceContract);
-    long size1 = consumeBandWidthSize(fakeTransactionCapsule, chainBaseManager);
+        .setLock(true)
+        .setBalance(balance);
+    long size1 = builder.build().getSerializedSize();
 
     DelegateResourceContract.Builder builder2 = DelegateResourceContract.newBuilder()
-                    .setBalance(TRX_PRECISION);
-    TransactionCapsule fakeTransactionCapsule2 = new TransactionCapsule(builder2.build()
-            , ContractType.DelegateResourceContract);
-    long size2 = consumeBandWidthSize(fakeTransactionCapsule2, chainBaseManager);
+        .setBalance(TRX_PRECISION);
+    long size2 = builder2.build().getSerializedSize();
     long addSize = Math.max(size1 - size2, 0L);
 
     return DELEGATE_COST_BASE_SIZE + addSize;
+  }
+
+  public static long calculateRemainNetUsage(long accountNetUsage,
+                                             final AccountCapsule ownerCapsule,
+                                             final DynamicPropertiesStore dynamicStore) {
+    long netUsage = (long) (accountNetUsage * TRX_PRECISION * ((double)
+        (dynamicStore.getTotalNetWeight()) / dynamicStore.getTotalNetLimit()));
+
+    long remainNetUsage = netUsage
+        - ownerCapsule.getFrozenBalance()
+        - ownerCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
+        - ownerCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth();
+
+    return Math.max(0, remainNetUsage);
+  }
+
+  public static long calculateRemainEnergyUsage(final AccountCapsule ownerCapsule,
+                                                final DynamicPropertiesStore dynamicStore) {
+    long energyUsage = (long) (ownerCapsule.getEnergyUsage() * TRX_PRECISION * ((double)
+        (dynamicStore.getTotalEnergyWeight()) / dynamicStore.getTotalEnergyCurrentLimit()));
+
+    long remainEnergyUsage = energyUsage
+        - ownerCapsule.getEnergyFrozenBalance()
+        - ownerCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()
+        - ownerCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy();
+
+    return Math.max(0, remainEnergyUsage);
   }
 
 }

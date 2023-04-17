@@ -669,14 +669,11 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
 
 
   public int getUnfreezingV2Count(long now) {
-    int count = 0;
-    List<UnFreezeV2> unFreezeV2List = account.getUnfrozenV2List();
-    for (UnFreezeV2 item : unFreezeV2List) {
-      if (item.getUnfreezeExpireTime() > now) {
-        count++;
-      }
-    }
-    return count;
+    return (int)account.getUnfrozenV2List()
+        .stream()
+        .filter(unfrozenV2 ->
+            (unfrozenV2.getUnfreezeExpireTime() > now))
+        .count();
   }
 
 
