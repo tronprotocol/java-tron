@@ -37,12 +37,13 @@ public class VmStateTestUtil {
 
   public static BlockCapsule mockBlock(ChainBaseManager chainBaseManager,
                                        WorldStateCallBack worldStateCallBack) {
-    chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(1000);
+    long mockNumber = 1000;
+    chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(mockNumber);
     TrieImpl2 trie = flushTrie(worldStateCallBack);
     BlockCapsule blockCap = new BlockCapsule(Protocol.Block.newBuilder().build());
     Protocol.BlockHeader.raw blockHeaderRaw =
         blockCap.getInstance().getBlockHeader().getRawData().toBuilder()
-            .setNumber(100)
+            .setNumber(mockNumber)
             .setTimestamp(System.currentTimeMillis())
             .setWitnessAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .build();
@@ -53,6 +54,8 @@ public class VmStateTestUtil {
     blockCap = new BlockCapsule(
         blockCap.getInstance().toBuilder().setBlockHeader(blockHeader).build());
     blockCap.generatedByMyself = true;
+    chainBaseManager.getBlockStore().put(blockCap.getBlockId().getBytes(), blockCap);
+    chainBaseManager.getBlockIndexStore().put(blockCap.getBlockId());
     return blockCap;
   }
 
