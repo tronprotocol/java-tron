@@ -1,6 +1,7 @@
 package org.tron.core.net;
 
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.core.exception.BadBlockException.TypeEnum.CALC_MERKLE_ROOT_FAILED;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -282,7 +283,12 @@ public class TronNetDelegate {
           | EventBloomException e) {
         metricsService.failProcessBlock(block.getNum(), e.getMessage());
         logger.error("Process block failed, {}, reason: {}", blockId.getString(), e.getMessage());
-        throw new P2pException(TypeEnum.BAD_BLOCK, e);
+        if (e instanceof BadBlockException
+                && ((BadBlockException) e).getType().equals(CALC_MERKLE_ROOT_FAILED)) {
+          throw new P2pException(TypeEnum.BLOCK_MERKLE_ERROR, e);
+        } else {
+          throw new P2pException(TypeEnum.BAD_BLOCK, e);
+        }
       }
     }
   }
@@ -312,10 +318,10 @@ public class TronNetDelegate {
     try {
       if (!block.validateSignature(dbManager.getDynamicPropertiesStore(),
               dbManager.getAccountStore())) {
-        throw new P2pException(TypeEnum.BAD_BLOCK, "valid signature failed.");
+        throw new P2pException(TypeEnum.BLOCK_SIGN_ERROR, "valid signature failed.");
       }
     } catch (ValidateSignatureException e) {
-      throw new P2pException(TypeEnum.BAD_BLOCK, e);
+      throw new P2pException(TypeEnum.BLOCK_SIGN_ERROR, e);
     }
   }
 

@@ -4,6 +4,7 @@ import static org.tron.common.utils.Commons.adjustAssetBalanceV2;
 import static org.tron.common.utils.Commons.adjustBalance;
 import static org.tron.common.utils.Commons.adjustTotalShieldedPoolValue;
 import static org.tron.common.utils.Commons.getExchangeStoreFinal;
+import static org.tron.core.exception.BadBlockException.TypeEnum.CALC_MERKLE_ROOT_FAILED;
 
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
@@ -392,6 +393,7 @@ public class ManagerTest extends BlockGenerate {
       Assert.assertTrue(false);
     } catch (BadBlockException e) {
       Assert.assertTrue(e instanceof BadBlockException);
+      Assert.assertTrue(e.getType().equals(CALC_MERKLE_ROOT_FAILED));
       Assert.assertEquals("The merkle hash is not validated for "
               + blockCapsule2.getNum(), e.getMessage());
     } catch (Exception e) {
