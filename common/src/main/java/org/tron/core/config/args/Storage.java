@@ -32,7 +32,6 @@ import org.tron.common.cache.CacheType;
 import org.tron.common.utils.DbOptionalsUtils;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Property;
-import org.tron.core.Constant;
 
 /**
  * Custom storage configurations
@@ -55,10 +54,6 @@ public class Storage {
   private static final String ESTIMATED_TRANSACTIONS_CONFIG_KEY =
       "storage.txCache.estimatedTransactions";
   private static final String SNAPSHOT_MAX_FLUSH_COUNT_CONFIG_KEY = "storage.snapshot.maxFlushCount";
-  private static final String DB_AUTO_PRUNE_SWITCH_CONFIG_KEY = "storage.prune.enable";
-  private static final String DB_AUTO_PRUNE_RETAIN_CONFIG_KEY = "storage.prune.retain";
-  private static final String DB_AUTO_PRUNE_FREQUENCY_CONFIG_KEY = "storage.prune.frequency";
-  private static final String DB_AUTO_PRUNE_BATCH_CONFIG_KEY = "storage.prune.batch";
   private static final String PROPERTIES_CONFIG_KEY = "storage.properties";
   private static final String PROPERTIES_CONFIG_DB_KEY = "storage";
   private static final String PROPERTIES_CONFIG_DEFAULT_KEY = "default";
@@ -96,11 +91,6 @@ public class Storage {
   private static final boolean DEFAULT_CHECKPOINT_SYNC = true;
   private static final int DEFAULT_ESTIMATED_TRANSACTIONS = 1000;
   private static final int DEFAULT_SNAPSHOT_MAX_FLUSH_COUNT = 1;
-  private static final boolean DEFAULT_DB_AUTO_PRUNE_SWITCH = false;
-  private static final int DEFAULT_DB_AUTO_PRUNE_RETAIN = 864000;
-  private static final int DEFAULT_DB_AUTO_PRUNE_FREQUENCY = 3;
-  private static final int DEFAULT_DB_AUTO_PRUNE_BATCH = 50;
-
   private Config storage;
 
   /**
@@ -121,22 +111,6 @@ public class Storage {
   @Getter
   @Setter
   private int maxFlushCount;
-
-  @Getter
-  @Setter
-  private boolean dbAutoPrune;
-
-  @Getter
-  @Setter
-  private int dbAutoPruneRetain;
-
-  @Getter
-  @Setter
-  private int dbAutoPruneFrequency;
-
-  @Getter
-  @Setter
-  private int dbAutoPruneBatch;
 
   /**
    * Index storage directory: /path/to/{indexDirectory}
@@ -206,57 +180,6 @@ public class Storage {
       throw new IllegalArgumentException("MaxFlushCount value must not exceed 500!");
     }
     return maxFlushCountConfig;
-  }
-
-  public void setDbAutoPruneInfo(final Config config) {
-    setDbAutoPrune(Storage.getDbAutoPruneSwitchFromConfig(config));
-    setDbAutoPruneRetain(Storage.getDbAutoPruneRetainFromConfig(config));
-    setDbAutoPruneFrequency(
-        Storage.getDbAutoPruneFrequencyFromConfig(config));
-    setDbAutoPruneBatch(Storage.getDbAutoPruneBatchFromConfig(config));
-  }
-
-  public static boolean getDbAutoPruneSwitchFromConfig(final Config config) {
-    return config.hasPath(DB_AUTO_PRUNE_SWITCH_CONFIG_KEY)
-        ? config.getBoolean(DB_AUTO_PRUNE_SWITCH_CONFIG_KEY) : DEFAULT_DB_AUTO_PRUNE_SWITCH;
-  }
-
-  public static int getDbAutoPruneRetainFromConfig(final Config config) {
-    if (!config.hasPath(DB_AUTO_PRUNE_RETAIN_CONFIG_KEY)) {
-      return DEFAULT_DB_AUTO_PRUNE_RETAIN;
-    }
-    int dbAutoPruneRetain = config.getInt(DB_AUTO_PRUNE_RETAIN_CONFIG_KEY);
-    if (dbAutoPruneRetain < 30 * Constant.ONE_DAY_BLOCKS_PREDICT) {
-      throw new IllegalArgumentException(
-          "[storage.prune.retain] value must not be less than 864000!");
-    }
-    return dbAutoPruneRetain;
-  }
-
-  public static int getDbAutoPruneFrequencyFromConfig(final Config config) {
-    if (!config.hasPath(DB_AUTO_PRUNE_FREQUENCY_CONFIG_KEY)) {
-      return DEFAULT_DB_AUTO_PRUNE_FREQUENCY;
-    }
-    int dbAutoPruneFrequency = config.getInt(DB_AUTO_PRUNE_FREQUENCY_CONFIG_KEY);
-    if (dbAutoPruneFrequency < 1) {
-      throw new IllegalArgumentException("[storage.prune.frequency] value must not be less than " +
-          "1!");
-    }
-    return dbAutoPruneFrequency;
-  }
-
-  public static int getDbAutoPruneBatchFromConfig(final Config config) {
-    if (!config.hasPath(DB_AUTO_PRUNE_BATCH_CONFIG_KEY)) {
-      return DEFAULT_DB_AUTO_PRUNE_BATCH;
-    }
-    int dbAutoPruneBatch = config.getInt(DB_AUTO_PRUNE_BATCH_CONFIG_KEY);
-    if (dbAutoPruneBatch < 1) {
-      throw new IllegalArgumentException("[storage.prune.batch] value must not be less than 1!");
-    }
-    if (dbAutoPruneBatch > 50) {
-      throw new IllegalArgumentException("[storage.prune.batch] value must not be more than 50!");
-    }
-    return dbAutoPruneBatch;
   }
 
   public static Boolean getContractParseSwitchFromConfig(final Config config) {
