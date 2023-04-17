@@ -1,5 +1,7 @@
 package org.tron.core;
 
+import org.tron.core.config.Parameter.ChainConstant;
+
 public class Constant {
 
   //config for testnet, mainnet, beta
@@ -38,6 +40,8 @@ public class Constant {
   // Numbers
   public static final int ONE_HUNDRED = 100;
   public static final int ONE_THOUSAND = 1000;
+
+  public static final long ONE_DAY_BLOCKS_PREDICT = 24 * 60 * 60 * 1000 / ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
   public static final byte[] ZTRON_EXPANDSEED_PERSONALIZATION = {'Z', 't', 'r', 'o', 'n', '_', 'E',
       'x',

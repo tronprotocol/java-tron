@@ -2,17 +2,20 @@ package org.tron.core.db2.core;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import org.tron.common.cache.CacheManager;
 import org.tron.common.cache.CacheType;
 import org.tron.common.cache.TronCache;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.storage.prune.ChainDataPruner;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
@@ -38,6 +41,7 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
     if (CACHE_DBS.contains(this.db.getDbName())) {
       this.cache = CacheManager.allocate(CacheType.findByType(this.db.getDbName()));
     }
+    ChainDataPruner.register(this.db.getDbName(), this);
   }
 
   private boolean needOptAsset() {
