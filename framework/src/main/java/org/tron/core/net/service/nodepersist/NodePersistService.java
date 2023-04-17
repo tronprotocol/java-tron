@@ -27,9 +27,10 @@ public class NodePersistService {
 
   private ChainBaseManager chainBaseManager = ChainBaseManager.getInstance();
 
-  private Timer nodePersistTaskTimer = new Timer("NodePersistTaskTimer");
+  private Timer nodePersistTaskTimer;
 
   public void init() {
+    nodePersistTaskTimer = new Timer("NodePersistTaskTimer");
     if (isNodePersist) {
       nodePersistTaskTimer.scheduleAtFixedRate(new TimerTask() {
         @Override

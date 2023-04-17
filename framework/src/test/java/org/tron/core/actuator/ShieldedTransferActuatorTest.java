@@ -1,16 +1,14 @@
 package org.tron.core.actuator;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
+import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
 import org.tron.core.Constant;
@@ -22,9 +20,7 @@ import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.PedersenHashCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.ValidateSignatureException;
@@ -47,14 +43,12 @@ import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 @Slf4j
-public class ShieldedTransferActuatorTest {
+public class ShieldedTransferActuatorTest extends BaseTest {
 
-  private static final String dbPath = "output_shield_transfer_test";
   private static final String PUBLIC_ADDRESS_ONE;
   private static final String ADDRESS_ONE_PRIVATE_KEY;
   private static final String PUBLIC_ADDRESS_TWO;
   private static final String ADDRESS_TWO_PRIVATE_KEY;
-  private static final String PUBLIC_ADDRESS_OFF_LINE;
   private static final long AMOUNT = 100000000L;
   private static final long OWNER_BALANCE = 9999999000000L;
   private static final long TO_BALANCE = 100001000000L;
@@ -69,22 +63,20 @@ public class ShieldedTransferActuatorTest {
   private static final int VOTE_SCORE = 2;
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
-  private static Wallet wallet;
-  private static Manager dbManager;
-  private static TronApplicationContext context;
-  private static TransactionUtil transactionUtil;
+  @Resource
+  private Wallet wallet;
+  @Resource
+  private TransactionUtil transactionUtil;
 
   static {
+    dbPath = "output_shield_transfer_test";
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
     PUBLIC_ADDRESS_ONE =
         Wallet.getAddressPreFixString() + "a7d8a35b260395c14aa456297662092ba3b76fc0";
     ADDRESS_ONE_PRIVATE_KEY = "7f7f701e94d4f1dd60ee5205e7ea8ee31121427210417b608a6b2e96433549a7";
     PUBLIC_ADDRESS_TWO =
         Wallet.getAddressPreFixString() + "8ba2aaae540c642e44e3bed5522c63bbc21fff92";
     ADDRESS_TWO_PRIVATE_KEY = "e4e0edd6bff7b353dfc69a590721e902e6915c5e3e87d36dcb567a9716304720";
-    PUBLIC_ADDRESS_OFF_LINE =
-        Wallet.getAddressPreFixString() + "7bcb781f4743afaacf9f9528f3ea903b3782339f";
     DEFAULT_OVK = ByteArray.fromHexString(
         "030c8c2bc59fb3eb8afb047a8ea4b028743d23e7d38c6fa30908358431e2314d");
   }
@@ -95,27 +87,10 @@ public class ShieldedTransferActuatorTest {
   @BeforeClass
   public static void init() throws ZksnarkException {
     Args.setFullNodeAllowShieldedTransaction(true);
-    wallet = context.getBean(Wallet.class);
-    transactionUtil = context.getBean(TransactionUtil.class);
-    dbManager = context.getBean(Manager.class);
     librustzcashInitZksnarkParams();
   }
 
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
-  }
-
-  private static void librustzcashInitZksnarkParams() throws ZksnarkException {
+  private static void librustzcashInitZksnarkParams() {
     FullNodeHttpApiService.librustzcashInitZksnarkParams();
   }
 

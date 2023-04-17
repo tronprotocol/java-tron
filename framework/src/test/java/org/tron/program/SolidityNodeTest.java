@@ -6,8 +6,6 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.client.DatabaseGrpcClient;
 import org.tron.core.Constant;
@@ -23,14 +21,12 @@ public class SolidityNodeTest {
   private static TronApplicationContext context;
 
   private static RpcApiService rpcApiService;
-  private static Application appT;
-  private static String dbPath = "output_witness_test";
+  private static String dbPath = "output_sn_test";
 
   static {
     Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     Args.getInstance().setSolidityNode(true);
-    appT = ApplicationFactory.create(context);
     rpcApiService = context.getBean(RpcApiService.class);
   }
 

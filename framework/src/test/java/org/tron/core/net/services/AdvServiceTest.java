@@ -1,23 +1,18 @@
 package org.tron.core.net.services;
 
 import com.google.common.collect.Lists;
-
-import java.io.File;
 import java.util.List;
-import org.junit.After;
+import javax.annotation.Resource;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.net.P2pEventHandlerImpl;
 import org.tron.core.net.message.adv.BlockMessage;
 import org.tron.core.net.message.adv.TransactionMessage;
 import org.tron.core.net.peer.Item;
@@ -27,32 +22,21 @@ import org.tron.p2p.P2pEventHandler;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
-public class AdvServiceTest {
+public class AdvServiceTest extends BaseTest {
 
-  protected TronApplicationContext context;
+  @Resource
   private AdvService service;
+  @Resource
   private PeerConnection peer;
-  private P2pEventHandlerImpl p2pEventHandler;
-  private String dbPath = "output-adv-service-test";
 
   /**
    * init context.
    */
-  @Before
-  public void init() {
+  @BeforeClass
+  public static void init() {
+    dbPath = "output-adv-service-test";
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug"},
         Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-    service = context.getBean(AdvService.class);
-  }
-
-  /**
-   * destroy.
-   */
-  @After
-  public void destroy() {
-    Args.clearParam();
-    FileUtil.deleteDir(new File(dbPath));
   }
 
   @Test
@@ -84,10 +68,6 @@ public class AdvServiceTest {
   private void testBroadcast() {
 
     try {
-      peer = context.getBean(PeerConnection.class);
-      Assert.assertFalse(peer.isDisconnect());
-      p2pEventHandler = context.getBean(P2pEventHandlerImpl.class);
-
       List<PeerConnection> peers = Lists.newArrayList();
       peers.add(peer);
       ReflectUtils.setFieldValue(P2pEventHandler.class, "peers", peers);
