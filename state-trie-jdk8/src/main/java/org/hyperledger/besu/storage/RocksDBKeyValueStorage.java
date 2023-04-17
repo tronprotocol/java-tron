@@ -36,8 +36,8 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
   private static final Logger LOG = LoggerFactory.getLogger(RocksDBKeyValueStorage.class);
 
   private final Options options;
-  private final OptimisticTransactionDB db;
-  private final AtomicBoolean closed = new AtomicBoolean(false);
+  protected final OptimisticTransactionDB db;
+  protected final AtomicBoolean closed = new AtomicBoolean(false);
   private final WriteOptions tryDeleteOptions =
           new WriteOptions().setNoSlowdown(true).setIgnoreMissingColumnFamilies(true);
 

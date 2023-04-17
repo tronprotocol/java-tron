@@ -17,6 +17,7 @@
  */
 package org.tron.core.db.common;
 
+import org.tron.common.storage.metric.Stat;
 import org.tron.core.db2.common.WrappedByteArray;
 
 import java.util.Map;
@@ -24,7 +25,7 @@ import java.util.Set;
 
 
 public interface DbSourceInter<V> extends BatchSourceInter<byte[], V>,
-    Iterable<Map.Entry<byte[], V>> {
+    Iterable<Map.Entry<byte[], V>>, Stat {
 
   String getDBName();
 
@@ -43,8 +44,6 @@ public interface DbSourceInter<V> extends BatchSourceInter<byte[], V>,
   Set<byte[]> allValues() throws RuntimeException;
 
   long getTotal() throws RuntimeException;
-
-  void stat();
 
   Map<WrappedByteArray, byte[]> prefixQuery(byte[] key);
 
