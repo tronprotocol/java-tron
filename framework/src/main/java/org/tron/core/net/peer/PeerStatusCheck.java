@@ -53,11 +53,17 @@ public class PeerStatusCheck {
       if (!isDisconnected) {
         isDisconnected = peer.getAdvInvRequest().values().stream()
             .anyMatch(time -> time < now - NetConstants.ADV_TIME_OUT);
+        if (isDisconnected) {
+          logger.warn("Peer {} get avd message timeout", peer.getInetAddress());
+        }
       }
 
       if (!isDisconnected) {
         isDisconnected = peer.getSyncBlockRequested().values().stream()
             .anyMatch(time -> time < now - NetConstants.SYNC_TIME_OUT);
+        if (isDisconnected) {
+          logger.warn("Peer {} get sync message timeout", peer.getInetAddress());
+        }
       }
 
       if (isDisconnected) {

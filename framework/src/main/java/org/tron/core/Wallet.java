@@ -648,18 +648,6 @@ public class Wallet {
     return tswBuilder.build();
   }
 
-  public byte[] pass2Key(byte[] passPhrase) {
-    return Sha256Hash.hash(CommonParameter
-        .getInstance().isECKeyCryptoEngine(), passPhrase);
-  }
-
-  public byte[] createAddress(byte[] passPhrase) {
-    byte[] privateKey = pass2Key(passPhrase);
-    SignInterface ecKey = SignUtils.fromPrivate(privateKey,
-        Args.getInstance().isECKeyCryptoEngine());
-    return ecKey.getAddress();
-  }
-
   public Block getNowBlock() {
     List<BlockCapsule> blockList = chainBaseManager.getBlockStore().getBlockByLatestNum(1);
     if (CollectionUtils.isEmpty(blockList)) {
@@ -765,17 +753,24 @@ public class Wallet {
         .createDbKeyV2(fromAddress.toByteArray(), toAddress.toByteArray(), false);
     DelegatedResourceCapsule unlockResource = chainBaseManager.getDelegatedResourceStore()
         .get(dbKey);
-    if (unlockResource != null) {
+    if (nonEmptyResource(unlockResource)) {
       builder.addDelegatedResource(unlockResource.getInstance());
     }
     dbKey = DelegatedResourceCapsule
         .createDbKeyV2(fromAddress.toByteArray(), toAddress.toByteArray(), true);
     DelegatedResourceCapsule lockResource = chainBaseManager.getDelegatedResourceStore()
         .get(dbKey);
-    if (lockResource != null) {
+    if (nonEmptyResource(lockResource)) {
       builder.addDelegatedResource(lockResource.getInstance());
     }
     return builder.build();
+  }
+
+  private boolean nonEmptyResource(DelegatedResourceCapsule resource) {
+    return Objects.nonNull(resource) && !(resource.getExpireTimeForBandwidth() == 0
+        && resource.getExpireTimeForEnergy() == 0
+        && resource.getFrozenBalanceForBandwidth() == 0
+        && resource.getFrozenBalanceForEnergy() == 0);
   }
 
   public GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage getCanWithdrawUnfreezeAmount(
@@ -913,6 +908,9 @@ public class Wallet {
   }
 
   public DelegatedResourceAccountIndex getDelegatedResourceAccountIndex(ByteString address) {
+    if (address == null || address.size() != DecodeUtil.ADDRESS_SIZE / 2) {
+      return DelegatedResourceAccountIndex.getDefaultInstance();
+    }
     DelegatedResourceAccountIndexCapsule accountIndexCapsule =
         chainBaseManager.getDelegatedResourceAccountIndexStore().getIndex(address.toByteArray());
     if (accountIndexCapsule != null) {
@@ -923,6 +921,9 @@ public class Wallet {
   }
 
   public DelegatedResourceAccountIndex getDelegatedResourceAccountIndexV2(ByteString address) {
+    if (address == null || address.size() != DecodeUtil.ADDRESS_SIZE / 2) {
+      return DelegatedResourceAccountIndex.getDefaultInstance();
+    }
     DelegatedResourceAccountIndexCapsule accountIndexCapsule = chainBaseManager
         .getDelegatedResourceAccountIndexStore().getV2Index(address.toByteArray());
     if (accountIndexCapsule != null) {
