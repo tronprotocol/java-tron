@@ -3,12 +3,9 @@ package org.tron.core.net.message.handshake;
 import com.google.protobuf.ByteString;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Commons;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.ChainBaseManager;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.message.MessageTypes;
@@ -62,26 +59,12 @@ public class HelloMessage extends TronMessage {
     builder.setSolidBlockId(sBlockId);
     builder.setHeadBlockId(hBlockId);
     builder.setNodeType(chainBaseManager.getNodeType().getType());
-    builder.setLowestBlockNum(calculateLowestBlockNum(chainBaseManager));
+    builder.setLowestBlockNum(chainBaseManager.isLiteNode()
+        ? chainBaseManager.getLowestBlockNum() : 0);
 
     this.helloMessage = builder.build();
     this.type = MessageTypes.P2P_HELLO.asByte();
     this.data = this.helloMessage.toByteArray();
-  }
-
-  public long calculateLowestBlockNum(ChainBaseManager chainBaseManager) {
-    if (!chainBaseManager.isLiteNode()) {
-      return 0;
-    }
-    if (!CommonParameter.getInstance().getStorage().isDbAutoPrune()) {
-      return chainBaseManager.getLowestBlockNum();
-    }
-    long lowestBlockNum = chainBaseManager.getLowestBlockNum();
-    long latestBlockNum = chainBaseManager.getDynamicPropertiesStore()
-        .getLatestBlockHeaderNumberFromDB();
-    long retainBlocksSafeIn2Days = CommonParameter.getInstance().getStorage()
-        .getDbAutoPruneRetain() - 2 * Constant.ONE_DAY_BLOCKS_PREDICT;
-    return Math.max(latestBlockNum - retainBlocksSafeIn2Days + 1, lowestBlockNum);
   }
 
   public void setHelloMessage(Protocol.HelloMessage helloMessage) {

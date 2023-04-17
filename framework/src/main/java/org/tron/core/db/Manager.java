@@ -69,7 +69,6 @@ import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.MetricLabels;
 import org.tron.common.prometheus.Metrics;
 import org.tron.common.runtime.RuntimeImpl;
-import org.tron.common.storage.prune.ChainDataPruner;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.JsonUtil;
 import org.tron.common.utils.Pair;
@@ -226,8 +225,6 @@ public class Manager {
   @Autowired
   @Getter
   private ChainBaseManager chainBaseManager;
-  @Autowired
-  private ChainDataPruner chainDataPruner;
   // transactions cache
   private BlockingQueue<TransactionCapsule> pendingTransactions;
   @Getter
@@ -1915,7 +1912,6 @@ public class Manager {
 
   public void closeAllStore() {
     logger.info("******** Begin to close db. ********");
-    chainDataPruner.shutdown();
     chainBaseManager.closeAllStore();
     logger.info("******** End to close db. ********");
   }
