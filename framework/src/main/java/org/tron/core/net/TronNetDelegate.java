@@ -349,4 +349,8 @@ public class TronNetDelegate {
     return chainBaseManager.getDynamicPropertiesStore().allowPBFT();
   }
 
+  public Object getForkLock() {
+    return dbManager.getForkLock();
+  }
+
 }
