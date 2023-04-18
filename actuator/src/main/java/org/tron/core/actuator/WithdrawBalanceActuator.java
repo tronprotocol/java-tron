@@ -112,11 +112,11 @@ public class WithdrawBalanceActuator extends AbstractActuator {
     boolean isGP = CommonParameter.getInstance()
         .getGenesisBlock().getWitnesses().stream().anyMatch(witness ->
             Arrays.equals(ownerAddress, witness.getAddress()));
-    if (isGP) {
+    /*if (isGP) {
       throw new ContractValidateException(
           ACCOUNT_EXCEPTION_STR + readableOwnerAddress
               + "] is a guard representative and is not allowed to withdraw Balance");
-    }
+    }*/
 
     long latestWithdrawTime = accountCapsule.getLatestWithdrawTime();
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
