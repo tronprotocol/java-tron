@@ -938,4 +938,25 @@ public class ManagerTest extends BlockGenerate {
     blockCapsule.sign(ByteArray.fromHexString(addressToProvateKeys.get(witnessAddress)));
     return blockCapsule;
   }
+
+  @Test
+  public void testExpireTransaction() {
+    TransferContract tc =
+        TransferContract.newBuilder()
+            .setAmount(10)
+            .setOwnerAddress(ByteString.copyFromUtf8("aaa"))
+            .setToAddress(ByteString.copyFromUtf8("bbb"))
+            .build();
+    TransactionCapsule trx = new TransactionCapsule(tc, ContractType.TransferContract);
+    long latestBlockTime = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
+    trx.setExpiration(latestBlockTime - 100);
+    try {
+      dbManager.validateCommon(trx);
+      Assert.fail();
+    } catch (TransactionExpirationException e) {
+      Assert.assertTrue(true);
+    } catch (TooBigTransactionException e) {
+      Assert.fail();
+    }
+  }
 }
