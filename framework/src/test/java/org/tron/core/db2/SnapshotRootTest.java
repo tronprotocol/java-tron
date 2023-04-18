@@ -4,6 +4,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -11,9 +13,12 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.util.CollectionUtils;
+import org.testng.collections.Sets;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.cache.CacheStrategies;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.SessionOptional;
 import org.tron.core.Constant;
@@ -24,6 +29,7 @@ import org.tron.core.db2.RevokingDbWithCacheNewValueTest.TestRevokingTronStore;
 import org.tron.core.db2.core.Snapshot;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.db2.core.SnapshotRoot;
+import org.tron.core.exception.ItemNotFoundException;
 
 public class SnapshotRootTest {
 
@@ -31,6 +37,15 @@ public class SnapshotRootTest {
   private TronApplicationContext context;
   private Application appT;
   private SnapshotManager revokingDatabase;
+  private final Set<String> noSecondCacheDBs = Sets.newHashSet(Arrays.asList("trans-cache",
+          "exchange-v2","nullifier","accountTrie","transactionRetStore","accountid-index",
+          "market_account","market_pair_to_price","recent-transaction","block-index","block",
+          "market_pair_price_to_order","proposal","tree-block-index","IncrementalMerkleTree",
+          "asset-issue","balance-trace","transactionHistoryStore","account-index","section-bloom",
+          "exchange","market_order","account-trace","contract-state","trans"));
+  private Set<String> allDBNames;
+  private Set<String> allRevokingDBNames;
+
 
   @Before
   public void init() {
@@ -112,6 +127,52 @@ public class SnapshotRootTest {
     revokingDatabase.updateSolidity(10);
     tronDatabase.close();
   }
+
+  @Test
+  public void testSecondCacheCheck()
+      throws ItemNotFoundException {
+    revokingDatabase = context.getBean(SnapshotManager.class);
+    allRevokingDBNames = parseRevokingDBNames(context);
+    allDBNames = Arrays.stream(new File("output_revokingStore_test/database").list())
+            .collect(Collectors.toSet());
+    if (CollectionUtils.isEmpty(allDBNames)) {
+      throw new ItemNotFoundException("No DBs found");
+    }
+    allDBNames.removeAll(noSecondCacheDBs);
+    allDBNames.removeAll(CacheStrategies.CACHE_DBS);
+    allDBNames.retainAll(allRevokingDBNames);
+    org.junit.Assert.assertEquals(String.format("New added dbs %s "
+                    + "shall consider to add second cache or add to noNeedCheckDBs!",
+        allDBNames.stream().collect(Collectors.joining(","))), allDBNames.size(), 0);
+  }
+
+  @Test
+  public void testSecondCacheCheckAddDb()
+          throws ItemNotFoundException {
+    revokingDatabase = context.getBean(SnapshotManager.class);
+    allRevokingDBNames = parseRevokingDBNames(context);
+    allRevokingDBNames.add("secondCheckTestDB");
+    FileUtil.createDirIfNotExists("output_revokingStore_test/database/secondCheckTestDB");
+    allDBNames = Arrays.stream(new File("output_revokingStore_test/database").list())
+            .collect(Collectors.toSet());
+    FileUtil.deleteDir(new File("output_revokingStore_test/database/secondCheckTestDB"));
+    if (CollectionUtils.isEmpty(allDBNames)) {
+      throw new ItemNotFoundException("No DBs found");
+    }
+    allDBNames.removeAll(noSecondCacheDBs);
+    allDBNames.removeAll(CacheStrategies.CACHE_DBS);
+    allDBNames.retainAll(allRevokingDBNames);
+    org.junit.Assert.assertTrue(String.format("New added dbs %s "
+                    + "check second cache failed!",
+            allDBNames.stream().collect(Collectors.joining(","))), allDBNames.size() == 1);
+  }
+
+  private Set<String> parseRevokingDBNames(TronApplicationContext context) {
+    SnapshotManager snapshotManager = context.getBean(SnapshotManager.class);
+    return snapshotManager.getDbs().stream().map(chainbase ->
+        chainbase.getDbName()).collect(Collectors.toSet());
+  }
+
 
   @NoArgsConstructor
   @AllArgsConstructor
