@@ -135,6 +135,8 @@ public class BandWidthRuntimeOutOfTimeWithCheckTest {
     Args.clearParam();
     context.destroy();
     FileUtil.deleteDir(new File(dbPath));
+    FileUtil.deleteDir(new File(dbDirectory));
+    FileUtil.deleteDir(new File(indexDirectory));
   }
 
   @Test
