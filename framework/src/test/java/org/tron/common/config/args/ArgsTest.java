@@ -11,16 +11,18 @@ import org.tron.core.config.args.Args;
 
 public class ArgsTest {
 
+  private static final String dbPath = "output_arg_test";
+
   @Before
   public void init() {
-    Args.setParam(new String[]{"--output-directory", "output-directory", "--p2p-disable", "true",
+    Args.setParam(new String[]{"--output-directory", dbPath, "--p2p-disable", "true",
         "--debug"}, Constant.TEST_CONF);
   }
 
   @After
   public void destroy() {
     Args.clearParam();
-    FileUtil.deleteDir(new File("output-directory"));
+    FileUtil.deleteDir(new File(dbPath));
   }
 
   @Test

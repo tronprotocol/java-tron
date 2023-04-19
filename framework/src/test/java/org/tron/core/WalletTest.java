@@ -728,6 +728,12 @@ public class WalletTest extends BaseTest {
 
       Protocol.Account account = Protocol.Account.newBuilder()
           .setAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS))).build();
+
+      AccountCapsule accountCapsule = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      accountCapsule.addAssetV2("testv2".getBytes(), 1L);
+      dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+
       wallet.getAccount(account);
       wallet.getProposalList();
       wallet.getWitnessList();

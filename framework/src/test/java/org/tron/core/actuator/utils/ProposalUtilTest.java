@@ -328,6 +328,10 @@ public class ProposalUtilTest extends BaseTest {
       Assert.assertEquals("Bad chain parameter value, valid range is [0, 1_000_000_000_000L]",
           e.getMessage());
     }
+
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .statsByVersion(ForkBlockVersionEnum.ENERGY_LIMIT.getValue(), stats);
+    forkUtils.reset();
   }
 
   @Test
