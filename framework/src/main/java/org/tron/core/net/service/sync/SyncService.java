@@ -23,7 +23,6 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.args.Args;
-import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.net.TronNetDelegate;
@@ -114,7 +113,10 @@ public class SyncService {
         logger.warn("Peer {} is in sync", peer.getInetSocketAddress());
         return;
       }
-      LinkedList<BlockId> chainSummary = getBlockChainSummary(peer);
+      LinkedList<BlockId> chainSummary;
+      synchronized (tronNetDelegate.getForkLock()) {
+        chainSummary = getBlockChainSummary(peer);
+      }
       peer.setSyncChainRequested(new Pair<>(chainSummary, System.currentTimeMillis()));
       peer.sendMessage(new SyncBlockChainMessage(chainSummary));
     } catch (Exception e) {
