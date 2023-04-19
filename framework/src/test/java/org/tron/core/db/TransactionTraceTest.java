@@ -57,6 +57,7 @@ public class TransactionTraceTest extends BaseTest {
   private static ByteString contractAddress = ByteString.copyFrom(ByteArray.fromInt(2));
   private static String OwnerAddress = "TCWHANtDDdkZCTo2T2peyEq3Eg9c2XB7ut";
   private static String TriggerOwnerAddress = "TCSgeWapPJhCqgWRxXCKb6jJ5AgNWSGjPA";
+  private static boolean init;
 
   static {
     dbPath = "output_TransactionTrace_test";
@@ -77,12 +78,15 @@ public class TransactionTraceTest extends BaseTest {
    */
   @Before
   public void init() {
+    if (init) {
+      return;
+    }
     //init energy
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1526647838000L);
     dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(100_000L);
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(0);
     VMConfig.initVmHardFork(false);
-
+    init = true;
   }
 
   @Test

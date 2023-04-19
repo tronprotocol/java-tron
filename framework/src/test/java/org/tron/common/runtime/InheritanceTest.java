@@ -22,6 +22,7 @@ public class InheritanceTest extends BaseTest {
 
   private static final String OWNER_ADDRESS;
   private RepositoryImpl repository;
+  private static boolean init;
 
   static {
     dbPath = "output_InheritanceTest";
@@ -34,9 +35,13 @@ public class InheritanceTest extends BaseTest {
    */
   @Before
   public void init() {
+    if (init) {
+      return;
+    }
     repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
     repository.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
     repository.addBalance(Hex.decode(OWNER_ADDRESS), 100000000);
+    init = true;
   }
 
   /**

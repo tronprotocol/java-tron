@@ -28,6 +28,7 @@ public class MerkleTreeTest extends BaseTest {
   public static final long totalBalance = 1000_0000_000_000L;
   private static final String dbDirectory = "db_ShieldedTransaction_test";
   private static final String indexDirectory = "index_ShieldedTransaction_test";
+  private static boolean init;
 
   static {
     dbPath = "output_ShieldedTransaction_test";
@@ -48,10 +49,14 @@ public class MerkleTreeTest extends BaseTest {
    */
   @Before
   public void init() {
+    if (init) {
+      return;
+    }
     //init energy
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1526647838000L);
     dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(100_000L);
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(0);
+    init = true;
   }
 
   private JSONArray readFile(String fileName) throws Exception {

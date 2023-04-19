@@ -24,6 +24,7 @@ public class InternalTransactionComplexTest extends BaseTest {
   private static final String OWNER_ADDRESS;
   private static Runtime runtime;
   private static RepositoryImpl repository;
+  private static boolean init;
 
   static {
     dbPath = "output_InternalTransactionComplexTest";
@@ -37,9 +38,13 @@ public class InternalTransactionComplexTest extends BaseTest {
    */
   @Before
   public void init() {
+    if (init) {
+      return;
+    }
     repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
     repository.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
     repository.addBalance(Hex.decode(OWNER_ADDRESS), 100000000);
+    init = true;
   }
 
   /**

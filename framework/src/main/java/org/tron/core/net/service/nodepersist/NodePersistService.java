@@ -8,12 +8,13 @@ import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.JsonUtil;
-import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.db.CommonStore;
 import org.tron.core.net.TronNetService;
 import org.tron.p2p.discover.Node;
 
@@ -24,7 +25,8 @@ public class NodePersistService {
   private static final long DB_COMMIT_RATE = 60 * 1000L;
   private static final int MAX_NODES_WRITE_TO_DB = 30;
   private final boolean isNodePersist = CommonParameter.getInstance().isNodeDiscoveryPersist();
-  private final ChainBaseManager chainBaseManager = ChainBaseManager.getInstance();
+  @Autowired
+  private CommonStore commonStore;
   private Timer nodePersistTaskTimer;
 
   public void init() {
@@ -53,7 +55,7 @@ public class NodePersistService {
   public List<InetSocketAddress> dbRead() {
     List<InetSocketAddress> nodes = new ArrayList<>();
     try {
-      byte[] nodeBytes = chainBaseManager.getCommonStore().get(DB_KEY_PEERS).getData();
+      byte[] nodeBytes = commonStore.get(DB_KEY_PEERS).getData();
       if (ByteArray.isEmpty(nodeBytes)) {
         return nodes;
       }
@@ -85,8 +87,7 @@ public class NodePersistService {
 
       logger.info("Write nodes to store: {}/{} nodes", batch.size(), tableNodes.size());
 
-      chainBaseManager.getCommonStore()
-              .put(DB_KEY_PEERS, new BytesCapsule(JsonUtil.obj2Json(dbNodes).getBytes()));
+      commonStore.put(DB_KEY_PEERS, new BytesCapsule(JsonUtil.obj2Json(dbNodes).getBytes()));
     } catch (Exception e) {
       logger.warn("DB write nodes failed, {}", e.getMessage());
     }

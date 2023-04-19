@@ -29,6 +29,7 @@ public class RuntimeTransferComplexTest extends BaseTest {
   private static final String TRANSFER_TO;
   private static Runtime runtime;
   private static RepositoryImpl repository;
+  private static boolean init;
 
   static {
     dbPath = "output_RuntimeTransferComplexTest";
@@ -42,12 +43,16 @@ public class RuntimeTransferComplexTest extends BaseTest {
    */
   @Before
   public void init() {
+    if (init) {
+      return;
+    }
     repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
     repository.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
     repository.addBalance(Hex.decode(OWNER_ADDRESS), 1000000000);
     repository.createAccount(Hex.decode(TRANSFER_TO), AccountType.Normal);
     repository.addBalance(Hex.decode(TRANSFER_TO), 10);
     repository.commit();
+    init = true;
   }
 
   /**
