@@ -4498,6 +4498,7 @@ public class Wallet {
     }
     Storage storage = new Storage(address, worldStateQueryInstance);
     storage.setContractVersion(contractCapsule.getInstance().getVersion());
+    storage.generateAddrHash(contractCapsule.getTrxHash());
     DataWord value = storage.getValue(new DataWord(ByteArray.fromHexString(storageIdx)));
     return value == null ? new byte[32] : value.getData();
   }
