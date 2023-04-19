@@ -11,19 +11,16 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import org.junit.AfterClass;
+import javax.annotation.Resource;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.testng.collections.Lists;
 import org.tron.api.GrpcAPI;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer.EmptyMerkleRoots;
@@ -50,9 +47,7 @@ import org.tron.core.capsule.ReceiveDescriptionCapsule;
 import org.tron.core.capsule.SpendDescriptionCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
@@ -90,7 +85,7 @@ import org.tron.protos.contract.ShieldContract.ReceiveDescription;
 import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
 import org.tron.protos.contract.ShieldContract.SpendDescription;
 
-public class SendCoinShieldTest {
+public class SendCoinShieldTest extends BaseTest {
 
   public static final long totalBalance = 1000_0000_000_000L;
   private static final byte[] DEFAULT_OVK;
@@ -105,16 +100,15 @@ public class SendCoinShieldTest {
   private static final int VOTE_SCORE = 2;
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
-  private static String dbPath = "output_ShieldedTransaction_test";
-  private static String dbDirectory = "db_ShieldedTransaction_test";
-  private static String indexDirectory = "index_ShieldedTransaction_test";
-  private static AnnotationConfigApplicationContext context;
-  private static Manager dbManager;
-  private static Wallet wallet;
+  @Resource
+  private Wallet wallet;
+
+  private static boolean init;
 
   static {
+    dbPath = "output_ShieldedTransaction_test";
     Args.setParam(new String[]{"--output-directory", dbPath}, "config-test-mainnet.conf");
-    context = new TronApplicationContext(DefaultConfig.class);
+    Args.getInstance().setZenTokenId(String.valueOf(tokenId));
     PUBLIC_ADDRESS_ONE =
         Wallet.getAddressPreFixString() + "a7d8a35b260395c14aa456297662092ba3b76fc0";
     DEFAULT_OVK = ByteArray
@@ -124,31 +118,16 @@ public class SendCoinShieldTest {
   /**
    * Init data.
    */
-  @BeforeClass
-  public static void init() {
-    FileUtil.deleteDir(new File(dbPath));
-
-    dbManager = context.getBean(Manager.class);
-    wallet = context.getBean(Wallet.class);
+  @Before
+  public void init() {
+    if (init) {
+      return;
+    }
     //init energy
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1526647838000L);
     dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(100_000L);
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(0);
-  }
 
-  @AfterClass
-  public static void removeDb() {
-    Args.clearParam();
-    context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
-  }
-
-  /**
-   * create temp Capsule test need.
-   */
-  @Before
-  public void createCapsule() {
-    Args.getInstance().setZenTokenId(String.valueOf(tokenId));
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     dbManager.getDynamicPropertiesStore().saveTokenIdNum(tokenId);
 
@@ -161,6 +140,8 @@ public class SendCoinShieldTest {
         .setUrl(ByteString.copyFrom(ByteArray.fromString(URL))).build();
     AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
     dbManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
+
+    init = true;
   }
 
   private void addZeroValueOutputNote(ZenTransactionBuilder builder) throws ZksnarkException {

@@ -2,23 +2,16 @@ package org.tron.common.runtime;
 
 import static org.tron.core.db.TransactionTrace.convertToTronAddress;
 
-import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 import org.testng.Assert;
-import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
-import org.tron.common.application.TronApplicationContext;
-import org.tron.common.utils.FileUtil;
+import org.tron.common.BaseTest;
 import org.tron.common.utils.WalletUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
@@ -30,21 +23,17 @@ import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.utils.DataWord;
 
 @Slf4j
-public class RuntimeTransferComplexTest {
+public class RuntimeTransferComplexTest extends BaseTest {
 
-  private static final String dbPath = "output_RuntimeTransferComplexTest";
   private static final String OWNER_ADDRESS;
   private static final String TRANSFER_TO;
   private static Runtime runtime;
-  private static Manager dbManager;
-  private static TronApplicationContext context;
-  private static Application appT;
   private static RepositoryImpl repository;
+  private static boolean init;
 
   static {
+    dbPath = "output_RuntimeTransferComplexTest";
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-    appT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     TRANSFER_TO = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
   }
@@ -52,29 +41,18 @@ public class RuntimeTransferComplexTest {
   /**
    * Init data.
    */
-  @BeforeClass
-  public static void init() {
-    dbManager = context.getBean(Manager.class);
+  @Before
+  public void init() {
+    if (init) {
+      return;
+    }
     repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
     repository.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
     repository.addBalance(Hex.decode(OWNER_ADDRESS), 1000000000);
     repository.createAccount(Hex.decode(TRANSFER_TO), AccountType.Normal);
     repository.addBalance(Hex.decode(TRANSFER_TO), 10);
     repository.commit();
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
+    init = true;
   }
 
   /**
@@ -132,7 +110,7 @@ public class RuntimeTransferComplexTest {
             consumeUserResourcePercent, null);
     byte[] contractAddress = WalletUtil.generateContractAddress(trx);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, repository, null);
-    Assert.assertNotNull(runtime.getRuntimeError().contains("REVERT"));
+    Assert.assertTrue(runtime.getRuntimeError().contains("REVERT"));
     Assert.assertNull(dbManager.getAccountStore().get(contractAddress));
     recoverDeposit();
   }
@@ -194,34 +172,25 @@ public class RuntimeTransferComplexTest {
    * payable { CALLED_INSTANCE = calledContract(_addr); } // expect calledContract -5, toAddress +5
    * function testCallTransferToInCalledContract(address toAddress) {
    * CALLED_INSTANCE.transferTo(toAddress); }
-   *
    * // expect calledContract -0, toAddress +0 function testRevertForCall(address toAddress){
    * CALLED_INSTANCE.transferTo(toAddress); revert(); } function testExceptionForCall(address
    * toAddress){ CALLED_INSTANCE.transferTo(toAddress); assert(1==2); } // expect c +100 -5,
    * toAddress +0 function testTransferToInCreatedContract(address toAddress) payable
    * returns(address){ createdContract c = (new createdContract).value(100)();
    * c.transferTo(toAddress); return address(c); }
-   *
    * // expect c +100 -5, toAddress not exist function testRevertForCreate(address toAddress)
    * payable returns(address){ createdContract c = (new createdContract).value(100)();
    * c.transferTo(toAddress); revert(); return address(c); }
-   *
    * // expect c +100 -5, toAddress not exist function testExceptionForCreate(address toAddress)
    * payable returns(address){ createdContract c = (new createdContract).value(100)();
    * c.transferTo(toAddress); assert(1==2); return address(c); }
-   *
    * function getBalance() public view returns(uint256){ return this.balance; } }
-   *
    * contract calledContract { constructor() payable {} function transferTo(address toAddress)
    * payable{ toAddress.transfer(5); }
-   *
    * function getBalance() public view returns(uint256){ return this.balance; }
-   *
    * }
-   *
    * contract createdContract { constructor() payable {} function transferTo(address toAddress){
    * toAddress.transfer(5); }
-   *
    * function getBalance() public view returns(uint256){ return this.balance; } }
    */
 
@@ -352,8 +321,6 @@ public class RuntimeTransferComplexTest {
         .generateTriggerSmartContractAndGetTransaction(msgSenderAddress, callerAddress,
             triggerData6, triggerCallValue, feeLimit);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction6, repository, null);
-    byte[] createdAddress3 = convertToTronAddress(
-        new DataWord(runtime.getResult().getHReturn()).getLast20Bytes());
     Assert.assertTrue(Hex.toHexString(new DataWord(createdAddress2).getLast20Bytes())
         .equalsIgnoreCase("0000000000000000000000000000000000000000"));
     Assert.assertTrue(runtime.getRuntimeError().contains("Invalid operation code: opCode[fe];"));
@@ -394,10 +361,9 @@ public class RuntimeTransferComplexTest {
     long feeLimit = 100000000;
     long consumeUserResourcePercent = 0;
 
-    byte[] contractAddress = TvmTestUtils
+    return TvmTestUtils
         .deployContractWholeProcessReturnContractAddress(contractName, address, ABI, code, value,
             feeLimit, consumeUserResourcePercent, null, repository, null);
-    return contractAddress;
   }
 
   private byte[] deployCallerContract(byte[] calledAddress)
@@ -475,14 +441,12 @@ public class RuntimeTransferComplexTest {
     long value = 1000;
     long feeLimit = 100000000;
     long consumeUserResourcePercent = 0;
-    byte[] contractAddress = TvmTestUtils
+    return TvmTestUtils
         .deployContractWholeProcessReturnContractAddress(contractName, callerAddress, callerABI,
             callerCode, value, feeLimit, consumeUserResourcePercent, null, repository, null);
-    return contractAddress;
   }
 
   private void recoverDeposit() {
-    dbManager = context.getBean(Manager.class);
     repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
   }
 

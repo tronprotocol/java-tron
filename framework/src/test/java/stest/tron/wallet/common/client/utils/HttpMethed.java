@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
@@ -2223,8 +2224,13 @@ public class HttpMethed {
   public static void waitToProduceOneBlock(String httpNode) {
     response = HttpMethed.getNowBlock(httpNode);
     responseContent = HttpMethed.parseResponseContent(response);
-    responseContent = HttpMethed.parseStringContent(responseContent.get("block_header").toString());
-    responseContent = HttpMethed.parseStringContent(responseContent.get("raw_data").toString());
+    if (responseContent.containsKey("block_header")) {
+      responseContent = HttpMethed.parseStringContent(
+          responseContent.get("block_header").toString());
+    }
+    if (responseContent.containsKey("raw_data")) {
+      responseContent = HttpMethed.parseStringContent(responseContent.get("raw_data").toString());
+    }
     Integer currentBlockNum = 0;
     if (responseContent.containsKey("number")) {
       currentBlockNum = Integer.parseInt(responseContent.get("number").toString());
@@ -2234,9 +2240,14 @@ public class HttpMethed {
     while (nextBlockNum <= currentBlockNum + 1 && times++ <= 10) {
       response = HttpMethed.getNowBlock(httpNode);
       responseContent = HttpMethed.parseResponseContent(response);
-      responseContent =
-          HttpMethed.parseStringContent(responseContent.get("block_header").toString());
-      responseContent = HttpMethed.parseStringContent(responseContent.get("raw_data").toString());
+      if (responseContent.containsKey("block_header")) {
+        responseContent = HttpMethed.parseStringContent(
+            responseContent.get("block_header").toString());
+      }
+      if (responseContent.containsKey("raw_data")) {
+        responseContent = HttpMethed.parseStringContent(
+            responseContent.get("raw_data").toString());
+      }
       if (responseContent.containsKey("number")) {
         nextBlockNum = Integer.parseInt(responseContent.get("number").toString());
       }

@@ -1,30 +1,27 @@
 package org.tron.common.runtime.vm;
 
+import static org.junit.Assert.assertNotNull;
+
 import com.google.protobuf.ByteString;
-import java.io.File;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.api.GrpcAPI.ShieldedTRC20Parameters;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.PedersenHashCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.vm.PrecompiledContracts.MerkleHash;
@@ -45,52 +42,28 @@ import org.tron.protos.contract.ShieldContract;
 import stest.tron.wallet.common.client.WalletClient;
 
 @Slf4j
-public class PrecompiledContractsVerifyProofTest {
+public class PrecompiledContractsVerifyProofTest extends BaseTest {
 
-  private static final String dbPath = "output_PrecompiledContracts_VerifyProof_test";
   private static final String SHIELDED_CONTRACT_ADDRESS_STR = "TGAmX5AqVUoXCf8MoHxbuhQPmhGfWTnEgA";
-  private static final byte[] SHIELDED_CONTRACT_ADDRESS;
+  private static byte[] SHIELDED_CONTRACT_ADDRESS;
   private static final String PUBLIC_TO_ADDRESS_STR = "TBaBXpRAeBhs75TZT751LwyhrcR25XeUot";
-  private static final byte[] PUBLIC_TO_ADDRESS;
-  private static final byte[] DEFAULT_OVK;
-  private static TronApplicationContext context;
-  private static Manager dbManager;
-
-  static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, "config-test.conf");
-    context = new TronApplicationContext(DefaultConfig.class);
-    DEFAULT_OVK = ByteArray
-        .fromHexString("030c8c2bc59fb3eb8afb047a8ea4b028743d23e7d38c6fa30908358431e2314d");
-    SHIELDED_CONTRACT_ADDRESS = WalletClient.decodeFromBase58Check(SHIELDED_CONTRACT_ADDRESS_STR);
-    PUBLIC_TO_ADDRESS = WalletClient.decodeFromBase58Check(PUBLIC_TO_ADDRESS_STR);
-    FullNodeHttpApiService.librustzcashInitZksnarkParams();
-  }
+  private static byte[] PUBLIC_TO_ADDRESS;
+  private static byte[] DEFAULT_OVK;
 
   VerifyMintProof mintContract = new VerifyMintProof();
   VerifyTransferProof transferContract = new VerifyTransferProof();
   VerifyBurnProof burnContract = new VerifyBurnProof();
   MerkleHash merkleHash = new MerkleHash();
 
-  /**
-   * Init data.
-   */
   @BeforeClass
   public static void init() {
-    dbManager = context.getBean(Manager.class);
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
+    dbPath = "output_PrecompiledContracts_VerifyProof_test";
+    Args.setParam(new String[]{"--output-directory", dbPath}, "config-test.conf");
+    DEFAULT_OVK = ByteArray
+        .fromHexString("030c8c2bc59fb3eb8afb047a8ea4b028743d23e7d38c6fa30908358431e2314d");
+    SHIELDED_CONTRACT_ADDRESS = WalletClient.decodeFromBase58Check(SHIELDED_CONTRACT_ADDRESS_STR);
+    PUBLIC_TO_ADDRESS = WalletClient.decodeFromBase58Check(PUBLIC_TO_ADDRESS_STR);
+    FullNodeHttpApiService.librustzcashInitZksnarkParams();
   }
 
   @Test
@@ -110,7 +83,8 @@ public class PrecompiledContractsVerifyProofTest {
       SpendingKey recvSk = SpendingKey.random();
       FullViewingKey fullViewingKey = recvSk.fullViewingKey();
       IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
-      PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
+      PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random())
+          .orElse(null);
       builder.addOutput(DEFAULT_OVK, paymentAddress, value, new byte[512]);
       ShieldedTRC20Parameters params = builder.build(false);
 
@@ -152,9 +126,10 @@ public class PrecompiledContractsVerifyProofTest {
       JLibrustzcash.librustzcashSaplingGenerateR(rcm1);
       byte[] rcm2 = new byte[32];
       JLibrustzcash.librustzcashSaplingGenerateR(rcm2);
-      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
-      PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).get();
-
+      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).orElse(null);
+      PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).orElse(null);
+      assertNotNull(senderPaymentAddress1);
+      assertNotNull(senderPaymentAddress2);
       { //for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
         mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
@@ -242,14 +217,16 @@ public class PrecompiledContractsVerifyProofTest {
         SpendingKey receiveSk1 = SpendingKey.random();
         FullViewingKey receiveFvk1 = receiveSk1.fullViewingKey();
         IncomingViewingKey receiveIvk1 = receiveFvk1.inViewingKey();
-        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT()).get();
+        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT())
+            .orElse(null);
         builder.addOutput(senderOvk, receivePaymentAddress1, 40, new byte[512]);
 
         //receiveNote2
         SpendingKey receiveSk2 = SpendingKey.random();
         FullViewingKey receiveFvk2 = receiveSk2.fullViewingKey();
         IncomingViewingKey receiveIvk2 = receiveFvk2.inViewingKey();
-        PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT()).get();
+        PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT())
+            .orElse(null);
         builder.addOutput(senderOvk, receivePaymentAddress2, 60, new byte[512]);
 
         ShieldedTRC20Parameters params = builder.build(true);
@@ -308,8 +285,8 @@ public class PrecompiledContractsVerifyProofTest {
       IncomingViewingKey senderIvk = senderFvk.inViewingKey();
       byte[] rcm1 = new byte[32];
       JLibrustzcash.librustzcashSaplingGenerateR(rcm1);
-      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
-
+      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).orElse(null);
+      assertNotNull(senderPaymentAddress1);
       { //for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
         mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(100));
@@ -358,7 +335,8 @@ public class PrecompiledContractsVerifyProofTest {
         SpendingKey receiveSk1 = SpendingKey.random();
         FullViewingKey receiveFvk1 = receiveSk1.fullViewingKey();
         IncomingViewingKey receiveIvk1 = receiveFvk1.inViewingKey();
-        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT()).get();
+        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT())
+            .orElse(null);
         builder.addOutput(senderOvk, receivePaymentAddress1, 100, new byte[512]);
 
         ShieldedTRC20Parameters params = builder.build(true);
@@ -413,8 +391,8 @@ public class PrecompiledContractsVerifyProofTest {
       IncomingViewingKey senderIvk = senderFvk.inViewingKey();
       byte[] rcm1 = new byte[32];
       JLibrustzcash.librustzcashSaplingGenerateR(rcm1);
-      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
-
+      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).orElse(null);
+      assertNotNull(senderPaymentAddress1);
       { //for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
         mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(100));
@@ -464,7 +442,8 @@ public class PrecompiledContractsVerifyProofTest {
         SpendingKey receiveSk1 = SpendingKey.random();
         FullViewingKey receiveFvk1 = receiveSk1.fullViewingKey();
         IncomingViewingKey receiveIvk1 = receiveFvk1.inViewingKey();
-        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT()).get();
+        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT())
+            .orElse(null);
         builder.addOutput(senderOvk, receivePaymentAddress1, 50, new byte[512]);
 
         ShieldedTRC20Parameters params = builder.build(true);
@@ -519,8 +498,8 @@ public class PrecompiledContractsVerifyProofTest {
       IncomingViewingKey senderIvk = senderFvk.inViewingKey();
       byte[] rcm1 = new byte[32];
       JLibrustzcash.librustzcashSaplingGenerateR(rcm1);
-      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
-
+      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).orElse(null);
+      assertNotNull(senderPaymentAddress1);
       { //for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
         mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(100));
@@ -569,14 +548,16 @@ public class PrecompiledContractsVerifyProofTest {
         SpendingKey receiveSk1 = SpendingKey.random();
         FullViewingKey receiveFvk1 = receiveSk1.fullViewingKey();
         IncomingViewingKey receiveIvk1 = receiveFvk1.inViewingKey();
-        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT()).get();
+        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT())
+            .orElse(null);
         builder.addOutput(senderOvk, receivePaymentAddress1, 40, new byte[512]);
 
         //receiveNote2
         SpendingKey receiveSk2 = SpendingKey.random();
         FullViewingKey receiveFvk2 = receiveSk2.fullViewingKey();
         IncomingViewingKey receiveIvk2 = receiveFvk2.inViewingKey();
-        PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT()).get();
+        PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT())
+            .orElse(null);
         builder.addOutput(senderOvk, receivePaymentAddress2, 60, new byte[512]);
 
         ShieldedTRC20Parameters params = builder.build(true);
@@ -637,9 +618,10 @@ public class PrecompiledContractsVerifyProofTest {
       JLibrustzcash.librustzcashSaplingGenerateR(rcm1);
       byte[] rcm2 = new byte[32];
       JLibrustzcash.librustzcashSaplingGenerateR(rcm2);
-      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
-      PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).get();
-
+      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).orElse(null);
+      PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).orElse(null);
+      assertNotNull(senderPaymentAddress1);
+      assertNotNull(senderPaymentAddress2);
       { //for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
         mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
@@ -727,7 +709,8 @@ public class PrecompiledContractsVerifyProofTest {
         SpendingKey receiveSk1 = SpendingKey.random();
         FullViewingKey receiveFvk1 = receiveSk1.fullViewingKey();
         IncomingViewingKey receiveIvk1 = receiveFvk1.inViewingKey();
-        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT()).get();
+        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT())
+            .orElse(null);
         builder.addOutput(senderOvk, receivePaymentAddress1, 100, new byte[512]);
 
         ShieldedTRC20Parameters params = builder.build(true);
@@ -780,12 +763,11 @@ public class PrecompiledContractsVerifyProofTest {
       SpendingKey senderSk = SpendingKey.random();
       ExpandedSpendingKey senderExpsk = senderSk.expandedSpendingKey();
       FullViewingKey senderFvk = senderSk.fullViewingKey();
-      byte[] senderOvk = senderFvk.getOvk();
       IncomingViewingKey senderIvk = senderFvk.inViewingKey();
       byte[] rcm = new byte[32];
       JLibrustzcash.librustzcashSaplingGenerateR(rcm);
-      PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).get();
-
+      PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).orElse(null);
+      assertNotNull(senderPaymentAddress);
       { //for mint
         ShieldedTRC20ParametersBuilder mintBuilder = new ShieldedTRC20ParametersBuilder();
         mintBuilder.setTransparentFromAmount(BigInteger.valueOf(value));
@@ -861,7 +843,8 @@ public class PrecompiledContractsVerifyProofTest {
       IncomingViewingKey ivk = fvk.inViewingKey();
       byte[] rcm = new byte[32];
       JLibrustzcash.librustzcashSaplingGenerateR(rcm);
-      PaymentAddress paymentAddress = ivk.address(DiversifierT.random()).get();
+      PaymentAddress paymentAddress = ivk.address(DiversifierT.random()).orElse(null);
+      assertNotNull(paymentAddress);
       Note note = new Note(paymentAddress.getD(), paymentAddress.getPkD(),
           randomLong(), rcm, new byte[512]);
       byte[] node = note.cm();
@@ -898,8 +881,8 @@ public class PrecompiledContractsVerifyProofTest {
     IncomingViewingKey senderIvk = senderFvk.inViewingKey();
     byte[] rcm1 = new byte[32];
     JLibrustzcash.librustzcashSaplingGenerateR(rcm1);
-    PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
-
+    PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).orElse(null);
+    assertNotNull(senderPaymentAddress1);
     { //for mint1
       ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
       mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(100));
@@ -949,7 +932,7 @@ public class PrecompiledContractsVerifyProofTest {
       SpendingKey receiveSk1 = SpendingKey.random();
       FullViewingKey receiveFvk1 = receiveSk1.fullViewingKey();
       IncomingViewingKey receiveIvk1 = receiveFvk1.inViewingKey();
-      PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT()).get();
+      PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT()).orElse(null);
       builder.addOutput(senderOvk, receivePaymentAddress1, 50, new byte[512]);
 
       ShieldedTRC20Parameters params = builder.build(true);
@@ -1019,7 +1002,7 @@ public class PrecompiledContractsVerifyProofTest {
     SpendingKey recvSk = SpendingKey.random();
     FullViewingKey fullViewingKey = recvSk.fullViewingKey();
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
-    PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
+    PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).orElse(null);
     builder.addOutput(DEFAULT_OVK, paymentAddress, value, new byte[512]);
     ShieldedTRC20Parameters params = builder.build(false);
 
@@ -1045,9 +1028,10 @@ public class PrecompiledContractsVerifyProofTest {
     JLibrustzcash.librustzcashSaplingGenerateR(rcm1);
     byte[] rcm2 = new byte[32];
     JLibrustzcash.librustzcashSaplingGenerateR(rcm2);
-    PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
-    PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).get();
-
+    PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).orElse(null);
+    PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).orElse(null);
+    assertNotNull(senderPaymentAddress1);
+    assertNotNull(senderPaymentAddress2);
     ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
     builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
     builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -1082,14 +1066,14 @@ public class PrecompiledContractsVerifyProofTest {
     SpendingKey receiveSk1 = SpendingKey.random();
     FullViewingKey receiveFvk1 = receiveSk1.fullViewingKey();
     IncomingViewingKey receiveIvk1 = receiveFvk1.inViewingKey();
-    PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT()).get();
+    PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT()).orElse(null);
     builder.addOutput(senderOvk, receivePaymentAddress1, 40, new byte[512]);
 
     //receiveNote2
     SpendingKey receiveSk2 = SpendingKey.random();
     FullViewingKey receiveFvk2 = receiveSk2.fullViewingKey();
     IncomingViewingKey receiveIvk2 = receiveFvk2.inViewingKey();
-    PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT()).get();
+    PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT()).orElse(null);
     builder.addOutput(senderOvk, receivePaymentAddress2, 60, new byte[512]);
     ShieldedTRC20Parameters params = builder.build(true);
 
@@ -1110,8 +1094,8 @@ public class PrecompiledContractsVerifyProofTest {
     IncomingViewingKey senderIvk = senderFvk.inViewingKey();
     byte[] rcm = new byte[32];
     JLibrustzcash.librustzcashSaplingGenerateR(rcm);
-    PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).get();
-
+    PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).orElse(null);
+    assertNotNull(senderPaymentAddress);
     ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
     builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BURN);
     builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -1155,7 +1139,8 @@ public class PrecompiledContractsVerifyProofTest {
       SpendingKey recvSk = SpendingKey.random();
       FullViewingKey fullViewingKey = recvSk.fullViewingKey();
       IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
-      PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
+      PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random())
+          .orElse(null);
       builder.addOutput(DEFAULT_OVK, paymentAddress, value, new byte[512]);
       ShieldedTRC20Parameters params = builder.build(false);
 
@@ -1181,9 +1166,10 @@ public class PrecompiledContractsVerifyProofTest {
     JLibrustzcash.librustzcashSaplingGenerateR(rcm1);
     byte[] rcm2 = new byte[32];
     JLibrustzcash.librustzcashSaplingGenerateR(rcm2);
-    PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
-    PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).get();
-
+    PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).orElse(null);
+    PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).orElse(null);
+    assertNotNull(senderPaymentAddress1);
+    assertNotNull(senderPaymentAddress2);
     for (long leafCount : leafCountList) {
       ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
       builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
@@ -1218,14 +1204,14 @@ public class PrecompiledContractsVerifyProofTest {
       SpendingKey receiveSk1 = SpendingKey.random();
       FullViewingKey receiveFvk1 = receiveSk1.fullViewingKey();
       IncomingViewingKey receiveIvk1 = receiveFvk1.inViewingKey();
-      PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT()).get();
+      PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT()).orElse(null);
       builder.addOutput(senderOvk, receivePaymentAddress1, 40, new byte[512]);
 
       //receiveNote2
       SpendingKey receiveSk2 = SpendingKey.random();
       FullViewingKey receiveFvk2 = receiveSk2.fullViewingKey();
       IncomingViewingKey receiveIvk2 = receiveFvk2.inViewingKey();
-      PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT()).get();
+      PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT()).orElse(null);
       builder.addOutput(senderOvk, receivePaymentAddress2, 60, new byte[512]);
       ShieldedTRC20Parameters params = builder.build(true);
 
@@ -1249,8 +1235,8 @@ public class PrecompiledContractsVerifyProofTest {
     IncomingViewingKey senderIvk = senderFvk.inViewingKey();
     byte[] rcm = new byte[32];
     JLibrustzcash.librustzcashSaplingGenerateR(rcm);
-    PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).get();
-
+    PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).orElse(null);
+    assertNotNull(senderPaymentAddress);
     ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
     builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
     builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -1275,14 +1261,14 @@ public class PrecompiledContractsVerifyProofTest {
     SpendingKey receiveSk1 = SpendingKey.random();
     FullViewingKey receiveFvk1 = receiveSk1.fullViewingKey();
     IncomingViewingKey receiveIvk1 = receiveFvk1.inViewingKey();
-    PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT()).get();
+    PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT()).orElse(null);
     builder.addOutput(senderOvk, receivePaymentAddress1, 40, new byte[512]);
 
     //receiveNote2
     SpendingKey receiveSk2 = SpendingKey.random();
     FullViewingKey receiveFvk2 = receiveSk2.fullViewingKey();
     IncomingViewingKey receiveIvk2 = receiveFvk2.inViewingKey();
-    PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT()).get();
+    PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT()).orElse(null);
     builder.addOutput(senderOvk, receivePaymentAddress2, 60, new byte[512]);
     ShieldedTRC20Parameters params = builder.build(true);
 
@@ -1307,9 +1293,10 @@ public class PrecompiledContractsVerifyProofTest {
     JLibrustzcash.librustzcashSaplingGenerateR(rcm1);
     byte[] rcm2 = new byte[32];
     JLibrustzcash.librustzcashSaplingGenerateR(rcm2);
-    PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
-    PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).get();
-
+    PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).orElse(null);
+    PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).orElse(null);
+    assertNotNull(senderPaymentAddress1);
+    assertNotNull(senderPaymentAddress2);
     ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
     builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
     builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -1344,7 +1331,8 @@ public class PrecompiledContractsVerifyProofTest {
     SpendingKey receiveSk = SpendingKey.random();
     FullViewingKey receiveFvk = receiveSk.fullViewingKey();
     IncomingViewingKey receiveIvk = receiveFvk.inViewingKey();
-    PaymentAddress receivePaymentAddress = receiveIvk.address(new DiversifierT()).get();
+    PaymentAddress receivePaymentAddress = receiveIvk.address(new DiversifierT()).orElse(null);
+    assertNotNull(receivePaymentAddress);
     byte[] r = new byte[32];
     JLibrustzcash.librustzcashSaplingGenerateR(r);
     builder.addOutput(senderOvk, receivePaymentAddress.getD(), receivePaymentAddress.getPkD(),
@@ -1376,7 +1364,8 @@ public class PrecompiledContractsVerifyProofTest {
       SpendingKey recvSk = SpendingKey.random();
       FullViewingKey fullViewingKey = recvSk.fullViewingKey();
       IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
-      PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
+      PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random())
+          .orElse(null);
       builder.addOutput(DEFAULT_OVK, paymentAddress, 50, new byte[512]);
       ShieldedTRC20Parameters params = builder.build(false);
 
@@ -1394,12 +1383,11 @@ public class PrecompiledContractsVerifyProofTest {
     SpendingKey senderSk = SpendingKey.random();
     ExpandedSpendingKey senderExpsk = senderSk.expandedSpendingKey();
     FullViewingKey senderFvk = senderSk.fullViewingKey();
-    byte[] senderOvk = senderFvk.getOvk();
     IncomingViewingKey senderIvk = senderFvk.inViewingKey();
     byte[] rcm = new byte[32];
     JLibrustzcash.librustzcashSaplingGenerateR(rcm);
-    PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).get();
-
+    PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).orElse(null);
+    assertNotNull(senderPaymentAddress);
     ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
     builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BURN);
     builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -1443,7 +1431,8 @@ public class PrecompiledContractsVerifyProofTest {
       SpendingKey recvSk = SpendingKey.random();
       FullViewingKey fullViewingKey = recvSk.fullViewingKey();
       IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
-      PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
+      PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random())
+          .orElse(null);
       builder.addOutput(DEFAULT_OVK, paymentAddress, value, new byte[512]);
       ShieldedTRC20Parameters params = builder.build(false);
 
@@ -1473,7 +1462,8 @@ public class PrecompiledContractsVerifyProofTest {
       SpendingKey recvSk = SpendingKey.random();
       FullViewingKey fullViewingKey = recvSk.fullViewingKey();
       IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
-      PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
+      PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random())
+          .orElse(null);
       builder.addOutput(DEFAULT_OVK, paymentAddress, value, new byte[512]);
       ShieldedTRC20Parameters params = builder.build(false);
 
@@ -1502,7 +1492,8 @@ public class PrecompiledContractsVerifyProofTest {
       SpendingKey recvSk = SpendingKey.random();
       FullViewingKey fullViewingKey = recvSk.fullViewingKey();
       IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
-      PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
+      PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random())
+          .orElse(null);
       builder.addOutput(DEFAULT_OVK, paymentAddress, value, new byte[512]);
       ShieldedTRC20Parameters params = builder.build(false);
 
@@ -1531,7 +1522,8 @@ public class PrecompiledContractsVerifyProofTest {
       SpendingKey recvSk = SpendingKey.random();
       FullViewingKey fullViewingKey = recvSk.fullViewingKey();
       IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
-      PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
+      PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random())
+          .orElse(null);
       builder.addOutput(DEFAULT_OVK, paymentAddress, value, new byte[512]);
       ShieldedTRC20Parameters params = builder.build(false);
 
@@ -1560,7 +1552,8 @@ public class PrecompiledContractsVerifyProofTest {
       SpendingKey recvSk = SpendingKey.random();
       FullViewingKey fullViewingKey = recvSk.fullViewingKey();
       IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
-      PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
+      PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random())
+          .orElse(null);
       builder.addOutput(DEFAULT_OVK, paymentAddress, value, new byte[512]);
       ShieldedTRC20Parameters params = builder.build(false);
 
@@ -1589,7 +1582,8 @@ public class PrecompiledContractsVerifyProofTest {
       SpendingKey recvSk = SpendingKey.random();
       FullViewingKey fullViewingKey = recvSk.fullViewingKey();
       IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
-      PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
+      PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random())
+          .orElse(null);
       builder.addOutput(DEFAULT_OVK, paymentAddress, value, new byte[512]);
       ShieldedTRC20Parameters params = builder.build(false);
 
@@ -1619,9 +1613,10 @@ public class PrecompiledContractsVerifyProofTest {
       JLibrustzcash.librustzcashSaplingGenerateR(rcm1);
       byte[] rcm2 = new byte[32];
       JLibrustzcash.librustzcashSaplingGenerateR(rcm2);
-      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
-      PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).get();
-
+      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).orElse(null);
+      PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).orElse(null);
+      assertNotNull(senderPaymentAddress1);
+      assertNotNull(senderPaymentAddress2);
       { //for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
         mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
@@ -1707,14 +1702,16 @@ public class PrecompiledContractsVerifyProofTest {
         SpendingKey receiveSk1 = SpendingKey.random();
         FullViewingKey receiveFvk1 = receiveSk1.fullViewingKey();
         IncomingViewingKey receiveIvk1 = receiveFvk1.inViewingKey();
-        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT()).get();
+        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT())
+            .orElse(null);
         builder.addOutput(senderOvk, receivePaymentAddress1, 40, new byte[512]);
 
         //receiveNote2
         SpendingKey receiveSk2 = SpendingKey.random();
         FullViewingKey receiveFvk2 = receiveSk2.fullViewingKey();
         IncomingViewingKey receiveIvk2 = receiveFvk2.inViewingKey();
-        PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT()).get();
+        PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT())
+            .orElse(null);
         builder.addOutput(senderOvk, receivePaymentAddress2, 60, new byte[512]);
 
         ShieldedTRC20Parameters params = builder.build(true);
@@ -1745,9 +1742,10 @@ public class PrecompiledContractsVerifyProofTest {
       JLibrustzcash.librustzcashSaplingGenerateR(rcm1);
       byte[] rcm2 = new byte[32];
       JLibrustzcash.librustzcashSaplingGenerateR(rcm2);
-      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
-      PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).get();
-
+      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).orElse(null);
+      PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).orElse(null);
+      assertNotNull(senderPaymentAddress1);
+      assertNotNull(senderPaymentAddress2);
       { //for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
         mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
@@ -1833,14 +1831,16 @@ public class PrecompiledContractsVerifyProofTest {
         SpendingKey receiveSk1 = SpendingKey.random();
         FullViewingKey receiveFvk1 = receiveSk1.fullViewingKey();
         IncomingViewingKey receiveIvk1 = receiveFvk1.inViewingKey();
-        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT()).get();
+        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT())
+            .orElse(null);
         builder.addOutput(senderOvk, receivePaymentAddress1, 40, new byte[512]);
 
         //receiveNote2
         SpendingKey receiveSk2 = SpendingKey.random();
         FullViewingKey receiveFvk2 = receiveSk2.fullViewingKey();
         IncomingViewingKey receiveIvk2 = receiveFvk2.inViewingKey();
-        PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT()).get();
+        PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT())
+            .orElse(null);
         builder.addOutput(senderOvk, receivePaymentAddress2, 60, new byte[512]);
 
         ShieldedTRC20Parameters params = builder.build(true);
@@ -1872,9 +1872,10 @@ public class PrecompiledContractsVerifyProofTest {
       JLibrustzcash.librustzcashSaplingGenerateR(rcm1);
       byte[] rcm2 = new byte[32];
       JLibrustzcash.librustzcashSaplingGenerateR(rcm2);
-      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
-      PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).get();
-
+      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).orElse(null);
+      PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).orElse(null);
+      assertNotNull(senderPaymentAddress1);
+      assertNotNull(senderPaymentAddress2);
       { //for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
         mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
@@ -1960,14 +1961,16 @@ public class PrecompiledContractsVerifyProofTest {
         SpendingKey receiveSk1 = SpendingKey.random();
         FullViewingKey receiveFvk1 = receiveSk1.fullViewingKey();
         IncomingViewingKey receiveIvk1 = receiveFvk1.inViewingKey();
-        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT()).get();
+        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT())
+            .orElse(null);
         builder.addOutput(senderOvk, receivePaymentAddress1, 40, new byte[512]);
 
         //receiveNote2
         SpendingKey receiveSk2 = SpendingKey.random();
         FullViewingKey receiveFvk2 = receiveSk2.fullViewingKey();
         IncomingViewingKey receiveIvk2 = receiveFvk2.inViewingKey();
-        PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT()).get();
+        PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT())
+            .orElse(null);
         builder.addOutput(senderOvk, receivePaymentAddress2, 60, new byte[512]);
 
         ShieldedTRC20Parameters params = builder.build(true);
@@ -1998,9 +2001,10 @@ public class PrecompiledContractsVerifyProofTest {
       JLibrustzcash.librustzcashSaplingGenerateR(rcm1);
       byte[] rcm2 = new byte[32];
       JLibrustzcash.librustzcashSaplingGenerateR(rcm2);
-      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
-      PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).get();
-
+      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).orElse(null);
+      PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).orElse(null);
+      assertNotNull(senderPaymentAddress1);
+      assertNotNull(senderPaymentAddress2);
       { //for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
         mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
@@ -2086,14 +2090,16 @@ public class PrecompiledContractsVerifyProofTest {
         SpendingKey receiveSk1 = SpendingKey.random();
         FullViewingKey receiveFvk1 = receiveSk1.fullViewingKey();
         IncomingViewingKey receiveIvk1 = receiveFvk1.inViewingKey();
-        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT()).get();
+        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT())
+            .orElse(null);
         builder.addOutput(senderOvk, receivePaymentAddress1, 40, new byte[512]);
 
         //receiveNote2
         SpendingKey receiveSk2 = SpendingKey.random();
         FullViewingKey receiveFvk2 = receiveSk2.fullViewingKey();
         IncomingViewingKey receiveIvk2 = receiveFvk2.inViewingKey();
-        PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT()).get();
+        PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT())
+            .orElse(null);
         builder.addOutput(senderOvk, receivePaymentAddress2, 60, new byte[512]);
 
         ShieldedTRC20Parameters params = builder.build(true);
@@ -2124,9 +2130,10 @@ public class PrecompiledContractsVerifyProofTest {
       JLibrustzcash.librustzcashSaplingGenerateR(rcm1);
       byte[] rcm2 = new byte[32];
       JLibrustzcash.librustzcashSaplingGenerateR(rcm2);
-      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
-      PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).get();
-
+      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).orElse(null);
+      PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).orElse(null);
+      assertNotNull(senderPaymentAddress1);
+      assertNotNull(senderPaymentAddress2);
       { //for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
         mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
@@ -2212,14 +2219,16 @@ public class PrecompiledContractsVerifyProofTest {
         SpendingKey receiveSk1 = SpendingKey.random();
         FullViewingKey receiveFvk1 = receiveSk1.fullViewingKey();
         IncomingViewingKey receiveIvk1 = receiveFvk1.inViewingKey();
-        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT()).get();
+        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT())
+            .orElse(null);
         builder.addOutput(senderOvk, receivePaymentAddress1, 40, new byte[512]);
 
         //receiveNote2
         SpendingKey receiveSk2 = SpendingKey.random();
         FullViewingKey receiveFvk2 = receiveSk2.fullViewingKey();
         IncomingViewingKey receiveIvk2 = receiveFvk2.inViewingKey();
-        PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT()).get();
+        PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT())
+            .orElse(null);
         builder.addOutput(senderOvk, receivePaymentAddress2, 60, new byte[512]);
 
         ShieldedTRC20Parameters params = builder.build(true);
@@ -2250,9 +2259,10 @@ public class PrecompiledContractsVerifyProofTest {
       JLibrustzcash.librustzcashSaplingGenerateR(rcm1);
       byte[] rcm2 = new byte[32];
       JLibrustzcash.librustzcashSaplingGenerateR(rcm2);
-      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
-      PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).get();
-
+      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).orElse(null);
+      PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).orElse(null);
+      assertNotNull(senderPaymentAddress1);
+      assertNotNull(senderPaymentAddress2);
       { //for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
         mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
@@ -2338,14 +2348,16 @@ public class PrecompiledContractsVerifyProofTest {
         SpendingKey receiveSk1 = SpendingKey.random();
         FullViewingKey receiveFvk1 = receiveSk1.fullViewingKey();
         IncomingViewingKey receiveIvk1 = receiveFvk1.inViewingKey();
-        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT()).get();
+        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT())
+            .orElse(null);
         builder.addOutput(senderOvk, receivePaymentAddress1, 40, new byte[512]);
 
         //receiveNote2
         SpendingKey receiveSk2 = SpendingKey.random();
         FullViewingKey receiveFvk2 = receiveSk2.fullViewingKey();
         IncomingViewingKey receiveIvk2 = receiveFvk2.inViewingKey();
-        PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT()).get();
+        PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT())
+            .orElse(null);
         builder.addOutput(senderOvk, receivePaymentAddress2, 60, new byte[512]);
 
         ShieldedTRC20Parameters params = builder.build(true);
@@ -2376,9 +2388,10 @@ public class PrecompiledContractsVerifyProofTest {
       JLibrustzcash.librustzcashSaplingGenerateR(rcm1);
       byte[] rcm2 = new byte[32];
       JLibrustzcash.librustzcashSaplingGenerateR(rcm2);
-      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
-      PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).get();
-
+      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).orElse(null);
+      PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).orElse(null);
+      assertNotNull(senderPaymentAddress1);
+      assertNotNull(senderPaymentAddress2);
       { //for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
         mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
@@ -2464,14 +2477,16 @@ public class PrecompiledContractsVerifyProofTest {
         SpendingKey receiveSk1 = SpendingKey.random();
         FullViewingKey receiveFvk1 = receiveSk1.fullViewingKey();
         IncomingViewingKey receiveIvk1 = receiveFvk1.inViewingKey();
-        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT()).get();
+        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT())
+            .orElse(null);
         builder.addOutput(senderOvk, receivePaymentAddress1, 40, new byte[512]);
 
         //receiveNote2
         SpendingKey receiveSk2 = SpendingKey.random();
         FullViewingKey receiveFvk2 = receiveSk2.fullViewingKey();
         IncomingViewingKey receiveIvk2 = receiveFvk2.inViewingKey();
-        PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT()).get();
+        PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT())
+            .orElse(null);
         builder.addOutput(senderOvk, receivePaymentAddress2, 60, new byte[512]);
 
         ShieldedTRC20Parameters params = builder.build(true);
@@ -2502,9 +2517,10 @@ public class PrecompiledContractsVerifyProofTest {
       JLibrustzcash.librustzcashSaplingGenerateR(rcm1);
       byte[] rcm2 = new byte[32];
       JLibrustzcash.librustzcashSaplingGenerateR(rcm2);
-      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
-      PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).get();
-
+      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).orElse(null);
+      PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).orElse(null);
+      assertNotNull(senderPaymentAddress1);
+      assertNotNull(senderPaymentAddress2);
       { //for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
         mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
@@ -2590,14 +2606,16 @@ public class PrecompiledContractsVerifyProofTest {
         SpendingKey receiveSk1 = SpendingKey.random();
         FullViewingKey receiveFvk1 = receiveSk1.fullViewingKey();
         IncomingViewingKey receiveIvk1 = receiveFvk1.inViewingKey();
-        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT()).get();
+        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT())
+            .orElse(null);
         builder.addOutput(senderOvk, receivePaymentAddress1, 40, new byte[512]);
 
         //receiveNote2
         SpendingKey receiveSk2 = SpendingKey.random();
         FullViewingKey receiveFvk2 = receiveSk2.fullViewingKey();
         IncomingViewingKey receiveIvk2 = receiveFvk2.inViewingKey();
-        PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT()).get();
+        PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT())
+            .orElse(null);
         builder.addOutput(senderOvk, receivePaymentAddress2, 60, new byte[512]);
 
         ShieldedTRC20Parameters params = builder.build(true);
@@ -2628,9 +2646,10 @@ public class PrecompiledContractsVerifyProofTest {
       JLibrustzcash.librustzcashSaplingGenerateR(rcm1);
       byte[] rcm2 = new byte[32];
       JLibrustzcash.librustzcashSaplingGenerateR(rcm2);
-      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
-      PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).get();
-
+      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).orElse(null);
+      PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).orElse(null);
+      assertNotNull(senderPaymentAddress1);
+      assertNotNull(senderPaymentAddress2);
       { //for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
         mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
@@ -2716,14 +2735,16 @@ public class PrecompiledContractsVerifyProofTest {
         SpendingKey receiveSk1 = SpendingKey.random();
         FullViewingKey receiveFvk1 = receiveSk1.fullViewingKey();
         IncomingViewingKey receiveIvk1 = receiveFvk1.inViewingKey();
-        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT()).get();
+        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT())
+            .orElse(null);
         builder.addOutput(senderOvk, receivePaymentAddress1, 40, new byte[512]);
 
         //receiveNote2
         SpendingKey receiveSk2 = SpendingKey.random();
         FullViewingKey receiveFvk2 = receiveSk2.fullViewingKey();
         IncomingViewingKey receiveIvk2 = receiveFvk2.inViewingKey();
-        PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT()).get();
+        PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT())
+            .orElse(null);
         builder.addOutput(senderOvk, receivePaymentAddress2, 60, new byte[512]);
 
         ShieldedTRC20Parameters params = builder.build(true);
@@ -2754,9 +2775,10 @@ public class PrecompiledContractsVerifyProofTest {
       JLibrustzcash.librustzcashSaplingGenerateR(rcm1);
       byte[] rcm2 = new byte[32];
       JLibrustzcash.librustzcashSaplingGenerateR(rcm2);
-      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
-      PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).get();
-
+      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).orElse(null);
+      PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).orElse(null);
+      assertNotNull(senderPaymentAddress1);
+      assertNotNull(senderPaymentAddress2);
       { //for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
         mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
@@ -2842,14 +2864,16 @@ public class PrecompiledContractsVerifyProofTest {
         SpendingKey receiveSk1 = SpendingKey.random();
         FullViewingKey receiveFvk1 = receiveSk1.fullViewingKey();
         IncomingViewingKey receiveIvk1 = receiveFvk1.inViewingKey();
-        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT()).get();
+        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT())
+            .orElse(null);
         builder.addOutput(senderOvk, receivePaymentAddress1, 40, new byte[512]);
 
         //receiveNote2
         SpendingKey receiveSk2 = SpendingKey.random();
         FullViewingKey receiveFvk2 = receiveSk2.fullViewingKey();
         IncomingViewingKey receiveIvk2 = receiveFvk2.inViewingKey();
-        PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT()).get();
+        PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT())
+            .orElse(null);
         builder.addOutput(senderOvk, receivePaymentAddress2, 60, new byte[512]);
 
         ShieldedTRC20Parameters params = builder.build(true);
@@ -2880,9 +2904,10 @@ public class PrecompiledContractsVerifyProofTest {
       JLibrustzcash.librustzcashSaplingGenerateR(rcm1);
       byte[] rcm2 = new byte[32];
       JLibrustzcash.librustzcashSaplingGenerateR(rcm2);
-      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
-      PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).get();
-
+      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).orElse(null);
+      PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).orElse(null);
+      assertNotNull(senderPaymentAddress1);
+      assertNotNull(senderPaymentAddress2);
       { //for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
         mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
@@ -2968,14 +2993,16 @@ public class PrecompiledContractsVerifyProofTest {
         SpendingKey receiveSk1 = SpendingKey.random();
         FullViewingKey receiveFvk1 = receiveSk1.fullViewingKey();
         IncomingViewingKey receiveIvk1 = receiveFvk1.inViewingKey();
-        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT()).get();
+        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT())
+            .orElse(null);
         builder.addOutput(senderOvk, receivePaymentAddress1, 40, new byte[512]);
 
         //receiveNote2
         SpendingKey receiveSk2 = SpendingKey.random();
         FullViewingKey receiveFvk2 = receiveSk2.fullViewingKey();
         IncomingViewingKey receiveIvk2 = receiveFvk2.inViewingKey();
-        PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT()).get();
+        PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT())
+            .orElse(null);
         builder.addOutput(senderOvk, receivePaymentAddress2, 60, new byte[512]);
 
         ShieldedTRC20Parameters params = builder.build(true);
@@ -3001,12 +3028,11 @@ public class PrecompiledContractsVerifyProofTest {
       SpendingKey senderSk = SpendingKey.random();
       ExpandedSpendingKey senderExpsk = senderSk.expandedSpendingKey();
       FullViewingKey senderFvk = senderSk.fullViewingKey();
-      byte[] senderOvk = senderFvk.getOvk();
       IncomingViewingKey senderIvk = senderFvk.inViewingKey();
       byte[] rcm = new byte[32];
       JLibrustzcash.librustzcashSaplingGenerateR(rcm);
-      PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).get();
-
+      PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).orElse(null);
+      assertNotNull(senderPaymentAddress);
       { //for mint
         ShieldedTRC20ParametersBuilder mintBuilder = new ShieldedTRC20ParametersBuilder();
         mintBuilder.setTransparentFromAmount(BigInteger.valueOf(value));
@@ -3072,12 +3098,11 @@ public class PrecompiledContractsVerifyProofTest {
       SpendingKey senderSk = SpendingKey.random();
       ExpandedSpendingKey senderExpsk = senderSk.expandedSpendingKey();
       FullViewingKey senderFvk = senderSk.fullViewingKey();
-      byte[] senderOvk = senderFvk.getOvk();
       IncomingViewingKey senderIvk = senderFvk.inViewingKey();
       byte[] rcm = new byte[32];
       JLibrustzcash.librustzcashSaplingGenerateR(rcm);
-      PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).get();
-
+      PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).orElse(null);
+      assertNotNull(senderPaymentAddress);
       { //for mint
         ShieldedTRC20ParametersBuilder mintBuilder = new ShieldedTRC20ParametersBuilder();
         mintBuilder.setTransparentFromAmount(BigInteger.valueOf(value));
@@ -3144,12 +3169,11 @@ public class PrecompiledContractsVerifyProofTest {
       SpendingKey senderSk = SpendingKey.random();
       ExpandedSpendingKey senderExpsk = senderSk.expandedSpendingKey();
       FullViewingKey senderFvk = senderSk.fullViewingKey();
-      byte[] senderOvk = senderFvk.getOvk();
       IncomingViewingKey senderIvk = senderFvk.inViewingKey();
       byte[] rcm = new byte[32];
       JLibrustzcash.librustzcashSaplingGenerateR(rcm);
-      PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).get();
-
+      PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).orElse(null);
+      assertNotNull(senderPaymentAddress);
       { //for mint
         ShieldedTRC20ParametersBuilder mintBuilder = new ShieldedTRC20ParametersBuilder();
         mintBuilder.setTransparentFromAmount(BigInteger.valueOf(value));
@@ -3215,12 +3239,11 @@ public class PrecompiledContractsVerifyProofTest {
       SpendingKey senderSk = SpendingKey.random();
       ExpandedSpendingKey senderExpsk = senderSk.expandedSpendingKey();
       FullViewingKey senderFvk = senderSk.fullViewingKey();
-      byte[] senderOvk = senderFvk.getOvk();
       IncomingViewingKey senderIvk = senderFvk.inViewingKey();
       byte[] rcm = new byte[32];
       JLibrustzcash.librustzcashSaplingGenerateR(rcm);
-      PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).get();
-
+      PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).orElse(null);
+      assertNotNull(senderPaymentAddress);
       { //for mint
         ShieldedTRC20ParametersBuilder mintBuilder = new ShieldedTRC20ParametersBuilder();
         mintBuilder.setTransparentFromAmount(BigInteger.valueOf(value));
@@ -3286,12 +3309,11 @@ public class PrecompiledContractsVerifyProofTest {
       SpendingKey senderSk = SpendingKey.random();
       ExpandedSpendingKey senderExpsk = senderSk.expandedSpendingKey();
       FullViewingKey senderFvk = senderSk.fullViewingKey();
-      byte[] senderOvk = senderFvk.getOvk();
       IncomingViewingKey senderIvk = senderFvk.inViewingKey();
       byte[] rcm = new byte[32];
       JLibrustzcash.librustzcashSaplingGenerateR(rcm);
-      PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).get();
-
+      PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).orElse(null);
+      assertNotNull(senderPaymentAddress);
       { //for mint
         ShieldedTRC20ParametersBuilder mintBuilder = new ShieldedTRC20ParametersBuilder();
         mintBuilder.setTransparentFromAmount(BigInteger.valueOf(value));
@@ -3357,12 +3379,11 @@ public class PrecompiledContractsVerifyProofTest {
       SpendingKey senderSk = SpendingKey.random();
       ExpandedSpendingKey senderExpsk = senderSk.expandedSpendingKey();
       FullViewingKey senderFvk = senderSk.fullViewingKey();
-      byte[] senderOvk = senderFvk.getOvk();
       IncomingViewingKey senderIvk = senderFvk.inViewingKey();
       byte[] rcm = new byte[32];
       JLibrustzcash.librustzcashSaplingGenerateR(rcm);
-      PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).get();
-
+      PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).orElse(null);
+      assertNotNull(senderPaymentAddress);
       { //for mint
         ShieldedTRC20ParametersBuilder mintBuilder = new ShieldedTRC20ParametersBuilder();
         mintBuilder.setTransparentFromAmount(BigInteger.valueOf(value));
@@ -3428,12 +3449,11 @@ public class PrecompiledContractsVerifyProofTest {
       SpendingKey senderSk = SpendingKey.random();
       ExpandedSpendingKey senderExpsk = senderSk.expandedSpendingKey();
       FullViewingKey senderFvk = senderSk.fullViewingKey();
-      byte[] senderOvk = senderFvk.getOvk();
       IncomingViewingKey senderIvk = senderFvk.inViewingKey();
       byte[] rcm = new byte[32];
       JLibrustzcash.librustzcashSaplingGenerateR(rcm);
-      PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).get();
-
+      PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).orElse(null);
+      assertNotNull(senderPaymentAddress);
       { //for mint
         ShieldedTRC20ParametersBuilder mintBuilder = new ShieldedTRC20ParametersBuilder();
         mintBuilder.setTransparentFromAmount(BigInteger.valueOf(value));
@@ -3499,12 +3519,11 @@ public class PrecompiledContractsVerifyProofTest {
       SpendingKey senderSk = SpendingKey.random();
       ExpandedSpendingKey senderExpsk = senderSk.expandedSpendingKey();
       FullViewingKey senderFvk = senderSk.fullViewingKey();
-      byte[] senderOvk = senderFvk.getOvk();
       IncomingViewingKey senderIvk = senderFvk.inViewingKey();
       byte[] rcm = new byte[32];
       JLibrustzcash.librustzcashSaplingGenerateR(rcm);
-      PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).get();
-
+      PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).orElse(null);
+      assertNotNull(senderPaymentAddress);
       { //for mint
         ShieldedTRC20ParametersBuilder mintBuilder = new ShieldedTRC20ParametersBuilder();
         mintBuilder.setTransparentFromAmount(BigInteger.valueOf(value));
@@ -3560,21 +3579,19 @@ public class PrecompiledContractsVerifyProofTest {
   private Pair<Boolean, byte[]> verifyTransfer(byte[] input) {
     transferContract.getEnergyForData(input);
     transferContract.setVmShouldEndInUs(System.nanoTime() / 1000 + 50 * 1000);
-    Pair<Boolean, byte[]> ret = transferContract.execute(input);
-    return ret;
+    return transferContract.execute(input);
   }
 
   private IncrementalMerkleVoucherContainer addSimpleMerkleVoucherContainer(
       IncrementalMerkleTreeContainer tree, byte[][] cm)
       throws ZksnarkException {
-    for (int i = 0; i < cm.length; i++) {
+    for (byte[] bytes : cm) {
       PedersenHashCapsule compressCapsule = new PedersenHashCapsule();
-      compressCapsule.setContent(ByteString.copyFrom(cm[i]));
+      compressCapsule.setContent(ByteString.copyFrom(bytes));
       ShieldContract.PedersenHash a = compressCapsule.getInstance();
       tree.append(a);
     }
-    IncrementalMerkleVoucherContainer voucher = tree.toVoucher();
-    return voucher;
+    return tree.toVoucher();
   }
 
   private byte[] decodePath(byte[] encodedPath) {
@@ -3669,24 +3686,6 @@ public class PrecompiledContractsVerifyProofTest {
         revDesc.getEpk().toByteArray(),
         Wallet.generateRandomBytes(192),
         params.getBindingSignature().toByteArray(),
-        longTo32Bytes(value),
-        params.getMessageHash().toByteArray(),
-        frontier,
-        longTo32Bytes(leafCount)
-    );
-    return mergedBytes;
-  }
-
-  private byte[] abiEncodeForMintWrongBindingSignature(ShieldedTRC20Parameters params, long value,
-      byte[] frontier, long leafCount) {
-    byte[] mergedBytes;
-    ShieldContract.ReceiveDescription revDesc = params.getReceiveDescription(0);
-    mergedBytes = ByteUtil.merge(
-        revDesc.getNoteCommitment().toByteArray(),
-        revDesc.getValueCommitment().toByteArray(),
-        revDesc.getEpk().toByteArray(),
-        revDesc.getZkproof().toByteArray(),
-        Wallet.generateRandomBytes(64),
         longTo32Bytes(value),
         params.getMessageHash().toByteArray(),
         frontier,
@@ -4505,7 +4504,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private long randomLong() {
-    return (long) Math.round(Math.random() * Long.MAX_VALUE / 2);
+    return Math.round(Math.random() * Long.MAX_VALUE / 2);
   }
 
 }

@@ -57,10 +57,9 @@ public class BroadcastServletTest {
   /**
    * set up.
    *
-   * @throws InterruptedException .
    */
   @Before
-  public void setUp() throws InterruptedException {
+  public void setUp() {
     broadcastServlet = new BroadcastServlet();
     this.request = mock(HttpServletRequest.class);
     this.response = mock(HttpServletResponse.class);
@@ -115,7 +114,7 @@ public class BroadcastServletTest {
         + "eapis.com/protocol.TransferContract\"},\"type\":\"TransferCon"
         + "tract\"}],\"ref_block_bytes\":\"267e\",\"ref_block_hash\":\"9a447d222e8"
         + "de9f2\",\"expiration\":1530893064000,\"timestamp\":1530893006233}}";
-    httpUrlConnection.setRequestProperty("Content-Length", "" + postData.length());
+    httpUrlConnection.setRequestProperty("Content-Length", String.valueOf(postData.length()));
 
     when(httpUrlConnection.getOutputStream()).thenReturn(outContent);
     OutputStreamWriter out = new OutputStreamWriter(httpUrlConnection.getOutputStream(),
@@ -146,8 +145,8 @@ public class BroadcastServletTest {
     InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream);
     BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
 
-    StringBuffer sb = new StringBuffer();
-    String text = null;
+    StringBuilder sb = new StringBuilder();
+    String text;
     while ((text = bufferedReader.readLine()) != null) {
       sb.append(text);
     }

@@ -1,26 +1,21 @@
 package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
 import java.util.Random;
-import org.junit.AfterClass;
+import javax.annotation.Resource;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.tron.common.BaseTest;
 import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
-import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
@@ -32,7 +27,7 @@ import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
 import org.tron.protos.contract.WitnessContract.VoteWitnessContract.Vote;
 import org.tron.protos.contract.WitnessContract.WitnessCreateContract;
 
-public class TransactionStoreTest {
+public class TransactionStoreTest extends BaseTest {
 
   private static final byte[] key1 = TransactionStoreTest.randomBytes(21);
   private static final byte[] key2 = TransactionStoreTest.randomBytes(21);
@@ -45,35 +40,21 @@ public class TransactionStoreTest {
   private static final long AMOUNT = 100;
   private static final String WITNESS_ADDRESS =
       Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
-  private static String dbPath = "output_TransactionStore_test";
   private static String dbDirectory = "db_TransactionStore_test";
   private static String indexDirectory = "index_TransactionStore_test";
-  private static TransactionStore transactionStore;
-  private static TronApplicationContext context;
-  private static Application AppT;
-  private static ChainBaseManager chainBaseManager;
+  @Resource
+  private TransactionStore transactionStore;
+  @Resource
+  private Application AppT;
 
   /**
    * Init data.
    */
   @BeforeClass
   public static void init() {
+    dbPath = "output_TransactionStore_test";
     Args.setParam(new String[]{"--output-directory", dbPath, "--storage-db-directory",
         dbDirectory, "--storage-index-directory", indexDirectory, "-w"}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-    AppT = ApplicationFactory.create(context);
-    chainBaseManager = context.getBean(ChainBaseManager.class);
-    transactionStore = chainBaseManager.getTransactionStore();
-  }
-
-  /**
-   * release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
   }
 
   /**

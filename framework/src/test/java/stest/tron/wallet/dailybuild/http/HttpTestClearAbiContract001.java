@@ -77,7 +77,7 @@ public class HttpTestClearAbiContract001 {
     response = HttpMethed.getTransactionById(httpnode, txid);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    Assert.assertTrue(!responseContent.getString("contract_address").isEmpty());
+    Assert.assertFalse(responseContent.getString("contract_address").isEmpty());
     contractAddress = responseContent.getString("contract_address");
 
     response = HttpMethed.getTransactionInfoById(httpnode, txid);

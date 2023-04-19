@@ -1,69 +1,22 @@
 package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
-import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
-import org.tron.core.Wallet;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
-import org.tron.core.db.StorageMarket;
 import org.tron.core.exception.ItemNotFoundException;
 
 @Slf4j
-public class ExchangeCapsuleTest {
-
-  private static final String dbPath = "output_exchange_capsule_test_test";
-  private static final String OWNER_ADDRESS;
-  private static final String OWNER_ADDRESS_INVALID = "aaaa";
-  private static final String OWNER_ACCOUNT_INVALID;
-  private static final long initBalance = 10_000_000_000_000_000L;
-  private static Manager dbManager;
-  private static ChainBaseManager chainBaseManager;
-  private static StorageMarket storageMarket;
-  private static TronApplicationContext context;
+public class ExchangeCapsuleTest extends BaseTest {
 
   static {
+    dbPath = "output_exchange_capsule_test_test";
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
-    OWNER_ACCOUNT_INVALID =
-        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3456";
-  }
-
-  /**
-   * Init data.
-   */
-  @BeforeClass
-  public static void init() {
-    dbManager = context.getBean(Manager.class);
-    chainBaseManager = context.getBean(ChainBaseManager.class);
-    storageMarket = new StorageMarket(chainBaseManager.getAccountStore(),
-        chainBaseManager.getDynamicPropertiesStore());
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   /**
