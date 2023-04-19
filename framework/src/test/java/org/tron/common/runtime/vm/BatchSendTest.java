@@ -1,30 +1,24 @@
 package org.tron.common.runtime.vm;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
-import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
-import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
@@ -36,37 +30,20 @@ import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.utils.AbiUtil;
 
 @Slf4j
-public class BatchSendTest {
+public class BatchSendTest extends BaseTest {
 
-  private static final String dbPath = "output_BatchSendTest";
   private static final String OWNER_ADDRESS;
   private static final String TRANSFER_TO;
-  private static final long TOTAL_SUPPLY = 1000_000_000L;
-  private static final int TRX_NUM = 10;
-  private static final int NUM = 1;
-  private static final long START_TIME = 1;
-  private static final long END_TIME = 2;
-  private static final int VOTE_SCORE = 2;
-  private static final String DESCRIPTION = "TRX";
-  private static final String URL = "https://tron.network";
   private static Runtime runtime;
-  private static Manager dbManager;
-  private static TronApplicationContext context;
-  private static Application appT;
   private static RepositoryImpl repository;
-  private static AccountCapsule ownerCapsule;
+  private static final AccountCapsule ownerCapsule;
 
   static {
+    dbPath = "output_BatchSendTest";
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-    appT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     TRANSFER_TO = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
-    dbManager = context.getBean(Manager.class);
-    repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
-    repository.createAccount(Hex.decode(TRANSFER_TO), AccountType.Normal);
-    repository.addBalance(Hex.decode(TRANSFER_TO), 10);
-    repository.commit();
+
     ownerCapsule =
         new AccountCapsule(
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
@@ -74,40 +51,31 @@ public class BatchSendTest {
             AccountType.AssetIssue);
 
     ownerCapsule.setBalance(1000_1000_1000L);
+
+
+  }
+
+  @Before
+  public void before() {
+    repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    repository.createAccount(Hex.decode(TRANSFER_TO), AccountType.Normal);
+    repository.addBalance(Hex.decode(TRANSFER_TO), 10);
+    repository.commit();
+
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     dbManager.getDynamicPropertiesStore().saveAllowMultiSign(1);
     dbManager.getDynamicPropertiesStore().saveAllowTvmTransferTrc10(1);
     dbManager.getDynamicPropertiesStore().saveAllowTvmConstantinople(1);
     dbManager.getDynamicPropertiesStore().saveAllowTvmSolidity059(1);
-
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   /**
    * pragma solidity ^0.5.4;
-   *
    * contract TestBatchSendTo { constructor() public payable{}
-   *
    * function depositIn() public payable{}
-   *
-   *
    * function batchSendTo (address  payable to1 ,address  payable to2 ,address  payable to3, uint256
    * m1,uint256 m2,uint256 m3) public { to1.send(m1 ); to2.send(m2 ); to3.send(m3 ); }
-   *
    * }
    */
   @Test
@@ -181,10 +149,9 @@ public class BatchSendTest {
     long tokenValue = 0;
     long tokenId = 0;
 
-    byte[] contractAddress = TvmTestUtils
+    return TvmTestUtils
         .deployContractWholeProcessReturnContractAddress(contractName, address, ABI, code, value,
             feeLimit, consumeUserResourcePercent, null, tokenValue, tokenId,
             repository, null);
-    return contractAddress;
   }
 }

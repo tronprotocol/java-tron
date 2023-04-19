@@ -4,16 +4,13 @@ import static junit.framework.TestCase.fail;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import java.io.File;
+import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.consensus.dpos.MaintenanceManager;
 import org.tron.core.Constant;
@@ -22,10 +19,8 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ConsensusService;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.AccountType;
@@ -37,9 +32,8 @@ import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
 import org.tron.protos.contract.WitnessContract.VoteWitnessContract.Vote;
 
 @Slf4j
-public class VoteWitnessActuatorTest {
+public class VoteWitnessActuatorTest extends BaseTest {
 
-  private static final String dbPath = "output_VoteWitness_test";
   private static final String ACCOUNT_NAME = "account";
   private static final String OWNER_ADDRESS;
   private static final String WITNESS_NAME = "witness";
@@ -49,14 +43,16 @@ public class VoteWitnessActuatorTest {
   private static final String WITNESS_ADDRESS_NOACCOUNT;
   private static final String OWNER_ADDRESS_NOACCOUNT;
   private static final String OWNER_ADDRESS_BALANCENOTSUFFICIENT;
-  private static TronApplicationContext context;
-  private static Manager dbManager;
-  private static MaintenanceManager maintenanceManager;
-  private static ConsensusService consensusService;
+  @Resource
+  private MaintenanceManager maintenanceManager;
+  @Resource
+  private ConsensusService consensusService;
+
+  private static boolean consensusStart;
 
   static {
+    dbPath = "output_VoteWitness_test";
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     WITNESS_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     WITNESS_ADDRESS_NOACCOUNT =
@@ -65,31 +61,6 @@ public class VoteWitnessActuatorTest {
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1aae";
     OWNER_ADDRESS_BALANCENOTSUFFICIENT =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e06d4271a1ced";
-  }
-
-  /**
-   * Init data.
-   */
-  @BeforeClass
-  public static void init() {
-    dbManager = context.getBean(Manager.class);
-    maintenanceManager = context.getBean(MaintenanceManager.class);
-    consensusService = context.getBean(ConsensusService.class);
-    consensusService.start();
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   /**
@@ -120,6 +91,12 @@ public class VoteWitnessActuatorTest {
     dbManager.getAccountStore()
         .put(ownerAccountFirstCapsule.getAddress().toByteArray(), ownerAccountFirstCapsule);
     dbManager.getWitnessStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
+
+    if (consensusStart) {
+      return;
+    }
+    consensusService.start();
+    consensusStart = true;
   }
 
   private Any getContract(String address, String voteaddress, Long value) {
@@ -203,7 +180,6 @@ public class VoteWitnessActuatorTest {
       actuator.execute(ret);
       fail("Invalid address");
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Invalid address", e.getMessage());
       maintenanceManager.doMaintenance();
       WitnessCapsule witnessCapsule = dbManager.getWitnessStore()
@@ -300,7 +276,7 @@ public class VoteWitnessActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      Assert.assertTrue(false);
+      Assert.fail();
     } catch (ContractValidateException e) {
       Assert.assertEquals(0, dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS)).getVotesList().size());

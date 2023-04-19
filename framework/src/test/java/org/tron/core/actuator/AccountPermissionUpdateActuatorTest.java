@@ -4,27 +4,19 @@ import static org.testng.Assert.fail;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.AccountType;
@@ -37,9 +29,8 @@ import org.tron.protos.contract.AccountContract.AccountCreateContract;
 import org.tron.protos.contract.AccountContract.AccountPermissionUpdateContract;
 
 @Slf4j
-public class AccountPermissionUpdateActuatorTest {
+public class AccountPermissionUpdateActuatorTest extends BaseTest {
 
-  private static final String dbPath = "output_transfer_test";
   private static final String OWNER_ADDRESS;
   private static final String WITNESS_ADDRESS;
   private static final String KEY_ADDRESS;
@@ -58,14 +49,10 @@ public class AccountPermissionUpdateActuatorTest {
   private static final String OWNER_ADDRESS_INVALID = "aaaa";
   private static final String OWNER_ADDRESS_NOACCOUNT;
   private static final String KEY_ADDRESS_INVALID = "bbbb";
-  public static Application AppT;
-  private static Manager dbManager;
-  private static TronApplicationContext context;
 
   static {
+    dbPath = "output_account_permission_update_test";
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-    AppT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     WITNESS_ADDRESS = Wallet.getAddressPreFixString() + "8CFC572CC20CA18B636BDD93B4FB15EA84CC2B4E";
     KEY_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
@@ -99,34 +86,13 @@ public class AccountPermissionUpdateActuatorTest {
   }
 
   /**
-   * Init data.
-   */
-  @BeforeClass
-  public static void init() {
-    dbManager = context.getBean(Manager.class);
-    dbManager.getDynamicPropertiesStore().saveAllowMultiSign(1);
-    dbManager.getDynamicPropertiesStore().saveTotalSignNum(5);
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
-  }
-
-  /**
    * create temp Capsule test need.
    */
   @Before
   public void createCapsule() {
+    dbManager.getDynamicPropertiesStore().saveAllowMultiSign(1);
+    dbManager.getDynamicPropertiesStore().saveTotalSignNum(5);
+
     AccountCapsule ownerCapsule = new AccountCapsule(
         ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
         ByteString.copyFromUtf8("owner"), AccountType.Normal);

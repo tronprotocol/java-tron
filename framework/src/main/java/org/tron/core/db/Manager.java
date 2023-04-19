@@ -193,7 +193,8 @@ public class Manager {
   @Getter
   @Setter
   private boolean isSyncMode;
-
+  @Getter
+  private Object forkLock = new Object();
   // map<Long, IncrementalMerkleTree>
   @Getter
   @Setter
@@ -1269,8 +1270,9 @@ public class Manager {
                   chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp(),
                   khaosDb.getHead(), khaosDb.getMiniStore().size(),
                   khaosDb.getMiniUnlinkedStore().size());
-
-              switchFork(newBlock);
+              synchronized (forkLock) {
+                switchFork(newBlock);
+              }
               logger.info(SAVE_BLOCK, newBlock);
 
               logger.warn(
@@ -1913,6 +1915,7 @@ public class Manager {
   public void closeAllStore() {
     logger.info("******** Begin to close db. ********");
     chainBaseManager.closeAllStore();
+    validateSignService.shutdown();
     logger.info("******** End to close db. ********");
   }
 

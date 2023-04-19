@@ -1,24 +1,19 @@
 package org.tron.common.runtime.vm;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
-import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
-import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
-import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.VMActuator;
@@ -26,9 +21,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionContext;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -43,9 +36,8 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import stest.tron.wallet.common.client.utils.AbiUtil;
 
 @Slf4j
-public class TransferToAccountTest {
+public class TransferToAccountTest extends BaseTest {
 
-  private static final String dbPath = "output_TransferToAccountTest";
   private static final String OWNER_ADDRESS;
   private static final String TRANSFER_TO;
   private static final long TOTAL_SUPPLY = 1000_000_000L;
@@ -57,21 +49,18 @@ public class TransferToAccountTest {
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
   private static Runtime runtime;
-  private static Manager dbManager;
-  private static ChainBaseManager chainBaseManager;
-  private static TronApplicationContext context;
-  private static Application appT;
   private static RepositoryImpl repository;
   private static AccountCapsule ownerCapsule;
 
   static {
+    dbPath = "output_TransferToAccountTest";
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-    appT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     TRANSFER_TO = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
-    dbManager = context.getBean(Manager.class);
-    chainBaseManager = context.getBean(ChainBaseManager.class);
+  }
+
+  @Before
+  public void before() {
     repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
     repository.createAccount(Hex.decode(TRANSFER_TO), AccountType.Normal);
     repository.addBalance(Hex.decode(TRANSFER_TO), 10);
@@ -83,20 +72,6 @@ public class TransferToAccountTest {
             AccountType.AssetIssue);
 
     ownerCapsule.setBalance(1000_1000_1000L);
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   private long createAsset(String tokenName) {
@@ -250,7 +225,6 @@ public class TransferToAccountTest {
     // 9.Test transferToken Big Amount
 
     selectorStr = "transferTokenTo(address,trcToken,uint256)";
-    ecKey = new ECKey(Utils.getRandom());
     String params = "000000000000000000000000548794500882809695a8a687866e76d4271a1abc"
         + Hex.toHexString(new DataWord(id).getData())
         + "0000000000000000000000000000000011111111111111111111111111111111";
@@ -318,10 +292,9 @@ public class TransferToAccountTest {
     long tokenValue = 100;
     long tokenId = id;
 
-    byte[] contractAddress = TvmTestUtils
+    return TvmTestUtils
         .deployContractWholeProcessReturnContractAddress(contractName, address, ABI, code, value,
             feeLimit, consumeUserResourcePercent, null, tokenValue, tokenId,
             repository, null);
-    return contractAddress;
   }
 }

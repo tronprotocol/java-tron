@@ -1,47 +1,30 @@
 package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
-import org.tron.common.utils.FileUtil;
+import org.tron.common.BaseTest;
 import org.tron.core.Constant;
 import org.tron.core.capsule.VotesCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.VotesStore;
 import org.tron.protos.Protocol.Vote;
 
 @Slf4j
-public class VotesStoreTest {
+public class VotesStoreTest extends BaseTest {
 
-  private static final String dbPath = "output-votesStore-test";
-  private static TronApplicationContext context;
 
   static {
+    dbPath = "output-votesStore-test";
     Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
   }
 
-  VotesStore votesStore;
-
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
-  }
-
-  @Before
-  public void initDb() {
-    this.votesStore = context.getBean(VotesStore.class);
-  }
+  @Resource
+  private VotesStore votesStore;
 
   @Test
   public void putAndGetVotes() {
