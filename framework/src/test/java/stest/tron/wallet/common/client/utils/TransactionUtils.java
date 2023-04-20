@@ -24,7 +24,13 @@ import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.exception.PermissionException;
+import org.tron.core.exception.SignatureFormatException;
+import org.tron.core.services.http.JsonFormat;
+import org.tron.core.store.AccountStore;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.contract.AccountContract.AccountCreateContract;
@@ -168,7 +174,6 @@ public class TransactionUtils {
    */
 
   public static Transaction sign(Transaction transaction, ECKey myKey) {
-    ByteString lockSript = ByteString.copyFrom(myKey.getAddress());
     Transaction.Builder transactionBuilderSigned = transaction.toBuilder();
 
     byte[] hash = Sha256Hash.hash(CommonParameter
@@ -183,6 +188,30 @@ public class TransactionUtils {
 
     transaction = transactionBuilderSigned.build();
     return transaction;
+  }
+
+  public static String getTransactionSign(String transaction, String priKey,
+                                                      boolean selfType) {
+    byte[] privateKey = ByteArray.fromHexString(priKey);
+    Transaction.Builder builder = Transaction.newBuilder();
+    try {
+      JsonFormat.merge(transaction, builder, selfType);
+      TransactionCapsule trx = new TransactionCapsule(builder.build());
+      trx.sign(privateKey);
+      return JsonFormat.printToString(trx.getInstance(), selfType);
+    } catch (JsonFormat.ParseException e) {
+      logger.error("{}", e);
+    }
+    return null;
+  }
+
+  public static TransactionCapsule addTransactionSign(Transaction transaction, String priKey,
+                                               AccountStore accountStore)
+          throws PermissionException, SignatureException, SignatureFormatException {
+    byte[] privateKey = ByteArray.fromHexString(priKey);
+    TransactionCapsule trx = new TransactionCapsule(transaction);
+    trx.addSign(privateKey, accountStore);
+    return trx;
   }
 
   /**
