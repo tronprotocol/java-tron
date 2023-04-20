@@ -33,6 +33,7 @@ import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.TransactionContext;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.vm.EnergyCost;
 import org.tron.core.vm.LogInfoTriggerParser;
@@ -94,6 +95,9 @@ public class VMActuator implements Actuator2 {
 
   private LogInfoTriggerParser logInfoTriggerParser;
 
+  private static final boolean isAllowStateRoot = CommonParameter.getInstance().getStorage()
+          .isAllowStateRoot();
+
   public VMActuator(boolean isConstantCall) {
     this.isConstantCall = isConstantCall;
     this.maxEnergyLimit = CommonParameter.getInstance().maxEnergyLimitForConstant;
@@ -120,16 +124,20 @@ public class VMActuator implements Actuator2 {
     trx = context.getTrxCap().getInstance();
 
     // check whether is state query
-    boolean stateQuery = context.getBlockCap() != null
-            && context.getBlockCap().getNum() < context.getStoreFactory()
-            .getChainBaseManager().getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+    boolean stateQuery = isAllowStateRoot && isConstantCall;
+    stateQuery = stateQuery && context.getBlockCap() != null;
+    try {
+      stateQuery = stateQuery && context.getBlockCap().getNum() < context.getStoreFactory()
+          .getChainBaseManager().getHead().getNum();
+    } catch (HeaderNotFound e) {
+      throw new ContractValidateException(e.getMessage());
+    }
 
     //Prepare Repository
-    if (!stateQuery) {
-      rootRepository = RepositoryImpl.createRoot(context.getStoreFactory());
+    if (stateQuery) {
+      rootRepository = RepositoryStateImpl.createRoot(context.getBlockCap().getArchiveRoot());
     } else {
-      rootRepository = RepositoryStateImpl.createRoot(context.getStoreFactory(),
-              context.getBlockCap().getArchiveRoot());
+      rootRepository = RepositoryImpl.createRoot(context.getStoreFactory());
     }
     // Load Config
     ConfigLoader.load(rootRepository);

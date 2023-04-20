@@ -38,8 +38,10 @@ import org.tron.core.db2.ISession;
 import org.tron.core.exception.JsonRpcInternalException;
 import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.core.exception.JsonRpcInvalidRequestException;
+import org.tron.core.exception.StoreException;
 import org.tron.core.services.jsonrpc.TronJsonRpc;
 import org.tron.core.services.jsonrpc.types.CallArguments;
+import org.tron.core.state.store.StorageRowStateStore;
 import org.tron.core.vm.program.Storage;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -248,14 +250,15 @@ public class WorldStateQueryTest {
     rootHash = blockCapsule.getArchiveRoot();
     worldStateQueryInstance = ChainBaseManager.fetch(rootHash);
     ContractCapsule contractCapsule = worldStateQueryInstance.getContract(contractAddress);
+    try (StorageRowStateStore store = new StorageRowStateStore(worldStateQueryInstance)) {
+      Storage storage = new Storage(contractAddress, store);
+      storage.setContractVersion(contractCapsule.getInstance().getVersion());
 
-    Storage storage = new Storage(contractAddress, worldStateQueryInstance);
-    storage.setContractVersion(contractCapsule.getInstance().getVersion());
+      DataWord value1 = storage.getValue(new DataWord(ByteArray.fromHexString("0")));
 
-    DataWord value1 = storage.getValue(new DataWord(ByteArray.fromHexString("0")));
-
-    DataWord value2 = storage.getValue(new DataWord(ByteArray.fromHexString("0")));
-    Assert.assertArrayEquals(value1.getData(), value2.getData());
+      DataWord value2 = storage.getValue(new DataWord(ByteArray.fromHexString("0")));
+      Assert.assertArrayEquals(value1.getData(), value2.getData());
+    }
     checkAccount(worldStateQueryInstance, blockCapsule.getNum());
     Assert.assertEquals(tronJsonRpc.getABIOfSmartContract(ByteArray.toHexString(contractAddress),
             ByteArray.toJsonHex(blockCapsule.getNum())),
@@ -356,6 +359,11 @@ public class WorldStateQueryTest {
 
     Assert.assertEquals(list, tronJsonRpc.getToken10(
             ByteArray.toHexString(account1Prikey.getAddress()), ByteArray.toJsonHex(blockNum)));
+    try {
+      Assert.assertNotNull(worldStateQueryInstance.getBlockByNum(blockNum));
+    } catch (StoreException e) {
+      Assert.fail();
+    }
   }
 
   private BlockCapsule buildTransferBlock(BlockCapsule parentBlock) {

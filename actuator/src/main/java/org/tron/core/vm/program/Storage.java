@@ -10,7 +10,6 @@ import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.capsule.StorageRowCapsule;
-import org.tron.core.state.WorldStateQueryInstance;
 import org.tron.core.store.StorageRowStore;
 
 public class Storage {
@@ -20,18 +19,12 @@ public class Storage {
   private final Map<DataWord, StorageRowCapsule> rowCache = new HashMap<>();
   @Getter
   private byte[] addrHash;
+  @Getter
   private StorageRowStore store;
-  private WorldStateQueryInstance worldStateQueryInstance;
   @Getter
   private byte[] address;
   @Setter
   private int contractVersion;
-
-  public Storage(byte[] address, WorldStateQueryInstance worldStateQueryInstance) {
-    addrHash = addrHash(address);
-    this.address = address;
-    this.worldStateQueryInstance = worldStateQueryInstance;
-  }
 
   public Storage(byte[] address, StorageRowStore store) {
     addrHash = addrHash(address);
@@ -43,7 +36,6 @@ public class Storage {
     this.addrHash = storage.addrHash.clone();
     this.address = storage.getAddress().clone();
     this.store = storage.store;
-    this.worldStateQueryInstance = storage.worldStateQueryInstance;
     this.contractVersion = storage.contractVersion;
     storage.getRowCache().forEach((DataWord rowKey, StorageRowCapsule row) -> {
       StorageRowCapsule newRow = new StorageRowCapsule(row);
@@ -82,9 +74,7 @@ public class Storage {
     if (rowCache.containsKey(key)) {
       return new DataWord(rowCache.get(key).getValue());
     } else {
-      byte[] rowKey = compose(key.getData(), addrHash);
-      StorageRowCapsule row = worldStateQueryInstance == null
-              ? store.get(rowKey) : worldStateQueryInstance.getStorageRow(rowKey);
+      StorageRowCapsule row = store.get(compose(key.getData(), addrHash));
       if (row == null || row.getInstance() == null) {
         return null;
       }
@@ -104,9 +94,6 @@ public class Storage {
   }
 
   public void commit() {
-    if (store == null) {
-      throw new UnsupportedOperationException();
-    }
     rowCache.forEach((DataWord rowKey, StorageRowCapsule row) -> {
       if (row.isDirty()) {
         if (new DataWord(row.getValue()).isZero()) {

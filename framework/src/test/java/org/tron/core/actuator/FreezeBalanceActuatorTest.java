@@ -335,8 +335,7 @@ public class FreezeBalanceActuatorTest {
       long totalNetWeightAfter = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
       Assert.assertEquals(totalNetWeightBefore + frozenBalance / 1000_000L, totalNetWeightAfter);
 
-      DynamicPropertiesStateStore stateStore = new DynamicPropertiesStateStore();
-      stateStore.init(queryInstance);
+      DynamicPropertiesStateStore stateStore = new DynamicPropertiesStateStore(queryInstance);
       Assert.assertEquals(totalNetWeightBefore + frozenBalance / 1000_000L,
               stateStore.getTotalNetWeight());
 

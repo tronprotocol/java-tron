@@ -1,20 +1,20 @@
 package org.tron.core.state.store;
 
 import org.rocksdb.DirectComparator;
-import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.StorageRowCapsule;
 import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.db2.core.Chainbase;
 import org.tron.core.state.WorldStateQueryInstance;
-import org.tron.core.store.AccountStore;
+import org.tron.core.store.StorageRowStore;
 
 import java.util.Iterator;
 import java.util.Map;
 
-public class AccountStateStore extends AccountStore implements StateStore {
+public class StorageRowStateStore extends StorageRowStore implements StateStore {
 
   private WorldStateQueryInstance worldStateQueryInstance;
 
-  public AccountStateStore(WorldStateQueryInstance worldStateQueryInstance) {
+  public StorageRowStateStore(WorldStateQueryInstance worldStateQueryInstance) {
     this.worldStateQueryInstance = worldStateQueryInstance;
   }
 
@@ -26,24 +26,24 @@ public class AccountStateStore extends AccountStore implements StateStore {
   }
 
   @Override
-  public AccountCapsule get(byte[] key) {
+  public StorageRowCapsule get(byte[] key) {
     return getFromRoot(key);
   }
 
   @Override
-  public AccountCapsule getFromRoot(byte[] key) {
+  public StorageRowCapsule getFromRoot(byte[] key) {
     return getUnchecked(key);
 
   }
 
   @Override
-  public AccountCapsule getUnchecked(byte[] key) {
-    return worldStateQueryInstance.getAccount(key);
+  public StorageRowCapsule getUnchecked(byte[] key) {
+    return worldStateQueryInstance.getStorageRow(key);
   }
 
   @Override
   public boolean has(byte[] key) {
-    return getUnchecked(key) != null;
+    return getUnchecked(key).getData() != null;
   }
 
   @Override
@@ -59,10 +59,6 @@ public class AccountStateStore extends AccountStore implements StateStore {
 
   //****  Unsupported Operation For StateDB
 
-  public static void setAccount(com.typesafe.config.Config config) {
-    throw new UnsupportedOperationException();
-  }
-
   protected org.iq80.leveldb.Options getOptionsByDbNameForLevelDB(String dbName) {
     throw new UnsupportedOperationException();
   }
@@ -72,7 +68,7 @@ public class AccountStateStore extends AccountStore implements StateStore {
   }
 
   @Override
-  public void put(byte[] key, AccountCapsule item) {
+  public void put(byte[] key, StorageRowCapsule item) {
     throwIfError();
   }
 
@@ -82,7 +78,7 @@ public class AccountStateStore extends AccountStore implements StateStore {
   }
 
   @Override
-  public AccountCapsule of(byte[] value) {
+  public StorageRowCapsule of(byte[] value) {
     throwIfError();
     return null;
   }
@@ -94,7 +90,7 @@ public class AccountStateStore extends AccountStore implements StateStore {
   }
 
   @Override
-  public Iterator<Map.Entry<byte[], AccountCapsule>> iterator() {
+  public Iterator<Map.Entry<byte[], StorageRowCapsule>> iterator() {
     throwIfError();
     return null;
   }
@@ -108,7 +104,7 @@ public class AccountStateStore extends AccountStore implements StateStore {
     throwIfError();
   }
 
-  public Map<WrappedByteArray, AccountCapsule> prefixQuery(byte[] key) {
+  public Map<WrappedByteArray, StorageRowCapsule> prefixQuery(byte[] key) {
     throwIfError();
     return null;
   }

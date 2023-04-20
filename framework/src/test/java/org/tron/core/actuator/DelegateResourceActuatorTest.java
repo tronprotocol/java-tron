@@ -381,8 +381,7 @@ public class DelegateResourceActuatorTest {
 
       long totalNetWeightAfter = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
       Assert.assertEquals(totalNetWeightBefore, totalNetWeightAfter);
-      DynamicPropertiesStateStore stateStore = new DynamicPropertiesStateStore();
-      stateStore.init(queryInstance);
+      DynamicPropertiesStateStore stateStore = new DynamicPropertiesStateStore(queryInstance);
       Assert.assertEquals(totalNetWeightBefore, stateStore.getTotalNetWeight());
 
 

@@ -1,11 +1,9 @@
 package org.tron.core.state.store;
 
-import lombok.Getter;
 import org.rocksdb.DirectComparator;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.db2.core.Chainbase;
-import org.tron.core.exception.BadItemException;
 import org.tron.core.state.WorldStateQueryInstance;
 import org.tron.core.store.DelegationStore;
 
@@ -15,13 +13,9 @@ import java.util.Map;
 public class DelegationStateStore extends DelegationStore implements StateStore {
 
   private WorldStateQueryInstance worldStateQueryInstance;
-  @Getter
-  private boolean init;
 
-  @Override
-  public void init(WorldStateQueryInstance worldStateQueryInstance) {
+  public DelegationStateStore(WorldStateQueryInstance worldStateQueryInstance) {
     this.worldStateQueryInstance = worldStateQueryInstance;
-    this.init = true;
   }
 
   //****  Override Operation For StateDB
@@ -44,19 +38,17 @@ public class DelegationStateStore extends DelegationStore implements StateStore 
 
   @Override
   public BytesCapsule getUnchecked(byte[] key) {
-    throwIfNotInit();
     return worldStateQueryInstance.getDelegation(key);
   }
 
   @Override
   public boolean has(byte[] key) {
-    return get(key) != null;
+    return getUnchecked(key) != null;
   }
 
   @Override
   public void close() {
     this.worldStateQueryInstance = null;
-    init = false;
   }
 
   @Override
@@ -86,7 +78,7 @@ public class DelegationStateStore extends DelegationStore implements StateStore 
   }
 
   @Override
-  public BytesCapsule of(byte[] value) throws BadItemException {
+  public BytesCapsule of(byte[] value) {
     throwIfError();
     return null;
   }
