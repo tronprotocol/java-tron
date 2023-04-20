@@ -37,7 +37,6 @@ import org.tron.core.state.trie.TrieImpl2;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.EnergyCost;
 import org.tron.core.vm.repository.RepositoryImpl;
-import org.tron.core.vm.repository.RepositoryStateImpl;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
@@ -57,7 +56,6 @@ public class TransferToAccountTest extends BaseTest {
   private static final String URL = "https://tron.network";
   private static Runtime runtime;
   private static RepositoryImpl repository;
-  private static RepositoryStateImpl repositoryState;
   private static AccountCapsule ownerCapsule;
   private static WorldStateCallBack worldStateCallBack;
 
@@ -142,8 +140,7 @@ public class TransferToAccountTest extends BaseTest {
     Assert.assertEquals(100,
         worldStateQueryInstance.getAccount(contractAddress)
             .getAssetV2MapForTest().get(String.valueOf(id)).longValue());
-    try (AccountStateStore store = new AccountStateStore()) {
-      store.init(worldStateQueryInstance);
+    try (AccountStateStore store = new AccountStateStore(worldStateQueryInstance)) {
       Assert.assertEquals(100,
             store.get(contractAddress).getAssetV2MapForTest().get(String.valueOf(id)).longValue());
     }

@@ -175,16 +175,15 @@ public class UnfreezeBalanceV2ActuatorTest extends BaseTest {
       Assert.assertEquals(100, owner.getFrozenV2BalanceForBandwidth());
       Assert.assertEquals(100L, owner.getTronPower());
 
-      WorldStateQueryInstance queryInstance = getQueryInstance();
-      owner = queryInstance.getAccount(ByteArray.fromHexString(OWNER_ADDRESS));
+      WorldStateQueryInstance instance = getQueryInstance();
+      owner = instance.getAccount(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertEquals(100, owner.getFrozenV2BalanceForBandwidth());
       Assert.assertEquals(100L, owner.getTronPower());
 
       long totalNetWeightAfter = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
       Assert.assertEquals(totalNetWeightBefore - 1000, totalNetWeightAfter);
 
-      DynamicPropertiesStateStore stateStore = new DynamicPropertiesStateStore();
-      stateStore.init(queryInstance);
+      DynamicPropertiesStateStore stateStore = new DynamicPropertiesStateStore(instance);
       Assert.assertEquals(totalNetWeightAfter, stateStore.getTotalNetWeight());
 
     } catch (Exception e) {
@@ -225,16 +224,15 @@ public class UnfreezeBalanceV2ActuatorTest extends BaseTest {
       Assert.assertEquals(100, owner.getAllFrozenBalanceForEnergy());
       Assert.assertEquals(100, owner.getTronPower());
 
-      WorldStateQueryInstance queryInstance = getQueryInstance();
-      owner = queryInstance.getAccount(ByteArray.fromHexString(OWNER_ADDRESS));
+      WorldStateQueryInstance instance = getQueryInstance();
+      owner = instance.getAccount(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertEquals(100, owner.getAllFrozenBalanceForEnergy());
       Assert.assertEquals(100, owner.getTronPower());
 
       long totalEnergyWeightAfter = dbManager.getDynamicPropertiesStore().getTotalEnergyWeight();
       Assert.assertEquals(totalEnergyWeightBefore - 1000, totalEnergyWeightAfter);
 
-      DynamicPropertiesStateStore stateStore = new DynamicPropertiesStateStore();
-      stateStore.init(queryInstance);
+      DynamicPropertiesStateStore stateStore = new DynamicPropertiesStateStore(instance);
       Assert.assertEquals(totalEnergyWeightAfter, stateStore.getTotalEnergyWeight());
 
     } catch (Exception e) {

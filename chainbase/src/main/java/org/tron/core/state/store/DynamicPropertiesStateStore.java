@@ -1,11 +1,10 @@
 package org.tron.core.state.store;
 
-import lombok.Getter;
 import org.rocksdb.DirectComparator;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.db2.core.Chainbase;
-import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.state.WorldStateQueryInstance;
 import org.tron.core.store.DynamicPropertiesStore;
 
@@ -15,13 +14,9 @@ import java.util.Map;
 public class DynamicPropertiesStateStore extends DynamicPropertiesStore implements StateStore {
 
   private WorldStateQueryInstance worldStateQueryInstance;
-  @Getter
-  private boolean init;
 
-  @Override
-  public void init(WorldStateQueryInstance worldStateQueryInstance) {
+  public DynamicPropertiesStateStore(WorldStateQueryInstance worldStateQueryInstance) {
     this.worldStateQueryInstance = worldStateQueryInstance;
-    init = true;
   }
 
   //****  Override Operation For StateDB
@@ -32,32 +27,29 @@ public class DynamicPropertiesStateStore extends DynamicPropertiesStore implemen
   }
 
   @Override
-  public BytesCapsule get(byte[] key) {
+  public BytesCapsule get(byte[] key) throws ItemNotFoundException {
     return getFromRoot(key);
   }
 
   @Override
-  public BytesCapsule getFromRoot(byte[] key) {
-    throwIfNotInit();
+  public BytesCapsule getFromRoot(byte[] key) throws ItemNotFoundException {
     return worldStateQueryInstance.getDynamicProperty(key);
 
   }
 
   @Override
   public BytesCapsule getUnchecked(byte[] key) {
-    throwIfNotInit();
     return worldStateQueryInstance.getUncheckedDynamicProperty(key);
   }
 
   @Override
   public boolean has(byte[] key) {
-    return get(key) != null;
+    return getUnchecked(key) != null;
   }
 
   @Override
   public void close() {
     this.worldStateQueryInstance = null;
-    init = false;
   }
 
   @Override
@@ -87,7 +79,7 @@ public class DynamicPropertiesStateStore extends DynamicPropertiesStore implemen
   }
 
   @Override
-  public BytesCapsule of(byte[] value) throws BadItemException {
+  public BytesCapsule of(byte[] value) {
     throwIfError();
     return null;
   }
