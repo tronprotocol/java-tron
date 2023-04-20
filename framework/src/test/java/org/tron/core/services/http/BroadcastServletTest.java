@@ -81,7 +81,7 @@ public class BroadcastServletTest {
   }
 
   @Test
-  public void testDoPost() throws IOException {
+  public void doPostTest() throws IOException {
     URLStreamHandlerFactory urlStreamHandlerFactory = mock(URLStreamHandlerFactory.class);
     URL.setURLStreamHandlerFactory(urlStreamHandlerFactory);
 
@@ -139,6 +139,7 @@ public class BroadcastServletTest {
     while ((line = in.readLine()) != null) {
       result.append(line).append("\n");
     }
+    Assert.assertNotNull(result);
     in.close();
     writer.flush();
     FileInputStream fileInputStream = new FileInputStream("temp.txt");
