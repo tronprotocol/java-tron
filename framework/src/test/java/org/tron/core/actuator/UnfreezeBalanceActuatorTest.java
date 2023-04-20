@@ -182,21 +182,20 @@ public class UnfreezeBalanceActuatorTest {
       Assert.assertEquals(owner.getBalance(), initBalance + frozenBalance);
       Assert.assertEquals(owner.getFrozenBalance(), 0);
       Assert.assertEquals(owner.getTronPower(), 0L);
-      WorldStateQueryInstance queryInstance = getQueryInstance();
+      WorldStateQueryInstance instance = getQueryInstance();
       Assert.assertEquals(owner.getBalance(),
-              queryInstance.getAccount(owner.createDbKey()).getBalance());
+              instance.getAccount(owner.createDbKey()).getBalance());
       Assert.assertEquals(owner.getFrozenBalance(),
-              queryInstance.getAccount(owner.createDbKey()).getFrozenBalance());
+              instance.getAccount(owner.createDbKey()).getFrozenBalance());
       Assert.assertEquals(owner.getTronPower(),
-              queryInstance.getAccount(owner.createDbKey()).getTronPower());
+              instance.getAccount(owner.createDbKey()).getTronPower());
 
 
       long totalNetWeightAfter = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
       Assert.assertEquals(totalNetWeightBefore,
           totalNetWeightAfter + frozenBalance / 1000_000L);
 
-      try (DynamicPropertiesStateStore stateStore = new DynamicPropertiesStateStore()) {
-        stateStore.init(queryInstance);
+      try (DynamicPropertiesStateStore stateStore = new DynamicPropertiesStateStore(instance)) {
         Assert.assertEquals(totalNetWeightBefore,
                 stateStore.getTotalNetWeight() + frozenBalance / 1000_000L);
       }
@@ -268,9 +267,8 @@ public class UnfreezeBalanceActuatorTest {
       actuator1.validate();
       actuator1.execute(ret1);
       long afterWeight1 = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
-      WorldStateQueryInstance queryInstance = getQueryInstance();
-      DynamicPropertiesStateStore stateStore = new DynamicPropertiesStateStore();
-      stateStore.init(queryInstance);
+      WorldStateQueryInstance instance = getQueryInstance();
+      DynamicPropertiesStateStore stateStore = new DynamicPropertiesStateStore(instance);
       Assert.assertEquals(1, stateStore.getTotalNetWeight());
       Assert.assertEquals(1, afterWeight1);
       Assert.assertEquals(ret1.getInstance().getRet(), code.SUCESS);
@@ -290,9 +288,8 @@ public class UnfreezeBalanceActuatorTest {
       actuator.validate();
       actuator.execute(ret);
       long afterWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
-      WorldStateQueryInstance queryInstance = getQueryInstance();
-      DynamicPropertiesStateStore stateStore = new DynamicPropertiesStateStore();
-      stateStore.init(queryInstance);
+      WorldStateQueryInstance instance = getQueryInstance();
+      DynamicPropertiesStateStore stateStore = new DynamicPropertiesStateStore(instance);
       Assert.assertEquals(0, stateStore.getTotalNetWeight());
       Assert.assertEquals(0, afterWeight);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);

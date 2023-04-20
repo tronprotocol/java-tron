@@ -16,6 +16,10 @@ public class StorageRowStore extends TronStoreWithRevoking<StorageRowCapsule> {
     super(dbName);
   }
 
+  protected StorageRowStore() {
+    super();
+  }
+
   @Override
   public StorageRowCapsule get(byte[] key) {
     StorageRowCapsule row = getUnchecked(key);

@@ -187,7 +187,7 @@ public class RewardBalanceTest extends VMTestBase {
     repository.commit();
 
     // test state query
-    testStateQuery(trie, storeFactory, blockCap,
+    testStateQuery(trie, blockCap,
         new DataWord(Base58.decode(nonexistentAccount)), rootInternalTransaction, trx);
 
     // trigger deployed contract
@@ -209,7 +209,7 @@ public class RewardBalanceTest extends VMTestBase {
     repository.commit();
 
     // test state query
-    testStateQuery(trie, storeFactory, blockCap,
+    testStateQuery(trie, blockCap,
         new DataWord(Base58.decode(factoryAddressStr)), rootInternalTransaction, trx);
 
     // trigger deployed contract
@@ -232,8 +232,8 @@ public class RewardBalanceTest extends VMTestBase {
     repository.commit();
 
     // test state query
-    testStateQuery(trie, storeFactory, blockCap,
-        new DataWord(Base58.decode(witnessAccount)), rootInternalTransaction, trx);
+    testStateQuery(trie, blockCap,
+            new DataWord(Base58.decode(witnessAccount)), rootInternalTransaction, trx);
 
     // Trigger contract method: nullAddressTest(address)
     methodByAddr = "nullAddressTest()";
@@ -255,8 +255,7 @@ public class RewardBalanceTest extends VMTestBase {
     repository.commit();
 
     // test state query
-    testStateQuery(trie, storeFactory, blockCap,
-        DataWord.ZERO(), rootInternalTransaction, trx);
+    testStateQuery(trie, blockCap, DataWord.ZERO(), rootInternalTransaction, trx);
 
     // Trigger contract method: localContractAddrTest()
     methodByAddr = "localContractAddrTest()";
@@ -278,15 +277,14 @@ public class RewardBalanceTest extends VMTestBase {
     repository.commit();
 
     // test state query
-    testStateQuery(trie, storeFactory, blockCap,
+    testStateQuery(trie, blockCap,
         new DataWord(Base58.decode(factoryAddressStr)), rootInternalTransaction, trx);
 
 
     ConfigLoader.disable = false;
   }
 
-  private void testStateQuery(TrieImpl2 trie, StoreFactory storeFactory,
-                              BlockCapsule blockCap, DataWord address,
+  private void testStateQuery(TrieImpl2 trie, BlockCapsule blockCap, DataWord address,
                               InternalTransaction rootInternalTransaction,
                               Transaction trx) throws ContractValidateException {
 
@@ -294,7 +292,7 @@ public class RewardBalanceTest extends VMTestBase {
     trie.commit();
     trie.flush();
     byte[] root = trie.getRootHash();
-    Repository repositoryState = RepositoryStateImpl.createRoot(storeFactory, Bytes32.wrap(root));
+    Repository repositoryState = RepositoryStateImpl.createRoot(Bytes32.wrap(root));
     ProgramInvoke programInvoke = ProgramInvokeFactory
         .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
             InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,

@@ -182,6 +182,7 @@ import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.adv.TransactionMessage;
 import org.tron.core.state.WorldStateQueryInstance;
+import org.tron.core.state.store.StorageRowStateStore;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AccountTraceStore;
@@ -4496,11 +4497,14 @@ public class Wallet {
     if (contractCapsule == null) {
       return null;
     }
-    Storage storage = new Storage(address, worldStateQueryInstance);
-    storage.setContractVersion(contractCapsule.getInstance().getVersion());
-    storage.generateAddrHash(contractCapsule.getTrxHash());
-    DataWord value = storage.getValue(new DataWord(ByteArray.fromHexString(storageIdx)));
-    return value == null ? new byte[32] : value.getData();
+
+    try (StorageRowStateStore store = new StorageRowStateStore(worldStateQueryInstance)) {
+      Storage storage = new Storage(address, store);
+      storage.setContractVersion(contractCapsule.getInstance().getVersion());
+      storage.generateAddrHash(contractCapsule.getTrxHash());
+      DataWord value = storage.getValue(new DataWord(ByteArray.fromHexString(storageIdx)));
+      return value == null ? new byte[32] : value.getData();
+    }
   }
 
   private Bytes32 getRootHashByNumber(long blockNumber) {

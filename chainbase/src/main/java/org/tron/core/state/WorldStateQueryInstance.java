@@ -15,6 +15,7 @@ import org.tron.common.utils.DecodeUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.CodeCapsule;
 import org.tron.core.capsule.ContractCapsule;
@@ -24,6 +25,8 @@ import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.StorageRowCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.exception.StoreException;
 import org.tron.core.state.trie.TrieImpl2;
 import org.tron.protos.Protocol;
 
@@ -40,11 +43,13 @@ public class WorldStateQueryInstance {
   public static final Bytes MIN_ASSET_ID = Bytes.ofUnsignedLong(0);
 
   private final WorldStateGenesis worldStateGenesis;
+  private final ChainBaseManager chainBaseManager;
 
   public WorldStateQueryInstance(Bytes32 rootHash, ChainBaseManager chainBaseManager) {
     this.rootHash = rootHash;
     this.trieImpl = new TrieImpl2(chainBaseManager.getWorldStateTrieStore(), rootHash);
     this.worldStateGenesis = chainBaseManager.getWorldStateGenesis();
+    this.chainBaseManager = chainBaseManager;
   }
 
   private byte[] get(StateType type, byte[] key) {
@@ -139,14 +144,13 @@ public class WorldStateQueryInstance {
     return Objects.nonNull(value) ? new CodeCapsule(value) : null;
   }
 
+
+  // never return null
   public StorageRowCapsule getStorageRow(byte[] key) {
     byte[] value = get(StateType.StorageRow, key);
-    if (Objects.nonNull(value)) {
-      StorageRowCapsule storageRowCapsule = new StorageRowCapsule(value);
-      storageRowCapsule.setRowKey(key);
-      return storageRowCapsule;
-    }
-    return null;
+    StorageRowCapsule storageRowCapsule = new StorageRowCapsule(value);
+    storageRowCapsule.setRowKey(key);
+    return storageRowCapsule;
   }
 
   // asset
@@ -185,12 +189,12 @@ public class WorldStateQueryInstance {
   }
 
   // properties
-  public BytesCapsule getDynamicProperty(byte[] key) {
+  public BytesCapsule getDynamicProperty(byte[] key) throws ItemNotFoundException {
     BytesCapsule value = getUncheckedDynamicProperty(key);
     if (Objects.nonNull(value)) {
       return value;
     } else {
-      throw new IllegalArgumentException("not found: " + ByteArray.toStr(key));
+      throw new ItemNotFoundException();
     }
   }
 
@@ -201,4 +205,10 @@ public class WorldStateQueryInstance {
     }
     return null;
   }
+
+  // getBlockByNum
+  public BlockCapsule getBlockByNum(long num) throws StoreException {
+    return chainBaseManager.getBlockByNum(num);
+  }
+
 }

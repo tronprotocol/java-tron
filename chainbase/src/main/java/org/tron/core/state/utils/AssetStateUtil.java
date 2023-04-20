@@ -58,8 +58,8 @@ public class AssetStateUtil {
   }
 
   public static boolean isAllowAssetOptimization(Bytes32 root) {
-    try (DynamicPropertiesStateStore store = new DynamicPropertiesStateStore()) {
-      store.init(ChainBaseManager.fetch(root));
+    try (DynamicPropertiesStateStore store =
+            new DynamicPropertiesStateStore(ChainBaseManager.fetch(root))) {
       return store.supportAllowAssetOptimization();
     }
   }

@@ -42,12 +42,13 @@ import org.tron.core.state.store.AccountStateStore;
 import org.tron.core.state.store.AssetIssueV2StateStore;
 import org.tron.core.state.store.DelegationStateStore;
 import org.tron.core.state.store.DynamicPropertiesStateStore;
+import org.tron.core.state.store.StorageRowStateStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.StoreFactory;
+import org.tron.core.store.StorageRowStore;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.Storage;
@@ -71,7 +72,6 @@ public class RepositoryStateImpl implements Repository {
   private static final byte[] TOTAL_TRON_POWER_WEIGHT = "TOTAL_TRON_POWER_WEIGHT".getBytes();
 
   private final Bytes32 rootHash;
-  private StoreFactory storeFactory;
 
   @Getter
   private final WorldStateQueryInstance worldStateQueryInstance;
@@ -80,6 +80,7 @@ public class RepositoryStateImpl implements Repository {
   private final AssetIssueV2StateStore assetIssueV2StateStore;
   private final DelegationStateStore delegationStateStore;
   private final DynamicPropertiesStateStore dynamicPropertiesStateStore;
+  private final StorageRowStateStore storageRowStateStore;
 
   private Repository parent = null;
 
@@ -98,36 +99,24 @@ public class RepositoryStateImpl implements Repository {
   private final HashMap<Key, Value<Protocol.DelegatedResourceAccountIndex>>
           delegatedResourceAccountIndexCache = new HashMap<>();
 
-  public RepositoryStateImpl(StoreFactory storeFactory, RepositoryStateImpl repository,
-                             Bytes32 rootHash) {
+  public RepositoryStateImpl(Bytes32 rootHash, RepositoryStateImpl repository) {
     this.rootHash = rootHash;
+    this.parent = repository;
     this.worldStateQueryInstance = ChainBaseManager.fetch(rootHash);
-    this.accountStateStore = new AccountStateStore();
-    this.assetIssueV2StateStore = new AssetIssueV2StateStore();
-    this.delegationStateStore = new DelegationStateStore();
-    this.dynamicPropertiesStateStore = new DynamicPropertiesStateStore();
-
-    init(storeFactory, repository);
+    this.accountStateStore = new AccountStateStore(worldStateQueryInstance);
+    this.assetIssueV2StateStore = new AssetIssueV2StateStore(worldStateQueryInstance);
+    this.delegationStateStore = new DelegationStateStore(worldStateQueryInstance);
+    this.dynamicPropertiesStateStore = new DynamicPropertiesStateStore(worldStateQueryInstance);
+    this.storageRowStateStore = new StorageRowStateStore(worldStateQueryInstance);
   }
 
-  public static RepositoryStateImpl createRoot(StoreFactory storeFactory, Bytes32 rootHash) {
-    return new RepositoryStateImpl(storeFactory, null, rootHash);
-  }
-
-  protected void init(StoreFactory storeFactory, RepositoryStateImpl parent) {
-    if (storeFactory != null) {
-      this.storeFactory = storeFactory;
-    }
-    this.parent = parent;
-    accountStateStore.init(this.worldStateQueryInstance);
-    assetIssueV2StateStore.init(this.worldStateQueryInstance);
-    delegationStateStore.init(this.worldStateQueryInstance);
-    dynamicPropertiesStateStore.init(this.worldStateQueryInstance);
+  public static RepositoryStateImpl createRoot(Bytes32 rootHash) {
+    return new RepositoryStateImpl(rootHash, null);
   }
 
   @Override
   public Repository newRepositoryChild() {
-    return new RepositoryStateImpl(storeFactory, this, this.rootHash);
+    return new RepositoryStateImpl(this.rootHash, this);
   }
 
   @Override
@@ -246,6 +235,10 @@ public class RepositoryStateImpl implements Repository {
   @Override
   public DelegationStore getDelegationStore() {
     return delegationStateStore;
+  }
+
+  public StorageRowStore getStorageRowStore() {
+    return storageRowStateStore;
   }
 
   @Override
@@ -624,7 +617,7 @@ public class RepositoryStateImpl implements Repository {
         storage = parentStorage;
       }
     } else {
-      storage = new Storage(address, worldStateQueryInstance);
+      storage = new Storage(address, getStorageRowStore());
     }
     ContractCapsule contract = getContract(address);
     if (contract != null) {
@@ -794,7 +787,7 @@ public class RepositoryStateImpl implements Repository {
   @Override
   public BlockCapsule getBlockByNum(long num) {
     try {
-      return ChainBaseManager.getInstance().getBlockByNum(num);
+      return worldStateQueryInstance.getBlockByNum(num);
     } catch (StoreException e) {
       throw new Program.IllegalOperationException("cannot find block num");
     }

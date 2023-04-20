@@ -573,7 +573,7 @@ public class FreezeV2Test {
     cancelAllUnfreezeV2(owner, contract, 0);
 
     AccountCapsule contractCapsule = manager.getAccountStore().get(contract);
-    contractCapsule.setLatestConsumeTimeForEnergy(ChainBaseManager.getInstance().getHeadSlot());
+    contractCapsule.setLatestConsumeTimeForEnergy(chainBaseManager.getHeadSlot());
     contractCapsule.setNewWindowSize(ENERGY, WINDOW_SIZE_MS / BLOCK_PRODUCED_INTERVAL);
     contractCapsule.setEnergyUsage(frozenBalance);
     manager.getAccountStore().put(contract, contractCapsule);
@@ -912,15 +912,13 @@ public class FreezeV2Test {
         Assert.assertEquals(
             oldReceiver.getNetUsage() - transferUsage,
             newReceiver.getNetUsage());
-        Assert.assertEquals(
-            ChainBaseManager.getInstance().getHeadSlot(),
+        Assert.assertEquals(chainBaseManager.getHeadSlot(),
             newReceiver.getLastConsumeTime(BANDWIDTH));
       } else {
         Assert.assertEquals(
             oldReceiver.getEnergyUsage() + transferUsage,
             newReceiver.getEnergyUsage());
-        Assert.assertEquals(
-            ChainBaseManager.getInstance().getHeadSlot(),
+        Assert.assertEquals(chainBaseManager.getHeadSlot(),
             newReceiver.getLastConsumeTime(ENERGY));
       }
     } else {
@@ -974,12 +972,12 @@ public class FreezeV2Test {
       oldInheritorBandwidthUsage = oldInheritor.getUsage(BANDWIDTH);
       oldInheritorEnergyUsage = oldInheritor.getUsage(ENERGY);
     }
-    BandwidthProcessor bandwidthProcessor = new BandwidthProcessor(ChainBaseManager.getInstance());
+    BandwidthProcessor bandwidthProcessor = new BandwidthProcessor(chainBaseManager);
     bandwidthProcessor.updateUsage(oldContract);
     oldContract.setLatestConsumeTime(now);
     EnergyProcessor energyProcessor =
         new EnergyProcessor(
-            manager.getDynamicPropertiesStore(), ChainBaseManager.getInstance().getAccountStore());
+            manager.getDynamicPropertiesStore(), chainBaseManager.getAccountStore());
     energyProcessor.updateUsage(oldContract);
     oldContract.setLatestConsumeTimeForEnergy(now);
 
@@ -1020,8 +1018,7 @@ public class FreezeV2Test {
                 now);
         Assert.assertEquals(
             expectedNewNetUsage, newInheritor.getNetUsage() - oldInheritorBandwidthUsage);
-        Assert.assertEquals(
-            ChainBaseManager.getInstance().getHeadSlot(), newInheritor.getLatestConsumeTime());
+        Assert.assertEquals(chainBaseManager.getHeadSlot(), newInheritor.getLatestConsumeTime());
       }
       if (oldContract.getEnergyUsage() > 0) {
         long expectedNewEnergyUsage =
@@ -1033,8 +1030,7 @@ public class FreezeV2Test {
                 now);
         Assert.assertEquals(
             expectedNewEnergyUsage, newInheritor.getEnergyUsage() - oldInheritorEnergyUsage);
-        Assert.assertEquals(
-            ChainBaseManager.getInstance().getHeadSlot(),
+        Assert.assertEquals(chainBaseManager.getHeadSlot(),
             newInheritor.getLatestConsumeTimeForEnergy());
       }
     }
