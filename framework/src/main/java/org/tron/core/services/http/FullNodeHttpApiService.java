@@ -42,8 +42,6 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private BroadcastServlet broadcastServlet;
   @Autowired
-  private TransactionSignServlet transactionSignServlet;
-  @Autowired
   private UpdateAccountServlet updateAccountServlet;
   @Autowired
   private VoteWitnessAccountServlet voteWitnessAccountServlet;
@@ -114,18 +112,6 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetNextMaintenanceTimeServlet getNextMaintenanceTimeServlet;
   @Autowired
-  private EasyTransferServlet easyTransferServlet;
-  @Autowired
-  private EasyTransferByPrivateServlet easyTransferByPrivateServlet;
-  @Autowired
-  private EasyTransferAssetServlet easyTransferAssetServlet;
-  @Autowired
-  private EasyTransferAssetByPrivateServlet easyTransferAssetByPrivateServlet;
-  @Autowired
-  private CreateAddressServlet createAddressServlet;
-  @Autowired
-  private GenerateAddressServlet generateAddressServlet;
-  @Autowired
   private ValidateAddressServlet validateAddressServlet;
   @Autowired
   private DeployContractServlet deployContractServlet;
@@ -169,8 +155,6 @@ public class FullNodeHttpApiService implements Service {
   private GetAccountResourceServlet getAccountResourceServlet;
   @Autowired
   private GetNodeInfoServlet getNodeInfoServlet;
-  @Autowired
-  private AddTransactionSignServlet addTransactionSignServlet;
   @Autowired
   private GetTransactionSignWeightServlet getTransactionSignWeightServlet;
   @Autowired
@@ -377,7 +361,6 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getAccountServlet), "/wallet/getaccount");
       context.addServlet(new ServletHolder(transferServlet), "/wallet/createtransaction");
       context.addServlet(new ServletHolder(broadcastServlet), "/wallet/broadcasttransaction");
-      context.addServlet(new ServletHolder(transactionSignServlet), "/wallet/gettransactionsign");
       context.addServlet(new ServletHolder(updateAccountServlet), "/wallet/updateaccount");
       context.addServlet(new ServletHolder(voteWitnessAccountServlet),
           "/wallet/votewitnessaccount");
@@ -430,14 +413,6 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(totalTransactionServlet), "/wallet/totaltransaction");
       context.addServlet(
           new ServletHolder(getNextMaintenanceTimeServlet), "/wallet/getnextmaintenancetime");
-      context.addServlet(new ServletHolder(createAddressServlet), "/wallet/createaddress");
-      context.addServlet(new ServletHolder(easyTransferServlet), "/wallet/easytransfer");
-      context.addServlet(new ServletHolder(easyTransferByPrivateServlet),
-          "/wallet/easytransferbyprivate");
-      context.addServlet(new ServletHolder(easyTransferAssetServlet), "/wallet/easytransferasset");
-      context.addServlet(new ServletHolder(easyTransferAssetByPrivateServlet),
-          "/wallet/easytransferassetbyprivate");
-      context.addServlet(new ServletHolder(generateAddressServlet), "/wallet/generateaddress");
       context.addServlet(new ServletHolder(validateAddressServlet), "/wallet/validateaddress");
       context.addServlet(new ServletHolder(deployContractServlet), "/wallet/deploycontract");
       context.addServlet(new ServletHolder(triggerSmartContractServlet),
@@ -464,8 +439,6 @@ public class FullNodeHttpApiService implements Service {
           "/wallet/getchainparameters");
       context.addServlet(new ServletHolder(getAccountResourceServlet),
           "/wallet/getaccountresource");
-      context.addServlet(new ServletHolder(addTransactionSignServlet),
-          "/wallet/addtransactionsign");
       context.addServlet(new ServletHolder(getTransactionSignWeightServlet),
           "/wallet/getsignweight");
       context.addServlet(new ServletHolder(getTransactionApprovedListServlet),
