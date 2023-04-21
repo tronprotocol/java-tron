@@ -5,6 +5,7 @@ import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.bouncycastle.util.encoders.Hex;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -80,9 +81,12 @@ public class TriggerSmartContractServletTest extends BaseTest {
     parameter.addProperty("owner_address", ByteArray.toHexString(ownerAddr));
     parameter.addProperty("contract_address", ByteArray.toHexString(contractAddr));
     parameter.addProperty("function_selector", "test()");
-    invokeToLocal("triggersmartcontract", parameter);
-    invokeToLocal("triggerconstantcontract", parameter);
-    invokeToLocal("estimateenergy", parameter);
+    HttpResponse triggersmartcontract1 = invokeToLocal("triggersmartcontract", parameter);
+    HttpResponse triggersmartcontract2 = invokeToLocal("triggerconstantcontract", parameter);
+    HttpResponse triggersmartcontract3 = invokeToLocal("estimateenergy", parameter);
+    Assert.assertNotNull(triggersmartcontract1);
+    Assert.assertNotNull(triggersmartcontract2);
+    Assert.assertNotNull(triggersmartcontract3);
   }
 
   public static HttpResponse invokeToLocal(

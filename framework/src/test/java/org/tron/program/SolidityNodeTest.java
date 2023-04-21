@@ -75,11 +75,11 @@ public class SolidityNodeTest {
   @Test
   public void testSolidityGrpcCall() {
     DatabaseGrpcClient databaseGrpcClient = null;
-    String addr = Args.getInstance().getTrustNodeAddr();
+    String address = Args.getInstance().getTrustNodeAddr();
     try {
-      databaseGrpcClient = new DatabaseGrpcClient(addr);
+      databaseGrpcClient = new DatabaseGrpcClient(address);
     } catch (Exception e) {
-      logger.error("Failed to create database grpc client {}", addr);
+      logger.error("Failed to create database grpc client {}", address);
     }
 
     Assert.assertNotNull(databaseGrpcClient);
@@ -89,6 +89,7 @@ public class SolidityNodeTest {
     Block genesisBlock = databaseGrpcClient.getBlock(0);
     Assert.assertNotNull(genesisBlock);
     Assert.assertFalse(genesisBlock.getTransactionsList().isEmpty());
+    databaseGrpcClient.shutdown();
   }
 
 }
