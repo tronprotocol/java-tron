@@ -944,8 +944,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.saveDynamicEnergyMaxFactor(CommonParameter.getInstance().getDynamicEnergyMaxFactor());
     }
 
-    if (CommonParameter.getInstance().getAllowTvmShangHai() == 1) {
-      this.saveAllowTvmShangHai(1);
+    try {
+      this.getAllowTvmShangHai();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowTvmShangHai(CommonParameter.getInstance().getAllowTvmShangHai());
     }
   }
 
@@ -2770,7 +2772,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return Optional.ofNullable(getUnchecked(ALLOW_TVM_SHANGHAI))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
-        .orElse(0L);
+        .orElse(CommonParameter.getInstance().getAllowTvmShangHai());
   }
 
   private static class DynamicResourceProperties {
