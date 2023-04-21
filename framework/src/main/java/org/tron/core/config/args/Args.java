@@ -231,6 +231,7 @@ public class Args extends CommonParameter {
     PARAMETER.p2pDisable = false;
     PARAMETER.dynamicConfigEnable = false;
     PARAMETER.dynamicConfigCheckInterval = 600;
+    PARAMETER.allowTvmShangHai = 0;
   }
 
   /**
@@ -1165,6 +1166,10 @@ public class Args extends CommonParameter {
     } else {
       PARAMETER.dynamicConfigCheckInterval = 600;
     }
+
+    PARAMETER.allowTvmShangHai =
+        config.hasPath(Constant.COMMITTEE_ALLOW_TVM_SHANGHAI) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_TVM_SHANGHAI) : 0;
 
     logConfig();
   }

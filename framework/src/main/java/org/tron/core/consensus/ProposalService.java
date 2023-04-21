@@ -339,6 +339,10 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveDynamicEnergyMaxFactor(entry.getValue());
           break;
         }
+        case ALLOW_TVM_SHANGHAI: {
+          manager.getDynamicPropertiesStore().saveAllowTvmShangHai(entry.getValue());
+          break;
+        }
         default:
           find = false;
           break;

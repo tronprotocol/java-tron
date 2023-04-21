@@ -206,6 +206,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID =
       "ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID".getBytes();
 
+  private static final byte[] ALLOW_TVM_SHANGHAI = "ALLOW_TVM_SHANGHAI".getBytes();
+
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -940,6 +942,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getDynamicEnergyMaxFactor();
     } catch (IllegalArgumentException e) {
       this.saveDynamicEnergyMaxFactor(CommonParameter.getInstance().getDynamicEnergyMaxFactor());
+    }
+
+    try {
+      this.getAllowTvmShangHai();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowTvmShangHai(CommonParameter.getInstance().getAllowTvmShangHai());
     }
   }
 
@@ -2749,6 +2757,20 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public long getAllowOptimizedReturnValueOfChainId() {
     String msg = "not found ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID";
     return Optional.ofNullable(getUnchecked(ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException(msg));
+  }
+
+  public void saveAllowTvmShangHai(long allowTvmShangHai) {
+    this.put(DynamicPropertiesStore.ALLOW_TVM_SHANGHAI,
+        new BytesCapsule(ByteArray.fromLong(allowTvmShangHai)));
+  }
+
+  public long getAllowTvmShangHai() {
+    String msg = "not found ALLOW_TVM_SHANGHAI";
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_SHANGHAI))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(

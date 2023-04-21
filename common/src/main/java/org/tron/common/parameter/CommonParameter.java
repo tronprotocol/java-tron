@@ -6,7 +6,6 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-
 import lombok.Getter;
 import lombok.Setter;
 import org.quartz.CronExpression;
@@ -641,6 +640,10 @@ public class CommonParameter {
   @Getter
   @Setter
   public long dynamicConfigCheckInterval;
+
+  @Getter
+  @Setter
+  public long allowTvmShangHai;
 
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));

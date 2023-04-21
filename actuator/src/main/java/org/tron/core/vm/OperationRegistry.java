@@ -11,6 +11,7 @@ public class OperationRegistry {
     TRON_V1_0,
     TRON_V1_1,
     TRON_V1_2,
+    TRON_V1_3,
     // add more
     // TRON_V2,
     // ETH
@@ -22,6 +23,7 @@ public class OperationRegistry {
     tableMap.put(Version.TRON_V1_0, newTronV10OperationSet());
     tableMap.put(Version.TRON_V1_1, newTronV11OperationSet());
     tableMap.put(Version.TRON_V1_2, newTronV12OperationSet());
+    tableMap.put(Version.TRON_V1_3, newTronV13OperationSet());
   }
 
   public static JumpTable newTronV10OperationSet() {
@@ -47,12 +49,18 @@ public class OperationRegistry {
     return table;
   }
 
+  public static JumpTable newTronV13OperationSet() {
+    JumpTable table = newTronV12OperationSet();
+    appendShangHaiOperations(table);
+    return table;
+  }
+
   // Just for warming up class to avoid out_of_time
   public static void init() {}
 
   public static JumpTable getTable() {
     // always get the table which has the newest version
-    JumpTable table = tableMap.get(Version.TRON_V1_2);
+    JumpTable table = tableMap.get(Version.TRON_V1_3);
 
     // next make the corresponding changes, exclude activating opcode
     if (VMConfig.allowHigherLimitForMaxCpuTimeOfOneTx()) {
@@ -615,6 +623,16 @@ public class OperationRegistry {
         Op.UNDELEGATERESOURCE, 3, 1,
         EnergyCost::getUnDelegateResourceCost,
         OperationActions::unDelegateResourceAction,
+        proposal));
+  }
+
+  public static void appendShangHaiOperations(JumpTable table) {
+    BooleanSupplier proposal = VMConfig::allowTvmShanghai;
+
+    table.set(new Operation(
+        Op.PUSH0, 0, 0,
+        EnergyCost::getBaseTierCost,
+        OperationActions::push0Action,
         proposal));
   }
 }
