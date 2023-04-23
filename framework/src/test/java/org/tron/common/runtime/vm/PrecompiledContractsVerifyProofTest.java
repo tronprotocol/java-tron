@@ -57,7 +57,8 @@ public class PrecompiledContractsVerifyProofTest {
   private static Manager dbManager;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, "config-test.conf");
+    Args.setParam(new String[]{"--output-directory",dbPath, "--debug", "--p2p-disable", "true"},
+            "config-test.conf");
     context = new TronApplicationContext(DefaultConfig.class);
     DEFAULT_OVK = ByteArray
         .fromHexString("030c8c2bc59fb3eb8afb047a8ea4b028743d23e7d38c6fa30908358431e2314d");

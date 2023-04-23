@@ -36,7 +36,7 @@ import org.tron.protos.contract.Common.ResourceCode;
 @Slf4j
 public class UnfreezeBalanceV2ActuatorTest {
 
-  private static final String dbPath = "output_unfreeze_balance_test";
+  private static final String dbPath = "output_unfreeze_balanceV2_test";
   private static final String OWNER_ADDRESS;
   private static final String RECEIVER_ADDRESS;
   private static final String OWNER_ADDRESS_INVALID = "aaaa";

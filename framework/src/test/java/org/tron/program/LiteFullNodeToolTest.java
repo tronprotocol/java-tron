@@ -1,19 +1,18 @@
 package org.tron.program;
 
-import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.io.File;
-import java.math.BigInteger;
+import java.io.IOException;
 import java.nio.file.Paths;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.api.GrpcAPI;
 import org.tron.api.WalletGrpc;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
@@ -23,15 +22,10 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Utils;
-import org.tron.core.Wallet;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
-import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
-import org.tron.protos.Protocol;
-import org.tron.protos.contract.BalanceContract;
 import org.tron.tool.litefullnode.LiteFullNodeTool;
-import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 public class LiteFullNodeToolTest {
 
@@ -39,6 +33,7 @@ public class LiteFullNodeToolTest {
 
   private TronApplicationContext context;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private ManagedChannel channelFull;
   private Application appTest;
 
   private String databaseDir;
@@ -47,7 +42,9 @@ public class LiteFullNodeToolTest {
   public ExpectedException thrown = ExpectedException.none();
 
 
-  private static final String DB_PATH = "output_lite_fn";
+  private  String DB_PATH;
+  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
 
   /**
    * init logic.
@@ -56,15 +53,14 @@ public class LiteFullNodeToolTest {
     context = new TronApplicationContext(DefaultConfig.class);
     appTest = ApplicationFactory.create(context);
     appTest.addService(context.getBean(RpcApiService.class));
-    appTest.addService(context.getBean(RpcApiServiceOnSolidity.class));
     appTest.initServices(Args.getInstance());
     appTest.startServices();
     appTest.startup();
 
     String fullnode = String.format("%s:%d", "127.0.0.1",
             Args.getInstance().getRpcPort());
-    ManagedChannel channelFull = ManagedChannelBuilder.forTarget(fullnode)
-            .usePlaintext(true)
+    channelFull = ManagedChannelBuilder.forTarget(fullnode)
+            .usePlaintext()
             .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
@@ -87,15 +83,17 @@ public class LiteFullNodeToolTest {
    * shutdown the fullnode.
    */
   public void shutdown() {
+    channelFull.shutdownNow();
     appTest.shutdownServices();
     appTest.shutdown();
     context.destroy();
   }
 
   @Before
-  public void init() {
-    destroy(DB_PATH); // delete if prev failed
-    Args.setParam(new String[]{"-d", DB_PATH, "-w"}, "config-localtest.conf");
+  public void init() throws IOException {
+    DB_PATH = temporaryFolder.newFolder().toString();
+    Args.setParam(new String[]{"-d", DB_PATH, "-w", "--p2p-disable", "true"},
+        "config-localtest.conf");
     // allow account root
     Args.getInstance().setAllowAccountStateRoot(1);
     databaseDir = Args.getInstance().getStorage().getDbDirectory();
@@ -105,7 +103,6 @@ public class LiteFullNodeToolTest {
 
   @After
   public void clear() {
-    destroy(DB_PATH);
     Args.clearParam();
   }
 

@@ -153,6 +153,15 @@ test {
         exclude 'org/tron/common/runtime/vm/WithdrawRewardTest.class'
     }
     maxHeapSize = "1024m"
+    doFirst {
+        forkEvery = 100
+        jvmArgs "-XX:MetaspaceSize=128m","-XX:MaxMetaspaceSize=256m", "-XX:+UseG1GC"
+    }
+    maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+    if (!project.hasProperty("createReports")) {
+        reports.html.enabled = false
+        reports.junitXml.enabled = false
+    }
 }
 
 task stest(type: Test) {

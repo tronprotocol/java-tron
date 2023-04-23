@@ -71,9 +71,9 @@ import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 public class BandWidthRuntimeOutOfTimeWithCheckTest {
 
   public static final long totalBalance = 1000_0000_000_000L;
-  private static String dbPath = "output_BandWidthRuntimeOutOfTimeTest_test";
-  private static String dbDirectory = "db_BandWidthRuntimeOutOfTimeTest_test";
-  private static String indexDirectory = "index_BandWidthRuntimeOutOfTimeTest_test";
+  private static String dbPath = "output_BandWidthRuntimeOutOfTimeWithCheckTest_test";
+  private static String dbDirectory = "db_BandWidthRuntimeOutOfTimeWithCheckTest_test";
+  private static String indexDirectory = "index_BandWidthRuntimeOutOfTimeWithCheckTest_test";
   private static AnnotationConfigApplicationContext context;
   private static Manager dbManager;
 

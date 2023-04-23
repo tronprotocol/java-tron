@@ -11,7 +11,7 @@ import static org.tron.common.zksnark.JLibrustzcash.librustzcashSaplingSpendSig;
 import static org.tron.common.zksnark.JLibsodium.CRYPTO_AEAD_CHACHA20POLY1305_IETF_NPUBBYTES;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
+import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -22,12 +22,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.JLibrustzcash;
@@ -67,23 +68,25 @@ import org.tron.protos.contract.ShieldContract.PedersenHash;
 @Slf4j
 public class LibrustzcashTest {
 
-  private static String dbPath = "output_Librustzcash_test";
-  private static String dbDirectory = "db_Librustzcash_test";
-  private static String indexDirectory = "index_Librustzcash_test";
-  private static AnnotationConfigApplicationContext context;
+  @Rule
+  public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  private static final AnnotationConfigApplicationContext context;
   private static Wallet wallet;
 
   static {
-    Args.setParam(
-        new String[]{
-            "--output-directory", dbPath,
-            "--storage-db-directory", dbDirectory,
-            "--storage-index-directory", indexDirectory,
-            "-w",
-            "--debug"
-        },
-        "config-test-mainnet.conf"
-    );
+    try {
+      Args.setParam(
+          new String[]{
+              "--output-directory", temporaryFolder.newFolder().toString(),
+              "-w",
+              "--debug"
+          },
+          "config-test-mainnet.conf"
+      );
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
 
     context = new TronApplicationContext(DefaultConfig.class);
   }
@@ -98,7 +101,6 @@ public class LibrustzcashTest {
   public static void removeDb() {
     Args.clearParam();
     context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
   }
 
   private static int randomInt(int minInt, int maxInt) {
