@@ -255,7 +255,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private long maintenanceTimeInterval = 0L;
 
   private volatile boolean reloadTotalSignNum = true;
-  private long totalSignNum = 0L;
+  private int totalSignNum = 0;
 
   private volatile boolean reloadAllowMultiSign = true;
   private long allowMultiSign = 0L;
@@ -2169,7 +2169,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.totalSignNum = getTotalSignNumFromDB();
       this.reloadTotalSignNum = false;
     }
-    return (int)this.totalSignNum;
+    return this.totalSignNum;
   }
 
   public int getTotalSignNumFromDB() {
