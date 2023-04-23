@@ -48,7 +48,7 @@ public class FreezeBalanceProcessor {
         break;
       default:
         throw new ContractValidateException(
-            "ResourceCode error,valid ResourceCode[BANDWIDTH、ENERGY]");
+            "Unknown ResourceCode, valid ResourceCode[BANDWIDTH、ENERGY]");
     }
 
     // validate for delegating resource

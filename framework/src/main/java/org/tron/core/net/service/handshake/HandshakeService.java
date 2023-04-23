@@ -11,6 +11,7 @@ import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.handshake.HelloMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
+import org.tron.core.net.service.effective.EffectiveCheckService;
 import org.tron.core.net.service.relay.RelayService;
 import org.tron.p2p.discover.Node;
 import org.tron.protos.Protocol.ReasonCode;
@@ -21,6 +22,9 @@ public class HandshakeService {
 
   @Autowired
   private RelayService relayService;
+
+  @Autowired
+  private EffectiveCheckService effectiveCheckService;
 
   @Autowired
   private ChainBaseManager chainBaseManager;
@@ -98,9 +102,18 @@ public class HandshakeService {
       return;
     }
 
+    if (msg.getHeadBlockId().getNum() < chainBaseManager.getHeadBlockId().getNum()
+        && peer.getInetSocketAddress().equals(effectiveCheckService.getCur())) {
+      logger.info("Peer's head block {} is below than we, peer->{}, me->{}",
+          peer.getInetSocketAddress(), msg.getHeadBlockId().getNum(),
+          chainBaseManager.getHeadBlockId().getNum());
+      peer.disconnect(ReasonCode.BELOW_THAN_ME);
+      return;
+    }
+
     peer.setHelloMessageReceive(msg);
 
-    peer.getChannel().updateLatency(
+    peer.getChannel().updateAvgLatency(
             System.currentTimeMillis() - peer.getChannel().getStartTime());
     PeerManager.sortPeers();
     peer.onConnect();
@@ -108,8 +121,9 @@ public class HandshakeService {
 
   private void sendHelloMessage(PeerConnection peer, long time) {
     Node node = new Node(TronNetService.getP2pConfig().getNodeID(),
-            TronNetService.getP2pConfig().getIp(),
-            TronNetService.getP2pConfig().getPort());
+        TronNetService.getP2pConfig().getIp(),
+        TronNetService.getP2pConfig().getIpv6(),
+        TronNetService.getP2pConfig().getPort());
     HelloMessage message = new HelloMessage(node, time, ChainBaseManager.getChainBaseManager());
     relayService.fillHelloMessage(message, peer.getChannel());
     peer.sendMessage(message);

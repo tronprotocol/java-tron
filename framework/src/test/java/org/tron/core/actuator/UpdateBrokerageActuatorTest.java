@@ -4,25 +4,19 @@ import static junit.framework.TestCase.fail;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.DelegationStore;
@@ -32,19 +26,16 @@ import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.StorageContract.UpdateBrokerageContract;
 
 @Slf4j(topic = "actuator")
-public class UpdateBrokerageActuatorTest {
+public class UpdateBrokerageActuatorTest extends BaseTest {
 
-  private static final String dbPath = "output_updatebrokerageactuator_test";
   private static final String OWNER_ADDRESS;
   private static final String OWNER_ADDRESS_NOTEXIST;
   private static final String OWNER_ADDRESS_INVALID;
   private static final int BROKEN_AGE = 10;
-  private static TronApplicationContext context;
-  private static Manager dbManager;
 
   static {
+    dbPath = "output_updatebrokerageactuator_test";
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ADDRESS_NOTEXIST =
         Wallet.getAddressPreFixString() + "1234b9367799eaa3197fecb144eb71de1e049123";
@@ -53,33 +44,9 @@ public class UpdateBrokerageActuatorTest {
   }
 
   /**
-   * Init data.
-   */
-  @BeforeClass
-  public static void init() {
-
-    dbManager = context.getBean(Manager.class);
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
-  }
-
-  @Before
-  /**
    * set witness store, account store, dynamic store
    */
+  @Before
   public void initDB() {
     // allow dynamic store
     dbManager.getDynamicPropertiesStore().saveChangeDelegation(1);

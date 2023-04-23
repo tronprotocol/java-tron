@@ -1,9 +1,5 @@
 package org.tron.core.vm.utils;
 
-import static org.tron.protos.contract.Common.ResourceCode;
-import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
-import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -15,7 +11,6 @@ import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
-import org.tron.protos.contract.Common;
 
 
 public class FreezeV2Util {

@@ -494,11 +494,6 @@ message Transactions {
   repeated Transaction transactions = 1;
 }
 
-message TransactionSign {
-  Transaction transaction = 1;
-  bytes privateKey = 2;
-}
-
 message BlockHeader {
   message raw {
     int64 timestamp = 1;
@@ -600,6 +595,7 @@ enum ReasonCode {
   CONNECT_FAIL = 0x21;
   TOO_MANY_PEERS_WITH_SAME_IP = 0x22;
   LIGHT_NODE_SYNC_FAIL = 0x23;
+  BELOW_THAN_ME = 0X24;
   UNKNOWN = 0xFF;
 }
 

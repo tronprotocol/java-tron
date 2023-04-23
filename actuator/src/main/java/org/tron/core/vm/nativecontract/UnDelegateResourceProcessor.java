@@ -1,8 +1,15 @@
 package org.tron.core.vm.nativecontract;
 
+import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
+import static org.tron.core.actuator.ActuatorConstant.STORE_NOT_EXIST;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
+import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
+
 import com.google.common.primitives.Bytes;
+import java.util.Arrays;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.ChainBaseManager;
@@ -16,15 +23,6 @@ import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.vm.nativecontract.param.UnDelegateResourceParam;
 import org.tron.core.vm.repository.Repository;
-
-import java.util.Arrays;
-import java.util.Objects;
-
-import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
-import static org.tron.core.actuator.ActuatorConstant.STORE_NOT_EXIST;
-import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
-import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
-import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 
 @Slf4j(topic = "VMProcessor")
 public class UnDelegateResourceProcessor {
@@ -84,7 +82,7 @@ public class UnDelegateResourceProcessor {
         break;
       default:
         throw new ContractValidateException(
-            "ResourceCode error.valid ResourceCode[BANDWIDTH、ENERGY]");
+            "Unknown ResourceCode, valid ResourceCode[BANDWIDTH、ENERGY]");
     }
   }
 
@@ -169,9 +167,8 @@ public class UnDelegateResourceProcessor {
 
         BandwidthProcessor processor = new BandwidthProcessor(ChainBaseManager.getInstance());
         if (Objects.nonNull(receiverCapsule) && transferUsage > 0) {
-          ownerCapsule.setNetUsage(processor.unDelegateIncrease(ownerCapsule, receiverCapsule,
-              transferUsage, BANDWIDTH, now));
-          ownerCapsule.setLatestConsumeTime(now);
+          processor.unDelegateIncrease(ownerCapsule, receiverCapsule,
+              transferUsage, BANDWIDTH, now);
         }
       }
       break;
@@ -184,9 +181,7 @@ public class UnDelegateResourceProcessor {
         EnergyProcessor processor =
             new EnergyProcessor(dynamicStore, ChainBaseManager.getInstance().getAccountStore());
         if (Objects.nonNull(receiverCapsule) && transferUsage > 0) {
-          ownerCapsule.setEnergyUsage(processor.unDelegateIncrease(ownerCapsule, receiverCapsule,
-              transferUsage, ENERGY, now));
-          ownerCapsule.setLatestConsumeTimeForEnergy(now);
+          processor.unDelegateIncrease(ownerCapsule, receiverCapsule, transferUsage, ENERGY, now);
         }
       }
       break;

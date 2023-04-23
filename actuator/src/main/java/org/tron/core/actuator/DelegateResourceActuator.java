@@ -210,8 +210,6 @@ public class DelegateResourceActuator extends AbstractActuator {
     return true;
   }
 
-
-
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
     return any.unpack(DelegateResourceContract.class).getOwnerAddress();

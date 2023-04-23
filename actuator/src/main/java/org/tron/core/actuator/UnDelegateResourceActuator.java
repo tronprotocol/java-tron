@@ -143,9 +143,8 @@ public class UnDelegateResourceActuator extends AbstractActuator {
 
         long now = chainBaseManager.getHeadSlot();
         if (Objects.nonNull(receiverCapsule) && transferUsage > 0) {
-          ownerCapsule.setNetUsage(processor.unDelegateIncrease(ownerCapsule, receiverCapsule,
-              transferUsage, BANDWIDTH, now));
-          ownerCapsule.setLatestConsumeTime(now);
+          processor.unDelegateIncrease(ownerCapsule, receiverCapsule,
+              transferUsage, BANDWIDTH, now);
         }
       }
       break;
@@ -159,9 +158,7 @@ public class UnDelegateResourceActuator extends AbstractActuator {
 
         long now = chainBaseManager.getHeadSlot();
         if (Objects.nonNull(receiverCapsule) && transferUsage > 0) {
-          ownerCapsule.setEnergyUsage(processor.unDelegateIncrease(ownerCapsule, receiverCapsule,
-              transferUsage, ENERGY, now));
-          ownerCapsule.setLatestConsumeTimeForEnergy(now);
+          processor.unDelegateIncrease(ownerCapsule, receiverCapsule, transferUsage, ENERGY, now);
         }
       }
       break;

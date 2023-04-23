@@ -5,8 +5,8 @@ import org.springframework.util.StringUtils;
 
 public class JsonUtil {
 
-  public static final <T> T json2Obj(String jsonString, Class<T> clazz) {
-    if (!StringUtils.isEmpty(jsonString) && clazz != null) {
+  public static <T> T json2Obj(String jsonString, Class<T> clazz) {
+    if (StringUtils.hasLength(jsonString) && clazz != null) {
       try {
         ObjectMapper om = new ObjectMapper();
         return om.readValue(jsonString, clazz);
@@ -18,7 +18,7 @@ public class JsonUtil {
     }
   }
 
-  public static final String obj2Json(Object obj) {
+  public static String obj2Json(Object obj) {
     if (obj == null) {
       return null;
     } else {

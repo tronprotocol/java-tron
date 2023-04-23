@@ -1,32 +1,29 @@
 package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
-import org.junit.AfterClass;
+import javax.annotation.Resource;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.AccountIndexStore;
 import org.tron.protos.Protocol.AccountType;
 
-public class AccountIndexStoreTest {
+public class AccountIndexStoreTest extends BaseTest {
 
-  private static String dbPath = "output_AccountIndexStore_test";
   private static String dbDirectory = "db_AccountIndexStore_test";
   private static String indexDirectory = "index_AccountIndexStore_test";
-  private static TronApplicationContext context;
-  private static AccountIndexStore accountIndexStore;
+  @Resource
+  private AccountIndexStore accountIndexStore;
   private static byte[] address = TransactionStoreTest.randomBytes(32);
   private static byte[] accountName = TransactionStoreTest.randomBytes(32);
 
   static {
+    dbPath = "output_AccountIndexStore_test";
     Args.setParam(
         new String[]{
             "--output-directory", dbPath,
@@ -35,19 +32,10 @@ public class AccountIndexStoreTest {
         },
         Constant.TEST_CONF
     );
-    context = new TronApplicationContext(DefaultConfig.class);
   }
 
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
-  }
-
-  @BeforeClass
-  public static void init() {
-    accountIndexStore = context.getBean(AccountIndexStore.class);
+  @Before
+  public void init() {
     AccountCapsule accountCapsule = new AccountCapsule(ByteString.copyFrom(address),
         ByteString.copyFrom(accountName),
         AccountType.forNumber(1));
