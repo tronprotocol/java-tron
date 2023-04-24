@@ -88,8 +88,7 @@ public class HttpApiAccessFilterTest extends BaseTest {
 
         Args.getInstance().setDisabledApiList(disabledApiList);
         String response = sendGetRequest(url);
-        Assert.assertEquals("{\"Error\":\"this API is unavailable due to config\"}",
-            response);
+        Assert.assertEquals("{\"Error\":\"this API is unavailable due to config\"}", response);
 
         Args.getInstance().setDisabledApiList(emptyList);
         int statusCode = getRequestCode(url);
