@@ -4,59 +4,26 @@ import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import java.util.List;
+import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.consensus.dpos.MaintenanceManager;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
-public class AccountVoteWitnessTest {
+public class AccountVoteWitnessTest extends BaseTest {
 
-  private static TronApplicationContext context;
-
-  private static Manager dbManager;
-  private static MaintenanceManager maintenanceManager;
-  private static String dbPath = "output_witness_test";
+  @Resource
+  private MaintenanceManager maintenanceManager;
 
   static {
+    dbPath = "output_witness_test";
     Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-  }
-
-  /**
-   * init db.
-   */
-  @BeforeClass
-  public static void init() {
-    dbManager = context.getBean(Manager.class);
-    maintenanceManager = context.getBean(MaintenanceManager.class);
-    // Args.setParam(new String[]{}, Constant.TEST_CONF);
-    //  dbManager = new Manager();
-    //  dbManager.init();
-  }
-
-  /**
-   * remo db when after test.
-   */
-  @AfterClass
-  public static void removeDb() {
-    Args.clearParam();
-    context.destroy();
-    File dbFolder = new File(dbPath);
-    if (deleteFolder(dbFolder)) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   private static Boolean deleteFolder(File index) {

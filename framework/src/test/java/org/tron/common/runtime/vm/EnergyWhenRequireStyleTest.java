@@ -1,24 +1,16 @@
 package org.tron.common.runtime.vm;
 
-import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
-import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.testng.Assert;
-import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
@@ -29,16 +21,17 @@ import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
+public class EnergyWhenRequireStyleTest extends BaseTest {
 
-public class EnergyWhenRequireStyleTest {
-
-  private Manager dbManager;
-  private TronApplicationContext context;
   private RepositoryImpl repository;
-  private String dbPath = "output_EnergyWhenRequireStyleTest";
-  private String OWNER_ADDRESS;
-  private Application AppT;
+  private static final String OWNER_ADDRESS;
   private long totalBalance = 30_000_000_000_000L;
+  
+  static {
+    dbPath = "output_EnergyWhenRequireStyleTest";
+    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
+    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
+  }
 
 
   /**
@@ -46,11 +39,6 @@ public class EnergyWhenRequireStyleTest {
    */
   @Before
   public void init() {
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-    AppT = ApplicationFactory.create(context);
-    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
-    dbManager = context.getBean(Manager.class);
     repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
     repository.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
     repository.addBalance(Hex.decode(OWNER_ADDRESS), totalBalance);
@@ -100,11 +88,10 @@ public class EnergyWhenRequireStyleTest {
         + "03e5763ffffffff7c0100000000000000000000000000000000000000000000000000000000600035041663"
         + "50bff6bf81146043575b600080fd5b348015604e57600080fd5b506055603e565b0000a165627a7a7230582"
         + "0f51282c5910e3ff1b5f2e9509f3cf23c7035027aae1947ab46e5a9252fb061eb0029";
-    String libraryAddressPair = null;
 
     TVMTestResult result = TvmTestUtils
         .deployContractAndReturnTvmTestResult(contractName, address, ABI, code, value, feeLimit,
-            consumeUserResourcePercent, libraryAddressPair, dbManager, null);
+            consumeUserResourcePercent, null, dbManager, null);
 
     long expectEnergyUsageTotal = 26275;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
@@ -120,8 +107,8 @@ public class EnergyWhenRequireStyleTest {
 
     long expectEnergyUsageTotal2 = 124;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
-    Assert.assertEquals(result.getRuntime().getResult().isRevert(), true);
-    Assert.assertTrue(result.getRuntime().getResult().getException() == null);
+    Assert.assertTrue(result.getRuntime().getResult().isRevert());
+    Assert.assertNull(result.getRuntime().getResult().getException());
     Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
         totalBalance - (expectEnergyUsageTotal + expectEnergyUsageTotal2) * 100);
 
@@ -153,11 +140,10 @@ public class EnergyWhenRequireStyleTest {
         + "03e5763ffffffff7c0100000000000000000000000000000000000000000000000000000000600035041663"
         + "357815c481146043575b600080fd5b348015604e57600080fd5b506055603e565b0000a165627a7a7230582"
         + "054141931bcc37d4f266815f02d2fb113f5af20825cbce45d3b0f2fe90ac0145d0029";
-    String libraryAddressPair = null;
 
     TVMTestResult result = TvmTestUtils
         .deployContractAndReturnTvmTestResult(contractName, address, ABI, code, value, feeLimit,
-            consumeUserResourcePercent, libraryAddressPair, dbManager, null);
+            consumeUserResourcePercent, null, dbManager, null);
 
     long expectEnergyUsageTotal = 26275;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
@@ -173,8 +159,8 @@ public class EnergyWhenRequireStyleTest {
 
     long expectEnergyUsageTotal2 = 124;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
-    Assert.assertEquals(result.getRuntime().getResult().isRevert(), true);
-    Assert.assertTrue(result.getRuntime().getResult().getException() == null);
+    Assert.assertTrue(result.getRuntime().getResult().isRevert());
+    Assert.assertNull(result.getRuntime().getResult().getException());
     Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
         totalBalance - (expectEnergyUsageTotal + expectEnergyUsageTotal2) * 100);
 
@@ -217,11 +203,10 @@ public class EnergyWhenRequireStyleTest {
         + "000000000000000028152600401600060405180830381600088803b15801560db57600080fd5b5087f11580"
         + "1560ee573d6000803e3d6000fd5b50505050505600a165627a7a7230582087d830c44fb566498789b212e3d"
         + "0374f7a7589a2efdda11b3a4c03051b57891a0029";
-    String libraryAddressPair = null;
 
     TVMTestResult result = TvmTestUtils
         .deployContractAndReturnTvmTestResult(contractName, address, ABI, code, value, feeLimit,
-            consumeUserResourcePercent, libraryAddressPair, dbManager, null);
+            consumeUserResourcePercent, null, dbManager, null);
 
     long expectEnergyUsageTotal = 57905;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
@@ -237,8 +222,8 @@ public class EnergyWhenRequireStyleTest {
 
     long expectEnergyUsageTotal2 = 5339;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
-    Assert.assertEquals(result.getRuntime().getResult().isRevert(), true);
-    Assert.assertTrue(result.getRuntime().getResult().getException() == null);
+    Assert.assertTrue(result.getRuntime().getResult().isRevert());
+    Assert.assertNull(result.getRuntime().getResult().getException());
     Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
         totalBalance - (expectEnergyUsageTotal + expectEnergyUsageTotal2) * 100);
 
@@ -294,11 +279,10 @@ public class EnergyWhenRequireStyleTest {
         + "0006000350416632b813bc081146043575b600080fd5b348015604e57600080fd5b5060556057565b005bfe"
         + "00a165627a7a72305820c02c76575c2a0ada80c3f6db47f885cece6c254d1e7c79eb6ddc1c1d4e70ebae002"
         + "9a165627a7a72305820cf879e62f738b44636adf61bd4b2fb38c10f027d2a4484d58baf44a06dc97bd90029";
-    String libraryAddressPair = null;
 
     TVMTestResult result = TvmTestUtils
         .deployContractAndReturnTvmTestResult(contractName, address, ABI, code, value, feeLimit,
-            consumeUserResourcePercent, libraryAddressPair, dbManager, null);
+            consumeUserResourcePercent, null, dbManager, null);
 
     long expectEnergyUsageTotal = 97341;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
@@ -314,8 +298,8 @@ public class EnergyWhenRequireStyleTest {
 
     long expectEnergyUsageTotal2 = 64125;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
-    Assert.assertEquals(result.getRuntime().getResult().isRevert(), true);
-    Assert.assertTrue(result.getRuntime().getResult().getException() == null);
+    Assert.assertTrue(result.getRuntime().getResult().isRevert());
+    Assert.assertNull(result.getRuntime().getResult().getException());
     Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
         totalBalance - (expectEnergyUsageTotal + expectEnergyUsageTotal2) * 100);
 
@@ -356,11 +340,10 @@ public class EnergyWhenRequireStyleTest {
         + "10066610087565b604051809103906000f080158015610082573d6000803e3d6000fd5b505050565b604051"
         + "6013806100978339019056006080604052348015600f57600080fd5b50fe00a165627a7a72305820685ff8f"
         + "74890f671deb4d3881a4b72ab0daac2ab0d36112e1ebdf98a43ac4d940029";
-    String libraryAddressPair = null;
 
     TVMTestResult result = TvmTestUtils
         .deployContractAndReturnTvmTestResult(contractName, address, ABI, code, value, feeLimit,
-            consumeUserResourcePercent, libraryAddressPair, dbManager, null);
+            consumeUserResourcePercent, null, dbManager, null);
 
     long expectEnergyUsageTotal = 42687;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
@@ -377,7 +360,7 @@ public class EnergyWhenRequireStyleTest {
     long expectEnergyUsageTotal2 = feeLimit / 100;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
     // todo: revert should be true!! see later
-    Assert.assertEquals(result.getRuntime().getResult().isRevert(), false);
+    Assert.assertFalse(result.getRuntime().getResult().isRevert());
     Assert
         .assertTrue(result.getRuntime().getResult().getException() instanceof OutOfEnergyException);
     Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
@@ -433,22 +416,21 @@ public class EnergyWhenRequireStyleTest {
         + "4052348015600f57600080fd5b500000a165627a7a72305820a82006ee5ac783bcea7085501eaed33360b31"
         + "20278f1f39e611afedc9f4a693b0029a165627a7a72305820a50d9536f182fb6aefc737fdc3a675630e75a0"
         + "8de88deb6b1bee6d4b6dff04730029";
-    String libraryAddressPair = null;
 
     TVMTestResult result = TvmTestUtils
         .deployContractAndReturnTvmTestResult(contractName, address, ABI, code, value, feeLimit,
-            consumeUserResourcePercent, libraryAddressPair, dbManager, null);
+            consumeUserResourcePercent, null, dbManager, null);
 
     long expectEnergyUsageTotal = 42;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
-    Assert.assertEquals(result.getRuntime().getResult().isRevert(), true);
-    Assert.assertTrue(result.getRuntime().getResult().getException() == null);
+    Assert.assertTrue(result.getRuntime().getResult().isRevert());
+    Assert.assertNull(result.getRuntime().getResult().getException());
     Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
         totalBalance - expectEnergyUsageTotal * 100);
 
     result = TvmTestUtils
         .deployContractAndReturnTvmTestResult(contractName, address, ABI, code, 0, feeLimit,
-            consumeUserResourcePercent, libraryAddressPair, dbManager, null);
+            consumeUserResourcePercent, null, dbManager, null);
     byte[] contractAddress = result.getContractAddress();
     long expectEnergyUsageTotal2 = 100341;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
@@ -462,18 +444,10 @@ public class EnergyWhenRequireStyleTest {
 
     long expectEnergyUsageTotal3 = 51833;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal3);
-    Assert.assertEquals(result.getRuntime().getResult().isRevert(), true);
-    Assert.assertTrue(result.getRuntime().getResult().getException() == null);
+    Assert.assertTrue(result.getRuntime().getResult().isRevert());
+    Assert.assertNull(result.getRuntime().getResult().getException());
     Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(), totalBalance
         - (expectEnergyUsageTotal + expectEnergyUsageTotal2 + expectEnergyUsageTotal3) * 100);
-
-  }
-
-  @Test
-  @Ignore
-  public void transferTest()
-      throws ContractExeException, ReceiptCheckErrException, ContractValidateException {
-    // done in EnergyWhenSendAndTransferTest
 
   }
 
@@ -512,11 +486,10 @@ public class EnergyWhenRequireStyleTest {
         + "6312065fe08114604d578063a26388bb146071575b600080fd5b348015605857600080fd5b50605f6085565"
         + "b60408051918252519081900360200190f35b348015607c57600080fd5b5060836048565b005b3031905600"
         + "a165627a7a7230582059cab3a7a5851a7852c728ec8729456a04dc022674976f3f26bfd51491dbf1080029";
-    String libraryAddressPair = null;
 
     TVMTestResult result = TvmTestUtils
         .deployContractAndReturnTvmTestResult(contractName, address, ABI, code, value, feeLimit,
-            consumeUserResourcePercent, libraryAddressPair, dbManager, null);
+            consumeUserResourcePercent, null, dbManager, null);
 
     long expectEnergyUsageTotal = 36481;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
@@ -532,30 +505,10 @@ public class EnergyWhenRequireStyleTest {
 
     long expectEnergyUsageTotal2 = 146;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
-    Assert.assertEquals(result.getRuntime().getResult().isRevert(), true);
-    Assert.assertTrue(result.getRuntime().getResult().getException() == null);
+    Assert.assertTrue(result.getRuntime().getResult().isRevert());
+    Assert.assertNull(result.getRuntime().getResult().getException());
     Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
         totalBalance - (expectEnergyUsageTotal + expectEnergyUsageTotal2) * 100);
-  }
-
-  @Test
-  @Ignore
-  public void reach64CallDepth() {
-    // done in ChargeTest
-  }
-
-  /**
-   * Release resources.
-   */
-  @After
-  public void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
 }

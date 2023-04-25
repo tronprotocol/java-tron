@@ -148,10 +148,14 @@ public class TronNetService {
   }
 
   private P2pConfig getConfig() {
+    P2pConfig config = new P2pConfig();
+    return updateConfig(config);
+  }
+
+  private P2pConfig updateConfig(P2pConfig config) {
     List<InetSocketAddress> seeds = parameter.getSeedNode().getAddressList();
     seeds.addAll(nodePersistService.dbRead());
     logger.debug("Seed InetSocketAddress: {}", seeds);
-    P2pConfig config = new P2pConfig();
     config.getSeedNodes().addAll(seeds);
     config.getActiveNodes().addAll(parameter.getActiveNodes());
     config.getTrustNodes().addAll(parameter.getPassiveNodes());
