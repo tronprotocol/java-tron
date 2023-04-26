@@ -7,6 +7,8 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Map;
 import org.junit.After;
 import org.junit.Assert;
@@ -37,6 +39,8 @@ public class SyncServiceTest {
   private P2pEventHandlerImpl p2pEventHandler;
   private ApplicationContext ctx;
   private String dbPath = "output-sync-service-test";
+  private InetSocketAddress inetSocketAddress =
+          new InetSocketAddress("127.0.0.2", 10001);
 
   public SyncServiceTest() {
   }
@@ -74,14 +78,17 @@ public class SyncServiceTest {
       Assert.assertTrue((boolean) ReflectUtils.getFieldObject(service, "handleFlag"));
       peer = context.getBean(PeerConnection.class);
       Assert.assertNull(peer.getSyncChainRequested());
+
       Channel c1 = new Channel();
-      InetSocketAddress a1 = new InetSocketAddress("127.0.0.1", 10001);
-      Field field = c1.getClass().getDeclaredField("inetSocketAddress");
-      field.setAccessible(true);
-      field.set(c1, a1.getAddress());
+      ReflectUtils.setFieldValue(c1, "inetSocketAddress", inetSocketAddress);
+      ReflectUtils.setFieldValue(c1, "inetAddress", inetSocketAddress.getAddress());
+
       peer.setChannel(c1);
+
       service.startSync(peer);
+
       ReflectUtils.setFieldValue(peer, "tronState", TronState.SYNCING);
+
       service.startSync(peer);
     } catch (Exception e) {
       // no need to deal with
@@ -90,14 +97,12 @@ public class SyncServiceTest {
   }
 
   @Test
-  public void testProcessBlock() throws Exception {
+  public void testProcessBlock() {
     peer = context.getBean(PeerConnection.class);
     Assert.assertNull(peer.getSyncChainRequested());
     Channel c1 = new Channel();
-    InetSocketAddress a1 = new InetSocketAddress("127.0.0.1", 10001);
-    Field field = c1.getClass().getDeclaredField("inetSocketAddress");
-    field.setAccessible(true);
-    field.set(c1, a1.getAddress());
+    ReflectUtils.setFieldValue(c1, "inetSocketAddress", inetSocketAddress);
+    ReflectUtils.setFieldValue(c1, "inetAddress", inetSocketAddress.getAddress());
     peer.setChannel(c1);
     service.processBlock(peer,
             new BlockMessage(new BlockCapsule(Protocol.Block.newBuilder().build())));
@@ -108,28 +113,29 @@ public class SyncServiceTest {
   }
 
   @Test
-  public void testOnDisconnect() throws Exception {
+  public void testOnDisconnect() {
     Cache<BlockCapsule.BlockId, PeerConnection> requestBlockIds =
             (Cache) ReflectUtils.getFieldObject(service, "requestBlockIds");
     peer = context.getBean(PeerConnection.class);
     Assert.assertNull(peer.getSyncChainRequested());
-    Channel c1 = new Channel();
-    InetSocketAddress a1 = new InetSocketAddress("127.0.0.1", 10001);
-    Field field = c1.getClass().getDeclaredField("inetSocketAddress");
-    field.setAccessible(true);
-    field.set(c1, a1.getAddress());
+    Channel c1 = mock(Channel.class);
+    Mockito.when(c1.getInetSocketAddress()).thenReturn(inetSocketAddress);
+    Mockito.when(c1.getInetAddress()).thenReturn(inetSocketAddress.getAddress());
     peer.setChannel(c1);
     BlockCapsule.BlockId blockId = new BlockCapsule.BlockId();
     requestBlockIds.put(blockId, peer);
-    peer.getSyncBlockToFetch().push(blockId);
+    peer.getSyncBlockRequested().put(blockId, System.currentTimeMillis());
     service.onDisconnect(peer);
     Assert.assertTrue(requestBlockIds.getIfPresent(blockId) == null);
   }
 
   @Test
   public void testStartFetchSyncBlock() throws Exception {
+    Field field = PeerManager.class.getDeclaredField("peers");
+    field.setAccessible(true);
+    field.set(PeerManager.class, Collections.synchronizedList(new ArrayList<>()));
+
     BlockCapsule.BlockId blockId = new BlockCapsule.BlockId();
-    InetSocketAddress a1 = new InetSocketAddress("127.0.0.1", 10001);
 
     Method method = service.getClass().getDeclaredMethod("startFetchSyncBlock");
     method.setAccessible(true);
@@ -139,8 +145,8 @@ public class SyncServiceTest {
                     ReflectUtils.getFieldObject(service, "requestBlockIds");
 
     Channel c1 = mock(Channel.class);
-    Mockito.when(c1.getInetSocketAddress()).thenReturn(a1);
-    Mockito.when(c1.getInetAddress()).thenReturn(a1.getAddress());
+    Mockito.when(c1.getInetSocketAddress()).thenReturn(inetSocketAddress);
+    Mockito.when(c1.getInetAddress()).thenReturn(inetSocketAddress.getAddress());
 
     PeerManager.add(ctx, c1);
     peer = PeerManager.getPeers().get(0);
@@ -166,6 +172,11 @@ public class SyncServiceTest {
 
   @Test
   public void testHandleSyncBlock() throws Exception {
+
+    Field field = PeerManager.class.getDeclaredField("peers");
+    field.setAccessible(true);
+    field.set(PeerManager.class, Collections.synchronizedList(new ArrayList<>()));
+
     Method method = service.getClass().getDeclaredMethod("handleSyncBlock");
     method.setAccessible(true);
 
