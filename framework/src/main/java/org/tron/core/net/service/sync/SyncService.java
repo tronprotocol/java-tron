@@ -251,12 +251,11 @@ public class SyncService {
     }
 
     final boolean[] isProcessed = {true};
-    final long[] solidNum = {0};
+    long solidNum = tronNetDelegate.getSolidBlockId().getNum();;
 
     while (isProcessed[0]) {
 
       isProcessed[0] = false;
-      solidNum[0] = tronNetDelegate.getSolidBlockId().getNum();
 
       blockWaitToProcess.forEach((msg, peerConnection) -> {
         synchronized (tronNetDelegate.getBlockLock()) {
@@ -265,7 +264,7 @@ public class SyncService {
             invalid(msg.getBlockId(), peerConnection);
             return;
           }
-          if (msg.getBlockId().getNum() <= solidNum[0]) {
+          if (msg.getBlockId().getNum() <= solidNum) {
             blockWaitToProcess.remove(msg);
             return;
           }
