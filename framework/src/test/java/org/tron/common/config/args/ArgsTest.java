@@ -37,5 +37,6 @@ public class ArgsTest {
     Assert.assertEquals(Args.getInstance().getRateLimiterGlobalQps(), 50000);
     Assert.assertEquals(Args.getInstance().getRateLimiterGlobalIpQps(), 10000);
     Assert.assertEquals(Args.getInstance().p2pDisable, true);
+    Assert.assertEquals(Args.getInstance().getMaxTps(), 1000);
   }
 }

@@ -135,6 +135,7 @@ public class Args extends CommonParameter {
     PARAMETER.minConnections = 8;
     PARAMETER.minActiveConnections = 3;
     PARAMETER.maxConnectionsWithSameIp = 2;
+    PARAMETER.maxTps = 1000;
     PARAMETER.minParticipationRate = 0;
     PARAMETER.nodeListenPort = 0;
     PARAMETER.nodeDiscoveryBindIp = "";
@@ -620,6 +621,9 @@ public class Args extends CommonParameter {
               config.hasPath(Constant.NODE_MAX_CONNECTIONS_WITH_SAME_IP) ? config
                       .getInt(Constant.NODE_MAX_CONNECTIONS_WITH_SAME_IP) : 2;
     }
+
+    PARAMETER.maxTps = config.hasPath(Constant.NODE_MAX_TPS)
+            ? config.getInt(Constant.NODE_MAX_TPS) : 1000;
 
     PARAMETER.minParticipationRate =
         config.hasPath(Constant.NODE_MIN_PARTICIPATION_RATE)
