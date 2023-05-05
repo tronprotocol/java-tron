@@ -146,6 +146,7 @@ public class Args extends CommonParameter {
     PARAMETER.nodeEnableIpv6 = false;
     PARAMETER.dnsTreeUrls = new ArrayList<>();
     PARAMETER.dnsPublishConfig = null;
+    PARAMETER.syncFetchBatchNum = 1000;
     PARAMETER.rpcPort = 0;
     PARAMETER.rpcOnSolidityPort = 0;
     PARAMETER.rpcOnPBFTPort = 0;
@@ -656,6 +657,15 @@ public class Args extends CommonParameter {
         Constant.NODE_DNS_TREE_URLS) : new ArrayList<>();
 
     PARAMETER.dnsPublishConfig = loadDnsPublishConfig(config);
+
+    PARAMETER.syncFetchBatchNum = config.hasPath(Constant.NODE_SYNC_FETCH_BATCH_NUM) ? config
+        .getInt(Constant.NODE_SYNC_FETCH_BATCH_NUM) : 1000;
+    if (PARAMETER.syncFetchBatchNum > 2000) {
+      PARAMETER.syncFetchBatchNum = 2000;
+    }
+    if (PARAMETER.syncFetchBatchNum < 100) {
+      PARAMETER.syncFetchBatchNum = 100;
+    }
 
     PARAMETER.rpcPort =
         config.hasPath(Constant.NODE_RPC_PORT)

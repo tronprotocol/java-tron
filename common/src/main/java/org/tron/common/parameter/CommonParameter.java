@@ -199,6 +199,9 @@ public class CommonParameter {
   @Getter
   @Setter
   public PublishConfig dnsPublishConfig;
+  @Getter
+  @Setter
+  public long syncFetchBatchNum;
 
   //If you are running a solidity node for java tron, this flag is set to true
   @Getter

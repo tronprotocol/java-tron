@@ -90,6 +90,7 @@ public class Constant {
   public static final String NODE_MAX_CONNECTIONS = "node.maxConnections";
   public static final String NODE_MIN_CONNECTIONS = "node.minConnections";
   public static final String NODE_MIN_ACTIVE_CONNECTIONS = "node.minActiveConnections";
+  public static final String NODE_SYNC_FETCH_BATCH_NUM = "node.syncFetchBatchNum";
 
   public static final String NODE_MAX_ACTIVE_NODES = "node.maxActiveNodes";
   public static final String NODE_MAX_ACTIVE_NODES_WITH_SAME_IP = "node.maxActiveNodesWithSameIp";
