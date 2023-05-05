@@ -251,7 +251,7 @@ public class SyncService {
     }
 
     final boolean[] isProcessed = {true};
-    long solidNum = tronNetDelegate.getSolidBlockId().getNum();;
+    long solidNum = tronNetDelegate.getSolidBlockId().getNum();
 
     while (isProcessed[0]) {
 

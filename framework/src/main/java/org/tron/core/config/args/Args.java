@@ -146,7 +146,7 @@ public class Args extends CommonParameter {
     PARAMETER.nodeEnableIpv6 = false;
     PARAMETER.dnsTreeUrls = new ArrayList<>();
     PARAMETER.dnsPublishConfig = null;
-    PARAMETER.syncFetchBatchNum = 1000;
+    PARAMETER.syncFetchBatchNum = 2000;
     PARAMETER.rpcPort = 0;
     PARAMETER.rpcOnSolidityPort = 0;
     PARAMETER.rpcOnPBFTPort = 0;
