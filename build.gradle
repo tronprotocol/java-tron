@@ -48,6 +48,8 @@ subprojects {
         compile "com.google.code.findbugs:jsr305:3.0.0"
         compile group: 'org.springframework', name: 'spring-context', version: '5.3.18'
         compile group: 'org.springframework', name: 'spring-tx', version: '5.3.18'
+        testImplementation group: 'org.springframework', name: 'spring-test', version: '5.3.18'
+        testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.9.1'
         compile "org.apache.commons:commons-lang3:3.12.0"
         compile group: 'org.apache.commons', name: 'commons-math', version: '2.2'
         compile "org.apache.commons:commons-collections4:4.1"

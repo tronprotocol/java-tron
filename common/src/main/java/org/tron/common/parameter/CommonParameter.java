@@ -459,10 +459,22 @@ public class CommonParameter {
   public String cryptoEngine = Constant.ECKey_ENGINE;
   @Getter
   @Setter
+  public boolean fullNodeRpcEnable = true;
+  @Getter
+  @Setter
+  public boolean solidityNodeRpcEnable = true;
+  @Getter
+  @Setter
+  public boolean PBFTNodeRpcEnable = true;
+  @Getter
+  @Setter
   public boolean fullNodeHttpEnable = true;
   @Getter
   @Setter
   public boolean solidityNodeHttpEnable = true;
+  @Getter
+  @Setter
+  public boolean PBFTNodeHttpEnable = true;
   @Getter
   @Setter
   public boolean jsonRpcHttpFullNodeEnable = false;

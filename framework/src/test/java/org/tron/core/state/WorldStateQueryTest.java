@@ -2,17 +2,23 @@ package org.tron.core.state;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import java.io.File;
-import java.nio.charset.StandardCharsets;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.rules.TemporaryFolder;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
@@ -21,7 +27,6 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.WalletUtil;
@@ -48,34 +53,36 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.BalanceContract;
 
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class WorldStateQueryTest {
   private static TronApplicationContext context;
   private static Application appTest;
   private static ChainBaseManager chainBaseManager;
   private static Manager manager;
 
-  private static String dbPath = "output-directory-state";
   private static TronJsonRpc tronJsonRpc;
   private static final long TOKEN_ID1 = 1000001L;
   private static final long TOKEN_ID2 = 1000002L;
 
-  private ECKey account1Prikey = ECKey.fromPrivate(ByteArray.fromHexString(
-      "D95611A9AF2A2A45359106222ED1AFED48853D9A44DEFF8DC7913F5CBA727366"));
-  private ECKey account2Prikey = ECKey.fromPrivate(ByteArray.fromHexString(
-      "cba92a516ea09f620a16ff7ee95ce0df1d56550a8babe9964981a7144c8a784a"));
+  private static ECKey account1Prikey = new ECKey();
+  private static ECKey account2Prikey = new ECKey();
 
   byte[] contractAddress;
   private static WorldStateCallBack worldStateCallBack;
+
+  @ClassRule
+  public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   /**
    * init logic.
    */
   @BeforeClass
-  public static void init() {
-    if (FileUtil.isExists(dbPath)) {
-      FileUtil.deleteDir(new File(dbPath));
-    }
-    Args.setParam(new String[]{"-d", dbPath}, "config-localtest.conf");
+  public static void init() throws IOException {
+
+    Args.setParam(new String[]{"-d", temporaryFolder.newFolder().toString()},
+        "config-localtest.conf");
     // disable p2p
     Args.getInstance().setP2pDisable(true);
     // allow account root
@@ -95,13 +102,26 @@ public class WorldStateQueryTest {
     worldStateCallBack.setExecute(false);
     manager = context.getBean(Manager.class);
     tronJsonRpc = context.getBean(TronJsonRpc.class);
+
+    Protocol.Account acc = Protocol.Account.newBuilder()
+        .setAccountName(ByteString.copyFrom(Objects.requireNonNull(ByteArray.fromString("acc"))))
+        .setAddress(ByteString.copyFrom(account1Prikey.getAddress()))
+        .setType(Protocol.AccountType.AssetIssue)
+        .setBalance(10000000000000000L).build();
+    Protocol.Account sun = Protocol.Account.newBuilder()
+        .setAccountName(ByteString.copyFrom(Objects.requireNonNull(ByteArray.fromString("sun"))))
+        .setAddress(ByteString.copyFrom(account2Prikey.getAddress()))
+        .setType(Protocol.AccountType.AssetIssue)
+        .setBalance(10000000000000000L).build();
+    chainBaseManager.getAccountStore().put(account1Prikey.getAddress(), new AccountCapsule(acc));
+    chainBaseManager.getAccountStore().put(account2Prikey.getAddress(), new AccountCapsule(sun));
+
   }
 
   @AfterClass
   public static void destroy() {
-    appTest.shutdown();
+    context.destroy();
     Args.clearParam();
-    FileUtil.deleteDir(new File(dbPath));
   }
 
   public void createAsset() {
