@@ -6,8 +6,6 @@ import com.beust.jcommander.internal.Lists;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -16,7 +14,11 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.rules.TemporaryFolder;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.config.DbBackupConfig;
 import org.tron.common.crypto.ECKey;
@@ -47,6 +49,9 @@ import org.tron.core.vm.program.Storage;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.SmartContractOuterClass;
 
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class WorldStateQueryInstanceTest {
 
   private WorldStateQueryInstance instance;
@@ -70,8 +75,6 @@ public class WorldStateQueryInstanceTest {
     // init dbBackupConfig to avoid NPE
     Args.getInstance().dbBackupConfig = DbBackupConfig.getInstance();
     context = new TronApplicationContext(DefaultConfig.class);
-    Path parentPath = temporaryFolder.newFolder().toPath();
-    Path dbPath = Paths.get(parentPath.toString());
     chainBaseManager = context.getBean(ChainBaseManager.class);
     worldStateTrieStore = chainBaseManager.getWorldStateTrieStore();
   }
