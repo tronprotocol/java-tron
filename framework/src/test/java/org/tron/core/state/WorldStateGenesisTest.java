@@ -1,18 +1,23 @@
 package org.tron.core.state;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
+import java.io.IOException;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.rules.TemporaryFolder;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.config.DbBackupConfig;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
@@ -20,23 +25,26 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.HeaderNotFound;
 
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class WorldStateGenesisTest {
   private static TronApplicationContext context;
   private static Application appTest;
   private static ChainBaseManager chainBaseManager;
   private static WorldStateGenesis worldStateGenesis;
 
-  private static String dbPath = "output-directory-state-genesis";
+  @Rule
+  public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   /**
    * init logic.
    */
   @Before
-  public void init() {
-    if (FileUtil.isExists(dbPath)) {
-      FileUtil.deleteDir(new File(dbPath));
-    }
-    Args.setParam(new String[]{"-d", dbPath}, "config-localtest.conf");
+  public void init() throws IOException {
+
+    Args.setParam(new String[]{"-d",  temporaryFolder.newFolder().toString()},
+        "config-localtest.conf");
     // allow account root
     Args.getInstance().setAllowAccountStateRoot(1);
     // init dbBackupConfig to avoid NPE
@@ -50,9 +58,8 @@ public class WorldStateGenesisTest {
 
   @After
   public void destroy() {
-    appTest.shutdown();
+    context.destroy();
     Args.clearParam();
-    FileUtil.deleteDir(new File(dbPath));
   }
 
   @Test
