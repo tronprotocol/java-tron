@@ -371,4 +371,6 @@ public class Constant {
 
   public static final String DYNAMIC_CONFIG_ENABLE = "node.dynamicConfig.enable";
   public static final String DYNAMIC_CONFIG_CHECK_INTERVAL = "node.dynamicConfig.checkInterval";
+
+  public static final String COMMITTEE_ALLOW_TVM_SHANGHAI = "committee.allowTvmShangHai";
 }

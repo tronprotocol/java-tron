@@ -206,6 +206,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID =
       "ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID".getBytes();
 
+  private static final byte[] ALLOW_TVM_SHANGHAI = "ALLOW_TVM_SHANGHAI".getBytes();
+
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -2753,6 +2755,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException(msg));
+  }
+
+  public void saveAllowTvmShangHai(long allowTvmShangHai) {
+    this.put(DynamicPropertiesStore.ALLOW_TVM_SHANGHAI,
+        new BytesCapsule(ByteArray.fromLong(allowTvmShangHai)));
+  }
+
+  public long getAllowTvmShangHai() {
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_SHANGHAI))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(CommonParameter.getInstance().getAllowTvmShangHai());
   }
 
   private static class DynamicResourceProperties {

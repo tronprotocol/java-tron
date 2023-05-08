@@ -1316,6 +1316,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getDynamicEnergyMaxFactor())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowTvmShangHai")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmShangHai())
+        .build());
+
     return builder.build();
   }
 
