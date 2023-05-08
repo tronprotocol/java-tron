@@ -630,7 +630,7 @@ public class OperationRegistry {
     BooleanSupplier proposal = VMConfig::allowTvmShanghai;
 
     table.set(new Operation(
-        Op.PUSH0, 0, 0,
+        Op.PUSH0, 0, 1,
         EnergyCost::getBaseTierCost,
         OperationActions::push0Action,
         proposal));
