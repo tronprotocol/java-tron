@@ -183,10 +183,20 @@ public class SyncServiceTest {
     Map<BlockMessage, PeerConnection> blockJustReceived =
             (Map<BlockMessage, PeerConnection>)
             ReflectUtils.getFieldObject(service, "blockJustReceived");
+    Protocol.BlockHeader.raw.Builder blockHeaderRawBuild = Protocol.BlockHeader.raw.newBuilder();
+    Protocol.BlockHeader.raw blockHeaderRaw = blockHeaderRawBuild
+        .setNumber(100000)
+        .build();
 
-    BlockCapsule blockCapsule = new BlockCapsule(Protocol.Block.newBuilder().build());
+    // block header
+    Protocol.BlockHeader.Builder blockHeaderBuild = Protocol.BlockHeader.newBuilder();
+    Protocol.BlockHeader blockHeader = blockHeaderBuild.setRawData(blockHeaderRaw).build();
+
+    BlockCapsule blockCapsule = new BlockCapsule(Protocol.Block.newBuilder()
+        .setBlockHeader(blockHeader).build());
 
     BlockCapsule.BlockId blockId = blockCapsule.getBlockId();
+
 
     InetSocketAddress a1 = new InetSocketAddress("127.0.0.1", 10001);
     Channel c1 = mock(Channel.class);

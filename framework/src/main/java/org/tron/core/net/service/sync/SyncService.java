@@ -21,7 +21,6 @@ import org.springframework.stereotype.Component;
 import org.tron.common.utils.Pair;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
@@ -64,6 +63,8 @@ public class SyncService {
 
   @Setter
   private volatile boolean fetchFlag = false;
+
+  private final long syncFetchBatchNum = Args.getInstance().getSyncFetchBatchNum();
 
   public void init() {
     fetchExecutor.scheduleWithFixedDelay(() -> {
@@ -132,7 +133,7 @@ public class SyncService {
     handleFlag = true;
     if (peer.isIdle()) {
       if (peer.getRemainNum() > 0
-          && peer.getSyncBlockToFetch().size() <= NetConstants.SYNC_FETCH_BATCH_NUM) {
+          && peer.getSyncBlockToFetch().size() <= syncFetchBatchNum) {
         syncNext(peer);
       } else {
         fetchFlag = true;
@@ -250,6 +251,7 @@ public class SyncService {
     }
 
     final boolean[] isProcessed = {true};
+    long solidNum = tronNetDelegate.getSolidBlockId().getNum();
 
     while (isProcessed[0]) {
 
@@ -260,6 +262,10 @@ public class SyncService {
           if (peerConnection.isDisconnect()) {
             blockWaitToProcess.remove(msg);
             invalid(msg.getBlockId(), peerConnection);
+            return;
+          }
+          if (msg.getBlockId().getNum() <= solidNum) {
+            blockWaitToProcess.remove(msg);
             return;
           }
           final boolean[] isFound = {false};
