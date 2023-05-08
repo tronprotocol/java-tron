@@ -973,9 +973,7 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.RATE_LIMITER_GLOBAL_IP_QPS) ? config
             .getInt(Constant.RATE_LIMITER_GLOBAL_IP_QPS) : 10000;
 
-    PARAMETER.rateLimiterInitialization =
-        config.hasPath(Constant.RATE_LIMITER) ? getRateLimiterFromConfig(config)
-            : new RateLimiterInitialization();
+    PARAMETER.rateLimiterInitialization = getRateLimiterFromConfig(config);
 
     PARAMETER.changedDelegation =
         config.hasPath(Constant.COMMITTEE_CHANGED_DELEGATION) ? config
@@ -1214,21 +1212,22 @@ public class Args extends CommonParameter {
   }
 
   private static RateLimiterInitialization getRateLimiterFromConfig(
-      final com.typesafe.config.Config config) {
-
+          final com.typesafe.config.Config config) {
     RateLimiterInitialization initialization = new RateLimiterInitialization();
-    ArrayList<RateLimiterInitialization.HttpRateLimiterItem> list1 = config
-        .getObjectList(Constant.RATE_LIMITER_HTTP).stream()
-        .map(RateLimiterInitialization::createHttpItem)
-        .collect(Collectors.toCollection(ArrayList::new));
-    initialization.setHttpMap(list1);
-
-    ArrayList<RateLimiterInitialization.RpcRateLimiterItem> list2 = config
-        .getObjectList(Constant.RATE_LIMITER_RPC).stream()
-        .map(RateLimiterInitialization::createRpcItem)
-        .collect(Collectors.toCollection(ArrayList::new));
-
-    initialization.setRpcMap(list2);
+    if (config.hasPath(Constant.RATE_LIMITER_HTTP)) {
+      ArrayList<RateLimiterInitialization.HttpRateLimiterItem> list1 = config
+              .getObjectList(Constant.RATE_LIMITER_HTTP).stream()
+              .map(RateLimiterInitialization::createHttpItem)
+              .collect(Collectors.toCollection(ArrayList::new));
+      initialization.setHttpMap(list1);
+    }
+    if (config.hasPath(Constant.RATE_LIMITER_RPC)) {
+      ArrayList<RateLimiterInitialization.RpcRateLimiterItem> list2 = config
+              .getObjectList(Constant.RATE_LIMITER_RPC).stream()
+              .map(RateLimiterInitialization::createRpcItem)
+              .collect(Collectors.toCollection(ArrayList::new));
+      initialization.setRpcMap(list2);
+    }
     return initialization;
   }
 
