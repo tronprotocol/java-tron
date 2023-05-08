@@ -165,6 +165,9 @@ public class CommonParameter {
   public int maxConnectionsWithSameIp;
   @Getter
   @Setter
+  public int maxTps;
+  @Getter
+  @Setter
   public int minParticipationRate;
   @Getter
   @Setter
