@@ -1,88 +1,61 @@
 package org.tron.core.services.filter;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Resource;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.tron.common.BaseTest;
 import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
-import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.common.utils.FileUtil;
-import org.tron.common.utils.ReflectUtils;
 import org.tron.core.Constant;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.services.interfaceOnPBFT.http.PBFT.HttpApiOnPBFTService;
 import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidityService;
 
-public class HttpApiAccessFilterTest {
+public class HttpApiAccessFilterTest extends BaseTest {
 
-  private static final Logger logger = LoggerFactory.getLogger("Test");
+  @Resource
+  private Application appTest;
+  @Resource
+  private FullNodeHttpApiService httpApiService;
+  @Resource
+  private HttpApiOnSolidityService httpApiOnSolidityService;
+  @Resource
+  private HttpApiOnPBFTService httpApiOnPBFTService;
+  @Resource
+  private HttpApiAccessFilter httpApiAccessFilter;
+  private static final CloseableHttpClient httpClient = HttpClients.createDefault();
 
-  private static TronApplicationContext context;
-  private static Application appTest;
-  private static CloseableHttpClient httpClient = HttpClients.createDefault();
-  private static String dbPath = "output_http_api_access_filter_test";
-  private static HttpApiAccessFilter httpApiAccessFilter;
+  static {
+    dbPath = "output_http_api_access_filter_test";
+    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
+    Args.getInstance().setFullNodeAllowShieldedTransactionArgs(false);
+  }
 
   /**
    * init dependencies.
    */
-  @BeforeClass
-  public static void init() {
-    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
-    //Args.getInstance().setFullNodeAllowShieldedTransactionArgs(false);
-    context = new TronApplicationContext(DefaultConfig.class);
-    appTest = ApplicationFactory.create(context);
-    httpApiAccessFilter = context.getBean(HttpApiAccessFilter.class);
-    FullNodeHttpApiService httpApiService = context
-            .getBean(FullNodeHttpApiService.class);
-    HttpApiOnSolidityService httpApiOnSolidityService = context
-            .getBean(HttpApiOnSolidityService.class);
-    HttpApiOnPBFTService httpApiOnPBFTService = context
-            .getBean(HttpApiOnPBFTService.class);
-
+  @Before
+  public void init() {
     appTest.addService(httpApiService);
     appTest.addService(httpApiOnSolidityService);
     appTest.addService(httpApiOnPBFTService);
     appTest.initServices(Args.getInstance());
     appTest.startServices();
     appTest.startup();
-  }
-
-  /**
-   * destroy the context.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    appTest.shutdownServices();
-    appTest.shutdown();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   @Test
@@ -119,7 +92,7 @@ public class HttpApiAccessFilterTest {
             response);
 
         Args.getInstance().setDisabledApiList(emptyList);
-        int statusCode = getReuqestCode(url);
+        int statusCode = getRequestCode(url);
         Assert.assertEquals(HttpStatus.SC_OK, statusCode);
       }
     }
@@ -128,12 +101,12 @@ public class HttpApiAccessFilterTest {
   private String sendGetRequest(String url) {
     HttpGet request = new HttpGet(url);
     request.setHeader("User-Agent", "Java client");
-    HttpResponse response = null;
+    HttpResponse response;
     try {
       response = httpClient.execute(request);
       BufferedReader rd = new BufferedReader(
               new InputStreamReader(response.getEntity().getContent()));
-      StringBuffer result = new StringBuffer();
+      StringBuilder result = new StringBuilder();
       String line;
       while ((line = rd.readLine()) != null) {
         result.append(line);
@@ -145,10 +118,10 @@ public class HttpApiAccessFilterTest {
     return null;
   }
 
-  private int getReuqestCode(String url) {
+  private int getRequestCode(String url) {
     HttpGet request = new HttpGet(url);
     request.setHeader("User-Agent", "Java client");
-    HttpResponse response = null;
+    HttpResponse response;
 
     try {
       response = httpClient.execute(request);
@@ -179,11 +152,11 @@ public class HttpApiAccessFilterTest {
 
     url = "/wallet/a/b/../getnowblock";
     f = (boolean) privateMethod.invoke(httpApiAccessFilter,url);
-    Assert.assertTrue(!f);
+    Assert.assertFalse(f);
 
     url = "/wallet/getblock";
     f = (boolean) privateMethod.invoke(httpApiAccessFilter,url);
-    Assert.assertTrue(!f);
+    Assert.assertFalse(f);
   }
 
 }

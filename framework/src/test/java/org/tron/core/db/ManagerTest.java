@@ -4,6 +4,7 @@ import static org.tron.common.utils.Commons.adjustAssetBalanceV2;
 import static org.tron.common.utils.Commons.adjustBalance;
 import static org.tron.common.utils.Commons.adjustTotalShieldedPoolValue;
 import static org.tron.common.utils.Commons.getExchangeStoreFinal;
+import static org.tron.core.exception.BadBlockException.TypeEnum.CALC_MERKLE_ROOT_FAILED;
 
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
@@ -226,6 +227,13 @@ public class ManagerTest extends BlockGenerate {
       }
     }
 
+    try {
+      chainManager.getBlockIdByNum(-1);
+      Assert.fail();
+    } catch (ItemNotFoundException e) {
+      Assert.assertTrue(true);
+    }
+
     Assert.assertTrue("hasBlocks is error", chainManager.hasBlocks());
   }
 
@@ -392,6 +400,7 @@ public class ManagerTest extends BlockGenerate {
       Assert.assertTrue(false);
     } catch (BadBlockException e) {
       Assert.assertTrue(e instanceof BadBlockException);
+      Assert.assertTrue(e.getType().equals(CALC_MERKLE_ROOT_FAILED));
       Assert.assertEquals("The merkle hash is not validated for "
               + blockCapsule2.getNum(), e.getMessage());
     } catch (Exception e) {
@@ -930,5 +939,26 @@ public class ManagerTest extends BlockGenerate {
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(ByteArray.fromHexString(addressToProvateKeys.get(witnessAddress)));
     return blockCapsule;
+  }
+
+  @Test
+  public void testExpireTransaction() {
+    TransferContract tc =
+        TransferContract.newBuilder()
+            .setAmount(10)
+            .setOwnerAddress(ByteString.copyFromUtf8("aaa"))
+            .setToAddress(ByteString.copyFromUtf8("bbb"))
+            .build();
+    TransactionCapsule trx = new TransactionCapsule(tc, ContractType.TransferContract);
+    long latestBlockTime = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
+    trx.setExpiration(latestBlockTime - 100);
+    try {
+      dbManager.validateCommon(trx);
+      Assert.fail();
+    } catch (TransactionExpirationException e) {
+      Assert.assertTrue(true);
+    } catch (TooBigTransactionException e) {
+      Assert.fail();
+    }
   }
 }

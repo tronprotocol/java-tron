@@ -1,30 +1,30 @@
 package org.tron.core.db;
 
-import java.io.File;
-import org.junit.AfterClass;
+import javax.annotation.Resource;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.TransactionInfoCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.store.TransactionHistoryStore;
 
-public class TransactionHistoryTest {
+public class TransactionHistoryTest extends BaseTest {
 
   private static final byte[] transactionId = TransactionStoreTest.randomBytes(32);
-  private static String dbPath = "output_TransactionHistoryStore_test";
   private static String dbDirectory = "db_TransactionHistoryStore_test";
   private static String indexDirectory = "index_TransactionHistoryStore_test";
-  private static TronApplicationContext context;
-  private static TransactionHistoryStore transactionHistoryStore;
+  @Resource
+  private TransactionHistoryStore transactionHistoryStore;
+
+  private static TransactionInfoCapsule transactionInfoCapsule;
 
   static {
+    dbPath = "output_TransactionHistoryStore_test";
     Args.setParam(
         new String[]{
             "--output-directory", dbPath,
@@ -33,25 +33,20 @@ public class TransactionHistoryTest {
         },
         Constant.TEST_CONF
     );
-    context = new TronApplicationContext(DefaultConfig.class);
-  }
-
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
   }
 
   @BeforeClass
   public static void init() {
-    transactionHistoryStore = context.getBean(TransactionHistoryStore.class);
-    TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
-
+    transactionInfoCapsule = new TransactionInfoCapsule();
     transactionInfoCapsule.setId(transactionId);
     transactionInfoCapsule.setFee(1000L);
     transactionInfoCapsule.setBlockNumber(100L);
     transactionInfoCapsule.setBlockTimeStamp(200L);
+
+  }
+
+  @Before
+  public void before() {
     transactionHistoryStore.put(transactionId, transactionInfoCapsule);
   }
 
