@@ -1,7 +1,6 @@
 package org.tron.core.net;
 
 import static org.tron.core.net.message.MessageTypes.INVENTORY;
-import static org.tron.core.net.message.MessageTypes.TRX;
 
 import java.util.HashSet;
 import java.util.Set;
