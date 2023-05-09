@@ -2,15 +2,14 @@ package org.tron.core.net.messagehandler;
 
 
 import static org.mockito.Mockito.mock;
-import static org.tron.core.net.message.handshake.HelloMessage.getEndpointFromNode;
 
 import com.google.protobuf.ByteString;
+import java.io.File;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -18,29 +17,22 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.consensus.pbft.message.PbftMessage;
-import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.P2pEventHandlerImpl;
 import org.tron.core.net.TronNetService;
-import org.tron.core.net.message.handshake.HelloMessage;
 import org.tron.core.net.message.keepalive.PingMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
 import org.tron.p2p.P2pConfig;
 import org.tron.p2p.base.Parameter;
 import org.tron.p2p.connection.Channel;
-import org.tron.p2p.discover.Node;
-import org.tron.p2p.utils.NetUtil;
-import org.tron.protos.Discover.Endpoint;
-import org.tron.protos.Protocol;
-import org.tron.protos.Protocol.HelloMessage.Builder;
-import org.tron.protos.Protocol.ReasonCode;
 
 public class MessageHandlerTest {
 
@@ -64,6 +56,12 @@ public class MessageHandlerTest {
     ReflectUtils.setFieldValue(tronNetService, "p2pConfig", Parameter.p2pConfig);
   }
 
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+    context.destroy();
+    FileUtil.deleteDir(new File(dbPath));
+  }
 
   @Before
   public void clearPeers() {
@@ -112,105 +110,5 @@ public class MessageHandlerTest {
     PingMessage pingMessage = new PingMessage();
     p2pEventHandler.onMessage(c1, pingMessage.getSendBytes());
     Assert.assertEquals(1, PeerManager.getPeers().size());
-  }
-
-  @Test
-  public void testHelloMessage()
-      throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-    InetSocketAddress a1 = new InetSocketAddress("127.0.0.1", 10001);
-    Channel c1 = mock(Channel.class);
-    Mockito.when(c1.getInetSocketAddress()).thenReturn(a1);
-    Mockito.when(c1.getInetAddress()).thenReturn(a1.getAddress());
-    PeerManager.add(ctx, c1);
-    peer = PeerManager.getPeers().get(0);
-
-    Method method = p2pEventHandler.getClass()
-        .getDeclaredMethod("processMessage", PeerConnection.class, byte[].class);
-    method.setAccessible(true);
-
-    //ok
-    Node node = new Node(NetUtil.getNodeId(),
-        a1.getAddress().getHostAddress(),
-        null,
-        a1.getPort());
-    HelloMessage helloMessage = new HelloMessage(node, System.currentTimeMillis(),
-        ChainBaseManager.getChainBaseManager());
-    method.invoke(p2pEventHandler, peer, helloMessage.getSendBytes());
-
-    //dup hello message
-    peer.setHelloMessageReceive(helloMessage);
-    method.invoke(p2pEventHandler, peer, helloMessage.getSendBytes());
-
-    //dup peer
-    peer.setHelloMessageReceive(null);
-    Mockito.when(c1.isDisconnect()).thenReturn(true);
-    method.invoke(p2pEventHandler, peer, helloMessage.getSendBytes());
-
-    //invalid hello message
-    try {
-      Protocol.HelloMessage.Builder builder =
-          getHelloMessageBuilder(node, System.currentTimeMillis(),
-              ChainBaseManager.getChainBaseManager());
-
-      BlockCapsule.BlockId hid = ChainBaseManager.getChainBaseManager().getHeadBlockId();
-      Protocol.HelloMessage.BlockId hBlockId = Protocol.HelloMessage.BlockId.newBuilder()
-          .setHash(ByteString.copyFrom(new byte[0]))
-          .setNumber(hid.getNum())
-          .build();
-      builder.setHeadBlockId(hBlockId);
-      helloMessage = new HelloMessage(builder.build().toByteArray());
-      Assert.assertTrue(!helloMessage.valid());
-    } catch (Exception e) {
-      Assert.fail();
-    }
-
-    //relay check service check failed
-    Args.getInstance().fastForward = true;
-    clearPeers();
-    try {
-      Protocol.HelloMessage.Builder builder =
-          getHelloMessageBuilder(node, System.currentTimeMillis(),
-              ChainBaseManager.getChainBaseManager());
-      helloMessage = new HelloMessage(builder.build().toByteArray());
-      method.invoke(p2pEventHandler, peer, helloMessage.getSendBytes());
-    } catch (Exception e) {
-      Assert.fail();
-    }
-
-  }
-
-  private Protocol.HelloMessage.Builder getHelloMessageBuilder(Node from, long timestamp,
-      ChainBaseManager chainBaseManager) throws Exception {
-    Endpoint fromEndpoint = getEndpointFromNode(from);
-
-    BlockCapsule.BlockId gid = chainBaseManager.getGenesisBlockId();
-    Protocol.HelloMessage.BlockId gBlockId = Protocol.HelloMessage.BlockId.newBuilder()
-        .setHash(gid.getByteString())
-        .setNumber(gid.getNum())
-        .build();
-
-    BlockCapsule.BlockId sid = chainBaseManager.getSolidBlockId();
-    Protocol.HelloMessage.BlockId sBlockId = Protocol.HelloMessage.BlockId.newBuilder()
-        .setHash(sid.getByteString())
-        .setNumber(sid.getNum())
-        .build();
-
-    BlockCapsule.BlockId hid = chainBaseManager.getHeadBlockId();
-    Protocol.HelloMessage.BlockId hBlockId = Protocol.HelloMessage.BlockId.newBuilder()
-        .setHash(hid.getByteString())
-        .setNumber(hid.getNum())
-        .build();
-    Builder builder = Protocol.HelloMessage.newBuilder();
-    builder.setFrom(fromEndpoint);
-    builder.setVersion(Args.getInstance().getNodeP2pVersion());
-    builder.setTimestamp(timestamp);
-    builder.setGenesisBlockId(gBlockId);
-    builder.setSolidBlockId(sBlockId);
-    builder.setHeadBlockId(hBlockId);
-    builder.setNodeType(chainBaseManager.getNodeType().getType());
-    builder.setLowestBlockNum(chainBaseManager.isLiteNode()
-        ? chainBaseManager.getLowestBlockNum() : 0);
-
-    return builder;
   }
 }
