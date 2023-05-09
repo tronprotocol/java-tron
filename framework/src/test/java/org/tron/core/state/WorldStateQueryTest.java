@@ -1,13 +1,25 @@
 package org.tron.core.state;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import io.prometheus.client.CollectorRegistry;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -16,6 +28,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.rules.TemporaryFolder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -24,6 +37,8 @@ import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.config.DbBackupConfig;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.parameter.CommonParameter;
+import org.tron.common.prometheus.Metrics;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteArray;
@@ -44,6 +59,7 @@ import org.tron.core.exception.JsonRpcInternalException;
 import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.core.exception.JsonRpcInvalidRequestException;
 import org.tron.core.exception.StoreException;
+import org.tron.core.services.jsonrpc.FullNodeJsonRpcHttpService;
 import org.tron.core.services.jsonrpc.TronJsonRpc;
 import org.tron.core.services.jsonrpc.types.CallArguments;
 import org.tron.core.state.store.StorageRowStateStore;
@@ -58,22 +74,27 @@ import org.tron.protos.contract.BalanceContract;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class WorldStateQueryTest {
   private static TronApplicationContext context;
-  private static Application appTest;
   private static ChainBaseManager chainBaseManager;
   private static Manager manager;
 
+  @Autowired
   private static TronJsonRpc tronJsonRpc;
   private static final long TOKEN_ID1 = 1000001L;
   private static final long TOKEN_ID2 = 1000002L;
 
-  private static ECKey account1Prikey = new ECKey();
-  private static ECKey account2Prikey = new ECKey();
+  private static final ECKey account1Prikey = new ECKey();
+  private static final ECKey account2Prikey = new ECKey();
 
   byte[] contractAddress;
   private static WorldStateCallBack worldStateCallBack;
 
+  private static final  int PORT_JSON_RPC = 18549;
+  private static final  int PORT_METRICS = 18890;
+
   @ClassRule
   public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  private static final AtomicInteger cnt = new AtomicInteger(0);
 
   /**
    * init logic.
@@ -89,8 +110,13 @@ public class WorldStateQueryTest {
     Args.getInstance().setAllowAccountStateRoot(1);
     // init dbBackupConfig to avoid NPE
     Args.getInstance().dbBackupConfig = DbBackupConfig.getInstance();
+    CommonParameter.getInstance().setJsonRpcHttpFullNodePort(PORT_JSON_RPC);
+    CommonParameter.getInstance().setMetricsPrometheusPort(PORT_METRICS);
+    CommonParameter.getInstance().setMetricsPrometheusEnable(true);
+    Metrics.init();
     context = new TronApplicationContext(DefaultConfig.class);
-    appTest = ApplicationFactory.create(context);
+    Application appTest = ApplicationFactory.create(context);
+    appTest.addService(context.getBean(FullNodeJsonRpcHttpService.class));
     appTest.initServices(Args.getInstance());
     appTest.startServices();
     appTest.startup();
@@ -115,7 +141,7 @@ public class WorldStateQueryTest {
         .setBalance(10000000000000000L).build();
     chainBaseManager.getAccountStore().put(account1Prikey.getAddress(), new AccountCapsule(acc));
     chainBaseManager.getAccountStore().put(account2Prikey.getAddress(), new AccountCapsule(sun));
-
+    createAsset();
   }
 
   @AfterClass
@@ -124,7 +150,7 @@ public class WorldStateQueryTest {
     Args.clearParam();
   }
 
-  public void createAsset() {
+  public static void createAsset() {
     Assert.assertEquals(TOKEN_ID1,manager.getDynamicPropertiesStore().getTokenIdNum() + 1);
     manager.getDynamicPropertiesStore().saveTokenIdNum(TOKEN_ID1);
     AssetIssueContractOuterClass.AssetIssueContract assetIssueContract =
@@ -206,7 +232,6 @@ public class WorldStateQueryTest {
 
   @Test
   public void testTransferAsset() throws InterruptedException, JsonRpcInvalidParamsException {
-    createAsset();
     manager.initGenesis();
     List<BlockCapsule> blockCapsules = chainBaseManager
             .getBlockStore().getBlockByLatestNum(1);
@@ -384,6 +409,34 @@ public class WorldStateQueryTest {
     } catch (StoreException e) {
       Assert.fail();
     }
+    JsonArray params = new JsonArray();
+    params.add(ByteArray.toHexString(account1Prikey.getAddress()));
+    params.add(ByteArray.toJsonHex(blockNum));
+    JsonObject requestBody = new JsonObject();
+    requestBody.addProperty("jsonrpc", "2.0");
+    requestBody.addProperty("method", "eth_getBalance");
+    requestBody.add("params", params);
+    requestBody.addProperty("id", 1);
+
+    CloseableHttpResponse response;
+    try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+      cnt.incrementAndGet();
+      HttpPost httpPost = new HttpPost("http://127.0.0.1:" + PORT_JSON_RPC + "/jsonrpc");
+      httpPost.addHeader("Content-Type", "application/json");
+      httpPost.setEntity(new StringEntity(requestBody.toString()));
+      response = httpClient.execute(httpPost);
+      String responseString = EntityUtils.toString(response.getEntity());
+      JSONObject jsonObject = JSON.parseObject(responseString);
+      long balance = ByteArray.jsonHexToLong(jsonObject.getString("result"));
+      Assert.assertEquals(account1Capsule.getBalance(), balance);
+      response.close();
+    } catch (Exception e) {
+      Assert.fail(e.getMessage());
+    }
+
+    Assert.assertEquals(cnt.get(), CollectorRegistry.defaultRegistry.getSampleValue(
+        "tron:jsonrpc_service_latency_seconds_count",
+        new String[] {"method"}, new String[] {"eth_getBalance"}).intValue());
   }
 
   private BlockCapsule buildTransferBlock(BlockCapsule parentBlock) {
