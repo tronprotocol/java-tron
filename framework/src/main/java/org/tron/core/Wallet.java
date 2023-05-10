@@ -780,6 +780,10 @@ public class Wallet {
           ByteString ownerAddress, long timestamp) {
     GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage.Builder builder =
             GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage.newBuilder();
+    if (timestamp < 0) {
+      return builder.build();
+    }
+
     long canWithdrawUnfreezeAmount;
 
     AccountStore accountStore = chainBaseManager.getAccountStore();
@@ -842,13 +846,7 @@ public class Wallet {
     }
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
 
-    List<UnFreezeV2> unfrozenV2List = accountCapsule.getInstance().getUnfrozenV2List();
-    long getUsedUnfreezeCount = unfrozenV2List
-            .stream()
-            .filter(unfrozenV2 ->
-                    (unfrozenV2.getUnfreezeAmount() > 0
-                     && unfrozenV2.getUnfreezeExpireTime() > now))
-            .count();
+    long getUsedUnfreezeCount = accountCapsule.getUnfreezingV2Count(now);
     getAvailableUnfreezeCount = UnfreezeBalanceV2Actuator.getUNFREEZE_MAX_TIMES()
             - getUsedUnfreezeCount;
     builder.setCount(getAvailableUnfreezeCount);
@@ -869,7 +867,7 @@ public class Wallet {
 
     long accountNetUsage = ownerCapsule.getNetUsage();
     accountNetUsage += org.tron.core.utils.TransactionUtil.estimateConsumeBandWidthSize(
-            ownerCapsule, chainBaseManager);
+            ownerCapsule.getBalance());
 
     long netUsage = (long) (accountNetUsage * TRX_PRECISION * ((double)
             (dynamicStore.getTotalNetWeight()) / dynamicStore.getTotalNetLimit()));
