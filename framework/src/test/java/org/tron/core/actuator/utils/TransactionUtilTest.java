@@ -4,27 +4,35 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.tron.core.capsule.utils.TransactionUtil.isNumber;
 
+import com.google.protobuf.ByteString;
 import java.nio.charset.StandardCharsets;
+
 import lombok.extern.slf4j.Slf4j;
-import org.junit.BeforeClass;
+import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.utils.ByteArray;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
+import org.tron.core.Wallet;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.utils.TransactionUtil;
+import org.tron.protos.Protocol;
 
 
 @Slf4j(topic = "capsule")
 public class TransactionUtilTest extends BaseTest {
 
-  /**
-   * Init .
-   */
-  @BeforeClass
-  public static void init() {
-    dbPath = "output_transactionUtil_test";
+  private static final String dbPath = "output_transactionUtil_test";
+  private static final String OWNER_ADDRESS;
+
+  static {
+    OWNER_ADDRESS =
+        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
   }
+
 
   @Test
   public void validAccountNameCheck() {
@@ -112,6 +120,119 @@ public class TransactionUtilTest extends BaseTest {
     assertFalse(isNumber(number.getBytes(StandardCharsets.UTF_8)));
     number = "24";
     assertTrue(isNumber(number.getBytes(StandardCharsets.UTF_8)));
+  }
+
+
+
+  @Test
+  public void testEstimateConsumeBandWidthSizeOld() {
+    dbManager.getDynamicPropertiesStore().saveAllowCreationOfContracts(1L);
+    ChainBaseManager chainBaseManager =  dbManager.getChainBaseManager();
+    long balance = 1000_000L;
+
+    AccountCapsule ownerCapsule = new AccountCapsule(ByteString.copyFromUtf8("owner"),
+        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), Protocol.AccountType.Normal,
+        balance);
+    ownerCapsule.addFrozenBalanceForBandwidthV2(balance);
+    dbManager.getAccountStore().put(ownerCapsule.createDbKey(), ownerCapsule);
+    ownerCapsule = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    long estimateConsumeBandWidthSize1 =  TransactionUtil.estimateConsumeBandWidthSizeOld(
+        ownerCapsule, chainBaseManager);
+    Assert.assertEquals(277, estimateConsumeBandWidthSize1);
+
+    balance = 1000_000_000L;
+    ownerCapsule = new AccountCapsule(ByteString.copyFromUtf8("owner"),
+        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), Protocol.AccountType.Normal,
+        balance);
+    ownerCapsule.addFrozenBalanceForBandwidthV2(balance);
+    dbManager.getAccountStore().put(ownerCapsule.createDbKey(), ownerCapsule);
+    long estimateConsumeBandWidthSize2 =  TransactionUtil.estimateConsumeBandWidthSizeOld(
+        ownerCapsule, chainBaseManager);
+    Assert.assertEquals(279, estimateConsumeBandWidthSize2);
+
+    balance = 1000_000_000_000L;
+    ownerCapsule = new AccountCapsule(ByteString.copyFromUtf8("owner"),
+        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), Protocol.AccountType.Normal,
+        balance);
+    ownerCapsule.addFrozenBalanceForBandwidthV2(balance);
+    dbManager.getAccountStore().put(ownerCapsule.createDbKey(), ownerCapsule);
+    long estimateConsumeBandWidthSize3 =  TransactionUtil.estimateConsumeBandWidthSizeOld(
+        ownerCapsule, chainBaseManager);
+    Assert.assertEquals(280, estimateConsumeBandWidthSize3);
+
+    balance = 1000_000_000_000_000L;
+    ownerCapsule = new AccountCapsule(ByteString.copyFromUtf8("owner"),
+        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), Protocol.AccountType.Normal,
+        balance);
+    ownerCapsule.addFrozenBalanceForBandwidthV2(balance);
+    dbManager.getAccountStore().put(ownerCapsule.createDbKey(), ownerCapsule);
+    long estimateConsumeBandWidthSize4 =  TransactionUtil.estimateConsumeBandWidthSizeOld(
+        ownerCapsule, chainBaseManager);
+    Assert.assertEquals(282, estimateConsumeBandWidthSize4);
+  }
+
+
+  @Test
+  public void testEstimateConsumeBandWidthSizeNew() {
+    long balance = 1000_000L;
+
+    long estimateConsumeBandWidthSize1 =  TransactionUtil.estimateConsumeBandWidthSize(balance);
+    Assert.assertEquals(277, estimateConsumeBandWidthSize1);
+
+    balance = 1000_000_000L;
+    long estimateConsumeBandWidthSize2 =  TransactionUtil.estimateConsumeBandWidthSize(balance);
+    Assert.assertEquals(279, estimateConsumeBandWidthSize2);
+
+    balance = 1000_000_000_000L;
+    long estimateConsumeBandWidthSize3 =  TransactionUtil.estimateConsumeBandWidthSize(balance);
+    Assert.assertEquals(280, estimateConsumeBandWidthSize3);
+
+    balance = 1000_000_000_000_000L;
+    long estimateConsumeBandWidthSize4 =  TransactionUtil.estimateConsumeBandWidthSize(balance);
+    Assert.assertEquals(282, estimateConsumeBandWidthSize4);
+  }
+
+
+
+  @Test
+  public void testEstimateConsumeBandWidthSize() {
+    dbManager.getDynamicPropertiesStore().saveAllowCreationOfContracts(1L);
+    ChainBaseManager chainBaseManager =  dbManager.getChainBaseManager();
+    long balance = 1000_000L;
+
+    AccountCapsule ownerCapsule;
+    long estimateConsumeBandWidthSizeOld;
+    long estimateConsumeBandWidthSizeNew;
+
+    for (int i = 0; i < 100; i++) {
+      // old value is
+      ownerCapsule = new AccountCapsule(ByteString.copyFromUtf8("owner"),
+          ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), Protocol.AccountType.Normal,
+          balance);
+      ownerCapsule.addFrozenBalanceForBandwidthV2(balance);
+      dbManager.getAccountStore().put(ownerCapsule.createDbKey(), ownerCapsule);
+      estimateConsumeBandWidthSizeOld =  TransactionUtil.estimateConsumeBandWidthSizeOld(
+          ownerCapsule, chainBaseManager);
+
+      // new value is
+      estimateConsumeBandWidthSizeNew =  TransactionUtil.estimateConsumeBandWidthSize(balance);
+
+      System.out.println("balance:"
+          + balance
+          + ", estimateConsumeBandWidthSizeOld:"
+          + estimateConsumeBandWidthSizeOld
+          + ", estimateConsumeBandWidthSizeNew:"
+          + estimateConsumeBandWidthSizeNew);
+      // new value assert equal to old value
+      Assert.assertEquals(estimateConsumeBandWidthSizeOld, estimateConsumeBandWidthSizeNew);
+
+      // balance accumulated
+      balance = balance * 10;
+      if (balance < 0) {
+        break;
+      }
+    }
+
   }
 
 }

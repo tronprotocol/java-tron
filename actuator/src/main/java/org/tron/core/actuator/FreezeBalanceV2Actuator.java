@@ -54,8 +54,8 @@ public class FreezeBalanceV2Actuator extends AbstractActuator {
       accountCapsule.initializeOldTronPower();
     }
 
-    long newBalance = accountCapsule.getBalance() - freezeBalanceV2Contract.getFrozenBalance();
     long frozenBalance = freezeBalanceV2Contract.getFrozenBalance();
+    long newBalance = accountCapsule.getBalance() - frozenBalance;
 
     switch (freezeBalanceV2Contract.getResource()) {
       case BANDWIDTH:
