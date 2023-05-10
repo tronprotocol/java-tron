@@ -1,6 +1,6 @@
 package org.tron.core.state.store;
 
-import org.rocksdb.DirectComparator;
+import org.rocksdb.AbstractComparator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.db2.core.Chainbase;
@@ -67,7 +67,7 @@ public class AccountStateStore extends AccountStore implements StateStore {
     throw new UnsupportedOperationException();
   }
 
-  protected DirectComparator getDirectComparator() {
+  protected AbstractComparator getDirectComparator() {
     throw new UnsupportedOperationException();
   }
 
