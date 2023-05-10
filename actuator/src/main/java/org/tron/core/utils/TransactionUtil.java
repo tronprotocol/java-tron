@@ -253,9 +253,24 @@ public class TransactionUtil {
     return tswBuilder.build();
   }
 
+  public static long estimateConsumeBandWidthSize(long balance) {
+    DelegateResourceContract.Builder builder = DelegateResourceContract.newBuilder()
+        .setLock(true)
+        .setBalance(balance);
+
+    long builderSize = builder.build().getSerializedSize();
+    DelegateResourceContract.Builder builder2 = DelegateResourceContract.newBuilder()
+        .setBalance(TRX_PRECISION);
+    long builder2Size = builder2.build().getSerializedSize();
+    long addSize = Math.max(builderSize - builder2Size, 0L);
+
+    return DELEGATE_COST_BASE_SIZE + addSize;
+  }
+
+  // only for testing
   public static long consumeBandWidthSize(
-          final TransactionCapsule transactionCapsule,
-          ChainBaseManager chainBaseManager) {
+      final TransactionCapsule transactionCapsule,
+      ChainBaseManager chainBaseManager) {
     long bytesSize;
 
     boolean supportVM = chainBaseManager.getDynamicPropertiesStore().supportVM();
@@ -278,21 +293,21 @@ public class TransactionUtil {
     return bytesSize;
   }
 
-
-  public static long estimateConsumeBandWidthSize(
-          final AccountCapsule ownerCapsule,
-          ChainBaseManager chainBaseManager) {
+  // only for testing
+  public static long estimateConsumeBandWidthSizeOld(
+      final AccountCapsule ownerCapsule,
+      ChainBaseManager chainBaseManager) {
     DelegateResourceContract.Builder builder = DelegateResourceContract.newBuilder()
-                    .setLock(true)
-                    .setBalance(ownerCapsule.getFrozenV2BalanceForBandwidth());
+        .setLock(true)
+        .setBalance(ownerCapsule.getFrozenV2BalanceForBandwidth());
     TransactionCapsule fakeTransactionCapsule = new TransactionCapsule(builder.build()
-            , ContractType.DelegateResourceContract);
+        , ContractType.DelegateResourceContract);
     long size1 = consumeBandWidthSize(fakeTransactionCapsule, chainBaseManager);
 
     DelegateResourceContract.Builder builder2 = DelegateResourceContract.newBuilder()
-                    .setBalance(TRX_PRECISION);
+        .setBalance(TRX_PRECISION);
     TransactionCapsule fakeTransactionCapsule2 = new TransactionCapsule(builder2.build()
-            , ContractType.DelegateResourceContract);
+        , ContractType.DelegateResourceContract);
     long size2 = consumeBandWidthSize(fakeTransactionCapsule2, chainBaseManager);
     long addSize = Math.max(size1 - size2, 0L);
 
