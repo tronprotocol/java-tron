@@ -176,7 +176,6 @@ public class SolidityNodeHttpApiService implements Service {
 
   @Override
   public void init(CommonParameter args) {
-    FullNodeHttpApiService.librustzcashInitZksnarkParams();
   }
 
   @Override

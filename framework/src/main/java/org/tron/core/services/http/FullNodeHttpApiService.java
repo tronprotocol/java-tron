@@ -349,7 +349,6 @@ public class FullNodeHttpApiService implements Service {
 
   @Override
   public void init(CommonParameter args) {
-    librustzcashInitZksnarkParams();
   }
 
   @Override
