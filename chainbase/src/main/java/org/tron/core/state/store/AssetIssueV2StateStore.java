@@ -1,7 +1,7 @@
 package org.tron.core.state.store;
 
 import lombok.extern.slf4j.Slf4j;
-import org.rocksdb.DirectComparator;
+import org.rocksdb.AbstractComparator;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.db2.core.Chainbase;
@@ -67,7 +67,7 @@ public class AssetIssueV2StateStore extends AssetIssueV2Store implements StateSt
     throw new UnsupportedOperationException();
   }
 
-  protected DirectComparator getDirectComparator() {
+  protected AbstractComparator getDirectComparator() {
     throw new UnsupportedOperationException();
   }
 

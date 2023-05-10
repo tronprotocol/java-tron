@@ -16,7 +16,7 @@ import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.WriteOptions;
-import org.rocksdb.DirectComparator;
+import org.rocksdb.AbstractComparator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
@@ -93,7 +93,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     return StorageUtils.getOptionsByDbName(dbName);
   }
 
-  protected DirectComparator getDirectComparator() {
+  protected AbstractComparator getDirectComparator() {
     return null;
   }
 

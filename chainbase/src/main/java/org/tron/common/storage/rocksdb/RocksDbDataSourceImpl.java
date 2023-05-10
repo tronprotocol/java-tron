@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.rocksdb.BlockBasedTableConfig;
 import org.rocksdb.BloomFilter;
 import org.rocksdb.Checkpoint;
-import org.rocksdb.DirectComparator;
+import org.rocksdb.AbstractComparator;
 import org.rocksdb.InfoLogLevel;
 import org.rocksdb.Logger;
 import org.rocksdb.Options;
@@ -59,11 +59,11 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
   private static final String KEY_ENGINE = "ENGINE";
   private static final String ROCKSDB = "ROCKSDB";
-  private DirectComparator comparator;
+  private AbstractComparator comparator;
   private static final org.slf4j.Logger rocksDbLogger = LoggerFactory.getLogger(ROCKSDB);
 
   public RocksDbDataSourceImpl(String parentPath, String name, RocksDbSettings settings,
-      DirectComparator comparator) {
+                               AbstractComparator comparator) {
     this.dataBaseName = name;
     this.parentPath = parentPath;
     this.comparator = comparator;
@@ -248,6 +248,7 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
         tableCfg.setCacheIndexAndFilterBlocks(true);
         tableCfg.setPinL0FilterAndIndexBlocksInCache(true);
         tableCfg.setFilter(new BloomFilter(10, false));
+        tableCfg.setFormatVersion(3); // Since RocksDB 5.15
 
         // read options
         readOpts = new ReadOptions();

@@ -34,8 +34,7 @@ DB convert provides a helper which can convert LevelDB data to RocksDB data, par
 
 - `<src>`: Input path for leveldb, default: output-directory/database.
 - `<dest>`: Output path for rocksdb, default: output-directory-dst/database.
-- `--safe`: In safe mode, read data from leveldb then put into rocksdb, it's a very time-consuming procedure. If not, just change engine.properties from leveldb to rocksdb, rocksdb
-  is compatible with leveldb for the current version. This may not be the case in the future, default: false.
+- `--safe`: It is deprecated, now must is in the safe mode.
 - `-h | --help`: Provide the help info.
 
 ### Examples:

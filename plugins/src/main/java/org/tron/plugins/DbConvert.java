@@ -50,12 +50,13 @@ public class DbConvert implements Callable<Integer> {
   private File dest;
 
   @CommandLine.Option(names = {"--safe"},
+      defaultValue = "true",
       description = "In safe mode, read data from leveldb then put rocksdb."
           + "If not, just change engine.properties from leveldb to rocksdb,"
           + "rocksdb is compatible with leveldb for current version."
           + "This may not be the case in the future."
           + "Default: ${DEFAULT-VALUE}")
-  private boolean safe;
+  private boolean safe = true;
 
   @CommandLine.Option(names = {"-h", "--help"})
   private boolean help;
@@ -94,6 +95,12 @@ public class DbConvert implements Callable<Integer> {
     }
     final long time = System.currentTimeMillis();
     List<Converter> services = new ArrayList<>();
+    if (!safe) {
+      logger.info("set safe mode in rocksdb version {}", RocksDB.rocksdbVersion());
+      spec.commandLine().getOut().format("set safe mode in rocksdb version %s",
+          RocksDB.rocksdbVersion()).println();
+      safe = true;
+    }
     files.forEach(f -> services.add(
         new DbConverter(src.getPath(), dest.getPath(), f.getName(), safe)));
     cpList.forEach(f -> services.add(

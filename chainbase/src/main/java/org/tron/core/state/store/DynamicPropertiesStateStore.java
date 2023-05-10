@@ -1,6 +1,6 @@
 package org.tron.core.state.store;
 
-import org.rocksdb.DirectComparator;
+import org.rocksdb.AbstractComparator;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.db2.core.Chainbase;
@@ -64,7 +64,7 @@ public class DynamicPropertiesStateStore extends DynamicPropertiesStore implemen
     throw new UnsupportedOperationException();
   }
 
-  protected DirectComparator getDirectComparator() {
+  protected AbstractComparator getDirectComparator() {
     throw new UnsupportedOperationException();
   }
 
