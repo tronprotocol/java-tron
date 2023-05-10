@@ -95,7 +95,7 @@ abstract class ResourceProcessor {
     return newUsage;
   }
 
-  public long unDelegateIncrease(AccountCapsule owner, final AccountCapsule receiver,
+  public void unDelegateIncrease(AccountCapsule owner, final AccountCapsule receiver,
                        long transferUsage, ResourceCode resourceCode, long now) {
     long lastOwnerTime = owner.getLastConsumeTime(resourceCode);
     long ownerUsage = owner.getUsage(resourceCode);
@@ -111,14 +111,17 @@ abstract class ResourceProcessor {
     // mean ownerUsage == 0 and transferUsage == 0
     if (newOwnerUsage == 0) {
         owner.setNewWindowSize(resourceCode, this.windowSize);
-      return newOwnerUsage;
+        owner.setUsage(resourceCode, 0);
+        owner.setLatestTime(resourceCode, now);
+      return;
     }
     // calculate new windowSize
     long newOwnerWindowSize = (ownerUsage * remainOwnerWindowSize +
             transferUsage * remainReceiverWindowSize)
             / newOwnerUsage;
     owner.setNewWindowSize(resourceCode, newOwnerWindowSize);
-    return newOwnerUsage;
+    owner.setUsage(resourceCode, newOwnerUsage);
+    owner.setLatestTime(resourceCode, now);
   }
 
   private long divideCeil(long numerator, long denominator) {

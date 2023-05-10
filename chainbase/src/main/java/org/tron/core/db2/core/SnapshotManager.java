@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -122,6 +123,7 @@ public class SnapshotManager implements RevokingDatabase {
       exitThread.interrupt();
       // help GC
       exitThread = null;
+      flushServices.values().forEach(ExecutorService::shutdown);
     } catch (Exception e) {
       logger.warn("exitThread interrupt error", e);
     }

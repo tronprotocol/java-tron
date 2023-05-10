@@ -30,9 +30,9 @@ public class FreezeBalanceProcessor {
     if (frozenBalance <= 0) {
       throw new ContractValidateException("FrozenBalance must be positive");
     } else if (frozenBalance < TRX_PRECISION) {
-      throw new ContractValidateException("FrozenBalance must be more than 1TRX");
+      throw new ContractValidateException("FrozenBalance must be greater than or equal to 1 TRX");
     } else if (frozenBalance > ownerCapsule.getBalance()) {
-      throw new ContractValidateException("FrozenBalance must be less than accountBalance");
+      throw new ContractValidateException("FrozenBalance must be less than or equal to accountBalance");
     }
 
     // validate frozen count of owner account
@@ -48,7 +48,7 @@ public class FreezeBalanceProcessor {
         break;
       default:
         throw new ContractValidateException(
-            "ResourceCode error,valid ResourceCode[BANDWIDTH、ENERGY]");
+            "Unknown ResourceCode, valid ResourceCode[BANDWIDTH、ENERGY]");
     }
 
     // validate for delegating resource

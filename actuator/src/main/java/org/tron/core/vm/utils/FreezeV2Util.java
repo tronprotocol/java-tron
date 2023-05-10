@@ -12,7 +12,6 @@ import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
 
-import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 public class FreezeV2Util {
 
@@ -163,13 +162,8 @@ public class FreezeV2Util {
         return frozenV2Resource;
       }
 
-      long remainNetUsage = usage
-          - accountCapsule.getFrozenBalance()
-          - accountCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
-          - accountCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth();
-
-      remainNetUsage = Math.max(0, remainNetUsage);
-      return Math.max(0L, frozenV2Resource - remainNetUsage);
+      long v2NetUsage = getV2NetUsage(accountCapsule, usage);
+      return Math.max(0L, frozenV2Resource - v2NetUsage);
     }
 
     if (type == 1) {
@@ -188,13 +182,8 @@ public class FreezeV2Util {
         return frozenV2Resource;
       }
 
-      long remainEnergyUsage = usage
-          - accountCapsule.getEnergyFrozenBalance()
-          - accountCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()
-          - accountCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy();
-
-      remainEnergyUsage = Math.max(0, remainEnergyUsage);
-      return Math.max(0L, frozenV2Resource - remainEnergyUsage);
+      long v2EnergyUsage = getV2EnergyUsage(accountCapsule, usage);
+      return Math.max(0L, frozenV2Resource - v2EnergyUsage);
     }
 
     return 0L;
@@ -248,6 +237,22 @@ public class FreezeV2Util {
   private static List<Protocol.Account.UnFreezeV2> getTotalWithdrawList(List<Protocol.Account.UnFreezeV2> unfrozenV2List, long now) {
     return unfrozenV2List.stream().filter(unfrozenV2 -> (unfrozenV2.getUnfreezeAmount() > 0
         && unfrozenV2.getUnfreezeExpireTime() <= now)).collect(Collectors.toList());
+  }
+
+  public static long getV2NetUsage(AccountCapsule ownerCapsule, long netUsage) {
+    long v2NetUsage= netUsage
+        - ownerCapsule.getFrozenBalance()
+        - ownerCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
+        - ownerCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth();
+    return Math.max(0, v2NetUsage);
+  }
+
+  public static long getV2EnergyUsage(AccountCapsule ownerCapsule, long energyUsage) {
+    long v2EnergyUsage= energyUsage
+          - ownerCapsule.getEnergyFrozenBalance()
+          - ownerCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()
+          - ownerCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy();
+    return Math.max(0, v2EnergyUsage);
   }
 
 }

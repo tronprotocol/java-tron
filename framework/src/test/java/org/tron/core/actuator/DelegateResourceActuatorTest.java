@@ -4,25 +4,19 @@ import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import java.io.File;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.DynamicPropertiesStore;
@@ -33,20 +27,17 @@ import org.tron.protos.contract.BalanceContract.DelegateResourceContract;
 import org.tron.protos.contract.Common.ResourceCode;
 
 @Slf4j
-public class DelegateResourceActuatorTest {
+public class DelegateResourceActuatorTest extends BaseTest {
 
-  private static final String dbPath = "output_delegate_resource_test";
   private static final String OWNER_ADDRESS;
   private static final String RECEIVER_ADDRESS;
   private static final String OWNER_ADDRESS_INVALID = "aaaa";
   private static final String OWNER_ACCOUNT_INVALID;
   private static final long initBalance = 10_000_000_000L;
-  private static Manager dbManager;
-  private static final TronApplicationContext context;
 
   static {
+    dbPath = "output_delegate_resource_test";
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     RECEIVER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
     OWNER_ACCOUNT_INVALID =
@@ -54,34 +45,13 @@ public class DelegateResourceActuatorTest {
   }
 
   /**
-   * Init data.
-   */
-  @BeforeClass
-  public static void init() {
-    dbManager = context.getBean(Manager.class);
-    dbManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(1L);
-    dbManager.getDynamicPropertiesStore().saveAllowNewResourceModel(1L);
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
-  }
-
-  /**
    * create temp Capsule test need.
    */
   @Before
   public void createAccountCapsule() {
+    dbManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(1L);
+    dbManager.getDynamicPropertiesStore().saveAllowNewResourceModel(1L);
+
     byte[] owner = ByteArray.fromHexString(OWNER_ADDRESS);
     byte[] receiver = ByteArray.fromHexString(RECEIVER_ADDRESS);
     AccountCapsule ownerCapsule =
@@ -179,7 +149,8 @@ public class DelegateResourceActuatorTest {
       actuator.execute(ret);
       Assert.fail("cannot run here.");
     } catch (ContractValidateException e) {
-      Assert.assertEquals("delegateBalance must be less than available FreezeBandwidthV2 balance",
+      Assert.assertEquals(
+          "delegateBalance must be less than or equal to available FreezeBandwidthV2 balance",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.fail();
@@ -193,7 +164,7 @@ public class DelegateResourceActuatorTest {
       Assert.fail("cannot run here.");
     } catch (ContractValidateException e) {
       Assert.assertEquals(
-          "delegateBalance must be less than available FreezeEnergyV2 balance",
+          "delegateBalance must be less than or equal to available FreezeEnergyV2 balance",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.fail(e.getMessage());
@@ -222,7 +193,8 @@ public class DelegateResourceActuatorTest {
       actuator.execute(ret);
       Assert.fail("cannot run here.");
     } catch (ContractValidateException e) {
-      Assert.assertEquals("delegateBalance must be less than available FreezeBandwidthV2 balance",
+      Assert.assertEquals(
+          "delegateBalance must be less than or equal to available FreezeBandwidthV2 balance",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.fail(e.getMessage());
@@ -253,7 +225,7 @@ public class DelegateResourceActuatorTest {
       Assert.fail("cannot run here.");
     } catch (ContractValidateException e) {
       Assert.assertEquals(
-          "delegateBalance must be less than available FreezeEnergyV2 balance",
+          "delegateBalance must be less than or equal to available FreezeEnergyV2 balance",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.fail(e.getMessage());
@@ -512,7 +484,8 @@ public class DelegateResourceActuatorTest {
       actuator.execute(ret);
       Assert.fail("cannot run here.");
     } catch (ContractValidateException e) {
-      Assert.assertEquals("delegateBalance must be more than 1TRX", e.getMessage());
+      Assert.assertEquals("delegateBalance must be greater than or equal to 1 TRX",
+          e.getMessage());
     } catch (ContractExeException e) {
       Assert.fail(e.getMessage());
     }
@@ -550,7 +523,8 @@ public class DelegateResourceActuatorTest {
       actuator.execute(ret);
       Assert.fail("cannot run here.");
     } catch (ContractValidateException e) {
-      Assert.assertEquals("delegateBalance must be less than available FreezeBandwidthV2 balance",
+      Assert.assertEquals(
+          "delegateBalance must be less than or equal to available FreezeBandwidthV2 balance",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.fail(e.getMessage());

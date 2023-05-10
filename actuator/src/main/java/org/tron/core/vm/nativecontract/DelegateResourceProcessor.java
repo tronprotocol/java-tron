@@ -3,6 +3,8 @@ package org.tron.core.vm.nativecontract;
 import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 import static org.tron.core.actuator.ActuatorConstant.STORE_NOT_EXIST;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+import static org.tron.core.vm.utils.FreezeV2Util.getV2EnergyUsage;
+import static org.tron.core.vm.utils.FreezeV2Util.getV2NetUsage;
 
 import com.google.common.primitives.Bytes;
 import com.google.protobuf.ByteString;
@@ -49,7 +51,7 @@ public class DelegateResourceProcessor {
     }
     long delegateBalance = param.getDelegateBalance();
     if (delegateBalance < TRX_PRECISION) {
-      throw new ContractValidateException("delegateBalance must be more than 1TRX");
+      throw new ContractValidateException("delegateBalance must be greater than or equal to 1 TRX");
     }
 
     switch (param.getResourceType()) {
@@ -60,16 +62,11 @@ public class DelegateResourceProcessor {
         long netUsage = (long) (ownerCapsule.getNetUsage() * TRX_PRECISION * ((double)
             (repo.getTotalNetWeight()) / dynamicStore.getTotalNetLimit()));
 
-        long remainNetUsage = netUsage
-                - ownerCapsule.getFrozenBalance()
-                - ownerCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
-                - ownerCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth();
+        long v2NetUsage = getV2NetUsage(ownerCapsule, netUsage);
 
-        remainNetUsage = Math.max(0, remainNetUsage);
-
-        if (ownerCapsule.getFrozenV2BalanceForBandwidth() - remainNetUsage < delegateBalance) {
+        if (ownerCapsule.getFrozenV2BalanceForBandwidth() - v2NetUsage < delegateBalance) {
           throw new ContractValidateException(
-                  "delegateBalance must be less than available FreezeBandwidthV2 balance");
+                  "delegateBalance must be less than or equal to available FreezeBandwidthV2 balance");
         }
       }
       break;
@@ -81,22 +78,17 @@ public class DelegateResourceProcessor {
         long energyUsage = (long) (ownerCapsule.getEnergyUsage() * TRX_PRECISION * ((double)
             (repo.getTotalEnergyWeight()) / dynamicStore.getTotalEnergyCurrentLimit()));
 
-        long remainEnergyUsage = energyUsage
-                - ownerCapsule.getEnergyFrozenBalance()
-                - ownerCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()
-                - ownerCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy();
+        long v2EnergyUsage = getV2EnergyUsage(ownerCapsule, energyUsage);
 
-        remainEnergyUsage = Math.max(0, remainEnergyUsage);
-
-        if (ownerCapsule.getFrozenV2BalanceForEnergy() - remainEnergyUsage < delegateBalance) {
+        if (ownerCapsule.getFrozenV2BalanceForEnergy() - v2EnergyUsage < delegateBalance) {
           throw new ContractValidateException(
-                  "delegateBalance must be less than available FreezeEnergyV2 balance");
+                  "delegateBalance must be less than or equal to available FreezeEnergyV2 balance");
         }
       }
       break;
       default:
         throw new ContractValidateException(
-            "ResourceCode error, valid ResourceCode[BANDWIDTH、ENERGY]");
+            "Unknown ResourceCode, valid ResourceCode[BANDWIDTH、ENERGY]");
     }
 
     byte[] receiverAddress = param.getReceiverAddress();
