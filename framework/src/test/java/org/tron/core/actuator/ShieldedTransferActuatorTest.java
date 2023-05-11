@@ -1,14 +1,13 @@
 package org.tron.core.actuator;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
+import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PublicMethod;
@@ -24,9 +23,7 @@ import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.PedersenHashCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.ValidateSignatureException;
@@ -47,9 +44,8 @@ import org.tron.protos.contract.ShieldContract.PedersenHash;
 import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
 
 @Slf4j
-public class ShieldedTransferActuatorTest {
+public class ShieldedTransferActuatorTest extends BaseTest {
 
-  private static final String dbPath = "output_shield_transfer_test";
   private static final String PUBLIC_ADDRESS_ONE;
   private static final String ADDRESS_ONE_PRIVATE_KEY;
   private static final String PUBLIC_ADDRESS_TWO;
@@ -71,11 +67,15 @@ public class ShieldedTransferActuatorTest {
   private static Wallet wallet;
   private static Manager dbManager;
   private static TronApplicationContext context;
+  @Resource
+  private Wallet wallet;
+  @Resource
+  private TransactionUtil transactionUtil;
 
   static {
+    dbPath = "output_shield_transfer_test";
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
-
     ADDRESS_ONE_PRIVATE_KEY = PublicMethod.getRandomPrivateKey();
     PUBLIC_ADDRESS_ONE = PublicMethod.getHexAddressByPrivateKey(ADDRESS_ONE_PRIVATE_KEY);
 
@@ -93,27 +93,10 @@ public class ShieldedTransferActuatorTest {
   @BeforeClass
   public static void init() throws ZksnarkException {
     Args.setFullNodeAllowShieldedTransaction(true);
-    wallet = context.getBean(Wallet.class);
-    /*context.getBean(TransactionUtil.class);*/
-    dbManager = context.getBean(Manager.class);
     librustzcashInitZksnarkParams();
   }
 
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
-  }
-
-  private static void librustzcashInitZksnarkParams() throws ZksnarkException {
+  private static void librustzcashInitZksnarkParams() {
     FullNodeHttpApiService.librustzcashInitZksnarkParams();
   }
 

@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
-
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -1815,9 +1814,9 @@ public class Program {
       repository.commit();
       return true;
     } catch (ContractValidateException e) {
-      logger.error("TVM Freeze: validate failure. Reason: {}", e.getMessage());
+      logger.warn("TVM Freeze: validate failure. Reason: {}", e.getMessage());
     } catch (ArithmeticException e) {
-      logger.error("TVM Freeze: frozenBalance out of long range.");
+      logger.warn("TVM Freeze: frozenBalance out of long range.");
     }
     if (internalTx != null) {
       internalTx.reject();
@@ -1848,7 +1847,7 @@ public class Program {
       }
       return true;
     } catch (ContractValidateException e) {
-      logger.error("TVM Unfreeze: validate failure. Reason: {}", e.getMessage());
+      logger.warn("TVM Unfreeze: validate failure. Reason: {}", e.getMessage());
     }
     if (internalTx != null) {
       internalTx.reject();
@@ -1911,9 +1910,9 @@ public class Program {
       repository.commit();
       return true;
     } catch (ContractValidateException e) {
-      logger.error("TVM FreezeBalanceV2: validate failure. Reason: {}", e.getMessage());
+      logger.warn("TVM FreezeBalanceV2: validate failure. Reason: {}", e.getMessage());
     } catch (ArithmeticException e) {
-      logger.error("TVM FreezeBalanceV2: frozenBalance out of long range.");
+      logger.warn("TVM FreezeBalanceV2: frozenBalance out of long range.");
     }
     if (internalTx != null) {
       internalTx.reject();
@@ -1947,9 +1946,9 @@ public class Program {
       }
       return true;
     } catch (ContractValidateException e) {
-      logger.error("TVM UnfreezeBalanceV2: validate failure. Reason: {}", e.getMessage());
+      logger.warn("TVM UnfreezeBalanceV2: validate failure. Reason: {}", e.getMessage());
     } catch (ArithmeticException e) {
-      logger.error("TVM UnfreezeBalanceV2: balance out of long range.");
+      logger.warn("TVM UnfreezeBalanceV2: balance out of long range.");
     }
     if (internalTx != null) {
       internalTx.reject();
@@ -1978,9 +1977,9 @@ public class Program {
       }
       return expireUnfreezeBalance;
     } catch (ContractValidateException e) {
-      logger.error("TVM WithdrawExpireUnfreeze: validate failure. Reason: {}", e.getMessage());
+      logger.warn("TVM WithdrawExpireUnfreeze: validate failure. Reason: {}", e.getMessage());
     } catch (ContractExeException e) {
-      logger.error("TVM WithdrawExpireUnfreeze: execute failure. Reason: {}", e.getMessage());
+      logger.warn("TVM WithdrawExpireUnfreeze: execute failure. Reason: {}", e.getMessage());
     }
     if (internalTx != null) {
       internalTx.reject();
@@ -2011,9 +2010,9 @@ public class Program {
       }
       return true;
     } catch (ContractValidateException e) {
-      logger.error("TVM CancelAllUnfreezeV2: validate failure. Reason: {}", e.getMessage());
+      logger.warn("TVM CancelAllUnfreezeV2: validate failure. Reason: {}", e.getMessage());
     } catch (ContractExeException e) {
-      logger.error("TVM CancelAllUnfreezeV2: execute failure. Reason: {}", e.getMessage());
+      logger.warn("TVM CancelAllUnfreezeV2: execute failure. Reason: {}", e.getMessage());
     }
     if (internalTx != null) {
       internalTx.reject();
@@ -2045,9 +2044,9 @@ public class Program {
       repository.commit();
       return true;
     } catch (ContractValidateException e) {
-      logger.error("TVM DelegateResource: validate failure. Reason: {}", e.getMessage());
+      logger.warn("TVM DelegateResource: validate failure. Reason: {}", e.getMessage());
     } catch (ArithmeticException e) {
-      logger.error("TVM DelegateResource: balance out of long range.");
+      logger.warn("TVM DelegateResource: balance out of long range.");
     }
     if (internalTx != null) {
       internalTx.reject();
@@ -2079,9 +2078,9 @@ public class Program {
       repository.commit();
       return true;
     } catch (ContractValidateException e) {
-      logger.error("TVM UnDelegateResource: validate failure. Reason: {}", e.getMessage());
+      logger.warn("TVM UnDelegateResource: validate failure. Reason: {}", e.getMessage());
     } catch (ArithmeticException e) {
-      logger.error("TVM UnDelegateResource: balance out of long range.");
+      logger.warn("TVM UnDelegateResource: balance out of long range.");
     }
     if (internalTx != null) {
       internalTx.reject();
@@ -2114,7 +2113,7 @@ public class Program {
           return Common.ResourceCode.UNRECOGNIZED;
       }
     } catch (ArithmeticException e) {
-      logger.error("TVM ParseResourceCodeV2: invalid resource code: {}", resourceType.sValue());
+      logger.warn("TVM ParseResourceCodeV2: invalid resource code: {}", resourceType.sValue());
       return Common.ResourceCode.UNRECOGNIZED;
     }
   }
@@ -2180,11 +2179,11 @@ public class Program {
       repository.commit();
       return true;
     } catch (ContractValidateException e) {
-      logger.error("TVM VoteWitness: validate failure. Reason: {}", e.getMessage());
+      logger.warn("TVM VoteWitness: validate failure. Reason: {}", e.getMessage());
     } catch (ContractExeException e) {
-      logger.error("TVM VoteWitness: execute failure. Reason: {}", e.getMessage());
+      logger.warn("TVM VoteWitness: execute failure. Reason: {}", e.getMessage());
     } catch (ArithmeticException e) {
-      logger.error("TVM VoteWitness: int or long out of range. caused by: {}", e.getMessage());
+      logger.warn("TVM VoteWitness: int or long out of range. caused by: {}", e.getMessage());
     }
     if (internalTx != null) {
       internalTx.reject();
@@ -2213,9 +2212,9 @@ public class Program {
       }
       return allowance;
     } catch (ContractValidateException e) {
-      logger.error("TVM WithdrawReward: validate failure. Reason: {}", e.getMessage());
+      logger.warn("TVM WithdrawReward: validate failure. Reason: {}", e.getMessage());
     } catch (ContractExeException e) {
-      logger.error("TVM WithdrawReward: execute failure. Reason: {}", e.getMessage());
+      logger.warn("TVM WithdrawReward: execute failure. Reason: {}", e.getMessage());
     }
     if (internalTx != null) {
       internalTx.reject();

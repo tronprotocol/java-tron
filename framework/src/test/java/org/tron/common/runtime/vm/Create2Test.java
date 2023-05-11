@@ -11,13 +11,18 @@ import org.junit.Test;
 import org.testng.Assert;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.WalletUtil;
 import org.tron.common.utils.client.utils.AbiUtil;
 import org.tron.common.utils.client.utils.DataWord;
+import org.tron.core.Wallet;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.services.NodeInfoService;
+import org.tron.core.services.jsonrpc.TronJsonRpcImpl;
 import org.tron.protos.Protocol.Transaction;
 
 @Slf4j
@@ -171,13 +176,30 @@ public class Create2Test extends VMTestBase {
 
     // trigger deployed contract
     String methodToTrigger = "plusOne()";
-    for (int i = 1; i < 3; i++) {
+    long loop = 2;
+    for (int i = 1; i <= loop; i++) {
       hexInput = AbiUtil.parseMethod(methodToTrigger, Collections.emptyList());
       result = TvmTestUtils
           .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
               actualContract, Hex.decode(hexInput), 0, fee, manager, null);
       Assert.assertNull(result.getRuntime().getRuntimeError());
       Assert.assertEquals(result.getRuntime().getResult().getHReturn(), new DataWord(i).getData());
+    }
+    testJsonRpc(actualContract, loop);
+  }
+
+  private void testJsonRpc(byte[] actualContract, long loop) {
+    TronJsonRpcImpl tronJsonRpc;
+    NodeInfoService nodeInfoService;
+    nodeInfoService = context.getBean(NodeInfoService.class);
+    Wallet wallet = context.getBean(Wallet.class);
+    tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet, manager);
+    try {
+      String res =
+          tronJsonRpc.getStorageAt(ByteArray.toHexString(actualContract), "0", "latest");
+      Assert.assertEquals(loop, ByteArray.jsonHexToLong(res));
+    } catch (JsonRpcInvalidParamsException e) {
+      Assert.fail();
     }
   }
 

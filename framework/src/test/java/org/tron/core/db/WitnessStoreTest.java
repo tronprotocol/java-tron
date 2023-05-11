@@ -1,44 +1,26 @@
 package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
+import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
-import org.tron.common.utils.FileUtil;
+import org.tron.common.BaseTest;
 import org.tron.core.Constant;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.WitnessStore;
 
 @Slf4j
-public class WitnessStoreTest {
-
-  private static final String dbPath = "output-witnessStore-test";
-  private static TronApplicationContext context;
+public class WitnessStoreTest extends BaseTest {
 
   static {
+    dbPath = "output-witnessStore-test";
     Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
   }
 
-  WitnessStore witnessStore;
-
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
-  }
-
-  @Before
-  public void initDb() {
-    this.witnessStore = context.getBean(WitnessStore.class);
-  }
+  @Resource
+  private WitnessStore witnessStore;
 
   @Test
   public void putAndGetWitness() {

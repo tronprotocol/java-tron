@@ -16,14 +16,14 @@ import org.tron.protos.contract.StorageContract.UpdateBrokerageContract;
 
 public class CreateCommonTransactionTest {
 
-  private static String fullnode = "127.0.0.1:50051";
+  private static final String FULL_NODE = "127.0.0.1:50051";
 
   /**
    * for example create UpdateBrokerageContract
    */
   public static void testCreateUpdateBrokerageContract() {
     WalletBlockingStub walletStub = WalletGrpc
-        .newBlockingStub(ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build());
+        .newBlockingStub(ManagedChannelBuilder.forTarget(FULL_NODE).usePlaintext(true).build());
     UpdateBrokerageContract.Builder updateBrokerageContract = UpdateBrokerageContract.newBuilder();
     updateBrokerageContract.setOwnerAddress(
         ByteString.copyFrom(decodeFromBase58Check("TN3zfjYUmMFK3ZsHSsrdJoNRtGkQmZLBLz")))

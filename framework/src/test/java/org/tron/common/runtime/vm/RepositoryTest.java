@@ -1,27 +1,22 @@
 package org.tron.common.runtime.vm;
 
-import java.io.File;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.testng.Assert;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.WalletUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
@@ -33,20 +28,19 @@ import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 
 @Slf4j
-public class RepositoryTest {
+public class RepositoryTest extends BaseTest {
 
-  private Manager manager;
-  private TronApplicationContext context;
-  private String dbPath = "output_DepostitTest";
-  private String OWNER_ADDRESS;
+  private static final String OWNER_ADDRESS;
   private Repository rootRepository;
+  
+  static {
+    dbPath = "output_DepostitTest";
+    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
+    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
+  }
 
   @Before
   public void init() {
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
-    manager = context.getBean(Manager.class);
     rootRepository = RepositoryImpl.createRoot(StoreFactory.getInstance());
     rootRepository.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
     rootRepository.addBalance(Hex.decode(OWNER_ADDRESS), 30000000000000L);
@@ -102,9 +96,9 @@ public class RepositoryTest {
       VMIllegalException, ContractValidateException {
     byte[] stats = new byte[27];
     Arrays.fill(stats, (byte) 1);
-    this.manager.getDynamicPropertiesStore()
+    this.dbManager.getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
-    this.manager.getDynamicPropertiesStore()
+    this.dbManager.getDynamicPropertiesStore()
         .saveLatestBlockHeaderNumber(CommonParameter.getInstance()
             .getBlockNumForEnergyLimit() + 1);
 
@@ -206,7 +200,7 @@ public class RepositoryTest {
         .parseAbi("callBcallARevert(address,uint256,uint256)", params1);
     TVMTestResult result = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            aAddress, triggerData, 0, fee, manager, null);
+            aAddress, triggerData, 0, fee, dbManager, null);
     Assert.assertNull(result.getRuntime().getRuntimeError());
 
     // check result
@@ -216,10 +210,10 @@ public class RepositoryTest {
 
     TVMTestResult checkN1 = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            aAddress, checkN1Data, 0, fee, manager, null);
+            aAddress, checkN1Data, 0, fee, dbManager, null);
     TVMTestResult checkN2 = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            aAddress, checkN2Data, 0, fee, manager, null);
+            aAddress, checkN2Data, 0, fee, dbManager, null);
 
     System.out.println(Hex.toHexString(checkN1.getRuntime().getResult().getHReturn()));
     System.out.println(Hex.toHexString(checkN2.getRuntime().getResult().getHReturn()));
@@ -238,14 +232,14 @@ public class RepositoryTest {
     triggerData = TvmTestUtils.parseAbi("callBcallA(address,uint256,uint256)", params2);
     result = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            aAddress, triggerData, 0, fee, manager, null);
+            aAddress, triggerData, 0, fee, dbManager, null);
     Assert.assertNull(result.getRuntime().getRuntimeError());
     checkN1 = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            aAddress, checkN1Data, 0, fee, manager, null);
+            aAddress, checkN1Data, 0, fee, dbManager, null);
     checkN2 = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            aAddress, checkN2Data, 0, fee, manager, null);
+            aAddress, checkN2Data, 0, fee, dbManager, null);
     System.out.println(Hex.toHexString(checkN1.getRuntime().getResult().getHReturn()));
     System.out.println(Hex.toHexString(checkN2.getRuntime().getResult().getHReturn()));
     Assert.assertEquals(checkN1.getRuntime().getResult().getHReturn(),
@@ -262,7 +256,7 @@ public class RepositoryTest {
       VMIllegalException, ContractValidateException {
     byte[] stats = new byte[27];
     Arrays.fill(stats, (byte) 0);
-    this.manager.getDynamicPropertiesStore()
+    this.dbManager.getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
 
     String contractA = "A";
@@ -360,7 +354,7 @@ public class RepositoryTest {
         .parseAbi("callBcallARevert(address,uint256,uint256)", params1);
     TVMTestResult result = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            aAddress, triggerData, 0, fee, manager, null);
+            aAddress, triggerData, 0, fee, dbManager, null);
     Assert.assertNull(result.getRuntime().getRuntimeError());
 
     // check result
@@ -370,10 +364,10 @@ public class RepositoryTest {
 
     TVMTestResult checkN1 = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            aAddress, checkN1Data, 0, fee, manager, null);
+            aAddress, checkN1Data, 0, fee, dbManager, null);
     TVMTestResult checkN2 = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            aAddress, checkN2Data, 0, fee, manager, null);
+            aAddress, checkN2Data, 0, fee, dbManager, null);
 
     System.out.println(Hex.toHexString(checkN1.getRuntime().getResult().getHReturn()));
     System.out.println(Hex.toHexString(checkN2.getRuntime().getResult().getHReturn()));
@@ -392,14 +386,14 @@ public class RepositoryTest {
     triggerData = TvmTestUtils.parseAbi("callBcallA(address,uint256,uint256)", params2);
     result = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            aAddress, triggerData, 0, fee, manager, null);
+            aAddress, triggerData, 0, fee, dbManager, null);
     Assert.assertNull(result.getRuntime().getRuntimeError());
     checkN1 = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            aAddress, checkN1Data, 0, fee, manager, null);
+            aAddress, checkN1Data, 0, fee, dbManager, null);
     checkN2 = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            aAddress, checkN2Data, 0, fee, manager, null);
+            aAddress, checkN2Data, 0, fee, dbManager, null);
     System.out.println(Hex.toHexString(checkN1.getRuntime().getResult().getHReturn()));
     System.out.println(Hex.toHexString(checkN2.getRuntime().getResult().getHReturn()));
     Assert.assertEquals(checkN1.getRuntime().getResult().getHReturn(),
@@ -409,17 +403,4 @@ public class RepositoryTest {
             new DataWord(1000).getData());
     CommonParameter.setENERGY_LIMIT_HARD_FORK(false);
   }
-
-
-  @After
-  public void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.error("Release resources failure.");
-    }
-  }
-
 }
