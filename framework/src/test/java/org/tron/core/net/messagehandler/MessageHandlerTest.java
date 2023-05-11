@@ -1,6 +1,5 @@
 package org.tron.core.net.messagehandler;
 
-
 import static org.mockito.Mockito.mock;
 
 import com.google.protobuf.ByteString;
