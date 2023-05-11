@@ -35,7 +35,6 @@ public class HandshakeService {
 
   public void processHelloMessage(PeerConnection peer, HelloMessage msg) {
     if (peer.getHelloMessageReceive() != null) {
-      System.out.println("11111111111");
       logger.warn("Peer {} receive dup hello message", peer.getInetSocketAddress());
       peer.disconnect(ReasonCode.BAD_PROTOCOL);
       return;
@@ -43,14 +42,12 @@ public class HandshakeService {
 
     TronNetService.getP2pService().updateNodeId(peer.getChannel(), msg.getFrom().getHexId());
     if (peer.isDisconnect()) {
-      System.out.println("222222222");
       logger.info("Duplicate Peer {}", peer.getInetSocketAddress());
       peer.disconnect(ReasonCode.DUPLICATE_PEER);
       return;
     }
 
     if (!msg.valid()) {
-      System.out.println("333333333");
       logger.warn("Peer {} invalid hello message parameters, "
                       + "GenesisBlockId: {}, SolidBlockId: {}, HeadBlockId: {}",
               peer.getInetSocketAddress(),
@@ -64,7 +61,6 @@ public class HandshakeService {
     peer.setAddress(msg.getHelloMessage().getAddress());
 
     if (!relayService.checkHelloMessage(msg, peer.getChannel())) {
-      System.out.println("44444444444");
       peer.disconnect(ReasonCode.UNEXPECTED_IDENTITY);
       return;
     }
@@ -72,7 +68,6 @@ public class HandshakeService {
     long headBlockNum = chainBaseManager.getHeadBlockNum();
     long lowestBlockNum = msg.getLowestBlockNum();
     if (lowestBlockNum > headBlockNum) {
-      System.out.println("55555555555");
       logger.info("Peer {} miss block, lowestBlockNum:{}, headBlockNum:{}",
               peer.getInetSocketAddress(), lowestBlockNum, headBlockNum);
       peer.disconnect(ReasonCode.LIGHT_NODE_SYNC_FAIL);
@@ -80,7 +75,6 @@ public class HandshakeService {
     }
 
     if (msg.getVersion() != Args.getInstance().getNodeP2pVersion()) {
-      System.out.println("6666666666");
       logger.info("Peer {} different p2p version, peer->{}, me->{}",
               peer.getInetSocketAddress(), msg.getVersion(),
               Args.getInstance().getNodeP2pVersion());
@@ -90,7 +84,6 @@ public class HandshakeService {
 
     if (!Arrays.equals(chainBaseManager.getGenesisBlockId().getBytes(),
             msg.getGenesisBlockId().getBytes())) {
-      System.out.println("7777777777");
       logger.info("Peer {} different genesis block, peer->{}, me->{}",
               peer.getInetSocketAddress(),
               msg.getGenesisBlockId().getString(),
@@ -101,7 +94,6 @@ public class HandshakeService {
 
     if (chainBaseManager.getSolidBlockId().getNum() >= msg.getSolidBlockId().getNum()
             && !chainBaseManager.containBlockInMainChain(msg.getSolidBlockId())) {
-      System.out.println("88888888888");
       logger.info("Peer {} different solid block, peer->{}, me->{}",
               peer.getInetSocketAddress(),
               msg.getSolidBlockId().getString(),
@@ -112,7 +104,6 @@ public class HandshakeService {
 
     if (msg.getHeadBlockId().getNum() < chainBaseManager.getHeadBlockId().getNum()
         && peer.getInetSocketAddress().equals(effectiveCheckService.getCur())) {
-      System.out.println("99999999999");
       logger.info("Peer's head block {} is below than we, peer->{}, me->{}",
           peer.getInetSocketAddress(), msg.getHeadBlockId().getNum(),
           chainBaseManager.getHeadBlockId().getNum());
@@ -120,7 +111,6 @@ public class HandshakeService {
       return;
     }
 
-    System.out.println("000000000");
     peer.setHelloMessageReceive(msg);
 
     peer.getChannel().updateAvgLatency(

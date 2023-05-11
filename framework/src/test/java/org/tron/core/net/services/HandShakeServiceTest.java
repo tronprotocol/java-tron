@@ -11,6 +11,7 @@ import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Random;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -209,14 +210,17 @@ public class HandShakeServiceTest {
       Assert.fail();
     }
 
-    //solidityBlock is small than us, but not contained
+    //solidityBlock <= us, but not contained
     builder = getHelloMessageBuilder(node2, System.currentTimeMillis(),
         ChainBaseManager.getChainBaseManager());
     BlockCapsule.BlockId sid = ChainBaseManager.getChainBaseManager().getSolidBlockId();
+
+    Random gen = new Random();
+    byte[] randomHash = new byte[Sha256Hash.LENGTH];
+    gen.nextBytes(randomHash);
+
     Protocol.HelloMessage.BlockId sBlockId = Protocol.HelloMessage.BlockId.newBuilder()
-        .setHash(ByteString.copyFrom(
-            ByteArray.fromHex("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b81")
-                .getBytes()))
+        .setHash(ByteString.copyFrom(randomHash))
         .setNumber(sid.getNum())
         .build();
     builder.setSolidBlockId(sBlockId);
