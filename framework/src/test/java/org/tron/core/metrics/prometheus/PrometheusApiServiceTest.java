@@ -24,6 +24,7 @@ import org.tron.common.prometheus.MetricLabels;
 import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.consensus.dpos.DposSlot;
@@ -48,7 +49,7 @@ public class PrometheusApiServiceTest extends BlockGenerate {
   static LocalDateTime localDateTime = LocalDateTime.now();
   private static DposSlot dposSlot;
   final int blocks = 512;
-  private final String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
+  private final String key = PublicMethod.getRandomPrivateKey();
   private final byte[] privateKey = ByteArray.fromHexString(key);
   private final AtomicInteger port = new AtomicInteger(0);
   private final long time = ZonedDateTime.of(localDateTime,
@@ -108,6 +109,17 @@ public class PrometheusApiServiceTest extends BlockGenerate {
     consensusService.start();
     chainManager = dbManager.getChainBaseManager();
     tronNetDelegate = context.getBean(TronNetDelegate.class);
+
+
+    byte[] address = PublicMethod.getAddressByteByPrivateKey(key);
+    ByteString addressByte = ByteString.copyFrom(address);
+    WitnessCapsule witnessCapsule = new WitnessCapsule(addressByte);
+    chainManager.getWitnessStore().put(addressByte.toByteArray(), witnessCapsule);
+    chainManager.addWitness(addressByte);
+
+    AccountCapsule accountCapsule =
+            new AccountCapsule(Protocol.Account.newBuilder().setAddress(addressByte).build());
+    chainManager.getAccountStore().put(addressByte.toByteArray(), accountCapsule);
   }
 
   @After

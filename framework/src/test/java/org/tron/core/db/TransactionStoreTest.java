@@ -13,6 +13,7 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
@@ -204,8 +205,7 @@ public class TransactionStoreTest {
   public void getUncheckedTransactionTest() {
     final BlockStore blockStore = chainBaseManager.getBlockStore();
     final TransactionStore trxStore = chainBaseManager.getTransactionStore();
-    String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
-
+    String key = PublicMethod.getRandomPrivateKey();
     BlockCapsule blockCapsule =
         new BlockCapsule(
             1,

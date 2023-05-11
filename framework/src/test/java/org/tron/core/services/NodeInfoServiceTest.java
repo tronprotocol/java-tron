@@ -11,9 +11,10 @@ import org.tron.api.WalletGrpc.WalletBlockingStub;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.entity.NodeInfo;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.client.Configuration;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.program.Version;
-import stest.tron.wallet.common.client.Configuration;
+
 
 @Slf4j
 public class NodeInfoServiceTest {

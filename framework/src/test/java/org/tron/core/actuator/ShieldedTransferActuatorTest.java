@@ -11,6 +11,8 @@ import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.PublicMethod;
+import org.tron.common.utils.client.utils.TransactionUtils;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
 import org.tron.core.Constant;
@@ -30,7 +32,6 @@ import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.services.http.FullNodeHttpApiService;
-import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
@@ -44,7 +45,6 @@ import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.ShieldContract.PedersenHash;
 import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
-import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 @Slf4j
 public class ShieldedTransferActuatorTest {
@@ -54,7 +54,6 @@ public class ShieldedTransferActuatorTest {
   private static final String ADDRESS_ONE_PRIVATE_KEY;
   private static final String PUBLIC_ADDRESS_TWO;
   private static final String ADDRESS_TWO_PRIVATE_KEY;
-  private static final String PUBLIC_ADDRESS_OFF_LINE;
   private static final long AMOUNT = 100000000L;
   private static final long OWNER_BALANCE = 9999999000000L;
   private static final long TO_BALANCE = 100001000000L;
@@ -72,19 +71,18 @@ public class ShieldedTransferActuatorTest {
   private static Wallet wallet;
   private static Manager dbManager;
   private static TronApplicationContext context;
-  private static TransactionUtil transactionUtil;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
-    PUBLIC_ADDRESS_ONE =
-        Wallet.getAddressPreFixString() + "a7d8a35b260395c14aa456297662092ba3b76fc0";
-    ADDRESS_ONE_PRIVATE_KEY = "7f7f701e94d4f1dd60ee5205e7ea8ee31121427210417b608a6b2e96433549a7";
+
+    ADDRESS_ONE_PRIVATE_KEY = PublicMethod.getRandomPrivateKey();
+    PUBLIC_ADDRESS_ONE = PublicMethod.getHexAddressByPrivateKey(ADDRESS_ONE_PRIVATE_KEY);
+
+    ADDRESS_TWO_PRIVATE_KEY = PublicMethod.getRandomPrivateKey();
     PUBLIC_ADDRESS_TWO =
-        Wallet.getAddressPreFixString() + "8ba2aaae540c642e44e3bed5522c63bbc21fff92";
-    ADDRESS_TWO_PRIVATE_KEY = "e4e0edd6bff7b353dfc69a590721e902e6915c5e3e87d36dcb567a9716304720";
-    PUBLIC_ADDRESS_OFF_LINE =
-        Wallet.getAddressPreFixString() + "7bcb781f4743afaacf9f9528f3ea903b3782339f";
+            PublicMethod.getHexAddressByPrivateKey(ADDRESS_TWO_PRIVATE_KEY);
+
     DEFAULT_OVK = ByteArray.fromHexString(
         "030c8c2bc59fb3eb8afb047a8ea4b028743d23e7d38c6fa30908358431e2314d");
   }
@@ -96,7 +94,7 @@ public class ShieldedTransferActuatorTest {
   public static void init() throws ZksnarkException {
     Args.setFullNodeAllowShieldedTransaction(true);
     wallet = context.getBean(Wallet.class);
-    transactionUtil = context.getBean(TransactionUtil.class);
+    /*context.getBean(TransactionUtil.class);*/
     dbManager = context.getBean(Manager.class);
     librustzcashInitZksnarkParams();
   }

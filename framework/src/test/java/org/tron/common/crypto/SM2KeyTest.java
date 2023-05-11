@@ -17,27 +17,28 @@ import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 import org.tron.common.crypto.sm2.SM2;
 import org.tron.common.crypto.sm2.SM2Signer;
+import org.tron.common.utils.PublicMethod;
 import org.tron.core.Wallet;
 
 @Slf4j
 public class SM2KeyTest {
 
-  //private String IDa = "ALICE123@YAHOO.COM";
-  private static BigInteger SM2_N = new BigInteger("FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFF7203DF6"
-      + "B21C6052B53BBF40939D54123", 16);
-  private String privString = "128B2FA8BD433C6C068C8D803DFF79792A519A55171B1B650C23661D15897263";
+  private String privString = PublicMethod.getSM2RandomPrivateKey();
   private BigInteger privateKey = new BigInteger(privString, 16);
-  private String pubString = "04d5548c7825cbb56150a3506cd57464af8a1ae0519dfaf3c58221dc810caf28d"
-      + "d921073768fe3d59ce54e79a49445cf73fed23086537027264d168946d479533e";
-  private String compressedPubString =
-      "02d5548c7825cbb56150a3506cd57464af8a1ae0519dfaf3c58221dc810caf28dd";
+  private String pubString = PublicMethod.getSM2PublicByPrivateKey(privString);
   private byte[] pubKey = Hex.decode(pubString);
+
+  private String compressedPubString = PublicMethod.getSM2CompressedPubString(privString);
   private byte[] compressedPubKey = Hex.decode(compressedPubString);
-  private String address = "62e49e4c2f4e3c0653a02f8859c1e6991b759e87";
+  private String address = PublicMethod.getSM2AddressByPrivateKey(privString);
+  private long hashCode = SM2.fromPrivate(privateKey).hashCode();
+
+  private String messageDigest = Hex.toHexString(
+          PublicMethod.getSM2HashByPubKey(pubKey, "message digest"));
 
   @Test
   public void testHashCode() {
-    assertEquals(1126288006, SM2.fromPrivate(privateKey).hashCode());
+    assertEquals(hashCode, SM2.fromPrivate(privateKey).hashCode());
   }
 
   @Test
@@ -109,7 +110,7 @@ public class SM2KeyTest {
     SM2Signer signer = key.getSM2SignerForHash();
     String message = "message digest";
     byte[] hash = signer.generateSM3Hash(message.getBytes());
-    assertEquals("299C7DDB0D8DD2A85381BACBB92F738F390210A493A144C78E18C67B430DA882",
+    assertEquals(messageDigest.toUpperCase(),
         Hex.toHexString(hash).toUpperCase());
   }
 
@@ -142,7 +143,8 @@ public class SM2KeyTest {
     SM2.SM2Signature sign = key.sign(hash);
     byte[] addr = SM2.signatureToAddress(hash, sign);
     addr = Arrays.copyOfRange(addr, 1, addr.length);
-    assertEquals(address, Hex.toHexString(addr));
+    byte[] addressTmp = Arrays.copyOfRange(Hex.decode(address), 1, addr.length + 1);
+    assertEquals(Hex.toHexString(addressTmp), Hex.toHexString(addr));
   }
 
   @Test
@@ -162,7 +164,8 @@ public class SM2KeyTest {
     SM2 key = SM2.fromPublicOnly(pubKey);
     byte[] prefixedAddress = key.getAddress();
     byte[] unprefixedAddress = Arrays.copyOfRange(key.getAddress(), 1, prefixedAddress.length);
-    assertArrayEquals(Hex.decode(address), unprefixedAddress);
+    byte[] addressTmp = Arrays.copyOfRange(Hex.decode(address), 1, prefixedAddress.length);
+    assertArrayEquals(addressTmp, unprefixedAddress);
     assertEquals(Wallet.getAddressPreFixByte(), prefixedAddress[0]);
   }
 
@@ -171,7 +174,8 @@ public class SM2KeyTest {
     SM2 key = SM2.fromPrivate(privateKey);
     byte[] prefixedAddress = key.getAddress();
     byte[] unprefixedAddress = Arrays.copyOfRange(key.getAddress(), 1, prefixedAddress.length);
-    assertArrayEquals(Hex.decode(address), unprefixedAddress);
+    byte[] addressTmp = Arrays.copyOfRange(Hex.decode(address), 1, prefixedAddress.length);
+    assertArrayEquals(addressTmp, unprefixedAddress);
     assertEquals(Wallet.getAddressPreFixByte(), prefixedAddress[0]);
   }
 

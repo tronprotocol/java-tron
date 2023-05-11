@@ -18,6 +18,7 @@ package org.tron.core.config.args;
 import com.google.common.collect.Lists;
 import io.grpc.internal.GrpcUtil;
 import io.grpc.netty.NettyServerBuilder;
+import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
@@ -25,10 +26,16 @@ import org.junit.Test;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.LocalWitnesses;
+import org.tron.common.utils.PublicMethod;
 import org.tron.core.Constant;
 
 @Slf4j
 public class ArgsTest {
+
+  private final String privateKey = PublicMethod.getRandomPrivateKey();
+  private String address;
+  private LocalWitnesses localWitnesses;
 
   @After
   public void destroy() {
@@ -42,6 +49,13 @@ public class ArgsTest {
     CommonParameter parameter = Args.getInstance();
 
     Args.logConfig();
+
+    localWitnesses = new LocalWitnesses();
+    localWitnesses.setPrivateKeys(Arrays.asList(privateKey));
+    localWitnesses.initWitnessAccountAddress(true);
+    Args.setLocalWitnesses(localWitnesses);
+    address = ByteArray.toHexString(Args.getLocalWitnesses()
+            .getWitnessAccountAddress(CommonParameter.getInstance().isECKeyCryptoEngine()));
 
     Assert.assertEquals(0, parameter.getBackupPriority());
 
@@ -65,7 +79,7 @@ public class ArgsTest {
         genesisBlock.getParentHash());
 
     Assert.assertEquals(
-        Lists.newArrayList("f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62"),
+        Lists.newArrayList(privateKey),
         Args.getLocalWitnesses().getPrivateKeys());
 
     Assert.assertTrue(parameter.isNodeDiscoveryEnable());
@@ -91,10 +105,12 @@ public class ArgsTest {
     Assert.assertEquals(GrpcUtil.DEFAULT_MAX_HEADER_LIST_SIZE, parameter.getMaxHeaderListSize());
     Assert.assertEquals(1L, parameter.getAllowCreationOfContracts());
 
-    Assert.assertEquals("f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62",
+    Assert.assertEquals(privateKey,
         Args.getLocalWitnesses().getPrivateKey());
-    Assert.assertEquals("a0299f3db80a24b20a254b89ce639d59132f157f13",
+
+    Assert.assertEquals(address,
         ByteArray.toHexString(Args.getLocalWitnesses()
             .getWitnessAccountAddress(CommonParameter.getInstance().isECKeyCryptoEngine())));
   }
 }
+

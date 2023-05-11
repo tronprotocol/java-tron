@@ -1,10 +1,8 @@
 package org.tron.program;
 
-import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.io.File;
-import java.math.BigInteger;
 import java.nio.file.Paths;
 import org.junit.After;
 import org.junit.Before;
@@ -23,15 +21,11 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Utils;
-import org.tron.core.Wallet;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
-import org.tron.protos.Protocol;
-import org.tron.protos.contract.BalanceContract;
 import org.tron.tool.litefullnode.LiteFullNodeTool;
-import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 public class LiteFullNodeToolTest {
 

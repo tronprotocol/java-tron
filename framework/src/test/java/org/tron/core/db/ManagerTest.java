@@ -9,6 +9,7 @@ import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -24,6 +25,8 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.JsonUtil;
+import org.tron.common.utils.LocalWitnesses;
+import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
@@ -66,6 +69,7 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ExchangeStore;
 import org.tron.core.store.ExchangeV2Store;
 import org.tron.core.store.IncrementalMerkleTreeStore;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
@@ -90,6 +94,8 @@ public class ManagerTest extends BlockGenerate {
   private static AtomicInteger port = new AtomicInteger(0);
   private static String accountAddress =
       Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+  private final String privateKey = PublicMethod.getRandomPrivateKey();
+  private LocalWitnesses localWitnesses;
 
   @Before
   public void init() {
@@ -103,6 +109,12 @@ public class ManagerTest extends BlockGenerate {
     consensusService = context.getBean(ConsensusService.class);
     consensusService.start();
     chainManager = dbManager.getChainBaseManager();
+
+    localWitnesses = new LocalWitnesses();
+    localWitnesses.setPrivateKeys(Arrays.asList(privateKey));
+    localWitnesses.initWitnessAccountAddress(true);
+    Args.setLocalWitnesses(localWitnesses);
+
     blockCapsule2 =
         new BlockCapsule(
             1,
@@ -119,6 +131,16 @@ public class ManagerTest extends BlockGenerate {
     blockCapsule2.sign(
         ByteArray.fromHexString(Args.getLocalWitnesses().getPrivateKey()));
     Assert.assertTrue(dbManager.getMaxFlushCount() == 200);
+
+    byte[] address = PublicMethod.getAddressByteByPrivateKey(privateKey);
+    ByteString addressByte = ByteString.copyFrom(address);
+    WitnessCapsule witnessCapsule = new WitnessCapsule(addressByte);
+    chainManager.getWitnessStore().put(addressByte.toByteArray(), witnessCapsule);
+    chainManager.addWitness(addressByte);
+
+    AccountCapsule accountCapsule =
+            new AccountCapsule(Protocol.Account.newBuilder().setAddress(addressByte).build());
+    chainManager.getAccountStore().put(addressByte.toByteArray(), accountCapsule);
   }
 
   @After
@@ -180,6 +202,7 @@ public class ManagerTest extends BlockGenerate {
             .setToAddress(ByteString.copyFromUtf8("bbb"))
             .build();
     TransactionCapsule trx = new TransactionCapsule(tc, ContractType.TransferContract);
+
     if (chainManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() == 0) {
       dbManager.pushBlock(blockCapsule);
       Assert.assertEquals(1,

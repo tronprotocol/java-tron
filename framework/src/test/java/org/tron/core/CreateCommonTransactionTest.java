@@ -1,6 +1,6 @@
 package org.tron.core;
 
-import static stest.tron.wallet.common.client.WalletClient.decodeFromBase58Check;
+import static org.tron.common.utils.client.WalletClient.decodeFromBase58Check;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
