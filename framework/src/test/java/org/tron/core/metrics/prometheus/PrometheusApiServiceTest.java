@@ -22,9 +22,11 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.MetricLabels;
 import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.consensus.dpos.DposSlot;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -40,7 +42,7 @@ public class PrometheusApiServiceTest extends BaseTest {
   @Resource
   private DposSlot dposSlot;
   final int blocks = 512;
-  private final String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
+  private final String key = PublicMethod.getRandomPrivateKey();
   private final byte[] privateKey = ByteArray.fromHexString(key);
   private static final AtomicInteger port = new AtomicInteger(0);
   private final long time = ZonedDateTime.of(localDateTime,
@@ -49,6 +51,8 @@ public class PrometheusApiServiceTest extends BaseTest {
   private TronNetDelegate tronNetDelegate;
   @Resource
   private ConsensusService consensusService;
+  @Resource
+  private ChainBaseManager chainManager;
 
   static {
     dbPath = "output-prometheus-metric";
@@ -82,11 +86,21 @@ public class PrometheusApiServiceTest extends BaseTest {
     Assert.assertNull(errorLogs);
   }
 
-
   @Before
   public void init() throws Exception {
     logger.info("Full node running.");
     consensusService.start();
+    chainBaseManager = dbManager.getChainBaseManager();
+    byte[] address = PublicMethod.getAddressByteByPrivateKey(key);
+    ByteString addressByte = ByteString.copyFrom(address);
+    WitnessCapsule witnessCapsule = new WitnessCapsule(addressByte);
+    chainBaseManager.getWitnessStore().put(addressByte.toByteArray(), witnessCapsule);
+    chainBaseManager.addWitness(addressByte);
+
+    AccountCapsule accountCapsule =
+            new AccountCapsule(Protocol.Account.newBuilder().setAddress(addressByte).build());
+    chainBaseManager.getAccountStore().put(addressByte.toByteArray(), accountCapsule);
+
   }
 
   private void generateBlock(Map<ByteString, String> witnessAndAccount) throws Exception {

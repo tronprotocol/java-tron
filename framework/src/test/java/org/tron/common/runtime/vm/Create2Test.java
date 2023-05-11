@@ -25,6 +25,7 @@ import org.tron.core.services.NodeInfoService;
 import org.tron.core.services.jsonrpc.TronJsonRpcImpl;
 import org.tron.protos.Protocol.Transaction;
 
+
 @Slf4j
 public class Create2Test extends VMTestBase {
   /*

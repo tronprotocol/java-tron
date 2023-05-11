@@ -10,7 +10,6 @@ import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
-import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.WalletUtil;
 import org.tron.common.utils.client.Parameter.CommonConstant;
 import org.tron.common.utils.client.WalletClient;

@@ -5,7 +5,7 @@
 # Note: modify the paths and private key to your own.
 
 # Auther: haoyouqiang
-# Since: 2018/5/27 
+# Since: 2018/5/27
 # Version: 1.0
 
 if [ $# -ne 1 ]; then
@@ -24,7 +24,7 @@ LOG_FILE_PATH="java-tron.log"
 
 CONF_FILE_PATH="./build/resources/main/config.conf"
 
-PRIVATE_KEY="650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812"
+PRIVATE_KEY=""
 
 case "${1}" in
     start)

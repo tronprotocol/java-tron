@@ -12,6 +12,9 @@ import org.junit.Test;
 import org.tron.common.crypto.sm2.SM2;
 import org.tron.common.utils.Sha256Hash;
 
+/**
+ * The reason the test case uses the private key plaintext is to ensure that, after the ECkey tool or algorithm is upgraded, the upgraded differences can be verified.
+ */
 public class BouncyCastleTest {
 
   private String privString = "c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4";

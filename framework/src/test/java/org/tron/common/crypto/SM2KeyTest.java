@@ -19,6 +19,9 @@ import org.tron.common.crypto.sm2.SM2;
 import org.tron.common.crypto.sm2.SM2Signer;
 import org.tron.core.Wallet;
 
+/**
+ * The reason the test case uses the private key plaintext is to ensure that, after the ECkey tool or algorithm is upgraded, the upgraded differences can be verified.
+ */
 @Slf4j
 public class SM2KeyTest {
 

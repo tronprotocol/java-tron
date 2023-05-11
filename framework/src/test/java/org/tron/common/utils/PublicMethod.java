@@ -7,14 +7,19 @@ import com.google.protobuf.ByteString;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.Objects;
+
+import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.util.encoders.Hex;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.Random;
 
-import lombok.extern.slf4j.Slf4j;
 import org.tron.api.GrpcAPI;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.sm2.SM2;
+import org.tron.common.crypto.sm2.SM2Signer;
 import org.tron.common.utils.client.utils.TransactionUtils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol;
@@ -23,6 +28,64 @@ import org.tron.protos.contract.SmartContractOuterClass;
 
 @Slf4j
 public class PublicMethod {
+
+  public static ECKey getRandomECKey(String privateKey) {
+    BigInteger priK = new BigInteger(privateKey, 16);
+    return ECKey.fromPrivate(priK);
+  }
+
+  public static String getRandomPrivateKey() {
+    return Hex.toHexString(Objects
+            .requireNonNull(new ECKey(Utils.getRandom()).getPrivKeyBytes()));
+  }
+
+  public static String getHexAddressByPrivateKey(String privateKey) {
+    return ByteArray.toHexString(getAddressByteByPrivateKey(privateKey));
+  }
+
+  public static byte[] getAddressByteByPrivateKey(String privateKey) {
+    return getRandomECKey(privateKey).getAddress();
+  }
+
+  public static String getPublicByPrivateKey(String privateKey) {
+    return Hex.toHexString(getRandomECKey(privateKey).getPubKey());
+  }
+
+  public static byte[] getPublicKeyFromPrivate(String privateKey) {
+    BigInteger tmpKey = new BigInteger(privateKey, 16);
+    return ECKey.publicKeyFromPrivate(tmpKey, true);
+  }
+
+  public static String getSM2RandomPrivateKey() {
+    SM2 key = new SM2(Utils.getRandom());
+    return Hex.toHexString(
+            Objects.requireNonNull(key.getPrivKeyBytes()));
+  }
+
+  public static SM2 getSM2byPrivate(String privateKey) {
+    BigInteger priK = new BigInteger(privateKey, 16);
+    return SM2.fromPrivate(priK);
+  }
+
+  public static String getSM2PublicByPrivateKey(String privateKey) {
+    return Hex.toHexString(getSM2byPrivate(privateKey).getPubKey());
+  }
+
+  public static String getSM2AddressByPrivateKey(String privateKey) {
+    return ByteArray
+            .toHexString(getSM2byPrivate(privateKey).getAddress());
+  }
+
+  public static byte[] getSM2PublicKeyFromPrivate(String privateKey) {
+    BigInteger tmpKey = new BigInteger(privateKey, 16);
+    return SM2.publicKeyFromPrivate(tmpKey, true);
+  }
+
+  public static byte[] getSM2HashByPubKey(byte[] pubKey, String message) {
+    SM2 key = SM2.fromPublicOnly(pubKey);
+    SM2Signer signer = key.getSM2SignerForHash();
+    return signer.generateSM3Hash(message.getBytes());
+  }
 
   /** constructor. */
   public static SmartContractOuterClass.SmartContract.ABI jsonStr2Abi(String jsonStr) {
@@ -38,24 +101,24 @@ public class PublicMethod {
     for (int index = 0; index < jsonRoot.size(); index++) {
       JsonElement abiItem = jsonRoot.get(index);
       boolean anonymous =
-              abiItem.getAsJsonObject().get("anonymous") != null
-                      && abiItem.getAsJsonObject().get("anonymous").getAsBoolean();
+          abiItem.getAsJsonObject().get("anonymous") != null
+          && abiItem.getAsJsonObject().get("anonymous").getAsBoolean();
       final boolean constant =
-              abiItem.getAsJsonObject().get("constant") != null
-                      && abiItem.getAsJsonObject().get("constant").getAsBoolean();
+          abiItem.getAsJsonObject().get("constant") != null
+          && abiItem.getAsJsonObject().get("constant").getAsBoolean();
       final String name =
-              abiItem.getAsJsonObject().get("name") != null
-                      ? abiItem.getAsJsonObject().get("name").getAsString()
-                      : null;
+          abiItem.getAsJsonObject().get("name") != null
+          ? abiItem.getAsJsonObject().get("name").getAsString()
+            : null;
       JsonArray inputs =
-              abiItem.getAsJsonObject().get("inputs") != null
-                      ? abiItem.getAsJsonObject().get("inputs").getAsJsonArray() : null;
+          abiItem.getAsJsonObject().get("inputs") != null
+          ? abiItem.getAsJsonObject().get("inputs").getAsJsonArray() : null;
       final JsonArray outputs =
-              abiItem.getAsJsonObject().get("outputs") != null
-                      ? abiItem.getAsJsonObject().get("outputs").getAsJsonArray() : null;
+          abiItem.getAsJsonObject().get("outputs") != null
+          ? abiItem.getAsJsonObject().get("outputs").getAsJsonArray() : null;
       String type =
-              abiItem.getAsJsonObject().get("type") != null
-                      ? abiItem.getAsJsonObject().get("type").getAsString() : null;
+          abiItem.getAsJsonObject().get("type") != null
+          ? abiItem.getAsJsonObject().get("type").getAsString() : null;
       final boolean payable =
               abiItem.getAsJsonObject().get("payable") != null
                       && abiItem.getAsJsonObject().get("payable").getAsBoolean();
@@ -138,7 +201,7 @@ public class PublicMethod {
 
   /** constructor. */
   public static SmartContractOuterClass.SmartContract.ABI.Entry.EntryType
-      getEntryType(String type) {
+          getEntryType(String type) {
     switch (type) {
       case "constructor":
         return SmartContractOuterClass.SmartContract.ABI.Entry.EntryType.Constructor;
@@ -158,7 +221,7 @@ public class PublicMethod {
 
   /** constructor. */
   public static SmartContractOuterClass.SmartContract.ABI.Entry.StateMutabilityType
-      getStateMutability(String stateMutability) {
+            getStateMutability(String stateMutability) {
     switch (stateMutability) {
       case "pure":
         return SmartContractOuterClass.SmartContract.ABI.Entry.StateMutabilityType.Pure;
