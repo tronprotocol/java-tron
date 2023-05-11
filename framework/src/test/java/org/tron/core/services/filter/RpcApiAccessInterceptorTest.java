@@ -3,10 +3,12 @@ package org.tron.core.services.filter;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
+import io.grpc.stub.ServerCallStreamObserver;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -118,6 +120,106 @@ public class RpcApiAccessInterceptorTest {
     thrown.expectMessage("this API is unavailable due to config");
     blockingStubFull.getBlockByNum(message);
   }
+
+  @Test
+  public void testRpcApiService() {
+    RpcApiService rpcApiService = context.getBean(RpcApiService.class);
+    ServerCallStreamObserverTest serverCallStreamObserverTest = new ServerCallStreamObserverTest();
+    rpcApiService.getBlockCommon(GrpcAPI.BlockReq.getDefaultInstance(),
+        serverCallStreamObserverTest);
+    Assert.assertTrue("Get block Common failed!", serverCallStreamObserverTest.isReady());
+    serverCallStreamObserverTest.isCancelled();
+    rpcApiService.getBrokerageInfoCommon(GrpcAPI.BytesMessage.newBuilder().build(),
+        serverCallStreamObserverTest);
+    Assert.assertTrue("Get brokerage info Common failed!",
+        serverCallStreamObserverTest.isReady());
+    serverCallStreamObserverTest.isCancelled();
+    rpcApiService.getBurnTrxCommon(GrpcAPI.EmptyMessage.newBuilder().build(),
+        serverCallStreamObserverTest);
+    Assert.assertTrue("Get burn trx common failed!",
+        serverCallStreamObserverTest.isReady());
+    serverCallStreamObserverTest.isCancelled();
+    rpcApiService.getPendingSizeCommon(GrpcAPI.EmptyMessage.getDefaultInstance(),
+        serverCallStreamObserverTest);
+    Assert.assertTrue("Get pending size common failed!",
+        serverCallStreamObserverTest.isReady());
+    serverCallStreamObserverTest.isCancelled();
+    rpcApiService.getRewardInfoCommon(GrpcAPI.BytesMessage.newBuilder().build(),
+        serverCallStreamObserverTest);
+    Assert.assertTrue("Get reward info common failed!",
+        serverCallStreamObserverTest.isReady());
+    serverCallStreamObserverTest.isCancelled();
+    rpcApiService.getTransactionCountByBlockNumCommon(
+        GrpcAPI.NumberMessage.newBuilder().getDefaultInstanceForType(),
+        serverCallStreamObserverTest);
+    Assert.assertTrue("Get transaction count by block num failed!",
+        serverCallStreamObserverTest.isReady());
+    serverCallStreamObserverTest.isCancelled();
+    rpcApiService.getTransactionFromPendingCommon(GrpcAPI.BytesMessage.newBuilder().build(),
+        serverCallStreamObserverTest);
+    Assert.assertTrue("Get transaction from pending failed!",
+        serverCallStreamObserverTest.isReady() == false);
+    serverCallStreamObserverTest.isCancelled();
+    rpcApiService.getTransactionListFromPendingCommon(GrpcAPI.EmptyMessage.newBuilder()
+        .getDefaultInstanceForType(), serverCallStreamObserverTest);
+    Assert.assertTrue("Get transaction list from pending failed!",
+        serverCallStreamObserverTest.isReady());
+  }
+
+
+  class ServerCallStreamObserverTest extends ServerCallStreamObserver {
+
+    Object ret;
+
+    @Override
+    public boolean isCancelled() {
+      ret = null;
+      return true;
+    }
+
+    @Override
+    public void setOnCancelHandler(Runnable onCancelHandler) {
+    }
+
+    @Override
+    public void setCompression(String compression) {
+    }
+
+    @Override
+    public boolean isReady() {
+      return Objects.nonNull(ret);
+    }
+
+    @Override
+    public void setOnReadyHandler(Runnable onReadyHandler) {
+    }
+
+    @Override
+    public void disableAutoInboundFlowControl() {
+    }
+
+    @Override
+    public void request(int count) {
+    }
+
+    @Override
+    public void setMessageCompression(boolean enable) {
+    }
+
+    @Override
+    public void onNext(Object value) {
+      ret = value;
+    }
+
+    @Override
+    public void onError(Throwable t) {
+    }
+
+    @Override
+    public void onCompleted() {
+    }
+  }
+
 
   @Test
   public void testAccessDisabledSolidityNode() {
