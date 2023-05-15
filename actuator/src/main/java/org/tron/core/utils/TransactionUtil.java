@@ -257,8 +257,8 @@ public class TransactionUtil {
     DelegateResourceContract.Builder builder = DelegateResourceContract.newBuilder()
         .setLock(true)
         .setBalance(balance);
-
     long builderSize = builder.build().getSerializedSize();
+
     DelegateResourceContract.Builder builder2 = DelegateResourceContract.newBuilder()
         .setBalance(TRX_PRECISION);
     long builder2Size = builder2.build().getSerializedSize();

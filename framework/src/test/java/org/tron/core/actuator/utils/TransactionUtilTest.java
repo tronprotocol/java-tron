@@ -241,13 +241,18 @@ public class TransactionUtilTest extends BaseTest {
   @Test
   public void estimateConsumeBandWidthSizePositive() {
     long balance = 100;
-    BalanceContract.DelegateResourceContract.Builder builder = BalanceContract.DelegateResourceContract.newBuilder()
+
+    BalanceContract.DelegateResourceContract.Builder builder =
+        BalanceContract.DelegateResourceContract.newBuilder()
         .setLock(true)
         .setBalance(balance);
-    BalanceContract.DelegateResourceContract.Builder builder2 = BalanceContract.DelegateResourceContract.newBuilder()
+    BalanceContract.DelegateResourceContract.Builder builder2 =
+        BalanceContract.DelegateResourceContract.newBuilder()
         .setBalance(TRX_PRECISION);
 
-    long expected = DELEGATE_COST_BASE_SIZE + Math.max(builder.build().getSerializedSize() - builder2.build().getSerializedSize(), 0L);
+    long expected = DELEGATE_COST_BASE_SIZE + Math.max(
+        builder.build().getSerializedSize() - builder2.build().getSerializedSize(), 0L);
+
     long actual = TransactionUtil.estimateConsumeBandWidthSize(balance);
     Assert.assertEquals(expected, actual);
   }
@@ -255,13 +260,18 @@ public class TransactionUtilTest extends BaseTest {
   @Test
   public void estimateConsumeBandWidthSizeBoundary() {
     long balance = TRX_PRECISION;
-    BalanceContract.DelegateResourceContract.Builder builder = BalanceContract.DelegateResourceContract.newBuilder()
+
+    BalanceContract.DelegateResourceContract.Builder builder =
+        BalanceContract.DelegateResourceContract.newBuilder()
         .setLock(true)
         .setBalance(balance);
-    BalanceContract.DelegateResourceContract.Builder builder2 = BalanceContract.DelegateResourceContract.newBuilder()
+    BalanceContract.DelegateResourceContract.Builder builder2 =
+        BalanceContract.DelegateResourceContract.newBuilder()
         .setBalance(TRX_PRECISION);
 
-    long expected = DELEGATE_COST_BASE_SIZE + Math.max(builder.build().getSerializedSize() - builder2.build().getSerializedSize(), 0L);
+    long expected = DELEGATE_COST_BASE_SIZE + Math.max(
+        builder.build().getSerializedSize() - builder2.build().getSerializedSize(), 0L);
+
     long actual = TransactionUtil.estimateConsumeBandWidthSize(balance);
     Assert.assertEquals(expected, actual);
   }
@@ -269,13 +279,18 @@ public class TransactionUtilTest extends BaseTest {
   @Test
   public void estimateConsumeBandWidthSizeEdge() {
     long balance = TRX_PRECISION + 1;
-    BalanceContract.DelegateResourceContract.Builder builder = BalanceContract.DelegateResourceContract.newBuilder()
+
+    BalanceContract.DelegateResourceContract.Builder builder =
+        BalanceContract.DelegateResourceContract.newBuilder()
         .setLock(true)
         .setBalance(balance);
-    BalanceContract.DelegateResourceContract.Builder builder2 = BalanceContract.DelegateResourceContract.newBuilder()
+    BalanceContract.DelegateResourceContract.Builder builder2 =
+        BalanceContract.DelegateResourceContract.newBuilder()
         .setBalance(TRX_PRECISION);
 
-    long expected = DELEGATE_COST_BASE_SIZE + Math.max(builder.build().getSerializedSize() - builder2.build().getSerializedSize(), 0L);
+    long expected = DELEGATE_COST_BASE_SIZE + Math.max(
+        builder.build().getSerializedSize() - builder2.build().getSerializedSize(), 0L);
+
     long actual = TransactionUtil.estimateConsumeBandWidthSize(balance);
     Assert.assertEquals(expected, actual);
   }
@@ -283,13 +298,18 @@ public class TransactionUtilTest extends BaseTest {
   @Test
   public void estimateConsumeBandWidthSizeCorner() {
     long balance = Long.MAX_VALUE;
-    BalanceContract.DelegateResourceContract.Builder builder = BalanceContract.DelegateResourceContract.newBuilder()
+
+    BalanceContract.DelegateResourceContract.Builder builder =
+        BalanceContract.DelegateResourceContract.newBuilder()
         .setLock(true)
         .setBalance(balance);
-    BalanceContract.DelegateResourceContract.Builder builder2 = BalanceContract.DelegateResourceContract.newBuilder()
+    BalanceContract.DelegateResourceContract.Builder builder2 =
+        BalanceContract.DelegateResourceContract.newBuilder()
         .setBalance(TRX_PRECISION);
 
-    long expected = DELEGATE_COST_BASE_SIZE + Math.max(builder.build().getSerializedSize() - builder2.build().getSerializedSize(), 0L);
+    long expected = DELEGATE_COST_BASE_SIZE + Math.max(
+        builder.build().getSerializedSize() - builder2.build().getSerializedSize(), 0L);
+
     long actual = TransactionUtil.estimateConsumeBandWidthSize(balance);
     Assert.assertEquals(expected, actual);
   }
