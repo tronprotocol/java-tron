@@ -58,13 +58,6 @@ public class WalletTestAccount011 {
 
   }
 
-  @Test(enabled = true)
-  public void testgenerateAddress() {
-    EmptyMessage.Builder builder = EmptyMessage.newBuilder();
-    blockingStubFull.generateAddress(builder.build());
-    blockingStubSolidity.generateAddress(builder.build());
-  }
-
   /**
    * constructor.
    */

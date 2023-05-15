@@ -124,6 +124,7 @@ public class Args extends CommonParameter {
     PARAMETER.needSyncCheck = false;
     PARAMETER.nodeDiscoveryEnable = false;
     PARAMETER.nodeDiscoveryPersist = false;
+    PARAMETER.nodeEffectiveCheckEnable = false;
     PARAMETER.nodeConnectionTimeout = 2000;
     PARAMETER.activeNodes = new ArrayList<>();
     PARAMETER.passiveNodes = new ArrayList<>();
@@ -134,6 +135,7 @@ public class Args extends CommonParameter {
     PARAMETER.minConnections = 8;
     PARAMETER.minActiveConnections = 3;
     PARAMETER.maxConnectionsWithSameIp = 2;
+    PARAMETER.maxTps = 1000;
     PARAMETER.minParticipationRate = 0;
     PARAMETER.nodeListenPort = 0;
     PARAMETER.nodeDiscoveryBindIp = "";
@@ -145,6 +147,7 @@ public class Args extends CommonParameter {
     PARAMETER.nodeEnableIpv6 = false;
     PARAMETER.dnsTreeUrls = new ArrayList<>();
     PARAMETER.dnsPublishConfig = null;
+    PARAMETER.syncFetchBatchNum = 2000;
     PARAMETER.rpcPort = 0;
     PARAMETER.rpcOnSolidityPort = 0;
     PARAMETER.rpcOnPBFTPort = 0;
@@ -230,6 +233,7 @@ public class Args extends CommonParameter {
     PARAMETER.p2pDisable = false;
     PARAMETER.dynamicConfigEnable = false;
     PARAMETER.dynamicConfigCheckInterval = 600;
+    PARAMETER.allowTvmShangHai = 0;
   }
 
   /**
@@ -559,13 +563,17 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.NODE_DISCOVERY_PERSIST)
             && config.getBoolean(Constant.NODE_DISCOVERY_PERSIST);
 
+    PARAMETER.nodeEffectiveCheckEnable =
+        config.hasPath(Constant.NODE_EFFECTIVE_CHECK_ENABLE)
+            && config.getBoolean(Constant.NODE_EFFECTIVE_CHECK_ENABLE);
+
     PARAMETER.nodeConnectionTimeout =
         config.hasPath(Constant.NODE_CONNECTION_TIMEOUT)
             ? config.getInt(Constant.NODE_CONNECTION_TIMEOUT) * 1000
             : 2000;
 
     if (!config.hasPath(Constant.NODE_FETCH_BLOCK_TIMEOUT)) {
-      PARAMETER.fetchBlockTimeout = 200;
+      PARAMETER.fetchBlockTimeout = 500;
     } else if (config.getInt(Constant.NODE_FETCH_BLOCK_TIMEOUT) > 1000) {
       PARAMETER.fetchBlockTimeout = 1000;
     } else if (config.getInt(Constant.NODE_FETCH_BLOCK_TIMEOUT) < 100) {
@@ -616,6 +624,9 @@ public class Args extends CommonParameter {
                       .getInt(Constant.NODE_MAX_CONNECTIONS_WITH_SAME_IP) : 2;
     }
 
+    PARAMETER.maxTps = config.hasPath(Constant.NODE_MAX_TPS)
+            ? config.getInt(Constant.NODE_MAX_TPS) : 1000;
+
     PARAMETER.minParticipationRate =
         config.hasPath(Constant.NODE_MIN_PARTICIPATION_RATE)
             ? config.getInt(Constant.NODE_MIN_PARTICIPATION_RATE)
@@ -651,6 +662,15 @@ public class Args extends CommonParameter {
         Constant.NODE_DNS_TREE_URLS) : new ArrayList<>();
 
     PARAMETER.dnsPublishConfig = loadDnsPublishConfig(config);
+
+    PARAMETER.syncFetchBatchNum = config.hasPath(Constant.NODE_SYNC_FETCH_BATCH_NUM) ? config
+        .getInt(Constant.NODE_SYNC_FETCH_BATCH_NUM) : 2000;
+    if (PARAMETER.syncFetchBatchNum > 2000) {
+      PARAMETER.syncFetchBatchNum = 2000;
+    }
+    if (PARAMETER.syncFetchBatchNum < 100) {
+      PARAMETER.syncFetchBatchNum = 100;
+    }
 
     PARAMETER.rpcPort =
         config.hasPath(Constant.NODE_RPC_PORT)
@@ -954,9 +974,7 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.RATE_LIMITER_GLOBAL_IP_QPS) ? config
             .getInt(Constant.RATE_LIMITER_GLOBAL_IP_QPS) : 10000;
 
-    PARAMETER.rateLimiterInitialization =
-        config.hasPath(Constant.RATE_LIMITER) ? getRateLimiterFromConfig(config)
-            : new RateLimiterInitialization();
+    PARAMETER.rateLimiterInitialization = getRateLimiterFromConfig(config);
 
     PARAMETER.changedDelegation =
         config.hasPath(Constant.COMMITTEE_CHANGED_DELEGATION) ? config
@@ -1161,6 +1179,10 @@ public class Args extends CommonParameter {
       PARAMETER.dynamicConfigCheckInterval = 600;
     }
 
+    PARAMETER.allowTvmShangHai =
+        config.hasPath(Constant.COMMITTEE_ALLOW_TVM_SHANGHAI) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_TVM_SHANGHAI) : 0;
+
     logConfig();
   }
 
@@ -1195,21 +1217,22 @@ public class Args extends CommonParameter {
   }
 
   private static RateLimiterInitialization getRateLimiterFromConfig(
-      final com.typesafe.config.Config config) {
-
+          final com.typesafe.config.Config config) {
     RateLimiterInitialization initialization = new RateLimiterInitialization();
-    ArrayList<RateLimiterInitialization.HttpRateLimiterItem> list1 = config
-        .getObjectList(Constant.RATE_LIMITER_HTTP).stream()
-        .map(RateLimiterInitialization::createHttpItem)
-        .collect(Collectors.toCollection(ArrayList::new));
-    initialization.setHttpMap(list1);
-
-    ArrayList<RateLimiterInitialization.RpcRateLimiterItem> list2 = config
-        .getObjectList(Constant.RATE_LIMITER_RPC).stream()
-        .map(RateLimiterInitialization::createRpcItem)
-        .collect(Collectors.toCollection(ArrayList::new));
-
-    initialization.setRpcMap(list2);
+    if (config.hasPath(Constant.RATE_LIMITER_HTTP)) {
+      ArrayList<RateLimiterInitialization.HttpRateLimiterItem> list1 = config
+              .getObjectList(Constant.RATE_LIMITER_HTTP).stream()
+              .map(RateLimiterInitialization::createHttpItem)
+              .collect(Collectors.toCollection(ArrayList::new));
+      initialization.setHttpMap(list1);
+    }
+    if (config.hasPath(Constant.RATE_LIMITER_RPC)) {
+      ArrayList<RateLimiterInitialization.RpcRateLimiterItem> list2 = config
+              .getObjectList(Constant.RATE_LIMITER_RPC).stream()
+              .map(RateLimiterInitialization::createRpcItem)
+              .collect(Collectors.toCollection(ArrayList::new));
+      initialization.setRpcMap(list2);
+    }
     return initialization;
   }
 
@@ -1222,9 +1245,6 @@ public class Args extends CommonParameter {
     List<String> list = config.getStringList(path);
     for (String configString : list) {
       InetSocketAddress inetSocketAddress = NetUtil.parseInetSocketAddress(configString);
-      if (inetSocketAddress == null) {
-        continue;
-      }
       if (filter) {
         String ip = inetSocketAddress.getAddress().getHostAddress();
         int port = inetSocketAddress.getPort();
@@ -1250,9 +1270,7 @@ public class Args extends CommonParameter {
     List<String> list = config.getStringList(path);
     for (String configString : list) {
       InetSocketAddress inetSocketAddress = NetUtil.parseInetSocketAddress(configString);
-      if (inetSocketAddress != null) {
-        ret.add(inetSocketAddress.getAddress());
-      }
+      ret.add(inetSocketAddress.getAddress());
     }
     return ret;
   }
@@ -1321,9 +1339,7 @@ public class Args extends CommonParameter {
     if (PARAMETER.seedNodes != null && !PARAMETER.seedNodes.isEmpty()) {
       for (String s : PARAMETER.seedNodes) {
         InetSocketAddress inetSocketAddress = NetUtil.parseInetSocketAddress(s);
-        if (inetSocketAddress != null) {
-          inetSocketAddressList.add(inetSocketAddress);
-        }
+        inetSocketAddressList.add(inetSocketAddress);
       }
     } else {
       inetSocketAddressList = getInetSocketAddress(config, Constant.SEED_NODE_IP_LIST, false);
@@ -1337,7 +1353,12 @@ public class Args extends CommonParameter {
     if (config.hasPath(Constant.NODE_DNS_PUBLISH)) {
       publishConfig.setDnsPublishEnable(config.getBoolean(Constant.NODE_DNS_PUBLISH));
     }
+    loadDnsPublishParameters(config, publishConfig);
+    return publishConfig;
+  }
 
+  public static void loadDnsPublishParameters(final com.typesafe.config.Config config,
+      PublishConfig publishConfig) {
     if (publishConfig.isDnsPublishEnable()) {
       if (config.hasPath(Constant.NODE_DNS_DOMAIN) && StringUtils.isNotEmpty(
           config.getString(Constant.NODE_DNS_DOMAIN))) {
@@ -1429,7 +1450,6 @@ public class Args extends CommonParameter {
         }
       }
     }
-    return publishConfig;
   }
 
   private static void logEmptyError(String arg) {
@@ -1632,6 +1652,7 @@ public class Args extends CommonParameter {
     logger.info("Bind IP: {}", parameter.getNodeDiscoveryBindIp());
     logger.info("External IP: {}", parameter.getNodeExternalIp());
     logger.info("Listen port: {}", parameter.getNodeListenPort());
+    logger.info("Node ipv6 enable: {}", parameter.isNodeEnableIpv6());
     logger.info("Discover enable: {}", parameter.isNodeDiscoveryEnable());
     logger.info("Active node size: {}", parameter.getActiveNodes().size());
     logger.info("Passive node size: {}", parameter.getPassiveNodes().size());
@@ -1646,6 +1667,7 @@ public class Args extends CommonParameter {
     logger.info("Trx reference block: {}", parameter.getTrxReferenceBlock());
     logger.info("Open full tcp disconnect: {}", parameter.isOpenFullTcpDisconnect());
     logger.info("Node detect enable: {}", parameter.isNodeDetectEnable());
+    logger.info("Node effective check enable: {}", parameter.isNodeEffectiveCheckEnable());
     logger.info("Rate limiter global qps: {}", parameter.getRateLimiterGlobalQps());
     logger.info("Rate limiter global ip qps: {}", parameter.getRateLimiterGlobalIpQps());
     logger.info("************************ Backup config ************************");

@@ -83,15 +83,18 @@ public class Constant {
   public static final String BLOCK_NEED_SYNC_CHECK = "block.needSyncCheck";
   public static final String NODE_DISCOVERY_ENABLE = "node.discovery.enable";
   public static final String NODE_DISCOVERY_PERSIST = "node.discovery.persist";
+  public static final String NODE_EFFECTIVE_CHECK_ENABLE = "node.effectiveCheckEnable";
   public static final String NODE_CONNECTION_TIMEOUT = "node.connection.timeout";
   public static final String NODE_FETCH_BLOCK_TIMEOUT = "node.fetchBlock.timeout";
   public static final String NODE_CHANNEL_READ_TIMEOUT = "node.channel.read.timeout";
   public static final String NODE_MAX_CONNECTIONS = "node.maxConnections";
   public static final String NODE_MIN_CONNECTIONS = "node.minConnections";
   public static final String NODE_MIN_ACTIVE_CONNECTIONS = "node.minActiveConnections";
+  public static final String NODE_SYNC_FETCH_BATCH_NUM = "node.syncFetchBatchNum";
 
   public static final String NODE_MAX_ACTIVE_NODES = "node.maxActiveNodes";
   public static final String NODE_MAX_ACTIVE_NODES_WITH_SAME_IP = "node.maxActiveNodesWithSameIp";
+  public static final String NODE_MAX_TPS = "node.maxTps";
   public static final String NODE_CONNECT_FACTOR = "node.connectFactor";
   public static final String NODE_ACTIVE_CONNECT_FACTOR = "node.activeConnectFactor";
 
@@ -368,4 +371,6 @@ public class Constant {
 
   public static final String DYNAMIC_CONFIG_ENABLE = "node.dynamicConfig.enable";
   public static final String DYNAMIC_CONFIG_CHECK_INTERVAL = "node.dynamicConfig.checkInterval";
+
+  public static final String COMMITTEE_ALLOW_TVM_SHANGHAI = "committee.allowTvmShangHai";
 }

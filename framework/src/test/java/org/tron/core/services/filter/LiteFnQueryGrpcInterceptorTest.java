@@ -5,6 +5,7 @@ import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
 import java.io.File;
 import java.util.concurrent.TimeUnit;
+import lombok.extern.slf4j.Slf4j;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -12,9 +13,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.tron.api.DatabaseGrpc;
 import org.tron.api.GrpcAPI;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
@@ -31,9 +29,8 @@ import org.tron.core.services.RpcApiService;
 import org.tron.core.services.interfaceOnPBFT.RpcApiServiceOnPBFT;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 
+@Slf4j
 public class LiteFnQueryGrpcInterceptorTest {
-
-  private static final Logger logger = LoggerFactory.getLogger("Test");
 
   private TronApplicationContext context;
   private ManagedChannel channelFull = null;
@@ -47,7 +44,7 @@ public class LiteFnQueryGrpcInterceptorTest {
   private Application appTest;
   private ChainBaseManager chainBaseManager;
 
-  private String dbPath = "output_grpc_filter_test";
+  private String dbPath = "output_grpc_interceptor_test";
 
   @Rule
   public ExpectedException thrown = ExpectedException.none();

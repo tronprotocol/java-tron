@@ -21,7 +21,6 @@ import org.springframework.stereotype.Component;
 import org.tron.common.utils.Pair;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
@@ -64,6 +63,8 @@ public class SyncService {
 
   @Setter
   private volatile boolean fetchFlag = false;
+
+  private final long syncFetchBatchNum = Args.getInstance().getSyncFetchBatchNum();
 
   public void init() {
     fetchExecutor.scheduleWithFixedDelay(() -> {
@@ -113,7 +114,10 @@ public class SyncService {
         logger.warn("Peer {} is in sync", peer.getInetSocketAddress());
         return;
       }
-      LinkedList<BlockId> chainSummary = getBlockChainSummary(peer);
+      LinkedList<BlockId> chainSummary;
+      synchronized (tronNetDelegate.getForkLock()) {
+        chainSummary = getBlockChainSummary(peer);
+      }
       peer.setSyncChainRequested(new Pair<>(chainSummary, System.currentTimeMillis()));
       peer.sendMessage(new SyncBlockChainMessage(chainSummary));
     } catch (Exception e) {
@@ -129,7 +133,7 @@ public class SyncService {
     handleFlag = true;
     if (peer.isIdle()) {
       if (peer.getRemainNum() > 0
-          && peer.getSyncBlockToFetch().size() <= NetConstants.SYNC_FETCH_BATCH_NUM) {
+          && peer.getSyncBlockToFetch().size() <= syncFetchBatchNum) {
         syncNext(peer);
       } else {
         fetchFlag = true;
@@ -247,6 +251,7 @@ public class SyncService {
     }
 
     final boolean[] isProcessed = {true};
+    long solidNum = tronNetDelegate.getSolidBlockId().getNum();
 
     while (isProcessed[0]) {
 
@@ -259,40 +264,57 @@ public class SyncService {
             invalid(msg.getBlockId(), peerConnection);
             return;
           }
+          if (msg.getBlockId().getNum() <= solidNum) {
+            blockWaitToProcess.remove(msg);
+            return;
+          }
           final boolean[] isFound = {false};
           tronNetDelegate.getActivePeer().stream()
               .filter(peer -> msg.getBlockId().equals(peer.getSyncBlockToFetch().peek()))
               .forEach(peer -> {
-                peer.getSyncBlockToFetch().pop();
-                peer.getSyncBlockInProcess().add(msg.getBlockId());
                 isFound[0] = true;
               });
           if (isFound[0]) {
             blockWaitToProcess.remove(msg);
             isProcessed[0] = true;
-            processSyncBlock(msg.getBlockCapsule());
+            processSyncBlock(msg.getBlockCapsule(), peerConnection);
           }
         }
       });
     }
   }
 
-  private void processSyncBlock(BlockCapsule block) {
+  private void processSyncBlock(BlockCapsule block, PeerConnection peerConnection) {
     boolean flag = true;
+    boolean attackFlag = false;
     BlockId blockId = block.getBlockId();
     try {
       tronNetDelegate.validSignature(block);
       tronNetDelegate.processBlock(block, true);
       pbftDataSyncHandler.processPBFTCommitData(block);
+    } catch (P2pException p2pException) {
+      logger.error("Process sync block {} failed, type: {}",
+              blockId.getString(), p2pException.getType());
+      attackFlag = p2pException.getType().equals(TypeEnum.BLOCK_SIGN_ERROR)
+              || p2pException.getType().equals(TypeEnum.BLOCK_MERKLE_ERROR);
+      flag = false;
     } catch (Exception e) {
       logger.error("Process sync block {} failed", blockId.getString(), e);
       flag = false;
     }
+
+    if (attackFlag) {
+      invalid(blockId, peerConnection);
+      peerConnection.disconnect(ReasonCode.BAD_BLOCK);
+      return;
+    }
+
     for (PeerConnection peer : tronNetDelegate.getActivePeer()) {
-      if (peer.getSyncBlockInProcess().remove(blockId)) {
+      if (blockId.equals(peer.getSyncBlockToFetch().peek())) {
+        peer.getSyncBlockToFetch().pop();
         if (flag) {
           peer.setBlockBothHave(blockId);
-          if (peer.getSyncBlockToFetch().isEmpty()) {
+          if (peer.getSyncBlockToFetch().isEmpty() && peer.isFetchAble()) {
             syncNext(peer);
           }
         } else {

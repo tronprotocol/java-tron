@@ -1,31 +1,26 @@
 package org.tron.core.jsonrpc;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
+import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.services.jsonrpc.types.BuildArguments;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 
 @Slf4j
-public class BuildTransactionTest {
+public class BuildTransactionTest extends BaseTest {
 
-  private static String dbPath = "output_build_transaction_test";
   private static final String OWNER_ADDRESS;
   private static final String OWNER_ADDRESS_ACCOUNT_NAME = "first";
 
@@ -33,24 +28,20 @@ public class BuildTransactionTest {
   private static final String CONTRACT_ADDRESS;
   private static final long SOURCE_PERCENT = 10L;
 
-  private static TronApplicationContext context;
-  private static Manager dbManager;
-  private static Wallet wallet;
+  @Resource
+  private Wallet wallet;
 
   static {
+    dbPath = "output_build_transaction_test";
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
 
     OWNER_ADDRESS =
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     CONTRACT_ADDRESS = Wallet.getAddressPreFixString() + "f859b5c93f789f4bcffbe7cc95a71e28e5e6a5bd";
   }
 
-  @BeforeClass
-  public static void init() {
-    dbManager = context.getBean(Manager.class);
-    wallet = context.getBean(Wallet.class);
-
+  @Before
+  public void init() {
     AccountCapsule accountCapsule =
         new AccountCapsule(
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
@@ -74,17 +65,6 @@ public class BuildTransactionTest {
     dbManager.getContractStore().put(
         contractCapsule.getAddress().toByteArray(),
         new ContractCapsule(builder.build()));
-  }
-
-  @AfterClass
-  public static void removeDb() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   @Test
