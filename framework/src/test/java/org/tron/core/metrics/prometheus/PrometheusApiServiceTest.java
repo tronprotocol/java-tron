@@ -22,11 +22,11 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.MetricLabels;
 import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.consensus.dpos.DposSlot;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -35,6 +35,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ConsensusService;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.protos.Protocol;
+
 
 @Slf4j(topic = "metric")
 public class PrometheusApiServiceTest extends BaseTest {
@@ -51,6 +52,8 @@ public class PrometheusApiServiceTest extends BaseTest {
   private TronNetDelegate tronNetDelegate;
   @Resource
   private ConsensusService consensusService;
+  @Resource
+  private ChainBaseManager chainManager;
 
   static {
     dbPath = "output-prometheus-metric";
@@ -84,16 +87,10 @@ public class PrometheusApiServiceTest extends BaseTest {
     Assert.assertNull(errorLogs);
   }
 
-
   @Before
   public void init() throws Exception {
     logger.info("Full node running.");
     consensusService.start();
-    context = new TronApplicationContext(DefaultConfig.class);
-    dbManager = context.getBean(Manager.class);
-    chainManager = dbManager.getChainBaseManager();
-    tronNetDelegate = context.getBean(TronNetDelegate.class);
-
     byte[] address = PublicMethod.getAddressByteByPrivateKey(key);
     ByteString addressByte = ByteString.copyFrom(address);
     WitnessCapsule witnessCapsule = new WitnessCapsule(addressByte);
@@ -103,6 +100,7 @@ public class PrometheusApiServiceTest extends BaseTest {
     AccountCapsule accountCapsule =
             new AccountCapsule(Protocol.Account.newBuilder().setAddress(addressByte).build());
     chainManager.getAccountStore().put(addressByte.toByteArray(), accountCapsule);
+
   }
 
   private void generateBlock(Map<ByteString, String> witnessAndAccount) throws Exception {

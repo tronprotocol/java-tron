@@ -9,7 +9,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.client.utils.TransactionUtils;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
@@ -64,18 +63,14 @@ public class ShieldedTransferActuatorTest extends BaseTest {
   private static final int VOTE_SCORE = 2;
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
-  private static Wallet wallet;
-  private static Manager dbManager;
-  private static TronApplicationContext context;
+
   @Resource
   private Wallet wallet;
-  @Resource
-  private TransactionUtil transactionUtil;
 
   static {
     dbPath = "output_shield_transfer_test";
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
+
     ADDRESS_ONE_PRIVATE_KEY = PublicMethod.getRandomPrivateKey();
     PUBLIC_ADDRESS_ONE = PublicMethod.getHexAddressByPrivateKey(ADDRESS_ONE_PRIVATE_KEY);
 

@@ -2,6 +2,9 @@ package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
 import java.io.File;
+import java.lang.reflect.Array;
+import java.util.Arrays;
+
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
@@ -13,13 +16,20 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.LocalWitnesses;
+import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.store.WitnessScheduleStore;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 
@@ -52,6 +62,15 @@ public class TransactionExpireTest {
     dbManager.getDynamicPropertiesStore()
         .saveLatestBlockHeaderTimestamp(blockCapsule.getTimeStamp());
     dbManager.updateRecentBlock(blockCapsule);
+    initLocalWitness();
+  }
+
+  private void initLocalWitness() {
+    String randomPrivateKey = PublicMethod.getRandomPrivateKey();
+    LocalWitnesses localWitnesses = new LocalWitnesses();
+    localWitnesses.setPrivateKeys(Arrays.asList(randomPrivateKey));
+    localWitnesses.initWitnessAccountAddress(true);
+    Args.setLocalWitnesses(localWitnesses);
   }
 
   @After

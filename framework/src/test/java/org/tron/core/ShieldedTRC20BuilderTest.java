@@ -57,8 +57,8 @@ import org.tron.protos.contract.ShieldContract.SpendDescription;
 public class ShieldedTRC20BuilderTest extends BaseTest {
   @Resource
   private Wallet wallet;
-  private final String priKey = PublicMethod.getRandomPrivateKey();;
-  private String pubAddress = PublicMethod.getHexAddressByPrivateKey(privateKey);
+  private final String priKey = PublicMethod.getRandomPrivateKey();
+  private String pubAddress = PublicMethod.getHexAddressByPrivateKey(priKey);
   private static final String SHIELDED_CONTRACT_ADDRESS_STR = "TGAmX5AqVUoXCf8MoHxbuhQPmhGfWTnEgA";
   private static final byte[] SHIELDED_CONTRACT_ADDRESS;
   private static final byte[] DEFAULT_OVK;
