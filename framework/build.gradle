@@ -152,21 +152,12 @@ test {
         exclude 'org/tron/core/ShieldedTRC20BuilderTest.class'
         exclude 'org/tron/common/runtime/vm/WithdrawRewardTest.class'
     }
-    maxHeapSize = "4024m"
+    maxHeapSize = "1024m"
     doFirst {
         forkEvery = 100
         jvmArgs "-XX:MetaspaceSize=128m","-XX:MaxMetaspaceSize=256m", "-XX:+UseG1GC"
     }
 }
-
-task dailyBuild(type: Test) {
-    useTestNG {
-        suites(file('src/test/resources/daily-build.xml'))
-        parallel 'tests'
-        threadCount 1
-    }
-}
-
 
 jacocoTestReport {
     reports {
