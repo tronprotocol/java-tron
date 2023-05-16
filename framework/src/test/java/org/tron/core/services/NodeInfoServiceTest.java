@@ -45,7 +45,7 @@ public class NodeInfoServiceTest {
   public void testGrpc() {
     WalletBlockingStub walletStub = WalletGrpc
         .newBlockingStub(ManagedChannelBuilder.forTarget(fullnode)
-            .usePlaintext(true)
+            .usePlaintext()
             .build());
     logger.info("getNodeInfo: {}", walletStub.getNodeInfo(EmptyMessage.getDefaultInstance()));
   }

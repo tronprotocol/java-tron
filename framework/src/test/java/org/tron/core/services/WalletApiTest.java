@@ -45,7 +45,7 @@ public class WalletApiTest {
   public void listNodesTest() {
     WalletGrpc.WalletBlockingStub walletStub = WalletGrpc
         .newBlockingStub(ManagedChannelBuilder.forTarget(fullnode)
-            .usePlaintext(true)
+            .usePlaintext()
             .build());
     Assert.assertTrue(walletStub.listNodes(EmptyMessage.getDefaultInstance())
         .getNodesList().size() == 0);
