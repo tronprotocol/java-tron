@@ -159,35 +159,6 @@ test {
     }
 }
 
-task stest(type: Test) {
-
-    useTestNG {
-        suites(file('src/test/resources/testng.xml'))
-        parallel 'tests'
-        threadCount 4
-
-    }
-
-    testLogging {
-        exceptionFormat = 'full'
-        showStackTraces = "true"
-    }
-
-    jacoco {
-        destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
-        classDumpDir = file("$buildDir/jacoco/classpathdumps")
-    }
-}
-
-task dailyBuild(type: Test) {
-    useTestNG {
-        suites(file('src/test/resources/daily-build.xml'))
-        parallel 'tests'
-        threadCount 1
-    }
-}
-
-
 jacocoTestReport {
     reports {
         xml.enabled true
