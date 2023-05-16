@@ -87,9 +87,9 @@ public class ContractEvent001 extends JsonRpcBase {
   /** constructor. */
   @BeforeClass(enabled = true)
   public void beforeClass() {
-    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build();
+    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext().build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    channelFull1 = ManagedChannelBuilder.forTarget(fullnode1).usePlaintext(true).build();
+    channelFull1 = ManagedChannelBuilder.forTarget(fullnode1).usePlaintext().build();
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
   }
 

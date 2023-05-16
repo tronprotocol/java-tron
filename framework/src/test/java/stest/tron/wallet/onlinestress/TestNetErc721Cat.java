@@ -65,7 +65,7 @@ public class TestNetErc721Cat {
     PublicMethed.printAddress(deployKey);
     PublicMethed.printAddress(triggerKey);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     Assert.assertTrue(PublicMethed.sendcoin(deployAddress, 50000000000L, fromAddress,

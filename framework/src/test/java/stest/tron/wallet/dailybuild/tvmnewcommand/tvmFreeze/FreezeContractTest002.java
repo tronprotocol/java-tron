@@ -64,7 +64,7 @@ public class FreezeContractTest002 {
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
-    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build();
+    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext().build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
     Assert.assertTrue(PublicMethed.sendcoin(testAddress001,2000_000000L,

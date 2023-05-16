@@ -51,13 +51,13 @@ public class ContractScenario003 {
   public void beforeClass() {
     PublicMethed.printAddress(contract003Key);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     logger.info(Long.toString(PublicMethed.queryAccount(contract003Key, blockingStubFull)
         .getBalance()));
     channelFull1 = ManagedChannelBuilder.forTarget(fullnode1)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
   }

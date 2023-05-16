@@ -181,7 +181,7 @@ public class TransferAssetIssue {
     logger.info(testKeyForCreate);
     logger.info(testKeyForParticipate);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     //Send coin to 2 account.
@@ -235,7 +235,7 @@ public class TransferAssetIssue {
       fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
           .get(randNum);
       channelFull = ManagedChannelBuilder.forTarget(fullnode)
-          .usePlaintext(true)
+          .usePlaintext()
           .build();
       blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 

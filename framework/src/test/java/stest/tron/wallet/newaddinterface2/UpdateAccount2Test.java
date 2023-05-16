@@ -92,7 +92,7 @@ public class UpdateAccount2Test {
   public void beforeClass() {
     PublicMethed.printAddress(lowBalTest);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }

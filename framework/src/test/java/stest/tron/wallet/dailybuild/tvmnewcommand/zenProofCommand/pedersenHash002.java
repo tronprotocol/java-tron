@@ -94,7 +94,7 @@ public class pedersenHash002 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     PublicMethed.printAddress(contractExcKey);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 

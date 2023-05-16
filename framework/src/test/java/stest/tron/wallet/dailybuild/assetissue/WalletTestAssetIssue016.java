@@ -76,22 +76,22 @@ public class WalletTestAssetIssue016 {
   @BeforeClass(enabled = true)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
     channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
 
     channelSoliInFull = ManagedChannelBuilder.forTarget(soliInFullnode)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubSoliInFull = WalletSolidityGrpc.newBlockingStub(channelSoliInFull);
 
     channelPbft = ManagedChannelBuilder.forTarget(soliInPbft)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubPbft = WalletSolidityGrpc.newBlockingStub(channelPbft);
   }

@@ -57,7 +57,7 @@ public class ShieldWrapper {
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
   private ManagedChannel channelFull = ManagedChannelBuilder.forTarget(fullnode)
-      .usePlaintext(true)
+      .usePlaintext()
       .build();
   private WalletGrpc.WalletBlockingStub blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   private Thread thread;

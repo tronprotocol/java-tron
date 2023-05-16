@@ -55,7 +55,7 @@ public class ContractTrc1155 {
 
   @BeforeSuite
   public void beforeSuite() {
-    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build();
+    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext().build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 

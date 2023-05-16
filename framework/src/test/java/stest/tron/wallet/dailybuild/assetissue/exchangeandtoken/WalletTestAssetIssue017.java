@@ -149,12 +149,12 @@ public class WalletTestAssetIssue017 {
   public void beforeClass() {
     logger.info(testKeyForAssetIssue017);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
     channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }

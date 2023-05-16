@@ -50,7 +50,7 @@ public class ContractRewardTest001 {
     Wallet.setAddressPreFixByte(Parameter.CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
 
     PublicMethed.printAddress(testKey001);
-    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build();
+    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext().build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
     PublicMethed

@@ -128,17 +128,17 @@ public class WalletTestZenToken007 {
     PublicMethed.printAddress(zenTokenOwnerKey2);
     PublicMethed.printAddress(zenTokenOwnerKey3);
     PublicMethed.printAddress(zenTokenOwnerKey4);
-    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true)
+    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext()
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
     channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
 
     channelSolidity1 = ManagedChannelBuilder.forTarget(soliditynode1)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubSolidity1 = WalletSolidityGrpc.newBlockingStub(channelSolidity1);
 
