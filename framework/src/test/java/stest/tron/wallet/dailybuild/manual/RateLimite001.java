@@ -42,15 +42,15 @@ public class RateLimite001 {
   @BeforeClass
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
     channelRealSolidity = ManagedChannelBuilder.forTarget(realSoliditynode)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     realBlockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelRealSolidity);
   }

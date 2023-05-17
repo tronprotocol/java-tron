@@ -66,7 +66,7 @@ public class WalletTestAssetIssue007 {
     PublicMethed.printAddress(testKeyForAssetIssue007);
     PublicMethed.printAddress(participateAssetCreateKey);
 
-    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build();
+    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext().build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 

@@ -4,29 +4,26 @@ import com.google.common.primitives.Bytes;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.io.File;
 import java.security.SignatureException;
 import java.util.List;
 import java.util.Optional;
+import javax.annotation.Resource;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.DecryptNotes;
 import org.tron.api.GrpcAPI.ReceiveNote;
 import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.GrpcAPI.TransactionExtention;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
@@ -37,7 +34,6 @@ import org.tron.common.zksnark.LibrustzcashParam.CheckSpendParams;
 import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.common.zksnark.LibrustzcashParam.OutputProofParams;
 import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
-import org.tron.core.ChainBaseManager;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorCreator;
@@ -52,11 +48,8 @@ import org.tron.core.capsule.SpendDescriptionCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ConsensusService;
-import org.tron.core.db.BlockGenerate;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
@@ -104,9 +97,8 @@ import org.tron.protos.contract.ShieldContract.SpendDescription;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 @Slf4j
-public class ShieldedReceiveTest extends BlockGenerate {
+public class ShieldedReceiveTest extends BaseTest {
 
-  private static final String dbPath = "receive_description_test";
   private static final String FROM_ADDRESS;
   private static final String ADDRESS_ONE_PRIVATE_KEY;
   private static final long OWNER_BALANCE = 100_000_000;
@@ -120,16 +112,18 @@ public class ShieldedReceiveTest extends BlockGenerate {
   private static final int VOTE_SCORE = 2;
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
-  private static Manager dbManager;
-  private static ChainBaseManager chainBaseManager;
-  private static ConsensusService consensusService;
-  private static TronApplicationContext context;
-  private static Wallet wallet;
-  private static TransactionUtil transactionUtil;
+  @Resource
+  private ConsensusService consensusService;
+  @Resource
+  private Wallet wallet;
+  @Resource
+  private TransactionUtil transactionUtil;
+
+  private static boolean init;
 
   static {
+    dbPath = "receive_description_test";
     Args.setParam(new String[]{"--output-directory", dbPath}, "config-localtest.conf");
-    context = new TronApplicationContext(DefaultConfig.class);
     FROM_ADDRESS = Wallet.getAddressPreFixString() + "a7d8a35b260395c14aa456297662092ba3b76fc0";
     ADDRESS_ONE_PRIVATE_KEY = "7f7f701e94d4f1dd60ee5205e7ea8ee31121427210417b608a6b2e96433549a7";
   }
@@ -137,35 +131,14 @@ public class ShieldedReceiveTest extends BlockGenerate {
   /**
    * Init data.
    */
-  @BeforeClass
-  public static void init() {
-    FileUtil.deleteDir(new File(dbPath));
-
-    wallet = context.getBean(Wallet.class);
-    transactionUtil = context.getBean(TransactionUtil.class);
-    dbManager = context.getBean(Manager.class);
-    chainBaseManager = context.getBean(ChainBaseManager.class);
-    setManager(dbManager);
-    consensusService = context.getBean(ConsensusService.class);
-    consensusService.start();
-    //give a big value for pool, avoid for
-    chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(10_000_000_000L);
-    // Args.getInstance().setAllowShieldedTransaction(1);
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
+  @Before
+  public void init() {
+    if (init) {
+      return;
     }
+    consensusService.start();
+    chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(10_000_000_000L);
+    init = true;
   }
 
   private static void librustzcashInitZksnarkParams() {

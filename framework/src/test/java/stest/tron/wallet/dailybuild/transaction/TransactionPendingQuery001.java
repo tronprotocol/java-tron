@@ -61,17 +61,17 @@ public class TransactionPendingQuery001 {
   @BeforeClass(enabled = true)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
     channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
 
     channelPbft = ManagedChannelBuilder.forTarget(soliInPbft)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubPbft = WalletSolidityGrpc.newBlockingStub(channelPbft);
 

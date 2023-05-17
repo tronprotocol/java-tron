@@ -86,6 +86,8 @@ dependencies {
     compile "io.vavr:vavr:0.9.2"
     compile group: 'org.pf4j', name: 'pf4j', version: '2.5.0'
 
+    testImplementation group: 'org.springframework', name: 'spring-test', version: '5.2.0.RELEASE'
+
     compile group: 'org.zeromq', name: 'jeromq', version: '0.5.0'
     compile project(":chainbase")
     compile project(":protocol")
@@ -151,6 +153,10 @@ test {
         exclude 'org/tron/common/runtime/vm/WithdrawRewardTest.class'
     }
     maxHeapSize = "1024m"
+    doFirst {
+        forkEvery = 100
+        jvmArgs "-XX:MetaspaceSize=128m","-XX:MaxMetaspaceSize=256m", "-XX:+UseG1GC"
+    }
 }
 
 task stest(type: Test) {

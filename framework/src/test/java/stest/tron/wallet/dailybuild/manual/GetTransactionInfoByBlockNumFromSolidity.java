@@ -26,9 +26,9 @@ public class GetTransactionInfoByBlockNumFromSolidity {
 
   @Test(enabled = true, description = "test getTransactionInfoByBlockNumFromSolidity")
   public void test01GetTransactionInfoByBlockNumFromSolidity() {
-    channelFull = ManagedChannelBuilder.forTarget(fullNode).usePlaintext(true).build();
+    channelFull = ManagedChannelBuilder.forTarget(fullNode).usePlaintext().build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    channelSolidity = ManagedChannelBuilder.forTarget(solidityNode).usePlaintext(true).build();
+    channelSolidity = ManagedChannelBuilder.forTarget(solidityNode).usePlaintext().build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
 
     Protocol.Block solidityCurrentBlock =

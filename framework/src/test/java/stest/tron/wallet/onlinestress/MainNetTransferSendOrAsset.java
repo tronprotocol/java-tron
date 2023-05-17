@@ -67,7 +67,7 @@ public class MainNetTransferSendOrAsset {
   @BeforeClass(enabled = false)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     Account fromAccount = PublicMethed.queryAccount(testKey001, blockingStubFull);

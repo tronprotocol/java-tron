@@ -107,6 +107,11 @@ public class MessageTest {
     messageStatistics.addTcpOutMessage(message4);
     messageStatistics.addTcpInMessage(message5);
     messageStatistics.addTcpOutMessage(message5);
+    try {
+      Thread.sleep(2000);// so that gap > 1 in MessageCount.update method
+    } catch (InterruptedException e) {
+      //ignore
+    }
     messageStatistics.addTcpInMessage(message6);
     messageStatistics.addTcpOutMessage(message6);
     messageStatistics.addTcpInMessage(message7);

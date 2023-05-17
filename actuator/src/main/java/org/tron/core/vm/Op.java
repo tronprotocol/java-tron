@@ -148,6 +148,7 @@ public class Op {
 
   /*  Push Operations */
   // Place item on stack
+  public static final int PUSH0 = 0x5f;
   public static final int PUSH1 = 0x60;
   public static final int PUSH2 = 0x61;
   public static final int PUSH3 = 0x62;

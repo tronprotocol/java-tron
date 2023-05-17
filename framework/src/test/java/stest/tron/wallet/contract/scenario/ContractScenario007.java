@@ -48,7 +48,7 @@ public class ContractScenario007 {
   public void beforeClass() {
     PublicMethed.printAddress(contract007Key);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }

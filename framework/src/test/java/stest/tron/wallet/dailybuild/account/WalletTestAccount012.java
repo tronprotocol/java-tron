@@ -51,7 +51,7 @@ public class WalletTestAccount012 {
   public void beforeClass() {
     PublicMethed.printAddress(frozenKey);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
+        .usePlaintext()
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 

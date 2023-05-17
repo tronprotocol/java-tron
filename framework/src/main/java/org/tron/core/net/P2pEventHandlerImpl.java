@@ -1,5 +1,7 @@
 package org.tron.core.net;
 
+import static org.tron.core.net.message.MessageTypes.INVENTORY;
+
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -11,11 +13,13 @@ import org.springframework.stereotype.Component;
 import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.Metrics;
 import org.tron.consensus.pbft.message.PbftMessage;
+import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.PbftMessageFactory;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.message.TronMessageFactory;
+import org.tron.core.net.message.adv.InventoryMessage;
 import org.tron.core.net.message.base.DisconnectMessage;
 import org.tron.core.net.message.handshake.HelloMessage;
 import org.tron.core.net.messagehandler.BlockMsgHandler;
@@ -84,6 +88,8 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
 
   private byte MESSAGE_MAX_TYPE = 127;
 
+  private int maxCountIn10s = Args.getInstance().getMaxTps() * 10;
+
   public P2pEventHandlerImpl() {
     Set<Byte> set = new HashSet<>();
     for (byte i = 0; i < MESSAGE_MAX_TYPE; i++) {
@@ -140,10 +146,27 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
     try {
       msg = TronMessageFactory.create(data);
       type = msg.getType();
+
+      if (INVENTORY.equals(type)) {
+        InventoryMessage message = (InventoryMessage) msg;
+        Protocol.Inventory.InventoryType inventoryType = message.getInventoryType();
+        int count = peer.getPeerStatistics().messageStatistics.tronInTrxInventoryElement
+                .getCount(10);
+        if (inventoryType.equals(Protocol.Inventory.InventoryType.TRX) && count > maxCountIn10s) {
+          logger.warn("Drop inventory from Peer {}, cur:{}, max:{}",
+                  peer.getInetAddress(), count, maxCountIn10s);
+          if (Args.getInstance().isOpenPrintLog()) {
+            logger.warn("[overload]Drop tx list is: {}", ((InventoryMessage) msg).getHashList());
+          }
+          return;
+        }
+      }
+
       peer.getPeerStatistics().messageStatistics.addTcpInMessage(msg);
       if (PeerConnection.needToLog(msg)) {
         logger.info("Receive message from  peer: {}, {}", peer.getInetSocketAddress(), msg);
       }
+
       switch (type) {
         case P2P_PING:
         case P2P_PONG:

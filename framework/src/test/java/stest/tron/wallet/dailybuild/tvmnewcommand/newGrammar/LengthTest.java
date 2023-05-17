@@ -52,7 +52,7 @@ public class LengthTest {
   @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(testKey001);
-    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build();
+    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext().build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
     PublicMethed
