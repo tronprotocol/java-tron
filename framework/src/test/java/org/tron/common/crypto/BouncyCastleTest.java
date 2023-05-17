@@ -29,10 +29,11 @@ public class BouncyCastleTest {
   public void testHex() {
     ECKey key = ECKey.fromPrivate(privateKey);
     byte[] address = key.getAddress();
-    assertEquals(spongyAddress,
-            Hex.toHexString(Arrays.copyOfRange(address, 0, 21)));
-    assertArrayEquals(Arrays.copyOfRange(address, 0, 21),
-            Hex.decode(spongyAddress));
+    byte[] addressTmp = Arrays.copyOfRange(Hex.decode(spongyAddress), 1, address.length);
+    assertEquals(Hex.toHexString(addressTmp),
+            Hex.toHexString(Arrays.copyOfRange(address, 1, 21)));
+    assertArrayEquals(Arrays.copyOfRange(address, 1, 21),
+            addressTmp);
   }
 
   @Test
