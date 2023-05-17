@@ -127,7 +127,7 @@ public class ECKeyTest {
     byte[] prefixedAddress = key.getAddress();
     byte[] addressTmp = Arrays.copyOfRange(Hex.decode(address), 1, prefixedAddress.length);
     byte[] unprefixedAddress = Arrays.copyOfRange(key.getAddress(), 1, prefixedAddress.length);
-    assertArrayEquals(Hex.decode(addressTmp), unprefixedAddress);
+    assertArrayEquals(addressTmp, unprefixedAddress);
     assertEquals(Wallet.getAddressPreFixByte(), prefixedAddress[0]);
   }
 
