@@ -232,6 +232,12 @@ public class SnapshotManager implements RevokingDatabase {
       throw new RevokingStoreIllegalStateException(activeSession);
     }
 
+    dbs.forEach(db -> {
+      if (db.getHead().isOptimized()) {
+        db.getHead().reloadToMem();
+      }
+    });
+
     --activeSession;
   }
 
