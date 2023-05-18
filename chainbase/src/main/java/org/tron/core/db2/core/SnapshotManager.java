@@ -471,9 +471,10 @@ public class SnapshotManager implements RevokingDatabase {
     if (cpList.size() < 3) {
       return;
     }
+    long latestTimestamp = Long.parseLong(cpList.get(cpList.size()-1));
     for (String cp: cpList.subList(0, cpList.size()-3)) {
       long timestamp = Long.parseLong(cp);
-      if (System.currentTimeMillis() - timestamp < ONE_MINUTE_MILLS*2) {
+      if (latestTimestamp - timestamp <= ONE_MINUTE_MILLS*2) {
         break;
       }
       String checkpointPath = Paths.get(StorageUtils.getOutputDirectoryByDbName(CHECKPOINT_V2_DIR),
@@ -522,7 +523,12 @@ public class SnapshotManager implements RevokingDatabase {
       return;
     }
 
+    long latestTimestamp = Long.parseLong(cpList.get(cpList.size()-1));
     for (String cp: cpList) {
+      long timestamp = Long.parseLong(cp);
+      if (latestTimestamp - timestamp > ONE_MINUTE_MILLS*2) {
+        continue;
+      }
       TronDatabase<byte[]> checkPointV2Store = getCheckpointDB(cp);
       recover(checkPointV2Store);
       checkPointV2Store.close();
