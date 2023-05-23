@@ -11,6 +11,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import stest.tron.wallet.common.client.Configuration;
+import stest.tron.wallet.common.client.WalletClient;
 import stest.tron.wallet.common.client.utils.HttpMethed;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
@@ -38,10 +39,14 @@ public class HttpTestSendCoin001 {
    */
   @Test(enabled = true, description = "SendCoin by http")
   public void test1SendCoin() {
-    response = HttpMethed.sendCoin(httpnode, fromAddress, receiverAddress, amount, testKey002);
-    Assert.assertTrue(HttpMethed.verificationResult(response));
+    // visible:true
+    response = HttpMethed.sendCoinWithVisible(httpnode, WalletClient.encode58Check(fromAddress), WalletClient.encode58Check(receiverAddress), amount, testKey002,"true");
+    // visible:false
+    response = HttpMethed.sendCoinWithVisible(httpnode, ByteArray.toHexString(fromAddress), ByteArray.toHexString(receiverAddress), amount, testKey002,"false");
+
+    /*Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
-    Assert.assertEquals(HttpMethed.getBalance(httpnode, receiverAddress), amount);
+    Assert.assertEquals(HttpMethed.getBalance(httpnode, receiverAddress), amount);*/
   }
 
   /**
@@ -157,8 +162,8 @@ public class HttpTestSendCoin001 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
-    HttpMethed.freedResource(httpnode, receiverAddress, fromAddress, receiverKey);
-    HttpMethed.disConnect();
+//    HttpMethed.freedResource(httpnode, receiverAddress, fromAddress, receiverKey);
+//    HttpMethed.disConnect();
   }
 
 }

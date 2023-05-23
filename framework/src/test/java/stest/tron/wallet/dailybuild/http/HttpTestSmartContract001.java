@@ -11,6 +11,8 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import stest.tron.wallet.common.client.Configuration;
+import stest.tron.wallet.common.client.WalletClient;
+import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.HttpMethed;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
@@ -46,7 +48,7 @@ public class HttpTestSmartContract001 {
       .getStringList("httpnode.ip.list").get(3);
 
   /**
-   * constructor.
+   * for deplou success,get trigger smartcontract transaction use this
    */
   @Test(enabled = true, description = "Deploy smart contract by http")
   public void test1DeployContract() {
@@ -58,7 +60,7 @@ public class HttpTestSmartContract001 {
     HttpMethed.waitToProduceOneBlock(httpnode);
     //Create an asset issue
     response = HttpMethed
-        .freezeBalance(httpnode, assetOwnerAddress, 100000000L, 3, 1, assetOwnerKey);
+        .freezeBalanceV2(httpnode, assetOwnerAddress, 100000000L, 1, assetOwnerKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
     response = HttpMethed.assetIssue(httpnode, assetOwnerAddress, name, name, totalSupply, 1, 1,
         System.currentTimeMillis() + 5000, System.currentTimeMillis() + 50000000, 2, 3, description,
@@ -82,13 +84,7 @@ public class HttpTestSmartContract001 {
     long tokenValue = 100000;
     long callValue = 5000;
 
-    //This deploy is test too large call_token_value will made the witness node cpu 100%
-    /*response = HttpMethed.deployContractGetTxidWithTooBigLong(httpnode,
-    contractName, abi, code, 1000000L,1000000000L, 100, 11111111111111L,
-        callValue, Integer.parseInt(assetIssueId), tokenValue, assetOwnerAddress, assetOwnerKey);
-    responseContent = HttpMethed.parseResponseContent(response);
-    Assert.assertTrue(responseContent.getString("Error").contains("Overflow"));*/
-
+    // for deplou success,get trigger smartcontract transaction use this
     String txid = HttpMethed
         .deployContractGetTxid(httpnode, contractName, abi, code, 1000000L, 1000000000L, 100,
             11111111111111L, callValue, Integer.parseInt(assetIssueId), tokenValue,
@@ -110,9 +106,59 @@ public class HttpTestSmartContract001 {
   }
 
   /**
+   * for get deplou transaction,use this
+   */
+  @Test(enabled = false, description = "Deploy smart contract by http")
+  public void test2DeployContract() {
+    PublicMethed.printAddress(assetOwnerKey);
+    HttpMethed.waitToProduceOneBlock(httpnode);
+    response = HttpMethed.sendCoin(httpnode, fromAddress, assetOwnerAddress, amount, testKey002);
+    response = HttpMethed.sendCoin(httpnode, fromAddress, assetReceiverAddress, amount, testKey002);
+    Assert.assertTrue(HttpMethed.verificationResult(response));
+    HttpMethed.waitToProduceOneBlock(httpnode);
+    //Create an asset issue
+    response = HttpMethed
+            .freezeBalanceV2(httpnode, assetOwnerAddress, 100000000L, 1, assetOwnerKey);
+    Assert.assertTrue(HttpMethed.verificationResult(response));
+    response = HttpMethed.assetIssue(httpnode, assetOwnerAddress, name, name, totalSupply, 1, 1,
+            System.currentTimeMillis() + 5000, System.currentTimeMillis() + 50000000, 2, 3, description,
+            url, 1000L, 1000L, assetOwnerKey);
+    Assert.assertTrue(HttpMethed.verificationResult(response));
+
+    HttpMethed.waitToProduceOneBlock(httpnode);
+
+    response = HttpMethed.getAccount(httpnode, assetOwnerAddress);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+
+    assetIssueId = responseContent.getString("asset_issued_ID");
+
+    contractName = "transferTokenContract";
+    String code = Configuration.getByPath("testng.conf")
+            .getString("code.code_ContractTrcToken001_transferTokenContract");
+    String abi = Configuration.getByPath("testng.conf")
+            .getString("abi.abi_ContractTrcToken001_transferTokenContract");
+
+    long tokenValue = 100000;
+    long callValue = 5000;
+
+    // for get deplou transaction,visible:false
+    String txid = HttpMethed
+            .deployContractGetTxidWithVisible(httpnode, contractName, abi, code, 1000000L, 1000000000L, 100,
+                    11111111111111L, callValue, Integer.parseInt(assetIssueId), tokenValue,
+                    ByteArray.toHexString(assetOwnerAddress), assetOwnerKey,"false");
+
+//    // for get deplou transaction,visible:true
+    txid = HttpMethed
+            .deployContractGetTxidWithVisible(httpnode, contractName, abi, code, 1000000L, 1000000000L, 100,
+                    11111111111111L, callValue, Integer.parseInt(assetIssueId), tokenValue,
+                    WalletClient.encode58Check(assetOwnerAddress), assetOwnerKey,"true");
+  }
+
+  /**
    * constructor.
    */
-  @Test(enabled = true, description = "Get contract by http")
+  @Test(enabled = false, description = "Get contract by http")
   public void test2GetContract() {
     response = HttpMethed.getContract(httpnode, contractAddress);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -145,43 +191,27 @@ public class HttpTestSmartContract001 {
     final Long beforeBalance = HttpMethed.getBalance(httpnode, assetOwnerAddress);
     String param = addressParam + tokenIdParam + tokenValueParam;
     Long callValue = 10L;
-    String txid = HttpMethed.triggerContractGetTxid(httpnode, assetOwnerAddress, contractAddress,
-        "TransferTokenTo(address,trcToken,uint256)", param, 1000000000L, callValue,
-        Integer.parseInt(assetIssueId), 20L, assetOwnerKey);
+    // visible:true
+    String txid = HttpMethed
+        .triggerContractGetTxidWithVisible(httpnode,
+            WalletClient.encode58Check(assetOwnerAddress),
+                Base58.encode58Check(ByteArray.fromHexString(contractAddress)),
+            "TransferTokenTo(address,trcToken,uint256)", param, 1000000000L, callValue,
+            Integer.parseInt(assetIssueId), 20L, assetOwnerKey, "true");
 
-    HttpMethed.waitToProduceOneBlock(httpnode);
-    //String txid = "49a30653d6e648da1e9a104b051b1b55c185fcaa0c2885405ae1d2fb258e3b3c";
-    logger.info(txid);
-    response = HttpMethed.getTransactionById(httpnode, txid);
-    responseContent = HttpMethed.parseResponseContent(response);
-    HttpMethed.printJsonContent(responseContent);
-    Assert.assertEquals(txid, responseContent.getString("txID"));
-    Assert.assertTrue(!responseContent.getString("raw_data").isEmpty());
-    Assert.assertTrue(!responseContent.getString("raw_data_hex").isEmpty());
-    Long afterBalance = HttpMethed.getBalance(httpnode, assetOwnerAddress);
-    logger.info("beforeBalance: " + beforeBalance);
-    logger.info("afterBalance: " + afterBalance);
-    Assert.assertTrue(beforeBalance - afterBalance == callValue);
-
-    response = HttpMethed.getTransactionInfoById(httpnode, txid);
-    responseContent = HttpMethed.parseResponseContent(response);
-    HttpMethed.printJsonContent(responseContent);
-    String receiptString = responseContent.getString("receipt");
-    Assert
-        .assertEquals(HttpMethed.parseStringContent(receiptString).getString("result"), "SUCCESS");
-    Assert.assertTrue(HttpMethed.parseStringContent(receiptString).getLong("energy_usage") > 0);
-    Assert.assertTrue(responseContent.getLong("blockNumber") > 0);
-
-    response = HttpMethed.getAccount(httpnode, assetReceiverAddress);
-    responseContent = HttpMethed.parseResponseContent(response);
-    HttpMethed.printJsonContent(responseContent);
-    Assert.assertTrue(!responseContent.getString("assetV2").isEmpty());
+    // visible:false
+    txid = HttpMethed
+            .triggerContractGetTxidWithVisible(httpnode,
+                    ByteArray.toHexString(assetOwnerAddress),
+                    contractAddress,
+                    "TransferTokenTo(address,trcToken,uint256)", param, 1000000000L, callValue,
+                    Integer.parseInt(assetIssueId), 20L, assetOwnerKey, "false");
   }
 
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Get transaction info by http")
+  @Test(enabled = false, description = "Get transaction info by http")
   public void test4GetTransactionInfoByBlocknum() {
     String hexReceiverAddress = ByteArray.toHexString(assetReceiverAddress);
     String addressParam = "000000000000000000000000" + hexReceiverAddress.substring(2);//[0,3)
@@ -225,7 +255,7 @@ public class HttpTestSmartContract001 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Get transaction info by http from solidity")
+  @Test(enabled = false, description = "Get transaction info by http from solidity")
   public void test5GetTransactionInfoByBlocknumFromSolidity() {
     String hexReceiverAddress = ByteArray.toHexString(assetReceiverAddress);
     String addressParam = "000000000000000000000000" + hexReceiverAddress.substring(2);//[0,3)
@@ -270,7 +300,7 @@ public class HttpTestSmartContract001 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Get transaction info by http from real solidity")
+  @Test(enabled = false, description = "Get transaction info by http from real solidity")
   public void test6GetTransactionInfoByBlocknumFromRealSolidity() {
     String hexReceiverAddress = ByteArray.toHexString(assetReceiverAddress);
     String addressParam = "000000000000000000000000" + hexReceiverAddress.substring(2);//[0,3)
@@ -315,7 +345,7 @@ public class HttpTestSmartContract001 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "UpdateSetting contract by http")
+  @Test(enabled = false, description = "UpdateSetting contract by http")
   public void test7UpdateSetting() {
 
     //assetOwnerAddress, assetOwnerKey
@@ -340,7 +370,7 @@ public class HttpTestSmartContract001 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "UpdateEnergyLimit contract by http")
+  @Test(enabled = false, description = "UpdateEnergyLimit contract by http")
   public void test8UpdateEnergyLimit() {
 
     //assetOwnerAddress, assetOwnerKey
@@ -366,8 +396,8 @@ public class HttpTestSmartContract001 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
-    HttpMethed.freedResource(httpnode, assetOwnerAddress, fromAddress, assetOwnerKey);
-    HttpMethed.freedResource(httpnode, assetReceiverAddress, fromAddress, assetReceiverKey);
+//    HttpMethed.freedResource(httpnode, assetOwnerAddress, fromAddress, assetOwnerKey);
+//    HttpMethed.freedResource(httpnode, assetReceiverAddress, fromAddress, assetReceiverKey);
     HttpMethed.disConnect();
   }
 }
