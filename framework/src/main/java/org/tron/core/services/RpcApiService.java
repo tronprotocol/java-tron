@@ -264,12 +264,6 @@ public class RpcApiService implements Service {
     }
 
     logger.info("RpcApiService has started, listening on " + port);
-
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      System.err.println("*** shutting down gRPC server since JVM is shutting down");
-      //server.this.stop();
-      System.err.println("*** server is shutdown");
-    }));
   }
 
 
@@ -371,7 +365,14 @@ public class RpcApiService implements Service {
   @Override
   public void stop() {
     if (apiServer != null) {
-      apiServer.shutdown();
+      logger.info("RpcApiService shutdown ...");
+      try {
+        apiServer.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        logger.warn("InterruptedException: {}", e.getMessage());
+      }
+      logger.info("RpcApiService shutdown complete");
     }
   }
 

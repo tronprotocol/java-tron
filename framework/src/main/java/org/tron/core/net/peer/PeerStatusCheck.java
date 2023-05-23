@@ -1,11 +1,11 @@
 package org.tron.core.net.peer;
 
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.protos.Protocol.ReasonCode;
@@ -17,8 +17,10 @@ public class PeerStatusCheck {
   @Autowired
   private TronNetDelegate tronNetDelegate;
 
-  private ScheduledExecutorService peerStatusCheckExecutor = Executors
-      .newSingleThreadScheduledExecutor();
+  private final String name = "peerStatusCheck";
+
+  private ScheduledExecutorService peerStatusCheckExecutor =  ExecutorServiceManager
+      .newSingleThreadScheduledExecutor(name);
 
   private int blockUpdateTimeout = 30_000;
 
@@ -33,7 +35,9 @@ public class PeerStatusCheck {
   }
 
   public void close() {
-    peerStatusCheckExecutor.shutdown();
+    logger.info("PeerStatusCheck shutdown...");
+    ExecutorServiceManager.shutdownAndAwaitTermination(peerStatusCheckExecutor, name);
+    logger.info("PeerStatusCheck shutdown complete");
   }
 
   public void statusCheck() {

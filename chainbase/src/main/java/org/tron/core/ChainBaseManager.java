@@ -28,8 +28,8 @@ import org.tron.core.db.KhaosDatabase;
 import org.tron.core.db.PbftSignDataStore;
 import org.tron.core.db.RecentBlockStore;
 import org.tron.core.db.RecentTransactionStore;
+import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db.TransactionStore;
-import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
@@ -245,53 +245,8 @@ public class ChainBaseManager {
   @Setter
   private long lowestBlockNum = -1; // except num = 0.
 
-  public void closeOneStore(ITronChainBase database) {
-    logger.info("******** Begin to close {}. ********",  database.getName());
-    try {
-      database.close();
-    } catch (Exception e) {
-      logger.info("Failed to close {}.", database.getName(), e);
-    } finally {
-      logger.info("******** End to close {}. ********", database.getName());
-    }
-  }
-
-  public void closeAllStore() {
-    dbStatService.shutdown();
-    closeOneStore(transactionRetStore);
-    closeOneStore(recentBlockStore);
-    closeOneStore(transactionHistoryStore);
-    closeOneStore(transactionStore);
-    closeOneStore(accountStore);
-    closeOneStore(blockStore);
-    closeOneStore(blockIndexStore);
-    closeOneStore(accountIdIndexStore);
-    closeOneStore(accountIndexStore);
-    closeOneStore(witnessScheduleStore);
-    closeOneStore(assetIssueStore);
-    closeOneStore(dynamicPropertiesStore);
-    closeOneStore(abiStore);
-    closeOneStore(codeStore);
-    closeOneStore(contractStore);
-    closeOneStore(contractStateStore);
-    closeOneStore(storageRowStore);
-    closeOneStore(exchangeStore);
-    closeOneStore(proposalStore);
-    closeOneStore(votesStore);
-    closeOneStore(delegatedResourceStore);
-    closeOneStore(delegatedResourceAccountIndexStore);
-    closeOneStore(assetIssueV2Store);
-    closeOneStore(exchangeV2Store);
-    closeOneStore(nullifierStore);
-    closeOneStore(merkleTreeStore);
-    closeOneStore(delegationStore);
-    closeOneStore(proofStore);
-    closeOneStore(commonStore);
-    closeOneStore(commonDataBase);
-    closeOneStore(pbftSignDataStore);
-    closeOneStore(sectionBloomStore);
-    closeOneStore(accountAssetStore);
-  }
+  @Autowired
+  private RevokingDatabase revokingDatabase;
 
   // for test only
   public List<ByteString> getWitnesses() {
@@ -432,6 +387,13 @@ public class ChainBaseManager {
     this.lowestBlockNum = this.blockIndexStore.getLimitNumber(1, 1).stream()
             .map(BlockId::getNum).findFirst().orElse(0L);
     this.nodeType = getLowestBlockNum() > 1 ? NodeType.LITE : NodeType.FULL;
+  }
+
+  public void stop() {
+    logger.info("******** Begin to stop service. ********");
+    dbStatService.shutdown();
+    revokingDatabase.shutdown();
+    logger.info("******** End to stop service. ********");
   }
 
   public boolean isLiteNode() {

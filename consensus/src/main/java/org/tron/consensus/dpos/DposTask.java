@@ -3,12 +3,14 @@ package org.tron.consensus.dpos;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import com.google.protobuf.ByteString;
+import java.util.concurrent.ExecutorService;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
+import org.springframework.util.ObjectUtils;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
@@ -34,16 +36,18 @@ public class DposTask {
   @Setter
   private DposService dposService;
 
-  private Thread produceThread;
+  private ExecutorService produceExecutor;
+
+  private final String name = "DPosMiner";
 
   private volatile boolean isRunning = true;
 
   public void init() {
 
-    if (!dposService.isEnable() || StringUtils.isEmpty(dposService.getMiners())) {
+    if (!dposService.isEnable() || ObjectUtils.isEmpty(dposService.getMiners())) {
       return;
     }
-
+    produceExecutor = ExecutorServiceManager.newSingleThreadExecutor(name);
     Runnable runnable = () -> {
       while (isRunning) {
         try {
@@ -67,17 +71,15 @@ public class DposTask {
         }
       }
     };
-    produceThread = new Thread(runnable, "DPosMiner");
-    produceThread.start();
+    produceExecutor.submit(runnable);
     logger.info("DPoS task started.");
   }
 
   public void stop() {
+    logger.info("DPoS task shutdown...");
     isRunning = false;
-    if (produceThread != null) {
-      produceThread.interrupt();
-    }
-    logger.info("DPoS task stopped.");
+    ExecutorServiceManager.shutdownAndAwaitTermination(produceExecutor, name);
+    logger.info("DPoS task shutdown complete");
   }
 
   private State produceBlock() {

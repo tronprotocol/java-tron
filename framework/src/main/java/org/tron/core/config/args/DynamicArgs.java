@@ -7,12 +7,11 @@ import java.io.File;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.List;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.Constant;
 import org.tron.core.config.Configuration;
@@ -26,10 +25,13 @@ public class DynamicArgs {
 
   private long lastModified = 0;
 
-  private ScheduledExecutorService reloadExecutor = Executors.newSingleThreadScheduledExecutor();
+  private ScheduledExecutorService reloadExecutor;
+
+  private final String name = "dynamic-reload";
 
   public void init() {
     if (parameter.isDynamicConfigEnable()) {
+      reloadExecutor = ExecutorServiceManager.newSingleThreadScheduledExecutor(name);
       logger.info("Start the dynamic loading configuration service");
       long checkInterval = parameter.getDynamicConfigCheckInterval();
       File config = getConfigFile();
@@ -108,7 +110,10 @@ public class DynamicArgs {
   }
 
   public void close() {
-    logger.info("Closing the dynamic loading configuration service");
-    reloadExecutor.shutdown();
+    if (parameter.isDynamicConfigEnable()) {
+      logger.info("dynamic reload service shutdown...");
+      ExecutorServiceManager.shutdownAndAwaitTermination(reloadExecutor, name);
+      logger.info("dynamic reload service shutdown complete");
+    }
   }
 }

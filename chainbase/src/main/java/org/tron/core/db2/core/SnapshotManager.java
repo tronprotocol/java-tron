@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -25,12 +24,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.tron.common.error.TronDBException;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.utils.FileUtil;
@@ -48,6 +48,7 @@ import org.tron.core.store.CheckPointV2Store;
 import org.tron.core.store.CheckTmpStore;
 
 @Slf4j(topic = "DB")
+@Component
 public class SnapshotManager implements RevokingDatabase {
 
   public static final int DEFAULT_MIN_FLUSH_COUNT = 1;
@@ -76,6 +77,7 @@ public class SnapshotManager implements RevokingDatabase {
   private Map<String, ListeningExecutorService> flushServices = new HashMap<>();
 
   private ScheduledExecutorService pruneCheckpointThread = null;
+  private final String pruneName = "checkpoint-prune";
 
   @Autowired
   @Setter
@@ -87,7 +89,8 @@ public class SnapshotManager implements RevokingDatabase {
 
   private int checkpointVersion = 1;   // default v1
 
-  public SnapshotManager(String checkpointPath) {
+  @Autowired
+  public SnapshotManager() {
   }
 
   @PostConstruct
@@ -95,7 +98,7 @@ public class SnapshotManager implements RevokingDatabase {
     checkpointVersion = CommonParameter.getInstance().getStorage().getCheckpointVersion();
     // prune checkpoint
     if (isV2Open()) {
-      pruneCheckpointThread = Executors.newSingleThreadScheduledExecutor();
+      pruneCheckpointThread = ExecutorServiceManager.newSingleThreadScheduledExecutor(pruneName);
       pruneCheckpointThread.scheduleWithFixedDelay(() -> {
         try {
           if (!unChecked) {
@@ -117,13 +120,22 @@ public class SnapshotManager implements RevokingDatabase {
     exitThread.start();
   }
 
-  @PreDestroy
-  public void close() {
+  @Override
+  public void shutdown() {
+    if (isV2Open()) {
+      logger.info("Prune checkpoint thread shutdown...");
+      ExecutorServiceManager.shutdownAndAwaitTermination(pruneCheckpointThread, pruneName);
+      logger.info("Prune checkpoint thread shutdown complete");
+    }
+
+    logger.info("Flush services shutdown...");
+    flushServices.forEach((key, value) -> ExecutorServiceManager.shutdownAndAwaitTermination(value,
+        "flush-service-" + key));
+    logger.info("Flush services shutdown complete");
     try {
       exitThread.interrupt();
       // help GC
       exitThread = null;
-      flushServices.values().forEach(ExecutorService::shutdown);
     } catch (Exception e) {
       logger.warn("exitThread interrupt error", e);
     }
@@ -280,17 +292,6 @@ public class SnapshotManager implements RevokingDatabase {
 
   public synchronized void disable() {
     disabled = true;
-  }
-
-  @Override
-  public void shutdown() {
-    logger.info("******** Begin to pop revokingDb. ********");
-    logger.info("******** Before revokingDb size: {}.", size);
-    checkTmpStore.close();
-    logger.info("******** End to pop revokingDb. ********");
-    if (pruneCheckpointThread != null) {
-      pruneCheckpointThread.shutdown();
-    }
   }
 
   public void updateSolidity(int hops) {

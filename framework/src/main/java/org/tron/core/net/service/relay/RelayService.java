@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -18,6 +17,7 @@ import org.tron.common.backup.BackupManager;
 import org.tron.common.backup.BackupManager.BackupStatusEnum;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
@@ -48,13 +48,18 @@ public class RelayService {
   @Autowired
   private ApplicationContext ctx;
 
+  @Autowired
   private Manager manager;
 
+  @Autowired
   private WitnessScheduleStore witnessScheduleStore;
 
+  @Autowired
   private BackupManager backupManager;
+  private final String name = "relay-service";
 
-  private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+  private ScheduledExecutorService executorService = ExecutorServiceManager
+      .newSingleThreadScheduledExecutor(name);
 
   private CommonParameter parameter = Args.getInstance();
 
@@ -69,10 +74,6 @@ public class RelayService {
   private int maxFastForwardNum = Args.getInstance().getMaxFastForwardNum();
 
   public void init() {
-    manager = ctx.getBean(Manager.class);
-    witnessScheduleStore = ctx.getBean(WitnessScheduleStore.class);
-    backupManager = ctx.getBean(BackupManager.class);
-
     logger.info("Fast forward config, isWitness: {}, keySize: {}, fastForwardNodes: {}",
         parameter.isWitness(), keySize, fastForwardNodes.size());
 
@@ -95,7 +96,9 @@ public class RelayService {
   }
 
   public void close() {
-    executorService.shutdown();
+    logger.info("Relay service shutdown...");
+    ExecutorServiceManager.shutdownAndAwaitTermination(executorService, name);
+    logger.info("Relay service shutdown complete");
   }
 
   public void fillHelloMessage(HelloMessage message, Channel channel) {

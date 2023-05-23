@@ -56,9 +56,11 @@ public class ServiceContainer {
   }
 
   public void stop() {
+    logger.info("Stopping services.");
     for (Service service : this.services) {
       logger.debug("Stopping {}.", service.getClass().getSimpleName());
       service.stop();
     }
+    logger.info("All services stopped.");
   }
 }

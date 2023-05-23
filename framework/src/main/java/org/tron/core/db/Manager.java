@@ -9,6 +9,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.protobuf.ByteString;
 import io.prometheus.client.Histogram;
 import java.util.ArrayList;
@@ -49,6 +50,7 @@ import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.bloom.Bloom;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.capsule.BlockFilterCapsule;
@@ -104,7 +106,6 @@ import org.tron.core.db.api.EnergyPriceHistoryLoader;
 import org.tron.core.db.api.MoveAbiHelper;
 import org.tron.core.db2.ISession;
 import org.tron.core.db2.core.Chainbase;
-import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
@@ -180,7 +181,7 @@ public class Manager {
   @Setter
   public boolean eventPluginLoaded = false;
   private int maxTransactionPendingSize = Args.getInstance().getMaxTransactionPendingSize();
-  @Autowired(required = false)
+  @Autowired
   @Getter
   private TransactionCache transactionCache;
   @Autowired
@@ -252,6 +253,10 @@ public class Manager {
 
   private AtomicInteger blockWaitLock = new AtomicInteger(0);
   private Object transactionLock = new Object();
+
+  private ExecutorService rePushEs;
+  private ExecutorService triggerEs;
+  private ExecutorService filterEs;
 
   /**
    * Cycle thread to rePush Transactions
@@ -427,16 +432,34 @@ public class Manager {
     return rePushTransactions;
   }
 
-  public void stopRePushThread() {
+  public void stop() {
+    logger.info("Manager shutdown...");
+    stopRePushThread();
+    stopTriggerThread();
+    stopFilterProcessThread();
+    stopValidateSignThread();
+    session.reset();
+    logger.info("Manager shutdown complete");
+  }
+
+  private void stopRePushThread() {
     isRunRePushThread = false;
+    ExecutorServiceManager.shutdownAndAwaitTermination(rePushEs, "repush");
   }
 
-  public void stopRePushTriggerThread() {
+  private void stopTriggerThread() {
     isRunTriggerCapsuleProcessThread = false;
+    ExecutorServiceManager.shutdownAndAwaitTermination(triggerEs, "trigger");
   }
 
-  public void stopFilterProcessThread() {
+  private void stopFilterProcessThread() {
+    EventPluginLoader.getInstance().stopPlugin();
     isRunFilterProcessThread = false;
+    ExecutorServiceManager.shutdownAndAwaitTermination(filterEs, "filter");
+  }
+
+  private void stopValidateSignThread() {
+    ExecutorServiceManager.shutdownAndAwaitTermination(validateSignService, "validate-sign");
   }
 
   @PostConstruct
@@ -522,23 +545,22 @@ public class Manager {
       logger.info("Lite node lowestNum: {}", chainBaseManager.getLowestBlockNum());
     }
     revokingStore.enable();
-    validateSignService = Executors
-        .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
-    Thread rePushThread = new Thread(rePushLoop);
-    rePushThread.setDaemon(true);
-    rePushThread.start();
+    validateSignService = Executors.newFixedThreadPool(
+        Args.getInstance().getValidateSignThreadNum(),
+        new ThreadFactoryBuilder().setNameFormat("validate-sign-%d").build());
+    rePushEs = ExecutorServiceManager.newSingleThreadExecutor("repush", true);
+    rePushEs.submit(rePushLoop);
     // add contract event listener for subscribing
     if (Args.getInstance().isEventSubscribe()) {
       startEventSubscribing();
-      Thread triggerCapsuleProcessThread = new Thread(triggerCapsuleProcessLoop);
-      triggerCapsuleProcessThread.setDaemon(true);
-      triggerCapsuleProcessThread.start();
+      triggerEs = ExecutorServiceManager.newSingleThreadExecutor("trigger", true);
+      triggerEs.submit(triggerCapsuleProcessLoop);
     }
 
     // start json rpc filter process
     if (CommonParameter.getInstance().isJsonRpcFilterEnabled()) {
-      Thread filterProcessThread = new Thread(filterProcessLoop);
-      filterProcessThread.start();
+      filterEs = ExecutorServiceManager.newSingleThreadExecutor("filter", true);
+      filterEs.submit(filterProcessLoop);
     }
 
     //initStoreFactory
@@ -560,6 +582,7 @@ public class Manager {
   /**
    * init genesis block.
    */
+
   public void initGenesis() {
     chainBaseManager.initGenesis();
     BlockCapsule genesisBlock = chainBaseManager.getGenesisBlock();
@@ -804,12 +827,8 @@ public class Manager {
 
 
   private boolean containsTransaction(byte[] transactionId) {
-    if (transactionCache != null && !transactionCache.has(transactionId)) {
-      // using the bloom filter only determines non-existent transaction
-      return false;
-    }
-
-    return chainBaseManager.getTransactionStore()
+    // using the bloom filter only determines non-existent transaction
+    return transactionCache.has(transactionId) && chainBaseManager.getTransactionStore()
         .has(transactionId);
   }
 
@@ -1915,24 +1934,6 @@ public class Manager {
 
   public NullifierStore getNullifierStore() {
     return chainBaseManager.getNullifierStore();
-  }
-
-  public void closeAllStore() {
-    logger.info("******** Begin to close db. ********");
-    chainBaseManager.closeAllStore();
-    validateSignService.shutdown();
-    logger.info("******** End to close db. ********");
-  }
-
-  public void closeOneStore(ITronChainBase database) {
-    logger.info("******** Begin to close {}. ********", database.getName());
-    try {
-      database.close();
-    } catch (Exception e) {
-      logger.info("Failed to close {}.", database.getName(), e);
-    } finally {
-      logger.info("******** End to close {}. ********", database.getName());
-    }
   }
 
   public boolean isTooManyPending() {

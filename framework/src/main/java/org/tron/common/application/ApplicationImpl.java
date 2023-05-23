@@ -1,9 +1,9 @@
 package org.tron.common.application;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
@@ -12,8 +12,6 @@ import org.tron.core.consensus.ConsensusService;
 import org.tron.core.db.Manager;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.net.TronNetService;
-import org.tron.program.FullNode;
-import org.tron.program.SolidityNode;
 
 @Slf4j(topic = "app")
 @Component
@@ -25,9 +23,11 @@ public class ApplicationImpl implements Application {
   private TronNetService tronNetService;
 
   @Autowired
+  @Getter
   private Manager dbManager;
 
   @Autowired
+  @Getter
   private ChainBaseManager chainBaseManager;
 
   @Autowired
@@ -71,23 +71,13 @@ public class ApplicationImpl implements Application {
 
   @Override
   public void shutdown() {
-    logger.info("******** start to shutdown ********");
     if (!Args.getInstance().isSolidityNode() && (!Args.getInstance().p2pDisable)) {
       tronNetService.close();
     }
     consensusService.stop();
-    synchronized (dbManager.getRevokingStore()) {
-      dbManager.getSession().reset();
-      closeRevokingStore();
-      closeAllStore();
-    }
-    dbManager.stopRePushThread();
-    dbManager.stopRePushTriggerThread();
-    EventPluginLoader.getInstance().stopPlugin();
-    dbManager.stopFilterProcessThread();
+    getDbManager().stop();
+    getChainBaseManager().stop();
     dynamicArgs.close();
-    logger.info("******** end to shutdown ********");
-    FullNode.shutDownSign = true;
   }
 
   @Override
@@ -99,24 +89,5 @@ public class ApplicationImpl implements Application {
   public void shutdownServices() {
     services.stop();
   }
-
-  @Override
-  public Manager getDbManager() {
-    return dbManager;
-  }
-
-  @Override
-  public ChainBaseManager getChainBaseManager() {
-    return chainBaseManager;
-  }
-
-  private void closeRevokingStore() {
-    logger.info("******** start to closeRevokingStore ********");
-    dbManager.getRevokingStore().shutdown();
-  }
-
-  private void closeAllStore() {
-    dbManager.closeAllStore();
-  }
-
 }
+

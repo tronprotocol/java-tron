@@ -6,7 +6,6 @@ import static org.tron.core.config.Parameter.NetConstants.MSG_CACHE_DURATION_IN_
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -15,15 +14,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
@@ -73,9 +71,13 @@ public class AdvService {
       .maximumSize(MAX_BLOCK_CACHE_SIZE).expireAfterWrite(1, TimeUnit.MINUTES)
       .recordStats().build();
 
-  private ScheduledExecutorService spreadExecutor = Executors.newSingleThreadScheduledExecutor();
+  private final String spreadName = "adv-spread";
+  private final String fetchName = "adv-fetch";
+  private final ScheduledExecutorService spreadExecutor = ExecutorServiceManager
+      .newSingleThreadScheduledExecutor(spreadName);
 
-  private ScheduledExecutorService fetchExecutor = Executors.newSingleThreadScheduledExecutor();
+  private final ScheduledExecutorService fetchExecutor = ExecutorServiceManager
+      .newSingleThreadScheduledExecutor(fetchName);
 
   @Getter
   private MessageCount trxCount = new MessageCount();
@@ -102,8 +104,10 @@ public class AdvService {
   }
 
   public void close() {
-    spreadExecutor.shutdown();
-    fetchExecutor.shutdown();
+    logger.info("Adv service shutdown...");
+    ExecutorServiceManager.shutdownAndAwaitTermination(spreadExecutor, spreadName);
+    ExecutorServiceManager.shutdownAndAwaitTermination(fetchExecutor, fetchName);
+    logger.info("Adv service shutdown complete");
   }
 
   public synchronized void addInvToCache(Item item) {

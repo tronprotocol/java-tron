@@ -9,14 +9,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.tron.common.utils.StorageUtils;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.RecentTransactionStore;
-import org.tron.core.db.RevokingDatabase;
-import org.tron.core.db.TransactionCache;
 import org.tron.core.db.backup.BackupRocksDBAspect;
 import org.tron.core.db.backup.NeedBeanCondition;
-import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.services.interfaceOnPBFT.RpcApiServiceOnPBFT;
 import org.tron.core.services.interfaceOnPBFT.http.PBFT.HttpApiOnPBFTService;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
@@ -40,16 +35,6 @@ public class DefaultConfig {
 
   public DefaultConfig() {
     Thread.setDefaultUncaughtExceptionHandler((t, e) -> logger.error("Uncaught exception", e));
-  }
-
-  @Bean
-  public RevokingDatabase revokingDatabase() {
-    try {
-      return new SnapshotManager(
-          StorageUtils.getOutputDirectoryByDbName("block"));
-    } finally {
-      logger.info("key-value data source created.");
-    }
   }
 
 
@@ -91,11 +76,6 @@ public class DefaultConfig {
     }
 
     return null;
-  }
-
-  @Bean
-  public TransactionCache transactionCache() {
-    return new TransactionCache("trans-cache", appCtx.getBean(RecentTransactionStore.class));
   }
 
   @Bean

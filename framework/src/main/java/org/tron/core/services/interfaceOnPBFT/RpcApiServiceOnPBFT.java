@@ -137,18 +137,19 @@ public class RpcApiServiceOnPBFT implements Service {
     }
 
     logger.info("RpcApiServiceOnPBFT started, listening on " + port);
-
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      System.err.println("*** shutting down gRPC server on PBFT since JVM is shutting down");
-      //server.this.stop();
-      System.err.println("*** server on PBFT shut down");
-    }));
   }
 
   @Override
   public void stop() {
     if (apiServer != null) {
-      apiServer.shutdown();
+      logger.info("RpcApiServiceOnPBFT shutdown...");
+      try {
+        apiServer.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        logger.warn("InterruptedException: {}", e.getMessage());
+      }
+      logger.info("RpcApiServiceOnPBFT shutdown complete");
     }
   }
 

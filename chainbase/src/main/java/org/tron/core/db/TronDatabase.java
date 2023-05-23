@@ -29,15 +29,15 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
   protected DbSourceInter<byte[]> dbSource;
   @Getter
   private String dbName;
-  private WriteOptionsWrapper writeOptions = WriteOptionsWrapper.getInstance()
-          .sync(CommonParameter.getInstance().getStorage().isDbSync());
+  private WriteOptionsWrapper writeOptions;
 
   @Autowired
   private DbStatService dbStatService;
 
   protected TronDatabase(String dbName) {
     this.dbName = dbName;
-
+    this.writeOptions = WriteOptionsWrapper.getInstance()
+        .sync(CommonParameter.getInstance().getStorage().isDbSync());
     if ("LEVELDB".equals(CommonParameter.getInstance().getStorage()
         .getDbEngine().toUpperCase())) {
       dbSource =
@@ -94,7 +94,14 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
    */
   @Override
   public void close() {
-    dbSource.closeDB();
+    logger.info("******** Begin to close {}. ********", getName());
+    try {
+      dbSource.closeDB();
+    } catch (Exception e) {
+      logger.warn("Failed to close {}.", getName(), e);
+    } finally {
+      logger.info("******** End to close {}. ********", getName());
+    }
   }
 
   public abstract void put(byte[] key, T item);

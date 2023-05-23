@@ -480,11 +480,4 @@ public class RevokingDbWithCacheNewValueTest {
       return ArrayUtils.isEmpty(value) ? null : new ProtoCapsuleTest(value);
     }
   }
-
-  public static class TestSnapshotManager extends SnapshotManager {
-
-    public TestSnapshotManager(String checkpointPath) {
-      super(checkpointPath);
-    }
-  }
 }

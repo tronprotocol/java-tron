@@ -1,9 +1,10 @@
 package org.tron.core.net.messagehandler;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -11,6 +12,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
@@ -43,18 +45,23 @@ public class TransactionsMsgHandler implements TronMsgHandler {
 
   private int threadNum = Args.getInstance().getValidateSignThreadNum();
   private ExecutorService trxHandlePool = new ThreadPoolExecutor(threadNum, threadNum, 0L,
-      TimeUnit.MILLISECONDS, queue);
+      TimeUnit.MILLISECONDS, queue,
+      new ThreadFactoryBuilder().setNameFormat("trx-Handle-%d").build());
 
-  private ScheduledExecutorService smartContractExecutor = Executors
-      .newSingleThreadScheduledExecutor();
+  private final String smartEsName = "transactions-msg-handler-smart-contract";
+
+  private final ScheduledExecutorService smartContractExecutor = ExecutorServiceManager
+      .newSingleThreadScheduledExecutor(smartEsName);
 
   public void init() {
     handleSmartContract();
   }
 
   public void close() {
-    trxHandlePool.shutdown();
-    smartContractExecutor.shutdown();
+    logger.info("Transaction msg handler shutdown...");
+    ExecutorServiceManager.shutdownAndAwaitTermination(trxHandlePool, "trx-handle");
+    ExecutorServiceManager.shutdownAndAwaitTermination(smartContractExecutor, smartEsName);
+    logger.info("Transaction msg handler shutdown complete");
   }
 
   public boolean isBusy() {
@@ -78,7 +85,14 @@ public class TransactionsMsgHandler implements TronMsgHandler {
           dropSmartContractCount++;
         }
       } else {
-        trxHandlePool.submit(() -> handleTransaction(peer, new TransactionMessage(trx)));
+        try {
+          trxHandlePool.submit(() -> handleTransaction(peer, new TransactionMessage(trx)));
+        } catch (RejectedExecutionException e) {
+          logger.warn("Trx from {} process failed, queueSize: {}",
+              peer.getInetAddress(), queue.size());
+          peer.disconnect(ReasonCode.USER_REASON);
+          return;
+        }
       }
     }
 
@@ -102,7 +116,7 @@ public class TransactionsMsgHandler implements TronMsgHandler {
   private void handleSmartContract() {
     smartContractExecutor.scheduleWithFixedDelay(() -> {
       try {
-        while (queue.size() < MAX_SMART_CONTRACT_SUBMIT_SIZE) {
+        while (queue.size() < MAX_SMART_CONTRACT_SUBMIT_SIZE && smartContractQueue.size() > 0) {
           TrxEvent event = smartContractQueue.take();
           trxHandlePool.submit(() -> handleTransaction(event.getPeer(), event.getMsg()));
         }

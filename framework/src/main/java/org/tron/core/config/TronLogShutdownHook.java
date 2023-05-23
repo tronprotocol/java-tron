@@ -16,9 +16,9 @@ public class TronLogShutdownHook extends ShutdownHookBase {
   private static final Duration CHECK_SHUTDOWN_DELAY = Duration.buildByMilliseconds(100);
 
   /**
-   * The check times before shutdown.  default is 50
+   * The check times before shutdown.  default is 600
    */
-  private Integer check_times = 50;
+  private Integer check_times = 600;
 
   public TronLogShutdownHook() {
   }
