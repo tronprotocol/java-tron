@@ -19,9 +19,6 @@ import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.sm2.SM2;
 import org.tron.common.crypto.sm2.SM2Signer;
-import org.tron.common.parameter.CommonParameter;
-import org.tron.common.utils.client.Parameter;
-import org.tron.common.utils.client.utils.Base58;
 import org.tron.common.utils.client.utils.TransactionUtils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol;
@@ -31,29 +28,26 @@ import org.tron.protos.contract.SmartContractOuterClass;
 @Slf4j
 public class PublicMethod {
 
-  private static byte addressPreFixByte = Parameter.CommonConstant.ADD_PRE_FIX_BYTE_MAINNET;
+  public static ECKey getRandomECKey(String privateKey) {
+    BigInteger priK = new BigInteger(privateKey, 16);
+    return ECKey.fromPrivate(priK);
+  }
 
   public static String getRandomPrivateKey() {
-    ECKey key = new ECKey(Utils.getRandom());
-    return Hex.toHexString(Objects.requireNonNull(key.getPrivKeyBytes()));
+    return Hex.toHexString(Objects
+            .requireNonNull(new ECKey(Utils.getRandom()).getPrivKeyBytes()));
   }
 
   public static String getHexAddressByPrivateKey(String privateKey) {
-    BigInteger priK = new BigInteger(privateKey, 16);
-    ECKey temKey = ECKey.fromPrivate(priK);
-    return ByteArray.toHexString(temKey.getAddress());
+    return ByteArray.toHexString(getAddressByteByPrivateKey(privateKey));
   }
 
   public static byte[] getAddressByteByPrivateKey(String privateKey) {
-    BigInteger priK = new BigInteger(privateKey, 16);
-    ECKey temKey = ECKey.fromPrivate(priK);
-    return temKey.getAddress();
+    return getRandomECKey(privateKey).getAddress();
   }
 
   public static String getPublicByPrivateKey(String privateKey) {
-    BigInteger priK = new BigInteger(privateKey, 16);
-    ECKey temKey = ECKey.fromPrivate(priK);
-    return Hex.toHexString(temKey.getPubKey());
+    return Hex.toHexString(getRandomECKey(privateKey).getPubKey());
   }
 
   public static byte[] getPublicKeyFromPrivate(String privateKey) {
@@ -61,26 +55,24 @@ public class PublicMethod {
     return ECKey.publicKeyFromPrivate(tmpKey, true);
   }
 
-  public static String getCompressedPubString(String privateKey) {
-    byte[] publicKeyFromPrivate = getPublicKeyFromPrivate(privateKey);
-    return Hex.toHexString(publicKeyFromPrivate);
-  }
-
   public static String getSM2RandomPrivateKey() {
     SM2 key = new SM2(Utils.getRandom());
-    return Hex.toHexString(Objects.requireNonNull(key.getPrivKeyBytes()));
+    return Hex.toHexString(
+            Objects.requireNonNull(key.getPrivKeyBytes()));
+  }
+
+  public static SM2 getSM2byPrivate(String privateKey) {
+    BigInteger priK = new BigInteger(privateKey, 16);
+    return SM2.fromPrivate(priK);
   }
 
   public static String getSM2PublicByPrivateKey(String privateKey) {
-    BigInteger priK = new BigInteger(privateKey, 16);
-    SM2 key = SM2.fromPrivate(priK);
-    return Hex.toHexString(key.getPubKey());
+    return Hex.toHexString(getSM2byPrivate(privateKey).getPubKey());
   }
 
   public static String getSM2AddressByPrivateKey(String privateKey) {
-    BigInteger priK = new BigInteger(privateKey, 16);
-    SM2 key = SM2.fromPrivate(priK);
-    return ByteArray.toHexString(key.getAddress());
+    return ByteArray
+            .toHexString(getSM2byPrivate(privateKey).getAddress());
   }
 
   public static byte[] getSM2PublicKeyFromPrivate(String privateKey) {
@@ -88,17 +80,11 @@ public class PublicMethod {
     return SM2.publicKeyFromPrivate(tmpKey, true);
   }
 
-  public static String getSM2CompressedPubString(String privateKey) {
-    byte[] publicKeyFromPrivate = getSM2PublicKeyFromPrivate(privateKey);
-    return Hex.toHexString(publicKeyFromPrivate);
-  }
-
   public static byte[] getSM2HashByPubKey(byte[] pubKey, String message) {
     SM2 key = SM2.fromPublicOnly(pubKey);
     SM2Signer signer = key.getSM2SignerForHash();
     return signer.generateSM3Hash(message.getBytes());
   }
-
 
   /** constructor. */
   public static SmartContractOuterClass.SmartContract.ABI jsonStr2Abi(String jsonStr) {
@@ -258,35 +244,6 @@ public class PublicMethod {
     Wallet.setAddressPreFixByte((byte) 0x41);
     ECKey key = ECKey.fromPrivate(new BigInteger(priKey, 16));
     return key.getAddress();
-  }
-
-  public static byte getAddressPreFixByte() {
-    return addressPreFixByte;
-  }
-
-  public static void setAddressPreFixByte(byte addressPreFixByte) {
-    PublicMethod.addressPreFixByte = addressPreFixByte;
-  }
-
-
-  private static byte[] decode58Check(String input) {
-    byte[] decodeCheck = Base58.decode(input);
-    if (decodeCheck.length <= 4) {
-      return null;
-    }
-    byte[] decodeData = new byte[decodeCheck.length - 4];
-    System.arraycopy(decodeCheck, 0, decodeData, 0, decodeData.length);
-    byte[] hash0 = Sha256Hash.hash(CommonParameter.getInstance()
-            .isECKeyCryptoEngine(), decodeData);
-    byte[] hash1 = Sha256Hash.hash(CommonParameter.getInstance()
-            .isECKeyCryptoEngine(), hash0);
-    if (hash1[0] == decodeCheck[decodeData.length]
-            && hash1[1] == decodeCheck[decodeData.length + 1]
-            && hash1[2] == decodeCheck[decodeData.length + 2]
-            && hash1[3] == decodeCheck[decodeData.length + 3]) {
-      return decodeData;
-    }
-    return null;
   }
 
   /**

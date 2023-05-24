@@ -28,7 +28,8 @@ public class SM2KeyTest {
   private String pubString = PublicMethod.getSM2PublicByPrivateKey(privString);
   private byte[] pubKey = Hex.decode(pubString);
 
-  private String compressedPubString = PublicMethod.getSM2CompressedPubString(privString);
+  private String compressedPubString = Hex.toHexString(
+          PublicMethod.getSM2PublicKeyFromPrivate(privString));
   private byte[] compressedPubKey = Hex.decode(compressedPubString);
   private String address = PublicMethod.getSM2AddressByPrivateKey(privString);
   private long hashCode = SM2.fromPrivate(privateKey).hashCode();

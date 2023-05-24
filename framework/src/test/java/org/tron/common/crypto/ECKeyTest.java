@@ -32,7 +32,7 @@ public class ECKeyTest {
   private String address = PublicMethod.getHexAddressByPrivateKey(privString);
   private long hashCode = ECKey.fromPrivate(privateKey).hashCode();
 
-  private String compressedPubString = PublicMethod.getCompressedPubString(privString);
+  private String compressedPubString = Hex.toHexString(PublicMethod.getPublicKeyFromPrivate(privString)) ;
   private byte[] compressedPubKey = Hex.decode(compressedPubString);
   String eventSign = "eventBytesL(address,bytes,bytes32,uint256,string)";
 
