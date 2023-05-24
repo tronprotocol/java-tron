@@ -88,7 +88,7 @@ dependencies {
 
     testImplementation group: 'org.springframework', name: 'spring-test', version: '5.2.0.RELEASE'
 
-    compile group: 'org.zeromq', name: 'jeromq', version: '0.5.0'
+    compile group: 'org.zeromq', name: 'jeromq', version: '0.5.3'
     compile project(":chainbase")
     compile project(":protocol")
     compile project(":actuator")
