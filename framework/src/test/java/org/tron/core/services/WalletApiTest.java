@@ -13,10 +13,11 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.client.Configuration;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import stest.tron.wallet.common.client.Configuration;
+
 
 @Slf4j
 public class WalletApiTest {

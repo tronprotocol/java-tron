@@ -13,6 +13,8 @@ import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.tron.common.BaseTest;
 import org.tron.common.application.Application;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.client.Configuration;
+import org.tron.common.utils.client.utils.HttpMethed;
 import org.tron.core.Constant;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.config.args.Args;
@@ -21,8 +23,6 @@ import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.SmartContractOuterClass;
-import stest.tron.wallet.common.client.Configuration;
-import stest.tron.wallet.common.client.utils.HttpMethed;
 
 @Slf4j
 public class TriggerSmartContractServletTest extends BaseTest {
