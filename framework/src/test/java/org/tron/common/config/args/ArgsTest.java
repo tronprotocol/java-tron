@@ -10,6 +10,8 @@ import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 
+
+
 public class ArgsTest {
 
   private static final String dbPath = "output_arg_test";
