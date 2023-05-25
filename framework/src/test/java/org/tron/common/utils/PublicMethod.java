@@ -138,7 +138,7 @@ public class PublicMethod {
 
   /** constructor. */
   public static SmartContractOuterClass.SmartContract.ABI.Entry.EntryType
-    getEntryType(String type) {
+      getEntryType(String type) {
     switch (type) {
       case "constructor":
         return SmartContractOuterClass.SmartContract.ABI.Entry.EntryType.Constructor;
@@ -158,7 +158,7 @@ public class PublicMethod {
 
   /** constructor. */
   public static SmartContractOuterClass.SmartContract.ABI.Entry.StateMutabilityType
-    getStateMutability(String stateMutability) {
+      getStateMutability(String stateMutability) {
     switch (stateMutability) {
       case "pure":
         return SmartContractOuterClass.SmartContract.ABI.Entry.StateMutabilityType.Pure;
