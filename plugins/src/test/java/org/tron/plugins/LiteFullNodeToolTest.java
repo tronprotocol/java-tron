@@ -2,6 +2,10 @@ package org.tron.plugins;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.io.File;
+import java.nio.file.Paths;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.After;
@@ -20,11 +24,6 @@ import org.tron.core.services.RpcApiService;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.plugins.utils.PublicMethod;
 import picocli.CommandLine;
-
-import java.io.File;
-import java.nio.file.Paths;
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class LiteFullNodeToolTest {

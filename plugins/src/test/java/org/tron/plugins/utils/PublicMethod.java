@@ -1,6 +1,12 @@
 package org.tron.plugins.utils;
 
 import com.google.protobuf.ByteString;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.util.List;
+import java.util.Random;
 import org.tron.api.GrpcAPI;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
@@ -9,13 +15,6 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.BalanceContract;
-
-import java.io.IOException;
-import java.math.BigInteger;
-import java.net.InetAddress;
-import java.net.Socket;
-import java.util.List;
-import java.util.Random;
 
 /**
  * @author liukai
@@ -116,6 +115,7 @@ public class PublicMethod {
     builder.setRawData(rowBuilder.build());
     return builder.build();
   }
+
   public static Protocol.Transaction sign(Protocol.Transaction transaction, ECKey myKey) {
     ByteString lockSript = ByteString.copyFrom(myKey.getAddress());
     Protocol.Transaction.Builder transactionBuilderSigned = transaction.toBuilder();
