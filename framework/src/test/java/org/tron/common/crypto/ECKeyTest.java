@@ -125,8 +125,9 @@ public class ECKeyTest {
     ECKey key = ECKey.fromPublicOnly(pubKey);
     // Addresses are prefixed with a constant.
     byte[] prefixedAddress = key.getAddress();
-    byte[] unprefixedAddress = Arrays.copyOfRange(key.getAddress(), 0, prefixedAddress.length);
-    assertArrayEquals(Hex.decode(address), unprefixedAddress);
+    byte[] addressTmp = Arrays.copyOfRange(Hex.decode(address), 1, prefixedAddress.length);
+    byte[] unprefixedAddress = Arrays.copyOfRange(key.getAddress(), 1, prefixedAddress.length);
+    assertArrayEquals(addressTmp, unprefixedAddress);
     assertEquals(Wallet.getAddressPreFixByte(), prefixedAddress[0]);
   }
 
@@ -135,8 +136,9 @@ public class ECKeyTest {
     ECKey key = ECKey.fromPrivate(privateKey);
     // Addresses are prefixed with a constant.
     byte[] prefixedAddress = key.getAddress();
-    byte[] unprefixedAddress = Arrays.copyOfRange(key.getAddress(), 0, prefixedAddress.length);
-    assertArrayEquals(Hex.decode(address), unprefixedAddress);
+    byte[] addressTmp = Arrays.copyOfRange(Hex.decode(address), 1, prefixedAddress.length);
+    byte[] unprefixedAddress = Arrays.copyOfRange(key.getAddress(), 1, prefixedAddress.length);
+    assertArrayEquals(addressTmp, unprefixedAddress);
     assertEquals(Wallet.getAddressPreFixByte(), prefixedAddress[0]);
   }
 
