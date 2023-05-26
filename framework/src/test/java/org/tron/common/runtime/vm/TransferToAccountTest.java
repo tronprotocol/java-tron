@@ -14,6 +14,8 @@ import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
+import org.tron.common.utils.client.utils.AbiUtil;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.VMActuator;
@@ -33,7 +35,6 @@ import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
-import stest.tron.wallet.common.client.utils.AbiUtil;
 
 @Slf4j
 public class TransferToAccountTest extends BaseTest {

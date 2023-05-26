@@ -17,21 +17,23 @@ import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 import org.tron.common.crypto.ECKey.ECDSASignature;
+import org.tron.common.utils.PublicMethod;
 import org.tron.core.Wallet;
 
 @Slf4j
 public class ECKeyTest {
 
-  private String privString = "c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4";
+  private String privString = PublicMethod.getRandomPrivateKey();
   private BigInteger privateKey = new BigInteger(privString, 16);
+  private String pubString = PublicMethod.getPublicByPrivateKey(privString);
 
-  private String pubString = "040947751e3022ecf3016be03ec77ab0ce3c2662b4843898cb068d74f698ccc"
-      + "8ad75aa17564ae80a20bb044ee7a6d903e8e8df624b089c95d66a0570f051e5a05b";
-  private String compressedPubString =
-      "030947751e3022ecf3016be03ec77ab0ce3c2662b4843898cb068d74f6" + "98ccc8ad";
+
   private byte[] pubKey = Hex.decode(pubString);
+  private String address = PublicMethod.getHexAddressByPrivateKey(privString);
+  private long hashCode = ECKey.fromPrivate(privateKey).hashCode();
+
+  private String compressedPubString = Hex.toHexString(PublicMethod.getPublicKeyFromPrivate(privString)) ;
   private byte[] compressedPubKey = Hex.decode(compressedPubString);
-  private String address = "cd2a3d9f938e13cd947ec05abc7fe734df8dd826";
   String eventSign = "eventBytesL(address,bytes,bytes32,uint256,string)";
 
   @Test
@@ -41,7 +43,7 @@ public class ECKeyTest {
 
   @Test
   public void testHashCode() {
-    assertEquals(-351262686, ECKey.fromPrivate(privateKey).hashCode());
+    assertEquals(hashCode, ECKey.fromPrivate(privateKey).hashCode());
   }
 
   @Test
@@ -123,8 +125,9 @@ public class ECKeyTest {
     ECKey key = ECKey.fromPublicOnly(pubKey);
     // Addresses are prefixed with a constant.
     byte[] prefixedAddress = key.getAddress();
+    byte[] addressTmp = Arrays.copyOfRange(Hex.decode(address), 1, prefixedAddress.length);
     byte[] unprefixedAddress = Arrays.copyOfRange(key.getAddress(), 1, prefixedAddress.length);
-    assertArrayEquals(Hex.decode(address), unprefixedAddress);
+    assertArrayEquals(addressTmp, unprefixedAddress);
     assertEquals(Wallet.getAddressPreFixByte(), prefixedAddress[0]);
   }
 
@@ -133,8 +136,9 @@ public class ECKeyTest {
     ECKey key = ECKey.fromPrivate(privateKey);
     // Addresses are prefixed with a constant.
     byte[] prefixedAddress = key.getAddress();
+    byte[] addressTmp = Arrays.copyOfRange(Hex.decode(address), 1, prefixedAddress.length);
     byte[] unprefixedAddress = Arrays.copyOfRange(key.getAddress(), 1, prefixedAddress.length);
-    assertArrayEquals(Hex.decode(address), unprefixedAddress);
+    assertArrayEquals(addressTmp, unprefixedAddress);
     assertEquals(Wallet.getAddressPreFixByte(), prefixedAddress[0]);
   }
 

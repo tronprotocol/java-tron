@@ -25,6 +25,9 @@ import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.PublicMethod;
+import org.tron.common.utils.client.WalletClient;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.JLibrustzcash;
@@ -49,13 +52,13 @@ import org.tron.core.zen.address.SpendingKey;
 import org.tron.core.zen.note.Note;
 import org.tron.protos.contract.ShieldContract;
 import org.tron.protos.contract.ShieldContract.SpendDescription;
-import stest.tron.wallet.common.client.WalletClient;
 
 @Slf4j
 public class ShieldedTRC20BuilderTest extends BaseTest {
   @Resource
   private Wallet wallet;
-  private final String priKey = "650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812";
+  private final String priKey = PublicMethod.getRandomPrivateKey();
+  private String pubAddress = PublicMethod.getHexAddressByPrivateKey(priKey);
   private static final String SHIELDED_CONTRACT_ADDRESS_STR = "TGAmX5AqVUoXCf8MoHxbuhQPmhGfWTnEgA";
   private static final byte[] SHIELDED_CONTRACT_ADDRESS;
   private static final byte[] DEFAULT_OVK;
@@ -102,7 +105,7 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
       Assert.assertEquals(1, result[31]);
 
       //update frontier and leafCount
-      
+
       int slot = result[63];
       if (slot == 0) {
         System.arraycopy(inputData, 0, frontier, 0, 32);
@@ -2173,7 +2176,6 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
   @Test
   public void getTriggerInputForForMint() throws Exception {
     librustzcashInitZksnarkParams();
-    String pubAddress = "TFsrP7YcSSRwHzLPwaCnXyTKagHs8rXKNJ";
     byte[] callerAddress = WalletClient.decodeFromBase58Check(pubAddress);
     SpendingKey sk = SpendingKey.random();
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();

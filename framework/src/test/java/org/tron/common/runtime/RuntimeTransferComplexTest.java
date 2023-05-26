@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.testng.Assert;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.WalletUtil;
+import org.tron.common.utils.client.utils.DataWord;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
@@ -20,7 +21,6 @@ import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
-import stest.tron.wallet.common.client.utils.DataWord;
 
 @Slf4j
 public class RuntimeTransferComplexTest extends BaseTest {
