@@ -15,6 +15,8 @@ import org.tron.api.GrpcAPI.ShieldedTRC20Parameters;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.client.WalletClient;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.JLibrustzcash;
@@ -39,7 +41,6 @@ import org.tron.core.zen.address.SpendingKey;
 import org.tron.core.zen.note.Note;
 import org.tron.keystore.Wallet;
 import org.tron.protos.contract.ShieldContract;
-import stest.tron.wallet.common.client.WalletClient;
 
 @Slf4j
 public class PrecompiledContractsVerifyProofTest extends BaseTest {

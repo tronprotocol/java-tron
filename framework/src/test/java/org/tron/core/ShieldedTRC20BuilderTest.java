@@ -25,6 +25,7 @@ import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.client.WalletClient;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.JLibrustzcash;
@@ -49,7 +50,6 @@ import org.tron.core.zen.address.SpendingKey;
 import org.tron.core.zen.note.Note;
 import org.tron.protos.contract.ShieldContract;
 import org.tron.protos.contract.ShieldContract.SpendDescription;
-import stest.tron.wallet.common.client.WalletClient;
 
 @Slf4j
 public class ShieldedTRC20BuilderTest extends BaseTest {
@@ -102,7 +102,7 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
       Assert.assertEquals(1, result[31]);
 
       //update frontier and leafCount
-      
+
       int slot = result[63];
       if (slot == 0) {
         System.arraycopy(inputData, 0, frontier, 0, 32);
