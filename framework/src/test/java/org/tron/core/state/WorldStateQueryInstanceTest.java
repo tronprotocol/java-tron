@@ -9,6 +9,7 @@ import java.io.IOException;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.hyperledger.besu.ethereum.trie.MerkleStorage;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -59,7 +60,7 @@ public class WorldStateQueryInstanceTest {
 
   private static TronApplicationContext context;
   private static ChainBaseManager chainBaseManager;
-  private static WorldStateTrieStore worldStateTrieStore;
+  private static MerkleStorage merkleStorage;
 
   private static final ECKey ecKey = new ECKey(Utils.getRandom());
   private static final byte[] address = ecKey.getAddress();
@@ -76,7 +77,7 @@ public class WorldStateQueryInstanceTest {
     Args.getInstance().dbBackupConfig = DbBackupConfig.getInstance();
     context = new TronApplicationContext(DefaultConfig.class);
     chainBaseManager = context.getBean(ChainBaseManager.class);
-    worldStateTrieStore = chainBaseManager.getWorldStateTrieStore();
+    merkleStorage =  context.getBean(MerkleStorage.class);
   }
 
   @After
@@ -87,7 +88,7 @@ public class WorldStateQueryInstanceTest {
 
   @Test
   public void testGet() {
-    trieImpl2 = new TrieImpl2(worldStateTrieStore);
+    trieImpl2 = new TrieImpl2(merkleStorage);
     testGetAccount();
     testGetAccountAsset();
     testGetContractState();
@@ -282,7 +283,7 @@ public class WorldStateQueryInstanceTest {
   }
 
   private void testGetStorageRow() {
-    trieImpl2 = new TrieImpl2(worldStateTrieStore);
+    trieImpl2 = new TrieImpl2(merkleStorage);
     byte[] key = address;
     byte[] value = "test".getBytes();
     trieImpl2.put(StateType.encodeKey(StateType.StorageRow, key), Bytes.wrap(value));

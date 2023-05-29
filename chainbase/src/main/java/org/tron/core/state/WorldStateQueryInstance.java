@@ -47,7 +47,7 @@ public class WorldStateQueryInstance {
 
   public WorldStateQueryInstance(Bytes32 rootHash, ChainBaseManager chainBaseManager) {
     this.rootHash = rootHash;
-    this.trieImpl = new TrieImpl2(chainBaseManager.getWorldStateTrieStore(), rootHash);
+    this.trieImpl = new TrieImpl2(chainBaseManager.getMerkleStorage(), rootHash);
     this.worldStateGenesis = chainBaseManager.getWorldStateGenesis();
     this.chainBaseManager = chainBaseManager;
   }

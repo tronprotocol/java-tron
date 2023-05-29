@@ -53,6 +53,11 @@ public enum StateType {
         .findFirst().orElse(UNDEFINED);
   }
 
+  public static StateType get(byte value) {
+    return Arrays.stream(StateType.values()).filter(type -> type.value == value)
+        .findFirst().orElse(UNDEFINED);
+  }
+
   public static byte[] encodeKey(StateType type, byte[] key) {
     byte[] p = new byte[]{type.value};
     return Bytes.concat(p, key);

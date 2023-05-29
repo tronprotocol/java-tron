@@ -138,7 +138,7 @@ public class WorldStateCallBack {
       BlockCapsule parentBlockCapsule =
           chainBaseManager.getBlockById(blockCapsule.getParentBlockId());
       Bytes32 rootHash = parentBlockCapsule.getArchiveRoot();
-      trie = new TrieImpl2(chainBaseManager.getWorldStateTrieStore(), rootHash);
+      trie = new TrieImpl2(chainBaseManager.getMerkleStorage(), rootHash);
     } catch (Exception e) {
       throw new MerkleTrieException(e.getMessage());
     }
@@ -160,7 +160,7 @@ public class WorldStateCallBack {
     if (!exe()) {
       return;
     }
-    trie = new TrieImpl2(chainBaseManager.getWorldStateTrieStore());
+    trie = new TrieImpl2(chainBaseManager.getMerkleStorage());
     clear();
     trie.commit();
     trie.flush();
