@@ -5,13 +5,14 @@ import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERV
 import com.google.common.cache.CacheLoader;
 import com.google.protobuf.ByteString;
 import java.util.List;
-import javax.annotation.PostConstruct;
 import java.util.concurrent.ExecutionException;
+import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.ethereum.trie.MerkleStorage;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +45,6 @@ import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.service.MortgageService;
 import org.tron.core.state.WorldStateGenesis;
 import org.tron.core.state.WorldStateQueryInstance;
-import org.tron.core.state.WorldStateTrieStore;
 import org.tron.core.store.AbiStore;
 import org.tron.core.store.AccountAssetStore;
 import org.tron.core.store.AccountIdIndexStore;
@@ -247,7 +247,7 @@ public class ChainBaseManager {
 
   @Autowired(required = false)
   @Getter
-  private WorldStateTrieStore worldStateTrieStore;
+  private MerkleStorage merkleStorage;
 
   @Autowired
   @Getter

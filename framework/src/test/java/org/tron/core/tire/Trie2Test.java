@@ -628,4 +628,24 @@ public class Trie2Test {
     Assert.assertEquals(trie3, trie);
   }
 
+  @Test
+  public void testRootHash() throws IOException {
+    TrieImpl2 trie = new TrieImpl2(folder.newFolder().toPath().toString());
+    Bytes k1 = Bytes.fromHexString("41548794500882809695a8a687866e76d4271a1abc");
+    Bytes v1 = Bytes.wrap(new byte[]{0});
+    Bytes v2 = Bytes.wrap(new byte[]{0});
+    trie.put(k1, v1);
+    trie.commit();
+    Bytes32 hash1 = trie.getRootHashByte32();
+    trie.put(k1, v2);
+    trie.commit();
+    Bytes32 hash2 = trie.getRootHashByte32();
+    Assert.assertEquals(hash1, hash2);
+    trie.put(k1, Bytes.ofUnsignedLong(0));
+    trie.commit();
+    Bytes32 hash3 = trie.getRootHashByte32();
+    Assert.assertNotEquals(hash1, hash3);
+
+  }
+
 }

@@ -25,8 +25,8 @@ import java.util.Optional;
 
 public class KeyValueMerkleStorage implements MerkleStorage {
 
-  private final KeyValueStorage keyValueStorage;
-  private final Map<Bytes32, Bytes> pendingUpdates = new HashMap<>();
+  protected final KeyValueStorage keyValueStorage;
+  protected final Map<Bytes32, Bytes> pendingUpdates = new HashMap<>();
 
   public KeyValueMerkleStorage(final KeyValueStorage keyValueStorage) {
     this.keyValueStorage = keyValueStorage;
