@@ -30,6 +30,7 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
     }
     previous = snapshot;
     snapshot.setNext(this);
+    isOptimized = snapshot.isOptimized();
   }
 
   @Override
