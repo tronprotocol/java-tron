@@ -233,6 +233,12 @@ public class SnapshotManager implements RevokingDatabase {
     }
 
     --activeSession;
+
+    dbs.forEach(db -> {
+      if (db.getHead().isOptimized()) {
+        db.getHead().reloadToMem();
+      }
+    });
   }
 
   public synchronized void pop() {
