@@ -48,6 +48,12 @@ public class MetricsHistogram {
     init(MetricKeys.Histogram.BLOCK_FETCH_LATENCY, "fetch block latency.");
     init(MetricKeys.Histogram.BLOCK_RECEIVE_DELAY,
         "receive block delay time, receiveTime - blockTime.");
+    init(MetricKeys.Histogram.TRON_STATE_PUT_PER_TRANS_LATENCY,
+        "state put per trans latency.");
+    init(MetricKeys.Histogram.TRON_STATE_PUT_LATENCY,
+        "state put latency.", "db");
+    init(MetricKeys.Histogram.STATE_PUSH_BLOCK_FINISH_LATENCY,
+        "state commit or flush per block latency.", "type");
   }
 
   private MetricsHistogram() {

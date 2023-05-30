@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.TreeMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import io.prometheus.client.Histogram;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tuweni.bytes.Bytes;
@@ -25,6 +26,8 @@ import org.hyperledger.besu.storage.KeyValueStorage;
 import org.hyperledger.besu.storage.RocksDBConfiguration;
 import org.hyperledger.besu.storage.RocksDBConfigurationBuilder;
 import org.hyperledger.besu.storage.RocksDBKeyValueStorage;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.Metrics;
 
 /**
  *
@@ -120,7 +123,10 @@ public class TrieImpl2 implements Trie<Bytes> {
 
   @Override
   public void commit() {
+    Histogram.Timer timer = Metrics.histogramStartTimer(
+        MetricKeys.Histogram.STATE_PUSH_BLOCK_FINISH_LATENCY, "commit");
     trie.commit(merkleStorage::put);
+    Metrics.histogramObserve(timer);
   }
 
   @Override
@@ -168,7 +174,10 @@ public class TrieImpl2 implements Trie<Bytes> {
 
   @Override
   public boolean flush() {
+    Histogram.Timer timer = Metrics.histogramStartTimer(
+        MetricKeys.Histogram.STATE_PUSH_BLOCK_FINISH_LATENCY, "flush");
     merkleStorage.commit();
+    Metrics.histogramObserve(timer);
     return true;
   }
 

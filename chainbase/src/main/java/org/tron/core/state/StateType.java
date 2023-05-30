@@ -67,4 +67,8 @@ public enum StateType {
     return Arrays.copyOfRange(key, 1, key.length);
   }
 
+  public static StateType decodeType(org.apache.tuweni.bytes.Bytes key) {
+    return StateType.get(key.get(0));
+  }
+
 }
