@@ -70,12 +70,12 @@ subprojects {
         resolutionStrategy {
             force group: 'com.google.guava', name: 'guava', version: '30.1-jre'
         }
-        resolutionStrategy.eachDependency { details ->
-            // TODO if update grpc remove
-            if(details.requested.group == 'io.netty') {
-                details.useVersion "4.1.27.Final"
-            }
-        }
+        //resolutionStrategy.eachDependency { details ->
+        //    // TODO if update grpc remove
+        //    if(details.requested.group == 'io.netty') {
+        //        details.useVersion "4.1.27.Final"
+        //    }
+        //}
     }
 }
 

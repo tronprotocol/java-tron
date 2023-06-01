@@ -67,8 +67,8 @@ dependencies {
 
     compile group: 'com.carrotsearch', name: 'java-sizeof', version: '0.0.5'
 
-    compile 'com.googlecode.cqengine:cqengine:2.12.4'
-    compile group: 'com.google.api.grpc', name: 'googleapis-common-protos', version: '0.0.3'
+    //compile 'com.googlecode.cqengine:cqengine:2.12.4'
+    compile group: 'com.google.api.grpc', name: 'proto-google-common-protos', version: '2.15.0'
 
     // http
     compile 'org.eclipse.jetty:jetty-server:9.4.49.v20220914'
