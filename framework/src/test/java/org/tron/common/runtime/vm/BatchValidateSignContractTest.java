@@ -6,16 +6,16 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.bouncycastle.util.encoders.Hex;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.testng.Assert;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.StringUtil;
+import org.tron.common.utils.client.utils.AbiUtil;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.vm.PrecompiledContracts;
 import org.tron.core.vm.PrecompiledContracts.BatchValidateSign;
-import stest.tron.wallet.common.client.utils.AbiUtil;
+
 
 @Slf4j
 public class BatchValidateSignContractTest {
@@ -76,7 +76,7 @@ public class BatchValidateSignContractTest {
     Assert.assertEquals(ret.getValue(), new byte[32]);
     System.gc(); // force triggering full gc to avoid timeout for next test
   }
-  
+
   @Test
   public void correctionTest() {
     contract.setConstantCall(false);

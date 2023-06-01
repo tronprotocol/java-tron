@@ -681,6 +681,17 @@ public class ProposalUtil {
         }
         break;
       }
+      case ALLOW_TVM_SHANGHAI: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_7_2)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_TVM_SHANGHAI]");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_TVM_SHANGHAI] is only allowed to be 1");
+        }
+        break;
+      }
       default:
         break;
     }
@@ -753,7 +764,8 @@ public class ProposalUtil {
     ALLOW_DYNAMIC_ENERGY(72), // 0, 1
     DYNAMIC_ENERGY_THRESHOLD(73), // 0, [0, LONG]
     DYNAMIC_ENERGY_INCREASE_FACTOR(74), // 0, [0, 10_000]
-    DYNAMIC_ENERGY_MAX_FACTOR(75); // 0, [0, 100_000]
+    DYNAMIC_ENERGY_MAX_FACTOR(75), // 0, [0, 100_000]
+    ALLOW_TVM_SHANGHAI(76); // 0, 1
 
     private long code;
 

@@ -117,8 +117,8 @@ public class FetchBlockService {
 
     if (optionalPeerConnection.isPresent()) {
       optionalPeerConnection.ifPresent(firstPeer -> {
-        if (shouldFetchBlock(firstPeer, fetchBlock)) {
-          firstPeer.getAdvInvRequest().put(item, System.currentTimeMillis());
+        if (shouldFetchBlock(firstPeer, fetchBlock)
+            && firstPeer.checkAndPutAdvInvRequest(item, System.currentTimeMillis())) {
           firstPeer.sendMessage(new FetchInvDataMessage(Collections.singletonList(item.getHash()),
               item.getType()));
           this.fetchBlockInfo = null;
