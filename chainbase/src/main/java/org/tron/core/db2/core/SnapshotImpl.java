@@ -47,12 +47,14 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
     Snapshot snapshot = head;
     Value value;
     // for properties optimized
+    /*
     if (isOptimized) {
       value = db.get(Key.of(key));
       if (value !=null) {
         return value.getBytes();
       }
     }
+     */
 
     while (Snapshot.isImpl(snapshot)) {
       if ((value = ((SnapshotImpl) snapshot).db.get(Key.of(key))) != null) {
