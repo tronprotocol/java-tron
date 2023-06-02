@@ -1,5 +1,6 @@
 package org.tron.core.actuator;
 
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.fail;
 
 import com.google.protobuf.Any;
@@ -165,27 +166,23 @@ public class AccountPermissionUpdateActuatorTest extends BaseTest {
       actuator.execute(ret);
 
       fail(failMsg);
-    } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
+    } catch (ContractValidateException | RuntimeException e) {
+      Assert.assertTrue(true);
       Assert.assertEquals(expectedMsg, e.getMessage());
     } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
-    } catch (RuntimeException e) {
-      Assert.assertTrue(e instanceof RuntimeException);
-      Assert.assertEquals(expectedMsg, e.getMessage());
+      Assert.fail();
     }
   }
 
   @Test
   public void successUpdatePermissionKey() {
-    String ownerAddress = OWNER_ADDRESS;
     String keyAddress = KEY_ADDRESS;
 
     // step 1, init
     addDefaultPermission();
 
     // step2, check init data
-    byte[] owner_name_array = ByteArray.fromHexString(ownerAddress);
+    byte[] owner_name_array = ByteArray.fromHexString(OWNER_ADDRESS);
     ByteString address = ByteString.copyFrom(owner_name_array);
     AccountCapsule owner = dbManager.getAccountStore().get(owner_name_array);
 
@@ -193,7 +190,7 @@ public class AccountPermissionUpdateActuatorTest extends BaseTest {
     Permission activePermission = AccountCapsule.createDefaultActivePermission(address,
         dbManager.getDynamicPropertiesStore());
 
-    Assert.assertEquals(owner.getInstance().getActivePermissionCount(), 1);
+    Assert.assertEquals(1, owner.getInstance().getActivePermissionCount());
     Permission ownerPermission1 = owner.getInstance().getOwnerPermission();
     Permission activePermission1 = owner.getInstance().getActivePermission(0);
 
@@ -240,21 +237,19 @@ public class AccountPermissionUpdateActuatorTest extends BaseTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+      Assert.assertEquals(code.SUCESS, ret.getInstance().getRet());
 
       // step 4, check result after update operation
       owner = dbManager.getAccountStore().get(owner_name_array);
-      Assert.assertEquals(owner.getInstance().getActivePermissionCount(), 1);
+      Assert.assertEquals(1, owner.getInstance().getActivePermissionCount());
       ownerPermission1 = owner.getInstance().getOwnerPermission();
       activePermission1 = owner.getInstance().getActivePermission(0);
 
       Assert.assertEquals(ownerPermission1, ownerPermission);
       Assert.assertEquals(activePermission1, activePermission);
 
-    } catch (ContractValidateException e) {
-      Assert.assertFalse(e instanceof ContractValidateException);
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
+    } catch (ContractValidateException | ContractExeException e) {
+      Assert.fail();
     }
   }
 
@@ -295,8 +290,7 @@ public class AccountPermissionUpdateActuatorTest extends BaseTest {
     AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
         .setAny(getContract(OWNER_ADDRESS));
-    TransactionResultCapsule ret = null;
-    processAndCheckInvalid(actuator, ret, "TransactionResultCapsule is null",
+    processAndCheckInvalid(actuator, null, "TransactionResultCapsule is null",
         "TransactionResultCapsule is null");
   }
 
@@ -364,7 +358,7 @@ public class AccountPermissionUpdateActuatorTest extends BaseTest {
     for (int i = 0; i <= 8; i++) {
       activeList.add(activePermission);
     }
-
+    assertNotNull(activeList);
     AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
         .setAny(getContract(address, ownerPermission, null, null));
@@ -930,12 +924,12 @@ public class AccountPermissionUpdateActuatorTest extends BaseTest {
     // 7fff1fc0037e0000000000000000000000000000000000000000000000000000,
     // and it should call the addSystemContractAndSetPermission to add new contract
     // type
-    // When you add a new contact, you can add its to contractType,
+    // When you add a new contact, you can add it to contractType,
     // as '|| contractType = ContractType.XXX',
     // and you will get the value from the output,
     // then update the value to checkAvailableContractType
     // and checkActiveDefaultOperations
-    String validContractType = "7fff1fc0037ef807000000000000000000000000000000000000000000000000";
+    String validContractType = "7fff1fc0037ef80f000000000000000000000000000000000000000000000000";
 
     byte[] availableContractType = new byte[32];
     for (ContractType contractType : ContractType.values()) {
@@ -962,7 +956,7 @@ public class AccountPermissionUpdateActuatorTest extends BaseTest {
     // 7fff1fc0033e0000000000000000000000000000000000000000000000000000,
     // and it should call the addSystemContractAndSetPermission to add new contract
     // type
-    String validContractType = "7fff1fc0033ef807000000000000000000000000000000000000000000000000";
+    String validContractType = "7fff1fc0033ef80f000000000000000000000000000000000000000000000000";
 
     byte[] availableContractType = new byte[32];
     for (ContractType contractType : ContractType.values()) {
@@ -985,7 +979,7 @@ public class AccountPermissionUpdateActuatorTest extends BaseTest {
 
   @Test
   public void checkAvailableContractType() {
-    String validContractType = "7fff1fc0037ef907000000000000000000000000000000000000000000000000";
+    String validContractType = "7fff1fc0037ef90f000000000000000000000000000000000000000000000000";
 
     byte[] availableContractType = new byte[32];
     for (ContractType contractType : ContractType.values()) {
@@ -1006,7 +1000,7 @@ public class AccountPermissionUpdateActuatorTest extends BaseTest {
 
   @Test
   public void checkActiveDefaultOperations() {
-    String validContractType = "7fff1fc0033ef907000000000000000000000000000000000000000000000000";
+    String validContractType = "7fff1fc0033ef90f000000000000000000000000000000000000000000000000";
 
     byte[] availableContractType = new byte[32];
     for (ContractType contractType : ContractType.values()) {

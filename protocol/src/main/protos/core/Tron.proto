@@ -374,6 +374,7 @@ message Transaction {
       WithdrawExpireUnfreezeContract = 56;
       DelegateResourceContract = 57;
       UnDelegateResourceContract = 58;
+      CancelUnfreezeV2Contract = 59;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;
@@ -422,6 +423,7 @@ message Transaction {
     bytes orderId = 25;
     repeated MarketOrderDetail orderDetails = 26;
     int64 withdraw_expire_amount = 27;
+    int64 cancel_unfreezeV2_amount = 28;
   }
 
   message raw {
@@ -482,6 +484,7 @@ message TransactionInfo {
   int64 packingFee = 27;
 
   int64 withdraw_expire_amount = 28;
+  int64 cancel_unfreezeV2_amount = 29;
 }
 
 message TransactionRet {

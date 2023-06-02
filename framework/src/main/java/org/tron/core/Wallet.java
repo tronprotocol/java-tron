@@ -1325,6 +1325,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmShangHai())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowCancelUnfreezeV2")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowCancelUnfreezeV2())
+        .build());
+
     return builder.build();
   }
 

@@ -14,7 +14,6 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.exception.BadItemException;
@@ -207,6 +206,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       "ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID".getBytes();
 
   private static final byte[] ALLOW_TVM_SHANGHAI = "ALLOW_TVM_SHANGHAI".getBytes();
+
+  private static final byte[] ALLOW_CANCEL_UNFREEZE_V2 = "ALLOW_CANCEL_UNFREEZE_V2"
+      .getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -2192,7 +2194,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public long getMaintenanceSkipSlots() {
-    return Parameter.ChainConstant.MAINTENANCE_SKIP_SLOTS;
+    return ChainConstant.MAINTENANCE_SKIP_SLOTS;
   }
 
   public void saveNextMaintenanceTime(long nextMaintenanceTime) {
@@ -2218,6 +2220,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   //The unit is trx
   public void addTotalNetWeight(long amount) {
+    if (amount == 0) {
+      return;
+    }
     long totalNetWeight = getTotalNetWeight();
     totalNetWeight += amount;
     if (allowNewReward()) {
@@ -2228,6 +2233,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   //The unit is trx
   public void addTotalEnergyWeight(long amount) {
+    if (amount == 0) {
+      return;
+    }
     long totalEnergyWeight = getTotalEnergyWeight();
     totalEnergyWeight += amount;
     if (allowNewReward()) {
@@ -2238,6 +2246,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   //The unit is trx
   public void addTotalTronPowerWeight(long amount) {
+    if (amount == 0) {
+      return;
+    }
     long totalWeight = getTotalTronPowerWeight();
     totalWeight += amount;
     if (allowNewReward()) {
@@ -2767,6 +2778,22 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElse(CommonParameter.getInstance().getAllowTvmShangHai());
+  }
+
+  public void saveAllowCancelUnfreezeV2(long allowCancelUnfreezeV2) {
+    this.put(DynamicPropertiesStore.ALLOW_CANCEL_UNFREEZE_V2,
+        new BytesCapsule(ByteArray.fromLong(allowCancelUnfreezeV2)));
+  }
+
+  public long getAllowCancelUnfreezeV2() {
+    return Optional.ofNullable(getUnchecked(ALLOW_CANCEL_UNFREEZE_V2))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(CommonParameter.getInstance().getAllowCancelUnfreezeV2());
+  }
+
+  public boolean supportAllowCancelUnfreezeV2() {
+    return getAllowCancelUnfreezeV2() == 1L && getUnfreezeDelayDays() > 0;
   }
 
   private static class DynamicResourceProperties {
