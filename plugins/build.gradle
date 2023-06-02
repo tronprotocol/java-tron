@@ -38,6 +38,7 @@ dependencies {
     compile 'io.github.tronprotocol:leveldbjni-all:1.18.2'
     compile 'io.github.tronprotocol:leveldb:1.18.2'
     compile project(":protocol")
+    testCompile project(":framework")
 }
 
 check.dependsOn 'lint'
