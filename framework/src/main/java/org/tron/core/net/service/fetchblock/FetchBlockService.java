@@ -73,10 +73,10 @@ public class FetchBlockService {
     sha256HashList.stream().filter(sha256Hash -> new BlockCapsule.BlockId(sha256Hash).getNum()
         == chainBaseManager.getHeadBlockNum() + 1)
         .findFirst().ifPresent(sha256Hash -> {
-      fetchBlockInfo = new FetchBlockInfo(sha256Hash, peer, System.currentTimeMillis());
-      logger.info("Set fetchBlockInfo, block: {}, peer: {}, time: {}", sha256Hash,
+          fetchBlockInfo = new FetchBlockInfo(sha256Hash, peer, System.currentTimeMillis());
+          logger.info("Set fetchBlockInfo, block: {}, peer: {}, time: {}", sha256Hash,
           fetchBlockInfo.getPeer().getInetAddress(), fetchBlockInfo.getTime());
-    });
+        });
   }
 
 
