@@ -351,6 +351,13 @@ public class ProposalService extends ProposalUtil {
           }
           break;
         }
+        case ALLOW_OPTIMIZE_LOCK_DELEGATE_RESOURCE: {
+          if (manager.getDynamicPropertiesStore().getAllowOptimizeLockDelegateResource() == 0) {
+            manager.getDynamicPropertiesStore()
+                .saveAllowOptimizeLockDelegateResource(entry.getValue());
+          }
+          break;
+        }
         default:
           find = false;
           break;

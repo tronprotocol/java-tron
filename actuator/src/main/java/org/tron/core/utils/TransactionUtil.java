@@ -17,6 +17,7 @@ package org.tron.core.utils;
 
 import static org.tron.common.crypto.Hash.sha3omit12;
 import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_COST_BASE_SIZE;
+import static org.tron.core.config.Parameter.ChainConstant.MAX_BLOCK_NUM_DELEGATE_PERIOD;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.common.base.CaseFormat;
@@ -279,11 +280,11 @@ public class TransactionUtil {
   }
 
 
-  public static long estimateConsumeBandWidthSize(
-          final AccountCapsule ownerCapsule,
-          ChainBaseManager chainBaseManager) {
+  public static long estimateConsumeBandWidthSize(final AccountCapsule ownerCapsule,
+      ChainBaseManager chainBaseManager) {
     DelegateResourceContract.Builder builder = DelegateResourceContract.newBuilder()
                     .setLock(true)
+                    .setLockPeriod(MAX_BLOCK_NUM_DELEGATE_PERIOD)
                     .setBalance(ownerCapsule.getFrozenV2BalanceForBandwidth());
     TransactionCapsule fakeTransactionCapsule = new TransactionCapsule(builder.build()
             , ContractType.DelegateResourceContract);
