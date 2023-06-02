@@ -103,6 +103,7 @@ message DelegateResourceContract {
   int64 balance = 3;
   bytes receiver_address = 4;
   bool  lock = 5;
+  int64 lock_period = 6;
 }
 
 message UnDelegateResourceContract {

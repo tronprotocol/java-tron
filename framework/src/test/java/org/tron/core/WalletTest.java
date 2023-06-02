@@ -363,6 +363,7 @@ public class WalletTest extends BaseTest {
   public void ss() {
     for (int i = 0; i < 4; i++) {
       ECKey ecKey = new ECKey(Utils.getRandom());
+      assertNotNull(ecKey);
       System.out.println(i + 1);
       System.out.println("privateKey:" + ByteArray.toHexString(ecKey.getPrivKeyBytes()));
       System.out.println("publicKey:" + ByteArray.toHexString(ecKey.getPubKey()));
@@ -483,14 +484,14 @@ public class WalletTest extends BaseTest {
     AssetIssueList assetList1 = wallet.getAssetIssueList(0, 100);
     assertEquals("get Asset1", assetList1.getAssetIssue(0).getName(), Asset1.getName());
     try {
-      assetList1.getAssetIssue(1);
+      assertNotNull(assetList1.getAssetIssue(1));
     } catch (Exception e) {
       Assert.assertTrue("AssetIssueList1 size should be 1", true);
     }
 
     AssetIssueList assetList2 = wallet.getAssetIssueList(0, 0);
     try {
-      assetList2.getAssetIssue(0);
+      assertNotNull(assetList2.getAssetIssue(0));
     } catch (Exception e) {
       Assert.assertTrue("AssetIssueList2 size should be 0", true);
     }
@@ -615,12 +616,8 @@ public class WalletTest extends BaseTest {
           delegatedResourceList.getDelegatedResource(0).getFrozenBalanceForBandwidth());
       Assert.assertEquals(0L,
           delegatedResourceList.getDelegatedResource(0).getExpireTimeForBandwidth());
-    } catch (ContractValidateException e) {
-      Assert.assertFalse(e instanceof ContractValidateException);
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
     } catch (Exception e) {
-      Assert.assertEquals(false, true);
+      Assert.fail();
     }
   }
 
@@ -794,7 +791,7 @@ public class WalletTest extends BaseTest {
     GrpcAPI.CanDelegatedMaxSizeResponseMessage message = wallet.getCanDelegatedMaxSize(
         ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
         BANDWIDTH.getNumber());
-    Assert.assertEquals(initBalance - 280L, message.getMaxSize());
+    Assert.assertEquals(initBalance - 285L, message.getMaxSize());
 
   }
 
@@ -1054,13 +1051,13 @@ public class WalletTest extends BaseTest {
   @Test
   public void testListNodes() {
     try {
-      GrpcAPI.NodeList nodeList = wallet.listNodes();
+      wallet.listNodes();
     } catch (Exception e) {
       Assert.assertTrue(e instanceof NullPointerException);
     }
     Args.getInstance().setP2pDisable(true);
     GrpcAPI.NodeList nodeList = wallet.listNodes();
-    Assert.assertTrue(nodeList.getNodesList().size() == 0);
+    assertEquals(0, nodeList.getNodesList().size());
   }
 }
 

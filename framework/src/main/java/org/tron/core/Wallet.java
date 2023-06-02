@@ -1325,6 +1325,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmShangHai())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowOptimizeLockDelegateResource")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowOptimizeLockDelegateResource())
+        .build());
+
     return builder.build();
   }
 
