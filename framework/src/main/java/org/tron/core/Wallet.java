@@ -1326,6 +1326,11 @@ public class Wallet {
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowCancelUnfreezeV2")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowCancelUnfreezeV2())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAllowOptimizeLockDelegateResource")
         .setValue(dbManager.getDynamicPropertiesStore().getAllowOptimizeLockDelegateResource())
         .build());

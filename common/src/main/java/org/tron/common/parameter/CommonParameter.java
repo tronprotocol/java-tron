@@ -653,6 +653,10 @@ public class CommonParameter {
 
   @Getter
   @Setter
+  public long allowCancelUnfreezeV2;
+
+  @Getter
+  @Setter
   public long allowOptimizeLockDelegateResource;
 
   private static double calcMaxTimeRatio() {

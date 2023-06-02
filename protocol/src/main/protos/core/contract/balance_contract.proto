@@ -112,3 +112,8 @@ message UnDelegateResourceContract {
   int64 balance = 3;
   bytes receiver_address = 4;
 }
+
+message CancelUnfreezeV2Contract {
+  bytes owner_address = 1;
+  repeated int32 index = 2;
+}

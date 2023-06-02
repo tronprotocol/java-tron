@@ -207,6 +207,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] ALLOW_TVM_SHANGHAI = "ALLOW_TVM_SHANGHAI".getBytes();
 
+  private static final byte[] ALLOW_CANCEL_UNFREEZE_V2 = "ALLOW_CANCEL_UNFREEZE_V2"
+      .getBytes();
+
   private static final byte[] ALLOW_OPTIMIZE_LOCK_DELEGATE_RESOURCE =
       "ALLOW_OPTIMIZE_LOCK_DELEGATE_RESOURCE".getBytes();
 
@@ -2778,6 +2781,22 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElse(CommonParameter.getInstance().getAllowTvmShangHai());
+  }
+
+  public void saveAllowCancelUnfreezeV2(long allowCancelUnfreezeV2) {
+    this.put(DynamicPropertiesStore.ALLOW_CANCEL_UNFREEZE_V2,
+        new BytesCapsule(ByteArray.fromLong(allowCancelUnfreezeV2)));
+  }
+
+  public long getAllowCancelUnfreezeV2() {
+    return Optional.ofNullable(getUnchecked(ALLOW_CANCEL_UNFREEZE_V2))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(CommonParameter.getInstance().getAllowCancelUnfreezeV2());
+  }
+
+  public boolean supportAllowCancelUnfreezeV2() {
+    return getAllowCancelUnfreezeV2() == 1L && getUnfreezeDelayDays() > 0;
   }
 
   public void saveAllowOptimizeLockDelegateResource(long allowOptimizeLockDelegateResource) {

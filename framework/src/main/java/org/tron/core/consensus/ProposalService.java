@@ -343,6 +343,14 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveAllowTvmShangHai(entry.getValue());
           break;
         }
+        case ALLOW_CANCEL_UNFREEZE_V2: {
+          if (manager.getDynamicPropertiesStore().getAllowCancelUnfreezeV2() == 0) {
+            manager.getDynamicPropertiesStore().saveAllowCancelUnfreezeV2(entry.getValue());
+            manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(
+                ContractType.CancelUnfreezeV2Contract_VALUE);
+          }
+          break;
+        }
         case ALLOW_OPTIMIZE_LOCK_DELEGATE_RESOURCE: {
           if (manager.getDynamicPropertiesStore().getAllowOptimizeLockDelegateResource() == 0) {
             manager.getDynamicPropertiesStore()
