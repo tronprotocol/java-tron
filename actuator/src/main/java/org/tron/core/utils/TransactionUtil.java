@@ -17,7 +17,6 @@ package org.tron.core.utils;
 
 import static org.tron.common.crypto.Hash.sha3omit12;
 import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_COST_BASE_SIZE;
-import static org.tron.core.config.Parameter.ChainConstant.MAX_BLOCK_NUM_DELEGATE_PERIOD;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.common.base.CaseFormat;
@@ -279,13 +278,19 @@ public class TransactionUtil {
     return bytesSize;
   }
 
-
   public static long estimateConsumeBandWidthSize(final AccountCapsule ownerCapsule,
       ChainBaseManager chainBaseManager) {
-    DelegateResourceContract.Builder builder = DelegateResourceContract.newBuilder()
-                    .setLock(true)
-                    .setLockPeriod(MAX_BLOCK_NUM_DELEGATE_PERIOD)
-                    .setBalance(ownerCapsule.getFrozenV2BalanceForBandwidth());
+    DelegateResourceContract.Builder builder;
+    if (chainBaseManager.getDynamicPropertiesStore().supportMaxDelegateLockPeriod()) {
+      builder = DelegateResourceContract.newBuilder()
+          .setLock(true)
+          .setLockPeriod(chainBaseManager.getDynamicPropertiesStore().getMaxDelegateLockPeriod())
+          .setBalance(ownerCapsule.getFrozenV2BalanceForBandwidth());
+    } else {
+      builder = DelegateResourceContract.newBuilder()
+          .setLock(true)
+          .setBalance(ownerCapsule.getFrozenV2BalanceForBandwidth());
+    }
     TransactionCapsule fakeTransactionCapsule = new TransactionCapsule(builder.build()
             , ContractType.DelegateResourceContract);
     long size1 = consumeBandWidthSize(fakeTransactionCapsule, chainBaseManager);

@@ -1326,13 +1326,13 @@ public class Wallet {
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-        .setKey("getAllowCancelUnfreezeV2")
-        .setValue(dbManager.getDynamicPropertiesStore().getAllowCancelUnfreezeV2())
+        .setKey("getAllowCancelAllUnfreezeV2")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowCancelAllUnfreezeV2())
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-        .setKey("getAllowOptimizeLockDelegateResource")
-        .setValue(dbManager.getDynamicPropertiesStore().getAllowOptimizeLockDelegateResource())
+        .setKey("getMaxDelegateLockPeriod")
+        .setValue(dbManager.getDynamicPropertiesStore().getMaxDelegateLockPeriod())
         .build());
 
     return builder.build();

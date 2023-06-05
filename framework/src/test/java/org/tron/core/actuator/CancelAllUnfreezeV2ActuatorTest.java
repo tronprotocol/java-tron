@@ -7,7 +7,6 @@ import static org.tron.protos.Protocol.Transaction.Result.code.SUCESS;
 import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
 import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 
-import com.beust.jcommander.internal.Lists;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +25,7 @@ import org.tron.protos.Protocol;
 import org.tron.protos.contract.BalanceContract;
 
 @Slf4j
-public class CancelUnfreezeV2ActuatorTest extends BaseTest {
+public class CancelAllUnfreezeV2ActuatorTest extends BaseTest {
 
   private static final String OWNER_ADDRESS;
   private static final String RECEIVER_ADDRESS;
@@ -46,7 +45,7 @@ public class CancelUnfreezeV2ActuatorTest extends BaseTest {
   @Before
   public void setUp() {
     dbManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(1L);
-    dbManager.getDynamicPropertiesStore().saveAllowCancelUnfreezeV2(1);
+    dbManager.getDynamicPropertiesStore().saveAllowCancelAllUnfreezeV2(1);
 
     AccountCapsule ownerCapsule = new AccountCapsule(ByteString.copyFromUtf8("owner"),
         ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), Protocol.AccountType.Normal,
@@ -57,35 +56,6 @@ public class CancelUnfreezeV2ActuatorTest extends BaseTest {
         ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS)), Protocol.AccountType.Normal,
         initBalance);
     dbManager.getAccountStore().put(receiverCapsule.getAddress().toByteArray(), receiverCapsule);
-  }
-
-  @Test
-  public void testCancelUnfreezeV2() {
-    long now = System.currentTimeMillis();
-    AccountCapsule accountCapsule = dbManager.getAccountStore()
-        .get(ByteArray.fromHexString(OWNER_ADDRESS));
-    accountCapsule.addUnfrozenV2List(BANDWIDTH, 1000000L, now + 14 * 24 * 3600 * 1000);
-    accountCapsule.addUnfrozenV2List(ENERGY, 2000000L, -1);
-    accountCapsule.addUnfrozenV2List(BANDWIDTH, 3000000L, now + 14 * 24 * 3600 * 1000);
-    accountCapsule.addUnfrozenV2List(ENERGY, 4000000L, now + 14 * 24 * 3600 * 1000);
-    accountCapsule.addUnfrozenV2List(BANDWIDTH, 4000000L, 100);
-    accountCapsule.addUnfrozenV2List(ENERGY, 4000000L, 100);
-    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-    CancelUnfreezeV2Actuator actuator = new CancelUnfreezeV2Actuator();
-    actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(getCancelUnfreezeV2Contract());
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-    try {
-      actuator.validate();
-      actuator.execute(ret);
-      assertEquals(SUCESS, ret.getInstance().getRet());
-      AccountCapsule owner = dbManager.getAccountStore()
-          .get(ByteArray.fromHexString(OWNER_ADDRESS));
-      assertEquals(2000000L, ret.getInstance().getWithdrawExpireAmount());
-      assertEquals(2, owner.getUnfrozenV2List().size());
-    } catch (ContractValidateException | ContractExeException e) {
-      fail();
-    }
   }
 
   @Test
@@ -100,7 +70,7 @@ public class CancelUnfreezeV2ActuatorTest extends BaseTest {
     accountCapsule.addUnfrozenV2List(BANDWIDTH, 4000000L, 100);
     accountCapsule.addUnfrozenV2List(ENERGY, 4000000L, 100);
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-    CancelUnfreezeV2Actuator actuator = new CancelUnfreezeV2Actuator();
+    CancelAllUnfreezeV2Actuator actuator = new CancelAllUnfreezeV2Actuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
         .setAny(getCancelAllUnfreezeV2Contract());
     TransactionResultCapsule ret = new TransactionResultCapsule();
@@ -130,9 +100,9 @@ public class CancelUnfreezeV2ActuatorTest extends BaseTest {
     accountCapsule.addUnfrozenV2List(BANDWIDTH, 4000000L, 100);
     accountCapsule.addUnfrozenV2List(ENERGY, 4000000L, 100);
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-    CancelUnfreezeV2Actuator actuator = new CancelUnfreezeV2Actuator();
+    CancelAllUnfreezeV2Actuator actuator = new CancelAllUnfreezeV2Actuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(getCancelUnfreezeV2Contract());
+        .setAny(getCancelAllUnfreezeV2Contract());
     try {
       actuator.validate();
     } catch (ContractValidateException e) {
@@ -144,33 +114,33 @@ public class CancelUnfreezeV2ActuatorTest extends BaseTest {
 
   @Test
   public void testInvalidOwnerAddress() {
-    CancelUnfreezeV2Actuator actuator = new CancelUnfreezeV2Actuator();
+    CancelAllUnfreezeV2Actuator actuator = new CancelAllUnfreezeV2Actuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(getCancelUnfreezeV2ContractInvalidAddress());
+        .setAny(getCancelAllUnfreezeV2ContractInvalidAddress());
     assertThrows("Invalid address", ContractValidateException.class, actuator::validate);
   }
 
   @Test
   public void testInvalidOwnerAccount() {
-    CancelUnfreezeV2Actuator actuator = new CancelUnfreezeV2Actuator();
+    CancelAllUnfreezeV2Actuator actuator = new CancelAllUnfreezeV2Actuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(getCancelUnfreezeV2ContractInvalidAccount());
+        .setAny(getCancelAllUnfreezeV2ContractInvalidAccount());
     assertThrows("Account[" + OWNER_ACCOUNT_INVALID + "] does not exist",
         ContractValidateException.class, actuator::validate);
   }
 
   @Test
   public void testInvalidOwnerUnfreezeV2List() {
-    CancelUnfreezeV2Actuator actuator = new CancelUnfreezeV2Actuator();
+    CancelAllUnfreezeV2Actuator actuator = new CancelAllUnfreezeV2Actuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(getCancelUnfreezeV2Contract());
+        .setAny(getCancelAllUnfreezeV2Contract());
     assertThrows("no unfreezeV2 list to cancel",
         ContractValidateException.class, actuator::validate);
   }
 
   @Test
-  public void testInvalidCancelUnfreezeV2Contract() {
-    CancelUnfreezeV2Actuator actuator = new CancelUnfreezeV2Actuator();
+  public void testInvalidCancelAllUnfreezeV2Contract() {
+    CancelAllUnfreezeV2Actuator actuator = new CancelAllUnfreezeV2Actuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(null);
     assertThrows(ActuatorConstant.CONTRACT_NOT_EXIST,
         ContractValidateException.class, actuator::validate);
@@ -178,100 +148,36 @@ public class CancelUnfreezeV2ActuatorTest extends BaseTest {
 
   @Test
   public void testInvalidAccountStore() {
-    CancelUnfreezeV2Actuator actuator = new CancelUnfreezeV2Actuator();
-    actuator.setChainBaseManager(null).setAny(getCancelUnfreezeV2Contract());
+    CancelAllUnfreezeV2Actuator actuator = new CancelAllUnfreezeV2Actuator();
+    actuator.setChainBaseManager(null).setAny(getCancelAllUnfreezeV2Contract());
     assertThrows(ActuatorConstant.STORE_NOT_EXIST,
         ContractValidateException.class, actuator::validate);
   }
 
   @Test
-  public void testSupportAllowCancelUnfreezeV2() {
-    dbManager.getDynamicPropertiesStore().saveAllowCancelUnfreezeV2(0);
-    CancelUnfreezeV2Actuator actuator = new CancelUnfreezeV2Actuator();
+  public void testSupportAllowCancelAllUnfreezeV2() {
+    dbManager.getDynamicPropertiesStore().saveAllowCancelAllUnfreezeV2(0);
+    CancelAllUnfreezeV2Actuator actuator = new CancelAllUnfreezeV2Actuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(getCancelUnfreezeV2Contract());
+        .setAny(getCancelAllUnfreezeV2Contract());
     assertThrows(
-        "Not support CancelUnfreezeV2 transaction, need to be opened by the committee",
-        ContractValidateException.class, actuator::validate);
-  }
-
-  @Test
-  public void testWrongIndex() {
-    dbManager.getDynamicPropertiesStore().saveAllowCancelUnfreezeV2(1);
-    long now = System.currentTimeMillis();
-    AccountCapsule accountCapsule = dbManager.getAccountStore()
-        .get(ByteArray.fromHexString(OWNER_ADDRESS));
-    accountCapsule.addUnfrozenV2List(BANDWIDTH, 1000000L, now + 14 * 24 * 3600 * 1000);
-    accountCapsule.addUnfrozenV2List(ENERGY, 2000000L, -1);
-    accountCapsule.addUnfrozenV2List(BANDWIDTH, 3000000L, now + 14 * 24 * 3600 * 1000);
-    accountCapsule.addUnfrozenV2List(ENERGY, 4000000L, now + 14 * 24 * 3600 * 1000);
-    accountCapsule.addUnfrozenV2List(BANDWIDTH, 4000000L, 100);
-    accountCapsule.addUnfrozenV2List(ENERGY, 4000000L, 100);
-    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-
-    CancelUnfreezeV2Actuator actuator = new CancelUnfreezeV2Actuator();
-    actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(getWrongIndexCancelUnfreezeV2Contract());
-    assertThrows("The input index[-1] cannot be less than 0 and cannot be greater than "
-            + "the maximum index[5] of unfreezeV2!",
-        ContractValidateException.class, actuator::validate);
-  }
-
-  @Test
-  public void testWrongIndexSize() {
-    dbManager.getDynamicPropertiesStore().saveAllowCancelUnfreezeV2(1);
-    long now = System.currentTimeMillis();
-    AccountCapsule accountCapsule = dbManager.getAccountStore()
-        .get(ByteArray.fromHexString(OWNER_ADDRESS));
-    accountCapsule.addUnfrozenV2List(BANDWIDTH, 1000000L, now + 14 * 24 * 3600 * 1000);
-    accountCapsule.addUnfrozenV2List(ENERGY, 2000000L, -1);
-    accountCapsule.addUnfrozenV2List(BANDWIDTH, 3000000L, now + 14 * 24 * 3600 * 1000);
-    accountCapsule.addUnfrozenV2List(ENERGY, 4000000L, now + 14 * 24 * 3600 * 1000);
-    accountCapsule.addUnfrozenV2List(BANDWIDTH, 4000000L, 100);
-    accountCapsule.addUnfrozenV2List(ENERGY, 4000000L, 100);
-    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-
-    CancelUnfreezeV2Actuator actuator = new CancelUnfreezeV2Actuator();
-    actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(getWrongIndexSizeCancelUnfreezeV2Contract());
-    assertThrows("The size of the index cannot exceed the size of unfrozenV2!",
+        "Not support CancelAllUnfreezeV2 transaction, need to be opened by the committee",
         ContractValidateException.class, actuator::validate);
   }
 
   @Test
   public void testErrorContract() {
-    dbManager.getDynamicPropertiesStore().saveAllowCancelUnfreezeV2(1);
-    CancelUnfreezeV2Actuator actuator = new CancelUnfreezeV2Actuator();
+    dbManager.getDynamicPropertiesStore().saveAllowCancelAllUnfreezeV2(1);
+    CancelAllUnfreezeV2Actuator actuator = new CancelAllUnfreezeV2Actuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getErrorContract());
     assertThrows(
-        "contract type error, expected type [CancelUnfreezeV2Contract], "
+        "contract type error, expected type [CancelAllUnfreezeV2Contract], "
             + "real type[WithdrawExpireUnfreezeContract]",
         ContractValidateException.class, actuator::validate);
   }
 
-  private Any getCancelUnfreezeV2Contract() {
-    return Any.pack(BalanceContract.CancelUnfreezeV2Contract.newBuilder()
-        .addAllIndex(Lists.newArrayList(0, 1, 2, 3))
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS))).build()
-    );
-  }
-
   private Any getCancelAllUnfreezeV2Contract() {
-    return Any.pack(BalanceContract.CancelUnfreezeV2Contract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS))).build()
-    );
-  }
-
-  private Any getWrongIndexSizeCancelUnfreezeV2Contract() {
-    return Any.pack(BalanceContract.CancelUnfreezeV2Contract.newBuilder()
-        .addAllIndex(Lists.newArrayList(0, 1, 2, 1, 3, 2, 4))
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS))).build()
-    );
-  }
-
-  private Any getWrongIndexCancelUnfreezeV2Contract() {
-    return Any.pack(BalanceContract.CancelUnfreezeV2Contract.newBuilder()
-        .addAllIndex(Lists.newArrayList(-1, 1, 2, 1, 3, 2))
+    return Any.pack(BalanceContract.CancelAllUnfreezeV2Contract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS))).build()
     );
   }
@@ -282,13 +188,13 @@ public class CancelUnfreezeV2ActuatorTest extends BaseTest {
     );
   }
 
-  private Any getCancelUnfreezeV2ContractInvalidAddress() {
-    return Any.pack(BalanceContract.CancelUnfreezeV2Contract.newBuilder().setOwnerAddress(
+  private Any getCancelAllUnfreezeV2ContractInvalidAddress() {
+    return Any.pack(BalanceContract.CancelAllUnfreezeV2Contract.newBuilder().setOwnerAddress(
         ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_INVALID))).build());
   }
 
-  private Any getCancelUnfreezeV2ContractInvalidAccount() {
-    return Any.pack(BalanceContract.CancelUnfreezeV2Contract.newBuilder().setOwnerAddress(
+  private Any getCancelAllUnfreezeV2ContractInvalidAccount() {
+    return Any.pack(BalanceContract.CancelAllUnfreezeV2Contract.newBuilder().setOwnerAddress(
         ByteString.copyFrom(ByteArray.fromHexString(OWNER_ACCOUNT_INVALID))).build()
     );
   }

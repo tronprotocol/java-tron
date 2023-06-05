@@ -148,7 +148,20 @@ public class TransactionUtilTest extends BaseTest {
         dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
     long estimateConsumeBandWidthSize = TransactionUtil.estimateConsumeBandWidthSize(ownerCapsule,
         dbManager.getChainBaseManager());
-    assertEquals(278L, estimateConsumeBandWidthSize);
+    assertEquals(275L, estimateConsumeBandWidthSize);
+    chainBaseManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(0);
+  }
+
+  @Test
+  public void testEstimateConsumeBandWidthSize2() {
+    chainBaseManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(14);
+    chainBaseManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(864000L);
+    AccountCapsule ownerCapsule =
+        dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    long estimateConsumeBandWidthSize = TransactionUtil.estimateConsumeBandWidthSize(ownerCapsule,
+        dbManager.getChainBaseManager());
+    assertEquals(277L, estimateConsumeBandWidthSize);
+    chainBaseManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(0);
   }
 
 }

@@ -303,7 +303,7 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private UnDelegateResourceServlet unDelegateResourceServlet;
   @Autowired
-  private CancelUnfreezeV2Servlet cancelUnfreezeV2Servlet;
+  private CancelAllUnfreezeV2Servlet cancelAllUnfreezeV2Servlet;
 
   private static String getParamsFile(String fileName) {
     InputStream in = Thread.currentThread().getContextClassLoader()
@@ -566,8 +566,8 @@ public class FullNodeHttpApiService implements Service {
           "/wallet/delegateresource");
       context.addServlet(new ServletHolder(unDelegateResourceServlet),
           "/wallet/undelegateresource");
-      context.addServlet(new ServletHolder(cancelUnfreezeV2Servlet),
-          "/wallet/cancelunfreezev2");
+      context.addServlet(new ServletHolder(cancelAllUnfreezeV2Servlet),
+          "/wallet/cancelallunfreezev2");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {

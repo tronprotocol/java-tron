@@ -207,11 +207,11 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] ALLOW_TVM_SHANGHAI = "ALLOW_TVM_SHANGHAI".getBytes();
 
-  private static final byte[] ALLOW_CANCEL_UNFREEZE_V2 = "ALLOW_CANCEL_UNFREEZE_V2"
+  private static final byte[] ALLOW_CANCEL_ALL_UNFREEZE_V2 = "ALLOW_CANCEL_ALL_UNFREEZE_V2"
       .getBytes();
 
-  private static final byte[] ALLOW_OPTIMIZE_LOCK_DELEGATE_RESOURCE =
-      "ALLOW_OPTIMIZE_LOCK_DELEGATE_RESOURCE".getBytes();
+  private static final byte[] MAX_DELEGATE_LOCK_PERIOD =
+      "MAX_DELEGATE_LOCK_PERIOD".getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -2783,36 +2783,36 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .orElse(CommonParameter.getInstance().getAllowTvmShangHai());
   }
 
-  public void saveAllowCancelUnfreezeV2(long allowCancelUnfreezeV2) {
-    this.put(DynamicPropertiesStore.ALLOW_CANCEL_UNFREEZE_V2,
-        new BytesCapsule(ByteArray.fromLong(allowCancelUnfreezeV2)));
+  public void saveAllowCancelAllUnfreezeV2(long allowCancelAllUnfreezeV2) {
+    this.put(DynamicPropertiesStore.ALLOW_CANCEL_ALL_UNFREEZE_V2,
+        new BytesCapsule(ByteArray.fromLong(allowCancelAllUnfreezeV2)));
   }
 
-  public long getAllowCancelUnfreezeV2() {
-    return Optional.ofNullable(getUnchecked(ALLOW_CANCEL_UNFREEZE_V2))
+  public long getAllowCancelAllUnfreezeV2() {
+    return Optional.ofNullable(getUnchecked(ALLOW_CANCEL_ALL_UNFREEZE_V2))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
-        .orElse(CommonParameter.getInstance().getAllowCancelUnfreezeV2());
+        .orElse(CommonParameter.getInstance().getAllowCancelAllUnfreezeV2());
   }
 
-  public boolean supportAllowCancelUnfreezeV2() {
-    return getAllowCancelUnfreezeV2() == 1L && getUnfreezeDelayDays() > 0;
+  public boolean supportAllowCancelAllUnfreezeV2() {
+    return getAllowCancelAllUnfreezeV2() == 1L && getUnfreezeDelayDays() > 0;
   }
 
-  public void saveAllowOptimizeLockDelegateResource(long allowOptimizeLockDelegateResource) {
-    this.put(DynamicPropertiesStore.ALLOW_OPTIMIZE_LOCK_DELEGATE_RESOURCE,
-        new BytesCapsule(ByteArray.fromLong(allowOptimizeLockDelegateResource)));
+  public void saveMaxDelegateLockPeriod(long maxDelegateLockPeriod) {
+    this.put(DynamicPropertiesStore.MAX_DELEGATE_LOCK_PERIOD,
+        new BytesCapsule(ByteArray.fromLong(maxDelegateLockPeriod)));
   }
 
-  public long getAllowOptimizeLockDelegateResource() {
-    return Optional.ofNullable(getUnchecked(ALLOW_OPTIMIZE_LOCK_DELEGATE_RESOURCE))
+  public long getMaxDelegateLockPeriod() {
+    return Optional.ofNullable(getUnchecked(MAX_DELEGATE_LOCK_PERIOD))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
-        .orElse(CommonParameter.getInstance().getAllowOptimizeLockDelegateResource());
+        .orElse(CommonParameter.getInstance().getMaxDelegateLockPeriod());
   }
 
-  public boolean supportAllowOptimizeLockDelegateResource() {
-    return getAllowOptimizeLockDelegateResource() == 1L && getUnfreezeDelayDays() > 0;
+  public boolean supportMaxDelegateLockPeriod() {
+    return getMaxDelegateLockPeriod() > 0 && getUnfreezeDelayDays() > 0;
   }
 
   private static class DynamicResourceProperties {

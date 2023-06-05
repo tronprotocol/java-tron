@@ -2,7 +2,6 @@ package org.tron.core.actuator;
 
 import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_PERIOD;
-import static org.tron.core.config.Parameter.ChainConstant.MAX_BLOCK_NUM_DELEGATE_PERIOD;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.protos.contract.Common.ResourceCode;
 import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
@@ -219,11 +218,13 @@ public class DelegateResourceActuator extends AbstractActuator {
     }
 
     boolean lock = delegateResourceContract.getLock();
-    if (lock && dynamicStore.supportAllowOptimizeLockDelegateResource()) {
+    if (lock && dynamicStore.supportMaxDelegateLockPeriod()) {
       long lockPeriod = delegateResourceContract.getLockPeriod();
-      if (lockPeriod < 0 || lockPeriod > MAX_BLOCK_NUM_DELEGATE_PERIOD) {
+      long maxDelegateLockPeriod = dynamicStore.getMaxDelegateLockPeriod();
+      if (lockPeriod < 0 || lockPeriod > maxDelegateLockPeriod) {
         throw new ContractValidateException(
-            "The lock period of delegate resource cannot be less than 0 and cannot exceed 1 year!");
+            "The lock period of delegate resource cannot be less than 0 and cannot exceed "
+                + maxDelegateLockPeriod + "!");
       }
 
       byte[] key = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress, true);
@@ -262,7 +263,7 @@ public class DelegateResourceActuator extends AbstractActuator {
     if (lockPeriod * 3 * 1000 < remainTime) {
       throw new ContractValidateException(
           "The lock period for " + resourceCode.name() + " this time cannot be less than the "
-              + "remaining time[" + remainTime + "s] of the last lock period for "
+              + "remaining time[" + remainTime + "ms] of the last lock period for "
               + resourceCode.name() + "!");
     }
   }
@@ -292,7 +293,7 @@ public class DelegateResourceActuator extends AbstractActuator {
     //modify DelegatedResourceStore
     long expireTime = 0;
     if (lock) {
-      if (dynamicPropertiesStore.supportAllowOptimizeLockDelegateResource()) {
+      if (dynamicPropertiesStore.supportMaxDelegateLockPeriod()) {
         expireTime = now + (lockPeriod == 0 ? DELEGATE_PERIOD : lockPeriod * 3 * 1000);
       } else {
         expireTime = now + DELEGATE_PERIOD;
