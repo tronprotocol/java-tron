@@ -72,7 +72,7 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
       try {
         BlockId blockId = null;
         while (!peer.getSyncBlockToFetch().isEmpty() && tronNetDelegate
-                .containBlock(peer.getSyncBlockToFetch().peek())) {
+                .containBlockInMainChain(peer.getSyncBlockToFetch().peek())) {
           blockId = peer.getSyncBlockToFetch().pop();
           peer.setBlockBothHave(blockId);
         }
