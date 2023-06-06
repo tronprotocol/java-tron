@@ -38,12 +38,6 @@ public class ForkController {
 
   public void init(ChainBaseManager manager) {
     this.manager = manager;
-    try {
-      checkLocalVersion();
-    } catch (RuntimeException r) {
-      logger.warn("Exception caught, detail:{}", r.getMessage());
-      System.exit(1);
-    }
   }
 
   public boolean pass(ForkBlockVersionEnum forkBlockVersionEnum) {
@@ -249,8 +243,8 @@ public class ForkController {
       }
     }
     if (latestVersion > systemVersion) {
-      throw new RuntimeException("Version check failed, latestVersion:"
-          + latestVersion + ", systemVersion:" + systemVersion);
+      throw new RuntimeException("Version check failed, please upgrade to the latest version," +
+          " latestVersion:" + latestVersion + ", systemVersion:" + systemVersion);
     }
   }
 }
