@@ -486,6 +486,12 @@ public class Manager {
       System.exit(1);
     }
     getChainBaseManager().getForkController().init(this.chainBaseManager);
+    try {
+      getChainBaseManager().getForkController().checkLocalVersion();
+    } catch (RuntimeException r) {
+      logger.error("{}", r.getMessage());
+      System.exit(1);
+    }
 
     if (Args.getInstance().isNeedToUpdateAsset() && needToUpdateAsset()) {
       new AssetUpdateHelper(chainBaseManager).doWork();
