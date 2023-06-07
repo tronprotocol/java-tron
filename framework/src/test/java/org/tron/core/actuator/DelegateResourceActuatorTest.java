@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_PERIOD;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
 import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
@@ -435,7 +436,7 @@ public class DelegateResourceActuatorTest extends BaseTest {
 
   @Test
   public void testMaxDelegateLockPeriodForBandwidthWrongLockPeriod1() {
-    dbManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(1);
+    dbManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(86401);
     freezeBandwidthForOwner();
     long delegateBalance = 1_000_000_000L;
     DelegateResourceActuator actuator = new DelegateResourceActuator();
@@ -444,7 +445,7 @@ public class DelegateResourceActuatorTest extends BaseTest {
             delegateBalance, 370 * 24 * 3600));
     assertThrows("The lock period of delegate resources cannot exceed 1 year!",
         ContractValidateException.class, actuator::validate);
-    dbManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(0);
+    dbManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(DELEGATE_PERIOD / 3000);
   }
 
   @Test
@@ -473,7 +474,7 @@ public class DelegateResourceActuatorTest extends BaseTest {
     assertThrows("The lock period for bandwidth this time cannot be less than the remaining"
             + " time[60000s] of the last lock period for bandwidth!",
         ContractValidateException.class, actuator1::validate);
-    dbManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(0);
+    dbManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(DELEGATE_PERIOD / 3000);
   }
 
   @Test

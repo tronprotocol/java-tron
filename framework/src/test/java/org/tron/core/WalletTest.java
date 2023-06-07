@@ -22,6 +22,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_PERIOD;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
 import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
@@ -792,19 +793,19 @@ public class WalletTest extends BaseTest {
         ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
         BANDWIDTH.getNumber());
     Assert.assertEquals(initBalance - 280L, message.getMaxSize());
-    chainBaseManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(0);
+    chainBaseManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(DELEGATE_PERIOD / 3000);
   }
 
   @Test
   public void testGetCanDelegatedMaxSizeBandWidth2() {
     chainBaseManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(14);
-    chainBaseManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(1);
+    chainBaseManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(86401);
     freezeBandwidthForOwner();
     GrpcAPI.CanDelegatedMaxSizeResponseMessage message = wallet.getCanDelegatedMaxSize(
         ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
         BANDWIDTH.getNumber());
-    Assert.assertEquals(initBalance - 282L, message.getMaxSize());
-    chainBaseManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(0);
+    Assert.assertEquals(initBalance - 284L, message.getMaxSize());
+    chainBaseManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(DELEGATE_PERIOD / 3000);
   }
 
   @Test
