@@ -627,7 +627,7 @@ Transaction and transaction-related messages.
           WithdrawExpireUnfreezeContract = 56;
           DelegateResourceContract = 57;
           UnDelegateResourceContract = 58;
-          CancelUnfreezeV2Contract = 59;
+          CancelAllUnfreezeV2Contract = 59;
         }
         ContractType type = 1;
         google.protobuf.Any parameter = 2;
@@ -888,7 +888,7 @@ Contract and contract-related messages.
       WithdrawExpireUnfreezeContract = 56;
       DelegateResourceContract = 57;
       UnDelegateResourceContract = 58;
-      CancelUnfreezeV2Contract = 59;
+      CancelAllUnfreezeV2Contract = 59;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;

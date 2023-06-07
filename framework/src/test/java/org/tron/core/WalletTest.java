@@ -791,8 +791,20 @@ public class WalletTest extends BaseTest {
     GrpcAPI.CanDelegatedMaxSizeResponseMessage message = wallet.getCanDelegatedMaxSize(
         ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
         BANDWIDTH.getNumber());
-    Assert.assertEquals(initBalance - 285L, message.getMaxSize());
+    Assert.assertEquals(initBalance - 280L, message.getMaxSize());
+    chainBaseManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(0);
+  }
 
+  @Test
+  public void testGetCanDelegatedMaxSizeBandWidth2() {
+    chainBaseManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(14);
+    chainBaseManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(1);
+    freezeBandwidthForOwner();
+    GrpcAPI.CanDelegatedMaxSizeResponseMessage message = wallet.getCanDelegatedMaxSize(
+        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+        BANDWIDTH.getNumber());
+    Assert.assertEquals(initBalance - 282L, message.getMaxSize());
+    chainBaseManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(0);
   }
 
   @Test
