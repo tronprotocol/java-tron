@@ -395,6 +395,9 @@ public class CommonParameter {
   public boolean version;
   @Getter
   @Setter
+  public boolean versionCheckEnable;
+  @Getter
+  @Setter
   public String zenTokenId;
   @Getter
   @Setter
