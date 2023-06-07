@@ -243,8 +243,7 @@ public class ForkController {
       }
     }
     if (latestVersion > systemVersion) {
-      throw new RuntimeException("Version check failed, please upgrade to the latest version," +
-          " latestVersion:" + latestVersion + ", systemVersion:" + systemVersion);
+      throw new RuntimeException("Version check failed, please upgrade to the latest version");
     }
   }
 }
