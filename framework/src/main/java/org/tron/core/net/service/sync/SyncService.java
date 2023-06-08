@@ -169,7 +169,8 @@ public class SyncService {
     if (beginBlockId.getNum() == 0) {
       highNoFork = high = tronNetDelegate.getHeadBlockId().getNum();
     } else {
-      if (tronNetDelegate.containBlockInMainChain(beginBlockId)) {
+      if (tronNetDelegate.getKhaosDbHeadBlockId().equals(beginBlockId)
+          || tronNetDelegate.containBlockInMainChain(beginBlockId)) {
         highNoFork = high = beginBlockId.getNum();
       } else {
         forkList = tronNetDelegate.getBlockChainHashesOnFork(beginBlockId);
