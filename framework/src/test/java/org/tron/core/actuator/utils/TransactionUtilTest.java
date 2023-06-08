@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.tron.core.capsule.utils.TransactionUtil.isNumber;
+import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_PERIOD;
 import static org.tron.core.utils.TransactionUtil.validAccountId;
 import static org.tron.core.utils.TransactionUtil.validAccountName;
 import static org.tron.core.utils.TransactionUtil.validAssetName;
@@ -149,7 +150,7 @@ public class TransactionUtilTest extends BaseTest {
     long estimateConsumeBandWidthSize = TransactionUtil.estimateConsumeBandWidthSize(ownerCapsule,
         dbManager.getChainBaseManager());
     assertEquals(275L, estimateConsumeBandWidthSize);
-    chainBaseManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(0);
+    chainBaseManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(DELEGATE_PERIOD / 3000);
   }
 
   @Test
@@ -161,7 +162,7 @@ public class TransactionUtilTest extends BaseTest {
     long estimateConsumeBandWidthSize = TransactionUtil.estimateConsumeBandWidthSize(ownerCapsule,
         dbManager.getChainBaseManager());
     assertEquals(277L, estimateConsumeBandWidthSize);
-    chainBaseManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(0);
+    chainBaseManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(DELEGATE_PERIOD / 3000);
   }
 
 }

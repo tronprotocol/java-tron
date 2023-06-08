@@ -713,10 +713,11 @@ public class ProposalUtil {
           throw new ContractValidateException(
               "Bad chain parameter id [MAX_DELEGATE_LOCK_PERIOD]");
         }
-        if (value <= 0) {
+        long maxDelegateLockPeriod = dynamicPropertiesStore.getMaxDelegateLockPeriod();
+        if (value <= maxDelegateLockPeriod || value > 10512000L) {
           throw new ContractValidateException(
-              "This value[MAX_DELEGATE_LOCK_PERIOD] is only allowed to be "
-                  + "greater than 0");
+              "This value[MAX_DELEGATE_LOCK_PERIOD] is only allowed to be greater than "
+                  + maxDelegateLockPeriod + "and less than or equal to 10512000 !");
         }
         if (dynamicPropertiesStore.getUnfreezeDelayDays() == 0) {
           throw new ContractValidateException(
@@ -800,7 +801,7 @@ public class ProposalUtil {
     DYNAMIC_ENERGY_MAX_FACTOR(75), // 0, [0, 100_000]
     ALLOW_TVM_SHANGHAI(76), // 0, 1
     ALLOW_CANCEL_ALL_UNFREEZE_V2(77), // 0, 1
-    MAX_DELEGATE_LOCK_PERIOD(78); // 0, 1
+    MAX_DELEGATE_LOCK_PERIOD(78); // (86400, 10512000]
 
     private long code;
 
