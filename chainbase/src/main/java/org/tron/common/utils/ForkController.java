@@ -48,7 +48,6 @@ public class ForkController {
         }
       }
       store.saveLatestVersion(latestVersion);
-      return;
     }
   }
 
