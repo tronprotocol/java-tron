@@ -130,6 +130,7 @@ import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.BalanceContract.AccountBalanceRequest;
 import org.tron.protos.contract.BalanceContract.AccountBalanceResponse;
 import org.tron.protos.contract.BalanceContract.BlockBalanceTrace;
+import org.tron.protos.contract.BalanceContract.CancelAllUnfreezeV2Contract;
 import org.tron.protos.contract.BalanceContract.DelegateResourceContract;
 import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
@@ -1468,6 +1469,13 @@ public class RpcApiService implements Service {
     public void unDelegateResource(UnDelegateResourceContract request,
                                        StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.UnDelegateResourceContract,
+          responseObserver);
+    }
+
+    @Override
+    public void cancelAllUnfreezeV2(CancelAllUnfreezeV2Contract request,
+                                    StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.CancelAllUnfreezeV2Contract,
           responseObserver);
     }
 

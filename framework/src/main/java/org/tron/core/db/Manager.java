@@ -450,6 +450,7 @@ public class Manager {
     trieService.setChainBaseManager(chainBaseManager);
     revokingStore.disable();
     revokingStore.check();
+    transactionCache.initCache();
     this.setProposalController(ProposalController.createInstance(this));
     this.setMerkleContainer(
         merkleContainer.createInstance(chainBaseManager.getMerkleTreeStore(),
@@ -486,6 +487,12 @@ public class Manager {
       System.exit(1);
     }
     getChainBaseManager().getForkController().init(this.chainBaseManager);
+    try {
+      getChainBaseManager().getForkController().checkLocalVersion();
+    } catch (RuntimeException r) {
+      logger.error("{}", r.getMessage());
+      System.exit(1);
+    }
 
     if (Args.getInstance().isNeedToUpdateAsset() && needToUpdateAsset()) {
       new AssetUpdateHelper(chainBaseManager).doWork();
@@ -1746,14 +1753,18 @@ public class Manager {
 
     payReward(block);
 
-    if (chainBaseManager.getDynamicPropertiesStore().getNextMaintenanceTime()
-        <= block.getTimeStamp()) {
+    boolean flag = chainBaseManager.getDynamicPropertiesStore().getNextMaintenanceTime()
+        <= block.getTimeStamp();
+    if (flag) {
       proposalController.processProposals();
-      chainBaseManager.getForkController().reset();
     }
 
     if (!consensus.applyBlock(block)) {
       throw new BadBlockException("consensus apply block failed");
+    }
+
+    if (flag) {
+      chainBaseManager.getForkController().reset();
     }
 
     updateTransHashCache(block);

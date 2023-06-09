@@ -395,6 +395,9 @@ public class CommonParameter {
   public boolean version;
   @Getter
   @Setter
+  public boolean versionCheckEnable;
+  @Getter
+  @Setter
   public String zenTokenId;
   @Getter
   @Setter
@@ -650,6 +653,10 @@ public class CommonParameter {
   @Getter
   @Setter
   public long allowTvmShangHai;
+
+  @Getter
+  @Setter
+  public long allowCancelAllUnfreezeV2;
 
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));
