@@ -222,39 +222,6 @@ public class ForkControllerTest {
     Assert.assertEquals(getSum(bytes), 4);
   }
 
-  @Test
-  public void testCheck() {
-    byte[] stats1 = {0, 0, 0, 0, 0};
-    byte[] stats2 = {1, 1, 1, 1, 1};
-
-    for (Parameter.ForkBlockVersionEnum version : Parameter.ForkBlockVersionEnum.values()) {
-      dynamicPropertiesStore.statsByVersion(version.getValue(), stats1);
-    }
-
-    dynamicPropertiesStore
-        .statsByVersion(Parameter.ForkBlockVersionEnum.VERSION_3_5.getValue(), stats2);
-
-    forkController.checkLocalVersion();
-
-    Assert.assertEquals(dynamicPropertiesStore.getLatestVersion(),
-        Parameter.ForkBlockVersionEnum.VERSION_3_5.getValue());
-
-
-    Args.getInstance().setVersionCheckEnable(false);
-    dynamicPropertiesStore.saveLatestVersion(Integer.MAX_VALUE);
-
-    forkController.checkLocalVersion();
-
-    Args.getInstance().setVersionCheckEnable(true);
-
-    try {
-      forkController.checkLocalVersion();
-      Assert.fail();
-    } catch (Exception e) {
-      Assert.assertTrue(e instanceof  RuntimeException);
-    }
-  }
-
   private BlockCapsule getBlock(int i, Parameter.ForkBlockVersionEnum versionEnum) {
     org.tron.protos.Protocol.BlockHeader.raw rawData =
         org.tron.protos.Protocol.BlockHeader.raw.newBuilder()

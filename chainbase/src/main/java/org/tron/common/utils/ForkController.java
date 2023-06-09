@@ -38,6 +38,18 @@ public class ForkController {
 
   public void init(ChainBaseManager manager) {
     this.manager = manager;
+    DynamicPropertiesStore store = manager.getDynamicPropertiesStore();
+    int latestVersion = store.getLatestVersion();
+    if (latestVersion == 0) {
+      for (ForkBlockVersionEnum version : ForkBlockVersionEnum.values()) {
+        int v = version.getValue();
+        if (pass(v) && latestVersion < v) {
+          latestVersion = v;
+        }
+      }
+      store.saveLatestVersion(latestVersion);
+      return;
+    }
   }
 
   public boolean pass(ForkBlockVersionEnum forkBlockVersionEnum) {
@@ -218,32 +230,4 @@ public class ForkController {
     }
   }
 
-  public void checkLocalVersion() {
-    DynamicPropertiesStore store = manager.getDynamicPropertiesStore();
-    int latestVersion = store.getLatestVersion();
-    if (latestVersion == 0) {
-      for (ForkBlockVersionEnum version : ForkBlockVersionEnum.values()) {
-        int v = version.getValue();
-        if (pass(v) && latestVersion < v) {
-          latestVersion = v;
-        }
-      }
-      store.saveLatestVersion(latestVersion);
-      return;
-    }
-
-    if (!CommonParameter.getInstance().isVersionCheckEnable()) {
-      return;
-    }
-
-    int systemVersion = 0;
-    for (ForkBlockVersionEnum version : ForkBlockVersionEnum.values()) {
-      if (version.getValue() > systemVersion) {
-        systemVersion = version.getValue();
-      }
-    }
-    if (latestVersion > systemVersion) {
-      throw new RuntimeException("Version check failed, please upgrade to the latest version");
-    }
-  }
 }
