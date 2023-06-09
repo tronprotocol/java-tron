@@ -61,10 +61,10 @@ public class DelegateResourceActuator extends AbstractActuator {
 
     AccountCapsule ownerCapsule = accountStore
         .get(delegateResourceContract.getOwnerAddress().toByteArray());
-
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     long delegateBalance = delegateResourceContract.getBalance();
     boolean lock = delegateResourceContract.getLock();
-    long lockPeriod = delegateResourceContract.getLockPeriod();
+    long lockPeriod = getLockPeriod(dynamicStore, delegateResourceContract);
     byte[] receiverAddress = delegateResourceContract.getReceiverAddress().toByteArray();
 
     // delegate resource to receiver
@@ -219,7 +219,7 @@ public class DelegateResourceActuator extends AbstractActuator {
 
     boolean lock = delegateResourceContract.getLock();
     if (lock && dynamicStore.supportMaxDelegateLockPeriod()) {
-      long lockPeriod = delegateResourceContract.getLockPeriod();
+      long lockPeriod = getLockPeriod(dynamicStore, delegateResourceContract);
       long maxDelegateLockPeriod = dynamicStore.getMaxDelegateLockPeriod();
       if (lockPeriod < 0 || lockPeriod > maxDelegateLockPeriod) {
         throw new ContractValidateException(
@@ -255,6 +255,16 @@ public class DelegateResourceActuator extends AbstractActuator {
     }
 
     return true;
+  }
+
+  private long getLockPeriod(DynamicPropertiesStore dynamicStore,
+      DelegateResourceContract delegateResourceContract) {
+    long lockPeriod = delegateResourceContract.getLockPeriod();
+    if (dynamicStore.supportMaxDelegateLockPeriod()) {
+      return lockPeriod == 0 ? DELEGATE_PERIOD / 3000 : lockPeriod;
+    } else {
+      return 0;
+    }
   }
 
   private void validRemainTime(ResourceCode resourceCode, long lockPeriod, long expireTime,
@@ -294,7 +304,7 @@ public class DelegateResourceActuator extends AbstractActuator {
     long expireTime = 0;
     if (lock) {
       if (dynamicPropertiesStore.supportMaxDelegateLockPeriod()) {
-        expireTime = now + (lockPeriod == 0 ? DELEGATE_PERIOD : lockPeriod * 3 * 1000);
+        expireTime = now + lockPeriod * 3 * 1000;
       } else {
         expireTime = now + DELEGATE_PERIOD;
       }
