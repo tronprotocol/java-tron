@@ -717,7 +717,7 @@ public class ProposalUtil {
         if (value <= maxDelegateLockPeriod || value > 10512000L) {
           throw new ContractValidateException(
               "This value[MAX_DELEGATE_LOCK_PERIOD] is only allowed to be greater than "
-                  + maxDelegateLockPeriod + "and less than or equal to 10512000 !");
+                  + maxDelegateLockPeriod + " and less than or equal to 10512000 !");
         }
         if (dynamicPropertiesStore.getUnfreezeDelayDays() == 0) {
           throw new ContractValidateException(
