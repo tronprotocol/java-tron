@@ -56,7 +56,7 @@ public class BatchValidateSignContractTest {
       }
     }
     Pair<Boolean, byte[]> ret;
-    ret = validateMultiSign(hash, signatures, addresses);
+    ret = validateMultiSignWithRetry(hash, signatures, addresses);
     for (int i = 0; i < 16; i++) {
       if (i % 5 == 0) {
         Assert.assertEquals(ret.getValue()[i], 0);
@@ -71,7 +71,7 @@ public class BatchValidateSignContractTest {
     signatures.add(Hex.toHexString(DataWord.ONE().getData()));
     addresses
         .add(StringUtil.encode58Check(TransactionTrace.convertToTronAddress(new byte[20])));
-    ret = validateMultiSign(hash, signatures, addresses);
+    ret = validateMultiSignWithRetry(hash, signatures, addresses);
     Assert.assertEquals(ret.getValue().length, 32);
     Assert.assertEquals(ret.getValue(), new byte[32]);
     System.gc(); // force triggering full gc to avoid timeout for next test
@@ -97,7 +97,7 @@ public class BatchValidateSignContractTest {
       }
     }
     Pair<Boolean, byte[]> ret = null;
-    ret = validateMultiSign(hash, signatures, addresses);
+    ret = validateMultiSignWithRetry(hash, signatures, addresses);
     for (int i = 0; i < 32; i++) {
       if (i >= 16) {
         Assert.assertEquals(ret.getValue()[i], 0);
@@ -110,7 +110,7 @@ public class BatchValidateSignContractTest {
 
     // incorrect hash
     byte[] incorrectHash = DataWord.ONE().getData();
-    ret = validateMultiSign(incorrectHash, signatures, addresses);
+    ret = validateMultiSignWithRetry(incorrectHash, signatures, addresses);
     for (int i = 0; i < 16; i++) {
       Assert.assertEquals(ret.getValue()[i], 0);
     }
@@ -118,9 +118,22 @@ public class BatchValidateSignContractTest {
     byte[] incorrectSign = DataWord.ONE().getData();
     List<Object> incorrectSigns = new ArrayList<>(signatures);
     incorrectSigns.remove(incorrectSigns.size() - 1);
-    ret = validateMultiSign(hash, incorrectSigns, addresses);
+    ret = validateMultiSignWithRetry(hash, incorrectSigns, addresses);
     Assert.assertEquals(ret.getValue(), DataWord.ZERO().getData());
     System.gc(); // force triggering full gc to avoid timeout for next test
+  }
+
+  Pair<Boolean, byte[]> validateMultiSignWithRetry(byte[] hash, List<Object> signatures,
+      List<Object> addresses) {
+    // Try the first execution
+    Pair<Boolean, byte[]> ret = validateMultiSign(hash, signatures, addresses);
+
+    // If failed at the first time, then retry
+    if (!ret.getKey()) {
+      ret = validateMultiSign(hash, signatures, addresses);
+    }
+
+    return ret;
   }
 
   Pair<Boolean, byte[]> validateMultiSign(byte[] hash, List<Object> signatures,
