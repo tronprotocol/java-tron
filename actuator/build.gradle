@@ -16,8 +16,6 @@ dependencies {
     testImplementation "junit:junit:$junitVersion"
     testImplementation "org.mockito:mockito-core:$mockitoVersion"
 
-    testImplementation "org.testng:testng:$testNgVersion"
-
     compile "org.slf4j:jcl-over-slf4j:$slf4jVersion"
     compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.69'
     compile group: 'commons-codec', name: 'commons-codec', version: '1.11'
@@ -49,23 +47,6 @@ test {
     }
 }
 
-task testng(type: Test) {
-    useTestNG()
-    testLogging {
-        events = ["skipped", "failed"]
-        exceptionFormat = "full"
-
-        debug.events = ["skipped", "failed"]
-        debug.exceptionFormat = "full"
-
-        info.events = ["failed", "skipped"]
-        info.exceptionFormat = "full"
-
-        warn.events = ["failed", "skipped"]
-        warn.exceptionFormat = "full"
-    }
-}
-
 jacocoTestReport {
     reports {
         xml.enabled = true
@@ -78,5 +59,3 @@ jacocoTestReport {
         }
     }
 }
-
-check.dependsOn testng

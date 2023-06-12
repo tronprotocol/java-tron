@@ -4,9 +4,9 @@ import static org.tron.core.db.TransactionTrace.convertToTronAddress;
 
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.testng.Assert;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.WalletUtil;
 import org.tron.common.utils.client.utils.DataWord;
