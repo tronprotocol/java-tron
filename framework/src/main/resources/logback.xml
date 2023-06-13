@@ -22,7 +22,7 @@
       <!-- rollover daily -->
       <fileNamePattern>./logs/tron-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
       <!-- each file should be at most 500MB, keep 30 days worth of history, but at most 50GB -->
-      <maxFileSize>500MB</maxFileSize>
+      <maxFileSize>800MB</maxFileSize>
       <maxHistory>7</maxHistory>
       <totalSizeCap>50GB</totalSizeCap>
     </rollingPolicy>
