@@ -680,6 +680,51 @@ public class ProposalUtil {
         }
         break;
       }
+      case ALLOW_TVM_SHANGHAI: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_7_2)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_TVM_SHANGHAI]");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_TVM_SHANGHAI] is only allowed to be 1");
+        }
+        break;
+      }
+      case ALLOW_CANCEL_ALL_UNFREEZE_V2: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_7_2)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_CANCEL_ALL_UNFREEZE_V2]");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_CANCEL_ALL_UNFREEZE_V2] is only allowed to be 1");
+        }
+        if (dynamicPropertiesStore.getUnfreezeDelayDays() == 0) {
+          throw new ContractValidateException(
+              "[UNFREEZE_DELAY_DAYS] proposal must be approved "
+                  + "before [ALLOW_CANCEL_ALL_UNFREEZE_V2] can be proposed");
+        }
+        break;
+      }
+      case MAX_DELEGATE_LOCK_PERIOD: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_7_2)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [MAX_DELEGATE_LOCK_PERIOD]");
+        }
+        long maxDelegateLockPeriod = dynamicPropertiesStore.getMaxDelegateLockPeriod();
+        if (value <= maxDelegateLockPeriod || value > 10512000L) {
+          throw new ContractValidateException(
+              "This value[MAX_DELEGATE_LOCK_PERIOD] is only allowed to be greater than "
+                  + maxDelegateLockPeriod + " and less than or equal to 10512000 !");
+        }
+        if (dynamicPropertiesStore.getUnfreezeDelayDays() == 0) {
+          throw new ContractValidateException(
+              "[UNFREEZE_DELAY_DAYS] proposal must be approved "
+                  + "before [MAX_DELEGATE_LOCK_PERIOD] can be proposed");
+        }
+        break;
+      }
       default:
         break;
     }
@@ -752,7 +797,10 @@ public class ProposalUtil {
     ALLOW_DYNAMIC_ENERGY(72), // 0, 1
     DYNAMIC_ENERGY_THRESHOLD(73), // 0, [0, LONG]
     DYNAMIC_ENERGY_INCREASE_FACTOR(74), // 0, [0, 10_000]
-    DYNAMIC_ENERGY_MAX_FACTOR(75); // 0, [0, 100_000]
+    DYNAMIC_ENERGY_MAX_FACTOR(75), // 0, [0, 100_000]
+    ALLOW_TVM_SHANGHAI(76), // 0, 1
+    ALLOW_CANCEL_ALL_UNFREEZE_V2(77), // 0, 1
+    MAX_DELEGATE_LOCK_PERIOD(78); // (86400, 10512000]
 
     private long code;
 

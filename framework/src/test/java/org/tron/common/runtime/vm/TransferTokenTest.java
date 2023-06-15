@@ -1,26 +1,20 @@
 package org.tron.common.runtime.vm;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
-import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
-import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
@@ -32,9 +26,8 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 
 @Slf4j
-public class TransferTokenTest {
+public class TransferTokenTest extends BaseTest {
 
-  private static final String dbPath = "output_TransferTokenTest";
   private static final String OWNER_ADDRESS;
   private static final String TRANSFER_TO;
   private static final long TOTAL_SUPPLY = 1000_000_000L;
@@ -46,20 +39,19 @@ public class TransferTokenTest {
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
   private static Runtime runtime;
-  private static Manager dbManager;
-  private static TronApplicationContext context;
-  private static Application appT;
   private static RepositoryImpl repository;
   private static AccountCapsule ownerCapsule;
 
 
   static {
+    dbPath = "output_TransferTokenTest";
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-    appT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     TRANSFER_TO = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
-    dbManager = context.getBean(Manager.class);
+  }
+
+  @Before
+  public void before() {
     repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
     repository.createAccount(Hex.decode(TRANSFER_TO), AccountType.Normal);
     repository.addBalance(Hex.decode(TRANSFER_TO), 10);
@@ -71,20 +63,6 @@ public class TransferTokenTest {
             AccountType.AssetIssue);
 
     ownerCapsule.setBalance(1000_1000_1000L);
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   private long createAsset(String tokenName) {
@@ -116,13 +94,11 @@ public class TransferTokenTest {
 
   /**
    * pragma solidity ^0.4.24;
-   *
    * contract tokenTest{ constructor() public payable{} // positive case function
    * TransferTokenTo(address toAddress, trcToken id,uint256 amount) public payable{
    * toAddress.transferToken(amount,id); } function suicide(address toAddress) payable public{
    * selfdestruct(toAddress); } function get(trcToken trc) public payable returns(uint256){ return
    * address(this).tokenBalance(trc); } }
-   *
    * 1. deploy 2. trigger and internal transaction 3. suicide (all token)
    */
   @Test

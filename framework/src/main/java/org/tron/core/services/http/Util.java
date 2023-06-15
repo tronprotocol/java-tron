@@ -64,6 +64,13 @@ public class Util {
   public static final String EXTRA_DATA = "extra_data";
   public static final String PARAMETER = "parameter";
 
+  // Used for TVM http interfaces
+  public static final String OWNER_ADDRESS = "owner_address";
+  public static final String CONTRACT_ADDRESS = "contract_address";
+  public static final String FUNCTION_SELECTOR = "function_selector";
+  public static final String FUNCTION_PARAMETER = "parameter";
+  public static final String CALL_DATA = "data";
+
   public static String printTransactionFee(String transactionFee) {
     JSONObject jsonObject = new JSONObject();
     JSONObject receipt = JSONObject.parseObject(transactionFee);
@@ -213,7 +220,7 @@ public class Util {
                 .parseObject(JsonFormat.printToString(deployContract, selfType));
             byte[] ownerAddress = deployContract.getOwnerAddress().toByteArray();
             byte[] contractAddress = generateContractAddress(transaction, ownerAddress);
-            jsonTransaction.put("contract_address", ByteArray.toHexString(contractAddress));
+            jsonTransaction.put(CONTRACT_ADDRESS, ByteArray.toHexString(contractAddress));
             break;
           default:
             Class clazz = TransactionFactory.getContract(contract.getType());
@@ -296,7 +303,7 @@ public class Util {
       } catch (JSONException e) {
         logger.debug("JSONException: {}", e.getMessage());
       } catch (Exception e) {
-        logger.error("", e);
+        logger.warn("{}", contractType, e);
       }
     }
     rawData.put("contract", contracts);
@@ -534,6 +541,32 @@ public class Util {
     }
 
     return newLogList;
+  }
+
+  /**
+   * Validate parameters for trigger constant and estimate energy
+   * - Rule-1: owner address must be set
+   * - Rule-2: either contract address is set or call data is set
+   * - Rule-3: if try to deploy, function selector and call data can not be both set
+   * @param contract parameters in json format
+   * @throws InvalidParameterException if validation is not passed, this kind of exception is thrown
+   */
+  public static void validateParameter(String contract) throws InvalidParameterException {
+    JSONObject jsonObject = JSONObject.parseObject(contract);
+    if (StringUtils.isEmpty(jsonObject.getString(OWNER_ADDRESS))) {
+      throw new InvalidParameterException(OWNER_ADDRESS + " isn't set.");
+    }
+    if (StringUtils.isEmpty(jsonObject.getString(CONTRACT_ADDRESS))
+        && StringUtils.isEmpty(jsonObject.getString(CALL_DATA))) {
+      throw new InvalidParameterException("At least one of "
+          + CONTRACT_ADDRESS + " and " + CALL_DATA + " must be set.");
+    }
+    if (StringUtils.isEmpty(jsonObject.getString(CONTRACT_ADDRESS))
+        && !StringUtils.isEmpty(jsonObject.getString(FUNCTION_SELECTOR))
+        && !StringUtils.isEmpty(jsonObject.getString(CALL_DATA))) {
+      throw new InvalidParameterException("While trying to deploy, "
+          + FUNCTION_SELECTOR + " and " + CALL_DATA + " can not be both set.");
+    }
   }
 
 }

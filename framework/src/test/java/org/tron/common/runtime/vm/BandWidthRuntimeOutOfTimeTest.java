@@ -17,24 +17,18 @@ package org.tron.common.runtime.vm;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import java.io.File;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.Commons;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -53,32 +47,27 @@ import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 /**
  * pragma solidity ^0.4.2;
- *
  * contract Fibonacci {
- *
  * event Notify(uint input, uint result);
- *
  * function fibonacci(uint number) constant returns(uint result) { if (number == 0) { return 0; }
  * else if (number == 1) { return 1; } else { uint256 first = 0; uint256 second = 1; uint256 ret =
  * 0; for(uint256 i = 2; i <= number; i++) { ret = first + second; first = second; second = ret; }
  * return ret; } }
- *
  * function fibonacciNotify(uint number) returns(uint result) { result = fibonacci(number);
  * Notify(number, result); } }
  */
-public class BandWidthRuntimeOutOfTimeTest {
+public class BandWidthRuntimeOutOfTimeTest extends BaseTest {
 
   public static final long totalBalance = 1000_0000_000_000L;
-  private static String dbPath = "output_BandWidthRuntimeOutOfTimeTest_test";
-  private static String dbDirectory = "db_BandWidthRuntimeOutOfTimeTest_test";
-  private static String indexDirectory = "index_BandWidthRuntimeOutOfTimeTest_test";
-  private static AnnotationConfigApplicationContext context;
-  private static Manager dbManager;
+  private static final String dbDirectory = "db_BandWidthRuntimeOutOfTimeTest_test";
+  private static final String indexDirectory = "index_BandWidthRuntimeOutOfTimeTest_test";
 
-  private static String OwnerAddress = "TCWHANtDDdkZCTo2T2peyEq3Eg9c2XB7ut";
-  private static String TriggerOwnerAddress = "TCSgeWapPJhCqgWRxXCKb6jJ5AgNWSGjPA";
+  private static final String OwnerAddress = "TCWHANtDDdkZCTo2T2peyEq3Eg9c2XB7ut";
+  private static final String TriggerOwnerAddress = "TCSgeWapPJhCqgWRxXCKb6jJ5AgNWSGjPA";
+  private static boolean init;
 
   static {
+    dbPath = "output_bandwidth_runtime_out_of_time_test";
     Args.setParam(
         new String[]{
             "--output-directory", dbPath,
@@ -89,17 +78,16 @@ public class BandWidthRuntimeOutOfTimeTest {
         },
         "config-test-mainnet.conf"
     );
-    context = new TronApplicationContext(DefaultConfig.class);
   }
-
-  private String trx2ContractAddress = "TPMBUANrTwwQAPwShn7ZZjTJz1f3F8jknj";
 
   /**
    * Init data.
    */
-  @BeforeClass
-  public static void init() {
-    dbManager = context.getBean(Manager.class);
+  @Before
+  public void init() {
+    if (init) {
+      return;
+    }
     //init energy
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1526647828000L);
     dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(10_000_000L);
@@ -123,16 +111,7 @@ public class BandWidthRuntimeOutOfTimeTest {
         .put(Commons.decodeFromBase58Check(TriggerOwnerAddress), accountCapsule2);
     dbManager.getDynamicPropertiesStore()
         .saveLatestBlockHeaderTimestamp(System.currentTimeMillis() / 1000);
-  }
-
-  /**
-   * destroy clear data of testing.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
+    init = true;
   }
 
   @Test
@@ -216,8 +195,7 @@ public class BandWidthRuntimeOutOfTimeTest {
     TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
         new RuntimeImpl());
     dbManager.consumeBandwidth(trxCap, trace);
-    BlockCapsule blockCapsule = null;
-    trace.init(blockCapsule);
+    trace.init(null);
     trace.exec();
     trace.finalization();
     owner = dbManager.getAccountStore()

@@ -89,6 +89,15 @@ public class TransactionResultCapsule implements ProtoCapsule<Result> {
             .setWithdrawExpireAmount(amount).build();
   }
 
+  public long getCancelAllUnfreezeV2Amount() {
+    return transactionResult.getCancelAllUnfreezeV2Amount();
+  }
+
+  public void setCancelAllUnfreezeV2Amount(long amount) {
+    this.transactionResult = this.transactionResult.toBuilder()
+        .setCancelAllUnfreezeV2Amount(amount).build();
+  }
+
   public long getExchangeReceivedAmount() {
     return transactionResult.getExchangeReceivedAmount();
   }

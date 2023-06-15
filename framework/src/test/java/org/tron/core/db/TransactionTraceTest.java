@@ -18,22 +18,17 @@ package org.tron.core.db;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.io.File;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -53,58 +48,19 @@ import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
-public class TransactionTraceTest {
+public class TransactionTraceTest extends BaseTest {
 
   public static final long totalBalance = 1000_0000_000_000L;
-  private static String dbPath = "output_TransactionTrace_test";
   private static String dbDirectory = "db_TransactionTrace_test";
   private static String indexDirectory = "index_TransactionTrace_test";
-  private static AnnotationConfigApplicationContext context;
-  private static Manager dbManager;
   private static ByteString ownerAddress = ByteString.copyFrom(ByteArray.fromInt(1));
   private static ByteString contractAddress = ByteString.copyFrom(ByteArray.fromInt(2));
-
-  /*
-   * DeployContract tracetestContract [{"constant":false,"inputs":[{"name":"accountId","type":
-   * "uint256"}],"name":"getVoters","outputs":[{"name":"","type":"uint256"}],"payable":false,"
-   * stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"","type"
-   * :"uint256"}],"name":"voters","outputs":[{"name":"","type":"uint256"}],"payable":false,
-   * "stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"vote","type"
-   * :"uint256"}],"name":"addVoters","outputs":[],"payable":false,"stateMutability":"nonpayable",
-   * "type":"function"},{"inputs":[],"payable":false,"stateMutability":"nonpayable","type":
-   * "constructor"}] 608060405234801561001057600080fd5b5060015b620186a081101561003857600081815260
-   * 2081905260409020819055600a01610014565b5061010b806100486000396000f300608060405260043610605257
-   * 63ffffffff7c010000000000000000000000000000000000000000000000000000000060003504166386b646f281
-   * 146057578063da58c7d914607e578063eb91a5ff146093575b600080fd5b348015606257600080fd5b50606c6004
-   * 3560aa565b60408051918252519081900360200190f35b348015608957600080fd5b50606c60043560bc565b3480
-   * 15609e57600080fd5b5060a860043560ce565b005b60009081526020819052604090205490565b60006020819052
-   * 908152604090205481565b6000818152602081905260409020555600a165627a7a72305820f9935f89890e51bcf3
-   * ea98fa4841c91ac5957a197d99eeb7879a775b30ee9a2d0029   1000000000 100
-   * */
-  /*
-   * DeployContract tracetestContract [{"constant":false,"inputs":[{"name":"accountId","type":
-   * "uint256"}],"name":"getVoters","outputs":[{"name":"","type":"uint256"}],"payable":false,
-   * "stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"",
-   * "type":"uint256"}],"name":"voters","outputs":[{"name":"","type":"uint256"}],"payable":false,
-   * "stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"vote","type"
-   * :"uint256"}],"name":"addVoters","outputs":[],"payable":false,"stateMutability":"nonpayable",
-   * "type":"function"},{"inputs":[],"payable":false,"stateMutability":"nonpayable","type":
-   * "constructor"}] 608060405234801561001057600080fd5b5060015b620186a08110156100385760008181526020
-   * 81905260409020819055600a01610014565b5061010b806100486000396000f30060806040526004361060525763ff
-   * ffffff7c010000000000000000000000000000000000000000000000000000000060003504166386b646f281146057
-   * 578063da58c7d914607e578063eb91a5ff146093575b600080fd5b348015606257600080fd5b50606c60043560aa56
-   * 5b60408051918252519081900360200190f35b348015608957600080fd5b50606c60043560bc565b348015609e576
-   * 00080fd5b5060a860043560ce565b005b60009081526020819052604090205490565b6000602081905290815260409
-   * 0205481565b6000818152602081905260409020555600a165627a7a72305820f9935f89890e51bcf3ea98fa4841c91
-   * ac5957a197d99eeb7879a775b30ee9a2d0029   1000000000 40
-   * */
   private static String OwnerAddress = "TCWHANtDDdkZCTo2T2peyEq3Eg9c2XB7ut";
   private static String TriggerOwnerAddress = "TCSgeWapPJhCqgWRxXCKb6jJ5AgNWSGjPA";
-  /*
-   * triggercontract TPMBUANrTwwQAPwShn7ZZjTJz1f3F8jknj addVoters(uint256) 113 false 1000000000 0
-   * */
+  private static boolean init;
 
   static {
+    dbPath = "output_TransactionTrace_test";
     Args.setParam(
         new String[]{
             "--output-directory", dbPath,
@@ -115,31 +71,22 @@ public class TransactionTraceTest {
         },
         "config-test-mainnet.conf"
     );
-    context = new TronApplicationContext(DefaultConfig.class);
   }
 
   /**
    * Init data.
    */
-  @BeforeClass
-  public static void init() {
-    dbManager = context.getBean(Manager.class);
+  @Before
+  public void init() {
+    if (init) {
+      return;
+    }
     //init energy
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1526647838000L);
     dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(100_000L);
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(0);
     VMConfig.initVmHardFork(false);
-
-  }
-
-  /**
-   * destroy clear data of testing.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
+    init = true;
   }
 
   @Test
