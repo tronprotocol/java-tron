@@ -423,7 +423,7 @@ message Transaction {
     bytes orderId = 25;
     repeated MarketOrderDetail orderDetails = 26;
     int64 withdraw_expire_amount = 27;
-    int64 cancel_all_unfreezeV2_amount = 28;
+    map<string, int64> cancel_unfreezeV2_amount = 28;
   }
 
   message raw {
@@ -484,7 +484,7 @@ message TransactionInfo {
   int64 packingFee = 27;
 
   int64 withdraw_expire_amount = 28;
-  int64 cancel_all_unfreezeV2_amount = 29;
+  map<string, int64> cancel_unfreezeV2_amount = 29;
 }
 
 message TransactionRet {

@@ -9,6 +9,7 @@ import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
@@ -81,8 +82,13 @@ public class CancelAllUnfreezeV2ActuatorTest extends BaseTest {
       assertEquals(SUCESS, ret.getInstance().getRet());
       AccountCapsule owner = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      Map<String, Long> cancelUnfreezeV2AmountMap = ret.getInstance()
+          .getCancelUnfreezeV2AmountMap();
       assertEquals(2000000L, ret.getInstance().getWithdrawExpireAmount());
       assertEquals(0, owner.getUnfrozenV2List().size());
+      assertEquals(8000000L, cancelUnfreezeV2AmountMap.get("BANDWIDTH").longValue());
+      assertEquals(8000000L, cancelUnfreezeV2AmountMap.get("ENERGY").longValue());
+      assertEquals(0, cancelUnfreezeV2AmountMap.get("TRON_POWER").longValue());
     } catch (ContractValidateException | ContractExeException e) {
       fail();
     }
