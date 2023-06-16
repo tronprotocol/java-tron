@@ -151,6 +151,13 @@ public class SyncServiceTest {
     PeerManager.add(ctx, c1);
     peer = PeerManager.getPeers().get(0);
 
+    Method method1 = PeerManager.class.getDeclaredMethod("check");
+    method1.setAccessible(true);
+    method1.invoke(PeerManager.class);
+    Method method2 = PeerManager.class.getDeclaredMethod("logPeerStats");
+    method2.setAccessible(true);
+    method2.invoke(PeerManager.class);
+
     method.invoke(service);
     Assert.assertTrue(peer.getSyncBlockRequested().get(blockId) == null);
 
