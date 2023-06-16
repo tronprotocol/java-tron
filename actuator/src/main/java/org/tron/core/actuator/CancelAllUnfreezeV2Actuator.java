@@ -5,13 +5,17 @@ import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
 import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
+import static org.tron.protos.contract.Common.ResourceCode.TRON_POWER;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
@@ -54,12 +58,13 @@ public class CancelAllUnfreezeV2Actuator extends AbstractActuator {
     List<UnFreezeV2> unfrozenV2List = ownerCapsule.getUnfrozenV2List();
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
     AtomicLong atomicWithdrawExpireBalance = new AtomicLong(0L);
-    AtomicLong atomicCancelBalance = new AtomicLong(0L);
-    Triple<AtomicLong, AtomicLong, AtomicLong> triple =
-        Triple.of(new AtomicLong(0L), new AtomicLong(0L), new AtomicLong(0L));
+    Triple<Pair<AtomicLong, AtomicLong>, Pair<AtomicLong, AtomicLong>, Pair<AtomicLong, AtomicLong>>
+        triple = Triple.of(
+        Pair.of(new AtomicLong(0L), new AtomicLong(0L)),
+        Pair.of(new AtomicLong(0L), new AtomicLong(0L)),
+        Pair.of(new AtomicLong(0L), new AtomicLong(0L)));
     for (UnFreezeV2 unFreezeV2 : unfrozenV2List) {
-      updateAndCalculate(triple, ownerCapsule, now, atomicWithdrawExpireBalance,
-          atomicCancelBalance, unFreezeV2);
+      updateAndCalculate(triple, ownerCapsule, now, atomicWithdrawExpireBalance, unFreezeV2);
     }
     ownerCapsule.clearUnfrozenV2();
     addTotalResourceWeight(dynamicStore, triple);
@@ -71,24 +76,29 @@ public class CancelAllUnfreezeV2Actuator extends AbstractActuator {
 
     accountStore.put(ownerCapsule.createDbKey(), ownerCapsule);
     ret.setWithdrawExpireAmount(withdrawExpireBalance);
-    ret.setCancelAllUnfreezeV2Amount(atomicCancelBalance.get());
+    Map<String, Long> cancelUnfreezeV2AmountMap = new HashMap<>();
+    cancelUnfreezeV2AmountMap.put(BANDWIDTH.name(), triple.getLeft().getRight().get());
+    cancelUnfreezeV2AmountMap.put(ENERGY.name(), triple.getMiddle().getRight().get());
+    cancelUnfreezeV2AmountMap.put(TRON_POWER.name(), triple.getRight().getRight().get());
+    ret.putAllCancelUnfreezeV2AmountMap(cancelUnfreezeV2AmountMap);
     ret.setStatus(fee, code.SUCESS);
     return true;
   }
 
   private void addTotalResourceWeight(DynamicPropertiesStore dynamicStore,
-                                      Triple<AtomicLong, AtomicLong, AtomicLong> triple) {
-    dynamicStore.addTotalNetWeight(triple.getLeft().get());
-    dynamicStore.addTotalEnergyWeight(triple.getMiddle().get());
-    dynamicStore.addTotalTronPowerWeight(triple.getRight().get());
+      Triple<Pair<AtomicLong, AtomicLong>,
+          Pair<AtomicLong, AtomicLong>,
+          Pair<AtomicLong, AtomicLong>> triple) {
+    dynamicStore.addTotalNetWeight(triple.getLeft().getLeft().get());
+    dynamicStore.addTotalEnergyWeight(triple.getMiddle().getLeft().get());
+    dynamicStore.addTotalTronPowerWeight(triple.getRight().getLeft().get());
   }
 
-  private void updateAndCalculate(Triple<AtomicLong, AtomicLong, AtomicLong> triple,
-      AccountCapsule ownerCapsule, long now, AtomicLong atomicLong, AtomicLong cancelBalance,
-      UnFreezeV2 unFreezeV2) {
+  private void updateAndCalculate(Triple<Pair<AtomicLong, AtomicLong>, Pair<AtomicLong, AtomicLong>,
+      Pair<AtomicLong, AtomicLong>> triple,
+      AccountCapsule ownerCapsule, long now, AtomicLong atomicLong, UnFreezeV2 unFreezeV2) {
     if (unFreezeV2.getUnfreezeExpireTime() > now) {
       updateFrozenInfoAndTotalResourceWeight(ownerCapsule, unFreezeV2, triple);
-      cancelBalance.addAndGet(unFreezeV2.getUnfreezeAmount());
     } else {
       atomicLong.addAndGet(unFreezeV2.getUnfreezeAmount());
     }
@@ -160,25 +170,29 @@ public class CancelAllUnfreezeV2Actuator extends AbstractActuator {
 
   public void updateFrozenInfoAndTotalResourceWeight(
       AccountCapsule accountCapsule, UnFreezeV2 unFreezeV2,
-      Triple<AtomicLong, AtomicLong, AtomicLong> triple) {
+      Triple<Pair<AtomicLong, AtomicLong>, Pair<AtomicLong, AtomicLong>,
+          Pair<AtomicLong, AtomicLong>> triple) {
     switch (unFreezeV2.getType()) {
       case BANDWIDTH:
         long oldNetWeight = accountCapsule.getFrozenV2BalanceWithDelegated(BANDWIDTH) / TRX_PRECISION;
         accountCapsule.addFrozenBalanceForBandwidthV2(unFreezeV2.getUnfreezeAmount());
         long newNetWeight = accountCapsule.getFrozenV2BalanceWithDelegated(BANDWIDTH) / TRX_PRECISION;
-        triple.getLeft().addAndGet(newNetWeight - oldNetWeight);
+        triple.getLeft().getLeft().addAndGet(newNetWeight - oldNetWeight);
+        triple.getLeft().getRight().addAndGet(unFreezeV2.getUnfreezeAmount());
         break;
       case ENERGY:
         long oldEnergyWeight = accountCapsule.getFrozenV2BalanceWithDelegated(ENERGY) / TRX_PRECISION;
         accountCapsule.addFrozenBalanceForEnergyV2(unFreezeV2.getUnfreezeAmount());
         long newEnergyWeight = accountCapsule.getFrozenV2BalanceWithDelegated(ENERGY) / TRX_PRECISION;
-        triple.getMiddle().addAndGet(newEnergyWeight - oldEnergyWeight);
+        triple.getMiddle().getLeft().addAndGet(newEnergyWeight - oldEnergyWeight);
+        triple.getMiddle().getRight().addAndGet(unFreezeV2.getUnfreezeAmount());
         break;
       case TRON_POWER:
         long oldTPWeight = accountCapsule.getTronPowerFrozenV2Balance() / TRX_PRECISION;
         accountCapsule.addFrozenForTronPowerV2(unFreezeV2.getUnfreezeAmount());
         long newTPWeight = accountCapsule.getTronPowerFrozenV2Balance() / TRX_PRECISION;
-        triple.getRight().addAndGet(newTPWeight - oldTPWeight);
+        triple.getRight().getLeft().addAndGet(newTPWeight - oldTPWeight);
+        triple.getRight().getRight().addAndGet(unFreezeV2.getUnfreezeAmount());
         break;
       default:
         break;
