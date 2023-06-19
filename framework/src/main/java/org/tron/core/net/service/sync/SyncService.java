@@ -210,7 +210,9 @@ public class SyncService {
 
   private BlockId getBlockIdByNum(long num) throws P2pException {
     BlockId head = tronNetDelegate.getHeadBlockId();
-    if (num == head.getNum()) {
+    if (num > head.getNum()) {
+      return tronNetDelegate.getKhaosDbHeadBlockId();
+    } else if (num == head.getNum()) {
       return head;
     }
     return tronNetDelegate.getBlockIdByNum(num);
