@@ -10,11 +10,11 @@ import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
-import org.tron.protos.contract.BalanceContract.DelegateResourceContract;
+import org.tron.protos.contract.BalanceContract.CancelAllUnfreezeV2Contract;
 
 @Component
 @Slf4j(topic = "API")
-public class DelegateResourceServlet extends RateLimiterServlet {
+public class CancelAllUnfreezeV2Servlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;
@@ -23,10 +23,10 @@ public class DelegateResourceServlet extends RateLimiterServlet {
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
       PostParams params = PostParams.getPostParams(request);
-      DelegateResourceContract.Builder build = DelegateResourceContract.newBuilder();
+      CancelAllUnfreezeV2Contract.Builder build = CancelAllUnfreezeV2Contract.newBuilder();
       JsonFormat.merge(params.getParams(), build, params.isVisible());
       Transaction tx = wallet
-          .createTransactionCapsule(build.build(), ContractType.DelegateResourceContract)
+          .createTransactionCapsule(build.build(), ContractType.CancelAllUnfreezeV2Contract)
           .getInstance();
       JSONObject jsonObject = JSON.parseObject(params.getParams());
       tx = Util.setTransactionPermissionId(jsonObject, tx);

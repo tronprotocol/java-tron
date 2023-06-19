@@ -1,21 +1,35 @@
 package org.tron.core.actuator.utils;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.tron.core.capsule.utils.TransactionUtil.isNumber;
+import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_PERIOD;
+import static org.tron.core.utils.TransactionUtil.validAccountId;
+import static org.tron.core.utils.TransactionUtil.validAccountName;
+import static org.tron.core.utils.TransactionUtil.validAssetName;
+import static org.tron.core.utils.TransactionUtil.validTokenAbbrName;
 
+import com.google.protobuf.ByteString;
 import java.nio.charset.StandardCharsets;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
+import org.tron.core.Wallet;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.utils.TransactionUtil;
+import org.tron.protos.Protocol.AccountType;
 
 
 @Slf4j(topic = "capsule")
 public class TransactionUtilTest extends BaseTest {
+
+  private static String OWNER_ADDRESS;
 
   /**
    * Init .
@@ -24,81 +38,96 @@ public class TransactionUtilTest extends BaseTest {
   public static void init() {
     dbPath = "output_transactionUtil_test";
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+
+  }
+
+  @Before
+  public void setUp() {
+    byte[] owner = ByteArray.fromHexString(OWNER_ADDRESS);
+    AccountCapsule ownerCapsule =
+        new AccountCapsule(
+            ByteString.copyFromUtf8("owner"),
+            ByteString.copyFrom(owner),
+            AccountType.Normal,
+            10_000_000_000L);
+    ownerCapsule.setFrozenForBandwidth(1000000L, 1000000L);
+    dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
   }
 
   @Test
   public void validAccountNameCheck() {
-    String account = "";
-    assertTrue(TransactionUtil.validAccountName(account.getBytes(StandardCharsets.UTF_8)));
+    StringBuilder account = new StringBuilder();
+    assertTrue(validAccountName(account.toString().getBytes(StandardCharsets.UTF_8)));
     for (int i = 0; i < 200; i++) {
-      account += (char) ('a' + (i % 26));
+      account.append((char) ('a' + (i % 26)));
     }
-    assertTrue(TransactionUtil.validAccountName(account.getBytes(StandardCharsets.UTF_8)));
-    account += 'z';
-    assertFalse(TransactionUtil.validAccountName(account.getBytes(StandardCharsets.UTF_8)));
+    assertTrue(validAccountName(account.toString().getBytes(StandardCharsets.UTF_8)));
+    account.append('z');
+    assertFalse(validAccountName(account.toString().getBytes(StandardCharsets.UTF_8)));
 
   }
 
   @Test
   public void validAccountIdCheck() {
-    String accountId = "";
-    assertFalse(TransactionUtil.validAccountId(accountId.getBytes(StandardCharsets.UTF_8)));
+    StringBuilder accountId = new StringBuilder();
+    assertFalse(validAccountId(accountId.toString().getBytes(StandardCharsets.UTF_8)));
     for (int i = 0; i < 7; i++) {
-      accountId += (char) ('a' + (i % 26));
+      accountId.append((char) ('a' + (i % 26)));
     }
-    assertFalse(TransactionUtil.validAccountId(accountId.getBytes(StandardCharsets.UTF_8)));
+    assertFalse(validAccountId(accountId.toString().getBytes(StandardCharsets.UTF_8)));
     for (int i = 0; i < 26; i++) {
-      accountId += (char) ('a' + (i % 26));
+      accountId.append((char) ('a' + (i % 26)));
     }
-    assertFalse(TransactionUtil.validAccountId(accountId.getBytes(StandardCharsets.UTF_8)));
-    accountId = "ab  cdefghij";
-    assertFalse(TransactionUtil.validAccountId(accountId.getBytes(StandardCharsets.UTF_8)));
-    accountId = (char) 128 + "abcdefjijk" + (char) 129;
-    assertFalse(TransactionUtil.validAccountId(accountId.getBytes(StandardCharsets.UTF_8)));
-    accountId = "";
+    assertFalse(validAccountId(accountId.toString().getBytes(StandardCharsets.UTF_8)));
+    accountId = new StringBuilder("ab  cdefghij");
+    assertFalse(validAccountId(accountId.toString().getBytes(StandardCharsets.UTF_8)));
+    accountId = new StringBuilder((char) 128 + "abcdefjijk" + (char) 129);
+    assertFalse(validAccountId(accountId.toString().getBytes(StandardCharsets.UTF_8)));
+    accountId = new StringBuilder();
     for (int i = 0; i < 30; i++) {
-      accountId += (char) ('a' + (i % 26));
+      accountId.append((char) ('a' + (i % 26)));
     }
-    assertTrue(TransactionUtil.validAccountId(accountId.getBytes(StandardCharsets.UTF_8)));
+    assertTrue(validAccountId(accountId.toString().getBytes(StandardCharsets.UTF_8)));
 
   }
 
   @Test
   public void validAssetNameCheck() {
-    String assetName = "";
-    assertFalse(TransactionUtil.validAssetName(assetName.getBytes(StandardCharsets.UTF_8)));
+    StringBuilder assetName = new StringBuilder();
+    assertFalse(validAssetName(assetName.toString().getBytes(StandardCharsets.UTF_8)));
     for (int i = 0; i < 33; i++) {
-      assetName += (char) ('a' + (i % 26));
+      assetName.append((char) ('a' + (i % 26)));
     }
-    assertFalse(TransactionUtil.validAssetName(assetName.getBytes(StandardCharsets.UTF_8)));
-    assetName = "ab  cdefghij";
-    assertFalse(TransactionUtil.validAssetName(assetName.getBytes(StandardCharsets.UTF_8)));
-    assetName = (char) 128 + "abcdefjijk" + (char) 129;
-    assertFalse(TransactionUtil.validAssetName(assetName.getBytes(StandardCharsets.UTF_8)));
-    assetName = "";
+    assertFalse(validAssetName(assetName.toString().getBytes(StandardCharsets.UTF_8)));
+    assetName = new StringBuilder("ab  cdefghij");
+    assertFalse(validAssetName(assetName.toString().getBytes(StandardCharsets.UTF_8)));
+    assetName = new StringBuilder((char) 128 + "abcdefjijk" + (char) 129);
+    assertFalse(validAssetName(assetName.toString().getBytes(StandardCharsets.UTF_8)));
+    assetName = new StringBuilder();
     for (int i = 0; i < 20; i++) {
-      assetName += (char) ('a' + (i % 26));
+      assetName.append((char) ('a' + (i % 26)));
     }
-    assertTrue(TransactionUtil.validAssetName(assetName.getBytes(StandardCharsets.UTF_8)));
+    assertTrue(validAssetName(assetName.toString().getBytes(StandardCharsets.UTF_8)));
   }
 
   @Test
   public void validTokenAbbrNameCheck() {
-    String abbrName = "";
-    assertFalse(TransactionUtil.validTokenAbbrName(abbrName.getBytes(StandardCharsets.UTF_8)));
+    StringBuilder abbrName = new StringBuilder();
+    assertFalse(validTokenAbbrName(abbrName.toString().getBytes(StandardCharsets.UTF_8)));
     for (int i = 0; i < 6; i++) {
-      abbrName += (char) ('a' + (i % 26));
+      abbrName.append((char) ('a' + (i % 26)));
     }
-    assertFalse(TransactionUtil.validTokenAbbrName(abbrName.getBytes(StandardCharsets.UTF_8)));
-    abbrName = "a bd";
-    assertFalse(TransactionUtil.validTokenAbbrName(abbrName.getBytes(StandardCharsets.UTF_8)));
-    abbrName = "a" + (char) 129 + 'f';
-    assertFalse(TransactionUtil.validTokenAbbrName(abbrName.getBytes(StandardCharsets.UTF_8)));
-    abbrName = "";
+    assertFalse(validTokenAbbrName(abbrName.toString().getBytes(StandardCharsets.UTF_8)));
+    abbrName = new StringBuilder("a bd");
+    assertFalse(validTokenAbbrName(abbrName.toString().getBytes(StandardCharsets.UTF_8)));
+    abbrName = new StringBuilder("a" + (char) 129 + 'f');
+    assertFalse(validTokenAbbrName(abbrName.toString().getBytes(StandardCharsets.UTF_8)));
+    abbrName = new StringBuilder();
     for (int i = 0; i < 5; i++) {
-      abbrName += (char) ('a' + (i % 26));
+      abbrName.append((char) ('a' + (i % 26)));
     }
-    assertTrue(TransactionUtil.validTokenAbbrName(abbrName.getBytes(StandardCharsets.UTF_8)));
+    assertTrue(validTokenAbbrName(abbrName.toString().getBytes(StandardCharsets.UTF_8)));
   }
 
   @Test
@@ -112,6 +141,28 @@ public class TransactionUtilTest extends BaseTest {
     assertFalse(isNumber(number.getBytes(StandardCharsets.UTF_8)));
     number = "24";
     assertTrue(isNumber(number.getBytes(StandardCharsets.UTF_8)));
+  }
+
+  @Test
+  public void testEstimateConsumeBandWidthSize() {
+    AccountCapsule ownerCapsule =
+        dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    long estimateConsumeBandWidthSize = TransactionUtil.estimateConsumeBandWidthSize(ownerCapsule,
+        dbManager.getChainBaseManager());
+    assertEquals(275L, estimateConsumeBandWidthSize);
+    chainBaseManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(DELEGATE_PERIOD / 3000);
+  }
+
+  @Test
+  public void testEstimateConsumeBandWidthSize2() {
+    chainBaseManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(14);
+    chainBaseManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(864000L);
+    AccountCapsule ownerCapsule =
+        dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    long estimateConsumeBandWidthSize = TransactionUtil.estimateConsumeBandWidthSize(ownerCapsule,
+        dbManager.getChainBaseManager());
+    assertEquals(277L, estimateConsumeBandWidthSize);
+    chainBaseManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(DELEGATE_PERIOD / 3000);
   }
 
 }
