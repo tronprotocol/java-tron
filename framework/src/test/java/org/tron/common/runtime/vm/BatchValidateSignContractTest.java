@@ -6,8 +6,8 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.bouncycastle.util.encoders.Hex;
+import org.junit.Assert;
 import org.junit.Test;
-import org.testng.Assert;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.StringUtil;
@@ -73,7 +73,7 @@ public class BatchValidateSignContractTest {
         .add(StringUtil.encode58Check(TransactionTrace.convertToTronAddress(new byte[20])));
     ret = validateMultiSignWithRetry(hash, signatures, addresses);
     Assert.assertEquals(ret.getValue().length, 32);
-    Assert.assertEquals(ret.getValue(), new byte[32]);
+    Assert.assertArrayEquals(ret.getValue(), new byte[32]);
     System.gc(); // force triggering full gc to avoid timeout for next test
   }
 
@@ -119,7 +119,7 @@ public class BatchValidateSignContractTest {
     List<Object> incorrectSigns = new ArrayList<>(signatures);
     incorrectSigns.remove(incorrectSigns.size() - 1);
     ret = validateMultiSignWithRetry(hash, incorrectSigns, addresses);
-    Assert.assertEquals(ret.getValue(), DataWord.ZERO().getData());
+    Assert.assertArrayEquals(ret.getValue(), DataWord.ZERO().getData());
     System.gc(); // force triggering full gc to avoid timeout for next test
   }
 
