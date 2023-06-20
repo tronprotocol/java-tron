@@ -88,8 +88,8 @@ abstract class ResourceProcessor {
         return newUsage;
       }
       long remainWindowSize = oldWindowSize - (now - lastTime);
-      long newWindowSize = (remainWindowSize * remainUsage + this.windowSize * usage)
-              / newUsage;
+      long newWindowSize = getNewWindowSize(remainUsage, remainWindowSize, usage,
+          windowSize, newUsage);
       accountCapsule.setNewWindowSize(resourceCode, newWindowSize);
     }
     return newUsage;
@@ -114,11 +114,20 @@ abstract class ResourceProcessor {
       return newOwnerUsage;
     }
     // calculate new windowSize
-    long newOwnerWindowSize = (ownerUsage * remainOwnerWindowSize +
-            transferUsage * remainReceiverWindowSize)
-            / newOwnerUsage;
+    long newOwnerWindowSize = getNewWindowSize(ownerUsage, remainOwnerWindowSize, transferUsage,
+        remainReceiverWindowSize, newOwnerUsage);
     owner.setNewWindowSize(resourceCode, newOwnerWindowSize);
     return newOwnerUsage;
+  }
+
+  private long getNewWindowSize(long lastUsage, long lastWindowSize, long usage,
+      long windowSize, long newUsage) {
+    if (dynamicPropertiesStore.supportAllowCancelAllUnfreezeV2()) {
+      return Math.min(windowSize, divideCeil(lastUsage * lastWindowSize + usage * windowSize,
+          newUsage));
+    } else {
+      return (lastUsage * lastWindowSize + usage * windowSize) / newUsage;
+    }
   }
 
   private long divideCeil(long numerator, long denominator) {
