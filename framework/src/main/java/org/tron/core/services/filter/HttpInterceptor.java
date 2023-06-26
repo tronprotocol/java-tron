@@ -38,30 +38,20 @@ public class HttpInterceptor implements Filter {
 
         HttpServletResponse resp = (HttpServletResponse) response;
 
-        if (resp.getStatus() != HTTP_NOT_FOUND) {  // correct endpoint
-          String endpointQPS = MetricsKey.NET_API_DETAIL_QPS + endpoint;
-          MetricsUtil.meterMark(MetricsKey.NET_API_QPS);
-          MetricsUtil.meterMark(endpointQPS);
+        int size = responseWrapper.getByteSize();
+        MetricsUtil.meterMark(MetricsKey.NET_API_OUT_TRAFFIC, size);
+        MetricsUtil.meterMark(MetricsKey.NET_API_QPS);
 
-          int reposeContentSize = responseWrapper.getByteSize();
-          String endpointOutTraffic = MetricsKey.NET_API_DETAIL_OUT_TRAFFIC + endpoint;
-          MetricsUtil.meterMark(MetricsKey.NET_API_OUT_TRAFFIC,
-              reposeContentSize);
-          MetricsUtil.meterMark(endpointOutTraffic, reposeContentSize);
-
-          if (resp.getStatus() != HTTP_SUCCESS) {  //http fail
-            String endpointFailQPS = MetricsKey.NET_API_DETAIL_FAIL_QPS + endpoint;
-            MetricsUtil.meterMark(MetricsKey.NET_API_FAIL_QPS);
-            MetricsUtil.meterMark(endpointFailQPS);
-          }
-        } else { // wrong endpoint
-          MetricsUtil.meterMark(MetricsKey.NET_API_QPS);
+        if (resp.getStatus() == HTTP_SUCCESS) {
+          MetricsUtil.meterMark(MetricsKey.NET_API_DETAIL_OUT_TRAFFIC + endpoint, size);
+          MetricsUtil.meterMark(MetricsKey.NET_API_DETAIL_QPS + endpoint);
+          Metrics.histogramObserve(MetricKeys.Histogram.HTTP_BYTES,
+                  responseWrapper.getByteSize(),
+                  Strings.isNullOrEmpty(endpoint) ? MetricLabels.UNDEFINED : endpoint,
+                  String.valueOf(responseWrapper.getStatus()));
+        } else {
           MetricsUtil.meterMark(MetricsKey.NET_API_FAIL_QPS);
         }
-        Metrics.histogramObserve(MetricKeys.Histogram.HTTP_BYTES,
-            responseWrapper.getByteSize(),
-            Strings.isNullOrEmpty(endpoint) ? MetricLabels.UNDEFINED : endpoint,
-            String.valueOf(responseWrapper.getStatus()));
       } else {
         chain.doFilter(request, response);
       }
