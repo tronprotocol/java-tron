@@ -393,28 +393,28 @@ public class TransactionTraceTest extends BaseTest {
 
     String contractName = "tracetestContract";
     String code = "608060405234801561001057600080fd5b5060005b6103e88110156100375760008181526020819"
-            + "05260409020819055600a01610014565b5061010f806100476000396000f300608060405260043610605257"
-            + "63ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416634903b"
-            + "0d181146057578063da31158814607e578063fe4ba936146093575b600080fd5b348015606257600080fd5b"
-            + "50606c60043560ad565b60408051918252519081900360200190f35b348015608957600080fd5b50606c600"
-            + "43560bf565b348015609e57600080fd5b5060ab60043560243560d1565b005b600060208190529081526040"
-            + "90205481565b60009081526020819052604090205490565b600091825260208290526040909120555600a16"
-            + "5627a7a723058200596e6c0a5371c2c533eb97ba4c1c19b0521750a5624cb5d2e93249c8b7219d20029";
+        + "05260409020819055600a01610014565b5061010f806100476000396000f300608060405260043610605257"
+        + "63ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416634903b"
+        + "0d181146057578063da31158814607e578063fe4ba936146093575b600080fd5b348015606257600080fd5b"
+        + "50606c60043560ad565b60408051918252519081900360200190f35b348015608957600080fd5b50606c600"
+        + "43560bf565b348015609e57600080fd5b5060ab60043560243560d1565b005b600060208190529081526040"
+        + "90205481565b60009081526020819052604090205490565b600091825260208290526040909120555600a16"
+        + "5627a7a723058200596e6c0a5371c2c533eb97ba4c1c19b0521750a5624cb5d2e93249c8b7219d20029";
     String abi = "[{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":"
-            + "\"balances\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"st"
-            + "ateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name"
-            + "\":\"account\",\"type\":\"uint256\"}],\"name\":\"getCoin\",\"outputs\":[{\"name\":\"\""
-            + ",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"func"
-            + "tion\"},{\"constant\":false,\"inputs\":[{\"name\":\"receiver\",\"type\":\"uint256\"},{"
-            + "\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"setCoin\",\"outputs\":[],\"payab"
-            + "le\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\""
-            + "payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}]";
+        + "\"balances\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"st"
+        + "ateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name"
+        + "\":\"account\",\"type\":\"uint256\"}],\"name\":\"getCoin\",\"outputs\":[{\"name\":\"\""
+        + ",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"func"
+        + "tion\"},{\"constant\":false,\"inputs\":[{\"name\":\"receiver\",\"type\":\"uint256\"},{"
+        + "\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"setCoin\",\"outputs\":[],\"payab"
+        + "le\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\""
+        + "payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}]";
     CreateSmartContract smartContract = TvmTestUtils.createSmartContract(
             Commons.decodeFromBase58Check(OwnerAddress), contractName, abi, code, 0,
             100);
     Transaction transaction = Transaction.newBuilder().setRawData(raw.newBuilder().addContract(
-                            Contract.newBuilder().setParameter(Any.pack(smartContract))
-                                    .setType(ContractType.CreateSmartContract)).setFeeLimit(1000000000)
+        Contract.newBuilder().setParameter(Any.pack(smartContract))
+            .setType(ContractType.CreateSmartContract)).setFeeLimit(1000000000)
                     .setTimestamp(System.currentTimeMillis()))
             .build();
 
