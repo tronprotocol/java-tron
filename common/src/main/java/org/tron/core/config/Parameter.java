@@ -76,6 +76,7 @@ public class Parameter {
     public static final long DELEGATE_PERIOD = 3 * 86_400_000L;
     public static final long TRX_PRECISION = 1000_000L;
     public static final long DELEGATE_COST_BASE_SIZE = 275L;
+    public static final long WINDOW_SIZE_PRECISION = 1000L;
   }
 
   public class NodeConstant {

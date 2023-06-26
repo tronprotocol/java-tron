@@ -193,6 +193,7 @@ message Account {
   bytes account_id = 23;
 
   int64 net_window_size = 24;
+  bool net_window_optimized = 25;
 
   message AccountResource {
     // energy resource, get from frozen
@@ -215,6 +216,7 @@ message Account {
 
     int64 delegated_frozenV2_balance_for_energy = 10;
     int64 acquired_delegated_frozenV2_balance_for_energy = 11;
+    bool energy_window_optimized = 12;
   }
   AccountResource account_resource = 26;
   bytes codeHash = 30;

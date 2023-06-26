@@ -368,6 +368,80 @@ public class UnDelegateResourceActuatorTest extends BaseTest {
     }
   }
 
+
+  @Test
+  public void testLockedAndUnlockUnDelegateForBandwidthUsingWindowSizeV2() {
+    delegateLockedBandwidthForOwner(Long.MAX_VALUE);
+    delegateBandwidthForOwner();
+    dbManager.getDynamicPropertiesStore().saveAllowCancelAllUnfreezeV2(1);
+
+    byte[] owner = ByteArray.fromHexString(OWNER_ADDRESS);
+    byte[] receiver = ByteArray.fromHexString(RECEIVER_ADDRESS);
+    long now = System.currentTimeMillis();
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
+
+    AccountCapsule receiverCapsule = dbManager.getAccountStore().get(receiver);
+    receiverCapsule.setNetUsage(1_000_000_000);
+    long nowSlot = dbManager.getChainBaseManager().getHeadSlot();
+    receiverCapsule.setLatestConsumeTime(nowSlot - 14400);
+    dbManager.getAccountStore().put(receiver, receiverCapsule);
+    AccountCapsule ownerCapsule = dbManager.getAccountStore().get(owner);
+    ownerCapsule.setNetUsage(1_000_000_000);
+    ownerCapsule.setLatestConsumeTime(nowSlot - 14400);
+    dbManager.getAccountStore().put(owner, ownerCapsule);
+
+    UnDelegateResourceActuator actuator = new UnDelegateResourceActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(
+            getDelegatedContractForBandwidth(OWNER_ADDRESS, delegateBalance));
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    try {
+      ownerCapsule = dbManager.getAccountStore().get(owner);
+      Assert.assertEquals(2 * delegateBalance,
+              receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth());
+      Assert.assertEquals(2 * delegateBalance,
+              ownerCapsule.getDelegatedFrozenV2BalanceForBandwidth());
+      Assert.assertEquals(0, ownerCapsule.getFrozenV2BalanceForBandwidth());
+      Assert.assertEquals(2 * delegateBalance, ownerCapsule.getTronPower());
+      Assert.assertEquals(1_000_000_000, ownerCapsule.getNetUsage());
+      Assert.assertEquals(1_000_000_000, receiverCapsule.getNetUsage());
+      DelegatedResourceCapsule delegatedResourceCapsule = dbManager.getDelegatedResourceStore()
+              .get(DelegatedResourceCapsule.createDbKeyV2(owner, receiver, false));
+      DelegatedResourceCapsule lockedResourceCapsule = dbManager.getDelegatedResourceStore()
+              .get(DelegatedResourceCapsule.createDbKeyV2(owner, receiver, true));
+      Assert.assertNotNull(delegatedResourceCapsule);
+      Assert.assertNotNull(lockedResourceCapsule);
+
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertEquals(code.SUCESS, ret.getInstance().getRet());
+
+      // check DelegatedResource
+      DelegatedResourceCapsule delegatedResourceCapsule1 = dbManager.getDelegatedResourceStore()
+              .get(DelegatedResourceCapsule.createDbKeyV2(owner, receiver, false));
+      DelegatedResourceCapsule lockedResourceCapsule1 = dbManager.getDelegatedResourceStore()
+              .get(DelegatedResourceCapsule.createDbKeyV2(owner, receiver, true));
+      Assert.assertNull(delegatedResourceCapsule1);
+      Assert.assertNotNull(lockedResourceCapsule1);
+      // check owner
+      ownerCapsule = dbManager.getAccountStore().get(owner);
+      Assert.assertEquals(1000000000, ownerCapsule.getDelegatedFrozenV2BalanceForBandwidth());
+      Assert.assertEquals(delegateBalance, ownerCapsule.getFrozenV2BalanceForBandwidth());
+      Assert.assertEquals(2 * delegateBalance, ownerCapsule.getTronPower());
+      Assert.assertEquals(750000000, ownerCapsule.getNetUsage());
+      Assert.assertEquals(nowSlot, ownerCapsule.getLatestConsumeTime());
+
+      // check receiver
+      receiverCapsule = dbManager.getAccountStore().get(receiver);
+      Assert.assertEquals(1000000000,
+              receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth());
+      Assert.assertEquals(250000000, receiverCapsule.getNetUsage());
+    } catch (ContractValidateException | ContractExeException e) {
+      Assert.fail(e.getMessage());
+    }
+    dbManager.getDynamicPropertiesStore().saveAllowCancelAllUnfreezeV2(0);
+  }
+
   @Test
   public void testLockedUnDelegateBalanceForBandwidthInsufficient() {
     delegateLockedBandwidthForOwner(Long.MAX_VALUE);
