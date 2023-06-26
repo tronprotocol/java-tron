@@ -93,7 +93,7 @@ public class StorageTest {
     Assert.assertEquals(1000, options.maxOpenFiles());
 
     options = StorageUtils.getOptionsByDbName("trans");
-    Assert.assertEquals(256 * 1024 * 1024, options.writeBufferSize());
+    Assert.assertEquals(16 * 1024 * 1024, options.writeBufferSize());
     Assert.assertEquals(50, options.maxOpenFiles());
   }
 

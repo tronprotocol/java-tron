@@ -27,7 +27,7 @@ public class PeerStatusCheck {
       try {
         statusCheck();
       } catch (Exception e) {
-        logger.error("", e);
+        logger.error("Check peers status processing failed", e);
       }
     }, 5, 2, TimeUnit.SECONDS);
   }
@@ -46,18 +46,24 @@ public class PeerStatusCheck {
 
       if (peer.isNeedSyncFromPeer()
           && peer.getBlockBothHaveUpdateTime() < now - blockUpdateTimeout) {
-        logger.warn("Peer {} not sync for a long time.", peer.getInetAddress());
+        logger.warn("Peer {} not sync for a long time", peer.getInetAddress());
         isDisconnected = true;
       }
 
       if (!isDisconnected) {
         isDisconnected = peer.getAdvInvRequest().values().stream()
             .anyMatch(time -> time < now - NetConstants.ADV_TIME_OUT);
+        if (isDisconnected) {
+          logger.warn("Peer {} get avd message timeout", peer.getInetAddress());
+        }
       }
 
       if (!isDisconnected) {
         isDisconnected = peer.getSyncBlockRequested().values().stream()
             .anyMatch(time -> time < now - NetConstants.SYNC_TIME_OUT);
+        if (isDisconnected) {
+          logger.warn("Peer {} get sync message timeout", peer.getInetAddress());
+        }
       }
 
       if (isDisconnected) {

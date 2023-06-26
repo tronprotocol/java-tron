@@ -62,36 +62,30 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
     this.TRANSACTION_COUNT =
         CommonParameter.getInstance().getStorage().getEstimatedBlockTransactions();
     this.recentTransactionStore = recentTransactionStore;
-    int dbVersion = CommonParameter.getInstance().getStorage().getDbVersion();
     String dbEngine = CommonParameter.getInstance().getStorage().getDbEngine();
-    if (dbVersion == 2) {
-      if ("LEVELDB".equals(dbEngine.toUpperCase())) {
-        this.persistentStore = new LevelDB(
-            new LevelDbDataSourceImpl(StorageUtils.getOutputDirectoryByDbName(name),
-                name, StorageUtils.getOptionsByDbName(name),
-                new WriteOptions().sync(CommonParameter.getInstance()
-                    .getStorage().isDbSync())));
-      } else if ("ROCKSDB".equals(dbEngine.toUpperCase())) {
-        String parentPath = Paths
-            .get(StorageUtils.getOutputDirectoryByDbName(name), CommonParameter
-                .getInstance().getStorage().getDbDirectory()).toString();
+    if ("LEVELDB".equals(dbEngine.toUpperCase())) {
+      this.persistentStore = new LevelDB(
+          new LevelDbDataSourceImpl(StorageUtils.getOutputDirectoryByDbName(name),
+              name, StorageUtils.getOptionsByDbName(name),
+              new WriteOptions().sync(CommonParameter.getInstance()
+                  .getStorage().isDbSync())));
+    } else if ("ROCKSDB".equals(dbEngine.toUpperCase())) {
+      String parentPath = Paths
+          .get(StorageUtils.getOutputDirectoryByDbName(name), CommonParameter
+              .getInstance().getStorage().getDbDirectory()).toString();
 
-        this.persistentStore = new RocksDB(
-            new RocksDbDataSourceImpl(parentPath,
-                name, CommonParameter.getInstance()
-                .getRocksDBCustomSettings()));
-      } else {
-        throw new RuntimeException("db type is not supported.");
-      }
+      this.persistentStore = new RocksDB(
+          new RocksDbDataSourceImpl(parentPath,
+              name, CommonParameter.getInstance()
+              .getRocksDBCustomSettings()));
     } else {
-      throw new RuntimeException("db version is not supported.");
+      throw new RuntimeException(String.format("db type: %s is not supported", dbEngine));
     }
     this.bloomFilters[0] = BloomFilter.create(Funnels.byteArrayFunnel(),
         MAX_BLOCK_SIZE * TRANSACTION_COUNT);
     this.bloomFilters[1] = BloomFilter.create(Funnels.byteArrayFunnel(),
         MAX_BLOCK_SIZE * TRANSACTION_COUNT);
 
-    init();
   }
 
   /**
@@ -109,14 +103,13 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
       bloomFilters[1].put(entry.getKey());
       persistentSize++;
     }
-    logger.info("load transaction cache from persistentStore "
-            + "db-size:{}, filter-size:{}, filter-fpp:{}, cost:{}ms",
+    logger.info("Load cache from persistentStore, db: {}, filter: {}, filter-fpp: {}, cost: {} ms.",
         persistentSize,
         bloomFilters[1].approximateElementCount(), bloomFilters[1].expectedFpp(),
         System.currentTimeMillis() - start);
   }
 
-  private void init() {
+  public void init() {
     long size = recentTransactionStore.size();
     if (size != MAX_BLOCK_SIZE) {
       // 0. load from persistentStore
@@ -133,8 +126,7 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
       trx.getTransactionIds().forEach(tid -> bloomFilters[1].put(Hex.decode(tid)));
     }
 
-    logger.info("load transaction cache from recentTransactionStore"
-            + " filter-size:{}, filter-fpp:{}, cost:{}ms",
+    logger.info("Load cache from recentTransactionStore, filter: {}, filter-fpp: {}, cost: {} ms.",
         bloomFilters[1].approximateElementCount(), bloomFilters[1].expectedFpp(),
         System.currentTimeMillis() - start);
   }
@@ -159,10 +151,11 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
       // init active filter start block
       filterStartBlock = blockNum;
       currentFilterIndex = 0;
-      logger.info("init tx cache bloomFilters at {}", blockNum);
+      logger.info("Init tx cache bloomFilters at {}.", blockNum);
     } else if (blockNum - filterStartBlock > MAX_BLOCK_SIZE) {
       // active filter is full
-      logger.info("active bloomFilters is full (size={} fpp={}), create a new one (start={})",
+      logger.info(
+          "Active bloomFilters is full (size = {} fpp = {}), create a new one (start = {}).",
           bloomFilters[currentFilterIndex].approximateElementCount(),
           bloomFilters[currentFilterIndex].expectedFpp(),
           blockNum);

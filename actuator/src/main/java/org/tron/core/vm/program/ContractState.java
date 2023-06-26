@@ -1,11 +1,14 @@
 package org.tron.core.vm.program;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.ContractStateCapsule;
+import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -104,8 +107,18 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public ContractStateCapsule getContractState(byte[] address) {
+    return repository.getContractState(address);
+  }
+
+  @Override
   public void updateContract(byte[] address, ContractCapsule contractCapsule) {
     repository.updateContract(address, contractCapsule);
+  }
+
+  @Override
+  public void updateContractState(byte[] address, ContractStateCapsule contractStateCapsule) {
+    repository.updateContractState(address, contractStateCapsule);
   }
 
   @Override
@@ -181,6 +194,10 @@ public class ContractState implements Repository, ProgramListenerAware {
     repository.putContract(key, value);
   }
 
+  @Override
+  public void putContractState(Key key, Value value) {
+    repository.putContractState(key, value);
+  }
 
   public void putStorage(Key key, Storage cache) {
     repository.putStorage(key, cache);
@@ -208,6 +225,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public void putDelegatedResourceAccountIndex(Key key, Value value) {
+    repository.putDelegatedResourceAccountIndex(key, value);
+  }
+
+  @Override
   public long addTokenBalance(byte[] address, byte[] tokenId, long value) {
     return repository.addTokenBalance(address, tokenId, value);
   }
@@ -220,6 +242,21 @@ public class ContractState implements Repository, ProgramListenerAware {
   @Override
   public long getAccountLeftEnergyFromFreeze(AccountCapsule accountCapsule) {
     return repository.getAccountLeftEnergyFromFreeze(accountCapsule);
+  }
+
+  @Override
+  public long getAccountEnergyUsage(AccountCapsule accountCapsule) {
+    return repository.getAccountEnergyUsage(accountCapsule);
+  }
+
+  @Override
+  public Pair<Long, Long> getAccountEnergyUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule) {
+    return repository.getAccountEnergyUsageBalanceAndRestoreSeconds(accountCapsule);
+  }
+
+  @Override
+  public Pair<Long, Long> getAccountNetUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule) {
+    return repository.getAccountNetUsageBalanceAndRestoreSeconds(accountCapsule);
   }
 
   @Override
@@ -273,6 +310,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public DelegatedResourceAccountIndexCapsule getDelegatedResourceAccountIndex(byte[] key) {
+    return repository.getDelegatedResourceAccountIndex(key);
+  }
+
+  @Override
   public void updateDynamicProperty(byte[] word, BytesCapsule bytesCapsule) {
     repository.updateDynamicProperty(word, bytesCapsule);
   }
@@ -308,6 +350,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public void updateDelegatedResourceAccountIndex(byte[] word, DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule) {
+    repository.updateDelegatedResourceAccountIndex(word, delegatedResourceAccountIndexCapsule);
+  }
+
+  @Override
   public void putDynamicProperty(Key key, Value value) {
     repository.putDynamicProperty(key, value);
   }
@@ -328,6 +375,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public void addTotalTronPowerWeight(long amount) {
+    repository.addTotalTronPowerWeight(amount);
+  }
+
+  @Override
   public void saveTotalNetWeight(long totalNetWeight) {
     repository.saveTotalNetWeight(totalNetWeight);
   }
@@ -338,6 +390,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public void saveTotalTronPowerWeight(long totalTronPowerWeight) {
+    repository.saveTotalTronPowerWeight(totalTronPowerWeight);
+  }
+
+  @Override
   public long getTotalNetWeight() {
     return repository.getTotalNetWeight();
   }
@@ -345,6 +402,21 @@ public class ContractState implements Repository, ProgramListenerAware {
   @Override
   public long getTotalEnergyWeight() {
     return repository.getTotalEnergyWeight();
+  }
+
+  @Override
+  public long getTotalTronPowerWeight() {
+    return repository.getTotalTronPowerWeight();
+  }
+
+  @Override
+  public long getHeadSlot() {
+    return repository.getHeadSlot();
+  }
+
+  @Override
+  public long getSlotByTimestampMs(long timestamp) {
+    return repository.getSlotByTimestampMs(timestamp);
   }
 
 }

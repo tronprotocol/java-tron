@@ -46,6 +46,7 @@ ALLOW_MIN_MEMORY=8192
 MAX_DIRECT_MEMORY=1g
 JVM_MS=4g
 JVM_MX=4g
+IS_BACKUP_GC_LOG=true
 
 SPECIFY_MEMORY=0
 RUN=false
@@ -113,6 +114,32 @@ if [ -z "$JAVA_HOME" ] ; then
   echo "Warning: JAVA_HOME environment variable is not set."
 fi
 
+backupGCLog() {
+  local maxFile=5
+  local gcLogDir=logs/gc_logs/
+  if [ ! -d "$gcLogDir" ];then
+    mkdir -p 'logs/gc_logs'
+  fi
+
+  if [ -f 'gc.log' ]; then
+    echo '[info] backup gc.log'
+    local dateformat=`date "+%Y-%m-%d_%H-%M-%S"`
+    tar -czvf gc.log_$dateformat'.tar.gz' gc.log
+    mv gc.log_$dateformat'.tar.gz' $gcLogDir
+    rm -rf gc.log
+
+    # checking the number of backups
+    local currentDirCount=`ls -l $gcLogDir | grep "gc.log*" | wc -l`
+    if [ $currentDirCount -gt $maxFile ]; then
+      local oldFileSize=`expr $currentDirCount - $maxFile`
+      local oldGcLogFiles=(`ls -1 $gcLogDir |head -n $oldFileSize`)
+    fi
+
+    for fileName in ${oldGcLogFiles[@]}; do
+      rm -rf $gcLogDir$fileName
+    done
+  fi
+}
 
 getLatestReleaseVersion() {
   full_node_version=`git ls-remote --tags $GITHUB_REPOSITORY |grep GreatVoyage- | awk -F '/' 'END{print $3}'`
@@ -356,7 +383,8 @@ rebuildManifest() {
     $JAVACMD -jar $ARCHIVE_JAR -d $REBUILD_DIR -m $REBUILD_MANIFEST_SIZE -b $REBUILD_BATCH_SIZE
   else
     echo 'info: download the rebuild manifest plugin from the github'
-    download $RELEASE_URL/download/GreatVoyage-v4.3.0/$ARCHIVE_JAR $ARCHIVE_JAR
+    local latest=$(`echo getLatestReleaseVersion`)
+    download $RELEASE_URL/download/GreatVoyage-v"$latest"/$ARCHIVE_JAR $ARCHIVE_JAR
     if [[ $download == 0 ]]; then
       echo 'info: download success, rebuild manifest'
       $JAVACMD -jar $ARCHIVE_JAR $REBUILD_DIR -m $REBUILD_MANIFEST_SIZE -b $REBUILD_BATCH_SIZE
@@ -514,14 +542,12 @@ while [ -n "$1" ]; do
   --run)
     if [[ $ALL_OPT_LENGTH -eq 1 ]]; then
       restart
-      exit
     fi
     RUN=true
     shift 1
     ;;
   --stop)
     stopService
-    exit
     ;;
   FullNode)
     RUN=true
@@ -553,6 +579,10 @@ while [ -n "$1" ]; do
   esac
 done
 
+if [[ $IS_BACKUP_GC_LOG = true ]]; then
+  backupGCLog
+fi
+
 if [[ $CLONE_BUILD == true ]];then
   cloneBuild
 fi
@@ -566,7 +596,6 @@ if [[ $QUICK_START == true ]]; then
       restart
     fi
   fi
-  exit
 fi
 
 if [[ $UPGRADE == true ]]; then
@@ -583,13 +612,11 @@ if [[ $DOWNLOAD == true ]]; then
   fi
 fi
 
-if [[ $ALL_OPT_LENGTH -eq 0 ]]; then
+if [[ $ALL_OPT_LENGTH -eq 0 || $ALL_OPT_LENGTH -gt 0 ]]; then
   restart
-  exit
 fi
 
 if [[ $RUN == true ]]; then
   restart
-  exit
 fi
 

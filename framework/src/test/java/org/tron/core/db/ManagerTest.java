@@ -4,13 +4,16 @@ import static org.tron.common.utils.Commons.adjustAssetBalanceV2;
 import static org.tron.common.utils.Commons.adjustBalance;
 import static org.tron.common.utils.Commons.adjustTotalShieldedPoolValue;
 import static org.tron.common.utils.Commons.getExchangeStoreFinal;
+import static org.tron.core.exception.BadBlockException.TypeEnum.CALC_MERKLE_ROOT_FAILED;
 
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -19,11 +22,16 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.testng.collections.Sets;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.JsonUtil;
+import org.tron.common.utils.LocalWitnesses;
+import org.tron.common.utils.PublicMethod;
+import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
@@ -37,8 +45,12 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
+import org.tron.core.config.Parameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ConsensusService;
+import org.tron.core.db.accountstate.AccountStateEntity;
+import org.tron.core.db.accountstate.TrieService;
+import org.tron.core.db.accountstate.storetrie.AccountStateStoreTrie;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
@@ -66,6 +78,8 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ExchangeStore;
 import org.tron.core.store.ExchangeV2Store;
 import org.tron.core.store.IncrementalMerkleTreeStore;
+import org.tron.core.store.StoreFactory;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
@@ -90,6 +104,8 @@ public class ManagerTest extends BlockGenerate {
   private static AtomicInteger port = new AtomicInteger(0);
   private static String accountAddress =
       Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+  private final String privateKey = PublicMethod.getRandomPrivateKey();
+  private LocalWitnesses localWitnesses;
 
   @Before
   public void init() {
@@ -103,6 +119,12 @@ public class ManagerTest extends BlockGenerate {
     consensusService = context.getBean(ConsensusService.class);
     consensusService.start();
     chainManager = dbManager.getChainBaseManager();
+
+    localWitnesses = new LocalWitnesses();
+    localWitnesses.setPrivateKeys(Arrays.asList(privateKey));
+    localWitnesses.initWitnessAccountAddress(true);
+    Args.setLocalWitnesses(localWitnesses);
+
     blockCapsule2 =
         new BlockCapsule(
             1,
@@ -118,6 +140,17 @@ public class ManagerTest extends BlockGenerate {
     blockCapsule2.setMerkleRoot();
     blockCapsule2.sign(
         ByteArray.fromHexString(Args.getLocalWitnesses().getPrivateKey()));
+    Assert.assertTrue(dbManager.getMaxFlushCount() == 200);
+
+    byte[] address = PublicMethod.getAddressByteByPrivateKey(privateKey);
+    ByteString addressByte = ByteString.copyFrom(address);
+    WitnessCapsule witnessCapsule = new WitnessCapsule(addressByte);
+    chainManager.getWitnessStore().put(addressByte.toByteArray(), witnessCapsule);
+    chainManager.addWitness(addressByte);
+
+    AccountCapsule accountCapsule =
+            new AccountCapsule(Protocol.Account.newBuilder().setAddress(addressByte).build());
+    chainManager.getAccountStore().put(addressByte.toByteArray(), accountCapsule);
   }
 
   @After
@@ -140,6 +173,17 @@ public class ManagerTest extends BlockGenerate {
             0, ByteString.copyFrom(new byte[64]));
     b.addTransaction(trx);
     dbManager.updateRecentTransaction(b);
+    try {
+      dbManager.consumeBandwidth(trx, new TransactionTrace(trx, StoreFactory.getInstance(),
+          new RuntimeImpl()));
+    } catch (Exception e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+    }
+    dbManager.consumeMemoFee(trx, new TransactionTrace(trx, StoreFactory.getInstance(),
+        new RuntimeImpl()));
+    Assert.assertTrue(dbManager.getTxListFromPending().isEmpty());
+    Assert.assertNull(dbManager.getTxFromPending(trx.getTransactionId().toString()));
+    Assert.assertEquals(0, dbManager.getPendingSize());
     Assert.assertEquals(1, chainManager.getRecentTransactionStore().size());
     byte[] key = ByteArray.subArray(ByteArray.fromLong(1), 6, 8);
     byte[] value = chainManager.getRecentTransactionStore().get(key).getData();
@@ -179,6 +223,7 @@ public class ManagerTest extends BlockGenerate {
             .setToAddress(ByteString.copyFromUtf8("bbb"))
             .build();
     TransactionCapsule trx = new TransactionCapsule(tc, ContractType.TransferContract);
+
     if (chainManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() == 0) {
       dbManager.pushBlock(blockCapsule);
       Assert.assertEquals(1,
@@ -210,6 +255,9 @@ public class ManagerTest extends BlockGenerate {
     } catch (Exception e) {
       Assert.assertTrue("pushBlock is error", false);
     }
+    TrieService trieService = context.getBean(TrieService.class);
+    Assert.assertTrue(trieService.getFullAccountStateRootHash().length > 0);
+    Assert.assertTrue(trieService.getSolidityAccountStateRootHash().length > 0);
 
     if (isUnlinked) {
       Assert.assertEquals("getBlockIdByNum is error",
@@ -225,7 +273,54 @@ public class ManagerTest extends BlockGenerate {
       }
     }
 
+    try {
+      chainManager.getBlockIdByNum(-1);
+      Assert.fail();
+    } catch (ItemNotFoundException e) {
+      Assert.assertTrue(true);
+    }
+    try {
+      dbManager.getBlockChainHashesOnFork(blockCapsule2.getBlockId());
+    } catch (Exception e) {
+      Assert.assertTrue(e instanceof NonCommonBlockException);
+    }
     Assert.assertTrue("hasBlocks is error", chainManager.hasBlocks());
+  }
+
+  @Test
+  public void transactionTest() {
+    TransactionCapsule trans0 = new TransactionCapsule(Transaction.newBuilder()
+            .setRawData(Transaction.raw.newBuilder().setData(ByteString.copyFrom(
+                    new byte[Parameter.ChainConstant.BLOCK_SIZE + Constant.ONE_THOUSAND]))).build(),
+            ContractType.ShieldedTransferContract);
+    ShieldContract.ShieldedTransferContract trx1 = ShieldContract.ShieldedTransferContract
+            .newBuilder()
+            .setFromAmount(10)
+            .setToAmount(10)
+            .build();
+    TransactionCapsule trans = new TransactionCapsule(trx1, ContractType.ShieldedTransferContract);
+    try {
+      dbManager.pushTransaction(trans0);
+      dbManager.pushTransaction(trans);
+    } catch (Exception e) {
+      Assert.assertTrue(e instanceof TaposException);
+    }
+    dbManager.rePush(trans0);
+    ReflectUtils.invokeMethod(dbManager,"filterOwnerAddress",
+        new Class[]{trans.getClass(), Set.class},trans, Sets.newHashSet());
+    Assert.assertNotNull(dbManager.getTxListFromPending());
+
+    try {
+      dbManager.validateTapos(trans);
+    } catch (Exception e) {
+      Assert.assertTrue(e instanceof TaposException);
+    }
+    try {
+      dbManager.pushVerifiedBlock(chainManager.getHead());
+      dbManager.getBlockChainHashesOnFork(chainManager.getHeadBlockId());
+    } catch (Exception e) {
+      Assert.assertTrue(e instanceof TaposException);
+    }
   }
 
   @Test
@@ -248,6 +343,24 @@ public class ManagerTest extends BlockGenerate {
     Assert.assertTrue(getExchangeStoreFinal(chainManager.getDynamicPropertiesStore(),
         chainManager.getExchangeStore(),
         chainManager.getExchangeV2Store()) instanceof ExchangeV2Store);
+
+  }
+
+  @Test
+  public void entityTest() {
+    AccountStateStoreTrie trie = context.getBean(AccountStateStoreTrie.class);
+    Assert.assertNull(trie.getAccount("".getBytes()));
+    Assert.assertNull(trie.getAccount("".getBytes(), "".getBytes()));
+    Assert.assertNull(trie.getSolidityAccount("".getBytes()));
+    Assert.assertTrue(trie.isEmpty());
+    AccountStateEntity entity = new AccountStateEntity();
+    AccountStateEntity parsedEntity = AccountStateEntity.parse("".getBytes());
+    Assert.assertTrue(parsedEntity != null);
+    Assert.assertTrue(parsedEntity.getAccount() != null);
+    Assert.assertTrue(org.tron.core.db.api.pojo.Account.of() != null);
+    Assert.assertTrue(org.tron.core.db.api.pojo.AssetIssue.of() != null);
+    Assert.assertTrue(org.tron.core.db.api.pojo.Block.of() != null);
+    Assert.assertTrue(org.tron.core.db.api.pojo.Transaction.of() != null);
 
   }
 
@@ -298,7 +411,8 @@ public class ManagerTest extends BlockGenerate {
       Assert.assertTrue(false);
     } catch (BalanceInsufficientException e) {
       Assert.assertEquals(
-          StringUtil.createReadableString(account.createDbKey()) + " insufficient balance",
+          StringUtil.createReadableString(account.createDbKey()) + " insufficient balance"
+                  + ", balance: " + account.getBalance() + ", amount: " + 40,
           e.getMessage());
     }
 
@@ -354,7 +468,8 @@ public class ManagerTest extends BlockGenerate {
     } catch (BalanceInsufficientException e) {
       Assert.assertTrue(e instanceof BalanceInsufficientException);
       Assert.assertEquals(
-          "reduceAssetAmount failed !", e.getMessage());
+          "reduceAssetAmount failed! account: " + StringUtil.encode58Check(account.createDbKey()),
+              e.getMessage());
     }
 
     account.setBalance(30);
@@ -389,7 +504,9 @@ public class ManagerTest extends BlockGenerate {
       Assert.assertTrue(false);
     } catch (BadBlockException e) {
       Assert.assertTrue(e instanceof BadBlockException);
-      Assert.assertEquals("The merkle hash is not validated", e.getMessage());
+      Assert.assertTrue(e.getType().equals(CALC_MERKLE_ROOT_FAILED));
+      Assert.assertEquals("The merkle hash is not validated for "
+              + blockCapsule2.getNum(), e.getMessage());
     } catch (Exception e) {
       Assert.assertFalse(e instanceof Exception);
     }
@@ -403,7 +520,7 @@ public class ManagerTest extends BlockGenerate {
       Assert.assertTrue(false);
     } catch (BalanceInsufficientException e) {
       Assert.assertTrue(e instanceof BalanceInsufficientException);
-      Assert.assertEquals("Total shielded pool value can not below 0", e.getMessage());
+      Assert.assertEquals("total shielded pool value can not below 0, actual: -1", e.getMessage());
     }
 
     long beforeTotalShieldValue = chainManager.getDynamicPropertiesStore()
@@ -444,7 +561,8 @@ public class ManagerTest extends BlockGenerate {
       Assert.assertTrue(false);
     } catch (BadBlockException e) {
       Assert.assertTrue(e instanceof BadBlockException);
-      Assert.assertEquals("shielded transaction count > " + SHIELDED_TRANS_IN_BLOCK_COUNTS,
+      Assert.assertEquals("num: " + blockCapsule2.getNum()
+                      + ", shielded transaction count > " + SHIELDED_TRANS_IN_BLOCK_COUNTS,
           e.getMessage());
     } catch (Exception e) {
       Assert.assertFalse(e instanceof Exception);
@@ -925,5 +1043,26 @@ public class ManagerTest extends BlockGenerate {
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(ByteArray.fromHexString(addressToProvateKeys.get(witnessAddress)));
     return blockCapsule;
+  }
+
+  @Test
+  public void testExpireTransaction() {
+    TransferContract tc =
+        TransferContract.newBuilder()
+            .setAmount(10)
+            .setOwnerAddress(ByteString.copyFromUtf8("aaa"))
+            .setToAddress(ByteString.copyFromUtf8("bbb"))
+            .build();
+    TransactionCapsule trx = new TransactionCapsule(tc, ContractType.TransferContract);
+    long latestBlockTime = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
+    trx.setExpiration(latestBlockTime - 100);
+    try {
+      dbManager.validateCommon(trx);
+      Assert.fail();
+    } catch (TransactionExpirationException e) {
+      Assert.assertTrue(true);
+    } catch (TooBigTransactionException e) {
+      Assert.fail();
+    }
   }
 }

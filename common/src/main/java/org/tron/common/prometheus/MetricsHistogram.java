@@ -17,6 +17,8 @@ public class MetricsHistogram {
         "url");
     init(MetricKeys.Histogram.GRPC_SERVICE_LATENCY, "Grpc Service latency.",
         "endpoint");
+    init(MetricKeys.Histogram.JSONRPC_SERVICE_LATENCY, "JsonRpc Service latency.",
+        "method");
     init(MetricKeys.Histogram.MINER_LATENCY, "miner latency.",
         "miner");
     init(MetricKeys.Histogram.PING_PONG_LATENCY, "node  ping pong  latency.");
@@ -41,6 +43,11 @@ public class MetricsHistogram {
         "type");
     init(MetricKeys.Histogram.HTTP_BYTES, "http_bytes traffic.",
         "url", "status");
+    init(MetricKeys.Histogram.MESSAGE_PROCESS_LATENCY, "process message latency.",
+        "type");
+    init(MetricKeys.Histogram.BLOCK_FETCH_LATENCY, "fetch block latency.");
+    init(MetricKeys.Histogram.BLOCK_RECEIVE_DELAY,
+        "receive block delay time, receiveTime - blockTime.");
   }
 
   private MetricsHistogram() {

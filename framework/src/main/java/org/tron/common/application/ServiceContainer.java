@@ -35,29 +35,29 @@ public class ServiceContainer {
 
   public void init() {
     for (Service service : this.services) {
-      logger.debug("Initing " + service.getClass().getSimpleName());
+      logger.debug("Initing {}.", service.getClass().getSimpleName());
       service.init();
     }
   }
 
   public void init(CommonParameter parameter) {
     for (Service service : this.services) {
-      logger.debug("Initing " + service.getClass().getSimpleName());
+      logger.debug("Initing {}.", service.getClass().getSimpleName());
       service.init(parameter);
     }
   }
 
   public void start() {
-    logger.debug("Starting services");
+    logger.debug("Starting services.");
     for (Service service : this.services) {
-      logger.debug("Starting " + service.getClass().getSimpleName());
+      logger.debug("Starting {}.", service.getClass().getSimpleName());
       service.start();
     }
   }
 
   public void stop() {
     for (Service service : this.services) {
-      logger.debug("Stopping " + service.getClass().getSimpleName());
+      logger.debug("Stopping {}.", service.getClass().getSimpleName());
       service.stop();
     }
   }

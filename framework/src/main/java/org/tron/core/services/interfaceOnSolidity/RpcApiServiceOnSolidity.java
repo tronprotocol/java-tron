@@ -8,19 +8,23 @@ import java.io.IOException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.binary.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.api.DatabaseGrpc.DatabaseImplBase;
 import org.tron.api.GrpcAPI;
-import org.tron.api.GrpcAPI.AddressPrKeyPairMessage;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockExtention;
 import org.tron.api.GrpcAPI.BlockReference;
 import org.tron.api.GrpcAPI.BytesMessage;
+import org.tron.api.GrpcAPI.CanDelegatedMaxSizeRequestMessage;
+import org.tron.api.GrpcAPI.CanDelegatedMaxSizeResponseMessage;
+import org.tron.api.GrpcAPI.CanWithdrawUnfreezeAmountRequestMessage;
+import org.tron.api.GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage;
 import org.tron.api.GrpcAPI.DelegatedResourceList;
 import org.tron.api.GrpcAPI.DelegatedResourceMessage;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.ExchangeList;
+import org.tron.api.GrpcAPI.GetAvailableUnfreezeCountRequestMessage;
+import org.tron.api.GrpcAPI.GetAvailableUnfreezeCountResponseMessage;
 import org.tron.api.GrpcAPI.NoteParameters;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.PaginatedMessage;
@@ -46,6 +50,7 @@ import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
 import org.tron.core.services.ratelimiter.RpcApiAccessInterceptor;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 import org.tron.protos.Protocol.DynamicProperties;
 import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.MarketOrder;
@@ -59,6 +64,7 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.ShieldContract.IncrementalMerkleVoucherInfo;
 import org.tron.protos.contract.ShieldContract.OutputPointInfo;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
+
 
 @Slf4j(topic = "API")
 public class RpcApiServiceOnSolidity implements Service {
@@ -306,10 +312,45 @@ public class RpcApiServiceOnSolidity implements Service {
     }
 
     @Override
+    public void getDelegatedResourceV2(DelegatedResourceMessage request,
+        StreamObserver<DelegatedResourceList> responseObserver) {
+      walletOnSolidity.futureGet(() -> rpcApiService.getWalletSolidityApi()
+          .getDelegatedResourceV2(request, responseObserver));
+    }
+
+    @Override
     public void getDelegatedResourceAccountIndex(BytesMessage request,
-        StreamObserver<org.tron.protos.Protocol.DelegatedResourceAccountIndex> responseObserver) {
+        StreamObserver<DelegatedResourceAccountIndex> responseObserver) {
       walletOnSolidity.futureGet(() -> rpcApiService.getWalletSolidityApi()
           .getDelegatedResourceAccountIndex(request, responseObserver));
+    }
+
+    @Override
+    public void getDelegatedResourceAccountIndexV2(BytesMessage request,
+        StreamObserver<DelegatedResourceAccountIndex> responseObserver) {
+      walletOnSolidity.futureGet(() -> rpcApiService.getWalletSolidityApi()
+          .getDelegatedResourceAccountIndexV2(request, responseObserver));
+    }
+
+    @Override
+    public void getCanDelegatedMaxSize(CanDelegatedMaxSizeRequestMessage request,
+        StreamObserver<CanDelegatedMaxSizeResponseMessage> responseObserver) {
+      walletOnSolidity.futureGet(() -> rpcApiService.getWalletSolidityApi()
+          .getCanDelegatedMaxSize(request, responseObserver));
+    }
+
+    @Override
+    public void getAvailableUnfreezeCount(GetAvailableUnfreezeCountRequestMessage request,
+        StreamObserver<GetAvailableUnfreezeCountResponseMessage> responseObserver) {
+      walletOnSolidity.futureGet(() -> rpcApiService.getWalletSolidityApi()
+          .getAvailableUnfreezeCount(request, responseObserver));
+    }
+
+    @Override
+    public void getCanWithdrawUnfreezeAmount(CanWithdrawUnfreezeAmountRequestMessage request,
+        StreamObserver<CanWithdrawUnfreezeAmountResponseMessage> responseObserver) {
+      walletOnSolidity.futureGet(() -> rpcApiService.getWalletSolidityApi()
+          .getCanWithdrawUnfreezeAmount(request, responseObserver));
     }
 
     @Override
@@ -348,21 +389,11 @@ public class RpcApiServiceOnSolidity implements Service {
           .triggerConstantContract(request, responseObserver));
     }
 
-
     @Override
-    public void generateAddress(EmptyMessage request,
-        StreamObserver<AddressPrKeyPairMessage> responseObserver) {
-      SignInterface cryptoEngine = SignUtils
-          .getGeneratedRandomSign(Utils.getRandom(), Args.getInstance().isECKeyCryptoEngine());
-      byte[] priKey = cryptoEngine.getPrivateKey();
-      byte[] address = cryptoEngine.getAddress();
-      String addressStr = StringUtil.encode58Check(address);
-      String priKeyStr = Hex.encodeHexString(priKey);
-      AddressPrKeyPairMessage.Builder builder = AddressPrKeyPairMessage.newBuilder();
-      builder.setAddress(addressStr);
-      builder.setPrivateKey(priKeyStr);
-      responseObserver.onNext(builder.build());
-      responseObserver.onCompleted();
+    public void estimateEnergy(TriggerSmartContract request,
+        StreamObserver<GrpcAPI.EstimateEnergyMessage> responseObserver) {
+      walletOnSolidity.futureGet(() -> rpcApiService.getWalletSolidityApi()
+          .estimateEnergy(request, responseObserver));
     }
 
     @Override

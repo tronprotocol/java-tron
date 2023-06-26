@@ -1,35 +1,45 @@
 package org.tron.core.net;
 
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
-import org.tron.common.overlay.server.ChannelManager;
-import org.tron.core.exception.P2pException;
-import org.tron.core.exception.P2pException.TypeEnum;
-import org.tron.core.net.message.BlockMessage;
-import org.tron.core.net.message.TransactionMessage;
-import org.tron.core.net.message.TronMessage;
-import org.tron.core.net.messagehandler.BlockMsgHandler;
-import org.tron.core.net.messagehandler.ChainInventoryMsgHandler;
-import org.tron.core.net.messagehandler.FetchInvDataMsgHandler;
-import org.tron.core.net.messagehandler.InventoryMsgHandler;
-import org.tron.core.net.messagehandler.PbftDataSyncHandler;
-import org.tron.core.net.messagehandler.SyncBlockChainMsgHandler;
+import org.tron.common.parameter.CommonParameter;
+import org.tron.core.config.args.Args;
+import org.tron.core.net.message.adv.TransactionMessage;
 import org.tron.core.net.messagehandler.TransactionsMsgHandler;
 import org.tron.core.net.peer.PeerConnection;
+import org.tron.core.net.peer.PeerManager;
 import org.tron.core.net.peer.PeerStatusCheck;
-import org.tron.core.net.service.AdvService;
-import org.tron.core.net.service.FetchBlockService;
-import org.tron.core.net.service.SyncService;
-import org.tron.protos.Protocol.ReasonCode;
+import org.tron.core.net.service.adv.AdvService;
+import org.tron.core.net.service.effective.EffectiveCheckService;
+import org.tron.core.net.service.fetchblock.FetchBlockService;
+import org.tron.core.net.service.nodepersist.NodePersistService;
+import org.tron.core.net.service.relay.RelayService;
+import org.tron.core.net.service.statistics.TronStatsManager;
+import org.tron.core.net.service.sync.SyncService;
+import org.tron.p2p.P2pConfig;
+import org.tron.p2p.P2pService;
+import org.tron.p2p.utils.NetUtil;
 
 @Slf4j(topic = "net")
 @Component
 public class TronNetService {
 
-  @Autowired
-  private ChannelManager channelManager;
+  @Getter
+  private static P2pConfig p2pConfig;
+
+  @Getter
+  private static P2pService p2pService = new P2pService();
 
   @Autowired
   private AdvService advService;
@@ -41,126 +51,150 @@ public class TronNetService {
   private PeerStatusCheck peerStatusCheck;
 
   @Autowired
-  private SyncBlockChainMsgHandler syncBlockChainMsgHandler;
-
-  @Autowired
-  private ChainInventoryMsgHandler chainInventoryMsgHandler;
-
-  @Autowired
-  private InventoryMsgHandler inventoryMsgHandler;
-
-
-  @Autowired
-  private FetchInvDataMsgHandler fetchInvDataMsgHandler;
-
-  @Autowired
-  private BlockMsgHandler blockMsgHandler;
-
-  @Autowired
   private TransactionsMsgHandler transactionsMsgHandler;
-
-  @Autowired
-  private PbftDataSyncHandler pbftDataSyncHandler;
 
   @Autowired
   private FetchBlockService fetchBlockService;
 
-  public void start() {
-    channelManager.init();
-    advService.init();
-    syncService.init();
-    peerStatusCheck.init();
-    transactionsMsgHandler.init();
-    fetchBlockService.init();
-    logger.info("TronNetService start successfully.");
+  private CommonParameter parameter = Args.getInstance();
+
+  @Autowired
+  private P2pEventHandlerImpl p2pEventHandler;
+
+  @Autowired
+  private NodePersistService nodePersistService;
+
+  @Autowired
+  private TronStatsManager tronStatsManager;
+
+  @Autowired
+  private RelayService relayService;
+
+  @Autowired
+  private EffectiveCheckService effectiveCheckService;
+
+  private volatile boolean init;
+
+  private static void setP2pConfig(P2pConfig config) {
+    TronNetService.p2pConfig = config;
   }
 
-  public void stop() {
-    logger.info("TronNetService closed start.");
-    channelManager.close();
+  public void start() {
+    try {
+      init = true;
+      setP2pConfig(getConfig());
+      p2pService.start(p2pConfig);
+      p2pService.register(p2pEventHandler);
+      advService.init();
+      syncService.init();
+      peerStatusCheck.init();
+      transactionsMsgHandler.init();
+      fetchBlockService.init();
+      nodePersistService.init();
+      tronStatsManager.init();
+      PeerManager.init();
+      relayService.init();
+      effectiveCheckService.init();
+      logger.info("Net service start successfully");
+    } catch (Exception e) {
+      logger.error("Net service start failed", e);
+    }
+  }
+
+  public void close() {
+    if (!init) {
+      return;
+    }
+    PeerManager.close();
+    tronStatsManager.close();
+    nodePersistService.close();
     advService.close();
     syncService.close();
     peerStatusCheck.close();
     transactionsMsgHandler.close();
     fetchBlockService.close();
-    logger.info("TronNetService closed successfully.");
+    effectiveCheckService.close();
+    p2pService.close();
+    relayService.close();
+    logger.info("Net service closed successfully");
   }
 
-  public int fastBroadcastTransaction(TransactionMessage msg) {
-    return advService.fastBroadcastTransaction(msg);
+  public static List<PeerConnection> getPeers() {
+    return PeerManager.getPeers();
   }
 
   public void broadcast(Message msg) {
     advService.broadcast(msg);
   }
 
-  protected void onMessage(PeerConnection peer, TronMessage msg) {
-    try {
-      switch (msg.getType()) {
-        case SYNC_BLOCK_CHAIN:
-          syncBlockChainMsgHandler.processMessage(peer, msg);
-          break;
-        case BLOCK_CHAIN_INVENTORY:
-          chainInventoryMsgHandler.processMessage(peer, msg);
-          break;
-        case INVENTORY:
-          inventoryMsgHandler.processMessage(peer, msg);
-          break;
-        case FETCH_INV_DATA:
-          fetchInvDataMsgHandler.processMessage(peer, msg);
-          break;
-        case BLOCK:
-          blockMsgHandler.processMessage(peer, msg);
-          break;
-        case TRXS:
-          transactionsMsgHandler.processMessage(peer, msg);
-          break;
-        case PBFT_COMMIT_MSG:
-          pbftDataSyncHandler.processMessage(peer, msg);
-          break;
-        default:
-          throw new P2pException(TypeEnum.NO_SUCH_MESSAGE, msg.getType().toString());
-      }
-    } catch (Exception e) {
-      processException(peer, msg, e);
-    }
+  public int fastBroadcastTransaction(TransactionMessage msg) {
+    return advService.fastBroadcastTransaction(msg);
   }
 
-  private void processException(PeerConnection peer, TronMessage msg, Exception ex) {
-    ReasonCode code;
-
-    if (ex instanceof P2pException) {
-      TypeEnum type = ((P2pException) ex).getType();
-      switch (type) {
-        case BAD_TRX:
-          code = ReasonCode.BAD_TX;
-          break;
-        case BAD_BLOCK:
-          code = ReasonCode.BAD_BLOCK;
-          break;
-        case NO_SUCH_MESSAGE:
-        case MESSAGE_WITH_WRONG_LENGTH:
-        case BAD_MESSAGE:
-          code = ReasonCode.BAD_PROTOCOL;
-          break;
-        case SYNC_FAILED:
-          code = ReasonCode.SYNC_FAIL;
-          break;
-        case UNLINK_BLOCK:
-          code = ReasonCode.UNLINKABLE;
-          break;
-        default:
-          code = ReasonCode.UNKNOWN;
-          break;
+  public static boolean hasIpv4Stack(Set<String> ipSet) {
+    for (String ip : ipSet) {
+      InetAddress inetAddress;
+      try {
+        inetAddress = InetAddress.getByName(ip);
+      } catch (UnknownHostException e) {
+        logger.warn("Get inet address failed, {}", e.getMessage());
+        continue;
       }
-      logger.warn("Message from {} process failed, {} \n type: {}, detail: {}.",
-          peer.getInetAddress(), msg, type, ex.getMessage());
-    } else {
-      code = ReasonCode.UNKNOWN;
-      logger.warn("Message from {} process failed, {}",
-          peer.getInetAddress(), msg, ex);
+      if (inetAddress instanceof Inet4Address) {
+        return true;
+      }
     }
+    return false;
+  }
 
-    peer.disconnect(code);
+  private P2pConfig getConfig() {
+    P2pConfig config = new P2pConfig();
+    return updateConfig(config);
+  }
+
+  private P2pConfig updateConfig(P2pConfig config) {
+    List<InetSocketAddress> seeds = parameter.getSeedNode().getAddressList();
+    seeds.addAll(nodePersistService.dbRead());
+    logger.debug("Seed InetSocketAddress: {}", seeds);
+    config.getSeedNodes().addAll(seeds);
+    config.getActiveNodes().addAll(parameter.getActiveNodes());
+    config.getTrustNodes().addAll(parameter.getPassiveNodes());
+    config.getActiveNodes().forEach(n -> config.getTrustNodes().add(n.getAddress()));
+    parameter.getFastForwardNodes().forEach(f -> config.getTrustNodes().add(f.getAddress()));
+    int maxConnections = parameter.getMaxConnections();
+    int minConnections = parameter.getMinConnections();
+    int minActiveConnections = parameter.getMinActiveConnections();
+    if (minConnections > maxConnections) {
+      minConnections = maxConnections;
+    }
+    if (minActiveConnections > minConnections) {
+      minActiveConnections = minConnections;
+    }
+    config.setMaxConnections(maxConnections);
+    config.setMinConnections(minConnections);
+    config.setMinActiveConnections(minActiveConnections);
+
+    config.setMaxConnectionsWithSameIp(parameter.getMaxConnectionsWithSameIp());
+    config.setPort(parameter.getNodeListenPort());
+    config.setNetworkId(parameter.getNodeP2pVersion());
+    config.setDisconnectionPolicyEnable(parameter.isOpenFullTcpDisconnect());
+    config.setNodeDetectEnable(parameter.isNodeDetectEnable());
+    config.setDiscoverEnable(parameter.isNodeDiscoveryEnable());
+    if (StringUtils.isEmpty(config.getIp()) && hasIpv4Stack(NetUtil.getAllLocalAddress())) {
+      config.setIp(parameter.getNodeExternalIp());
+    }
+    if (StringUtils.isNotEmpty(config.getIpv6())) {
+      config.getActiveNodes().remove(new InetSocketAddress(config.getIpv6(), config.getPort()));
+    }
+    if (!parameter.nodeEnableIpv6) {
+      config.setIpv6(null);
+    }
+    logger.info("Local ipv4: {}", config.getIp());
+    logger.info("Local ipv6: {}", config.getIpv6());
+    config.setTreeUrls(parameter.getDnsTreeUrls());
+    if (Objects.nonNull(parameter.getDnsPublishConfig())) {
+      config.setPublishConfig(parameter.getDnsPublishConfig());
+    }
+    return config;
   }
 }

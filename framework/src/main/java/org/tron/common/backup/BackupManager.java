@@ -3,7 +3,7 @@ package org.tron.common.backup;
 import static org.tron.common.backup.BackupManager.BackupStatusEnum.INIT;
 import static org.tron.common.backup.BackupManager.BackupStatusEnum.MASTER;
 import static org.tron.common.backup.BackupManager.BackupStatusEnum.SLAVER;
-import static org.tron.common.net.udp.message.UdpMessageTypeEnum.BACKUP_KEEP_ALIVE;
+import static org.tron.common.backup.message.UdpMessageTypeEnum.BACKUP_KEEP_ALIVE;
 
 import io.netty.util.internal.ConcurrentSet;
 import java.net.InetAddress;
@@ -14,11 +14,11 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.tron.common.net.udp.handler.EventHandler;
-import org.tron.common.net.udp.handler.MessageHandler;
-import org.tron.common.net.udp.handler.UdpEvent;
-import org.tron.common.net.udp.message.Message;
-import org.tron.common.net.udp.message.backup.KeepAliveMessage;
+import org.tron.common.backup.message.KeepAliveMessage;
+import org.tron.common.backup.message.Message;
+import org.tron.common.backup.socket.EventHandler;
+import org.tron.common.backup.socket.MessageHandler;
+import org.tron.common.backup.socket.UdpEvent;
 import org.tron.common.parameter.CommonParameter;
 
 @Slf4j(topic = "backup")
@@ -72,7 +72,7 @@ public class BackupManager implements EventHandler {
     try {
       localIp = InetAddress.getLocalHost().getHostAddress();
     } catch (Exception e) {
-      logger.warn("Failed to get local ip.");
+      logger.warn("Failed to get local ip");
     }
 
     for (String member : parameter.getBackupMembers()) {
@@ -105,7 +105,7 @@ public class BackupManager implements EventHandler {
             .accept(new UdpEvent(new KeepAliveMessage(status.equals(MASTER), priority),
                 new InetSocketAddress(member, port))));
       } catch (Throwable t) {
-        logger.error("Exception in send keep alive message:{}", t.getMessage());
+        logger.error("Exception in send keep alive", t);
       }
     }, 1000, keepAliveInterval, TimeUnit.MILLISECONDS);
   }
@@ -120,7 +120,7 @@ public class BackupManager implements EventHandler {
       return;
     }
     if (!members.contains(sender.getHostString())) {
-      logger.warn("Receive keep alive message from {} is not my member.", sender.getHostString());
+      logger.warn("Receive keep alive message from {} is not my member", sender.getHostString());
       return;
     }
 

@@ -44,6 +44,7 @@ public class MetricKeys {
   public static class Histogram {
     public static final String HTTP_SERVICE_LATENCY = "tron:http_service_latency_seconds";
     public static final String GRPC_SERVICE_LATENCY = "tron:grpc_service_latency_seconds";
+    public static final String JSONRPC_SERVICE_LATENCY = "tron:jsonrpc_service_latency_seconds";
     public static final String MINER_LATENCY = "tron:miner_latency_seconds";
     public static final String PING_PONG_LATENCY = "tron:ping_pong_latency_seconds";
     public static final String VERIFY_SIGN_LATENCY = "tron:verify_sign_latency_seconds";
@@ -58,6 +59,9 @@ public class MetricKeys {
     public static final String TCP_BYTES = "tron:tcp_bytes";
     public static final String HTTP_BYTES = "tron:http_bytes";
     public static final String INTERNAL_SERVICE_LATENCY = "tron:internal_service_latency_seconds";
+    public static final String MESSAGE_PROCESS_LATENCY = "tron:message_process_latency_seconds";
+    public static final String BLOCK_FETCH_LATENCY = "tron:block_fetch_latency_seconds";
+    public static final String BLOCK_RECEIVE_DELAY = "tron:block_receive_delay_seconds";
 
     private Histogram() {
       throw new IllegalStateException("Histogram");

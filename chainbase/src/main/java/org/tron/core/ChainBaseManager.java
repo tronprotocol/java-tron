@@ -4,6 +4,7 @@ import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERV
 
 import com.google.protobuf.ByteString;
 import java.util.List;
+import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +44,7 @@ import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.BalanceTraceStore;
 import org.tron.core.store.CodeStore;
+import org.tron.core.store.ContractStateStore;
 import org.tron.core.store.ContractStore;
 import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DelegatedResourceStore;
@@ -143,6 +145,9 @@ public class ChainBaseManager {
   private ContractStore contractStore;
   @Autowired
   @Getter
+  private ContractStateStore contractStateStore;
+  @Autowired
+  @Getter
   private DelegatedResourceStore delegatedResourceStore;
   @Autowired
   @Getter
@@ -232,14 +237,22 @@ public class ChainBaseManager {
   @Autowired
   private DbStatService dbStatService;
 
+  @Getter
+  @Setter
+  private NodeType nodeType;
+
+  @Getter
+  @Setter
+  private long lowestBlockNum = -1; // except num = 0.
+
   public void closeOneStore(ITronChainBase database) {
-    logger.info("******** begin to close " + database.getName() + " ********");
+    logger.info("******** Begin to close {}. ********",  database.getName());
     try {
       database.close();
     } catch (Exception e) {
-      logger.info("failed to close  " + database.getName() + ". " + e);
+      logger.info("Failed to close {}.", database.getName(), e);
     } finally {
-      logger.info("******** end to close " + database.getName() + " ********");
+      logger.info("******** End to close {}. ********", database.getName());
     }
   }
 
@@ -260,6 +273,7 @@ public class ChainBaseManager {
     closeOneStore(abiStore);
     closeOneStore(codeStore);
     closeOneStore(contractStore);
+    closeOneStore(contractStateStore);
     closeOneStore(storageRowStore);
     closeOneStore(exchangeStore);
     closeOneStore(proposalStore);
@@ -297,8 +311,7 @@ public class ChainBaseManager {
     if (CollectionUtils.isNotEmpty(blocks)) {
       return blocks.get(0);
     } else {
-      logger.info("Header block Not Found");
-      throw new HeaderNotFound("Header block Not Found");
+      throw new HeaderNotFound("header block not found");
     }
   }
 
@@ -349,6 +362,9 @@ public class ChainBaseManager {
     }
   }
 
+  public BlockCapsule getKhaosDbHead(){
+    return this.khaosDb.getHead();
+  }
 
   /**
    * Get a BlockCapsule by id.
@@ -409,6 +425,29 @@ public class ChainBaseManager {
     chainBaseManager = manager;
     AssetUtil.setAccountAssetStore(manager.getAccountAssetStore());
     AssetUtil.setDynamicPropertiesStore(manager.getDynamicPropertiesStore());
+  }
+
+  @PostConstruct
+  private void init() {
+    this.lowestBlockNum = this.blockIndexStore.getLimitNumber(1, 1).stream()
+            .map(BlockId::getNum).findFirst().orElse(0L);
+    this.nodeType = getLowestBlockNum() > 1 ? NodeType.LITE : NodeType.FULL;
+  }
+
+  public boolean isLiteNode() {
+    return getNodeType() == NodeType.LITE;
+  }
+
+  public enum  NodeType  {
+    FULL(0),
+    LITE(1);
+
+    @Getter
+    private final int type;
+
+    NodeType(int type) {
+      this.type = type;
+    }
   }
 }
 

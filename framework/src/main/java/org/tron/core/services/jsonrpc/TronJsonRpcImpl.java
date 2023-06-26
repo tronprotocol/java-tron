@@ -14,6 +14,7 @@ import com.alibaba.fastjson.JSON;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessageV3;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +31,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.tron.api.GrpcAPI.BytesMessage;
+import org.tron.api.GrpcAPI.EstimateEnergyMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionExtention;
@@ -37,6 +39,7 @@ import org.tron.common.crypto.Hash;
 import org.tron.common.logsfilter.ContractEventParser;
 import org.tron.common.logsfilter.capsule.BlockFilterCapsule;
 import org.tron.common.logsfilter.capsule.LogsFilterCapsule;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
@@ -134,6 +137,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   private static final String TAG_NOT_SUPPORT_ERROR = "TAG [earliest | pending] not supported";
   private static final String QUANTITY_NOT_SUPPORT_ERROR =
       "QUANTITY not supported, just support TAG as latest";
+  private static final String NO_BLOCK_HEADER = "header not found";
+  private static final String NO_BLOCK_HEADER_BY_HASH = "header for hash not found";
 
   private static final String ERROR_SELECTOR = "08c379a0"; // Function selector for Error(string)
   /**
@@ -387,6 +392,31 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     retBuilder.setResult(true).setCode(response_code.SUCCESS);
   }
 
+  private void estimateEnergy(byte[] ownerAddressByte, byte[] contractAddressByte,
+      long value, byte[] data, TransactionExtention.Builder trxExtBuilder,
+      Return.Builder retBuilder, EstimateEnergyMessage.Builder estimateBuilder)
+      throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
+
+    TriggerSmartContract triggerContract = triggerCallContract(
+        ownerAddressByte,
+        contractAddressByte,
+        value,
+        data,
+        0,
+        null
+    );
+
+    TransactionCapsule trxCap = wallet.createTransactionCapsule(triggerContract,
+        ContractType.TriggerSmartContract);
+    Transaction trx =
+        wallet.estimateEnergy(triggerContract, trxCap, trxExtBuilder, retBuilder, estimateBuilder);
+    trxExtBuilder.setTransaction(trx);
+    trxExtBuilder.setTxid(trxCap.getTransactionId().getByteString());
+    trxExtBuilder.setResult(retBuilder);
+    retBuilder.setResult(true).setCode(response_code.SUCCESS);
+    estimateBuilder.setResult(retBuilder);
+  }
+
   /**
    * @param data Hash of the method signature and encoded parameters. for example:
    * getMethodSign(methodName(uint256,uint256)) || data1 || data2
@@ -466,6 +496,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       StorageRowStore store = manager.getStorageRowStore();
       Storage storage = new Storage(addressByte, store);
       storage.setContractVersion(smartContract.getVersion());
+      storage.generateAddrHash(smartContract.getTrxHash().toByteArray());
 
       DataWord value = storage.getValue(new DataWord(ByteArray.fromHexString(storageIdx)));
       return ByteArray.toJsonHex(value == null ? new byte[32] : value.getData());
@@ -538,8 +569,12 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       return "0x0";
     }
 
+    boolean supportEstimateEnergy = CommonParameter.getInstance().isEstimateEnergy();
+
     TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
     Return.Builder retBuilder = Return.newBuilder();
+    EstimateEnergyMessage.Builder estimateBuilder
+        = EstimateEnergyMessage.newBuilder();
 
     try {
       byte[] contractAddress;
@@ -550,13 +585,22 @@ public class TronJsonRpcImpl implements TronJsonRpc {
         contractAddress = new byte[0];
       }
 
-      callTriggerConstantContract(ownerAddress,
-          contractAddress,
-          args.parseValue(),
-          ByteArray.fromHexString(args.getData()),
-          trxExtBuilder,
-          retBuilder);
-
+      if (supportEstimateEnergy) {
+        estimateEnergy(ownerAddress,
+            contractAddress,
+            args.parseValue(),
+            ByteArray.fromHexString(args.getData()),
+            trxExtBuilder,
+            retBuilder,
+            estimateBuilder);
+      } else {
+        callTriggerConstantContract(ownerAddress,
+            contractAddress,
+            args.parseValue(),
+            ByteArray.fromHexString(args.getData()),
+            trxExtBuilder,
+            retBuilder);
+      }
 
     } catch (ContractValidateException e) {
       String errString = "invalid contract";
@@ -587,7 +631,13 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
       throw new JsonRpcInternalException(errMsg);
     } else {
-      return ByteArray.toJsonHex(trxExtBuilder.getEnergyUsed());
+
+      if (supportEstimateEnergy) {
+        return ByteArray.toJsonHex(estimateBuilder.getEnergyRequired());
+      } else {
+        return ByteArray.toJsonHex(trxExtBuilder.getEnergyUsed());
+      }
+
     }
   }
 
@@ -716,9 +766,54 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public String getCall(CallArguments transactionCall, String blockNumOrTag)
+  public String getCall(CallArguments transactionCall, Object blockParamObj)
       throws JsonRpcInvalidParamsException, JsonRpcInvalidRequestException,
       JsonRpcInternalException {
+
+    String blockNumOrTag;
+    if (blockParamObj instanceof HashMap) {
+      HashMap<String, String> paramMap;
+      paramMap = (HashMap<String, String>) blockParamObj;
+
+      if (paramMap.containsKey("blockNumber")) {
+        try {
+          blockNumOrTag = paramMap.get("blockNumber");
+        } catch (ClassCastException e) {
+          throw new JsonRpcInvalidParamsException(JSON_ERROR);
+        }
+
+        long blockNumber;
+        try {
+          blockNumber = ByteArray.hexToBigInteger(blockNumOrTag).longValue();
+        } catch (Exception e) {
+          throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
+        }
+
+        if (wallet.getBlockByNum(blockNumber) == null) {
+          throw new JsonRpcInternalException(NO_BLOCK_HEADER);
+        }
+
+      } else if (paramMap.containsKey("blockHash")) {
+        try {
+          blockNumOrTag = paramMap.get("blockHash");
+        } catch (ClassCastException e) {
+          throw new JsonRpcInvalidParamsException(JSON_ERROR);
+        }
+
+        if (getBlockByJsonHash(blockNumOrTag) == null) {
+          throw new JsonRpcInternalException(NO_BLOCK_HEADER_BY_HASH);
+        }
+      } else {
+        throw new JsonRpcInvalidRequestException(JSON_ERROR);
+      }
+
+      blockNumOrTag = LATEST_STR;
+    } else if (blockParamObj instanceof String) {
+      blockNumOrTag = (String) blockParamObj;
+    } else {
+      throw new JsonRpcInvalidRequestException(JSON_ERROR);
+    }
+
     if (EARLIEST_STR.equalsIgnoreCase(blockNumOrTag)
         || PENDING_STR.equalsIgnoreCase(blockNumOrTag)) {
       throw new JsonRpcInvalidParamsException(TAG_NOT_SUPPORT_ERROR);
@@ -730,7 +825,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
           ByteArray.fromHexString(transactionCall.getData()));
     } else {
       try {
-        ByteArray.hexToBigInteger(blockNumOrTag).longValue();
+        ByteArray.hexToBigInteger(blockNumOrTag);
       } catch (Exception e) {
         throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
       }

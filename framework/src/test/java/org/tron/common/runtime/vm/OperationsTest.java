@@ -2,6 +2,7 @@ package org.tron.common.runtime.vm;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.File;
 import java.util.List;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -12,29 +13,37 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.util.StringUtils;
+import org.tron.common.BaseTest;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction;
+import org.tron.common.utils.FileUtil;
+import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.store.StoreFactory;
+import org.tron.core.vm.EnergyCost;
 import org.tron.core.vm.JumpTable;
 import org.tron.core.vm.Op;
 import org.tron.core.vm.Operation;
 import org.tron.core.vm.OperationRegistry;
 import org.tron.core.vm.VM;
+import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.invoke.ProgramInvokeMockImpl;
 import org.tron.protos.Protocol;
 
 @Slf4j
-public class OperationsTest {
+public class OperationsTest extends BaseTest {
 
   private ProgramInvokeMockImpl invoke;
   private Program program;
-  private final JumpTable jumpTable = OperationRegistry.newTronV10OperationSet();
+  private final JumpTable jumpTable = OperationRegistry.getTable();
 
   @BeforeClass
   public static void init() {
+    dbPath = "output_operations_test";
+    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
     CommonParameter.getInstance().setDebug(true);
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
@@ -46,7 +55,10 @@ public class OperationsTest {
 
   @AfterClass
   public static void destroy() {
+    ConfigLoader.disable = false;
+    VMConfig.initVmHardFork(false);
     Args.clearParam();
+    FileUtil.deleteDir(new File(dbPath));
     VMConfig.initAllowTvmTransferTrc10(0);
     VMConfig.initAllowTvmConstantinople(0);
     VMConfig.initAllowTvmSolidity059(0);
@@ -92,9 +104,12 @@ public class OperationsTest {
 
   @SneakyThrows
   private Program buildEmptyContext(byte[] ops) {
+    StoreFactory.init();
+    StoreFactory storeFactory = StoreFactory.getInstance();
+    storeFactory.setChainBaseManager(chainBaseManager);
     Program context = new Program(
         ops, ops,
-        new ProgramInvokeMockImpl(ops, ops),
+        new ProgramInvokeMockImpl(storeFactory, ops, ops),
         new InternalTransaction(
             Protocol.Transaction.getDefaultInstance(),
             InternalTransaction.TrxType.TRX_UNKNOWN_TYPE));
@@ -168,7 +183,7 @@ public class OperationsTest {
 
     // test MULMOD
     op = new byte[]{0x60, 0x02, 0x60, 0x01, 0x60, 0x01, 0x09};
-    program = new Program(op, op, invoke, interTrx);;
+    program = new Program(op, op, invoke, interTrx);
     testOperations(program);
     Assert.assertEquals(17, program.getResult().getEnergyUsed());
     Assert.assertEquals(new DataWord(0x01), program.getStack().pop());
@@ -226,7 +241,7 @@ public class OperationsTest {
 
     // test EQ = 0X14
     op = new byte[]{0x60, 0x01, 0x60, 0x02, 0X14};
-    program = new Program(op, op, invoke, interTrx);;
+    program = new Program(op, op, invoke, interTrx);
     testOperations(program);
     Assert.assertEquals(9, program.getResult().getEnergyUsed());
     Assert.assertEquals(new DataWord(0x00), program.getStack().pop());
@@ -247,7 +262,7 @@ public class OperationsTest {
 
     // test OR = 0x17
     op = new byte[]{0x60, 0x01, 0x60, 0x02, 0x17};
-    program = new Program(op, op, invoke, interTrx);;
+    program = new Program(op, op, invoke, interTrx);
     testOperations(program);
     Assert.assertEquals(9, program.getResult().getEnergyUsed());
     Assert.assertEquals(new DataWord(0x03), program.getStack().pop());
@@ -275,7 +290,7 @@ public class OperationsTest {
 
     // test SHL = 0x1b
     op = new byte[]{0x60, 0x01, 0x60, 0x01, 0x1b};
-    program = new Program(op, op, invoke, interTrx);;
+    program = new Program(op, op, invoke, interTrx);
     testOperations(program);
     Assert.assertEquals(9, program.getResult().getEnergyUsed());
     Assert.assertEquals(new DataWord(0x02), program.getStack().pop());
@@ -314,10 +329,11 @@ public class OperationsTest {
 
     // test ADDRESS = 0x30
     op = new byte[]{0x30};
-    program = new Program(op, op, invoke, interTrx);;
+    program = new Program(op, op, invoke, interTrx);
     testOperations(program);
     Assert.assertEquals(2, program.getResult().getEnergyUsed());
-    Assert.assertEquals(invoke.getContractAddress(), program.getStack().pop());
+    Assert.assertArrayEquals(invoke.getContractAddress().getLast20Bytes(),
+        program.getStack().pop().getLast20Bytes());
 
     // test ORIGIN = 0x32
     op = new byte[]{0x32};
@@ -491,7 +507,7 @@ public class OperationsTest {
 
     // MSTORE8 = 0x53
     op = new byte[]{0x60, 0x01, 0x60, 0x01, 0x53};
-    program = new Program(op, op, invoke, interTrx);;
+    program = new Program(op, op, invoke, interTrx);
     testOperations(program);
     Assert.assertEquals(9, program.getResult().getEnergyUsed(), 41);
     Assert.assertEquals(32, program.getMemSize());
@@ -833,6 +849,25 @@ public class OperationsTest {
 
   }
 
+  @Test
+  public void testPush0() throws ContractValidateException {
+    VMConfig.initAllowTvmShangHai(1);
+
+    invoke = new ProgramInvokeMockImpl();
+    Protocol.Transaction trx = Protocol.Transaction.getDefaultInstance();
+    InternalTransaction interTrx =
+        new InternalTransaction(trx, InternalTransaction.TrxType.TRX_UNKNOWN_TYPE);
+
+    byte[] op = new byte[1];
+    op[0] = Op.PUSH0;
+    program = new Program(op, op, invoke, interTrx);
+    testOperations(program);
+    Assert.assertEquals(EnergyCost.getBaseTierCost(null), program.getResult().getEnergyUsed());
+    Assert.assertEquals(DataWord.ZERO(), program.getStack().pop());
+
+    VMConfig.initAllowTvmShangHai(0);
+  }
+
   private void testOperations(Program program) {
     try {
       while (!program.isStopped()) {
@@ -868,10 +903,10 @@ public class OperationsTest {
     } catch (Program.JVMStackOverFlowException | Program.OutOfTimeException e) {
       throw e;
     } catch (RuntimeException e) {
-      if (StringUtils.isEmpty(e.getMessage())) {
-        program.setRuntimeFailure(new RuntimeException("Unknown Exception"));
-      } else {
+      if (StringUtils.hasLength(e.getMessage())) {
         program.setRuntimeFailure(e);
+      } else {
+        program.setRuntimeFailure(new RuntimeException("Unknown Exception"));
       }
     } catch (StackOverflowError soe) {
       logger.info("\n !!! StackOverflowError: update your java run command with -Xss !!!\n", soe);
@@ -908,10 +943,10 @@ public class OperationsTest {
     } catch (Program.JVMStackOverFlowException | Program.OutOfTimeException e) {
       throw e;
     } catch (RuntimeException e) {
-      if (StringUtils.isEmpty(e.getMessage())) {
-        program.setRuntimeFailure(new RuntimeException("Unknown Exception"));
-      } else {
+      if (StringUtils.hasLength(e.getMessage())) {
         program.setRuntimeFailure(e);
+      } else {
+        program.setRuntimeFailure(new RuntimeException("Unknown Exception"));
       }
     } catch (StackOverflowError soe) {
       logger.info("\n !!! StackOverflowError: update your java run command with -Xss !!!\n", soe);

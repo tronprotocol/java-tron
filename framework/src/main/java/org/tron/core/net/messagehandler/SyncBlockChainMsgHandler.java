@@ -11,9 +11,9 @@ import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.net.TronNetDelegate;
-import org.tron.core.net.message.ChainInventoryMessage;
-import org.tron.core.net.message.SyncBlockChainMessage;
 import org.tron.core.net.message.TronMessage;
+import org.tron.core.net.message.sync.ChainInventoryMessage;
+import org.tron.core.net.message.sync.SyncBlockChainMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol;
 
@@ -29,7 +29,10 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
 
     SyncBlockChainMessage syncBlockChainMessage = (SyncBlockChainMessage) msg;
 
-    check(peer, syncBlockChainMessage);
+    if (!check(peer, syncBlockChainMessage)) {
+      peer.disconnect(Protocol.ReasonCode.BAD_PROTOCOL);
+      return;
+    }
 
     long remainNum = 0;
 
@@ -38,7 +41,7 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
     LinkedList<BlockId> blockIds = getLostBlockIds(summaryChainIds);
 
     if (blockIds.size() == 0) {
-      logger.error("Can't get lost block Ids.");
+      logger.warn("Can't get lost block Ids");
       peer.disconnect(Protocol.ReasonCode.INCOMPATIBLE_CHAIN);
       return;
     } else if (blockIds.size() == 1) {
@@ -53,7 +56,7 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
     peer.sendMessage(new ChainInventoryMessage(blockIds, remainNum));
   }
 
-  private void check(PeerConnection peer, SyncBlockChainMessage msg) throws P2pException {
+  private boolean check(PeerConnection peer, SyncBlockChainMessage msg) throws P2pException {
     List<BlockId> blockIds = msg.getBlockIds();
     if (CollectionUtils.isEmpty(blockIds)) {
       throw new P2pException(TypeEnum.BAD_MESSAGE, "SyncBlockChain blockIds is empty");
@@ -61,7 +64,9 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
 
     BlockId firstId = blockIds.get(0);
     if (!tronNetDelegate.containBlockInMainChain(firstId)) {
-      throw new P2pException(TypeEnum.BAD_MESSAGE, "No first block:" + firstId.getString());
+      logger.warn("Sync message from peer {} without the first block: {}",
+              peer.getInetSocketAddress(), firstId.getString());
+      return false;
     }
 
     long headNum = tronNetDelegate.getHeadBlockId().getNum();
@@ -76,6 +81,8 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
       throw new P2pException(TypeEnum.BAD_MESSAGE,
           "lastSyncNum:" + lastSyncBlockId.getNum() + " gt lastNum:" + lastNum);
     }
+
+    return true;
   }
 
   private LinkedList<BlockId> getLostBlockIds(List<BlockId> blockIds) throws P2pException {

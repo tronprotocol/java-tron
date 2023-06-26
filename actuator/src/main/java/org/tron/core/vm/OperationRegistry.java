@@ -10,6 +10,8 @@ public class OperationRegistry {
   public enum Version {
     TRON_V1_0,
     TRON_V1_1,
+    TRON_V1_2,
+    TRON_V1_3,
     // add more
     // TRON_V2,
     // ETH
@@ -20,6 +22,8 @@ public class OperationRegistry {
   static {
     tableMap.put(Version.TRON_V1_0, newTronV10OperationSet());
     tableMap.put(Version.TRON_V1_1, newTronV11OperationSet());
+    tableMap.put(Version.TRON_V1_2, newTronV12OperationSet());
+    tableMap.put(Version.TRON_V1_3, newTronV13OperationSet());
   }
 
   public static JumpTable newTronV10OperationSet() {
@@ -35,23 +39,35 @@ public class OperationRegistry {
   }
 
   public static JumpTable newTronV11OperationSet() {
-    JumpTable table = newTronV10OperationSet();
-    adjustMemOperations(table);
+    return newTronV10OperationSet();
+  }
+
+  public static JumpTable newTronV12OperationSet() {
+    JumpTable table = newTronV11OperationSet();
+    appendFreezeV2Operations(table);
+    appendDelegateOperations(table);
+    return table;
+  }
+
+  public static JumpTable newTronV13OperationSet() {
+    JumpTable table = newTronV12OperationSet();
+    appendShangHaiOperations(table);
     return table;
   }
 
   // Just for warming up class to avoid out_of_time
-  public static void init() {
-  }
+  public static void init() {}
 
   public static JumpTable getTable() {
-    // implement as needed
-    // switch (tx.getType()) {
-    // }
+    // always get the table which has the newest version
+    JumpTable table = tableMap.get(Version.TRON_V1_3);
+
+    // next make the corresponding changes, exclude activating opcode
     if (VMConfig.allowHigherLimitForMaxCpuTimeOfOneTx()) {
-      return tableMap.get(Version.TRON_V1_1);
+      adjustMemOperations(table);
     }
-    return tableMap.get(Version.TRON_V1_0);
+
+    return table;
   }
 
   public static JumpTable newBaseOperationSet() {
@@ -564,5 +580,59 @@ public class OperationRegistry {
         Op.MSTORE8, 2, 0,
         EnergyCost::getMStore8Cost2,
         OperationActions::mStore8Action));
+  }
+
+  public static void appendFreezeV2Operations(JumpTable table) {
+    BooleanSupplier proposal = VMConfig::allowTvmFreezeV2;
+
+    table.set(new Operation(
+        Op.FREEZEBALANCEV2, 2, 1,
+        EnergyCost::getFreezeBalanceV2Cost,
+        OperationActions::freezeBalanceV2Action,
+        proposal));
+
+    table.set(new Operation(
+        Op.UNFREEZEBALANCEV2, 2, 1,
+        EnergyCost::getUnfreezeBalanceV2Cost,
+        OperationActions::unfreezeBalanceV2Action,
+        proposal));
+
+    table.set(new Operation(
+        Op.WITHDRAWEXPIREUNFREEZE, 0, 1,
+        EnergyCost::getWithdrawExpireUnfreezeCost,
+        OperationActions::withdrawExpireUnfreezeAction,
+        proposal));
+
+    table.set(new Operation(
+        Op.CANCELALLUNFREEZEV2, 0, 1,
+        EnergyCost::getCancelAllUnfreezeV2Cost,
+        OperationActions::cancelAllUnfreezeV2Action,
+        proposal));
+  }
+
+  public static void appendDelegateOperations(JumpTable table) {
+    BooleanSupplier proposal = VMConfig::allowTvmFreezeV2;
+
+    table.set(new Operation(
+        Op.DELEGATERESOURCE, 3, 1,
+        EnergyCost::getDelegateResourceCost,
+        OperationActions::delegateResourceAction,
+        proposal));
+
+    table.set(new Operation(
+        Op.UNDELEGATERESOURCE, 3, 1,
+        EnergyCost::getUnDelegateResourceCost,
+        OperationActions::unDelegateResourceAction,
+        proposal));
+  }
+
+  public static void appendShangHaiOperations(JumpTable table) {
+    BooleanSupplier proposal = VMConfig::allowTvmShanghai;
+
+    table.set(new Operation(
+        Op.PUSH0, 0, 1,
+        EnergyCost::getBaseTierCost,
+        OperationActions::push0Action,
+        proposal));
   }
 }

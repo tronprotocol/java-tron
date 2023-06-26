@@ -68,6 +68,9 @@ public class Constant {
   public static final String VM_MIN_TIME_RATIO = "vm.minTimeRatio";
   public static final String VM_MAX_TIME_RATIO = "vm.maxTimeRatio";
   public static final String VM_LONG_RUNNING_TIME = "vm.longRunningTime";
+  public static final String VM_ESTIMATE_ENERGY = "vm.estimateEnergy";
+
+  public static final String VM_ESTIMATE_ENERGY_MAX_RETRY = "vm.estimateEnergyMaxRetry";
 
   public static final String ROCKSDB = "ROCKSDB";
 
@@ -80,15 +83,18 @@ public class Constant {
   public static final String BLOCK_NEED_SYNC_CHECK = "block.needSyncCheck";
   public static final String NODE_DISCOVERY_ENABLE = "node.discovery.enable";
   public static final String NODE_DISCOVERY_PERSIST = "node.discovery.persist";
+  public static final String NODE_EFFECTIVE_CHECK_ENABLE = "node.effectiveCheckEnable";
   public static final String NODE_CONNECTION_TIMEOUT = "node.connection.timeout";
   public static final String NODE_FETCH_BLOCK_TIMEOUT = "node.fetchBlock.timeout";
   public static final String NODE_CHANNEL_READ_TIMEOUT = "node.channel.read.timeout";
   public static final String NODE_MAX_CONNECTIONS = "node.maxConnections";
   public static final String NODE_MIN_CONNECTIONS = "node.minConnections";
   public static final String NODE_MIN_ACTIVE_CONNECTIONS = "node.minActiveConnections";
+  public static final String NODE_SYNC_FETCH_BATCH_NUM = "node.syncFetchBatchNum";
 
   public static final String NODE_MAX_ACTIVE_NODES = "node.maxActiveNodes";
   public static final String NODE_MAX_ACTIVE_NODES_WITH_SAME_IP = "node.maxActiveNodesWithSameIp";
+  public static final String NODE_MAX_TPS = "node.maxTps";
   public static final String NODE_CONNECT_FACTOR = "node.connectFactor";
   public static final String NODE_ACTIVE_CONNECT_FACTOR = "node.activeConnectFactor";
 
@@ -100,6 +106,22 @@ public class Constant {
 
   public static final String NODE_P2P_PING_INTERVAL = "node.p2p.pingInterval";
   public static final String NODE_P2P_VERSION = "node.p2p.version";
+  public static final String NODE_ENABLE_IPV6  = "node.enableIpv6";
+  public static final String NODE_DNS_TREE_URLS = "node.dns.treeUrls";
+  public static final String NODE_DNS_PUBLISH = "node.dns.publish";
+  public static final String NODE_DNS_DOMAIN = "node.dns.dnsDomain";
+  public static final String NODE_DNS_CHANGE_THRESHOLD = "node.dns.changeThreshold";
+  public static final String NODE_DNS_MAX_MERGE_SIZE = "node.dns.maxMergeSize";
+  public static final String NODE_DNS_PRIVATE = "node.dns.dnsPrivate";
+  public static final String NODE_DNS_KNOWN_URLS = "node.dns.knownUrls";
+  public static final String NODE_DNS_STATIC_NODES = "node.dns.staticNodes";
+  public static final String NODE_DNS_SERVER_TYPE = "node.dns.serverType";
+  public static final String NODE_DNS_ACCESS_KEY_ID = "node.dns.accessKeyId";
+  public static final String NODE_DNS_ACCESS_KEY_SECRET = "node.dns.accessKeySecret";
+  public static final String NODE_DNS_ALIYUN_ENDPOINT = "node.dns.aliyunDnsEndpoint";
+  public static final String NODE_DNS_AWS_REGION = "node.dns.awsRegion";
+  public static final String NODE_DNS_AWS_HOST_ZONE_ID = "node.dns.awsHostZoneId";
+
   public static final String NODE_RPC_PORT = "node.rpc.port";
   public static final String NODE_RPC_SOLIDITY_PORT = "node.rpc.solidityPort";
   public static final String NODE_RPC_PBFT_PORT = "node.rpc.PBFTPort";
@@ -172,6 +194,8 @@ public class Constant {
 
   public static final String NODE_IS_OPEN_FULL_TCP_DISCONNECT = "node.isOpenFullTcpDisconnect";
 
+  public static final String NODE_DETECT_ENABLE = "node.nodeDetectEnable";
+
   public static final String NODE_MAX_TRANSACTION_PENDING_SIZE = "node.maxTransactionPendingSize";
 
   public static final String NODE_PENDING_TRANSACTION_TIMEOUT = "node.pendingTransactionTimeout";
@@ -191,6 +215,8 @@ public class Constant {
   public static final String VM_TRACE = "vm.vmTrace";
 
   public static final String VM_SAVE_INTERNAL_TX = "vm.saveInternalTx";
+
+  public static final String VM_SAVE_FEATURED_INTERNAL_TX = "vm.saveFeaturedInternalTx";
 
   // public static final String COMMITTEE_ALLOW_SHIELDED_TRANSACTION = "committee.allowShieldedTransaction";
 
@@ -229,6 +255,10 @@ public class Constant {
   public static final String NODE_SHIELDED_TRANS_IN_PENDING_MAX_COUNTS = "node.shieldedTransInPendingMaxCounts";
 
   public static final String RATE_LIMITER = "rate.limiter";
+
+  public static final String RATE_LIMITER_GLOBAL_QPS = "rate.limiter.global.qps";
+
+  public static final String RATE_LIMITER_GLOBAL_IP_QPS = "rate.limiter.global.ip.qps";
 
   public static final String COMMITTEE_CHANGED_DELEGATION = "committee.changedDelegation";
 
@@ -285,11 +315,16 @@ public class Constant {
 
   public static final String COMMITTEE_ALLOW_TVM_FREEZE = "committee.allowTvmFreeze";
   public static final String COMMITTEE_ALLOW_TVM_VOTE = "committee.allowTvmVote";
+  public static final String COMMITTEE_UNFREEZE_DELAY_DAYS = "committee.unfreezeDelayDays";
 
   public static final String COMMITTEE_ALLOW_TVM_LONDON = "committee.allowTvmLondon";
   public static final String COMMITTEE_ALLOW_TVM_COMPATIBLE_EVM = "committee.allowTvmCompatibleEvm";
   public static final String COMMITTEE_ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX =
       "committee.allowHigherLimitForMaxCpuTimeOfOneTx";
+  public static final String COMMITTEE_ALLOW_NEW_REWARD_ALGORITHM = "committee.allowNewRewardAlgorithm";
+  public static final String COMMITTEE_ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID =
+      "committee.allowOptimizedReturnValueOfChainId";
+
 
   public static final String METRICS_STORAGE_ENABLE = "node.metrics.storageEnable";
   public static final String METRICS_INFLUXDB_IP = "node.metrics.influxdb.ip";
@@ -305,6 +340,26 @@ public class Constant {
 
   public static final String ALLOW_ACCOUNT_ASSET_OPTIMIZATION = "committee.allowAccountAssetOptimization";
   public static final String ALLOW_ASSET_OPTIMIZATION = "committee.allowAssetOptimization";
+  public static final String ALLOW_NEW_REWARD = "committee.allowNewReward";
+  public static final String MEMO_FEE = "committee.memoFee";
+  public static final String ALLOW_DELEGATE_OPTIMIZATION = "committee.allowDelegateOptimization";
+
+  public static final String ALLOW_DYNAMIC_ENERGY = "committee.allowDynamicEnergy";
+
+  public static final String DYNAMIC_ENERGY_THRESHOLD = "committee.dynamicEnergyThreshold";
+
+  public static final String DYNAMIC_ENERGY_INCREASE_FACTOR
+      = "committee.dynamicEnergyIncreaseFactor";
+
+  public static final String DYNAMIC_ENERGY_MAX_FACTOR = "committee.dynamicEnergyMaxFactor";
+
+  public static final long DYNAMIC_ENERGY_FACTOR_DECIMAL = 10_000L;
+
+  public static final long DYNAMIC_ENERGY_INCREASE_FACTOR_RANGE = 10_000L;
+
+  public static final long DYNAMIC_ENERGY_MAX_FACTOR_RANGE = 100_000L;
+
+  public static final int DYNAMIC_ENERGY_DECREASE_DIVISION = 4;
 
   public static final String LOCAL_HOST = "127.0.0.1";
 
@@ -313,4 +368,9 @@ public class Constant {
   public static final String NODE_SHUTDOWN_BLOCK_COUNT = "node.shutdown.BlockCount";
 
   public static final String BLOCK_CACHE_TIMEOUT = "node.blockCacheTimeout";
+
+  public static final String DYNAMIC_CONFIG_ENABLE = "node.dynamicConfig.enable";
+  public static final String DYNAMIC_CONFIG_CHECK_INTERVAL = "node.dynamicConfig.checkInterval";
+
+  public static final String COMMITTEE_ALLOW_TVM_SHANGHAI = "committee.allowTvmShangHai";
 }

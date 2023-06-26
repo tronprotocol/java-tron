@@ -44,7 +44,7 @@ public class PbftManager {
     }
     if (!pbftMessageHandle.isSyncing()) {
       if (Param.getInstance().isEnable()) {
-        for (Miner miner : pbftMessageHandle.getSrMinerList()) {
+        for (Miner miner : pbftMessageHandle.getSrMinerList(epoch)) {
           doAction(PbftMessage.prePrepareBlockMsg(block, epoch, miner));
         }
       } else {
@@ -59,7 +59,7 @@ public class PbftManager {
     }
     if (!pbftMessageHandle.isSyncing()) {
       if (Param.getInstance().isEnable()) {
-        for (Miner miner : pbftMessageHandle.getSrMinerList()) {
+        for (Miner miner : pbftMessageHandle.getSrMinerList(epoch)) {
           doAction(PbftMessage.prePrepareSRLMsg(block, currentWitness, epoch, miner));
         }
       } else {

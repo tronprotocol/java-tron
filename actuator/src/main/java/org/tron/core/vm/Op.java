@@ -148,6 +148,7 @@ public class Op {
 
   /*  Push Operations */
   // Place item on stack
+  public static final int PUSH0 = 0x5f;
   public static final int PUSH1 = 0x60;
   public static final int PUSH2 = 0x61;
   public static final int PUSH3 = 0x62;
@@ -236,6 +237,12 @@ public class Op {
   public static final int FREEZEEXPIRETIME = 0xd7;
   public static final int VOTEWITNESS = 0xd8;
   public static final int WITHDRAWREWARD = 0xd9;
+  public static final int FREEZEBALANCEV2 = 0xda;
+  public static final int UNFREEZEBALANCEV2 = 0xdb;
+  public static final int CANCELALLUNFREEZEV2 = 0xdc;
+  public static final int WITHDRAWEXPIREUNFREEZE = 0xdd;
+  public static final int DELEGATERESOURCE = 0xde;
+  public static final int UNDELEGATERESOURCE = 0xdf;
 
   // (0xf0) Create a new account with associated code
   public static final int CREATE = 0xf0;

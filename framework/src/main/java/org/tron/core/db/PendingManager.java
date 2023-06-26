@@ -34,7 +34,7 @@ public class PendingManager implements AutoCloseable {
         Metrics.counterInc(MetricKeys.Counter.TXS, 1,
             MetricLabels.Counter.TXS_FAIL, MetricLabels.Counter.TXS_FAIL_TIMEOUT);
         if (Args.getInstance().isOpenPrintLog()) {
-          logger.warn("[timeout] remove tx from repush, txId:{}", tx.getTransactionId());
+          logger.warn("Timeout remove tx from repush, txId: {}.", tx.getTransactionId());
         }
       }
     }
@@ -54,7 +54,7 @@ public class PendingManager implements AutoCloseable {
     Metrics.gaugeSet(MetricKeys.Gauge.MANAGER_QUEUE, 0,
         MetricLabels.Gauge.QUEUE_POPPED);
     if (Args.getInstance().isOpenPrintLog()) {
-      logger.warn("pending tx size:{}", dbManager.getRePushTransactions().size());
+      logger.info("Pending tx size: {}.", dbManager.getRePushTransactions().size());
     }
 
   }
@@ -69,7 +69,7 @@ public class PendingManager implements AutoCloseable {
         Metrics.counterInc(MetricKeys.Counter.TXS, 1,
             MetricLabels.Counter.TXS_FAIL, MetricLabels.Counter.TXS_FAIL_TIMEOUT);
         if (Args.getInstance().isOpenPrintLog()) {
-          logger.warn("[timeout] remove tx from pending, txId:{}", tx.getTransactionId());
+          logger.warn("Timeout remove tx from pending, txId: {}.", tx.getTransactionId());
         }
       }
     } catch (InterruptedException e) {

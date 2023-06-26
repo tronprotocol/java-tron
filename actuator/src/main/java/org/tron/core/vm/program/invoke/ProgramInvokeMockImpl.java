@@ -8,6 +8,7 @@ import org.tron.common.crypto.SignUtils;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol;
@@ -45,7 +46,11 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   }
 
   public ProgramInvokeMockImpl(byte[] op, byte[] opAddress) {
-    this.deposit = RepositoryImpl.createRoot(null);
+    this(null, op, opAddress);
+  }
+
+  public ProgramInvokeMockImpl(StoreFactory storeFactory, byte[] op, byte[] opAddress) {
+    this.deposit = RepositoryImpl.createRoot(storeFactory);
     this.deposit.createAccount(opAddress, Protocol.AccountType.Normal);
 
     this.deposit.createAccount(opAddress, Protocol.AccountType.Contract);
