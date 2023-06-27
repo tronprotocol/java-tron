@@ -4,15 +4,15 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
 import java.io.File;
+import java.util.concurrent.TimeUnit;
+import lombok.extern.slf4j.Slf4j;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.tron.api.DatabaseGrpc;
 import org.tron.api.GrpcAPI;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
@@ -20,6 +20,7 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.PublicMethod;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
@@ -28,9 +29,8 @@ import org.tron.core.services.RpcApiService;
 import org.tron.core.services.interfaceOnPBFT.RpcApiServiceOnPBFT;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 
+@Slf4j
 public class LiteFnQueryGrpcInterceptorTest {
-
-  private static final Logger logger = LoggerFactory.getLogger("Test");
 
   private TronApplicationContext context;
   private ManagedChannel channelFull = null;
@@ -38,14 +38,13 @@ public class LiteFnQueryGrpcInterceptorTest {
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubpBFT = null;
-  private DatabaseGrpc.DatabaseBlockingStub databaseBlockingStub = null;
   private RpcApiService rpcApiService;
   private RpcApiServiceOnSolidity rpcApiServiceOnSolidity;
   private RpcApiServiceOnPBFT rpcApiServiceOnPBFT;
   private Application appTest;
   private ChainBaseManager chainBaseManager;
 
-  private String dbPath = "output_grpc_filter_test";
+  private String dbPath = "output_grpc_interceptor_test";
 
   @Rule
   public ExpectedException thrown = ExpectedException.none();
@@ -56,22 +55,24 @@ public class LiteFnQueryGrpcInterceptorTest {
   @Before
   public void init() {
     Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
+    Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setRpcOnSolidityPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setRpcOnPBFTPort(PublicMethod.chooseRandomPort());
     String fullnode = String.format("%s:%d", Args.getInstance().getNodeDiscoveryBindIp(),
             Args.getInstance().getRpcPort());
     String pBFTNode = String.format("%s:%d", Args.getInstance().getNodeDiscoveryBindIp(),
             Args.getInstance().getRpcOnPBFTPort());
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
-            .usePlaintext(true)
+            .usePlaintext()
             .build();
     channelpBFT = ManagedChannelBuilder.forTarget(pBFTNode)
-            .usePlaintext(true)
+            .usePlaintext()
             .build();
     context = new TronApplicationContext(DefaultConfig.class);
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelFull);
     blockingStubpBFT = WalletSolidityGrpc.newBlockingStub(channelpBFT);
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelFull);
-    databaseBlockingStub = DatabaseGrpc.newBlockingStub(channelFull);
     rpcApiService = context.getBean(RpcApiService.class);
     rpcApiServiceOnSolidity = context.getBean(RpcApiServiceOnSolidity.class);
     rpcApiServiceOnPBFT = context.getBean(RpcApiServiceOnPBFT.class);
@@ -89,7 +90,13 @@ public class LiteFnQueryGrpcInterceptorTest {
    * destroy the context.
    */
   @After
-  public void destroy() {
+  public void destroy() throws InterruptedException {
+    if (channelFull != null) {
+      channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+    if (channelpBFT != null) {
+      channelpBFT.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
     Args.clearParam();
     appTest.shutdownServices();
     appTest.shutdown();

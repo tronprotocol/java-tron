@@ -234,7 +234,7 @@ public class SumActuatorTest {
     appTest.startServices();
     appTest.startup();
     channelFull = ManagedChannelBuilder.forTarget(serviceNode)
-            .usePlaintext(true)
+            .usePlaintext()
             .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }

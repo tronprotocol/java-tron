@@ -86,7 +86,6 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
     this.bloomFilters[1] = BloomFilter.create(Funnels.byteArrayFunnel(),
         MAX_BLOCK_SIZE * TRANSACTION_COUNT);
 
-    init();
   }
 
   /**
@@ -110,7 +109,7 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
         System.currentTimeMillis() - start);
   }
 
-  private void init() {
+  public void init() {
     long size = recentTransactionStore.size();
     if (size != MAX_BLOCK_SIZE) {
       // 0. load from persistentStore

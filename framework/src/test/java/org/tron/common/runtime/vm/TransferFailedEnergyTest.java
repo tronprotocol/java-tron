@@ -12,6 +12,7 @@ import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.WalletUtil;
+import org.tron.common.utils.client.utils.AbiUtil;
 import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -20,7 +21,6 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.vm.config.ConfigLoader;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
-import stest.tron.wallet.common.client.utils.AbiUtil;
 
 public class TransferFailedEnergyTest extends VMTestBase {
   /*

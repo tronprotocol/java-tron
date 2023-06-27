@@ -45,7 +45,7 @@ public class MetricsApiServiceTest {
     );
     CommonParameter parameter = Args.getInstance();
     parameter.setNodeListenPort(port);
-    parameter.getSeedNode().getIpList().clear();
+    parameter.getSeedNode().getAddressList().clear();
     parameter.setNodeExternalIp("127.0.0.1");
     context = new TronApplicationContext(DefaultConfig.class);
     appT = ApplicationFactory.create(context);
