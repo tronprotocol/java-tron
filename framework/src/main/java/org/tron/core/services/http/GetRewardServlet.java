@@ -18,8 +18,8 @@ public class GetRewardServlet extends RateLimiterServlet {
   private Manager manager;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
+    long value = 0;
     try {
-      long value = 0;
       byte[] address = Util.getAddress(request);
       if (address != null) {
         value = manager.getMortgageService().queryReward(address);
@@ -35,7 +35,11 @@ public class GetRewardServlet extends RateLimiterServlet {
     } catch (Exception e) {
       logger.error("", e);
       try {
-        response.getWriter().println(Util.printErrorMsg(e));
+        if ("STREAMED".equals(e.getMessage())) {
+          response.getWriter().println("{\"reward\": " + value + "}");
+        } else {
+          response.getWriter().println(Util.printErrorMsg(e));
+        }
       } catch (IOException ioe) {
         logger.debug("IOException: {}", ioe.getMessage());
       }

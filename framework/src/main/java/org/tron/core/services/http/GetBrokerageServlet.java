@@ -18,8 +18,8 @@ public class GetBrokerageServlet extends RateLimiterServlet {
   private Manager manager;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
+    int value = 0;
     try {
-      int value = 0;
       byte[] address = Util.getAddress(request);
       long cycle = manager.getDynamicPropertiesStore().getCurrentCycleNumber();
       if (address != null) {
@@ -34,7 +34,15 @@ public class GetBrokerageServlet extends RateLimiterServlet {
         logger.debug("IOException: {}", ioe.getMessage());
       }
     } catch (Exception e) {
-      Util.processError(e, response);
+      if ("STREAMED".equals(e.getMessage())) {
+        try {
+          response.getWriter().println("{\"brokerage\": " + value + "}");
+        } catch (IOException ex) {
+          logger.debug("IOException: {}", ex.getMessage());
+        }
+      } else {
+        Util.processError(e, response);
+      }
     }
   }
 
