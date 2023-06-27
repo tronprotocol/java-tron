@@ -59,7 +59,7 @@ public class NativeMessageQueue {
   }
 
   public void publishTrigger(String data, String topic) {
-    if (Objects.isNull(publisher) || Objects.isNull(context.isClosed()) || context.isClosed()) {
+    if (Objects.isNull(publisher) || Objects.isNull(context) || context.isClosed()) {
       return;
     }
 

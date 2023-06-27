@@ -136,7 +136,7 @@ public class TrieTest {
       trie2.put(RLP.encodeInt(i), String.valueOf(i).getBytes());
     }
     byte[] rootHash2 = trie2.getRootHash();
-    Assert.assertTrue(java.util.Arrays.equals(rootHash1, rootHash2));
+    Assert.assertArrayEquals(rootHash1, rootHash2);
   }
 
   private void assertTrue(byte[] key, TrieImpl trieCopy) {

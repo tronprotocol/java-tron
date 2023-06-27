@@ -69,6 +69,10 @@ public class ReceiptCapsule {
   @Setter
   private long callerEnergyWindowSize;
 
+  @Getter
+  @Setter
+  private long callerEnergyWindowSizeV2;
+
   /**
    * Window size of caller after merging frozen energy
    */
@@ -82,6 +86,10 @@ public class ReceiptCapsule {
   @Getter
   @Setter
   private long originEnergyWindowSize;
+
+  @Getter
+  @Setter
+  private long originEnergyWindowSizeV2;
 
   /**
    * Window size of origin after merging frozen energy

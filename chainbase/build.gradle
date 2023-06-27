@@ -3,7 +3,7 @@ description = "chainbase – a decentralized database for blockchain."
 // Dependency versions
 // ---------------------------------------
 
-def junitVersion = "4.12"
+def junitVersion = "4.13.2"
 def mockitoVersion = "2.1.0"
 def testNgVersion = "6.11"
 def jacocoVersion = "0.8.0"
