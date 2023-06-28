@@ -6,12 +6,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.ToString;
 import org.bouncycastle.util.encoders.Hex;
+import org.junit.Assert;
 import org.junit.Test;
-import org.testng.Assert;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.WalletUtil;
+import org.tron.common.utils.client.utils.AbiUtil;
 import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -20,7 +21,6 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.vm.config.ConfigLoader;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
-import stest.tron.wallet.common.client.utils.AbiUtil;
 
 public class TransferFailedEnergyTest extends VMTestBase {
   /*
@@ -383,12 +383,12 @@ public class TransferFailedEnergyTest extends VMTestBase {
             factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
     ProgramResult programResult = result.getRuntime().getResult();
     ReceiptCapsule receiptCapsule = result.getReceipt();
-    Assert.assertEquals(receiptCapsule.getResult(), testCase.getReceiptResult(),
-        testCase.getMethod());
+    Assert.assertEquals(testCase.getMethod(),
+        receiptCapsule.getResult(), testCase.getReceiptResult());
     if (testCase.allEnergy) {
-      Assert.assertEquals(programResult.getEnergyUsed(), 1000000, testCase.getMethod());
+      Assert.assertEquals(testCase.getMethod(), programResult.getEnergyUsed(), 1000000);
     } else {
-      Assert.assertTrue(programResult.getEnergyUsed() < allEnergy, testCase.getMethod());
+      Assert.assertTrue(testCase.getMethod(), programResult.getEnergyUsed() < allEnergy);
     }
   }
 

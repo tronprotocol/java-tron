@@ -1,22 +1,17 @@
 package org.tron.core.zksnark;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
 import java.util.Optional;
+import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AssetIssueCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.note.Note;
 import org.tron.core.zen.note.NoteEncryption.Encryption;
@@ -25,7 +20,7 @@ import org.tron.core.zen.note.OutgoingPlaintext;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 
 @Slf4j
-public class NoteEncDecryTest {
+public class NoteEncDecryTest extends BaseTest {
 
   private static final String dbPath = "note_encdec_test";
   private static final String FROM_ADDRESS;
@@ -41,13 +36,12 @@ public class NoteEncDecryTest {
   private static final int VOTE_SCORE = 2;
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
-  private static Manager dbManager;
-  private static TronApplicationContext context;
-  private static Wallet wallet;
+  private static boolean init;
+  @Resource
+  private Wallet wallet;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, "config-localtest.conf");
-    context = new TronApplicationContext(DefaultConfig.class);
     FROM_ADDRESS = Wallet.getAddressPreFixString() + "a7d8a35b260395c14aa456297662092ba3b76fc0";
     ADDRESS_ONE_PRIVATE_KEY = "7f7f701e94d4f1dd60ee5205e7ea8ee31121427210417b608a6b2e96433549a7";
   }
@@ -55,28 +49,15 @@ public class NoteEncDecryTest {
   /**
    * Init data.
    */
-  @BeforeClass
-  public static void init() {
-    wallet = context.getBean(Wallet.class);
-    dbManager = context.getBean(Manager.class);
+  @Before
+  public void init() {
+    if (init) {
+      return;
+    }
     //give a big value for pool, avoid for
     dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(10_000_000_000L);
     // Args.getInstance().setAllowShieldedTransaction(1);
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
+    init = true;
   }
 
   /**

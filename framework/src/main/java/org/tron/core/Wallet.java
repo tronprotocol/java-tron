@@ -122,6 +122,7 @@ import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
 import org.tron.consensus.ConsensusDelegate;
 import org.tron.core.actuator.Actuator;
+import org.tron.core.actuator.ActuatorConstant;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.actuator.UnfreezeBalanceV2Actuator;
 import org.tron.core.actuator.VMActuator;
@@ -533,6 +534,9 @@ public class Wallet {
 
       if (chainBaseManager.getDynamicPropertiesStore().supportVM()) {
         trx.resetResult();
+      }
+      if (trx.getInstance().getRawData().getContractCount() == 0) {
+        throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
       }
       dbManager.pushTransaction(trx);
       int num = tronNetService.fastBroadcastTransaction(message);
@@ -1314,6 +1318,21 @@ public class Wallet {
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getDynamicEnergyMaxFactor")
         .setValue(dbManager.getDynamicPropertiesStore().getDynamicEnergyMaxFactor())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowTvmShangHai")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmShangHai())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowCancelAllUnfreezeV2")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowCancelAllUnfreezeV2())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getMaxDelegateLockPeriod")
+        .setValue(dbManager.getDynamicPropertiesStore().getMaxDelegateLockPeriod())
         .build());
 
     return builder.build();

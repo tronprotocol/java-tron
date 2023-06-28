@@ -1,75 +1,54 @@
 package org.tron.common.runtime.vm;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.bouncycastle.util.encoders.Hex;
-import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
-import org.testng.Assert;
-import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
+import org.tron.common.utils.client.utils.AbiUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.PrecompiledContracts.ValidateMultiSign;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol;
-import stest.tron.wallet.common.client.utils.AbiUtil;
+
 
 @Slf4j
-public class ValidateMultiSignContractTest {
+public class ValidateMultiSignContractTest extends BaseTest {
 
-  private static final String dbPath = "output_ValidateMultiSignContract_test";
   private static final String METHOD_SIGN = "validatemultisign(address,uint256,bytes32,bytes[])";
   private static final byte[] longData;
-  private static TronApplicationContext context;
-  private static Application appT;
-  private static Manager dbManager;
 
   static {
+    dbPath = "output_ValidateMultiSignContract_test";
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-    appT = ApplicationFactory.create(context);
-    dbManager = context.getBean(Manager.class);
-    dbManager.getDynamicPropertiesStore().saveAllowMultiSign(1);
-    dbManager.getDynamicPropertiesStore().saveTotalSignNum(5);
-
     longData = new byte[1000000];
     Arrays.fill(longData, (byte) 2);
   }
 
   ValidateMultiSign contract = new ValidateMultiSign();
 
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
+  @Before
+  public void before() {
+    dbManager.getDynamicPropertiesStore().saveAllowMultiSign(1);
+    dbManager.getDynamicPropertiesStore().saveTotalSignNum(5);
   }
 
   @Test
@@ -81,7 +60,7 @@ public class ValidateMultiSignContractTest {
     signs.add(Hex.toHexString(sign));
 
     //Address non exist
-    Assert.assertEquals(
+    Assert.assertArrayEquals(
         validateMultiSign(StringUtil.encode58Check(key.getAddress()), 1, hash, signs)
             .getValue(), DataWord.ZERO().getData());
   }
@@ -116,7 +95,8 @@ public class ValidateMultiSignContractTest {
             .build();
 
     toAccount
-        .updatePermissions(toAccount.getPermissionById(0), null, Arrays.asList(activePermission));
+        .updatePermissions(toAccount.getPermissionById(0), null,
+            Collections.singletonList(activePermission));
     dbManager.getAccountStore().put(key.getAddress(), toAccount);
 
     //generate data
@@ -140,21 +120,21 @@ public class ValidateMultiSignContractTest {
     signs.add(Hex.toHexString(key1.sign(toSign).toByteArray()));
     signs.add(Hex.toHexString(key2.sign(toSign).toByteArray()));
 
-    Assert.assertEquals(
+    Assert.assertArrayEquals(
         validateMultiSign(StringUtil.encode58Check(key.getAddress()), permissionId, data, signs)
             .getValue(), DataWord.ONE().getData());
 
     //weight not enough
     signs = new ArrayList<>();
     signs.add(Hex.toHexString(key1.sign(toSign).toByteArray()));
-    Assert.assertEquals(
+    Assert.assertArrayEquals(
         validateMultiSign(StringUtil.encode58Check(key.getAddress()), permissionId, data, signs)
             .getValue(), DataWord.ZERO().getData());
 
     //put wrong sign
     signs = new ArrayList<>();
     signs.add(Hex.toHexString(key1.sign(toSign).toByteArray()));
-    Assert.assertEquals(
+    Assert.assertArrayEquals(
         validateMultiSign(StringUtil.encode58Check(key.getAddress()), permissionId, data, signs)
             .getValue(), DataWord.ZERO().getData());
 
@@ -162,7 +142,7 @@ public class ValidateMultiSignContractTest {
     signs.add(Hex.toHexString(key1.sign(toSign).toByteArray()));
     signs.add(Hex.toHexString(new ECKey().sign(toSign).toByteArray()));
 
-    Assert.assertEquals(
+    Assert.assertArrayEquals(
         validateMultiSign(StringUtil.encode58Check(key.getAddress()), permissionId, data, signs)
             .getValue(), DataWord.ZERO().getData());
   }

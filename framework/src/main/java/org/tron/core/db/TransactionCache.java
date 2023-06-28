@@ -14,4 +14,8 @@ public class TransactionCache extends TronStoreWithRevoking<BytesCapsule> {
                           RecentTransactionStore recentTransactionStore) {
     super(new TxCacheDB(dbName, recentTransactionStore));
   }
+
+  public void initCache() {
+    ((TxCacheDB) getDb()).init();
+  }
 }

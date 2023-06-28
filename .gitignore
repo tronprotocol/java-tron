@@ -54,3 +54,5 @@ Wallet
 
 # vm_trace
 /vm_trace/
+
+/framework/propPath

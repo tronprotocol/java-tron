@@ -1,37 +1,42 @@
 package org.tron.core.services.http;
 
 import com.google.gson.JsonObject;
-import java.io.File;
+import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.bouncycastle.util.encoders.Hex;
-import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.tron.common.BaseTest;
 import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
-import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.client.Configuration;
+import org.tron.common.utils.client.utils.HttpMethed;
 import org.tron.core.Constant;
 import org.tron.core.capsule.ContractCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.SmartContractOuterClass;
-import stest.tron.wallet.common.client.utils.HttpMethed;
 
 @Slf4j
-public class TriggerSmartContractServletTest {
+public class TriggerSmartContractServletTest extends BaseTest {
+  private static final String httpNode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list")
+      .get(0);
+  private static final byte[] ownerAddr = Hex.decode("410000000000000000000000000000000000000000");
+  private static final byte[] contractAddr = Hex.decode(
+      "41000000000000000000000000000000000000dEaD");
 
-  private static String dbPath;
-  private static byte[] ownerAddr = Hex.decode("410000000000000000000000000000000000000000");
-  private static byte[] contractAddr = Hex.decode("41000000000000000000000000000000000000dEaD");
-  private static TronApplicationContext context;
+  @Resource
+  private FullNodeHttpApiService httpApiService;
+  @Resource
+  private Application appT;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -43,13 +48,10 @@ public class TriggerSmartContractServletTest {
     // build app context
     DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
     beanFactory.setAllowCircularReferences(false);
-    context = new TronApplicationContext(beanFactory);
-    context.register(DefaultConfig.class);
-    context.refresh();
-    Application appT = ApplicationFactory.create(context);
+  }
 
-    // register http service
-    FullNodeHttpApiService httpApiService = context.getBean(FullNodeHttpApiService.class);
+  @Before
+  public void before() {
     appT.addService(httpApiService);
 
     // start services
@@ -71,30 +73,26 @@ public class TriggerSmartContractServletTest {
     rootRepository.commit();
   }
 
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
-  }
-
 
   @Test
-  public void testNormalCall() throws Exception {
-    HttpMethed.waitToProduceOneBlock("127.0.0.1:8090");
+  public void testNormalCall() {
+    HttpMethed.waitToProduceOneBlock(httpNode);
     JsonObject parameter = new JsonObject();
     parameter.addProperty("owner_address", ByteArray.toHexString(ownerAddr));
     parameter.addProperty("contract_address", ByteArray.toHexString(contractAddr));
     parameter.addProperty("function_selector", "test()");
-    invokeToLocal("triggersmartcontract", parameter);
-    invokeToLocal("triggerconstantcontract", parameter);
-    invokeToLocal("estimateenergy", parameter);
+    HttpResponse triggersmartcontract1 = invokeToLocal("triggersmartcontract", parameter);
+    HttpResponse triggersmartcontract2 = invokeToLocal("triggerconstantcontract", parameter);
+    HttpResponse triggersmartcontract3 = invokeToLocal("estimateenergy", parameter);
+    Assert.assertNotNull(triggersmartcontract1);
+    Assert.assertNotNull(triggersmartcontract2);
+    Assert.assertNotNull(triggersmartcontract3);
   }
 
   public static HttpResponse invokeToLocal(
       String method, JsonObject parameter) {
     try {
-      final String requestUrl = "http://127.0.0.1:8090/wallet/" + method;
+      final String requestUrl = "http://" + httpNode + "/wallet/" + method;
       return HttpMethed.createConnect(requestUrl, parameter);
     } catch (Exception e) {
       e.printStackTrace();

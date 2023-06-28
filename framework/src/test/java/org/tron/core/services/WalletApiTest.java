@@ -13,10 +13,11 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.client.Configuration;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import stest.tron.wallet.common.client.Configuration;
+
 
 @Slf4j
 public class WalletApiTest {
@@ -44,7 +45,7 @@ public class WalletApiTest {
   public void listNodesTest() {
     WalletGrpc.WalletBlockingStub walletStub = WalletGrpc
         .newBlockingStub(ManagedChannelBuilder.forTarget(fullnode)
-            .usePlaintext(true)
+            .usePlaintext()
             .build());
     Assert.assertTrue(walletStub.listNodes(EmptyMessage.getDefaultInstance())
         .getNodesList().size() == 0);

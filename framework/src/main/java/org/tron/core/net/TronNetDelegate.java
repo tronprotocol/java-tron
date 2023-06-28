@@ -146,6 +146,10 @@ public class TronNetDelegate {
     return chainBaseManager.getHeadBlockId();
   }
 
+  public BlockId getKhaosDbHeadBlockId() {
+    return chainBaseManager.getKhaosDbHead().getBlockId();
+  }
+
   public BlockId getSolidBlockId() {
     return chainBaseManager.getSolidBlockId();
   }
@@ -315,13 +319,15 @@ public class TronNetDelegate {
   }
 
   public void validSignature(BlockCapsule block) throws P2pException {
+    boolean flag;
     try {
-      if (!block.validateSignature(dbManager.getDynamicPropertiesStore(),
-              dbManager.getAccountStore())) {
-        throw new P2pException(TypeEnum.BLOCK_SIGN_ERROR, "valid signature failed.");
-      }
-    } catch (ValidateSignatureException e) {
+      flag = block.validateSignature(dbManager.getDynamicPropertiesStore(),
+              dbManager.getAccountStore());
+    } catch (Exception e) {
       throw new P2pException(TypeEnum.BLOCK_SIGN_ERROR, e);
+    }
+    if (!flag) {
+      throw new P2pException(TypeEnum.BLOCK_SIGN_ERROR, "valid signature failed.");
     }
   }
 
@@ -345,6 +351,10 @@ public class TronNetDelegate {
 
   public boolean allowPBFT() {
     return chainBaseManager.getDynamicPropertiesStore().allowPBFT();
+  }
+
+  public Object getForkLock() {
+    return dbManager.getForkLock();
   }
 
 }
