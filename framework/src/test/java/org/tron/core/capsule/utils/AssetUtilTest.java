@@ -2,49 +2,30 @@ package org.tron.core.capsule.utils;
 
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.api.GrpcAPI.AssetIssueList;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
-import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BandwidthProcessor;
-import org.tron.core.db.Manager;
-import org.tron.core.store.AccountAssetStore;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 
 @Slf4j
-public class AssetUtilTest {
+public class AssetUtilTest extends BaseTest {
 
-  private static String dbPath = "output_AssetUtil_test";
-  private static Manager dbManager;
-  private static TronApplicationContext context;
-  private static ChainBaseManager chainBaseManager;
 
   static {
+    dbPath = "output_AssetUtil_test";
     Args.setParam(new String[] {"-d", dbPath, "-w"}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-    dbManager = context.getBean(Manager.class);
-    chainBaseManager = context.getBean(ChainBaseManager.class);
-  }
-
-  @AfterClass
-  public static void removeDb() {
-    Args.clearParam();
-    FileUtil.deleteDir(new File(dbPath));
   }
 
   public static byte[] randomBytes(int length) {
@@ -54,14 +35,12 @@ public class AssetUtilTest {
     return result;
   }
 
-  private static AccountCapsule createAccount2() {
-    AccountAssetStore accountAssetStore = dbManager.getAccountAssetStore();
+  private AccountCapsule createAccount2() {
     com.google.protobuf.ByteString accountName =
         com.google.protobuf.ByteString.copyFrom(randomBytes(16));
     com.google.protobuf.ByteString address = ByteString.copyFrom(randomBytes(32));
     Protocol.AccountType accountType = Protocol.AccountType.forNumber(1);
-    AccountCapsule accountCapsule = new AccountCapsule(accountName, address, accountType);
-    return accountCapsule;
+    return new AccountCapsule(accountName, address, accountType);
   }
 
   @Test

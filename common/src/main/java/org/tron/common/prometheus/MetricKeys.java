@@ -51,6 +51,7 @@ public class MetricKeys {
   public static class Histogram {
     public static final String HTTP_SERVICE_LATENCY = "tron:http_service_latency_seconds";
     public static final String GRPC_SERVICE_LATENCY = "tron:grpc_service_latency_seconds";
+    public static final String JSONRPC_SERVICE_LATENCY = "tron:jsonrpc_service_latency_seconds";
     public static final String MINER_LATENCY = "tron:miner_latency_seconds";
     public static final String PING_PONG_LATENCY = "tron:ping_pong_latency_seconds";
     public static final String VERIFY_SIGN_LATENCY = "tron:verify_sign_latency_seconds";

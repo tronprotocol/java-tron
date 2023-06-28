@@ -3,29 +3,23 @@ package org.tron.common.runtime;
 import static org.tron.core.capsule.utils.TransactionUtil.buildTransactionInfoInstance;
 import static org.tron.core.utils.TransactionUtil.generateContractAddress;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 import org.testng.Assert;
-import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -41,22 +35,18 @@ import org.tron.protos.Protocol.Transaction.Result.contractResult;
 
 
 @Slf4j
-public class ProgramResultTest {
+public class ProgramResultTest extends BaseTest {
 
-  private static final String dbPath = "output_InternalTransactionComplexTest";
   private static final String OWNER_ADDRESS;
   private static final String TRANSFER_TO;
   private static Runtime runtime;
-  private static Manager dbManager;
-  private static TronApplicationContext context;
-  private static Application appT;
   private static RepositoryImpl repository;
+  private static boolean init;
 
   static {
+    dbPath = "output_InternalTransactionComplexTest";
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug", "--support-constant"},
         Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-    appT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     TRANSFER_TO = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
   }
@@ -64,29 +54,18 @@ public class ProgramResultTest {
   /**
    * Init data.
    */
-  @BeforeClass
-  public static void init() {
-    dbManager = context.getBean(Manager.class);
+  @Before
+  public void init() {
+    if (init) {
+      return;
+    }
     repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
     repository.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
     repository.addBalance(Hex.decode(OWNER_ADDRESS), 100000000);
     repository.createAccount(Hex.decode(TRANSFER_TO), AccountType.Normal);
     repository.addBalance(Hex.decode(TRANSFER_TO), 0);
     repository.commit();
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
+    init = true;
   }
 
   /**
@@ -127,8 +106,8 @@ public class ProgramResultTest {
         internalTransaction -> hashList.add(Hex.toHexString(internalTransaction.getHash())));
     // No dup
     List<String> dupHash = hashList.stream()
-        .collect(Collectors.toMap(e -> e, e -> 1, (a, b) -> a + b)).entrySet().stream()
-        .filter(entry -> entry.getValue() > 1).map(entry -> entry.getKey())
+        .collect(Collectors.toMap(e -> e, e -> 1, Integer::sum)).entrySet().stream()
+        .filter(entry -> entry.getValue() > 1).map(Map.Entry::getKey)
         .collect(Collectors.toList());
     Assert.assertEquals(dupHash.size(), 0);
   }
@@ -307,27 +286,27 @@ public class ProgramResultTest {
         new DataWord(internalTransactionsList.get(0).getTransferToAddress()).getLast20Bytes(),
         new DataWord(bContract).getLast20Bytes());
     Assert.assertEquals(internalTransactionsList.get(0).getNote(), "create");
-    Assert.assertEquals(internalTransactionsList.get(0).isRejected(), false);
+    Assert.assertFalse(internalTransactionsList.get(0).isRejected());
     Assert.assertEquals(internalTransactionsList.get(1).getValue(), 5);
     Assert.assertEquals(internalTransactionsList.get(1).getSender(), aContract);
     Assert.assertEquals(
         new DataWord(internalTransactionsList.get(1).getTransferToAddress()).getLast20Bytes(),
         new DataWord(bContract).getLast20Bytes());
     Assert.assertEquals(internalTransactionsList.get(1).getNote(), "call");
-    Assert.assertEquals(internalTransactionsList.get(1).isRejected(), false);
+    Assert.assertFalse(internalTransactionsList.get(1).isRejected());
     Assert.assertEquals(internalTransactionsList.get(2).getValue(), 0);
     Assert.assertEquals(internalTransactionsList.get(2).getSender(), aContract);
     Assert.assertEquals(
         new DataWord(internalTransactionsList.get(2).getTransferToAddress()).getLast20Bytes(),
         new DataWord(bContract).getLast20Bytes());
     Assert.assertEquals(internalTransactionsList.get(2).getNote(), "call");
-    Assert.assertEquals(internalTransactionsList.get(2).isRejected(), false);
+    Assert.assertFalse(internalTransactionsList.get(2).isRejected());
     Assert.assertEquals(internalTransactionsList.get(3).getValue(), 1);
     Assert.assertEquals(new DataWord(internalTransactionsList.get(3).getSender()).getLast20Bytes(),
         new DataWord(bContract).getLast20Bytes());
     Assert.assertEquals(internalTransactionsList.get(3).getTransferToAddress(), cContract);
     Assert.assertEquals(internalTransactionsList.get(3).getNote(), "call");
-    Assert.assertEquals(internalTransactionsList.get(3).isRejected(), false);
+    Assert.assertFalse(internalTransactionsList.get(3).isRejected());
     checkTransactionInfo(traceSuccess, trx1, null, internalTransactionsList);
 
     // ======================================= Test Fail =======================================
@@ -352,28 +331,28 @@ public class ProgramResultTest {
         new DataWord(internalTransactionsListFail.get(0).getTransferToAddress()).getLast20Bytes(),
         new DataWord(bContract2).getLast20Bytes());
     Assert.assertEquals(internalTransactionsListFail.get(0).getNote(), "create");
-    Assert.assertEquals(internalTransactionsListFail.get(0).isRejected(), true);
+    Assert.assertTrue(internalTransactionsListFail.get(0).isRejected());
     Assert.assertEquals(internalTransactionsListFail.get(1).getValue(), 5);
     Assert.assertEquals(internalTransactionsListFail.get(1).getSender(), aContract);
     Assert.assertEquals(
         new DataWord(internalTransactionsListFail.get(1).getTransferToAddress()).getLast20Bytes(),
         new DataWord(bContract2).getLast20Bytes());
     Assert.assertEquals(internalTransactionsListFail.get(1).getNote(), "call");
-    Assert.assertEquals(internalTransactionsListFail.get(1).isRejected(), true);
+    Assert.assertTrue(internalTransactionsListFail.get(1).isRejected());
     Assert.assertEquals(internalTransactionsListFail.get(2).getValue(), 0);
     Assert.assertEquals(internalTransactionsListFail.get(2).getSender(), aContract);
     Assert.assertEquals(
         new DataWord(internalTransactionsListFail.get(2).getTransferToAddress()).getLast20Bytes(),
         new DataWord(bContract2).getLast20Bytes());
     Assert.assertEquals(internalTransactionsListFail.get(2).getNote(), "call");
-    Assert.assertEquals(internalTransactionsListFail.get(2).isRejected(), true);
+    Assert.assertTrue(internalTransactionsListFail.get(2).isRejected());
     Assert.assertEquals(internalTransactionsListFail.get(3).getValue(), 1);
     Assert.assertEquals(
         new DataWord(internalTransactionsListFail.get(3).getSender()).getLast20Bytes(),
         new DataWord(bContract2).getLast20Bytes());
     Assert.assertEquals(internalTransactionsListFail.get(3).getTransferToAddress(), cContract);
     Assert.assertEquals(internalTransactionsListFail.get(3).getNote(), "call");
-    Assert.assertEquals(internalTransactionsListFail.get(3).isRejected(), true);
+    Assert.assertTrue(internalTransactionsListFail.get(3).isRejected());
     checkTransactionInfo(traceFailed, trx2, null, internalTransactionsListFail);
   }
 
@@ -520,14 +499,14 @@ public class ProgramResultTest {
         .getInternalTransactions();
     Assert
         .assertEquals(dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getBalance(), 1000);
-    Assert.assertEquals(dbManager.getAccountStore().get(suicideContract), null);
+    Assert.assertNull(dbManager.getAccountStore().get(suicideContract));
     Assert.assertEquals(internalTransactionsList.get(0).getValue(), 1000);
     Assert.assertEquals(new DataWord(internalTransactionsList.get(0).getSender()).getLast20Bytes(),
         new DataWord(suicideContract).getLast20Bytes());
     Assert.assertEquals(internalTransactionsList.get(0).getTransferToAddress(),
         Hex.decode(TRANSFER_TO));
     Assert.assertEquals(internalTransactionsList.get(0).getNote(), "suicide");
-    Assert.assertEquals(internalTransactionsList.get(0).isRejected(), false);
+    Assert.assertFalse(internalTransactionsList.get(0).isRejected());
     checkTransactionInfo(trace, trx, null, internalTransactionsList);
   }
 

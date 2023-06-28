@@ -6,27 +6,20 @@ import static org.tron.core.db.TransactionTrace.convertToTronAddress;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.encoders.Hex;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -37,9 +30,7 @@ import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
@@ -56,21 +47,17 @@ import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
 import org.tron.protos.contract.Common;
 
 @Slf4j
-public class PrecompiledContractsTest {
+public class PrecompiledContractsTest extends BaseTest {
 
   // common
   private static final DataWord voteContractAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000010001");
-  private static final DataWord withdrawBalanceAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000000010004");
   private static final DataWord proposalApproveAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000010005");
   private static final DataWord proposalCreateAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000010006");
   private static final DataWord proposalDeleteAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000010007");
-  private static final DataWord convertFromTronBytesAddressAddr = new DataWord(
-      "0000000000000000000000000000000000000000000000000000000000010008");
   private static final DataWord convertFromTronBase58AddressAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000010009");
 
@@ -108,7 +95,6 @@ public class PrecompiledContractsTest {
   private static final DataWord totalAcquiredResourceAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000001000015");
 
-  private static final String dbPath = "output_PrecompiledContracts_test";
   private static final String ACCOUNT_NAME = "account";
   private static final String OWNER_ADDRESS;
   private static final String WITNESS_NAME = "witness";
@@ -117,42 +103,14 @@ public class PrecompiledContractsTest {
   private static final String URL = "https://tron.network";
   // withdraw
   private static final long initBalance = 10_000_000_000L;
-  private static final long allowance = 32_000_000L;
   private static final long latestTimestamp = 1_000_000L;
-  private static TronApplicationContext context;
-  private static Application appT;
-  private static Manager dbManager;
 
   static {
+    dbPath = "output_PrecompiledContracts_test";
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-    appT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     WITNESS_ADDRESS = Wallet.getAddressPreFixString() + WITNESS_ADDRESS_BASE;
 
-  }
-
-
-  /**
-   * Init data.
-   */
-  @BeforeClass
-  public static void init() {
-    dbManager = context.getBean(Manager.class);
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   /**
@@ -459,7 +417,6 @@ public class PrecompiledContractsTest {
 
     // with usage.
     byte[] TOTAL_ENERGY_CURRENT_LIMIT = "TOTAL_ENERGY_CURRENT_LIMIT".getBytes();
-    byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
 
     long energyLimit = 1_000_000_000_000L;
     tempRepository.getDynamicPropertiesStore().put(TOTAL_ENERGY_CURRENT_LIMIT,
@@ -1168,10 +1125,6 @@ public class PrecompiledContractsTest {
     res = totalAcquiredResourcePcc.execute(ByteUtil.merge(address32, ByteUtil.longTo32Bytes(2)));
     Assert.assertTrue(res.getLeft());
     Assert.assertEquals(0, ByteArray.toLong(res.getRight()));
-  }
-
-  @Test
-  public void convertFromTronBytesAddressNativeTest() {
   }
 
   //@Test

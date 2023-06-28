@@ -1,5 +1,6 @@
 package org.tron.core.services.http;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -18,6 +19,7 @@ public class DelegateResourceServlet extends RateLimiterServlet {
   @Autowired
   private Wallet wallet;
 
+  @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
       PostParams params = PostParams.getPostParams(request);
@@ -26,7 +28,7 @@ public class DelegateResourceServlet extends RateLimiterServlet {
       Transaction tx = wallet
           .createTransactionCapsule(build.build(), ContractType.DelegateResourceContract)
           .getInstance();
-      JSONObject jsonObject = JSONObject.parseObject(params.getParams());
+      JSONObject jsonObject = JSON.parseObject(params.getParams());
       tx = Util.setTransactionPermissionId(jsonObject, tx);
       response.getWriter().println(Util.printCreateTransaction(tx, params.isVisible()));
     } catch (Exception e) {
