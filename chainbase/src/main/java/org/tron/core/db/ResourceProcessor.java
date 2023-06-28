@@ -1,7 +1,5 @@
 package org.tron.core.db;
 
-import static java.lang.Math.ceil;
-import static java.lang.Math.round;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.ChainConstant.WINDOW_SIZE_PRECISION;
 

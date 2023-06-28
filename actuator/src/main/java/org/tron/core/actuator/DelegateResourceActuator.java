@@ -5,6 +5,7 @@ import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_DELEGATE;
 import static org.tron.common.prometheus.MetricLabels.STAKE_ENERGY;
 import static org.tron.common.prometheus.MetricLabels.STAKE_NET;
 import static org.tron.common.prometheus.MetricLabels.STAKE_VERSION_V2;
+import static org.tron.common.prometheus.MetricLabels.STAKE_VERSION_V2_1;
 import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_PERIOD;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
@@ -72,7 +73,8 @@ public class DelegateResourceActuator extends AbstractActuator {
     boolean lock = delegateResourceContract.getLock();
     long lockPeriod = getLockPeriod(dynamicStore, delegateResourceContract);
     byte[] receiverAddress = delegateResourceContract.getReceiverAddress().toByteArray();
-
+    String version = dynamicStore.supportMaxDelegateLockPeriod() ?
+        STAKE_VERSION_V2_1 : STAKE_VERSION_V2;
     // delegate resource to receiver
     switch (delegateResourceContract.getResource()) {
       case BANDWIDTH:
@@ -82,7 +84,7 @@ public class DelegateResourceActuator extends AbstractActuator {
         ownerCapsule.addDelegatedFrozenV2BalanceForBandwidth(delegateBalance);
         ownerCapsule.addFrozenBalanceForBandwidthV2(-delegateBalance);
         Metrics.histogramObserve(STAKE_HISTOGRAM, delegateBalance,
-            STAKE_VERSION_V2, STAKE_DELEGATE, STAKE_NET);
+            version, STAKE_DELEGATE, STAKE_NET);
         break;
       case ENERGY:
         delegateResource(ownerAddress, receiverAddress, false,
@@ -91,12 +93,12 @@ public class DelegateResourceActuator extends AbstractActuator {
         ownerCapsule.addDelegatedFrozenV2BalanceForEnergy(delegateBalance);
         ownerCapsule.addFrozenBalanceForEnergyV2(-delegateBalance);
         Metrics.histogramObserve(STAKE_HISTOGRAM, delegateBalance,
-            STAKE_VERSION_V2, STAKE_DELEGATE, STAKE_ENERGY);
+            version, STAKE_DELEGATE, STAKE_ENERGY);
         break;
       default:
         logger.debug("Resource Code Error.");
     }
-    logger.info("delegate resource detail:{},{},{}",
+    logger.info("delegate resource {} detail:{},{},{}", version,
         StringUtil.createReadableString(ownerCapsule.getAddress()),
         ownerCapsule.getType(), delegateBalance);
     accountStore.put(ownerCapsule.createDbKey(), ownerCapsule);
