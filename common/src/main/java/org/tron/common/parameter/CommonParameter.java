@@ -1,15 +1,11 @@
 package org.tron.common.parameter;
 
-import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
-
 import com.beust.jcommander.Parameter;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-
-import com.google.common.annotations.VisibleForTesting;
 import lombok.Getter;
 import lombok.Setter;
 import org.quartz.CronExpression;
@@ -22,6 +18,7 @@ import org.tron.core.Constant;
 import org.tron.core.config.args.Overlay;
 import org.tron.core.config.args.SeedNode;
 import org.tron.core.config.args.Storage;
+import org.tron.p2p.dns.update.PublishConfig;
 
 public class CommonParameter {
 
@@ -30,6 +27,7 @@ public class CommonParameter {
   public static CommonParameter PARAMETER = new CommonParameter();
   @Setter
   public static boolean ENERGY_LIMIT_HARD_FORK = false;
+  @Getter
   @Parameter(names = {"-c", "--config"}, description = "Config file (default:config.conf)")
   public String shellConfFileName = "";
   @Getter
@@ -142,6 +140,9 @@ public class CommonParameter {
   public boolean nodeDiscoveryPersist;
   @Getter
   @Setter
+  public boolean nodeEffectiveCheckEnable;
+  @Getter
+  @Setter
   public int nodeConnectionTimeout;
   @Getter
   @Setter
@@ -161,6 +162,9 @@ public class CommonParameter {
   @Getter
   @Setter
   public int maxConnectionsWithSameIp;
+  @Getter
+  @Setter
+  public int maxTps;
   @Getter
   @Setter
   public int minParticipationRate;
@@ -188,6 +192,19 @@ public class CommonParameter {
   @Getter
   @Setter
   public String p2pNodeId;
+  @Getter
+  @Setter
+  public boolean nodeEnableIpv6 = false;
+  @Getter
+  @Setter
+  public List<String> dnsTreeUrls;
+  @Getter
+  @Setter
+  public PublishConfig dnsPublishConfig;
+  @Getter
+  @Setter
+  public long syncFetchBatchNum;
+
   //If you are running a solidity node for java tron, this flag is set to true
   @Getter
   @Setter
@@ -322,6 +339,9 @@ public class CommonParameter {
   public boolean isOpenFullTcpDisconnect;
   @Getter
   @Setter
+  public boolean nodeDetectEnable;
+  @Getter
+  @Setter
   public int allowMultiSign;
   @Getter
   @Setter
@@ -398,11 +418,22 @@ public class CommonParameter {
   @Setter
   public RateLimiterInitialization rateLimiterInitialization;
   @Getter
+  @Setter
+  public int rateLimiterGlobalQps;
+  @Getter
+  @Setter
+  public int rateLimiterGlobalIpQps;
+  @Getter
   public DbBackupConfig dbBackupConfig;
   @Getter
   public RocksDbSettings rocksDBCustomSettings;
   @Getter
   public GenesisBlock genesisBlock;
+  @Getter
+  @Setter
+  @Parameter(names = {"--p2p-disable"}, description = "Switch for p2p module initialization. "
+      + "(defalut: false)", arity = 1)
+  public boolean p2pDisable = false;
   @Getter
   @Setter
   public List<InetSocketAddress> activeNodes;
@@ -607,6 +638,22 @@ public class CommonParameter {
   @Getter
   @Setter
   public long dynamicEnergyMaxFactor = 0L;
+
+  @Getter
+  @Setter
+  public boolean dynamicConfigEnable;
+
+  @Getter
+  @Setter
+  public long dynamicConfigCheckInterval;
+
+  @Getter
+  @Setter
+  public long allowTvmShangHai;
+
+  @Getter
+  @Setter
+  public long allowCancelAllUnfreezeV2;
 
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));

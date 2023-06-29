@@ -22,6 +22,7 @@ public class MetricLabels {
   public static final String STAKE_VOTE = "vote";
   public static final String STAKE_VERSION_V1 = "v1";
   public static final String STAKE_VERSION_V2 = "v2";
+  public static final String STAKE_VERSION_V2_1 = "v2.1";
   /**
    * label keys
    */

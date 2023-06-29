@@ -4,24 +4,18 @@ import static junit.framework.TestCase.fail;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import java.io.File;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.AccountType;
@@ -30,10 +24,8 @@ import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.WitnessContract.WitnessCreateContract;
 
 @Slf4j
+public class WitnessCreateActuatorTest extends BaseTest {
 
-public class WitnessCreateActuatorTest {
-
-  private static final String dbPath = "output_WitnessCreate_test";
   private static final String ACCOUNT_NAME_FIRST = "ownerF";
   private static final String OWNER_ADDRESS_FIRST;
   private static final String ACCOUNT_NAME_SECOND = "ownerS";
@@ -42,12 +34,10 @@ public class WitnessCreateActuatorTest {
   private static final String OWNER_ADDRESS_INVALID = "aaaa";
   private static final String OWNER_ADDRESS_NOACCOUNT;
   private static final String OWNER_ADDRESS_BALANCENOTSUFFIENT;
-  private static TronApplicationContext context;
-  private static Manager dbManager;
 
   static {
+    dbPath = "output_WitnessCreate_test";
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS_FIRST =
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ADDRESS_SECOND =
@@ -56,29 +46,6 @@ public class WitnessCreateActuatorTest {
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1aed";
     OWNER_ADDRESS_BALANCENOTSUFFIENT =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e06d4271a1ced";
-  }
-
-  /**
-   * Init data.
-   */
-  @BeforeClass
-  public static void init() {
-    dbManager = context.getBean(Manager.class);
-
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   /**
