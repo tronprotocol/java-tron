@@ -808,9 +808,13 @@ public class Manager {
       // using the bloom filter only determines non-existent transaction
       return false;
     }
-
-    return chainBaseManager.getTransactionStore()
+    long s = System.currentTimeMillis();
+    boolean ret = chainBaseManager.getTransactionStore()
         .has(transactionId);
+    Metrics.histogramObserve(MetricKeys.Histogram.TRANS_CACHE_QUERY_DB_LATENCY,
+        (System.currentTimeMillis() - s) / Metrics.MILLISECONDS_PER_SECOND, ret
+            ? MetricLabels.Histogram.HIT : MetricLabels.Histogram.MISS);
+    return ret;
   }
 
   /**

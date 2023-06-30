@@ -69,6 +69,9 @@ public class MetricLabels {
     public static final String TRAFFIC_IN = "in";
     public static final String TRAFFIC_OUT = "out";
 
+    public static final String MISS = "miss";
+    public static final String HIT = "hit";
+
     private Histogram() {
       throw new IllegalStateException("Histogram");
     }
