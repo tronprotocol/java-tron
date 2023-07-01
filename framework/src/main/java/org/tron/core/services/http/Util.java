@@ -500,12 +500,17 @@ public class Util {
     String addressParam = "address";
     String addressStr = request.getParameter(addressParam);
     if (StringUtils.isBlank(addressStr)) {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      JSONObject jsonObject = JSON.parseObject(input);
-      if (jsonObject != null) {
-        addressStr = jsonObject.getString(addressParam);
+      try {
+        String input = request.getReader().lines()
+                .collect(Collectors.joining(System.lineSeparator()));
+        Util.checkBodySize(input);
+        JSONObject jsonObject = JSON.parseObject(input);
+        if (jsonObject != null) {
+          addressStr = jsonObject.getString(addressParam);
+        }
+      } catch (Exception e) {
+        logger.warn("exception msg: {}", e.getMessage());
+        return null;
       }
     }
     if (StringUtils.isNotBlank(addressStr)) {
