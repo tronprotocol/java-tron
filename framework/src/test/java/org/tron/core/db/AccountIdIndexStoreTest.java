@@ -1,23 +1,21 @@
 package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
 import java.util.Random;
-import org.junit.AfterClass;
+import javax.annotation.Resource;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
-import org.tron.common.utils.FileUtil;
+import org.tron.common.BaseTest;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.protos.Protocol.AccountType;
 
-public class AccountIdIndexStoreTest {
+public class AccountIdIndexStoreTest extends BaseTest {
 
   private static final byte[] ACCOUNT_ADDRESS_ONE = randomBytes(16);
   private static final byte[] ACCOUNT_ADDRESS_TWO = randomBytes(16);
@@ -28,30 +26,21 @@ public class AccountIdIndexStoreTest {
   private static final byte[] ACCOUNT_NAME_THREE = randomBytes(6);
   private static final byte[] ACCOUNT_NAME_FOUR = randomBytes(6);
   private static final byte[] ACCOUNT_NAME_FIVE = randomBytes(6);
-  private static String dbPath = "output_AccountIndexStore_test";
-  private static TronApplicationContext context;
-  private static AccountIdIndexStore accountIdIndexStore;
+  @Resource
+  private AccountIdIndexStore accountIdIndexStore;
   private static AccountCapsule accountCapsule1;
   private static AccountCapsule accountCapsule2;
   private static AccountCapsule accountCapsule3;
   private static AccountCapsule accountCapsule4;
 
   static {
+    dbPath = "output_AccountIndexStore_test";
     Args.setParam(new String[]{"--output-directory", dbPath},
         Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-  }
-
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
   }
 
   @BeforeClass
   public static void init() {
-    accountIdIndexStore = context.getBean(AccountIdIndexStore.class);
     accountCapsule1 = new AccountCapsule(ByteString.copyFrom(ACCOUNT_ADDRESS_ONE),
         ByteString.copyFrom(ACCOUNT_NAME_ONE), AccountType.Normal);
     accountCapsule1.setAccountId(ByteString.copyFrom(ACCOUNT_NAME_ONE).toByteArray());
@@ -64,6 +53,11 @@ public class AccountIdIndexStoreTest {
     accountCapsule4 = new AccountCapsule(ByteString.copyFrom(ACCOUNT_ADDRESS_FOUR),
         ByteString.copyFrom(ACCOUNT_NAME_FOUR), AccountType.Normal);
     accountCapsule4.setAccountId(ByteString.copyFrom(ACCOUNT_NAME_FOUR).toByteArray());
+
+  }
+
+  @Before
+  public void before() {
     accountIdIndexStore.put(accountCapsule1);
     accountIdIndexStore.put(accountCapsule2);
     accountIdIndexStore.put(accountCapsule3);

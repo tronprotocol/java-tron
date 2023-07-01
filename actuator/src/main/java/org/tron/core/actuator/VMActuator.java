@@ -4,6 +4,7 @@ import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static org.apache.commons.lang3.ArrayUtils.getLength;
 import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
+import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
@@ -58,7 +59,6 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
-import org.tron.protos.contract.Common;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
@@ -568,12 +568,13 @@ public class VMActuator implements Actuator2 {
       energyProcessor.updateUsage(account);
       account.setLatestConsumeTimeForEnergy(now);
       receipt.setCallerEnergyUsage(account.getEnergyUsage());
-      receipt.setCallerEnergyWindowSize(account.getWindowSize(Common.ResourceCode.ENERGY));
+      receipt.setCallerEnergyWindowSize(account.getWindowSize(ENERGY));
+      receipt.setCallerEnergyWindowSizeV2(account.getWindowSizeV2(ENERGY));
       account.setEnergyUsage(
-          energyProcessor.increase(account, Common.ResourceCode.ENERGY,
+          energyProcessor.increase(account, ENERGY,
               account.getEnergyUsage(), min(leftFrozenEnergy, energyFromFeeLimit), now, now));
       receipt.setCallerEnergyMergedUsage(account.getEnergyUsage());
-      receipt.setCallerEnergyMergedWindowSize(account.getWindowSize(Common.ResourceCode.ENERGY));
+      receipt.setCallerEnergyMergedWindowSize(account.getWindowSize(ENERGY));
       rootRepository.updateAccount(account.createDbKey(), account);
     }
     return min(availableEnergy, energyFromFeeLimit);
@@ -730,12 +731,13 @@ public class VMActuator implements Actuator2 {
       energyProcessor.updateUsage(creator);
       creator.setLatestConsumeTimeForEnergy(now);
       receipt.setOriginEnergyUsage(creator.getEnergyUsage());
-      receipt.setOriginEnergyWindowSize(creator.getWindowSize(Common.ResourceCode.ENERGY));
+      receipt.setOriginEnergyWindowSize(creator.getWindowSize(ENERGY));
+      receipt.setOriginEnergyWindowSizeV2(creator.getWindowSizeV2(ENERGY));
       creator.setEnergyUsage(
-          energyProcessor.increase(creator, Common.ResourceCode.ENERGY,
+          energyProcessor.increase(creator, ENERGY,
               creator.getEnergyUsage(), creatorEnergyLimit, now, now));
       receipt.setOriginEnergyMergedUsage(creator.getEnergyUsage());
-      receipt.setOriginEnergyMergedWindowSize(creator.getWindowSize(Common.ResourceCode.ENERGY));
+      receipt.setOriginEnergyMergedWindowSize(creator.getWindowSize(ENERGY));
       rootRepository.updateAccount(creator.createDbKey(), creator);
     }
     return Math.addExact(callerEnergyLimit, creatorEnergyLimit);

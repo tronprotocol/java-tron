@@ -1,21 +1,17 @@
 package org.tron.core.jsonrpc;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
+import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.db2.core.Chainbase.Cursor;
 import org.tron.core.services.NodeInfoService;
 import org.tron.core.services.jsonrpc.TronJsonRpcImpl;
@@ -24,30 +20,28 @@ import org.tron.core.services.jsonrpc.types.BuildArguments;
 import org.tron.protos.Protocol;
 
 @Slf4j
-public class WalletCursorTest {
-  private static String dbPath = "output_wallet_cursor_test";
+public class WalletCursorTest extends BaseTest {
   private static final String OWNER_ADDRESS;
   private static final String OWNER_ADDRESS_ACCOUNT_NAME = "first";
-
-  private static TronApplicationContext context;
-  private static Manager dbManager;
-  private static Wallet wallet;
-  private static NodeInfoService nodeInfoService;
+  @Resource
+  private Wallet wallet;
+  @Resource
+  private NodeInfoService nodeInfoService;
+  private static boolean init;
 
   static {
+    dbPath = "output_wallet_cursor_test";
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
 
     OWNER_ADDRESS =
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
-    nodeInfoService = context.getBean("nodeInfoService", NodeInfoService.class);
   }
 
-  @BeforeClass
-  public static void init() {
-    dbManager = context.getBean(Manager.class);
-    wallet = context.getBean(Wallet.class);
-
+  @Before
+  public void init() {
+    if (init) {
+      return;
+    }
     AccountCapsule accountCapsule =
         new AccountCapsule(
             ByteString.copyFromUtf8(OWNER_ADDRESS_ACCOUNT_NAME),
@@ -55,17 +49,7 @@ public class WalletCursorTest {
             Protocol.AccountType.Normal,
             10000_000_000L);
     dbManager.getAccountStore().put(accountCapsule.getAddress().toByteArray(), accountCapsule);
-  }
-
-  @AfterClass
-  public static void removeDb() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
+    init = true;
   }
 
   @Test

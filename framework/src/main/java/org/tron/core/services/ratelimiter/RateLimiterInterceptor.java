@@ -107,10 +107,13 @@ public class RateLimiterInterceptor implements ServerInterceptor {
     IRateLimiter rateLimiter = container
         .get(KEY_PREFIX_RPC, call.getMethodDescriptor().getFullMethodName());
 
+    RuntimeData runtimeData = new RuntimeData(call);
+    GlobalRateLimiter.acquire(runtimeData);
+
     boolean acquireResource = true;
 
     if (rateLimiter != null) {
-      acquireResource = rateLimiter.acquire(new RuntimeData(call));
+      acquireResource = rateLimiter.acquire(runtimeData);
     }
 
     Listener<ReqT> listener = new ServerCall.Listener<ReqT>() {

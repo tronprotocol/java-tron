@@ -1,7 +1,7 @@
 package org.tron.core.services;
 
 import static org.tron.common.utils.Commons.decodeFromBase58Check;
-import static stest.tron.wallet.common.client.Parameter.CommonConstant.ADD_PRE_FIX_BYTE_MAINNET;
+import static org.tron.common.utils.client.Parameter.CommonConstant.ADD_PRE_FIX_BYTE_MAINNET;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannelBuilder;
@@ -33,7 +33,7 @@ public class DelegationServiceTest {
   public static void testGrpc() {
     WalletBlockingStub walletStub = WalletGrpc
         .newBlockingStub(ManagedChannelBuilder.forTarget(fullnode)
-            .usePlaintext(true)
+            .usePlaintext()
             .build());
     BytesMessage.Builder builder = BytesMessage.newBuilder();
     builder.setValue(ByteString.copyFromUtf8("TLTDZBcPoJ8tZ6TTEeEqEvwYFk2wgotSfD"));

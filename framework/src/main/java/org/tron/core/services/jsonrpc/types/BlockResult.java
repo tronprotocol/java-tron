@@ -84,6 +84,10 @@ public class BlockResult {
   @Setter
   private String mixHash = ByteArray.toJsonHex(new byte[32]);
 
+  public BlockResult() {
+
+  }
+
   public BlockResult(Block block, boolean fullTx, Wallet wallet) {
     BlockCapsule blockCapsule = new BlockCapsule(block);
 

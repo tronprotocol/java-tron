@@ -11,6 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.WalletUtil;
+import org.tron.common.utils.client.Parameter.CommonConstant;
+import org.tron.common.utils.client.WalletClient;
+import org.tron.common.utils.client.utils.AbiUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -23,15 +26,12 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
+
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
-import stest.tron.wallet.common.client.Parameter.CommonConstant;
-import stest.tron.wallet.common.client.WalletClient;
-import stest.tron.wallet.common.client.utils.AbiUtil;
-import stest.tron.wallet.common.client.utils.PublicMethed;
 
 
 /**
@@ -621,7 +621,7 @@ public class TvmTestUtils {
       String abiString, String code, long value, long consumeUserResourcePercent) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
 
-    SmartContract.ABI abi = PublicMethed.jsonStr2Abi(abiString);
+    SmartContract.ABI abi = jsonStr2Abi(abiString);
     if (abi == null) {
       return null;
     }
