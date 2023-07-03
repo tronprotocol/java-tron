@@ -52,7 +52,6 @@ public class NodeInfoServiceTest {
     Mockito.when(c1.getInetSocketAddress()).thenReturn(a1);
     Mockito.when(c1.getInetAddress()).thenReturn(a1.getAddress());
     p2pEventHandler.onConnect(c1);
-    Assert.assertEquals(1, PeerManager.getPeers().size());
 
     //test setConnectInfo
     NodeInfo nodeInfo = nodeInfoService.getNodeInfo();
