@@ -19,7 +19,6 @@ import org.tron.core.metrics.MetricsUtil;
 public class HttpInterceptor implements Filter {
 
   private String endpoint;
-  private final int HTTP_NOT_FOUND = 404;
   private final int HTTP_SUCCESS = 200;
 
   @Override
