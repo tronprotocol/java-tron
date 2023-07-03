@@ -132,7 +132,7 @@ public class TransferTokenTest extends BaseTest {
             triggerCallValue, feeLimit, tokenValue, id);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction, dbManager, null);
 
-    org.testng.Assert.assertNull(runtime.getRuntimeError());
+    Assert.assertNull(runtime.getRuntimeError());
     Assert.assertEquals(100 + tokenValue - 9,
         dbManager.getAccountStore().get(contractAddress).getAssetV2MapForTest()
                 .get(String.valueOf(id)).longValue());
@@ -157,7 +157,7 @@ public class TransferTokenTest extends BaseTest {
             triggerData2,
             triggerCallValue, feeLimit, 0, id);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction2, dbManager, null);
-    org.testng.Assert.assertNull(runtime.getRuntimeError());
+    Assert.assertNull(runtime.getRuntimeError());
     Assert.assertEquals(100 + tokenValue - 9 + 9,
         dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getAssetV2MapForTest()
             .get(String.valueOf(id)).longValue());

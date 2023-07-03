@@ -6,8 +6,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import org.bouncycastle.util.Arrays;
+import org.junit.Assert;
 import org.junit.Test;
-import org.testng.Assert;
 import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.ByteArray;
@@ -76,7 +76,7 @@ public class EventParserTest {
     }
 
     Assert.assertEquals(LogInfoTriggerParser.getEntrySignature(entry), eventSign);
-    Assert.assertEquals(Hash.sha3(LogInfoTriggerParser.getEntrySignature(entry).getBytes()),
+    Assert.assertArrayEquals(Hash.sha3(LogInfoTriggerParser.getEntrySignature(entry).getBytes()),
         topicList.get(0));
     Assert.assertNotNull(entry);
     Map<String, String> dataMap = ContractEventParserAbi.parseEventData(data, topicList, entry);

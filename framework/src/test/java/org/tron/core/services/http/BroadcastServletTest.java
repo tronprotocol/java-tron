@@ -25,7 +25,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.Test;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.services.http.solidity.mockito.HttpUrlStreamHandler;
 
@@ -47,7 +47,12 @@ public class BroadcastServletTest {
   public static void init() {
     // Allows for mocking URL connections
     URLStreamHandlerFactory urlStreamHandlerFactory = mock(URLStreamHandlerFactory.class);
-    URL.setURLStreamHandlerFactory(urlStreamHandlerFactory);
+    try {
+      URL.setURLStreamHandlerFactory(urlStreamHandlerFactory);
+    } catch (Error e) {
+      logger.info("Ignore error: {}", e.getMessage());
+    }
+
 
     httpUrlStreamHandler = new HttpUrlStreamHandler();
     given(urlStreamHandlerFactory.createURLStreamHandler("http")).willReturn(httpUrlStreamHandler);
@@ -83,8 +88,6 @@ public class BroadcastServletTest {
   @Test
   public void doPostTest() throws IOException {
     URLStreamHandlerFactory urlStreamHandlerFactory = mock(URLStreamHandlerFactory.class);
-    URL.setURLStreamHandlerFactory(urlStreamHandlerFactory);
-
     httpUrlStreamHandler = new HttpUrlStreamHandler();
     given(urlStreamHandlerFactory.createURLStreamHandler("http")).willReturn(httpUrlStreamHandler);
 
