@@ -93,6 +93,7 @@ public class MetricLabels {
     public static final String STAKE_DELEGATE = "delegate";
     public static final String STAKE_UNDELEGATE = "undelegate";
     public static final String STAKE_WITHDRAW = "withdraw";
+    public static final String STAKE_CANCEL_UNFREEZE = "cancelUnfreeze";
 
     private Histogram() {
       throw new IllegalStateException("Histogram");
