@@ -1,0 +1,64 @@
+name: "CodeQL"
+
+on:
+  push:
+    branches: [ 'develop', 'master', 'release_tronz_stest_case', 'release_tronz_4.0', 'release_v3.5', 'release_v4.0.2', 'release_v4.1_fix_event_filter', 'release_v4.1', 'release_v4.1.1', 'release_v4.1.2', 'release_v4.1.3', 'release_v4.2', 'release_v4.2.1', 'release_v4.2.2.1', 'release_v4.2.3', 'release_v4.3', 'release_v4.3.0-to-nile', 'release_v4.3.0', 'release_v4.4.0_test', 'release_v4.4.0_test1', 'release_v4.4.0', 'release_v4.4.1', 'release_v4.4.2', 'release_v4.4.3', 'release_v4.4.4', 'release_v4.4.5', 'release_v4.4.6', 'release_v4.5.0', 'release_v4.5.1', 'release_v4.5.2', 'release_v4.6.0', 'release_v4.7.0', 'release_v4.7.0.1', 'release_v4.7.1', 'release_v4.7.1.1', 'release_v4.7.2', 'release_vm_shielded_4.0_add_ret', 'release_vm_shielded_4.0_version', 'release_vm_shielded_4.0_version1', 'release_vm_shielded_4.0_with_test', 'release_vm_shielded_4.0', 'release_vm_zksnarks_4.0', 'release', 'release_3.6_fix', 'release_3.6', 'release_3.6.1', 'release_3.6.2', 'release_3_6_2', 'release_3.6.6_fix_rename', 'release_3.6.6', 'release_3.7_mul_witness_log', 'release_3.7_mul_witness', 'release_3.7_mul_witness_1', 'release_3.7_nodes_multi_witness', 'release_3.7_nodes', 'release_3.7_to_master', 'release_3.7_to_master_1', 'release_3.7_to_master_2', 'release_3.7', 'release_4.0_libsodium', 'release_4.0_nile_merge3.6.6', 'release_4.0_nile', 'release_4.0_params', 'release_4.0_stest_case', 'release_4.0_testfix', 'release_4.0', 'release_4.0.1', 'release_4.1_remove_stake', 'release_4.1_remove_stake2', 'release_4.1_remove_stake3', 'release_4.1', 'release_4.1.2', 'release_4.1.3', 'release_4.2.0', 'release_4.2.1', 'release_4.3', 'release_4.6.0' ]
+  pull_request:
+    # The branches below must be a subset of the branches above
+    branches: [ 'develop' ]
+  schedule:
+    - cron: '6 10 * * 0'
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'java' ]
+        # CodeQL supports [ 'cpp', 'csharp', 'go', 'java', 'javascript', 'python', 'ruby' ]
+        # Use only 'java' to analyze code written in Java, Kotlin or both
+        # Use only 'javascript' to analyze code written in JavaScript, TypeScript or both
+        # Learn more about CodeQL language support at https://aka.ms/codeql-docs/language-support
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    # Initializes the CodeQL tools for scanning.
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v2
+      with:
+        languages: ${{ matrix.language }}
+        # If you wish to specify custom queries, you can do so here or in a config file.
+        # By default, queries listed here will override any specified in a config file.
+        # Prefix the list here with "+" to use these queries and those in the config file.
+
+        # For more details on CodeQL's query packs, refer to: https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#using-queries-in-ql-packs
+        # queries: security-extended,security-and-quality
+
+    # Autobuild attempts to build any compiled languages (C/C++, C#, Go, Java, or Swift).
+    # If this step fails, then you should remove it and run the build manually (see below)
+    - name: Autobuild
+      uses: github/codeql-action/autobuild@v2
+
+    # ℹ️ Command-line programs to run using the OS shell.
+    # 📚 See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsrun
+
+    #   If the Autobuild fails above, remove it and uncomment the following three lines.
+    #   modify them (or add more) to build your code if your project, please refer to the EXAMPLE below for guidance.
+
+    # - run: |
+    #     echo "Run, Build Application using script"
+    #     ./location_of_script_within_repo/buildscript.sh
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v2
+      with:
+        category: "/language:${{matrix.language}}"
