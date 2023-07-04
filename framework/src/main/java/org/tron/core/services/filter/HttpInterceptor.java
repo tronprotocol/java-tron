@@ -61,7 +61,7 @@ public class HttpInterceptor implements Filter {
       String key = MetricsKey.NET_API_DETAIL_QPS + endpoint;
       if (MetricsUtil.getMeters(MetricsKey.NET_API_DETAIL_QPS).containsKey(key)) {
         MetricsUtil.meterMark(key, 1);
-        MetricsUtil.meterMark(MetricsKey.NET_API_DETAIL_QPS + endpoint, 1);
+        MetricsUtil.meterMark(MetricsKey.NET_API_DETAIL_FAIL_QPS + endpoint, 1);
       }
       MetricsUtil.meterMark(MetricsKey.NET_API_QPS, 1);
       MetricsUtil.meterMark(MetricsKey.NET_API_FAIL_QPS, 1);
