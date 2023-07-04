@@ -56,7 +56,7 @@ public class HttpInterceptor implements Filter {
           MetricsUtil.meterMark(MetricsKey.NET_API_FAIL_QPS);
           MetricsUtil.meterMark(MetricsKey.NET_API_DETAIL_FAIL_QPS + endpoint);
         }
-        
+
         MetricsUtil.meterMark(MetricsKey.NET_API_DETAIL_OUT_TRAFFIC + endpoint, size);
         Metrics.histogramObserve(MetricKeys.Histogram.HTTP_BYTES,
                 size, endpoint, String.valueOf(responseWrapper.getStatus()));
@@ -64,10 +64,12 @@ public class HttpInterceptor implements Filter {
         chain.doFilter(request, response);
       }
     } catch (Exception e) {
-      String key = MetricsKey.NET_API_DETAIL_QPS + endpoint;
-      if (MetricsUtil.getMeters(MetricsKey.NET_API_DETAIL_QPS).containsKey(key)) {
-        MetricsUtil.meterMark(key, 1);
-        MetricsUtil.meterMark(key, 1);
+      if (MetricsUtil.getMeters(MetricsKey.NET_API_DETAIL_QPS).containsKey(
+              MetricsKey.NET_API_DETAIL_QPS + endpoint)) {
+        MetricsUtil.meterMark(MetricsKey.NET_API_DETAIL_FAIL_QPS
+                + endpoint, 1);
+        MetricsUtil.meterMark(MetricsKey.NET_API_DETAIL_QPS
+                + endpoint, 1);
       }
       MetricsUtil.meterMark(MetricsKey.NET_API_QPS, 1);
       MetricsUtil.meterMark(MetricsKey.NET_API_FAIL_QPS, 1);
