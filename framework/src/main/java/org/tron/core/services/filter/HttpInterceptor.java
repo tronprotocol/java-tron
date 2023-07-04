@@ -45,11 +45,11 @@ public class HttpInterceptor implements Filter {
           MetricsUtil.meterMark(MetricsKey.NET_API_DETAIL_OUT_TRAFFIC + endpoint, size);
           MetricsUtil.meterMark(MetricsKey.NET_API_DETAIL_QPS + endpoint);
           Metrics.histogramObserve(MetricKeys.Histogram.HTTP_BYTES,
-                  responseWrapper.getByteSize(),
-                  Strings.isNullOrEmpty(endpoint) ? MetricLabels.UNDEFINED : endpoint,
-                  String.valueOf(responseWrapper.getStatus()));
+                  size, endpoint, String.valueOf(responseWrapper.getStatus()));
         } else {
           MetricsUtil.meterMark(MetricsKey.NET_API_FAIL_QPS);
+          Metrics.histogramObserve(MetricKeys.Histogram.HTTP_BYTES,
+                  size, MetricLabels.UNDEFINED, String.valueOf(responseWrapper.getStatus()));
         }
       } else {
         chain.doFilter(request, response);
