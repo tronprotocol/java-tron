@@ -1,24 +1,17 @@
 package org.tron.common.runtime.vm;
 
-import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.testng.Assert;
-import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
@@ -29,15 +22,17 @@ import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
 @Ignore
-public class TimeBenchmarkTest {
+public class TimeBenchmarkTest extends BaseTest {
 
-  private Manager dbManager;
-  private TronApplicationContext context;
   private RepositoryImpl repository;
-  private String dbPath = "output_TimeBenchmarkTest";
-  private String OWNER_ADDRESS;
-  private Application AppT;
+  private static final String OWNER_ADDRESS;
   private long totalBalance = 30_000_000_000_000L;
+
+  static {
+    dbPath = "output_TimeBenchmarkTest";
+    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
+    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
+  }
 
 
   /**
@@ -45,11 +40,6 @@ public class TimeBenchmarkTest {
    */
   @Before
   public void init() {
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-    AppT = ApplicationFactory.create(context);
-    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
-    dbManager = context.getBean(Manager.class);
     repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
     repository.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
     repository.addBalance(Hex.decode(OWNER_ADDRESS), totalBalance);
@@ -137,23 +127,9 @@ public class TimeBenchmarkTest {
 
     long expectEnergyUsageTotal2 = 110;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
-    Assert.assertEquals(result.getRuntime().getResult().isRevert(), true);
-    Assert.assertTrue(result.getRuntime().getResult().getException() == null);
+    Assert.assertTrue(result.getRuntime().getResult().isRevert());
+    Assert.assertNull(result.getRuntime().getResult().getException());
     Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
         totalBalance - (expectEnergyUsageTotal + expectEnergyUsageTotal2) * 100);
-  }
-
-  /**
-   * Release resources.
-   */
-  @After
-  public void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 }

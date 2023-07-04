@@ -16,15 +16,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.binary.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.DatabaseGrpc.DatabaseImplBase;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountNetMessage;
 import org.tron.api.GrpcAPI.AccountResourceMessage;
-import org.tron.api.GrpcAPI.Address;
-import org.tron.api.GrpcAPI.AddressPrKeyPairMessage;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockExtention;
 import org.tron.api.GrpcAPI.BlockLimit;
@@ -39,11 +36,6 @@ import org.tron.api.GrpcAPI.DecryptNotesTRC20;
 import org.tron.api.GrpcAPI.DelegatedResourceList;
 import org.tron.api.GrpcAPI.DelegatedResourceMessage;
 import org.tron.api.GrpcAPI.DiversifierMessage;
-import org.tron.api.GrpcAPI.EasyTransferAssetByPrivateMessage;
-import org.tron.api.GrpcAPI.EasyTransferAssetMessage;
-import org.tron.api.GrpcAPI.EasyTransferByPrivateMessage;
-import org.tron.api.GrpcAPI.EasyTransferMessage;
-import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.EstimateEnergyMessage;
 import org.tron.api.GrpcAPI.ExchangeList;
@@ -52,7 +44,6 @@ import org.tron.api.GrpcAPI.IncomingViewingKeyDiversifierMessage;
 import org.tron.api.GrpcAPI.IncomingViewingKeyMessage;
 import org.tron.api.GrpcAPI.IvkDecryptTRC20Parameters;
 import org.tron.api.GrpcAPI.NfTRC20Parameters;
-import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NoteParameters;
 import org.tron.api.GrpcAPI.NumberMessage;
@@ -85,13 +76,10 @@ import org.tron.api.WalletExtensionGrpc;
 import org.tron.api.WalletGrpc.WalletImplBase;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
 import org.tron.common.application.Service;
-import org.tron.common.crypto.SignInterface;
-import org.tron.common.crypto.SignUtils;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
-import org.tron.common.utils.Utils;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -108,7 +96,6 @@ import org.tron.core.exception.StoreException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.metrics.MetricsApiService;
-import org.tron.core.net.TronNetService;
 import org.tron.core.services.filter.LiteFnQueryGrpcInterceptor;
 import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
 import org.tron.core.services.ratelimiter.RpcApiAccessInterceptor;
@@ -130,7 +117,6 @@ import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.TransactionInfo;
-import org.tron.protos.Protocol.TransactionSign;
 import org.tron.protos.contract.AccountContract.AccountCreateContract;
 import org.tron.protos.contract.AccountContract.AccountPermissionUpdateContract;
 import org.tron.protos.contract.AccountContract.AccountUpdateContract;
@@ -144,6 +130,7 @@ import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.BalanceContract.AccountBalanceRequest;
 import org.tron.protos.contract.BalanceContract.AccountBalanceResponse;
 import org.tron.protos.contract.BalanceContract.BlockBalanceTrace;
+import org.tron.protos.contract.BalanceContract.CancelAllUnfreezeV2Contract;
 import org.tron.protos.contract.BalanceContract.DelegateResourceContract;
 import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
@@ -727,12 +714,6 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void generateAddress(EmptyMessage request,
-        StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver) {
-      generateAddressCommon(request, responseObserver);
-    }
-
-    @Override
     public void getRewardInfo(BytesMessage request,
         StreamObserver<NumberMessage> responseObserver) {
       getRewardInfoCommon(request, responseObserver);
@@ -1145,55 +1126,6 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
 
-
-    @Override
-    public void getTransactionSign(TransactionSign req,
-        StreamObserver<Transaction> responseObserver) {
-      TransactionCapsule result = TransactionUtil.getTransactionSign(req);
-      responseObserver.onNext(result.getInstance());
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void getTransactionSign2(TransactionSign req,
-        StreamObserver<TransactionExtention> responseObserver) {
-      TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
-      Return.Builder retBuilder = Return.newBuilder();
-      try {
-        TransactionCapsule trx = TransactionUtil.getTransactionSign(req);
-        trxExtBuilder.setTransaction(trx.getInstance());
-        trxExtBuilder.setTxid(trx.getTransactionId().getByteString());
-        retBuilder.setResult(true).setCode(response_code.SUCCESS);
-      } catch (Exception e) {
-        retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
-            .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
-        logger.info(EXCEPTION_CAUGHT + e.getMessage());
-      }
-      trxExtBuilder.setResult(retBuilder);
-      responseObserver.onNext(trxExtBuilder.build());
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void addSign(TransactionSign req,
-        StreamObserver<TransactionExtention> responseObserver) {
-      TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
-      Return.Builder retBuilder = Return.newBuilder();
-      try {
-        TransactionCapsule trx = transactionUtil.addSign(req);
-        trxExtBuilder.setTransaction(trx.getInstance());
-        trxExtBuilder.setTxid(trx.getTransactionId().getByteString());
-        retBuilder.setResult(true).setCode(response_code.SUCCESS);
-      } catch (Exception e) {
-        retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
-            .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
-        logger.info(EXCEPTION_CAUGHT + e.getMessage());
-      }
-      trxExtBuilder.setResult(retBuilder);
-      responseObserver.onNext(trxExtBuilder.build());
-      responseObserver.onCompleted();
-    }
-
     @Override
     public void getTransactionSignWeight(Transaction req,
         StreamObserver<TransactionSignWeight> responseObserver) {
@@ -1207,121 +1139,6 @@ public class RpcApiService implements Service {
         StreamObserver<TransactionApprovedList> responseObserver) {
       TransactionApprovedList tal = wallet.getTransactionApprovedList(req);
       responseObserver.onNext(tal);
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void createAddress(BytesMessage req,
-        StreamObserver<BytesMessage> responseObserver) {
-      byte[] address = wallet.createAddress(req.getValue().toByteArray());
-      BytesMessage.Builder builder = BytesMessage.newBuilder();
-      builder.setValue(ByteString.copyFrom(address));
-      responseObserver.onNext(builder.build());
-      responseObserver.onCompleted();
-    }
-
-    private EasyTransferResponse easyTransfer(byte[] privateKey, ByteString toAddress,
-        long amount) {
-      TransactionCapsule transactionCapsule;
-      GrpcAPI.Return.Builder returnBuilder = GrpcAPI.Return.newBuilder();
-      EasyTransferResponse.Builder responseBuild = EasyTransferResponse.newBuilder();
-      try {
-        SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey, Args.getInstance()
-            .isECKeyCryptoEngine());
-        byte[] owner = cryptoEngine.getAddress();
-        TransferContract.Builder builder = TransferContract.newBuilder();
-        builder.setOwnerAddress(ByteString.copyFrom(owner));
-        builder.setToAddress(toAddress);
-        builder.setAmount(amount);
-        transactionCapsule = createTransactionCapsule(builder.build(),
-            ContractType.TransferContract);
-        transactionCapsule.sign(privateKey);
-        GrpcAPI.Return result = wallet.broadcastTransaction(transactionCapsule.getInstance());
-        responseBuild.setTransaction(transactionCapsule.getInstance());
-        responseBuild.setTxid(transactionCapsule.getTransactionId().getByteString());
-        responseBuild.setResult(result);
-      } catch (ContractValidateException e) {
-        returnBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
-            .setMessage(ByteString.copyFromUtf8(e.getMessage()));
-        responseBuild.setResult(returnBuilder.build());
-      } catch (Exception e) {
-        returnBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
-            .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
-        responseBuild.setResult(returnBuilder.build());
-      }
-
-      return responseBuild.build();
-    }
-
-    @Override
-    public void easyTransfer(EasyTransferMessage req,
-        StreamObserver<EasyTransferResponse> responseObserver) {
-      byte[] privateKey = wallet.pass2Key(req.getPassPhrase().toByteArray());
-      EasyTransferResponse response = easyTransfer(privateKey, req.getToAddress(), req.getAmount());
-      responseObserver.onNext(response);
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void easyTransferAsset(EasyTransferAssetMessage req,
-        StreamObserver<EasyTransferResponse> responseObserver) {
-      byte[] privateKey = wallet.pass2Key(req.getPassPhrase().toByteArray());
-      EasyTransferResponse response = easyTransferAsset(privateKey, req.getToAddress(),
-          req.getAssetId(), req.getAmount());
-      responseObserver.onNext(response);
-      responseObserver.onCompleted();
-    }
-
-    private EasyTransferResponse easyTransferAsset(byte[] privateKey, ByteString toAddress,
-        String assetId, long amount) {
-      TransactionCapsule transactionCapsule;
-      GrpcAPI.Return.Builder returnBuilder = GrpcAPI.Return.newBuilder();
-      EasyTransferResponse.Builder responseBuild = EasyTransferResponse.newBuilder();
-      try {
-        SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey,
-            Args.getInstance().isECKeyCryptoEngine());
-        byte[] owner = cryptoEngine.getAddress();
-        TransferAssetContract.Builder builder = TransferAssetContract.newBuilder();
-        builder.setOwnerAddress(ByteString.copyFrom(owner));
-        builder.setToAddress(toAddress);
-        builder.setAssetName(ByteString.copyFrom(assetId.getBytes()));
-        builder.setAmount(amount);
-        transactionCapsule = createTransactionCapsule(builder.build(),
-            ContractType.TransferAssetContract);
-        transactionCapsule.sign(privateKey);
-        GrpcAPI.Return result = wallet.broadcastTransaction(transactionCapsule.getInstance());
-        responseBuild.setTransaction(transactionCapsule.getInstance());
-        responseBuild.setTxid(transactionCapsule.getTransactionId().getByteString());
-        responseBuild.setResult(result);
-      } catch (ContractValidateException e) {
-        returnBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
-            .setMessage(ByteString.copyFromUtf8(e.getMessage()));
-        responseBuild.setResult(returnBuilder.build());
-      } catch (Exception e) {
-        returnBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
-            .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
-        responseBuild.setResult(returnBuilder.build());
-      }
-
-      return responseBuild.build();
-    }
-
-    @Override
-    public void easyTransferByPrivate(EasyTransferByPrivateMessage req,
-        StreamObserver<EasyTransferResponse> responseObserver) {
-      byte[] privateKey = req.getPrivateKey().toByteArray();
-      EasyTransferResponse response = easyTransfer(privateKey, req.getToAddress(), req.getAmount());
-      responseObserver.onNext(response);
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void easyTransferAssetByPrivate(EasyTransferAssetByPrivateMessage req,
-        StreamObserver<EasyTransferResponse> responseObserver) {
-      byte[] privateKey = req.getPrivateKey().toByteArray();
-      EasyTransferResponse response = easyTransferAsset(privateKey, req.getToAddress(),
-          req.getAssetId(), req.getAmount());
-      responseObserver.onNext(response);
       responseObserver.onCompleted();
     }
 
@@ -1656,6 +1473,13 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void cancelAllUnfreezeV2(CancelAllUnfreezeV2Contract request,
+                                    StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.CancelAllUnfreezeV2Contract,
+          responseObserver);
+    }
+
+    @Override
     public void proposalCreate(ProposalCreateContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.ProposalCreateContract, responseObserver);
@@ -1736,14 +1560,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void listNodes(EmptyMessage request, StreamObserver<NodeList> responseObserver) {
-      NodeList.Builder nodeListBuilder = NodeList.newBuilder();
-      TronNetService.getP2pService().getConnectableNodes().forEach(node -> {
-        nodeListBuilder.addNodes(Node.newBuilder().setAddress(
-                Address.newBuilder()
-                        .setHost(ByteString.copyFrom(ByteArray.fromString(node.getHost())))
-                        .setPort(node.getPort())));
-      });
-      responseObserver.onNext(nodeListBuilder.build());
+      responseObserver.onNext(wallet.listNodes());
       responseObserver.onCompleted();
     }
 
@@ -2240,12 +2057,6 @@ public class RpcApiService implements Service {
         StreamObserver<Protocol.ChainParameters> responseObserver) {
       responseObserver.onNext(wallet.getChainParameters());
       responseObserver.onCompleted();
-    }
-
-    @Override
-    public void generateAddress(EmptyMessage request,
-        StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver) {
-      generateAddressCommon(request, responseObserver);
     }
 
     @Override
@@ -2904,21 +2715,6 @@ public class RpcApiService implements Service {
       responseObserver.onNext(metricsApiService.getMetricProtoInfo());
       responseObserver.onCompleted();
     }
-  }
-
-  public void generateAddressCommon(EmptyMessage request,
-      StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver) {
-    SignInterface cryptoEngine = SignUtils.getGeneratedRandomSign(Utils.getRandom(),
-        Args.getInstance().isECKeyCryptoEngine());
-    byte[] priKey = cryptoEngine.getPrivateKey();
-    byte[] address = cryptoEngine.getAddress();
-    String addressStr = StringUtil.encode58Check(address);
-    String priKeyStr = Hex.encodeHexString(priKey);
-    AddressPrKeyPairMessage.Builder builder = AddressPrKeyPairMessage.newBuilder();
-    builder.setAddress(addressStr);
-    builder.setPrivateKey(priKeyStr);
-    responseObserver.onNext(builder.build());
-    responseObserver.onCompleted();
   }
 
   public void getRewardInfoCommon(BytesMessage request,

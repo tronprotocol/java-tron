@@ -20,7 +20,8 @@ public abstract class Message {
 
   public static Node getNode(Endpoint endpoint) {
     Node node = new Node(endpoint.getNodeId().toByteArray(),
-        ByteArray.toStr(endpoint.getAddress().toByteArray()), endpoint.getPort());
+        ByteArray.toStr(endpoint.getAddress().toByteArray()),
+        ByteArray.toStr(endpoint.getAddressIpv6().toByteArray()), endpoint.getPort());
     return node;
   }
 

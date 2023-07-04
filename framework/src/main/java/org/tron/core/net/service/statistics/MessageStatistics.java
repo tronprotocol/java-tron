@@ -143,16 +143,17 @@ public class MessageStatistics {
         break;
       case TRX:
         if (flag) {
-          tronInMessage.add();
+          tronInTrx.add();
         } else {
-          tronOutMessage.add();
+          tronOutTrx.add();
         }
         break;
       case BLOCK:
         if (flag) {
           tronInBlock.add();
+        } else {
+          tronOutBlock.add();
         }
-        tronOutBlock.add();
         break;
       default:
         break;

@@ -1,5 +1,7 @@
 package org.tron.core.store;
 
+import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_PERIOD;
+
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
 import java.util.Optional;
@@ -14,7 +16,6 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.exception.BadItemException;
@@ -101,6 +102,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] STORAGE_EXCHANGE_TAX_RATE = "STORAGE_EXCHANGE_TAX_RATE".getBytes();
   private static final String FORK_CONTROLLER = "FORK_CONTROLLER";
   private static final String FORK_PREFIX = "FORK_VERSION_";
+  private static final byte[] VERSION_NUMBER = "VERSION_NUMBER".getBytes();
   //This value is only allowed to be 0, 1, -1
   private static final byte[] REMOVE_THE_POWER_OF_THE_GR = "REMOVE_THE_POWER_OF_THE_GR".getBytes();
   //This value is only allowed to be 0, 1, -1
@@ -205,6 +207,14 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID =
       "ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID".getBytes();
+
+  private static final byte[] ALLOW_TVM_SHANGHAI = "ALLOW_TVM_SHANGHAI".getBytes();
+
+  private static final byte[] ALLOW_CANCEL_ALL_UNFREEZE_V2 = "ALLOW_CANCEL_ALL_UNFREEZE_V2"
+      .getBytes();
+
+  private static final byte[] MAX_DELEGATE_LOCK_PERIOD =
+      "MAX_DELEGATE_LOCK_PERIOD".getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -2190,7 +2200,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public long getMaintenanceSkipSlots() {
-    return Parameter.ChainConstant.MAINTENANCE_SKIP_SLOTS;
+    return ChainConstant.MAINTENANCE_SKIP_SLOTS;
   }
 
   public void saveNextMaintenanceTime(long nextMaintenanceTime) {
@@ -2216,6 +2226,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   //The unit is trx
   public void addTotalNetWeight(long amount) {
+    if (amount == 0) {
+      return;
+    }
     long totalNetWeight = getTotalNetWeight();
     totalNetWeight += amount;
     if (allowNewReward()) {
@@ -2226,6 +2239,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   //The unit is trx
   public void addTotalEnergyWeight(long amount) {
+    if (amount == 0) {
+      return;
+    }
     long totalEnergyWeight = getTotalEnergyWeight();
     totalEnergyWeight += amount;
     if (allowNewReward()) {
@@ -2236,6 +2252,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   //The unit is trx
   public void addTotalTronPowerWeight(long amount) {
+    if (amount == 0) {
+      return;
+    }
     long totalWeight = getTotalTronPowerWeight();
     totalWeight += amount;
     if (allowNewReward()) {
@@ -2278,6 +2297,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     String forkKey = FORK_CONTROLLER + version;
     byte[] value = revokingDB.getUnchecked(forkKey.getBytes());
     return value == null ? null : Boolean.valueOf(new String(value));
+  }
+
+  public void saveLatestVersion(int version) {
+    this.put(VERSION_NUMBER, new BytesCapsule(ByteArray.fromInt(version)));
+  }
+
+  public int getLatestVersion() {
+    BytesCapsule data = getUnchecked(VERSION_NUMBER);
+    if (data == null) {
+      saveLatestVersion(0);
+      return 0;
+    }
+    return ByteArray.toInt(data.getData());
   }
 
   /**
@@ -2753,6 +2785,50 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException(msg));
+  }
+
+  public void saveAllowTvmShangHai(long allowTvmShangHai) {
+    this.put(DynamicPropertiesStore.ALLOW_TVM_SHANGHAI,
+        new BytesCapsule(ByteArray.fromLong(allowTvmShangHai)));
+  }
+
+  public long getAllowTvmShangHai() {
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_SHANGHAI))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(CommonParameter.getInstance().getAllowTvmShangHai());
+  }
+
+  public void saveAllowCancelAllUnfreezeV2(long allowCancelAllUnfreezeV2) {
+    this.put(DynamicPropertiesStore.ALLOW_CANCEL_ALL_UNFREEZE_V2,
+        new BytesCapsule(ByteArray.fromLong(allowCancelAllUnfreezeV2)));
+  }
+
+  public long getAllowCancelAllUnfreezeV2() {
+    return Optional.ofNullable(getUnchecked(ALLOW_CANCEL_ALL_UNFREEZE_V2))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(CommonParameter.getInstance().getAllowCancelAllUnfreezeV2());
+  }
+
+  public boolean supportAllowCancelAllUnfreezeV2() {
+    return getAllowCancelAllUnfreezeV2() == 1L && getUnfreezeDelayDays() > 0;
+  }
+
+  public void saveMaxDelegateLockPeriod(long maxDelegateLockPeriod) {
+    this.put(DynamicPropertiesStore.MAX_DELEGATE_LOCK_PERIOD,
+        new BytesCapsule(ByteArray.fromLong(maxDelegateLockPeriod)));
+  }
+
+  public long getMaxDelegateLockPeriod() {
+    return Optional.ofNullable(getUnchecked(MAX_DELEGATE_LOCK_PERIOD))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(DELEGATE_PERIOD / 3000);
+  }
+
+  public boolean supportMaxDelegateLockPeriod() {
+    return (getMaxDelegateLockPeriod() > DELEGATE_PERIOD / 3000) && getUnfreezeDelayDays() > 0;
   }
 
   private static class DynamicResourceProperties {

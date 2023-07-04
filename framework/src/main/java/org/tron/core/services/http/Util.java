@@ -27,7 +27,6 @@ import org.bouncycastle.util.encoders.Hex;
 import org.eclipse.jetty.util.StringUtil;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.BlockList;
-import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionIdList;
@@ -64,6 +63,13 @@ public class Util {
   public static final String CONTRACT_TYPE = "contractType";
   public static final String EXTRA_DATA = "extra_data";
   public static final String PARAMETER = "parameter";
+
+  // Used for TVM http interfaces
+  public static final String OWNER_ADDRESS = "owner_address";
+  public static final String CONTRACT_ADDRESS = "contract_address";
+  public static final String FUNCTION_SELECTOR = "function_selector";
+  public static final String FUNCTION_PARAMETER = "parameter";
+  public static final String CALL_DATA = "data";
 
   public static String printTransactionFee(String transactionFee) {
     JSONObject jsonObject = new JSONObject();
@@ -127,12 +133,6 @@ public class Util {
     list.stream().forEach(transactionCapsule -> transactions
         .add(printTransactionToJSON(transactionCapsule.getInstance(), selfType)));
     return transactions;
-  }
-
-  public static String printEasyTransferResponse(EasyTransferResponse response, boolean selfType) {
-    JSONObject jsonResponse = JSONObject.parseObject(JsonFormat.printToString(response, selfType));
-    jsonResponse.put(TRANSACTION, printTransactionToJSON(response.getTransaction(), selfType));
-    return jsonResponse.toJSONString();
   }
 
   public static String printTransaction(Transaction transaction, boolean selfType) {
@@ -220,7 +220,7 @@ public class Util {
                 .parseObject(JsonFormat.printToString(deployContract, selfType));
             byte[] ownerAddress = deployContract.getOwnerAddress().toByteArray();
             byte[] contractAddress = generateContractAddress(transaction, ownerAddress);
-            jsonTransaction.put("contract_address", ByteArray.toHexString(contractAddress));
+            jsonTransaction.put(CONTRACT_ADDRESS, ByteArray.toHexString(contractAddress));
             break;
           default:
             Class clazz = TransactionFactory.getContract(contract.getType());
@@ -303,7 +303,7 @@ public class Util {
       } catch (JSONException e) {
         logger.debug("JSONException: {}", e.getMessage());
       } catch (Exception e) {
-        logger.error("", e);
+        logger.warn("{}", contractType, e);
       }
     }
     rawData.put("contract", contracts);
@@ -541,6 +541,32 @@ public class Util {
     }
 
     return newLogList;
+  }
+
+  /**
+   * Validate parameters for trigger constant and estimate energy
+   * - Rule-1: owner address must be set
+   * - Rule-2: either contract address is set or call data is set
+   * - Rule-3: if try to deploy, function selector and call data can not be both set
+   * @param contract parameters in json format
+   * @throws InvalidParameterException if validation is not passed, this kind of exception is thrown
+   */
+  public static void validateParameter(String contract) throws InvalidParameterException {
+    JSONObject jsonObject = JSONObject.parseObject(contract);
+    if (StringUtils.isEmpty(jsonObject.getString(OWNER_ADDRESS))) {
+      throw new InvalidParameterException(OWNER_ADDRESS + " isn't set.");
+    }
+    if (StringUtils.isEmpty(jsonObject.getString(CONTRACT_ADDRESS))
+        && StringUtils.isEmpty(jsonObject.getString(CALL_DATA))) {
+      throw new InvalidParameterException("At least one of "
+          + CONTRACT_ADDRESS + " and " + CALL_DATA + " must be set.");
+    }
+    if (StringUtils.isEmpty(jsonObject.getString(CONTRACT_ADDRESS))
+        && !StringUtils.isEmpty(jsonObject.getString(FUNCTION_SELECTOR))
+        && !StringUtils.isEmpty(jsonObject.getString(CALL_DATA))) {
+      throw new InvalidParameterException("While trying to deploy, "
+          + FUNCTION_SELECTOR + " and " + CALL_DATA + " can not be both set.");
+    }
   }
 
 }

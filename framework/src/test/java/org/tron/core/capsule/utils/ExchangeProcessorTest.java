@@ -1,36 +1,22 @@
 package org.tron.core.capsule.utils;
 
-import java.io.File;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
-import org.tron.common.utils.FileUtil;
+import org.tron.common.BaseTest;
 import org.tron.core.Constant;
-import org.tron.core.Wallet;
 import org.tron.core.capsule.ExchangeProcessor;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 
 @Slf4j
-public class ExchangeProcessorTest {
+public class ExchangeProcessorTest extends BaseTest {
 
-  private static final String dbPath = "output_buy_exchange_processor_test";
-  private static final String OWNER_ADDRESS;
-  private static final String OWNER_ADDRESS_INVALID = "aaaa";
-  private static final String OWNER_ACCOUNT_INVALID;
-  private static final long initBalance = 10_000_000_000_000_000L;
   private static ExchangeProcessor processor;
-  private static TronApplicationContext context;
 
   static {
+    dbPath = "output_buy_exchange_processor_test";
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
-    OWNER_ACCOUNT_INVALID =
-        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3456";
   }
 
   /**
@@ -40,24 +26,6 @@ public class ExchangeProcessorTest {
   public static void init() {
     long supply = 1_000_000_000_000_000_000L;
     processor = new ExchangeProcessor(supply);
-    //    Args.setParam(new String[]{"--output-directory", dbPath},
-    //        "config-junit.conf");
-    //    dbManager = new Manager();
-    //    dbManager.init();
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   @Test
