@@ -1,23 +1,19 @@
 package org.tron.core.jsonrpc;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import javax.annotation.Resource;
 import org.junit.Test;
 import org.testng.Assert;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.TransactionRetCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.EventBloomException;
 import org.tron.core.services.jsonrpc.TronJsonRpc.FilterRequest;
@@ -27,28 +23,14 @@ import org.tron.core.store.SectionBloomStore;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.Protocol.TransactionInfo.Log;
 
-public class SectionBloomStoreTest {
+public class SectionBloomStoreTest extends BaseTest {
 
-  private static final String dbPath = "output-sectionBloomStore-test";
-  static SectionBloomStore sectionBloomStore;
-  private static TronApplicationContext context;
+  @Resource
+  SectionBloomStore sectionBloomStore;
 
   static {
-    Args.setParam(new String[] {"--output-directory", dbPath},
-        Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-  }
-
-  @BeforeClass
-  public static void init() {
-    sectionBloomStore = context.getBean(SectionBloomStore.class);
-  }
-
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
+    dbPath = "output-sectionBloomStore-test";
+    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
   }
 
   @Test

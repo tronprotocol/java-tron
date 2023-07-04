@@ -1,57 +1,46 @@
 package org.tron.core.witness;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.junit.AfterClass;
+import javax.annotation.Resource;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 import org.testng.collections.Lists;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.ProposalCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ConsensusService;
 import org.tron.core.consensus.ProposalController;
-import org.tron.core.db.Manager;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Proposal.State;
 
-public class ProposalControllerTest {
+public class ProposalControllerTest extends BaseTest {
 
-  private static Manager dbManager;
-  private static ConsensusService consensusService;
-  private static TronApplicationContext context;
-  private static String dbPath = "output_proposal_controller_test";
+  @Resource
+  private ConsensusService consensusService;
   private static ProposalController proposalController;
+  private static boolean init;
 
   static {
+    dbPath = "output_proposal_controller_test";
     Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
   }
 
-  @BeforeClass
-  public static void init() {
-    dbManager = context.getBean(Manager.class);
-    consensusService = context.getBean(ConsensusService.class);
+  @Before
+  public void init() {
+    if (init) {
+      return;
+    }
     consensusService.start();
-    proposalController = ProposalController
-        .createInstance(dbManager);
-  }
-
-  @AfterClass
-  public static void removeDb() {
-    Args.clearParam();
-    context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
+    proposalController = ProposalController.createInstance(dbManager);
+    init = true;
   }
 
   @Test
@@ -199,7 +188,7 @@ public class ProposalControllerTest {
       proposalCapsule.addApproval(ByteString.copyFrom(new byte[]{(byte) i}));
     }
 
-    Assert.assertEquals(true, proposalCapsule.hasMostApprovals(activeWitnesses));
+    Assert.assertTrue(proposalCapsule.hasMostApprovals(activeWitnesses));
 
     proposalCapsule.clearApproval();
     for (int i = 1; i < 18; i++) {
@@ -214,10 +203,7 @@ public class ProposalControllerTest {
     for (int i = 0; i < 3; i++) {
       proposalCapsule.addApproval(ByteString.copyFrom(new byte[]{(byte) i}));
     }
-    Assert.assertEquals(true, proposalCapsule.hasMostApprovals(activeWitnesses));
-
-
+    Assert.assertTrue(proposalCapsule.hasMostApprovals(activeWitnesses));
   }
-
 
 }

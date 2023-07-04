@@ -2,6 +2,8 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import java.io.File;
+import java.util.Arrays;
+
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -9,6 +11,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.LocalWitnesses;
+import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -19,6 +23,9 @@ import org.tron.protos.contract.BalanceContract.TransferContract;
 
 @Slf4j
 public class BlockCapsuleTest {
+
+  private final String privateKey = PublicMethod.getRandomPrivateKey();
+  private LocalWitnesses localWitnesses;
 
   private static BlockCapsule blockCapsule0 = new BlockCapsule(1,
       Sha256Hash.wrap(ByteString
@@ -119,8 +126,14 @@ public class BlockCapsuleTest {
         Sha256Hash.wrap(blockCapsule0.getParentHashStr()));
   }
 
+
   @Test
   public void testHasWitnessSignature() {
+
+    localWitnesses = new LocalWitnesses();
+    localWitnesses.setPrivateKeys(Arrays.asList(privateKey));
+    localWitnesses.initWitnessAccountAddress(true);
+    Args.setLocalWitnesses(localWitnesses);
 
     Assert.assertFalse(blockCapsule0.hasWitnessSignature());
     blockCapsule0

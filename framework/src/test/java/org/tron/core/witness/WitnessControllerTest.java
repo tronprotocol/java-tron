@@ -3,51 +3,25 @@ package org.tron.core.witness;
 import static org.junit.Assert.assertEquals;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import javax.annotation.Resource;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.consensus.dpos.DposSlot;
-import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 
-public class WitnessControllerTest {
+public class WitnessControllerTest extends BaseTest {
 
-  private static Manager dbManager = new Manager();
-  private static DposSlot dposSlot;
-  private static ChainBaseManager chainBaseManager;
+  @Resource
+  private DposSlot dposSlot;
 
-  private static TronApplicationContext context;
-  private static String dbPath = "output_witness_controller_test";
 
   static {
+    dbPath = "output_witness_controller_test";
     Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-  }
-
-  ByteString blank = ByteString.copyFrom(new byte[1]);
-
-  @BeforeClass
-  public static void init() {
-    dbManager = context.getBean(Manager.class);
-    chainBaseManager = context.getBean(ChainBaseManager.class);
-
-    dposSlot = context.getBean(DposSlot.class);
-  }
-
-  @AfterClass
-  public static void removeDb() {
-    Args.clearParam();
-    context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
   }
 
   @Test

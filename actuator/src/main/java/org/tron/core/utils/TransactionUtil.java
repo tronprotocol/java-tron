@@ -278,13 +278,19 @@ public class TransactionUtil {
     return bytesSize;
   }
 
-
-  public static long estimateConsumeBandWidthSize(
-          final AccountCapsule ownerCapsule,
-          ChainBaseManager chainBaseManager) {
-    DelegateResourceContract.Builder builder = DelegateResourceContract.newBuilder()
-                    .setLock(true)
-                    .setBalance(ownerCapsule.getFrozenV2BalanceForBandwidth());
+  public static long estimateConsumeBandWidthSize(final AccountCapsule ownerCapsule,
+      ChainBaseManager chainBaseManager) {
+    DelegateResourceContract.Builder builder;
+    if (chainBaseManager.getDynamicPropertiesStore().supportMaxDelegateLockPeriod()) {
+      builder = DelegateResourceContract.newBuilder()
+          .setLock(true)
+          .setLockPeriod(chainBaseManager.getDynamicPropertiesStore().getMaxDelegateLockPeriod())
+          .setBalance(ownerCapsule.getFrozenV2BalanceForBandwidth());
+    } else {
+      builder = DelegateResourceContract.newBuilder()
+          .setLock(true)
+          .setBalance(ownerCapsule.getFrozenV2BalanceForBandwidth());
+    }
     TransactionCapsule fakeTransactionCapsule = new TransactionCapsule(builder.build()
             , ContractType.DelegateResourceContract);
     long size1 = consumeBandWidthSize(fakeTransactionCapsule, chainBaseManager);

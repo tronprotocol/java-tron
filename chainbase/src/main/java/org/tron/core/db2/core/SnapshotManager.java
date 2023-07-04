@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -122,6 +123,7 @@ public class SnapshotManager implements RevokingDatabase {
       exitThread.interrupt();
       // help GC
       exitThread = null;
+      flushServices.values().forEach(ExecutorService::shutdown);
     } catch (Exception e) {
       logger.warn("exitThread interrupt error", e);
     }
@@ -469,9 +471,10 @@ public class SnapshotManager implements RevokingDatabase {
     if (cpList.size() < 3) {
       return;
     }
+    long latestTimestamp = Long.parseLong(cpList.get(cpList.size()-1));
     for (String cp: cpList.subList(0, cpList.size()-3)) {
       long timestamp = Long.parseLong(cp);
-      if (System.currentTimeMillis() - timestamp < ONE_MINUTE_MILLS*2) {
+      if (latestTimestamp - timestamp <= ONE_MINUTE_MILLS*2) {
         break;
       }
       String checkpointPath = Paths.get(StorageUtils.getOutputDirectoryByDbName(CHECKPOINT_V2_DIR),
@@ -506,6 +509,7 @@ public class SnapshotManager implements RevokingDatabase {
       }
     }
     recover(checkTmpStore);
+    logger.info("checkpoint v1 recover success");
     unChecked = false;
   }
 
@@ -520,7 +524,12 @@ public class SnapshotManager implements RevokingDatabase {
       return;
     }
 
+    long latestTimestamp = Long.parseLong(cpList.get(cpList.size()-1));
     for (String cp: cpList) {
+      long timestamp = Long.parseLong(cp);
+      if (latestTimestamp - timestamp > ONE_MINUTE_MILLS*2) {
+        continue;
+      }
       TronDatabase<byte[]> checkPointV2Store = getCheckpointDB(cp);
       recover(checkPointV2Store);
       checkPointV2Store.close();
