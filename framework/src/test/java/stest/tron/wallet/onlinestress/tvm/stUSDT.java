@@ -26,6 +26,7 @@ import static stest.tron.wallet.common.client.utils.PublicMethed.getFinalAddress
 
 public class stUSDT {
   private final String testNetAccountKey = "f51dd12e73a409b0b8d2ab74c5b56edfcca3bbcd4cb24aea6ff69ae2c1eaabd4";
+//  private final String testNetAccountKey = "1ec9c30c9c246572557d8aaf88fd0823b70fb4b5a085be80959d66be0afb2848";
   private final byte[] testNetAccountAddress = getFinalAddress(testNetAccountKey);
 
   byte[] UnstUSDTProxy = null;
@@ -54,14 +55,17 @@ public class stUSDT {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    UnstUSDTProxy = WalletClient.decodeFromBase58Check("TVAsF1CnUhmHmN4shcBH4EoRxrncuEFbeu");
+    // nile pubilc test
+    UnstUSDTProxy = WalletClient.decodeFromBase58Check("TVqzeEEX1qkNr4jxZCo8g3xbSdBForBR7n");
+//    UnstUSDTProxy = WalletClient.decodeFromBase58Check("TVqzeEEX1qkNr4jxZCo8g3xbSdBForBR7n");
   }
 
   @Test(enabled = true, description = "requestWithdrawal")
   public void requestWithdrawal(){
-    for (int i = 0;i<1200;i++){
+    for (int i = 0;i<101;i++){
+      // 166666666666669
       String txid = PublicMethed.triggerContract(UnstUSDTProxy,
-              "requestWithdrawal(uint256)", "166666666666669", false,
+              "requestWithdrawal(uint256)", "3000000000000000000", false,
               0, maxFeeLimit, testNetAccountAddress, testNetAccountKey, blockingStubFull);
       Optional<Protocol.TransactionInfo> infoById = null;
       PublicMethed.waitProduceNextBlock(blockingStubFull);
