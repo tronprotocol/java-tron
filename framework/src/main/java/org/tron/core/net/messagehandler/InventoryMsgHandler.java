@@ -31,9 +31,9 @@ public class InventoryMsgHandler implements TronMsgHandler {
     InventoryMessage inventoryMessage = (InventoryMessage) msg;
     InventoryType type = inventoryMessage.getInventoryType();
 
-    if (!check(peer, inventoryMessage)) {
-      return;
-    }
+//    if (!check(peer, inventoryMessage)) {
+//      return;
+//    }
 
     for (Sha256Hash id : inventoryMessage.getHashList()) {
       Item item = new Item(id, type);
