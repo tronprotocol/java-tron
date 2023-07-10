@@ -13,6 +13,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.BaseTest;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.TvmTestUtils;
@@ -52,10 +53,10 @@ public class TransferActuatorTest extends BaseTest {
   private static final String OWNER_ACCOUNT_INVALID;
   private static final String OWNER_NO_BALANCE;
   private static final String To_ACCOUNT_INVALID;
-  private static Manager dbManager;
-  private static TronApplicationContext context;
-  private static final WorldStateCallBack worldStateCallBack;
-  private static final ChainBaseManager chainBaseManager;
+  @Autowired
+  private WorldStateCallBack worldStateCallBack;
+  @Autowired
+  private ChainBaseManager chainBaseManager;
 
   static {
     dbPath = "output_transfer_test";
@@ -67,8 +68,6 @@ public class TransferActuatorTest extends BaseTest {
     OWNER_NO_BALANCE = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3433";
     To_ACCOUNT_INVALID =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3422";
-    worldStateCallBack = context.getBean(WorldStateCallBack.class);
-    chainBaseManager = context.getBean(ChainBaseManager.class);
   }
 
   /**

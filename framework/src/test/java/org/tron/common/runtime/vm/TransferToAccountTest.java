@@ -8,6 +8,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.BaseTest;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
@@ -63,23 +64,22 @@ public class TransferToAccountTest extends BaseTest {
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
   private static Runtime runtime;
-  private static Manager dbManager;
-  private static ChainBaseManager chainBaseManager;
-  private static TronApplicationContext context;
-  private static Application appT;
+  @Autowired
+  private ChainBaseManager chainBaseManager;
   private static RepositoryImpl repository;
   private static AccountCapsule ownerCapsule;
-  private static WorldStateCallBack worldStateCallBack;
+  @Autowired
+  private WorldStateCallBack worldStateCallBack;
 
   static {
     dbPath = "output_TransferToAccountTest";
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-    appT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     TRANSFER_TO = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
-    dbManager = context.getBean(Manager.class);
-    chainBaseManager = context.getBean(ChainBaseManager.class);
+  }
+
+  @Before
+  public void before() {
     repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
     repository.createAccount(Hex.decode(TRANSFER_TO), AccountType.Normal);
     repository.addBalance(Hex.decode(TRANSFER_TO), 10);
@@ -91,21 +91,6 @@ public class TransferToAccountTest extends BaseTest {
             AccountType.AssetIssue);
 
     ownerCapsule.setBalance(1000_1000_1000L);
-    worldStateCallBack = context.getBean(WorldStateCallBack.class);
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   private long createAsset(String tokenName) {

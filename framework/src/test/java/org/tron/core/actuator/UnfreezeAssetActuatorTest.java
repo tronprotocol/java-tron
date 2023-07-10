@@ -8,6 +8,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.BaseTest;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
@@ -42,10 +43,10 @@ public class UnfreezeAssetActuatorTest extends BaseTest {
   private static final long frozenBalance = 1_000_000_000L;
   private static final String assetName = "testCoin";
   private static final String assetID = "123456";
-  private static Manager dbManager;
-  private static TronApplicationContext context;
-  private static final WorldStateCallBack worldStateCallBack;
-  private static final ChainBaseManager chainBaseManager;
+  @Autowired
+  private WorldStateCallBack worldStateCallBack;
+  @Autowired
+  private ChainBaseManager chainBaseManager;
 
   static {
     dbPath = "output_unfreeze_asset_test";
@@ -53,8 +54,6 @@ public class UnfreezeAssetActuatorTest extends BaseTest {
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     OWNER_ACCOUNT_INVALID =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3456";
-    worldStateCallBack = context.getBean(WorldStateCallBack.class);
-    chainBaseManager = context.getBean(ChainBaseManager.class);
   }
 
   /**

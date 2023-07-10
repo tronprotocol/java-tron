@@ -27,6 +27,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.BaseTest;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.TvmTestUtils;
@@ -78,11 +79,11 @@ public class TransferAssetActuatorTest extends BaseTest {
   private static final int VOTE_SCORE = 2;
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
-  private static TronApplicationContext context;
-  private static Manager dbManager;
   private static Any contract;
-  private static final WorldStateCallBack worldStateCallBack;
-  private static final ChainBaseManager chainBaseManager;
+  @Autowired
+  private WorldStateCallBack worldStateCallBack;
+  @Autowired
+  private ChainBaseManager chainBaseManager;
 
   static {
     dbPath = "output_transferasset_test";
@@ -94,8 +95,6 @@ public class TransferAssetActuatorTest extends BaseTest {
             + "B56446E617E924805E4D6CA021D341FEF6E21234";
     ownerAsset_ADDRESS =
             Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049010";
-    worldStateCallBack = context.getBean(WorldStateCallBack.class);
-    chainBaseManager = context.getBean(ChainBaseManager.class);
   }
 
   /**
