@@ -6,18 +6,16 @@ import static org.tron.core.config.Parameter.ChainConstant.TRANSFER_FEE;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.util.Date;
+import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
-import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -50,10 +48,8 @@ public class TransferActuatorTest extends BaseTest {
   private static final String OWNER_ACCOUNT_INVALID;
   private static final String OWNER_NO_BALANCE;
   private static final String To_ACCOUNT_INVALID;
-  private static Manager dbManager;
-  private static TronApplicationContext context;
-  private static final WorldStateCallBack worldStateCallBack;
-  private static final ChainBaseManager chainBaseManager;
+  @Resource
+  private WorldStateCallBack worldStateCallBack;
 
   static {
     dbPath = "output_transfer_test";
@@ -65,8 +61,6 @@ public class TransferActuatorTest extends BaseTest {
     OWNER_NO_BALANCE = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3433";
     To_ACCOUNT_INVALID =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3422";
-    worldStateCallBack = context.getBean(WorldStateCallBack.class);
-    chainBaseManager = context.getBean(ChainBaseManager.class);
   }
 
   /**

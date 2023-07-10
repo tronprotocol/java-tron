@@ -20,18 +20,16 @@ import static org.tron.common.utils.Commons.adjustBalance;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
-import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -76,11 +74,9 @@ public class TransferAssetActuatorTest extends BaseTest {
   private static final int VOTE_SCORE = 2;
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
-  private static TronApplicationContext context;
-  private static Manager dbManager;
   private static Any contract;
-  private static final WorldStateCallBack worldStateCallBack;
-  private static final ChainBaseManager chainBaseManager;
+  @Resource
+  private WorldStateCallBack worldStateCallBack;
 
   static {
     dbPath = "output_transferasset_test";
@@ -92,8 +88,6 @@ public class TransferAssetActuatorTest extends BaseTest {
             + "B56446E617E924805E4D6CA021D341FEF6E21234";
     ownerAsset_ADDRESS =
             Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049010";
-    worldStateCallBack = context.getBean(WorldStateCallBack.class);
-    chainBaseManager = context.getBean(ChainBaseManager.class);
   }
 
   /**

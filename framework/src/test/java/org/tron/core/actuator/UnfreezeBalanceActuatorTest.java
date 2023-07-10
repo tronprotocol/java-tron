@@ -6,16 +6,14 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
-import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -46,10 +44,8 @@ public class UnfreezeBalanceActuatorTest extends BaseTest {
   private static final long initBalance = 10_000_000_000L;
   private static final long frozenBalance = 1_000_000_000L;
   private static final long smallTatalResource = 100L;
-  private static Manager dbManager;
-  private static TronApplicationContext context;
-  private static final WorldStateCallBack worldStateCallBack;
-  private static final ChainBaseManager chainBaseManager;
+  @Resource
+  private WorldStateCallBack worldStateCallBack;
 
   static {
     dbPath = "output_unfreeze_balance_test";
@@ -58,8 +54,6 @@ public class UnfreezeBalanceActuatorTest extends BaseTest {
     RECEIVER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
     OWNER_ACCOUNT_INVALID =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3456";
-    worldStateCallBack = context.getBean(WorldStateCallBack.class);
-    chainBaseManager = context.getBean(ChainBaseManager.class);
   }
 
   /**

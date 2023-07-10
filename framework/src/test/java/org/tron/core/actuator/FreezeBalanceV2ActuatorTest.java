@@ -5,9 +5,9 @@ import static org.tron.core.config.Parameter.ChainConstant.TRANSFER_FEE;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,10 +38,8 @@ public class FreezeBalanceV2ActuatorTest extends BaseTest {
   private static final String OWNER_ADDRESS_INVALID = "aaaa";
   private static final String OWNER_ACCOUNT_INVALID;
   private static final long initBalance = 10_000_000_000L;
-  private static Manager dbManager;
-  private static TronApplicationContext context;
-  private static final WorldStateCallBack worldStateCallBack;
-  private static final ChainBaseManager chainBaseManager;
+  @Resource
+  private WorldStateCallBack worldStateCallBack;
 
   static {
     dbPath = "output_freeze_balance_v2_test";
@@ -50,9 +48,6 @@ public class FreezeBalanceV2ActuatorTest extends BaseTest {
     RECEIVER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
     OWNER_ACCOUNT_INVALID =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3456";
-    worldStateCallBack = context.getBean(WorldStateCallBack.class);
-    chainBaseManager = context.getBean(ChainBaseManager.class);
-    Assert.assertNotNull(worldStateCallBack.getTrie());
   }
 
   /**

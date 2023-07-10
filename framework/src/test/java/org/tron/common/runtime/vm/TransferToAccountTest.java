@@ -1,6 +1,7 @@
 package org.tron.common.runtime.vm;
 
 import com.google.protobuf.ByteString;
+import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Assert;
@@ -16,7 +17,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
 import org.tron.common.utils.client.utils.AbiUtil;
-import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.VMActuator;
@@ -57,7 +57,8 @@ public class TransferToAccountTest extends BaseTest {
   private static Runtime runtime;
   private static RepositoryImpl repository;
   private static AccountCapsule ownerCapsule;
-  private static WorldStateCallBack worldStateCallBack;
+  @Resource
+  private WorldStateCallBack worldStateCallBack;
 
   static {
     dbPath = "output_TransferToAccountTest";
@@ -79,7 +80,6 @@ public class TransferToAccountTest extends BaseTest {
             AccountType.AssetIssue);
 
     ownerCapsule.setBalance(1000_1000_1000L);
-    worldStateCallBack = context.getBean(WorldStateCallBack.class);
   }
 
   private long createAsset(String tokenName) {
@@ -354,6 +354,7 @@ public class TransferToAccountTest extends BaseTest {
         .deployContractWholeProcessReturnContractAddress(contractName, address, ABI, code, value,
             feeLimit, consumeUserResourcePercent, null, tokenValue, tokenId,
             repository, null);
+    return contractAddress;
   }
 
   private WorldStateQueryInstance flushTrieAndGetQueryInstance() {

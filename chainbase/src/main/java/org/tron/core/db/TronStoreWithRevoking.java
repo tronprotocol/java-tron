@@ -87,6 +87,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   }
 
   protected TronStoreWithRevoking() {
+    this.db = null;
   }
 
   protected org.iq80.leveldb.Options getOptionsByDbNameForLevelDB(String dbName) {
