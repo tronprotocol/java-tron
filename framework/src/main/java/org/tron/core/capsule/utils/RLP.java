@@ -204,7 +204,7 @@ public class RLP {
     return value;
   }
 
-  private static String decodeStringItem(byte[] data, int index) {
+  public static String decodeStringItem(byte[] data, int index) {
 
     final byte[] valueBytes = decodeItemBytes(data, index);
 
@@ -229,12 +229,12 @@ public class RLP {
     }
   }
 
-  private static byte[] decodeByteArray(byte[] data, int index) {
+  public static byte[] decodeByteArray(byte[] data, int index) {
 
     return decodeItemBytes(data, index);
   }
 
-  private static int nextItemLength(byte[] data, int index) {
+  public static int nextItemLength(byte[] data, int index) {
 
     if (index >= data.length) {
       return -1;

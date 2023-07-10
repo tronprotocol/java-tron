@@ -6,7 +6,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
+import org.tron.common.BaseTest;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
@@ -19,6 +21,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
+import org.tron.common.utils.client.utils.AbiUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -45,12 +48,10 @@ import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
-import stest.tron.wallet.common.client.utils.AbiUtil;
 
 @Slf4j
-public class TransferToAccountTest {
+public class TransferToAccountTest extends BaseTest {
 
-  private static final String dbPath = "output_TransferToAccountTest";
   private static final String OWNER_ADDRESS;
   private static final String TRANSFER_TO;
   private static final long TOTAL_SUPPLY = 1000_000_000L;
@@ -71,6 +72,7 @@ public class TransferToAccountTest {
   private static WorldStateCallBack worldStateCallBack;
 
   static {
+    dbPath = "output_TransferToAccountTest";
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     appT = ApplicationFactory.create(context);
@@ -300,7 +302,6 @@ public class TransferToAccountTest {
     // 9.Test transferToken Big Amount
 
     selectorStr = "transferTokenTo(address,trcToken,uint256)";
-    ecKey = new ECKey(Utils.getRandom());
     String params = "000000000000000000000000548794500882809695a8a687866e76d4271a1abc"
         + Hex.toHexString(new DataWord(id).getData())
         + "0000000000000000000000000000000011111111111111111111111111111111";
@@ -375,11 +376,10 @@ public class TransferToAccountTest {
         feeLimit, consumeUserResourcePercent, tokenValue, tokenId, null);
     VmStateTestUtil.runConstantCall(chainBaseManager, worldStateCallBack, tx);
 
-    byte[] contractAddress = TvmTestUtils
+    return TvmTestUtils
         .deployContractWholeProcessReturnContractAddress(contractName, address, ABI, code, value,
             feeLimit, consumeUserResourcePercent, null, tokenValue, tokenId,
             repository, null);
-    return contractAddress;
   }
 
   private WorldStateQueryInstance flushTrieAndGetQueryInstance() {

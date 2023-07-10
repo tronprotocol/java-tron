@@ -1,147 +1,168 @@
 package org.tron.core.actuator.utils;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.tron.core.capsule.utils.TransactionUtil.isNumber;
+import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_PERIOD;
+import static org.tron.core.utils.TransactionUtil.validAccountId;
+import static org.tron.core.utils.TransactionUtil.validAccountName;
+import static org.tron.core.utils.TransactionUtil.validAssetName;
+import static org.tron.core.utils.TransactionUtil.validTokenAbbrName;
 
-import java.io.File;
-import java.io.UnsupportedEncodingException;
+import com.google.protobuf.ByteString;
+import java.nio.charset.StandardCharsets;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
-import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
-import org.tron.common.application.TronApplicationContext;
-import org.tron.common.utils.FileUtil;
+import org.tron.common.BaseTest;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
-import org.tron.core.config.DefaultConfig;
+import org.tron.core.Wallet;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.utils.TransactionUtil;
+import org.tron.protos.Protocol.AccountType;
 
 
 @Slf4j(topic = "capsule")
-public class TransactionUtilTest {
+public class TransactionUtilTest extends BaseTest {
 
-  private static final String dbPath = "output_transactionUtil_test";
-  public static Application AppT;
-  private static TronApplicationContext context;
+  private static String OWNER_ADDRESS;
 
   /**
    * Init .
    */
   @BeforeClass
   public static void init() {
+    dbPath = "output_transactionUtil_test";
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-    AppT = ApplicationFactory.create(context);
+    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+
   }
 
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
+  @Before
+  public void setUp() {
+    byte[] owner = ByteArray.fromHexString(OWNER_ADDRESS);
+    AccountCapsule ownerCapsule =
+        new AccountCapsule(
+            ByteString.copyFromUtf8("owner"),
+            ByteString.copyFrom(owner),
+            AccountType.Normal,
+            10_000_000_000L);
+    ownerCapsule.setFrozenForBandwidth(1000000L, 1000000L);
+    dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
   }
 
   @Test
-  public void validAccountNameCheck() throws UnsupportedEncodingException {
-    TransactionUtil actuatorUtil = new TransactionUtil();
-    String account = "";
-    Assert.assertEquals(true, actuatorUtil.validAccountName(account.getBytes("utf-8")));
+  public void validAccountNameCheck() {
+    StringBuilder account = new StringBuilder();
+    assertTrue(validAccountName(account.toString().getBytes(StandardCharsets.UTF_8)));
     for (int i = 0; i < 200; i++) {
-      account += (char) ('a' + (i % 26));
+      account.append((char) ('a' + (i % 26)));
     }
-    Assert.assertEquals(true, actuatorUtil.validAccountName(account.getBytes("utf-8")));
-    account += 'z';
-    Assert.assertEquals(false, actuatorUtil.validAccountName(account.getBytes("utf-8")));
+    assertTrue(validAccountName(account.toString().getBytes(StandardCharsets.UTF_8)));
+    account.append('z');
+    assertFalse(validAccountName(account.toString().getBytes(StandardCharsets.UTF_8)));
 
   }
 
   @Test
-  public void validAccountIdCheck() throws UnsupportedEncodingException {
-    TransactionUtil actuatorUtil = new TransactionUtil();
-    String accountId = "";
-    Assert.assertEquals(false, actuatorUtil.validAccountId(accountId.getBytes("utf-8")));
+  public void validAccountIdCheck() {
+    StringBuilder accountId = new StringBuilder();
+    assertFalse(validAccountId(accountId.toString().getBytes(StandardCharsets.UTF_8)));
     for (int i = 0; i < 7; i++) {
-      accountId += (char) ('a' + (i % 26));
+      accountId.append((char) ('a' + (i % 26)));
     }
-    Assert.assertEquals(false, actuatorUtil.validAccountId(accountId.getBytes("utf-8")));
+    assertFalse(validAccountId(accountId.toString().getBytes(StandardCharsets.UTF_8)));
     for (int i = 0; i < 26; i++) {
-      accountId += (char) ('a' + (i % 26));
+      accountId.append((char) ('a' + (i % 26)));
     }
-    Assert.assertEquals(false, actuatorUtil.validAccountId(accountId.getBytes("utf-8")));
-    accountId = "ab  cdefghij";
-    Assert.assertEquals(false, actuatorUtil.validAccountId(accountId.getBytes("utf-8")));
-    accountId = Character.toString((char) 128) + "abcdefjijk" + Character.toString((char) 129);
-    Assert.assertEquals(false, actuatorUtil.validAccountId(accountId.getBytes("utf-8")));
-    accountId = "";
+    assertFalse(validAccountId(accountId.toString().getBytes(StandardCharsets.UTF_8)));
+    accountId = new StringBuilder("ab  cdefghij");
+    assertFalse(validAccountId(accountId.toString().getBytes(StandardCharsets.UTF_8)));
+    accountId = new StringBuilder((char) 128 + "abcdefjijk" + (char) 129);
+    assertFalse(validAccountId(accountId.toString().getBytes(StandardCharsets.UTF_8)));
+    accountId = new StringBuilder();
     for (int i = 0; i < 30; i++) {
-      accountId += (char) ('a' + (i % 26));
+      accountId.append((char) ('a' + (i % 26)));
     }
-    Assert.assertEquals(true, actuatorUtil.validAccountId(accountId.getBytes("utf-8")));
+    assertTrue(validAccountId(accountId.toString().getBytes(StandardCharsets.UTF_8)));
 
   }
 
   @Test
-  public void validAssetNameCheck() throws UnsupportedEncodingException {
-    TransactionUtil actuatorUtil = new TransactionUtil();
-    String assetName = "";
-    Assert.assertEquals(false, actuatorUtil.validAssetName(assetName.getBytes("utf-8")));
+  public void validAssetNameCheck() {
+    StringBuilder assetName = new StringBuilder();
+    assertFalse(validAssetName(assetName.toString().getBytes(StandardCharsets.UTF_8)));
     for (int i = 0; i < 33; i++) {
-      assetName += (char) ('a' + (i % 26));
+      assetName.append((char) ('a' + (i % 26)));
     }
-    Assert.assertEquals(false, actuatorUtil.validAssetName(assetName.getBytes("utf-8")));
-    assetName = "ab  cdefghij";
-    Assert.assertEquals(false, actuatorUtil.validAssetName(assetName.getBytes("utf-8")));
-    assetName = Character.toString((char) 128) + "abcdefjijk" + Character.toString((char) 129);
-    Assert.assertEquals(false, actuatorUtil.validAssetName(assetName.getBytes("utf-8")));
-    assetName = "";
+    assertFalse(validAssetName(assetName.toString().getBytes(StandardCharsets.UTF_8)));
+    assetName = new StringBuilder("ab  cdefghij");
+    assertFalse(validAssetName(assetName.toString().getBytes(StandardCharsets.UTF_8)));
+    assetName = new StringBuilder((char) 128 + "abcdefjijk" + (char) 129);
+    assertFalse(validAssetName(assetName.toString().getBytes(StandardCharsets.UTF_8)));
+    assetName = new StringBuilder();
     for (int i = 0; i < 20; i++) {
-      assetName += (char) ('a' + (i % 26));
+      assetName.append((char) ('a' + (i % 26)));
     }
-    Assert.assertEquals(true, actuatorUtil.validAssetName(assetName.getBytes("utf-8")));
+    assertTrue(validAssetName(assetName.toString().getBytes(StandardCharsets.UTF_8)));
   }
 
   @Test
-  public void validTokenAbbrNameCheck() throws UnsupportedEncodingException {
-
-    TransactionUtil actuatorUtil = new TransactionUtil();
-    String abbrName = "";
-    Assert.assertEquals(false, actuatorUtil.validTokenAbbrName(abbrName.getBytes("utf-8")));
+  public void validTokenAbbrNameCheck() {
+    StringBuilder abbrName = new StringBuilder();
+    assertFalse(validTokenAbbrName(abbrName.toString().getBytes(StandardCharsets.UTF_8)));
     for (int i = 0; i < 6; i++) {
-      abbrName += (char) ('a' + (i % 26));
+      abbrName.append((char) ('a' + (i % 26)));
     }
-    Assert.assertEquals(false, actuatorUtil.validTokenAbbrName(abbrName.getBytes("utf-8")));
-    abbrName = "a bd";
-    Assert.assertEquals(false, actuatorUtil.validTokenAbbrName(abbrName.getBytes("utf-8")));
-    abbrName = "a" + Character.toString((char) 129) + 'f';
-    Assert.assertEquals(false, actuatorUtil.validTokenAbbrName(abbrName.getBytes("utf-8")));
-    abbrName = "";
+    assertFalse(validTokenAbbrName(abbrName.toString().getBytes(StandardCharsets.UTF_8)));
+    abbrName = new StringBuilder("a bd");
+    assertFalse(validTokenAbbrName(abbrName.toString().getBytes(StandardCharsets.UTF_8)));
+    abbrName = new StringBuilder("a" + (char) 129 + 'f');
+    assertFalse(validTokenAbbrName(abbrName.toString().getBytes(StandardCharsets.UTF_8)));
+    abbrName = new StringBuilder();
     for (int i = 0; i < 5; i++) {
-      abbrName += (char) ('a' + (i % 26));
+      abbrName.append((char) ('a' + (i % 26)));
     }
-    Assert.assertEquals(true, actuatorUtil.validTokenAbbrName(abbrName.getBytes("utf-8")));
+    assertTrue(validTokenAbbrName(abbrName.toString().getBytes(StandardCharsets.UTF_8)));
   }
 
   @Test
-  public void isNumberCheck() throws UnsupportedEncodingException {
-    TransactionUtil actuatorUtil = new TransactionUtil();
+  public void isNumberCheck() {
     String number = "";
-    Assert.assertEquals(false, isNumber(number.getBytes("utf-8")));
+    assertFalse(isNumber(number.getBytes(StandardCharsets.UTF_8)));
 
     number = "123df34";
-    Assert.assertEquals(false, isNumber(number.getBytes("utf-8")));
+    assertFalse(isNumber(number.getBytes(StandardCharsets.UTF_8)));
     number = "013";
-    Assert.assertEquals(false, isNumber(number.getBytes("utf-8")));
+    assertFalse(isNumber(number.getBytes(StandardCharsets.UTF_8)));
     number = "24";
-    Assert.assertEquals(true, isNumber(number.getBytes("utf-8")));
+    assertTrue(isNumber(number.getBytes(StandardCharsets.UTF_8)));
+  }
+
+  @Test
+  public void testEstimateConsumeBandWidthSize() {
+    AccountCapsule ownerCapsule =
+        dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    long estimateConsumeBandWidthSize = TransactionUtil.estimateConsumeBandWidthSize(ownerCapsule,
+        dbManager.getChainBaseManager());
+    assertEquals(275L, estimateConsumeBandWidthSize);
+    chainBaseManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(DELEGATE_PERIOD / 3000);
+  }
+
+  @Test
+  public void testEstimateConsumeBandWidthSize2() {
+    chainBaseManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(14);
+    chainBaseManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(864000L);
+    AccountCapsule ownerCapsule =
+        dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    long estimateConsumeBandWidthSize = TransactionUtil.estimateConsumeBandWidthSize(ownerCapsule,
+        dbManager.getChainBaseManager());
+    assertEquals(277L, estimateConsumeBandWidthSize);
+    chainBaseManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(DELEGATE_PERIOD / 3000);
   }
 
 }

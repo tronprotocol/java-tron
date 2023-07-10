@@ -1,17 +1,24 @@
 package org.tron.core.actuator;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_PERIOD;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
+import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
+import static org.tron.protos.contract.Common.ResourceCode.TRON_POWER;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
+import org.tron.common.BaseTest;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -34,13 +41,12 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
+import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.BalanceContract.DelegateResourceContract;
-import org.tron.protos.contract.Common.ResourceCode;
 
 @Slf4j
-public class DelegateResourceActuatorTest {
+public class DelegateResourceActuatorTest extends BaseTest {
 
-  private static final String dbPath = "output_delegate_resource_test";
   private static final String OWNER_ADDRESS;
   private static final String RECEIVER_ADDRESS;
   private static final String OWNER_ADDRESS_INVALID = "aaaa";
@@ -52,6 +58,7 @@ public class DelegateResourceActuatorTest {
   private static final ChainBaseManager chainBaseManager;
 
   static {
+    dbPath = "output_delegate_resource_test";
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
@@ -63,35 +70,14 @@ public class DelegateResourceActuatorTest {
   }
 
   /**
-   * Init data.
-   */
-  @BeforeClass
-  public static void init() {
-    dbManager = context.getBean(Manager.class);
-    dbManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(1L);
-    dbManager.getDynamicPropertiesStore().saveAllowNewResourceModel(1L);
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
-  }
-
-  /**
    * create temp Capsule test need.
    */
   @Before
   public void createAccountCapsule() {
     worldStateCallBack.setExecute(true);
+    dbManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(1L);
+    dbManager.getDynamicPropertiesStore().saveAllowNewResourceModel(1L);
+
     byte[] owner = ByteArray.fromHexString(OWNER_ADDRESS);
     byte[] receiver = ByteArray.fromHexString(RECEIVER_ADDRESS);
     AccountCapsule ownerCapsule =
@@ -153,9 +139,31 @@ public class DelegateResourceActuatorTest {
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
             .setReceiverAddress(ByteString.copyFrom(ByteArray.fromHexString(receiveAddress)))
             .setBalance(unfreezeBalance)
-            .setResource(ResourceCode.BANDWIDTH)
+            .setResource(BANDWIDTH)
             .setLock(lock)
             .build());
+  }
+
+  private Any getMaxDelegateLockPeriodContractForBandwidth(long unfreezeBalance, long lockPeriod) {
+    return Any.pack(DelegateResourceContract.newBuilder()
+        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+        .setReceiverAddress(ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS)))
+        .setBalance(unfreezeBalance)
+        .setResource(BANDWIDTH)
+        .setLock(true)
+        .setLockPeriod(lockPeriod)
+        .build());
+  }
+
+  private Any getMaxDelegateLockPeriodContractForEnergy(long unfreezeBalance, long lockPeriod) {
+    return Any.pack(DelegateResourceContract.newBuilder()
+        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+        .setReceiverAddress(ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS)))
+        .setBalance(unfreezeBalance)
+        .setResource(ENERGY)
+        .setLock(true)
+        .setLockPeriod(lockPeriod)
+        .build());
   }
 
   private Any getDelegateContractForCpu(long unfreezeBalance) {
@@ -164,7 +172,7 @@ public class DelegateResourceActuatorTest {
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setReceiverAddress(ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS)))
             .setBalance(unfreezeBalance)
-            .setResource(ResourceCode.ENERGY)
+            .setResource(ENERGY)
             .build());
   }
 
@@ -174,7 +182,7 @@ public class DelegateResourceActuatorTest {
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setReceiverAddress(ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS)))
             .setBalance(unfreezeBalance)
-            .setResource(ResourceCode.TRON_POWER)
+            .setResource(TRON_POWER)
             .build());
   }
 
@@ -192,12 +200,12 @@ public class DelegateResourceActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      Assert.fail("cannot run here.");
+      fail("cannot run here.");
     } catch (ContractValidateException e) {
-      Assert.assertEquals("delegateBalance must be less than available FreezeBandwidthV2 balance",
+      assertEquals("delegateBalance must be less than available FreezeBandwidthV2 balance",
           e.getMessage());
     } catch (ContractExeException e) {
-      Assert.fail();
+      fail();
     }
 
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(
@@ -205,13 +213,13 @@ public class DelegateResourceActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      Assert.fail("cannot run here.");
+      fail("cannot run here.");
     } catch (ContractValidateException e) {
-      Assert.assertEquals(
+      assertEquals(
           "delegateBalance must be less than available FreezeEnergyV2 balance",
           e.getMessage());
     } catch (ContractExeException e) {
-      Assert.fail(e.getMessage());
+      fail(e.getMessage());
     }
   }
 
@@ -235,15 +243,14 @@ public class DelegateResourceActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      Assert.fail("cannot run here.");
+      fail("cannot run here.");
     } catch (ContractValidateException e) {
-      Assert.assertEquals("delegateBalance must be less than available FreezeBandwidthV2 balance",
+      assertEquals("delegateBalance must be less than available FreezeBandwidthV2 balance",
           e.getMessage());
     } catch (ContractExeException e) {
-      Assert.fail(e.getMessage());
+      fail(e.getMessage());
     }
   }
-
 
   @Test
   public void testDelegateCpuWithUsage() {
@@ -265,13 +272,13 @@ public class DelegateResourceActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      Assert.fail("cannot run here.");
+      fail("cannot run here.");
     } catch (ContractValidateException e) {
-      Assert.assertEquals(
+      assertEquals(
           "delegateBalance must be less than available FreezeEnergyV2 balance",
           e.getMessage());
     } catch (ContractExeException e) {
-      Assert.fail(e.getMessage());
+      fail(e.getMessage());
     }
   }
 
@@ -297,9 +304,9 @@ public class DelegateResourceActuatorTest {
       actuator.validate();
       actuator.execute(ret);
     } catch (ContractValidateException e) {
-      Assert.assertEquals("Do not allow delegate resources to contract addresses", e.getMessage());
+      assertEquals("Do not allow delegate resources to contract addresses", e.getMessage());
     } catch (ContractExeException e) {
-      Assert.fail(e.getMessage());
+      fail(e.getMessage());
     }
   }
 
@@ -316,9 +323,9 @@ public class DelegateResourceActuatorTest {
       actuator.validate();
       actuator.execute(ret);
     } catch (ContractValidateException e) {
-      Assert.assertEquals("receiverAddress must not be the same as ownerAddress", e.getMessage());
+      assertEquals("receiverAddress must not be the same as ownerAddress", e.getMessage());
     } catch (ContractExeException e) {
-      Assert.fail(e.getMessage());
+      fail(e.getMessage());
     }
   }
 
@@ -337,7 +344,7 @@ public class DelegateResourceActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      Assert.assertEquals(code.SUCESS, ret.getInstance().getRet());
+      assertEquals(code.SUCESS, ret.getInstance().getRet());
       AccountCapsule ownerCapsule =
           dbManager.getAccountStore().get(owner);
 
@@ -355,10 +362,10 @@ public class DelegateResourceActuatorTest {
 
       AccountCapsule receiverCapsule =
           dbManager.getAccountStore().get(receiver);
-      Assert.assertEquals(delegateBalance,
+      assertEquals(delegateBalance,
           receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth());
-      Assert.assertEquals(0L, receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy());
-      Assert.assertEquals(0L, receiverCapsule.getTronPower());
+      assertEquals(0L, receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy());
+      assertEquals(0L, receiverCapsule.getTronPower());
 
       receiverCapsule = queryInstance.getAccount(receiver);
       Assert.assertEquals(delegateBalance,
@@ -388,20 +395,20 @@ public class DelegateResourceActuatorTest {
       //check DelegatedResourceAccountIndex
       DelegatedResourceAccountIndexCapsule ownerIndexCapsule = dbManager
           .getDelegatedResourceAccountIndexStore().getV2Index(owner);
-      Assert.assertEquals(0, ownerIndexCapsule.getFromAccountsList().size());
-      Assert.assertEquals(1, ownerIndexCapsule.getToAccountsList().size());
-      Assert.assertTrue(ownerIndexCapsule.getToAccountsList()
+      assertEquals(0, ownerIndexCapsule.getFromAccountsList().size());
+      assertEquals(1, ownerIndexCapsule.getToAccountsList().size());
+      assertTrue(ownerIndexCapsule.getToAccountsList()
           .contains(ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS))));
 
       DelegatedResourceAccountIndexCapsule receiveCapsule = dbManager
           .getDelegatedResourceAccountIndexStore().getV2Index(receiver);
-      Assert.assertEquals(0, receiveCapsule.getToAccountsList().size());
-      Assert.assertEquals(1, receiveCapsule.getFromAccountsList().size());
-      Assert.assertTrue(receiveCapsule.getFromAccountsList()
+      assertEquals(0, receiveCapsule.getToAccountsList().size());
+      assertEquals(1, receiveCapsule.getFromAccountsList().size());
+      assertTrue(receiveCapsule.getFromAccountsList()
           .contains(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS))));
 
     } catch (ContractValidateException | ContractExeException e) {
-      Assert.fail(e.getMessage());
+      fail(e.getMessage());
     }
   }
 
@@ -421,22 +428,23 @@ public class DelegateResourceActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      Assert.assertEquals(code.SUCESS, ret.getInstance().getRet());
+      assertEquals(code.SUCESS, ret.getInstance().getRet());
       AccountCapsule ownerCapsule =
               dbManager.getAccountStore().get(owner);
 
-      Assert.assertEquals(delegateBalance, ownerCapsule.getDelegatedFrozenV2BalanceForBandwidth());
-      Assert.assertEquals(initBalance - delegateBalance,
+      assertEquals(delegateBalance, ownerCapsule.getDelegatedFrozenV2BalanceForBandwidth());
+      assertEquals(initBalance - delegateBalance,
               ownerCapsule.getFrozenV2BalanceForBandwidth());
-      Assert.assertEquals(initBalance, ownerCapsule.getTronPower());
+      assertEquals(initBalance, ownerCapsule.getTronPower());
 
       AccountCapsule receiverCapsule =
               dbManager.getAccountStore().get(receiver);
-      Assert.assertEquals(delegateBalance,
+      assertEquals(delegateBalance,
               receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth());
-      Assert.assertEquals(0L, receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy());
-      Assert.assertEquals(0L, receiverCapsule.getTronPower());
+      assertEquals(0L, receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy());
+      assertEquals(0L, receiverCapsule.getTronPower());
 
+      //check DelegatedResource
       DelegatedResourceCapsule delegatedResourceCapsule = dbManager.getDelegatedResourceStore()
               .get(DelegatedResourceCapsule
                       .createDbKeyV2(ByteArray.fromHexString(OWNER_ADDRESS),
@@ -448,28 +456,181 @@ public class DelegateResourceActuatorTest {
       Assert.assertNull(delegatedResourceCapsule);
       Assert.assertNotNull(lockedResourceCapsule);
       Assert.assertNotEquals(0, lockedResourceCapsule.getExpireTimeForBandwidth());
-      Assert.assertEquals(delegateBalance, lockedResourceCapsule.getFrozenBalanceForBandwidth());
+      assertEquals(delegateBalance, lockedResourceCapsule.getFrozenBalanceForBandwidth());
       long totalNetWeightAfter = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
-      Assert.assertEquals(totalNetWeightBefore, totalNetWeightAfter);
+      assertEquals(totalNetWeightBefore, totalNetWeightAfter);
 
       //check DelegatedResourceAccountIndex
       DelegatedResourceAccountIndexCapsule ownerIndexCapsule = dbManager
               .getDelegatedResourceAccountIndexStore().getV2Index(owner);
-      Assert.assertEquals(0, ownerIndexCapsule.getFromAccountsList().size());
-      Assert.assertEquals(1, ownerIndexCapsule.getToAccountsList().size());
-      Assert.assertTrue(ownerIndexCapsule.getToAccountsList()
+      assertEquals(0, ownerIndexCapsule.getFromAccountsList().size());
+      assertEquals(1, ownerIndexCapsule.getToAccountsList().size());
+      assertTrue(ownerIndexCapsule.getToAccountsList()
               .contains(ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS))));
 
       DelegatedResourceAccountIndexCapsule receiveCapsule = dbManager
               .getDelegatedResourceAccountIndexStore().getV2Index(receiver);
-      Assert.assertEquals(0, receiveCapsule.getToAccountsList().size());
-      Assert.assertEquals(1, receiveCapsule.getFromAccountsList().size());
-      Assert.assertTrue(receiveCapsule.getFromAccountsList()
+      assertEquals(0, receiveCapsule.getToAccountsList().size());
+      assertEquals(1, receiveCapsule.getFromAccountsList().size());
+      assertTrue(receiveCapsule.getFromAccountsList()
               .contains(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS))));
 
     } catch (ContractValidateException | ContractExeException e) {
-      Assert.fail(e.getMessage());
+      fail(e.getMessage());
     }
+  }
+
+  @Test
+  public void testMaxDelegateLockPeriodForBandwidthWrongLockPeriod1() {
+    dbManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(86401);
+    freezeBandwidthForOwner();
+    long delegateBalance = 1_000_000_000L;
+    DelegateResourceActuator actuator = new DelegateResourceActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(
+        getMaxDelegateLockPeriodContractForBandwidth(
+            delegateBalance, 370 * 24 * 3600));
+    assertThrows("The lock period of delegate resources cannot exceed 1 year!",
+        ContractValidateException.class, actuator::validate);
+    dbManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(DELEGATE_PERIOD / 3000);
+  }
+
+  @Test
+  public void testMaxDelegateLockPeriodForBandwidthWrongLockPeriod2() {
+    dbManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(864000L);
+    freezeBandwidthForOwner();
+    long delegateBalance = 1_000_000_000L;
+    DelegateResourceActuator actuator = new DelegateResourceActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(
+        getMaxDelegateLockPeriodContractForBandwidth(
+            delegateBalance, 60));
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      assertEquals(code.SUCESS, ret.getInstance().getRet());
+    } catch (ContractValidateException | ContractExeException e) {
+      fail(e.getMessage());
+    }
+
+    DelegateResourceActuator actuator1 = new DelegateResourceActuator();
+    actuator1.setChainBaseManager(dbManager.getChainBaseManager()).setAny(
+        getMaxDelegateLockPeriodContractForBandwidth(
+            delegateBalance, 30));
+    assertThrows("The lock period for bandwidth this time cannot be less than the remaining"
+            + " time[60000s] of the last lock period for bandwidth!",
+        ContractValidateException.class, actuator1::validate);
+    dbManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(DELEGATE_PERIOD / 3000);
+  }
+
+  @Test
+  public void testMaxDelegateLockPeriodForBandwidth() {
+    dbManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(864000L);
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(50_000L);
+    freezeBandwidthForOwner();
+    long delegateBalance = 1_000_000_000L;
+    DelegateResourceActuator actuator = new DelegateResourceActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(
+        getMaxDelegateLockPeriodContractForBandwidth(
+            delegateBalance, 60));
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      assertEquals(code.SUCESS, ret.getInstance().getRet());
+    } catch (ContractValidateException | ContractExeException e) {
+      fail(e.getMessage());
+    }
+
+    DelegateResourceActuator actuator1 = new DelegateResourceActuator();
+    actuator1.setChainBaseManager(dbManager.getChainBaseManager()).setAny(
+        getMaxDelegateLockPeriodContractForBandwidth(
+            delegateBalance, 60));
+
+    TransactionResultCapsule ret1 = new TransactionResultCapsule();
+    try {
+      actuator1.validate();
+      actuator1.execute(ret1);
+      assertEquals(code.SUCESS, ret1.getInstance().getRet());
+    } catch (ContractValidateException | ContractExeException e) {
+      fail(e.getMessage());
+    }
+    DelegatedResourceCapsule lockedResourceCapsule = dbManager.getDelegatedResourceStore()
+        .get(DelegatedResourceCapsule
+            .createDbKeyV2(ByteArray.fromHexString(OWNER_ADDRESS),
+                ByteArray.fromHexString(RECEIVER_ADDRESS), true));
+    long expireTimeForBandwidth = lockedResourceCapsule.getExpireTimeForBandwidth();
+    assertEquals(50_000L + 60 * 3 * 1000, expireTimeForBandwidth);
+    assertTrue(expireTimeForBandwidth > 60_000);
+  }
+
+  @Test
+  public void testMaxDelegateLockPeriodForEnergy() {
+    dbManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(864000L);
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(50_000L);
+    freezeCpuForOwner();
+    long delegateBalance = 1_000_000_000L;
+    DelegateResourceActuator actuator = new DelegateResourceActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(
+        getMaxDelegateLockPeriodContractForEnergy(
+            delegateBalance, 60));
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      assertEquals(code.SUCESS, ret.getInstance().getRet());
+    } catch (ContractValidateException | ContractExeException e) {
+      fail(e.getMessage());
+    }
+
+    DelegateResourceActuator actuator1 = new DelegateResourceActuator();
+    actuator1.setChainBaseManager(dbManager.getChainBaseManager()).setAny(
+        getMaxDelegateLockPeriodContractForEnergy(
+            delegateBalance, 60));
+
+    TransactionResultCapsule ret1 = new TransactionResultCapsule();
+    try {
+      actuator1.validate();
+      actuator1.execute(ret1);
+      assertEquals(code.SUCESS, ret1.getInstance().getRet());
+    } catch (ContractValidateException | ContractExeException e) {
+      fail(e.getMessage());
+    }
+    DelegatedResourceCapsule lockedResourceCapsule = dbManager.getDelegatedResourceStore()
+        .get(DelegatedResourceCapsule
+            .createDbKeyV2(ByteArray.fromHexString(OWNER_ADDRESS),
+                ByteArray.fromHexString(RECEIVER_ADDRESS), true));
+    assertTrue(lockedResourceCapsule.getExpireTimeForEnergy() > 60_000);
+  }
+
+  @Test
+  public void testMaxDelegateLockPeriodForEnergyWrongLockPeriod2() {
+    dbManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(864000L);
+    freezeCpuForOwner();
+    long delegateBalance = 1_000_000_000L;
+    DelegateResourceActuator actuator = new DelegateResourceActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(
+        getMaxDelegateLockPeriodContractForEnergy(
+            delegateBalance, 60));
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      assertEquals(code.SUCESS, ret.getInstance().getRet());
+    } catch (ContractValidateException | ContractExeException e) {
+      fail(e.getMessage());
+    }
+
+    DelegateResourceActuator actuator1 = new DelegateResourceActuator();
+    actuator1.setChainBaseManager(dbManager.getChainBaseManager()).setAny(
+        getMaxDelegateLockPeriodContractForEnergy(
+            delegateBalance, 30));
+    assertThrows("The lock period for energy this time cannot be less than the remaining"
+            + " time[60000s] of the last lock period for energy!",
+        ContractValidateException.class, actuator1::validate);
   }
 
   @Test
@@ -487,53 +648,50 @@ public class DelegateResourceActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      Assert.assertEquals(code.SUCESS, ret.getInstance().getRet());
+      assertEquals(code.SUCESS, ret.getInstance().getRet());
       AccountCapsule ownerCapsule =
           dbManager.getAccountStore().get(owner);
 
-      Assert.assertEquals(initBalance, ownerCapsule.getBalance());
-      Assert.assertEquals(0L, ownerCapsule.getFrozenBalance());
-      Assert.assertEquals(0L, ownerCapsule.getDelegatedFrozenV2BalanceForBandwidth());
-      Assert.assertEquals(delegateBalance, ownerCapsule.getDelegatedFrozenV2BalanceForEnergy());
-      Assert.assertEquals(initBalance, ownerCapsule.getTronPower());
+      assertEquals(initBalance, ownerCapsule.getBalance());
+      assertEquals(0L, ownerCapsule.getFrozenBalance());
+      assertEquals(0L, ownerCapsule.getDelegatedFrozenV2BalanceForBandwidth());
+      assertEquals(delegateBalance, ownerCapsule.getDelegatedFrozenV2BalanceForEnergy());
+      assertEquals(initBalance, ownerCapsule.getTronPower());
 
       AccountCapsule receiverCapsule =
           dbManager.getAccountStore().get(receiver);
-      Assert.assertEquals(0L, receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth());
-      Assert.assertEquals(delegateBalance,
+      assertEquals(0L, receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth());
+      assertEquals(delegateBalance,
           receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy());
-      Assert.assertEquals(0L, receiverCapsule.getTronPower());
+      assertEquals(0L, receiverCapsule.getTronPower());
 
       DelegatedResourceCapsule delegatedResourceCapsule = dbManager.getDelegatedResourceStore()
           .get(DelegatedResourceCapsule.createDbKeyV2(owner, receiver, false));
 
-      Assert.assertEquals(0L, delegatedResourceCapsule.getFrozenBalanceForBandwidth());
-      Assert.assertEquals(delegateBalance, delegatedResourceCapsule.getFrozenBalanceForEnergy());
+      assertEquals(0L, delegatedResourceCapsule.getFrozenBalanceForBandwidth());
+      assertEquals(delegateBalance, delegatedResourceCapsule.getFrozenBalanceForEnergy());
 
       long totalEnergyWeightAfter = dbManager.getDynamicPropertiesStore().getTotalEnergyWeight();
-      Assert.assertEquals(totalEnergyWeightBefore, totalEnergyWeightAfter);
+      assertEquals(totalEnergyWeightBefore, totalEnergyWeightAfter);
 
       //check DelegatedResourceAccountIndex
       DelegatedResourceAccountIndexCapsule ownerIndexCapsule = dbManager
           .getDelegatedResourceAccountIndexStore().getV2Index(owner);
-      Assert
-          .assertEquals(0, ownerIndexCapsule.getFromAccountsList().size());
-      Assert.assertEquals(1, ownerIndexCapsule.getToAccountsList().size());
-      Assert.assertTrue(ownerIndexCapsule.getToAccountsList()
+      assertEquals(0, ownerIndexCapsule.getFromAccountsList().size());
+      assertEquals(1, ownerIndexCapsule.getToAccountsList().size());
+      assertTrue(ownerIndexCapsule.getToAccountsList()
           .contains(ByteString.copyFrom(receiver)));
 
       DelegatedResourceAccountIndexCapsule receiverIndexCapsule = dbManager
           .getDelegatedResourceAccountIndexStore().getV2Index(receiver);
-      Assert
-          .assertEquals(0, receiverIndexCapsule.getToAccountsList().size());
-      Assert
-          .assertEquals(1,
+      assertEquals(0, receiverIndexCapsule.getToAccountsList().size());
+      assertEquals(1,
               receiverIndexCapsule.getFromAccountsList().size());
-      Assert.assertTrue(receiverIndexCapsule.getFromAccountsList()
+      assertTrue(receiverIndexCapsule.getFromAccountsList()
           .contains(ByteString.copyFrom(owner)));
 
     } catch (ContractValidateException | ContractExeException e) {
-      Assert.fail(e.getMessage());
+      fail(e.getMessage());
     }
   }
 
@@ -548,11 +706,11 @@ public class DelegateResourceActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      Assert.fail("cannot run here.");
+      fail("cannot run here.");
     } catch (ContractValidateException e) {
-      Assert.assertEquals("delegateBalance must be more than 1TRX", e.getMessage());
+      assertEquals("delegateBalance must be more than 1TRX", e.getMessage());
     } catch (ContractExeException e) {
-      Assert.fail(e.getMessage());
+      fail(e.getMessage());
     }
   }
 
@@ -566,12 +724,12 @@ public class DelegateResourceActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      Assert.fail("cannot run here.");
+      fail("cannot run here.");
     } catch (ContractValidateException e) {
-      Assert.assertEquals("ResourceCode error, valid ResourceCode[BANDWIDTH、ENERGY]",
+      assertEquals("ResourceCode error, valid ResourceCode[BANDWIDTH、ENERGY]",
           e.getMessage());
     } catch (ContractExeException e) {
-      Assert.fail(e.getMessage());
+      fail(e.getMessage());
     }
   }
 
@@ -586,12 +744,12 @@ public class DelegateResourceActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      Assert.fail("cannot run here.");
+      fail("cannot run here.");
     } catch (ContractValidateException e) {
-      Assert.assertEquals("delegateBalance must be less than available FreezeBandwidthV2 balance",
+      assertEquals("delegateBalance must be less than available FreezeBandwidthV2 balance",
           e.getMessage());
     } catch (ContractExeException e) {
-      Assert.fail(e.getMessage());
+      fail(e.getMessage());
     }
   }
 
@@ -606,13 +764,23 @@ public class DelegateResourceActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      Assert.fail("cannot run here.");
+      fail("cannot run here.");
 
     } catch (ContractValidateException e) {
-      Assert.assertEquals("Invalid address", e.getMessage());
+      assertEquals("Invalid address", e.getMessage());
     } catch (ContractExeException e) {
-      Assert.fail(e.getMessage());
+      fail(e.getMessage());
     }
+  }
+
+  @Test
+  public void invalidReceiverAddress() {
+    freezeBandwidthForOwner();
+    DelegateResourceActuator actuator = new DelegateResourceActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getDelegateContractForBandwidth(
+            OWNER_ADDRESS, OWNER_ADDRESS_INVALID, 1_000_000_000L));
+    assertThrows("Invalid receiverAddress", ContractValidateException.class, actuator::validate);
   }
 
   @Test
@@ -626,12 +794,12 @@ public class DelegateResourceActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      Assert.fail("cannot run here.");
+      fail("cannot run here.");
     } catch (ContractValidateException e) {
-      Assert.assertEquals("Account[" + OWNER_ACCOUNT_INVALID + "] not exists",
+      assertEquals("Account[" + OWNER_ACCOUNT_INVALID + "] not exists",
           e.getMessage());
     } catch (ContractExeException e) {
-      Assert.fail(e.getMessage());
+      fail(e.getMessage());
     }
   }
 
@@ -655,6 +823,50 @@ public class DelegateResourceActuatorTest {
 
     actuatorTest.setNullDBManagerMsg("No account store or dynamic store!");
     actuatorTest.nullDBManger();
+  }
+
+  @Test
+  public void testSupportDelegateResource() {
+    dbManager.getDynamicPropertiesStore().saveAllowDelegateResource(0);
+    DelegateResourceActuator actuator = new DelegateResourceActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getDelegateContractForBandwidth(
+                OWNER_ADDRESS,
+                RECEIVER_ADDRESS,
+                1_000_000_000L));
+    assertThrows(
+        "No support for resource delegate",
+        ContractValidateException.class, actuator::validate);
+  }
+
+  @Test
+  public void testSupportUnfreezeDelay() {
+    dbManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(0);
+    DelegateResourceActuator actuator = new DelegateResourceActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getDelegateContractForBandwidth(
+            OWNER_ADDRESS,
+            RECEIVER_ADDRESS,
+            1_000_000_000L));
+    assertThrows(
+        "Not support Delegate resource transaction, need to be opened by the committee",
+        ContractValidateException.class, actuator::validate);
+  }
+
+  @Test
+  public void testErrorContract() {
+    DelegateResourceActuator actuator = new DelegateResourceActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getErrorContract());
+    assertThrows(
+        "contract type error, expected type [DelegateResourceContract], "
+            + "real type[WithdrawExpireUnfreezeContract]",
+        ContractValidateException.class, actuator::validate);
+  }
+
+  private Any getErrorContract() {
+    return Any.pack(BalanceContract.WithdrawExpireUnfreezeContract.newBuilder().setOwnerAddress(
+        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS))).build()
+    );
   }
 
   private WorldStateQueryInstance getQueryInstance() {

@@ -5,7 +5,6 @@ import static org.tron.core.config.Parameter.ChainConstant.TRANSFER_FEE;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import java.io.File;
 import java.util.Date;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
@@ -13,8 +12,8 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
+import org.tron.common.BaseTest;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.ByteArray;
@@ -24,7 +23,6 @@ import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
@@ -42,9 +40,8 @@ import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 
 @Slf4j
-public class TransferActuatorTest {
+public class TransferActuatorTest extends BaseTest {
 
-  private static final String dbPath = "output_transfer_test";
   private static final String OWNER_ADDRESS;
   private static final String TO_ADDRESS;
   private static final long AMOUNT = 100;
@@ -61,8 +58,8 @@ public class TransferActuatorTest {
   private static final ChainBaseManager chainBaseManager;
 
   static {
+    dbPath = "output_transfer_test";
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     TO_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ACCOUNT_INVALID =
@@ -72,32 +69,6 @@ public class TransferActuatorTest {
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3422";
     worldStateCallBack = context.getBean(WorldStateCallBack.class);
     chainBaseManager = context.getBean(ChainBaseManager.class);
-  }
-
-  /**
-   * Init data.
-   */
-  @BeforeClass
-  public static void init() {
-    dbManager = context.getBean(Manager.class);
-    //    Args.setParam(new String[]{"--output-directory", dbPath},
-    //        "config-junit.conf");
-    //    dbManager = new Manager();
-    //    dbManager.init();
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   /**

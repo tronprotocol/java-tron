@@ -4,12 +4,17 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.io.File;
 import java.nio.file.Paths;
+import java.util.concurrent.TimeUnit;
+
+import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.api.GrpcAPI;
 import org.tron.api.WalletGrpc;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
@@ -22,17 +27,16 @@ import org.tron.common.utils.Utils;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
+import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.tool.litefullnode.LiteFullNodeTool;
 
+@Slf4j
 public class LiteFullNodeToolTest {
-
-  private static final Logger logger = LoggerFactory.getLogger("Test");
 
   private TronApplicationContext context;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private ManagedChannel channelFull;
   private Application appTest;
-
   private String databaseDir;
 
   @Rule
@@ -51,16 +55,16 @@ public class LiteFullNodeToolTest {
     appTest.startServices();
     appTest.startup();
 
-    String fullnode = String.format("%s:%d", "127.0.0.1",
-            Args.getInstance().getRpcPort());
-    channelFull = ManagedChannelBuilder.forTarget(fullnode)
-            .usePlaintext(true)
-            .build();
+    String fullNode = String.format("%s:%d", "127.0.0.1",
+        Args.getInstance().getRpcPort());
+    channelFull = ManagedChannelBuilder.forTarget(fullNode)
+        .usePlaintext()
+        .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
   /**
-   *  Delete the database when exit.
+   *  Delete the database when exited.
    */
   public static void destroy(String dbPath) {
     File f = new File(dbPath);
@@ -74,10 +78,12 @@ public class LiteFullNodeToolTest {
   }
 
   /**
-   * shutdown the fullnode.
+   * shutdown the fullNode.
    */
-  public void shutdown() {
-    channelFull.shutdownNow();
+  public void shutdown() throws InterruptedException {
+    if (channelFull != null) {
+      channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
     appTest.shutdownServices();
     appTest.shutdown();
     context.destroy();
@@ -86,9 +92,9 @@ public class LiteFullNodeToolTest {
   public void init() {
     destroy(dbPath); // delete if prev failed
     Args.setParam(new String[]{"-d", dbPath, "-w"}, "config-localtest.conf");
-    Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
     // allow account root
     Args.getInstance().setAllowAccountStateRoot(1);
+    Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
     databaseDir = Args.getInstance().getStorage().getDbDirectory();
     // init dbBackupConfig to avoid NPE
     Args.getInstance().dbBackupConfig = DbBackupConfig.getInstance();
@@ -98,28 +104,30 @@ public class LiteFullNodeToolTest {
   public void clear() {
     destroy(dbPath);
     Args.clearParam();
+    dbPath = "output_lite_fn";
   }
 
   @Test
-  public void testToolsWithLevelDB() {
+  public void testToolsWithLevelDB() throws InterruptedException {
     logger.info("testToolsWithLevelDB start");
     testTools("LEVELDB", 1);
   }
 
   @Test
-  public void testToolsWithLevelDBV2() {
+  public void testToolsWithLevelDBV2() throws InterruptedException {
     logger.info("testToolsWithLevelDB start");
     testTools("LEVELDB", 2);
   }
 
   @Test
-  public void testToolsWithRocksDB() {
+  public void testToolsWithRocksDB() throws InterruptedException {
     logger.info("testToolsWithRocksDB start");
     testTools("ROCKSDB", 1);
   }
 
-  private void testTools(String dbType, int checkpointVersion) {
-    dbPath = String.format("%s_%s_%d", dbPath, dbType, checkpointVersion);
+  private void testTools(String dbType, int checkpointVersion)
+      throws InterruptedException {
+    dbPath = String.format("%s_%s_%d", dbPath, dbType, System.currentTimeMillis());
     init();
     final String[] argsForSnapshot =
         new String[]{"-o", "split", "-t", "snapshot", "--fn-data-path",
@@ -135,7 +143,7 @@ public class LiteFullNodeToolTest {
     Args.getInstance().getStorage().setDbEngine(dbType);
     Args.getInstance().getStorage().setCheckpointVersion(checkpointVersion);
     LiteFullNodeTool.setRecentBlks(3);
-    // start fullnode
+    // start fullNode
     startApp();
     // produce transactions for 18 seconds
     generateSomeTransactions(18);
@@ -145,7 +153,7 @@ public class LiteFullNodeToolTest {
     FileUtil.deleteDir(Paths.get(dbPath, databaseDir, "trans-cache").toFile());
     // generate snapshot
     LiteFullNodeTool.main(argsForSnapshot);
-    // start fullnode
+    // start fullNode
     startApp();
     // produce transactions for 6 seconds
     generateSomeTransactions(6);
@@ -158,14 +166,14 @@ public class LiteFullNodeToolTest {
     if (!database.renameTo(new File(Paths.get(dbPath, databaseDir + "_bak").toString()))) {
       throw new RuntimeException(
               String.format("rename %s to %s failed", database.getPath(),
-                      Paths.get(dbPath, databaseDir).toString()));
+                  Paths.get(dbPath, databaseDir)));
     }
     // change snapshot to the new database
     File snapshot = new File(Paths.get(dbPath, "snapshot").toString());
     if (!snapshot.renameTo(new File(Paths.get(dbPath, databaseDir).toString()))) {
       throw new RuntimeException(
               String.format("rename snapshot to %s failed",
-                      Paths.get(dbPath, databaseDir).toString()));
+                  Paths.get(dbPath, databaseDir)));
     }
     // start and validate the snapshot
     startApp();

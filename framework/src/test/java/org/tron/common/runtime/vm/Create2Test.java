@@ -15,6 +15,8 @@ import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.runtime.VmStateTestUtil;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.WalletUtil;
+import org.tron.common.utils.client.utils.AbiUtil;
+import org.tron.common.utils.client.utils.DataWord;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.exception.ContractExeException;
@@ -26,8 +28,7 @@ import org.tron.core.services.NodeInfoService;
 import org.tron.core.services.jsonrpc.TronJsonRpcImpl;
 import org.tron.core.state.WorldStateCallBack;
 import org.tron.protos.Protocol.Transaction;
-import stest.tron.wallet.common.client.utils.AbiUtil;
-import stest.tron.wallet.common.client.utils.DataWord;
+
 
 @Slf4j
 public class Create2Test extends VMTestBase {

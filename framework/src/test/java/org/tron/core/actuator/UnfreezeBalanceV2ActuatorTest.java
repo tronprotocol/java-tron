@@ -6,14 +6,13 @@ import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
+import org.tron.common.BaseTest;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -39,9 +38,8 @@ import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.Common.ResourceCode;
 
 @Slf4j
-public class UnfreezeBalanceV2ActuatorTest {
+public class UnfreezeBalanceV2ActuatorTest extends BaseTest {
 
-  private static final String dbPath = "output_unfreeze_balance_test";
   private static final String OWNER_ADDRESS;
   private static final String RECEIVER_ADDRESS;
   private static final String OWNER_ADDRESS_INVALID = "aaaa";
@@ -54,6 +52,7 @@ public class UnfreezeBalanceV2ActuatorTest {
   private static final ChainBaseManager chainBaseManager;
 
   static {
+    dbPath = "output_unfreeze_balance_v2_test";
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
@@ -65,35 +64,14 @@ public class UnfreezeBalanceV2ActuatorTest {
   }
 
   /**
-   * Init data.
-   */
-  @BeforeClass
-  public static void init() {
-    dbManager = context.getBean(Manager.class);
-    dbManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(1L);
-    dbManager.getDynamicPropertiesStore().saveAllowNewResourceModel(1L);
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
-  }
-
-  /**
    * create temp Capsule test need.
    */
   @Before
   public void createAccountCapsule() {
     worldStateCallBack.setExecute(true);
+    dbManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(1L);
+    dbManager.getDynamicPropertiesStore().saveAllowNewResourceModel(1L);
+
     AccountCapsule ownerCapsule = new AccountCapsule(ByteString.copyFromUtf8("owner"),
         ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), AccountType.Normal,
         initBalance);

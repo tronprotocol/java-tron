@@ -481,7 +481,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     TransactionCapsule trxCap = wallet.createTransactionCapsule(triggerContract,
         ContractType.TriggerSmartContract);
     Transaction trx  = wallet.triggerConstantContract(
-          triggerContract, trxCap, trxExtBuilder, retBuilder, blockNumber);
+          triggerContract, trxCap, trxExtBuilder, retBuilder, false, blockNumber);
 
     trxExtBuilder.setTransaction(trx);
     trxExtBuilder.setTxid(trxCap.getTransactionId().getByteString());

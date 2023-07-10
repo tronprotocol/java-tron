@@ -4,11 +4,13 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.JsonUtil;
 import org.tron.core.capsule.BytesCapsule;
@@ -21,18 +23,16 @@ import org.tron.p2p.discover.Node;
 @Component
 public class NodePersistService {
   private static final byte[] DB_KEY_PEERS = "peers".getBytes();
-  private static final long DB_COMMIT_RATE = 1 * 60 * 1000L;
+  private static final long DB_COMMIT_RATE = 60 * 1000L;
   private static final int MAX_NODES_WRITE_TO_DB = 30;
-
-  private boolean isNodePersist = Args.getInstance().isNodeDiscoveryPersist();
-
+  private final boolean isNodePersist = CommonParameter.getInstance().isNodeDiscoveryPersist();
   @Autowired
   private CommonStore commonStore;
-
-  private Timer nodePersistTaskTimer = new Timer("NodePersistTaskTimer");
+  private Timer nodePersistTaskTimer;
 
   public void init() {
     if (isNodePersist) {
+      nodePersistTaskTimer = new Timer("NodePersistTaskTimer");
       nodePersistTaskTimer.scheduleAtFixedRate(new TimerTask() {
         @Override
         public void run() {
@@ -43,6 +43,9 @@ public class NodePersistService {
   }
 
   public void close() {
+    if (Objects.isNull(nodePersistTaskTimer)) {
+      return;
+    }
     try {
       nodePersistTaskTimer.cancel();
     } catch (Exception e) {
@@ -72,7 +75,8 @@ public class NodePersistService {
       List<Node> tableNodes = TronNetService.getP2pService().getTableNodes();
       tableNodes.sort(Comparator.comparingLong(value -> -value.getUpdateTime()));
       for (Node n : tableNodes) {
-        batch.add(new DBNode(n.getHost(), n.getPort()));
+        batch.add(
+            new DBNode(n.getPreferInetSocketAddress().getAddress().getHostAddress(), n.getPort()));
       }
 
       if (batch.size() > MAX_NODES_WRITE_TO_DB) {

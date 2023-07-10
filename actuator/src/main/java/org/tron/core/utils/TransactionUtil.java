@@ -49,7 +49,6 @@ import org.tron.protos.Protocol.Permission.PermissionType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
-import org.tron.protos.Protocol.TransactionSign;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -184,21 +183,6 @@ public class TransactionUtil {
         .replace("_", "");
   }
 
-  public static TransactionCapsule getTransactionSign(TransactionSign transactionSign) {
-    byte[] privateKey = transactionSign.getPrivateKey().toByteArray();
-    TransactionCapsule trx = new TransactionCapsule(transactionSign.getTransaction());
-    trx.sign(privateKey);
-    return trx;
-  }
-
-  public TransactionCapsule addSign(TransactionSign transactionSign)
-      throws PermissionException, SignatureException, SignatureFormatException {
-    byte[] privateKey = transactionSign.getPrivateKey().toByteArray();
-    TransactionCapsule trx = new TransactionCapsule(transactionSign.getTransaction());
-    trx.addSign(privateKey, chainBaseManager.getAccountStore());
-    return trx;
-  }
-
   public TransactionSignWeight getTransactionSignWeight(Transaction trx) {
     TransactionSignWeight.Builder tswBuilder = TransactionSignWeight.newBuilder();
     TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
@@ -294,13 +278,19 @@ public class TransactionUtil {
     return bytesSize;
   }
 
-
-  public static long estimateConsumeBandWidthSize(
-          final AccountCapsule ownerCapsule,
-          ChainBaseManager chainBaseManager) {
-    DelegateResourceContract.Builder builder = DelegateResourceContract.newBuilder()
-                    .setLock(true)
-                    .setBalance(ownerCapsule.getFrozenV2BalanceForBandwidth());
+  public static long estimateConsumeBandWidthSize(final AccountCapsule ownerCapsule,
+      ChainBaseManager chainBaseManager) {
+    DelegateResourceContract.Builder builder;
+    if (chainBaseManager.getDynamicPropertiesStore().supportMaxDelegateLockPeriod()) {
+      builder = DelegateResourceContract.newBuilder()
+          .setLock(true)
+          .setLockPeriod(chainBaseManager.getDynamicPropertiesStore().getMaxDelegateLockPeriod())
+          .setBalance(ownerCapsule.getFrozenV2BalanceForBandwidth());
+    } else {
+      builder = DelegateResourceContract.newBuilder()
+          .setLock(true)
+          .setBalance(ownerCapsule.getFrozenV2BalanceForBandwidth());
+    }
     TransactionCapsule fakeTransactionCapsule = new TransactionCapsule(builder.build()
             , ContractType.DelegateResourceContract);
     long size1 = consumeBandWidthSize(fakeTransactionCapsule, chainBaseManager);

@@ -78,6 +78,12 @@ subprojects {
                 details.useVersion "4.1.27.Final"
             }
         }
+        resolutionStrategy.eachDependency { details ->
+            // TODO if update grpc remove
+            if(details.requested.group == 'io.netty') {
+                details.useVersion "4.1.27.Final"
+            }
+        }
     }
 }
 
@@ -90,3 +96,10 @@ task copyToParent(type: Copy) {
 
 build.finalizedBy(copyToParent)
 
+gradle.buildFinished {
+    if (project.hasProperty('cleanSubBuild')) {
+        subprojects {
+            buildDir.deleteDir()
+        }
+    }
+}

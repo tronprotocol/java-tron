@@ -5,28 +5,23 @@ import static junit.framework.TestCase.fail;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.io.File;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
@@ -37,10 +32,8 @@ import org.tron.protos.contract.SmartContractOuterClass.UpdateEnergyLimitContrac
 
 
 @Slf4j
-//@Ignore
-public class UpdateEnergyLimitContractActuatorTest {
+public class UpdateEnergyLimitContractActuatorTest extends BaseTest {
 
-  private static final String dbPath = "output_updateEnergyLimitContractActuator_test";
   private static final String OWNER_ADDRESS_ACCOUNT_NAME = "test_account";
   private static final String OWNER_ADDRESS_INVALID = "aaaa";
   private static final String SMART_CONTRACT_NAME = "smart_contarct";
@@ -49,15 +42,13 @@ public class UpdateEnergyLimitContractActuatorTest {
   private static final long SOURCE_ENERGY_LIMIT = 10L;
   private static final long TARGET_ENERGY_LIMIT = 30L;
   private static final long INVALID_ENERGY_LIMIT = -200L;
-  private static TronApplicationContext context;
-  private static Manager dbManager;
   private static String OWNER_ADDRESS;
   private static String SECOND_ACCOUNT_ADDRESS;
   private static String OWNER_ADDRESS_NOTEXIST;
 
   static {
+    dbPath = "output_updateEnergyLimitContractActuator_test";
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
   }
 
   /**
@@ -65,33 +56,13 @@ public class UpdateEnergyLimitContractActuatorTest {
    */
   @BeforeClass
   public static void init() {
-    dbManager = context.getBean(Manager.class);
     OWNER_ADDRESS =
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     SECOND_ACCOUNT_ADDRESS =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d427122222";
     OWNER_ADDRESS_NOTEXIST =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
-
-    byte[] stats = new byte[27];
-    Arrays.fill(stats, (byte) 1);
-    dbManager.getDynamicPropertiesStore()
-        .statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
     CommonParameter.getInstance().setBlockNumForEnergyLimit(0);
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   /**
@@ -99,6 +70,10 @@ public class UpdateEnergyLimitContractActuatorTest {
    */
   @Before
   public void createCapsule() {
+    byte[] stats = new byte[27];
+    Arrays.fill(stats, (byte) 1);
+    dbManager.getDynamicPropertiesStore()
+        .statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
     // address in accountStore and the owner of contract
     AccountCapsule accountCapsule =
         new AccountCapsule(

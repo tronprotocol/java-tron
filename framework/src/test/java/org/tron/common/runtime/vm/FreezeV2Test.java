@@ -31,6 +31,7 @@ import org.tron.common.utils.FastByteComparisons;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
+import org.tron.common.utils.client.utils.AbiUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -57,7 +58,6 @@ import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.contract.Common;
-import stest.tron.wallet.common.client.utils.AbiUtil;
 
 @Slf4j
 public class FreezeV2Test {

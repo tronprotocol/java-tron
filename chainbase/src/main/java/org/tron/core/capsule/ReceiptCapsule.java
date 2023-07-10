@@ -69,6 +69,10 @@ public class ReceiptCapsule {
   @Setter
   private long callerEnergyWindowSize;
 
+  @Getter
+  @Setter
+  private long callerEnergyWindowSizeV2;
+
   /**
    * Window size of caller after merging frozen energy
    */
@@ -82,6 +86,10 @@ public class ReceiptCapsule {
   @Getter
   @Setter
   private long originEnergyWindowSize;
+
+  @Getter
+  @Setter
+  private long originEnergyWindowSizeV2;
 
   /**
    * Window size of origin after merging frozen energy
@@ -192,6 +200,12 @@ public class ReceiptCapsule {
       AccountCapsule caller,
       long percent, long originEnergyLimit, EnergyProcessor energyProcessor, long now)
       throws BalanceInsufficientException {
+
+    // Reset origin energy usage here! Because after stake 2.0, this field are reused for
+    // recording pre-merge frozen energy for origin account. If total energy usage is zero, this
+    // field will be a dirty record.
+    this.setOriginEnergyUsage(0);
+
     if (receipt.getEnergyUsageTotal() <= 0) {
       return;
     }

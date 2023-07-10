@@ -54,6 +54,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   @Autowired
   private DbStatService dbStatService;
 
+  @Getter
   private DB<byte[], byte[]> db;
 
   private StateType type;
