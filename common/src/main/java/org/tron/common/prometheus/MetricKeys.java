@@ -40,6 +40,7 @@ public class MetricKeys {
     public static final String CONTRACT_USAGE = "tron:contract_usage_g";
 
     public static final String TOTAL_RESOURCE_WEIGHT = "tron:total_resource_g";
+    public static final String RESOURCE_WINDOW_SIZE = "tron:resource_window_size_g";
 
     private Gauge() {
       throw new IllegalStateException("Gauge");

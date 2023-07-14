@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.utils.AssetUtil;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
@@ -43,7 +44,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static java.lang.Math.ceil;
+import static org.tron.common.prometheus.MetricKeys.Gauge.RESOURCE_WINDOW_SIZE;
+import static org.tron.common.prometheus.MetricLabels.STAKE_ENERGY;
+import static org.tron.common.prometheus.MetricLabels.STAKE_NET;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.ChainConstant.WINDOW_SIZE_MS;
 import static org.tron.core.config.Parameter.ChainConstant.WINDOW_SIZE_PRECISION;
@@ -1446,7 +1449,14 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     }
   }
 
-  public void setNewWindowSizeV2( ResourceCode resourceCode, long newWindowSize) {
+  public void setNewWindowSizeV2(ResourceCode resourceCode, long newWindowSize) {
+    if (newWindowSize > 0 && newWindowSize < WINDOW_SIZE_PRECISION) {
+      String resourceType = resourceCode == BANDWIDTH ? STAKE_NET : STAKE_ENERGY;
+      String address = StringUtil.createReadableString(this.getAddress());
+      logger.warn("this account[{}]'s {} window size[{}] is unacceptable !",
+          address, resourceType, newWindowSize);
+      Metrics.gaugeSet(RESOURCE_WINDOW_SIZE, newWindowSize, address, resourceType);
+    }
     this.setNewWindowSize(resourceCode, newWindowSize);
     if (!this.getWindowOptimized(resourceCode)) {
       this.setWindowOptimized(resourceCode, true);

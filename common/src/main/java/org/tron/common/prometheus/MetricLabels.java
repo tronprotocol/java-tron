@@ -19,6 +19,7 @@ public class MetricLabels {
   public static final String STAKE_NET = "net";
   public static final String STAKE_ENERGY = "energy";
   public static final String STAKE_POWER = "power";
+  public static final String STAKE_RESOURCE = "resource";
   public static final String STAKE_VOTE = "vote";
   public static final String STAKE_VERSION_V1 = "v1";
   public static final String STAKE_VERSION_V2 = "v2";
@@ -29,6 +30,7 @@ public class MetricLabels {
   public static final String LABEL_STAKE_VERSION = "version";
   public static final String LABEL_RESOURCE_TYPE = "resource";
   public static final String LABEL_CONTRACT_TYPE = "contract";
+  public static final String ACCOUNT_ADDRESS = "address";
 
   private MetricLabels() {
     throw new IllegalStateException("MetricsLabels");
