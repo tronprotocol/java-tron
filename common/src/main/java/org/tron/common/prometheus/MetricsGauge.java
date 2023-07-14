@@ -1,5 +1,7 @@
 package org.tron.common.prometheus;
 
+import static org.tron.common.prometheus.MetricKeys.Gauge.RESOURCE_WINDOW_SIZE;
+import static org.tron.common.prometheus.MetricLabels.ACCOUNT_ADDRESS;
 import static org.tron.common.prometheus.MetricLabels.LABEL_RESOURCE_TYPE;
 import static org.tron.common.prometheus.MetricLabels.LABEL_STAKE_VERSION;
 
@@ -29,6 +31,8 @@ class MetricsGauge {
 
     init(MetricKeys.Gauge.TOTAL_RESOURCE_WEIGHT, "tron stake total resource weight.",
         LABEL_STAKE_VERSION, LABEL_RESOURCE_TYPE);
+    init(RESOURCE_WINDOW_SIZE, "tron resource window size.",
+        ACCOUNT_ADDRESS, LABEL_RESOURCE_TYPE);
   }
 
   private MetricsGauge() {
