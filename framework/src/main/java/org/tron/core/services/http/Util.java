@@ -70,6 +70,7 @@ public class Util {
   public static final String FUNCTION_SELECTOR = "function_selector";
   public static final String FUNCTION_PARAMETER = "parameter";
   public static final String CALL_DATA = "data";
+  public static final String APPLICATION_FORM_URLENCODED = "application/x-www-form-urlencoded";
 
   public static String printTransactionFee(String transactionFee) {
     JSONObject jsonObject = new JSONObject();
@@ -499,6 +500,12 @@ public class Util {
     byte[] address = null;
     String addressParam = "address";
     String addressStr = request.getParameter(addressParam);
+
+    if (APPLICATION_FORM_URLENCODED.equals(request.getContentType())
+            && StringUtils.isBlank(addressStr)) {
+      throw new IllegalArgumentException("invalid request parameter");
+    }
+
     if (StringUtils.isBlank(addressStr)) {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
