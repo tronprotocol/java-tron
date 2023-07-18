@@ -2058,7 +2058,7 @@ public class Wallet {
             .parseFrom(chainBaseManager.getMerkleTreeIndexStore().get(blockNum));
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error("GetMerkleTreeOfBlock failed, blockNum:{}", blockNum, ex);
     }
 
     return null;
@@ -4304,7 +4304,7 @@ public class Wallet {
 
       return energyFee;
     } catch (Exception e) {
-      logger.error("getEnergyFee timestamp={} failed, error is {}", timestamp, e.getMessage());
+      logger.error("GetEnergyFee timestamp={} failed", timestamp, e);
       return getEnergyFee();
     }
   }
@@ -4313,7 +4313,7 @@ public class Wallet {
     try {
       return chainBaseManager.getDynamicPropertiesStore().getEnergyPriceHistory();
     } catch (Exception e) {
-      logger.error("getEnergyPrices failed, error is {}", e.getMessage());
+      logger.error("GetEnergyPrices failed", e);
     }
 
     return null;
@@ -4323,7 +4323,7 @@ public class Wallet {
     try {
       return chainBaseManager.getDynamicPropertiesStore().getBandwidthPriceHistory();
     } catch (Exception e) {
-      logger.error("getBandwidthPrices failed, error is {}", e.getMessage());
+      logger.error("GetBandwidthPrices failed", e);
     }
 
     return null;
@@ -4444,7 +4444,7 @@ public class Wallet {
     try {
       return chainBaseManager.getDynamicPropertiesStore().getMemoFeeHistory();
     } catch (Exception e) {
-      logger.error("getMemoFeePrices failed, error is {}", e.getMessage());
+      logger.error("GetMemoFeePrices failed", e);
     }
     return null;
   }
