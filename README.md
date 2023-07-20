@@ -42,7 +42,7 @@
 </p>
 
 ## Table of Contents
-- [What’s TRON?](#what’s-tron)
+- [What’s TRON?](#whats-tron)
 - [Building the Source Code](#building-the-source)
 - [Running java-tron](#running-java-tron)
 - [Community](#community)
