@@ -48,7 +48,7 @@
 - [Community](#community)
 - [Contribution](#contribution)
 - [Resources](#resources)
-- [Integrity Check](#integrity-Check)
+- [Integrity Check](#integrity-check)
 - [License](#license)
 
 ## What's TRON?
