@@ -19,6 +19,11 @@ import org.junit.Test;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.core.Wallet;
 
+/**
+ * The reason the test case uses the private key plaintext is to ensure that,
+ * after the ECkey tool or algorithm is upgraded,
+ * the upgraded differences can be verified.
+ */
 @Slf4j
 public class ECKeyTest {
 

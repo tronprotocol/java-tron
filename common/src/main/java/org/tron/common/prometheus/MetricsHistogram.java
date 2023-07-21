@@ -17,6 +17,8 @@ public class MetricsHistogram {
         "url");
     init(MetricKeys.Histogram.GRPC_SERVICE_LATENCY, "Grpc Service latency.",
         "endpoint");
+    init(MetricKeys.Histogram.JSONRPC_SERVICE_LATENCY, "JsonRpc Service latency.",
+        "method");
     init(MetricKeys.Histogram.MINER_LATENCY, "miner latency.",
         "miner");
     init(MetricKeys.Histogram.PING_PONG_LATENCY, "node  ping pong  latency.");

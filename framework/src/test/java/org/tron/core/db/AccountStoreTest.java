@@ -3,46 +3,40 @@ package org.tron.core.db;
 import static org.junit.Assert.assertEquals;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.junit.AfterClass;
+import javax.annotation.Resource;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
-import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db2.ISession;
-import org.tron.core.store.AccountAssetStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.AccountType;
 
-public class AccountStoreTest {
+public class AccountStoreTest extends BaseTest {
 
   private static final byte[] data = TransactionStoreTest.randomBytes(32);
-  private static String dbPath = "output_AccountStore_test";
   private static String dbDirectory = "db_AccountStore_test";
   private static String indexDirectory = "index_AccountStore_test";
-  private static TronApplicationContext context;
-  private static AccountStore accountStore;
-  private static AccountAssetStore accountAssetStore;
-  private static Manager manager;
-  private static DynamicPropertiesStore dynamicPropertiesStore;
-  private static AssetIssueStore assetIssueStore;
-  private static ChainBaseManager chainBaseManager;
+  @Resource
+  private AccountStore accountStore;
+  @Resource
+  private DynamicPropertiesStore dynamicPropertiesStore;
+  @Resource
+  private AssetIssueStore assetIssueStore;
   private static byte[] address = TransactionStoreTest.randomBytes(32);
   private static byte[] accountName = TransactionStoreTest.randomBytes(32);
+  private static boolean init;
 
   static {
+    dbPath = "output_AccountStore_test";
     Args.setParam(
         new String[]{
             "--output-directory", dbPath,
@@ -51,23 +45,13 @@ public class AccountStoreTest {
         },
         Constant.TEST_CONF
     );
-    context = new TronApplicationContext(DefaultConfig.class);
   }
 
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
-  }
-
-  @BeforeClass
-  public static void init() {
-    accountStore = context.getBean(AccountStore.class);
-    accountAssetStore = context.getBean(AccountAssetStore.class);
-    dynamicPropertiesStore = context.getBean(DynamicPropertiesStore.class);
-    manager = context.getBean(Manager.class);
-    chainBaseManager = context.getBean(ChainBaseManager.class);
+  @Before
+  public void init() {
+    if (init) {
+      return;
+    }
     assetIssueStore = chainBaseManager.getAssetIssueStore();
     dynamicPropertiesStore.saveAllowBlackHoleOptimization(1);
     AccountCapsule accountCapsule = new AccountCapsule(ByteString.copyFrom(address),
@@ -75,6 +59,7 @@ public class AccountStoreTest {
         AccountType.forNumber(1));
 
     accountStore.put(data, accountCapsule);
+    init = true;
   }
 
   @Test
@@ -149,7 +134,7 @@ public class AccountStoreTest {
     assertEquals(100, (long)assets.get("200"));
 
     accountCapsule.clearAsset();
-    try (ISession tmpSession = manager.getRevokingStore().buildSession()) {
+    try (ISession tmpSession = dbManager.getRevokingStore().buildSession()) {
       accountCapsule.addAssetAmountV2("100".getBytes(), 1,
               dynamicPropertiesStore, assetIssueStore);
       accountCapsule.reduceAssetAmountV2("200".getBytes(), 1,
@@ -160,11 +145,11 @@ public class AccountStoreTest {
     assertEquals(101, accountCapsule.getAssetV2("100"));
     assertEquals(99, accountCapsule.getAssetV2("200"));
 
-    try (ISession tmpSession = manager.getRevokingStore().buildSession()) {
+    try (ISession tmpSession = dbManager.getRevokingStore().buildSession()) {
       tmpSession.commit();
     }
 
-    try (ISession tmpSession = manager.getRevokingStore().buildSession()) {
+    try (ISession tmpSession = dbManager.getRevokingStore().buildSession()) {
       accountCapsule.reduceAssetAmountV2("200".getBytes(), 89,
               dynamicPropertiesStore, assetIssueStore);
       accountCapsule.addAssetAmountV2("300".getBytes(), 10,
@@ -178,7 +163,7 @@ public class AccountStoreTest {
     assertEquals(10, (long)assets.get("200"));
     assertEquals(10, (long)assets.get("300"));
 
-    try (ISession tmpSession = manager.getRevokingStore().buildSession()) {
+    try (ISession tmpSession = dbManager.getRevokingStore().buildSession()) {
       accountCapsule.reduceAssetAmountV2("100".getBytes(), 91,
               dynamicPropertiesStore, assetIssueStore);
       accountCapsule.addAssetAmountV2("200".getBytes(), 0,

@@ -1,23 +1,16 @@
 package org.tron.common.runtime.vm;
 
-import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.testng.Assert;
-import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
@@ -29,28 +22,24 @@ import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
-public class EnergyWhenTimeoutStyleTest {
+public class EnergyWhenTimeoutStyleTest extends BaseTest {
 
-  private Manager dbManager;
-  private TronApplicationContext context;
   private RepositoryImpl repository;
-  private String dbPath = "output_CPUTimeTest";
-  private String OWNER_ADDRESS;
-  private Application AppT;
+  private static final String OWNER_ADDRESS;
   private long totalBalance = 30_000_000_000_000L;
 
+  static {
+    dbPath = "output_CPUTimeTest";
+    Args.setParam(new String[]{"--output-directory", dbPath},
+        Constant.TEST_CONF);
+    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
+  }
 
   /**
    * Init data.
    */
   @Before
   public void init() {
-    Args.setParam(new String[]{"--output-directory", dbPath},
-        Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-    AppT = ApplicationFactory.create(context);
-    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
-    dbManager = context.getBean(Manager.class);
     repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
     repository.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
     repository.addBalance(Hex.decode(OWNER_ADDRESS), totalBalance);
@@ -109,7 +98,6 @@ public class EnergyWhenTimeoutStyleTest {
     /* =================================== CALL setVote(uint256) =============================== */
     String params = "0000000000000000000000000000000000000000000000000000000000000003";
     byte[] triggerData = TvmTestUtils.parseAbi("setVote(uint256)", params);
-    boolean haveException = false;
     result = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), contractAddress,
             triggerData, value, feeLimit, dbManager, null);
@@ -144,27 +132,11 @@ public class EnergyWhenTimeoutStyleTest {
         + "60011560cb576001600080828254019250508190555060b1565b505600a165627a7a72305820290a38c9bbaf"
         + "ccaf6c7f752ab56d229e354da767efb72715ee9fdb653b9f4b6c0029";
 
-    String libraryAddressPair = null;
 
     return TvmTestUtils
         .deployContractAndReturnTvmTestResult(contractName, address, ABI, code,
             value,
-            feeLimit, consumeUserResourcePercent, libraryAddressPair,
+            feeLimit, consumeUserResourcePercent, null,
             dbManager, null);
   }
-
-  /**
-   * Release resources.
-   */
-  @After
-  public void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
-  }
-
 }

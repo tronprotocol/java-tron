@@ -40,6 +40,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.PublicMethod;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db2.common.WrappedByteArray;
@@ -86,7 +87,7 @@ public class LevelDbDataSourceImplTest {
   @Test
   public void testPutGet() {
     dataSourceTest.resetDb();
-    String key1 = "2c0937534dd1b3832d05d865e8e6f2bf23218300b33a992740d45ccab7d4f519";
+    String key1 = PublicMethod.getRandomPrivateKey();
     byte[] key = key1.getBytes();
     dataSourceTest.initDB();
     String value1 = "50000";
@@ -115,9 +116,9 @@ public class LevelDbDataSourceImplTest {
         Args.getInstance().getOutputDirectory(), "test_updateByBatch");
     dataSource.initDB();
     dataSource.resetDb();
-    String key1 = "431cd8c8d5abe5cb5944b0889b32482d85772fbb98987b10fbb7f17110757350";
+    String key1 = PublicMethod.getRandomPrivateKey();
     String value1 = "50000";
-    String key2 = "431cd8c8d5abe5cb5944b0889b32482d85772fbb98987b10fbb7f17110757351";
+    String key2 =  PublicMethod.getRandomPrivateKey();
     String value2 = "10000";
 
     Map<byte[], byte[]> rows = new HashMap<>();
@@ -137,7 +138,7 @@ public class LevelDbDataSourceImplTest {
     LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
         Args.getInstance().getOutputDirectory(), "test_delete");
     dataSource.initDB();
-    String key1 = "431cd8c8d5abe5cb5944b0889b32482d85772fbb98987b10fbb7f17110757350";
+    String key1 = PublicMethod.getRandomPrivateKey();
     byte[] key = key1.getBytes();
     dataSource.deleteData(key);
     byte[] value = dataSource.getData(key);
@@ -153,14 +154,14 @@ public class LevelDbDataSourceImplTest {
     dataSource.initDB();
     dataSource.resetDb();
 
-    String key1 = "431cd8c8d5abe5cb5944b0889b32482d85772fbb98987b10fbb7f17110757321";
+    String key1 = PublicMethod.getRandomPrivateKey();
     byte[] key = key1.getBytes();
 
     String value1 = "50000";
     byte[] value = value1.getBytes();
 
     dataSource.putData(key, value);
-    String key3 = "431cd8c8d5abe5cb5944b0889b32482d85772fbb98987b10fbb7f17110757091";
+    String key3 = PublicMethod.getRandomPrivateKey();
     byte[] key2 = key3.getBytes();
 
     String value3 = "30000";

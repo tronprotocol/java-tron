@@ -31,6 +31,8 @@ import org.tron.common.utils.Commons;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
+import org.tron.common.utils.client.utils.AbiUtil;
+import org.tron.common.utils.client.utils.DataWord;
 import org.tron.consensus.dpos.MaintenanceManager;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
@@ -50,8 +52,6 @@ import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol;
-import stest.tron.wallet.common.client.utils.AbiUtil;
-import stest.tron.wallet.common.client.utils.DataWord;
 
 @Slf4j
 public class VoteTest {
