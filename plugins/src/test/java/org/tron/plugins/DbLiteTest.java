@@ -1,4 +1,4 @@
-package org.tron.program;
+package org.tron.plugins;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -16,16 +16,16 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.config.DbBackupConfig;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.FileUtil;
-import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Utils;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
-import org.tron.tool.litefullnode.LiteFullNodeTool;
+import org.tron.plugins.utils.PublicMethod;
+import picocli.CommandLine;
 
 @Slf4j
-public class LiteFullNodeToolTest {
+public class DbLiteTest {
 
   private TronApplicationContext context;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -134,7 +134,7 @@ public class LiteFullNodeToolTest {
             "--dataset-path", dbPath + File.separator + "history"};
     Args.getInstance().getStorage().setDbEngine(dbType);
     Args.getInstance().getStorage().setCheckpointVersion(checkpointVersion);
-    LiteFullNodeTool.setRecentBlks(3);
+    DbLite.setRecentBlks(3);
     // start fullNode
     startApp();
     // produce transactions for 18 seconds
@@ -144,7 +144,8 @@ public class LiteFullNodeToolTest {
     // delete tran-cache
     FileUtil.deleteDir(Paths.get(dbPath, databaseDir, "trans-cache").toFile());
     // generate snapshot
-    LiteFullNodeTool.main(argsForSnapshot);
+    CommandLine snapshotCommand = new CommandLine(new DbLite());
+    snapshotCommand.execute(argsForSnapshot);
     // start fullNode
     startApp();
     // produce transactions for 6 seconds
@@ -152,7 +153,8 @@ public class LiteFullNodeToolTest {
     // stop the node
     shutdown();
     // generate history
-    LiteFullNodeTool.main(argsForHistory);
+    CommandLine historyCommand = new CommandLine(new DbLite());
+    historyCommand.execute(argsForHistory);
     // backup original database to database_bak
     File database = new File(Paths.get(dbPath, databaseDir).toString());
     if (!database.renameTo(new File(Paths.get(dbPath, databaseDir + "_bak").toString()))) {
@@ -173,12 +175,13 @@ public class LiteFullNodeToolTest {
     // stop the node
     shutdown();
     // merge history
-    LiteFullNodeTool.main(argsForMerge);
+    CommandLine mergeCommand = new CommandLine(new DbLite());
+    mergeCommand.execute(argsForMerge);
     // start and validate
     startApp();
     generateSomeTransactions(6);
     shutdown();
-    LiteFullNodeTool.reSetRecentBlks();
+    DbLite.reSetRecentBlks();
   }
 
   private void generateSomeTransactions(int during) {
