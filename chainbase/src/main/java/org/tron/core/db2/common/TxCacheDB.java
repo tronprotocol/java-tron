@@ -1,10 +1,23 @@
 package org.tron.core.db2.common;
 
+import com.google.common.collect.Lists;
 import com.google.common.hash.BloomFilter;
 import com.google.common.hash.Funnels;
 import com.google.common.primitives.Longs;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import lombok.extern.slf4j.Slf4j;
@@ -17,8 +30,10 @@ import org.tron.common.prometheus.Metrics;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.JsonUtil;
 import org.tron.common.utils.StorageUtils;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.db.RecentTransactionItem;
 import org.tron.core.db.RecentTransactionStore;
@@ -57,8 +72,16 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   // replace persistentStore and optimizes startup performance
   private RecentTransactionStore recentTransactionStore;
 
+  private final String backupPropFile;
+  private List<String> backupBloomFile;
+
   public TxCacheDB(String name, RecentTransactionStore recentTransactionStore) {
     this.name = name;
+    this.backupPropFile = Paths.get(StorageUtils.getOutputDirectoryByDbName(name),
+        "backupProp").toString();
+    this.backupBloomFile = Arrays.asList(Paths.get(StorageUtils.getOutputDirectoryByDbName(name),
+        "backupBloom1").toString(),Paths.get(StorageUtils.getOutputDirectoryByDbName(name),
+        "backupBloom2").toString());
     this.TRANSACTION_COUNT =
         CommonParameter.getInstance().getStorage().getEstimatedBlockTransactions();
     this.recentTransactionStore = recentTransactionStore;
@@ -110,6 +133,9 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   }
 
   public void init() {
+    if (loadBloomFromFileSuccess()) {
+      return;
+    }
     long size = recentTransactionStore.size();
     if (size != MAX_BLOCK_SIZE) {
       // 0. load from persistentStore
@@ -129,6 +155,28 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
     logger.info("Load cache from recentTransactionStore, filter: {}, filter-fpp: {}, cost: {} ms.",
         bloomFilters[1].approximateElementCount(), bloomFilters[1].expectedFpp(),
         System.currentTimeMillis() - start);
+  }
+
+  private boolean loadBloomFromFileSuccess() {
+    try(BufferedInputStream bufferedInputStream1 = new BufferedInputStream(
+        new FileInputStream(backupBloomFile.get(0)));
+        BufferedInputStream bufferedInputStream2 = new BufferedInputStream(
+            new FileInputStream(backupBloomFile.get(1)));
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(
+            new FileInputStream(backupPropFile)))) {
+//      FileUtil.createFileIfNotExists(backupBloomFile.get(0));
+//      FileUtil.createFileIfNotExists(backupBloomFile.get(1));
+      filterStartBlock = Long.parseLong(bufferedReader.readLine());
+      currentFilterIndex = Integer.decode(bufferedReader.readLine());
+      //todo check
+      bloomFilters[0] = BloomFilter.readFrom(bufferedInputStream1, Funnels.byteArrayFunnel());
+      bloomFilters[1] = BloomFilter.readFrom(bufferedInputStream2, Funnels.byteArrayFunnel());
+      logger.info("Restore bloom filter of tx cache completed.");
+      return Boolean.TRUE;
+    } catch (Exception e) {
+      logger.warn("Restore bloom filter of tx cache failed! ", e);
+      return Boolean.FALSE;
+    }
   }
 
   @Override
@@ -215,9 +263,28 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   @Override
   public void close() {
     reset();
+    backupBloom();
     bloomFilters[0] = null;
     bloomFilters[1] = null;
     persistentStore.close();
+  }
+
+  private void backupBloom() {
+    try(BufferedOutputStream bufferedOutputStream1 = new BufferedOutputStream(
+            new FileOutputStream(backupBloomFile.get(0)));
+        BufferedOutputStream bufferedOutputStream2 = new BufferedOutputStream(
+            new FileOutputStream(backupBloomFile.get(1)))) {
+//      FileUtil.createFileIfNotExists(backupBloomFile.get(0));
+//      FileUtil.createFileIfNotExists(backupBloomFile.get(1));
+      FileUtil.saveData(backupPropFile, filterStartBlock + "\n" + currentFilterIndex + "\n",
+          Boolean.FALSE);
+      bloomFilters[0].writeTo(bufferedOutputStream1);
+      bloomFilters[1].writeTo(bufferedOutputStream2);
+      //todo check
+      logger.info("Backup bloom filter of tx cache completed.");
+    } catch (Exception e) {
+      logger.warn("Backup bloom filter of tx cache failed! ", e);
+    }
   }
 
   @Override
