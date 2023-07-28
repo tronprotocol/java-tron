@@ -169,7 +169,8 @@ public class SyncService {
     if (beginBlockId.getNum() == 0) {
       highNoFork = high = tronNetDelegate.getHeadBlockId().getNum();
     } else {
-      if (tronNetDelegate.containBlockInMainChain(beginBlockId)) {
+      if (tronNetDelegate.getKhaosDbHeadBlockId().equals(beginBlockId)
+          || tronNetDelegate.containBlockInMainChain(beginBlockId)) {
         highNoFork = high = beginBlockId.getNum();
       } else {
         forkList = tronNetDelegate.getBlockChainHashesOnFork(beginBlockId);
@@ -208,7 +209,11 @@ public class SyncService {
   }
 
   private BlockId getBlockIdByNum(long num) throws P2pException {
-    BlockId head = tronNetDelegate.getHeadBlockId();
+    BlockId head = tronNetDelegate.getKhaosDbHeadBlockId();
+    if (num == head.getNum()) {
+      return head;
+    }
+    head = tronNetDelegate.getHeadBlockId();
     if (num == head.getNum()) {
       return head;
     }

@@ -42,15 +42,14 @@
 </p>
 
 ## Table of Contents
-- [What’s TRON?](#What’s-TRON)
-- [Building the Source Code](#Building-the-source)
-  - [Getting the Source Code](#Getting-the-Source-Code)
-  - [Build](#Build)
-- [Running java-tron](#Running-java-tron)
-- [Community](#Community)
-- [Contribution](#Contribution)
-- [Resources](#Resources)
-- [License](#License)
+- [What’s TRON?](#whats-tron)
+- [Building the Source Code](#building-the-source)
+- [Running java-tron](#running-java-tron)
+- [Community](#community)
+- [Contribution](#contribution)
+- [Resources](#resources)
+- [Integrity Check](#integrity-check)
+- [License](#license)
 
 ## What's TRON?
 
@@ -63,7 +62,7 @@ TRON is a project dedicated to building the infrastructure for a truly decentral
 TRON enables large-scale development and engagement. With over 2000 transactions per second (TPS), high concurrency, low latency, and massive data transmission. It is ideal for building decentralized entertainment applications. Free features and incentive systems allow developers to create premium app experiences for users.
 
 # Building the source
-Building java-tron requires `git` and `Oracle JDK 1.8` to be installed, other JDK versions are not supported yet. Make sure you operate on `Linux` and `MacOS` operating systems.
+Building java-tron requires `git` and 64-bit version of `Oracle JDK 1.8` to be installed, other JDK versions are not supported yet. Make sure you operate on `Linux` and `MacOS` operating systems.
 
 Clone the repo and switch to the `master` branch
 
@@ -79,7 +78,7 @@ $ ./gradlew clean build -x test
 
 
 # Running java-tron
-Running java-tron requires `Oracle JDK 1.8` to be installed, other JDK versions are not supported yet. Make sure you operate on `Linux` and `MacOS` operating systems.
+Running java-tron requires 64-bit version of `Oracle JDK 1.8` to be installed, other JDK versions are not supported yet. Make sure you operate on `Linux` and `MacOS` operating systems.
 
 Get the mainnet configuration file: [main_net_config.conf](https://github.com/tronprotocol/tron-deployment/blob/master/main_net_config.conf), other network configuration files can be find [here](https://github.com/tronprotocol/tron-deployment).
 ## Hardware Requirements

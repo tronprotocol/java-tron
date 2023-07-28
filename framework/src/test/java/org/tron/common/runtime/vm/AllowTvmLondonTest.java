@@ -5,8 +5,8 @@ import static org.tron.common.utils.ByteUtil.longTo32Bytes;
 import java.util.Collections;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
+import org.junit.Assert;
 import org.junit.Test;
-import org.testng.Assert;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.WalletUtil;
@@ -74,7 +74,7 @@ public class AllowTvmLondonTest extends VMTestBase {
             factoryAddress, Hex.decode(hexInput), 0, feeLimit, manager, null);
     byte[] returnValue = result.getRuntime().getResult().getHReturn();
     Assert.assertNull(result.getRuntime().getRuntimeError());
-    Assert.assertEquals(returnValue,
+    Assert.assertArrayEquals(returnValue,
         longTo32Bytes(manager.getDynamicPropertiesStore().getEnergyFee()));
   }
 

@@ -1,5 +1,6 @@
 package org.tron.core.db;
 
+import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
@@ -9,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.testng.collections.Lists;
 import org.tron.common.BaseTest;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;

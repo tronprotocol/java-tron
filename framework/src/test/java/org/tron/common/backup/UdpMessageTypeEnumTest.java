@@ -3,8 +3,8 @@ package org.tron.common.backup;
 import static org.tron.common.backup.message.UdpMessageTypeEnum.BACKUP_KEEP_ALIVE;
 import static org.tron.common.backup.message.UdpMessageTypeEnum.UNKNOWN;
 
+import org.junit.Assert;
 import org.junit.Test;
-import org.testng.Assert;
 import org.tron.common.backup.message.UdpMessageTypeEnum;
 
 public class UdpMessageTypeEnumTest {

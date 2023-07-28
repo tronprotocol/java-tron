@@ -33,8 +33,6 @@ dependencies {
     testImplementation "junit:junit:$junitVersion"
     testImplementation "org.mockito:mockito-core:$mockitoVersion"
 
-    testImplementation "org.testng:testng:$testNgVersion"
-
     compile group: leveldbGroup, name: leveldbName, version: leveldbVersion
     compile "org.fusesource.jansi:jansi:$jansiVersion"
     compile group: 'org.rocksdb', name: 'rocksdbjni', version: '5.15.10'
@@ -72,25 +70,6 @@ test {
         maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
     }
 }
-
-task testng(type: Test) {
-    useTestNG()
-    testLogging {
-        events = ["skipped", "failed"]
-        exceptionFormat = "full"
-
-        debug.events = ["skipped", "failed"]
-        debug.exceptionFormat = "full"
-
-        info.events = ["failed", "skipped"]
-        info.exceptionFormat = "full"
-
-        warn.events = ["failed", "skipped"]
-        warn.exceptionFormat = "full"
-    }
-}
-
-check.dependsOn testng
 
 jacoco {
     toolVersion = jacocoVersion // See http://www.eclemma.org/jacoco/.

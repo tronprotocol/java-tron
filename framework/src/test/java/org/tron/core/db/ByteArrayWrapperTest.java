@@ -1,8 +1,8 @@
 package org.tron.core.db;
 
 import lombok.extern.slf4j.Slf4j;
+import org.junit.Assert;
 import org.junit.Test;
-import org.testng.Assert;
 import org.tron.common.utils.ByteArray;
 
 @Slf4j

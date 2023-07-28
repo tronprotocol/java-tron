@@ -515,6 +515,7 @@ public class SnapshotManager implements RevokingDatabase {
       }
     }
     recover(checkTmpStore);
+    logger.info("checkpoint v1 recover success");
     unChecked = false;
   }
 

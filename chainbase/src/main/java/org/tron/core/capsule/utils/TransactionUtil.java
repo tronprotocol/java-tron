@@ -100,6 +100,7 @@ public class TransactionUtil {
     builder.setExchangeId(programResult.getRet().getExchangeId());
     builder.setWithdrawAmount(programResult.getRet().getWithdrawAmount());
     builder.setWithdrawExpireAmount(programResult.getRet().getWithdrawExpireAmount());
+    builder.putAllCancelUnfreezeV2Amount(programResult.getRet().getCancelUnfreezeV2AmountMap());
     builder.setExchangeReceivedAmount(programResult.getRet().getExchangeReceivedAmount());
     builder.setExchangeInjectAnotherAmount(programResult.getRet().getExchangeInjectAnotherAmount());
     builder.setExchangeWithdrawAnotherAmount(
