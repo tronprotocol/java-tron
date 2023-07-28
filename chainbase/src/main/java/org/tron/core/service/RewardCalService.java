@@ -64,6 +64,7 @@ public class RewardCalService {
   @PreDestroy
   private void destroy() {
     es.shutdownNow();
+    rewardCacheStore.close();
   }
 
   public void calReward() throws IOException {
@@ -150,5 +151,9 @@ public class RewardCalService {
       double voteRate = (double) userVote / totalVote;
       return (long) (voteRate * totalReward);
     }).sum();
+  }
+
+  public long getReward(byte[] address, long cycle) {
+    return rewardCacheStore.getReward(Bytes.concat(address, Longs.toByteArray(cycle)));
   }
 }
