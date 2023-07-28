@@ -4,6 +4,7 @@ import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.protobuf.InvalidProtocolBufferException;
+import io.prometheus.client.Histogram;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -12,6 +13,8 @@ import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
 import org.tron.core.db.common.iterator.DBIterator;
@@ -104,10 +107,14 @@ public class RewardCalService {
     if (account == null || account.getVotesList().isEmpty()) {
       return;
     }
+    Histogram.Timer requestTimer = Metrics.histogramStartTimer(
+        MetricKeys.Histogram.DO_REWARD_CAL_DELAY,
+        (newRewardCalStartCycle - beginCycle) / 100 + "");
     long reward = LongStream.range(beginCycle, newRewardCalStartCycle)
         .map(i -> computeReward(i, account))
         .sum();
     rewardCacheStore.putReward(Bytes.concat(address, Longs.toByteArray(beginCycle)), reward);
+    Metrics.histogramObserve(requestTimer);
   }
 
   private Protocol.Account getAccount(byte[] address) {
