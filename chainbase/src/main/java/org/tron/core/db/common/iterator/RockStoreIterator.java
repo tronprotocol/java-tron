@@ -76,4 +76,19 @@ public final class RockStoreIterator implements DBIterator {
       }
     };
   }
+
+  @Override
+  public void seek(byte[] key) {
+    dbIterator.seek(key);
+  }
+
+  @Override
+  public void seekToFirst() {
+    dbIterator.seekToFirst();
+  }
+
+  @Override
+  public void seekToLast() {
+    dbIterator.seekToLast();
+  }
 }
