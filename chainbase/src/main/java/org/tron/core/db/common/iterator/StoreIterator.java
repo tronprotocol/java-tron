@@ -61,4 +61,19 @@ public final class StoreIterator implements org.tron.core.db.common.iterator.DBI
   public void remove() {
     throw new UnsupportedOperationException();
   }
+
+  @Override
+  public void seek(byte[] key) {
+    dbIterator.seek(key);
+  }
+
+  @Override
+  public void seekToFirst() {
+    dbIterator.seekToFirst();
+  }
+
+  @Override
+  public void seekToLast() {
+    dbIterator.seekToLast();
+  }
 }
