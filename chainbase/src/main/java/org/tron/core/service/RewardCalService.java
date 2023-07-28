@@ -45,7 +45,8 @@ public class RewardCalService {
   private static final byte[] IS_DONE_VALUE = new byte[]{0x01};
 
   private long newRewardCalStartCycle = Long.MAX_VALUE;
-  private byte[] lastKey = null;
+  private static final int ADDRESS_SIZE = 21;
+  private byte[] lastAccount = new byte[ADDRESS_SIZE];
 
 
   private final ExecutorService es = Executors.newSingleThreadExecutor(
@@ -71,7 +72,8 @@ public class RewardCalService {
     try (DBIterator iterator = rewardCacheStore.iterator()) {
       iterator.seekToLast();
       if (iterator.hasNext()) {
-        lastKey = iterator.next().getKey();
+        byte[] key  = iterator.next().getKey();
+        System.arraycopy(key, 0, lastAccount, 0, ADDRESS_SIZE);
       }
     }
     es.submit(this::startRewardCal);
@@ -83,9 +85,9 @@ public class RewardCalService {
       logger.info("RewardCalService is done");
       return;
     }
-    logger.info("RewardCalService start from lastKey: {}", ByteArray.toHexString(lastKey));
+    logger.info("RewardCalService start from lastAccount: {}", ByteArray.toHexString(lastAccount));
     ((DBIterator) delegationStore.getDb().iterator()).prefixQueryAfterThat(
-        new byte[]{Constant.ADD_PRE_FIX_BYTE_MAINNET}, lastKey).forEachRemaining(e -> {
+        new byte[]{Constant.ADD_PRE_FIX_BYTE_MAINNET}, lastAccount).forEachRemaining(e -> {
           try {
             doRewardCal(e.getKey(), ByteArray.toLong(e.getValue()));
           } catch (InterruptedException error) {
