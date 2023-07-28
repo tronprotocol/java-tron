@@ -10,6 +10,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.LongStream;
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -60,6 +61,11 @@ public class RewardCalService {
     }
   }
 
+  @PreDestroy
+  private void destroy() {
+    es.shutdownNow();
+  }
+
   public void calReward() throws IOException {
     try (DBIterator iterator = rewardCacheStore.iterator()) {
       iterator.seekToLast();
@@ -82,7 +88,6 @@ public class RewardCalService {
           try {
             doRewardCal(e.getKey(), ByteArray.toLong(e.getValue()));
           } catch (InterruptedException error) {
-            logger.error(error.getMessage(), error);
             Thread.currentThread().interrupt();
           }
         });
