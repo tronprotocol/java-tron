@@ -42,6 +42,8 @@ public class MetricKeys {
     public static final String TOTAL_RESOURCE_WEIGHT = "tron:total_resource_g";
     public static final String RESOURCE_WINDOW_SIZE = "tron:resource_window_size_g";
 
+    public static final String VERIFY_SIGN_SIZE = "tron:verify_sign_size";
+
     private Gauge() {
       throw new IllegalStateException("Gauge");
     }
