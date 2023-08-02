@@ -34,6 +34,7 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.ReasonCode;
 
 @Slf4j(topic = "net")
 @Component
@@ -182,6 +183,7 @@ public class RelayService {
       TronNetService.getP2pConfig().getActiveNodes().remove(address);
       TronNetService.getPeers().forEach(peer -> {
         if (peer.getInetAddress().equals(address.getAddress())) {
+          peer.disconnect(ReasonCode.NOT_WITNESS);
           peer.getChannel().close();
         }
       });

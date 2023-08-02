@@ -16,6 +16,7 @@ import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.MetricLabels;
 import org.tron.common.prometheus.Metrics;
 import org.tron.p2p.connection.Channel;
+import org.tron.protos.Protocol.ReasonCode;
 
 @Slf4j(topic = "net")
 public class PeerManager {
@@ -45,6 +46,7 @@ public class PeerManager {
     try {
       for (PeerConnection p : new ArrayList<>(peers)) {
         if (!p.isDisconnect()) {
+          p.disconnect(ReasonCode.PEER_QUITING);
           p.getChannel().close();
         }
       }
