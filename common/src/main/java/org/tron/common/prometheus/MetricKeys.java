@@ -72,6 +72,7 @@ public class MetricKeys {
     public static final String BLOCK_RECEIVE_DELAY = "tron:block_receive_delay_seconds";
 
     public static final String STAKE_HISTOGRAM = "tron:stake_h";
+    public static final String UNFREEZE_CAN_WITHDRAW = "tron:unfreeze_can_withdraw";
 
     private Histogram() {
       throw new IllegalStateException("Histogram");
