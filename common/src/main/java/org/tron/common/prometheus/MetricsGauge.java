@@ -34,7 +34,7 @@ class MetricsGauge {
     init(RESOURCE_WINDOW_SIZE, "tron resource window size.",
         ACCOUNT_ADDRESS, LABEL_RESOURCE_TYPE);
 
-    init(MetricKeys.Gauge.VERIFY_SIGN_SIZE, "tron verify sign trx size.", "type");
+    init(MetricKeys.Gauge.VERIFY_SIGN_SIZE, "tron verify sign trx size.");
   }
 
   private MetricsGauge() {

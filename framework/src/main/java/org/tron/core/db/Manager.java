@@ -1969,7 +1969,7 @@ public class Manager {
       }
     } finally {
       Metrics.histogramObserve(requestTimer);
-      Metrics.gaugeSet(Gauge.VERIFY_SIGN_SIZE, txs.size(), MetricLabels.TRX);
+      Metrics.gaugeSet(Gauge.VERIFY_SIGN_SIZE, txs.size());
     }
   }
 
