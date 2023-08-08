@@ -1,5 +1,6 @@
 package org.tron.core.db;
 
+import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -15,8 +16,6 @@ import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.keystore.Wallet;
-
-import java.io.IOException;
 
 @Slf4j
 public class TxCacheDBInitTest {
@@ -40,13 +39,12 @@ public class TxCacheDBInitTest {
   @BeforeClass
   public static void init() throws IOException {
     Args.setParam(new String[]{"--output-directory", temporaryFolder.newFolder().toString(),
-            "--p2p-disable", "true"},
-        Constant.TEST_CONF);
+        "--p2p-disable", "true"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
   }
 
   @Test
-  public void reload(){
+  public void reload() {
     putTransaction();
     DefaultListableBeanFactory defaultListableBeanFactory =
         (DefaultListableBeanFactory) context.getAutowireCapableBeanFactory();
