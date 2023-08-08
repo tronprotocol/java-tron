@@ -316,9 +316,7 @@ public class ChainBaseManager {
   }
 
   public synchronized BlockId getHeadBlockId() {
-    return new BlockId(
-        dynamicPropertiesStore.getLatestBlockHeaderHash(),
-        dynamicPropertiesStore.getLatestBlockHeaderNumber());
+    return new BlockId(dynamicPropertiesStore.getLatestBlockHeaderHash());
   }
 
   public long getHeadBlockNum() {
