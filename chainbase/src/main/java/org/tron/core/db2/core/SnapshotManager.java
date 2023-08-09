@@ -499,7 +499,9 @@ public class SnapshotManager implements RevokingDatabase {
     if (!isV2Open()) {
       List<String> cpList = getCheckpointList();
       if (cpList != null && cpList.size() != 0) {
-        logger.error("checkpoint check failed, can't convert checkpoint from v2 to v1");
+        logger.error("checkpoint check failed, the checkpoint version of database not match your " +
+            "config file, please set storage.checkpoint.version = 2 in your config file " +
+            "and restart the node.");
         System.exit(-1);
       }
       checkV1();
