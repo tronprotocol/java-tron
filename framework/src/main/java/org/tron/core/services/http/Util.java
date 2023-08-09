@@ -518,7 +518,7 @@ public class Util {
     String method = request.getMethod();
     String value = null;
 
-    if (HttpMethod.GET.toString().toUpperCase() .equalsIgnoreCase(method)) {
+    if (HttpMethod.GET.toString().toUpperCase().equalsIgnoreCase(method)) {
       return request.getParameter(key);
     }
     if (HttpMethod.POST.toString().toUpperCase().equals(method)) {
@@ -526,7 +526,7 @@ public class Util {
       if (StringUtils.isBlank(contentType)) {
         return null;
       }
-      if (APPLICATION_JSON.toLowerCase().contains(contentType)){
+      if (APPLICATION_JSON.toLowerCase().contains(contentType)) {
         value = getRequestValue(request);
         if (StringUtils.isBlank(value)) {
           return null;
