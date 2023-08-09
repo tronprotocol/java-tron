@@ -536,7 +536,7 @@ public class Util {
           return jsonObject.getString(key);
         }
       } else if (APPLICATION_FORM_URLENCODED.toLowerCase().contains(contentType)) {
-        return getParam(getRequestValue(request));
+        return getParam(getRequestValue(request), key);
       } else {
         return null;
       }
@@ -544,7 +544,7 @@ public class Util {
     return value;
   }
 
-  private static String getParam(String requestParam) {
+  private static String getParam(String requestParam, String key) {
     String[] params = requestParam.split("&");
     if (params.length == 0) {
       String[] keyValue = requestParam.split("=");
@@ -558,7 +558,7 @@ public class Util {
         if (keyValue.length == 1) {
           continue;
         }
-        if (keyValue[0].equals("address")) {
+        if (keyValue[0].equals(key)) {
           return keyValue[1];
         }
       }
