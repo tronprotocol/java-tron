@@ -14,17 +14,13 @@ import com.google.protobuf.Message;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
-import java.net.HttpURLConnection;
 import java.nio.charset.Charset;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -520,21 +516,17 @@ public class Util {
 
   private static String checkGetParam(HttpServletRequest request, String key) throws Exception {
     String method = request.getMethod();
-    String value;
+    String value = null;
 
     if (HttpMethod.GET.toString().toUpperCase() .equalsIgnoreCase(method)) {
-      value = request.getParameter(key);
-      if (StringUtils.isBlank(value)) {
-        throw new IllegalArgumentException("Invalid request parameter");
-      }
-      return value;
+      return request.getParameter(key);
     } else if (HttpMethod.POST.toString().toUpperCase().equals(method)) {
       String contentType = request.getContentType();
       if (StringUtils.isBlank(contentType)) {
         throw new IllegalArgumentException("Invalid request parameter");
       }
       if (APPLICATION_JSON.toLowerCase().contains(contentType)){
-        value = getValue(request);
+        value = getRequestValue(request);
         if (StringUtils.isBlank(value)) {
           return null;
         }
@@ -544,22 +536,36 @@ public class Util {
           return jsonObject.getString(key);
         }
       } else if (APPLICATION_FORM_URLENCODED.toLowerCase().contains(contentType)) {
-        value = getValue(request);
-        String[] keyValue = value.split("=");
-        if (keyValue.length <= 1) {
-          throw new IllegalArgumentException("Invalid request parameter");
+        return getParam(getRequestValue(request));
+      } else {
+        return null;
+      }
+    }
+    return value;
+  }
+
+  private static String getParam(String requestParam) {
+    String[] params = requestParam.split("&");
+    if (params.length == 0) {
+      String[] keyValue = requestParam.split("=");
+      if (keyValue.length <= 1) {
+        return null;
+      }
+      return keyValue[1];
+    } else {
+      for (String param : params) {
+        String[] keyValue = param.split("=");
+        if (keyValue.length == 1) {
+          continue;
         }
         if (keyValue[0].equals("address")) {
           return keyValue[1];
         }
-      } else {
-        throw new IllegalArgumentException("Invalid request types");
       }
     }
     return null;
   }
-
-  public static String getValue(HttpServletRequest request) throws IOException {
+  public static String getRequestValue(HttpServletRequest request) throws IOException {
     BufferedReader reader = new BufferedReader(new InputStreamReader(request.getInputStream()));
     String line;
     StringBuilder sb = new StringBuilder();
