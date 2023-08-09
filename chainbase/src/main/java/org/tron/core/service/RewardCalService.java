@@ -139,20 +139,22 @@ public class RewardCalService {
   }
 
   long computeReward(long cycle, Protocol.Account account) {
-    return account.getVotesList().stream().mapToLong(vote -> {
+    long reward = 0;
+    for (Protocol.Vote vote : account.getVotesList()) {
       byte[] srAddress = vote.getVoteAddress().toByteArray();
       long totalReward = delegationStore.getReward(cycle, srAddress);
       if (totalReward <= 0) {
-        return 0;
+        continue;
       }
       long totalVote = delegationStore.getWitnessVote(cycle, srAddress);
       if (totalVote <= 0) {
-        return 0;
+        continue;
       }
       long userVote = vote.getVoteCount();
       double voteRate = (double) userVote / totalVote;
-      return (long) (voteRate * totalReward);
-    }).sum();
+      reward += voteRate * totalReward;
+    }
+    return reward;
   }
 
   public long getReward(byte[] address, long cycle) {
