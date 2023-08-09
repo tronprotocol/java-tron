@@ -1,5 +1,6 @@
 package org.tron.core.services.http;
 
+import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.tron.common.utils.Commons.decodeFromBase58Check;
 
 import com.alibaba.fastjson.JSON;
@@ -18,13 +19,17 @@ import java.nio.charset.Charset;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
+import org.eclipse.jetty.util.MultiMap;
 import org.eclipse.jetty.util.StringUtil;
+import org.eclipse.jetty.util.UrlEncoded;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
@@ -333,12 +338,16 @@ public class Util {
     return visible;
   }
 
+  public static boolean existVisible(final HttpServletRequest request) {
+    return Objects.nonNull(request.getParameter(VISIBLE));
+  }
+
   public static boolean getVisiblePost(final String input) {
     boolean visible = false;
     if (StringUtil.isNotBlank(input)) {
       JSONObject jsonObject = JSON.parseObject(input);
       if (jsonObject.containsKey(VISIBLE)) {
-        visible = jsonObject.getBoolean(VISIBLE);
+        visible = Boolean.parseBoolean(jsonObject.getString(VISIBLE));
       }
     }
 
@@ -567,6 +576,25 @@ public class Util {
       throw new InvalidParameterException("While trying to deploy, "
           + FUNCTION_SELECTOR + " and " + CALL_DATA + " can not be both set.");
     }
+  }
+
+  public static String getJsonString(String str) {
+    if (StringUtils.isEmpty(str)) {
+      return EMPTY;
+    }
+    MultiMap<String> params = new MultiMap<>();
+    UrlEncoded.decodeUtf8To(str, params);
+    JSONObject json = new JSONObject();
+    for (Map.Entry<String, List<String>> entry : params.entrySet()) {
+      String key = entry.getKey();
+      List<String> values = entry.getValue();
+      if (values.size() == 1) {
+        json.put(key, values.get(0));
+      } else {
+        json.put(key, values);
+      }
+    }
+    return json.toString();
   }
 
 }
