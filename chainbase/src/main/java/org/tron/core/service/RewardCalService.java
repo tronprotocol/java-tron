@@ -61,7 +61,7 @@ public class RewardCalService {
     if (newRewardCalStartCycle != Long.MAX_VALUE) {
       isDoneKey = ByteArray.fromLong(newRewardCalStartCycle);
       if (rewardCacheStore.has(isDoneKey)) {
-        logger.info("RewardCalService is done");
+        logger.info("RewardCalService is already done");
         return;
       }
       accountIterator = (DBIterator) accountStore.getDb().iterator();
@@ -90,7 +90,7 @@ public class RewardCalService {
     newRewardCalStartCycle = propertiesStore.getNewRewardAlgorithmEffectiveCycle();
     isDoneKey = ByteArray.fromLong(newRewardCalStartCycle);
     if (rewardCacheStore.has(isDoneKey)) {
-      logger.info("RewardCalService is done");
+      logger.info("RewardCalService is already done");
       return;
     }
     accountIterator = (DBIterator) accountStore.getDb().iterator();
