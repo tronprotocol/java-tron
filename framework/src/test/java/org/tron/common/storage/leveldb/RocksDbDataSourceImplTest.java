@@ -20,7 +20,9 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.ExpectedSystemExit;
 import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -47,6 +49,9 @@ public class RocksDbDataSourceImplTest {
   private byte[] key4 = "00000004aa".getBytes();
   private byte[] key5 = "00000005aa".getBytes();
   private byte[] key6 = "00000006aa".getBytes();
+
+  @Rule
+  public final ExpectedSystemExit exit = ExpectedSystemExit.none();
 
   /**
    * Release resources.
@@ -381,5 +386,24 @@ public class RocksDbDataSourceImplTest {
 
     dataSource.resetDb();
     dataSource.closeDB();
+  }
+
+  @Test
+  public void initDbTest() {
+    exit.expectSystemExitWithStatus(1);
+    makeExceptionDb("test_initDb");
+    RocksDbDataSourceImpl dataSource = new RocksDbDataSourceImpl(
+        Args.getInstance().getOutputDirectory(), "test_initDb");
+    dataSource.initDB();
+    dataSource.closeDB();
+  }
+
+  private void makeExceptionDb(String dbName) {
+    RocksDbDataSourceImpl dataSource = new RocksDbDataSourceImpl(
+        Args.getInstance().getOutputDirectory(), "test_initDb");
+    dataSource.initDB();
+    dataSource.closeDB();
+    FileUtil.saveData(dataSource.getDbPath().toString() + "/CURRENT",
+        "...", Boolean.FALSE);
   }
 }
