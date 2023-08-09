@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -34,8 +35,10 @@ public class GetBrokerageServletTest {
     try {
       String contentAsString = response.getContentAsString();
       JSONObject result = JSONObject.parseObject(contentAsString);
+      int reward = (int)result.get("reward");
+      Assert.assertEquals(0, reward);
       String content = (String) result.get("Error");
-      assertEquals(content, "INVALID address, invalid request parameter");
+      Assert.assertNull(content);
     } catch (UnsupportedEncodingException e) {
       e.printStackTrace();
     }
