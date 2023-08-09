@@ -21,7 +21,10 @@ public final class StoreIterator implements org.tron.core.db.common.iterator.DBI
 
   @Override
   public void close() throws IOException {
-    dbIterator.close();
+    if (valid) {
+      dbIterator.close();
+      valid = false;
+    }
   }
 
   @Override

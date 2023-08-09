@@ -21,7 +21,10 @@ public final class RockStoreIterator implements DBIterator {
 
   @Override
   public void close() throws IOException {
-    dbIterator.close();
+    if (valid) {
+      dbIterator.close();
+      valid = false;
+    }
   }
 
   @Override
