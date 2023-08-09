@@ -49,6 +49,7 @@ import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.bloom.Bloom;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.capsule.BlockFilterCapsule;
@@ -253,6 +254,13 @@ public class Manager {
   private AtomicInteger blockWaitLock = new AtomicInteger(0);
   private Object transactionLock = new Object();
 
+  private ExecutorService rePushEs;
+  private static final String rePushEsName = "repush";
+  private ExecutorService triggerEs;
+  private static final String triggerEsName = "event-trigger";
+  private ExecutorService filterEs;
+  private static final String filterEsName = "filter";
+
   /**
    * Cycle thread to rePush Transactions
    */
@@ -429,14 +437,17 @@ public class Manager {
 
   public void stopRePushThread() {
     isRunRePushThread = false;
+    ExecutorServiceManager.shutdownAndAwaitTermination(rePushEs, rePushEsName);
   }
 
   public void stopRePushTriggerThread() {
     isRunTriggerCapsuleProcessThread = false;
+    ExecutorServiceManager.shutdownAndAwaitTermination(triggerEs, triggerEsName);
   }
 
   public void stopFilterProcessThread() {
     isRunFilterProcessThread = false;
+    ExecutorServiceManager.shutdownAndAwaitTermination(filterEs, filterEsName);
   }
 
   @PostConstruct
@@ -524,21 +535,19 @@ public class Manager {
     revokingStore.enable();
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
-    Thread rePushThread = new Thread(rePushLoop);
-    rePushThread.setDaemon(true);
-    rePushThread.start();
+    rePushEs = ExecutorServiceManager.newSingleThreadExecutor(rePushEsName, true);
+    rePushEs.submit(rePushLoop);
     // add contract event listener for subscribing
     if (Args.getInstance().isEventSubscribe()) {
       startEventSubscribing();
-      Thread triggerCapsuleProcessThread = new Thread(triggerCapsuleProcessLoop);
-      triggerCapsuleProcessThread.setDaemon(true);
-      triggerCapsuleProcessThread.start();
+      triggerEs = ExecutorServiceManager.newSingleThreadExecutor(triggerEsName, true);
+      triggerEs.submit(triggerCapsuleProcessLoop);
     }
 
     // start json rpc filter process
     if (CommonParameter.getInstance().isJsonRpcFilterEnabled()) {
-      Thread filterProcessThread = new Thread(filterProcessLoop);
-      filterProcessThread.start();
+      filterEs = ExecutorServiceManager.newSingleThreadExecutor(filterEsName, true);
+      filterEs.submit(filterProcessLoop);
     }
 
     //initStoreFactory

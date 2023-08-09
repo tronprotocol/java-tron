@@ -4,12 +4,12 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.JsonUtil;
@@ -27,28 +27,24 @@ public class NodePersistService {
   private final boolean isNodePersist = CommonParameter.getInstance().isNodeDiscoveryPersist();
   @Autowired
   private CommonStore commonStore;
-  private Timer nodePersistTaskTimer;
+
+  private ScheduledExecutorService nodePersistExecutor;
+
+  private final String name = "NodePersistTask";
 
   public void init() {
     if (isNodePersist) {
-      nodePersistTaskTimer = new Timer("NodePersistTaskTimer");
-      nodePersistTaskTimer.scheduleAtFixedRate(new TimerTask() {
-        @Override
-        public void run() {
-          dbWrite();
-        }
-      }, DB_COMMIT_RATE, DB_COMMIT_RATE);
+      nodePersistExecutor = ExecutorServiceManager.newSingleThreadScheduledExecutor(name);
+      nodePersistExecutor.scheduleAtFixedRate(this::dbWrite, DB_COMMIT_RATE, DB_COMMIT_RATE,
+          TimeUnit.MILLISECONDS);
     }
   }
 
   public void close() {
-    if (Objects.isNull(nodePersistTaskTimer)) {
-      return;
-    }
-    try {
-      nodePersistTaskTimer.cancel();
-    } catch (Exception e) {
-      logger.error("Close nodePersistTaskTimer failed", e);
+    if (isNodePersist) {
+      logger.info("Node persist service shutdown...");
+      ExecutorServiceManager.shutdownAndAwaitTermination(nodePersistExecutor, name);
+      logger.info("Node persist service shutdown complete");
     }
   }
 
