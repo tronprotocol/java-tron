@@ -171,6 +171,7 @@ public class ComputeRewardTest {
   public void query() throws IOException {
     rewardCalService.calRewardForTest();
     Assert.assertEquals(3189, rewardCalService.getReward(OWNER_ADDRESS, 3));
+    rewardCalService.calRewardForTest();
   }
 
   static class Vote {
