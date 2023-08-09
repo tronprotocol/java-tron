@@ -60,6 +60,10 @@ public class RewardCalService {
     newRewardCalStartCycle = propertiesStore.getNewRewardAlgorithmEffectiveCycle();
     if (newRewardCalStartCycle != Long.MAX_VALUE) {
       isDoneKey = ByteArray.fromLong(newRewardCalStartCycle);
+      if (rewardCacheStore.has(isDoneKey)) {
+        logger.info("RewardCalService is done");
+        return;
+      }
       accountIterator = (DBIterator) accountStore.getDb().iterator();
       calReward();
     }
@@ -85,6 +89,10 @@ public class RewardCalService {
   public void calRewardForTest() throws IOException {
     newRewardCalStartCycle = propertiesStore.getNewRewardAlgorithmEffectiveCycle();
     isDoneKey = ByteArray.fromLong(newRewardCalStartCycle);
+    if (rewardCacheStore.has(isDoneKey)) {
+      logger.info("RewardCalService is done");
+      return;
+    }
     accountIterator = (DBIterator) accountStore.getDb().iterator();
     try (DBIterator iterator = rewardCacheStore.iterator()) {
       iterator.seekToLast();
@@ -100,10 +108,6 @@ public class RewardCalService {
   private void startRewardCal() {
     if (!doing.compareAndSet(false, true)) {
       logger.info("RewardCalService is doing");
-      return;
-    }
-    if (rewardCacheStore.has(isDoneKey)) {
-      logger.info("RewardCalService is done");
       return;
     }
     logger.info("RewardCalService start from lastAccount: {}", ByteArray.toHexString(lastAccount));
