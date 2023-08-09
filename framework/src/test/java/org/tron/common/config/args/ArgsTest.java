@@ -1,6 +1,9 @@
 package org.tron.common.config.args;
 
+import com.beust.jcommander.JCommander;
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -11,14 +14,13 @@ import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 
 
-
 public class ArgsTest {
 
   private static final String dbPath = "output_arg_test";
 
   @Before
   public void init() {
-    Args.setParam(new String[]{"--output-directory", dbPath, "--p2p-disable", "true",
+    Args.setParam(new String[] {"--output-directory", dbPath, "--p2p-disable", "true",
         "--debug"}, Constant.TEST_CONF);
   }
 
@@ -44,5 +46,19 @@ public class ArgsTest {
     RateLimiterInitialization rateLimiter = Args.getInstance().getRateLimiterInitialization();
     Assert.assertEquals(rateLimiter.getHttpMap().size(), 1);
     Assert.assertEquals(rateLimiter.getRpcMap().size(), 0);
+  }
+
+  @Test
+  public void testHelpMessage() {
+    JCommander jCommander = JCommander.newBuilder().addObject(Args.PARAMETER).build();
+    Method method;
+    try {
+      method = Args.class.getDeclaredMethod("printVersion");
+      method.setAccessible(true);
+      method.invoke(Args.class);
+    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+      Assert.fail();
+    }
+    Args.printHelp(jCommander);
   }
 }
