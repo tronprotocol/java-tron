@@ -31,10 +31,8 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
     previous = snapshot;
     snapshot.setNext(this);
     isOptimized = snapshot.isOptimized();
-    if (isOptimized) {
-      if (root == previous) {
-        Streams.stream(root.iterator()).forEach( e -> put(e.getKey(),e.getValue()));
-      }
+    if (isOptimized &&  root == previous) {
+      Streams.stream(root.iterator()).forEach( e -> put(e.getKey(),e.getValue()));
     }
   }
 
@@ -46,15 +44,6 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   private byte[] get(Snapshot head, byte[] key) {
     Snapshot snapshot = head;
     Value value;
-    // for properties optimized
-    /*
-    if (isOptimized) {
-      value = db.get(Key.of(key));
-      if (value !=null) {
-        return value.getBytes();
-      }
-    }
-     */
 
     while (Snapshot.isImpl(snapshot)) {
       if ((value = ((SnapshotImpl) snapshot).db.get(Key.of(key))) != null) {
@@ -99,17 +88,16 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
     Streams.stream(fromImpl.db).forEach(e -> db.put(e.getKey(), e.getValue()));
   }
 
-  public void mergeFullData(Snapshot from) {
+  public void mergeAhead(Snapshot from) {
     if (from instanceof SnapshotRoot) {
       return ;
     }
     SnapshotImpl fromImpl = (SnapshotImpl) from;
-    Streams.stream(fromImpl.db).forEach(e ->
-        {
-          if (db.get(e.getKey()) == null && e.getValue() != null ) {
-            db.put(e.getKey(), e.getValue());
-          }
-        }
+    Streams.stream(fromImpl.db).forEach(e -> {
+      if (db.get(e.getKey()) == null && e.getValue() != null) {
+        db.put(e.getKey(), e.getValue());
+      }
+    }
     );
   }
 
@@ -211,7 +199,7 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   @Override
   public void reloadToMem() {
     if (isOptimized) {
-      mergeFullData(previous);
+      mergeAhead(previous);
     }
   }
 }
