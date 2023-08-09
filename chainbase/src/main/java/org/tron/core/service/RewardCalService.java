@@ -8,6 +8,7 @@ import io.prometheus.client.Histogram;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.LongStream;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -48,6 +49,8 @@ public class RewardCalService {
   private static final int ADDRESS_SIZE = 21;
   private byte[] lastAccount = new byte[ADDRESS_SIZE];
 
+  private final AtomicBoolean doing = new AtomicBoolean(false);
+
 
   private final ExecutorService es = Executors.newSingleThreadExecutor(
       new ThreadFactoryBuilder().setNameFormat("rewardCalService").build());
@@ -79,8 +82,26 @@ public class RewardCalService {
     es.submit(this::startRewardCal);
   }
 
+  public void calRewardForTest() throws IOException {
+    newRewardCalStartCycle = propertiesStore.getNewRewardAlgorithmEffectiveCycle();
+    isDoneKey = ByteArray.fromLong(newRewardCalStartCycle);
+    accountIterator = (DBIterator) accountStore.getDb().iterator();
+    try (DBIterator iterator = rewardCacheStore.iterator()) {
+      iterator.seekToLast();
+      if (iterator.hasNext()) {
+        byte[] key  = iterator.next().getKey();
+        System.arraycopy(key, 0, lastAccount, 0, ADDRESS_SIZE);
+      }
+    }
+    startRewardCal();
+  }
+
 
   private void startRewardCal() {
+    if (!doing.compareAndSet(false, true)) {
+      logger.info("RewardCalService is doing");
+      return;
+    }
     if (rewardCacheStore.has(isDoneKey)) {
       logger.info("RewardCalService is done");
       return;
