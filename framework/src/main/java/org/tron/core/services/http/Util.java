@@ -520,7 +520,8 @@ public class Util {
 
     if (HttpMethod.GET.toString().toUpperCase() .equalsIgnoreCase(method)) {
       return request.getParameter(key);
-    } else if (HttpMethod.POST.toString().toUpperCase().equals(method)) {
+    }
+    if (HttpMethod.POST.toString().toUpperCase().equals(method)) {
       String contentType = request.getContentType();
       if (StringUtils.isBlank(contentType)) {
         throw new IllegalArgumentException("Invalid request parameter");
@@ -536,7 +537,7 @@ public class Util {
           return jsonObject.getString(key);
         }
       } else if (APPLICATION_FORM_URLENCODED.toLowerCase().contains(contentType)) {
-        return getParam(getRequestValue(request), key);
+        return request.getParameter(key);
       } else {
         return null;
       }
@@ -544,27 +545,6 @@ public class Util {
     return value;
   }
 
-  private static String getParam(String requestParam, String key) {
-    String[] params = requestParam.split("&");
-    if (params.length == 0) {
-      String[] keyValue = requestParam.split("=");
-      if (keyValue.length <= 1) {
-        return null;
-      }
-      return keyValue[1];
-    } else {
-      for (String param : params) {
-        String[] keyValue = param.split("=");
-        if (keyValue.length == 1) {
-          continue;
-        }
-        if (keyValue[0].equals(key)) {
-          return keyValue[1];
-        }
-      }
-    }
-    return null;
-  }
   public static String getRequestValue(HttpServletRequest request) throws IOException {
     BufferedReader reader = new BufferedReader(new InputStreamReader(request.getInputStream()));
     String line;
