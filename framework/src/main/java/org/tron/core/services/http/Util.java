@@ -524,7 +524,7 @@ public class Util {
     if (HttpMethod.POST.toString().toUpperCase().equals(method)) {
       String contentType = request.getContentType();
       if (StringUtils.isBlank(contentType)) {
-        throw new IllegalArgumentException("Invalid request parameter");
+        return null;
       }
       if (APPLICATION_JSON.toLowerCase().contains(contentType)){
         value = getRequestValue(request);
