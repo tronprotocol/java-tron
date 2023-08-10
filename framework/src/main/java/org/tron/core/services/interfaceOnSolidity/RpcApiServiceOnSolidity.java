@@ -28,6 +28,7 @@ import org.tron.api.GrpcAPI.GetAvailableUnfreezeCountResponseMessage;
 import org.tron.api.GrpcAPI.NoteParameters;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.PaginatedMessage;
+import org.tron.api.GrpcAPI.ResourcePricesResponseMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.SpendResult;
@@ -36,12 +37,8 @@ import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
 import org.tron.common.application.Service;
-import org.tron.common.crypto.SignInterface;
-import org.tron.common.crypto.SignUtils;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.common.utils.StringUtil;
-import org.tron.common.utils.Utils;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
@@ -535,6 +532,20 @@ public class RpcApiServiceOnSolidity implements Service {
                          StreamObserver<BlockExtention> responseObserver) {
       walletOnSolidity.futureGet(
           () -> rpcApiService.getWalletSolidityApi().getBlock(request, responseObserver));
+    }
+
+    @Override
+    public void getBandwidthPrices(EmptyMessage request,
+        StreamObserver<ResourcePricesResponseMessage> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi().getBandwidthPrices(request, responseObserver));
+    }
+
+    @Override
+    public void getEnergyPrices(EmptyMessage request,
+        StreamObserver<ResourcePricesResponseMessage> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi().getEnergyPrices(request, responseObserver));
     }
 
   }

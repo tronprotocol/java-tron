@@ -87,6 +87,7 @@ import org.tron.api.GrpcAPI.PrivateShieldedTRC20Parameters;
 import org.tron.api.GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.ReceiveNote;
+import org.tron.api.GrpcAPI.ResourcePricesResponseMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.ShieldedAddressInfo;
@@ -4309,23 +4310,25 @@ public class Wallet {
     }
   }
 
-  public String getEnergyPrices() {
+  public ResourcePricesResponseMessage getEnergyPrices() {
+    ResourcePricesResponseMessage.Builder builder = ResourcePricesResponseMessage.newBuilder();
     try {
-      return chainBaseManager.getDynamicPropertiesStore().getEnergyPriceHistory();
+      builder.setPrices(chainBaseManager.getDynamicPropertiesStore().getEnergyPriceHistory());
+      return builder.build();
     } catch (Exception e) {
       logger.error("GetEnergyPrices failed", e);
     }
-
     return null;
   }
 
-  public String getBandwidthPrices() {
+  public ResourcePricesResponseMessage getBandwidthPrices() {
+    ResourcePricesResponseMessage.Builder builder = ResourcePricesResponseMessage.newBuilder();
     try {
-      return chainBaseManager.getDynamicPropertiesStore().getBandwidthPriceHistory();
+      builder.setPrices(chainBaseManager.getDynamicPropertiesStore().getBandwidthPriceHistory());
+      return builder.build();
     } catch (Exception e) {
       logger.error("GetBandwidthPrices failed", e);
     }
-
     return null;
   }
 

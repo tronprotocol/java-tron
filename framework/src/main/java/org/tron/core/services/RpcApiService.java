@@ -55,6 +55,7 @@ import org.tron.api.GrpcAPI.PrivateParametersWithoutAsk;
 import org.tron.api.GrpcAPI.PrivateShieldedTRC20Parameters;
 import org.tron.api.GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk;
 import org.tron.api.GrpcAPI.ProposalList;
+import org.tron.api.GrpcAPI.ResourcePricesResponseMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.ShieldedAddressInfo;
@@ -993,6 +994,28 @@ public class RpcApiService implements Service {
     public void getBlock(GrpcAPI.BlockReq  request,
         StreamObserver<BlockExtention> responseObserver) {
       getBlockCommon(request, responseObserver);
+    }
+
+    @Override
+    public void getBandwidthPrices(EmptyMessage request,
+        StreamObserver<ResourcePricesResponseMessage> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getBandwidthPrices());
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getEnergyPrices(EmptyMessage request,
+        StreamObserver<ResourcePricesResponseMessage> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getEnergyPrices());
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
     }
   }
 
@@ -2021,6 +2044,28 @@ public class RpcApiService implements Service {
                 .onNext(wallet.getCanWithdrawUnfreezeAmount(
                         request.getOwnerAddress(), request.getTimestamp()
         ));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getBandwidthPrices(EmptyMessage request,
+        StreamObserver<ResourcePricesResponseMessage> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getBandwidthPrices());
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getEnergyPrices(EmptyMessage request,
+        StreamObserver<ResourcePricesResponseMessage> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getEnergyPrices());
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
       }
