@@ -3,10 +3,10 @@ package org.tron.common.runtime.vm;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.testng.Assert;
 import org.tron.common.BaseTest;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.Runtime;
@@ -194,7 +194,6 @@ public class RepositoryTest extends BaseTest {
     String params1 = Hex.toHexString(new DataWord(bAddress).getData())
         + "000000000000000000000000000000000000000000000000000000000000000100000000000000000000000"
         + "00000000000000000000000000000000000000002";
-    System.err.println(params1);
 
     byte[] triggerData = TvmTestUtils
         .parseAbi("callBcallARevert(address,uint256,uint256)", params1);
@@ -215,12 +214,10 @@ public class RepositoryTest extends BaseTest {
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             aAddress, checkN2Data, 0, fee, dbManager, null);
 
-    System.out.println(Hex.toHexString(checkN1.getRuntime().getResult().getHReturn()));
-    System.out.println(Hex.toHexString(checkN2.getRuntime().getResult().getHReturn()));
 
-    Assert.assertEquals(checkN1.getRuntime().getResult().getHReturn(),
+    Assert.assertArrayEquals(checkN1.getRuntime().getResult().getHReturn(),
         new DataWord(1).getData());
-    Assert.assertEquals(checkN2.getRuntime().getResult().getHReturn(),
+    Assert.assertArrayEquals(checkN2.getRuntime().getResult().getHReturn(),
         new DataWord(0).getData());
 
     // trigger contractA
@@ -240,12 +237,9 @@ public class RepositoryTest extends BaseTest {
     checkN2 = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             aAddress, checkN2Data, 0, fee, dbManager, null);
-    System.out.println(Hex.toHexString(checkN1.getRuntime().getResult().getHReturn()));
-    System.out.println(Hex.toHexString(checkN2.getRuntime().getResult().getHReturn()));
-    Assert.assertEquals(checkN1.getRuntime().getResult().getHReturn(),
+    Assert.assertArrayEquals(checkN1.getRuntime().getResult().getHReturn(),
         new DataWord(100).getData());
-    Assert
-        .assertEquals(checkN2.getRuntime().getResult().getHReturn(),
+    Assert.assertArrayEquals(checkN2.getRuntime().getResult().getHReturn(),
             new DataWord(1000).getData());
     CommonParameter.setENERGY_LIMIT_HARD_FORK(false);
   }
@@ -369,12 +363,10 @@ public class RepositoryTest extends BaseTest {
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             aAddress, checkN2Data, 0, fee, dbManager, null);
 
-    System.out.println(Hex.toHexString(checkN1.getRuntime().getResult().getHReturn()));
-    System.out.println(Hex.toHexString(checkN2.getRuntime().getResult().getHReturn()));
 
-    Assert.assertEquals(checkN1.getRuntime().getResult().getHReturn(),
+    Assert.assertArrayEquals(checkN1.getRuntime().getResult().getHReturn(),
         new DataWord(1).getData());
-    Assert.assertEquals(checkN2.getRuntime().getResult().getHReturn(),
+    Assert.assertArrayEquals(checkN2.getRuntime().getResult().getHReturn(),
         new DataWord(2).getData());
 
     // trigger contractA
@@ -394,12 +386,10 @@ public class RepositoryTest extends BaseTest {
     checkN2 = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             aAddress, checkN2Data, 0, fee, dbManager, null);
-    System.out.println(Hex.toHexString(checkN1.getRuntime().getResult().getHReturn()));
-    System.out.println(Hex.toHexString(checkN2.getRuntime().getResult().getHReturn()));
-    Assert.assertEquals(checkN1.getRuntime().getResult().getHReturn(),
+    Assert.assertArrayEquals(checkN1.getRuntime().getResult().getHReturn(),
         new DataWord(100).getData());
     Assert
-        .assertEquals(checkN2.getRuntime().getResult().getHReturn(),
+        .assertArrayEquals(checkN2.getRuntime().getResult().getHReturn(),
             new DataWord(1000).getData());
     CommonParameter.setENERGY_LIMIT_HARD_FORK(false);
   }

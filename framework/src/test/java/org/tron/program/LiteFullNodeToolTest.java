@@ -48,10 +48,10 @@ public class LiteFullNodeToolTest {
     appTest.startup();
 
     String fullNode = String.format("%s:%d", "127.0.0.1",
-            Args.getInstance().getRpcPort());
-    ManagedChannel channelFull = ManagedChannelBuilder.forTarget(fullNode)
-            .usePlaintext()
-            .build();
+        Args.getInstance().getRpcPort());
+    channelFull = ManagedChannelBuilder.forTarget(fullNode)
+        .usePlaintext()
+        .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 

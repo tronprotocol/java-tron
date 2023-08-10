@@ -48,7 +48,11 @@ public class GetTransactionByIdSolidityServletTest {
   public static void init() {
     // Allows for mocking URL connections
     URLStreamHandlerFactory urlStreamHandlerFactory = mock(URLStreamHandlerFactory.class);
-    URL.setURLStreamHandlerFactory(urlStreamHandlerFactory);
+    try {
+      URL.setURLStreamHandlerFactory(urlStreamHandlerFactory);
+    } catch (Error e) {
+      logger.info("Ignore error: {}", e.getMessage());
+    }
 
     httpUrlStreamHandler = new HttpUrlStreamHandler();
     given(urlStreamHandlerFactory.createURLStreamHandler("http")).willReturn(httpUrlStreamHandler);

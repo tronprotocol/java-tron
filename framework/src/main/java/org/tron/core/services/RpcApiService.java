@@ -130,6 +130,7 @@ import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.BalanceContract.AccountBalanceRequest;
 import org.tron.protos.contract.BalanceContract.AccountBalanceResponse;
 import org.tron.protos.contract.BalanceContract.BlockBalanceTrace;
+import org.tron.protos.contract.BalanceContract.CancelAllUnfreezeV2Contract;
 import org.tron.protos.contract.BalanceContract.DelegateResourceContract;
 import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
@@ -298,7 +299,7 @@ public class RpcApiService implements Service {
       retBuilder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
           .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
       trxExtBuilder.setResult(retBuilder);
-      logger.warn("When run constant call in VM, failed for reason: " + e.getMessage());
+      logger.warn("When run constant call in VM, have RuntimeException: " + e.getMessage());
     } catch (Exception e) {
       retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
           .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
@@ -1472,6 +1473,13 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void cancelAllUnfreezeV2(CancelAllUnfreezeV2Contract request,
+                                    StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.CancelAllUnfreezeV2Contract,
+          responseObserver);
+    }
+
+    @Override
     public void proposalCreate(ProposalCreateContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.ProposalCreateContract, responseObserver);
@@ -1886,7 +1894,7 @@ public class RpcApiService implements Service {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
         trxExtBuilder.setResult(retBuilder);
-        logger.warn("When run constant call in VM, failed for reason: " + e.getMessage());
+        logger.warn("When run constant call in VM, have Runtime Exception: " + e.getMessage());
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));

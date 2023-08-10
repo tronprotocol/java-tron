@@ -5,9 +5,12 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.tron.common.parameter.RateLimiterInitialization;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
+
+
 
 public class ArgsTest {
 
@@ -34,8 +37,12 @@ public class ArgsTest {
     Assert.assertEquals(Args.getInstance().getBlockCacheTimeout(), 60);
     Assert.assertEquals(Args.getInstance().isNodeDetectEnable(), false);
     Assert.assertFalse(Args.getInstance().isNodeEffectiveCheckEnable());
-    Assert.assertEquals(Args.getInstance().getRateLimiterGlobalQps(), 50000);
-    Assert.assertEquals(Args.getInstance().getRateLimiterGlobalIpQps(), 10000);
+    Assert.assertEquals(Args.getInstance().getRateLimiterGlobalQps(), 1000);
+    Assert.assertEquals(Args.getInstance().getRateLimiterGlobalIpQps(), 1000);
     Assert.assertEquals(Args.getInstance().p2pDisable, true);
+    Assert.assertEquals(Args.getInstance().getMaxTps(), 1000);
+    RateLimiterInitialization rateLimiter = Args.getInstance().getRateLimiterInitialization();
+    Assert.assertEquals(rateLimiter.getHttpMap().size(), 1);
+    Assert.assertEquals(rateLimiter.getRpcMap().size(), 0);
   }
 }

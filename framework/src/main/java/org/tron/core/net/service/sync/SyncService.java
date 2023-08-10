@@ -21,7 +21,6 @@ import org.springframework.stereotype.Component;
 import org.tron.common.utils.Pair;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
@@ -64,6 +63,8 @@ public class SyncService {
 
   @Setter
   private volatile boolean fetchFlag = false;
+
+  private final long syncFetchBatchNum = Args.getInstance().getSyncFetchBatchNum();
 
   public void init() {
     fetchExecutor.scheduleWithFixedDelay(() -> {
@@ -132,7 +133,7 @@ public class SyncService {
     handleFlag = true;
     if (peer.isIdle()) {
       if (peer.getRemainNum() > 0
-          && peer.getSyncBlockToFetch().size() <= NetConstants.SYNC_FETCH_BATCH_NUM) {
+          && peer.getSyncBlockToFetch().size() <= syncFetchBatchNum) {
         syncNext(peer);
       } else {
         fetchFlag = true;
@@ -168,7 +169,8 @@ public class SyncService {
     if (beginBlockId.getNum() == 0) {
       highNoFork = high = tronNetDelegate.getHeadBlockId().getNum();
     } else {
-      if (tronNetDelegate.containBlockInMainChain(beginBlockId)) {
+      if (tronNetDelegate.getKhaosDbHeadBlockId().equals(beginBlockId)
+          || tronNetDelegate.containBlockInMainChain(beginBlockId)) {
         highNoFork = high = beginBlockId.getNum();
       } else {
         forkList = tronNetDelegate.getBlockChainHashesOnFork(beginBlockId);
@@ -207,7 +209,11 @@ public class SyncService {
   }
 
   private BlockId getBlockIdByNum(long num) throws P2pException {
-    BlockId head = tronNetDelegate.getHeadBlockId();
+    BlockId head = tronNetDelegate.getKhaosDbHeadBlockId();
+    if (num == head.getNum()) {
+      return head;
+    }
+    head = tronNetDelegate.getHeadBlockId();
     if (num == head.getNum()) {
       return head;
     }
@@ -224,7 +230,8 @@ public class SyncService {
             send.put(peer, new LinkedList<>());
           }
           for (BlockId blockId : peer.getSyncBlockToFetch()) {
-            if (requestBlockIds.getIfPresent(blockId) == null) {
+            if (requestBlockIds.getIfPresent(blockId) == null
+                && !peer.getSyncBlockInProcess().contains(blockId)) {
               requestBlockIds.put(blockId, peer);
               peer.getSyncBlockRequested().put(blockId, System.currentTimeMillis());
               send.get(peer).add(blockId);
@@ -250,6 +257,7 @@ public class SyncService {
     }
 
     final boolean[] isProcessed = {true};
+    long solidNum = tronNetDelegate.getSolidBlockId().getNum();
 
     while (isProcessed[0]) {
 
@@ -262,6 +270,11 @@ public class SyncService {
             invalid(msg.getBlockId(), peerConnection);
             return;
           }
+          if (msg.getBlockId().getNum() <= solidNum) {
+            blockWaitToProcess.remove(msg);
+            peerConnection.getSyncBlockInProcess().remove(msg.getBlockId());
+            return;
+          }
           final boolean[] isFound = {false};
           tronNetDelegate.getActivePeer().stream()
               .filter(peer -> msg.getBlockId().equals(peer.getSyncBlockToFetch().peek()))
@@ -272,6 +285,7 @@ public class SyncService {
             blockWaitToProcess.remove(msg);
             isProcessed[0] = true;
             processSyncBlock(msg.getBlockCapsule(), peerConnection);
+            peerConnection.getSyncBlockInProcess().remove(msg.getBlockId());
           }
         }
       });

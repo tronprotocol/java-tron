@@ -124,6 +124,7 @@ import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
 import org.tron.consensus.ConsensusDelegate;
 import org.tron.core.actuator.Actuator;
+import org.tron.core.actuator.ActuatorConstant;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.actuator.UnfreezeBalanceV2Actuator;
 import org.tron.core.actuator.VMActuator;
@@ -535,6 +536,9 @@ public class Wallet {
 
       if (chainBaseManager.getDynamicPropertiesStore().supportVM()) {
         trx.resetResult();
+      }
+      if (trx.getInstance().getRawData().getContractCount() == 0) {
+        throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
       }
       dbManager.pushTransaction(trx);
       int num = tronNetService.fastBroadcastTransaction(message);
@@ -1306,6 +1310,21 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getDynamicEnergyMaxFactor())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowTvmShangHai")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmShangHai())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowCancelAllUnfreezeV2")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowCancelAllUnfreezeV2())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getMaxDelegateLockPeriod")
+        .setValue(dbManager.getDynamicPropertiesStore().getMaxDelegateLockPeriod())
+        .build());
+
     return builder.build();
   }
 
@@ -2029,7 +2048,7 @@ public class Wallet {
             .parseFrom(chainBaseManager.getMerkleTreeIndexStore().get(blockNum));
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error("GetMerkleTreeOfBlock failed, blockNum:{}", blockNum, ex);
     }
 
     return null;
@@ -4275,7 +4294,7 @@ public class Wallet {
 
       return energyFee;
     } catch (Exception e) {
-      logger.error("getEnergyFee timestamp={} failed, error is {}", timestamp, e.getMessage());
+      logger.error("GetEnergyFee timestamp={} failed", timestamp, e);
       return getEnergyFee();
     }
   }
@@ -4284,7 +4303,7 @@ public class Wallet {
     try {
       return chainBaseManager.getDynamicPropertiesStore().getEnergyPriceHistory();
     } catch (Exception e) {
-      logger.error("getEnergyPrices failed, error is {}", e.getMessage());
+      logger.error("GetEnergyPrices failed", e);
     }
 
     return null;
@@ -4294,7 +4313,7 @@ public class Wallet {
     try {
       return chainBaseManager.getDynamicPropertiesStore().getBandwidthPriceHistory();
     } catch (Exception e) {
-      logger.error("getBandwidthPrices failed, error is {}", e.getMessage());
+      logger.error("GetBandwidthPrices failed", e);
     }
 
     return null;
@@ -4415,7 +4434,7 @@ public class Wallet {
     try {
       return chainBaseManager.getDynamicPropertiesStore().getMemoFeeHistory();
     } catch (Exception e) {
-      logger.error("getMemoFeePrices failed, error is {}", e.getMessage());
+      logger.error("GetMemoFeePrices failed", e);
     }
     return null;
   }

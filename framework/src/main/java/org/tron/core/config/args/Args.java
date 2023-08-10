@@ -135,6 +135,7 @@ public class Args extends CommonParameter {
     PARAMETER.minConnections = 8;
     PARAMETER.minActiveConnections = 3;
     PARAMETER.maxConnectionsWithSameIp = 2;
+    PARAMETER.maxTps = 1000;
     PARAMETER.minParticipationRate = 0;
     PARAMETER.nodeListenPort = 0;
     PARAMETER.nodeDiscoveryBindIp = "";
@@ -146,6 +147,7 @@ public class Args extends CommonParameter {
     PARAMETER.nodeEnableIpv6 = false;
     PARAMETER.dnsTreeUrls = new ArrayList<>();
     PARAMETER.dnsPublishConfig = null;
+    PARAMETER.syncFetchBatchNum = 2000;
     PARAMETER.rpcPort = 0;
     PARAMETER.rpcOnSolidityPort = 0;
     PARAMETER.rpcOnPBFTPort = 0;
@@ -231,6 +233,7 @@ public class Args extends CommonParameter {
     PARAMETER.p2pDisable = false;
     PARAMETER.dynamicConfigEnable = false;
     PARAMETER.dynamicConfigCheckInterval = 600;
+    PARAMETER.allowTvmShangHai = 0;
   }
 
   /**
@@ -621,6 +624,9 @@ public class Args extends CommonParameter {
                       .getInt(Constant.NODE_MAX_CONNECTIONS_WITH_SAME_IP) : 2;
     }
 
+    PARAMETER.maxTps = config.hasPath(Constant.NODE_MAX_TPS)
+            ? config.getInt(Constant.NODE_MAX_TPS) : 1000;
+
     PARAMETER.minParticipationRate =
         config.hasPath(Constant.NODE_MIN_PARTICIPATION_RATE)
             ? config.getInt(Constant.NODE_MIN_PARTICIPATION_RATE)
@@ -656,6 +662,15 @@ public class Args extends CommonParameter {
         Constant.NODE_DNS_TREE_URLS) : new ArrayList<>();
 
     PARAMETER.dnsPublishConfig = loadDnsPublishConfig(config);
+
+    PARAMETER.syncFetchBatchNum = config.hasPath(Constant.NODE_SYNC_FETCH_BATCH_NUM) ? config
+        .getInt(Constant.NODE_SYNC_FETCH_BATCH_NUM) : 2000;
+    if (PARAMETER.syncFetchBatchNum > 2000) {
+      PARAMETER.syncFetchBatchNum = 2000;
+    }
+    if (PARAMETER.syncFetchBatchNum < 100) {
+      PARAMETER.syncFetchBatchNum = 100;
+    }
 
     PARAMETER.rpcPort =
         config.hasPath(Constant.NODE_RPC_PORT)
@@ -809,7 +824,7 @@ public class Args extends CommonParameter {
     PARAMETER.validateSignThreadNum =
         config.hasPath(Constant.NODE_VALIDATE_SIGN_THREAD_NUM) ? config
             .getInt(Constant.NODE_VALIDATE_SIGN_THREAD_NUM)
-            : (Runtime.getRuntime().availableProcessors() + 1) / 2;
+            : Runtime.getRuntime().availableProcessors();
 
     PARAMETER.walletExtensionApi =
         config.hasPath(Constant.NODE_WALLET_EXTENSION_API)
@@ -959,9 +974,7 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.RATE_LIMITER_GLOBAL_IP_QPS) ? config
             .getInt(Constant.RATE_LIMITER_GLOBAL_IP_QPS) : 10000;
 
-    PARAMETER.rateLimiterInitialization =
-        config.hasPath(Constant.RATE_LIMITER) ? getRateLimiterFromConfig(config)
-            : new RateLimiterInitialization();
+    PARAMETER.rateLimiterInitialization = getRateLimiterFromConfig(config);
 
     PARAMETER.changedDelegation =
         config.hasPath(Constant.COMMITTEE_CHANGED_DELEGATION) ? config
@@ -1166,6 +1179,10 @@ public class Args extends CommonParameter {
       PARAMETER.dynamicConfigCheckInterval = 600;
     }
 
+    PARAMETER.allowTvmShangHai =
+        config.hasPath(Constant.COMMITTEE_ALLOW_TVM_SHANGHAI) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_TVM_SHANGHAI) : 0;
+
     logConfig();
   }
 
@@ -1200,21 +1217,22 @@ public class Args extends CommonParameter {
   }
 
   private static RateLimiterInitialization getRateLimiterFromConfig(
-      final com.typesafe.config.Config config) {
-
+          final com.typesafe.config.Config config) {
     RateLimiterInitialization initialization = new RateLimiterInitialization();
-    ArrayList<RateLimiterInitialization.HttpRateLimiterItem> list1 = config
-        .getObjectList(Constant.RATE_LIMITER_HTTP).stream()
-        .map(RateLimiterInitialization::createHttpItem)
-        .collect(Collectors.toCollection(ArrayList::new));
-    initialization.setHttpMap(list1);
-
-    ArrayList<RateLimiterInitialization.RpcRateLimiterItem> list2 = config
-        .getObjectList(Constant.RATE_LIMITER_RPC).stream()
-        .map(RateLimiterInitialization::createRpcItem)
-        .collect(Collectors.toCollection(ArrayList::new));
-
-    initialization.setRpcMap(list2);
+    if (config.hasPath(Constant.RATE_LIMITER_HTTP)) {
+      ArrayList<RateLimiterInitialization.HttpRateLimiterItem> list1 = config
+              .getObjectList(Constant.RATE_LIMITER_HTTP).stream()
+              .map(RateLimiterInitialization::createHttpItem)
+              .collect(Collectors.toCollection(ArrayList::new));
+      initialization.setHttpMap(list1);
+    }
+    if (config.hasPath(Constant.RATE_LIMITER_RPC)) {
+      ArrayList<RateLimiterInitialization.RpcRateLimiterItem> list2 = config
+              .getObjectList(Constant.RATE_LIMITER_RPC).stream()
+              .map(RateLimiterInitialization::createRpcItem)
+              .collect(Collectors.toCollection(ArrayList::new));
+      initialization.setRpcMap(list2);
+    }
     return initialization;
   }
 

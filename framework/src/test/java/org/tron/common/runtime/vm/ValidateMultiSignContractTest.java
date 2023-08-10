@@ -8,9 +8,9 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.bouncycastle.util.encoders.Hex;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.testng.Assert;
 import org.tron.common.BaseTest;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
@@ -19,6 +19,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
+import org.tron.common.utils.client.utils.AbiUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.args.Args;
@@ -27,7 +28,7 @@ import org.tron.core.vm.PrecompiledContracts.ValidateMultiSign;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol;
-import stest.tron.wallet.common.client.utils.AbiUtil;
+
 
 @Slf4j
 public class ValidateMultiSignContractTest extends BaseTest {
@@ -59,7 +60,7 @@ public class ValidateMultiSignContractTest extends BaseTest {
     signs.add(Hex.toHexString(sign));
 
     //Address non exist
-    Assert.assertEquals(
+    Assert.assertArrayEquals(
         validateMultiSign(StringUtil.encode58Check(key.getAddress()), 1, hash, signs)
             .getValue(), DataWord.ZERO().getData());
   }
@@ -119,21 +120,21 @@ public class ValidateMultiSignContractTest extends BaseTest {
     signs.add(Hex.toHexString(key1.sign(toSign).toByteArray()));
     signs.add(Hex.toHexString(key2.sign(toSign).toByteArray()));
 
-    Assert.assertEquals(
+    Assert.assertArrayEquals(
         validateMultiSign(StringUtil.encode58Check(key.getAddress()), permissionId, data, signs)
             .getValue(), DataWord.ONE().getData());
 
     //weight not enough
     signs = new ArrayList<>();
     signs.add(Hex.toHexString(key1.sign(toSign).toByteArray()));
-    Assert.assertEquals(
+    Assert.assertArrayEquals(
         validateMultiSign(StringUtil.encode58Check(key.getAddress()), permissionId, data, signs)
             .getValue(), DataWord.ZERO().getData());
 
     //put wrong sign
     signs = new ArrayList<>();
     signs.add(Hex.toHexString(key1.sign(toSign).toByteArray()));
-    Assert.assertEquals(
+    Assert.assertArrayEquals(
         validateMultiSign(StringUtil.encode58Check(key.getAddress()), permissionId, data, signs)
             .getValue(), DataWord.ZERO().getData());
 
@@ -141,7 +142,7 @@ public class ValidateMultiSignContractTest extends BaseTest {
     signs.add(Hex.toHexString(key1.sign(toSign).toByteArray()));
     signs.add(Hex.toHexString(new ECKey().sign(toSign).toByteArray()));
 
-    Assert.assertEquals(
+    Assert.assertArrayEquals(
         validateMultiSign(StringUtil.encode58Check(key.getAddress()), permissionId, data, signs)
             .getValue(), DataWord.ZERO().getData());
   }

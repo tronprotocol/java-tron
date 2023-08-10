@@ -281,6 +281,9 @@ service Wallet {
   rpc UnDelegateResource (UnDelegateResourceContract) returns (TransactionExtention) {
   }
 
+  rpc CancelAllUnfreezeV2 (CancelAllUnfreezeV2Contract) returns (TransactionExtention) {
+  }
+
   //Please use UpdateAsset2 instead of this function.
   rpc UpdateAsset (UpdateAssetContract) returns (Transaction) {
     option (google.api.http) = {

@@ -25,6 +25,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.client.utils.TransactionUtils;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.JLibrustzcash;
@@ -94,7 +95,6 @@ import org.tron.protos.contract.ShieldContract.PedersenHash;
 import org.tron.protos.contract.ShieldContract.ReceiveDescription;
 import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
 import org.tron.protos.contract.ShieldContract.SpendDescription;
-import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 @Slf4j
 public class ShieldedReceiveTest extends BaseTest {

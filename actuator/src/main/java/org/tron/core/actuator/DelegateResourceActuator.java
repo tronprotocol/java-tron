@@ -3,6 +3,9 @@ package org.tron.core.actuator;
 import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_PERIOD;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+import static org.tron.protos.contract.Common.ResourceCode;
+import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
+import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 import static org.tron.core.vm.utils.FreezeV2Util.getV2EnergyUsage;
 import static org.tron.core.vm.utils.FreezeV2Util.getV2NetUsage;
 
@@ -48,8 +51,10 @@ public class DelegateResourceActuator extends AbstractActuator {
     long fee = calcFee();
     final DelegateResourceContract delegateResourceContract;
     AccountStore accountStore = chainBaseManager.getAccountStore();
+    byte[] ownerAddress;
     try {
-      delegateResourceContract = any.unpack(DelegateResourceContract.class);
+      delegateResourceContract = this.any.unpack(DelegateResourceContract.class);
+      ownerAddress = getOwnerAddress().toByteArray();
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
@@ -58,24 +63,24 @@ public class DelegateResourceActuator extends AbstractActuator {
 
     AccountCapsule ownerCapsule = accountStore
         .get(delegateResourceContract.getOwnerAddress().toByteArray());
-
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     long delegateBalance = delegateResourceContract.getBalance();
     boolean lock = delegateResourceContract.getLock();
-    byte[] ownerAddress = delegateResourceContract.getOwnerAddress().toByteArray();
+    long lockPeriod = getLockPeriod(dynamicStore, delegateResourceContract);
     byte[] receiverAddress = delegateResourceContract.getReceiverAddress().toByteArray();
 
     // delegate resource to receiver
     switch (delegateResourceContract.getResource()) {
       case BANDWIDTH:
         delegateResource(ownerAddress, receiverAddress, true,
-            delegateBalance, lock);
+            delegateBalance, lock, lockPeriod);
 
         ownerCapsule.addDelegatedFrozenV2BalanceForBandwidth(delegateBalance);
         ownerCapsule.addFrozenBalanceForBandwidthV2(-delegateBalance);
         break;
       case ENERGY:
         delegateResource(ownerAddress, receiverAddress, false,
-            delegateBalance, lock);
+            delegateBalance, lock, lockPeriod);
 
         ownerCapsule.addDelegatedFrozenV2BalanceForEnergy(delegateBalance);
         ownerCapsule.addFrozenBalanceForEnergyV2(-delegateBalance);
@@ -102,6 +107,7 @@ public class DelegateResourceActuator extends AbstractActuator {
     }
     AccountStore accountStore = chainBaseManager.getAccountStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    DelegatedResourceStore delegatedResourceStore = chainBaseManager.getDelegatedResourceStore();
     if (!any.is(DelegateResourceContract.class)) {
       throw new ContractValidateException(
           "contract type error,expected type [DelegateResourceContract],real type["
@@ -118,13 +124,14 @@ public class DelegateResourceActuator extends AbstractActuator {
     }
 
     final DelegateResourceContract delegateResourceContract;
+    byte[] ownerAddress;
     try {
       delegateResourceContract = this.any.unpack(DelegateResourceContract.class);
+      ownerAddress = getOwnerAddress().toByteArray();
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
-    byte[] ownerAddress = delegateResourceContract.getOwnerAddress().toByteArray();
     if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid address");
     }
@@ -202,12 +209,65 @@ public class DelegateResourceActuator extends AbstractActuator {
               + readableOwnerAddress + NOT_EXIST_STR);
     }
 
+    boolean lock = delegateResourceContract.getLock();
+    if (lock && dynamicStore.supportMaxDelegateLockPeriod()) {
+      long lockPeriod = getLockPeriod(dynamicStore, delegateResourceContract);
+      long maxDelegateLockPeriod = dynamicStore.getMaxDelegateLockPeriod();
+      if (lockPeriod < 0 || lockPeriod > maxDelegateLockPeriod) {
+        throw new ContractValidateException(
+            "The lock period of delegate resource cannot be less than 0 and cannot exceed "
+                + maxDelegateLockPeriod + "!");
+      }
+
+      byte[] key = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress, true);
+      DelegatedResourceCapsule delegatedResourceCapsule = delegatedResourceStore.get(key);
+      long now = dynamicStore.getLatestBlockHeaderTimestamp();
+      if (delegatedResourceCapsule != null) {
+        switch (delegateResourceContract.getResource()) {
+          case BANDWIDTH: {
+            validRemainTime(BANDWIDTH, lockPeriod,
+                delegatedResourceCapsule.getExpireTimeForBandwidth(), now);
+          }
+          break;
+          case ENERGY: {
+            validRemainTime(ENERGY, lockPeriod,
+                delegatedResourceCapsule.getExpireTimeForEnergy(), now);
+          }
+          break;
+          default:
+            throw new ContractValidateException(
+                "ResourceCode error, valid ResourceCode[BANDWIDTH、ENERGY]");
+        }
+      }
+    }
+
     if (receiverCapsule.getType() == AccountType.Contract) {
       throw new ContractValidateException(
           "Do not allow delegate resources to contract addresses");
     }
 
     return true;
+  }
+
+  private long getLockPeriod(DynamicPropertiesStore dynamicStore,
+      DelegateResourceContract delegateResourceContract) {
+    long lockPeriod = delegateResourceContract.getLockPeriod();
+    if (dynamicStore.supportMaxDelegateLockPeriod()) {
+      return lockPeriod == 0 ? DELEGATE_PERIOD / 3000 : lockPeriod;
+    } else {
+      return 0;
+    }
+  }
+
+  private void validRemainTime(ResourceCode resourceCode, long lockPeriod, long expireTime,
+      long now) throws ContractValidateException {
+    long remainTime = expireTime - now;
+    if (lockPeriod * 3 * 1000 < remainTime) {
+      throw new ContractValidateException(
+          "The lock period for " + resourceCode.name() + " this time cannot be less than the "
+              + "remaining time[" + remainTime + "ms] of the last lock period for "
+              + resourceCode.name() + "!");
+    }
   }
 
   @Override
@@ -221,7 +281,7 @@ public class DelegateResourceActuator extends AbstractActuator {
   }
 
   private void delegateResource(byte[] ownerAddress, byte[] receiverAddress, boolean isBandwidth,
-                                long balance, boolean lock) {
+                                long balance, boolean lock, long lockPeriod) {
     AccountStore accountStore = chainBaseManager.getAccountStore();
     DynamicPropertiesStore dynamicPropertiesStore = chainBaseManager.getDynamicPropertiesStore();
     DelegatedResourceStore delegatedResourceStore = chainBaseManager.getDelegatedResourceStore();
@@ -233,12 +293,15 @@ public class DelegateResourceActuator extends AbstractActuator {
     delegatedResourceStore.unLockExpireResource(ownerAddress, receiverAddress, now);
 
     //modify DelegatedResourceStore
-    byte[] key;
     long expireTime = 0;
     if (lock) {
-      expireTime = now + DELEGATE_PERIOD;
+      if (dynamicPropertiesStore.supportMaxDelegateLockPeriod()) {
+        expireTime = now + lockPeriod * 3 * 1000;
+      } else {
+        expireTime = now + DELEGATE_PERIOD;
+      }
     }
-    key = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress, lock);
+    byte[] key = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress, lock);
     DelegatedResourceCapsule delegatedResourceCapsule = delegatedResourceStore.get(key);
     if (delegatedResourceCapsule == null) {
       delegatedResourceCapsule = new DelegatedResourceCapsule(ByteString.copyFrom(ownerAddress),

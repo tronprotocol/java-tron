@@ -21,6 +21,7 @@ import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.StoreFactory;
+import org.tron.core.vm.EnergyCost;
 import org.tron.core.vm.JumpTable;
 import org.tron.core.vm.Op;
 import org.tron.core.vm.Operation;
@@ -37,7 +38,7 @@ public class OperationsTest extends BaseTest {
 
   private ProgramInvokeMockImpl invoke;
   private Program program;
-  private final JumpTable jumpTable = OperationRegistry.newTronV10OperationSet();
+  private final JumpTable jumpTable = OperationRegistry.getTable();
 
   @BeforeClass
   public static void init() {
@@ -846,6 +847,25 @@ public class OperationsTest extends BaseTest {
     Assert.assertEquals("6000600000000000000000000000000000000000000000000000000000000000",
         Hex.toHexString(program.getMemory()).toUpperCase());
 
+  }
+
+  @Test
+  public void testPush0() throws ContractValidateException {
+    VMConfig.initAllowTvmShangHai(1);
+
+    invoke = new ProgramInvokeMockImpl();
+    Protocol.Transaction trx = Protocol.Transaction.getDefaultInstance();
+    InternalTransaction interTrx =
+        new InternalTransaction(trx, InternalTransaction.TrxType.TRX_UNKNOWN_TYPE);
+
+    byte[] op = new byte[1];
+    op[0] = Op.PUSH0;
+    program = new Program(op, op, invoke, interTrx);
+    testOperations(program);
+    Assert.assertEquals(EnergyCost.getBaseTierCost(null), program.getResult().getEnergyUsed());
+    Assert.assertEquals(DataWord.ZERO(), program.getStack().pop());
+
+    VMConfig.initAllowTvmShangHai(0);
   }
 
   private void testOperations(Program program) {
