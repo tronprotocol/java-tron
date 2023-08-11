@@ -44,6 +44,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.SignatureFormatException;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Permission.PermissionType;
 import org.tron.protos.Protocol.Transaction;
@@ -222,7 +223,7 @@ public class TransactionUtil {
         }
         tswBuilder.setPermission(permission);
         if (trx.getSignatureCount() > 0) {
-          List<ByteString> approveList = new ArrayList<ByteString>();
+          List<ByteString> approveList = new ArrayList<>();
           long currentWeight = TransactionCapsule.checkWeight(permission, trx.getSignatureList(),
               Sha256Hash.hash(CommonParameter.getInstance()
                   .isECKeyCryptoEngine(), trx.getRawData().toByteArray()), approveList);
@@ -253,12 +254,19 @@ public class TransactionUtil {
     return tswBuilder.build();
   }
 
-  public static long estimateConsumeBandWidthSize(long balance) {
-    DelegateResourceContract.Builder builder = DelegateResourceContract.newBuilder()
-        .setLock(true)
-        .setBalance(balance);
+  public static long estimateConsumeBandWidthSize(DynamicPropertiesStore dps, long balance) {
+    DelegateResourceContract.Builder builder;
+    if (dps.supportMaxDelegateLockPeriod()) {
+      builder = DelegateResourceContract.newBuilder()
+              .setLock(true)
+              .setLockPeriod(dps.getMaxDelegateLockPeriod())
+              .setBalance(balance);
+    } else {
+      builder = DelegateResourceContract.newBuilder()
+              .setLock(true)
+              .setBalance(balance);
+    }
     long builderSize = builder.build().getSerializedSize();
-
     DelegateResourceContract.Builder builder2 = DelegateResourceContract.newBuilder()
         .setBalance(TRX_PRECISION);
     long builder2Size = builder2.build().getSerializedSize();
@@ -266,58 +274,4 @@ public class TransactionUtil {
 
     return DELEGATE_COST_BASE_SIZE + addSize;
   }
-
-  // only for testing
-  public static long consumeBandWidthSize(
-      final TransactionCapsule transactionCapsule,
-      ChainBaseManager chainBaseManager) {
-    long bytesSize;
-
-    boolean supportVM = chainBaseManager.getDynamicPropertiesStore().supportVM();
-    if (supportVM) {
-      bytesSize = transactionCapsule.getInstance().toBuilder().clearRet().build().getSerializedSize();
-    } else {
-      bytesSize = transactionCapsule.getSerializedSize();
-    }
-
-    List<Transaction.Contract> contracts = transactionCapsule.getInstance().getRawData().getContractList();
-    for (Transaction.Contract contract : contracts) {
-      if (contract.getType() == Contract.ContractType.ShieldedTransferContract) {
-        continue;
-      }
-      if (supportVM) {
-        bytesSize += Constant.MAX_RESULT_SIZE_IN_TX;
-      }
-    }
-
-    return bytesSize;
-  }
-
-  public static long estimateConsumeBandWidthSize(final AccountCapsule ownerCapsule,
-      ChainBaseManager chainBaseManager) {
-    DelegateResourceContract.Builder builder;
-    if (chainBaseManager.getDynamicPropertiesStore().supportMaxDelegateLockPeriod()) {
-      builder = DelegateResourceContract.newBuilder()
-          .setLock(true)
-          .setLockPeriod(chainBaseManager.getDynamicPropertiesStore().getMaxDelegateLockPeriod())
-          .setBalance(ownerCapsule.getFrozenV2BalanceForBandwidth());
-    } else {
-      builder = DelegateResourceContract.newBuilder()
-          .setLock(true)
-          .setBalance(ownerCapsule.getFrozenV2BalanceForBandwidth());
-    }
-    TransactionCapsule fakeTransactionCapsule = new TransactionCapsule(builder.build()
-            , ContractType.DelegateResourceContract);
-    long size1 = consumeBandWidthSize(fakeTransactionCapsule, chainBaseManager);
-
-    DelegateResourceContract.Builder builder2 = DelegateResourceContract.newBuilder()
-                    .setBalance(TRX_PRECISION);
-    TransactionCapsule fakeTransactionCapsule2 = new TransactionCapsule(builder2.build()
-            , ContractType.DelegateResourceContract);
-    long size2 = consumeBandWidthSize(fakeTransactionCapsule2, chainBaseManager);
-    long addSize = Math.max(size1 - size2, 0L);
-
-    return DELEGATE_COST_BASE_SIZE + addSize;
-  }
-
 }

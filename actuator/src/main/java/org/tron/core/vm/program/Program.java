@@ -9,6 +9,10 @@ import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
 import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
 import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
+import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
+import static org.tron.protos.contract.Common.ResourceCode.TRON_POWER;
+import static org.tron.protos.contract.Common.ResourceCode.UNRECOGNIZED;
 
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
@@ -557,7 +561,7 @@ public class Program {
     ownerCapsule.setLatestConsumeTime(now);
     if (ownerCapsule.getNetUsage() > 0) {
       bandwidthProcessor.unDelegateIncrease(inheritorCapsule, ownerCapsule,
-          ownerCapsule.getNetUsage(), Common.ResourceCode.BANDWIDTH, now);
+          ownerCapsule.getNetUsage(), BANDWIDTH, now);
     }
 
     EnergyProcessor energyProcessor =
@@ -567,7 +571,7 @@ public class Program {
     ownerCapsule.setLatestConsumeTimeForEnergy(now);
     if (ownerCapsule.getEnergyUsage() > 0) {
       energyProcessor.unDelegateIncrease(inheritorCapsule, ownerCapsule,
-          ownerCapsule.getEnergyUsage(), Common.ResourceCode.ENERGY, now);
+          ownerCapsule.getEnergyUsage(), ENERGY, now);
     }
 
     // withdraw expire unfrozen balance
@@ -594,9 +598,9 @@ public class Program {
   private void clearOwnerFreezeV2(AccountCapsule ownerCapsule) {
     ownerCapsule.clearFrozenV2();
     ownerCapsule.setNetUsage(0);
-    ownerCapsule.setNewWindowSize(Common.ResourceCode.BANDWIDTH, 0);
+    ownerCapsule.setNewWindowSize(BANDWIDTH, 0);
     ownerCapsule.setEnergyUsage(0);
-    ownerCapsule.setNewWindowSize(Common.ResourceCode.ENERGY, 0);
+    ownerCapsule.setNewWindowSize(ENERGY, 0);
     ownerCapsule.clearUnfrozenV2();
   }
 
@@ -2077,11 +2081,11 @@ public class Program {
   private Common.ResourceCode parseResourceCode(DataWord resourceType) {
     switch (resourceType.intValue()) {
       case 0:
-        return Common.ResourceCode.BANDWIDTH;
+        return BANDWIDTH;
       case 1:
-        return Common.ResourceCode.ENERGY;
+        return ENERGY;
       default:
-        return Common.ResourceCode.UNRECOGNIZED;
+        return UNRECOGNIZED;
     }
   }
 
@@ -2090,13 +2094,13 @@ public class Program {
       byte type = resourceType.sValue().byteValueExact();
       switch (type) {
         case 0:
-          return Common.ResourceCode.BANDWIDTH;
+          return BANDWIDTH;
         case 1:
-          return Common.ResourceCode.ENERGY;
+          return ENERGY;
         case 2:
-          return Common.ResourceCode.TRON_POWER;
+          return TRON_POWER;
         default:
-          return Common.ResourceCode.UNRECOGNIZED;
+          return UNRECOGNIZED;
       }
     } catch (ArithmeticException e) {
       logger.warn("TVM ParseResourceCodeV2: invalid resource code: {}", resourceType.sValue());

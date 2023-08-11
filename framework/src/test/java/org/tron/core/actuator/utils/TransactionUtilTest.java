@@ -4,35 +4,37 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.tron.core.capsule.utils.TransactionUtil.isNumber;
+import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_COST_BASE_SIZE;
 import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_PERIOD;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.core.utils.TransactionUtil.validAccountId;
 import static org.tron.core.utils.TransactionUtil.validAccountName;
 import static org.tron.core.utils.TransactionUtil.validAssetName;
 import static org.tron.core.utils.TransactionUtil.validTokenAbbrName;
-import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_COST_BASE_SIZE;
-import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.protobuf.ByteString;
 import java.nio.charset.StandardCharsets;
-
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.TransactionUtil;
-import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.contract.BalanceContract.DelegateResourceContract;
 import org.tron.protos.Protocol;
-import org.tron.protos.contract.BalanceContract;
-
+import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 @Slf4j(topic = "capsule")
 public class TransactionUtilTest extends BaseTest {
@@ -47,7 +49,6 @@ public class TransactionUtilTest extends BaseTest {
     dbPath = "output_transactionUtil_test";
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
-
   }
 
   @Before
@@ -63,6 +64,80 @@ public class TransactionUtilTest extends BaseTest {
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
   }
 
+  // only for testing
+  public static long consumeBandWidthSize(
+      final TransactionCapsule transactionCapsule,
+      ChainBaseManager chainBaseManager) {
+    long bytesSize;
+
+    boolean supportVM = chainBaseManager.getDynamicPropertiesStore().supportVM();
+    if (supportVM) {
+      bytesSize = transactionCapsule.getInstance().toBuilder().clearRet().build().getSerializedSize();
+    } else {
+      bytesSize = transactionCapsule.getSerializedSize();
+    }
+
+    List<Transaction.Contract> contracts = transactionCapsule.getInstance().getRawData().getContractList();
+    for (Transaction.Contract contract : contracts) {
+      if (contract.getType() == Transaction.Contract.ContractType.ShieldedTransferContract) {
+        continue;
+      }
+      if (supportVM) {
+        bytesSize += Constant.MAX_RESULT_SIZE_IN_TX;
+      }
+    }
+
+    return bytesSize;
+  }
+
+  // only for testing
+  public static long estimateConsumeBandWidthSize(final AccountCapsule ownerCapsule,
+                                                  ChainBaseManager chainBaseManager) {
+    DelegateResourceContract.Builder builder;
+    if (chainBaseManager.getDynamicPropertiesStore().supportMaxDelegateLockPeriod()) {
+      builder = DelegateResourceContract.newBuilder()
+          .setLock(true)
+          .setLockPeriod(chainBaseManager.getDynamicPropertiesStore().getMaxDelegateLockPeriod())
+          .setBalance(ownerCapsule.getFrozenV2BalanceForBandwidth());
+    } else {
+      builder = DelegateResourceContract.newBuilder()
+          .setLock(true)
+          .setBalance(ownerCapsule.getFrozenV2BalanceForBandwidth());
+    }
+    TransactionCapsule fakeTransactionCapsule = new TransactionCapsule(builder.build()
+        , ContractType.DelegateResourceContract);
+    long size1 = consumeBandWidthSize(fakeTransactionCapsule, chainBaseManager);
+
+    DelegateResourceContract.Builder builder2 = DelegateResourceContract.newBuilder()
+        .setBalance(TRX_PRECISION);
+    TransactionCapsule fakeTransactionCapsule2 = new TransactionCapsule(builder2.build()
+        , ContractType.DelegateResourceContract);
+    long size2 = consumeBandWidthSize(fakeTransactionCapsule2, chainBaseManager);
+    long addSize = Math.max(size1 - size2, 0L);
+
+    return DELEGATE_COST_BASE_SIZE + addSize;
+  }
+
+  // only for testing
+  public static long estimateConsumeBandWidthSizeOld(
+      final AccountCapsule ownerCapsule,
+      ChainBaseManager chainBaseManager) {
+    DelegateResourceContract.Builder builder = DelegateResourceContract.newBuilder()
+        .setLock(true)
+        .setBalance(ownerCapsule.getFrozenV2BalanceForBandwidth());
+    TransactionCapsule fakeTransactionCapsule = new TransactionCapsule(builder.build()
+        , ContractType.DelegateResourceContract);
+    long size1 = consumeBandWidthSize(fakeTransactionCapsule, chainBaseManager);
+
+    DelegateResourceContract.Builder builder2 = DelegateResourceContract.newBuilder()
+        .setBalance(TRX_PRECISION);
+    TransactionCapsule fakeTransactionCapsule2 = new TransactionCapsule(builder2.build()
+        , ContractType.DelegateResourceContract);
+    long size2 = consumeBandWidthSize(fakeTransactionCapsule2, chainBaseManager);
+    long addSize = Math.max(size1 - size2, 0L);
+
+    return DELEGATE_COST_BASE_SIZE + addSize;
+  }
 
   @Test
   public void validAccountNameCheck() {
@@ -74,7 +149,6 @@ public class TransactionUtilTest extends BaseTest {
     assertTrue(validAccountName(account.toString().getBytes(StandardCharsets.UTF_8)));
     account.append('z');
     assertFalse(validAccountName(account.toString().getBytes(StandardCharsets.UTF_8)));
-
   }
 
   @Test
@@ -156,7 +230,7 @@ public class TransactionUtilTest extends BaseTest {
   public void testEstimateConsumeBandWidthSize() {
     AccountCapsule ownerCapsule =
         dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-    long estimateConsumeBandWidthSize = TransactionUtil.estimateConsumeBandWidthSize(ownerCapsule,
+    long estimateConsumeBandWidthSize = estimateConsumeBandWidthSize(ownerCapsule,
         dbManager.getChainBaseManager());
     assertEquals(275L, estimateConsumeBandWidthSize);
     chainBaseManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(DELEGATE_PERIOD / 3000);
@@ -168,18 +242,17 @@ public class TransactionUtilTest extends BaseTest {
     chainBaseManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(864000L);
     AccountCapsule ownerCapsule =
         dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-    long estimateConsumeBandWidthSize = TransactionUtil.estimateConsumeBandWidthSize(ownerCapsule,
+    long estimateConsumeBandWidthSize = estimateConsumeBandWidthSize(ownerCapsule,
         dbManager.getChainBaseManager());
     assertEquals(277L, estimateConsumeBandWidthSize);
     chainBaseManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(DELEGATE_PERIOD / 3000);
   }
 
 
-
   @Test
   public void testEstimateConsumeBandWidthSizeOld() {
     dbManager.getDynamicPropertiesStore().saveAllowCreationOfContracts(1L);
-    ChainBaseManager chainBaseManager =  dbManager.getChainBaseManager();
+    ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
     long balance = 1000_000L;
 
     AccountCapsule ownerCapsule = new AccountCapsule(ByteString.copyFromUtf8("owner"),
@@ -188,7 +261,7 @@ public class TransactionUtilTest extends BaseTest {
     ownerCapsule.addFrozenBalanceForBandwidthV2(balance);
     dbManager.getAccountStore().put(ownerCapsule.createDbKey(), ownerCapsule);
     ownerCapsule = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-    long estimateConsumeBandWidthSize1 =  TransactionUtil.estimateConsumeBandWidthSizeOld(
+    long estimateConsumeBandWidthSize1 = estimateConsumeBandWidthSizeOld(
         ownerCapsule, chainBaseManager);
     Assert.assertEquals(277, estimateConsumeBandWidthSize1);
 
@@ -198,7 +271,7 @@ public class TransactionUtilTest extends BaseTest {
         balance);
     ownerCapsule.addFrozenBalanceForBandwidthV2(balance);
     dbManager.getAccountStore().put(ownerCapsule.createDbKey(), ownerCapsule);
-    long estimateConsumeBandWidthSize2 =  TransactionUtil.estimateConsumeBandWidthSizeOld(
+    long estimateConsumeBandWidthSize2 = estimateConsumeBandWidthSizeOld(
         ownerCapsule, chainBaseManager);
     Assert.assertEquals(279, estimateConsumeBandWidthSize2);
 
@@ -208,7 +281,7 @@ public class TransactionUtilTest extends BaseTest {
         balance);
     ownerCapsule.addFrozenBalanceForBandwidthV2(balance);
     dbManager.getAccountStore().put(ownerCapsule.createDbKey(), ownerCapsule);
-    long estimateConsumeBandWidthSize3 =  TransactionUtil.estimateConsumeBandWidthSizeOld(
+    long estimateConsumeBandWidthSize3 = estimateConsumeBandWidthSizeOld(
         ownerCapsule, chainBaseManager);
     Assert.assertEquals(280, estimateConsumeBandWidthSize3);
 
@@ -218,7 +291,7 @@ public class TransactionUtilTest extends BaseTest {
         balance);
     ownerCapsule.addFrozenBalanceForBandwidthV2(balance);
     dbManager.getAccountStore().put(ownerCapsule.createDbKey(), ownerCapsule);
-    long estimateConsumeBandWidthSize4 =  TransactionUtil.estimateConsumeBandWidthSizeOld(
+    long estimateConsumeBandWidthSize4 = estimateConsumeBandWidthSizeOld(
         ownerCapsule, chainBaseManager);
     Assert.assertEquals(282, estimateConsumeBandWidthSize4);
   }
@@ -227,29 +300,29 @@ public class TransactionUtilTest extends BaseTest {
   @Test
   public void testEstimateConsumeBandWidthSizeNew() {
     long balance = 1000_000L;
-
-    long estimateConsumeBandWidthSize1 =  TransactionUtil.estimateConsumeBandWidthSize(balance);
+    DynamicPropertiesStore dps = chainBaseManager.getDynamicPropertiesStore();
+    long estimateConsumeBandWidthSize1 = TransactionUtil.estimateConsumeBandWidthSize(dps, balance);
     Assert.assertEquals(277, estimateConsumeBandWidthSize1);
 
     balance = 1000_000_000L;
-    long estimateConsumeBandWidthSize2 =  TransactionUtil.estimateConsumeBandWidthSize(balance);
+    long estimateConsumeBandWidthSize2 = TransactionUtil.estimateConsumeBandWidthSize(dps, balance);
     Assert.assertEquals(279, estimateConsumeBandWidthSize2);
 
     balance = 1000_000_000_000L;
-    long estimateConsumeBandWidthSize3 =  TransactionUtil.estimateConsumeBandWidthSize(balance);
+    long estimateConsumeBandWidthSize3 = TransactionUtil.estimateConsumeBandWidthSize(dps, balance);
     Assert.assertEquals(280, estimateConsumeBandWidthSize3);
 
     balance = 1000_000_000_000_000L;
-    long estimateConsumeBandWidthSize4 =  TransactionUtil.estimateConsumeBandWidthSize(balance);
+    long estimateConsumeBandWidthSize4 = TransactionUtil.estimateConsumeBandWidthSize(dps, balance);
     Assert.assertEquals(282, estimateConsumeBandWidthSize4);
   }
-
 
 
   @Test
   public void testEstimateConsumeBandWidthSize3() {
     dbManager.getDynamicPropertiesStore().saveAllowCreationOfContracts(1L);
-    ChainBaseManager chainBaseManager =  dbManager.getChainBaseManager();
+    ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
+    DynamicPropertiesStore dps = chainBaseManager.getDynamicPropertiesStore();
     long balance = 1000_000L;
 
     AccountCapsule ownerCapsule;
@@ -263,11 +336,11 @@ public class TransactionUtilTest extends BaseTest {
           balance);
       ownerCapsule.addFrozenBalanceForBandwidthV2(balance);
       dbManager.getAccountStore().put(ownerCapsule.createDbKey(), ownerCapsule);
-      estimateConsumeBandWidthSizeOld =  TransactionUtil.estimateConsumeBandWidthSizeOld(
+      estimateConsumeBandWidthSizeOld = estimateConsumeBandWidthSizeOld(
           ownerCapsule, chainBaseManager);
 
       // new value is
-      estimateConsumeBandWidthSizeNew =  TransactionUtil.estimateConsumeBandWidthSize(balance);
+      estimateConsumeBandWidthSizeNew = TransactionUtil.estimateConsumeBandWidthSize(dps, balance);
 
       System.out.println("balance:"
           + balance
@@ -289,70 +362,73 @@ public class TransactionUtilTest extends BaseTest {
 
   @Test
   public void estimateConsumeBandWidthSizePositive() {
+    DynamicPropertiesStore dps = chainBaseManager.getDynamicPropertiesStore();
     long balance = 100;
-    BalanceContract.DelegateResourceContract.Builder builder =
-        BalanceContract.DelegateResourceContract.newBuilder()
-        .setLock(true)
-        .setBalance(balance);
-    BalanceContract.DelegateResourceContract.Builder builder2 =
-        BalanceContract.DelegateResourceContract.newBuilder()
-        .setBalance(TRX_PRECISION);
+    DelegateResourceContract.Builder builder =
+        DelegateResourceContract.newBuilder()
+            .setLock(true)
+            .setBalance(balance);
+    DelegateResourceContract.Builder builder2 =
+        DelegateResourceContract.newBuilder()
+            .setBalance(TRX_PRECISION);
 
     long expected = DELEGATE_COST_BASE_SIZE + Math.max(
         builder.build().getSerializedSize() - builder2.build().getSerializedSize(), 0L);
-    long actual = TransactionUtil.estimateConsumeBandWidthSize(balance);
+    long actual = TransactionUtil.estimateConsumeBandWidthSize(dps, balance);
     Assert.assertEquals(expected, actual);
   }
 
   @Test
   public void estimateConsumeBandWidthSizeBoundary() {
+    DynamicPropertiesStore dps = chainBaseManager.getDynamicPropertiesStore();
     long balance = TRX_PRECISION;
-    BalanceContract.DelegateResourceContract.Builder builder =
-        BalanceContract.DelegateResourceContract.newBuilder()
-        .setLock(true)
-        .setBalance(balance);
-    BalanceContract.DelegateResourceContract.Builder builder2 =
-        BalanceContract.DelegateResourceContract.newBuilder()
-        .setBalance(TRX_PRECISION);
+    DelegateResourceContract.Builder builder =
+        DelegateResourceContract.newBuilder()
+            .setLock(true)
+            .setBalance(balance);
+    DelegateResourceContract.Builder builder2 =
+        DelegateResourceContract.newBuilder()
+            .setBalance(TRX_PRECISION);
 
     long expected = DELEGATE_COST_BASE_SIZE + Math.max(
         builder.build().getSerializedSize() - builder2.build().getSerializedSize(), 0L);
-    long actual = TransactionUtil.estimateConsumeBandWidthSize(balance);
+    long actual = TransactionUtil.estimateConsumeBandWidthSize(dps, balance);
     Assert.assertEquals(expected, actual);
   }
 
   @Test
   public void estimateConsumeBandWidthSizeEdge() {
+    DynamicPropertiesStore dps = chainBaseManager.getDynamicPropertiesStore();
     long balance = TRX_PRECISION + 1;
-    BalanceContract.DelegateResourceContract.Builder builder =
-        BalanceContract.DelegateResourceContract.newBuilder()
-        .setLock(true)
-        .setBalance(balance);
-    BalanceContract.DelegateResourceContract.Builder builder2 =
-        BalanceContract.DelegateResourceContract.newBuilder()
-        .setBalance(TRX_PRECISION);
+    DelegateResourceContract.Builder builder =
+        DelegateResourceContract.newBuilder()
+            .setLock(true)
+            .setBalance(balance);
+    DelegateResourceContract.Builder builder2 =
+        DelegateResourceContract.newBuilder()
+            .setBalance(TRX_PRECISION);
 
     long expected = DELEGATE_COST_BASE_SIZE + Math.max(
         builder.build().getSerializedSize() - builder2.build().getSerializedSize(), 0L);
-    long actual = TransactionUtil.estimateConsumeBandWidthSize(balance);
+    long actual = TransactionUtil.estimateConsumeBandWidthSize(dps, balance);
     Assert.assertEquals(expected, actual);
   }
 
   @Test
   public void estimateConsumeBandWidthSizeCorner() {
+    DynamicPropertiesStore dps = chainBaseManager.getDynamicPropertiesStore();
     long balance = Long.MAX_VALUE;
-    BalanceContract.DelegateResourceContract.Builder builder =
-        BalanceContract.DelegateResourceContract.newBuilder()
-        .setLock(true)
-        .setBalance(balance);
-    BalanceContract.DelegateResourceContract.Builder builder2 =
-        BalanceContract.DelegateResourceContract.newBuilder()
-        .setBalance(TRX_PRECISION);
+    DelegateResourceContract.Builder builder =
+        DelegateResourceContract.newBuilder()
+            .setLock(true)
+            .setBalance(balance);
+    DelegateResourceContract.Builder builder2 =
+        DelegateResourceContract.newBuilder()
+            .setBalance(TRX_PRECISION);
 
     long expected = DELEGATE_COST_BASE_SIZE + Math.max(
         builder.build().getSerializedSize() - builder2.build().getSerializedSize(), 0L);
-    long actual = TransactionUtil.estimateConsumeBandWidthSize(balance);
+    long actual = TransactionUtil.estimateConsumeBandWidthSize(dps, balance);
     Assert.assertEquals(expected, actual);
   }
-
 }

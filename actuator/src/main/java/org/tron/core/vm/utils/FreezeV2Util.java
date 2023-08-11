@@ -12,7 +12,6 @@ import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
 
-
 public class FreezeV2Util {
 
   private FreezeV2Util() {

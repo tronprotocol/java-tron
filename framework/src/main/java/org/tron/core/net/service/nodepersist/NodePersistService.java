@@ -60,9 +60,6 @@ public class NodePersistService {
         return nodes;
       }
       DBNodes dbNodes = JsonUtil.json2Obj(new String(nodeBytes), DBNodes.class);
-      if (Objects.isNull(dbNodes)) {
-        return nodes;
-      }
       logger.info("Read node from store: {} nodes", dbNodes.getNodes().size());
       dbNodes.getNodes().forEach(n -> nodes.add(new InetSocketAddress(n.getHost(), n.getPort())));
     } catch (Exception e) {

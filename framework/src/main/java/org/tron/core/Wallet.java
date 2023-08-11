@@ -21,6 +21,7 @@ package org.tron.core;
 import static org.tron.common.utils.Commons.getAssetIssueStoreFinal;
 import static org.tron.common.utils.Commons.getExchangeStoreFinal;
 import static org.tron.common.utils.WalletUtil.isConstant;
+import static org.tron.core.capsule.utils.TransactionUtil.buildInternalTransaction;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
@@ -154,7 +155,6 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.MarketUtils;
-import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.BlockIndexStore;
@@ -193,6 +193,7 @@ import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.StoreFactory;
+import org.tron.core.utils.TransactionUtil;
 import org.tron.core.vm.program.Program;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder.ShieldedTRC20ParametersType;
@@ -870,7 +871,7 @@ public class Wallet {
     processor.updateUsage(ownerCapsule);
 
     long accountNetUsage = ownerCapsule.getNetUsage();
-    accountNetUsage += org.tron.core.utils.TransactionUtil.estimateConsumeBandWidthSize(
+    accountNetUsage += TransactionUtil.estimateConsumeBandWidthSize(dynamicStore,
             ownerCapsule.getBalance());
 
     long netUsage = (long) (accountNetUsage * TRX_PRECISION * ((double)
@@ -3048,7 +3049,7 @@ public class Wallet {
     result.getLogInfoList().forEach(logInfo ->
         builder.addLogs(LogInfo.buildLog(logInfo)));
     result.getInternalTransactions().forEach(it ->
-        builder.addInternalTransactions(TransactionUtil.buildInternalTransaction(it)));
+        builder.addInternalTransactions(buildInternalTransaction(it)));
     ret.setStatus(0, code.SUCESS);
     if (StringUtils.isNoneEmpty(result.getRuntimeError())) {
       ret.setStatus(0, code.FAILED);
