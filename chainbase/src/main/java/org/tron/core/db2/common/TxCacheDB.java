@@ -31,6 +31,7 @@ import org.tron.common.prometheus.Metrics;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.JsonUtil;
 import org.tron.common.utils.StorageUtils;
 import org.tron.core.capsule.BytesCapsule;
@@ -72,6 +73,11 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   // replace persistentStore and optimizes startup performance
   private RecentTransactionStore recentTransactionStore;
 
+  private final Path cacheFile0;
+  private final Path cacheFile1;
+  private final Path cacheProperties;
+  private final Path cacheDir;
+
   public TxCacheDB(String name, RecentTransactionStore recentTransactionStore) {
     this.name = name;
     this.TRANSACTION_COUNT =
@@ -100,6 +106,10 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
         MAX_BLOCK_SIZE * TRANSACTION_COUNT);
     this.bloomFilters[1] = BloomFilter.create(Funnels.byteArrayFunnel(),
         MAX_BLOCK_SIZE * TRANSACTION_COUNT);
+    cacheDir = Paths.get(CommonParameter.getInstance().getOutputDirectory(), ".cache");
+    this.cacheFile0 = Paths.get(cacheDir.toString(), "bloomFilters_0");
+    this.cacheFile1 = Paths.get(cacheDir.toString(), "bloomFilters_1");
+    this.cacheProperties = Paths.get(cacheDir.toString(), "txCache.properties");
 
   }
 
@@ -243,20 +253,15 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   }
 
   private boolean recovery() {
+    FileUtil.createDirIfNotExists(this.cacheDir.toString());
     logger.info("recovery bloomFilters start.");
-    final Path file0 = Paths.get(CommonParameter.getInstance().getOutputDirectory(),
-        "bloomFilters_0");
-    final Path file1 = Paths.get(CommonParameter.getInstance().getOutputDirectory(),
-        "bloomFilters_1");
-    Path txCacheProperties = Paths.get(CommonParameter.getInstance().getOutputDirectory(),
-        "txCache.properties");
-    Map<String, String>  properties = readProperties(txCacheProperties);
+    Map<String, String>  properties = readProperties(this.cacheProperties);
 
     if (properties == null || properties.size() != 3) {
       logger.info("properties is corrupted.");
       try {
-        Files.deleteIfExists(file0);
-        Files.deleteIfExists(file1);
+        Files.deleteIfExists(this.cacheFile0);
+        Files.deleteIfExists(this.cacheFile1);
       } catch (IOException e) {
         logger.warn("recovery bloomFilters failed. {}", e.getMessage());
       }
@@ -267,8 +272,10 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
     filterStartBlock = Long.parseLong(properties.get("filterStartBlock"));
     currentBlockNum = Long.parseLong(properties.get("currentBlockNum"));
     currentFilterIndex = Integer.parseInt(properties.get("currentFilterIndex"));
-    CompletableFuture<Boolean> tk0 = CompletableFuture.supplyAsync(() -> recovery(0, file0));
-    CompletableFuture<Boolean> tk1 = CompletableFuture.supplyAsync(() -> recovery(1, file1));
+    CompletableFuture<Boolean> tk0 = CompletableFuture.supplyAsync(
+        () -> recovery(0, this.cacheFile0));
+    CompletableFuture<Boolean> tk1 = CompletableFuture.supplyAsync(
+        () -> recovery(1, this.cacheFile1));
 
     return CompletableFuture.allOf(tk0, tk1).thenApply(v -> {
       logger.info("filterStartBlock: {}, currentBlockNum: {}, currentFilterIndex: {}",
@@ -303,15 +310,12 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   }
 
   private void dump() {
+    FileUtil.createDirIfNotExists(this.cacheDir.toString());
     logger.info("dump bloomFilters start.");
-    Path file0 = Paths.get(CommonParameter.getInstance().getOutputDirectory(),
-        "bloomFilters_0");
-    Path file1 = Paths.get(CommonParameter.getInstance().getOutputDirectory(),
-        "bloomFilters_1");
-    Path txCacheProperties = Paths.get(CommonParameter.getInstance().getOutputDirectory(),
-        "txCache.properties");
-    CompletableFuture<Void> task0 = CompletableFuture.runAsync(() -> dump(0, file0));
-    CompletableFuture<Void> task1 = CompletableFuture.runAsync(() -> dump(1, file1));
+    CompletableFuture<Void> task0 = CompletableFuture.runAsync(
+        () -> dump(0, this.cacheFile0));
+    CompletableFuture<Void> task1 = CompletableFuture.runAsync(
+        () -> dump(1, this.cacheFile1));
     CompletableFuture.allOf(task0, task1).thenRun(() -> {
       logger.info("filterStartBlock: {}, currentBlockNum: {}, currentFilterIndex: {}",
           filterStartBlock, currentBlockNum, currentFilterIndex);
@@ -319,7 +323,7 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
       properties.put("filterStartBlock", String.valueOf(filterStartBlock));
       properties.put("currentBlockNum", String.valueOf(currentBlockNum));
       properties.put("currentFilterIndex", String.valueOf(currentFilterIndex));
-      writeProperties(txCacheProperties, properties);
+      writeProperties(this.cacheProperties, properties);
       logger.info("dump bloomFilters done.");
 
     }).exceptionally(e -> {
