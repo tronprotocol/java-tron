@@ -5,17 +5,16 @@ import com.google.common.hash.Funnels;
 import com.google.common.primitives.Longs;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.Reader;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -255,42 +254,16 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   private boolean recovery() {
     FileUtil.createDirIfNotExists(this.cacheDir.toString());
     logger.info("recovery bloomFilters start.");
-    Map<String, String>  properties = readProperties(this.cacheProperties);
-
-    if (properties == null || properties.size() != 3) {
-      logger.info("properties is corrupted.");
-      try {
-        Files.deleteIfExists(this.cacheFile0);
-        Files.deleteIfExists(this.cacheFile1);
-      } catch (IOException e) {
-        logger.warn("recovery bloomFilters failed. {}", e.getMessage());
-      }
-      logger.info("rollback to previous mode.");
-      return false;
-    }
-
-    filterStartBlock = Long.parseLong(properties.get("filterStartBlock"));
-    currentBlockNum = Long.parseLong(properties.get("currentBlockNum"));
-    currentFilterIndex = Integer.parseInt(properties.get("currentFilterIndex"));
-    CompletableFuture<Boolean> tk0 = CompletableFuture.supplyAsync(
-        () -> recovery(0, this.cacheFile0));
-    CompletableFuture<Boolean> tk1 = CompletableFuture.supplyAsync(
-        () -> recovery(1, this.cacheFile1));
+    CompletableFuture<Boolean> loadProperties = CompletableFuture.supplyAsync(this::loadProperties);
+    CompletableFuture<Boolean> tk0 = loadProperties.thenApplyAsync(
+        v -> recovery(0, this.cacheFile0));
+    CompletableFuture<Boolean> tk1 = loadProperties.thenApplyAsync(
+        v -> recovery(1, this.cacheFile1));
 
     return CompletableFuture.allOf(tk0, tk1).thenApply(v -> {
-      logger.info("filterStartBlock: {}, currentBlockNum: {}, currentFilterIndex: {}",
-          filterStartBlock, currentBlockNum, currentFilterIndex);
       logger.info("recovery bloomFilters success.");
       return true;
-    }).exceptionally(e -> {
-      bloomFilters[0] = BloomFilter.create(Funnels.byteArrayFunnel(),
-          MAX_BLOCK_SIZE * TRANSACTION_COUNT);
-      bloomFilters[1] = BloomFilter.create(Funnels.byteArrayFunnel(),
-          MAX_BLOCK_SIZE * TRANSACTION_COUNT);
-      logger.warn("recovery bloomFilters failed. {}", e.getMessage());
-      logger.info("rollback to previous mode.");
-      return false;
-    }).join();
+    }).exceptionally(this::handleException).join();
   }
 
   private boolean recovery(int index, Path file) {
@@ -303,10 +276,25 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
           index, bloomFilters[index].approximateElementCount(), bloomFilters[index].expectedFpp(),
           System.currentTimeMillis() - start);
       return true;
-    } catch (IOException e) {
-      logger.warn("recovery bloomFilter[{}] failed.", index, e);
+    } catch (Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private boolean handleException(Throwable e) {
+    bloomFilters[0] = BloomFilter.create(Funnels.byteArrayFunnel(),
+        MAX_BLOCK_SIZE * TRANSACTION_COUNT);
+    bloomFilters[1] = BloomFilter.create(Funnels.byteArrayFunnel(),
+        MAX_BLOCK_SIZE * TRANSACTION_COUNT);
+    try {
+      Files.deleteIfExists(this.cacheFile0);
+      Files.deleteIfExists(this.cacheFile1);
+    } catch (Exception ignored) {
+
+    }
+    logger.info("recovery bloomFilters failed. {}", e.getMessage());
+    logger.info("rollback to previous mode.");
+    return false;
   }
 
   private void dump() {
@@ -317,79 +305,57 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
     CompletableFuture<Void> task1 = CompletableFuture.runAsync(
         () -> dump(1, this.cacheFile1));
     CompletableFuture.allOf(task0, task1).thenRun(() -> {
-      logger.info("filterStartBlock: {}, currentBlockNum: {}, currentFilterIndex: {}",
-          filterStartBlock, currentBlockNum, currentFilterIndex);
-      Map<String, String> properties = new HashMap<>();
-      properties.put("filterStartBlock", String.valueOf(filterStartBlock));
-      properties.put("currentBlockNum", String.valueOf(currentBlockNum));
-      properties.put("currentFilterIndex", String.valueOf(currentFilterIndex));
-      writeProperties(this.cacheProperties, properties);
+      writeProperties();
       logger.info("dump bloomFilters done.");
 
     }).exceptionally(e -> {
-      logger.warn("dump bloomFilters to file failed. {}", e.getMessage());
+      logger.info("dump bloomFilters to file failed. {}", e.getMessage());
       return null;
     }).join();
   }
 
   private void dump(int index, Path file) {
-    try {
-      Files.deleteIfExists(file);
-    } catch (IOException e) {
-      logger.warn("dump bloomFilters[{}] failed.", index, e);
-      throw new RuntimeException(e);
-    }
-    try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(file,
-        StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE))) {
+    try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(file))) {
       logger.info("dump bloomFilters[{}] to file.", index);
       long start = System.currentTimeMillis();
       bloomFilters[index].writeTo(out);
       logger.info("dump bloomFilters[{}] to file done,filter: {}, filter-fpp: {}, cost {} ms.",
           index, bloomFilters[index].approximateElementCount(), bloomFilters[index].expectedFpp(),
           System.currentTimeMillis() - start);
-    } catch (IOException e) {
-      logger.warn("dump bloomFilters[{}] failed. {}", index, e.getMessage());
+    } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
 
-  private Map<String, String> readProperties(Path file) {
-    try (BufferedReader r = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
-      Properties prop = new Properties();
-      prop.load(r);
-      HashMap<String, String> map = new HashMap<>();
-      prop.forEach((k, v) -> {
-        String key = new String(k.toString().getBytes(StandardCharsets.ISO_8859_1),
-            StandardCharsets.UTF_8);
-        String value = new String(v.toString().getBytes(StandardCharsets.ISO_8859_1),
-            StandardCharsets.UTF_8);
-        map.put(key, value);
-      });
-      map.entrySet().removeIf(entry -> entry.getValue() == null || entry.getValue().isEmpty());
-      return map;
-    } catch (IOException e) {
-      logger.warn("readProperties. {}", e.getMessage());
-      return null;
-    } finally {
-      try {
-        Files.deleteIfExists(file);
-      } catch (IOException e) {
-        logger.warn("readProperties. {}", e.getMessage());
-      }
-    }
-  }
-
-  private boolean writeProperties(Path file, Map<String, String> kvMap) {
-    try (BufferedWriter w = Files.newBufferedWriter(file);
-         BufferedReader r = Files.newBufferedReader(file)) {
+  private boolean loadProperties() {
+    try (Reader r = new InputStreamReader(new BufferedInputStream(Files.newInputStream(
+        this.cacheProperties, StandardOpenOption.READ, StandardOpenOption.DELETE_ON_CLOSE)),
+        StandardCharsets.UTF_8)) {
       Properties properties = new Properties();
       properties.load(r);
-      kvMap.forEach(properties::setProperty);
-      properties.store(w, "Generated by the application.  PLEASE DO NOT EDIT! ");
-    } catch (IOException e) {
+      filterStartBlock = Long.parseLong(properties.getProperty("filterStartBlock"));
+      currentBlockNum = Long.parseLong(properties.getProperty("currentBlockNum"));
+      currentFilterIndex = Integer.parseInt(properties.getProperty("currentFilterIndex"));
+      logger.info("filterStartBlock: {}, currentBlockNum: {}, currentFilterIndex: {}, load done.",
+          filterStartBlock, currentBlockNum, currentFilterIndex);
+      return true;
+    } catch (Exception e) {
       throw new RuntimeException(e);
     }
-    return true;
+  }
+
+  private void writeProperties() {
+    try (Writer w = Files.newBufferedWriter(this.cacheProperties, StandardCharsets.UTF_8)) {
+      Properties properties = new Properties();
+      properties.setProperty("filterStartBlock", String.valueOf(filterStartBlock));
+      properties.setProperty("currentBlockNum", String.valueOf(currentBlockNum));
+      properties.setProperty("currentFilterIndex", String.valueOf(currentFilterIndex));
+      properties.store(w, "Generated by the application.  PLEASE DO NOT EDIT! ");
+      logger.info("filterStartBlock: {}, currentBlockNum: {}, currentFilterIndex: {}, write done.",
+          filterStartBlock, currentBlockNum, currentFilterIndex);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
