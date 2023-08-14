@@ -33,6 +33,7 @@ public class ExecutorServiceManager {
     if (pool == null) {
       return;
     }
+    logger.info("Pool {} shutdown...", name);
     pool.shutdown(); // Disable new tasks from being submitted
     try {
       // Wait a while for existing tasks to terminate
@@ -49,5 +50,6 @@ public class ExecutorServiceManager {
       // Preserve interrupt status
       Thread.currentThread().interrupt();
     }
+    logger.info("Pool {} shutdown done", name);
   }
 }

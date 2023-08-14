@@ -94,6 +94,7 @@ public class BackupServer {
   public void close() {
     logger.info("Closing backup server...");
     shutdown = true;
+    ExecutorServiceManager.shutdownAndAwaitTermination(executor, name);
     if (channel != null) {
       try {
         channel.close().await(10, TimeUnit.SECONDS);
@@ -101,7 +102,6 @@ public class BackupServer {
         logger.warn("Closing backup server failed.", e);
       }
     }
-    ExecutorServiceManager.shutdownAndAwaitTermination(executor, name);
     logger.info("Backup server closed.");
   }
 }

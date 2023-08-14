@@ -42,9 +42,7 @@ public class NodePersistService {
 
   public void close() {
     if (isNodePersist) {
-      logger.info("Node persist service shutdown...");
       ExecutorServiceManager.shutdownAndAwaitTermination(nodePersistExecutor, name);
-      logger.info("Node persist service shutdown complete");
     }
   }
 

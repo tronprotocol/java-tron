@@ -76,10 +76,8 @@ public class DposTask {
   }
 
   public void stop() {
-    logger.info("DPoS task shutdown...");
     isRunning = false;
     ExecutorServiceManager.shutdownAndAwaitTermination(produceExecutor, name);
-    logger.info("DPoS task shutdown complete");
   }
 
   private State produceBlock() {
