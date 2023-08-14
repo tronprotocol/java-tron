@@ -546,7 +546,7 @@ public class Manager {
 
     // start json rpc filter process
     if (CommonParameter.getInstance().isJsonRpcFilterEnabled()) {
-      filterEs = ExecutorServiceManager.newSingleThreadExecutor(filterEsName, true);
+      filterEs = ExecutorServiceManager.newSingleThreadExecutor(filterEsName);
       filterEs.submit(filterProcessLoop);
     }
 
