@@ -26,7 +26,14 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
+import org.tron.protos.contract.BalanceContract.CancelAllUnfreezeV2Contract;
+import org.tron.protos.contract.BalanceContract.DelegateResourceContract;
+import org.tron.protos.contract.BalanceContract.FreezeBalanceV2Contract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
+import org.tron.protos.contract.BalanceContract.UnDelegateResourceContract;
+import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
+import org.tron.protos.contract.BalanceContract.UnfreezeBalanceV2Contract;
+import org.tron.protos.contract.BalanceContract.WithdrawExpireUnfreezeContract;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
@@ -154,6 +161,100 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
               if (Objects.nonNull(createSmartContract.getOwnerAddress())) {
                 transactionLogTrigger.setFromAddress(
                     StringUtil.encode58Check(createSmartContract.getOwnerAddress().toByteArray()));
+              }
+              break;
+            case UnfreezeBalanceContract:
+              UnfreezeBalanceContract unfreezeBalanceContract = contractParameter
+                  .unpack(UnfreezeBalanceContract.class);
+
+              if (Objects.nonNull(unfreezeBalanceContract)) {
+                if (Objects.nonNull(unfreezeBalanceContract.getOwnerAddress())) {
+                  transactionLogTrigger.setFromAddress(StringUtil
+                      .encode58Check(unfreezeBalanceContract.getOwnerAddress().toByteArray()));
+                }
+                if (Objects.nonNull(unfreezeBalanceContract.getReceiverAddress())) {
+                  transactionLogTrigger.setToAddress(StringUtil
+                      .encode58Check(unfreezeBalanceContract.getReceiverAddress().toByteArray()));
+                }
+              }
+              break;
+            case FreezeBalanceV2Contract:
+              FreezeBalanceV2Contract freezeBalanceV2Contract = contractParameter
+                  .unpack(FreezeBalanceV2Contract.class);
+
+              if (Objects.nonNull(freezeBalanceV2Contract)) {
+                if (Objects.nonNull(freezeBalanceV2Contract.getOwnerAddress())) {
+                  transactionLogTrigger.setFromAddress(StringUtil
+                      .encode58Check(freezeBalanceV2Contract.getOwnerAddress().toByteArray()));
+                }
+                transactionLogTrigger.setAssetAmount(freezeBalanceV2Contract.getFrozenBalance());
+              }
+              break;
+            case UnfreezeBalanceV2Contract:
+              UnfreezeBalanceV2Contract unfreezeBalanceV2Contract = contractParameter
+                  .unpack(UnfreezeBalanceV2Contract.class);
+
+              if (Objects.nonNull(unfreezeBalanceV2Contract)) {
+                if (Objects.nonNull(unfreezeBalanceV2Contract.getOwnerAddress())) {
+                  transactionLogTrigger.setFromAddress(StringUtil
+                      .encode58Check(unfreezeBalanceV2Contract.getOwnerAddress().toByteArray()));
+                }
+                transactionLogTrigger.setAssetAmount(
+                    unfreezeBalanceV2Contract.getUnfreezeBalance());
+              }
+              break;
+            case WithdrawExpireUnfreezeContract:
+              WithdrawExpireUnfreezeContract withdrawExpireUnfreezeContract = contractParameter
+                  .unpack(WithdrawExpireUnfreezeContract.class);
+
+              if (Objects.nonNull(withdrawExpireUnfreezeContract)
+                  && Objects.nonNull(withdrawExpireUnfreezeContract.getOwnerAddress())) {
+                transactionLogTrigger.setFromAddress(StringUtil.encode58Check(
+                      withdrawExpireUnfreezeContract.getOwnerAddress().toByteArray()));
+              }
+              break;
+            case DelegateResourceContract:
+              DelegateResourceContract delegateResourceContract = contractParameter
+                  .unpack(DelegateResourceContract.class);
+
+              if (Objects.nonNull(delegateResourceContract)) {
+                if (Objects.nonNull(delegateResourceContract.getOwnerAddress())) {
+                  transactionLogTrigger.setFromAddress(StringUtil
+                      .encode58Check(delegateResourceContract.getOwnerAddress().toByteArray()));
+                }
+                if (Objects.nonNull(delegateResourceContract.getReceiverAddress())) {
+                  transactionLogTrigger.setToAddress(StringUtil
+                      .encode58Check(delegateResourceContract.getReceiverAddress().toByteArray()));
+                }
+                transactionLogTrigger.setAssetAmount(
+                    delegateResourceContract.getBalance());
+              }
+              break;
+            case UnDelegateResourceContract:
+              UnDelegateResourceContract unDelegateResourceContract = contractParameter
+                  .unpack(UnDelegateResourceContract.class);
+
+              if (Objects.nonNull(unDelegateResourceContract)) {
+                if (Objects.nonNull(unDelegateResourceContract.getOwnerAddress())) {
+                  transactionLogTrigger.setFromAddress(StringUtil
+                      .encode58Check(unDelegateResourceContract.getOwnerAddress().toByteArray()));
+                }
+                if (Objects.nonNull(unDelegateResourceContract.getReceiverAddress())) {
+                  transactionLogTrigger.setToAddress(StringUtil.encode58Check(
+                      unDelegateResourceContract.getReceiverAddress().toByteArray()));
+                }
+                transactionLogTrigger.setAssetAmount(
+                    unDelegateResourceContract.getBalance());
+              }
+              break;
+            case CancelAllUnfreezeV2Contract:
+              CancelAllUnfreezeV2Contract cancelAllUnfreezeV2Contract = contractParameter
+                  .unpack(CancelAllUnfreezeV2Contract.class);
+
+              if (Objects.nonNull(cancelAllUnfreezeV2Contract)
+                  && Objects.nonNull(cancelAllUnfreezeV2Contract.getOwnerAddress())) {
+                transactionLogTrigger.setFromAddress(StringUtil
+                      .encode58Check(cancelAllUnfreezeV2Contract.getOwnerAddress().toByteArray()));
               }
               break;
             default:
