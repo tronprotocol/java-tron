@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.bouncycastle.util.encoders.Hex;
@@ -76,6 +77,7 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   private final Path cacheFile1;
   private final Path cacheProperties;
   private final Path cacheDir;
+  private AtomicBoolean isValid = new AtomicBoolean(false);
 
   public TxCacheDB(String name, RecentTransactionStore recentTransactionStore) {
     this.name = name;
@@ -135,6 +137,7 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
 
   public void init() {
     if (recovery()) {
+      isValid.set(true);
       return;
     }
     long size = recentTransactionStore.size();
@@ -156,6 +159,7 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
     logger.info("Load cache from recentTransactionStore, filter: {}, filter-fpp: {}, cost: {} ms.",
         bloomFilters[1].approximateElementCount(), bloomFilters[1].expectedFpp(),
         System.currentTimeMillis() - start);
+    isValid.set(true);
   }
 
   @Override
@@ -235,8 +239,10 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   }
 
   @Override
-  public void flush(Map<WrappedByteArray, WrappedByteArray> batch) {
+  public synchronized void flush(Map<WrappedByteArray, WrappedByteArray> batch) {
+    isValid.set(false);
     batch.forEach((k, v) -> this.put(k.getBytes(), v.getBytes()));
+    isValid.set(true);
   }
 
   @Override
@@ -298,6 +304,9 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   }
 
   private void dump() {
+    if (!isValid.get()) {
+      logger.info("bloomFilters is not valid.");
+    }
     FileUtil.createDirIfNotExists(this.cacheDir.toString());
     logger.info("dump bloomFilters start.");
     CompletableFuture<Void> task0 = CompletableFuture.runAsync(

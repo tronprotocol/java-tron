@@ -45,6 +45,8 @@ public class TxCacheDBInitTest {
 
   @Test
   public void reload() {
+    TransactionCache db = context.getBean(TransactionCache.class);
+    db.initCache();
     putTransaction();
     DefaultListableBeanFactory defaultListableBeanFactory =
         (DefaultListableBeanFactory) context.getAutowireCapableBeanFactory();
