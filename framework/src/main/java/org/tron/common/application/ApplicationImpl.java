@@ -12,8 +12,6 @@ import org.tron.core.consensus.ConsensusService;
 import org.tron.core.db.Manager;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.net.TronNetService;
-import org.tron.program.FullNode;
-import org.tron.program.SolidityNode;
 
 @Slf4j(topic = "app")
 @Component
@@ -87,7 +85,6 @@ public class ApplicationImpl implements Application {
     dbManager.stopFilterProcessThread();
     dynamicArgs.close();
     logger.info("******** end to shutdown ********");
-    FullNode.shutDownSign = true;
   }
 
   @Override
