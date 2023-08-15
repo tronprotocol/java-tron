@@ -1,13 +1,14 @@
 package org.tron.consensus.pbft;
 
 import com.google.protobuf.ByteString;
+import java.io.Closeable;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.consensus.base.Param;
 import org.tron.consensus.base.Param.Miner;
 import org.tron.consensus.dpos.MaintenanceManager;
@@ -18,7 +19,7 @@ import org.tron.core.capsule.BlockCapsule;
 
 @Slf4j(topic = "pbft")
 @Component
-public class PbftManager {
+public class PbftManager implements Closeable {
 
   @Autowired
   private PbftMessageHandle pbftMessageHandle;
@@ -29,8 +30,8 @@ public class PbftManager {
   @Autowired
   private ChainBaseManager chainBaseManager;
 
-  private ExecutorService executorService = Executors.newFixedThreadPool(10,
-      r -> new Thread(r, "Pbft"));
+  private final String esName = "pbft-msg-manager";
+  private ExecutorService executorService = ExecutorServiceManager.newFixedThreadPool(esName, 10);
 
   @PostConstruct
   public void init() {
@@ -109,6 +110,11 @@ public class PbftManager {
       witnessList = maintenanceManager.getBeforeWitness();
     }
     return witnessList.contains(ByteString.copyFrom(msg.getPublicKey()));
+  }
+
+  @Override
+  public void close() {
+    ExecutorServiceManager.shutdownAndAwaitTermination(executorService, esName);
   }
 
 }
