@@ -13,6 +13,8 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.triggerCallContract;
 import com.alibaba.fastjson.JSON;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessageV3;
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -22,7 +24,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.Getter;
@@ -30,12 +31,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.EstimateEnergyMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.common.crypto.Hash;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.logsfilter.ContractEventParser;
 import org.tron.common.logsfilter.capsule.BlockFilterCapsule;
 import org.tron.common.logsfilter.capsule.LogsFilterCapsule;
@@ -91,7 +95,8 @@ import org.tron.protos.contract.SmartContractOuterClass.SmartContractDataWrapper
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 @Slf4j(topic = "API")
-public class TronJsonRpcImpl implements TronJsonRpc {
+@Component
+public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
 
   public enum RequestSource {
     FULLNODE,
@@ -148,12 +153,14 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   private final NodeInfoService nodeInfoService;
   private final Wallet wallet;
   private final Manager manager;
+  private final String esName = "query-section";
 
-  public TronJsonRpcImpl(NodeInfoService nodeInfoService, Wallet wallet, Manager manager) {
+  @Autowired
+  public TronJsonRpcImpl(@Autowired NodeInfoService nodeInfoService, @Autowired Wallet wallet, @Autowired Manager manager) {
     this.nodeInfoService = nodeInfoService;
     this.wallet = wallet;
     this.manager = manager;
-    this.sectionExecutor = Executors.newFixedThreadPool(5);
+    this.sectionExecutor = ExecutorServiceManager.newFixedThreadPool(esName, 5);
   }
 
   public static void handleBLockFilter(BlockFilterCapsule blockFilterCapsule) {
@@ -1368,6 +1375,11 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     }
 
     return result;
+  }
+
+  @Override
+  public void close() throws IOException {
+    ExecutorServiceManager.shutdownAndAwaitTermination(sectionExecutor, esName);
   }
 
 }
