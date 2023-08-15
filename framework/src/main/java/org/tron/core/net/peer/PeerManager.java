@@ -5,13 +5,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.MetricLabels;
 import org.tron.common.prometheus.Metrics;
@@ -25,8 +25,11 @@ public class PeerManager {
   private static AtomicInteger passivePeersCount = new AtomicInteger(0);
   @Getter
   private static AtomicInteger activePeersCount = new AtomicInteger(0);
+  private static final  String esName = "peer-manager";
 
-  private static ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+  private static ScheduledExecutorService executor =
+      ExecutorServiceManager.newSingleThreadScheduledExecutor(esName);
+
 
   private static long DISCONNECTION_TIME_OUT = 60_000;
 
@@ -48,7 +51,7 @@ public class PeerManager {
           p.getChannel().close();
         }
       }
-      executor.shutdownNow();
+      ExecutorServiceManager.shutdownAndAwaitTermination(executor, esName);
     } catch (Exception e) {
       logger.error("Peer manager shutdown failed", e);
     }
