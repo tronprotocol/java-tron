@@ -6,7 +6,6 @@ import java.io.UnsupportedEncodingException;
 import javax.annotation.Resource;
 
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -16,12 +15,8 @@ import org.tron.core.config.args.Args;
 
 public class GetBrokerageServletTest extends BaseTest {
 
-  private MockHttpServletRequest request;
-  private MockHttpServletResponse response;
-
   @Resource
   private  GetBrokerageServlet getBrokerageServlet;
-
 
   static {
     dbPath = "db_GetBrokerageServlet_test";
@@ -32,20 +27,21 @@ public class GetBrokerageServletTest extends BaseTest {
     );
   }
 
-  @Before
-  public void setUp() {
-    request = new MockHttpServletRequest();
+  public MockHttpServletRequest createRequest(String contentType) {
+    MockHttpServletRequest request = new MockHttpServletRequest();
     request.setMethod("POST");
-    request.setContentType("application/x-www-form-urlencoded");
+    request.setContentType(contentType);
     request.setCharacterEncoding("UTF-8");
-
-    response = new MockHttpServletResponse();
+    return request;
   }
 
   @Test
-  public void getBrokerageValueTest() {
+  public void getBrokerageValueByJsonTest() {
     int expect = 20;
-    request.addParameter("address", "27VZHn9PFZwNh7o2EporxmLkpe157iWZVkh");
+    String jsonParam = "{\"address\": \"27VZHn9PFZwNh7o2EporxmLkpe157iWZVkh\"}";
+    MockHttpServletRequest request = createRequest("application/json");
+    request.setContent(jsonParam.getBytes());
+    MockHttpServletResponse response = new MockHttpServletResponse();
     getBrokerageServlet.doPost(request, response);
     try {
       String contentAsString = response.getContentAsString();
@@ -58,9 +54,28 @@ public class GetBrokerageServletTest extends BaseTest {
   }
 
   @Test
-  public void getBrokerageTest() {
+  public void getBrokerageValueTest() {
+    int expect = 20;
+    MockHttpServletRequest request = createRequest("application/x-www-form-urlencoded");
+    request.addParameter("address", "27VZHn9PFZwNh7o2EporxmLkpe157iWZVkh");
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    getBrokerageServlet.doPost(request, response);
+    try {
+      String contentAsString = response.getContentAsString();
+      JSONObject result = JSONObject.parseObject(contentAsString);
+      int brokerage = (int)result.get("brokerage");
+      Assert.assertEquals(expect, brokerage);
+    } catch (UnsupportedEncodingException e) {
+      Assert.fail(e.getMessage());
+    }
+  }
+
+  @Test
+  public void getByBlankParamTest() {
     int expect = 0;
+    MockHttpServletRequest request = createRequest("application/x-www-form-urlencoded");
     request.addParameter("address", "");
+    MockHttpServletResponse response = new MockHttpServletResponse();
     getBrokerageServlet.doPost(request, response);
     try {
       String contentAsString = response.getContentAsString();

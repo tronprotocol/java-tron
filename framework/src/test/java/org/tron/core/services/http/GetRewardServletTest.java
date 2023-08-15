@@ -4,15 +4,18 @@ import static org.tron.common.utils.Commons.decodeFromBase58Check;
 
 import com.alibaba.fastjson.JSONObject;
 
+import java.io.File;
 import java.io.UnsupportedEncodingException;
 import javax.annotation.Resource;
 
+import org.apache.commons.lang3.StringUtils;
+import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.tron.common.BaseTest;
+import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -20,9 +23,6 @@ import org.tron.core.service.MortgageService;
 import org.tron.core.store.DelegationStore;
 
 public class GetRewardServletTest extends BaseTest {
-
-  private MockHttpServletRequest request;
-  private MockHttpServletResponse response;
 
   @Resource
   private Manager manager;
@@ -45,14 +45,12 @@ public class GetRewardServletTest extends BaseTest {
     );
   }
 
-  @Before
-  public void setUp() {
-    request = new MockHttpServletRequest();
+  public MockHttpServletRequest createRequest(String contentType) {
+    MockHttpServletRequest request = new MockHttpServletRequest();
     request.setMethod("POST");
-    request.setContentType("application/x-www-form-urlencoded");
+    request.setContentType(contentType);
     request.setCharacterEncoding("UTF-8");
-
-    response = new MockHttpServletResponse();
+    return request;
   }
 
   public void init() {
@@ -63,9 +61,31 @@ public class GetRewardServletTest extends BaseTest {
   }
 
   @Test
+  public void getRewardValueByJsonTest() {
+    init();
+    int expect = 138181;
+    String jsonParam = "{\"address\": \"27VZHn9PFZwNh7o2EporxmLkpe157iWZVkh\"}";
+    MockHttpServletRequest request = createRequest("application/json");
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    request.setContent(jsonParam.getBytes());
+    try {
+      mortgageService.payStandbyWitness();
+      getRewardServlet.doPost(request, response);
+      String contentAsString = response.getContentAsString();
+      JSONObject result = JSONObject.parseObject(contentAsString);
+      int reward = (int)result.get("reward");
+      Assert.assertEquals(expect, reward);
+    } catch (UnsupportedEncodingException e) {
+      Assert.fail(e.getMessage());
+    }
+  }
+
+  @Test
   public void getRewardValueTest() {
     init();
     int expect = 138181;
+    MockHttpServletRequest request = createRequest("application/x-www-form-urlencoded");
+    MockHttpServletResponse response = new MockHttpServletResponse();
     mortgageService.payStandbyWitness();
     request.addParameter("address", "27VZHn9PFZwNh7o2EporxmLkpe157iWZVkh");
     getRewardServlet.doPost(request, response);
@@ -80,7 +100,9 @@ public class GetRewardServletTest extends BaseTest {
   }
 
   @Test
-  public void getRewardTest() {
+  public void getByBlankParamTest() {
+    MockHttpServletRequest request = createRequest("application/x-www-form-urlencoded");
+    MockHttpServletResponse response = new MockHttpServletResponse();
     request.addParameter("address", "");
     GetRewardServlet getRewardServlet = new GetRewardServlet();
     getRewardServlet.doPost(request, response);
@@ -93,6 +115,14 @@ public class GetRewardServletTest extends BaseTest {
       Assert.assertNull(content);
     } catch (UnsupportedEncodingException e) {
       Assert.fail(e.getMessage());
+    }
+  }
+
+  @After
+  public void deleteDatabase() {
+    Args.clearParam();
+    if (StringUtils.isNotEmpty(dbPath)) {
+      FileUtil.deleteDir(new File(dbPath));
     }
   }
 }
