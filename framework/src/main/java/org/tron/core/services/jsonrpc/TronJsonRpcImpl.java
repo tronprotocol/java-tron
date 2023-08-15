@@ -156,7 +156,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   private final String esName = "query-section";
 
   @Autowired
-  public TronJsonRpcImpl(@Autowired NodeInfoService nodeInfoService, @Autowired Wallet wallet, @Autowired Manager manager) {
+  public TronJsonRpcImpl(@Autowired NodeInfoService nodeInfoService, @Autowired Wallet wallet,
+                         @Autowired Manager manager) {
     this.nodeInfoService = nodeInfoService;
     this.wallet = wallet;
     this.manager = manager;
