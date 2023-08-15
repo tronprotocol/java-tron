@@ -619,6 +619,14 @@ public class WalletTest extends BaseTest {
   }
 
   @Test
+  public void testGetExchangeList() {
+    buildExchange();
+    //
+    ExchangeList exchangeList = wallet.getExchangeList();
+    Assert.assertEquals(2, exchangeList.getExchangesCount());
+  }
+
+  @Test
   public void getBlock() {
     GrpcAPI.BlockReq req = GrpcAPI.BlockReq.getDefaultInstance();
     Block block = wallet.getBlock(req);

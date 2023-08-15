@@ -23,6 +23,7 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.contract.ShieldContract.IncrementalMerkleTree;
 import org.tron.protos.contract.ShieldContract.IncrementalMerkleVoucherInfo;
 import org.tron.protos.contract.ShieldContract.OutputPoint;
 import org.tron.protos.contract.ShieldContract.OutputPointInfo;
@@ -331,6 +332,9 @@ public class MerkleContainerTest extends BaseTest {
   public void getMerkleTreeWitnessInfoTest() throws Exception {
     //init
     initMerkleTreeWitnessInfo();
+
+    IncrementalMerkleTree incrementalMerkleTree = wallet.getMerkleTreeOfBlock(99);
+    Assert.assertNotNull(incrementalMerkleTree);
 
     //blockNum:100,txNum:1
     ByteString txId1 = ByteString.copyFrom(ByteArray

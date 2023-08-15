@@ -2378,8 +2378,8 @@ public class ShieldedReceiveTest extends BaseTest {
     chainBaseManager.addWitness(ByteString.copyFrom(witnessAddress));
 
     //sometimes generate block failed, try several times.
-
-    Block block = getSignedBlock(witnessCapsule.getAddress(), 0, privateKey);
+    long time = System.currentTimeMillis();
+    Block block = getSignedBlock(witnessCapsule.getAddress(), time, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
 
     //create transactions
@@ -2427,11 +2427,14 @@ public class ShieldedReceiveTest extends BaseTest {
 
     Thread.sleep(500);
     //package transaction to block
-    block = getSignedBlock(witnessCapsule.getAddress(), 0, privateKey);
+    block = getSignedBlock(witnessCapsule.getAddress(), time + 3000, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
 
     BlockCapsule blockCapsule3 = new BlockCapsule(wallet.getNowBlock());
     Assert.assertEquals("blocknum != 2", 2, blockCapsule3.getNum());
+
+    block = getSignedBlock(witnessCapsule.getAddress(), time + 6000, privateKey);
+    dbManager.pushBlock(new BlockCapsule(block));
 
     // scan note by ivk
     byte[] receiverIvk = incomingViewingKey.getValue();
@@ -2453,6 +2456,7 @@ public class ShieldedReceiveTest extends BaseTest {
       outPointBuild.setIndex(i);
       request.addOutPoints(outPointBuild.build());
     }
+    request.setBlockNum(1);
     IncrementalMerkleVoucherInfo merkleVoucherInfo = wallet
         .getMerkleTreeVoucherInfo(request.build());
 
