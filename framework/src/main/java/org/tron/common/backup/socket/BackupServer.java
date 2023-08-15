@@ -19,7 +19,7 @@ import org.tron.p2p.stats.TrafficStats;
 
 @Slf4j(topic = "backup")
 @Component
-public class BackupServer {
+public class BackupServer implements AutoCloseable {
 
   private CommonParameter commonParameter = CommonParameter.getInstance();
 
@@ -91,10 +91,12 @@ public class BackupServer {
     }
   }
 
+  @Override
   public void close() {
     logger.info("Closing backup server...");
     shutdown = true;
     ExecutorServiceManager.shutdownAndAwaitTermination(executor, name);
+    backupManager.stop();
     if (channel != null) {
       try {
         channel.close().await(10, TimeUnit.SECONDS);
