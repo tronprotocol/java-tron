@@ -26,7 +26,7 @@ public class JsonRpcServlet extends RateLimiterServlet {
   private JsonRpcServer rpcServer = null;
 
   @Autowired
-  TronJsonRpc tronJsonRpc;
+  private TronJsonRpc tronJsonRpc;
 
   @Autowired
   private JsonRpcInterceptor interceptor;
