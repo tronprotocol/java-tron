@@ -69,7 +69,6 @@ public class GetRewardServletTest extends BaseTest {
     MockHttpServletResponse response = new MockHttpServletResponse();
     request.setContent(jsonParam.getBytes());
     try {
-      mortgageService.payStandbyWitness();
       getRewardServlet.doPost(request, response);
       String contentAsString = response.getContentAsString();
       JSONObject result = JSONObject.parseObject(contentAsString);
