@@ -365,7 +365,8 @@ public class ShieldWalletTest extends BaseTest {
             + "205d2c0a2020202022736869656c6465645f54524332305f636f6e74726163745f61646472657373223"
             + "a2234313434303037393739333539454341433339354242443343454638303630443344463244433346"
             + "3031220a7d"));
-    PrivateShieldedTRC20ParametersWithoutAsk.Builder builder = PrivateShieldedTRC20ParametersWithoutAsk.newBuilder();
+    PrivateShieldedTRC20ParametersWithoutAsk.Builder builder =
+        PrivateShieldedTRC20ParametersWithoutAsk.newBuilder();
     try {
       JsonFormat.merge(parameter, builder, false);
     } catch (ParseException e) {
@@ -373,8 +374,8 @@ public class ShieldWalletTest extends BaseTest {
     }
 
     try {
-      ShieldedTRC20Parameters shieldedTRC20Parameters = wallet1.createShieldedContractParametersWithoutAsk(
-          builder.build());
+      ShieldedTRC20Parameters shieldedTRC20Parameters =
+          wallet1.createShieldedContractParametersWithoutAsk(builder.build());
       Assert.assertNotNull(shieldedTRC20Parameters);
     } catch (Exception e) {
       Assert.fail();
