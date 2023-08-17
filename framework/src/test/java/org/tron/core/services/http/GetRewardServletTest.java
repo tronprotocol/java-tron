@@ -117,11 +117,4 @@ public class GetRewardServletTest extends BaseTest {
     }
   }
 
-  @After
-  public void deleteDatabase() {
-    Args.clearParam();
-    if (StringUtils.isNotEmpty(dbPath)) {
-      FileUtil.deleteDir(new File(dbPath));
-    }
-  }
 }
