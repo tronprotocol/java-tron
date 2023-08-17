@@ -17,6 +17,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.DecryptNotes;
+import org.tron.api.GrpcAPI.DecryptNotesMarked;
 import org.tron.api.GrpcAPI.ReceiveNote;
 import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.GrpcAPI.TransactionExtention;
@@ -2440,6 +2441,11 @@ public class ShieldedReceiveTest extends BaseTest {
     byte[] receiverIvk = incomingViewingKey.getValue();
     DecryptNotes notes1 = wallet.scanNoteByIvk(0, 100, receiverIvk);
     Assert.assertEquals(2, notes1.getNoteTxsCount());
+
+    // scan note by ivk and mark
+    DecryptNotesMarked notes3 = wallet.scanAndMarkNoteByIvk(0, 100, receiverIvk,
+        fullViewingKey.getAk(), fullViewingKey.getNk());
+    Assert.assertEquals(2, notes3.getNoteTxsCount());
 
     // scan note by ovk
     DecryptNotes notes2 = wallet.scanNoteByOvk(0, 100, senderOvk);

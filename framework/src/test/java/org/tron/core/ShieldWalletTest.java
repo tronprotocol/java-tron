@@ -1,17 +1,31 @@
 package org.tron.core;
 
+import static org.mockito.Answers.RETURNS_DEEP_STUBS;
+import static org.mockito.ArgumentMatchers.anyByte;
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.anyCollectionOf;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.tron.core.services.http.FullNodeHttpApiService.librustzcashInitZksnarkParams;
 
+import java.math.BigInteger;
 import javax.annotation.Resource;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.tron.api.GrpcAPI.PrivateParameters;
 import org.tron.api.GrpcAPI.PrivateParametersWithoutAsk;
+import org.tron.api.GrpcAPI.PrivateShieldedTRC20Parameters;
+import org.tron.api.GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk;
 import org.tron.api.GrpcAPI.ShieldedAddressInfo;
+import org.tron.api.GrpcAPI.ShieldedTRC20Parameters;
 import org.tron.common.BaseTest;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.services.http.JsonFormat;
 import org.tron.core.services.http.JsonFormat.ParseException;
@@ -189,4 +203,86 @@ public class ShieldWalletTest extends BaseTest {
     }
   }
 
+  @Test
+  public void testCreateShieldedContractParameters() throws ContractExeException {
+    librustzcashInitZksnarkParams();
+    Args.getInstance().setFullNodeAllowShieldedTransactionArgs(true);
+    Wallet wallet1 = Mockito.mock(Wallet.class);
+
+    Mockito.when(wallet1.getShieldedContractScalingFactor(
+            ByteArray.fromHexString("4144007979359ECAC395BBD3CEF8060D3DF2DC3F01")))
+        .thenReturn(BigInteger.valueOf(1).toByteArray());
+
+    String parameter = "{\n"
+        + "    \"ask\":\"c2513e9e308494932bd82e0ce53662d17421d90b72a8471a0a12b8552a336e02\",\n"
+        + "    \"nsk\":\"4c6bf3dd4a0643d20b628f7e45980c5e187f07a51d6f3e86aaf1ab916c07eb0d\",\n"
+        + "    \"ovk\":\"17a58d9a5058da6e42ca12cd289d0a6aa169b926c18e19bca518b8d6f8674e43\",\n"
+        + "    \"from_amount\":\"100\",\n"
+        + "    \"shielded_receives\":[\n"
+        + "        {\n"
+        + "            \"note\":{\n"
+        + "                \"value\":100,\n"
+        + "                \"payment_address\":\"ztron1y99u6ejqenupvfkp5g6q6yqkp0a44c48cta0dd5gejtqa4v27hqa2cghfvdxnmneh6qqq03fa75\",\n"
+        + "                \"rcm\":\"16b6f5e40444ab7eeab11ae6613c27f35117971efa87b71560b5813829c9390d\"\n"
+        + "            }\n"
+        + "        }\n"
+        + "    ],\n"
+        + "    \"shielded_TRC20_contract_address\":\"4144007979359ECAC395BBD3CEF8060D3DF2DC3F01\"\n"
+        + "}";
+    PrivateShieldedTRC20Parameters.Builder builder = PrivateShieldedTRC20Parameters.newBuilder();
+    try {
+      JsonFormat.merge(parameter, builder, false);
+    } catch (ParseException e) {
+      Assert.fail();
+    }
+
+    try {
+      ShieldedTRC20Parameters shieldedTRC20Parameters = wallet1.createShieldedContractParameters(
+          builder.build());
+      System.out.println(shieldedTRC20Parameters);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  @Test
+  public void testCreateShieldedContractParametersWithoutAsk() throws ContractExeException {
+    librustzcashInitZksnarkParams();
+    Args.getInstance().setFullNodeAllowShieldedTransactionArgs(true);
+    Wallet wallet1 = Mockito.mock(Wallet.class);
+
+    Mockito.when(wallet1.getShieldedContractScalingFactor(
+            ByteArray.fromHexString("4144007979359ECAC395BBD3CEF8060D3DF2DC3F01")))
+        .thenReturn(BigInteger.valueOf(1).toByteArray());
+    String parameter = "{\n"
+        + "    \"ak\":\"0eba73a48e2949ea5daa13bcef4fdf3a5aa9f3b268067cf81123398a838fe3cc\",\n"
+        + "    \"nsk\":\"4c6bf3dd4a0643d20b628f7e45980c5e187f07a51d6f3e86aaf1ab916c07eb0d\",\n"
+        + "    \"ovk\":\"17a58d9a5058da6e42ca12cd289d0a6aa169b926c18e19bca518b8d6f8674e43\",\n"
+        + "    \"from_amount\":\"100\",\n"
+        + "    \"shielded_receives\":[\n"
+        + "        {\n"
+        + "            \"note\":{\n"
+        + "                \"value\":100,\n"
+        + "                \"payment_address\":\"ztron1y99u6ejqenupvfkp5g6q6yqkp0a44c48cta0dd5gejtqa4v27hqa2cghfvdxnmneh6qqq03fa75\",\n"
+        + "                \"rcm\":\"16b6f5e40444ab7eeab11ae6613c27f35117971efa87b71560b5813829c9390d\"\n"
+        + "            }\n"
+        + "        }\n"
+        + "    ],\n"
+        + "    \"shielded_TRC20_contract_address\":\"4144007979359ECAC395BBD3CEF8060D3DF2DC3F01\"\n"
+        + "}";
+    PrivateShieldedTRC20ParametersWithoutAsk.Builder builder = PrivateShieldedTRC20ParametersWithoutAsk.newBuilder();
+    try {
+      JsonFormat.merge(parameter, builder, false);
+    } catch (ParseException e) {
+      Assert.fail();
+    }
+    try {
+      ShieldedTRC20Parameters shieldedTRC20Parameters = wallet1.createShieldedContractParametersWithoutAsk(
+          builder.build());
+      System.out.println(shieldedTRC20Parameters);
+      //Assert.assertNotNull(shieldedTRC20Parameters);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
 }

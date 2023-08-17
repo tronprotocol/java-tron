@@ -636,7 +636,7 @@ public class Args extends CommonParameter {
             ? config.getInt(Constant.NODE_LISTEN_PORT) : 0;
 
     bindIp(config);
-    externalIp(config, PARAMETER.p2pConfig);
+    externalIp(config);
 
     //PARAMETER.nodeDiscoveryPublicHomeNode =
     //    config.hasPath(Constant.NODE_DISCOVERY_PUBLIC_HOME_NODE) && config
@@ -1544,12 +1544,12 @@ public class Args extends CommonParameter {
     }
   }
 
-  private static void externalIp(final com.typesafe.config.Config config, P2pConfig p2pConfig) {
+  private static void externalIp(final com.typesafe.config.Config config) {
     if (!config.hasPath(Constant.NODE_DISCOVERY_EXTERNAL_IP) || config
         .getString(Constant.NODE_DISCOVERY_EXTERNAL_IP).trim().isEmpty()) {
       if (PARAMETER.nodeExternalIp == null) {
         logger.info("External IP wasn't set, using ipv4 from libp2p");
-        PARAMETER.nodeExternalIp = p2pConfig.getIp();
+        PARAMETER.nodeExternalIp = PARAMETER.p2pConfig.getIp();
         if (StringUtils.isEmpty(PARAMETER.nodeExternalIp)) {
           PARAMETER.nodeExternalIp = PARAMETER.nodeDiscoveryBindIp;
         }
