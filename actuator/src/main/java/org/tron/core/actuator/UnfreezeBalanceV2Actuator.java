@@ -1,6 +1,7 @@
 package org.tron.core.actuator;
 
 import static org.tron.common.prometheus.MetricKeys.Histogram.STAKE_HISTOGRAM;
+import static org.tron.common.prometheus.MetricKeys.Histogram.UNFREEZE_CAN_WITHDRAW;
 import static org.tron.common.prometheus.MetricLabels.STAKE_ENERGY;
 import static org.tron.common.prometheus.MetricLabels.STAKE_NET;
 import static org.tron.common.prometheus.MetricLabels.STAKE_POWER;
@@ -293,6 +294,8 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
         dynamicStore.addTotalNetWeight(newNetWeight - oldNetWeight);
         Metrics.histogramObserve(STAKE_HISTOGRAM, unfreezeBalance,
             STAKE_VERSION_V2, STAKE_UNFREEZE, STAKE_NET);
+        Metrics.histogramObserve(UNFREEZE_CAN_WITHDRAW, unfreezeBalance,
+            STAKE_VERSION_V2, STAKE_UNFREEZE, STAKE_NET);
         break;
       case ENERGY:
         long oldEnergyWeight = accountCapsule.getFrozenV2BalanceWithDelegated(ENERGY) / TRX_PRECISION;
@@ -301,6 +304,8 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
         dynamicStore.addTotalEnergyWeight(newEnergyWeight - oldEnergyWeight);
         Metrics.histogramObserve(STAKE_HISTOGRAM, unfreezeBalance,
             STAKE_VERSION_V2, STAKE_UNFREEZE, STAKE_ENERGY);
+        Metrics.histogramObserve(UNFREEZE_CAN_WITHDRAW, unfreezeBalance,
+            STAKE_VERSION_V2, STAKE_ENERGY);
         break;
       case TRON_POWER:
         long oldTPWeight = accountCapsule.getTronPowerFrozenV2Balance() / TRX_PRECISION;
@@ -308,6 +313,8 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
         long newTPWeight = accountCapsule.getTronPowerFrozenV2Balance() / TRX_PRECISION;
         dynamicStore.addTotalTronPowerWeight(newTPWeight - oldTPWeight);
         Metrics.histogramObserve(STAKE_HISTOGRAM, unfreezeBalance,
+            STAKE_VERSION_V2, STAKE_UNFREEZE, STAKE_POWER);
+        Metrics.histogramObserve(UNFREEZE_CAN_WITHDRAW, unfreezeBalance,
             STAKE_VERSION_V2, STAKE_UNFREEZE, STAKE_POWER);
         break;
       default:

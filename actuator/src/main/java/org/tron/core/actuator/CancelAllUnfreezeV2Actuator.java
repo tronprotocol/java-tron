@@ -1,8 +1,11 @@
 package org.tron.core.actuator;
 
 import static org.tron.common.prometheus.MetricKeys.Histogram.STAKE_HISTOGRAM;
+import static org.tron.common.prometheus.MetricKeys.Histogram.UNFREEZE_CAN_WITHDRAW;
 import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_CANCEL_UNFREEZE;
+import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_UNFREEZE;
 import static org.tron.common.prometheus.MetricLabels.Histogram.STAKE_WITHDRAW;
+import static org.tron.common.prometheus.MetricLabels.STAKE_ENERGY;
 import static org.tron.common.prometheus.MetricLabels.STAKE_NET;
 import static org.tron.common.prometheus.MetricLabels.STAKE_RESOURCE;
 import static org.tron.common.prometheus.MetricLabels.STAKE_VERSION_V2;
@@ -93,6 +96,11 @@ public class CancelAllUnfreezeV2Actuator extends AbstractActuator {
         .stream().mapToLong(v -> v).sum();
     Metrics.histogramObserve(STAKE_HISTOGRAM, sum, STAKE_VERSION_V2,
         STAKE_CANCEL_UNFREEZE, STAKE_RESOURCE);
+
+    Metrics.histogramObserve(UNFREEZE_CAN_WITHDRAW, -triple.getLeft().getRight().get(),
+        STAKE_VERSION_V2, STAKE_NET);
+    Metrics.histogramObserve(UNFREEZE_CAN_WITHDRAW, -triple.getMiddle().getRight().get(),
+        STAKE_VERSION_V2, STAKE_ENERGY);
     logger.info("cancel all unfreezeV2 detail:{},{},{}",
         StringUtil.createReadableString(ownerCapsule.getAddress()), ownerCapsule.getType(), sum);
     return true;
