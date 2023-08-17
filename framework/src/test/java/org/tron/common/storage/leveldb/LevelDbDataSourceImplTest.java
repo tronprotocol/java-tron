@@ -27,7 +27,9 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -113,6 +115,13 @@ public class LevelDbDataSourceImplTest {
         Args.getInstance().getOutputDirectory(), "test_reset");
     dataSource.resetDb();
     assertEquals(0, dataSource.allKeys().size());
+    assertEquals("LEVELDB", dataSource.getEngine());
+    assertEquals("test_reset", dataSource.getName());
+    assertEquals(Sets.newHashSet(), dataSource.getlatestValues(0));
+    assertEquals(Collections.emptyMap(), dataSource.getNext(key1, 0));
+    assertEquals(new ArrayList<>(), dataSource.getKeysNext(key1, 0));
+    assertEquals(Sets.newHashSet(), dataSource.getValuesNext(key1, 0));
+    assertEquals(Sets.newHashSet(), dataSource.getlatestValues(0));
     dataSource.closeDB();
   }
 
