@@ -2054,8 +2054,16 @@ public class Wallet {
 
     try {
       if (chainBaseManager.getMerkleTreeIndexStore().has(ByteArray.fromLong(blockNum))) {
-        return IncrementalMerkleTree
-            .parseFrom(chainBaseManager.getMerkleTreeIndexStore().get(blockNum));
+        byte[] treeRoot = chainBaseManager.getMerkleTreeIndexStore().get(blockNum);
+        if (treeRoot == null) {
+          return null;
+        }
+        IncrementalMerkleTreeCapsule treeCapsule = chainBaseManager.getMerkleTreeStore()
+            .get(treeRoot);
+        if (treeCapsule == null) {
+          return null;
+        }
+        return treeCapsule.getInstance();
       }
     } catch (Exception ex) {
       logger.error("GetMerkleTreeOfBlock failed, blockNum:{}", blockNum, ex);
@@ -4113,7 +4121,7 @@ public class Wallet {
     }
   }
 
-  private byte[] getShieldedContractScalingFactor(byte[] contractAddress)
+  public byte[] getShieldedContractScalingFactor(byte[] contractAddress)
       throws ContractExeException {
     String methodSign = "scalingFactor()";
     byte[] selector = new byte[4];
