@@ -28,6 +28,7 @@ import org.tron.core.db.KhaosDatabase;
 import org.tron.core.db.PbftSignDataStore;
 import org.tron.core.db.RecentBlockStore;
 import org.tron.core.db.RecentTransactionStore;
+import org.tron.core.db.TransactionCache;
 import org.tron.core.db.TransactionStore;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.exception.BadItemException;
@@ -237,6 +238,9 @@ public class ChainBaseManager {
   @Autowired
   private DbStatService dbStatService;
 
+  @Autowired
+  private TransactionCache transactionCache;
+
   @Getter
   @Setter
   private NodeType nodeType;
@@ -291,6 +295,7 @@ public class ChainBaseManager {
     closeOneStore(pbftSignDataStore);
     closeOneStore(sectionBloomStore);
     closeOneStore(accountAssetStore);
+    closeOneStore(transactionCache);
   }
 
   // for test only
@@ -316,9 +321,7 @@ public class ChainBaseManager {
   }
 
   public synchronized BlockId getHeadBlockId() {
-    return new BlockId(
-        dynamicPropertiesStore.getLatestBlockHeaderHash(),
-        dynamicPropertiesStore.getLatestBlockHeaderNumber());
+    return new BlockId(dynamicPropertiesStore.getLatestBlockHeaderHash());
   }
 
   public long getHeadBlockNum() {
