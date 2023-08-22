@@ -73,6 +73,7 @@ import org.tron.core.exception.CipherException;
 import org.tron.core.store.AccountStore;
 import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
+import org.tron.p2p.P2pConfig;
 import org.tron.p2p.dns.update.DnsType;
 import org.tron.p2p.dns.update.PublishConfig;
 import org.tron.p2p.utils.NetUtil;
@@ -140,9 +141,9 @@ public class Args extends CommonParameter {
     PARAMETER.nodeListenPort = 0;
     PARAMETER.nodeDiscoveryBindIp = "";
     PARAMETER.nodeExternalIp = "";
-    PARAMETER.nodeDiscoveryPublicHomeNode = false;
-    PARAMETER.nodeDiscoveryPingTimeout = 15000;
-    PARAMETER.nodeP2pPingInterval = 0L;
+    // PARAMETER.nodeDiscoveryPublicHomeNode = false;
+    // PARAMETER.nodeDiscoveryPingTimeout = 15000;
+    // PARAMETER.nodeP2pPingInterval = 0L;
     PARAMETER.nodeP2pVersion = 0;
     PARAMETER.nodeEnableIpv6 = false;
     PARAMETER.dnsTreeUrls = new ArrayList<>();
@@ -170,7 +171,7 @@ public class Args extends CommonParameter {
     PARAMETER.forbidTransferToContract = 0;
     PARAMETER.tcpNettyWorkThreadNum = 0;
     PARAMETER.udpNettyWorkThreadNum = 0;
-    PARAMETER.p2pNodeId = "";
+    // PARAMETER.p2pNodeId = "";
     PARAMETER.solidityNode = false;
     PARAMETER.trustNodeAddr = "";
     PARAMETER.walletExtensionApi = false;
@@ -639,17 +640,17 @@ public class Args extends CommonParameter {
     bindIp(config);
     externalIp(config);
 
-    PARAMETER.nodeDiscoveryPublicHomeNode =
-        config.hasPath(Constant.NODE_DISCOVERY_PUBLIC_HOME_NODE) && config
-            .getBoolean(Constant.NODE_DISCOVERY_PUBLIC_HOME_NODE);
+    //PARAMETER.nodeDiscoveryPublicHomeNode =
+    //    config.hasPath(Constant.NODE_DISCOVERY_PUBLIC_HOME_NODE) && config
+    //        .getBoolean(Constant.NODE_DISCOVERY_PUBLIC_HOME_NODE);
 
-    PARAMETER.nodeDiscoveryPingTimeout =
-        config.hasPath(Constant.NODE_DISCOVERY_PING_TIMEOUT)
-            ? config.getLong(Constant.NODE_DISCOVERY_PING_TIMEOUT) : 15000;
+    //PARAMETER.nodeDiscoveryPingTimeout =
+    //    config.hasPath(Constant.NODE_DISCOVERY_PING_TIMEOUT)
+    //        ? config.getLong(Constant.NODE_DISCOVERY_PING_TIMEOUT) : 15000;
 
-    PARAMETER.nodeP2pPingInterval =
-        config.hasPath(Constant.NODE_P2P_PING_INTERVAL)
-            ? config.getLong(Constant.NODE_P2P_PING_INTERVAL) : 0;
+    //PARAMETER.nodeP2pPingInterval =
+    //    config.hasPath(Constant.NODE_P2P_PING_INTERVAL)
+    //        ? config.getLong(Constant.NODE_P2P_PING_INTERVAL) : 0;
 
     PARAMETER.nodeP2pVersion =
         config.hasPath(Constant.NODE_P2P_VERSION)
