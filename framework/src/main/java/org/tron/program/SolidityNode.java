@@ -90,14 +90,9 @@ public class SolidityNode {
       appT.addService(httpApiService);
     }
 
-    appT.initServices(parameter);
-    appT.startServices();
-    appT.startup();
-
     SolidityNode node = new SolidityNode(appT.getDbManager());
     node.start();
-
-    rpcApiService.blockUntilShutdown();
+    appT.startup();
   }
 
   private void start() {

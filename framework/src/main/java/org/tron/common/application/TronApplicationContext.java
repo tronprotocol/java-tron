@@ -25,7 +25,6 @@ public class TronApplicationContext extends AnnotationConfigApplicationContext {
   public void doClose() {
     logger.info("******** start to close ********");
     Application appT = ApplicationFactory.create(this);
-    appT.shutdownServices();
     appT.shutdown();
     super.doClose();
     logger.info("******** close end ********");

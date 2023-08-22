@@ -93,8 +93,6 @@ public class BaseNet {
       appT = ApplicationFactory.create(context);
       rpcApiService = context.getBean(RpcApiService.class);
       appT.addService(rpcApiService);
-      appT.initServices(parameter);
-      appT.startServices();
       appT.startup();
       try {
         Thread.sleep(2000);

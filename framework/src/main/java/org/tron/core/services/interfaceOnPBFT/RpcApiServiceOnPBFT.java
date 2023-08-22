@@ -1,9 +1,7 @@
 package org.tron.core.services.interfaceOnPBFT;
 
-import io.grpc.Server;
 import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,12 +33,9 @@ import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
-import org.tron.common.application.Service;
-import org.tron.common.crypto.ECKey;
+import org.tron.common.application.RpcService;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.common.utils.StringUtil;
-import org.tron.common.utils.Utils;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.filter.LiteFnQueryGrpcInterceptor;
@@ -65,10 +60,7 @@ import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 
 @Slf4j(topic = "API")
-public class RpcApiServiceOnPBFT implements Service {
-
-  private int port = Args.getInstance().getRpcOnPBFTPort();
-  private Server apiServer;
+public class RpcApiServiceOnPBFT extends RpcService {
 
   @Autowired
   private WalletOnPBFT walletOnPBFT;
@@ -93,66 +85,37 @@ public class RpcApiServiceOnPBFT implements Service {
 
   @Override
   public void init(CommonParameter parameter) {
-
+    port = Args.getInstance().getRpcOnPBFTPort();
   }
 
   @Override
   public void start() {
-    try {
-      NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port)
-          .addService(new DatabaseApi());
-
-      CommonParameter args = CommonParameter.getInstance();
-
-      if (args.getRpcThreadNum() > 0) {
-        serverBuilder = serverBuilder
-            .executor(ExecutorServiceManager.newFixedThreadPool(
-                executorName, args.getRpcThreadNum()));
-      }
-
-      serverBuilder = serverBuilder.addService(new WalletPBFTApi());
-
-      // Set configs from config.conf or default value
-      serverBuilder
-          .maxConcurrentCallsPerConnection(args.getMaxConcurrentCallsPerConnection())
-          .flowControlWindow(args.getFlowControlWindow())
-          .maxConnectionIdle(args.getMaxConnectionIdleInMillis(), TimeUnit.MILLISECONDS)
-          .maxConnectionAge(args.getMaxConnectionAgeInMillis(), TimeUnit.MILLISECONDS)
-          .maxInboundMessageSize(args.getMaxMessageSize())
-          .maxHeaderListSize(args.getMaxHeaderListSize());
-
-      // add a ratelimiter interceptor
-      serverBuilder.intercept(rateLimiterInterceptor);
-
-      // add api access interceptor
-      serverBuilder.intercept(apiAccessInterceptor);
-
-      // add lite fullnode query interceptor
-      serverBuilder.intercept(liteFnQueryGrpcInterceptor);
-
-      apiServer = serverBuilder.build();
-      rateLimiterInterceptor.init(apiServer);
-
-      apiServer.start();
-
-    } catch (IOException e) {
-      logger.debug(e.getMessage(), e);
+    NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port)
+        .addService(new DatabaseApi());
+    CommonParameter args = CommonParameter.getInstance();
+    if (args.getRpcThreadNum() > 0) {
+      serverBuilder = serverBuilder
+          .executor(ExecutorServiceManager.newFixedThreadPool(
+              executorName, args.getRpcThreadNum()));
     }
-
-    logger.info("RpcApiServiceOnPBFT started, listening on " + port);
-
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      System.err.println("*** shutting down gRPC server on PBFT since JVM is shutting down");
-      //server.this.stop();
-      System.err.println("*** server on PBFT shut down");
-    }));
-  }
-
-  @Override
-  public void stop() {
-    if (apiServer != null) {
-      apiServer.shutdown();
-    }
+    serverBuilder = serverBuilder.addService(new WalletPBFTApi());
+    // Set configs from config.conf or default value
+    serverBuilder
+        .maxConcurrentCallsPerConnection(args.getMaxConcurrentCallsPerConnection())
+        .flowControlWindow(args.getFlowControlWindow())
+        .maxConnectionIdle(args.getMaxConnectionIdleInMillis(), TimeUnit.MILLISECONDS)
+        .maxConnectionAge(args.getMaxConnectionAgeInMillis(), TimeUnit.MILLISECONDS)
+        .maxInboundMessageSize(args.getMaxMessageSize())
+        .maxHeaderListSize(args.getMaxHeaderListSize());
+    // add a ratelimiter interceptor
+    serverBuilder.intercept(rateLimiterInterceptor);
+    // add api access interceptor
+    serverBuilder.intercept(apiAccessInterceptor);
+    // add lite fullnode query interceptor
+    serverBuilder.intercept(liteFnQueryGrpcInterceptor);
+    apiServer = serverBuilder.build();
+    rateLimiterInterceptor.init(apiServer);
+    super.start();
   }
 
   /**

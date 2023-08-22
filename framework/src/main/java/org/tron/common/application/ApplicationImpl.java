@@ -7,7 +7,6 @@ import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
-import org.tron.core.config.args.DynamicArgs;
 import org.tron.core.consensus.ConsensusService;
 import org.tron.core.db.Manager;
 import org.tron.core.metrics.MetricsUtil;
@@ -30,9 +29,6 @@ public class ApplicationImpl implements Application {
 
   @Autowired
   private ConsensusService consensusService;
-
-  @Autowired
-  private DynamicArgs dynamicArgs;
 
   @Override
   public void setOptions(Args args) {
@@ -64,33 +60,24 @@ public class ApplicationImpl implements Application {
     }
     consensusService.start();
     MetricsUtil.init();
-    dynamicArgs.init();
+    this.initServices(Args.getInstance());
+    this.startServices();
   }
 
   @Override
   public void shutdown() {
-    logger.info("******** start to shutdown ********");
+    this.shutdownServices();
+    consensusService.stop();
     if (!Args.getInstance().isSolidityNode() && (!Args.getInstance().p2pDisable)) {
       tronNetService.close();
     }
-    consensusService.stop();
-    synchronized (dbManager.getRevokingStore()) {
-      dbManager.getSession().reset();
-      closeRevokingStore();
-    }
-    dbManager.stopRePushThread();
-    dbManager.stopRePushTriggerThread();
-    EventPluginLoader.getInstance().stopPlugin();
-    dbManager.stopFilterProcessThread();
-    dbManager.stopValidateSignThread();
-    getChainBaseManager().shutdown();
-    dynamicArgs.close();
-    logger.info("******** end to shutdown ********");
+    dbManager.close();
   }
 
   @Override
   public void startServices() {
     services.start();
+    services.blockUntilShutdown();
   }
 
   @Override
@@ -106,11 +93,6 @@ public class ApplicationImpl implements Application {
   @Override
   public ChainBaseManager getChainBaseManager() {
     return chainBaseManager;
-  }
-
-  private void closeRevokingStore() {
-    logger.info("******** start to closeRevokingStore ********");
-    dbManager.getRevokingStore().shutdown();
   }
 
 }

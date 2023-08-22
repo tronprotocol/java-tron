@@ -131,11 +131,6 @@ public class FullNode {
       JsonRpcServiceOnPBFT jsonRpcServiceOnPBFT = context.getBean(JsonRpcServiceOnPBFT.class);
       appT.addService(jsonRpcServiceOnPBFT);
     }
-
-    appT.initServices(parameter);
-    appT.startServices();
     appT.startup();
-
-    rpcApiService.blockUntilShutdown();
   }
 }

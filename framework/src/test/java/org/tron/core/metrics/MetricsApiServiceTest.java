@@ -52,8 +52,6 @@ public class MetricsApiServiceTest {
     rpcApiService = context.getBean(RpcApiService.class);
     metricsApiService = context.getBean(MetricsApiService.class);
     appT.addService(rpcApiService);
-    appT.initServices(parameter);
-    appT.startServices();
     appT.startup();
   }
 

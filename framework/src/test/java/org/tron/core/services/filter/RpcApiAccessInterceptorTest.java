@@ -89,8 +89,6 @@ public class RpcApiAccessInterceptorTest {
     appTest.addService(rpcApiService);
     appTest.addService(rpcApiServiceOnSolidity);
     appTest.addService(rpcApiServiceOnPBFT);
-    appTest.initServices(Args.getInstance());
-    appTest.startServices();
     appTest.startup();
   }
 

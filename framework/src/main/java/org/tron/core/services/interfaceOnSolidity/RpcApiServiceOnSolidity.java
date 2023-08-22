@@ -1,10 +1,8 @@
 package org.tron.core.services.interfaceOnSolidity;
 
 import com.google.protobuf.ByteString;
-import io.grpc.Server;
 import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,14 +32,10 @@ import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
-import org.tron.common.application.Service;
-import org.tron.common.crypto.SignInterface;
-import org.tron.common.crypto.SignUtils;
+import org.tron.common.application.RpcService;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.common.utils.StringUtil;
-import org.tron.common.utils.Utils;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
@@ -67,10 +61,8 @@ import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 
 @Slf4j(topic = "API")
-public class RpcApiServiceOnSolidity implements Service {
+public class RpcApiServiceOnSolidity extends RpcService {
 
-  private int port = Args.getInstance().getRpcOnSolidityPort();
-  private Server apiServer;
 
   @Autowired
   private WalletOnSolidity walletOnSolidity;
@@ -95,57 +87,36 @@ public class RpcApiServiceOnSolidity implements Service {
 
   @Override
   public void init(CommonParameter args) {
+    port = Args.getInstance().getRpcOnSolidityPort();
   }
 
   @Override
   public void start() {
-    try {
-      NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port)
-          .addService(new DatabaseApi());
-
-      CommonParameter parameter = Args.getInstance();
-
-      if (parameter.getRpcThreadNum() > 0) {
-        serverBuilder = serverBuilder
-            .executor(ExecutorServiceManager.newFixedThreadPool(
-                executorName, parameter.getRpcThreadNum()));
-      }
-
-      serverBuilder = serverBuilder.addService(new WalletSolidityApi());
-
-      // Set configs from config.conf or default value
-      serverBuilder.maxConcurrentCallsPerConnection(parameter.getMaxConcurrentCallsPerConnection())
-          .flowControlWindow(parameter.getFlowControlWindow())
-          .maxConnectionIdle(parameter.getMaxConnectionIdleInMillis(), TimeUnit.MILLISECONDS)
-          .maxConnectionAge(parameter.getMaxConnectionAgeInMillis(), TimeUnit.MILLISECONDS)
-          .maxInboundMessageSize(parameter.getMaxMessageSize())
-          .maxHeaderListSize(parameter.getMaxHeaderListSize());
-
-      // add a ratelimiter interceptor
-      serverBuilder.intercept(rateLimiterInterceptor);
-
-      // add api access interceptor
-      serverBuilder.intercept(apiAccessInterceptor);
-
-      // add lite fullnode query interceptor
-      serverBuilder.intercept(liteFnQueryGrpcInterceptor);
-
-      apiServer = serverBuilder.build();
-      rateLimiterInterceptor.init(apiServer);
-
-      apiServer.start();
-
-    } catch (IOException e) {
-      logger.debug(e.getMessage(), e);
+    NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port)
+        .addService(new DatabaseApi());
+    CommonParameter parameter = Args.getInstance();
+    if (parameter.getRpcThreadNum() > 0) {
+      serverBuilder = serverBuilder
+          .executor(ExecutorServiceManager.newFixedThreadPool(
+              executorName, parameter.getRpcThreadNum()));
     }
-
-    logger.info("RpcApiServiceOnSolidity started, listening on " + port);
-
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      System.err.println("*** shutting down gRPC server on solidity since JVM is shutting down");
-      //server.this.stop();
-      System.err.println("*** server on solidity shut down");
-    }));
+    serverBuilder = serverBuilder.addService(new WalletSolidityApi());
+    // Set configs from config.conf or default value
+    serverBuilder.maxConcurrentCallsPerConnection(parameter.getMaxConcurrentCallsPerConnection())
+        .flowControlWindow(parameter.getFlowControlWindow())
+        .maxConnectionIdle(parameter.getMaxConnectionIdleInMillis(), TimeUnit.MILLISECONDS)
+        .maxConnectionAge(parameter.getMaxConnectionAgeInMillis(), TimeUnit.MILLISECONDS)
+        .maxInboundMessageSize(parameter.getMaxMessageSize())
+        .maxHeaderListSize(parameter.getMaxHeaderListSize());
+    // add a ratelimiter interceptor
+    serverBuilder.intercept(rateLimiterInterceptor);
+    // add api access interceptor
+    serverBuilder.intercept(apiAccessInterceptor);
+    // add lite fullnode query interceptor
+    serverBuilder.intercept(liteFnQueryGrpcInterceptor);
+    apiServer = serverBuilder.build();
+    rateLimiterInterceptor.init(apiServer);
+    super.start();
   }
 
   private TransactionExtention transaction2Extention(Transaction transaction) {
@@ -175,13 +146,6 @@ public class RpcApiServiceOnSolidity implements Service {
       builder.addTransactions(transaction2Extention(transaction));
     }
     return builder.build();
-  }
-
-  @Override
-  public void stop() {
-    if (apiServer != null) {
-      apiServer.shutdown();
-    }
   }
 
   /**

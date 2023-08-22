@@ -55,8 +55,6 @@ public class TriggerSmartContractServletTest extends BaseTest {
     appT.addService(httpApiService);
 
     // start services
-    appT.initServices(Args.getInstance());
-    appT.startServices();
     appT.startup();
 
     // create contract for testing

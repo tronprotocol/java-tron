@@ -85,8 +85,6 @@ public class LiteFnQueryGrpcInterceptorTest {
     appTest.addService(rpcApiService);
     appTest.addService(rpcOnSolidity);
     appTest.addService(rpcApiServiceOnPBFT);
-    appTest.initServices(Args.getInstance());
-    appTest.startServices();
     appTest.startup();
   }
 
