@@ -180,21 +180,21 @@ public class CommonParameter {
   @Getter
   @Setter
   public String nodeExternalIp;
-//  @Getter
-//  @Setter
-//  public boolean nodeDiscoveryPublicHomeNode;
-//  @Getter
-//  @Setter
-//  public long nodeDiscoveryPingTimeout;
-//  @Getter
-//  @Setter
-//  public long nodeP2pPingInterval;
+  @Getter
+  @Setter
+  public boolean nodeDiscoveryPublicHomeNode;
+  @Getter
+  @Setter
+  public long nodeDiscoveryPingTimeout;
+  @Getter
+  @Setter
+  public long nodeP2pPingInterval;
   @Getter
   @Setter
   public int nodeP2pVersion;
-//  @Getter
-//  @Setter
-//  public String p2pNodeId;
+  @Getter
+  @Setter
+  public String p2pNodeId;
   @Getter
   @Setter
   public boolean nodeEnableIpv6 = false;

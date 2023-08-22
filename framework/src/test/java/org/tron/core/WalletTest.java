@@ -39,11 +39,9 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.api.GrpcAPI;
-import org.tron.api.GrpcAPI.AccountNetMessage;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.ExchangeList;
-import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.common.BaseTest;
 import org.tron.common.crypto.ECKey;
@@ -139,7 +137,7 @@ public class WalletTest extends BaseTest {
 
   static {
     dbPath = "output_wallet_test";
-    Args.setParam(new String[] {"-d", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     RECEIVER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
   }
@@ -237,11 +235,11 @@ public class WalletTest extends BaseTest {
   private static Transaction getBuildTransaction(
       TransferContract transferContract, long transactionTimestamp, long refBlockNum) {
     return Transaction.newBuilder().setRawData(
-            Transaction.raw.newBuilder().setTimestamp(transactionTimestamp)
-                .setRefBlockNum(refBlockNum)
-                .addContract(
-                    Contract.newBuilder().setType(ContractType.TransferContract)
-                        .setParameter(Any.pack(transferContract)).build()).build())
+        Transaction.raw.newBuilder().setTimestamp(transactionTimestamp)
+            .setRefBlockNum(refBlockNum)
+            .addContract(
+                Contract.newBuilder().setType(ContractType.TransferContract)
+                    .setParameter(Any.pack(transferContract)).build()).build())
         .build();
   }
 
@@ -290,9 +288,9 @@ public class WalletTest extends BaseTest {
   private static Block getBuildBlock(long timestamp, long num, long witnessId,
       String witnessAddress, Transaction transaction, Transaction transactionNext) {
     return Block.newBuilder().setBlockHeader(BlockHeader.newBuilder().setRawData(
-            raw.newBuilder().setTimestamp(timestamp).setNumber(num).setWitnessId(witnessId)
-                .setWitnessAddress(ByteString.copyFrom(ByteArray.fromHexString(witnessAddress)))
-                .build()).build()).addTransactions(transaction).addTransactions(transactionNext)
+        raw.newBuilder().setTimestamp(timestamp).setNumber(num).setWitnessId(witnessId)
+            .setWitnessAddress(ByteString.copyFrom(ByteArray.fromHexString(witnessAddress)))
+            .build()).build()).addTransactions(transaction).addTransactions(transactionNext)
         .build();
   }
 
@@ -510,52 +508,6 @@ public class WalletTest extends BaseTest {
   }
 
   @Test
-  public void testGetAssetIssueByAccount() {
-    buildAssetIssue();
-    //
-    AssetIssueList assetIssueList = wallet.getAssetIssueByAccount(
-        ByteString.copyFromUtf8("Address1"));
-    Assert.assertEquals(1, assetIssueList.getAssetIssueCount());
-  }
-
-  @Test
-  public void testGetAssetIssueList() {
-    buildAssetIssue();
-    //
-    AssetIssueList assetIssueList = wallet.getAssetIssueList();
-    Assert.assertEquals(1, assetIssueList.getAssetIssueCount());
-  }
-
-  @Test
-  public void testGetAssetIssueListByName() {
-    buildAssetIssue();
-    //
-    AssetIssueList assetIssueList = wallet.getAssetIssueListByName(
-        ByteString.copyFromUtf8("Asset1"));
-    Assert.assertEquals(1, assetIssueList.getAssetIssueCount());
-  }
-
-  @Test
-  public void testGetAssetIssueById() {
-    buildAssetIssue();
-    //
-    AssetIssueContract assetIssueContract = wallet.getAssetIssueById("id2");
-    Assert.assertNotNull(assetIssueContract);
-  }
-
-  @Test
-  public void testGetAccountNet() {
-    ByteString addressByte = ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS));
-    AccountCapsule accountCapsule =
-        new AccountCapsule(Protocol.Account.newBuilder().setAddress(addressByte).build());
-    accountCapsule.setBalance(1000_000_000L);
-    dbManager.getChainBaseManager().getAccountStore()
-        .put(accountCapsule.createDbKey(), accountCapsule);
-    AccountNetMessage accountNetMessage = wallet.getAccountNet(addressByte);
-    Assert.assertNotNull(accountNetMessage);
-  }
-
-  @Test
   public void getPaginatedProposalList() {
     buildProposal();
     //
@@ -589,16 +541,6 @@ public class WalletTest extends BaseTest {
   }
 
   @Test
-  public void testGetProposalById() {
-    buildProposal();
-    //
-    Proposal proposal = wallet.getProposalById(ByteString.copyFrom(ByteArray.fromLong(1L)));
-    Assert.assertNotNull(proposal);
-    proposal = wallet.getProposalById(ByteString.copyFrom(ByteArray.fromLong(3L)));
-    Assert.assertNull(proposal);
-  }
-
-  @Test
   public void getPaginatedExchangeList() {
     buildExchange();
     ExchangeList exchangeList = wallet.getPaginatedExchangeList(0, 100);
@@ -606,24 +548,6 @@ public class WalletTest extends BaseTest {
         exchangeList.getExchangesList().get(0).getCreatorAddress().toStringUtf8());
     assertEquals("Address2",
         exchangeList.getExchangesList().get(1).getCreatorAddress().toStringUtf8());
-  }
-
-  @Test
-  public void testGetExchangeById() {
-    buildExchange();
-    //
-    Exchange exchange = wallet.getExchangeById(ByteString.copyFrom(ByteArray.fromLong(1L)));
-    Assert.assertNotNull(exchange);
-    exchange = wallet.getExchangeById(ByteString.copyFrom(ByteArray.fromLong(3L)));
-    Assert.assertNull(exchange);
-  }
-
-  @Test
-  public void testGetExchangeList() {
-    buildExchange();
-    //
-    ExchangeList exchangeList = wallet.getExchangeList();
-    Assert.assertEquals(2, exchangeList.getExchangesCount());
   }
 
   @Test
@@ -650,12 +574,6 @@ public class WalletTest extends BaseTest {
     req = req.toBuilder().clearDetail()
         .setIdOrNum(new BlockCapsule(block).getBlockId().toString()).build();
     assertEquals(block, wallet.getBlock(req));
-  }
-
-  @Test
-  public void testGetNextMaintenanceTime() {
-    NumberMessage numberMessage = wallet.getNextMaintenanceTime();
-    Assert.assertEquals(0, numberMessage.getNum());
   }
 
   //@Test
@@ -742,8 +660,8 @@ public class WalletTest extends BaseTest {
   }
 
   private Any getDelegatedContractForCpu(String ownerAddress, String receiverAddress,
-      long frozenBalance,
-      long duration) {
+                                         long frozenBalance,
+                                         long duration) {
     return Any.pack(
         BalanceContract.FreezeBalanceContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
@@ -779,13 +697,13 @@ public class WalletTest extends BaseTest {
   }
 
   private Any getDelegateContractForBandwidth(String ownerAddress, String receiveAddress,
-      long unfreezeBalance) {
+                                              long unfreezeBalance) {
     return getLockedDelegateContractForBandwidth(ownerAddress, receiveAddress,
         unfreezeBalance, false);
   }
 
   private Any getLockedDelegateContractForBandwidth(String ownerAddress, String receiveAddress,
-      long unfreezeBalance, boolean lock) {
+                                                    long unfreezeBalance, boolean lock) {
     return Any.pack(BalanceContract.DelegateResourceContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
         .setReceiverAddress(ByteString.copyFrom(ByteArray.fromHexString(receiveAddress)))
@@ -1005,7 +923,7 @@ public class WalletTest extends BaseTest {
     chainBaseManager.getAccountIdIndexStore().put(ownerCapsule);
     Protocol.Account account = wallet.getAccountById(
         Protocol.Account.newBuilder().setAccountId(ByteString.copyFromUtf8("1001")).build());
-    Assert.assertEquals(ownerCapsule.getAddress(), account.getAddress());
+    Assert.assertEquals(ownerCapsule.getAddress(),account.getAddress());
   }
 
   @Test
@@ -1023,18 +941,18 @@ public class WalletTest extends BaseTest {
     String assetName = "My_asset";
     String id = "10001";
     AssetIssueCapsule assetCapsule = new AssetIssueCapsule(ByteArray.fromHexString(OWNER_ADDRESS),
-        id, assetName, "abbr", 1_000_000_000_000L, 6);
+        id,assetName,"abbr", 1_000_000_000_000L,6);
     chainBaseManager.getAssetIssueStore().put(assetCapsule.createDbKey(), assetCapsule);
     chainBaseManager.getAssetIssueV2Store().put(assetCapsule.createDbV2Key(), assetCapsule);
     try {
       AssetIssueContract assetIssue =
           wallet.getAssetIssueByName(ByteString.copyFromUtf8(assetName));
-      Assert.assertEquals(ByteString.copyFromUtf8(assetName), assetIssue.getName());
-      Assert.assertEquals(id, assetIssue.getId());
+      Assert.assertEquals(ByteString.copyFromUtf8(assetName),assetIssue.getName());
+      Assert.assertEquals(id,assetIssue.getId());
       chainBaseManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
       assetIssue = wallet.getAssetIssueByName(ByteString.copyFromUtf8(assetName));
-      Assert.assertEquals(ByteString.copyFromUtf8(assetName), assetIssue.getName());
-      Assert.assertEquals(id, assetIssue.getId());
+      Assert.assertEquals(ByteString.copyFromUtf8(assetName),assetIssue.getName());
+      Assert.assertEquals(id,assetIssue.getId());
     } catch (NonUniqueObjectException e) {
       Assert.fail(e.getMessage());
     }

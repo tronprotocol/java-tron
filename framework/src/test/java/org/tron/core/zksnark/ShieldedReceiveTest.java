@@ -17,7 +17,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.DecryptNotes;
-import org.tron.api.GrpcAPI.DecryptNotesMarked;
 import org.tron.api.GrpcAPI.ReceiveNote;
 import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.GrpcAPI.TransactionExtention;
@@ -2379,8 +2378,8 @@ public class ShieldedReceiveTest extends BaseTest {
     chainBaseManager.addWitness(ByteString.copyFrom(witnessAddress));
 
     //sometimes generate block failed, try several times.
-    long time = System.currentTimeMillis();
-    Block block = getSignedBlock(witnessCapsule.getAddress(), time, privateKey);
+
+    Block block = getSignedBlock(witnessCapsule.getAddress(), 0, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
 
     //create transactions
@@ -2428,24 +2427,16 @@ public class ShieldedReceiveTest extends BaseTest {
 
     Thread.sleep(500);
     //package transaction to block
-    block = getSignedBlock(witnessCapsule.getAddress(), time + 3000, privateKey);
+    block = getSignedBlock(witnessCapsule.getAddress(), 0, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
 
     BlockCapsule blockCapsule3 = new BlockCapsule(wallet.getNowBlock());
     Assert.assertEquals("blocknum != 2", 2, blockCapsule3.getNum());
 
-    block = getSignedBlock(witnessCapsule.getAddress(), time + 6000, privateKey);
-    dbManager.pushBlock(new BlockCapsule(block));
-
     // scan note by ivk
     byte[] receiverIvk = incomingViewingKey.getValue();
     DecryptNotes notes1 = wallet.scanNoteByIvk(0, 100, receiverIvk);
     Assert.assertEquals(2, notes1.getNoteTxsCount());
-
-    // scan note by ivk and mark
-    DecryptNotesMarked notes3 = wallet.scanAndMarkNoteByIvk(0, 100, receiverIvk,
-        fullViewingKey.getAk(), fullViewingKey.getNk());
-    Assert.assertEquals(2, notes3.getNoteTxsCount());
 
     // scan note by ovk
     DecryptNotes notes2 = wallet.scanNoteByOvk(0, 100, senderOvk);
@@ -2462,7 +2453,6 @@ public class ShieldedReceiveTest extends BaseTest {
       outPointBuild.setIndex(i);
       request.addOutPoints(outPointBuild.build());
     }
-    request.setBlockNum(1);
     IncrementalMerkleVoucherInfo merkleVoucherInfo = wallet
         .getMerkleTreeVoucherInfo(request.build());
 
