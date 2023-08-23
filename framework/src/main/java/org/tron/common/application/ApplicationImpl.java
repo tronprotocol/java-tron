@@ -77,12 +77,13 @@ public class ApplicationImpl implements Application {
     synchronized (dbManager.getRevokingStore()) {
       dbManager.getSession().reset();
       closeRevokingStore();
-      closeAllStore();
     }
     dbManager.stopRePushThread();
     dbManager.stopRePushTriggerThread();
     EventPluginLoader.getInstance().stopPlugin();
     dbManager.stopFilterProcessThread();
+    dbManager.stopValidateSignThread();
+    getChainBaseManager().shutdown();
     dynamicArgs.close();
     logger.info("******** end to shutdown ********");
   }
@@ -110,10 +111,6 @@ public class ApplicationImpl implements Application {
   private void closeRevokingStore() {
     logger.info("******** start to closeRevokingStore ********");
     dbManager.getRevokingStore().shutdown();
-  }
-
-  private void closeAllStore() {
-    dbManager.closeAllStore();
   }
 
 }

@@ -21,6 +21,8 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.bouncycastle.util.encoders.Hex;
@@ -78,6 +80,10 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   private final Path cacheProperties;
   private final Path cacheDir;
   private AtomicBoolean isValid = new AtomicBoolean(false);
+
+  @Getter
+  @Setter
+  private volatile boolean alive;
 
   public TxCacheDB(String name, RecentTransactionStore recentTransactionStore) {
     this.name = name;
@@ -138,6 +144,7 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   public void init() {
     if (recovery()) {
       isValid.set(true);
+      setAlive(true);
       return;
     }
     long size = recentTransactionStore.size();
@@ -160,6 +167,7 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
         bloomFilters[1].approximateElementCount(), bloomFilters[1].expectedFpp(),
         System.currentTimeMillis() - start);
     isValid.set(true);
+    setAlive(true);
   }
 
   @Override
@@ -247,10 +255,14 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
 
   @Override
   public void close() {
+    if (!isAlive()) {
+      return;
+    }
     dump();
     bloomFilters[0] = null;
     bloomFilters[1] = null;
     persistentStore.close();
+    setAlive(false);
   }
 
   @Override

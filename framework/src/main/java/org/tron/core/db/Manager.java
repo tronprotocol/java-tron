@@ -105,7 +105,6 @@ import org.tron.core.db.api.EnergyPriceHistoryLoader;
 import org.tron.core.db.api.MoveAbiHelper;
 import org.tron.core.db2.ISession;
 import org.tron.core.db2.core.Chainbase;
-import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
@@ -448,6 +447,10 @@ public class Manager {
   public void stopFilterProcessThread() {
     isRunFilterProcessThread = false;
     ExecutorServiceManager.shutdownAndAwaitTermination(filterEs, filterEsName);
+  }
+
+  public void stopValidateSignThread() {
+    ExecutorServiceManager.shutdownAndAwaitTermination(validateSignService, "validate-sign");
   }
 
   @PostConstruct
@@ -1924,24 +1927,6 @@ public class Manager {
 
   public NullifierStore getNullifierStore() {
     return chainBaseManager.getNullifierStore();
-  }
-
-  public void closeAllStore() {
-    logger.info("******** Begin to close db. ********");
-    chainBaseManager.closeAllStore();
-    validateSignService.shutdown();
-    logger.info("******** End to close db. ********");
-  }
-
-  public void closeOneStore(ITronChainBase database) {
-    logger.info("******** Begin to close {}. ********", database.getName());
-    try {
-      database.close();
-    } catch (Exception e) {
-      logger.info("Failed to close {}.", database.getName(), e);
-    } finally {
-      logger.info("******** End to close {}. ********", database.getName());
-    }
   }
 
   public boolean isTooManyPending() {
