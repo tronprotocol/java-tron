@@ -346,6 +346,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         }
       }
       return owner.toByteArray();
+    } catch (InvalidProtocolBufferException invalidProtocolBufferException) {
+      logger.warn("InvalidProtocolBufferException occurred because {}, please verify the interface "
+          + "input parameters", invalidProtocolBufferException.getMessage());
+      return new byte[0];
     } catch (Exception ex) {
       logger.error(ex.getMessage());
       return new byte[0];

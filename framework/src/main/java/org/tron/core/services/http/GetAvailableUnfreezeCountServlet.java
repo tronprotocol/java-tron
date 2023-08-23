@@ -23,6 +23,9 @@ public class GetAvailableUnfreezeCountServlet extends RateLimiterServlet {
     try {
       boolean visible = Util.getVisible(request);
       String ownerAddress = request.getParameter("ownerAddress");
+      if (ownerAddress == null) {
+        ownerAddress = request.getParameter("owner_address");
+      }
       if (visible) {
         ownerAddress = Util.getHexAddress(ownerAddress);
       }

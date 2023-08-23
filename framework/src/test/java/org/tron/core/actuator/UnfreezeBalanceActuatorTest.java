@@ -629,10 +629,9 @@ public class UnfreezeBalanceActuatorTest extends BaseTest {
       actuator.execute(ret);
       fail("cannot run here.");
     } catch (ContractValidateException e) {
-      Assert.assertTrue(true);
       Assert.assertEquals("no frozenBalance(BANDWIDTH)", e.getMessage());
     } catch (ContractExeException e) {
-      Assert.assertTrue(true);
+      Assert.fail();
     }
   }
 
@@ -842,12 +841,9 @@ public class UnfreezeBalanceActuatorTest extends BaseTest {
       fail("cannot run here.");
 
     } catch (ContractValidateException e) {
-      Assert.assertTrue(true);
-
       Assert.assertEquals("Invalid address", e.getMessage());
-
     } catch (ContractExeException e) {
-      Assert.assertTrue(true);
+      Assert.fail();
     }
 
   }
@@ -870,7 +866,6 @@ public class UnfreezeBalanceActuatorTest extends BaseTest {
       actuator.execute(ret);
       fail("cannot run here.");
     } catch (ContractValidateException e) {
-      Assert.assertTrue(true);
       Assert.assertEquals("Account[" + OWNER_ACCOUNT_INVALID + "] does not exist",
           e.getMessage());
     } catch (ContractExeException e) {
@@ -890,7 +885,6 @@ public class UnfreezeBalanceActuatorTest extends BaseTest {
       fail("cannot run here.");
 
     } catch (ContractValidateException e) {
-      Assert.assertTrue(true);
       Assert.assertEquals("no frozenBalance(BANDWIDTH)", e.getMessage());
     } catch (ContractExeException e) {
       Assert.fail();
@@ -916,7 +910,6 @@ public class UnfreezeBalanceActuatorTest extends BaseTest {
       fail("cannot run here.");
 
     } catch (ContractValidateException e) {
-      Assert.assertTrue(true);
       Assert.assertEquals("It's not time to unfreeze(BANDWIDTH).", e.getMessage());
     } catch (ContractExeException e) {
       Assert.fail();
@@ -1178,7 +1171,7 @@ public class UnfreezeBalanceActuatorTest extends BaseTest {
       actuator.validate();
       Assert.fail();
     } catch (ContractValidateException e) {
-      Assert.assertTrue(true);
+      Assert.assertEquals("It's not time to unfreeze(TronPower).", e.getMessage());
     }
   }
 

@@ -30,11 +30,11 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.TransactionUtil;
-import org.tron.protos.contract.BalanceContract.DelegateResourceContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.contract.BalanceContract.DelegateResourceContract;
 
 @Slf4j(topic = "capsule")
 public class TransactionUtilTest extends BaseTest {
@@ -68,26 +68,27 @@ public class TransactionUtilTest extends BaseTest {
   public static long consumeBandWidthSize(
       final TransactionCapsule transactionCapsule,
       ChainBaseManager chainBaseManager) {
-    long bytesSize;
+    long bs;
 
     boolean supportVM = chainBaseManager.getDynamicPropertiesStore().supportVM();
     if (supportVM) {
-      bytesSize = transactionCapsule.getInstance().toBuilder().clearRet().build().getSerializedSize();
+      bs = transactionCapsule.getInstance().toBuilder().clearRet().build().getSerializedSize();
     } else {
-      bytesSize = transactionCapsule.getSerializedSize();
+      bs = transactionCapsule.getSerializedSize();
     }
 
-    List<Transaction.Contract> contracts = transactionCapsule.getInstance().getRawData().getContractList();
+    List<Transaction.Contract> contracts = transactionCapsule.getInstance().getRawData()
+        .getContractList();
     for (Transaction.Contract contract : contracts) {
       if (contract.getType() == Transaction.Contract.ContractType.ShieldedTransferContract) {
         continue;
       }
       if (supportVM) {
-        bytesSize += Constant.MAX_RESULT_SIZE_IN_TX;
+        bs += Constant.MAX_RESULT_SIZE_IN_TX;
       }
     }
 
-    return bytesSize;
+    return bs;
   }
 
   // only for testing
@@ -104,14 +105,14 @@ public class TransactionUtilTest extends BaseTest {
           .setLock(true)
           .setBalance(ownerCapsule.getFrozenV2BalanceForBandwidth());
     }
-    TransactionCapsule fakeTransactionCapsule = new TransactionCapsule(builder.build()
-        , ContractType.DelegateResourceContract);
+    TransactionCapsule fakeTransactionCapsule = new TransactionCapsule(builder.build(),
+        ContractType.DelegateResourceContract);
     long size1 = consumeBandWidthSize(fakeTransactionCapsule, chainBaseManager);
 
     DelegateResourceContract.Builder builder2 = DelegateResourceContract.newBuilder()
         .setBalance(TRX_PRECISION);
-    TransactionCapsule fakeTransactionCapsule2 = new TransactionCapsule(builder2.build()
-        , ContractType.DelegateResourceContract);
+    TransactionCapsule fakeTransactionCapsule2 = new TransactionCapsule(builder2.build(),
+        ContractType.DelegateResourceContract);
     long size2 = consumeBandWidthSize(fakeTransactionCapsule2, chainBaseManager);
     long addSize = Math.max(size1 - size2, 0L);
 
@@ -125,14 +126,14 @@ public class TransactionUtilTest extends BaseTest {
     DelegateResourceContract.Builder builder = DelegateResourceContract.newBuilder()
         .setLock(true)
         .setBalance(ownerCapsule.getFrozenV2BalanceForBandwidth());
-    TransactionCapsule fakeTransactionCapsule = new TransactionCapsule(builder.build()
-        , ContractType.DelegateResourceContract);
+    TransactionCapsule fakeTransactionCapsule = new TransactionCapsule(builder.build(),
+        ContractType.DelegateResourceContract);
     long size1 = consumeBandWidthSize(fakeTransactionCapsule, chainBaseManager);
 
     DelegateResourceContract.Builder builder2 = DelegateResourceContract.newBuilder()
         .setBalance(TRX_PRECISION);
-    TransactionCapsule fakeTransactionCapsule2 = new TransactionCapsule(builder2.build()
-        , ContractType.DelegateResourceContract);
+    TransactionCapsule fakeTransactionCapsule2 = new TransactionCapsule(builder2.build(),
+        ContractType.DelegateResourceContract);
     long size2 = consumeBandWidthSize(fakeTransactionCapsule2, chainBaseManager);
     long addSize = Math.max(size1 - size2, 0L);
 

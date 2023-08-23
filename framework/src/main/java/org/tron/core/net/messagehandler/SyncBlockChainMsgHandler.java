@@ -87,6 +87,18 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
 
   private LinkedList<BlockId> getLostBlockIds(List<BlockId> blockIds) throws P2pException {
 
+    BlockId unForkId = getUnForkId(blockIds);
+    LinkedList<BlockId> ids = getBlockIds(unForkId.getNum());
+
+    if (ids.isEmpty() || !unForkId.equals(ids.peekFirst())) {
+      unForkId = getUnForkId(blockIds);
+      ids = getBlockIds(unForkId.getNum());
+    }
+
+    return ids;
+  }
+
+  private BlockId getUnForkId(List<BlockId> blockIds) throws P2pException {
     BlockId unForkId = null;
     for (int i = blockIds.size() - 1; i >= 0; i--) {
       if (tronNetDelegate.containBlockInMainChain(blockIds.get(i))) {
@@ -99,13 +111,17 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
       throw new P2pException(TypeEnum.SYNC_FAILED, "unForkId is null");
     }
 
+    return unForkId;
+  }
+
+  private LinkedList<BlockId> getBlockIds(Long unForkNum) throws P2pException {
     BlockId headID = tronNetDelegate.getHeadBlockId();
     long headNum = headID.getNum();
 
-    long len = Math.min(headNum, unForkId.getNum() + NetConstants.SYNC_FETCH_BATCH_NUM);
+    long len = Math.min(headNum, unForkNum + NetConstants.SYNC_FETCH_BATCH_NUM);
 
     LinkedList<BlockId> ids = new LinkedList<>();
-    for (long i = unForkId.getNum(); i <= len; i++) {
+    for (long i = unForkNum; i <= len; i++) {
       if (i == headNum) {
         ids.add(headID);
       } else {

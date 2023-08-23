@@ -223,7 +223,7 @@ public class FreezeBalanceV2ActuatorTest extends BaseTest {
     } catch (ContractValidateException e) {
       Assert.assertEquals("Invalid address", e.getMessage());
     } catch (ContractExeException e) {
-      Assert.assertTrue(true);
+      Assert.fail();
     }
 
   }

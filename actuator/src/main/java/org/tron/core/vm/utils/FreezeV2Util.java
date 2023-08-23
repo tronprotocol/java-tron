@@ -234,8 +234,8 @@ public class FreezeV2Util {
   }
 
   private static List<Protocol.Account.UnFreezeV2> getTotalWithdrawList(List<Protocol.Account.UnFreezeV2> unfrozenV2List, long now) {
-    return unfrozenV2List.stream().filter(unfrozenV2 -> (unfrozenV2.getUnfreezeAmount() > 0
-        && unfrozenV2.getUnfreezeExpireTime() <= now)).collect(Collectors.toList());
+    return unfrozenV2List.stream().filter(unfrozenV2 -> unfrozenV2.getUnfreezeExpireTime() <= now)
+        .collect(Collectors.toList());
   }
 
   public static long getV2NetUsage(AccountCapsule ownerCapsule, long netUsage) {

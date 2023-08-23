@@ -806,13 +806,8 @@ public class Wallet {
     long finalTimestamp = timestamp;
 
     canWithdrawUnfreezeAmount = unfrozenV2List
-            .stream()
-            .filter(unfrozenV2 ->
-                    (unfrozenV2.getUnfreezeAmount() > 0
-                    && unfrozenV2.getUnfreezeExpireTime() <= finalTimestamp))
-            .mapToLong(UnFreezeV2::getUnfreezeAmount)
-            .sum();
-
+            .stream().filter(unfrozenV2 -> unfrozenV2.getUnfreezeExpireTime() <= finalTimestamp)
+            .mapToLong(UnFreezeV2::getUnfreezeAmount).sum();
 
     builder.setAmount(canWithdrawUnfreezeAmount);
     return builder.build();
