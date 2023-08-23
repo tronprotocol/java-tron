@@ -93,6 +93,7 @@ public class SolidityNode {
     SolidityNode node = new SolidityNode(appT.getDbManager());
     node.start();
     appT.startup();
+    appT.blockUntilShutdown();
   }
 
   private void start() {

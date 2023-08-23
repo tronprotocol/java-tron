@@ -34,6 +34,9 @@ public interface Application {
 
   void startServices();
 
+  default void blockUntilShutdown() {
+  }
+
   void shutdownServices();
 
   void addService(Service service);

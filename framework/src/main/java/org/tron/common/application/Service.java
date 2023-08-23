@@ -23,6 +23,11 @@ public interface Service {
 
   void init(CommonParameter parameter);
 
+  /**
+   * Start the service.
+   * {@link Service#init(CommonParameter parameter) init(CommonParameter parameter)} must be called
+   * before this method.
+   */
   void start();
 
   void stop();

@@ -256,6 +256,7 @@ public class JsonrpcServiceTest extends BaseTest {
 
   @Test
   public void testGetBlockByNumber2() {
+    fullNodeJsonRpcHttpService.init(Args.getInstance());
     fullNodeJsonRpcHttpService.start();
     JsonArray params = new JsonArray();
     params.add(ByteArray.toJsonHex(blockCapsule.getNum()));
