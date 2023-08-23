@@ -103,8 +103,8 @@ public class Constant {
   public static final String NODE_LISTEN_PORT = "node.listen.port";
   //public static final String NODE_DISCOVERY_PUBLIC_HOME_NODE = "node.discovery.public.home.node";
   //public static final String NODE_DISCOVERY_PING_TIMEOUT = "node.discovery.ping.timeout";
-
-  public static final String NODE_P2P_PING_INTERVAL = "node.p2p.pingInterval";
+  
+  //public static final String NODE_P2P_PING_INTERVAL = "node.p2p.pingInterval";
   public static final String NODE_P2P_VERSION = "node.p2p.version";
   public static final String NODE_ENABLE_IPV6  = "node.enableIpv6";
   public static final String NODE_DNS_TREE_URLS = "node.dns.treeUrls";
