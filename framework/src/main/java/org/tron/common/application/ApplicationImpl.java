@@ -12,8 +12,6 @@ import org.tron.core.consensus.ConsensusService;
 import org.tron.core.db.Manager;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.net.TronNetService;
-import org.tron.program.FullNode;
-import org.tron.program.SolidityNode;
 
 @Slf4j(topic = "app")
 @Component
@@ -79,15 +77,15 @@ public class ApplicationImpl implements Application {
     synchronized (dbManager.getRevokingStore()) {
       dbManager.getSession().reset();
       closeRevokingStore();
-      closeAllStore();
     }
     dbManager.stopRePushThread();
     dbManager.stopRePushTriggerThread();
     EventPluginLoader.getInstance().stopPlugin();
     dbManager.stopFilterProcessThread();
+    dbManager.stopValidateSignThread();
+    getChainBaseManager().shutdown();
     dynamicArgs.close();
     logger.info("******** end to shutdown ********");
-    FullNode.shutDownSign = true;
   }
 
   @Override
@@ -113,10 +111,6 @@ public class ApplicationImpl implements Application {
   private void closeRevokingStore() {
     logger.info("******** start to closeRevokingStore ********");
     dbManager.getRevokingStore().shutdown();
-  }
-
-  private void closeAllStore() {
-    dbManager.closeAllStore();
   }
 
 }

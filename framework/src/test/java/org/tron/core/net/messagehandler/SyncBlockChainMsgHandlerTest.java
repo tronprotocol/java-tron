@@ -2,6 +2,7 @@ package org.tron.core.net.messagehandler;
 
 import java.io.File;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -64,6 +65,21 @@ public class SyncBlockChainMsgHandlerTest {
     method.setAccessible(true);
     boolean f = (boolean)method.invoke(handler, peer, message);
     Assert.assertTrue(!f);
+
+    Method method1 = handler.getClass().getDeclaredMethod(
+        "getLostBlockIds", List.class);
+    method1.setAccessible(true);
+    try {
+      method1.invoke(handler, blockIds);
+    } catch (InvocationTargetException e) {
+      Assert.assertEquals("unForkId is null", e.getTargetException().getMessage());
+    }
+
+    Method method2 = handler.getClass().getDeclaredMethod(
+        "getBlockIds", Long.class);
+    method2.setAccessible(true);
+    List list = (List) method2.invoke(handler, 0L);
+    Assert.assertEquals(1, list.size());
   }
 
   @After
