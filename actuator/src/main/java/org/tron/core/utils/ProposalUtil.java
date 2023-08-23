@@ -2,6 +2,7 @@ package org.tron.core.utils;
 
 import static org.tron.core.Constant.DYNAMIC_ENERGY_INCREASE_FACTOR_RANGE;
 import static org.tron.core.Constant.DYNAMIC_ENERGY_MAX_FACTOR_RANGE;
+import static org.tron.core.config.Parameter.ChainConstant.ONE_YEAR_BLOCK_NUMBERS;
 
 import org.tron.common.utils.ForkController;
 import org.tron.core.config.Parameter.ForkBlockVersionConsts;
@@ -714,10 +715,11 @@ public class ProposalUtil {
               "Bad chain parameter id [MAX_DELEGATE_LOCK_PERIOD]");
         }
         long maxDelegateLockPeriod = dynamicPropertiesStore.getMaxDelegateLockPeriod();
-        if (value <= maxDelegateLockPeriod || value > 10512000L) {
+        if (value <= maxDelegateLockPeriod || value > ONE_YEAR_BLOCK_NUMBERS) {
           throw new ContractValidateException(
               "This value[MAX_DELEGATE_LOCK_PERIOD] is only allowed to be greater than "
-                  + maxDelegateLockPeriod + " and less than or equal to 10512000 !");
+                  + maxDelegateLockPeriod + " and less than or equal to " + ONE_YEAR_BLOCK_NUMBERS
+                      + " !");
         }
         if (dynamicPropertiesStore.getUnfreezeDelayDays() == 0) {
           throw new ContractValidateException(
