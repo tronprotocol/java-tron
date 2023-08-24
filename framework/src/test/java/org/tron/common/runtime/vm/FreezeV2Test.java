@@ -842,20 +842,20 @@ public class FreezeV2Test {
       acquiredBalance = res == 0 ? oldReceiver.getAcquiredDelegatedFrozenV2BalanceForBandwidth() :
           oldReceiver.getAcquiredDelegatedFrozenV2BalanceForEnergy();
 
+      long unDelegateMaxUsage;
       if (res == 0) {
-        long unDelegateMaxUsage = (long) (amount / TRX_PRECISION
+        unDelegateMaxUsage = (long) (amount / TRX_PRECISION
             * ((double) (dynamicStore.getTotalNetLimit()) / dynamicStore.getTotalNetWeight()));
         transferUsage = (long) (oldReceiver.getNetUsage()
             * ((double) (amount) / oldReceiver.getAllFrozenBalanceForBandwidth()));
-        transferUsage = Math.min(unDelegateMaxUsage, transferUsage);
       } else {
-        long unDelegateMaxUsage = (long) (amount / TRX_PRECISION
+        unDelegateMaxUsage = (long) (amount / TRX_PRECISION
             * ((double) (dynamicStore.getTotalEnergyCurrentLimit())
             / dynamicStore.getTotalEnergyWeight()));
         transferUsage = (long) (oldReceiver.getEnergyUsage()
             * ((double) (amount) / oldReceiver.getAllFrozenBalanceForEnergy()));
-        transferUsage = Math.min(unDelegateMaxUsage, transferUsage);
       }
+      transferUsage = Math.min(unDelegateMaxUsage, transferUsage);
     }
 
     DelegatedResourceStore delegatedResourceStore = manager.getDelegatedResourceStore();
@@ -1002,28 +1002,18 @@ public class FreezeV2Test {
         newInheritor.getFrozenBalance() - oldInheritorFrozenBalance);
     if (oldInheritor != null) {
       if (oldContract.getNetUsage() > 0) {
-        long expectedNewNetUsage =
-            bandwidthProcessor.unDelegateIncrease(
-                oldInheritor,
-                oldContract,
-                oldContract.getNetUsage(),
-                Common.ResourceCode.BANDWIDTH,
-                now);
+        bandwidthProcessor.unDelegateIncrease(oldInheritor, oldContract, oldContract.getNetUsage(),
+            Common.ResourceCode.BANDWIDTH, now);
         Assert.assertEquals(
-            expectedNewNetUsage, newInheritor.getNetUsage() - oldInheritorBandwidthUsage);
+            oldInheritor.getNetUsage(), newInheritor.getNetUsage() - oldInheritorBandwidthUsage);
         Assert.assertEquals(
             ChainBaseManager.getInstance().getHeadSlot(), newInheritor.getLatestConsumeTime());
       }
       if (oldContract.getEnergyUsage() > 0) {
-        long expectedNewEnergyUsage =
-            energyProcessor.unDelegateIncrease(
-                oldInheritor,
-                oldContract,
-                oldContract.getEnergyUsage(),
-                Common.ResourceCode.ENERGY,
-                now);
+        energyProcessor.unDelegateIncrease(oldInheritor, oldContract,
+            oldContract.getEnergyUsage(), Common.ResourceCode.ENERGY, now);
         Assert.assertEquals(
-            expectedNewEnergyUsage, newInheritor.getEnergyUsage() - oldInheritorEnergyUsage);
+            oldInheritor.getEnergyUsage(), newInheritor.getEnergyUsage() - oldInheritorEnergyUsage);
         Assert.assertEquals(
             ChainBaseManager.getInstance().getHeadSlot(),
             newInheritor.getLatestConsumeTimeForEnergy());

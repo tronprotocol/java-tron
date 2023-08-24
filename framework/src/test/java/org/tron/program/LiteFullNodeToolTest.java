@@ -5,7 +5,6 @@ import io.grpc.ManagedChannelBuilder;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
-
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Test;
@@ -76,9 +75,7 @@ public class LiteFullNodeToolTest {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
-    appTest.shutdownServices();
-    appTest.shutdown();
-    context.destroy();
+    context.close();
   }
 
   public void init() {
