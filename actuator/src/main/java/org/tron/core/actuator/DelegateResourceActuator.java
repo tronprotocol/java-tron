@@ -149,7 +149,7 @@ public class DelegateResourceActuator extends AbstractActuator {
         long accountNetUsage = ownerCapsule.getNetUsage();
         if (null != this.getTx() && this.getTx().isTransactionCreate()) {
           accountNetUsage += TransactionUtil.estimateConsumeBandWidthSize(
-              ownerCapsule.getBalance());
+              ownerCapsule.getFrozenV2BalanceForBandwidth());
         }
         long netUsage = (long) (accountNetUsage * TRX_PRECISION * ((double)
             (dynamicStore.getTotalNetWeight()) / dynamicStore.getTotalNetLimit()));

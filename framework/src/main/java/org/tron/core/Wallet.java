@@ -867,7 +867,7 @@ public class Wallet {
 
     long accountNetUsage = ownerCapsule.getNetUsage();
     accountNetUsage += org.tron.core.utils.TransactionUtil.estimateConsumeBandWidthSize(
-            ownerCapsule.getBalance());
+            ownerCapsule.getFrozenV2BalanceForBandwidth());
 
     long netUsage = (long) (accountNetUsage * TRX_PRECISION * ((double)
             (dynamicStore.getTotalNetWeight()) / dynamicStore.getTotalNetLimit()));
