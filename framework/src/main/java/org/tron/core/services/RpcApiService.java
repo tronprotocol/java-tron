@@ -204,7 +204,7 @@ public class RpcApiService implements Service {
   @Getter
   private MonitorApi monitorApi = new MonitorApi();
 
-  private final String executorName = "rpc-pbft-executor";
+  private final String executorName = "rpc-full-executor";
 
   @Override
   public void init() {
