@@ -77,6 +77,7 @@ public class Parameter {
     public static final long TRX_PRECISION = 1000_000L;
     public static final long DELEGATE_COST_BASE_SIZE = 275L;
     public static final long WINDOW_SIZE_PRECISION = 1000L;
+    public static final long ONE_YEAR_BLOCK_NUMBERS = 10512000L;
   }
 
   public class NodeConstant {
