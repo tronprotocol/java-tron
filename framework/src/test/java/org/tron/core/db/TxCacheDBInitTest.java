@@ -51,6 +51,7 @@ public class TxCacheDBInitTest {
     DefaultListableBeanFactory defaultListableBeanFactory =
         (DefaultListableBeanFactory) context.getAutowireCapableBeanFactory();
     queryTransaction();
+    db.close();
     defaultListableBeanFactory.destroySingleton("transactionCache");
     TransactionCache transactionCache = new TransactionCache("transactionCache",
         context.getBean(RecentTransactionStore.class));
