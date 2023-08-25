@@ -128,7 +128,6 @@ public class WalletTest extends BaseTest {
   private static Transaction transaction4;
   private static Transaction transaction5;
   private static AssetIssueCapsule Asset1;
-  private static AssetIssueCapsule Asset2;
 
   private static final String OWNER_ADDRESS;
   private static final String RECEIVER_ADDRESS;
@@ -297,17 +296,9 @@ public class WalletTest extends BaseTest {
 
   private void buildAssetIssue() {
     AssetIssueContract.Builder builder = AssetIssueContract.newBuilder();
-    builder.setOwnerAddress(ByteString.copyFromUtf8("Address1"));
     builder.setName(ByteString.copyFromUtf8("Asset1"));
     Asset1 = new AssetIssueCapsule(builder.build());
     chainBaseManager.getAssetIssueStore().put(Asset1.createDbKey(), Asset1);
-
-    AssetIssueContract.Builder builder2 = AssetIssueContract.newBuilder();
-    builder2.setOwnerAddress(ByteString.copyFromUtf8("Address2"));
-    builder2.setName(ByteString.copyFromUtf8("Asset2"));
-    builder2.setId("id2");
-    Asset2 = new AssetIssueCapsule(builder2.build());
-    chainBaseManager.getAssetIssueV2Store().put(Asset2.getId().getBytes(), Asset2);
   }
 
   private void buildProposal() {
