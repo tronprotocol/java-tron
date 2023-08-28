@@ -30,8 +30,6 @@ import org.tron.core.services.jsonrpc.FullNodeJsonRpcHttpService;
 public class FullNode {
 
 
-  public static volatile boolean shutDownSign = false;
-
   public static void load(String path) {
     try {
       File file = new File(path);
