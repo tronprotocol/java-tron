@@ -533,6 +533,16 @@ public class WalletTest extends BaseTest {
   }
 
   @Test
+  public void testGetProposalById() {
+    buildProposal();
+    //
+    Proposal proposal = wallet.getProposalById(ByteString.copyFrom(ByteArray.fromLong(1L)));
+    Assert.assertNotNull(proposal);
+    proposal = wallet.getProposalById(ByteString.copyFrom(ByteArray.fromLong(3L)));
+    Assert.assertNull(proposal);
+  }
+
+  @Test
   public void getPaginatedExchangeList() {
     buildExchange();
     ExchangeList exchangeList = wallet.getPaginatedExchangeList(0, 100);
