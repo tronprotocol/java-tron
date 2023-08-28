@@ -79,7 +79,6 @@ public class ApplicationImpl implements Application {
   }
 
   @Override
-  // DO NOT USE THIS METHOD IN TEST CASES
   public void blockUntilShutdown() {
     services.blockUntilShutdown();
   }
