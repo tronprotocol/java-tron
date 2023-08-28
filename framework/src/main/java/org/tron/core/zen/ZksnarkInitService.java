@@ -3,16 +3,22 @@ package org.tron.core.zen;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.springframework.context.annotation.DependsOn;
+import org.springframework.stereotype.Component;
 import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam;
 import org.tron.core.exception.ZksnarkException;
 
 @Slf4j(topic = "API")
+@Component
+@DependsOn("fullNodeHttpApiService")
 public class ZksnarkInitService {
 
-  static {
+  @PostConstruct
+  private void init() {
     librustzcashInitZksnarkParams();
   }
 

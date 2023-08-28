@@ -19,7 +19,7 @@ import org.tron.core.services.filter.HttpInterceptor;
 import org.tron.core.services.filter.LiteFnQueryHttpFilter;
 
 
-@Component
+@Component("fullNodeHttpApiService")
 @Slf4j(topic = "API")
 public class FullNodeHttpApiService extends HttpService {
 
