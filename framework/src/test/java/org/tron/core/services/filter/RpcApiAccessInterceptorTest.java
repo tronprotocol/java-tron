@@ -4,7 +4,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.ServerCallStreamObserver;
-import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -13,16 +13,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.rules.TemporaryFolder;
 import org.tron.api.GrpcAPI;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PublicMethod;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
@@ -41,17 +42,18 @@ public class RpcApiAccessInterceptorTest {
   private static WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubPBFT = null;
   private static Application appTest;
 
-  private static String dbPath = "output_rpc_api_access_interceptor_test";
-
   @Rule
   public ExpectedException thrown = ExpectedException.none();
+
+  @ClassRule
+  public static TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   /**
    * init logic.
    */
   @BeforeClass
-  public static void init() {
-    Args.setParam(new String[] {"-d", dbPath}, Constant.TEST_CONF);
+  public static void init() throws IOException {
+    Args.setParam(new String[] {"-d", temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
     Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
     Args.getInstance().setRpcOnSolidityPort(PublicMethod.chooseRandomPort());
     Args.getInstance().setRpcOnPBFTPort(PublicMethod.chooseRandomPort());
@@ -97,15 +99,8 @@ public class RpcApiAccessInterceptorTest {
    */
   @AfterClass
   public static void destroy() {
+    context.close();
     Args.clearParam();
-    appTest.shutdownServices();
-    appTest.shutdown();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   @Test
