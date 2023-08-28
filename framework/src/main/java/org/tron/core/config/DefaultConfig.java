@@ -42,7 +42,7 @@ public class DefaultConfig {
     Thread.setDefaultUncaughtExceptionHandler((t, e) -> logger.error("Uncaught exception", e));
   }
 
-  @Bean
+  @Bean(destroyMethod = "")
   public RevokingDatabase revokingDatabase() {
     try {
       return new SnapshotManager(
