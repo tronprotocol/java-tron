@@ -29,6 +29,8 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.NodeInfoService;
+import org.tron.core.services.interfaceJsonRpcOnPBFT.JsonRpcServiceOnPBFT;
+import org.tron.core.services.interfaceJsonRpcOnSolidity.JsonRpcServiceOnSolidity;
 import org.tron.core.services.jsonrpc.FullNodeJsonRpcHttpService;
 import org.tron.core.services.jsonrpc.TronJsonRpcImpl;
 import org.tron.core.services.jsonrpc.types.BlockResult;
@@ -55,10 +57,18 @@ public class JsonrpcServiceTest extends BaseTest {
   @Resource
   private FullNodeJsonRpcHttpService fullNodeJsonRpcHttpService;
 
+  @Resource
+  private JsonRpcServiceOnPBFT jsonRpcServiceOnPBFT;
+
+  @Resource
+  private JsonRpcServiceOnSolidity jsonRpcServiceOnSolidity;
+
   static {
     dbPath = "output_jsonrpc_service_test";
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     CommonParameter.getInstance().setJsonRpcHttpFullNodeEnable(true);
+    CommonParameter.getInstance().setJsonRpcHttpPBFTNodeEnable(true);
+    CommonParameter.getInstance().setJsonRpcHttpSolidityNodeEnable(true);
     CommonParameter.getInstance().setMetricsPrometheusEnable(true);
     Metrics.init();
 
@@ -288,6 +298,19 @@ public class JsonrpcServiceTest extends BaseTest {
       Assert.fail(e.getMessage());
     } finally {
       fullNodeJsonRpcHttpService.stop();
+    }
+  }
+
+  @Test
+  public void testServicesInit() {
+    try {
+      jsonRpcServiceOnPBFT.init(Args.getInstance());
+      jsonRpcServiceOnPBFT.start();
+      jsonRpcServiceOnSolidity.init(Args.getInstance());
+      jsonRpcServiceOnSolidity.start();
+    } finally {
+      jsonRpcServiceOnPBFT.stop();
+      jsonRpcServiceOnSolidity.stop();
     }
   }
 

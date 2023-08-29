@@ -100,7 +100,7 @@ public class BaseNet {
         //ignore
       }
       tronNetDelegate = context.getBean(TronNetDelegate.class);
-      rpcApiService.blockUntilShutdown();
+      appT.blockUntilShutdown();
     });
     int tryTimes = 0;
     do {
