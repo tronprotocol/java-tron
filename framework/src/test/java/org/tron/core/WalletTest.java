@@ -553,6 +553,24 @@ public class WalletTest extends BaseTest {
   }
 
   @Test
+  public void testGetExchangeById() {
+    buildExchange();
+    //
+    Exchange exchange = wallet.getExchangeById(ByteString.copyFrom(ByteArray.fromLong(1L)));
+    Assert.assertNotNull(exchange);
+    exchange = wallet.getExchangeById(ByteString.copyFrom(ByteArray.fromLong(3L)));
+    Assert.assertNull(exchange);
+  }
+
+  @Test
+  public void testGetExchangeList() {
+    buildExchange();
+    //
+    ExchangeList exchangeList = wallet.getExchangeList();
+    Assert.assertEquals(2, exchangeList.getExchangesCount());
+  }
+
+  @Test
   public void getBlock() {
     GrpcAPI.BlockReq req = GrpcAPI.BlockReq.getDefaultInstance();
     Block block = wallet.getBlock(req);
