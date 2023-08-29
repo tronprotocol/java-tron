@@ -90,32 +90,44 @@ public class RpcApiServiceOnPBFT extends RpcService {
 
   @Override
   public void start() {
-    NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port)
-        .addService(new DatabaseApi());
-    CommonParameter args = CommonParameter.getInstance();
-    if (args.getRpcThreadNum() > 0) {
-      serverBuilder = serverBuilder
-          .executor(ExecutorServiceManager.newFixedThreadPool(
-              executorName, args.getRpcThreadNum()));
+    try {
+      NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port)
+          .addService(new DatabaseApi());
+
+      CommonParameter args = CommonParameter.getInstance();
+
+      if (args.getRpcThreadNum() > 0) {
+        serverBuilder = serverBuilder
+            .executor(ExecutorServiceManager.newFixedThreadPool(
+                executorName, args.getRpcThreadNum()));
+      }
+
+      serverBuilder = serverBuilder.addService(new WalletPBFTApi());
+
+      // Set configs from config.conf or default value
+      serverBuilder
+          .maxConcurrentCallsPerConnection(args.getMaxConcurrentCallsPerConnection())
+          .flowControlWindow(args.getFlowControlWindow())
+          .maxConnectionIdle(args.getMaxConnectionIdleInMillis(), TimeUnit.MILLISECONDS)
+          .maxConnectionAge(args.getMaxConnectionAgeInMillis(), TimeUnit.MILLISECONDS)
+          .maxInboundMessageSize(args.getMaxMessageSize())
+          .maxHeaderListSize(args.getMaxHeaderListSize());
+
+      // add a ratelimiter interceptor
+      serverBuilder.intercept(rateLimiterInterceptor);
+
+      // add api access interceptor
+      serverBuilder.intercept(apiAccessInterceptor);
+
+      // add lite fullnode query interceptor
+      serverBuilder.intercept(liteFnQueryGrpcInterceptor);
+
+      apiServer = serverBuilder.build();
+      rateLimiterInterceptor.init(apiServer);
+      super.start();
+    } catch (Exception e) {
+      logger.debug(e.getMessage(), e);
     }
-    serverBuilder = serverBuilder.addService(new WalletPBFTApi());
-    // Set configs from config.conf or default value
-    serverBuilder
-        .maxConcurrentCallsPerConnection(args.getMaxConcurrentCallsPerConnection())
-        .flowControlWindow(args.getFlowControlWindow())
-        .maxConnectionIdle(args.getMaxConnectionIdleInMillis(), TimeUnit.MILLISECONDS)
-        .maxConnectionAge(args.getMaxConnectionAgeInMillis(), TimeUnit.MILLISECONDS)
-        .maxInboundMessageSize(args.getMaxMessageSize())
-        .maxHeaderListSize(args.getMaxHeaderListSize());
-    // add a ratelimiter interceptor
-    serverBuilder.intercept(rateLimiterInterceptor);
-    // add api access interceptor
-    serverBuilder.intercept(apiAccessInterceptor);
-    // add lite fullnode query interceptor
-    serverBuilder.intercept(liteFnQueryGrpcInterceptor);
-    apiServer = serverBuilder.build();
-    rateLimiterInterceptor.init(apiServer);
-    super.start();
   }
 
   /**

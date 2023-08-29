@@ -214,41 +214,53 @@ public class RpcApiService extends RpcService {
 
   @Override
   public void start() {
-    NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port).addService(databaseApi);
-    CommonParameter parameter = Args.getInstance();
-    if (parameter.getRpcThreadNum() > 0) {
-      serverBuilder = serverBuilder
-          .executor(ExecutorServiceManager.newFixedThreadPool(
-              executorName, parameter.getRpcThreadNum()));
-    }
-    if (parameter.isSolidityNode()) {
-      serverBuilder = serverBuilder.addService(walletSolidityApi);
-      if (parameter.isWalletExtensionApi()) {
-        serverBuilder = serverBuilder.addService(new WalletExtensionApi());
+    try {
+      NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port).addService(databaseApi);
+      CommonParameter parameter = Args.getInstance();
+
+      if (parameter.getRpcThreadNum() > 0) {
+        serverBuilder = serverBuilder
+            .executor(ExecutorServiceManager.newFixedThreadPool(
+                executorName, parameter.getRpcThreadNum()));
       }
-    } else {
-      serverBuilder = serverBuilder.addService(walletApi);
+
+      if (parameter.isSolidityNode()) {
+        serverBuilder = serverBuilder.addService(walletSolidityApi);
+        if (parameter.isWalletExtensionApi()) {
+          serverBuilder = serverBuilder.addService(new WalletExtensionApi());
+        }
+      } else {
+        serverBuilder = serverBuilder.addService(walletApi);
+      }
+
+      if (parameter.isNodeMetricsEnable()) {
+        serverBuilder = serverBuilder.addService(monitorApi);
+      }
+
+      // Set configs from config.conf or default value
+      serverBuilder
+          .maxConcurrentCallsPerConnection(parameter.getMaxConcurrentCallsPerConnection())
+          .flowControlWindow(parameter.getFlowControlWindow())
+          .maxConnectionIdle(parameter.getMaxConnectionIdleInMillis(), TimeUnit.MILLISECONDS)
+          .maxConnectionAge(parameter.getMaxConnectionAgeInMillis(), TimeUnit.MILLISECONDS)
+          .maxInboundMessageSize(parameter.getMaxMessageSize())
+          .maxHeaderListSize(parameter.getMaxHeaderListSize());
+
+      // add a rate limiter interceptor
+      serverBuilder.intercept(rateLimiterInterceptor);
+
+      // add api access interceptor
+      serverBuilder.intercept(apiAccessInterceptor);
+
+      // add lite fullnode query interceptor
+      serverBuilder.intercept(liteFnQueryGrpcInterceptor);
+
+      apiServer = serverBuilder.build();
+      rateLimiterInterceptor.init(apiServer);
+      super.start();
+    } catch (Exception e) {
+      logger.debug(e.getMessage(), e);
     }
-    if (parameter.isNodeMetricsEnable()) {
-      serverBuilder = serverBuilder.addService(monitorApi);
-    }
-    // Set configs from config.conf or default value
-    serverBuilder
-        .maxConcurrentCallsPerConnection(parameter.getMaxConcurrentCallsPerConnection())
-        .flowControlWindow(parameter.getFlowControlWindow())
-        .maxConnectionIdle(parameter.getMaxConnectionIdleInMillis(), TimeUnit.MILLISECONDS)
-        .maxConnectionAge(parameter.getMaxConnectionAgeInMillis(), TimeUnit.MILLISECONDS)
-        .maxInboundMessageSize(parameter.getMaxMessageSize())
-        .maxHeaderListSize(parameter.getMaxHeaderListSize());
-    // add a rate limiter interceptor
-    serverBuilder.intercept(rateLimiterInterceptor);
-    // add api access interceptor
-    serverBuilder.intercept(apiAccessInterceptor);
-    // add lite fullnode query interceptor
-    serverBuilder.intercept(liteFnQueryGrpcInterceptor);
-    apiServer = serverBuilder.build();
-    rateLimiterInterceptor.init(apiServer);
-    super.start();
   }
 
 

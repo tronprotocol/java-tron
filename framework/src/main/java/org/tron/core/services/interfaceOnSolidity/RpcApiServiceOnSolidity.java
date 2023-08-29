@@ -92,31 +92,43 @@ public class RpcApiServiceOnSolidity extends RpcService {
 
   @Override
   public void start() {
-    NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port)
-        .addService(new DatabaseApi());
-    CommonParameter parameter = Args.getInstance();
-    if (parameter.getRpcThreadNum() > 0) {
-      serverBuilder = serverBuilder
-          .executor(ExecutorServiceManager.newFixedThreadPool(
-              executorName, parameter.getRpcThreadNum()));
+    try {
+      NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port)
+          .addService(new DatabaseApi());
+
+      CommonParameter parameter = Args.getInstance();
+
+      if (parameter.getRpcThreadNum() > 0) {
+        serverBuilder = serverBuilder
+            .executor(ExecutorServiceManager.newFixedThreadPool(
+                executorName, parameter.getRpcThreadNum()));
+      }
+
+      serverBuilder = serverBuilder.addService(new WalletSolidityApi());
+
+      // Set configs from config.conf or default value
+      serverBuilder.maxConcurrentCallsPerConnection(parameter.getMaxConcurrentCallsPerConnection())
+          .flowControlWindow(parameter.getFlowControlWindow())
+          .maxConnectionIdle(parameter.getMaxConnectionIdleInMillis(), TimeUnit.MILLISECONDS)
+          .maxConnectionAge(parameter.getMaxConnectionAgeInMillis(), TimeUnit.MILLISECONDS)
+          .maxInboundMessageSize(parameter.getMaxMessageSize())
+          .maxHeaderListSize(parameter.getMaxHeaderListSize());
+
+      // add a ratelimiter interceptor
+      serverBuilder.intercept(rateLimiterInterceptor);
+
+      // add api access interceptor
+      serverBuilder.intercept(apiAccessInterceptor);
+
+      // add lite fullnode query interceptor
+      serverBuilder.intercept(liteFnQueryGrpcInterceptor);
+
+      apiServer = serverBuilder.build();
+      rateLimiterInterceptor.init(apiServer);
+      super.start();
+    } catch (Exception e) {
+      logger.debug(e.getMessage(), e);
     }
-    serverBuilder = serverBuilder.addService(new WalletSolidityApi());
-    // Set configs from config.conf or default value
-    serverBuilder.maxConcurrentCallsPerConnection(parameter.getMaxConcurrentCallsPerConnection())
-        .flowControlWindow(parameter.getFlowControlWindow())
-        .maxConnectionIdle(parameter.getMaxConnectionIdleInMillis(), TimeUnit.MILLISECONDS)
-        .maxConnectionAge(parameter.getMaxConnectionAgeInMillis(), TimeUnit.MILLISECONDS)
-        .maxInboundMessageSize(parameter.getMaxMessageSize())
-        .maxHeaderListSize(parameter.getMaxHeaderListSize());
-    // add a ratelimiter interceptor
-    serverBuilder.intercept(rateLimiterInterceptor);
-    // add api access interceptor
-    serverBuilder.intercept(apiAccessInterceptor);
-    // add lite fullnode query interceptor
-    serverBuilder.intercept(liteFnQueryGrpcInterceptor);
-    apiServer = serverBuilder.build();
-    rateLimiterInterceptor.init(apiServer);
-    super.start();
   }
 
   private TransactionExtention transaction2Extention(Transaction transaction) {

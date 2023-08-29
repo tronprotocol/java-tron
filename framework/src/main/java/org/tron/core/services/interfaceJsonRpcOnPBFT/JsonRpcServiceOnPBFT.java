@@ -28,15 +28,23 @@ public class JsonRpcServiceOnPBFT extends HttpService {
 
   @Override
   public void start() {
-    apiServer = new Server(port);
-    ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-    context.setContextPath("/");
-    apiServer.setHandler(context);
-    context.addServlet(new ServletHolder(jsonRpcOnPBFTServlet), "/jsonrpc");
-    int maxHttpConnectNumber = CommonParameter.getInstance().getMaxHttpConnectNumber();
-    if (maxHttpConnectNumber > 0) {
-      apiServer.addBean(new ConnectionLimit(maxHttpConnectNumber, apiServer));
+    try {
+      apiServer = new Server(port);
+      ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+      context.setContextPath("/");
+      apiServer.setHandler(context);
+
+      context.addServlet(new ServletHolder(jsonRpcOnPBFTServlet), "/jsonrpc");
+
+      int maxHttpConnectNumber = CommonParameter.getInstance().getMaxHttpConnectNumber();
+      if (maxHttpConnectNumber > 0) {
+        apiServer.addBean(new ConnectionLimit(maxHttpConnectNumber, apiServer));
+      }
+
+      super.start();
+
+    } catch (Exception e) {
+      logger.debug("IOException: {}", e.getMessage());
     }
-    super.start();
   }
 }

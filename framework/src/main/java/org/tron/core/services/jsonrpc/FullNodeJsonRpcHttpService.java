@@ -33,21 +33,30 @@ public class FullNodeJsonRpcHttpService extends HttpService {
 
   @Override
   public void start() {
-    apiServer = new Server(port);
-    ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-    context.setContextPath("/");
-    apiServer.setHandler(context);
-    context.addServlet(new ServletHolder(jsonRpcServlet), "/jsonrpc");
-    int maxHttpConnectNumber = CommonParameter.getInstance().getMaxHttpConnectNumber();
-    if (maxHttpConnectNumber > 0) {
-      apiServer.addBean(new ConnectionLimit(maxHttpConnectNumber, apiServer));
+    try {
+      apiServer = new Server(port);
+      ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+      context.setContextPath("/");
+      apiServer.setHandler(context);
+
+      context.addServlet(new ServletHolder(jsonRpcServlet), "/jsonrpc");
+
+      int maxHttpConnectNumber = CommonParameter.getInstance().getMaxHttpConnectNumber();
+      if (maxHttpConnectNumber > 0) {
+        apiServer.addBean(new ConnectionLimit(maxHttpConnectNumber, apiServer));
+      }
+
+      // filter
+      ServletHandler handler = new ServletHandler();
+      FilterHolder fh = handler
+          .addFilterWithMapping(HttpInterceptor.class, "/*",
+              EnumSet.of(DispatcherType.REQUEST));
+      context.addFilter(fh, "/*", EnumSet.of(DispatcherType.REQUEST));
+
+      super.start();
+
+    } catch (Exception e) {
+      logger.debug("IOException: {}", e.getMessage());
     }
-    // filter
-    ServletHandler handler = new ServletHandler();
-    FilterHolder fh = handler
-        .addFilterWithMapping(HttpInterceptor.class, "/*",
-            EnumSet.of(DispatcherType.REQUEST));
-    context.addFilter(fh, "/*", EnumSet.of(DispatcherType.REQUEST));
-    super.start();
   }
 }

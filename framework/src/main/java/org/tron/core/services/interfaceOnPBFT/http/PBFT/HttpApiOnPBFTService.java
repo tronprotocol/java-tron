@@ -184,99 +184,114 @@ public class HttpApiOnPBFTService extends HttpService {
 
   @Override
   public void start() {
-    apiServer = new Server(port);
-    ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-    context.setContextPath("/walletpbft/");
-    apiServer.setHandler(context);
-    // same as FullNode
-    context.addServlet(new ServletHolder(accountOnPBFTServlet), "/getaccount");
-    context.addServlet(new ServletHolder(listWitnessesOnPBFTServlet), "/listwitnesses");
-    context.addServlet(new ServletHolder(getAssetIssueListOnPBFTServlet), "/getassetissuelist");
-    context.addServlet(new ServletHolder(getPaginatedAssetIssueListOnPBFTServlet),
-        "/getpaginatedassetissuelist");
-    context
-        .addServlet(new ServletHolder(getAssetIssueByNameOnPBFTServlet), "/getassetissuebyname");
-    context.addServlet(new ServletHolder(getAssetIssueByIdOnPBFTServlet), "/getassetissuebyid");
-    context.addServlet(new ServletHolder(getAssetIssueListByNameOnPBFTServlet),
-        "/getassetissuelistbyname");
-    context.addServlet(new ServletHolder(getNowBlockOnPBFTServlet), "/getnowblock");
-    context.addServlet(new ServletHolder(getBlockByNumOnPBFTServlet), "/getblockbynum");
-    context.addServlet(new ServletHolder(getDelegatedResourceOnPBFTServlet),
-        "/getdelegatedresource");
-    context.addServlet(new ServletHolder(getDelegatedResourceAccountIndexOnPBFTServlet),
-        "/getdelegatedresourceaccountindex");
-    context.addServlet(new ServletHolder(getExchangeByIdOnPBFTServlet), "/getexchangebyid");
-    context.addServlet(new ServletHolder(listExchangesOnPBFTServlet), "/listexchanges");
-    context.addServlet(new ServletHolder(getAccountByIdOnPBFTServlet), "/getaccountbyid");
-    context.addServlet(new ServletHolder(getBlockByIdOnPBFTServlet), "/getblockbyid");
-    context
-        .addServlet(new ServletHolder(getBlockByLimitNextOnPBFTServlet), "/getblockbylimitnext");
-    context
-        .addServlet(new ServletHolder(getBlockByLatestNumOnPBFTServlet), "/getblockbylatestnum");
-    context.addServlet(new ServletHolder(getMerkleTreeVoucherInfoOnPBFTServlet),
-        "/getmerkletreevoucherinfo");
-    context.addServlet(new ServletHolder(scanAndMarkNoteByIvkOnPBFTServlet),
-        "/scanandmarknotebyivk");
-    context.addServlet(new ServletHolder(scanNoteByIvkOnPBFTServlet), "/scannotebyivk");
-    context.addServlet(new ServletHolder(scanNoteByOvkOnPBFTServlet), "/scannotebyovk");
-    context.addServlet(new ServletHolder(isSpendOnPBFTServlet), "/isspend");
-    context.addServlet(new ServletHolder(triggerConstantContractOnPBFTServlet),
-        "/triggerconstantcontract");
-    context.addServlet(new ServletHolder(estimateEnergyOnPBFTServlet), "/estimateenergy");
-    // only for PBFTNode
-    context.addServlet(new ServletHolder(getTransactionByIdOnPBFTServlet), "/gettransactionbyid");
-    context.addServlet(new ServletHolder(getTransactionInfoByIdOnPBFTServlet),
-        "/gettransactioninfobyid");
-    context.addServlet(new ServletHolder(getTransactionCountByBlockNumOnPBFTServlet),
-        "/gettransactioncountbyblocknum");
-    context.addServlet(new ServletHolder(getNodeInfoOnPBFTServlet), "/getnodeinfo");
-    context.addServlet(new ServletHolder(getBrokerageServlet), "/getBrokerage");
-    context.addServlet(new ServletHolder(getRewardServlet), "/getReward");
-    context.addServlet(new ServletHolder(getMarketOrderByAccountOnPBFTServlet),
-        "/getmarketorderbyaccount");
-    context.addServlet(new ServletHolder(getMarketOrderByIdOnPBFTServlet),
-        "/getmarketorderbyid");
-    context.addServlet(new ServletHolder(getMarketPriceByPairOnPBFTServlet),
-        "/getmarketpricebypair");
-    context.addServlet(new ServletHolder(getMarketOrderListByPairOnPBFTServlet),
-        "/getmarketorderlistbypair");
-    context.addServlet(new ServletHolder(getMarketPairListOnPBFTServlet),
-        "/getmarketpairlist");
-    context.addServlet(new ServletHolder(scanShieldedTRC20NotesByIvkOnPBFTServlet),
-        "/scanshieldedtrc20notesbyivk");
-    context.addServlet(new ServletHolder(scanShieldedTRC20NotesByOvkOnPBFTServlet),
-        "/scanshieldedtrc20notesbyovk");
-    context.addServlet(new ServletHolder(isShieldedTRC20ContractNoteSpentOnPBFTServlet),
-        "/isshieldedtrc20contractnotespent");
-    context.addServlet(new ServletHolder(getBurnTrxOnPBFTServlet),
-        "/getburntrx");
-    context.addServlet(new ServletHolder(getBandwidthPricesOnPBFTServlet),
-        "/getbandwidthprices");
-    context.addServlet(new ServletHolder(getEnergyPricesOnPBFTServlet),
-        "/getenergyprices");
-    context.addServlet(new ServletHolder(getBlockOnPBFTServlet),
-        "/getblock");
-    context.addServlet(new ServletHolder(getAvailableUnfreezeCountOnPBFTServlet),
-        "/getavailableunfreezecount");
-    context.addServlet(new ServletHolder(getCanDelegatedMaxSizeOnPBFTServlet),
-        "/getcandelegatedmaxsize");
-    context.addServlet(new ServletHolder(getCanWithdrawUnfreezeAmountOnPBFTServlet),
-        "/getcanwithdrawunfreezeamount");
-    context.addServlet(new ServletHolder(getDelegatedResourceAccountIndexV2OnPBFTServlet),
-        "/getdelegatedresourceaccountindexv2");
-    context.addServlet(new ServletHolder(getDelegatedResourceV2OnPBFTServlet),
-        "/getdelegatedresourcev2");
-    int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
-    if (maxHttpConnectNumber > 0) {
-      apiServer.addBean(new ConnectionLimit(maxHttpConnectNumber, apiServer));
+    try {
+      apiServer = new Server(port);
+      ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+      context.setContextPath("/walletpbft/");
+      apiServer.setHandler(context);
+
+      // same as FullNode
+      context.addServlet(new ServletHolder(accountOnPBFTServlet), "/getaccount");
+      context.addServlet(new ServletHolder(listWitnessesOnPBFTServlet), "/listwitnesses");
+      context.addServlet(new ServletHolder(getAssetIssueListOnPBFTServlet), "/getassetissuelist");
+      context.addServlet(new ServletHolder(getPaginatedAssetIssueListOnPBFTServlet),
+          "/getpaginatedassetissuelist");
+      context
+          .addServlet(new ServletHolder(getAssetIssueByNameOnPBFTServlet), "/getassetissuebyname");
+      context.addServlet(new ServletHolder(getAssetIssueByIdOnPBFTServlet), "/getassetissuebyid");
+      context.addServlet(new ServletHolder(getAssetIssueListByNameOnPBFTServlet),
+          "/getassetissuelistbyname");
+      context.addServlet(new ServletHolder(getNowBlockOnPBFTServlet), "/getnowblock");
+      context.addServlet(new ServletHolder(getBlockByNumOnPBFTServlet), "/getblockbynum");
+      context.addServlet(new ServletHolder(getDelegatedResourceOnPBFTServlet),
+          "/getdelegatedresource");
+      context.addServlet(new ServletHolder(getDelegatedResourceAccountIndexOnPBFTServlet),
+          "/getdelegatedresourceaccountindex");
+      context.addServlet(new ServletHolder(getExchangeByIdOnPBFTServlet), "/getexchangebyid");
+      context.addServlet(new ServletHolder(listExchangesOnPBFTServlet), "/listexchanges");
+      context.addServlet(new ServletHolder(getAccountByIdOnPBFTServlet), "/getaccountbyid");
+      context.addServlet(new ServletHolder(getBlockByIdOnPBFTServlet), "/getblockbyid");
+      context
+          .addServlet(new ServletHolder(getBlockByLimitNextOnPBFTServlet), "/getblockbylimitnext");
+      context
+          .addServlet(new ServletHolder(getBlockByLatestNumOnPBFTServlet), "/getblockbylatestnum");
+      context.addServlet(new ServletHolder(getMerkleTreeVoucherInfoOnPBFTServlet),
+          "/getmerkletreevoucherinfo");
+      context.addServlet(new ServletHolder(scanAndMarkNoteByIvkOnPBFTServlet),
+          "/scanandmarknotebyivk");
+      context.addServlet(new ServletHolder(scanNoteByIvkOnPBFTServlet), "/scannotebyivk");
+      context.addServlet(new ServletHolder(scanNoteByOvkOnPBFTServlet), "/scannotebyovk");
+      context.addServlet(new ServletHolder(isSpendOnPBFTServlet), "/isspend");
+      context.addServlet(new ServletHolder(triggerConstantContractOnPBFTServlet),
+          "/triggerconstantcontract");
+      context.addServlet(new ServletHolder(estimateEnergyOnPBFTServlet), "/estimateenergy");
+
+      // only for PBFTNode
+      context.addServlet(new ServletHolder(getTransactionByIdOnPBFTServlet), "/gettransactionbyid");
+      context.addServlet(new ServletHolder(getTransactionInfoByIdOnPBFTServlet),
+          "/gettransactioninfobyid");
+
+      context.addServlet(new ServletHolder(getTransactionCountByBlockNumOnPBFTServlet),
+          "/gettransactioncountbyblocknum");
+
+      context.addServlet(new ServletHolder(getNodeInfoOnPBFTServlet), "/getnodeinfo");
+      context.addServlet(new ServletHolder(getBrokerageServlet), "/getBrokerage");
+      context.addServlet(new ServletHolder(getRewardServlet), "/getReward");
+
+      context.addServlet(new ServletHolder(getMarketOrderByAccountOnPBFTServlet),
+          "/getmarketorderbyaccount");
+      context.addServlet(new ServletHolder(getMarketOrderByIdOnPBFTServlet),
+          "/getmarketorderbyid");
+      context.addServlet(new ServletHolder(getMarketPriceByPairOnPBFTServlet),
+          "/getmarketpricebypair");
+      context.addServlet(new ServletHolder(getMarketOrderListByPairOnPBFTServlet),
+          "/getmarketorderlistbypair");
+      context.addServlet(new ServletHolder(getMarketPairListOnPBFTServlet),
+          "/getmarketpairlist");
+
+      context.addServlet(new ServletHolder(scanShieldedTRC20NotesByIvkOnPBFTServlet),
+          "/scanshieldedtrc20notesbyivk");
+      context.addServlet(new ServletHolder(scanShieldedTRC20NotesByOvkOnPBFTServlet),
+          "/scanshieldedtrc20notesbyovk");
+      context.addServlet(new ServletHolder(isShieldedTRC20ContractNoteSpentOnPBFTServlet),
+          "/isshieldedtrc20contractnotespent");
+      context.addServlet(new ServletHolder(getBurnTrxOnPBFTServlet),
+          "/getburntrx");
+      context.addServlet(new ServletHolder(getBandwidthPricesOnPBFTServlet),
+          "/getbandwidthprices");
+      context.addServlet(new ServletHolder(getEnergyPricesOnPBFTServlet),
+          "/getenergyprices");
+      context.addServlet(new ServletHolder(getBlockOnPBFTServlet),
+          "/getblock");
+
+      context.addServlet(new ServletHolder(getAvailableUnfreezeCountOnPBFTServlet),
+          "/getavailableunfreezecount");
+      context.addServlet(new ServletHolder(getCanDelegatedMaxSizeOnPBFTServlet),
+          "/getcandelegatedmaxsize");
+      context.addServlet(new ServletHolder(getCanWithdrawUnfreezeAmountOnPBFTServlet),
+          "/getcanwithdrawunfreezeamount");
+      context.addServlet(new ServletHolder(getDelegatedResourceAccountIndexV2OnPBFTServlet),
+          "/getdelegatedresourceaccountindexv2");
+      context.addServlet(new ServletHolder(getDelegatedResourceV2OnPBFTServlet),
+          "/getdelegatedresourcev2");
+
+      int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
+      if (maxHttpConnectNumber > 0) {
+        apiServer.addBean(new ConnectionLimit(maxHttpConnectNumber, apiServer));
+      }
+
+      // filters the specified APIs
+      // when node is lite fullnode and openHistoryQueryWhenLiteFN is false
+      context.addFilter(new FilterHolder(liteFnQueryHttpFilter), "/*",
+          EnumSet.allOf(DispatcherType.class));
+
+      // api access filter
+      context.addFilter(new FilterHolder(httpApiAccessFilter), "/*",
+          EnumSet.allOf(DispatcherType.class));
+
+      super.start();
+    } catch (Exception e) {
+      logger.debug("IOException: {}", e.getMessage());
     }
-    // filters the specified APIs
-    // when node is lite fullnode and openHistoryQueryWhenLiteFN is false
-    context.addFilter(new FilterHolder(liteFnQueryHttpFilter), "/*",
-        EnumSet.allOf(DispatcherType.class));
-    // api access filter
-    context.addFilter(new FilterHolder(httpApiAccessFilter), "/*",
-        EnumSet.allOf(DispatcherType.class));
-    super.start();
   }
 }
