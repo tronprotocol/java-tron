@@ -173,6 +173,9 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
                 transactionLogTrigger.setToAddress(StringUtil
                     .encode58Check(unfreezeBalanceContract.getReceiverAddress().toByteArray()));
               }
+              transactionLogTrigger.setAssetName("trx");
+              transactionLogTrigger.setAssetAmount(
+                  transactionInfo.getUnfreezeAmount());
               break;
             case FreezeBalanceV2Contract:
               FreezeBalanceV2Contract freezeBalanceV2Contract = contractParameter
