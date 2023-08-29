@@ -1,7 +1,5 @@
 package org.tron.core.db;
 
-import static java.lang.Math.ceil;
-import static java.lang.Math.round;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.ChainConstant.WINDOW_SIZE_PRECISION;
 
@@ -127,16 +125,17 @@ abstract class ResourceProcessor {
 
     long remainWindowSize = oldWindowSizeV2 - (now - lastTime) * WINDOW_SIZE_PRECISION;
     long newWindowSize = divideCeil(
-            remainUsage * remainWindowSize + usage * this.windowSize * WINDOW_SIZE_PRECISION, newUsage);
+        remainUsage * remainWindowSize + usage * this.windowSize * WINDOW_SIZE_PRECISION, newUsage);
     newWindowSize = Math.min(newWindowSize, this.windowSize * WINDOW_SIZE_PRECISION);
     accountCapsule.setNewWindowSizeV2(resourceCode, newWindowSize);
     return newUsage;
   }
 
-  public long unDelegateIncrease(AccountCapsule owner, final AccountCapsule receiver,
+  public void unDelegateIncrease(AccountCapsule owner, final AccountCapsule receiver,
       long transferUsage, ResourceCode resourceCode, long now) {
     if (dynamicPropertiesStore.supportAllowCancelAllUnfreezeV2()) {
-      return unDelegateIncreaseV2(owner, receiver, transferUsage, resourceCode, now);
+      unDelegateIncreaseV2(owner, receiver, transferUsage, resourceCode, now);
+      return;
     }
     long lastOwnerTime = owner.getLastConsumeTime(resourceCode);
     long ownerUsage = owner.getUsage(resourceCode);
@@ -152,16 +151,19 @@ abstract class ResourceProcessor {
     // mean ownerUsage == 0 and transferUsage == 0
     if (newOwnerUsage == 0) {
       owner.setNewWindowSize(resourceCode, this.windowSize);
-      return newOwnerUsage;
+      owner.setUsage(resourceCode, 0);
+      owner.setLatestTime(resourceCode, now);
+      return;
     }
     // calculate new windowSize
     long newOwnerWindowSize = getNewWindowSize(ownerUsage, remainOwnerWindowSize, transferUsage,
         remainReceiverWindowSize, newOwnerUsage);
     owner.setNewWindowSize(resourceCode, newOwnerWindowSize);
-    return newOwnerUsage;
+    owner.setUsage(resourceCode, newOwnerUsage);
+    owner.setLatestTime(resourceCode, now);
   }
 
-  public long unDelegateIncreaseV2(AccountCapsule owner, final AccountCapsule receiver,
+  public void unDelegateIncreaseV2(AccountCapsule owner, final AccountCapsule receiver,
       long transferUsage, ResourceCode resourceCode, long now) {
     long lastOwnerTime = owner.getLastConsumeTime(resourceCode);
     long ownerUsage = owner.getUsage(resourceCode);
@@ -171,7 +173,9 @@ abstract class ResourceProcessor {
     // mean ownerUsage == 0 and transferUsage == 0
     if (newOwnerUsage == 0) {
       owner.setNewWindowSizeV2(resourceCode, this.windowSize * WINDOW_SIZE_PRECISION);
-      return newOwnerUsage;
+      owner.setUsage(resourceCode, 0);
+      owner.setLatestTime(resourceCode, now);
+      return;
     }
 
     long remainOwnerWindowSizeV2 = owner.getWindowSizeV2(resourceCode);
@@ -186,7 +190,8 @@ abstract class ResourceProcessor {
             newOwnerUsage);
     newOwnerWindowSize = Math.min(newOwnerWindowSize, this.windowSize * WINDOW_SIZE_PRECISION);
     owner.setNewWindowSizeV2(resourceCode, newOwnerWindowSize);
-    return newOwnerUsage;
+    owner.setUsage(resourceCode, newOwnerUsage);
+    owner.setLatestTime(resourceCode, now);
   }
 
   private long getNewWindowSize(long lastUsage, long lastWindowSize, long usage,
