@@ -44,10 +44,10 @@ public abstract class RpcService implements Service {
     if (apiServer != null) {
       try {
         apiServer.start();
+        logger.info("{} started, listening on {}", this.getClass().getSimpleName(), port);
       } catch (IOException e) {
         logger.error("{}", this.getClass().getSimpleName(), e);
       }
-      logger.info("{} started, listening on {}", this.getClass().getSimpleName(), port);
     }
   }
 
