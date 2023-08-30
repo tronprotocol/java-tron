@@ -72,7 +72,6 @@ public class RewardCalService {
   @PreDestroy
   private void destroy() {
     es.shutdownNow();
-    rewardCacheStore.close();
   }
 
   public void calReward() throws IOException {
