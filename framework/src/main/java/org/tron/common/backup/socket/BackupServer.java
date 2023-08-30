@@ -7,11 +7,13 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.backup.BackupManager;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.p2p.stats.TrafficStats;
 
@@ -29,6 +31,9 @@ public class BackupServer {
 
   private volatile boolean shutdown = false;
 
+  private final String name = "BackupServer";
+  private ExecutorService executor;
+
   @Autowired
   public BackupServer(final BackupManager backupManager) {
     this.backupManager = backupManager;
@@ -36,13 +41,14 @@ public class BackupServer {
 
   public void initServer() {
     if (port > 0 && commonParameter.getBackupMembers().size() > 0) {
-      new Thread(() -> {
+      executor = ExecutorServiceManager.newSingleThreadExecutor(name);
+      executor.submit(() -> {
         try {
           start();
         } catch (Exception e) {
           logger.error("Start backup server failed, {}", e);
         }
-      }, "BackupServer").start();
+      });
     }
   }
 
@@ -88,6 +94,7 @@ public class BackupServer {
   public void close() {
     logger.info("Closing backup server...");
     shutdown = true;
+    ExecutorServiceManager.shutdownAndAwaitTermination(executor, name);
     if (channel != null) {
       try {
         channel.close().await(10, TimeUnit.SECONDS);
@@ -95,5 +102,6 @@ public class BackupServer {
         logger.warn("Closing backup server failed.", e);
       }
     }
+    logger.info("Backup server closed.");
   }
 }

@@ -125,8 +125,8 @@ public class WithdrawExpireUnfreezeActuator extends AbstractActuator {
   }
 
   private List<UnFreezeV2> getTotalWithdrawList(List<UnFreezeV2> unfrozenV2List, long now) {
-    return unfrozenV2List.stream().filter(unfrozenV2 -> (unfrozenV2.getUnfreezeAmount() > 0
-        && unfrozenV2.getUnfreezeExpireTime() <= now)).collect(Collectors.toList());
+    return unfrozenV2List.stream().filter(unfrozenV2 -> unfrozenV2.getUnfreezeExpireTime() <= now)
+        .collect(Collectors.toList());
   }
 
   private List<UnFreezeV2> getRemainWithdrawList(List<UnFreezeV2> unfrozenV2List, long now) {

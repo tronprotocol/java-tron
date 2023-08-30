@@ -290,10 +290,6 @@ public class SnapshotManager implements RevokingDatabase {
 
   @Override
   public void shutdown() {
-    logger.info("******** Begin to pop revokingDb. ********");
-    logger.info("******** Before revokingDb size: {}.", size);
-    checkTmpStore.close();
-    logger.info("******** End to pop revokingDb. ********");
     if (pruneCheckpointThread != null) {
       pruneCheckpointThread.shutdown();
     }
