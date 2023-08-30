@@ -857,7 +857,13 @@ public class DelegateResourceActuatorTest extends BaseTest {
   @Test
   public void testDelegateResourceNoFreeze123() {
     long frozenBalance = 1000_000_000L;
-    freezeBandwidthForOwner1(frozenBalance);
+    AccountCapsule ownerCapsule =
+        dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    ownerCapsule.addFrozenBalanceForBandwidthV2(frozenBalance);
+    dbManager.getDynamicPropertiesStore().addTotalNetWeight(
+        frozenBalance / TRX_PRECISION + 43100000000L);
+    dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
+
     long delegateBalance = frozenBalance - 279 * TRX_PRECISION;
     //long delegateBalance = initBalance;
     DelegateResourceActuator actuator = new DelegateResourceActuator();
@@ -882,12 +888,4 @@ public class DelegateResourceActuatorTest extends BaseTest {
     Assert.assertEquals(true, bSuccess);
   }
 
-  public void freezeBandwidthForOwner1(long frozenBalance) {
-    AccountCapsule ownerCapsule =
-        dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-    ownerCapsule.addFrozenBalanceForBandwidthV2(frozenBalance);
-    dbManager.getDynamicPropertiesStore().addTotalNetWeight(
-        frozenBalance / TRX_PRECISION + 43100000000L);
-    dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
-  }
 }
