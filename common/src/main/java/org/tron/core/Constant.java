@@ -280,7 +280,6 @@ public class Constant {
   public static final String NODE_DISCOVERY_BIND_IP = "node.discovery.bind.ip";
 
   public static final String NODE_DISCOVERY_EXTERNAL_IP = "node.discovery.external.ip";
-  public static final String AMAZONAWS_URL = "http://checkip.amazonaws.com";
 
   public static final String NODE_BACKUP_PRIORITY = "node.backup.priority";
   public static final String NODE_BACKUP_PORT = "node.backup.port";
