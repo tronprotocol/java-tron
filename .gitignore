@@ -56,3 +56,4 @@ Wallet
 /vm_trace/
 
 /framework/propPath
+.cache
