@@ -198,8 +198,6 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
 
   @Override
   public void reloadToMem() {
-    if (isOptimized) {
       mergeAhead(previous);
-    }
   }
 }
