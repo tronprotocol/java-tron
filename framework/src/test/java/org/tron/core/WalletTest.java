@@ -42,6 +42,7 @@ import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.ExchangeList;
+import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.common.BaseTest;
 import org.tron.common.crypto.ECKey;
@@ -532,6 +533,16 @@ public class WalletTest extends BaseTest {
   }
 
   @Test
+  public void testGetProposalById() {
+    buildProposal();
+    //
+    Proposal proposal = wallet.getProposalById(ByteString.copyFrom(ByteArray.fromLong(1L)));
+    Assert.assertNotNull(proposal);
+    proposal = wallet.getProposalById(ByteString.copyFrom(ByteArray.fromLong(3L)));
+    Assert.assertNull(proposal);
+  }
+
+  @Test
   public void getPaginatedExchangeList() {
     buildExchange();
     ExchangeList exchangeList = wallet.getPaginatedExchangeList(0, 100);
@@ -539,6 +550,24 @@ public class WalletTest extends BaseTest {
         exchangeList.getExchangesList().get(0).getCreatorAddress().toStringUtf8());
     assertEquals("Address2",
         exchangeList.getExchangesList().get(1).getCreatorAddress().toStringUtf8());
+  }
+
+  @Test
+  public void testGetExchangeById() {
+    buildExchange();
+    //
+    Exchange exchange = wallet.getExchangeById(ByteString.copyFrom(ByteArray.fromLong(1L)));
+    Assert.assertNotNull(exchange);
+    exchange = wallet.getExchangeById(ByteString.copyFrom(ByteArray.fromLong(3L)));
+    Assert.assertNull(exchange);
+  }
+
+  @Test
+  public void testGetExchangeList() {
+    buildExchange();
+    //
+    ExchangeList exchangeList = wallet.getExchangeList();
+    Assert.assertEquals(2, exchangeList.getExchangesCount());
   }
 
   @Test
@@ -565,6 +594,12 @@ public class WalletTest extends BaseTest {
     req = req.toBuilder().clearDetail()
         .setIdOrNum(new BlockCapsule(block).getBlockId().toString()).build();
     assertEquals(block, wallet.getBlock(req));
+  }
+
+  @Test
+  public void testGetNextMaintenanceTime() {
+    NumberMessage numberMessage = wallet.getNextMaintenanceTime();
+    Assert.assertEquals(0, numberMessage.getNum());
   }
 
   //@Test
