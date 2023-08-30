@@ -116,8 +116,8 @@ public class TransactionsMsgHandler implements TronMsgHandler {
   }
 
   private void handleTransaction(PeerConnection peer, TransactionMessage trx) {
-    if (peer.isDisconnect()) {
-      logger.warn("Drop trx {} from {}, peer is disconnect", trx.getMessageId(),
+    if (peer.isBadPeer()) {
+      logger.warn("Drop trx {} from {}, peer is bad peer", trx.getMessageId(),
           peer.getInetAddress());
       return;
     }
@@ -133,6 +133,7 @@ public class TransactionsMsgHandler implements TronMsgHandler {
       logger.warn("Trx {} from peer {} process failed. type: {}, reason: {}",
           trx.getMessageId(), peer.getInetAddress(), e.getType(), e.getMessage());
       if (e.getType().equals(TypeEnum.BAD_TRX)) {
+        peer.setBadPeer(true);
         peer.disconnect(ReasonCode.BAD_TX);
       }
     } catch (Exception e) {

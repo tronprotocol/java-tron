@@ -22,6 +22,7 @@ import org.tron.core.services.interfaceOnSolidity.http.GetAssetIssueByNameOnSoli
 import org.tron.core.services.interfaceOnSolidity.http.GetAssetIssueListByNameOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetAssetIssueListOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetAvailableUnfreezeCountOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetBandwidthPricesOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetBlockByIdOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetBlockByLatestNumOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetBlockByLimitNextOnSolidityServlet;
@@ -168,6 +169,8 @@ public class HttpApiOnSolidityService implements Service {
   @Autowired
   private GetMarketPairListOnSolidityServlet getMarketPairListOnSolidityServlet;
   @Autowired
+  private GetBandwidthPricesOnSolidityServlet getBandwidthPricesOnSolidityServlet;
+  @Autowired
   private GetEnergyPricesOnSolidityServlet getEnergyPricesOnSolidityServlet;
 
   @Autowired
@@ -290,6 +293,8 @@ public class HttpApiOnSolidityService implements Service {
       context.addServlet(new ServletHolder(getRewardServlet), "/walletsolidity/getReward");
       context
           .addServlet(new ServletHolder(getBurnTrxOnSolidityServlet), "/walletsolidity/getburntrx");
+      context.addServlet(new ServletHolder(getBandwidthPricesOnSolidityServlet),
+          "/walletsolidity/getbandwidthprices");
       context.addServlet(new ServletHolder(getEnergyPricesOnSolidityServlet),
           "/walletsolidity/getenergyprices");
 

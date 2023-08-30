@@ -1,27 +1,28 @@
-package org.tron.core.services.interfaceOnPBFT.http;
+package org.tron.core.services.interfaceOnSolidity.http;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.core.services.http.GetEnergyPricesServlet;
-import org.tron.core.services.interfaceOnPBFT.WalletOnPBFT;
+import org.tron.core.services.http.GetBandwidthPricesServlet;
+import org.tron.core.services.interfaceOnSolidity.WalletOnSolidity;
 
 @Component
 @Slf4j(topic = "API")
-public class GetEnergyPricesOnPBFTServlet extends GetEnergyPricesServlet {
+public class GetBandwidthPricesOnSolidityServlet extends GetBandwidthPricesServlet {
 
   @Autowired
-  private WalletOnPBFT walletOnPBFT;
+  private WalletOnSolidity walletOnSolidity;
 
   @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
-    walletOnPBFT.futureGet(() -> super.doGet(request, response));
+    walletOnSolidity.futureGet(() -> super.doGet(request, response));
   }
 
   @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
-    walletOnPBFT.futureGet(() -> super.doPost(request, response));
+    walletOnSolidity.futureGet(() -> super.doPost(request, response));
   }
 }
+
