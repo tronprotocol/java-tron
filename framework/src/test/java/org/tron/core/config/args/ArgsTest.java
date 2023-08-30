@@ -128,6 +128,12 @@ public class ArgsTest {
   public void testIpFromLibP2p()
       throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
     Args.setParam(new String[] {"-w"}, Constant.TEST_CONF);
+    CommonParameter parameter = Args.getInstance();
+
+    String configuredBindIp = parameter.getNodeDiscoveryBindIp();
+    String configuredExternalIp = parameter.getNodeExternalIp();
+    Assert.assertEquals("127.0.0.1", configuredBindIp);
+    Assert.assertEquals("46.168.1.1", configuredExternalIp);
 
     Config config = Configuration.getByFileName(null, Constant.TEST_CONF);
     Config config2 = config.withoutPath(Constant.NODE_DISCOVERY_BIND_IP);
@@ -144,8 +150,8 @@ public class ArgsTest {
     method2.setAccessible(true);
     method2.invoke(Args.class, config3);
 
-    Assert.assertNotEquals("127.0.0.1", CommonParameter.getInstance().getNodeDiscoveryBindIp());
-    Assert.assertNotEquals("46.168.1.1", CommonParameter.getInstance().getNodeExternalIp());
+    Assert.assertNotEquals(configuredBindIp, parameter.getNodeDiscoveryBindIp());
+    Assert.assertNotEquals(configuredExternalIp, parameter.getNodeExternalIp());
   }
 }
 
