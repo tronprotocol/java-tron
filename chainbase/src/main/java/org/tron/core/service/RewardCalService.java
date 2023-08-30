@@ -75,13 +75,7 @@ public class RewardCalService {
   }
 
   public void calReward() throws IOException {
-    try (DBIterator iterator = rewardCacheStore.iterator()) {
-      iterator.seekToLast();
-      if (iterator.hasNext()) {
-        byte[] key  = iterator.next().getKey();
-        System.arraycopy(key, 0, lastAccount, 0, ADDRESS_SIZE);
-      }
-    }
+    initLastAccount();
     es.submit(this::startRewardCal);
   }
 
@@ -93,14 +87,18 @@ public class RewardCalService {
       return;
     }
     accountIterator = (DBIterator) accountStore.getDb().iterator();
+    initLastAccount();
+    startRewardCal();
+  }
+
+  private void initLastAccount() throws IOException {
     try (DBIterator iterator = rewardCacheStore.iterator()) {
       iterator.seekToLast();
-      if (iterator.hasNext()) {
-        byte[] key  = iterator.next().getKey();
+      if (iterator.valid()) {
+        byte[] key  = iterator.getKey();
         System.arraycopy(key, 0, lastAccount, 0, ADDRESS_SIZE);
       }
     }
-    startRewardCal();
   }
 
 
