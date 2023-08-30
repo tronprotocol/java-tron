@@ -94,7 +94,7 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
     }
     SnapshotImpl fromImpl = (SnapshotImpl) from;
     Streams.stream(fromImpl.db).forEach(e -> {
-      if (db.get(e.getKey()) == null && e.getValue() != null) {
+      if (db.get(e.getKey()) == null) {
         db.put(e.getKey(), e.getValue());
       }
     }
