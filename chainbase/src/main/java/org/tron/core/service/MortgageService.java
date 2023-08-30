@@ -167,25 +167,6 @@ public class MortgageService {
     return reward + accountCapsule.getAllowance();
   }
 
-  private long computeReward(long cycle, AccountCapsule accountCapsule) {
-    long reward = 0;
-    for (Vote vote : accountCapsule.getVotesList()) {
-      byte[] srAddress = vote.getVoteAddress().toByteArray();
-      long totalReward = delegationStore.getReward(cycle, srAddress);
-      long totalVote = delegationStore.getWitnessVote(cycle, srAddress);
-      if (totalVote == DelegationStore.REMARK || totalVote == 0) {
-        continue;
-      }
-      long userVote = vote.getVoteCount();
-      double voteRate = (double) userVote / totalVote;
-      reward += voteRate * totalReward;
-      logger.debug("ComputeReward {}, {}, {}, {}, {}, {}, {}.", cycle,
-          Hex.toHexString(accountCapsule.getAddress().toByteArray()), Hex.toHexString(srAddress),
-          userVote, totalVote, totalReward, reward);
-    }
-    return reward;
-  }
-
   /**
    * Compute reward from begin cycle to end cycle, which endCycle must greater than beginCycle.
    * While computing reward after new reward algorithm taking effective cycle number,
@@ -265,7 +246,7 @@ public class MortgageService {
     long cacheData = rewardCalService.getReward(accountCapsule.createDbKey(), beginCycle);
     long reward = 0;
     for (long cycle = beginCycle; cycle < oldEndCycle; cycle++) {
-      reward += computeReward(cycle, accountCapsule);
+      reward += rewardCalService.computeReward(cycle, accountCapsule.getInstance());
     }
     if (cacheData != -1 && cacheData != reward) {
       logger.error("Old reward algorithm reward not equal, address {}, beginCycle {}, "
