@@ -629,8 +629,7 @@ public class UnfreezeBalanceV2ActuatorTest extends BaseTest {
             .build();
 
     long ret = actuator.calcUnfreezeExpireTime(now);
-
-    Assert.assertTrue(true);
+    Assert.assertTrue(ret > 0);
   }
 
   @Test

@@ -1,11 +1,14 @@
 package org.tron.core.actuator;
 
 import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_PERIOD;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.protos.contract.Common.ResourceCode;
 import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
 import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
+import static org.tron.core.vm.utils.FreezeV2Util.getV2EnergyUsage;
+import static org.tron.core.vm.utils.FreezeV2Util.getV2NetUsage;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -64,7 +67,8 @@ public class DelegateResourceActuator extends AbstractActuator {
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     long delegateBalance = delegateResourceContract.getBalance();
     boolean lock = delegateResourceContract.getLock();
-    long lockPeriod = getLockPeriod(dynamicStore, delegateResourceContract);
+    long lockPeriod = getLockPeriod(dynamicStore.supportMaxDelegateLockPeriod(),
+            delegateResourceContract);
     byte[] receiverAddress = delegateResourceContract.getReceiverAddress().toByteArray();
 
     // delegate resource to receiver
@@ -143,7 +147,7 @@ public class DelegateResourceActuator extends AbstractActuator {
 
     long delegateBalance = delegateResourceContract.getBalance();
     if (delegateBalance < TRX_PRECISION) {
-      throw new ContractValidateException("delegateBalance must be more than 1TRX");
+      throw new ContractValidateException("delegateBalance must be greater than or equal to 1 TRX");
     }
 
     switch (delegateResourceContract.getResource()) {
@@ -153,22 +157,15 @@ public class DelegateResourceActuator extends AbstractActuator {
 
         long accountNetUsage = ownerCapsule.getNetUsage();
         if (null != this.getTx() && this.getTx().isTransactionCreate()) {
-          accountNetUsage += TransactionUtil.estimateConsumeBandWidthSize(ownerCapsule,
-              chainBaseManager);
+          accountNetUsage += TransactionUtil.estimateConsumeBandWidthSize(dynamicStore,
+                  ownerCapsule.getFrozenV2BalanceForBandwidth());
         }
         long netUsage = (long) (accountNetUsage * TRX_PRECISION * ((double)
             (dynamicStore.getTotalNetWeight()) / dynamicStore.getTotalNetLimit()));
-
-        long remainNetUsage = netUsage
-            - ownerCapsule.getFrozenBalance()
-            - ownerCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
-            - ownerCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth();
-
-        remainNetUsage = Math.max(0, remainNetUsage);
-
-        if (ownerCapsule.getFrozenV2BalanceForBandwidth() - remainNetUsage < delegateBalance) {
+        long v2NetUsage = getV2NetUsage(ownerCapsule, netUsage);
+        if (ownerCapsule.getFrozenV2BalanceForBandwidth() - v2NetUsage < delegateBalance) {
           throw new ContractValidateException(
-              "delegateBalance must be less than available FreezeBandwidthV2 balance");
+              "delegateBalance must be less than or equal to available FreezeBandwidthV2 balance");
         }
       }
       break;
@@ -178,17 +175,10 @@ public class DelegateResourceActuator extends AbstractActuator {
 
         long energyUsage = (long) (ownerCapsule.getEnergyUsage() * TRX_PRECISION * ((double)
             (dynamicStore.getTotalEnergyWeight()) / dynamicStore.getTotalEnergyCurrentLimit()));
-
-        long remainEnergyUsage = energyUsage
-            - ownerCapsule.getEnergyFrozenBalance()
-            - ownerCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()
-            - ownerCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy();
-
-        remainEnergyUsage = Math.max(0, remainEnergyUsage);
-
-        if (ownerCapsule.getFrozenV2BalanceForEnergy() - remainEnergyUsage < delegateBalance) {
+        long v2EnergyUsage = getV2EnergyUsage(ownerCapsule, energyUsage);
+        if (ownerCapsule.getFrozenV2BalanceForEnergy() - v2EnergyUsage < delegateBalance) {
           throw new ContractValidateException(
-                  "delegateBalance must be less than available FreezeEnergyV2 balance");
+                  "delegateBalance must be less than or equal to available FreezeEnergyV2 balance");
         }
       }
       break;
@@ -219,7 +209,7 @@ public class DelegateResourceActuator extends AbstractActuator {
 
     boolean lock = delegateResourceContract.getLock();
     if (lock && dynamicStore.supportMaxDelegateLockPeriod()) {
-      long lockPeriod = getLockPeriod(dynamicStore, delegateResourceContract);
+      long lockPeriod = getLockPeriod(true, delegateResourceContract);
       long maxDelegateLockPeriod = dynamicStore.getMaxDelegateLockPeriod();
       if (lockPeriod < 0 || lockPeriod > maxDelegateLockPeriod) {
         throw new ContractValidateException(
@@ -257,20 +247,20 @@ public class DelegateResourceActuator extends AbstractActuator {
     return true;
   }
 
-  private long getLockPeriod(DynamicPropertiesStore dynamicStore,
+  private long getLockPeriod(boolean supportMaxDelegateLockPeriod,
       DelegateResourceContract delegateResourceContract) {
     long lockPeriod = delegateResourceContract.getLockPeriod();
-    if (dynamicStore.supportMaxDelegateLockPeriod()) {
-      return lockPeriod == 0 ? DELEGATE_PERIOD / 3000 : lockPeriod;
+    if (supportMaxDelegateLockPeriod) {
+      return lockPeriod == 0 ? DELEGATE_PERIOD / BLOCK_PRODUCED_INTERVAL : lockPeriod;
     } else {
-      return 0;
+      return DELEGATE_PERIOD / BLOCK_PRODUCED_INTERVAL;
     }
   }
 
   private void validRemainTime(ResourceCode resourceCode, long lockPeriod, long expireTime,
       long now) throws ContractValidateException {
     long remainTime = expireTime - now;
-    if (lockPeriod * 3 * 1000 < remainTime) {
+    if (lockPeriod * BLOCK_PRODUCED_INTERVAL < remainTime) {
       throw new ContractValidateException(
           "The lock period for " + resourceCode.name() + " this time cannot be less than the "
               + "remaining time[" + remainTime + "ms] of the last lock period for "
@@ -303,11 +293,7 @@ public class DelegateResourceActuator extends AbstractActuator {
     //modify DelegatedResourceStore
     long expireTime = 0;
     if (lock) {
-      if (dynamicPropertiesStore.supportMaxDelegateLockPeriod()) {
-        expireTime = now + lockPeriod * 3 * 1000;
-      } else {
-        expireTime = now + DELEGATE_PERIOD;
-      }
+      expireTime = now + lockPeriod * BLOCK_PRODUCED_INTERVAL;
     }
     byte[] key = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress, lock);
     DelegatedResourceCapsule delegatedResourceCapsule = delegatedResourceStore.get(key);

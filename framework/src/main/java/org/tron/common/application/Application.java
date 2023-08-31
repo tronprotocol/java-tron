@@ -34,6 +34,10 @@ public interface Application {
 
   void startServices();
 
+  // DO NOT USE THIS METHOD IN TEST CASES MAIN-THREAD
+  default void blockUntilShutdown() {
+  }
+
   void shutdownServices();
 
   void addService(Service service);

@@ -5,7 +5,6 @@ import io.grpc.ManagedChannelBuilder;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
-
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Test;
@@ -43,8 +42,6 @@ public class LiteFullNodeToolTest {
     appTest = ApplicationFactory.create(context);
     appTest.addService(context.getBean(RpcApiService.class));
     appTest.addService(context.getBean(RpcApiServiceOnSolidity.class));
-    appTest.initServices(Args.getInstance());
-    appTest.startServices();
     appTest.startup();
 
     String fullNode = String.format("%s:%d", "127.0.0.1",
@@ -76,9 +73,7 @@ public class LiteFullNodeToolTest {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
-    appTest.shutdownServices();
-    appTest.shutdown();
-    context.destroy();
+    context.close();
   }
 
   public void init() {

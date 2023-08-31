@@ -18,14 +18,21 @@ public class GetBlockByNumServlet extends RateLimiterServlet {
   @Autowired
   private Wallet wallet;
 
+  @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
-      fillResponse(Util.getVisible(request), Long.parseLong(request.getParameter("num")), response);
+      long num = 0;
+      String numStr = request.getParameter("num");
+      if (numStr != null) {
+        num = Long.parseLong(numStr);
+      }
+      fillResponse(Util.getVisible(request), num, response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
   }
 
+  @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
       PostParams params = PostParams.getPostParams(request);

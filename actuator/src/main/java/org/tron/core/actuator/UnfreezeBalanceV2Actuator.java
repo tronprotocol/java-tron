@@ -11,6 +11,8 @@ import static org.tron.protos.contract.Common.ResourceCode.TRON_POWER;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -365,19 +367,23 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
     }
 
     // Update Owner Voting
-    votesCapsule.clearNewVotes();
+    List<Vote> addVotes = new ArrayList<>();
     for (Vote vote : accountCapsule.getVotesList()) {
       long newVoteCount = (long)
           ((double) vote.getVoteCount() / totalVote * ownedTronPower / TRX_PRECISION);
       if (newVoteCount > 0) {
-        votesCapsule.addNewVotes(vote.getVoteAddress(), newVoteCount);
+        Vote newVote = Vote.newBuilder()
+            .setVoteAddress(vote.getVoteAddress())
+            .setVoteCount(newVoteCount)
+            .build();
+        addVotes.add(newVote);
       }
     }
+    votesCapsule.clearNewVotes();
+    votesCapsule.addAllNewVotes(addVotes);
     votesStore.put(ownerAddress, votesCapsule);
 
     accountCapsule.clearVotes();
-    for (Vote vote : votesCapsule.getNewVotes()) {
-      accountCapsule.addVotes(vote.getVoteAddress(), vote.getVoteCount());
-    }
+    accountCapsule.addAllVotes(addVotes);
   }
 }

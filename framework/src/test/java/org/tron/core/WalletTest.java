@@ -42,6 +42,8 @@ import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.ExchangeList;
+import org.tron.api.GrpcAPI.NumberMessage;
+import org.tron.api.GrpcAPI.PricesResponseMessage;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.common.BaseTest;
 import org.tron.common.crypto.ECKey;
@@ -532,6 +534,16 @@ public class WalletTest extends BaseTest {
   }
 
   @Test
+  public void testGetProposalById() {
+    buildProposal();
+    //
+    Proposal proposal = wallet.getProposalById(ByteString.copyFrom(ByteArray.fromLong(1L)));
+    Assert.assertNotNull(proposal);
+    proposal = wallet.getProposalById(ByteString.copyFrom(ByteArray.fromLong(3L)));
+    Assert.assertNull(proposal);
+  }
+
+  @Test
   public void getPaginatedExchangeList() {
     buildExchange();
     ExchangeList exchangeList = wallet.getPaginatedExchangeList(0, 100);
@@ -539,6 +551,24 @@ public class WalletTest extends BaseTest {
         exchangeList.getExchangesList().get(0).getCreatorAddress().toStringUtf8());
     assertEquals("Address2",
         exchangeList.getExchangesList().get(1).getCreatorAddress().toStringUtf8());
+  }
+
+  @Test
+  public void testGetExchangeById() {
+    buildExchange();
+    //
+    Exchange exchange = wallet.getExchangeById(ByteString.copyFrom(ByteArray.fromLong(1L)));
+    Assert.assertNotNull(exchange);
+    exchange = wallet.getExchangeById(ByteString.copyFrom(ByteArray.fromLong(3L)));
+    Assert.assertNull(exchange);
+  }
+
+  @Test
+  public void testGetExchangeList() {
+    buildExchange();
+    //
+    ExchangeList exchangeList = wallet.getExchangeList();
+    Assert.assertEquals(2, exchangeList.getExchangesCount());
   }
 
   @Test
@@ -565,6 +595,12 @@ public class WalletTest extends BaseTest {
     req = req.toBuilder().clearDetail()
         .setIdOrNum(new BlockCapsule(block).getBlockId().toString()).build();
     assertEquals(block, wallet.getBlock(req));
+  }
+
+  @Test
+  public void testGetNextMaintenanceTime() {
+    NumberMessage numberMessage = wallet.getNextMaintenanceTime();
+    Assert.assertEquals(0, numberMessage.getNum());
   }
 
   //@Test
@@ -895,8 +931,8 @@ public class WalletTest extends BaseTest {
 
   @Test
   public void testGetMemoFeePrices() {
-    String memeFeeList = wallet.getMemoFeePrices();
-    Assert.assertEquals("0:0", memeFeeList);
+    PricesResponseMessage memeFeeList = wallet.getMemoFeePrices();
+    Assert.assertEquals("0:0", memeFeeList.getPrices());
   }
 
   @Test
@@ -1072,5 +1108,48 @@ public class WalletTest extends BaseTest {
     GrpcAPI.NodeList nodeList = wallet.listNodes();
     assertEquals(0, nodeList.getNodesList().size());
   }
+
+  /**
+   *  We calculate the size of the structure and conclude that
+   *    delegate_balance = 1000_000L; => 277
+   *    delegate_balance = 1000_000_000L; => 279
+   *    delegate_balance = 1000_000_000_000L => 280
+   *
+   *  We initialize account information as follows
+   *    account balance = 1000_000_000_000L
+   *    account frozen_balance = 1000_000_000L
+   *
+   *  then estimateConsumeBandWidthSize cost 279
+   *
+   *  so we have following result:
+   *  TransactionUtil.estimateConsumeBandWidthSize(
+   *    dynamicStore,ownerCapsule.getBalance())   ===> false
+   *  TransactionUtil.estimateConsumeBandWidthSize(
+   *    dynamicStore,ownerCapsule.getFrozenV2BalanceForBandwidth()) ===> true
+   *
+   *  This test case is used to verify the above conclusions
+   */
+  @Test
+  public void testGetCanDelegatedMaxSizeBandWidth123() {
+    long frozenBalance = 1000_000_000L;
+    AccountCapsule ownerCapsule =
+        dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    ownerCapsule.addFrozenBalanceForBandwidthV2(frozenBalance);
+    ownerCapsule.setNetUsage(0L);
+    ownerCapsule.setEnergyUsage(0L);
+    dbManager.getDynamicPropertiesStore().saveTotalNetWeight(0L);
+    dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(0L);
+    dbManager.getDynamicPropertiesStore().addTotalNetWeight(
+        frozenBalance / TRX_PRECISION + 43100000000L);
+    dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
+
+    GrpcAPI.CanDelegatedMaxSizeResponseMessage message = wallet.getCanDelegatedMaxSize(
+        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+        BANDWIDTH.getNumber());
+    Assert.assertEquals(frozenBalance / TRX_PRECISION - 279,
+        message.getMaxSize() / TRX_PRECISION);
+    chainBaseManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(DELEGATE_PERIOD / 3000);
+  }
+
 }
 
