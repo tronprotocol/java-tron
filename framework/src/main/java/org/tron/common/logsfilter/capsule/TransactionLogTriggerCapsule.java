@@ -1,6 +1,7 @@
 package org.tron.common.logsfilter.capsule;
 
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.CreateSmartContract;
+import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -236,6 +237,9 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
 
               transactionLogTrigger.setFromAddress(StringUtil
                   .encode58Check(cancelAllUnfreezeV2Contract.getOwnerAddress().toByteArray()));
+              transactionLogTrigger.setAssetName("energy");
+              transactionLogTrigger.setAssetAmount(
+                  transactionInfo.getCancelUnfreezeV2AmountMap().get(ENERGY.name()));
               break;
             default:
               break;
