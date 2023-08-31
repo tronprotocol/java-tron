@@ -1,10 +1,8 @@
 package org.tron.core.services.interfaceOnSolidity;
 
 import com.google.protobuf.ByteString;
-import io.grpc.Server;
 import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,9 +33,7 @@ import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
-import org.tron.common.application.Service;
-import org.tron.common.crypto.SignInterface;
-import org.tron.common.crypto.SignUtils;
+import org.tron.common.application.RpcService;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Sha256Hash;
@@ -66,10 +62,8 @@ import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 
 @Slf4j(topic = "API")
-public class RpcApiServiceOnSolidity implements Service {
+public class RpcApiServiceOnSolidity extends RpcService {
 
-  private int port = Args.getInstance().getRpcOnSolidityPort();
-  private Server apiServer;
 
   @Autowired
   private WalletOnSolidity walletOnSolidity;
@@ -94,6 +88,7 @@ public class RpcApiServiceOnSolidity implements Service {
 
   @Override
   public void init(CommonParameter args) {
+    port = Args.getInstance().getRpcOnSolidityPort();
   }
 
   @Override
@@ -131,20 +126,10 @@ public class RpcApiServiceOnSolidity implements Service {
 
       apiServer = serverBuilder.build();
       rateLimiterInterceptor.init(apiServer);
-
-      apiServer.start();
-
-    } catch (IOException e) {
+      super.start();
+    } catch (Exception e) {
       logger.debug(e.getMessage(), e);
     }
-
-    logger.info("RpcApiServiceOnSolidity started, listening on " + port);
-
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      System.err.println("*** shutting down gRPC server on solidity since JVM is shutting down");
-      //server.this.stop();
-      System.err.println("*** server on solidity shut down");
-    }));
   }
 
   private TransactionExtention transaction2Extention(Transaction transaction) {
@@ -174,13 +159,6 @@ public class RpcApiServiceOnSolidity implements Service {
       builder.addTransactions(transaction2Extention(transaction));
     }
     return builder.build();
-  }
-
-  @Override
-  public void stop() {
-    if (apiServer != null) {
-      apiServer.shutdown();
-    }
   }
 
   /**

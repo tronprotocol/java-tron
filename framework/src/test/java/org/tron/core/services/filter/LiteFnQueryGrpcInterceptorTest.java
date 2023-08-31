@@ -74,6 +74,7 @@ public class LiteFnQueryGrpcInterceptorTest {
             .usePlaintext()
             .build();
     context = new TronApplicationContext(DefaultConfig.class);
+    context.registerShutdownHook();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
     blockingStubpBFT = WalletSolidityGrpc.newBlockingStub(channelpBFT);
@@ -85,8 +86,6 @@ public class LiteFnQueryGrpcInterceptorTest {
     appTest.addService(rpcApiService);
     appTest.addService(rpcOnSolidity);
     appTest.addService(rpcApiServiceOnPBFT);
-    appTest.initServices(Args.getInstance());
-    appTest.startServices();
     appTest.startup();
   }
 

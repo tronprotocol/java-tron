@@ -9,6 +9,8 @@ import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.tron.common.es.ExecutorServiceManager;
@@ -28,6 +30,7 @@ public class DynamicArgs {
   private ScheduledExecutorService reloadExecutor;
   private final String esName = "dynamic-reload";
 
+  @PostConstruct
   public void init() {
     if (parameter.isDynamicConfigEnable()) {
       reloadExecutor = ExecutorServiceManager.newSingleThreadScheduledExecutor(esName);
@@ -108,6 +111,7 @@ public class DynamicArgs {
         TronNetService.getP2pConfig().getTrustNodes().toString());
   }
 
+  @PreDestroy
   public void close() {
     ExecutorServiceManager.shutdownAndAwaitTermination(reloadExecutor, esName);
   }

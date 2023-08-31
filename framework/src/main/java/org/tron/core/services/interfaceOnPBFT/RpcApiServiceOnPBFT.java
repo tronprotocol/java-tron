@@ -1,9 +1,7 @@
 package org.tron.core.services.interfaceOnPBFT;
 
-import io.grpc.Server;
 import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,8 +34,7 @@ import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
-import org.tron.common.application.Service;
-import org.tron.common.crypto.ECKey;
+import org.tron.common.application.RpcService;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
@@ -64,10 +61,7 @@ import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 
 @Slf4j(topic = "API")
-public class RpcApiServiceOnPBFT implements Service {
-
-  private int port = Args.getInstance().getRpcOnPBFTPort();
-  private Server apiServer;
+public class RpcApiServiceOnPBFT extends RpcService {
 
   @Autowired
   private WalletOnPBFT walletOnPBFT;
@@ -92,7 +86,7 @@ public class RpcApiServiceOnPBFT implements Service {
 
   @Override
   public void init(CommonParameter parameter) {
-
+    port = Args.getInstance().getRpcOnPBFTPort();
   }
 
   @Override
@@ -131,26 +125,9 @@ public class RpcApiServiceOnPBFT implements Service {
 
       apiServer = serverBuilder.build();
       rateLimiterInterceptor.init(apiServer);
-
-      apiServer.start();
-
-    } catch (IOException e) {
+      super.start();
+    } catch (Exception e) {
       logger.debug(e.getMessage(), e);
-    }
-
-    logger.info("RpcApiServiceOnPBFT started, listening on " + port);
-
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      System.err.println("*** shutting down gRPC server on PBFT since JVM is shutting down");
-      //server.this.stop();
-      System.err.println("*** server on PBFT shut down");
-    }));
-  }
-
-  @Override
-  public void stop() {
-    if (apiServer != null) {
-      apiServer.shutdown();
     }
   }
 

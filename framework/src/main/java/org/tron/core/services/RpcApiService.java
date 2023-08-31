@@ -5,12 +5,10 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.ProtocolStringList;
-import io.grpc.Server;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
-import java.io.IOException;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import lombok.Getter;
@@ -75,7 +73,7 @@ import org.tron.api.MonitorGrpc;
 import org.tron.api.WalletExtensionGrpc;
 import org.tron.api.WalletGrpc.WalletImplBase;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
-import org.tron.common.application.Service;
+import org.tron.common.application.RpcService;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
@@ -164,15 +162,13 @@ import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
 
 @Component
 @Slf4j(topic = "API")
-public class RpcApiService implements Service {
+public class RpcApiService extends RpcService {
 
   public static final String CONTRACT_VALIDATE_EXCEPTION = "ContractValidateException: {}";
   private static final String EXCEPTION_CAUGHT = "exception caught";
   private static final String UNKNOWN_EXCEPTION_CAUGHT = "unknown exception caught: ";
   private static final long BLOCK_LIMIT_NUM = 100;
   private static final long TRANSACTION_LIMIT_NUM = 1000;
-  private int port = Args.getInstance().getRpcPort();
-  private Server apiServer;
   @Autowired
   private Manager dbManager;
   @Autowired
@@ -208,6 +204,7 @@ public class RpcApiService implements Service {
 
   @Override
   public void init(CommonParameter args) {
+    port = Args.getInstance().getRpcPort();
   }
 
   @Override
@@ -255,19 +252,10 @@ public class RpcApiService implements Service {
 
       apiServer = serverBuilder.build();
       rateLimiterInterceptor.init(apiServer);
-
-      apiServer.start();
-    } catch (IOException e) {
+      super.start();
+    } catch (Exception e) {
       logger.debug(e.getMessage(), e);
     }
-
-    logger.info("RpcApiService has started, listening on " + port);
-
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      System.err.println("*** shutting down gRPC server since JVM is shutting down");
-      //server.this.stop();
-      System.err.println("*** server is shutdown");
-    }));
   }
 
 
@@ -363,27 +351,6 @@ public class RpcApiService implements Service {
     String msg = "Not support Shielded TRC20 Transaction, need to be opened by the committee";
     if (!dbManager.getDynamicPropertiesStore().supportShieldedTRC20Transaction()) {
       throw new ZksnarkException(msg);
-    }
-  }
-
-  @Override
-  public void stop() {
-    if (apiServer != null) {
-      apiServer.shutdown();
-    }
-  }
-
-  /**
-   * ...
-   */
-  public void blockUntilShutdown() {
-    if (apiServer != null) {
-      try {
-        apiServer.awaitTermination();
-      } catch (InterruptedException e) {
-        logger.warn("{}", e);
-        Thread.currentThread().interrupt();
-      }
     }
   }
 
