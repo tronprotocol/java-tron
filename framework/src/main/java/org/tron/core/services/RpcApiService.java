@@ -49,6 +49,7 @@ import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.OvkDecryptTRC20Parameters;
 import org.tron.api.GrpcAPI.PaginatedMessage;
 import org.tron.api.GrpcAPI.PaymentAddressMessage;
+import org.tron.api.GrpcAPI.PricesResponseMessage;
 import org.tron.api.GrpcAPI.PrivateParameters;
 import org.tron.api.GrpcAPI.PrivateParametersWithoutAsk;
 import org.tron.api.GrpcAPI.PrivateShieldedTRC20Parameters;
@@ -174,16 +175,12 @@ public class RpcApiService implements Service {
   private Server apiServer;
   @Autowired
   private Manager dbManager;
-
   @Autowired
   private ChainBaseManager chainBaseManager;
-
   @Autowired
   private Wallet wallet;
-
   @Autowired
   private TransactionUtil transactionUtil;
-
   @Autowired
   private NodeInfoService nodeInfoService;
   @Autowired
@@ -192,10 +189,8 @@ public class RpcApiService implements Service {
   private LiteFnQueryGrpcInterceptor liteFnQueryGrpcInterceptor;
   @Autowired
   private RpcApiAccessInterceptor apiAccessInterceptor;
-
   @Autowired
   private MetricsApiService metricsApiService;
-
   @Getter
   private DatabaseApi databaseApi = new DatabaseApi();
   private WalletApi walletApi = new WalletApi();
@@ -996,6 +991,28 @@ public class RpcApiService implements Service {
     public void getBlock(GrpcAPI.BlockReq  request,
         StreamObserver<BlockExtention> responseObserver) {
       getBlockCommon(request, responseObserver);
+    }
+
+    @Override
+    public void getBandwidthPrices(EmptyMessage request,
+        StreamObserver<PricesResponseMessage> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getBandwidthPrices());
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getEnergyPrices(EmptyMessage request,
+        StreamObserver<PricesResponseMessage> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getEnergyPrices());
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
     }
   }
 
@@ -2024,6 +2041,39 @@ public class RpcApiService implements Service {
                 .onNext(wallet.getCanWithdrawUnfreezeAmount(
                         request.getOwnerAddress(), request.getTimestamp()
         ));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getBandwidthPrices(EmptyMessage request,
+        StreamObserver<PricesResponseMessage> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getBandwidthPrices());
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getEnergyPrices(EmptyMessage request,
+        StreamObserver<PricesResponseMessage> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getEnergyPrices());
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getMemoFee(EmptyMessage request,
+        StreamObserver<PricesResponseMessage> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getMemoFeePrices());
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
       }

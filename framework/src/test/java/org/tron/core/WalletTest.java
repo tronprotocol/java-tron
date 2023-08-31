@@ -43,6 +43,7 @@ import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.NumberMessage;
+import org.tron.api.GrpcAPI.PricesResponseMessage;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.common.BaseTest;
 import org.tron.common.crypto.ECKey;
@@ -930,8 +931,8 @@ public class WalletTest extends BaseTest {
 
   @Test
   public void testGetMemoFeePrices() {
-    String memeFeeList = wallet.getMemoFeePrices();
-    Assert.assertEquals("0:0", memeFeeList);
+    PricesResponseMessage memeFeeList = wallet.getMemoFeePrices();
+    Assert.assertEquals("0:0", memeFeeList.getPrices());
   }
 
   @Test
