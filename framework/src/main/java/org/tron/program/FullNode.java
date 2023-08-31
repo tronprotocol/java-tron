@@ -30,8 +30,6 @@ import org.tron.core.services.jsonrpc.FullNodeJsonRpcHttpService;
 public class FullNode {
 
 
-  public static volatile boolean shutDownSign = false;
-
   public static void load(String path) {
     try {
       File file = new File(path);
@@ -131,11 +129,7 @@ public class FullNode {
       JsonRpcServiceOnPBFT jsonRpcServiceOnPBFT = context.getBean(JsonRpcServiceOnPBFT.class);
       appT.addService(jsonRpcServiceOnPBFT);
     }
-
-    appT.initServices(parameter);
-    appT.startServices();
     appT.startup();
-
-    rpcApiService.blockUntilShutdown();
+    appT.blockUntilShutdown();
   }
 }

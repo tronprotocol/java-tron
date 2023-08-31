@@ -9,7 +9,7 @@ import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.tron.common.application.Service;
+import org.tron.common.application.HttpService;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.filter.HttpApiAccessFilter;
@@ -63,11 +63,7 @@ import org.tron.core.services.interfaceOnSolidity.http.TriggerConstantContractOn
 
 
 @Slf4j(topic = "API")
-public class HttpApiOnSolidityService implements Service {
-
-  private int port = Args.getInstance().getSolidityHttpPort();
-
-  private Server server;
+public class HttpApiOnSolidityService extends HttpService {
 
   @Autowired
   private GetAccountOnSolidityServlet accountOnSolidityServlet;
@@ -189,16 +185,16 @@ public class HttpApiOnSolidityService implements Service {
 
   @Override
   public void init(CommonParameter args) {
-
+    port = Args.getInstance().getSolidityHttpPort();
   }
 
   @Override
   public void start() {
     try {
-      server = new Server(port);
+      apiServer = new Server(port);
       ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
       context.setContextPath("/");
-      server.setHandler(context);
+      apiServer.setHandler(context);
 
       // same as FullNode
       context.addServlet(new ServletHolder(accountOnSolidityServlet), "/walletsolidity/getaccount");
@@ -315,20 +311,11 @@ public class HttpApiOnSolidityService implements Service {
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
-        server.addBean(new ConnectionLimit(maxHttpConnectNumber, server));
+        apiServer.addBean(new ConnectionLimit(maxHttpConnectNumber, apiServer));
       }
-      server.start();
+      super.start();
     } catch (Exception e) {
       logger.debug("IOException: {}", e.getMessage());
-    }
-  }
-
-  @Override
-  public void stop() {
-    try {
-      server.stop();
-    } catch (Exception e) {
-      logger.debug("Exception: {}", e.getMessage());
     }
   }
 }

@@ -2416,6 +2416,17 @@ public class Manager {
     return blockWaitLock.get() > NO_BLOCK_WAITING_LOCK;
   }
 
+  public void close() {
+    stopRePushThread();
+    stopRePushTriggerThread();
+    EventPluginLoader.getInstance().stopPlugin();
+    stopFilterProcessThread();
+    stopValidateSignThread();
+    chainBaseManager.shutdown();
+    revokingStore.shutdown();
+    session.reset();
+  }
+
   private static class ValidateSignTask implements Callable<Boolean> {
 
     private TransactionCapsule trx;

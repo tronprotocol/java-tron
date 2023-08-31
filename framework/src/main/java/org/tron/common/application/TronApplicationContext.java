@@ -2,7 +2,7 @@ package org.tron.common.application;
 
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.tron.program.FullNode;
+import org.tron.core.config.TronLogShutdownHook;
 
 public class TronApplicationContext extends AnnotationConfigApplicationContext {
 
@@ -25,10 +25,15 @@ public class TronApplicationContext extends AnnotationConfigApplicationContext {
   public void doClose() {
     logger.info("******** start to close ********");
     Application appT = ApplicationFactory.create(this);
-    appT.shutdownServices();
     appT.shutdown();
     super.doClose();
     logger.info("******** close end ********");
-    FullNode.shutDownSign = true;
+    TronLogShutdownHook.shutDown = true;
+  }
+
+  @Override
+  public void registerShutdownHook() {
+    super.registerShutdownHook();
+    TronLogShutdownHook.shutDown = false;
   }
 }
