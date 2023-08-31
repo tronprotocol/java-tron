@@ -37,10 +37,12 @@ public abstract class BaseTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
-    if (StringUtils.isNotEmpty(dbPath) && FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
+    if (StringUtils.isNotEmpty(dbPath)) {
+      if (FileUtil.deleteDir(new File(dbPath))) {
+        logger.info("Release resources successful.");
+      } else {
+        logger.info("Release resources failure.");
+      }
     }
   }
 

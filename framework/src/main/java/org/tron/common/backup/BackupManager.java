@@ -9,7 +9,6 @@ import io.netty.util.internal.ConcurrentSet;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Set;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +18,7 @@ import org.tron.common.backup.message.Message;
 import org.tron.common.backup.socket.EventHandler;
 import org.tron.common.backup.socket.MessageHandler;
 import org.tron.common.backup.socket.UdpEvent;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
 
 @Slf4j(topic = "backup")
@@ -39,7 +39,10 @@ public class BackupManager implements EventHandler {
 
   private Set<String> members = new ConcurrentSet<>();
 
-  private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+  private final String esName = "backup-manager";
+
+  private ScheduledExecutorService executorService =
+      ExecutorServiceManager.newSingleThreadScheduledExecutor(esName);
 
   private MessageHandler messageHandler;
 
@@ -142,6 +145,10 @@ public class BackupManager implements EventHandler {
         setStatus(SLAVER);
       }
     }
+  }
+
+  public void stop() {
+    ExecutorServiceManager.shutdownAndAwaitTermination(executorService, esName);
   }
 
   @Override
