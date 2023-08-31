@@ -57,7 +57,7 @@ public class ContractStoreTest extends BaseTest {
   }
 
   @Test
-  public void get() {
+  public void testGet() {
     ContractCapsule contractCapsule = contractStore.get(ByteArray.fromHexString(CONTRACT_ADDRESS));
     byte[] originAddressByte = contractCapsule.getOriginAddress();
     String address = ByteArray.toHexString(originAddressByte);
@@ -65,7 +65,7 @@ public class ContractStoreTest extends BaseTest {
   }
 
   @Test
-  public void put() {
+  public void testPut() {
     String contractAddress = "22222222";
     String contractName = "test_contract_name";
     SmartContractOuterClass.SmartContract.Builder contract =
@@ -82,7 +82,7 @@ public class ContractStoreTest extends BaseTest {
   }
 
   @Test
-  public void delete() {
+  public void testDelete() {
     String contractAddress = "3333333";
     String contractName = "test_contract_name3333";
     SmartContractOuterClass.SmartContract.Builder contract =

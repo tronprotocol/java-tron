@@ -44,7 +44,7 @@ public class AssetIssueV2StoreTest extends BaseTest {
   }
 
   @Test
-  public void put() {
+  public void testPut() {
     String firstTokenId = "efg";
     assetIssueCapsule =
             new AssetIssueCapsule(
@@ -62,7 +62,7 @@ public class AssetIssueV2StoreTest extends BaseTest {
   }
 
   @Test
-  public void get() {
+  public void testGet() {
     AssetIssueCapsule assetIssueCapsule1 = assetIssueV2Store.get(assetIssueCapsule.createDbV2Key());
     Assert.assertNotNull(assetIssueCapsule1);
     String assetName = new String(assetIssueCapsule1.getName().toByteArray());
@@ -70,7 +70,7 @@ public class AssetIssueV2StoreTest extends BaseTest {
   }
 
   @Test
-  public void delete() {
+  public void testDelete() {
     String firstTokenId = "hij";
     assetIssueCapsule =
             new AssetIssueCapsule(

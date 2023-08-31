@@ -95,7 +95,7 @@ public class AccountAssetStoreTest extends BaseTest {
   }
 
   @Test
-  public void put() {
+  public void testPut() {
     byte[] key = "10000".getBytes();
     accountAssetStore.put(key, Longs.toByteArray(100L));
     byte[] bytes = accountAssetStore.get(key);
@@ -103,13 +103,13 @@ public class AccountAssetStoreTest extends BaseTest {
   }
 
   @Test
-  public void get() {
+  public void testGet() {
     byte[] bytes = accountAssetStore.get(ASSET_KEY);
     Assert.assertEquals(200L, Longs.fromByteArray(bytes));
   }
 
   @Test
-  public void getAccountAssets() {
+  public void testGetAccountAssets() {
     long assetKey = createAsset("testToken1");
     AccountCapsule accountCapsule = accountStore.get(ownerCapsule.getAddress().toByteArray());
     long assetValue = accountCapsule.getAssetV2(String.valueOf(assetKey));
@@ -117,7 +117,7 @@ public class AccountAssetStoreTest extends BaseTest {
   }
 
   @Test
-  public void getAllAssets() {
+  public void testGetAllAssets() {
     long assetKey1 = createAsset("testToken1");
     long assetKey2 = createAsset("testToken2");
     AccountCapsule accountCapsule = accountStore.get(ownerCapsule.getAddress().toByteArray());

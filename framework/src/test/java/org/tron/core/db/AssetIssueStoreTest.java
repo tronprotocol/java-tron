@@ -56,7 +56,7 @@ public class AssetIssueStoreTest extends BaseTest {
   }
 
   @Test
-  public void put() {
+  public void testPut() {
     long id = dbManager.getDynamicPropertiesStore().getTokenIdNum() + 1;
     String issueName = "test-asset2";
     AssetIssueCapsule assetIssueCapsule = createAssetIssue(id, issueName);
@@ -68,7 +68,7 @@ public class AssetIssueStoreTest extends BaseTest {
   }
 
   @Test
-  public void get() {
+  public void testGet() {
     AssetIssueCapsule assetIssueCapsule = assetIssueStore.get(ByteArray.fromString(NAME));
     Assert.assertNotNull(assetIssueCapsule);
     Assert.assertEquals(NAME, new String(assetIssueCapsule.getName().toByteArray()));
@@ -76,7 +76,7 @@ public class AssetIssueStoreTest extends BaseTest {
   }
 
   @Test
-  public void delete() {
+  public void testDelete() {
     long id = dbManager.getDynamicPropertiesStore().getTokenIdNum() + 1;
     String issueName = "test-asset-delete";
     AssetIssueCapsule assetIssueCapsule = createAssetIssue(id, issueName);
