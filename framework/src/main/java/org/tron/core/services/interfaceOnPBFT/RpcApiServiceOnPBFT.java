@@ -4,7 +4,6 @@ import io.grpc.Server;
 import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +37,7 @@ import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
 import org.tron.common.application.Service;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
@@ -85,6 +85,8 @@ public class RpcApiServiceOnPBFT implements Service {
   @Autowired
   private RpcApiAccessInterceptor apiAccessInterceptor;
 
+  private final String executorName = "rpc-pbft-executor";
+
   @Override
   public void init() {
   }
@@ -104,7 +106,8 @@ public class RpcApiServiceOnPBFT implements Service {
 
       if (args.getRpcThreadNum() > 0) {
         serverBuilder = serverBuilder
-            .executor(Executors.newFixedThreadPool(args.getRpcThreadNum()));
+            .executor(ExecutorServiceManager.newFixedThreadPool(
+                executorName, args.getRpcThreadNum()));
       }
 
       serverBuilder = serverBuilder.addService(new WalletPBFTApi());
