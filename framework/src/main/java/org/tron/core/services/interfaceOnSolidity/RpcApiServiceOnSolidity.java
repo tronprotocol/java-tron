@@ -5,7 +5,6 @@ import io.grpc.Server;
 import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +27,7 @@ import org.tron.api.GrpcAPI.GetAvailableUnfreezeCountResponseMessage;
 import org.tron.api.GrpcAPI.NoteParameters;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.PaginatedMessage;
-import org.tron.api.GrpcAPI.ResourcePricesResponseMessage;
+import org.tron.api.GrpcAPI.PricesResponseMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.SpendResult;
@@ -37,6 +36,9 @@ import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
 import org.tron.common.application.Service;
+import org.tron.common.crypto.SignInterface;
+import org.tron.common.crypto.SignUtils;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
@@ -84,6 +86,8 @@ public class RpcApiServiceOnSolidity implements Service {
   @Autowired
   private RpcApiAccessInterceptor apiAccessInterceptor;
 
+  private final String executorName = "rpc-solidity-executor";
+
   @Override
   public void init() {
   }
@@ -102,7 +106,8 @@ public class RpcApiServiceOnSolidity implements Service {
 
       if (parameter.getRpcThreadNum() > 0) {
         serverBuilder = serverBuilder
-            .executor(Executors.newFixedThreadPool(parameter.getRpcThreadNum()));
+            .executor(ExecutorServiceManager.newFixedThreadPool(
+                executorName, parameter.getRpcThreadNum()));
       }
 
       serverBuilder = serverBuilder.addService(new WalletSolidityApi());
@@ -536,14 +541,14 @@ public class RpcApiServiceOnSolidity implements Service {
 
     @Override
     public void getBandwidthPrices(EmptyMessage request,
-        StreamObserver<ResourcePricesResponseMessage> responseObserver) {
+        StreamObserver<PricesResponseMessage> responseObserver) {
       walletOnSolidity.futureGet(
           () -> rpcApiService.getWalletSolidityApi().getBandwidthPrices(request, responseObserver));
     }
 
     @Override
     public void getEnergyPrices(EmptyMessage request,
-        StreamObserver<ResourcePricesResponseMessage> responseObserver) {
+        StreamObserver<PricesResponseMessage> responseObserver) {
       walletOnSolidity.futureGet(
           () -> rpcApiService.getWalletSolidityApi().getEnergyPrices(request, responseObserver));
     }

@@ -29,7 +29,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
@@ -206,6 +205,7 @@ public class Manager {
   @Setter
   private MerkleContainer merkleContainer;
   private ExecutorService validateSignService;
+  private String validateSignName = "validate-sign";
   private boolean isRunRePushThread = true;
   private boolean isRunTriggerCapsuleProcessThread = true;
   private BlockingQueue<TransactionCapsule> pushTransactionQueue = new LinkedBlockingQueue<>();
@@ -536,8 +536,8 @@ public class Manager {
       logger.info("Lite node lowestNum: {}", chainBaseManager.getLowestBlockNum());
     }
     revokingStore.enable();
-    validateSignService = Executors
-        .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
+    validateSignService = ExecutorServiceManager
+        .newFixedThreadPool(validateSignName, Args.getInstance().getValidateSignThreadNum());
     rePushEs = ExecutorServiceManager.newSingleThreadExecutor(rePushEsName, true);
     rePushEs.submit(rePushLoop);
     // add contract event listener for subscribing

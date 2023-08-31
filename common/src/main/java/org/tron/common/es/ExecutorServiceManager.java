@@ -1,12 +1,15 @@
 package org.tron.common.es;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 
-@Slf4j(topic = "common")
+@Slf4j(topic = "common-executor")
 public class ExecutorServiceManager {
 
   public static ExecutorService newSingleThreadExecutor(String name) {
@@ -27,6 +30,31 @@ public class ExecutorServiceManager {
                                                                           boolean isDaemon) {
     return Executors.newSingleThreadScheduledExecutor(
         new ThreadFactoryBuilder().setNameFormat(name).setDaemon(isDaemon).build());
+  }
+
+  public static ExecutorService newFixedThreadPool(String name, int fixThreads) {
+    return newFixedThreadPool(name, fixThreads, false);
+  }
+
+  public static ExecutorService newFixedThreadPool(String name, int fixThreads, boolean isDaemon) {
+    return Executors.newFixedThreadPool(fixThreads,
+        new ThreadFactoryBuilder().setNameFormat(name + "-%d").setDaemon(isDaemon).build());
+  }
+
+  public static ExecutorService newThreadPoolExecutor(int corePoolSize, int maximumPoolSize,
+                                                   long keepAliveTime, TimeUnit unit,
+                                                   BlockingQueue<Runnable> workQueue,
+                                                   String name) {
+    return newThreadPoolExecutor(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue,
+        name, false);
+  }
+
+  public static ExecutorService newThreadPoolExecutor(int corePoolSize, int maximumPoolSize,
+                                                   long keepAliveTime, TimeUnit unit,
+                                                   BlockingQueue<Runnable> workQueue,
+                                                   String name, boolean isDaemon) {
+    return new ThreadPoolExecutor(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue,
+        new ThreadFactoryBuilder().setNameFormat(name + "-%d").setDaemon(isDaemon).build());
   }
 
   public static void shutdownAndAwaitTermination(ExecutorService pool, String name) {

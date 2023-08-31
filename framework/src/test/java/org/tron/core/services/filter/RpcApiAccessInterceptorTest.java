@@ -284,5 +284,11 @@ public class RpcApiAccessInterceptorTest {
     assertNotNull(blockingStubPBFT.getEnergyPrices(message));
   }
 
+  @Test
+  public void testGetMemoFee() {
+    EmptyMessage message = EmptyMessage.newBuilder().build();
+    assertNotNull(blockingStubFull.getMemoFee(message));
+  }
+
 }
 

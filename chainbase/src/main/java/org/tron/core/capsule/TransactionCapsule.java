@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
@@ -43,6 +42,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
@@ -86,8 +86,9 @@ import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
 @Slf4j(topic = "capsule")
 public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
-  private static final ExecutorService executorService = Executors
-      .newFixedThreadPool(CommonParameter.getInstance()
+  private static final String esName = "valid-contract-proto";
+  private static final ExecutorService executorService = ExecutorServiceManager
+      .newFixedThreadPool(esName, CommonParameter.getInstance()
           .getValidContractProtoThreadNum());
   private static final String OWNER_ADDRESS = "ownerAddress_";
 

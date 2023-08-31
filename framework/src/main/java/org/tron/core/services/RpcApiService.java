@@ -12,7 +12,6 @@ import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.util.Objects;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -50,12 +49,12 @@ import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.OvkDecryptTRC20Parameters;
 import org.tron.api.GrpcAPI.PaginatedMessage;
 import org.tron.api.GrpcAPI.PaymentAddressMessage;
+import org.tron.api.GrpcAPI.PricesResponseMessage;
 import org.tron.api.GrpcAPI.PrivateParameters;
 import org.tron.api.GrpcAPI.PrivateParametersWithoutAsk;
 import org.tron.api.GrpcAPI.PrivateShieldedTRC20Parameters;
 import org.tron.api.GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk;
 import org.tron.api.GrpcAPI.ProposalList;
-import org.tron.api.GrpcAPI.ResourcePricesResponseMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.ShieldedAddressInfo;
@@ -77,6 +76,7 @@ import org.tron.api.WalletExtensionGrpc;
 import org.tron.api.WalletGrpc.WalletImplBase;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
 import org.tron.common.application.Service;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
@@ -175,16 +175,12 @@ public class RpcApiService implements Service {
   private Server apiServer;
   @Autowired
   private Manager dbManager;
-
   @Autowired
   private ChainBaseManager chainBaseManager;
-
   @Autowired
   private Wallet wallet;
-
   @Autowired
   private TransactionUtil transactionUtil;
-
   @Autowired
   private NodeInfoService nodeInfoService;
   @Autowired
@@ -193,10 +189,8 @@ public class RpcApiService implements Service {
   private LiteFnQueryGrpcInterceptor liteFnQueryGrpcInterceptor;
   @Autowired
   private RpcApiAccessInterceptor apiAccessInterceptor;
-
   @Autowired
   private MetricsApiService metricsApiService;
-
   @Getter
   private DatabaseApi databaseApi = new DatabaseApi();
   private WalletApi walletApi = new WalletApi();
@@ -204,6 +198,8 @@ public class RpcApiService implements Service {
   private WalletSolidityApi walletSolidityApi = new WalletSolidityApi();
   @Getter
   private MonitorApi monitorApi = new MonitorApi();
+
+  private final String executorName = "rpc-full-executor";
 
   @Override
   public void init() {
@@ -222,7 +218,8 @@ public class RpcApiService implements Service {
 
       if (parameter.getRpcThreadNum() > 0) {
         serverBuilder = serverBuilder
-            .executor(Executors.newFixedThreadPool(parameter.getRpcThreadNum()));
+            .executor(ExecutorServiceManager.newFixedThreadPool(
+                executorName, parameter.getRpcThreadNum()));
       }
 
       if (parameter.isSolidityNode()) {
@@ -998,7 +995,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void getBandwidthPrices(EmptyMessage request,
-        StreamObserver<ResourcePricesResponseMessage> responseObserver) {
+        StreamObserver<PricesResponseMessage> responseObserver) {
       try {
         responseObserver.onNext(wallet.getBandwidthPrices());
       } catch (Exception e) {
@@ -1009,7 +1006,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void getEnergyPrices(EmptyMessage request,
-        StreamObserver<ResourcePricesResponseMessage> responseObserver) {
+        StreamObserver<PricesResponseMessage> responseObserver) {
       try {
         responseObserver.onNext(wallet.getEnergyPrices());
       } catch (Exception e) {
@@ -2052,7 +2049,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void getBandwidthPrices(EmptyMessage request,
-        StreamObserver<ResourcePricesResponseMessage> responseObserver) {
+        StreamObserver<PricesResponseMessage> responseObserver) {
       try {
         responseObserver.onNext(wallet.getBandwidthPrices());
       } catch (Exception e) {
@@ -2063,9 +2060,20 @@ public class RpcApiService implements Service {
 
     @Override
     public void getEnergyPrices(EmptyMessage request,
-        StreamObserver<ResourcePricesResponseMessage> responseObserver) {
+        StreamObserver<PricesResponseMessage> responseObserver) {
       try {
         responseObserver.onNext(wallet.getEnergyPrices());
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getMemoFee(EmptyMessage request,
+        StreamObserver<PricesResponseMessage> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getMemoFeePrices());
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
       }

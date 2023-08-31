@@ -768,10 +768,13 @@ service Wallet {
   rpc GetBlock (BlockReq) returns (BlockExtention) {
   }
 
-  rpc GetBandwidthPrices (EmptyMessage) returns (ResourcePricesResponseMessage) {
+  rpc GetBandwidthPrices (EmptyMessage) returns (PricesResponseMessage) {
   }
 
-  rpc GetEnergyPrices (EmptyMessage) returns (ResourcePricesResponseMessage) {
+  rpc GetEnergyPrices (EmptyMessage) returns (PricesResponseMessage) {
+  }
+
+  rpc GetMemoFee (EmptyMessage) returns (PricesResponseMessage) {
   }
 };
 
@@ -969,10 +972,10 @@ service WalletSolidity {
   }
   rpc GetBlock (BlockReq) returns (BlockExtention) {
   }
-  rpc GetBandwidthPrices (EmptyMessage) returns (ResourcePricesResponseMessage) {
+  rpc GetBandwidthPrices (EmptyMessage) returns (PricesResponseMessage) {
   }
 
-  rpc GetEnergyPrices (EmptyMessage) returns (ResourcePricesResponseMessage) {
+  rpc GetEnergyPrices (EmptyMessage) returns (PricesResponseMessage) {
   }
 };
 
@@ -1118,7 +1121,7 @@ message CanWithdrawUnfreezeAmountResponseMessage {
   int64 amount = 1;
 }
 
-message ResourcePricesResponseMessage {
+message PricesResponseMessage {
   string prices = 1;
 }
 
