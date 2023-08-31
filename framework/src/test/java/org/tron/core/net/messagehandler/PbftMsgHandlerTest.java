@@ -1,5 +1,7 @@
 package org.tron.core.net.messagehandler;
 
+import static org.mockito.Mockito.mock;
+
 import com.google.protobuf.ByteString;
 import java.io.File;
 import java.lang.reflect.Field;
@@ -36,7 +38,7 @@ import org.tron.p2p.P2pConfig;
 import org.tron.p2p.base.Parameter;
 import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol;
-import static org.mockito.Mockito.mock;
+
 
 public class PbftMsgHandlerTest {
   private static TronApplicationContext context;
