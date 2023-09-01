@@ -1,6 +1,8 @@
 package org.tron.common.logsfilter.trigger;
 
 import java.util.List;
+import java.util.Map;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -90,6 +92,10 @@ public class TransactionLogTrigger extends Trigger {
   @Getter
   @Setter
   private long energyUnitPrice;
+
+  @Getter
+  @Setter
+  private Map<String, Long> cancelUnfreezeV2AmountMap;
 
   public TransactionLogTrigger() {
     setTriggerName(Trigger.TRANSACTION_TRIGGER_NAME);
