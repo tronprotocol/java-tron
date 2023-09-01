@@ -21,7 +21,7 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
-import org.tron.plugins.utils.PublicMethod;
+import org.tron.common.utils.PublicMethod;
 import picocli.CommandLine;
 
 @Slf4j
