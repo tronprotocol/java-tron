@@ -3,11 +3,11 @@ package org.tron.core.net.service.statistics;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.net.InetAddress;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.MetricLabels;
 import org.tron.common.prometheus.Metrics;
@@ -27,7 +27,10 @@ public class TronStatsManager {
   private static Cache<InetAddress, NodeStatistics> cache = CacheBuilder.newBuilder()
           .maximumSize(3000).recordStats().build();
 
-  private ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+  private final String esName = "net-traffic-collector";
+
+  private ScheduledExecutorService executor =
+      ExecutorServiceManager.newSingleThreadScheduledExecutor(esName);
 
   public static NodeStatistics getNodeStatistics(InetAddress inetAddress) {
     NodeStatistics nodeStatistics = cache.getIfPresent(inetAddress);
@@ -49,11 +52,7 @@ public class TronStatsManager {
   }
 
   public void close() {
-    try {
-      executor.shutdownNow();
-    } catch (Exception e) {
-      logger.error("Exception in shutdown traffic stats worker, {}", e.getMessage());
-    }
+    ExecutorServiceManager.shutdownAndAwaitTermination(executor, esName);
   }
 
   private void work() {

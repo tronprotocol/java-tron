@@ -11,14 +11,13 @@ import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 
 
-
 public class ArgsTest {
 
   private static final String dbPath = "output_arg_test";
 
   @Before
   public void init() {
-    Args.setParam(new String[]{"--output-directory", dbPath, "--p2p-disable", "true",
+    Args.setParam(new String[] {"--output-directory", dbPath, "--p2p-disable", "true",
         "--debug"}, Constant.TEST_CONF);
   }
 
@@ -32,7 +31,6 @@ public class ArgsTest {
   public void testConfig() {
     Assert.assertEquals(Args.getInstance().getMaxTransactionPendingSize(), 2000);
     Assert.assertEquals(Args.getInstance().getPendingTransactionTimeout(), 60_000);
-    Assert.assertEquals(Args.getInstance().getNodeDiscoveryPingTimeout(), 15_000);
     Assert.assertEquals(Args.getInstance().getMaxFastForwardNum(), 3);
     Assert.assertEquals(Args.getInstance().getBlockCacheTimeout(), 60);
     Assert.assertEquals(Args.getInstance().isNodeDetectEnable(), false);

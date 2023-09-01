@@ -50,9 +50,9 @@ import org.tron.core.capsule.SpendDescriptionCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ZksnarkException;
-import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.ZenTransactionBuilder.SpendDescriptionInfo;
+import org.tron.core.zen.ZksnarkInitService;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
 import org.tron.core.zen.address.FullViewingKey;
@@ -116,7 +116,7 @@ public class LibrustzcashTest extends BaseTest {
   }
 
   public static void librustzcashInitZksnarkParams() {
-    FullNodeHttpApiService.librustzcashInitZksnarkParams();
+    ZksnarkInitService.librustzcashInitZksnarkParams();
   }
 
   @Test
