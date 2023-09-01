@@ -32,6 +32,12 @@ public class SnapshotImplTest {
     Args.setParam(new String[]{"-d", "output_revokingStore_test"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     appT = ApplicationFactory.create(context);
+
+    tronDatabase = new RevokingDbWithCacheNewValueTest.TestRevokingTronStore(
+        "testSnapshotRoot-testMerge");
+    revokingDatabase = context.getBean(SnapshotManager.class);
+    revokingDatabase.enable();
+    revokingDatabase.add(tronDatabase.getRevokingDB());
   }
 
   @After
@@ -39,6 +45,9 @@ public class SnapshotImplTest {
     Args.clearParam();
     context.destroy();
     FileUtil.deleteDir(new File("output_revokingStore_test"));
+
+    tronDatabase.close();
+    revokingDatabase.shutdown();
   }
 
   /**
@@ -51,15 +60,9 @@ public class SnapshotImplTest {
    */
   @Test
   public void testMergeRoot() {
-    tronDatabase = new RevokingDbWithCacheNewValueTest.TestRevokingTronStore(
-        "testSnapshotRoot-testMerge");
-    revokingDatabase = context.getBean(SnapshotManager.class);
-    revokingDatabase.enable();
-    revokingDatabase.add(tronDatabase.getRevokingDB());
-
     // linklist is: from -> root
     SnapshotRoot root = new SnapshotRoot(tronDatabase.getDb());
-    root.setOptimized(true);
+    //root.setOptimized(true);
 
     root.put("key1".getBytes(), "value1".getBytes());
     root.put("key2".getBytes(), "value2".getBytes());
@@ -87,11 +90,6 @@ public class SnapshotImplTest {
    */
   @Test
   public void testMergeAhead() {
-    tronDatabase = new RevokingDbWithCacheNewValueTest.TestRevokingTronStore(
-        "testSnapshotRoot-testMerge");
-    revokingDatabase = context.getBean(SnapshotManager.class);
-    revokingDatabase.enable();
-    revokingDatabase.add(tronDatabase.getRevokingDB());
 
     // linklist is: from2 -> from -> root
     SnapshotRoot root = new SnapshotRoot(tronDatabase.getDb());
@@ -160,12 +158,6 @@ public class SnapshotImplTest {
    */
   @Test
   public void testMergeOverride() {
-    tronDatabase = new RevokingDbWithCacheNewValueTest.TestRevokingTronStore(
-        "testSnapshotRoot-testMerge");
-    revokingDatabase = context.getBean(SnapshotManager.class);
-    revokingDatabase.enable();
-    revokingDatabase.add(tronDatabase.getRevokingDB());
-
     // linklist is: from2 -> from -> root
     SnapshotRoot root = new SnapshotRoot(tronDatabase.getDb());
     SnapshotImpl from = getSnapshotImplIns(root);
