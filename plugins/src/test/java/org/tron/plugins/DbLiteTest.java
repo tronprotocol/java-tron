@@ -16,12 +16,12 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.config.DbBackupConfig;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Utils;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
-import org.tron.common.utils.PublicMethod;
 import picocli.CommandLine;
 
 @Slf4j
@@ -144,8 +144,8 @@ public class DbLiteTest {
     // delete tran-cache
     FileUtil.deleteDir(Paths.get(dbPath, databaseDir, "trans-cache").toFile());
     // generate snapshot
-    CommandLine snapshotCommand = new CommandLine(new DbLite());
-    snapshotCommand.execute(argsForSnapshot);
+    CommandLine commandLine = new CommandLine(new DbLite());
+    commandLine.execute(argsForSnapshot);
     // start fullNode
     startApp();
     // produce transactions for 6 seconds
@@ -153,8 +153,7 @@ public class DbLiteTest {
     // stop the node
     shutdown();
     // generate history
-    CommandLine historyCommand = new CommandLine(new DbLite());
-    historyCommand.execute(argsForHistory);
+    commandLine.execute(argsForHistory);
     // backup original database to database_bak
     File database = new File(Paths.get(dbPath, databaseDir).toString());
     if (!database.renameTo(new File(Paths.get(dbPath, databaseDir + "_bak").toString()))) {
@@ -175,8 +174,7 @@ public class DbLiteTest {
     // stop the node
     shutdown();
     // merge history
-    CommandLine mergeCommand = new CommandLine(new DbLite());
-    mergeCommand.execute(argsForMerge);
+    commandLine.execute(argsForMerge);
     // start and validate
     startApp();
     generateSomeTransactions(6);
