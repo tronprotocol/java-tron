@@ -238,7 +238,7 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
               transactionLogTrigger.setFromAddress(StringUtil
                   .encode58Check(cancelAllUnfreezeV2Contract.getOwnerAddress().toByteArray()));
               transactionLogTrigger.setAssetName("trx");
-              transactionLogTrigger.setCancelUnfreezeV2AmountMap(transactionInfo.getCancelUnfreezeV2AmountMap());
+              transactionLogTrigger.setExtMap(transactionInfo.getCancelUnfreezeV2AmountMap());
               break;
             default:
               break;

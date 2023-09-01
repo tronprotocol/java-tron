@@ -95,7 +95,7 @@ public class TransactionLogTrigger extends Trigger {
 
   @Getter
   @Setter
-  private Map<String, Long> cancelUnfreezeV2AmountMap;
+  private Map<String, Long> extMap;
 
   public TransactionLogTrigger() {
     setTriggerName(Trigger.TRANSACTION_TRIGGER_NAME);
