@@ -53,8 +53,6 @@ public class HttpApiAccessFilterTest extends BaseTest {
     appTest.addService(httpApiService);
     appTest.addService(httpApiOnSolidityService);
     appTest.addService(httpApiOnPBFTService);
-    appTest.initServices(Args.getInstance());
-    appTest.startServices();
     appTest.startup();
   }
 

@@ -42,8 +42,6 @@ public class LiteFullNodeToolTest {
     appTest = ApplicationFactory.create(context);
     appTest.addService(context.getBean(RpcApiService.class));
     appTest.addService(context.getBean(RpcApiServiceOnSolidity.class));
-    appTest.initServices(Args.getInstance());
-    appTest.startServices();
     appTest.startup();
 
     String fullNode = String.format("%s:%d", "127.0.0.1",

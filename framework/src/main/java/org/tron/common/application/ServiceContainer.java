@@ -15,17 +15,19 @@
 
 package org.tron.common.application;
 
-import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.parameter.CommonParameter;
 
 @Slf4j(topic = "app")
 public class ServiceContainer {
 
-  private ArrayList<Service> services;
+  private final Set<Service> services;
 
   public ServiceContainer() {
-    this.services = new ArrayList<>();
+    this.services = Collections.synchronizedSet(new LinkedHashSet<>());
   }
 
   public void add(Service service) {
@@ -34,31 +36,38 @@ public class ServiceContainer {
 
 
   public void init() {
-    for (Service service : this.services) {
+    this.services.forEach(service -> {
       logger.debug("Initing {}.", service.getClass().getSimpleName());
       service.init();
-    }
+    });
   }
 
   public void init(CommonParameter parameter) {
-    for (Service service : this.services) {
+    this.services.forEach(service -> {
       logger.debug("Initing {}.", service.getClass().getSimpleName());
       service.init(parameter);
-    }
+    });
   }
 
   public void start() {
-    logger.debug("Starting services.");
-    for (Service service : this.services) {
+    logger.info("Starting api services.");
+    this.services.forEach(service -> {
       logger.debug("Starting {}.", service.getClass().getSimpleName());
       service.start();
-    }
+    });
+    logger.info("All api services started.");
   }
 
   public void stop() {
-    for (Service service : this.services) {
+    logger.info("Stopping api services.");
+    this.services.forEach(service -> {
       logger.debug("Stopping {}.", service.getClass().getSimpleName());
       service.stop();
-    }
+    });
+    logger.info("All api services stopped.");
+  }
+
+  public void blockUntilShutdown() {
+    this.services.stream().findFirst().ifPresent(Service::blockUntilShutdown);
   }
 }
