@@ -84,6 +84,7 @@ import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NoteParameters;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.PaymentAddressMessage;
+import org.tron.api.GrpcAPI.PricesResponseMessage;
 import org.tron.api.GrpcAPI.PrivateParameters;
 import org.tron.api.GrpcAPI.PrivateParametersWithoutAsk;
 import org.tron.api.GrpcAPI.PrivateShieldedTRC20Parameters;
@@ -867,7 +868,7 @@ public class Wallet {
 
     long accountNetUsage = ownerCapsule.getNetUsage();
     accountNetUsage += TransactionUtil.estimateConsumeBandWidthSize(dynamicStore,
-            ownerCapsule.getBalance());
+            ownerCapsule.getFrozenV2BalanceForBandwidth());
 
     long netUsage = (long) (accountNetUsage * TRX_PRECISION * ((double)
             (dynamicStore.getTotalNetWeight()) / dynamicStore.getTotalNetLimit()));
@@ -4295,23 +4296,25 @@ public class Wallet {
     }
   }
 
-  public String getEnergyPrices() {
+  public PricesResponseMessage getEnergyPrices() {
+    PricesResponseMessage.Builder builder = PricesResponseMessage.newBuilder();
     try {
-      return chainBaseManager.getDynamicPropertiesStore().getEnergyPriceHistory();
+      builder.setPrices(chainBaseManager.getDynamicPropertiesStore().getEnergyPriceHistory());
+      return builder.build();
     } catch (Exception e) {
       logger.error("GetEnergyPrices failed", e);
     }
-
     return null;
   }
 
-  public String getBandwidthPrices() {
+  public PricesResponseMessage getBandwidthPrices() {
+    PricesResponseMessage.Builder builder = PricesResponseMessage.newBuilder();
     try {
-      return chainBaseManager.getDynamicPropertiesStore().getBandwidthPriceHistory();
+      builder.setPrices(chainBaseManager.getDynamicPropertiesStore().getBandwidthPriceHistory());
+      return builder.build();
     } catch (Exception e) {
       logger.error("GetBandwidthPrices failed", e);
     }
-
     return null;
   }
 
@@ -4426,9 +4429,11 @@ public class Wallet {
     return block.toBuilder().clearTransactions().build();
   }
 
-  public String getMemoFeePrices() {
+  public PricesResponseMessage getMemoFeePrices() {
+    PricesResponseMessage.Builder builder = PricesResponseMessage.newBuilder();
     try {
-      return chainBaseManager.getDynamicPropertiesStore().getMemoFeeHistory();
+      builder.setPrices(chainBaseManager.getDynamicPropertiesStore().getMemoFeeHistory());
+      return builder.build();
     } catch (Exception e) {
       logger.error("GetMemoFeePrices failed", e);
     }

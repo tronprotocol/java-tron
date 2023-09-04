@@ -18,6 +18,7 @@ import org.tron.core.Constant;
 import org.tron.core.config.args.Overlay;
 import org.tron.core.config.args.SeedNode;
 import org.tron.core.config.args.Storage;
+import org.tron.p2p.P2pConfig;
 import org.tron.p2p.dns.update.PublishConfig;
 
 public class CommonParameter {
@@ -168,6 +169,8 @@ public class CommonParameter {
   @Getter
   @Setter
   public int minParticipationRate;
+  @Getter
+  public P2pConfig p2pConfig;
   @Getter
   @Setter
   public int nodeListenPort;

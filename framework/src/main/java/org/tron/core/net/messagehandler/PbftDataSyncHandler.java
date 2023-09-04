@@ -4,6 +4,7 @@ import com.google.common.collect.Sets;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.netty.util.internal.ConcurrentSet;
+import java.io.Closeable;
 import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,12 +13,12 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.consensus.base.Param;
@@ -34,12 +35,14 @@ import org.tron.protos.Protocol.PBFTMessage.Raw;
 
 @Slf4j(topic = "pbft-data-sync")
 @Service
-public class PbftDataSyncHandler implements TronMsgHandler {
+public class PbftDataSyncHandler implements TronMsgHandler, Closeable {
 
   private Map<Long, PbftCommitMessage> pbftCommitMessageCache = new ConcurrentHashMap<>();
 
-  private ExecutorService executorService = Executors.newFixedThreadPool(19,
-      r -> new Thread(r, "valid-header-pbft-sign"));
+  private final String esName = "valid-header-pbft-sign";
+
+  private ExecutorService executorService = ExecutorServiceManager.newFixedThreadPool(
+      esName, 19);
 
   @Autowired
   private ChainBaseManager chainBaseManager;
@@ -79,6 +82,11 @@ public class PbftDataSyncHandler implements TronMsgHandler {
     } catch (Exception e) {
       logger.error("", e);
     }
+  }
+
+  @Override
+  public void close() {
+    ExecutorServiceManager.shutdownAndAwaitTermination(executorService, esName);
   }
 
   private void processPBFTCommitMessage(PbftCommitMessage pbftCommitMessage) {

@@ -59,6 +59,7 @@ public class PbftApiTest extends BaseTest {
 
     Assert.assertTrue(dynamicPropertiesStore.getLatestBlockHeaderNumber() >= 10);
     commonDataBase.saveLatestPbftBlockNum(6);
+    httpApiOnPBFTService.init(Args.getInstance());
     httpApiOnPBFTService.start();
     CloseableHttpResponse response;
     try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
