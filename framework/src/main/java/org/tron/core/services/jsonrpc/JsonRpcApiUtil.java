@@ -242,17 +242,6 @@ public class JsonRpcApiUtil {
         case TransferContract:
           amount = contractParameter.unpack(TransferContract.class).getAmount();
           break;
-        case TransferAssetContract:
-          amount = contractParameter.unpack(TransferAssetContract.class).getAmount();
-          break;
-        case VoteWitnessContract:
-          List<Vote> votesList = contractParameter.unpack(VoteWitnessContract.class).getVotesList();
-          long voteNumber = 0L;
-          for (Vote vote : votesList) {
-            voteNumber += vote.getVoteCount();
-          }
-          amount = voteNumber;
-          break;
         case WitnessCreateContract:
           amount = 9999_000_000L;
           break;
@@ -261,21 +250,18 @@ public class JsonRpcApiUtil {
           amount = 1024_000_000L;
           break;
         case ParticipateAssetIssueContract:
-          break;
+        case UnfreezeAssetContract:
+        case VoteWitnessContract:
+        case TransferAssetContract:
+        case ExchangeWithdrawContract:
+        case ExchangeInjectContract:
+        case ExchangeTransactionContract:
+              break;
         case FreezeBalanceContract:
           amount = contractParameter.unpack(FreezeBalanceContract.class).getFrozenBalance();
           break;
         case TriggerSmartContract:
           amount = contractParameter.unpack(TriggerSmartContract.class).getCallValue();
-          break;
-        case ExchangeInjectContract:
-          amount = contractParameter.unpack(ExchangeInjectContract.class).getQuant();
-          break;
-        case ExchangeWithdrawContract:
-          amount = contractParameter.unpack(ExchangeWithdrawContract.class).getQuant();
-          break;
-        case ExchangeTransactionContract:
-          amount = contractParameter.unpack(ExchangeTransactionContract.class).getQuant();
           break;
         case AccountPermissionUpdateContract:
           amount = 100_000_000L;
@@ -295,10 +281,6 @@ public class JsonRpcApiUtil {
         case UnfreezeBalanceV2Contract:
         case CancelAllUnfreezeV2Contract:
           amount = getAmountFromTransactionInfo(hash, contract.getType(), transactionInfo);
-          break;
-        case UnfreezeAssetContract:
-          amount = getUnfreezeAssetAmount(contractParameter.unpack(UnfreezeAssetContract.class)
-              .getOwnerAddress().toByteArray(), wallet);
           break;
         default:
       }
@@ -354,33 +336,6 @@ public class JsonRpcApiUtil {
     }
     return amount;
   }
-
-  public static long getUnfreezeAssetAmount(byte[] addressBytes, Wallet wallet) {
-    long amount = 0L;
-    try {
-      if (addressBytes == null) {
-        return amount;
-      }
-
-      AssetIssueList assetIssueList = wallet
-          .getAssetIssueByAccount(ByteString.copyFrom(addressBytes));
-      if (assetIssueList != null) {
-        if (assetIssueList.getAssetIssueCount() != 1) {
-          return amount;
-        } else {
-          AssetIssueContract assetIssue = assetIssueList.getAssetIssue(0);
-          for (FrozenSupply frozenSupply : assetIssue.getFrozenSupplyList()) {
-            amount += frozenSupply.getFrozenAmount();
-          }
-        }
-      }
-    } catch (Exception e) {
-      logger.warn("Exception happens when get token10 frozenAmount. Exception = [{}]",
-          Throwables.getStackTraceAsString(e));
-    }
-    return amount;
-  }
-
   /**
    * convert 40 or 42 hex string of address to byte array, compatible with "41"(T) ahead,
    * padding 0 ahead if length is odd.
