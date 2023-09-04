@@ -38,6 +38,7 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
     if (CACHE_DBS.contains(this.db.getDbName())) {
       this.cache = CacheManager.allocate(CacheType.findByType(this.db.getDbName()));
     }
+    isOptimized = "properties".equalsIgnoreCase(db.getDbName());
   }
 
   private boolean needOptAsset() {
@@ -221,4 +222,7 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   public Snapshot newInstance() {
     return new SnapshotRoot(db.newInstance());
   }
+
+  @Override
+  public void reloadToMem() { }
 }
