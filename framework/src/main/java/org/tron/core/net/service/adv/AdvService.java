@@ -271,7 +271,7 @@ public class AdvService {
       }
       long now = System.currentTimeMillis();
       invToFetch.forEach((item, time) -> {
-        if (time < now - MSG_CACHE_DURATION_IN_BLOCKS * BLOCK_PRODUCED_INTERVAL) {
+        if (time < now - TIMEOUT) {
           logger.info("This obj is too late to fetch, type: {} hash: {}", item.getType(),
                   item.getHash());
           invToFetch.remove(item);

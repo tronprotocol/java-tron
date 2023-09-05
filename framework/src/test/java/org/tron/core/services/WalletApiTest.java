@@ -36,8 +36,6 @@ public class WalletApiTest {
     appT = ApplicationFactory.create(context);
     rpcApiService = context.getBean(RpcApiService.class);
     appT.addService(rpcApiService);
-    appT.initServices(Args.getInstance());
-    appT.startServices();
     appT.startup();
   }
 
