@@ -1,5 +1,8 @@
 package org.tron.core.actuator.utils;
 
+import static org.tron.core.Constant.DYNAMIC_ENERGY_INCREASE_FACTOR_RANGE;
+import static org.tron.core.config.Parameter.ChainConstant.ONE_YEAR_BLOCK_NUMBERS;
+
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,6 +29,7 @@ public class ProposalUtilTest extends BaseTest {
   private static final long LONG_VALUE = 100_000_000_000_000_000L;
   private static final String LONG_VALUE_ERROR =
       "Bad chain parameter value, valid range is [0," + LONG_VALUE + "]";
+  private static final String BAD_PARAM_ID = "Bad chain parameter id";
 
   /**
    * Init .
@@ -63,6 +67,7 @@ public class ProposalUtilTest extends BaseTest {
   public void validateCheck() {
     DynamicPropertiesStore dynamicPropertiesStore = null;
     ForkController forkUtils = ForkController.instance();
+
     long invalidValue = -1;
 
     try {
@@ -246,6 +251,425 @@ public class ProposalUtilTest extends BaseTest {
     } catch (ContractValidateException e) {
       Assert.assertEquals(
           "Bad chain parameter value, valid range is [10,100]", e.getMessage());
+    }
+
+    dynamicPropertiesStore.saveAllowHigherLimitForMaxCpuTimeOfOneTx(1);
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.MAX_CPU_TIME_OF_ONE_TX.getCode(), 401);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "Bad chain parameter value, valid range is [10,400]", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.MAX_CPU_TIME_OF_ONE_TX.getCode(), 9);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "Bad chain parameter value, valid range is [10,400]", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_UPDATE_ACCOUNT_NAME.getCode(), 0);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "This value[ALLOW_UPDATE_ACCOUNT_NAME] is only allowed to be 1", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_SAME_TOKEN_NAME.getCode(), 0);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "This value[ALLOW_SAME_TOKEN_NAME] is only allowed to be 1", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_DELEGATE_RESOURCE.getCode(), 0);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "This value[ALLOW_DELEGATE_RESOURCE] is only allowed to be 1", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.TOTAL_ENERGY_LIMIT.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.TOTAL_CURRENT_ENERGY_LIMIT.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_MULTI_SIGN.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id: ALLOW_MULTI_SIGN", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_ADAPTIVE_ENERGY.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id: ALLOW_ADAPTIVE_ENERGY", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.UPDATE_ACCOUNT_PERMISSION_FEE.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id: UPDATE_ACCOUNT_PERMISSION_FEE", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.MULTI_SIGN_FEE.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id: MULTI_SIGN_FEE", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_PROTO_FILTER_NUM.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_ACCOUNT_STATE_ROOT.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_TVM_CONSTANTINOPLE.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_TVM_SOLIDITY_059.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id", e.getMessage());
+    }
+
+    dynamicPropertiesStore.saveAllowCreationOfContracts(0);
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_TVM_SOLIDITY_059.getCode(), 1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "Bad chain parameter id",
+          e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_CHANGE_DELEGATION.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.WITNESS_127_PAY_PER_BLOCK.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.FORBID_TRANSFER_TO_CONTRACT.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id", e.getMessage());
+    }
+
+    dynamicPropertiesStore.saveAllowCreationOfContracts(0);
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.FORBID_TRANSFER_TO_CONTRACT.getCode(), 1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "Bad chain parameter id",
+          e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_PBFT.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id [ALLOW_PBFT]", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_TVM_ISTANBUL.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id [ALLOW_TVM_ISTANBUL]", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_SHIELDED_TRC20_TRANSACTION.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "Bad chain parameter id [ALLOW_SHIELDED_TRC20_TRANSACTION]", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_MARKET_TRANSACTION.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id [ALLOW_MARKET_TRANSACTION]", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.MARKET_SELL_FEE.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id [MARKET_SELL_FEE]", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.MARKET_CANCEL_FEE.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id [MARKET_CANCEL_FEE]", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.MAX_FEE_LIMIT.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id [MAX_FEE_LIMIT]", e.getMessage());
+    }
+
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_TRANSACTION_FEE_POOL.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id [ALLOW_TRANSACTION_FEE_POOL]", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_BLACKHOLE_OPTIMIZATION.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id [ALLOW_REMOVE_BLACKHOLE]", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_NEW_RESOURCE_MODEL.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id [ALLOW_NEW_RESOURCE_MODEL]", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_TVM_FREEZE.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id [ALLOW_TVM_FREEZE]", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_TVM_VOTE.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id [ALLOW_TVM_VOTE]", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_ACCOUNT_ASSET_OPTIMIZATION.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "Bad chain parameter id [ALLOW_ACCOUNT_ASSET_OPTIMIZATION]", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_TVM_LONDON.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id [ALLOW_TVM_LONDON]", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_TVM_COMPATIBLE_EVM.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id [ALLOW_TVM_COMPATIBLE_EVM]", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "Bad chain parameter id [ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX]", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_ASSET_OPTIMIZATION.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id [ALLOW_ASSET_OPTIMIZATION]", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_NEW_REWARD.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id [ALLOW_NEW_REWARD]", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.MEMO_FEE.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id [MEMO_FEE]", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_DELEGATE_OPTIMIZATION.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id [ALLOW_DELEGATE_OPTIMIZATION]", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.UNFREEZE_DELAY_DAYS.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id [UNFREEZE_DELAY_DAYS]", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "Bad chain parameter id [ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID]", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_DYNAMIC_ENERGY.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id [ALLOW_DYNAMIC_ENERGY]", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.DYNAMIC_ENERGY_THRESHOLD.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id [DYNAMIC_ENERGY_THRESHOLD]", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.DYNAMIC_ENERGY_INCREASE_FACTOR.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "Bad chain parameter id [DYNAMIC_ENERGY_INCREASE_FACTOR]", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_TVM_SHANGHAI.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id [ALLOW_TVM_SHANGHAI]", e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_CANCEL_ALL_UNFREEZE_V2.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id [ALLOW_CANCEL_ALL_UNFREEZE_V2]", e.getMessage());
+    }
+
+    long maxDelegateLockPeriod = dynamicPropertiesStore.getMaxDelegateLockPeriod();
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.MAX_DELEGATE_LOCK_PERIOD.getCode(), -1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter id [MAX_DELEGATE_LOCK_PERIOD]", e.getMessage());
     }
 
     try {
