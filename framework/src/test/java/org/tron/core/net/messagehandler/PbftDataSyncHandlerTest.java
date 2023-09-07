@@ -1,8 +1,10 @@
 package org.tron.core.net.messagehandler;
 
+import com.alibaba.fastjson.JSON;
 import com.google.protobuf.ByteString;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -47,5 +49,9 @@ public class PbftDataSyncHandlerTest {
     field.set(pbftDataSyncHandler, chainBaseManager);
 
     pbftDataSyncHandler.processPBFTCommitData(blockCapsule);
+    Field field1 = PbftDataSyncHandler.class.getDeclaredField("pbftCommitMessageCache");
+    field1.setAccessible(true);
+    Map map = JSON.parseObject(JSON.toJSONString(field1.get(pbftDataSyncHandler)), Map.class);
+    Assert.assertFalse(map.containsKey(0));
   }
 }

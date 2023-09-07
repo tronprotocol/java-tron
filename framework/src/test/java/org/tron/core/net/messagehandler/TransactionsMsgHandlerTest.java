@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -26,7 +25,6 @@ import org.tron.core.net.service.adv.AdvService;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.BalanceContract;
 
-@Slf4j
 public class TransactionsMsgHandlerTest extends BaseTest {
   @BeforeClass
   public static void init() {
@@ -79,7 +77,7 @@ public class TransactionsMsgHandlerTest extends BaseTest {
       Assert.assertNull(advInvRequest.get(item));
       //Thread.sleep(10);
     } catch (Exception e) {
-      logger.error("error", e);
+      Assert.fail();
     } finally {
       transactionsMsgHandler.close();
     }
