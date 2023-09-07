@@ -12,13 +12,16 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.p2p.utils.ByteArray;
 import org.tron.protos.Protocol;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.Common;
+import org.tron.protos.contract.SmartContractOuterClass;
 
 public class TransactionLogTriggerCapsuleTest {
 
   private static final String OWNER_ADDRESS = "41548794500882809695a8a687866e76d4271a1abc";
   private static final String RECEIVER_ADDRESS = "41abd4b9367799eaa3197fecb144eb71de1e049150";
+  private static final String CONTRACT_ADDRESS = "1111";
 
   public TransactionCapsule transactionCapsule;
   public BlockCapsule blockCapsule;
@@ -149,6 +152,75 @@ public class TransactionLogTriggerCapsuleTest {
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)));
     transactionCapsule = new TransactionCapsule(builder2.build(),
         Protocol.Transaction.Contract.ContractType.CancelAllUnfreezeV2Contract);
+
+    TransactionLogTriggerCapsule triggerCapsule =
+        new TransactionLogTriggerCapsule(transactionCapsule, blockCapsule);
+
+    Assert.assertNotNull(triggerCapsule.getTransactionLogTrigger().getFromAddress());
+  }
+
+  @Test
+  public void testConstructorWithTransferTrxCapsule() {
+    BalanceContract.TransferContract.Builder builder2 =
+        BalanceContract.TransferContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS)))
+            .setAmount(TRX_PRECISION);
+    transactionCapsule = new TransactionCapsule(builder2.build(),
+        Protocol.Transaction.Contract.ContractType.TransferContract);
+
+    TransactionLogTriggerCapsule triggerCapsule =
+        new TransactionLogTriggerCapsule(transactionCapsule, blockCapsule);
+
+    Assert.assertNotNull(triggerCapsule.getTransactionLogTrigger().getFromAddress());
+    Assert.assertNotNull(triggerCapsule.getTransactionLogTrigger().getToAddress());
+    Assert.assertEquals("trx", triggerCapsule.getTransactionLogTrigger().getAssetName());
+    Assert.assertEquals(TRX_PRECISION, triggerCapsule.getTransactionLogTrigger().getAssetAmount());
+  }
+
+  @Test
+  public void testConstructorWithTransferAssetTrxCapsule() {
+    AssetIssueContractOuterClass.TransferAssetContract.Builder builder2 =
+        AssetIssueContractOuterClass.TransferAssetContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS)))
+            .setAssetName(ByteString.copyFrom("eth".getBytes()))
+            .setAmount(TRX_PRECISION);
+    transactionCapsule = new TransactionCapsule(builder2.build(),
+        Protocol.Transaction.Contract.ContractType.TransferAssetContract);
+
+    TransactionLogTriggerCapsule triggerCapsule =
+        new TransactionLogTriggerCapsule(transactionCapsule, blockCapsule);
+
+    Assert.assertNotNull(triggerCapsule.getTransactionLogTrigger().getFromAddress());
+    Assert.assertNotNull(triggerCapsule.getTransactionLogTrigger().getToAddress());
+    Assert.assertEquals("eth", triggerCapsule.getTransactionLogTrigger().getAssetName());
+    Assert.assertEquals(TRX_PRECISION, triggerCapsule.getTransactionLogTrigger().getAssetAmount());
+  }
+
+  @Test
+  public void testConstructorWithTriggerSmartContractTrxCapsule() {
+    SmartContractOuterClass.TriggerSmartContract.Builder builder2 =
+        SmartContractOuterClass.TriggerSmartContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setContractAddress(ByteString.copyFrom(ByteArray.fromHexString(CONTRACT_ADDRESS)));
+    transactionCapsule = new TransactionCapsule(builder2.build(),
+        Protocol.Transaction.Contract.ContractType.TriggerSmartContract);
+
+    TransactionLogTriggerCapsule triggerCapsule =
+        new TransactionLogTriggerCapsule(transactionCapsule, blockCapsule);
+
+    Assert.assertNotNull(triggerCapsule.getTransactionLogTrigger().getFromAddress());
+    Assert.assertNotNull(triggerCapsule.getTransactionLogTrigger().getToAddress());
+  }
+
+  @Test
+  public void testConstructorWithCreateSmartContractTrxCapsule() {
+    SmartContractOuterClass.CreateSmartContract.Builder builder2 =
+        SmartContractOuterClass.CreateSmartContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)));
+    transactionCapsule = new TransactionCapsule(builder2.build(),
+        Protocol.Transaction.Contract.ContractType.CreateSmartContract);
 
     TransactionLogTriggerCapsule triggerCapsule =
         new TransactionLogTriggerCapsule(transactionCapsule, blockCapsule);
