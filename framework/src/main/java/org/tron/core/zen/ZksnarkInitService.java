@@ -57,6 +57,9 @@ public class ZksnarkInitService {
     } catch (IOException e) {
       logger.error(e.getMessage(), e);
     }
+    if (fileOut.exists()) {
+      fileOut.deleteOnExit();
+    }
     return fileOut.getAbsolutePath();
   }
 }

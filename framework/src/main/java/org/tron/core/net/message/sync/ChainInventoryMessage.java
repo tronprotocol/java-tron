@@ -73,6 +73,7 @@ public class ChainInventoryMessage extends TronMessage {
         sb.append(", end blockId: ").append(blockIdWeGet.peekLast().getString());
       }
     }
+    sb.append(", remain_num: ").append(chainInventory.getRemainNum());
     return sb.toString();
   }
 }
