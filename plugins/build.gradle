@@ -78,7 +78,7 @@ test {
         exceptionFormat = 'full'
     }
     jacoco {
-        destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
+        destinationFile = file("../framework/build/jacoco/jacocoTest1.exec")
         classDumpDir = file("$buildDir/jacoco/classpathdumps")
     }
 }
@@ -89,7 +89,7 @@ jacocoTestReport {
         csv.enabled false
         html.destination file("${buildDir}/jacocoHtml")
     }
-    executionData.from = 'build/jacoco/jacocoTest.exec'
+    getExecutionData().setFrom(fileTree('../framework/build/jacoco').include("**.exec"))
 }
 
 def binaryRelease(taskName, jarName, mainClass) {
