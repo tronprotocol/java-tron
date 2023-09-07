@@ -27,8 +27,7 @@ public class InternalTransactionComplexTest extends BaseTest {
   private static boolean init;
 
   static {
-    dbPath = "output_InternalTransactionComplexTest";
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug", "--support-constant"},
+    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug", "--support-constant"},
         Constant.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
   }

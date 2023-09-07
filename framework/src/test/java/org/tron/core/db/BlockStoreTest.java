@@ -11,8 +11,7 @@ public class BlockStoreTest extends BaseTest {
 
 
   static {
-    dbPath = "output-blockStore-test";
-    Args.setParam(new String[]{"--output-directory", dbPath},
+    Args.setParam(new String[]{"--output-directory", dbPath()},
         Constant.TEST_CONF);
   }
 

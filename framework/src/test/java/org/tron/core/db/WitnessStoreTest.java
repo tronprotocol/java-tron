@@ -15,8 +15,7 @@ import org.tron.core.store.WitnessStore;
 public class WitnessStoreTest extends BaseTest {
 
   static {
-    dbPath = "output-witnessStore-test";
-    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
   }
 
   @Resource

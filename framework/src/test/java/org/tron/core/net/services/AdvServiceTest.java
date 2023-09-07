@@ -2,17 +2,18 @@ package org.tron.core.net.services;
 
 import static org.mockito.Mockito.mock;
 
-import java.io.File;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
@@ -31,17 +32,18 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
 public class AdvServiceTest {
-  private static String dbPath = "output-adv-service-test1";
   private static TronApplicationContext context;
   private static AdvService service;
   private static P2pEventHandlerImpl p2pEventHandler;
   private static ApplicationContext ctx;
 
+  @ClassRule
+  public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
   @BeforeClass
-  public static void init() {
-    dbPath = "output-adv-service-test";
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"},
-            Constant.TEST_CONF);
+  public static void init() throws IOException {
+    Args.setParam(new String[]{"--output-directory",
+        temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     service = context.getBean(AdvService.class);
     p2pEventHandler = context.getBean(P2pEventHandlerImpl.class);
@@ -52,7 +54,6 @@ public class AdvServiceTest {
   public static void after() {
     Args.clearParam();
     context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
   }
 
   @Test

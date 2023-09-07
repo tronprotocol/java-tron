@@ -40,8 +40,7 @@ public class HttpApiAccessFilterTest extends BaseTest {
   private static final CloseableHttpClient httpClient = HttpClients.createDefault();
 
   static {
-    dbPath = "output_http_api_access_filter_test";
-    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
     Args.getInstance().setFullNodeAllowShieldedTransactionArgs(false);
   }
 
