@@ -29,7 +29,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
@@ -105,7 +104,6 @@ import org.tron.core.db.api.EnergyPriceHistoryLoader;
 import org.tron.core.db.api.MoveAbiHelper;
 import org.tron.core.db2.ISession;
 import org.tron.core.db2.core.Chainbase;
-import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
@@ -207,6 +205,7 @@ public class Manager {
   @Setter
   private MerkleContainer merkleContainer;
   private ExecutorService validateSignService;
+  private String validateSignName = "validate-sign";
   private boolean isRunRePushThread = true;
   private boolean isRunTriggerCapsuleProcessThread = true;
   private BlockingQueue<TransactionCapsule> pushTransactionQueue = new LinkedBlockingQueue<>();
@@ -450,6 +449,10 @@ public class Manager {
     ExecutorServiceManager.shutdownAndAwaitTermination(filterEs, filterEsName);
   }
 
+  public void stopValidateSignThread() {
+    ExecutorServiceManager.shutdownAndAwaitTermination(validateSignService, "validate-sign");
+  }
+
   @PostConstruct
   public void init() {
     ChainBaseManager.init(chainBaseManager);
@@ -533,8 +536,8 @@ public class Manager {
       logger.info("Lite node lowestNum: {}", chainBaseManager.getLowestBlockNum());
     }
     revokingStore.enable();
-    validateSignService = Executors
-        .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
+    validateSignService = ExecutorServiceManager
+        .newFixedThreadPool(validateSignName, Args.getInstance().getValidateSignThreadNum());
     rePushEs = ExecutorServiceManager.newSingleThreadExecutor(rePushEsName, true);
     rePushEs.submit(rePushLoop);
     // add contract event listener for subscribing
@@ -1926,24 +1929,6 @@ public class Manager {
     return chainBaseManager.getNullifierStore();
   }
 
-  public void closeAllStore() {
-    logger.info("******** Begin to close db. ********");
-    chainBaseManager.closeAllStore();
-    validateSignService.shutdown();
-    logger.info("******** End to close db. ********");
-  }
-
-  public void closeOneStore(ITronChainBase database) {
-    logger.info("******** Begin to close {}. ********", database.getName());
-    try {
-      database.close();
-    } catch (Exception e) {
-      logger.info("Failed to close {}.", database.getName(), e);
-    } finally {
-      logger.info("******** End to close {}. ********", database.getName());
-    }
-  }
-
   public boolean isTooManyPending() {
     return getPendingTransactions().size() + getRePushTransactions().size()
         > maxTransactionPendingSize;
@@ -2429,6 +2414,17 @@ public class Manager {
 
   private boolean isBlockWaitingLock() {
     return blockWaitLock.get() > NO_BLOCK_WAITING_LOCK;
+  }
+
+  public void close() {
+    stopRePushThread();
+    stopRePushTriggerThread();
+    EventPluginLoader.getInstance().stopPlugin();
+    stopFilterProcessThread();
+    stopValidateSignThread();
+    chainBaseManager.shutdown();
+    revokingStore.shutdown();
+    session.reset();
   }
 
   private static class ValidateSignTask implements Callable<Boolean> {

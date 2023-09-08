@@ -2,7 +2,7 @@ package org.tron.core;
 
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
-import static org.tron.core.services.http.FullNodeHttpApiService.librustzcashInitZksnarkParams;
+import static org.tron.core.zen.ZksnarkInitService.librustzcashInitZksnarkParams;
 
 import java.math.BigInteger;
 import javax.annotation.Resource;

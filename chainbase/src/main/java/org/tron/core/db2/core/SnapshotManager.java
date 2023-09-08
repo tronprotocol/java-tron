@@ -16,8 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -25,12 +23,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.error.TronDBException;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.utils.FileUtil;
@@ -76,6 +74,7 @@ public class SnapshotManager implements RevokingDatabase {
   private Map<String, ListeningExecutorService> flushServices = new HashMap<>();
 
   private ScheduledExecutorService pruneCheckpointThread = null;
+  private final String pruneName = "checkpoint-prune";
 
   @Autowired
   @Setter
@@ -95,7 +94,7 @@ public class SnapshotManager implements RevokingDatabase {
     checkpointVersion = CommonParameter.getInstance().getStorage().getCheckpointVersion();
     // prune checkpoint
     if (isV2Open()) {
-      pruneCheckpointThread = Executors.newSingleThreadScheduledExecutor();
+      pruneCheckpointThread = ExecutorServiceManager.newSingleThreadScheduledExecutor(pruneName);
       pruneCheckpointThread.scheduleWithFixedDelay(() -> {
         try {
           if (!unChecked) {
@@ -115,18 +114,6 @@ public class SnapshotManager implements RevokingDatabase {
     });
     exitThread.setName("exit-thread");
     exitThread.start();
-  }
-
-  @PreDestroy
-  public void close() {
-    try {
-      exitThread.interrupt();
-      // help GC
-      exitThread = null;
-      flushServices.values().forEach(ExecutorService::shutdown);
-    } catch (Exception e) {
-      logger.warn("exitThread interrupt error", e);
-    }
   }
 
   public static String simpleDecode(byte[] bytes) {
@@ -177,7 +164,8 @@ public class SnapshotManager implements RevokingDatabase {
     Chainbase revokingDB = (Chainbase) db;
     dbs.add(revokingDB);
     flushServices.put(revokingDB.getDbName(),
-        MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()));
+        MoreExecutors.listeningDecorator(ExecutorServiceManager.newSingleThreadExecutor(
+            "flush-service-" + revokingDB.getDbName())));
   }
 
   private void advance() {
@@ -233,6 +221,12 @@ public class SnapshotManager implements RevokingDatabase {
     }
 
     --activeSession;
+
+    dbs.forEach(db -> {
+      if (db.getHead().isOptimized()) {
+        db.getHead().reloadToMem();
+      }
+    });
   }
 
   public synchronized void pop() {
@@ -284,12 +278,15 @@ public class SnapshotManager implements RevokingDatabase {
 
   @Override
   public void shutdown() {
-    logger.info("******** Begin to pop revokingDb. ********");
-    logger.info("******** Before revokingDb size: {}.", size);
-    checkTmpStore.close();
-    logger.info("******** End to pop revokingDb. ********");
-    if (pruneCheckpointThread != null) {
-      pruneCheckpointThread.shutdown();
+    ExecutorServiceManager.shutdownAndAwaitTermination(pruneCheckpointThread, pruneName);
+    flushServices.forEach((key, value) -> ExecutorServiceManager.shutdownAndAwaitTermination(value,
+        "flush-service-" + key));
+    try {
+      exitThread.interrupt();
+      // help GC
+      exitThread = null;
+    } catch (Exception e) {
+      logger.warn("exitThread interrupt error", e);
     }
   }
 

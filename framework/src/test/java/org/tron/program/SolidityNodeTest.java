@@ -35,6 +35,7 @@ public class SolidityNodeTest {
    */
   @BeforeClass
   public static void init() {
+    rpcApiService.init(Args.getInstance());
     rpcApiService.start();
   }
 
