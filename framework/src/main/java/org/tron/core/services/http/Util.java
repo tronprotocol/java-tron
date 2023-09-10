@@ -554,9 +554,9 @@ public class Util {
   }
 
   private static boolean isApplicationJson(String contentType) {
-    return contentType.contains(MimeTypes.Type.APPLICATION_JSON.asString()) ||
-            contentType.contains(MimeTypes.Type.APPLICATION_JSON_UTF_8.asString()) ||
-            contentType.contains(MimeTypes.Type.APPLICATION_JSON_8859_1.asString());
+    return contentType.contains(MimeTypes.Type.APPLICATION_JSON.asString())
+           || contentType.contains(MimeTypes.Type.APPLICATION_JSON_UTF_8.asString())
+           || contentType.contains(MimeTypes.Type.APPLICATION_JSON_8859_1.asString());
   }
 
   public static String getRequestValue(HttpServletRequest request) throws IOException {
