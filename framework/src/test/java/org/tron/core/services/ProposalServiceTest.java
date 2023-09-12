@@ -26,8 +26,7 @@ public class ProposalServiceTest extends BaseTest {
 
   @BeforeClass
   public static void init() {
-    dbPath = "output_proposal_test";
-    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
     
   }
 

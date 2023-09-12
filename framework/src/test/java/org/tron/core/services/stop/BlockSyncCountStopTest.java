@@ -19,10 +19,4 @@ public class BlockSyncCountStopTest extends ConditionallyStopTest {
     Assert.assertEquals(sync + currentHeader, dbManager
         .getDynamicPropertiesStore().getLatestBlockHeaderNumberFromDB());
   }
-
-  @Override
-  protected void initDbPath() {
-    dbPath = "output-sync-stop";
-  }
-
 }

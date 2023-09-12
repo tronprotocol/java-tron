@@ -34,8 +34,10 @@ public class BackupDbUtilTest extends BaseTest {
   String bak2Path;
   int frequency;
 
+  private static final String dbPath;
+
   static {
-    dbPath = "output-BackupDbUtilTest";
+    dbPath = dbPath();
     Args.setParam(
         new String[]{
             "--output-directory", dbPath,

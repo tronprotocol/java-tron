@@ -37,10 +37,4 @@ public class BlockTimeStopTest extends ConditionallyStopTest {
     Assert.assertTrue(cronExpression.isSatisfiedBy(new Date(chainManager
         .getBlockById(chainManager.getBlockIdByNum(height)).getTimeStamp())));
   }
-
-  @Override
-  protected void initDbPath() {
-    dbPath = "output-time-stop";
-  }
-
 }

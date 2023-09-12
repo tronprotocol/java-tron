@@ -1,6 +1,6 @@
 package org.tron.core.actuator.vm;
 
-import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
@@ -8,9 +8,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.TransactionStoreTest;
@@ -20,7 +21,8 @@ import org.tron.core.vm.trace.ProgramTraceListener;
 
 @Slf4j(topic = "VM")
 public class ProgramTraceListenerTest {
-  private static final String dbPath = "output_programTraceListener_test";
+  @ClassRule
+  public static TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private static final int WORD_SIZE = 32;
   private ProgramTraceListener traceListener;
@@ -30,15 +32,15 @@ public class ProgramTraceListenerTest {
   private DataWord storageWordValue = new DataWord(3);
 
   @BeforeClass
-  public static void init() {
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
+  public static void init() throws IOException {
+    Args.setParam(new String[]{"--output-directory",
+        temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
 
   }
 
   @AfterClass
   public static void destroy() {
     Args.clearParam();
-    FileUtil.deleteDir(new File(dbPath));
   }
 
   private void invokeProgramTraceListener(ProgramTraceListener traceListener) {

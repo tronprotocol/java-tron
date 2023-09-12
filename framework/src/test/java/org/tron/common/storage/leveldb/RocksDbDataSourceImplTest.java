@@ -8,6 +8,7 @@ import static org.junit.Assert.assertNull;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,11 +19,12 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.ExpectedSystemExit;
+import org.junit.rules.TemporaryFolder;
 import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -34,7 +36,8 @@ import org.tron.core.db2.common.WrappedByteArray;
 @Slf4j
 public class RocksDbDataSourceImplTest {
 
-  private static final String dbPath = "output-Rocks-test";
+  @ClassRule
+  public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
   private static RocksDbDataSourceImpl dataSourceTest;
 
   private byte[] value1 = "10000".getBytes();
@@ -58,25 +61,15 @@ public class RocksDbDataSourceImplTest {
    */
   @AfterClass
   public static void destroy() {
-    String directory = Args.getInstance().getStorage().getDbDirectory();
     Args.clearParam();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
-
-    if (FileUtil.deleteDir(new File(dbPath  + directory))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   @BeforeClass
-  public static void initDb() {
-    Args.setParam(new String[]{"--output-directory", dbPath}, "config-test-dbbackup.conf");
-    dataSourceTest = new RocksDbDataSourceImpl(dbPath + File.separator, "test_rocksDb");
+  public static void initDb() throws IOException {
+    Args.setParam(new String[]{"--output-directory",
+        temporaryFolder.newFolder().toString()}, "config-test-dbbackup.conf");
+    dataSourceTest = new RocksDbDataSourceImpl(
+        Args.getInstance().getOutputDirectory() + File.separator, "test_rocksDb");
   }
 
   @Test

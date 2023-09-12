@@ -110,8 +110,7 @@ public class SendCoinShieldTest extends BaseTest {
   private static boolean init;
 
   static {
-    dbPath = "output_ShieldedTransaction_test";
-    Args.setParam(new String[]{"--output-directory", dbPath}, "config-test-mainnet.conf");
+    Args.setParam(new String[]{"--output-directory", dbPath()}, "config-test-mainnet.conf");
     Args.getInstance().setZenTokenId(String.valueOf(tokenId));
     PUBLIC_ADDRESS_ONE =
         Wallet.getAddressPreFixString() + "a7d8a35b260395c14aa456297662092ba3b76fc0";

@@ -24,8 +24,7 @@ public class EnergyProcessorTest extends BaseTest {
   private static final String USER_ADDRESS;
 
   static {
-    dbPath = "energy_processor_test";
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
     ASSET_NAME = "test_token";
     CONTRACT_PROVIDER_ADDRESS =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";

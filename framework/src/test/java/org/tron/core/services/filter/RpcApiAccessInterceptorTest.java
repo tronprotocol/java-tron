@@ -48,7 +48,7 @@ public class RpcApiAccessInterceptorTest {
   private static WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
   private static WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubPBFT = null;
   @ClassRule
-  public static TemporaryFolder temporaryFolder = new TemporaryFolder();
+  public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   /**
    * init logic.

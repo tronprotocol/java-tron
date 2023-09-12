@@ -24,8 +24,7 @@ public class StorageMarketTest extends BaseTest {
   private static StorageMarket storageMarket;
 
   static {
-    dbPath = "output_storage_market_test";
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
   }
 
