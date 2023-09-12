@@ -30,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.eclipse.jetty.http.HttpMethod;
+import org.eclipse.jetty.http.MimeTypes;
 import org.eclipse.jetty.util.MultiMap;
 import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.UrlEncoded;
@@ -78,8 +79,6 @@ public class Util {
   public static final String FUNCTION_SELECTOR = "function_selector";
   public static final String FUNCTION_PARAMETER = "parameter";
   public static final String CALL_DATA = "data";
-  public static final String APPLICATION_FORM_URLENCODED = "application/x-www-form-urlencoded";
-  public static final String APPLICATION_JSON = "application/json";
 
   public static String printTransactionFee(String transactionFee) {
     JSONObject jsonObject = new JSONObject();
@@ -535,7 +534,9 @@ public class Util {
       if (StringUtils.isBlank(contentType)) {
         return null;
       }
-      if (APPLICATION_JSON.toLowerCase().contains(contentType)) {
+      if (contentType.contains(MimeTypes.Type.APPLICATION_JSON.asString())
+              || contentType.contains(MimeTypes.Type.APPLICATION_JSON_UTF_8.asString())
+              || contentType.contains(MimeTypes.Type.APPLICATION_JSON_8859_1.asString())) {
         value = getRequestValue(request);
         if (StringUtils.isBlank(value)) {
           return null;
@@ -545,7 +546,7 @@ public class Util {
         if (jsonObject != null) {
           return jsonObject.getString(key);
         }
-      } else if (APPLICATION_FORM_URLENCODED.toLowerCase().contains(contentType)) {
+      } else if (contentType.contains(MimeTypes.Type.FORM_ENCODED.asString())) {
         return request.getParameter(key);
       } else {
         return null;
