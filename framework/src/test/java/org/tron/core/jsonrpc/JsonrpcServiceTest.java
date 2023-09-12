@@ -64,8 +64,7 @@ public class JsonrpcServiceTest extends BaseTest {
   private JsonRpcServiceOnSolidity jsonRpcServiceOnSolidity;
 
   static {
-    dbPath = "output_jsonrpc_service_test";
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
     CommonParameter.getInstance().setJsonRpcHttpFullNodeEnable(true);
     CommonParameter.getInstance().setJsonRpcHttpPBFTNodeEnable(true);
     CommonParameter.getInstance().setJsonRpcHttpSolidityNodeEnable(true);

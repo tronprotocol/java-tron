@@ -3,6 +3,7 @@ package org.tron.core.services.stop;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.io.File;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -17,7 +18,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.parameter.CommonParameter;
@@ -44,6 +47,8 @@ import org.tron.protos.Protocol;
 @Slf4j
 public abstract class ConditionallyStopTest extends BlockGenerate {
 
+  @ClassRule
+  public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   static ChainBaseManager chainManager;
   private static DposSlot dposSlot;
@@ -67,14 +72,15 @@ public abstract class ConditionallyStopTest extends BlockGenerate {
 
   protected abstract void check() throws Exception;
 
-  protected abstract void initDbPath();
+  protected void initDbPath() throws IOException {
+    dbPath = temporaryFolder.newFolder().toString();
+  }
 
 
   @Before
   public void init() throws Exception {
 
     initDbPath();
-    FileUtil.deleteDir(new File(dbPath));
     logger.info("Full node running.");
     Args.setParam(new String[] {"-d", dbPath, "-w"}, Constant.TEST_CONF);
     Args.getInstance().setNodeListenPort(10000 + port.incrementAndGet());
@@ -108,7 +114,6 @@ public abstract class ConditionallyStopTest extends BlockGenerate {
   public void destroy() {
     Args.clearParam();
     context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
   }
 
   private void generateBlock(Map<ByteString, String> witnessAndAccount) throws Exception {

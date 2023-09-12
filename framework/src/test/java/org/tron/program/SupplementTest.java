@@ -5,12 +5,15 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.io.IOException;
 import java.math.BigInteger;
 import javax.annotation.Resource;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
@@ -34,7 +37,9 @@ import org.tron.keystore.WalletUtils;
 @ContextConfiguration(classes = {DefaultConfig.class})
 public class SupplementTest {
 
-  private static final String dbPath = "output_coverage_test";
+  @ClassRule
+  public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
+  private static String dbPath;
 
   @Resource
   private StorageRowStore storageRowStore;
@@ -43,7 +48,8 @@ public class SupplementTest {
   public ExpectedException thrown = ExpectedException.none();
 
   @BeforeClass
-  public static void init() {
+  public static void init() throws IOException {
+    dbPath = temporaryFolder.newFolder().toString();
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
   }
 
@@ -53,7 +59,8 @@ public class SupplementTest {
     assertNotNull(storageRowCapsule);
 
     DbBackupConfig dbBackupConfig = new DbBackupConfig();
-    dbBackupConfig.initArgs(true, "propPath", "bak1path/", "bak2path/", 1);
+    String p = dbPath + File.separator;
+    dbBackupConfig.initArgs(true, p + "propPath", p + "bak1path/", p + "bak2path/", 1);
 
     WalletUtils.generateFullNewWalletFile("123456", new File(dbPath));
     WalletUtils.generateLightNewWalletFile("123456", new File(dbPath));

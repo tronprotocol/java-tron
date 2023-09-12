@@ -19,8 +19,7 @@ public class VotesStoreTest extends BaseTest {
 
 
   static {
-    dbPath = "output-votesStore-test";
-    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
   }
 
   @Resource

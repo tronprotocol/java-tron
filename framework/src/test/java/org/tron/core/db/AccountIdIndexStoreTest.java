@@ -34,8 +34,7 @@ public class AccountIdIndexStoreTest extends BaseTest {
   private static AccountCapsule accountCapsule4;
 
   static {
-    dbPath = "output_AccountIndexStore_test";
-    Args.setParam(new String[]{"--output-directory", dbPath},
+    Args.setParam(new String[]{"--output-directory", dbPath()},
         Constant.TEST_CONF);
   }
 

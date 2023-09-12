@@ -29,8 +29,7 @@ public class NullifierStoreTest extends BaseTest {
   private static BytesCapsule nullifier2New;
 
   static {
-    dbPath = "output_NullifierStore_test";
-    Args.setParam(new String[]{"--output-directory", dbPath},
+    Args.setParam(new String[]{"--output-directory", dbPath()},
         Constant.TEST_CONF);
   }
 
