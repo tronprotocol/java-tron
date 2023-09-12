@@ -2,7 +2,6 @@ package org.tron.common.runtime.vm;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.File;
 import java.util.List;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +15,6 @@ import org.springframework.util.StringUtils;
 import org.tron.common.BaseTest;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractValidateException;
@@ -42,8 +40,7 @@ public class OperationsTest extends BaseTest {
 
   @BeforeClass
   public static void init() {
-    dbPath = "output_operations_test";
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"}, Constant.TEST_CONF);
     CommonParameter.getInstance().setDebug(true);
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
@@ -58,7 +55,6 @@ public class OperationsTest extends BaseTest {
     ConfigLoader.disable = false;
     VMConfig.initVmHardFork(false);
     Args.clearParam();
-    FileUtil.deleteDir(new File(dbPath));
     VMConfig.initAllowTvmTransferTrc10(0);
     VMConfig.initAllowTvmConstantinople(0);
     VMConfig.initAllowTvmSolidity059(0);

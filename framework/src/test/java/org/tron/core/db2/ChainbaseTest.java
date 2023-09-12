@@ -1,18 +1,19 @@
 package org.tron.core.db2;
 
-import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.rocksdb.RocksDB;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.common.DbSourceInter;
@@ -24,7 +25,8 @@ import org.tron.core.db2.core.SnapshotRoot;
 @Slf4j
 public class ChainbaseTest {
 
-  private static final String dbPath = "output-chainbase-test";
+  @ClassRule
+  public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
   private Chainbase chainbase = null;
 
   private final byte[] value0 = "00000".getBytes();
@@ -61,17 +63,13 @@ public class ChainbaseTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   @Before
-  public void initDb() {
+  public void initDb() throws IOException {
     RocksDB.loadLibrary();
-    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory",
+        temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
   }
 
   @Test

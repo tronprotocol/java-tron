@@ -17,8 +17,7 @@ public class ActuatorConstantTest extends BaseTest {
    */
   @BeforeClass
   public static void init() {
-    dbPath = "output_actuatorConstant_test";
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
   }
 
   @Test

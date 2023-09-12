@@ -26,6 +26,7 @@ import static org.junit.Assert.assertNull;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,9 +38,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.ExpectedSystemExit;
+import org.junit.rules.TemporaryFolder;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PublicMethod;
@@ -50,7 +53,8 @@ import org.tron.core.db2.common.WrappedByteArray;
 @Slf4j
 public class LevelDbDataSourceImplTest {
 
-  private static final String dbPath = "output-levelDb-test";
+  @ClassRule
+  public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
   private static LevelDbDataSourceImpl dataSourceTest;
 
   private byte[] value1 = "10000".getBytes();
@@ -76,17 +80,14 @@ public class LevelDbDataSourceImplTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   @Before
-  public void initDb() {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    dataSourceTest = new LevelDbDataSourceImpl(dbPath + File.separator, "test_levelDb");
+  public void initDb() throws IOException {
+    Args.setParam(new String[]{"--output-directory",
+        temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
+    dataSourceTest = new LevelDbDataSourceImpl(
+        Args.getInstance().getOutputDirectory() + File.separator, "test_levelDb");
   }
 
   @Test

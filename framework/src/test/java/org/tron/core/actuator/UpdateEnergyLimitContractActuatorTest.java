@@ -47,8 +47,7 @@ public class UpdateEnergyLimitContractActuatorTest extends BaseTest {
   private static String OWNER_ADDRESS_NOTEXIST;
 
   static {
-    dbPath = "output_updateEnergyLimitContractActuator_test";
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
   }
 
   /**

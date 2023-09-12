@@ -1,15 +1,16 @@
 package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
-import org.tron.common.utils.FileUtil;
+import org.junit.rules.TemporaryFolder;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -21,7 +22,8 @@ import org.tron.protos.Protocol.Vote;
 @Slf4j
 public class VotesCapsuleTest {
 
-  private static String dbPath = "output_votesCapsule_test";
+  @ClassRule
+  public static TemporaryFolder temporaryFolder = new TemporaryFolder();
   private static final String OWNER_ADDRESS;
   private static List<Vote> oldVotes;
 
@@ -31,15 +33,15 @@ public class VotesCapsuleTest {
   }
 
   @BeforeClass
-  public static void init() {
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
+  public static void init() throws IOException {
+    Args.setParam(new String[]{"--output-directory",
+        temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
 
   }
 
   @AfterClass
   public static void destroy() {
     Args.clearParam();
-    FileUtil.deleteDir(new File(dbPath));
   }
 
   @Test

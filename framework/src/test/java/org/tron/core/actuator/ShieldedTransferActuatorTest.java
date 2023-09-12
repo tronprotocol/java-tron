@@ -68,8 +68,7 @@ public class ShieldedTransferActuatorTest extends BaseTest {
   private Wallet wallet;
 
   static {
-    dbPath = "output_shield_transfer_test";
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
     ADDRESS_ONE_PRIVATE_KEY = PublicMethod.getRandomPrivateKey();
     PUBLIC_ADDRESS_ONE = PublicMethod.getHexAddressByPrivateKey(ADDRESS_ONE_PRIVATE_KEY);
 
