@@ -1,33 +1,35 @@
 package org.tron.common.config.args;
 
 import com.beust.jcommander.JCommander;
-import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.tron.common.parameter.RateLimiterInitialization;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 
 
 public class ArgsTest {
 
-  private static final String dbPath = "output_arg_test";
+  @Rule
+  public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Before
-  public void init() {
-    Args.setParam(new String[] {"--output-directory", dbPath, "--p2p-disable", "true",
+  public void init() throws IOException {
+    Args.setParam(new String[] {"--output-directory",
+        temporaryFolder.newFolder().toString(), "--p2p-disable", "true",
         "--debug"}, Constant.TEST_CONF);
   }
 
   @After
   public void destroy() {
     Args.clearParam();
-    FileUtil.deleteDir(new File(dbPath));
   }
 
   @Test

@@ -29,8 +29,7 @@ public class ShieldWalletTest extends BaseTest {
   private Wallet wallet;
 
   static {
-    dbPath = "shield_wallet_test";
-    Args.setParam(new String[] {"-d", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-d", dbPath()}, Constant.TEST_CONF);
   }
 
   @Test

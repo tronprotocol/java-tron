@@ -40,9 +40,8 @@ public class TriggerSmartContractServletTest extends BaseTest {
 
   @BeforeClass
   public static void init() throws Exception {
-    dbPath = "output_" + TriggerSmartContractServletTest.class.getName();
     Args.setParam(
-        new String[]{"--output-directory", dbPath, "--debug", "--witness"}, Constant.TEST_CONF);
+        new String[]{"--output-directory", dbPath(), "--debug", "--witness"}, Constant.TEST_CONF);
     Args.getInstance().needSyncCheck = false;
 
     // build app context

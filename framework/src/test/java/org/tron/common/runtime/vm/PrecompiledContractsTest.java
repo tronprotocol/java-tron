@@ -106,8 +106,7 @@ public class PrecompiledContractsTest extends BaseTest {
   private static final long latestTimestamp = 1_000_000L;
 
   static {
-    dbPath = "output_PrecompiledContracts_test";
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"}, Constant.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     WITNESS_ADDRESS = Wallet.getAddressPreFixString() + WITNESS_ADDRESS_BASE;
 

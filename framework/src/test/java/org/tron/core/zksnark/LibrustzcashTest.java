@@ -73,10 +73,9 @@ public class LibrustzcashTest extends BaseTest {
 
   @BeforeClass
   public static void init() {
-    dbPath = "output_Librustzcash_test";
     Args.setParam(
         new String[]{
-            "--output-directory", dbPath,
+            "--output-directory", dbPath(),
             "--storage-db-directory", dbDirectory,
             "--storage-index-directory", indexDirectory,
             "-w",

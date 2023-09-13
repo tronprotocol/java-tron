@@ -40,8 +40,7 @@ public class RuntimeImplTest extends BaseTest {
   private final long creatorTotalBalance = 3_000_000_000L;
 
   static {
-    dbPath = "output_RuntimeImplTest";
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"}, Constant.TEST_CONF);
     callerAddress = Hex
         .decode(Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc");
     creatorAddress = Hex

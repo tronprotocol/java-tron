@@ -46,8 +46,7 @@ public class TransactionUtilTest extends BaseTest {
    */
   @BeforeClass
   public static void init() {
-    dbPath = "output_transactionUtil_test";
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
   }
 
