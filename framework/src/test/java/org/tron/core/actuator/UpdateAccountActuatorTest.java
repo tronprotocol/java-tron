@@ -32,8 +32,7 @@ public class UpdateAccountActuatorTest extends BaseTest {
   private static final String OWNER_ADDRESS_INVALID = "aaaa";
 
   static {
-    dbPath = "output_updateaccount_test";
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     OWNER_ADDRESS_1 = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
   }

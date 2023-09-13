@@ -35,8 +35,7 @@ public class PbftApiTest extends BaseTest {
 
   @BeforeClass
   public static void init() {
-    dbPath = "output_pbftAPI_test";
-    Args.setParam(new String[]{"-d", dbPath, "-w"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath(), "-w"}, Constant.TEST_CONF);
   }
 
   @Test

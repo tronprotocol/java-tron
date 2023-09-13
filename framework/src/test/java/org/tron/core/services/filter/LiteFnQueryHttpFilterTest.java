@@ -42,8 +42,7 @@ public class LiteFnQueryHttpFilterTest extends BaseTest {
   private final CloseableHttpClient httpClient = HttpClients.createDefault();
 
   static {
-    dbPath = "output_http_filter_test";
-    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
     Args.getInstance().setFullNodeAllowShieldedTransactionArgs(false);
   }
 

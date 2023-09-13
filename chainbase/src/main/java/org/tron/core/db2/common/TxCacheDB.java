@@ -318,6 +318,7 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   private void dump() {
     if (!isValid.get()) {
       logger.info("bloomFilters is not valid.");
+      return;
     }
     FileUtil.createDirIfNotExists(this.cacheDir.toString());
     logger.info("dump bloomFilters start.");

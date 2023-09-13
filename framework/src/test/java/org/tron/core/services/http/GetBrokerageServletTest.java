@@ -19,10 +19,9 @@ public class GetBrokerageServletTest extends BaseTest {
   private  GetBrokerageServlet getBrokerageServlet;
 
   static {
-    dbPath = "db_GetBrokerageServlet_test";
     Args.setParam(
             new String[]{
-                "--output-directory", dbPath,
+                "--output-directory", dbPath(),
             }, Constant.TEST_CONF
     );
   }

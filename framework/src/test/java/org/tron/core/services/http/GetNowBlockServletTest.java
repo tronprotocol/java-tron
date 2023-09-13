@@ -20,10 +20,9 @@ public class GetNowBlockServletTest extends BaseTest {
   private GetNowBlockServlet getNowBlockServlet;
 
   static {
-    dbPath = "db_GetNowBlockServlet_test";
     Args.setParam(
         new String[]{
-            "--output-directory", dbPath,
+            "--output-directory", dbPath(),
         }, Constant.TEST_CONF
     );
   }

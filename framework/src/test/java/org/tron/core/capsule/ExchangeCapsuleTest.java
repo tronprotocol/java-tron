@@ -15,8 +15,7 @@ import org.tron.core.exception.ItemNotFoundException;
 public class ExchangeCapsuleTest extends BaseTest {
 
   static {
-    dbPath = "output_exchange_capsule_test_test";
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
   }
 
   /**

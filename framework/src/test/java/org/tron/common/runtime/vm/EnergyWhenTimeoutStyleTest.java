@@ -29,8 +29,7 @@ public class EnergyWhenTimeoutStyleTest extends BaseTest {
   private long totalBalance = 30_000_000_000_000L;
 
   static {
-    dbPath = "output_CPUTimeTest";
-    Args.setParam(new String[]{"--output-directory", dbPath},
+    Args.setParam(new String[]{"--output-directory", dbPath()},
         Constant.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
   }
