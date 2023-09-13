@@ -63,18 +63,6 @@ public class GetRewardServletTest extends BaseTest {
     delegationStore.setWitnessVote(0, sr, 100000000);
   }
 
-  @After
-  public void destroy1() {
-    Args.clearParam();
-    if (StringUtils.isNotEmpty(dbPath)) {
-      if (FileUtil.deleteDir(new File(dbPath))) {
-        logger.info("Release resources successful.");
-      } else {
-        logger.info("Release resources failure.");
-      }
-    }
-  }
-
   @Test
   public void getRewardValueByJsonTest() {
     int expect = 138181;
