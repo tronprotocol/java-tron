@@ -53,6 +53,25 @@ public class GetBrokerageServletTest extends BaseTest {
     }
   }
 
+
+  @Test
+  public void getBrokerageByJsonUTF8Test() {
+    int expect = 20;
+    String jsonParam = "{\"address\": \"27VZHn9PFZwNh7o2EporxmLkpe157iWZVkh\"}";
+    MockHttpServletRequest request = createRequest("application/json; charset=utf-8");
+    request.setContent(jsonParam.getBytes());
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    getBrokerageServlet.doPost(request, response);
+    try {
+      String contentAsString = response.getContentAsString();
+      JSONObject result = JSONObject.parseObject(contentAsString);
+      int brokerage = (int)result.get("brokerage");
+      Assert.assertEquals(expect, brokerage);
+    } catch (UnsupportedEncodingException e) {
+      Assert.fail(e.getMessage());
+    }
+  }
+
   @Test
   public void getBrokerageValueTest() {
     int expect = 20;
