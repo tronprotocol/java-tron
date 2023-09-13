@@ -534,9 +534,7 @@ public class Util {
       if (StringUtils.isBlank(contentType)) {
         return null;
       }
-      if (contentType.contains(MimeTypes.Type.APPLICATION_JSON.asString())
-              || contentType.contains(MimeTypes.Type.APPLICATION_JSON_UTF_8.asString())
-              || contentType.contains(MimeTypes.Type.APPLICATION_JSON_8859_1.asString())) {
+      if (contentType.contains(MimeTypes.Type.APPLICATION_JSON.asString())) {
         value = getRequestValue(request);
         if (StringUtils.isBlank(value)) {
           return null;
