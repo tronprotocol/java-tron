@@ -1,16 +1,16 @@
 package org.tron.core;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.ForkController;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
@@ -24,12 +24,14 @@ public class ForkControllerTest {
   private static DynamicPropertiesStore dynamicPropertiesStore;
   private static final ForkController forkController = ForkController.instance();
   private static TronApplicationContext context;
-  private static final String dbPath = "output_fork_test";
+  @Rule
+  public final TemporaryFolder temporaryFolder = new TemporaryFolder();
   private static long ENERGY_LIMIT_BLOCK_NUM = 4727890L;
 
   @Before
-  public void init() {
-    Args.setParam(new String[]{"-d", dbPath, "-w"}, Constant.TEST_CONF);
+  public void init() throws IOException {
+    Args.setParam(new String[]{"-d",
+        temporaryFolder.newFolder().toString(), "-w"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     dynamicPropertiesStore = context.getBean(DynamicPropertiesStore.class);
     chainBaseManager = context.getBean(ChainBaseManager.class);
@@ -255,7 +257,6 @@ public class ForkControllerTest {
   public void removeDb() {
     Args.clearParam();
     context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
   }
 
 }

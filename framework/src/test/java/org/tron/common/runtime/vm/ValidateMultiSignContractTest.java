@@ -37,8 +37,7 @@ public class ValidateMultiSignContractTest extends BaseTest {
   private static final byte[] longData;
 
   static {
-    dbPath = "output_ValidateMultiSignContract_test";
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"}, Constant.TEST_CONF);
     longData = new byte[1000000];
     Arrays.fill(longData, (byte) 2);
   }

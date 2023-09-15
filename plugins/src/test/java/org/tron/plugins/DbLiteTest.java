@@ -3,10 +3,14 @@ package org.tron.plugins;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
+import org.junit.ClassRule;
+import org.junit.Rule;
+import org.junit.rules.TemporaryFolder;
 import org.junit.Test;
 import org.tron.api.WalletGrpc;
 import org.tron.common.application.Application;
@@ -32,7 +36,11 @@ public class DbLiteTest {
   private Application appTest;
   private String databaseDir;
 
-  private static String dbPath = "output_lite_fn";
+  @Rule
+  public final TemporaryFolder folder = new TemporaryFolder();
+
+  private String dbPath;
+  CommandLine cli = new CommandLine(new DbLite());
 
   /**
    * init logic.
@@ -53,20 +61,6 @@ public class DbLiteTest {
   }
 
   /**
-   *  Delete the database when exited.
-   */
-  public static void destroy(String dbPath) {
-    File f = new File(dbPath);
-    if (f.exists()) {
-      if (FileUtil.deleteDir(f)) {
-        logger.info("Release resources successful.");
-      } else {
-        logger.info("Release resources failure.");
-      }
-    }
-  }
-
-  /**
    * shutdown the fullNode.
    */
   public void shutdown() throws InterruptedException {
@@ -76,9 +70,10 @@ public class DbLiteTest {
     context.close();
   }
 
-  public void init() {
-    destroy(dbPath); // delete if prev failed
-    Args.setParam(new String[]{"-d", dbPath, "-w"}, "config-localtest.conf");
+  public void init() throws IOException {
+    dbPath = folder.newFolder().toString();
+    Args.setParam(new String[]{"-d", dbPath, "-w", "--p2p-disable", "true"},
+        "config-localtest.conf");
     // allow account root
     Args.getInstance().setAllowAccountStateRoot(1);
     Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
@@ -89,9 +84,7 @@ public class DbLiteTest {
 
   @After
   public void clear() {
-    destroy(dbPath);
     Args.clearParam();
-    dbPath = "output_lite_fn";
   }
 
   @Test
@@ -114,6 +107,7 @@ public class DbLiteTest {
 
   private void testTools(String dbType, int checkpointVersion)
       throws InterruptedException {
+    logger.info("dbType {}, checkpointVersion {}", dbType, checkpointVersion);
     dbPath = String.format("%s_%s_%d", dbPath, dbType, System.currentTimeMillis());
     init();
     final String[] argsForSnapshot =
@@ -139,8 +133,7 @@ public class DbLiteTest {
     // delete tran-cache
     FileUtil.deleteDir(Paths.get(dbPath, databaseDir, "trans-cache").toFile());
     // generate snapshot
-    CommandLine commandLine = new CommandLine(new DbLite());
-    commandLine.execute(argsForSnapshot);
+    cli.execute(argsForSnapshot);
     // start fullNode
     startApp();
     // produce transactions for 6 seconds
@@ -148,7 +141,7 @@ public class DbLiteTest {
     // stop the node
     shutdown();
     // generate history
-    commandLine.execute(argsForHistory);
+    cli.execute(argsForHistory);
     // backup original database to database_bak
     File database = new File(Paths.get(dbPath, databaseDir).toString());
     if (!database.renameTo(new File(Paths.get(dbPath, databaseDir + "_bak").toString()))) {
@@ -169,7 +162,7 @@ public class DbLiteTest {
     // stop the node
     shutdown();
     // merge history
-    commandLine.execute(argsForMerge);
+    cli.execute(argsForMerge);
     // start and validate
     startApp();
     generateSomeTransactions(6);

@@ -29,8 +29,7 @@ public class ProposalControllerTest extends BaseTest {
   private static boolean init;
 
   static {
-    dbPath = "output_proposal_controller_test";
-    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
   }
 
   @Before

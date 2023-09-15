@@ -1,14 +1,15 @@
 package org.tron.core.net.services;
 
-import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
@@ -21,12 +22,14 @@ public class EffectiveCheckServiceTest {
 
   protected TronApplicationContext context;
   private EffectiveCheckService service;
-  private String dbPath = "output-effective-service-test";
+
+  @Rule
+  public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Before
-  public void init() {
-    Args.setParam(new String[] {"--output-directory", dbPath, "--debug"},
-        Constant.TEST_CONF);
+  public void init() throws IOException {
+    Args.setParam(new String[] {"--output-directory",
+        temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     service = context.getBean(EffectiveCheckService.class);
   }
@@ -35,7 +38,6 @@ public class EffectiveCheckServiceTest {
   public void destroy() {
     Args.clearParam();
     context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
   }
 
   @Test

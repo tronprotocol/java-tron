@@ -47,7 +47,7 @@ public class LiteFnQueryGrpcInterceptorTest {
   public ExpectedException thrown = ExpectedException.none();
 
   @ClassRule
-  public static TemporaryFolder temporaryFolder = new TemporaryFolder();
+  public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   /**
    * init logic.

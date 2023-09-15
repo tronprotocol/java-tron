@@ -19,7 +19,9 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.Runtime;
@@ -264,7 +266,8 @@ public class VoteTest {
     return getConsumer("<", expected);
   }
 
-  private static String dbPath;
+  @Rule
+  public TemporaryFolder temporaryFolder = new TemporaryFolder();
   private static TronApplicationContext context;
   private static Manager manager;
   private static MaintenanceManager maintenanceManager;
@@ -275,8 +278,8 @@ public class VoteTest {
 
   @Before
   public void init() throws Exception {
-    dbPath = "output_" + VoteTest.class.getName();
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory",
+        temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
     CommonParameter.getInstance().setCheckFrozenTime(0);
     context = new TronApplicationContext(DefaultConfig.class);
     manager = context.getBean(Manager.class);
@@ -310,11 +313,6 @@ public class VoteTest {
     VMConfig.initVmHardFork(false);
     Args.clearParam();
     context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.error("Release resources failure.");
-    }
   }
 
   private byte[] deployContract(String contractName, String abi, String code) throws Exception {

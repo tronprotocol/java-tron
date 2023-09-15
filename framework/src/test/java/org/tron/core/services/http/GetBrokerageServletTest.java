@@ -19,10 +19,9 @@ public class GetBrokerageServletTest extends BaseTest {
   private  GetBrokerageServlet getBrokerageServlet;
 
   static {
-    dbPath = "db_GetBrokerageServlet_test";
     Args.setParam(
             new String[]{
-                "--output-directory", dbPath,
+                "--output-directory", dbPath(),
             }, Constant.TEST_CONF
     );
   }
@@ -40,6 +39,25 @@ public class GetBrokerageServletTest extends BaseTest {
     int expect = 20;
     String jsonParam = "{\"address\": \"27VZHn9PFZwNh7o2EporxmLkpe157iWZVkh\"}";
     MockHttpServletRequest request = createRequest("application/json");
+    request.setContent(jsonParam.getBytes());
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    getBrokerageServlet.doPost(request, response);
+    try {
+      String contentAsString = response.getContentAsString();
+      JSONObject result = JSONObject.parseObject(contentAsString);
+      int brokerage = (int)result.get("brokerage");
+      Assert.assertEquals(expect, brokerage);
+    } catch (UnsupportedEncodingException e) {
+      Assert.fail(e.getMessage());
+    }
+  }
+
+
+  @Test
+  public void getBrokerageByJsonUTF8Test() {
+    int expect = 20;
+    String jsonParam = "{\"address\": \"27VZHn9PFZwNh7o2EporxmLkpe157iWZVkh\"}";
+    MockHttpServletRequest request = createRequest("application/json; charset=utf-8");
     request.setContent(jsonParam.getBytes());
     MockHttpServletResponse response = new MockHttpServletResponse();
     getBrokerageServlet.doPost(request, response);

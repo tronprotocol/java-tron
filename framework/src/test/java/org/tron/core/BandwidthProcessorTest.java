@@ -47,8 +47,7 @@ public class BandwidthProcessorTest extends BaseTest {
 
 
   static {
-    dbPath = "output_bandwidth_processor_test";
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
     ASSET_NAME = "test_token";
     ASSET_NAME_V2 = "2";
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
