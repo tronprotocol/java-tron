@@ -34,8 +34,7 @@ public class UpdateBrokerageActuatorTest extends BaseTest {
   private static final int BROKEN_AGE = 10;
 
   static {
-    dbPath = "output_updatebrokerageactuator_test";
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ADDRESS_NOTEXIST =
         Wallet.getAddressPreFixString() + "1234b9367799eaa3197fecb144eb71de1e049123";

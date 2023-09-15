@@ -19,10 +19,9 @@ public class ListNodesServletTest extends BaseTest {
   private ListNodesServlet listNodesServlet;
 
   static {
-    dbPath = "db_GetNowBlockServlet_test";
     Args.setParam(
         new String[]{
-            "--output-directory", dbPath,
+            "--output-directory", dbPath(),
         }, Constant.TEST_CONF
     );
   }

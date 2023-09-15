@@ -8,7 +8,6 @@ import java.util.List;
 import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.parameter.CommonParameter;
@@ -32,14 +31,9 @@ public class KhaosDatabaseTest extends BaseTest {
   private KhaosDatabase khaosDatabase;
 
   static {
-    dbPath = "output-khaosDatabase-test";
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
   }
 
-  @BeforeClass
-  public static void init() {
-    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
-  }
 
   @Test
   public void testStartBlock() {

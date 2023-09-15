@@ -58,8 +58,7 @@ public class PrecompiledContractsVerifyProofTest extends BaseTest {
 
   @BeforeClass
   public static void init() {
-    dbPath = "output_PrecompiledContracts_VerifyProof_test";
-    Args.setParam(new String[]{"--output-directory", dbPath}, "config-test.conf");
+    Args.setParam(new String[]{"--output-directory", dbPath()}, "config-test.conf");
     DEFAULT_OVK = ByteArray
         .fromHexString("030c8c2bc59fb3eb8afb047a8ea4b028743d23e7d38c6fa30908358431e2314d");
     SHIELDED_CONTRACT_ADDRESS = WalletClient.decodeFromBase58Check(SHIELDED_CONTRACT_ADDRESS_STR);

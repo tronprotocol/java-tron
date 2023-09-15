@@ -29,8 +29,7 @@ public class TimeBenchmarkTest extends BaseTest {
   private long totalBalance = 30_000_000_000_000L;
 
   static {
-    dbPath = "output_TimeBenchmarkTest";
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"}, Constant.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
   }
 

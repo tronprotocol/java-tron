@@ -30,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.eclipse.jetty.http.HttpMethod;
+import org.eclipse.jetty.http.MimeTypes;
 import org.eclipse.jetty.util.MultiMap;
 import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.UrlEncoded;
@@ -78,8 +79,6 @@ public class Util {
   public static final String FUNCTION_SELECTOR = "function_selector";
   public static final String FUNCTION_PARAMETER = "parameter";
   public static final String CALL_DATA = "data";
-  public static final String APPLICATION_FORM_URLENCODED = "application/x-www-form-urlencoded";
-  public static final String APPLICATION_JSON = "application/json";
 
   public static String printTransactionFee(String transactionFee) {
     JSONObject jsonObject = new JSONObject();
@@ -525,7 +524,6 @@ public class Util {
 
   private static String checkGetParam(HttpServletRequest request, String key) throws Exception {
     String method = request.getMethod();
-    String value = null;
 
     if (HttpMethod.GET.toString().toUpperCase().equalsIgnoreCase(method)) {
       return request.getParameter(key);
@@ -535,8 +533,10 @@ public class Util {
       if (StringUtils.isBlank(contentType)) {
         return null;
       }
-      if (APPLICATION_JSON.toLowerCase().contains(contentType)) {
-        value = getRequestValue(request);
+      if (contentType.contains(MimeTypes.Type.FORM_ENCODED.asString())) {
+        return request.getParameter(key);
+      } else {
+        String value = getRequestValue(request);
         if (StringUtils.isBlank(value)) {
           return null;
         }
@@ -545,13 +545,10 @@ public class Util {
         if (jsonObject != null) {
           return jsonObject.getString(key);
         }
-      } else if (APPLICATION_FORM_URLENCODED.toLowerCase().contains(contentType)) {
-        return request.getParameter(key);
-      } else {
         return null;
       }
     }
-    return value;
+    return null;
   }
 
   public static String getRequestValue(HttpServletRequest request) throws IOException {

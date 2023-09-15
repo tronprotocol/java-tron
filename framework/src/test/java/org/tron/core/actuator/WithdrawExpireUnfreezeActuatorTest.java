@@ -39,8 +39,7 @@ public class WithdrawExpireUnfreezeActuatorTest extends BaseTest {
   private static final long allowance = 32_000_000L;
 
   static {
-    dbPath = "output_withdraw_expire_unfreeze_test";
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     OWNER_ACCOUNT_INVALID =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3456";

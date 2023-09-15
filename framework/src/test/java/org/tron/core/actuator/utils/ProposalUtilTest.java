@@ -32,8 +32,7 @@ public class ProposalUtilTest extends BaseTest {
    */
   @BeforeClass
   public static void init() {
-    dbPath = "output_ProposalUtil_test";
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
   }
   
   @Test
