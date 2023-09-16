@@ -40,7 +40,7 @@ public class DbLiteTest {
   public final TemporaryFolder folder = new TemporaryFolder();
 
   private String dbPath;
-  CommandLine cli = new CommandLine(new DbLite());
+  private CommandLine cli = new CommandLine(new DbLite());
 
   /**
    * init logic.
@@ -88,25 +88,25 @@ public class DbLiteTest {
   }
 
   @Test
-  public void testToolsWithLevelDB() throws InterruptedException {
+  public void testToolsWithLevelDB() throws InterruptedException, IOException {
     logger.info("testToolsWithLevelDB start");
     testTools("LEVELDB", 1);
   }
 
   @Test
-  public void testToolsWithLevelDBV2() throws InterruptedException {
+  public void testToolsWithLevelDBV2() throws InterruptedException, IOException {
     logger.info("testToolsWithLevelDB start");
     testTools("LEVELDB", 2);
   }
 
   @Test
-  public void testToolsWithRocksDB() throws InterruptedException {
+  public void testToolsWithRocksDB() throws InterruptedException, IOException {
     logger.info("testToolsWithRocksDB start");
     testTools("ROCKSDB", 1);
   }
 
-  private void testTools(String dbType, int checkpointVersion)
-      throws InterruptedException {
+   void testTools(String dbType, int checkpointVersion)
+          throws InterruptedException, IOException {
     logger.info("dbType {}, checkpointVersion {}", dbType, checkpointVersion);
     dbPath = String.format("%s_%s_%d", dbPath, dbType, System.currentTimeMillis());
     init();
