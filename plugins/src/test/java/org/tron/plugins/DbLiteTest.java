@@ -105,7 +105,7 @@ public class DbLiteTest {
     testTools("ROCKSDB", 1);
   }
 
-   void testTools(String dbType, int checkpointVersion)
+   protected void testTools(String dbType, int checkpointVersion)
           throws InterruptedException, IOException {
     logger.info("dbType {}, checkpointVersion {}", dbType, checkpointVersion);
     dbPath = String.format("%s_%s_%d", dbPath, dbType, System.currentTimeMillis());
