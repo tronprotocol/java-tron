@@ -528,8 +528,8 @@ public class LiteFullNodeTool {
   }
 
   private void run(Args argv) {
-    logger.info("LiteFullNodeTool is an obsolete tool and is not recommended" +
-            " to be used any more, please use the tool DbLite.");
+    logger.info("LiteFullNodeTool is an obsolete tool and is not recommended"
+            + " to be used any more, please use the tool DbLite.");
     if (StringUtils.isBlank(argv.fnDataPath) || StringUtils.isBlank(argv.datasetPath)) {
       throw new ParameterException("fnDataPath or datasetPath can't be null");
     }

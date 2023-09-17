@@ -8,10 +8,8 @@ import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
-import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
-import org.junit.Test;
 import org.tron.api.WalletGrpc;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
@@ -87,25 +85,7 @@ public class DbLiteTest {
     Args.clearParam();
   }
 
-  @Test
-  public void testToolsWithLevelDB() throws InterruptedException, IOException {
-    logger.info("testToolsWithLevelDB start");
-    testTools("LEVELDB", 1);
-  }
-
-  @Test
-  public void testToolsWithLevelDBV2() throws InterruptedException, IOException {
-    logger.info("testToolsWithLevelDB start");
-    testTools("LEVELDB", 2);
-  }
-
-  @Test
-  public void testToolsWithRocksDB() throws InterruptedException, IOException {
-    logger.info("testToolsWithRocksDB start");
-    testTools("ROCKSDB", 1);
-  }
-
-   protected void testTools(String dbType, int checkpointVersion)
+  protected void testTools(String dbType, int checkpointVersion)
           throws InterruptedException, IOException {
     logger.info("dbType {}, checkpointVersion {}", dbType, checkpointVersion);
     dbPath = String.format("%s_%s_%d", dbPath, dbType, System.currentTimeMillis());
