@@ -26,10 +26,9 @@ public class AssetIssueStoreTest extends BaseTest {
   private AssetIssueStore assetIssueStore;
 
   static {
-    dbPath = "db_AssetIssueStoreTest_test";
     Args.setParam(
             new String[]{
-                "--output-directory", dbPath,
+                "--output-directory", dbPath(),
             },
             Constant.TEST_CONF
     );
