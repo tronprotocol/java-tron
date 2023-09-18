@@ -20,17 +20,22 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.SimpleMerklePatriciaTrie;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.error.TronDBException;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.WriteOptionsWrapper;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StorageUtils;
 import org.tron.core.db.RevokingDatabase;
@@ -417,6 +422,9 @@ public class SnapshotManager implements RevokingDatabase {
               .collect(HashMap::new, (m, k) -> m.put(k.getKey(), k.getValue()), HashMap::putAll),
           WriteOptionsWrapper.getInstance().sync(syncFlag));
 
+      // insert state trie
+      calculateStateRoot(batch);
+
     } catch (Exception e) {
       throw new TronDBException(e);
     } finally {
@@ -424,6 +432,34 @@ public class SnapshotManager implements RevokingDatabase {
         checkPointStore.close();
       }
     }
+  }
+
+  private void calculateStateRoot(Map<WrappedByteArray, WrappedByteArray> batch) {
+    final MerklePatriciaTrie<org.apache.tuweni.bytes.Bytes, org.apache.tuweni.bytes.Bytes>
+        acc = new SimpleMerklePatriciaTrie<>(Function.identity());
+    final MerklePatriciaTrie<org.apache.tuweni.bytes.Bytes, org.apache.tuweni.bytes.Bytes>
+        row = new SimpleMerklePatriciaTrie<>(Function.identity());
+    AtomicLong height = new AtomicLong();
+    batch.forEach((k, v) -> {
+      byte[] key = k.getBytes();
+      byte[] value = v.getBytes();
+      String dbName = simpleDecode(key);
+      if ("account".equalsIgnoreCase(dbName)) {
+        acc.put(org.apache.tuweni.bytes.Bytes.wrap(key),
+            org.apache.tuweni.bytes.Bytes.wrap(value));
+      }
+      if ("storage-row".equalsIgnoreCase(dbName)) {
+        row.put(org.apache.tuweni.bytes.Bytes.wrap(key),
+            org.apache.tuweni.bytes.Bytes.wrap(value));
+      }
+      if ("properties".equalsIgnoreCase(dbName)
+          && Arrays.equals(Bytes.concat(simpleEncode("properties"),
+          "latest_block_header_number".getBytes()), key)) {
+        height.set(ByteArray.toLong(value));
+      }
+    });
+    logger.info("height: {}, acc root: {}, row root: {}",
+        height.get(), acc.getRootHash(), row.getRootHash());
   }
 
   private TronDatabase<byte[]> getCheckpointDB(String dbName) {
