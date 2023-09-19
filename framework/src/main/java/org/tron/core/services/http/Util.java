@@ -613,6 +613,9 @@ public class Util {
   }
 
   public static String getJsonString(String str) {
+    if (isValidJson(str)) {
+      return str;
+    }
     if (StringUtils.isEmpty(str)) {
       return EMPTY;
     }
@@ -631,4 +634,12 @@ public class Util {
     return json.toString();
   }
 
+  public static boolean isValidJson(String json) {
+    try {
+      JSON.parse(json);
+      return true;
+    } catch (Exception e) {
+      return false;
+    }
+  }
 }
