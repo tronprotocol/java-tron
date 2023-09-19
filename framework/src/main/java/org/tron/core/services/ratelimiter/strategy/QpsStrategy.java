@@ -8,9 +8,9 @@ import org.tron.core.config.args.Args;
 
 @Slf4j
 public class QpsStrategy extends Strategy {
-
   public static final String STRATEGY_PARAM_QPS = "qps";
   public static final int DEFAULT_QPS = Args.getInstance().getRateLimiterGlobalApiQps();
+  public static final String DEFAULT_QPS_PARAM = "qps=" + DEFAULT_QPS;
   private RateLimiter rateLimiter;
 
   public QpsStrategy(String paramString) {

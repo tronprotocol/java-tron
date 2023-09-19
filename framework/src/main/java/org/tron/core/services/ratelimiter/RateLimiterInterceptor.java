@@ -23,27 +23,22 @@ import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.services.ratelimiter.adapter.DefaultBaseQqsAdapter;
 import org.tron.core.services.ratelimiter.adapter.IPreemptibleRateLimiter;
 import org.tron.core.services.ratelimiter.adapter.IRateLimiter;
+import org.tron.core.services.ratelimiter.strategy.QpsStrategy;
 
 
 @Slf4j
 @Component
 public class RateLimiterInterceptor implements ServerInterceptor {
-
   private static final String KEY_PREFIX_RPC = "rpc_";
-
-  private static final int QPS = Args.getInstance().getRateLimiterGlobalApiQps();
-
   @Autowired
   private RateLimiterContainer container;
 
-
   public void init(Server server) {
-
     // add default
     for (ServerServiceDefinition service : server.getServices()) {
       for (ServerMethodDefinition<?, ?> method : service.getMethods()) {
         container.add(KEY_PREFIX_RPC, method.getMethodDescriptor().getFullMethodName(),
-            new DefaultBaseQqsAdapter("qps=" + QPS));
+            new DefaultBaseQqsAdapter(QpsStrategy.DEFAULT_QPS_PARAM));
       }
     }
 

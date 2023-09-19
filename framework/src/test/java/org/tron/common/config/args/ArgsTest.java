@@ -1,24 +1,15 @@
 package org.tron.common.config.args;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.net.URLConnection;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.tron.common.client.WalletGrpcClient;
 import org.tron.common.parameter.RateLimiterInitialization;
-import org.tron.common.utils.client.GrpcClient;
-import org.tron.common.utils.client.WalletClient;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
-
 
 public class ArgsTest {
 

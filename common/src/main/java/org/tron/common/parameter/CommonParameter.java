@@ -415,7 +415,6 @@ public class CommonParameter {
   @Setter
   public int rateLimiterGlobalIpQps;
   @Getter
-  @Setter
   public int rateLimiterGlobalApiQps;
   @Getter
   public DbBackupConfig dbBackupConfig;
