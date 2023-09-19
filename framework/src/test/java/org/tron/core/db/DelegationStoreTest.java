@@ -23,10 +23,9 @@ public class DelegationStoreTest extends BaseTest {
   private DelegationStore delegationStore;
 
   static {
-    dbPath = "db_DelegationStore_test";
     Args.setParam(
             new String[]{
-                "--output-directory", dbPath,
+                "--output-directory", dbPath(),
             },
             Constant.TEST_CONF
     );
