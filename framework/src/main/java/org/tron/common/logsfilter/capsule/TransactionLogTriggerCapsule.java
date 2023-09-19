@@ -175,8 +175,10 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
                     .encode58Check(unfreezeBalanceContract.getReceiverAddress().toByteArray()));
               }
               transactionLogTrigger.setAssetName("trx");
-              transactionLogTrigger.setAssetAmount(
-                  transactionInfo.getUnfreezeAmount());
+              if (Objects.nonNull(transactionInfo)) {
+                transactionLogTrigger.setAssetAmount(
+                    transactionInfo.getUnfreezeAmount());
+              }
               break;
             case FreezeBalanceV2Contract:
               FreezeBalanceV2Contract freezeBalanceV2Contract = contractParameter
@@ -204,7 +206,9 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
               transactionLogTrigger.setFromAddress(StringUtil.encode58Check(
                   withdrawExpireUnfreezeContract.getOwnerAddress().toByteArray()));
               transactionLogTrigger.setAssetName("trx");
-              transactionLogTrigger.setAssetAmount(transactionInfo.getWithdrawExpireAmount());
+              if (Objects.nonNull(transactionInfo)) {
+                transactionLogTrigger.setAssetAmount(transactionInfo.getWithdrawExpireAmount());
+              }
               break;
             case DelegateResourceContract:
               DelegateResourceContract delegateResourceContract = contractParameter
@@ -238,7 +242,9 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
               transactionLogTrigger.setFromAddress(StringUtil
                   .encode58Check(cancelAllUnfreezeV2Contract.getOwnerAddress().toByteArray()));
               transactionLogTrigger.setAssetName("trx");
-              transactionLogTrigger.setExtMap(transactionInfo.getCancelUnfreezeV2AmountMap());
+              if (Objects.nonNull(transactionInfo)) {
+                transactionLogTrigger.setExtMap(transactionInfo.getCancelUnfreezeV2AmountMap());
+              }
               break;
             default:
               break;

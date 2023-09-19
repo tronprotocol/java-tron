@@ -613,11 +613,11 @@ public class Util {
   }
 
   public static String getJsonString(String str) {
-    if (isValidJson(str)) {
-      return str;
-    }
     if (StringUtils.isEmpty(str)) {
       return EMPTY;
+    }
+    if (isValidJson(str)) {
+      return str;
     }
     MultiMap<String> params = new MultiMap<>();
     UrlEncoded.decodeUtf8To(str, params);
