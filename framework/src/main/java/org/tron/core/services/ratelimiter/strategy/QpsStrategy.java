@@ -4,12 +4,13 @@ import com.google.common.util.concurrent.RateLimiter;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.core.config.args.Args;
 
 @Slf4j
 public class QpsStrategy extends Strategy {
 
   public static final String STRATEGY_PARAM_QPS = "qps";
-  public static final Double DEFAULT_QPS = 100D;
+  public static final int DEFAULT_QPS = Args.getInstance().getRateLimiterGlobalApiQps();
   private RateLimiter rateLimiter;
 
   public QpsStrategy(String paramString) {

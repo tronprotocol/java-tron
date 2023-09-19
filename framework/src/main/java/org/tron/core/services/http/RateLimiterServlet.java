@@ -31,6 +31,7 @@ public abstract class RateLimiterServlet extends HttpServlet {
 
   private static final String KEY_PREFIX_HTTP = "http_";
   private static final String ADAPTER_PREFIX = "org.tron.core.services.ratelimiter.adapter.";
+  private static final int QPS = Args.getInstance().getRateLimiterGlobalApiQps();
 
   @Autowired
   private RateLimiterContainer container;
@@ -62,7 +63,7 @@ public abstract class RateLimiterServlet extends HttpServlet {
 
         } else {
           constructor = c.getConstructor();
-          obj = constructor.newInstance();
+          obj = constructor.newInstance("qps=" + QPS);
           container.add(KEY_PREFIX_HTTP, getClass().getSimpleName(), (IRateLimiter) obj);
         }
         success = true;
@@ -78,7 +79,7 @@ public abstract class RateLimiterServlet extends HttpServlet {
       // if the specific rate limiter strategy of servlet is not defined or fail to add,
       // then add a default Strategy.
       try {
-        IRateLimiter rateLimiter = new DefaultBaseQqsAdapter("qps=1000");
+        IRateLimiter rateLimiter = new DefaultBaseQqsAdapter("qps=" + QPS);
         container.add(KEY_PREFIX_HTTP, getClass().getSimpleName(), rateLimiter);
       } catch (Exception e) {
         logger.warn(

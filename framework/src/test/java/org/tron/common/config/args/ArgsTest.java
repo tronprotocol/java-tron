@@ -1,13 +1,21 @@
 package org.tron.common.config.args;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.net.URLConnection;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.tron.common.client.WalletGrpcClient;
 import org.tron.common.parameter.RateLimiterInitialization;
+import org.tron.common.utils.client.GrpcClient;
+import org.tron.common.utils.client.WalletClient;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 
@@ -31,6 +39,7 @@ public class ArgsTest {
 
   @Test
   public void testConfig() {
+    Args.logConfig();
     Assert.assertEquals(Args.getInstance().getMaxTransactionPendingSize(), 2000);
     Assert.assertEquals(Args.getInstance().getPendingTransactionTimeout(), 60_000);
     Assert.assertEquals(Args.getInstance().getMaxFastForwardNum(), 3);
@@ -39,6 +48,7 @@ public class ArgsTest {
     Assert.assertFalse(Args.getInstance().isNodeEffectiveCheckEnable());
     Assert.assertEquals(Args.getInstance().getRateLimiterGlobalQps(), 1000);
     Assert.assertEquals(Args.getInstance().getRateLimiterGlobalIpQps(), 1000);
+    Assert.assertEquals(Args.getInstance().getRateLimiterGlobalApiQps(), 100);
     Assert.assertEquals(Args.getInstance().p2pDisable, true);
     Assert.assertEquals(Args.getInstance().getMaxTps(), 1000);
     RateLimiterInitialization rateLimiter = Args.getInstance().getRateLimiterInitialization();

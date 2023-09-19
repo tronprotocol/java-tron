@@ -224,6 +224,7 @@ public class Args extends CommonParameter {
     PARAMETER.memoFee = 0;
     PARAMETER.rateLimiterGlobalQps = 50000;
     PARAMETER.rateLimiterGlobalIpQps = 10000;
+    PARAMETER.rateLimiterGlobalApiQps = 1000;
     PARAMETER.p2pDisable = false;
     PARAMETER.dynamicConfigEnable = false;
     PARAMETER.dynamicConfigCheckInterval = 600;
@@ -957,6 +958,10 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.RATE_LIMITER_GLOBAL_IP_QPS) ? config
             .getInt(Constant.RATE_LIMITER_GLOBAL_IP_QPS) : 10000;
 
+    PARAMETER.rateLimiterGlobalApiQps =
+      config.hasPath(Constant.RATE_LIMITER_GLOBAL_API_QPS) ? config
+        .getInt(Constant.RATE_LIMITER_GLOBAL_API_QPS) : 1000;
+
     PARAMETER.rateLimiterInitialization = getRateLimiterFromConfig(config);
 
     PARAMETER.changedDelegation =
@@ -1627,6 +1632,7 @@ public class Args extends CommonParameter {
     logger.info("Node effective check enable: {}", parameter.isNodeEffectiveCheckEnable());
     logger.info("Rate limiter global qps: {}", parameter.getRateLimiterGlobalQps());
     logger.info("Rate limiter global ip qps: {}", parameter.getRateLimiterGlobalIpQps());
+    logger.info("Rate limiter global api qps: {}", parameter.getRateLimiterGlobalApiQps());
     logger.info("************************ Backup config ************************");
     logger.info("Backup priority: {}", parameter.getBackupPriority());
     logger.info("Backup listen port: {}", parameter.getBackupPort());

@@ -31,6 +31,8 @@ public class RateLimiterInterceptor implements ServerInterceptor {
 
   private static final String KEY_PREFIX_RPC = "rpc_";
 
+  private static final int QPS = Args.getInstance().getRateLimiterGlobalApiQps();
+
   @Autowired
   private RateLimiterContainer container;
 
@@ -41,7 +43,7 @@ public class RateLimiterInterceptor implements ServerInterceptor {
     for (ServerServiceDefinition service : server.getServices()) {
       for (ServerMethodDefinition<?, ?> method : service.getMethods()) {
         container.add(KEY_PREFIX_RPC, method.getMethodDescriptor().getFullMethodName(),
-            new DefaultBaseQqsAdapter("qps=1000"));
+            new DefaultBaseQqsAdapter("qps=" + QPS));
       }
     }
 
