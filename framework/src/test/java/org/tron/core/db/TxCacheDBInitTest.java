@@ -15,6 +15,7 @@ import org.tron.core.Constant;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.keystore.Wallet;
 
 @Slf4j
@@ -53,11 +54,22 @@ public class TxCacheDBInitTest {
     queryTransaction();
     db.close();
     defaultListableBeanFactory.destroySingleton("transactionCache");
-    TransactionCache transactionCache = new TransactionCache("transactionCache",
-        context.getBean(RecentTransactionStore.class));
-    transactionCache.initCache();
-    defaultListableBeanFactory.registerSingleton("transactionCache",transactionCache);
+    db = new TransactionCache("transactionCache",
+        context.getBean(RecentTransactionStore.class),
+        context.getBean(DynamicPropertiesStore.class));
+    db.initCache();
+    defaultListableBeanFactory.registerSingleton("transactionCache",db);
     queryTransaction();
+    db.close();
+    defaultListableBeanFactory.destroySingleton("transactionCache");
+    db = new TransactionCache("transactionCache",
+        context.getBean(RecentTransactionStore.class),
+        context.getBean(DynamicPropertiesStore.class));
+    DynamicPropertiesStore dynamicPropertiesStore = context.getBean(DynamicPropertiesStore.class);
+    dynamicPropertiesStore.saveLatestBlockHeaderNumber(1);
+    defaultListableBeanFactory.registerSingleton("transactionCache",db);
+    db.initCache();
+    Assert.assertFalse(db.has(hash[65538]));
   }
 
   private void putTransaction() {

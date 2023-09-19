@@ -11,9 +11,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.tron.common.utils.StorageUtils;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.RecentTransactionStore;
 import org.tron.core.db.RevokingDatabase;
-import org.tron.core.db.TransactionCache;
 import org.tron.core.db.backup.BackupRocksDBAspect;
 import org.tron.core.db.backup.NeedBeanCondition;
 import org.tron.core.db2.core.SnapshotManager;
@@ -91,11 +89,6 @@ public class DefaultConfig {
     }
 
     return null;
-  }
-
-  @Bean
-  public TransactionCache transactionCache() {
-    return new TransactionCache("trans-cache", appCtx.getBean(RecentTransactionStore.class));
   }
 
   @Bean
