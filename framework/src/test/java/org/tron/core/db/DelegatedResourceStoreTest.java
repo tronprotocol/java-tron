@@ -23,10 +23,9 @@ public class DelegatedResourceStoreTest extends BaseTest {
   private DelegatedResourceStore delegatedResourceStore;
 
   static {
-    dbPath = "db_DelegatedResourceStore_test";
     Args.setParam(
             new String[]{
-                "--output-directory", dbPath,
+                "--output-directory", dbPath(),
             },
             Constant.TEST_CONF
     );

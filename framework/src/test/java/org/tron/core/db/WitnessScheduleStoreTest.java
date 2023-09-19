@@ -31,8 +31,7 @@ public class WitnessScheduleStoreTest extends BaseTest {
 
 
   static {
-    dbPath = "output-WitnessScheduleStore-test";
-    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
   }
 
   @Before
