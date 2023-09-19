@@ -44,10 +44,9 @@ public class AccountAssetStoreTest extends BaseTest {
   private AccountStore accountStore;
 
   static {
-    dbPath = "db_AccountAssetStore_test";
     Args.setParam(
             new String[]{
-                "--output-directory", dbPath,
+                "--output-directory", dbPath(),
             },
             Constant.TEST_CONF
     );

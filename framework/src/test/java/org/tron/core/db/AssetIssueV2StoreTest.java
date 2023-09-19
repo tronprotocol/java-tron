@@ -16,10 +16,9 @@ import org.tron.protos.contract.AssetIssueContractOuterClass;
 public class AssetIssueV2StoreTest extends BaseTest {
 
   static {
-    dbPath = "db_AssetIssueV2StoreTest_test";
     Args.setParam(
           new String[]{
-              "--output-directory", dbPath,
+              "--output-directory", dbPath(),
           },
           Constant.TEST_CONF
     );

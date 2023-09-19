@@ -22,10 +22,9 @@ public class ContractStoreTest extends BaseTest {
   private static String OWNER_ADDRESS;
 
   static {
-    dbPath = "db_ContractStoreTest_test";
     Args.setParam(
             new String[]{
-                "--output-directory", dbPath,
+                "--output-directory", dbPath(),
             },
             Constant.TEST_CONF
     );
