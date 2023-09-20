@@ -415,6 +415,8 @@ public class CommonParameter {
   @Setter
   public int rateLimiterGlobalIpQps;
   @Getter
+  public int rateLimiterGlobalApiQps;
+  @Getter
   public DbBackupConfig dbBackupConfig;
   @Getter
   public RocksDbSettings rocksDBCustomSettings;
