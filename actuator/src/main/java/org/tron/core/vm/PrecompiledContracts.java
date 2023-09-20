@@ -39,20 +39,14 @@ import org.tron.common.crypto.Blake2bfMessageDigest;
 import org.tron.common.crypto.Hash;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.crypto.SignatureInterface;
-import org.tron.common.crypto.zksnark.BN128;
-import org.tron.common.crypto.zksnark.BN128Fp;
-import org.tron.common.crypto.zksnark.BN128G1;
-import org.tron.common.crypto.zksnark.BN128G2;
-import org.tron.common.crypto.zksnark.Fp;
-import org.tron.common.crypto.zksnark.PairingCheck;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.utils.BIUtil;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.zksnark.JLibarkworks;
 import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam;
 import org.tron.core.capsule.AccountCapsule;
@@ -706,7 +700,7 @@ public class PrecompiledContracts {
   }
 
   /**
-   * Computes point addition on Barreto–Naehrig curve. See {@link BN128Fp} for details<br/> <br/>
+   * Computes point addition on Barreto–Naehrig curve.<br/> <br/>
    * <p>
    * input data[]:<br/> two points encoded as (x, y), where x and y are 32-byte left-padded
    * integers,<br/> if input is shorter than expected, it's assumed to be right-padded with zero
@@ -742,25 +736,28 @@ public class PrecompiledContracts {
       byte[] x2 = parseWord(data, 2);
       byte[] y2 = parseWord(data, 3);
 
-      BN128<Fp> p1 = BN128Fp.create(x1, y1);
-      if (p1 == null) {
+      
+      if (!JLibarkworks.libarkworksG1IsValid(x1, y1)) {
         return Pair.of(false, EMPTY_BYTE_ARRAY);
       }
+      byte[] p1 = ArrayUtils.addAll(x1, y1);
 
-      BN128<Fp> p2 = BN128Fp.create(x2, y2);
-      if (p2 == null) {
+      if (!JLibarkworks.libarkworksG1IsValid(x2, y2)) {
         return Pair.of(false, EMPTY_BYTE_ARRAY);
       }
+      byte[] p2 = ArrayUtils.addAll(x2, y2);
 
-      BN128<Fp> res = p1.add(p2).toEthNotation();
-
-      return Pair.of(true, encodeRes(res.x().bytes(), res.y().bytes()));
+      byte[] res = JLibarkworks.libarkworksAddG1(p1, p2);
+      if (res == null) {
+        return Pair.of(false, EMPTY_BYTE_ARRAY);
+      }
+      return Pair.of(true, res);
     }
   }
 
   /**
-   * Computes multiplication of scalar value on a point belonging to Barreto–Naehrig curve. See
-   * {@link BN128Fp} for details<br/> <br/>
+   * Computes multiplication of scalar value on a point belonging to Barreto–Naehrig curve.
+   * <br/> <br/>
    * <p>
    * input data[]:<br/> point encoded as (x, y) is followed by scalar s, where x, y and s are
    * 32-byte left-padded integers,<br/> if input is shorter than expected, it's assumed to be
@@ -795,23 +792,25 @@ public class PrecompiledContracts {
 
       byte[] s = parseWord(data, 2);
 
-      BN128<Fp> p = BN128Fp.create(x, y);
-      if (p == null) {
+      if (!JLibarkworks.libarkworksG1IsValid(x, y)) {
         return Pair.of(false, EMPTY_BYTE_ARRAY);
       }
+      byte[] p = ArrayUtils.addAll(x, y);
 
-      BN128<Fp> res = p.mul(BIUtil.toBI(s)).toEthNotation();
-
-      return Pair.of(true, encodeRes(res.x().bytes(), res.y().bytes()));
+      byte[] res = JLibarkworks.libarkworksMulG1(p, s);
+      if (res == null) {
+        return Pair.of(false, EMPTY_BYTE_ARRAY);
+      }
+      return Pair.of(true, res);
     }
   }
 
   /**
-   * Computes pairing check. <br/> See {@link PairingCheck} for details.<br/> <br/>
+   * Computes pairing check.<br/> <br/>
    * <p>
-   * Input data[]: <br/> an array of points (a1, b1, ... , ak, bk), <br/> where "ai" is a point of
-   * {@link BN128Fp} curve and encoded as two 32-byte left-padded integers (x; y) <br/> "bi" is a
-   * point of {@link BN128G2} curve and encoded as four 32-byte left-padded integers {@code (ai + b;
+   * Input data[]: <br/> an array of points (a1, b1, ... , ak, bk), <br/> where "ai" is an element
+   * of group G1 and encoded as two 32-byte left-padded integers (x; y) <br/> "bi" is an
+   * element of group G2 and encoded as four 32-byte left-padded integers {@code (ai + b;
    * ci + d)}, each coordinate of the point is a big-endian {@link } number, so {@code b} precedes
    * {@code a} in the encoding: {@code (b, a; d, c)} <br/> thus each pair (ai, bi) has 192 bytes
    * length, if 192 is not a multiple of {@code data.length} then execution fails <br/> the number
@@ -854,38 +853,39 @@ public class PrecompiledContracts {
         return Pair.of(false, EMPTY_BYTE_ARRAY);
       }
 
-      PairingCheck check = PairingCheck.create();
+      int pairs = data.length / PAIR_SIZE;
 
       // iterating over all pairs
+      byte[] g1s = new byte[0];
+      byte[] g2s = new byte[0];
       for (int offset = 0; offset < data.length; offset += PAIR_SIZE) {
 
-        Pair<BN128G1, BN128G2> pair = decodePair(data, offset);
+        Pair<byte[], byte[]> pair = decodePair(data, offset);
 
         // fail if decoding has failed
         if (pair == null) {
           return Pair.of(false, EMPTY_BYTE_ARRAY);
         }
 
-        check.addPair(pair.getLeft(), pair.getRight());
+        g1s = ArrayUtils.addAll(g1s, pair.getLeft());
+        g2s = ArrayUtils.addAll(g2s, pair.getRight());
       }
 
-      check.run();
-      int result = check.result();
+      int result = JLibarkworks.libarkworksPairingCheck(g1s, g2s, pairs) ? 1 : 0;
 
       return Pair.of(true, new DataWord(result).getData());
     }
 
-    private Pair<BN128G1, BN128G2> decodePair(byte[] in, int offset) {
+    private Pair<byte[], byte[]> decodePair(byte[] in, int offset) {
 
       byte[] x = parseWord(in, offset, 0);
       byte[] y = parseWord(in, offset, 1);
 
-      BN128G1 p1 = BN128G1.create(x, y);
-
       // fail if point is invalid
-      if (p1 == null) {
+      if (!JLibarkworks.libarkworksG1IsValid(x, y)) {
         return null;
       }
+      byte[] p1 = ArrayUtils.addAll(x, y);
 
       // (b, a)
       byte[] b = parseWord(in, offset, 2);
@@ -895,12 +895,11 @@ public class PrecompiledContracts {
       byte[] d = parseWord(in, offset, 4);
       byte[] c = parseWord(in, offset, 5);
 
-      BN128G2 p2 = BN128G2.create(a, b, c, d);
-
       // fail if point is invalid
-      if (p2 == null) {
+      if (!JLibarkworks.libarkworksG2IsValid(a, b, c, d)) {
         return null;
       }
+      byte[] p2 = ArrayUtils.addAll(ArrayUtils.addAll(a, b), ArrayUtils.addAll(c, d));
 
       return Pair.of(p1, p2);
     }

@@ -357,7 +357,7 @@ public class ByteUtil {
    * @param idx an index of the word starting from {@code 0}
    */
   public static byte[] parseWord(byte[] input, int idx) {
-    return parseBytes(input, WORD_SIZE * idx, WORD_SIZE);
+    return parseWord(input, 0, idx);
   }
 
   /**
@@ -368,7 +368,8 @@ public class ByteUtil {
    * @param offset an offset in {@code input} array to start parsing from
    */
   public static byte[] parseWord(byte[] input, int offset, int idx) {
-    return parseBytes(input, offset + WORD_SIZE * idx, WORD_SIZE);
+    byte[] bytes = parseBytes(input, offset + WORD_SIZE * idx, WORD_SIZE);
+    return bytes == EMPTY_BYTE_ARRAY ? new byte[WORD_SIZE] : bytes;
   }
 
   public static boolean greater(byte[] bytes1, byte[] bytes2) {
