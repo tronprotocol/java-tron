@@ -1,6 +1,7 @@
 package org.tron.common.logsfilter;
 
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
 
 import com.google.protobuf.ByteString;
 import org.junit.Assert;
@@ -37,12 +38,18 @@ public class TransactionLogTriggerCapsuleTest {
         .setReceiverAddress(ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS)));
     transactionCapsule = new TransactionCapsule(builder2.build(),
         Protocol.Transaction.Contract.ContractType.UnfreezeBalanceContract);
+    Protocol.TransactionInfo.Builder builder = Protocol.TransactionInfo.newBuilder();
+    builder.setUnfreezeAmount(TRX_PRECISION + 1000);
 
-    TransactionLogTriggerCapsule triggerCapsule =
-        new TransactionLogTriggerCapsule(transactionCapsule, blockCapsule);
+
+    TransactionLogTriggerCapsule triggerCapsule = new TransactionLogTriggerCapsule(
+        transactionCapsule, blockCapsule,0,0,0,
+        builder.build(),0);
 
     Assert.assertNotNull(triggerCapsule.getTransactionLogTrigger().getFromAddress());
     Assert.assertNotNull(triggerCapsule.getTransactionLogTrigger().getToAddress());
+    Assert.assertEquals(TRX_PRECISION + 1000,
+        triggerCapsule.getTransactionLogTrigger().getAssetAmount());
   }
 
 
@@ -93,12 +100,17 @@ public class TransactionLogTriggerCapsuleTest {
     transactionCapsule = new TransactionCapsule(builder2.build(),
         Protocol.Transaction.Contract.ContractType.WithdrawExpireUnfreezeContract);
 
-    TransactionLogTriggerCapsule triggerCapsule =
-        new TransactionLogTriggerCapsule(transactionCapsule, blockCapsule);
+    Protocol.TransactionInfo.Builder builder = Protocol.TransactionInfo.newBuilder();
+    builder.setWithdrawExpireAmount(TRX_PRECISION + 1000);
+
+    TransactionLogTriggerCapsule triggerCapsule = new TransactionLogTriggerCapsule(
+        transactionCapsule, blockCapsule,0,0,0,
+        builder.build(),0);
 
     Assert.assertNotNull(triggerCapsule.getTransactionLogTrigger().getFromAddress());
     Assert.assertEquals("trx", triggerCapsule.getTransactionLogTrigger().getAssetName());
-    Assert.assertEquals(0L, triggerCapsule.getTransactionLogTrigger().getAssetAmount());
+    Assert.assertEquals(TRX_PRECISION + 1000,
+        triggerCapsule.getTransactionLogTrigger().getAssetAmount());
   }
 
 
@@ -150,10 +162,17 @@ public class TransactionLogTriggerCapsuleTest {
     transactionCapsule = new TransactionCapsule(builder2.build(),
         Protocol.Transaction.Contract.ContractType.CancelAllUnfreezeV2Contract);
 
-    TransactionLogTriggerCapsule triggerCapsule =
-        new TransactionLogTriggerCapsule(transactionCapsule, blockCapsule);
+    Protocol.TransactionInfo.Builder builder = Protocol.TransactionInfo.newBuilder();
+    builder.clearCancelUnfreezeV2Amount().putCancelUnfreezeV2Amount(
+        BANDWIDTH.name(), TRX_PRECISION + 2000);
+
+    TransactionLogTriggerCapsule triggerCapsule = new TransactionLogTriggerCapsule(
+        transactionCapsule, blockCapsule,0,0,0,
+        builder.build(),0);
 
     Assert.assertNotNull(triggerCapsule.getTransactionLogTrigger().getFromAddress());
+    Assert.assertEquals(TRX_PRECISION + 2000,
+        triggerCapsule.getTransactionLogTrigger().getExtMap().get(BANDWIDTH.name()).longValue());
   }
 
 }
