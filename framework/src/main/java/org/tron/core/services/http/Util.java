@@ -616,6 +616,9 @@ public class Util {
     if (StringUtils.isEmpty(str)) {
       return EMPTY;
     }
+    if (isValidJson(str)) {
+      return str;
+    }
     MultiMap<String> params = new MultiMap<>();
     UrlEncoded.decodeUtf8To(str, params);
     JSONObject json = new JSONObject();
@@ -631,4 +634,12 @@ public class Util {
     return json.toString();
   }
 
+  public static boolean isValidJson(String json) {
+    try {
+      JSON.parse(json);
+      return true;
+    } catch (Exception e) {
+      return false;
+    }
+  }
 }
