@@ -39,6 +39,7 @@ import org.tron.tool.litefullnode.db.DBInterface;
 import org.tron.tool.litefullnode.iterator.DBIterator;
 
 @Slf4j(topic = "tool")
+@Deprecated
 public class LiteFullNodeTool {
 
   private static final long START_TIME = System.currentTimeMillis() / 1000;
@@ -527,6 +528,8 @@ public class LiteFullNodeTool {
   }
 
   private void run(Args argv) {
+    logger.info("LiteFullNodeTool is an obsolete tool and is not recommended"
+            + " to be used any more, please use the tool DbLite.");
     if (StringUtils.isBlank(argv.fnDataPath) || StringUtils.isBlank(argv.datasetPath)) {
       throw new ParameterException("fnDataPath or datasetPath can't be null");
     }
