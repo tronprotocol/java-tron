@@ -93,7 +93,7 @@ public class DelegateResourceProcessor {
 
     byte[] receiverAddress = param.getReceiverAddress();
 
-    if (ArrayUtils.isEmpty(receiverAddress) || !DecodeUtil.addressValid(receiverAddress)) {
+    if (!DecodeUtil.addressValid(receiverAddress)) {
       throw new ContractValidateException("Invalid receiverAddress");
     }
     if (Arrays.equals(receiverAddress, ownerAddress)) {

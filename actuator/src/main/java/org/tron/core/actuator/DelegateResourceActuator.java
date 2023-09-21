@@ -189,7 +189,7 @@ public class DelegateResourceActuator extends AbstractActuator {
 
     byte[] receiverAddress = delegateResourceContract.getReceiverAddress().toByteArray();
 
-    if (ArrayUtils.isEmpty(receiverAddress) || !DecodeUtil.addressValid(receiverAddress)) {
+    if (!DecodeUtil.addressValid(receiverAddress)) {
       throw new ContractValidateException("Invalid receiverAddress");
     }
 
