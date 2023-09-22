@@ -528,8 +528,8 @@ public class LiteFullNodeTool {
   }
 
   private void run(Args argv) {
-    logger.info("LiteFullNodeTool is an obsolete tool and is not recommended"
-            + " to be used any more, please use the tool DbLite.");
+    logger.info("LiteFullNodeTool is deprecated and it will be removed in the next major release,"
+            + " use Toolkit.jar db lite instead, parameters are fully compatible.");
     if (StringUtils.isBlank(argv.fnDataPath) || StringUtils.isBlank(argv.datasetPath)) {
       throw new ParameterException("fnDataPath or datasetPath can't be null");
     }
