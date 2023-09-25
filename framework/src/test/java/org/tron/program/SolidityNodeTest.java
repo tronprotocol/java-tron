@@ -13,6 +13,7 @@ import org.tron.common.client.DatabaseGrpcClient;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
+import org.tron.core.services.http.solidity.SolidityNodeHttpApiService;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DynamicProperties;
 
@@ -21,6 +22,8 @@ public class SolidityNodeTest extends BaseTest {
 
   @Resource
   RpcApiService rpcApiService;
+  @Resource
+  SolidityNodeHttpApiService solidityNodeHttpApiService;
 
   static {
     try {
@@ -94,4 +97,11 @@ public class SolidityNodeTest extends BaseTest {
     rpcApiService.stop();
   }
 
+  @Test
+  public void testSolidityNodeHttpApiService() {
+    solidityNodeHttpApiService.init(Args.getInstance());
+    solidityNodeHttpApiService.start();
+    solidityNodeHttpApiService.stop();
+    Assert.assertTrue(true);
+  }
 }
