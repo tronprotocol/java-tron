@@ -256,6 +256,8 @@ public class Constant {
 
   public static final String RATE_LIMITER_GLOBAL_IP_QPS = "rate.limiter.global.ip.qps";
 
+  public static final String RATE_LIMITER_GLOBAL_API_QPS = "rate.limiter.global.api.qps";
+
   public static final String COMMITTEE_CHANGED_DELEGATION = "committee.changedDelegation";
 
   public static final String CRYPTO_ENGINE = "crypto.engine";

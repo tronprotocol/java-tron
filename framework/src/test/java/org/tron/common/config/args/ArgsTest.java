@@ -14,7 +14,6 @@ import org.tron.common.parameter.RateLimiterInitialization;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 
-
 public class ArgsTest {
 
   @Rule
@@ -34,6 +33,7 @@ public class ArgsTest {
 
   @Test
   public void testConfig() {
+    Args.logConfig();
     Assert.assertEquals(Args.getInstance().getMaxTransactionPendingSize(), 2000);
     Assert.assertEquals(Args.getInstance().getPendingTransactionTimeout(), 60_000);
     Assert.assertEquals(Args.getInstance().getMaxFastForwardNum(), 3);
@@ -42,6 +42,7 @@ public class ArgsTest {
     Assert.assertFalse(Args.getInstance().isNodeEffectiveCheckEnable());
     Assert.assertEquals(Args.getInstance().getRateLimiterGlobalQps(), 1000);
     Assert.assertEquals(Args.getInstance().getRateLimiterGlobalIpQps(), 1000);
+    Assert.assertEquals(Args.getInstance().getRateLimiterGlobalApiQps(), 100);
     Assert.assertEquals(Args.getInstance().p2pDisable, true);
     Assert.assertEquals(Args.getInstance().getMaxTps(), 1000);
     RateLimiterInitialization rateLimiter = Args.getInstance().getRateLimiterInitialization();

@@ -40,6 +40,7 @@ import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.db.RecentTransactionItem;
 import org.tron.core.db.RecentTransactionStore;
 import org.tron.core.db.common.iterator.DBIterator;
+import org.tron.core.store.DynamicPropertiesStore;
 
 @Slf4j(topic = "DB")
 public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
@@ -59,7 +60,6 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   private BloomFilter<byte[]>[] bloomFilters = new BloomFilter[2];
   // filterStartBlock record the start block of the active filter
   private volatile long filterStartBlock = INVALID_BLOCK;
-  private volatile long currentBlockNum = INVALID_BLOCK;
   // currentFilterIndex records the index of the active filter
   private volatile int currentFilterIndex = 0;
 
@@ -75,6 +75,8 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   // replace persistentStore and optimizes startup performance
   private RecentTransactionStore recentTransactionStore;
 
+  private DynamicPropertiesStore dynamicPropertiesStore;
+
   private final Path cacheFile0;
   private final Path cacheFile1;
   private final Path cacheProperties;
@@ -85,11 +87,13 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   @Setter
   private volatile boolean alive;
 
-  public TxCacheDB(String name, RecentTransactionStore recentTransactionStore) {
+  public TxCacheDB(String name, RecentTransactionStore recentTransactionStore,
+                   DynamicPropertiesStore dynamicPropertiesStore) {
     this.name = name;
     this.TRANSACTION_COUNT =
         CommonParameter.getInstance().getStorage().getEstimatedBlockTransactions();
     this.recentTransactionStore = recentTransactionStore;
+    this.dynamicPropertiesStore = dynamicPropertiesStore;
     String dbEngine = CommonParameter.getInstance().getStorage().getDbEngine();
     if ("LEVELDB".equals(dbEngine.toUpperCase())) {
       this.persistentStore = new LevelDB(
@@ -211,7 +215,6 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
               MAX_BLOCK_SIZE * TRANSACTION_COUNT);
     }
     bloomFilters[currentFilterIndex].put(key);
-    currentBlockNum = blockNum;
     if (lastMetricBlock != blockNum) {
       lastMetricBlock = blockNum;
       Metrics.gaugeSet(MetricKeys.Gauge.TX_CACHE,
@@ -318,6 +321,7 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   private void dump() {
     if (!isValid.get()) {
       logger.info("bloomFilters is not valid.");
+      return;
     }
     FileUtil.createDirIfNotExists(this.cacheDir.toString());
     logger.info("dump bloomFilters start.");
@@ -355,8 +359,14 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
       Properties properties = new Properties();
       properties.load(r);
       filterStartBlock = Long.parseLong(properties.getProperty("filterStartBlock"));
-      currentBlockNum = Long.parseLong(properties.getProperty("currentBlockNum"));
+      long currentBlockNum = Long.parseLong(properties.getProperty("currentBlockNum"));
+      long currentBlockNumFromDB = dynamicPropertiesStore.getLatestBlockHeaderNumberFromDB();
       currentFilterIndex = Integer.parseInt(properties.getProperty("currentFilterIndex"));
+      if (currentBlockNum != currentBlockNumFromDB) {
+        throw new IllegalStateException(
+            String.format("currentBlockNum not match. filter: %d, db: %d",
+            currentBlockNum, currentBlockNumFromDB));
+      }
       logger.info("filterStartBlock: {}, currentBlockNum: {}, currentFilterIndex: {}, load done.",
           filterStartBlock, currentBlockNum, currentFilterIndex);
       return true;
@@ -368,6 +378,7 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   private void writeProperties() {
     try (Writer w = Files.newBufferedWriter(this.cacheProperties, StandardCharsets.UTF_8)) {
       Properties properties = new Properties();
+      long currentBlockNum = dynamicPropertiesStore.getLatestBlockHeaderNumberFromDB();
       properties.setProperty("filterStartBlock", String.valueOf(filterStartBlock));
       properties.setProperty("currentBlockNum", String.valueOf(currentBlockNum));
       properties.setProperty("currentFilterIndex", String.valueOf(currentFilterIndex));
@@ -381,7 +392,7 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
 
   @Override
   public TxCacheDB newInstance() {
-    return new TxCacheDB(name, recentTransactionStore);
+    return new TxCacheDB(name, recentTransactionStore, dynamicPropertiesStore);
   }
 
   @Override
