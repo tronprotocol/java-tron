@@ -1153,9 +1153,15 @@ public class PrecompiledContractsTest extends BaseTest {
       JSONObject testCase = testCases.getJSONObject(i);
       String name = testCase.getString("Name");
       byte[] input = Hex.decode(testCase.getString("Input"));
-      byte[] expected = Hex.decode(testCase.getString("Expected"));
-      byte[] actual = bn128Add.execute(input).getRight();
-      assertArrayEquals(String.format("BN128Add test %s failed", name), expected, actual);
+      Boolean expectedResult = testCase.getBoolean("Result");
+      byte[] expectedOutput = Hex.decode(testCase.getString("Expected"));
+      
+      Pair<Boolean, byte[]> res = bn128Add.execute(input);
+      Boolean actualResult = res.getLeft();
+      byte[] actualOutput = res.getRight();
+      
+      Assert.assertEquals(String.format("test %s failed", name), expectedResult, actualResult);
+      assertArrayEquals(String.format("test %s failed", name), expectedOutput, actualOutput);
     }
   }
 
@@ -1168,9 +1174,15 @@ public class PrecompiledContractsTest extends BaseTest {
       JSONObject testCase = testCases.getJSONObject(i);
       String name = testCase.getString("Name");
       byte[] input = Hex.decode(testCase.getString("Input"));
-      byte[] expected = Hex.decode(testCase.getString("Expected"));
-      byte[] actual = bn128Mul.execute(input).getRight();
-      assertArrayEquals(String.format("bn128Mul test %s failed", name), expected, actual);
+      Boolean expectedResult = testCase.getBoolean("Result");
+      byte[] expectedOutput = Hex.decode(testCase.getString("Expected"));
+
+      Pair<Boolean, byte[]> res = bn128Mul.execute(input);
+      Boolean actualResult = res.getLeft();
+      byte[] actualOutput = res.getRight();
+
+      Assert.assertEquals(String.format("test %s failed", name), expectedResult, actualResult);
+      assertArrayEquals(String.format("test %s failed", name), expectedOutput, actualOutput);
     }
   }
 
@@ -1184,9 +1196,16 @@ public class PrecompiledContractsTest extends BaseTest {
       JSONObject testCase = testCases.getJSONObject(i);
       String name = testCase.getString("Name");
       byte[] input = Hex.decode(testCase.getString("Input"));
-      byte[] expected = Hex.decode(testCase.getString("Expected"));
-      byte[] actual = bn128Pairing.execute(input).getRight();
-      assertArrayEquals(String.format("bn128Pairing test %s failed", name), expected, actual);
+      Boolean expectedResult = testCase.getBoolean("Result");
+      byte[] expectedOutput = Hex.decode(testCase.getString("Expected"));
+
+
+      Pair<Boolean, byte[]> res = bn128Pairing.execute(input);
+      Boolean actualResult = res.getLeft();
+      byte[] actualOutput = res.getRight();
+      
+      Assert.assertEquals(String.format("test %s failed", name), expectedResult, actualResult);
+      assertArrayEquals(String.format("test %s failed", name), expectedOutput, actualOutput);
     }
   }
 
