@@ -528,8 +528,6 @@ public class LiteFullNodeTool {
   }
 
   private void run(Args argv) {
-    logger.info("LiteFullNodeTool is deprecated and it will be removed in the next major release,"
-            + " use Toolkit.jar db lite instead, parameters are fully compatible.");
     if (StringUtils.isBlank(argv.fnDataPath) || StringUtils.isBlank(argv.datasetPath)) {
       throw new ParameterException("fnDataPath or datasetPath can't be null");
     }
@@ -559,6 +557,8 @@ public class LiteFullNodeTool {
    * main.
    */
   public static void main(String[] args) {
+    logger.info("LiteFullNodeTool is deprecated and it will be removed in the next major release,"
+            + " use Toolkit.jar db lite instead, parameters are fully compatible.");
     Args argv = new Args();
     CommonParameter.getInstance().setValidContractProtoThreadNum(1);
     LiteFullNodeTool tool = new LiteFullNodeTool();
