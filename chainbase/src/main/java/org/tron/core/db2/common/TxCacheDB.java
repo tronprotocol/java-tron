@@ -288,10 +288,14 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
     CompletableFuture<Boolean> tk1 = loadProperties.thenApplyAsync(
         v -> recovery(1, this.cacheFile1));
 
-    return CompletableFuture.allOf(tk0, tk1).thenApply(v -> {
-      logger.info("recovery bloomFilters success.");
-      return true;
-    }).exceptionally(this::handleException).join();
+    try {
+      return CompletableFuture.allOf(tk0, tk1).thenApply(v -> {
+        logger.info("recovery bloomFilters success.");
+        return true;
+      }).exceptionally(this::handleException).join();
+    } finally {
+      clearCrc32c();
+    }
   }
 
   private boolean recovery(int index, Path file) {
@@ -337,14 +341,17 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
         () -> dump(0, this.cacheFile0));
     CompletableFuture<Void> task1 = CompletableFuture.runAsync(
         () -> dump(1, this.cacheFile1));
-    CompletableFuture.allOf(task0, task1).thenRun(() -> {
-      writeProperties();
-      logger.info("dump bloomFilters done.");
-
-    }).exceptionally(e -> {
-      logger.info("dump bloomFilters to file failed. {}", e.getMessage());
-      return null;
-    }).join();
+    try {
+      CompletableFuture.allOf(task0, task1).thenRun(() -> {
+        writeProperties();
+        logger.info("dump bloomFilters done.");
+      }).exceptionally(e -> {
+        logger.info("dump bloomFilters to file failed. {}", e.getMessage());
+        return null;
+      }).join();
+    } finally {
+      clearCrc32c();
+    }
   }
 
   private void dump(int index, Path file) {
@@ -430,6 +437,11 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private void clearCrc32c() {
+    this.crc32c0 = null;
+    this.crc32c1 = null;
   }
 
   @Override
