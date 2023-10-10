@@ -58,6 +58,7 @@ public class MetricKeys {
     public static final String UDP_BYTES = "tron:udp_bytes";
     public static final String TCP_BYTES = "tron:tcp_bytes";
     public static final String HTTP_BYTES = "tron:http_bytes";
+    public static final String TX_BYTES = "tron:tx_bytes";
     public static final String INTERNAL_SERVICE_LATENCY = "tron:internal_service_latency_seconds";
     public static final String MESSAGE_PROCESS_LATENCY = "tron:message_process_latency_seconds";
     public static final String BLOCK_FETCH_LATENCY = "tron:block_fetch_latency_seconds";

@@ -7,6 +7,8 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
@@ -66,6 +68,12 @@ public class TransferActuator extends AbstractActuator {
       }
       Commons.adjustBalance(accountStore, toAddress, amount);
       ret.setStatus(fee, code.SUCESS);
+      int length = transferContract.toByteArray().length;
+      Metrics.histogramObserve(MetricKeys.Histogram.TX_BYTES,
+              length, "Transfer");
+      logger.info("Transfer length: {}", length);
+
+
     } catch (BalanceInsufficientException | ArithmeticException | InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
