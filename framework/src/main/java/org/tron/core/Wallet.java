@@ -2041,19 +2041,11 @@ public class Wallet {
 
     try {
       if (chainBaseManager.getMerkleTreeIndexStore().has(ByteArray.fromLong(blockNum))) {
-        byte[] treeRoot = chainBaseManager.getMerkleTreeIndexStore().get(blockNum);
-        if (treeRoot == null) {
-          return null;
-        }
-        IncrementalMerkleTreeCapsule treeCapsule = chainBaseManager.getMerkleTreeStore()
-            .get(treeRoot);
-        if (treeCapsule == null) {
-          return null;
-        }
-        return treeCapsule.getInstance();
+        return IncrementalMerkleTree
+            .parseFrom(chainBaseManager.getMerkleTreeIndexStore().get(blockNum));
       }
     } catch (Exception ex) {
-      logger.error("GetMerkleTreeOfBlock failed, blockNum:{}", blockNum, ex);
+      logger.error(ex.getMessage());
     }
 
     return null;

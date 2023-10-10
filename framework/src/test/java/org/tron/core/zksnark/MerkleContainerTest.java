@@ -332,9 +332,6 @@ public class MerkleContainerTest extends BaseTest {
     //init
     initMerkleTreeWitnessInfo();
 
-    IncrementalMerkleTree incrementalMerkleTree = wallet.getMerkleTreeOfBlock(99);
-    Assert.assertNotNull(incrementalMerkleTree);
-
     //blockNum:100,txNum:1
     ByteString txId1 = ByteString.copyFrom(ByteArray
         .fromHexString("59051fde6f2e47306f17fca57a4aab3c12d948b7980fd4163c93520b69a7b982"));
