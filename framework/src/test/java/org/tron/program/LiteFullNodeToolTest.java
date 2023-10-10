@@ -24,6 +24,7 @@ import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.tool.litefullnode.LiteFullNodeTool;
 
 @Slf4j
+@Deprecated
 public class LiteFullNodeToolTest {
 
   private TronApplicationContext context;
