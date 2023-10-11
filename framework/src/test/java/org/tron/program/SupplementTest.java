@@ -9,15 +9,10 @@ import java.io.IOException;
 import java.math.BigInteger;
 import javax.annotation.Resource;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.tron.common.BaseTest;
 import org.tron.common.config.DbBackupConfig;
 import org.tron.common.entity.PeerInfo;
 import org.tron.common.utils.CompactEncoder;
@@ -26,19 +21,13 @@ import org.tron.common.utils.Value;
 import org.tron.core.Constant;
 import org.tron.core.capsule.StorageRowCapsule;
 import org.tron.core.capsule.utils.RLP;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.http.HttpSelfFormatFieldName;
 import org.tron.core.store.StorageRowStore;
 import org.tron.keystore.WalletUtils;
 
-@RunWith(SpringJUnit4ClassRunner.class)
-@DirtiesContext
-@ContextConfiguration(classes = {DefaultConfig.class})
-public class SupplementTest {
+public class SupplementTest extends BaseTest {
 
-  @ClassRule
-  public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
   private static String dbPath;
 
   @Resource
@@ -49,7 +38,7 @@ public class SupplementTest {
 
   @BeforeClass
   public static void init() throws IOException {
-    dbPath = temporaryFolder.newFolder().toString();
+    dbPath = dbPath();
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
   }
 

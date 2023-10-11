@@ -17,7 +17,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.application.Application;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
@@ -27,8 +26,6 @@ import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidit
 
 public class HttpApiAccessFilterTest extends BaseTest {
 
-  @Resource
-  private Application appTest;
   @Resource
   private FullNodeHttpApiService httpApiService;
   @Resource
@@ -49,10 +46,10 @@ public class HttpApiAccessFilterTest extends BaseTest {
    */
   @Before
   public void init() {
-    appTest.addService(httpApiService);
-    appTest.addService(httpApiOnSolidityService);
-    appTest.addService(httpApiOnPBFTService);
-    appTest.startup();
+    appT.addService(httpApiService);
+    appT.addService(httpApiOnSolidityService);
+    appT.addService(httpApiOnPBFTService);
+    appT.startup();
   }
 
   @Test
