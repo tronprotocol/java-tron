@@ -126,11 +126,11 @@ public class Chainbase implements IRevokingDB {
 
     Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
             key.length,
-            "put", getDbName()==null ? "" : getDbName()
+            "put"
     );
     Metrics.counterInc(MetricKeys.Counter.DB_OP,
             1,
-            "put", getDbName()==null ? "" : getDbName()
+            "put"
     );
   }
 
@@ -139,11 +139,11 @@ public class Chainbase implements IRevokingDB {
     head().remove(key);
     Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
             key.length,
-            "delete", getDbName()==null ? "" : getDbName()
+            "delete"
     );
     Metrics.counterInc(MetricKeys.Counter.DB_OP,
             1,
-            "delete", getDbName()==null ? "" : getDbName()
+            "delete"
     );
   }
 
@@ -155,11 +155,11 @@ public class Chainbase implements IRevokingDB {
     }
     Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
             key.length,
-            "get", getDbName()==null ? "" : getDbName()
+            "get"
     );
     Metrics.counterInc(MetricKeys.Counter.DB_OP,
             1,
-            "get", getDbName()==null ? "" : getDbName()
+            "get"
     );
     return value;
   }
@@ -177,11 +177,11 @@ public class Chainbase implements IRevokingDB {
   public byte[] getUnchecked(byte[] key) {
     Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
             key.length,
-            "get", getDbName()==null ? "" : getDbName()
+            "get"
     );
     Metrics.counterInc(MetricKeys.Counter.DB_OP,
             1,
-            "get", getDbName()==null ? "" : getDbName()
+            "get"
     );
     return head().get(key);
   }
