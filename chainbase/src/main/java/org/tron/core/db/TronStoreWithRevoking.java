@@ -19,6 +19,8 @@ import org.iq80.leveldb.WriteOptions;
 import org.rocksdb.DirectComparator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.Metrics;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.storage.metric.DbStatService;
 import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
@@ -108,20 +110,53 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     }
 
     revokingDB.put(key, item.getData());
+
+    Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
+            key.length,
+            getDbName(), "put"
+    );
+    Metrics.histogramObserve(MetricKeys.Counter.DB_OP,
+            1,
+            "put"
+    );
   }
 
   @Override
   public void delete(byte[] key) {
     revokingDB.delete(key);
+    Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
+            key.length,
+            getDbName(), "delete"
+    );
+    Metrics.histogramObserve(MetricKeys.Counter.DB_OP,
+            1,
+            "delete"
+    );
   }
 
   @Override
   public T get(byte[] key) throws ItemNotFoundException, BadItemException {
+    Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
+            key.length,
+            getDbName(), "get"
+    );
+    Metrics.histogramObserve(MetricKeys.Counter.DB_OP,
+            1,
+            "get"
+    );
     return of(revokingDB.get(key));
   }
 
   @Override
   public T getUnchecked(byte[] key) {
+    Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
+            key.length,
+            getDbName(), "get"
+    );
+    Metrics.histogramObserve(MetricKeys.Counter.DB_OP,
+            1,
+            "get"
+    );
     byte[] value = revokingDB.getUnchecked(key);
 
     try {

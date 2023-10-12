@@ -12,10 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.tron.common.prometheus.MetricKeys;
-import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.Pair;
 import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.LevelDB;
@@ -124,27 +121,11 @@ public class Chainbase implements IRevokingDB {
   @Override
   public synchronized void put(byte[] key, byte[] value) {
     head().put(key, value);
-    Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
-            key.length,
-            head.getDbName(), "put"
-    );
-    Metrics.histogramObserve(MetricKeys.Counter.DB_OP,
-            1,
-            "put"
-    );
   }
 
   @Override
   public synchronized void delete(byte[] key) {
     head().remove(key);
-    Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
-            key.length,
-            head.getDbName(), "delete"
-    );
-    Metrics.histogramObserve(MetricKeys.Counter.DB_OP,
-            1,
-            "delete"
-    );
   }
 
   @Override
@@ -153,14 +134,6 @@ public class Chainbase implements IRevokingDB {
     if (value == null) {
       throw new ItemNotFoundException();
     }
-    Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
-            key.length,
-            head.getDbName(), "get"
-    );
-    Metrics.histogramObserve(MetricKeys.Counter.DB_OP,
-            1,
-            "get"
-    );
     return value;
   }
 
@@ -175,14 +148,6 @@ public class Chainbase implements IRevokingDB {
 
   @Override
   public byte[] getUnchecked(byte[] key) {
-    Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
-            key.length,
-            head.getDbName(), "get"
-    );
-    Metrics.histogramObserve(MetricKeys.Counter.DB_OP,
-            1,
-            "get"
-    );
     return head().get(key);
   }
 
