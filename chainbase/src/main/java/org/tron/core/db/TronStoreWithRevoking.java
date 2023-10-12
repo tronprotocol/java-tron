@@ -113,7 +113,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
 
     Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
             key.length,
-            getDbName(), "put"
+            "put"
     );
     Metrics.counterInc(MetricKeys.Counter.DB_OP,
             1,
