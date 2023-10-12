@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.db2.common.IRevokingDB;
@@ -121,6 +123,15 @@ public class Chainbase implements IRevokingDB {
   @Override
   public synchronized void put(byte[] key, byte[] value) {
     head().put(key, value);
+
+    Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
+            key.length,
+            "put", getDbName()==null ? "" : getDbName()
+    );
+    Metrics.counterInc(MetricKeys.Counter.DB_OP,
+            1,
+            "put", getDbName()==null ? "" : getDbName()
+    );
   }
 
   @Override

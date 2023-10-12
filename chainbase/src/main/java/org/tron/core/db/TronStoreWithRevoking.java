@@ -111,14 +111,6 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
 
     revokingDB.put(key, item.getData());
 
-    Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
-            key.length,
-            "put"
-    );
-    Metrics.counterInc(MetricKeys.Counter.DB_OP,
-            1,
-            "put"
-    );
   }
 
   @Override
