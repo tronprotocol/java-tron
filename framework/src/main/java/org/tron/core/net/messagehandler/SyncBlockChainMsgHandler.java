@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.utils.Pair;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.exception.P2pException;
@@ -38,10 +37,8 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
     long remainNum = 0;
 
     List<BlockId> summaryChainIds = syncBlockChainMessage.getBlockIds();
-
-    Pair<LinkedList<BlockId>, BlockId> pair = getLostBlockIds(summaryChainIds);
-    LinkedList<BlockId> blockIds = pair.getKey();
-    BlockId headID = pair.getValue();
+    BlockId headID = tronNetDelegate.getHeadBlockId();
+    LinkedList<BlockId> blockIds = getLostBlockIds(summaryChainIds, headID);
 
     if (blockIds.size() == 0) {
       logger.warn("Can't get lost block Ids");
@@ -88,11 +85,10 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
     return true;
   }
 
-  private Pair<LinkedList<BlockId>, BlockId> getLostBlockIds(List<BlockId> blockIds)
+  private LinkedList<BlockId> getLostBlockIds(List<BlockId> blockIds, BlockId headID)
       throws P2pException {
 
     BlockId unForkId = getUnForkId(blockIds);
-    BlockId headID = tronNetDelegate.getHeadBlockId();
     LinkedList<BlockId> ids = getBlockIds(unForkId.getNum(), headID);
 
     if (ids.isEmpty() || !unForkId.equals(ids.peekFirst())) {
@@ -100,7 +96,7 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
       ids = getBlockIds(unForkId.getNum(), headID);
     }
 
-    return new Pair<>(ids, headID);
+    return ids;
   }
 
   private BlockId getUnForkId(List<BlockId> blockIds) throws P2pException {
