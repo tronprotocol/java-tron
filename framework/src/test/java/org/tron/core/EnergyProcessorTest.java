@@ -14,6 +14,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.Common;
 
 @Slf4j
 public class EnergyProcessorTest extends BaseTest {
@@ -97,7 +98,63 @@ public class EnergyProcessorTest extends BaseTest {
     Assert.assertEquals(1526647838000L,
         ownerCapsuleNew.getAccountResource().getLatestConsumeTimeForEnergy());
     Assert.assertEquals(10000L, ownerCapsuleNew.getAccountResource().getEnergyUsage());
+  }
 
+  @Test
+  public void testUseEnergyInWindowSizeV2() throws Exception {
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(10000L);
+    dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(2849288700L);
+    dbManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(14);
+
+    AccountCapsule ownerCapsule =
+        dbManager.getAccountStore().get(ByteArray.fromHexString(CONTRACT_PROVIDER_ADDRESS));
+    ownerCapsule.setNewWindowSize(Common.ResourceCode.ENERGY, 300);
+    ownerCapsule.setWindowOptimized(Common.ResourceCode.ENERGY, false);
+    ownerCapsule.setLatestConsumeTimeForEnergy(9999L);
+    ownerCapsule.setEnergyUsage(70021176L);
+    dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
+
+    EnergyProcessor processor =
+        new EnergyProcessor(dbManager.getDynamicPropertiesStore(), dbManager.getAccountStore());
+    long energy = 2345L;
+    long now = 9999L;
+    for (int i = 0; i < 1000; i++) {
+      processor.useEnergy(ownerCapsule, energy, now);
+    }
+    processor.useEnergy(ownerCapsule, energy, now);
+    Assert.assertEquals(72368521, ownerCapsule.getEnergyUsage());
+    Assert.assertEquals(300, ownerCapsule.getWindowSize(Common.ResourceCode.ENERGY));
+    Assert.assertFalse(ownerCapsule.getWindowOptimized(Common.ResourceCode.ENERGY));
+
+    dbManager.getDynamicPropertiesStore().saveAllowCancelAllUnfreezeV2(1);
+    ownerCapsule.setNewWindowSize(Common.ResourceCode.ENERGY, 300);
+    ownerCapsule.setWindowOptimized(Common.ResourceCode.ENERGY, false);
+    ownerCapsule.setLatestConsumeTimeForEnergy(9999L);
+    ownerCapsule.setEnergyUsage(70021176L);
+    dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
+
+    for (int i = 0; i < 1000; i++) {
+      processor.useEnergy(ownerCapsule, energy, now);
+    }
+    processor.useEnergy(ownerCapsule, energy, now);
+
+    Assert.assertEquals(72368521L, ownerCapsule.getEnergyUsage());
+    Assert.assertEquals(1224, ownerCapsule.getWindowSize(Common.ResourceCode.ENERGY));
+    Assert.assertEquals(1224919, ownerCapsule.getWindowSizeV2(Common.ResourceCode.ENERGY));
+    Assert.assertTrue(ownerCapsule.getWindowOptimized(Common.ResourceCode.ENERGY));
+
+    ownerCapsule.setNewWindowSize(Common.ResourceCode.ENERGY, 300);
+    ownerCapsule.setWindowOptimized(Common.ResourceCode.ENERGY, false);
+    ownerCapsule.setLatestConsumeTimeForEnergy(9999L);
+    ownerCapsule.setEnergyUsage(70021176L);
+    dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
+    for (int i = 0; i < 1000; i++) {
+      processor.useEnergy(ownerCapsule, energy, now);
+      now++;
+    }
+    Assert.assertEquals(15844971L, ownerCapsule.getEnergyUsage());
+    Assert.assertEquals(2086, ownerCapsule.getWindowSize(Common.ResourceCode.ENERGY));
+    Assert.assertEquals(2086556, ownerCapsule.getWindowSizeV2(Common.ResourceCode.ENERGY));
   }
 
   @Test

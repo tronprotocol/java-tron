@@ -42,8 +42,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import static java.lang.Math.ceil;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.ChainConstant.WINDOW_SIZE_MS;
+import static org.tron.core.config.Parameter.ChainConstant.WINDOW_SIZE_PRECISION;
 import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
 import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 import static org.tron.protos.contract.Common.ResourceCode.TRON_POWER;
@@ -1369,12 +1371,62 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
 
   public long getWindowSize(ResourceCode resourceCode) {
     long windowSize;
+    boolean windowOptimized;
     if (resourceCode == BANDWIDTH) {
       windowSize = this.account.getNetWindowSize();
+      windowOptimized = this.account.getNetWindowOptimized();
     } else {
       windowSize = this.account.getAccountResource().getEnergyWindowSize();
+      windowOptimized = this.account.getAccountResource().getEnergyWindowOptimized();
     }
-    return windowSize == 0 ? WINDOW_SIZE_MS / BLOCK_PRODUCED_INTERVAL : windowSize;
+    if (windowSize == 0) {
+      return WINDOW_SIZE_MS / BLOCK_PRODUCED_INTERVAL;
+    }
+    if (windowOptimized) {
+      return windowSize < WINDOW_SIZE_PRECISION ? WINDOW_SIZE_MS / BLOCK_PRODUCED_INTERVAL :
+          windowSize / WINDOW_SIZE_PRECISION;
+    } else {
+      return windowSize;
+    }
+  }
+
+  public long getWindowSizeV2(ResourceCode resourceCode) {
+    long windowSize;
+    boolean windowOptimized;
+    if (resourceCode == BANDWIDTH) {
+      windowSize = this.account.getNetWindowSize();
+      windowOptimized = this.account.getNetWindowOptimized();
+    } else {
+      windowSize = this.account.getAccountResource().getEnergyWindowSize();
+      windowOptimized = this.account.getAccountResource().getEnergyWindowOptimized();
+    }
+    if (windowSize == 0) {
+      return WINDOW_SIZE_MS / BLOCK_PRODUCED_INTERVAL * WINDOW_SIZE_PRECISION;
+    }
+    if (windowOptimized) {
+      return windowSize;
+    } else {
+      return windowSize * WINDOW_SIZE_PRECISION;
+    }
+  }
+
+  public boolean getWindowOptimized(ResourceCode resourceCode) {
+    boolean windowOptimized;
+    if (resourceCode == BANDWIDTH) {
+      windowOptimized = this.account.getNetWindowOptimized();
+    } else {
+      windowOptimized = this.account.getAccountResource().getEnergyWindowOptimized();
+    }
+    return windowOptimized;
+  }
+
+  public void setWindowOptimized(ResourceCode resourceCode, boolean windowOptimized) {
+    if (resourceCode == BANDWIDTH) {
+      this.account = this.account.toBuilder().setNetWindowOptimized(windowOptimized).build();
+    } else {
+      this.account = this.account.toBuilder().setAccountResource(this.account.getAccountResource()
+          .toBuilder().setEnergyWindowOptimized(windowOptimized).build()).build();
+    }
   }
 
   public long getLastConsumeTime(ResourceCode resourceCode) {
@@ -1390,6 +1442,13 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       return getFrozenV2BalanceForBandwidth() + getDelegatedFrozenV2BalanceForBandwidth();
     } else {
       return getFrozenV2BalanceForEnergy() + getDelegatedFrozenV2BalanceForEnergy();
+    }
+  }
+
+  public void setNewWindowSizeV2( ResourceCode resourceCode, long newWindowSize) {
+    this.setNewWindowSize(resourceCode, newWindowSize);
+    if (!this.getWindowOptimized(resourceCode)) {
+      this.setWindowOptimized(resourceCode, true);
     }
   }
 

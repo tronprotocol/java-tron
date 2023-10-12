@@ -337,7 +337,8 @@ public class JsonRpcApiUtil {
             amount = transactionInfo.getWithdrawExpireAmount();
             break;
           case CancelAllUnfreezeV2Contract:
-            amount = transactionInfo.getCancelAllUnfreezeV2Amount();
+            amount = transactionInfo.getCancelUnfreezeV2AmountMap().values()
+                .stream().mapToLong(v -> v).sum();
             break;
           default:
             break;
