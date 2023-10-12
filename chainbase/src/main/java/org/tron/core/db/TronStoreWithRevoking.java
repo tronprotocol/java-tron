@@ -115,7 +115,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
             key.length,
             getDbName(), "put"
     );
-    Metrics.histogramObserve(MetricKeys.Counter.DB_OP,
+    Metrics.counterInc(MetricKeys.Counter.DB_OP,
             1,
             "put"
     );
@@ -126,9 +126,9 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     revokingDB.delete(key);
     Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
             key.length,
-            getDbName(), "delete"
+            "delete"
     );
-    Metrics.histogramObserve(MetricKeys.Counter.DB_OP,
+    Metrics.counterInc(MetricKeys.Counter.DB_OP,
             1,
             "delete"
     );
@@ -138,9 +138,9 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   public T get(byte[] key) throws ItemNotFoundException, BadItemException {
     Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
             key.length,
-            getDbName(), "get"
+             "get"
     );
-    Metrics.histogramObserve(MetricKeys.Counter.DB_OP,
+    Metrics.counterInc(MetricKeys.Counter.DB_OP,
             1,
             "get"
     );
@@ -151,9 +151,9 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   public T getUnchecked(byte[] key) {
     Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
             key.length,
-            getDbName(), "get"
+            "get"
     );
-    Metrics.histogramObserve(MetricKeys.Counter.DB_OP,
+    Metrics.counterInc(MetricKeys.Counter.DB_OP,
             1,
             "get"
     );
