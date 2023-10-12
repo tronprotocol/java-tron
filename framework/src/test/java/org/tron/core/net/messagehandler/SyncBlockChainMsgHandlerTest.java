@@ -69,10 +69,10 @@ public class SyncBlockChainMsgHandlerTest {
     Assert.assertTrue(!f);
 
     Method method1 = handler.getClass().getDeclaredMethod(
-        "getLostBlockIds", List.class);
+        "getLostBlockIds", List.class, BlockId.class);
     method1.setAccessible(true);
     try {
-      method1.invoke(handler, blockIds);
+      method1.invoke(handler, blockIds, new BlockCapsule.BlockId());
     } catch (InvocationTargetException e) {
       Assert.assertEquals("unForkId is null", e.getTargetException().getMessage());
     }
