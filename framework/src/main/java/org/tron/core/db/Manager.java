@@ -1739,6 +1739,12 @@ public class Manager {
         if (Objects.nonNull(result)) {
           results.add(result);
         }
+        Metrics.histogramObserve(MetricKeys.Histogram.TX_BYTES,
+                transactionCapsule.getSerializedSize(),
+                transactionCapsule.getInstance()
+                        .getRawData()
+                        .getContract(0)
+                        .getType().toString());
       }
       transactionRetCapsule.addAllTransactionInfos(results);
       accountStateCallBack.executePushFinish();

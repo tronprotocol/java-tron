@@ -68,11 +68,6 @@ public class TransferActuator extends AbstractActuator {
       }
       Commons.adjustBalance(accountStore, toAddress, amount);
       ret.setStatus(fee, code.SUCESS);
-      int length = transferContract.toByteArray().length;
-      Metrics.histogramObserve(MetricKeys.Histogram.TX_BYTES,
-              length,
-              "transfer");
-      logger.info("Transfer length: {}", length);
     } catch (BalanceInsufficientException | ArithmeticException | InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
