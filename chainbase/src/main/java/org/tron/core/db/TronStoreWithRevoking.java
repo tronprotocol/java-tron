@@ -116,26 +116,12 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   @Override
   public void delete(byte[] key) {
     revokingDB.delete(key);
-    Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
-            key.length,
-            "delete"
-    );
-    Metrics.counterInc(MetricKeys.Counter.DB_OP,
-            1,
-            "delete"
-    );
+
   }
 
   @Override
   public T get(byte[] key) throws ItemNotFoundException, BadItemException {
-    Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
-            key.length,
-             "get"
-    );
-    Metrics.counterInc(MetricKeys.Counter.DB_OP,
-            1,
-            "get"
-    );
+
     return of(revokingDB.get(key));
   }
 

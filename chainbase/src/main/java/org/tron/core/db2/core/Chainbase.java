@@ -137,6 +137,14 @@ public class Chainbase implements IRevokingDB {
   @Override
   public synchronized void delete(byte[] key) {
     head().remove(key);
+    Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
+            key.length,
+            "delete", getDbName()==null ? "" : getDbName()
+    );
+    Metrics.counterInc(MetricKeys.Counter.DB_OP,
+            1,
+            "delete", getDbName()==null ? "" : getDbName()
+    );
   }
 
   @Override
@@ -145,6 +153,14 @@ public class Chainbase implements IRevokingDB {
     if (value == null) {
       throw new ItemNotFoundException();
     }
+    Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
+            key.length,
+            "get", getDbName()==null ? "" : getDbName()
+    );
+    Metrics.counterInc(MetricKeys.Counter.DB_OP,
+            1,
+            "get", getDbName()==null ? "" : getDbName()
+    );
     return value;
   }
 
@@ -159,6 +175,14 @@ public class Chainbase implements IRevokingDB {
 
   @Override
   public byte[] getUnchecked(byte[] key) {
+    Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
+            key.length,
+            "get", getDbName()==null ? "" : getDbName()
+    );
+    Metrics.counterInc(MetricKeys.Counter.DB_OP,
+            1,
+            "get", getDbName()==null ? "" : getDbName()
+    );
     return head().get(key);
   }
 
