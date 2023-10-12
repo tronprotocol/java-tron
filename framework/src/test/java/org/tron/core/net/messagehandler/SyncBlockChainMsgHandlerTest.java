@@ -15,6 +15,7 @@ import org.junit.rules.TemporaryFolder;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
@@ -68,18 +69,18 @@ public class SyncBlockChainMsgHandlerTest {
     Assert.assertTrue(!f);
 
     Method method1 = handler.getClass().getDeclaredMethod(
-        "getLostBlockIds", List.class);
+        "getLostBlockIds", List.class, BlockId.class);
     method1.setAccessible(true);
     try {
-      method1.invoke(handler, blockIds);
+      method1.invoke(handler, blockIds, new BlockCapsule.BlockId());
     } catch (InvocationTargetException e) {
       Assert.assertEquals("unForkId is null", e.getTargetException().getMessage());
     }
 
     Method method2 = handler.getClass().getDeclaredMethod(
-        "getBlockIds", Long.class);
+        "getBlockIds", Long.class, BlockId.class);
     method2.setAccessible(true);
-    List list = (List) method2.invoke(handler, 0L);
+    List list = (List) method2.invoke(handler, 0L, new BlockCapsule.BlockId());
     Assert.assertEquals(1, list.size());
   }
 
