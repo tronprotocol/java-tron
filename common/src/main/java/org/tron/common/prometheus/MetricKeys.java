@@ -60,7 +60,7 @@ public class MetricKeys {
     public static final String TCP_BYTES = "tron:tcp_bytes";
     public static final String HTTP_BYTES = "tron:http_bytes";
     public static final String TX_BYTES = "tron:tx_bytes";
-    public static final String DB_BYTES = "tron:tx_bytes";
+    public static final String DB_BYTES = "tron:db_bytes";
 
     public static final String INTERNAL_SERVICE_LATENCY = "tron:internal_service_latency_seconds";
     public static final String MESSAGE_PROCESS_LATENCY = "tron:message_process_latency_seconds";
