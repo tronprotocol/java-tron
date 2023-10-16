@@ -23,10 +23,9 @@ public class AccountIndexStoreTest extends BaseTest {
   private static byte[] accountName = TransactionStoreTest.randomBytes(32);
 
   static {
-    dbPath = "output_AccountIndexStore_test";
     Args.setParam(
         new String[]{
-            "--output-directory", dbPath,
+            "--output-directory", dbPath(),
             "--storage-db-directory", dbDirectory,
             "--storage-index-directory", indexDirectory
         },

@@ -36,8 +36,7 @@ public class EnergyPriceHistoryLoaderTest extends BaseTest {
   private static long price5 = 140L;
 
   static {
-    dbPath = "output-EnergyPriceHistoryLoaderTest-test";
-    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath()}, Constant.TEST_CONF);
   }
 
   public void initDB() {

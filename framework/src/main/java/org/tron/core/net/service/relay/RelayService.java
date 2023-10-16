@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -18,6 +17,7 @@ import org.tron.common.backup.BackupManager;
 import org.tron.common.backup.BackupManager.BackupStatusEnum;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
@@ -34,6 +34,7 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.ReasonCode;
 
 @Slf4j(topic = "net")
 @Component
@@ -53,8 +54,10 @@ public class RelayService {
   private WitnessScheduleStore witnessScheduleStore;
 
   private BackupManager backupManager;
+  private final String esName = "relay-service";
 
-  private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+  private ScheduledExecutorService executorService = ExecutorServiceManager
+      .newSingleThreadScheduledExecutor(esName);
 
   private CommonParameter parameter = Args.getInstance();
 
@@ -95,7 +98,7 @@ public class RelayService {
   }
 
   public void close() {
-    executorService.shutdown();
+    ExecutorServiceManager.shutdownAndAwaitTermination(executorService, esName);
   }
 
   public void fillHelloMessage(HelloMessage message, Channel channel) {
@@ -182,6 +185,7 @@ public class RelayService {
       TronNetService.getP2pConfig().getActiveNodes().remove(address);
       TronNetService.getPeers().forEach(peer -> {
         if (peer.getInetAddress().equals(address.getAddress())) {
+          peer.disconnect(ReasonCode.NOT_WITNESS);
           peer.getChannel().close();
         }
       });

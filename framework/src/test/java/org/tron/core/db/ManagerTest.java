@@ -7,8 +7,9 @@ import static org.tron.common.utils.Commons.getExchangeStoreFinal;
 import static org.tron.core.exception.BadBlockException.TypeEnum.CALC_MERKLE_ROOT_FAILED;
 
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.protobuf.ByteString;
-import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -21,13 +22,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.testng.collections.Sets;
+import org.junit.rules.TemporaryFolder;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.JsonUtil;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
@@ -100,7 +101,8 @@ public class ManagerTest extends BlockGenerate {
   private static DposSlot dposSlot;
   private static TronApplicationContext context;
   private static BlockCapsule blockCapsule2;
-  private static String dbPath = "output_manager_test";
+  @Rule
+  public TemporaryFolder temporaryFolder = new TemporaryFolder();
   private static AtomicInteger port = new AtomicInteger(0);
   private static String accountAddress =
       Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
@@ -108,8 +110,9 @@ public class ManagerTest extends BlockGenerate {
   private LocalWitnesses localWitnesses;
 
   @Before
-  public void init() {
-    Args.setParam(new String[]{"-d", dbPath, "-w"}, Constant.TEST_CONF);
+  public void init() throws IOException {
+    Args.setParam(new String[]{"-d",
+        temporaryFolder.newFolder().toString(), "-w"}, Constant.TEST_CONF);
     Args.getInstance().setNodeListenPort(10000 + port.incrementAndGet());
     context = new TronApplicationContext(DefaultConfig.class);
 
@@ -157,7 +160,6 @@ public class ManagerTest extends BlockGenerate {
   public void removeDb() {
     Args.clearParam();
     context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
   }
 
   @Test

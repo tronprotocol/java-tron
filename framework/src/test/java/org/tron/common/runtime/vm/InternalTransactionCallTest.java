@@ -1,18 +1,19 @@
 package org.tron.common.runtime.vm;
 
-import java.io.File;
+import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.testng.Assert;
+import org.junit.rules.TemporaryFolder;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TvmTestUtils;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.DefaultConfig;
@@ -33,7 +34,8 @@ public class InternalTransactionCallTest {
   private Manager dbManager;
   private TronApplicationContext context;
   private RepositoryImpl repository;
-  private String dbPath = "output_InternalTransactionCallTest";
+  @Rule
+  public TemporaryFolder temporaryFolder = new TemporaryFolder();
   private String OWNER_ADDRESS;
   private Application AppT;
 
@@ -41,9 +43,10 @@ public class InternalTransactionCallTest {
    * Init data.
    */
   @Before
-  public void init() {
+  public void init() throws IOException {
     Args.clearParam();
-    Args.setParam(new String[]{"--output-directory", dbPath, "--support-constant", "--debug"},
+    Args.setParam(new String[]{"--output-directory",
+            temporaryFolder.newFolder().toString(), "--support-constant", "--debug"},
         Constant.TEST_CONF);
 
     context = new TronApplicationContext(DefaultConfig.class);
@@ -356,11 +359,5 @@ public class InternalTransactionCallTest {
   public void destroy() {
     context.destroy();
     Args.clearParam();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.warn("Release resources failure.");
-    }
-
   }
 }

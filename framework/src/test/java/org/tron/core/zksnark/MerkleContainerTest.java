@@ -23,6 +23,7 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.contract.ShieldContract.IncrementalMerkleTree;
 import org.tron.protos.contract.ShieldContract.IncrementalMerkleVoucherInfo;
 import org.tron.protos.contract.ShieldContract.OutputPoint;
 import org.tron.protos.contract.ShieldContract.OutputPointInfo;
@@ -38,8 +39,7 @@ public class MerkleContainerTest extends BaseTest {
 
 
   static {
-    dbPath = "MerkleContainerTest";
-    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
   }
 
   /*@Before

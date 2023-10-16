@@ -20,8 +20,7 @@ public class WitnessControllerTest extends BaseTest {
 
 
   static {
-    dbPath = "output_witness_controller_test";
-    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
   }
 
   @Test

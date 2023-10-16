@@ -16,8 +16,16 @@
 package org.tron.core.config.args;
 
 import com.google.common.collect.Lists;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigMergeable;
+import com.typesafe.config.ConfigOrigin;
+import com.typesafe.config.ConfigRenderOptions;
+import com.typesafe.config.ConfigValue;
+import com.typesafe.config.ConfigValueType;
 import io.grpc.internal.GrpcUtil;
 import io.grpc.netty.NettyServerBuilder;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
@@ -28,7 +36,10 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
+import org.tron.common.utils.ReflectUtils;
 import org.tron.core.Constant;
+import org.tron.core.config.Configuration;
+import org.tron.core.net.peer.PeerManager;
 
 @Slf4j
 public class ArgsTest {
@@ -44,7 +55,7 @@ public class ArgsTest {
 
   @Test
   public void get() {
-    Args.setParam(new String[]{"-w"}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-w"}, Constant.TEST_CONF);
 
     CommonParameter parameter = Args.getInstance();
 
@@ -55,7 +66,7 @@ public class ArgsTest {
     localWitnesses.initWitnessAccountAddress(true);
     Args.setLocalWitnesses(localWitnesses);
     address = ByteArray.toHexString(Args.getLocalWitnesses()
-            .getWitnessAccountAddress(CommonParameter.getInstance().isECKeyCryptoEngine()));
+        .getWitnessAccountAddress(CommonParameter.getInstance().isECKeyCryptoEngine()));
 
     Assert.assertEquals(0, parameter.getBackupPriority());
 
@@ -111,6 +122,36 @@ public class ArgsTest {
     Assert.assertEquals(address,
         ByteArray.toHexString(Args.getLocalWitnesses()
             .getWitnessAccountAddress(CommonParameter.getInstance().isECKeyCryptoEngine())));
+  }
+
+  @Test
+  public void testIpFromLibP2p()
+      throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    Args.setParam(new String[] {"-w"}, Constant.TEST_CONF);
+    CommonParameter parameter = Args.getInstance();
+
+    String configuredBindIp = parameter.getNodeDiscoveryBindIp();
+    String configuredExternalIp = parameter.getNodeExternalIp();
+    Assert.assertEquals("127.0.0.1", configuredBindIp);
+    Assert.assertEquals("46.168.1.1", configuredExternalIp);
+
+    Config config = Configuration.getByFileName(null, Constant.TEST_CONF);
+    Config config2 = config.withoutPath(Constant.NODE_DISCOVERY_BIND_IP);
+    Config config3 = config2.withoutPath(Constant.NODE_DISCOVERY_EXTERNAL_IP);
+
+    CommonParameter.getInstance().setNodeDiscoveryBindIp(null);
+    CommonParameter.getInstance().setNodeExternalIp(null);
+
+    Method method1 = Args.class.getDeclaredMethod("bindIp", Config.class);
+    method1.setAccessible(true);
+    method1.invoke(Args.class, config3);
+
+    Method method2 = Args.class.getDeclaredMethod("externalIp", Config.class);
+    method2.setAccessible(true);
+    method2.invoke(Args.class, config3);
+
+    Assert.assertNotEquals(configuredBindIp, parameter.getNodeDiscoveryBindIp());
+    Assert.assertNotEquals(configuredExternalIp, parameter.getNodeExternalIp());
   }
 }
 

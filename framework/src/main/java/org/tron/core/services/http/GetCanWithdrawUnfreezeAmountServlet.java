@@ -18,23 +18,29 @@ public class GetCanWithdrawUnfreezeAmountServlet extends RateLimiterServlet {
   @Autowired
   private Wallet wallet;
 
+  @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
       boolean visible = Util.getVisible(request);
       String ownerAddress = request.getParameter("owner_address");
-      long timestamp = Long.valueOf(request.getParameter("timestamp"));
+      long timestamp = 0;
+      String timestampStr = request.getParameter("timestamp");
+      if (timestampStr != null) {
+        timestamp = Long.parseLong(timestampStr);
+      }
       if (visible) {
         ownerAddress = Util.getHexAddress(ownerAddress);
       }
       fillResponse(visible,
-              ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)),
-              timestamp,
-              response);
+          ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)),
+          timestamp,
+          response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
   }
 
+  @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
       PostParams params = PostParams.getPostParams(request);

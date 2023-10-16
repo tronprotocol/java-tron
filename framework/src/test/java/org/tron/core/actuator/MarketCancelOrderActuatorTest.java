@@ -1,7 +1,5 @@
 package org.tron.core.actuator;
 
-import static org.testng.Assert.fail;
-
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.util.List;
@@ -53,8 +51,7 @@ public class MarketCancelOrderActuatorTest extends BaseTest {
   private static final String TRX = "_";
 
   static {
-    dbPath = "output_MarketCancelOrder_test";
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
     OWNER_ADDRESS_FIRST =
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ADDRESS_SECOND =
@@ -192,7 +189,7 @@ public class MarketCancelOrderActuatorTest extends BaseTest {
 
     try {
       actuator.validate();
-      fail("Invalid address");
+      Assert.fail("Invalid address");
     } catch (ContractValidateException e) {
       Assert.assertEquals("Invalid address", e.getMessage());
     }
@@ -212,7 +209,7 @@ public class MarketCancelOrderActuatorTest extends BaseTest {
 
     try {
       actuator.validate();
-      fail("Account does not exist!");
+      Assert.fail("Account does not exist!");
     } catch (ContractValidateException e) {
       Assert.assertEquals("Account does not exist!", e.getMessage());
     }
@@ -231,7 +228,7 @@ public class MarketCancelOrderActuatorTest extends BaseTest {
         OWNER_ADDRESS_FIRST, orderId));
     try {
       actuator.validate();
-      fail("orderId not exists");
+      Assert.fail("orderId not exists");
     } catch (ContractValidateException e) {
       Assert.assertEquals("orderId not exists", e.getMessage());
     }
@@ -265,7 +262,7 @@ public class MarketCancelOrderActuatorTest extends BaseTest {
 
     try {
       actuator.validate();
-      fail("Order is not active!");
+      Assert.fail("Order is not active!");
     } catch (ContractValidateException e) {
       Assert.assertEquals("Order is not active!", e.getMessage());
     }
@@ -300,7 +297,7 @@ public class MarketCancelOrderActuatorTest extends BaseTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      fail("Order does not belong to the account!");
+      Assert.fail("Order does not belong to the account!");
     } catch (ContractValidateException e) {
       Assert.assertEquals("Order does not belong to the account!", e.getMessage());
     } catch (ContractExeException e) {
@@ -342,7 +339,7 @@ public class MarketCancelOrderActuatorTest extends BaseTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      fail("No enough balance !");
+      Assert.fail("No enough balance !");
     } catch (ContractValidateException e) {
       Assert.assertEquals("No enough balance !", e.getMessage());
     } catch (ContractExeException e) {
@@ -379,7 +376,7 @@ public class MarketCancelOrderActuatorTest extends BaseTest {
     try {
       actuator.validate();
     } catch (ContractValidateException e) {
-      fail("validateSuccess error");
+      Assert.fail("validateSuccess error");
     }
   }
 

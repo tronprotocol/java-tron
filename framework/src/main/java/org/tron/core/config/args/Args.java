@@ -15,15 +15,12 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
 import io.grpc.internal.GrpcUtil;
 import io.grpc.netty.NettyServerBuilder;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.URL;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -73,6 +70,7 @@ import org.tron.core.exception.CipherException;
 import org.tron.core.store.AccountStore;
 import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
+import org.tron.p2p.P2pConfig;
 import org.tron.p2p.dns.update.DnsType;
 import org.tron.p2p.dns.update.PublishConfig;
 import org.tron.p2p.utils.NetUtil;
@@ -140,9 +138,6 @@ public class Args extends CommonParameter {
     PARAMETER.nodeListenPort = 0;
     PARAMETER.nodeDiscoveryBindIp = "";
     PARAMETER.nodeExternalIp = "";
-    PARAMETER.nodeDiscoveryPublicHomeNode = false;
-    PARAMETER.nodeDiscoveryPingTimeout = 15000;
-    PARAMETER.nodeP2pPingInterval = 0L;
     PARAMETER.nodeP2pVersion = 0;
     PARAMETER.nodeEnableIpv6 = false;
     PARAMETER.dnsTreeUrls = new ArrayList<>();
@@ -170,7 +165,6 @@ public class Args extends CommonParameter {
     PARAMETER.forbidTransferToContract = 0;
     PARAMETER.tcpNettyWorkThreadNum = 0;
     PARAMETER.udpNettyWorkThreadNum = 0;
-    PARAMETER.p2pNodeId = "";
     PARAMETER.solidityNode = false;
     PARAMETER.trustNodeAddr = "";
     PARAMETER.walletExtensionApi = false;
@@ -230,6 +224,7 @@ public class Args extends CommonParameter {
     PARAMETER.memoFee = 0;
     PARAMETER.rateLimiterGlobalQps = 50000;
     PARAMETER.rateLimiterGlobalIpQps = 10000;
+    PARAMETER.rateLimiterGlobalApiQps = 1000;
     PARAMETER.p2pDisable = false;
     PARAMETER.dynamicConfigEnable = false;
     PARAMETER.dynamicConfigCheckInterval = 600;
@@ -632,24 +627,13 @@ public class Args extends CommonParameter {
             ? config.getInt(Constant.NODE_MIN_PARTICIPATION_RATE)
             : 0;
 
+    PARAMETER.p2pConfig = new P2pConfig();
     PARAMETER.nodeListenPort =
         config.hasPath(Constant.NODE_LISTEN_PORT)
             ? config.getInt(Constant.NODE_LISTEN_PORT) : 0;
 
     bindIp(config);
     externalIp(config);
-
-    PARAMETER.nodeDiscoveryPublicHomeNode =
-        config.hasPath(Constant.NODE_DISCOVERY_PUBLIC_HOME_NODE) && config
-            .getBoolean(Constant.NODE_DISCOVERY_PUBLIC_HOME_NODE);
-
-    PARAMETER.nodeDiscoveryPingTimeout =
-        config.hasPath(Constant.NODE_DISCOVERY_PING_TIMEOUT)
-            ? config.getLong(Constant.NODE_DISCOVERY_PING_TIMEOUT) : 15000;
-
-    PARAMETER.nodeP2pPingInterval =
-        config.hasPath(Constant.NODE_P2P_PING_INTERVAL)
-            ? config.getLong(Constant.NODE_P2P_PING_INTERVAL) : 0;
 
     PARAMETER.nodeP2pVersion =
         config.hasPath(Constant.NODE_P2P_VERSION)
@@ -824,7 +808,7 @@ public class Args extends CommonParameter {
     PARAMETER.validateSignThreadNum =
         config.hasPath(Constant.NODE_VALIDATE_SIGN_THREAD_NUM) ? config
             .getInt(Constant.NODE_VALIDATE_SIGN_THREAD_NUM)
-            : (Runtime.getRuntime().availableProcessors() + 1) / 2;
+            : Runtime.getRuntime().availableProcessors();
 
     PARAMETER.walletExtensionApi =
         config.hasPath(Constant.NODE_WALLET_EXTENSION_API)
@@ -973,6 +957,10 @@ public class Args extends CommonParameter {
     PARAMETER.rateLimiterGlobalIpQps =
         config.hasPath(Constant.RATE_LIMITER_GLOBAL_IP_QPS) ? config
             .getInt(Constant.RATE_LIMITER_GLOBAL_IP_QPS) : 10000;
+
+    PARAMETER.rateLimiterGlobalApiQps =
+      config.hasPath(Constant.RATE_LIMITER_GLOBAL_API_QPS) ? config
+        .getInt(Constant.RATE_LIMITER_GLOBAL_API_QPS) : 1000;
 
     PARAMETER.rateLimiterInitialization = getRateLimiterFromConfig(config);
 
@@ -1549,36 +1537,10 @@ public class Args extends CommonParameter {
     if (!config.hasPath(Constant.NODE_DISCOVERY_EXTERNAL_IP) || config
         .getString(Constant.NODE_DISCOVERY_EXTERNAL_IP).trim().isEmpty()) {
       if (PARAMETER.nodeExternalIp == null) {
-        logger.info("External IP wasn't set, using checkip.amazonaws.com to identify it...");
-        BufferedReader in = null;
-        try {
-          in = new BufferedReader(new InputStreamReader(
-              new URL(Constant.AMAZONAWS_URL).openStream()));
-          PARAMETER.nodeExternalIp = in.readLine();
-          if (PARAMETER.nodeExternalIp == null || PARAMETER.nodeExternalIp.trim().isEmpty()) {
-            throw new IOException("Invalid address: '" + PARAMETER.nodeExternalIp + "'");
-          }
-          try {
-            InetAddress.getByName(PARAMETER.nodeExternalIp);
-          } catch (Exception e) {
-            throw new IOException("Invalid address: '" + PARAMETER.nodeExternalIp + "'");
-          }
-          logger.info("External address identified: {}", PARAMETER.nodeExternalIp);
-        } catch (IOException e) {
+        logger.info("External IP wasn't set, using ipv4 from libp2p");
+        PARAMETER.nodeExternalIp = PARAMETER.p2pConfig.getIp();
+        if (StringUtils.isEmpty(PARAMETER.nodeExternalIp)) {
           PARAMETER.nodeExternalIp = PARAMETER.nodeDiscoveryBindIp;
-          logger.warn(
-              "Can't get external IP. Fall back to peer.bind.ip: "
-                  + PARAMETER.nodeExternalIp + " :"
-                  + e);
-        } finally {
-          if (in != null) {
-            try {
-              in.close();
-            } catch (IOException e) {
-              //ignore
-            }
-          }
-
         }
       }
     } else {
@@ -1670,6 +1632,7 @@ public class Args extends CommonParameter {
     logger.info("Node effective check enable: {}", parameter.isNodeEffectiveCheckEnable());
     logger.info("Rate limiter global qps: {}", parameter.getRateLimiterGlobalQps());
     logger.info("Rate limiter global ip qps: {}", parameter.getRateLimiterGlobalIpQps());
+    logger.info("Rate limiter global api qps: {}", parameter.getRateLimiterGlobalApiQps());
     logger.info("************************ Backup config ************************");
     logger.info("Backup priority: {}", parameter.getBackupPriority());
     logger.info("Backup listen port: {}", parameter.getBackupPort());

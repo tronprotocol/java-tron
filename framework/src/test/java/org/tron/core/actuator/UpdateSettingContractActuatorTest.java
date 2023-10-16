@@ -41,8 +41,7 @@ public class UpdateSettingContractActuatorTest extends BaseTest {
   private static final long INVALID_PERCENT = 200L;
 
   static {
-    dbPath = "output_updatesettingcontract_test";
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ADDRESS_NOTEXIST =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";

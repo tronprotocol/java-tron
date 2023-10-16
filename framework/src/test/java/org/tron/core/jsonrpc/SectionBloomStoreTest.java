@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.annotation.Resource;
+import org.junit.Assert;
 import org.junit.Test;
-import org.testng.Assert;
 import org.tron.common.BaseTest;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
@@ -29,8 +29,7 @@ public class SectionBloomStoreTest extends BaseTest {
   SectionBloomStore sectionBloomStore;
 
   static {
-    dbPath = "output-sectionBloomStore-test";
-    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath()}, Constant.TEST_CONF);
   }
 
   @Test
