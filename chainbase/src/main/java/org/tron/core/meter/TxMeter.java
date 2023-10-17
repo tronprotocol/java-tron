@@ -46,7 +46,7 @@ public class TxMeter {
 
   public static void incrPutCount() {
     Meter meter = cache.get();
-    meter.incrReadCount();
+    meter.incrPutCount();
   }
 
   public static long totalReadLength() {
