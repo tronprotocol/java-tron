@@ -70,8 +70,8 @@ dependencies {
     compile group: 'com.google.api.grpc', name: 'proto-google-common-protos', version: '2.15.0'
 
     // http
-    compile 'org.eclipse.jetty:jetty-server:9.4.49.v20220914'
-    compile 'org.eclipse.jetty:jetty-servlet:9.4.49.v20220914'
+    compile 'org.eclipse.jetty:jetty-server:9.4.53.v20231009'
+    compile 'org.eclipse.jetty:jetty-servlet:9.4.53.v20231009'
     compile 'com.alibaba:fastjson:1.2.83'
     compile group: 'org.apache.httpcomponents', name: 'httpasyncclient', version: '4.1.1'
     // end http
