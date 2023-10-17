@@ -50,14 +50,23 @@ public class TxMeter {
   }
 
   public static long totalReadLength() {
+    if (!checkInit()) {
+      return 0;
+    }
     return cache.get().getReadLength();
   }
 
   public static long totalPutLength() {
+    if (!checkInit()) {
+      return 0;
+    }
     return cache.get().getPutLength();
   }
 
   public static long totalReadCount() {
+    if (!checkInit()) {
+      return 0;
+    }
     return cache.get().getReadCount();
   }
 
