@@ -71,10 +71,16 @@ public class TxMeter {
   }
 
   public static long totalPutCount() {
+    if (!checkInit()) {
+      return 0;
+    }
     return cache.get().getPutCount();
   }
 
   public static void remove() {
+    if (!checkInit()) {
+      return;
+    }
     cache.remove();
   }
 
