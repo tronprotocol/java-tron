@@ -520,6 +520,8 @@ public class Args extends CommonParameter {
 
     PARAMETER.storage.setEstimatedBlockTransactions(
         Storage.getEstimatedTransactionsFromConfig(config));
+    PARAMETER.storage.setTxCacheInitOptimization(
+        Storage.getTxCacheInitOptimizationFromConfig(config));
     PARAMETER.storage.setMaxFlushCount(Storage.getSnapshotMaxFlushCountFromConfig(config));
 
     PARAMETER.storage.setDefaultDbOptions(config);
