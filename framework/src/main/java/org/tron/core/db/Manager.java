@@ -1523,11 +1523,11 @@ public class Manager {
             TxMeter.totalPutLength(),
             "put"
     );
-    Metrics.histogramObserve(MetricKeys.Counter.DB_OP,
+    Metrics.counterInc(MetricKeys.Counter.DB_OP,
             TxMeter.totalReadCount(),
             "read"
     );
-    Metrics.histogramObserve(MetricKeys.Counter.DB_OP,
+    Metrics.counterInc(MetricKeys.Counter.DB_OP,
             TxMeter.totalPutCount(),
             "put"
     );
