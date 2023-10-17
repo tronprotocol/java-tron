@@ -18,6 +18,7 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.AccountType;
@@ -50,13 +51,14 @@ public class TransferActuator extends AbstractActuator {
 
       // if account with to_address does not exist, create it first.
       AccountCapsule toAccount = accountStore.get(toAddress);
+      TxMeter.incrReadLength(toAccount.getInstance().getSerializedSize());
       if (toAccount == null) {
         boolean withDefaultPermission =
             dynamicStore.getAllowMultiSign() == 1;
         toAccount = new AccountCapsule(ByteString.copyFrom(toAddress), AccountType.Normal,
             dynamicStore.getLatestBlockHeaderTimestamp(), withDefaultPermission, dynamicStore);
         accountStore.put(toAddress, toAccount);
-
+        TxMeter.incrPutLength(toAccount.getInstance().getSerializedSize());
         fee = fee + dynamicStore.getCreateNewAccountFeeInSystemContract();
       }
 
@@ -116,6 +118,7 @@ public class TransferActuator extends AbstractActuator {
     }
 
     AccountCapsule ownerAccount = accountStore.get(ownerAddress);
+    TxMeter.incrReadLength(ownerAccount.getInstance().getSerializedSize());
 
     if (ownerAccount == null) {
       throw new ContractValidateException("Validate TransferContract error, no OwnerAccount.");
@@ -129,6 +132,8 @@ public class TransferActuator extends AbstractActuator {
 
     try {
       AccountCapsule toAccount = accountStore.get(toAddress);
+      TxMeter.incrReadLength(toAccount.getInstance().getSerializedSize());
+
       if (toAccount == null) {
         fee = fee + dynamicStore.getCreateNewAccountFeeInSystemContract();
       }
@@ -148,6 +153,8 @@ public class TransferActuator extends AbstractActuator {
           && toAccount.getType() == AccountType.Contract) {
 
         ContractCapsule contractCapsule = chainBaseManager.getContractStore().get(toAddress);
+        TxMeter.incrReadLength(contractCapsule.getInstance().getSerializedSize());
+
         if (contractCapsule == null) { //  this can not happen
           throw new ContractValidateException(
               "Account type is Contract, but it is not exist in contract store.");

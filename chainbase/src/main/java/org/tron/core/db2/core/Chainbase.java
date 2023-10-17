@@ -124,27 +124,27 @@ public class Chainbase implements IRevokingDB {
   public synchronized void put(byte[] key, byte[] value) {
     head().put(key, value);
 
-    Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
-            key.length,
-            "put"
-    );
-    Metrics.counterInc(MetricKeys.Counter.DB_OP,
-            1,
-            "put"
-    );
+//    Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
+//            key.length,
+//            "put"
+//    );
+//    Metrics.counterInc(MetricKeys.Counter.DB_OP,
+//            1,
+//            "put"
+//    );
   }
 
   @Override
   public synchronized void delete(byte[] key) {
     head().remove(key);
-    Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
-            key.length,
-            "delete"
-    );
-    Metrics.counterInc(MetricKeys.Counter.DB_OP,
-            1,
-            "delete"
-    );
+//    Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
+//            key.length,
+//            "delete"
+//    );
+//    Metrics.counterInc(MetricKeys.Counter.DB_OP,
+//            1,
+//            "delete"
+//    );
   }
 
   @Override
@@ -153,14 +153,14 @@ public class Chainbase implements IRevokingDB {
     if (value == null) {
       throw new ItemNotFoundException();
     }
-    Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
-            key.length,
-            "get"
-    );
-    Metrics.counterInc(MetricKeys.Counter.DB_OP,
-            1,
-            "get"
-    );
+//    Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
+//            key.length,
+//            "get"
+//    );
+//    Metrics.counterInc(MetricKeys.Counter.DB_OP,
+//            1,
+//            "get"
+//    );
     return value;
   }
 
@@ -175,14 +175,14 @@ public class Chainbase implements IRevokingDB {
 
   @Override
   public byte[] getUnchecked(byte[] key) {
-    Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
-            key.length,
-            "get"
-    );
-    Metrics.counterInc(MetricKeys.Counter.DB_OP,
-            1,
-            "get"
-    );
+//    Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
+//            key.length,
+//            "get"
+//    );
+//    Metrics.counterInc(MetricKeys.Counter.DB_OP,
+//            1,
+//            "get"
+//    );
     return head().get(key);
   }
 

@@ -127,14 +127,14 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
 
   @Override
   public T getUnchecked(byte[] key) {
-    Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
-            key.length,
-            "get"
-    );
-    Metrics.counterInc(MetricKeys.Counter.DB_OP,
-            1,
-            "get"
-    );
+//    Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
+//            key.length,
+//            "get"
+//    );
+//    Metrics.counterInc(MetricKeys.Counter.DB_OP,
+//            1,
+//            "get"
+//    );
     byte[] value = revokingDB.getUnchecked(key);
 
     try {
