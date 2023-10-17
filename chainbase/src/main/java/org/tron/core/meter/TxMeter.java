@@ -22,7 +22,7 @@ public class TxMeter {
   }
 
   public static void incrPutLength(long length) {
-    if (checkInit()) {
+    if (!checkInit()) {
       return;
     }
     Meter meter = cache.get();
@@ -31,7 +31,7 @@ public class TxMeter {
   }
 
   public static void incrReadLength(long length) {
-    if (checkInit()) {
+    if (!checkInit()) {
       return;
     }
     Meter meter = cache.get();
