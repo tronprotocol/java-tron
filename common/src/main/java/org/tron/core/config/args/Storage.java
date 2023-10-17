@@ -77,6 +77,7 @@ public class Storage {
   private static final String CHECKPOINT_SYNC_KEY = "storage.checkpoint.sync";
 
   private static final String CACHE_STRATEGIES = "storage.cache.strategies";
+  public static final String TX_CACHE_INIT_OPTIMIZATION = "storage.txCache.initOptimization";
 
   /**
    * Default values of directory
@@ -144,6 +145,10 @@ public class Storage {
   @Getter
   @Setter
   private int estimatedBlockTransactions;
+
+  @Getter
+  @Setter
+  private boolean txCacheInitOptimization = false;
 
   // second cache
   private final Map<CacheType, String> cacheStrategies = Maps.newConcurrentMap();
@@ -233,6 +238,11 @@ public class Storage {
       estimatedTransactions = 100;
     }
     return estimatedTransactions;
+  }
+
+  public static boolean getTxCacheInitOptimizationFromConfig(final Config config) {
+    return config.hasPath(TX_CACHE_INIT_OPTIMIZATION)
+        && config.getBoolean(TX_CACHE_INIT_OPTIMIZATION);
   }
 
 

@@ -89,6 +89,7 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   private final Path cacheProperties;
   private final Path cacheDir;
   private AtomicBoolean isValid = new AtomicBoolean(false);
+  private boolean txCacheInitOptimization;
 
   @Getter
   @Setter
@@ -128,6 +129,8 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
     this.cacheFile0 = Paths.get(cacheDir.toString(), "bloomFilters_0");
     this.cacheFile1 = Paths.get(cacheDir.toString(), "bloomFilters_1");
     this.cacheProperties = Paths.get(cacheDir.toString(), "txCache.properties");
+    this.txCacheInitOptimization = CommonParameter.getInstance()
+        .getStorage().isTxCacheInitOptimization();
 
   }
 
@@ -280,6 +283,12 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   }
 
   private boolean recovery() {
+    if (!txCacheInitOptimization) {
+      logger.info("txCache init optimization is disabled, skip fast recovery mode.");
+      logger.info("If you want fast recovery mode,"
+          + " please set `storage.txCache.initOptimization = true` in config.conf.");
+      return false;
+    }
     FileUtil.createDirIfNotExists(this.cacheDir.toString());
     logger.info("recovery bloomFilters start.");
     CompletableFuture<Boolean> loadProperties = CompletableFuture.supplyAsync(this::loadProperties);
