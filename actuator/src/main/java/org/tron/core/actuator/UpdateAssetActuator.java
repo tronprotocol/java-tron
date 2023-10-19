@@ -69,6 +69,7 @@ public class UpdateAssetActuator extends AbstractActuator {
       if (dynamicStore.getAllowSameTokenName() == 0) {
         assetIssueCapsule = assetIssueStore.get(accountCapsule.getAssetIssuedName().toByteArray());
         TxMeter.incrReadLength(assetIssueCapsule.getInstance().getSerializedSize());
+
         assetIssueCapsule.setFreeAssetNetLimit(newLimit);
         assetIssueCapsule.setPublicFreeAssetNetLimit(newPublicLimit);
         assetIssueCapsule.setUrl(newUrl);
@@ -137,6 +138,7 @@ public class UpdateAssetActuator extends AbstractActuator {
     if (account == null) {
       throw new ContractValidateException("Account does not exist");
     }
+    TxMeter.incrReadLength(account.getInstance().getSerializedSize());
 
     TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     if (dynamicStore.getAllowSameTokenName() == 0) {
@@ -154,11 +156,11 @@ public class UpdateAssetActuator extends AbstractActuator {
         throw new ContractValidateException("Account has not issued any asset");
       }
 
-      if (assetIssueV2Store.get(account.getAssetIssuedID().toByteArray())
-          == null) {
+      AssetIssueCapsule assetIssueCapsule = assetIssueV2Store.get(account.getAssetIssuedID().toByteArray());
+      if (assetIssueCapsule == null) {
         throw new ContractValidateException("Asset is not existed in AssetIssueV2Store");
       }
-      TxMeter.incrReadLength(account.getAssetIssuedID().toByteArray().length);
+      TxMeter.incrReadLength(assetIssueCapsule);
     }
 
     if (!TransactionUtil.validUrl(newUrl.toByteArray())) {

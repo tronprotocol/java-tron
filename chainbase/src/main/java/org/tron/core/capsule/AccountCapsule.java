@@ -744,6 +744,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
           .putAssetV2(tokenID, Math.addExact(currentAmount, amount))
           .build();
     }
+
+
     //key is token id
     TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     if (dynamicPropertiesStore.getAllowSameTokenName() == 1) {
@@ -779,9 +781,11 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     //key is token name
     if (dynamicPropertiesStore.getAllowSameTokenName() == 0) {
       TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
+
       Map<String, Long> assetMap = this.account.getAssetMap();
       AssetIssueCapsule assetIssueCapsule = assetIssueStore.get(key);
       TxMeter.incrReadLength(assetIssueCapsule.getInstance().getSerializedSize());
+
       String tokenID = assetIssueCapsule.getId();
       String nameKey = ByteArray.toStr(key);
       Long currentAmount = assetMap.get(nameKey);

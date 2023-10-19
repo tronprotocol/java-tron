@@ -49,7 +49,7 @@ public class UpdateSettingContractActuator extends AbstractActuator {
               deployedContract.getInstance().toBuilder().setConsumeUserResourcePercent(newPercent)
                       .build());
       contractStore.put(contractAddress, contractCapsule);
-      TxMeter.incrReadLength(contractCapsule.getInstance().getSerializedSize());
+      TxMeter.incrWriteLength(contractCapsule.getInstance().getSerializedSize());
 
       RepositoryImpl.removeLruCache(contractAddress);
 

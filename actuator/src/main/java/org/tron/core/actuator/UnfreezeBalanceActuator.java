@@ -116,7 +116,8 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       }
 
       AccountCapsule receiverCapsule = accountStore.get(receiverAddress);
-      TxMeter.incrReadLength(receiverCapsule.getInstance().getSerializedSize());
+      TxMeter.incrReadLength(receiverCapsule);
+      TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
 
       if (dynamicStore.getAllowTvmConstantinople() == 0 ||
           (receiverCapsule != null && receiverCapsule.getType() != AccountType.Contract)) {
@@ -124,6 +125,8 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           case BANDWIDTH:
             long oldNetWeight = receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth() / 
                     TRX_PRECISION;
+
+            TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
             if (dynamicStore.getAllowTvmSolidity059() == 1
                 && receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
                 < unfreezeBalance) {
@@ -139,6 +142,8 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           case ENERGY:
             long oldEnergyWeight = receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy() / 
                     TRX_PRECISION;
+
+            TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
             if (dynamicStore.getAllowTvmSolidity059() == 1
                 && receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy() < unfreezeBalance) {
               oldEnergyWeight = unfreezeBalance / TRX_PRECISION;
@@ -165,9 +170,12 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
 
       if (delegatedResourceCapsule.getFrozenBalanceForBandwidth() == 0
           && delegatedResourceCapsule.getFrozenBalanceForEnergy() == 0) {
+
         delegatedResourceStore.delete(key);
+        TxMeter.incrWriteLength(delegatedResourceCapsule.getInstance().getSerializedSize());
 
         //modify DelegatedResourceAccountIndexStore
+        TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
         if (!dynamicStore.supportAllowDelegateOptimization()) {
           DelegatedResourceAccountIndexCapsule ownerIndexCapsule =
               delegatedResourceAccountIndexStore.get(ownerAddress);
@@ -210,6 +218,8 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           frozenList.addAll(accountCapsule.getFrozenList());
           Iterator<Frozen> iterator = frozenList.iterator();
           long now = dynamicStore.getLatestBlockHeaderTimestamp();
+          TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
+
           while (iterator.hasNext()) {
             Frozen next = iterator.next();
             if (next.getExpireTime() <= now) {
@@ -252,7 +262,8 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       }
 
     }
-    
+
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     long weight = dynamicStore.allowNewReward() ? decrease : -unfreezeBalance / TRX_PRECISION;
     switch (unfreezeBalanceContract.getResource()) {
       case BANDWIDTH:
@@ -369,13 +380,15 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       }
 
       AccountCapsule receiverCapsule = accountStore.get(receiverAddress);
+      TxMeter.incrReadLength(receiverCapsule);
+
+      TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
       if (dynamicStore.getAllowTvmConstantinople() == 0
           && receiverCapsule == null) {
         String readableReceiverAddress = StringUtil.createReadableString(receiverAddress);
         throw new ContractValidateException(
             "Receiver Account[" + readableReceiverAddress + "] does not exist");
       }
-      TxMeter.incrReadLength(receiverCapsule.getInstance().getSerializedSize());
 
       byte[] key = DelegatedResourceCapsule
           .createDbKey(unfreezeBalanceContract.getOwnerAddress().toByteArray(),
@@ -386,6 +399,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
         throw new ContractValidateException(
             "delegated Resource does not exist");
       }
+      TxMeter.incrReadLength(delegatedResourceCapsule.getInstance().getSerializedSize());
 
       switch (unfreezeBalanceContract.getResource()) {
         case BANDWIDTH:
@@ -393,6 +407,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
             throw new ContractValidateException("no delegatedFrozenBalance(BANDWIDTH)");
           }
 
+          TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
           if (dynamicStore.getAllowTvmConstantinople() == 0) {
             if (receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
                 < delegatedResourceCapsule.getFrozenBalanceForBandwidth()) {
@@ -403,6 +418,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
                       + "]");
             }
           } else {
+            TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
             if (dynamicStore.getAllowTvmSolidity059() != 1
                 && receiverCapsule != null
                 && receiverCapsule.getType() != AccountType.Contract
@@ -425,6 +441,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
             throw new ContractValidateException("no delegateFrozenBalance(Energy)");
           }
           if (dynamicStore.getAllowTvmConstantinople() == 0) {
+            TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
             if (receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()
                 < delegatedResourceCapsule.getFrozenBalanceForEnergy()) {
               throw new ContractValidateException(
@@ -434,6 +451,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
                       "]");
             }
           } else {
+            TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
             if (dynamicStore.getAllowTvmSolidity059() != 1
                 && receiverCapsule != null
                 && receiverCapsule.getType() != AccountType.Contract

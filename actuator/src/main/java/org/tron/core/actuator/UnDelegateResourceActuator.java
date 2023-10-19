@@ -192,6 +192,7 @@ public class UnDelegateResourceActuator extends AbstractActuator {
         .createDbKeyV2(ownerAddress, receiverAddress, true);
     DelegatedResourceCapsule lockResource = delegatedResourceStore
         .get(lockKey);
+    TxMeter.incrReadLength(lockResource);
     if (lockResource == null && unlockResource == null) {
       //modify DelegatedResourceAccountIndexStore
       delegatedResourceAccountIndexStore.unDelegateV2(ownerAddress, receiverAddress);

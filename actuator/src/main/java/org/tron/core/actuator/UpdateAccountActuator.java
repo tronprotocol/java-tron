@@ -46,10 +46,10 @@ public class UpdateAccountActuator extends AbstractActuator {
 
     account.setAccountName(accountUpdateContract.getAccountName().toByteArray());
     chainBaseManager.getAccountStore().put(ownerAddress, account);
-    TxMeter.incrReadLength(account.getInstance().getSerializedSize());
+    TxMeter.incrWriteLength(account.getInstance().getSerializedSize());
 
     chainBaseManager.getAccountIndexStore().put(account);
-    TxMeter.incrReadLength(account.getInstance().getSerializedSize());
+    TxMeter.incrWriteLength(account.getInstance().getSerializedSize());
 
     ret.setStatus(fee, code.SUCESS);
 
@@ -92,6 +92,7 @@ public class UpdateAccountActuator extends AbstractActuator {
     }
     TxMeter.incrReadLength(account.getInstance().getSerializedSize());
 
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     if (account.getAccountName() != null && !account.getAccountName().isEmpty()
         && chainBaseManager.getDynamicPropertiesStore().getAllowUpdateAccountName() == 0) {
       throw new ContractValidateException("This account name is already existed");
@@ -100,6 +101,8 @@ public class UpdateAccountActuator extends AbstractActuator {
     if (chainBaseManager.getAccountIndexStore().has(accountName)
         && chainBaseManager.getDynamicPropertiesStore().getAllowUpdateAccountName() == 0) {
       TxMeter.incrReadLength(account.getInstance().getSerializedSize());
+      TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
+
       throw new ContractValidateException("This name is existed");
     }
     TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());

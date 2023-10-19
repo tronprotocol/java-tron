@@ -73,19 +73,23 @@ public class AssetIssueActuator extends AbstractActuator {
       tokenIdNum++;
       assetIssueCapsule.setId(Long.toString(tokenIdNum));
       assetIssueCapsuleV2.setId(Long.toString(tokenIdNum));
+      TxMeter.incrWriteLength(TxMeter.BaseType.LONG.getLength());
       dynamicStore.saveTokenIdNum(tokenIdNum);
 
+      TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
       if (dynamicStore.getAllowSameTokenName() == 0) {
         assetIssueCapsuleV2.setPrecision(0);
         assetIssueStore
-            .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
-        TxMeter.incrReadLength(assetIssueCapsule.getInstance().getSerializedSize());
+                .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
+        TxMeter.incrWriteLength(assetIssueCapsule.getInstance().getSerializedSize());
+
         assetIssueV2Store
-            .put(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
+                .put(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
+        TxMeter.incrWriteLength(assetIssueCapsuleV2.getInstance().getSerializedSize());
       } else {
         assetIssueV2Store
-            .put(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
-        TxMeter.incrReadLength(assetIssueCapsule.getInstance().getSerializedSize());
+                .put(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
+        TxMeter.incrWriteLength(assetIssueCapsuleV2.getInstance().getSerializedSize());
       }
 
       Commons.adjustBalance(accountStore, ownerAddress, -fee);
@@ -95,7 +99,7 @@ public class AssetIssueActuator extends AbstractActuator {
         Commons.adjustBalance(accountStore, accountStore.getBlackhole(), fee);//send to blackhole
       }
       AccountCapsule accountCapsule = accountStore.get(ownerAddress);
-      TxMeter.incrReadLength(assetIssueCapsule.getInstance().getSerializedSize());
+      TxMeter.incrReadLength(accountCapsule);
       List<FrozenSupply> frozenSupplyList = assetIssueContract.getFrozenSupplyList();
       Iterator<FrozenSupply> iterator = frozenSupplyList.iterator();
       long remainSupply = assetIssueContract.getTotalSupply();
@@ -106,13 +110,14 @@ public class AssetIssueActuator extends AbstractActuator {
         FrozenSupply next = iterator.next();
         long expireTime = startTime + next.getFrozenDays() * FROZEN_PERIOD;
         Frozen newFrozen = Frozen.newBuilder()
-            .setFrozenBalance(next.getFrozenAmount())
-            .setExpireTime(expireTime)
-            .build();
+                .setFrozenBalance(next.getFrozenAmount())
+                .setExpireTime(expireTime)
+                .build();
         frozenList.add(newFrozen);
         remainSupply -= next.getFrozenAmount();
       }
 
+      TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
       if (dynamicStore.getAllowSameTokenName() == 0) {
         accountCapsule.addAsset(assetIssueCapsule.createDbKey(), remainSupply);
       }
@@ -120,7 +125,7 @@ public class AssetIssueActuator extends AbstractActuator {
       accountCapsule.setAssetIssuedID(assetIssueCapsule.createDbV2Key());
       accountCapsule.addAssetV2(assetIssueCapsuleV2.createDbV2Key(), remainSupply);
       accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
-          .addAllFrozenSupply(frozenList).build());
+              .addAllFrozenSupply(frozenList).build());
 
       accountStore.put(ownerAddress, accountCapsule);
       TxMeter.incrWriteLength(accountCapsule.getInstance().getSerializedSize());
@@ -148,8 +153,8 @@ public class AssetIssueActuator extends AbstractActuator {
     AccountStore accountStore = chainBaseManager.getAccountStore();
     if (!this.any.is(AssetIssueContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [AssetIssueContract],real type[" + any
-              .getClass() + "]");
+              "contract type error,expected type [AssetIssueContract],real type[" + any
+                      .getClass() + "]");
     }
 
     final AssetIssueContract assetIssueContract;
@@ -178,13 +183,13 @@ public class AssetIssueActuator extends AbstractActuator {
 
     int precision = assetIssueContract.getPrecision();
     if (precision != 0
-        && dynamicStore.getAllowSameTokenName() != 0
-        && (precision < 0 || precision > ActuatorConstant.PRECISION_DECIMAL)) {
+            && dynamicStore.getAllowSameTokenName() != 0
+            && (precision < 0 || precision > ActuatorConstant.PRECISION_DECIMAL)) {
       throw new ContractValidateException("precision cannot exceed 6");
     }
 
     if ((!assetIssueContract.getAbbr().isEmpty()) && !TransactionUtil
-        .validAssetName(assetIssueContract.getAbbr().toByteArray())) {
+            .validAssetName(assetIssueContract.getAbbr().toByteArray())) {
       throw new ContractValidateException("Invalid abbreviation for token");
     }
 
@@ -193,7 +198,7 @@ public class AssetIssueActuator extends AbstractActuator {
     }
 
     if (!TransactionUtil
-        .validAssetDescription(assetIssueContract.getDescription().toByteArray())) {
+            .validAssetDescription(assetIssueContract.getDescription().toByteArray())) {
       throw new ContractValidateException("Invalid description");
     }
 
@@ -211,8 +216,8 @@ public class AssetIssueActuator extends AbstractActuator {
     }
 
     if (dynamicStore.getAllowSameTokenName() == 0
-        && assetIssueStore.get(assetIssueContract.getName().toByteArray())
-        != null) {
+            && assetIssueStore.get(assetIssueContract.getName().toByteArray())
+            != null) {
       throw new ContractValidateException("Token exists");
     }
 
@@ -233,19 +238,19 @@ public class AssetIssueActuator extends AbstractActuator {
     }
 
     if (assetIssueContract.getFrozenSupplyCount()
-        > dynamicStore.getMaxFrozenSupplyNumber()) {
+            > dynamicStore.getMaxFrozenSupplyNumber()) {
       throw new ContractValidateException("Frozen supply list length is too long");
     }
 
     if (assetIssueContract.getFreeAssetNetLimit() < 0
-        || assetIssueContract.getFreeAssetNetLimit() >=
-        dynamicStore.getOneDayNetLimit()) {
+            || assetIssueContract.getFreeAssetNetLimit() >=
+            dynamicStore.getOneDayNetLimit()) {
       throw new ContractValidateException("Invalid FreeAssetNetLimit");
     }
 
     if (assetIssueContract.getPublicFreeAssetNetLimit() < 0
-        || assetIssueContract.getPublicFreeAssetNetLimit() >=
-        dynamicStore.getOneDayNetLimit()) {
+            || assetIssueContract.getPublicFreeAssetNetLimit() >=
+            dynamicStore.getOneDayNetLimit()) {
       throw new ContractValidateException("Invalid PublicFreeAssetNetLimit");
     }
 
@@ -264,10 +269,10 @@ public class AssetIssueActuator extends AbstractActuator {
         throw new ContractValidateException("Frozen supply cannot exceed total supply");
       }
       if (!(next.getFrozenDays() >= minFrozenSupplyTime
-          && next.getFrozenDays() <= maxFrozenSupplyTime)) {
+              && next.getFrozenDays() <= maxFrozenSupplyTime)) {
         throw new ContractValidateException(
-            "frozenDuration must be less than " + maxFrozenSupplyTime + " days "
-                + "and more than " + minFrozenSupplyTime + " days");
+                "frozenDuration must be less than " + maxFrozenSupplyTime + " days "
+                        + "and more than " + minFrozenSupplyTime + " days");
       }
       remainSupply -= next.getFrozenAmount();
     }

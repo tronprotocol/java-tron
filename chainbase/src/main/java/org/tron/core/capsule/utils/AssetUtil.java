@@ -43,6 +43,7 @@ public class AssetUtil {
 
     long balance = accountAssetStore.getBalance(account, key);
     TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
+
     Map<String, Long> map = new HashMap<>();
     map.putAll(account.getAssetV2Map());
     map.put(sKey, balance);

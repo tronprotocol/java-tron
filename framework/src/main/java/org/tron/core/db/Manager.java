@@ -794,6 +794,8 @@ public class Manager {
 
   void validateDup(TransactionCapsule transactionCapsule) throws DupTransactionException {
     if (containsTransaction(transactionCapsule)) {
+      TxMeter.incrReadLength(transactionCapsule
+              .getTransactionId().getBytes().length);
       throw new DupTransactionException(String.format("dup trans : %s ",
           transactionCapsule.getTransactionId()));
     }
@@ -804,13 +806,12 @@ public class Manager {
   }
 
   private boolean containsTransaction(byte[] transactionId) {
-    TxMeter.incrReadLength(transactionId.length);
     if (transactionCache != null && !transactionCache.has(transactionId)) {
       // using the bloom filter only determines non-existent transaction
       return false;
     }
-
     TxMeter.incrReadLength(transactionId.length);
+
     return chainBaseManager.getTransactionStore()
         .has(transactionId);
   }

@@ -48,9 +48,7 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
 
       byte[] ownerAddress = accountPermissionUpdateContract.getOwnerAddress().toByteArray();
       AccountCapsule account = accountStore.get(ownerAddress);
-      TxMeter.incrReadLength(account.getInstance().getSerializedSize());
-
-
+      TxMeter.incrReadLength(account);
 
       account.updatePermissions(accountPermissionUpdateContract.getOwner(),
           accountPermissionUpdateContract.getWitness(),

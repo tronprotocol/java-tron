@@ -6,6 +6,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
@@ -118,6 +119,7 @@ public class WitnessCreateActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     return chainBaseManager.getDynamicPropertiesStore().getAccountUpgradeCost();
   }
 
@@ -153,8 +155,11 @@ public class WitnessCreateActuator extends AbstractActuator {
 
     Commons
         .adjustBalance(accountStore, witnessCreateContract.getOwnerAddress().toByteArray(), -cost);
+
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     if (dynamicStore.supportBlackHoleOptimization()) {
       dynamicStore.burnTrx(cost);
+      TxMeter.incrWriteLength(ByteArray.fromLong(cost).length);
     } else {
       Commons.adjustBalance(accountStore, accountStore.getBlackhole(), +cost);
     }

@@ -77,6 +77,8 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       AssetIssueCapsule assetIssueCapsule;
       assetIssueCapsule = Commons
           .getAssetIssueStoreFinal(dynamicStore, assetIssueStore, assetIssueV2Store).get(key);
+      TxMeter.incrWriteLength(assetIssueCapsule.getInstance().getSerializedSize());
+
 
       long exchangeAmount = Math.multiplyExact(cost, assetIssueCapsule.getNum());
       exchangeAmount = Math.floorDiv(exchangeAmount, assetIssueCapsule.getTrxNum());

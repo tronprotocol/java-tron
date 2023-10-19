@@ -173,10 +173,9 @@ public class ExchangeCreateActuator extends AbstractActuator {
     }
 
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
-    TxMeter.incrWriteLength(accountCapsule.getInstance().getSerializedSize() * 2L);
+    TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize() * 2L);
 
     if (accountCapsule.getBalance() < calcFee()) {
-      TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
       throw new ContractValidateException("No enough balance for exchange create fee!");
     }
 
@@ -185,6 +184,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
     long firstTokenBalance = contract.getFirstTokenBalance();
     long secondTokenBalance = contract.getSecondTokenBalance();
 
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     if (dynamicStore.getAllowSameTokenName() == 1) {
       if (!Arrays.equals(firstTokenID, TRX_SYMBOL_BYTES) && !isNumber(firstTokenID)) {
         throw new ContractValidateException("first token id is not a valid number");
@@ -202,6 +202,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
       throw new ContractValidateException("token balance must greater than zero");
     }
 
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     long balanceLimit = dynamicStore.getExchangeBalanceLimit();
     if (firstTokenBalance > balanceLimit || secondTokenBalance > balanceLimit) {
       throw new ContractValidateException("token balance must less than " + balanceLimit);

@@ -135,12 +135,12 @@ public class VoteWitnessActuator extends AbstractActuator {
 
       long tronPower;
       DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
-      TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
       if (dynamicStore.supportAllowNewResourceModel()) {
         tronPower = accountCapsule.getAllTronPower();
       } else {
         tronPower = accountCapsule.getTronPower();
       }
+      TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
 
       sum = LongMath
           .checkedMultiply(sum, TRX_PRECISION); //trx -> drop. The vote count is based on TRX
