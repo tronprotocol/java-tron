@@ -13,6 +13,7 @@ import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.ContractStore;
 import org.tron.core.vm.repository.RepositoryImpl;
@@ -41,10 +42,14 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
       long newOriginEnergyLimit = usContract.getOriginEnergyLimit();
       byte[] contractAddress = usContract.getContractAddress().toByteArray();
       ContractCapsule deployedContract = contractStore.get(contractAddress);
+      TxMeter.incrReadLength(deployedContract.getInstance().getSerializedSize());
 
-      contractStore.put(contractAddress, new ContractCapsule(
-          deployedContract.getInstance().toBuilder().setOriginEnergyLimit(newOriginEnergyLimit)
-              .build()));
+      ContractCapsule contractCapsule = new ContractCapsule(
+              deployedContract.getInstance().toBuilder().setOriginEnergyLimit(newOriginEnergyLimit)
+                      .build());
+      contractStore.put(contractAddress, contractCapsule);
+      TxMeter.incrWriteLength(contractCapsule.getInstance().getSerializedSize());
+
       RepositoryImpl.removeLruCache(contractAddress);
 
       ret.setStatus(fee, code.SUCESS);
@@ -93,6 +98,7 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
       throw new ContractValidateException(
           ActuatorConstant.ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] does not exist");
     }
+    TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
 
     long newOriginEnergyLimit = contract.getOriginEnergyLimit();
     if (newOriginEnergyLimit <= 0) {
@@ -107,6 +113,7 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
       throw new ContractValidateException(
           "Contract does not exist");
     }
+    TxMeter.incrReadLength(deployedContract.getInstance().getSerializedSize());
 
     byte[] deployedContractOwnerAddress = deployedContract.getInstance().getOriginAddress()
         .toByteArray();

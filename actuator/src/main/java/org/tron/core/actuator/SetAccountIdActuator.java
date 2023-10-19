@@ -9,6 +9,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.utils.TransactionUtil;
@@ -44,10 +45,14 @@ public class SetAccountIdActuator extends AbstractActuator {
 
     byte[] ownerAddress = setAccountIdContract.getOwnerAddress().toByteArray();
     AccountCapsule account = accountStore.get(ownerAddress);
+    TxMeter.incrReadLength(account.getInstance().getSerializedSize());
 
     account.setAccountId(setAccountIdContract.getAccountId().toByteArray());
     accountStore.put(ownerAddress, account);
+    TxMeter.incrWriteLength(account.getInstance().getSerializedSize());
+
     accountIdIndexStore.put(account);
+    TxMeter.incrWriteLength(account.getInstance().getSerializedSize());
     ret.setStatus(fee, code.SUCESS);
 
     return true;
@@ -85,13 +90,19 @@ public class SetAccountIdActuator extends AbstractActuator {
     }
 
     AccountCapsule account = accountStore.get(ownerAddress);
+
     if (account == null) {
       throw new ContractValidateException("Account has not existed");
     }
+    TxMeter.incrWriteLength(account.getInstance().getSerializedSize());
+
+
     if (account.getAccountId() != null && !account.getAccountId().isEmpty()) {
       throw new ContractValidateException("This account id already set");
     }
     if (accountIdIndexStore.has(accountId)) {
+      TxMeter.incrReadLength(accountIdIndexStore
+              .get(accountId).getData().length);
       throw new ContractValidateException("This id has existed");
     }
 

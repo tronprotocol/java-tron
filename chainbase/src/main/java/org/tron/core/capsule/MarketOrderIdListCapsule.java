@@ -8,6 +8,7 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.protos.Protocol.MarketOrderIdList;
@@ -84,6 +85,7 @@ public class MarketOrderIdListCapsule implements ProtoCapsule<MarketOrderIdList>
     // pre.next = current.next
     // current.next.prev = current.prev
     if (preCapsule != null) {
+      TxMeter.incrReadLength(preCapsule.getInstance().getSerializedSize());
       if (nextCapsule != null) {
         preCapsule.setNext(currentCapsule.getNext());
       } else {
@@ -91,6 +93,7 @@ public class MarketOrderIdListCapsule implements ProtoCapsule<MarketOrderIdList>
       }
 
       marketOrderStore.put(preCapsule.getID().toByteArray(), preCapsule);
+      TxMeter.incrWriteLength(preCapsule.getInstance().getSerializedSize());
     } else {
       // current is head
       // head = current.next
@@ -103,6 +106,7 @@ public class MarketOrderIdListCapsule implements ProtoCapsule<MarketOrderIdList>
 
       // head changed
       pairPriceToOrderStore.put(pairPriceKey, this);
+      TxMeter.incrWriteLength(this.getInstance().getSerializedSize());
     }
 
     if (nextCapsule != null) {
@@ -113,6 +117,7 @@ public class MarketOrderIdListCapsule implements ProtoCapsule<MarketOrderIdList>
       }
 
       marketOrderStore.put(nextCapsule.getID().toByteArray(), nextCapsule);
+      TxMeter.incrWriteLength(nextCapsule.getInstance().getSerializedSize());
     } else {
       // current is tail
       // this.tail = pre
@@ -124,12 +129,14 @@ public class MarketOrderIdListCapsule implements ProtoCapsule<MarketOrderIdList>
 
       // tail changed
       pairPriceToOrderStore.put(pairPriceKey, this);
+      TxMeter.incrWriteLength(this.getInstance().getSerializedSize());
     }
 
     // update current
     currentCapsule.setPrev(new byte[0]);
     currentCapsule.setNext(new byte[0]);
     marketOrderStore.put(currentCapsule.getID().toByteArray(), currentCapsule);
+    TxMeter.incrWriteLength(currentCapsule.getInstance().getSerializedSize());
   }
 
   public void setHead(byte[] head) {
@@ -170,11 +177,15 @@ public class MarketOrderIdListCapsule implements ProtoCapsule<MarketOrderIdList>
       // this.tail = order
       byte[] tailId = this.getTail();
       MarketOrderCapsule tailCapsule = orderStore.get(tailId);
+      TxMeter.incrReadLength(tailCapsule.getInstance().getSerializedSize());
+
       tailCapsule.setNext(orderId);
       orderStore.put(tailId, tailCapsule);
+      TxMeter.incrWriteLength(tailCapsule.getInstance().getSerializedSize());
 
       currentCapsule.setPrev(tailId);
       orderStore.put(orderId, currentCapsule);
+      TxMeter.incrWriteLength(currentCapsule.getInstance().getSerializedSize());
 
       this.setTail(orderId);
     }

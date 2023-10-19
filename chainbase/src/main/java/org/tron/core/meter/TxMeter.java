@@ -12,7 +12,7 @@ public class TxMeter {
   private TxMeter(){}
 
   public static void init (TransactionCapsule capsule) {
-    Meter meter = new Meter(capsule.getTransactionId());
+    Meter meter = new Meter(capsule);
     cache.set(meter);
   }
 
@@ -21,7 +21,7 @@ public class TxMeter {
     return meter != null && meter.isInit();
   }
 
-  public static void incrPutLength(long length) {
+  public static void incrWriteLength(long length) {
     if (!checkInit()) {
       return;
     }
@@ -38,6 +38,16 @@ public class TxMeter {
     meter.incrReadLength(length);
     incrReadCount();
   }
+
+  public static void incrSigLength(long length) {
+    if (!checkInit()) {
+      return;
+    }
+    Meter meter = cache.get();
+    meter.incrSigLength(length);
+  }
+
+
 
   public static void incrReadCount() {
     Meter meter = cache.get();
@@ -70,6 +80,13 @@ public class TxMeter {
     return cache.get().getReadCount();
   }
 
+  public static long totalSigLength() {
+    if (!checkInit()) {
+      return 0;
+    }
+    return cache.get().getSigLength();
+  }
+
   public static long totalPutCount() {
     if (!checkInit()) {
       return 0;
@@ -84,11 +101,29 @@ public class TxMeter {
     cache.remove();
   }
 
+  public enum BaseType {
+    LONG(8),
+    BOOLEAN(1),
+    ;
+
+    private int length;
+
+    BaseType(int length) {
+      this.length = length;
+    }
+
+    public int getLength() {
+      return length;
+    }
+  }
+
 }
 
 class Meter {
 
   private Sha256Hash transactionId;
+
+  private TransactionCapsule transactionCapsule;
 
   private long putCount;
 
@@ -98,10 +133,17 @@ class Meter {
 
   private long readLength;
 
+  private long sigLength;
+
   private boolean isInit = false;
 
   public Meter(Sha256Hash transactionId) {
     this.transactionId = transactionId;
+    this.isInit = true;
+  }
+
+  public Meter(TransactionCapsule transactionCapsule) {
+    this.transactionCapsule = transactionCapsule;
     this.isInit = true;
   }
 
@@ -153,6 +195,22 @@ class Meter {
     isInit = init;
   }
 
+  public long getSigLength() {
+    return sigLength;
+  }
+
+  public void incrSigLength(long sigLength) {
+    this.sigLength += sigLength;
+  }
+
+  public TransactionCapsule getTransactionCapsule() {
+    return transactionCapsule;
+  }
+
+  public void setTransactionCapsule(TransactionCapsule transactionCapsule) {
+    this.transactionCapsule = transactionCapsule;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -166,3 +224,4 @@ class Meter {
     return Objects.hash(transactionId, putCount, readCount, putLength);
   }
 }
+

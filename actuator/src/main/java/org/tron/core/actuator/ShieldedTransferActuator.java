@@ -30,6 +30,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ZkProofValidateException;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
@@ -139,9 +140,12 @@ public class ShieldedTransferActuator extends AbstractActuator {
       if (toAccount == null) {
         boolean withDefaultPermission =
             dynamicStore.getAllowMultiSign() == 1;
+        TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
+
         toAccount = new AccountCapsule(ByteString.copyFrom(toAddress), AccountType.Normal,
             dynamicStore.getLatestBlockHeaderTimestamp(), withDefaultPermission, dynamicStore);
         accountStore.put(toAddress, toAccount);
+        TxMeter.incrWriteLength(toAccount.getInstance().getSerializedSize());
       }
       Commons.adjustAssetBalanceV2(toAddress, CommonParameter.getInstance().getZenTokenId(),
           amount, accountStore, assetIssueStore,
@@ -164,11 +168,15 @@ public class ShieldedTransferActuator extends AbstractActuator {
     for (SpendDescription spend : spends) {
       if (nullifierStore.has(
           new BytesCapsule(spend.getNullifier().toByteArray()).getData())) {
+        TxMeter.incrReadLength(spend.getNullifier().toByteArray().length);
+
         ret.setStatus(fee, code.FAILED);
         ret.setShieldedTransactionFee(fee);
         throw new ContractExeException("double spend");
       }
+
       nullifierStore.put(new BytesCapsule(spend.getNullifier().toByteArray()));
+      TxMeter.incrWriteLength(spend.getNullifier().toByteArray().length);
     }
     if (CommonParameter.getInstance().isFullNodeAllowShieldedTransactionArgs()) {
       IncrementalMerkleTreeContainer currentMerkle = merkleContainer.getCurrentMerkle();
@@ -212,11 +220,13 @@ public class ShieldedTransferActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
 
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     if (dynamicStore.getAllowSameTokenName() != 1) {
       throw new ContractValidateException("shielded transaction is not allowed before "
           + "ALLOW_SAME_TOKEN_NAME is opened by the committee");
     }
 
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     if (!dynamicStore.supportShieldedTransaction()) {
       throw new ContractValidateException("Not support Shielded Transaction, need to be opened by"
           + " the committee");
@@ -279,7 +289,10 @@ public class ShieldedTransferActuator extends AbstractActuator {
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     ZKProofStore proofStore = chainBaseManager.getProofStore();
     if (proofStore.has(tx.getTransactionId().getBytes())) {
+      TxMeter.incrReadLength(tx.getTransactionId().getBytes().length);
+
       if (proofStore.get(tx.getTransactionId().getBytes())) {
+        TxMeter.incrReadLength(tx.getTransactionId().getBytes().length);
         return;
       } else {
         throw new ZkProofValidateException("record is fail, skip proof", false);
@@ -326,6 +339,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
         long valueBalance;
         long totalShieldedPoolValue = dynamicStore
             .getTotalShieldedPoolValue();
+
+        TxMeter.incrReadLength(TxMeter.BaseType.BOOLEAN.getLength());
         try {
           valueBalance = Math.addExact(Math.subtractExact(shieldedTransferContract.getToAmount(),
               shieldedTransferContract.getFromAmount()), fee);
@@ -360,6 +375,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
   private void recordProof(Sha256Hash tid, boolean result) {
     ZKProofStore proofStore = chainBaseManager.getProofStore();
     proofStore.put(tid.getBytes(), result);
+
+    TxMeter.incrWriteLength(TxMeter.BaseType.BOOLEAN.getLength());
   }
 
 
@@ -431,6 +448,9 @@ public class ShieldedTransferActuator extends AbstractActuator {
         throw new ContractValidateException("Validate ShieldedTransferContract error, "
             + "no OwnerAccount");
       }
+      TxMeter.incrReadLength(ownerAccount.getInstance().getSerializedSize());
+
+
       long balance = getZenBalance(ownerAccount);
       if (fromAmount <= 0) {
         throw new ContractValidateException("from_amount must be greater than 0");
@@ -452,6 +472,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
       AccountCapsule toAccount = accountStore.get(toAddress);
       if (toAccount != null) {
         try {
+          TxMeter.incrReadLength(toAccount.getInstance().getSerializedSize());
+
           Math.addExact(getZenBalance(toAccount), toAmount);
         } catch (ArithmeticException e) {
           logger.debug(e.getMessage(), e);
@@ -481,10 +503,15 @@ public class ShieldedTransferActuator extends AbstractActuator {
     if (hasTransparentTo) {
       AccountCapsule toAccount = chainBaseManager.getAccountStore().get(toAddress);
       if (toAccount == null) {
+
+        TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
         return chainBaseManager.getDynamicPropertiesStore()
             .getShieldedTransactionCreateAccountFee();
       }
+      TxMeter.incrReadLength(toAccount.getInstance().getSerializedSize());
+
     }
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     return chainBaseManager.getDynamicPropertiesStore().getShieldedTransactionFee();
   }
 

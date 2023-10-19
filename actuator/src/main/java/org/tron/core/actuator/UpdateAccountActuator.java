@@ -9,6 +9,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -41,10 +42,14 @@ public class UpdateAccountActuator extends AbstractActuator {
 
     byte[] ownerAddress = accountUpdateContract.getOwnerAddress().toByteArray();
     AccountCapsule account = chainBaseManager.getAccountStore().get(ownerAddress);
+    TxMeter.incrReadLength(account.getInstance().getSerializedSize());
 
     account.setAccountName(accountUpdateContract.getAccountName().toByteArray());
     chainBaseManager.getAccountStore().put(ownerAddress, account);
+    TxMeter.incrReadLength(account.getInstance().getSerializedSize());
+
     chainBaseManager.getAccountIndexStore().put(account);
+    TxMeter.incrReadLength(account.getInstance().getSerializedSize());
 
     ret.setStatus(fee, code.SUCESS);
 
@@ -85,6 +90,7 @@ public class UpdateAccountActuator extends AbstractActuator {
     if (account == null) {
       throw new ContractValidateException("Account does not exist");
     }
+    TxMeter.incrReadLength(account.getInstance().getSerializedSize());
 
     if (account.getAccountName() != null && !account.getAccountName().isEmpty()
         && chainBaseManager.getDynamicPropertiesStore().getAllowUpdateAccountName() == 0) {
@@ -93,8 +99,10 @@ public class UpdateAccountActuator extends AbstractActuator {
 
     if (chainBaseManager.getAccountIndexStore().has(accountName)
         && chainBaseManager.getDynamicPropertiesStore().getAllowUpdateAccountName() == 0) {
+      TxMeter.incrReadLength(account.getInstance().getSerializedSize());
       throw new ContractValidateException("This name is existed");
     }
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
 
     return true;
   }

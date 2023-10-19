@@ -1,9 +1,12 @@
 package org.tron.common.prometheus;
 
 import io.prometheus.client.Counter;
+
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.ContractTypes;
 
 @Slf4j(topic = "metrics")
 class MetricsCounter {
@@ -18,7 +21,7 @@ class MetricsCounter {
     init(MetricKeys.Counter.P2P_DISCONNECT, "tron p2p disconnect .", "type");
     init(MetricKeys.Counter.INTERNAL_SERVICE_FAIL, "internal Service fail.",
         "class", "method");
-    init(MetricKeys.Counter.DB_OP, "database operator.", "type");
+    init(MetricKeys.Counter.DB_OP, "database operator.", ContractTypes.getContractTypes());
   }
 
   private MetricsCounter() {

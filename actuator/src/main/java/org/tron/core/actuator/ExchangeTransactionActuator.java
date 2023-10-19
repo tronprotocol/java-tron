@@ -19,6 +19,7 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
@@ -54,10 +55,12 @@ public class ExchangeTransactionActuator extends AbstractActuator {
           .unpack(ExchangeTransactionContract.class);
       AccountCapsule accountCapsule = accountStore
           .get(exchangeTransactionContract.getOwnerAddress().toByteArray());
+      TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
 
       ExchangeCapsule exchangeCapsule = Commons
           .getExchangeStoreFinal(dynamicStore, exchangeStore, exchangeV2Store).
               get(ByteArray.fromLong(exchangeTransactionContract.getExchangeId()));
+      TxMeter.incrReadLength(exchangeCapsule.getInstance().getSerializedSize());
 
       byte[] firstTokenID = exchangeCapsule.getFirstTokenId();
       byte[] secondTokenID = exchangeCapsule.getSecondTokenId();
@@ -91,7 +94,7 @@ public class ExchangeTransactionActuator extends AbstractActuator {
       }
 
       accountStore.put(accountCapsule.createDbKey(), accountCapsule);
-
+      TxMeter.incrWriteLength(accountCapsule.getInstance().getSerializedSize());
       Commons.putExchangeCapsule(exchangeCapsule, dynamicStore, exchangeStore, exchangeV2Store,
           assetIssueStore);
 
@@ -142,6 +145,7 @@ public class ExchangeTransactionActuator extends AbstractActuator {
     }
 
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
+    TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize() * 2L);
 
     if (accountCapsule.getBalance() < calcFee()) {
       throw new ContractValidateException("No enough balance for exchange transaction fee!");
@@ -151,6 +155,7 @@ public class ExchangeTransactionActuator extends AbstractActuator {
     try {
       exchangeCapsule = Commons.getExchangeStoreFinal(dynamicStore, exchangeStore, exchangeV2Store).
           get(ByteArray.fromLong(contract.getExchangeId()));
+      TxMeter.incrReadLength(exchangeCapsule.getInstance().getSerializedSize());
     } catch (ItemNotFoundException ex) {
       throw new ContractValidateException("Exchange[" + contract.getExchangeId()
           + ActuatorConstant.NOT_EXIST_STR);
@@ -165,6 +170,7 @@ public class ExchangeTransactionActuator extends AbstractActuator {
     long tokenQuant = contract.getQuant();
     long tokenExpected = contract.getExpected();
 
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     if (dynamicStore.getAllowSameTokenName() == 1 &&
         !Arrays.equals(tokenID, TRX_SYMBOL_BYTES) &&
         !isNumber(tokenID)) {
@@ -187,6 +193,7 @@ public class ExchangeTransactionActuator extends AbstractActuator {
           + "the exchange has been closed");
     }
 
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     long balanceLimit = dynamicStore.getExchangeBalanceLimit();
     long tokenBalance = (Arrays.equals(tokenID, firstTokenID) ? firstTokenBalance
         : secondTokenBalance);

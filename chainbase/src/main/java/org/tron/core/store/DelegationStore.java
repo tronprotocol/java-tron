@@ -10,6 +10,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
+import org.tron.core.meter.TxMeter;
 
 import java.math.BigInteger;
 
@@ -126,6 +127,7 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
     if (bytesCapsule == null) {
       return BigInteger.ZERO;
     } else {
+      TxMeter.incrReadLength(bytesCapsule.getData().length);
       return new BigInteger(bytesCapsule.getData());
     }
   }

@@ -27,6 +27,7 @@ import org.tron.core.capsule.MarketOrderCapsule;
 import org.tron.core.capsule.MarketPriceCapsule;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.MarketAccountStore;
@@ -292,8 +293,12 @@ public class MarketUtils {
     if (state == State.INACTIVE || state == State.CANCELED) {
       MarketAccountOrderCapsule accountOrderCapsule = marketAccountStore
           .get(orderCapsule.getOwnerAddress().toByteArray());
+      TxMeter.incrReadLength(accountOrderCapsule.getInstance().getSerializedSize());
+
       accountOrderCapsule.removeOrder(orderCapsule.getID());
+
       marketAccountStore.put(accountOrderCapsule.createDbKey(), accountOrderCapsule);
+      TxMeter.incrWriteLength(accountOrderCapsule.getInstance().getSerializedSize());
     }
   }
 

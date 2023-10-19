@@ -17,6 +17,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.service.MortgageService;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
@@ -56,16 +57,22 @@ public class WithdrawBalanceActuator extends AbstractActuator {
 
     AccountCapsule accountCapsule = accountStore.
         get(withdrawBalanceContract.getOwnerAddress().toByteArray());
+    TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
+
     long oldBalance = accountCapsule.getBalance();
     long allowance = accountCapsule.getAllowance();
 
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
+
     accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
         .setBalance(oldBalance + allowance)
         .setAllowance(0L)
         .setLatestWithdrawTime(now)
         .build());
     accountStore.put(accountCapsule.createDbKey(), accountCapsule);
+    TxMeter.incrWriteLength(accountCapsule.getInstance().getSerializedSize());
+
     ret.setWithdrawAmount(allowance);
     ret.setStatus(fee, code.SUCESS);
 
@@ -101,11 +108,13 @@ public class WithdrawBalanceActuator extends AbstractActuator {
     }
 
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
+
     if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
           ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
     }
+    TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
 
     String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
 
@@ -121,6 +130,7 @@ public class WithdrawBalanceActuator extends AbstractActuator {
     long latestWithdrawTime = accountCapsule.getLatestWithdrawTime();
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
     long witnessAllowanceFrozenTime = dynamicStore.getWitnessAllowanceFrozenTime() * FROZEN_PERIOD;
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength() * 2L);
 
     if (now - latestWithdrawTime < witnessAllowanceFrozenTime) {
       throw new ContractValidateException("The last withdraw time is "

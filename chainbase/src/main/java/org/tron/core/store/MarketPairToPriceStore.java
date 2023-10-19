@@ -9,6 +9,7 @@ import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.MarketOrderIdListCapsule;
 import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.db.TronStoreWithRevoking;
+import org.tron.core.meter.TxMeter;
 
 /**
  * This store is used to store the first price Key of specific token pair
@@ -32,6 +33,7 @@ public class MarketPairToPriceStore extends TronStoreWithRevoking<BytesCapsule> 
   public long getPriceNum(byte[] key) {
     BytesCapsule bytesCapsule = get(key);
     if (bytesCapsule != null) {
+      TxMeter.incrReadLength(bytesCapsule.getData().length);
       return ByteArray.toLong(bytesCapsule.getData());
     } else {
       return 0L;
@@ -43,7 +45,9 @@ public class MarketPairToPriceStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public void setPriceNum(byte[] key, long number) {
-    put(key, new BytesCapsule(ByteArray.fromLong(number)));
+    BytesCapsule bytesCapsule = new BytesCapsule(ByteArray.fromLong(number));
+    TxMeter.incrReadLength(bytesCapsule.getData().length);
+    put(key, bytesCapsule);
   }
 
   public void setPriceNum(byte[] sellTokenId, byte[] buyTokenId, long number) {
@@ -61,10 +65,15 @@ public class MarketPairToPriceStore extends TronStoreWithRevoking<BytesCapsule> 
     byte[] pairKey = MarketUtils.createPairKey(sellTokenId, buyTokenId);
     if (has(pairKey)) {
       number = getPriceNum(pairKey) + 1;
+      TxMeter.incrWriteLength(number * 2L);
+
     } else {
       number = 1;
       byte[] headKey = MarketUtils.getPairPriceHeadKey(sellTokenId, buyTokenId);
-      pairPriceToOrderStore.put(headKey, new MarketOrderIdListCapsule());
+      MarketOrderIdListCapsule marketOrderIdListCapsule = new MarketOrderIdListCapsule();
+
+      pairPriceToOrderStore.put(headKey, marketOrderIdListCapsule);
+      TxMeter.incrWriteLength(marketOrderIdListCapsule.getInstance().getSerializedSize());
     }
 
     setPriceNum(pairKey, number);

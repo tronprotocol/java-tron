@@ -34,6 +34,7 @@ import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
@@ -91,6 +92,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
 
       AccountCapsule accountCapsule = accountStore
           .get(contract.getOwnerAddress().toByteArray());
+      TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
 
       byte[] orderId = contract.getOrderId().toByteArray();
       MarketOrderCapsule orderCapsule = orderStore.get(orderId);
@@ -108,7 +110,10 @@ public class MarketCancelOrderActuator extends AbstractActuator {
 
       MarketUtils.updateOrderState(orderCapsule, State.CANCELED, marketAccountStore);
       accountStore.put(orderCapsule.getOwnerAddress().toByteArray(), accountCapsule);
+      TxMeter.incrWriteLength(accountCapsule.getInstance().getSerializedSize());
+
       orderStore.put(orderCapsule.getID().toByteArray(), orderCapsule);
+      TxMeter.incrWriteLength(orderCapsule.getInstance().getSerializedSize());
 
       // 2. clear orderList
       byte[] pairPriceKey = MarketUtils.createPairPriceKey(
@@ -118,6 +123,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
           orderCapsule.getBuyTokenQuantity()
       );
       MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore.get(pairPriceKey);
+      TxMeter.incrReadLength(orderIdListCapsule.getInstance().getSerializedSize());
 
       // delete order
       orderIdListCapsule.removeOrder(orderCapsule, orderStore, pairPriceKey, pairPriceToOrderStore);
@@ -125,6 +131,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
       if (orderIdListCapsule.isOrderEmpty()) {
         // if orderList is empty, delete
         pairPriceToOrderStore.delete(pairPriceKey);
+        TxMeter.incrWriteLength(orderIdListCapsule.getInstance().getSerializedSize());
 
         // 3. modify priceList
         // decrease price number
@@ -134,8 +141,10 @@ public class MarketCancelOrderActuator extends AbstractActuator {
         long remainCount = pairToPriceStore.getPriceNum(makerPair) - 1;
         if (remainCount == 0) {
           pairToPriceStore.delete(makerPair);
+          TxMeter.incrWriteLength(TxMeter.BaseType.LONG.getLength());
         } else {
           pairToPriceStore.setPriceNum(makerPair, remainCount);
+          TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
         }
       }
 
@@ -167,6 +176,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
               .getClass() + "]");
     }
 
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     if (!dynamicStore.supportAllowMarketTransaction()) {
       throw new ContractValidateException("Not support Market Transaction, need to be opened by"
           + " the committee");
@@ -193,11 +203,13 @@ public class MarketCancelOrderActuator extends AbstractActuator {
     if (ownerAccount == null) {
       throw new ContractValidateException("Account does not exist!");
     }
+    TxMeter.incrReadLength(ownerAccount.getInstance().getSerializedSize());
 
     // Whether the order exist
     MarketOrderCapsule marketOrderCapsule;
     try {
       marketOrderCapsule = orderStore.get(orderId.toByteArray());
+      TxMeter.incrReadLength(marketOrderCapsule.getInstance().getSerializedSize());
     } catch (ItemNotFoundException ex) {
       throw new ContractValidateException(
           "orderId not exists");

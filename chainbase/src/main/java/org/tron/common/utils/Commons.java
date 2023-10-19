@@ -6,6 +6,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
@@ -58,6 +59,7 @@ public class Commons {
   public static void adjustBalance(AccountStore accountStore, byte[] accountAddress, long amount)
       throws BalanceInsufficientException {
     AccountCapsule account = accountStore.getUnchecked(accountAddress);
+    TxMeter.incrReadLength(account.getInstance().getSerializedSize());
     adjustBalance(accountStore, account, amount);
   }
 
@@ -79,11 +81,13 @@ public class Commons {
     }
     account.setBalance(Math.addExact(balance, amount));
     accountStore.put(account.getAddress().toByteArray(), account);
+    TxMeter.incrWriteLength(account.getInstance().getSerializedSize());
   }
 
   public static ExchangeStore getExchangeStoreFinal(DynamicPropertiesStore dynamicPropertiesStore,
       ExchangeStore exchangeStore,
       ExchangeV2Store exchangeV2Store) {
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     if (dynamicPropertiesStore.getAllowSameTokenName() == 0) {
       return exchangeStore;
     } else {
@@ -96,17 +100,22 @@ public class Commons {
       ExchangeV2Store exchangeV2Store, AssetIssueStore assetIssueStore) {
     if (dynamicPropertiesStore.getAllowSameTokenName() == 0) {
       exchangeStore.put(exchangeCapsule.createDbKey(), exchangeCapsule);
+      TxMeter.incrWriteLength(exchangeCapsule.getInstance().getSerializedSize());
+
       ExchangeCapsule exchangeCapsuleV2 = new ExchangeCapsule(exchangeCapsule.getData());
       exchangeCapsuleV2.resetTokenWithID(assetIssueStore, dynamicPropertiesStore);
       exchangeV2Store.put(exchangeCapsuleV2.createDbKey(), exchangeCapsuleV2);
+      TxMeter.incrWriteLength(exchangeCapsuleV2.getInstance().getSerializedSize());
     } else {
       exchangeV2Store.put(exchangeCapsule.createDbKey(), exchangeCapsule);
+      TxMeter.incrWriteLength(exchangeCapsule.getInstance().getSerializedSize());
     }
   }
 
   public static AssetIssueStore getAssetIssueStoreFinal(
       DynamicPropertiesStore dynamicPropertiesStore,
       AssetIssueStore assetIssueStore, AssetIssueV2Store assetIssueV2Store) {
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     if (dynamicPropertiesStore.getAllowSameTokenName() == 0) {
       return assetIssueStore;
     } else {
@@ -133,6 +142,7 @@ public class Commons {
                   StringUtil.encode58Check(account.createDbKey())));
     }
     accountStore.put(account.getAddress().toByteArray(), account);
+    TxMeter.incrWriteLength(account.getInstance().getSerializedSize());
   }
 
   public static void adjustTotalShieldedPoolValue(long valueBalance,
@@ -143,6 +153,8 @@ public class Commons {
       throw new BalanceInsufficientException(String.format(
           "total shielded pool value can not below 0, actual: %d", totalShieldedPoolValue));
     }
+
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     dynamicPropertiesStore.saveTotalShieldedPoolValue(totalShieldedPoolValue);
   }
 
@@ -151,6 +163,7 @@ public class Commons {
       DynamicPropertiesStore dynamicPropertiesStore)
       throws BalanceInsufficientException {
     AccountCapsule account = accountStore.getUnchecked(accountAddress);
+    TxMeter.incrWriteLength(account.getInstance().getSerializedSize());
     adjustAssetBalanceV2(account, AssetID, amount, accountStore, assetIssueStore,
         dynamicPropertiesStore);
   }

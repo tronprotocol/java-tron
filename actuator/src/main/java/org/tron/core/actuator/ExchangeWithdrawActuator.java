@@ -56,6 +56,7 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
       AccountCapsule accountCapsule = accountStore
           .get(exchangeWithdrawContract.getOwnerAddress().toByteArray());
 
+
       ExchangeCapsule exchangeCapsule = Commons
           .getExchangeStoreFinal(dynamicStore, exchangeStore, exchangeV2Store).
               get(ByteArray.fromLong(exchangeWithdrawContract.getExchangeId()));

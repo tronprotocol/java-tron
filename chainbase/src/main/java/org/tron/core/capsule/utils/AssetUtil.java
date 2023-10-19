@@ -4,6 +4,7 @@ import com.google.common.primitives.Bytes;
 import java.util.HashMap;
 import java.util.Map;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.store.AccountAssetStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Account;
@@ -23,7 +24,11 @@ public class AssetUtil {
       return false;
     }
     byte[] dbKey = Bytes.concat(account.getAddress().toByteArray(), key);
-    return accountAssetStore.get(dbKey) != null;
+    byte[] bytes = accountAssetStore.get(dbKey);
+    if (bytes != null) {
+      TxMeter.incrReadLength(bytes.length);
+    }
+    return bytes != null;
   }
 
   public static Account importAsset(Account account, byte[] key) {
@@ -37,6 +42,7 @@ public class AssetUtil {
     }
 
     long balance = accountAssetStore.getBalance(account, key);
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     Map<String, Long> map = new HashMap<>();
     map.putAll(account.getAssetV2Map());
     map.put(sKey, balance);
@@ -61,6 +67,7 @@ public class AssetUtil {
   }
 
   public static boolean isAllowAssetOptimization() {
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     return dynamicPropertiesStore.supportAllowAssetOptimization();
   }
 

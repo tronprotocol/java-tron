@@ -1514,23 +1514,33 @@ public class Manager {
   }
 
   private void setTxMeterMetrics(TransactionCapsule trxCap) {
-    TxMeter.incrPutLength(trxCap.getTransactionId().getBytes().length);
+    TxMeter.incrWriteLength(trxCap.getTransactionId().getBytes().length);
     Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
             TxMeter.totalReadLength(),
-            "read"
+            "read",
+            trxCap.getInstance().getRawData().getContract(0).getType().toString()
     );
     Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
             TxMeter.totalPutLength(),
-            "put"
+            "put",
+            trxCap.getInstance().getRawData().getContract(0).getType().toString()
     );
     Metrics.counterInc(MetricKeys.Counter.DB_OP,
             TxMeter.totalReadCount(),
-            "read"
+            "read",
+            trxCap.getInstance().getRawData().getContract(0).getType().toString()
     );
     Metrics.counterInc(MetricKeys.Counter.DB_OP,
             TxMeter.totalPutCount(),
-            "put"
+            "put",
+            trxCap.getInstance().getRawData().getContract(0).getType().toString()
     );
+
+    Metrics.histogramObserve(MetricKeys.Histogram.TX_SIG_BYTES,
+            TxMeter.totalSigLength(),
+            "sig"
+    );
+
     TxMeter.remove();
   }
 
@@ -1995,6 +2005,7 @@ public class Manager {
       for (TransactionCapsule transaction : txs) {
         Future<Boolean> future = validateSignService
             .submit(new ValidateSignTask(transaction, countDownLatch, chainBaseManager));
+        TxMeter.incrSigLength(transaction.getInstance().getSerializedSize());
         futures.add(future);
       }
       countDownLatch.await();

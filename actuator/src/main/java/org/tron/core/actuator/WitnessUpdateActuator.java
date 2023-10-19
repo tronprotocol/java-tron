@@ -9,6 +9,7 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.utils.TransactionUtil;
@@ -29,6 +30,7 @@ public class WitnessUpdateActuator extends AbstractActuator {
         .get(contract.getOwnerAddress().toByteArray());
     witnessCapsule.setUrl(contract.getUpdateUrl().toStringUtf8());
     witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
+    TxMeter.incrWriteLength(witnessCapsule.getInstance().getSerializedSize());
   }
 
   @Override
@@ -83,6 +85,7 @@ public class WitnessUpdateActuator extends AbstractActuator {
     if (!accountStore.has(ownerAddress)) {
       throw new ContractValidateException("account does not exist");
     }
+    TxMeter.incrReadLength(accountStore.get(ownerAddress).getInstance().getSerializedSize());
 
     if (!TransactionUtil.validUrl(contract.getUpdateUrl().toByteArray())) {
       throw new ContractValidateException("Invalid url");
@@ -91,7 +94,7 @@ public class WitnessUpdateActuator extends AbstractActuator {
     if (!witnessStore.has(ownerAddress)) {
       throw new ContractValidateException("Witness does not exist");
     }
-
+    TxMeter.incrReadLength(witnessStore.get(ownerAddress).getInstance().getSerializedSize());
     return true;
   }
 

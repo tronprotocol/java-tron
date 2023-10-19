@@ -4,6 +4,7 @@ import io.prometheus.client.Histogram;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.ContractTypes;
 
 @Slf4j(topic = "metrics")
 public class MetricsHistogram {
@@ -45,7 +46,9 @@ public class MetricsHistogram {
         "url", "status");
     init(MetricKeys.Histogram.TX_BYTES, "tx_bytes traffic.",
             "type");
-        init(MetricKeys.Histogram.DB_BYTES, "db_bytes traffic.",
+    init(MetricKeys.Histogram.DB_BYTES, "db_bytes traffic.",
+                ContractTypes.getContractTypes());
+    init(MetricKeys.Histogram.TX_SIG_BYTES, "tx_sig_bytes traffic.",
             "type");
     init(MetricKeys.Histogram.MESSAGE_PROCESS_LATENCY, "process message latency.",
         "type");

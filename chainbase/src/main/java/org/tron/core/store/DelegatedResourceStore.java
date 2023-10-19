@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
+import org.tron.core.meter.TxMeter;
 
 @Component
 public class DelegatedResourceStore extends TronStoreWithRevoking<DelegatedResourceCapsule> {
@@ -41,6 +42,7 @@ public class DelegatedResourceStore extends TronStoreWithRevoking<DelegatedResou
     if (lockResource == null) {
       return;
     }
+    TxMeter.incrReadLength(lockResource.getInstance().getSerializedSize());
     if (lockResource.getExpireTimeForEnergy() >= now
         && lockResource.getExpireTimeForBandwidth() >= now) {
       return;
@@ -66,10 +68,13 @@ public class DelegatedResourceStore extends TronStoreWithRevoking<DelegatedResou
     if (lockResource.getFrozenBalanceForBandwidth() == 0
         && lockResource.getFrozenBalanceForEnergy() == 0) {
       delete(lockKey);
+      TxMeter.incrWriteLength(lockKey.length);
     } else {
       put(lockKey, lockResource);
+      TxMeter.incrWriteLength(lockResource.getInstance().getSerializedSize());
     }
     put(unlockKey, unlockResource);
+    TxMeter.incrWriteLength(unlockResource.getInstance().getSerializedSize());
   }
 
 }

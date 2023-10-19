@@ -58,7 +58,7 @@ public class TransferActuator extends AbstractActuator {
         toAccount = new AccountCapsule(ByteString.copyFrom(toAddress), AccountType.Normal,
             dynamicStore.getLatestBlockHeaderTimestamp(), withDefaultPermission, dynamicStore);
         accountStore.put(toAddress, toAccount);
-        TxMeter.incrPutLength(toAccount.getInstance().getSerializedSize());
+        TxMeter.incrWriteLength(toAccount.getInstance().getSerializedSize());
         fee = fee + dynamicStore.getCreateNewAccountFeeInSystemContract();
       }
 
@@ -118,11 +118,11 @@ public class TransferActuator extends AbstractActuator {
     }
 
     AccountCapsule ownerAccount = accountStore.get(ownerAddress);
-    TxMeter.incrReadLength(ownerAccount.getInstance().getSerializedSize());
 
     if (ownerAccount == null) {
       throw new ContractValidateException("Validate TransferContract error, no OwnerAccount.");
     }
+    TxMeter.incrReadLength(ownerAccount.getInstance().getSerializedSize());
 
     long balance = ownerAccount.getBalance();
 
@@ -132,9 +132,9 @@ public class TransferActuator extends AbstractActuator {
 
     try {
       AccountCapsule toAccount = accountStore.get(toAddress);
-      TxMeter.incrReadLength(toAccount.getInstance().getSerializedSize());
 
       if (toAccount == null) {
+        TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
         fee = fee + dynamicStore.getCreateNewAccountFeeInSystemContract();
       }
       //after ForbidTransferToContract proposal, send trx to smartContract by actuator is not allowed.
@@ -142,6 +142,7 @@ public class TransferActuator extends AbstractActuator {
           && toAccount != null
           && toAccount.getType() == AccountType.Contract) {
 
+        TxMeter.incrReadLength(toAccount.getInstance().getSerializedSize());
         throw new ContractValidateException("Cannot transfer TRX to a smartContract.");
 
       }
@@ -153,8 +154,6 @@ public class TransferActuator extends AbstractActuator {
           && toAccount.getType() == AccountType.Contract) {
 
         ContractCapsule contractCapsule = chainBaseManager.getContractStore().get(toAddress);
-        TxMeter.incrReadLength(contractCapsule.getInstance().getSerializedSize());
-
         if (contractCapsule == null) { //  this can not happen
           throw new ContractValidateException(
               "Account type is Contract, but it is not exist in contract store.");
@@ -163,6 +162,7 @@ public class TransferActuator extends AbstractActuator {
               "Cannot transfer TRX to a smartContract which version is one. "
                   + "Instead please use TriggerSmartContract ");
         }
+        TxMeter.incrReadLength(contractCapsule.getInstance().getSerializedSize());
       }
 
       if (balance < Math.addExact(amount, fee)) {
@@ -173,6 +173,7 @@ public class TransferActuator extends AbstractActuator {
       }
 
       if (toAccount != null) {
+        TxMeter.incrReadLength(toAccount.getInstance().getSerializedSize());
         Math.addExact(toAccount.getBalance(), amount);
       }
     } catch (ArithmeticException e) {

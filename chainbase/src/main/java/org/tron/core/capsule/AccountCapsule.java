@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.utils.AssetUtil;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Account;
@@ -707,7 +708,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       assetMap = this.account.getAssetV2Map();
       currentAmount = assetMap.get(tokenID);
     }
-
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     return amount > 0 && null != currentAmount && amount <= currentAmount;
   }
 
@@ -727,9 +728,11 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       DynamicPropertiesStore dynamicPropertiesStore, AssetIssueStore assetIssueStore) {
     importAsset(key);
     //key is token name
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     if (dynamicPropertiesStore.getAllowSameTokenName() == 0) {
       Map<String, Long> assetMap = this.account.getAssetMap();
       AssetIssueCapsule assetIssueCapsule = assetIssueStore.get(key);
+      TxMeter.incrReadLength(assetIssueCapsule.getInstance().getSerializedSize());
       String tokenID = assetIssueCapsule.getId();
       String nameKey = ByteArray.toStr(key);
       Long currentAmount = assetMap.get(nameKey);
@@ -742,6 +745,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
           .build();
     }
     //key is token id
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     if (dynamicPropertiesStore.getAllowSameTokenName() == 1) {
       String tokenIDStr = ByteArray.toStr(key);
       Map<String, Long> assetMapV2 = this.account.getAssetV2Map();
@@ -774,8 +778,10 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     importAsset(key);
     //key is token name
     if (dynamicPropertiesStore.getAllowSameTokenName() == 0) {
+      TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
       Map<String, Long> assetMap = this.account.getAssetMap();
       AssetIssueCapsule assetIssueCapsule = assetIssueStore.get(key);
+      TxMeter.incrReadLength(assetIssueCapsule.getInstance().getSerializedSize());
       String tokenID = assetIssueCapsule.getId();
       String nameKey = ByteArray.toStr(key);
       Long currentAmount = assetMap.get(nameKey);
@@ -789,6 +795,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     }
     //key is token id
     if (dynamicPropertiesStore.getAllowSameTokenName() == 1) {
+      TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
       String tokenID = ByteArray.toStr(key);
       Map<String, Long> assetMapV2 = this.account.getAssetV2Map();
       Long currentAmount = assetMapV2.get(tokenID);

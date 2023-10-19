@@ -18,8 +18,10 @@ import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.VotesCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.service.MortgageService;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
@@ -113,10 +115,14 @@ public class VoteWitnessActuator extends AbstractActuator {
           throw new ContractValidateException(
               ACCOUNT_EXCEPTION_STR + readableWitnessAddress + NOT_EXIST_STR);
         }
+        AccountCapsule accountCapsule = accountStore.get(witnessCandidate);
+        TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
         if (!witnessStore.has(witnessCandidate)) {
           throw new ContractValidateException(
               WITNESS_EXCEPTION_STR + readableWitnessAddress + NOT_EXIST_STR);
         }
+        WitnessCapsule witnessCapsule = witnessStore.get(witnessCandidate);
+        TxMeter.incrReadLength(witnessCapsule.getInstance().getSerializedSize());
         sum = LongMath.checkedAdd(sum, vote.getVoteCount());
       }
 
@@ -125,9 +131,11 @@ public class VoteWitnessActuator extends AbstractActuator {
         throw new ContractValidateException(
             ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
       }
+      TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
 
       long tronPower;
       DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+      TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
       if (dynamicStore.supportAllowNewResourceModel()) {
         tronPower = accountCapsule.getAllTronPower();
       } else {
@@ -161,8 +169,11 @@ public class VoteWitnessActuator extends AbstractActuator {
     mortgageService.withdrawReward(ownerAddress);
 
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
-
+    TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    TxMeter.incrReadLength(TxMeter.BaseType.BOOLEAN.getLength());
+
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     if (dynamicStore.supportAllowNewResourceModel()
         && accountCapsule.oldTronPowerIsNotInitialized()) {
       accountCapsule.initializeOldTronPower();
@@ -173,6 +184,7 @@ public class VoteWitnessActuator extends AbstractActuator {
           accountCapsule.getVotesList());
     } else {
       votesCapsule = votesStore.get(ownerAddress);
+      TxMeter.incrReadLength(votesCapsule.getInstance().getSerializedSize());
     }
 
     accountCapsule.clearVotes();
@@ -187,7 +199,9 @@ public class VoteWitnessActuator extends AbstractActuator {
     });
 
     accountStore.put(accountCapsule.createDbKey(), accountCapsule);
+    TxMeter.incrWriteLength(accountCapsule.getInstance().getSerializedSize());
     votesStore.put(ownerAddress, votesCapsule);
+    TxMeter.incrWriteLength(votesCapsule.getInstance().getSerializedSize());
   }
 
   @Override

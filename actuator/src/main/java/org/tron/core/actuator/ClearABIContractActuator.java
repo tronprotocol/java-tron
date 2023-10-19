@@ -15,6 +15,7 @@ import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.store.AbiStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.ContractStore;
@@ -44,7 +45,7 @@ public class ClearABIContractActuator extends AbstractActuator {
 
       byte[] contractAddress = usContract.getContractAddress().toByteArray();
       abiStore.put(contractAddress, new AbiCapsule(ABI.getDefaultInstance()));
-
+      TxMeter.incrWriteLength(ABI.getDefaultInstance().getSerializedSize());
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
@@ -87,6 +88,7 @@ public class ClearABIContractActuator extends AbstractActuator {
     String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
 
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
+    TxMeter.incrReadLength(ABI.getDefaultInstance().getSerializedSize());
     if (accountCapsule == null) {
       throw new ContractValidateException(
           ActuatorConstant.ACCOUNT_EXCEPTION_STR
@@ -95,6 +97,7 @@ public class ClearABIContractActuator extends AbstractActuator {
 
     byte[] contractAddress = contract.getContractAddress().toByteArray();
     ContractCapsule deployedContract = contractStore.get(contractAddress);
+    TxMeter.incrReadLength(deployedContract.getInstance().getSerializedSize());
 
     if (deployedContract == null) {
       throw new ContractValidateException(

@@ -41,6 +41,7 @@ import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
@@ -114,6 +115,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
       AccountCapsule accountCapsule = accountStore
           .get(contract.getOwnerAddress().toByteArray());
+      TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
 
       sellTokenID = contract.getSellTokenId().toByteArray();
       buyTokenID = contract.getBuyTokenId().toByteArray();
@@ -126,6 +128,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
       // fee
       accountCapsule.setBalance(accountCapsule.getBalance() - fee);
       // add to blackhole address
+      TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
       if (dynamicStore.supportBlackHoleOptimization()) {
         dynamicStore.burnTrx(fee);
       } else {
@@ -136,6 +139,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
       // 2. create and save order
       MarketOrderCapsule orderCapsule = createAndSaveOrder(accountCapsule, contract);
+      TxMeter.incrReadLength(orderCapsule.getInstance().getSerializedSize());
 
       // 3. match order
       matchOrder(orderCapsule, takerPrice, ret, accountCapsule);
@@ -147,6 +151,8 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
       orderStore.put(orderCapsule.getID().toByteArray(), orderCapsule);
       accountStore.put(accountCapsule.createDbKey(), accountCapsule);
+      TxMeter.incrWriteLength(orderCapsule.getInstance().getSerializedSize());
+      TxMeter.incrWriteLength(accountCapsule.getInstance().getSerializedSize());
 
       ret.setOrderId(orderCapsule.getID());
       ret.setStatus(fee, code.SUCESS);
@@ -179,6 +185,8 @@ public class MarketSellAssetActuator extends AbstractActuator {
               .getClass() + "]");
     }
 
+
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     if (!dynamicStore.supportAllowMarketTransaction()) {
       throw new ContractValidateException("Not support Market Transaction, need to be opened by"
           + " the committee");
@@ -209,6 +217,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
     if (ownerAccount == null) {
       throw new ContractValidateException("Account does not exist!");
     }
+    TxMeter.incrReadLength(ownerAccount.getInstance().getSerializedSize());
 
     if (!Arrays.equals(sellTokenID, "_".getBytes()) && !isNumber(sellTokenID)) {
       throw new ContractValidateException("sellTokenId is not a valid number");
@@ -233,6 +242,10 @@ public class MarketSellAssetActuator extends AbstractActuator {
     // check order num
     MarketAccountOrderCapsule marketAccountOrderCapsule = marketAccountStore
         .getUnchecked(ownerAddress);
+    if (marketAccountOrderCapsule != null) {
+      TxMeter.incrReadLength(marketAccountOrderCapsule.getInstance().getSerializedSize());
+    }
+
     if (marketAccountOrderCapsule != null
         && marketAccountOrderCapsule.getCount() >= MAX_ACTIVE_ORDER_NUM) {
       throw new ContractValidateException(
@@ -242,6 +255,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
     try {
       // Whether the balance is enough
       long fee = calcFee();
+      TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
 
       if (Arrays.equals(sellTokenID, "_".getBytes())) {
         if (ownerAccount.getBalance() < Math.addExact(sellTokenQuantity, fee)) {
@@ -258,6 +272,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
         if (assetIssueCapsule == null) {
           throw new ContractValidateException("No sellTokenId !");
         }
+        TxMeter.incrReadLength(assetIssueCapsule.getInstance().getSerializedSize());
         if (!ownerAccount.assetBalanceEnoughV2(sellTokenID, sellTokenQuantity,
             dynamicStore)) {
           throw new ContractValidateException("SellToken balance is not enough !");
@@ -272,6 +287,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
         if (assetIssueCapsule == null) {
           throw new ContractValidateException("No buyTokenId !");
         }
+        TxMeter.incrReadLength(assetIssueCapsule.getInstance().getSerializedSize());
       }
     } catch (ArithmeticException e) {
       logger.debug(e.getMessage(), e);
@@ -288,6 +304,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     return dynamicStore.getMarketSellFee();
   }
 
@@ -315,6 +332,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
     // makerPair not exists
     long makerPriceNumber = pairToPriceStore.getPriceNum(makerPair);
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     if (makerPriceNumber == 0) {
       return;
     }
@@ -338,12 +356,16 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
       // if not exists
       MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore.get(pairPriceKey);
+      if (null != orderIdListCapsule) {
+        TxMeter.incrReadLength(orderIdListCapsule.getInstance().getSerializedSize());
+      }
 
       // match different orders which have the same price
       while (takerCapsule.getSellTokenQuantityRemain() != 0
           && !orderIdListCapsule.isOrderEmpty()) {
         byte[] orderId = orderIdListCapsule.getHead();
         MarketOrderCapsule makerOrderCapsule = orderStore.get(orderId);
+        TxMeter.incrReadLength(makerOrderCapsule.getInstance().getSerializedSize());
 
         matchSingleOrder(takerCapsule, makerOrderCapsule, ret, takerAccountCapsule);
 
@@ -363,6 +385,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
       // the orders of makerPrice have been all consumed
       if (orderIdListCapsule.isOrderEmpty()) {
         pairPriceToOrderStore.delete(pairPriceKey);
+        TxMeter.incrReadLength(orderIdListCapsule.getInstance().getSerializedSize());
 
         // need to delete marketPair if no more price(priceKeysList is empty after deleting)
         priceKeysList.remove(0);
@@ -372,6 +395,8 @@ public class MarketSellAssetActuator extends AbstractActuator {
         // if really empty, need to delete token pair from pairToPriceStore
         if (remainCount == 0) {
           pairToPriceStore.delete(makerPair);
+          TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
+
           break;
         } else {
           pairToPriceStore.setPriceNum(makerPair, remainCount);
@@ -482,6 +507,9 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
     // save makerOrderCapsule
     orderStore.put(makerOrderCapsule.getID().toByteArray(), makerOrderCapsule);
+    TxMeter.incrWriteLength(makerOrderCapsule.getInstance().getSerializedSize());
+
+
 
     // add token into account
     addTrxOrToken(takerOrderCapsule, takerBuyTokenQuantityReceive, takerAccountCapsule);
@@ -503,6 +531,8 @@ public class MarketSellAssetActuator extends AbstractActuator {
     if (marketAccountOrderCapsule == null) {
       marketAccountOrderCapsule = new MarketAccountOrderCapsule(contract.getOwnerAddress());
     }
+    TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
+
 
     // note: here use total_count
     byte[] orderId = MarketUtils
@@ -511,13 +541,18 @@ public class MarketSellAssetActuator extends AbstractActuator {
     MarketOrderCapsule orderCapsule = new MarketOrderCapsule(orderId, contract);
 
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
+
     orderCapsule.setCreateTime(now);
 
     marketAccountOrderCapsule.addOrders(orderCapsule.getID());
     marketAccountOrderCapsule.setCount(marketAccountOrderCapsule.getCount() + 1);
     marketAccountOrderCapsule.setTotalCount(marketAccountOrderCapsule.getTotalCount() + 1);
     marketAccountStore.put(accountCapsule.createDbKey(), marketAccountOrderCapsule);
+    TxMeter.incrWriteLength(marketAccountOrderCapsule.getInstance().getSerializedSize());
+
     orderStore.put(orderId, orderCapsule);
+    TxMeter.incrWriteLength(orderCapsule.getInstance().getSerializedSize());
 
     return orderCapsule;
   }
@@ -547,6 +582,8 @@ public class MarketSellAssetActuator extends AbstractActuator {
   private void addTrxOrToken(MarketOrderCapsule orderCapsule, long num) {
     AccountCapsule accountCapsule = accountStore
         .get(orderCapsule.getOwnerAddress().toByteArray());
+    TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
+
 
     byte[] buyTokenId = orderCapsule.getBuyTokenId();
     if (Arrays.equals(buyTokenId, "_".getBytes())) {
@@ -556,14 +593,18 @@ public class MarketSellAssetActuator extends AbstractActuator {
           .addAssetAmountV2(buyTokenId, num, dynamicStore, assetIssueStore);
     }
     accountStore.put(orderCapsule.getOwnerAddress().toByteArray(), accountCapsule);
+    TxMeter.incrWriteLength(accountCapsule.getInstance().getSerializedSize());
   }
 
   private void returnSellTokenRemain(MarketOrderCapsule orderCapsule) {
     AccountCapsule accountCapsule = accountStore
         .get(orderCapsule.getOwnerAddress().toByteArray());
+    TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
+
 
     MarketUtils.returnSellTokenRemain(orderCapsule, accountCapsule, dynamicStore, assetIssueStore);
     accountStore.put(orderCapsule.getOwnerAddress().toByteArray(), accountCapsule);
+    TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
   }
 
   private void saveRemainOrder(MarketOrderCapsule orderCapsule)
@@ -577,6 +618,10 @@ public class MarketSellAssetActuator extends AbstractActuator {
     );
 
     MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore.getUnchecked(pairPriceKey);
+    if (orderIdListCapsule != null) {
+      TxMeter.incrReadLength(orderIdListCapsule.getInstance().getSerializedSize());
+    }
+
     if (orderIdListCapsule == null) {
       orderIdListCapsule = new MarketOrderIdListCapsule();
 
@@ -588,6 +633,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
     orderIdListCapsule.addOrder(orderCapsule, orderStore);
     pairPriceToOrderStore.put(pairPriceKey, orderIdListCapsule);
+    TxMeter.incrWriteLength(orderIdListCapsule.getInstance().getSerializedSize());
   }
 
 }

@@ -28,6 +28,7 @@ import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
@@ -64,6 +65,9 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       //subtract from owner address
       byte[] ownerAddress = participateAssetIssueContract.getOwnerAddress().toByteArray();
       AccountCapsule ownerAccount = accountStore.get(ownerAddress);
+      TxMeter.incrReadLength(ownerAccount.getInstance().getSerializedSize());
+
+
       long balance = Math.subtractExact(ownerAccount.getBalance(), cost);
       balance = Math.subtractExact(balance, fee);
       ownerAccount.setBalance(balance);
@@ -81,6 +85,9 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       //add to to_address
       byte[] toAddress = participateAssetIssueContract.getToAddress().toByteArray();
       AccountCapsule toAccount = accountStore.get(toAddress);
+      TxMeter.incrReadLength(toAccount.getInstance().getSerializedSize());
+
+
       toAccount.setBalance(Math.addExact(toAccount.getBalance(), cost));
       if (!toAccount.reduceAssetAmountV2(key, exchangeAmount, dynamicStore, assetIssueStore)) {
         throw new ContractExeException("reduceAssetAmount failed !");
@@ -89,6 +96,9 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       //write to db
       accountStore.put(ownerAddress, ownerAccount);
       accountStore.put(toAddress, toAccount);
+      TxMeter.incrWriteLength(ownerAccount.getInstance().getSerializedSize());
+      TxMeter.incrWriteLength(toAccount.getInstance().getSerializedSize());
+
       ret.setStatus(fee, Protocol.Transaction.Result.code.SUCESS);
     } catch (InvalidProtocolBufferException | ArithmeticException e) {
       logger.debug(e.getMessage(), e);
@@ -153,6 +163,9 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
     if (ownerAccount == null) {
       throw new ContractValidateException("Account does not exist!");
     }
+    TxMeter.incrReadLength(ownerAccount.getInstance().getSerializedSize());
+
+
     try {
       //Whether the balance is enough
       long fee = calcFee();
@@ -167,12 +180,14 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       if (assetIssueCapsule == null) {
         throw new ContractValidateException("No asset named " + ByteArray.toStr(assetName));
       }
+      TxMeter.incrReadLength(assetIssueCapsule.getInstance().getSerializedSize());
 
       if (!Arrays.equals(toAddress, assetIssueCapsule.getOwnerAddress().toByteArray())) {
         throw new ContractValidateException(
             "The asset is not issued by " + ByteArray.toHexString(toAddress));
       }
       //Whether the exchange can be processed: to see if the exchange can be the exact int
+      TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
       long now = dynamicStore.getLatestBlockHeaderTimestamp();
       if (now >= assetIssueCapsule.getEndTime() || now < assetIssueCapsule
           .getStartTime()) {
@@ -191,6 +206,8 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       if (toAccount == null) {
         throw new ContractValidateException("To account does not exist!");
       }
+      TxMeter.incrReadLength(toAccount.getInstance().getSerializedSize());
+
 
       if (!toAccount.assetBalanceEnoughV2(assetName, exchangeAmount,
           dynamicStore)) {

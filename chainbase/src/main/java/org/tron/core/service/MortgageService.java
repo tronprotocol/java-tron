@@ -14,6 +14,7 @@ import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
@@ -85,9 +86,12 @@ public class MortgageService {
       return;
     }
     AccountCapsule accountCapsule = accountStore.get(address);
+    TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
     long beginCycle = delegationStore.getBeginCycle(address);
     long endCycle = delegationStore.getEndCycle(address);
     long currentCycle = dynamicPropertiesStore.getCurrentCycleNumber();
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
+
     long reward = 0;
     if (beginCycle > currentCycle || accountCapsule == null) {
       return;
@@ -95,6 +99,7 @@ public class MortgageService {
     if (beginCycle == currentCycle) {
       AccountCapsule account = delegationStore.getAccountVote(beginCycle, address);
       if (account != null) {
+        TxMeter.incrReadLength(account.getInstance().getSerializedSize());
         return;
       }
     }
@@ -102,6 +107,7 @@ public class MortgageService {
     if (beginCycle + 1 == endCycle && beginCycle < currentCycle) {
       AccountCapsule account = delegationStore.getAccountVote(beginCycle, address);
       if (account != null) {
+        TxMeter.incrReadLength(account.getInstance().getSerializedSize());
         reward = computeReward(beginCycle, endCycle, account);
         adjustAllowance(address, reward);
         reward = 0;
@@ -113,6 +119,7 @@ public class MortgageService {
     endCycle = currentCycle;
     if (CollectionUtils.isEmpty(accountCapsule.getVotesList())) {
       delegationStore.setBeginCycle(address, endCycle + 1);
+      TxMeter.incrWriteLength(TxMeter.BaseType.LONG.getLength());
       return;
     }
     if (beginCycle < endCycle) {
@@ -120,8 +127,11 @@ public class MortgageService {
       adjustAllowance(address, reward);
     }
     delegationStore.setBeginCycle(address, endCycle);
+    TxMeter.incrWriteLength(TxMeter.BaseType.LONG.getLength());
     delegationStore.setEndCycle(address, endCycle + 1);
+    TxMeter.incrWriteLength(TxMeter.BaseType.LONG.getLength());
     delegationStore.setAccountVote(endCycle, address, accountCapsule);
+    TxMeter.incrWriteLength(accountCapsule.getInstance().getSerializedSize());
     logger.info("Adjust {} allowance {}, now currentCycle {}, beginCycle {}, endCycle {}, "
             + "account vote {}.", Hex.toHexString(address), reward, currentCycle,
         beginCycle, endCycle, accountCapsule.getVotesList());
@@ -136,10 +146,14 @@ public class MortgageService {
     long beginCycle = delegationStore.getBeginCycle(address);
     long endCycle = delegationStore.getEndCycle(address);
     long currentCycle = dynamicPropertiesStore.getCurrentCycleNumber();
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength() * 3L);
+
     long reward = 0;
     if (accountCapsule == null) {
       return 0;
     }
+    TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
+
     if (beginCycle > currentCycle) {
       return accountCapsule.getAllowance();
     }
@@ -148,6 +162,8 @@ public class MortgageService {
       AccountCapsule account = delegationStore.getAccountVote(beginCycle, address);
       if (account != null) {
         reward = computeReward(beginCycle, endCycle, account);
+        TxMeter.incrReadLength(account.getInstance().getSerializedSize());
+
       }
       beginCycle += 1;
     }
@@ -197,6 +213,7 @@ public class MortgageService {
 
     long reward = 0;
     long newAlgorithmCycle = dynamicPropertiesStore.getNewRewardAlgorithmEffectiveCycle();
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     if (beginCycle < newAlgorithmCycle) {
       long oldEndCycle = Math.min(endCycle, newAlgorithmCycle);
       for (long cycle = beginCycle; cycle < oldEndCycle; cycle++) {
@@ -239,6 +256,7 @@ public class MortgageService {
   public void adjustAllowance(AccountStore accountStore, byte[] accountAddress, long amount)
       throws BalanceInsufficientException {
     AccountCapsule account = accountStore.getUnchecked(accountAddress);
+    TxMeter.incrReadLength(account.getInstance().getSerializedSize());
     long allowance = account.getAllowance();
     if (amount == 0) {
       return;
@@ -251,6 +269,7 @@ public class MortgageService {
     }
     account.setAllowance(allowance + amount);
     accountStore.put(account.createDbKey(), account);
+    TxMeter.incrWriteLength(account.getInstance().getSerializedSize());
   }
 
   private void sortWitness(List<ByteString> list) {

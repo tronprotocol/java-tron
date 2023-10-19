@@ -16,6 +16,7 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ProposalStore;
@@ -45,8 +46,11 @@ public class ProposalDeleteActuator extends AbstractActuator {
           .unpack(ProposalDeleteContract.class);
       ProposalCapsule proposalCapsule = proposalStore.
           get(ByteArray.fromLong(proposalDeleteContract.getProposalId()));
+      TxMeter.incrReadLength(proposalCapsule.getInstance().getSerializedSize());
+
       proposalCapsule.setState(State.CANCELED);
       proposalStore.put(proposalCapsule.createDbKey(), proposalCapsule);
+      TxMeter.incrWriteLength(proposalCapsule.getInstance().getSerializedSize());
 
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException | ItemNotFoundException e) {
@@ -91,9 +95,14 @@ public class ProposalDeleteActuator extends AbstractActuator {
       throw new ContractValidateException(ACCOUNT_EXCEPTION_STR + readableOwnerAddress
           + NOT_EXIST_STR);
     }
+    TxMeter.incrReadLength(accountStore.get(ownerAddress)
+            .getInstance().getSerializedSize());
+
 
     long latestProposalNum = dynamicStore
         .getLatestProposalNum();
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
+
     if (contract.getProposalId() > latestProposalNum) {
       throw new ContractValidateException(PROPOSAL_EXCEPTION_STR + contract.getProposalId()
           + NOT_EXIST_STR);
@@ -103,12 +112,16 @@ public class ProposalDeleteActuator extends AbstractActuator {
     try {
       proposalCapsule = proposalStore.
           get(ByteArray.fromLong(contract.getProposalId()));
+      TxMeter.incrReadLength(proposalCapsule.getInstance().getSerializedSize());
+
     } catch (ItemNotFoundException ex) {
       throw new ContractValidateException(PROPOSAL_EXCEPTION_STR + contract.getProposalId()
           + NOT_EXIST_STR);
     }
 
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
+
     if (!proposalCapsule.getProposalAddress().equals(contract.getOwnerAddress())) {
       throw new ContractValidateException(PROPOSAL_EXCEPTION_STR + contract.getProposalId() + "] "
           + "is not proposed by " + readableOwnerAddress);

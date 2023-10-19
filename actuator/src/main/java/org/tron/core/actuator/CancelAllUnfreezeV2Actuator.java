@@ -23,6 +23,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Account.UnFreezeV2;
@@ -55,8 +56,10 @@ public class CancelAllUnfreezeV2Actuator extends AbstractActuator {
       throw new ContractExeException(e.getMessage());
     }
     AccountCapsule ownerCapsule = accountStore.get(ownerAddress);
+    TxMeter.incrReadLength(ownerCapsule.getInstance().getSerializedSize());
     List<UnFreezeV2> unfrozenV2List = ownerCapsule.getUnfrozenV2List();
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     AtomicLong atomicWithdrawExpireBalance = new AtomicLong(0L);
     Triple<Pair<AtomicLong, AtomicLong>, Pair<AtomicLong, AtomicLong>, Pair<AtomicLong, AtomicLong>>
         triple = Triple.of(
@@ -75,6 +78,7 @@ public class CancelAllUnfreezeV2Actuator extends AbstractActuator {
     }
 
     accountStore.put(ownerCapsule.createDbKey(), ownerCapsule);
+    TxMeter.incrWriteLength(ownerCapsule.getInstance().getSerializedSize());
     ret.setWithdrawExpireAmount(withdrawExpireBalance);
     Map<String, Long> cancelUnfreezeV2AmountMap = new HashMap<>();
     cancelUnfreezeV2AmountMap.put(BANDWIDTH.name(), triple.getLeft().getRight().get());
@@ -92,6 +96,9 @@ public class CancelAllUnfreezeV2Actuator extends AbstractActuator {
     dynamicStore.addTotalNetWeight(triple.getLeft().getLeft().get());
     dynamicStore.addTotalEnergyWeight(triple.getMiddle().getLeft().get());
     dynamicStore.addTotalTronPowerWeight(triple.getRight().getLeft().get());
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
   }
 
   private void updateAndCalculate(Triple<Pair<AtomicLong, AtomicLong>, Pair<AtomicLong, AtomicLong>,
@@ -139,6 +146,8 @@ public class CancelAllUnfreezeV2Actuator extends AbstractActuator {
       throw new ContractValidateException("Invalid address");
     }
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
+    TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
+
     String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
     if (Objects.isNull(accountCapsule)) {
       throw new ContractValidateException(ACCOUNT_EXCEPTION_STR
