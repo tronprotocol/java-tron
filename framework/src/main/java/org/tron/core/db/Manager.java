@@ -1527,13 +1527,11 @@ public class Manager {
     );
     Metrics.counterInc(MetricKeys.Counter.DB_OP,
             TxMeter.totalReadCount(),
-            "read",
-            trxCap.getInstance().getRawData().getContract(0).getType().toString()
+            "read"
     );
     Metrics.counterInc(MetricKeys.Counter.DB_OP,
             TxMeter.totalPutCount(),
-            "put",
-            trxCap.getInstance().getRawData().getContract(0).getType().toString()
+            "put"
     );
 
     Metrics.histogramObserve(MetricKeys.Histogram.TX_SIG_BYTES,
