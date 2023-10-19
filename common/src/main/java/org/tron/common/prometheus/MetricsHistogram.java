@@ -46,8 +46,7 @@ public class MetricsHistogram {
         "url", "status");
     init(MetricKeys.Histogram.TX_BYTES, "tx_bytes traffic.",
             "type");
-    init(MetricKeys.Histogram.DB_BYTES, "db_bytes traffic.", "read");
-    dbBytes();
+    init(MetricKeys.Histogram.DB_BYTES, "db_bytes traffic.",ContractTypes.getContractTypes());
     init(MetricKeys.Histogram.TX_SIG_BYTES, "tx_sig_bytes traffic.",
             "type");
     init(MetricKeys.Histogram.MESSAGE_PROCESS_LATENCY, "process message latency.",
@@ -55,12 +54,6 @@ public class MetricsHistogram {
     init(MetricKeys.Histogram.BLOCK_FETCH_LATENCY, "fetch block latency.");
     init(MetricKeys.Histogram.BLOCK_RECEIVE_DELAY,
         "receive block delay time, receiveTime - blockTime.");
-  }
-
-  private static void dbBytes() {
-    for (String contractType : ContractTypes.getContractTypes()) {
-      init(MetricKeys.Histogram.DB_BYTES, "db_bytes traffic.", contractType);
-    }
   }
 
   private MetricsHistogram() {
