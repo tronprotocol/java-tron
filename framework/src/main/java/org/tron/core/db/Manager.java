@@ -1519,19 +1519,23 @@ public class Manager {
     TxMeter.incrWriteLength(trxCap.getTransactionId().getBytes().length);
     Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
             TxMeter.totalReadLength(),
-            "read"
+            "read",
+            trxCap.getInstance().getRawData().getContract(0).getType().toString()
     );
     Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
             TxMeter.totalPutLength(),
-            "put"
+            "put",
+            trxCap.getInstance().getRawData().getContract(0).getType().toString()
     );
     Metrics.counterInc(MetricKeys.Counter.DB_OP,
             TxMeter.totalReadCount(),
-            "read"
+            "read",
+            trxCap.getInstance().getRawData().getContract(0).getType().toString()
     );
     Metrics.counterInc(MetricKeys.Counter.DB_OP,
             TxMeter.totalPutCount(),
-            "put"
+            "put",
+            trxCap.getInstance().getRawData().getContract(0).getType().toString()
     );
 
     Metrics.histogramObserve(MetricKeys.Histogram.TX_SIG_BYTES,
