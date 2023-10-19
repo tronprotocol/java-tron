@@ -15,6 +15,7 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.WitnessStore;
@@ -86,17 +87,18 @@ public class WitnessCreateActuator extends AbstractActuator {
     }
 
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
-
     if (accountCapsule == null) {
       throw new ContractValidateException("account[" + readableOwnerAddress
           + ActuatorConstant.NOT_EXIST_STR);
     }
+    TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
     /* todo later
     if (ArrayUtils.isEmpty(accountCapsule.getAccountName().toByteArray())) {
       throw new ContractValidateException("accountStore name not set");
     } */
 
     if (witnessStore.has(ownerAddress)) {
+      TxMeter.incrReadLength(witnessStore.get(ownerAddress).getInstance().getSerializedSize());
       throw new ContractValidateException(
           WITNESS_EXCEPTION_STR + readableOwnerAddress + "] has existed");
     }
@@ -132,14 +134,23 @@ public class WitnessCreateActuator extends AbstractActuator {
 
     logger.debug("createWitness,address[{}]", witnessCapsule.createReadableString());
     witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
+    TxMeter.incrWriteLength(witnessCapsule.getInstance().getSerializedSize());
+
     AccountCapsule accountCapsule = accountStore
         .get(witnessCapsule.createDbKey());
+    TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
     accountCapsule.setIsWitness(true);
+
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     if (dynamicStore.getAllowMultiSign() == 1) {
       accountCapsule.setDefaultWitnessPermission(dynamicStore);
     }
     accountStore.put(accountCapsule.createDbKey(), accountCapsule);
+    TxMeter.incrWriteLength(accountCapsule.getInstance().getSerializedSize());
+
     long cost = dynamicStore.getAccountUpgradeCost();
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
+
     Commons
         .adjustBalance(accountStore, witnessCreateContract.getOwnerAddress().toByteArray(), -cost);
     if (dynamicStore.supportBlackHoleOptimization()) {
@@ -147,6 +158,8 @@ public class WitnessCreateActuator extends AbstractActuator {
     } else {
       Commons.adjustBalance(accountStore, accountStore.getBlackhole(), +cost);
     }
+
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     dynamicStore.addTotalCreateWitnessCost(cost);
   }
 }

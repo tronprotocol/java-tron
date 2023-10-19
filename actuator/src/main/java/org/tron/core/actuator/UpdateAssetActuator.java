@@ -10,6 +10,7 @@ import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
@@ -50,20 +51,24 @@ public class UpdateAssetActuator extends AbstractActuator {
       ByteString newDescription = updateAssetContract.getDescription();
 
       AccountCapsule accountCapsule = accountStore.get(ownerAddress);
+      TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
 
       AssetIssueCapsule assetIssueCapsule;
       AssetIssueCapsule assetIssueCapsuleV2;
 
       AssetIssueStore assetIssueStoreV2 = assetIssueV2Store;
       assetIssueCapsuleV2 = assetIssueStoreV2.get(accountCapsule.getAssetIssuedID().toByteArray());
+      TxMeter.incrReadLength(assetIssueCapsuleV2.getInstance().getSerializedSize());
 
       assetIssueCapsuleV2.setFreeAssetNetLimit(newLimit);
       assetIssueCapsuleV2.setPublicFreeAssetNetLimit(newPublicLimit);
       assetIssueCapsuleV2.setUrl(newUrl);
       assetIssueCapsuleV2.setDescription(newDescription);
 
+      TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
       if (dynamicStore.getAllowSameTokenName() == 0) {
         assetIssueCapsule = assetIssueStore.get(accountCapsule.getAssetIssuedName().toByteArray());
+        TxMeter.incrReadLength(assetIssueCapsule.getInstance().getSerializedSize());
         assetIssueCapsule.setFreeAssetNetLimit(newLimit);
         assetIssueCapsule.setPublicFreeAssetNetLimit(newPublicLimit);
         assetIssueCapsule.setUrl(newUrl);
@@ -73,9 +78,13 @@ public class UpdateAssetActuator extends AbstractActuator {
             .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
         assetIssueStoreV2
             .put(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
+        TxMeter.incrWriteLength(assetIssueCapsule.getInstance().getSerializedSize());
+        TxMeter.incrWriteLength(assetIssueCapsuleV2.getInstance().getSerializedSize());
+
       } else {
         assetIssueV2Store
             .put(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
+        TxMeter.incrWriteLength(assetIssueCapsuleV2.getInstance().getSerializedSize());
       }
 
       ret.setStatus(fee, code.SUCESS);
@@ -129,6 +138,7 @@ public class UpdateAssetActuator extends AbstractActuator {
       throw new ContractValidateException("Account does not exist");
     }
 
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     if (dynamicStore.getAllowSameTokenName() == 0) {
       if (account.getAssetIssuedName().isEmpty()) {
         throw new ContractValidateException("Account has not issued any asset");
@@ -138,6 +148,7 @@ public class UpdateAssetActuator extends AbstractActuator {
           == null) {
         throw new ContractValidateException("Asset is not existed in AssetIssueStore");
       }
+      TxMeter.incrReadLength(account.getAssetIssuedName().toByteArray().length);
     } else {
       if (account.getAssetIssuedID().isEmpty()) {
         throw new ContractValidateException("Account has not issued any asset");
@@ -147,6 +158,7 @@ public class UpdateAssetActuator extends AbstractActuator {
           == null) {
         throw new ContractValidateException("Asset is not existed in AssetIssueV2Store");
       }
+      TxMeter.incrReadLength(account.getAssetIssuedID().toByteArray().length);
     }
 
     if (!TransactionUtil.validUrl(newUrl.toByteArray())) {
@@ -157,6 +169,7 @@ public class UpdateAssetActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid description");
     }
 
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     if (newLimit < 0 || newLimit >= dynamicStore.getOneDayNetLimit()) {
       throw new ContractValidateException("Invalid FreeAssetNetLimit");
     }

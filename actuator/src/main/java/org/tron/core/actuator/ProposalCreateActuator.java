@@ -16,6 +16,7 @@ import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.utils.ProposalUtil;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -41,18 +42,26 @@ public class ProposalCreateActuator extends AbstractActuator {
       final ProposalCreateContract proposalCreateContract = this.any
           .unpack(ProposalCreateContract.class);
       long id = chainBaseManager.getDynamicPropertiesStore().getLatestProposalNum() + 1;
+      TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
+
       ProposalCapsule proposalCapsule =
           new ProposalCapsule(proposalCreateContract.getOwnerAddress(), id);
 
       proposalCapsule.setParameters(proposalCreateContract.getParametersMap());
 
       long now = chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
+      TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
+
       long maintenanceTimeInterval = chainBaseManager.getDynamicPropertiesStore()
           .getMaintenanceTimeInterval();
+      TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
+
       proposalCapsule.setCreateTime(now);
 
       long currentMaintenanceTime =
           chainBaseManager.getDynamicPropertiesStore().getNextMaintenanceTime();
+      TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
+
       long now3 = now + CommonParameter.getInstance().getProposalExpireTime();
       long round = (now3 - currentMaintenanceTime) / maintenanceTimeInterval;
       long expirationTime =
@@ -60,7 +69,11 @@ public class ProposalCreateActuator extends AbstractActuator {
       proposalCapsule.setExpirationTime(expirationTime);
 
       chainBaseManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
+      TxMeter.incrWriteLength(proposalCapsule.getInstance().getSerializedSize());
+
+
       chainBaseManager.getDynamicPropertiesStore().saveLatestProposalNum(id);
+      TxMeter.incrWriteLength(TxMeter.BaseType.LONG.getLength());
 
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
@@ -102,11 +115,16 @@ public class ProposalCreateActuator extends AbstractActuator {
       throw new ContractValidateException(
           ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
     }
+    TxMeter.incrReadLength(chainBaseManager.getAccountStore()
+            .get(ownerAddress).getInstance().getSerializedSize());
+
 
     if (!chainBaseManager.getWitnessStore().has(ownerAddress)) {
       throw new ContractValidateException(
           WITNESS_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
     }
+    TxMeter.incrReadLength(chainBaseManager.getWitnessStore()
+            .get(ownerAddress).getInstance().getSerializedSize());
 
     if (contract.getParametersMap().size() == 0) {
       throw new ContractValidateException("This proposal has no parameter.");

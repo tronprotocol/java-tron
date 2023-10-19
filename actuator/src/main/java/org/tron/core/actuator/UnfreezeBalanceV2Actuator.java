@@ -23,6 +23,7 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.service.MortgageService;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
@@ -70,9 +71,12 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
     mortgageService.withdrawReward(ownerAddress);
 
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
+    TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
+
     long unfreezeAmount = this.unfreezeExpire(accountCapsule, now);
     long unfreezeBalance = unfreezeBalanceV2Contract.getUnfreezeBalance();
 
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     if (dynamicStore.supportAllowNewResourceModel()
         && accountCapsule.oldTronPowerIsNotInitialized()) {
       accountCapsule.initializeOldTronPower();
@@ -86,12 +90,14 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
     this.updateTotalResourceWeight(accountCapsule, unfreezeBalanceV2Contract, unfreezeBalance);
     this.updateVote(accountCapsule, unfreezeBalanceV2Contract, ownerAddress);
 
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     if (dynamicStore.supportAllowNewResourceModel()
         && !accountCapsule.oldTronPowerIsInvalid()) {
       accountCapsule.invalidateOldTronPower();
     }
 
     accountStore.put(ownerAddress, accountCapsule);
+    TxMeter.incrWriteLength(accountCapsule.getInstance().getSerializedSize());
 
     ret.setWithdrawExpireAmount(unfreezeAmount);
     ret.setStatus(fee, code.SUCESS);
@@ -133,13 +139,17 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
     }
 
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
+
     if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
           ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] does not exist");
     }
+    TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
 
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
+
     switch (unfreezeBalanceV2Contract.getResource()) {
       case BANDWIDTH:
         if (!checkExistFrozenBalance(accountCapsule, BANDWIDTH)) {
@@ -152,6 +162,7 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
         }
         break;
       case TRON_POWER:
+        TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
         if (dynamicStore.supportAllowNewResourceModel()) {
           if (!checkExistFrozenBalance(accountCapsule, TRON_POWER)) {
             throw new ContractValidateException("no frozenBalance(TronPower)");
@@ -161,6 +172,7 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
         }
         break;
       default:
+        TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
         if (dynamicStore.supportAllowNewResourceModel()) {
           throw new ContractValidateException("ResourceCode error.valid ResourceCode[BANDWIDTH、Energy、TRON_POWER]");
         } else {
@@ -227,7 +239,7 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
   public long calcUnfreezeExpireTime(long now) {
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     long unfreezeDelayDays = dynamicStore.getUnfreezeDelayDays();
-
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     return now + unfreezeDelayDays * FROZEN_PERIOD;
   }
 
@@ -278,18 +290,21 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
         long oldNetWeight = accountCapsule.getFrozenV2BalanceWithDelegated(BANDWIDTH) / TRX_PRECISION;
         accountCapsule.addFrozenBalanceForBandwidthV2(-unfreezeBalance);
         long newNetWeight = accountCapsule.getFrozenV2BalanceWithDelegated(BANDWIDTH) / TRX_PRECISION;
+        TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
         dynamicStore.addTotalNetWeight(newNetWeight - oldNetWeight);
         break;
       case ENERGY:
         long oldEnergyWeight = accountCapsule.getFrozenV2BalanceWithDelegated(ENERGY) / TRX_PRECISION;
         accountCapsule.addFrozenBalanceForEnergyV2(-unfreezeBalance);
         long newEnergyWeight = accountCapsule.getFrozenV2BalanceWithDelegated(ENERGY) / TRX_PRECISION;
+        TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
         dynamicStore.addTotalEnergyWeight(newEnergyWeight - oldEnergyWeight);
         break;
       case TRON_POWER:
         long oldTPWeight = accountCapsule.getTronPowerFrozenV2Balance() / TRX_PRECISION;
         accountCapsule.addFrozenForTronPowerV2(-unfreezeBalance);
         long newTPWeight = accountCapsule.getTronPowerFrozenV2Balance() / TRX_PRECISION;
+        TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
         dynamicStore.addTotalTronPowerWeight(newTPWeight - oldTPWeight);
         break;
       default:
@@ -307,6 +322,7 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
     if (accountCapsule.getVotesList().isEmpty()) {
       return;
     }
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     if (dynamicStore.supportAllowNewResourceModel()) {
       if (accountCapsule.oldTronPowerIsInvalid()) {
         switch (unfreezeBalanceV2Contract.getResource()) {
@@ -331,6 +347,7 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
         accountCapsule.clearVotes();
         votesCapsule.clearNewVotes();
         votesStore.put(ownerAddress, votesCapsule);
+        TxMeter.incrWriteLength(votesCapsule.getInstance().getSerializedSize());
         return;
       }
     }
@@ -340,6 +357,8 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
       totalVote += vote.getVoteCount();
     }
     long ownedTronPower;
+
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     if (dynamicStore.supportAllowNewResourceModel()) {
       ownedTronPower = accountCapsule.getAllTronPower();
     } else {
@@ -362,6 +381,7 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
       );
     } else {
       votesCapsule = votesStore.get(ownerAddress);
+      TxMeter.incrReadLength(votesCapsule.getInstance().getSerializedSize() * 2L);
     }
 
     // Update Owner Voting
@@ -374,6 +394,7 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
       }
     }
     votesStore.put(ownerAddress, votesCapsule);
+    TxMeter.incrWriteLength(votesCapsule.getInstance().getSerializedSize());
 
     accountCapsule.clearVotes();
     for (Vote vote : votesCapsule.getNewVotes()) {

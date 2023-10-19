@@ -22,6 +22,7 @@ import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DelegatedResourceStore;
@@ -61,6 +62,7 @@ public class DelegateResourceActuator extends AbstractActuator {
 
     AccountCapsule ownerCapsule = accountStore
         .get(delegateResourceContract.getOwnerAddress().toByteArray());
+    TxMeter.incrReadLength(ownerCapsule.getInstance().getSerializedSize());
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     long delegateBalance = delegateResourceContract.getBalance();
     boolean lock = delegateResourceContract.getLock();
@@ -298,6 +300,7 @@ public class DelegateResourceActuator extends AbstractActuator {
 
     // 1. unlock the expired delegate resource
     long now = chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     delegatedResourceStore.unLockExpireResource(ownerAddress, receiverAddress, now);
 
     //modify DelegatedResourceStore
@@ -311,6 +314,7 @@ public class DelegateResourceActuator extends AbstractActuator {
     }
     byte[] key = DelegatedResourceCapsule.createDbKeyV2(ownerAddress, receiverAddress, lock);
     DelegatedResourceCapsule delegatedResourceCapsule = delegatedResourceStore.get(key);
+
     if (delegatedResourceCapsule == null) {
       delegatedResourceCapsule = new DelegatedResourceCapsule(ByteString.copyFrom(ownerAddress),
           ByteString.copyFrom(receiverAddress));
@@ -322,6 +326,7 @@ public class DelegateResourceActuator extends AbstractActuator {
       delegatedResourceCapsule.addFrozenBalanceForEnergy(balance, expireTime);
     }
     delegatedResourceStore.put(key, delegatedResourceCapsule);
+    TxMeter.incrWriteLength(delegatedResourceCapsule.getInstance().getSerializedSize());
 
     //modify DelegatedResourceAccountIndexStore
     delegatedResourceAccountIndexStore.delegateV2(ownerAddress, receiverAddress,
@@ -329,12 +334,14 @@ public class DelegateResourceActuator extends AbstractActuator {
 
     //modify AccountStore for receiver
     AccountCapsule receiverCapsule = accountStore.get(receiverAddress);
+    TxMeter.incrReadLength(receiverCapsule.getInstance().getSerializedSize());
     if (isBandwidth) {
       receiverCapsule.addAcquiredDelegatedFrozenV2BalanceForBandwidth(balance);
     } else {
       receiverCapsule.addAcquiredDelegatedFrozenV2BalanceForEnergy(balance);
     }
     accountStore.put(receiverCapsule.createDbKey(), receiverCapsule);
+    TxMeter.incrWriteLength(receiverCapsule.getInstance().getSerializedSize());
   }
 
 }

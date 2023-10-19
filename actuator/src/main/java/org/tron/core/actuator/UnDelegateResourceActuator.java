@@ -20,6 +20,7 @@ import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DelegatedResourceStore;
@@ -67,6 +68,7 @@ public class UnDelegateResourceActuator extends AbstractActuator {
     long transferUsage = 0;
     // modify receiver Account
     if (receiverCapsule != null) {
+      TxMeter.incrReadLength(receiverCapsule.getInstance().getSerializedSize());
       long now = chainBaseManager.getHeadSlot();
       switch (unDelegateResourceContract.getResource()) {
         case BANDWIDTH:
@@ -120,6 +122,7 @@ public class UnDelegateResourceActuator extends AbstractActuator {
           break;
       }
       accountStore.put(receiverCapsule.createDbKey(), receiverCapsule);
+      TxMeter.incrWriteLength(receiverCapsule.getInstance().getSerializedSize());
     }
 
     // transfer lock delegate to unlock
@@ -130,9 +133,12 @@ public class UnDelegateResourceActuator extends AbstractActuator {
         .createDbKeyV2(ownerAddress, receiverAddress, false);
     DelegatedResourceCapsule unlockResource = delegatedResourceStore
         .get(unlockKey);
+    TxMeter.incrReadLength(unlockResource.getInstance().getSerializedSize());
 
     // modify owner Account
     AccountCapsule ownerCapsule = accountStore.get(ownerAddress);
+    TxMeter.incrReadLength(ownerCapsule.getInstance().getSerializedSize());
+
     switch (unDelegateResourceContract.getResource()) {
       case BANDWIDTH: {
         unlockResource.addFrozenBalanceForBandwidth(-unDelegateBalance, 0);
@@ -174,9 +180,12 @@ public class UnDelegateResourceActuator extends AbstractActuator {
     if (unlockResource.getFrozenBalanceForBandwidth() == 0
         && unlockResource.getFrozenBalanceForEnergy() == 0) {
       delegatedResourceStore.delete(unlockKey);
+      TxMeter.incrWriteLength(unlockResource.getInstance().getSerializedSize());
+
       unlockResource = null;
     } else {
       delegatedResourceStore.put(unlockKey, unlockResource);
+      TxMeter.incrWriteLength(unlockResource.getInstance().getSerializedSize());
     }
 
     byte[] lockKey = DelegatedResourceCapsule
@@ -189,9 +198,8 @@ public class UnDelegateResourceActuator extends AbstractActuator {
     }
 
     accountStore.put(ownerAddress, ownerCapsule);
-
+    TxMeter.incrWriteLength(ownerCapsule.getInstance().getSerializedSize());
     ret.setStatus(fee, code.SUCESS);
-
     return true;
   }
 
@@ -210,6 +218,7 @@ public class UnDelegateResourceActuator extends AbstractActuator {
       throw new ContractValidateException("No support for resource delegate");
     }
 
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     if (!dynamicStore.supportUnfreezeDelay()) {
       throw new ContractValidateException("Not support unDelegate resource transaction,"
           + " need to be opened by the committee");
@@ -233,6 +242,10 @@ public class UnDelegateResourceActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid address");
     }
     AccountCapsule ownerCapsule = accountStore.get(ownerAddress);
+    if (ownerCapsule != null) {
+      TxMeter.incrReadLength(ownerCapsule.getInstance().getSerializedSize());
+    }
+
     if (ownerCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
@@ -264,6 +277,12 @@ public class UnDelegateResourceActuator extends AbstractActuator {
     if (unlockResourceCapsule == null && lockResourceCapsule == null) {
       throw new ContractValidateException(
           "delegated Resource does not exist");
+    }
+    if (null != lockResourceCapsule) {
+      TxMeter.incrReadLength(lockResourceCapsule.getInstance().getSerializedSize());
+    }
+    if (null != unlockResourceCapsule) {
+      TxMeter.incrReadLength(unlockResourceCapsule.getInstance().getSerializedSize());
     }
 
     long unDelegateBalance = unDelegateResourceContract.getBalance();

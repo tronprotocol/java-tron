@@ -15,6 +15,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
@@ -46,6 +47,8 @@ public class UnfreezeAssetActuator extends AbstractActuator {
       byte[] ownerAddress = unfreezeAssetContract.getOwnerAddress().toByteArray();
 
       AccountCapsule accountCapsule = accountStore.get(ownerAddress);
+      TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
+
       long unfreezeAsset = 0L;
       List<Frozen> frozenList = Lists.newArrayList();
       frozenList.addAll(accountCapsule.getFrozenSupplyList());
@@ -59,6 +62,7 @@ public class UnfreezeAssetActuator extends AbstractActuator {
         }
       }
 
+      TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
       if (dynamicStore.getAllowSameTokenName() == 0) {
         accountCapsule
             .addAssetAmountV2(accountCapsule.getAssetIssuedName().toByteArray(), unfreezeAsset,
@@ -73,6 +77,8 @@ public class UnfreezeAssetActuator extends AbstractActuator {
           .clearFrozenSupply().addAllFrozenSupply(frozenList).build());
 
       accountStore.put(ownerAddress, accountCapsule);
+      TxMeter.incrWriteLength(accountCapsule.getInstance().getSerializedSize());
+
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException | ArithmeticException e) {
       logger.debug(e.getMessage(), e);
@@ -111,11 +117,13 @@ public class UnfreezeAssetActuator extends AbstractActuator {
     }
 
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
+
     if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
           ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] does not exist");
     }
+    TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
 
     if (accountCapsule.getFrozenSupplyCount() <= 0) {
       throw new ContractValidateException("no frozen supply balance");

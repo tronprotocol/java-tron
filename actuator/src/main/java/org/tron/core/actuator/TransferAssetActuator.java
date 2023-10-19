@@ -28,6 +28,7 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
@@ -66,6 +67,7 @@ public class TransferAssetActuator extends AbstractActuator {
         toAccountCapsule = new AccountCapsule(ByteString.copyFrom(toAddress), AccountType.Normal,
             dynamicStore.getLatestBlockHeaderTimestamp(), withDefaultPermission, dynamicStore);
         accountStore.put(toAddress, toAccountCapsule);
+        TxMeter.incrWriteLength(toAccountCapsule.getInstance().getSerializedSize());
 
         fee = fee + dynamicStore.getCreateNewAccountFeeInSystemContract();
       }
@@ -73,15 +75,17 @@ public class TransferAssetActuator extends AbstractActuator {
       long amount = transferAssetContract.getAmount();
 
       AccountCapsule ownerAccountCapsule = accountStore.get(ownerAddress);
+      TxMeter.incrReadLength(ownerAccountCapsule.getInstance().getSerializedSize());
       if (!ownerAccountCapsule
           .reduceAssetAmountV2(assetName.toByteArray(), amount, dynamicStore, assetIssueStore)) {
         throw new ContractExeException("reduceAssetAmount failed !");
       }
       accountStore.put(ownerAddress, ownerAccountCapsule);
-
+      TxMeter.incrWriteLength(ownerAccountCapsule.getInstance().getSerializedSize());
       toAccountCapsule
           .addAssetAmountV2(assetName.toByteArray(), amount, dynamicStore, assetIssueStore);
       accountStore.put(toAddress, toAccountCapsule);
+      TxMeter.incrWriteLength(toAccountCapsule.getInstance().getSerializedSize());
 
       Commons.adjustBalance(accountStore, ownerAccountCapsule, -fee);
       if (dynamicStore.supportBlackHoleOptimization()) {
@@ -149,6 +153,7 @@ public class TransferAssetActuator extends AbstractActuator {
     }
 
     AccountCapsule ownerAccount = accountStore.get(ownerAddress);
+    TxMeter.incrReadLength(ownerAccount.getInstance().getSerializedSize());
     if (ownerAccount == null) {
       throw new ContractValidateException("No owner account!");
     }
@@ -167,6 +172,7 @@ public class TransferAssetActuator extends AbstractActuator {
     }
 
     AccountCapsule toAccount = accountStore.get(toAddress);
+    TxMeter.incrReadLength(toAccount.getInstance().getSerializedSize());
     if (toAccount != null) {
       //after ForbidTransferToContract proposal, send trx to smartContract by actuator is not allowed.
       if (dynamicStore.getForbidTransferToContract() == 1
@@ -185,6 +191,7 @@ public class TransferAssetActuator extends AbstractActuator {
       }
     } else {
       fee = fee + dynamicStore.getCreateNewAccountFeeInSystemContract();
+      TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
       if (ownerAccount.getBalance() < fee) {
         throw new ContractValidateException(
             "Validate TransferAssetActuator error, insufficient fee.");

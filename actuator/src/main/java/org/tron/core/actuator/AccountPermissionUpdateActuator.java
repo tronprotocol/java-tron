@@ -15,6 +15,7 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Key;
@@ -47,10 +48,15 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
 
       byte[] ownerAddress = accountPermissionUpdateContract.getOwnerAddress().toByteArray();
       AccountCapsule account = accountStore.get(ownerAddress);
+      TxMeter.incrReadLength(account.getInstance().getSerializedSize());
+
+
+
       account.updatePermissions(accountPermissionUpdateContract.getOwner(),
           accountPermissionUpdateContract.getWitness(),
           accountPermissionUpdateContract.getActivesList());
       accountStore.put(ownerAddress, account);
+      TxMeter.incrWriteLength(account.getInstance().getSerializedSize());
 
       Commons.adjustBalance(accountStore, ownerAddress, -fee);
       if (chainBaseManager.getDynamicPropertiesStore().supportBlackHoleOptimization()) {
@@ -71,6 +77,8 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
 
   private boolean checkPermission(Permission permission) throws ContractValidateException {
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     if (permission.getKeysCount() > dynamicStore.getTotalSignNum()) {
       throw new ContractValidateException("number of keys in permission should not be greater "
           + "than " + dynamicStore.getTotalSignNum());
@@ -160,6 +168,7 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
     AccountStore accountStore = chainBaseManager.getAccountStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
 
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     if (dynamicStore.getAllowMultiSign() != 1) {
       throw new ContractValidateException("multi sign is not allowed, "
           + "need to be opened by the committee");
@@ -184,6 +193,7 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
     if (accountCapsule == null) {
       throw new ContractValidateException("ownerAddress account does not exist");
     }
+    TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
 
     if (!accountPermissionUpdateContract.hasOwner()) {
       throw new ContractValidateException("owner permission is missed");
@@ -236,6 +246,7 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     return chainBaseManager.getDynamicPropertiesStore().getUpdateAccountPermissionFee();
   }
 }

@@ -32,6 +32,7 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
@@ -68,6 +69,7 @@ public class AssetIssueActuator extends AbstractActuator {
       AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
       AssetIssueCapsule assetIssueCapsuleV2 = new AssetIssueCapsule(assetIssueContract);
       long tokenIdNum = dynamicStore.getTokenIdNum();
+      TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
       tokenIdNum++;
       assetIssueCapsule.setId(Long.toString(tokenIdNum));
       assetIssueCapsuleV2.setId(Long.toString(tokenIdNum));
@@ -77,11 +79,13 @@ public class AssetIssueActuator extends AbstractActuator {
         assetIssueCapsuleV2.setPrecision(0);
         assetIssueStore
             .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
+        TxMeter.incrReadLength(assetIssueCapsule.getInstance().getSerializedSize());
         assetIssueV2Store
             .put(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
       } else {
         assetIssueV2Store
             .put(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
+        TxMeter.incrReadLength(assetIssueCapsule.getInstance().getSerializedSize());
       }
 
       Commons.adjustBalance(accountStore, ownerAddress, -fee);
@@ -91,6 +95,7 @@ public class AssetIssueActuator extends AbstractActuator {
         Commons.adjustBalance(accountStore, accountStore.getBlackhole(), fee);//send to blackhole
       }
       AccountCapsule accountCapsule = accountStore.get(ownerAddress);
+      TxMeter.incrReadLength(assetIssueCapsule.getInstance().getSerializedSize());
       List<FrozenSupply> frozenSupplyList = assetIssueContract.getFrozenSupplyList();
       Iterator<FrozenSupply> iterator = frozenSupplyList.iterator();
       long remainSupply = assetIssueContract.getTotalSupply();
@@ -118,7 +123,7 @@ public class AssetIssueActuator extends AbstractActuator {
           .addAllFrozenSupply(frozenList).build());
 
       accountStore.put(ownerAddress, accountCapsule);
-
+      TxMeter.incrWriteLength(accountCapsule.getInstance().getSerializedSize());
       ret.setAssetIssueID(Long.toString(tokenIdNum));
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException | BalanceInsufficientException | ArithmeticException e) {
@@ -268,6 +273,7 @@ public class AssetIssueActuator extends AbstractActuator {
     }
 
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
+    TxMeter.incrWriteLength(accountCapsule.getInstance().getSerializedSize());
     if (accountCapsule == null) {
       throw new ContractValidateException("Account not exists");
     }

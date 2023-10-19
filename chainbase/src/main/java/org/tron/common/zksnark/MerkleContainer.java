@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.PedersenHashCapsule;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.store.IncrementalMerkleTreeStore;
 import org.tron.core.store.TreeBlockIndexStore;
 
@@ -42,6 +43,7 @@ public class MerkleContainer {
   }
 
   public void setCurrentMerkle(IncrementalMerkleTreeContainer treeContainer) {
+    TxMeter.incrWriteLength(treeContainer.getTreeCapsule().getInstance().getSerializedSize());
     incrementalMerkleTreeStore.put(currentTreeKey, treeContainer.getTreeCapsule());
   }
 

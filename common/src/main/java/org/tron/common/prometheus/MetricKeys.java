@@ -17,6 +17,7 @@ public class MetricKeys {
     public static final String P2P_ERROR = "tron:p2p_error";
     public static final String P2P_DISCONNECT = "tron:p2p_disconnect";
     public static final String INTERNAL_SERVICE_FAIL = "tron:internal_service_fail";
+    public static final String DB_OP = "tron:db_op";
 
     private Counter() {
       throw new IllegalStateException("Counter");
@@ -58,6 +59,10 @@ public class MetricKeys {
     public static final String UDP_BYTES = "tron:udp_bytes";
     public static final String TCP_BYTES = "tron:tcp_bytes";
     public static final String HTTP_BYTES = "tron:http_bytes";
+    public static final String TX_BYTES = "tron:tx_bytes";
+    public static final String DB_BYTES = "tron:db_bytes";
+    public static final String TX_SIG_BYTES = "tron:tx_sig_bytes";
+
     public static final String INTERNAL_SERVICE_LATENCY = "tron:internal_service_latency_seconds";
     public static final String MESSAGE_PROCESS_LATENCY = "tron:message_process_latency_seconds";
     public static final String BLOCK_FETCH_LATENCY = "tron:block_fetch_latency_seconds";

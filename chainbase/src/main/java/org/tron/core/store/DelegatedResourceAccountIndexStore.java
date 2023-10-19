@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
+import org.tron.core.meter.TxMeter;
 
 @Component
 public class DelegatedResourceAccountIndexStore extends
@@ -45,6 +46,8 @@ public class DelegatedResourceAccountIndexStore extends
       // convert complete or have no delegate
       return;
     }
+    TxMeter.incrReadLength(indexCapsule.getInstance().getSerializedSize());
+
     // convert old data
     List<ByteString> toList = indexCapsule.getToAccountsList();
     for (int i = 0; i < toList.size(); i++) {
@@ -58,6 +61,7 @@ public class DelegatedResourceAccountIndexStore extends
       this.delegate(fromList.get(i).toByteArray(), address, i + 1L);
     }
     this.delete(address);
+    TxMeter.incrWriteLength(indexCapsule.getInstance().getSerializedSize());
   }
 
   public void delegate(byte[] from, byte[] to, long time) {
@@ -66,12 +70,14 @@ public class DelegatedResourceAccountIndexStore extends
         new DelegatedResourceAccountIndexCapsule(ByteString.copyFrom(to));
     toIndexCapsule.setTimestamp(time);
     this.put(fromKey, toIndexCapsule);
+    TxMeter.incrWriteLength(toIndexCapsule.getInstance().getSerializedSize());
 
     byte[] toKey = Bytes.concat(TO_PREFIX, to, from);
     DelegatedResourceAccountIndexCapsule fromIndexCapsule =
         new DelegatedResourceAccountIndexCapsule(ByteString.copyFrom(from));
     fromIndexCapsule.setTimestamp(time);
     this.put(toKey, fromIndexCapsule);
+    TxMeter.incrWriteLength(fromIndexCapsule.getInstance().getSerializedSize());
   }
 
   public void delegateV2(byte[] from, byte[] to, long time) {
@@ -80,12 +86,14 @@ public class DelegatedResourceAccountIndexStore extends
         new DelegatedResourceAccountIndexCapsule(ByteString.copyFrom(to));
     toIndexCapsule.setTimestamp(time);
     this.put(fromKey, toIndexCapsule);
+    TxMeter.incrWriteLength(toIndexCapsule.getInstance().getSerializedSize());
 
     byte[] toKey = Bytes.concat(V2_TO_PREFIX, to, from);
     DelegatedResourceAccountIndexCapsule fromIndexCapsule =
         new DelegatedResourceAccountIndexCapsule(ByteString.copyFrom(from));
     fromIndexCapsule.setTimestamp(time);
     this.put(toKey, fromIndexCapsule);
+    TxMeter.incrWriteLength(fromIndexCapsule.getInstance().getSerializedSize());
   }
 
   public void unDelegate(byte[] from, byte[] to) {

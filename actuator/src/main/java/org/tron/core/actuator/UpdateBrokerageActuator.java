@@ -5,12 +5,14 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
@@ -50,6 +52,8 @@ public class UpdateBrokerageActuator extends AbstractActuator {
     int brokerage = updateBrokerageContract.getBrokerage();
 
     delegationStore.setBrokerage(ownerAddress, brokerage);
+    TxMeter.incrWriteLength(ByteArray.fromInt(brokerage).length);
+
     ret.setStatus(fee, code.SUCESS);
 
     return true;
@@ -98,11 +102,14 @@ public class UpdateBrokerageActuator extends AbstractActuator {
     if (witnessCapsule == null) {
       throw new ContractValidateException("Not existed witness:" + Hex.toHexString(ownerAddress));
     }
+    TxMeter.incrReadLength(witnessCapsule.getInstance().getSerializedSize());
+
 
     AccountCapsule account = accountStore.get(ownerAddress);
     if (account == null) {
       throw new ContractValidateException("Account does not exist");
     }
+    TxMeter.incrReadLength(account.getInstance().getSerializedSize());
 
     return true;
   }

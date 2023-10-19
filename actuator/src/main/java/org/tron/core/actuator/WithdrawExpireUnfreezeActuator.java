@@ -16,6 +16,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Account.UnFreezeV2;
@@ -50,7 +51,11 @@ public class WithdrawExpireUnfreezeActuator extends AbstractActuator {
     }
     AccountCapsule accountCapsule = accountStore.get(
         withdrawExpireUnfreezeContract.getOwnerAddress().toByteArray());
+    TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
+
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
+
     List<UnFreezeV2> unfrozenV2List = accountCapsule.getInstance().getUnfrozenV2List();
     long totalWithdrawUnfreeze = getTotalWithdrawUnfreeze(unfrozenV2List, now);
     accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
@@ -60,6 +65,8 @@ public class WithdrawExpireUnfreezeActuator extends AbstractActuator {
     accountCapsule.clearUnfrozenV2();
     accountCapsule.addAllUnfrozenV2(newUnFreezeList);
     accountStore.put(accountCapsule.createDbKey(), accountCapsule);
+    TxMeter.incrWriteLength(accountCapsule.getInstance().getSerializedSize());
+
     ret.setWithdrawExpireAmount(totalWithdrawUnfreeze);
     ret.setStatus(fee, code.SUCESS);
     return true;
@@ -85,6 +92,7 @@ public class WithdrawExpireUnfreezeActuator extends AbstractActuator {
       throw new ContractValidateException("Not support WithdrawExpireUnfreeze transaction,"
           + " need to be opened by the committee");
     }
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
 
     final WithdrawExpireUnfreezeContract withdrawExpireUnfreezeContract;
     try {
@@ -98,11 +106,13 @@ public class WithdrawExpireUnfreezeActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid address");
     }
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
+
     String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
     if (Objects.isNull(accountCapsule)) {
       throw new ContractValidateException(ACCOUNT_EXCEPTION_STR
           + readableOwnerAddress + NOT_EXIST_STR);
     }
+    TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
 
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
     List<UnFreezeV2> unfrozenV2List = accountCapsule.getInstance().getUnfrozenV2List();

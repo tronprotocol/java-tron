@@ -24,6 +24,7 @@ import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DelegatedResourceStore;
@@ -60,13 +61,17 @@ public class FreezeBalanceActuator extends AbstractActuator {
     }
     AccountCapsule accountCapsule = accountStore
         .get(freezeBalanceContract.getOwnerAddress().toByteArray());
+    TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
 
     if (dynamicStore.supportAllowNewResourceModel()
         && accountCapsule.oldTronPowerIsNotInitialized()) {
       accountCapsule.initializeOldTronPower();
     }
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
 
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
+
     long duration = freezeBalanceContract.getFrozenDuration() * FROZEN_PERIOD;
 
     long newBalance = accountCapsule.getBalance() - freezeBalanceContract.getFrozenBalance();
@@ -298,6 +303,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
     DelegatedResourceCapsule delegatedResourceCapsule = delegatedResourceStore
         .get(key);
     if (delegatedResourceCapsule != null) {
+      TxMeter.incrReadLength(delegatedResourceCapsule.getInstance().getSerializedSize());
       if (isBandwidth) {
         delegatedResourceCapsule.addFrozenBalanceForBandwidth(balance, expireTime);
       } else {
@@ -315,21 +321,25 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
     }
     delegatedResourceStore.put(key, delegatedResourceCapsule);
+    TxMeter.incrWriteLength(delegatedResourceCapsule.getInstance().getSerializedSize());
 
     //modify DelegatedResourceAccountIndexStore
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     if (!dynamicPropertiesStore.supportAllowDelegateOptimization()) {
-
       DelegatedResourceAccountIndexCapsule ownerIndexCapsule =
           delegatedResourceAccountIndexStore.get(ownerAddress);
       if (ownerIndexCapsule == null) {
         ownerIndexCapsule = new DelegatedResourceAccountIndexCapsule(
             ByteString.copyFrom(ownerAddress));
       }
+      TxMeter.incrReadLength(ownerIndexCapsule.getInstance().getSerializedSize());
+
       List<ByteString> toAccountsList = ownerIndexCapsule.getToAccountsList();
       if (!toAccountsList.contains(ByteString.copyFrom(receiverAddress))) {
         ownerIndexCapsule.addToAccount(ByteString.copyFrom(receiverAddress));
       }
       delegatedResourceAccountIndexStore.put(ownerAddress, ownerIndexCapsule);
+      TxMeter.incrWriteLength(ownerIndexCapsule.getInstance().getSerializedSize());
 
       DelegatedResourceAccountIndexCapsule receiverIndexCapsule
           = delegatedResourceAccountIndexStore.get(receiverAddress);
@@ -337,13 +347,15 @@ public class FreezeBalanceActuator extends AbstractActuator {
         receiverIndexCapsule = new DelegatedResourceAccountIndexCapsule(
             ByteString.copyFrom(receiverAddress));
       }
+      TxMeter.incrReadLength(receiverIndexCapsule.getInstance().getSerializedSize());
+
       List<ByteString> fromAccountsList = receiverIndexCapsule
           .getFromAccountsList();
       if (!fromAccountsList.contains(ByteString.copyFrom(ownerAddress))) {
         receiverIndexCapsule.addFromAccount(ByteString.copyFrom(ownerAddress));
       }
       delegatedResourceAccountIndexStore.put(receiverAddress, receiverIndexCapsule);
-
+      TxMeter.incrWriteLength(receiverIndexCapsule.getInstance().getSerializedSize());
     } else {
       // modify DelegatedResourceAccountIndexStore new
       delegatedResourceAccountIndexStore.convert(ownerAddress);
@@ -354,6 +366,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
     //modify AccountStore
     AccountCapsule receiverCapsule = accountStore.get(receiverAddress);
+    TxMeter.incrReadLength(receiverCapsule.getInstance().getSerializedSize());
     long oldWeight;
     long newWeight;
     if (isBandwidth) {
@@ -366,6 +379,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
       newWeight = receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy() / TRX_PRECISION;
     }
     accountStore.put(receiverCapsule.createDbKey(), receiverCapsule);
+    TxMeter.incrWriteLength(receiverCapsule.getInstance().getSerializedSize());
     return newWeight - oldWeight;
   }
 

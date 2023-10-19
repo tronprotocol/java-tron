@@ -128,6 +128,7 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.service.MortgageService;
@@ -802,13 +803,14 @@ public class Manager {
     return containsTransaction(transactionCapsule.getTransactionId().getBytes());
   }
 
-
   private boolean containsTransaction(byte[] transactionId) {
+    TxMeter.incrReadLength(transactionId.length);
     if (transactionCache != null && !transactionCache.has(transactionId)) {
       // using the bloom filter only determines non-existent transaction
       return false;
     }
 
+    TxMeter.incrReadLength(transactionId.length);
     return chainBaseManager.getTransactionStore()
         .has(transactionId);
   }
@@ -1457,6 +1459,7 @@ public class Manager {
       trxCap.setResult(trace.getTransactionContext());
     }
     chainBaseManager.getTransactionStore().put(trxCap.getTransactionId().getBytes(), trxCap);
+    setTxMeterMetrics(trxCap);
 
     Optional.ofNullable(transactionCache)
         .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
@@ -1499,6 +1502,37 @@ public class Manager {
     }
     Metrics.histogramObserve(requestTimer);
     return transactionInfo.getInstance();
+  }
+
+  private void setTxMeterMetrics(TransactionCapsule trxCap) {
+    TxMeter.incrWriteLength(trxCap.getTransactionId().getBytes().length);
+    Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
+            TxMeter.totalReadLength(),
+            "read",
+            trxCap.getInstance().getRawData().getContract(0).getType().toString()
+    );
+    Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
+            TxMeter.totalPutLength(),
+            "put",
+            trxCap.getInstance().getRawData().getContract(0).getType().toString()
+    );
+    Metrics.counterInc(MetricKeys.Counter.DB_OP,
+            TxMeter.totalReadCount(),
+            "read",
+            trxCap.getInstance().getRawData().getContract(0).getType().toString()
+    );
+    Metrics.counterInc(MetricKeys.Counter.DB_OP,
+            TxMeter.totalPutCount(),
+            "put",
+            trxCap.getInstance().getRawData().getContract(0).getType().toString()
+    );
+
+    Metrics.histogramObserve(MetricKeys.Histogram.TX_SIG_BYTES,
+            TxMeter.totalSigLength(),
+            "sig"
+    );
+
+    TxMeter.remove();
   }
 
   /**
@@ -1724,12 +1758,19 @@ public class Manager {
         if (block.generatedByMyself) {
           transactionCapsule.setVerified(true);
         }
+        TxMeter.init(transactionCapsule);
         accountStateCallBack.preExeTrans();
         TransactionInfo result = processTransaction(transactionCapsule, block);
         accountStateCallBack.exeTransFinish();
         if (Objects.nonNull(result)) {
           results.add(result);
         }
+        Metrics.histogramObserve(MetricKeys.Histogram.TX_BYTES,
+                transactionCapsule.getSerializedSize(),
+                transactionCapsule.getInstance()
+                        .getRawData()
+                        .getContract(0)
+                        .getType().toString());
       }
       transactionRetCapsule.addAllTransactionInfos(results);
       accountStateCallBack.executePushFinish();
@@ -1955,6 +1996,7 @@ public class Manager {
       for (TransactionCapsule transaction : txs) {
         Future<Boolean> future = validateSignService
             .submit(new ValidateSignTask(transaction, countDownLatch, chainBaseManager));
+        TxMeter.incrSigLength(transaction.getInstance().getSerializedSize());
         futures.add(future);
       }
       countDownLatch.await();

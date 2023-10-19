@@ -22,6 +22,7 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.service.MortgageService;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DelegatedResourceAccountIndexStore;
@@ -74,12 +75,15 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     mortgageService.withdrawReward(ownerAddress);
 
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
+    TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
+
     long oldBalance = accountCapsule.getBalance();
 
     long unfreezeBalance = 0L;
 
     if (dynamicStore.supportAllowNewResourceModel()
         && accountCapsule.oldTronPowerIsNotInitialized()) {
+      TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
       accountCapsule.initializeOldTronPower();
     }
 
@@ -93,6 +97,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
               unfreezeBalanceContract.getReceiverAddress().toByteArray());
       DelegatedResourceCapsule delegatedResourceCapsule = delegatedResourceStore
           .get(key);
+      TxMeter.incrReadLength(delegatedResourceCapsule.getInstance().getSerializedSize());
 
       switch (unfreezeBalanceContract.getResource()) {
         case BANDWIDTH:
@@ -111,6 +116,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       }
 
       AccountCapsule receiverCapsule = accountStore.get(receiverAddress);
+      TxMeter.incrReadLength(receiverCapsule.getInstance().getSerializedSize());
 
       if (dynamicStore.getAllowTvmConstantinople() == 0 ||
           (receiverCapsule != null && receiverCapsule.getType() != AccountType.Contract)) {
@@ -149,6 +155,8 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
             break;
         }
         accountStore.put(receiverCapsule.createDbKey(), receiverCapsule);
+        TxMeter.incrWriteLength(receiverCapsule.getInstance().getSerializedSize());
+
       } else {
         decrease = -unfreezeBalance / TRX_PRECISION;
       }
@@ -166,19 +174,23 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           if (ownerIndexCapsule != null) {
             List<ByteString> toAccountsList = new ArrayList<>(ownerIndexCapsule
                 .getToAccountsList());
+            TxMeter.incrReadLength(ownerIndexCapsule.getInstance().getSerializedSize());
             toAccountsList.remove(ByteString.copyFrom(receiverAddress));
             ownerIndexCapsule.setAllToAccounts(toAccountsList);
             delegatedResourceAccountIndexStore.put(ownerAddress, ownerIndexCapsule);
+            TxMeter.incrWriteLength(ownerIndexCapsule.getInstance().getSerializedSize());
           }
 
           DelegatedResourceAccountIndexCapsule receiverIndexCapsule =
               delegatedResourceAccountIndexStore.get(receiverAddress);
           if (receiverIndexCapsule != null) {
+            TxMeter.incrReadLength(receiverIndexCapsule.getInstance().getSerializedSize());
             List<ByteString> fromAccountsList = new ArrayList<>(receiverIndexCapsule
                 .getFromAccountsList());
             fromAccountsList.remove(ByteString.copyFrom(ownerAddress));
             receiverIndexCapsule.setAllFromAccounts(fromAccountsList);
             delegatedResourceAccountIndexStore.put(receiverAddress, receiverIndexCapsule);
+            TxMeter.incrWriteLength(receiverIndexCapsule.getInstance().getSerializedSize());
           }
         } else {
           //modify DelegatedResourceAccountIndexStore new
@@ -188,6 +200,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
         }
       } else {
         delegatedResourceStore.put(key, delegatedResourceCapsule);
+        TxMeter.incrWriteLength(delegatedResourceCapsule.getInstance().getSerializedSize());
       }
     } else {
       switch (unfreezeBalanceContract.getResource()) {
@@ -245,14 +258,17 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       case BANDWIDTH:
         dynamicStore
             .addTotalNetWeight(weight);
+        TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
         break;
       case ENERGY:
         dynamicStore
             .addTotalEnergyWeight(weight);
+        TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
         break;
       case TRON_POWER:
         dynamicStore
             .addTotalTronPowerWeight(weight);
+        TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
         break;
       default:
         //this should never happen
@@ -260,6 +276,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     }
 
     boolean needToClearVote = true;
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     if (dynamicStore.supportAllowNewResourceModel()
         && accountCapsule.oldTronPowerIsInvalid()) {
       switch (unfreezeBalanceContract.getResource()) {
@@ -275,23 +292,27 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     if (needToClearVote) {
       VotesCapsule votesCapsule;
       if (!votesStore.has(ownerAddress)) {
+        TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
         votesCapsule = new VotesCapsule(unfreezeBalanceContract.getOwnerAddress(),
             accountCapsule.getVotesList());
       } else {
         votesCapsule = votesStore.get(ownerAddress);
+        TxMeter.incrReadLength(votesCapsule.getData().length);
       }
       accountCapsule.clearVotes();
       votesCapsule.clearNewVotes();
       votesStore.put(ownerAddress, votesCapsule);
+      TxMeter.incrWriteLength(votesCapsule.getData().length);
     }
 
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     if (dynamicStore.supportAllowNewResourceModel()
         && !accountCapsule.oldTronPowerIsInvalid()) {
       accountCapsule.invalidateOldTronPower();
     }
 
     accountStore.put(ownerAddress, accountCapsule);
-
+    TxMeter.incrWriteLength(accountCapsule.getData().length);
     ret.setUnfreezeAmount(unfreezeBalance);
     ret.setStatus(fee, code.SUCESS);
 
@@ -332,6 +353,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       throw new ContractValidateException(
           ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] does not exist");
     }
+    TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
     byte[] receiverAddress = unfreezeBalanceContract.getReceiverAddress().toByteArray();
     //If the receiver is not included in the contract, unfreeze frozen balance for this account.
@@ -353,6 +375,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
         throw new ContractValidateException(
             "Receiver Account[" + readableReceiverAddress + "] does not exist");
       }
+      TxMeter.incrReadLength(receiverCapsule.getInstance().getSerializedSize());
 
       byte[] key = DelegatedResourceCapsule
           .createDbKey(unfreezeBalanceContract.getOwnerAddress().toByteArray(),
@@ -458,6 +481,8 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           break;
         case TRON_POWER:
           if (dynamicStore.supportAllowNewResourceModel()) {
+            TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
+
             Frozen frozenBalanceForTronPower = accountCapsule.getInstance().getTronPower();
             if (frozenBalanceForTronPower.getFrozenBalance() <= 0) {
               throw new ContractValidateException("no frozenBalance(TronPower)");
@@ -471,6 +496,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           break;
         default:
           if (dynamicStore.supportAllowNewResourceModel()) {
+            TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
             throw new ContractValidateException(
                 "ResourceCode error.valid ResourceCode[BANDWIDTH、Energy、TRON_POWER]");
           } else {

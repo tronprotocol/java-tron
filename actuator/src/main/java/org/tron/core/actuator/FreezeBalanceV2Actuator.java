@@ -9,6 +9,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -48,7 +49,9 @@ public class FreezeBalanceV2Actuator extends AbstractActuator {
       throw new ContractExeException(e.getMessage());
     }
     AccountCapsule accountCapsule = accountStore.get(freezeBalanceV2Contract.getOwnerAddress().toByteArray());
+    TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
 
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     if (dynamicStore.supportAllowNewResourceModel()
         && accountCapsule.oldTronPowerIsNotInitialized()) {
       accountCapsule.initializeOldTronPower();
@@ -63,18 +66,21 @@ public class FreezeBalanceV2Actuator extends AbstractActuator {
         accountCapsule.addFrozenBalanceForBandwidthV2(frozenBalance);
         long newNetWeight = accountCapsule.getFrozenV2BalanceWithDelegated(BANDWIDTH) / TRX_PRECISION;
         dynamicStore.addTotalNetWeight(newNetWeight - oldNetWeight);
+        TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
         break;
       case ENERGY:
         long oldEnergyWeight = accountCapsule.getFrozenV2BalanceWithDelegated(ENERGY) / TRX_PRECISION;
         accountCapsule.addFrozenBalanceForEnergyV2(frozenBalance);
         long newEnergyWeight = accountCapsule.getFrozenV2BalanceWithDelegated(ENERGY) / TRX_PRECISION;
         dynamicStore.addTotalEnergyWeight(newEnergyWeight - oldEnergyWeight);
+        TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
         break;
       case TRON_POWER:
         long oldTPWeight = accountCapsule.getTronPowerFrozenV2Balance() / TRX_PRECISION;
         accountCapsule.addFrozenForTronPowerV2(frozenBalance);
         long newTPWeight = accountCapsule.getTronPowerFrozenV2Balance() / TRX_PRECISION;
         dynamicStore.addTotalTronPowerWeight(newTPWeight - oldTPWeight);
+        TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
         break;
       default:
         logger.debug("Resource Code Error.");
@@ -82,6 +88,7 @@ public class FreezeBalanceV2Actuator extends AbstractActuator {
 
     accountCapsule.setBalance(newBalance);
     accountStore.put(accountCapsule.createDbKey(), accountCapsule);
+    TxMeter.incrWriteLength(accountCapsule.getInstance().getSerializedSize());
 
     ret.setStatus(fee, code.SUCESS);
 
@@ -108,6 +115,7 @@ public class FreezeBalanceV2Actuator extends AbstractActuator {
       throw new ContractValidateException("Not support FreezeV2 transaction,"
           + " need to be opened by the committee");
     }
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
 
     final FreezeBalanceV2Contract freezeBalanceV2Contract;
     try {
@@ -127,6 +135,7 @@ public class FreezeBalanceV2Actuator extends AbstractActuator {
       throw new ContractValidateException(
           ActuatorConstant.ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
     }
+    TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
 
     long frozenBalance = freezeBalanceV2Contract.getFrozenBalance();
     if (frozenBalance <= 0) {
@@ -145,12 +154,14 @@ public class FreezeBalanceV2Actuator extends AbstractActuator {
       case ENERGY:
         break;
       case TRON_POWER:
+        TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
         if (!dynamicStore.supportAllowNewResourceModel()) {
           throw new ContractValidateException(
               "ResourceCode error, valid ResourceCode[BANDWIDTH、ENERGY]");
         }
         break;
       default:
+        TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
         if (dynamicStore.supportAllowNewResourceModel()) {
           throw new ContractValidateException(
               "ResourceCode error, valid ResourceCode[BANDWIDTH、ENERGY、TRON_POWER]");

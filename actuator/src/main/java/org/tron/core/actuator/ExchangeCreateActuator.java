@@ -18,6 +18,7 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
@@ -52,7 +53,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
           .unpack(ExchangeCreateContract.class);
       AccountCapsule accountCapsule = accountStore
           .get(exchangeCreateContract.getOwnerAddress().toByteArray());
-
+      TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
       byte[] firstTokenID = exchangeCreateContract.getFirstTokenId().toByteArray();
       byte[] secondTokenID = exchangeCreateContract.getSecondTokenId().toByteArray();
       long firstTokenBalance = exchangeCreateContract.getFirstTokenBalance();
@@ -90,15 +91,18 @@ public class ExchangeCreateActuator extends AbstractActuator {
             );
         exchangeCapsule.setBalance(firstTokenBalance, secondTokenBalance);
         exchangeStore.put(exchangeCapsule.createDbKey(), exchangeCapsule);
+        TxMeter.incrWriteLength(exchangeCapsule.getInstance().getSerializedSize());
 
         //save to new asset store
         if (!Arrays.equals(firstTokenID, TRX_SYMBOL_BYTES)) {
           String firstTokenRealID = assetIssueStore.get(firstTokenID).getId();
           firstTokenID = firstTokenRealID.getBytes();
+          TxMeter.incrReadLength(firstTokenID.length);
         }
         if (!Arrays.equals(secondTokenID, TRX_SYMBOL_BYTES)) {
           String secondTokenRealID = assetIssueStore.get(secondTokenID).getId();
           secondTokenID = secondTokenRealID.getBytes();
+          TxMeter.incrReadLength(secondTokenID.length);
         }
       }
 
@@ -114,9 +118,11 @@ public class ExchangeCreateActuator extends AbstractActuator {
             );
         exchangeCapsuleV2.setBalance(firstTokenBalance, secondTokenBalance);
         exchangeV2Store.put(exchangeCapsuleV2.createDbKey(), exchangeCapsuleV2);
+        TxMeter.incrWriteLength(exchangeCapsuleV2.getInstance().getSerializedSize());
       }
 
       accountStore.put(accountCapsule.createDbKey(), accountCapsule);
+      TxMeter.incrWriteLength(accountCapsule.getInstance().getSerializedSize());
       dynamicStore.saveLatestExchangeNum(id);
       if (dynamicStore.supportBlackHoleOptimization()) {
         dynamicStore.burnTrx(fee);
@@ -167,8 +173,10 @@ public class ExchangeCreateActuator extends AbstractActuator {
     }
 
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
+    TxMeter.incrWriteLength(accountCapsule.getInstance().getSerializedSize() * 2L);
 
     if (accountCapsule.getBalance() < calcFee()) {
+      TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
       throw new ContractValidateException("No enough balance for exchange create fee!");
     }
 
@@ -230,6 +238,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     return chainBaseManager.getDynamicPropertiesStore().getExchangeCreateFee();
   }
 

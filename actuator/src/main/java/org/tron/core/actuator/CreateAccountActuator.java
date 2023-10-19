@@ -14,6 +14,7 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.meter.TxMeter;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -47,7 +48,7 @@ public class CreateAccountActuator extends AbstractActuator {
 
       accountStore
           .put(accountCreateContract.getAccountAddress().toByteArray(), accountCapsule);
-
+      TxMeter.incrWriteLength(accountCapsule.getInstance().getSerializedSize());
       Commons
           .adjustBalance(accountStore, accountCreateContract.getOwnerAddress().toByteArray(), -fee);
       // Add to blackhole address
@@ -102,7 +103,7 @@ public class CreateAccountActuator extends AbstractActuator {
           ActuatorConstant.ACCOUNT_EXCEPTION_STR
               + readableOwnerAddress + NOT_EXIST_STR);
     }
-
+    TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
     final long fee = calcFee();
     if (accountCapsule.getBalance() < fee) {
       throw new ContractValidateException(
@@ -119,6 +120,7 @@ public class CreateAccountActuator extends AbstractActuator {
 //    }
 
     if (accountStore.has(accountAddress)) {
+      TxMeter.incrReadLength(TxMeter.BaseType.BOOLEAN.getLength());
       throw new ContractValidateException("Account has existed");
     }
 
@@ -132,6 +134,7 @@ public class CreateAccountActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     return chainBaseManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();
   }
 }
