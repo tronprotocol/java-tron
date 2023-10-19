@@ -239,6 +239,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     return dynamicStore.getMarketCancelFee();
   }
 

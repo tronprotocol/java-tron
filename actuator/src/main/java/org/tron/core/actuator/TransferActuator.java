@@ -51,12 +51,13 @@ public class TransferActuator extends AbstractActuator {
 
       // if account with to_address does not exist, create it first.
       AccountCapsule toAccount = accountStore.get(toAddress);
-      TxMeter.incrReadLength(toAccount.getInstance().getSerializedSize());
+      TxMeter.incrReadLength(toAccount);
+
       if (toAccount == null) {
         boolean withDefaultPermission =
-            dynamicStore.getAllowMultiSign() == 1;
+                dynamicStore.getAllowMultiSign() == 1;
         toAccount = new AccountCapsule(ByteString.copyFrom(toAddress), AccountType.Normal,
-            dynamicStore.getLatestBlockHeaderTimestamp(), withDefaultPermission, dynamicStore);
+                dynamicStore.getLatestBlockHeaderTimestamp(), withDefaultPermission, dynamicStore);
         accountStore.put(toAddress, toAccount);
         TxMeter.incrWriteLength(toAccount.getInstance().getSerializedSize());
         fee = fee + dynamicStore.getCreateNewAccountFeeInSystemContract();
@@ -64,6 +65,7 @@ public class TransferActuator extends AbstractActuator {
 
       Commons.adjustBalance(accountStore, ownerAddress, -(Math.addExact(fee, amount)));
       if (dynamicStore.supportBlackHoleOptimization()) {
+        TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
         dynamicStore.burnTrx(fee);
       } else {
         Commons.adjustBalance(accountStore, accountStore.getBlackhole(), fee);
@@ -90,8 +92,8 @@ public class TransferActuator extends AbstractActuator {
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     if (!this.any.is(TransferContract.class)) {
       throw new ContractValidateException(
-          "contract type error, expected type [TransferContract], real type [" + this.any
-              .getClass() + "]");
+              "contract type error, expected type [TransferContract], real type [" + this.any
+                      .getClass() + "]");
     }
     long fee = calcFee();
     final TransferContract transferContract;
@@ -139,8 +141,8 @@ public class TransferActuator extends AbstractActuator {
       }
       //after ForbidTransferToContract proposal, send trx to smartContract by actuator is not allowed.
       if (dynamicStore.getForbidTransferToContract() == 1
-          && toAccount != null
-          && toAccount.getType() == AccountType.Contract) {
+              && toAccount != null
+              && toAccount.getType() == AccountType.Contract) {
 
         TxMeter.incrReadLength(toAccount.getInstance().getSerializedSize());
         throw new ContractValidateException("Cannot transfer TRX to a smartContract.");
@@ -150,26 +152,26 @@ public class TransferActuator extends AbstractActuator {
       // after AllowTvmCompatibleEvm proposal, send trx to smartContract which version is one
       // by actuator is not allowed.
       if (dynamicStore.getAllowTvmCompatibleEvm() == 1
-          && toAccount != null
-          && toAccount.getType() == AccountType.Contract) {
+              && toAccount != null
+              && toAccount.getType() == AccountType.Contract) {
 
         ContractCapsule contractCapsule = chainBaseManager.getContractStore().get(toAddress);
         if (contractCapsule == null) { //  this can not happen
           throw new ContractValidateException(
-              "Account type is Contract, but it is not exist in contract store.");
+                  "Account type is Contract, but it is not exist in contract store.");
         } else if (contractCapsule.getContractVersion() == 1) {
           throw new ContractValidateException(
-              "Cannot transfer TRX to a smartContract which version is one. "
-                  + "Instead please use TriggerSmartContract ");
+                  "Cannot transfer TRX to a smartContract which version is one. "
+                          + "Instead please use TriggerSmartContract ");
         }
         TxMeter.incrReadLength(contractCapsule.getInstance().getSerializedSize());
       }
 
       if (balance < Math.addExact(amount, fee)) {
         logger.warn("Balance is not sufficient. Account: {}, balance: {}, amount: {}, fee: {}.",
-            StringUtil.encode58Check(ownerAddress), balance, amount, fee);
+                StringUtil.encode58Check(ownerAddress), balance, amount, fee);
         throw new ContractValidateException(
-            "Validate TransferContract error, balance is not sufficient.");
+                "Validate TransferContract error, balance is not sufficient.");
       }
 
       if (toAccount != null) {

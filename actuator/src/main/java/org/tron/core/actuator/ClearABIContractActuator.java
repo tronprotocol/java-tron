@@ -88,21 +88,21 @@ public class ClearABIContractActuator extends AbstractActuator {
     String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
 
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
-    TxMeter.incrReadLength(ABI.getDefaultInstance().getSerializedSize());
     if (accountCapsule == null) {
       throw new ContractValidateException(
           ActuatorConstant.ACCOUNT_EXCEPTION_STR
               + readableOwnerAddress + NOT_EXIST_STR);
     }
+    TxMeter.incrReadLength(ABI.getDefaultInstance().getSerializedSize());
 
     byte[] contractAddress = contract.getContractAddress().toByteArray();
     ContractCapsule deployedContract = contractStore.get(contractAddress);
-    TxMeter.incrReadLength(deployedContract.getInstance().getSerializedSize());
 
     if (deployedContract == null) {
       throw new ContractValidateException(
           "Contract not exists");
     }
+    TxMeter.incrReadLength(deployedContract.getInstance().getSerializedSize());
 
     byte[] deployedContractOwnerAddress = deployedContract.getInstance().getOriginAddress()
         .toByteArray();

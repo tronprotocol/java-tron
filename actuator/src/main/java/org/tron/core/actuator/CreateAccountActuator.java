@@ -120,7 +120,7 @@ public class CreateAccountActuator extends AbstractActuator {
 //    }
 
     if (accountStore.has(accountAddress)) {
-      TxMeter.incrReadLength(TxMeter.BaseType.BOOLEAN.getLength());
+      TxMeter.incrReadLength(accountStore.get(accountAddress));
       throw new ContractValidateException("Account has existed");
     }
 

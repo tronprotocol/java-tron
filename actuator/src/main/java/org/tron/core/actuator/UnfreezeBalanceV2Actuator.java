@@ -343,6 +343,7 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
           );
         } else {
           votesCapsule = votesStore.get(ownerAddress);
+          TxMeter.incrReadLength(votesCapsule.getInstance().getSerializedSize());
         }
         accountCapsule.clearVotes();
         votesCapsule.clearNewVotes();

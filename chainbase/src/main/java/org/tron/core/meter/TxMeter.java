@@ -1,6 +1,7 @@
 package org.tron.core.meter;
 
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.capsule.ProtoCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 
 import java.util.Objects;
@@ -37,6 +38,13 @@ public class TxMeter {
     Meter meter = cache.get();
     meter.incrReadLength(length);
     incrReadCount();
+  }
+
+  public static void incrReadLength(ProtoCapsule protoCapsule) {
+    if (!checkInit() || protoCapsule == null) {
+      return;
+    }
+    incrReadLength(protoCapsule.getData().length);
   }
 
   public static void incrSigLength(long length) {

@@ -153,10 +153,10 @@ public class TransferAssetActuator extends AbstractActuator {
     }
 
     AccountCapsule ownerAccount = accountStore.get(ownerAddress);
-    TxMeter.incrReadLength(ownerAccount.getInstance().getSerializedSize());
     if (ownerAccount == null) {
       throw new ContractValidateException("No owner account!");
     }
+    TxMeter.incrReadLength(ownerAccount.getInstance().getSerializedSize());
 
     if (!Commons.getAssetIssueStoreFinal(dynamicStore, assetIssueStore, assetIssueV2Store)
         .has(assetName)) {
@@ -172,8 +172,8 @@ public class TransferAssetActuator extends AbstractActuator {
     }
 
     AccountCapsule toAccount = accountStore.get(toAddress);
-    TxMeter.incrReadLength(toAccount.getInstance().getSerializedSize());
     if (toAccount != null) {
+      TxMeter.incrReadLength(toAccount.getInstance().getSerializedSize());
       //after ForbidTransferToContract proposal, send trx to smartContract by actuator is not allowed.
       if (dynamicStore.getForbidTransferToContract() == 1
           && toAccount.getType() == AccountType.Contract) {

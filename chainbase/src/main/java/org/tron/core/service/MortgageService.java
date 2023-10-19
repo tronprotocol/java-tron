@@ -86,9 +86,11 @@ public class MortgageService {
       return;
     }
     AccountCapsule accountCapsule = accountStore.get(address);
-    TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
+    TxMeter.incrReadLength(accountCapsule);
+
     long beginCycle = delegationStore.getBeginCycle(address);
     long endCycle = delegationStore.getEndCycle(address);
+
     long currentCycle = dynamicPropertiesStore.getCurrentCycleNumber();
     TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
 
@@ -128,8 +130,10 @@ public class MortgageService {
     }
     delegationStore.setBeginCycle(address, endCycle);
     TxMeter.incrWriteLength(TxMeter.BaseType.LONG.getLength());
+
     delegationStore.setEndCycle(address, endCycle + 1);
     TxMeter.incrWriteLength(TxMeter.BaseType.LONG.getLength());
+
     delegationStore.setAccountVote(endCycle, address, accountCapsule);
     TxMeter.incrWriteLength(accountCapsule.getInstance().getSerializedSize());
     logger.info("Adjust {} allowance {}, now currentCycle {}, beginCycle {}, endCycle {}, "
@@ -138,6 +142,7 @@ public class MortgageService {
   }
 
   public long queryReward(byte[] address) {
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     if (!dynamicPropertiesStore.allowChangeDelegation()) {
       return 0;
     }
@@ -214,6 +219,7 @@ public class MortgageService {
     long reward = 0;
     long newAlgorithmCycle = dynamicPropertiesStore.getNewRewardAlgorithmEffectiveCycle();
     TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
+
     if (beginCycle < newAlgorithmCycle) {
       long oldEndCycle = Math.min(endCycle, newAlgorithmCycle);
       for (long cycle = beginCycle; cycle < oldEndCycle; cycle++) {
@@ -257,6 +263,7 @@ public class MortgageService {
       throws BalanceInsufficientException {
     AccountCapsule account = accountStore.getUnchecked(accountAddress);
     TxMeter.incrReadLength(account.getInstance().getSerializedSize());
+
     long allowance = account.getAllowance();
     if (amount == 0) {
       return;

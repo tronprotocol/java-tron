@@ -130,6 +130,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
     accountCapsule.setBalance(newBalance);
     accountStore.put(accountCapsule.createDbKey(), accountCapsule);
+    TxMeter.incrWriteLength(accountCapsule.getInstance().getSerializedSize());
 
     ret.setStatus(fee, code.SUCESS);
 
@@ -328,11 +329,11 @@ public class FreezeBalanceActuator extends AbstractActuator {
     if (!dynamicPropertiesStore.supportAllowDelegateOptimization()) {
       DelegatedResourceAccountIndexCapsule ownerIndexCapsule =
           delegatedResourceAccountIndexStore.get(ownerAddress);
+      TxMeter.incrReadLength(ownerIndexCapsule);
       if (ownerIndexCapsule == null) {
         ownerIndexCapsule = new DelegatedResourceAccountIndexCapsule(
             ByteString.copyFrom(ownerAddress));
       }
-      TxMeter.incrReadLength(ownerIndexCapsule.getInstance().getSerializedSize());
 
       List<ByteString> toAccountsList = ownerIndexCapsule.getToAccountsList();
       if (!toAccountsList.contains(ByteString.copyFrom(receiverAddress))) {
@@ -343,11 +344,11 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
       DelegatedResourceAccountIndexCapsule receiverIndexCapsule
           = delegatedResourceAccountIndexStore.get(receiverAddress);
+      TxMeter.incrReadLength(receiverIndexCapsule);
       if (receiverIndexCapsule == null) {
         receiverIndexCapsule = new DelegatedResourceAccountIndexCapsule(
             ByteString.copyFrom(receiverAddress));
       }
-      TxMeter.incrReadLength(receiverIndexCapsule.getInstance().getSerializedSize());
 
       List<ByteString> fromAccountsList = receiverIndexCapsule
           .getFromAccountsList();
@@ -362,6 +363,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
       delegatedResourceAccountIndexStore.convert(receiverAddress);
       delegatedResourceAccountIndexStore.delegate(ownerAddress, receiverAddress,
           dynamicPropertiesStore.getLatestBlockHeaderTimestamp());
+      TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     }
 
     //modify AccountStore

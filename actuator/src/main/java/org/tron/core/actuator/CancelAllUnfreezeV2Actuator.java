@@ -96,9 +96,7 @@ public class CancelAllUnfreezeV2Actuator extends AbstractActuator {
     dynamicStore.addTotalNetWeight(triple.getLeft().getLeft().get());
     dynamicStore.addTotalEnergyWeight(triple.getMiddle().getLeft().get());
     dynamicStore.addTotalTronPowerWeight(triple.getRight().getLeft().get());
-    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
-    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
-    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength() * 3L);
   }
 
   private void updateAndCalculate(Triple<Pair<AtomicLong, AtomicLong>, Pair<AtomicLong, AtomicLong>,
@@ -146,13 +144,13 @@ public class CancelAllUnfreezeV2Actuator extends AbstractActuator {
       throw new ContractValidateException("Invalid address");
     }
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
-    TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
 
     String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
     if (Objects.isNull(accountCapsule)) {
       throw new ContractValidateException(ACCOUNT_EXCEPTION_STR
           + readableOwnerAddress + NOT_EXIST_STR);
     }
+    TxMeter.incrReadLength(accountCapsule.getInstance().getSerializedSize());
 
     List<UnFreezeV2> unfrozenV2List = accountCapsule.getUnfrozenV2List();
     if (unfrozenV2List.isEmpty()) {

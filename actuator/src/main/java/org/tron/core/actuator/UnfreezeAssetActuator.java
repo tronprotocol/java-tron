@@ -139,6 +139,7 @@ public class UnfreezeAssetActuator extends AbstractActuator {
       }
     }
 
+    TxMeter.incrReadLength(TxMeter.BaseType.LONG.getLength());
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
     long allowedUnfreezeCount = accountCapsule.getFrozenSupplyList().stream()
         .filter(frozen -> frozen.getExpireTime() <= now).count();
