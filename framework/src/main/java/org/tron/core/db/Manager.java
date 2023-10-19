@@ -1515,6 +1515,7 @@ public class Manager {
   }
 
   private void setTxMeterMetrics(TransactionCapsule trxCap) {
+    logger.info("Metrics type txType------->{}", trxCap.getInstance().getRawData().getContract(0).getType().toString());
     TxMeter.incrWriteLength(trxCap.getTransactionId().getBytes().length);
     Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
             TxMeter.totalReadLength(),
