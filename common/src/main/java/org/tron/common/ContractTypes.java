@@ -7,6 +7,9 @@ public class ContractTypes {
   public static String[] getContractTypes() {
     return Arrays.asList(
             "type",
+            "read",
+            "put",
+            "sig",
             "AccountCreateContract",
             "TransferContract",
             "TransferAssetContract",
