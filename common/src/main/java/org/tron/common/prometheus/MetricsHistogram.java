@@ -44,10 +44,10 @@ public class MetricsHistogram {
         "type");
     init(MetricKeys.Histogram.HTTP_BYTES, "http_bytes traffic.",
         "url", "status");
-    init(MetricKeys.Histogram.TX_BYTES, "tx_bytes traffic.",
-            "type");
+//    init(MetricKeys.Histogram.TX_BYTES, "tx_bytes traffic.",
+//            "type");
     init(MetricKeys.Histogram.DB_BYTES, "db_bytes traffic.",
-                ContractTypes.getContractTypes());
+                "type", "txtype");
     init(MetricKeys.Histogram.TX_SIG_BYTES, "tx_sig_bytes traffic.",
             "type");
     init(MetricKeys.Histogram.MESSAGE_PROCESS_LATENCY, "process message latency.",

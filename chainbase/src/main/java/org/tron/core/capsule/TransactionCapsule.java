@@ -93,6 +93,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   private Transaction transaction;
   @Setter
+  @Getter
   private boolean isVerified = false;
   @Setter
   @Getter

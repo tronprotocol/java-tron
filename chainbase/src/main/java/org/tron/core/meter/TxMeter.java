@@ -55,8 +55,6 @@ public class TxMeter {
     meter.incrSigLength(length);
   }
 
-
-
   public static void incrReadCount() {
     Meter meter = cache.get();
     meter.incrReadCount();

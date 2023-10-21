@@ -1760,18 +1760,15 @@ public class Manager {
           transactionCapsule.setVerified(true);
         }
         TxMeter.init(transactionCapsule);
+        if (transactionCapsule.isVerified()) {
+          TxMeter.incrReadLength(transactionCapsule.getInstance().getSerializedSize());
+        }
         accountStateCallBack.preExeTrans();
         TransactionInfo result = processTransaction(transactionCapsule, block);
         accountStateCallBack.exeTransFinish();
         if (Objects.nonNull(result)) {
           results.add(result);
         }
-        Metrics.histogramObserve(MetricKeys.Histogram.TX_BYTES,
-                transactionCapsule.getSerializedSize(),
-                transactionCapsule.getInstance()
-                        .getRawData()
-                        .getContract(0)
-                        .getType().toString());
       }
       transactionRetCapsule.addAllTransactionInfos(results);
       accountStateCallBack.executePushFinish();
@@ -1997,7 +1994,6 @@ public class Manager {
       for (TransactionCapsule transaction : txs) {
         Future<Boolean> future = validateSignService
             .submit(new ValidateSignTask(transaction, countDownLatch, chainBaseManager));
-        TxMeter.incrSigLength(transaction.getInstance().getSerializedSize());
         futures.add(future);
       }
       countDownLatch.await();
