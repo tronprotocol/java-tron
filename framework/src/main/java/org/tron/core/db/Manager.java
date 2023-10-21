@@ -1761,7 +1761,7 @@ public class Manager {
         }
         TxMeter.init(transactionCapsule);
         if (transactionCapsule.isVerified()) {
-          TxMeter.incrReadLength(transactionCapsule.getInstance().getSerializedSize());
+          TxMeter.incrSigLength(transactionCapsule.getInstance().getSerializedSize());
         }
         accountStateCallBack.preExeTrans();
         TransactionInfo result = processTransaction(transactionCapsule, block);
