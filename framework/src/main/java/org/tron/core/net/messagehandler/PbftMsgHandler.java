@@ -16,6 +16,7 @@ import org.tron.core.exception.P2pException;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.peer.PeerConnection;
+import org.tron.protos.Protocol.PBFTMessage.DataType;
 
 @Component
 public class PbftMsgHandler {
@@ -35,8 +36,13 @@ public class PbftMsgHandler {
     if (Param.getInstance().getPbftInterface().isSyncing()) {
       return;
     }
-    if (tronNetDelegate.getHeadBlockId().getNum() - msg.getViewN() >
-        Args.getInstance().getPBFTExpireNum()) {
+    if (msg.getDataType().equals(DataType.BLOCK) &&
+        tronNetDelegate.getHeadBlockId().getNum() - msg.getNumber()
+            > Args.getInstance().getPBFTExpireNum()) {
+      return;
+    }
+    long currentEpoch = tronNetDelegate.getNextMaintenanceTime();
+    if (msg.getDataType().equals(DataType.SRL) && currentEpoch - msg.getEpoch() > 1) {
       return;
     }
     msg.analyzeSignature();

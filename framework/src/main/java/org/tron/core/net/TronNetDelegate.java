@@ -357,4 +357,8 @@ public class TronNetDelegate {
     return dbManager.getForkLock();
   }
 
+  public long getNextMaintenanceTime() {
+    return chainBaseManager.getDynamicPropertiesStore().getNextMaintenanceTime();
+  }
+
 }

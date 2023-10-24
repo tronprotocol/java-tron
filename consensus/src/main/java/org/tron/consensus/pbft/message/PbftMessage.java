@@ -28,10 +28,6 @@ public class PbftMessage extends PbftBaseMessage {
     return pbftMessage.getRawData().getViewN() + "_" + pbftMessage.getRawData().getDataType();
   }
 
-  public long getViewN() {
-    return pbftMessage.getRawData().getViewN();
-  }
-
   public static PbftMessage prePrepareBlockMsg(BlockCapsule block, long epoch, Miner miner) {
     return buildCommon(DataType.BLOCK, block.getBlockId().getByteString(), block, epoch,
         block.getNum(), miner);
