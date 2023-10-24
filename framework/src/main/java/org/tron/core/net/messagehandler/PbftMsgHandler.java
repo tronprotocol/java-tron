@@ -11,7 +11,9 @@ import org.tron.consensus.base.Param;
 import org.tron.consensus.pbft.PbftManager;
 import org.tron.consensus.pbft.message.PbftBaseMessage;
 import org.tron.consensus.pbft.message.PbftMessage;
+import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
+import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.peer.PeerConnection;
 
@@ -26,8 +28,15 @@ public class PbftMsgHandler {
   @Autowired
   private PbftManager pbftManager;
 
+  @Autowired
+  private TronNetDelegate tronNetDelegate;
+
   public void processMessage(PeerConnection peer, PbftMessage msg) throws Exception {
     if (Param.getInstance().getPbftInterface().isSyncing()) {
+      return;
+    }
+    if (tronNetDelegate.getHeadBlockId().getNum() - msg.getViewN() >
+        Args.getInstance().getPBFTExpireNum()) {
       return;
     }
     msg.analyzeSignature();
