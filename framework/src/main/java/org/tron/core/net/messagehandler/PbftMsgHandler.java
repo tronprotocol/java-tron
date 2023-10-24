@@ -36,13 +36,15 @@ public class PbftMsgHandler {
     if (Param.getInstance().getPbftInterface().isSyncing()) {
       return;
     }
-    if (msg.getDataType().equals(DataType.BLOCK) &&
-        tronNetDelegate.getHeadBlockId().getNum() - msg.getNumber()
-            > Args.getInstance().getPBFTExpireNum()) {
+    if (msg.getDataType().equals(DataType.BLOCK)
+        && tronNetDelegate.getHeadBlockId().getNum() - msg.getNumber()
+        > Args.getInstance().getPBFTExpireNum()) {
       return;
     }
     long currentEpoch = tronNetDelegate.getNextMaintenanceTime();
-    if (msg.getDataType().equals(DataType.SRL) && currentEpoch - msg.getEpoch() > 1) {
+    long expireEpoch = 2 * tronNetDelegate.getMaintenanceTimeInterval();
+    if (msg.getDataType().equals(DataType.SRL)
+        && currentEpoch - msg.getEpoch() > expireEpoch) {
       return;
     }
     msg.analyzeSignature();

@@ -361,4 +361,8 @@ public class TronNetDelegate {
     return chainBaseManager.getDynamicPropertiesStore().getNextMaintenanceTime();
   }
 
+  public long getMaintenanceTimeInterval() {
+    return chainBaseManager.getDynamicPropertiesStore().getMaintenanceTimeInterval();
+  }
+
 }
