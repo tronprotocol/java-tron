@@ -11,13 +11,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.utils.Pair;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -54,10 +54,13 @@ public class SyncService {
       .expireAfterWrite(blockCacheTimeout, TimeUnit.MINUTES).initialCapacity(10_000)
       .recordStats().build();
 
-  private ScheduledExecutorService fetchExecutor = Executors.newSingleThreadScheduledExecutor();
+  private final String fetchEsName = "sync-fetch-block";
+  private final String handleEsName = "sync-handle-block";
+  private final ScheduledExecutorService fetchExecutor = ExecutorServiceManager
+      .newSingleThreadScheduledExecutor(fetchEsName);
 
-  private ScheduledExecutorService blockHandleExecutor = Executors
-      .newSingleThreadScheduledExecutor();
+  private final ScheduledExecutorService blockHandleExecutor = ExecutorServiceManager
+      .newSingleThreadScheduledExecutor(handleEsName);
 
   private volatile boolean handleFlag = false;
 
@@ -91,8 +94,8 @@ public class SyncService {
   }
 
   public void close() {
-    fetchExecutor.shutdown();
-    blockHandleExecutor.shutdown();
+    ExecutorServiceManager.shutdownAndAwaitTermination(fetchExecutor, fetchEsName);
+    ExecutorServiceManager.shutdownAndAwaitTermination(blockHandleExecutor, handleEsName);
   }
 
   public void startSync(PeerConnection peer) {

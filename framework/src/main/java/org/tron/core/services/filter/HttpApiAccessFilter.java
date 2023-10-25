@@ -65,7 +65,7 @@ public class HttpApiAccessFilter implements Filter {
         disabled = disabledApiList.contains(endpoint.split("/")[2].toLowerCase());
       }
     } catch (Exception e) {
-      logger.error("check isDisabled except, endpoint={}, error is {}", endpoint, e.getMessage());
+      logger.warn("check isDisabled except, endpoint={}, {}", endpoint, e.getMessage());
     }
 
     return disabled;

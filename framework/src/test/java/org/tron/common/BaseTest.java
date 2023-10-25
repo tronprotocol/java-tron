@@ -1,18 +1,21 @@
 package org.tron.common;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
+import java.io.IOException;
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.ClassRule;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.tron.common.application.Application;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.consensus.base.Param;
 import org.tron.core.ChainBaseManager;
@@ -28,20 +31,38 @@ import org.tron.protos.Protocol;
 @DirtiesContext
 public abstract class BaseTest {
 
-  protected static String dbPath;
+  @ClassRule
+  public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
   @Resource
   protected Manager dbManager;
   @Resource
   protected ChainBaseManager chainBaseManager;
 
+  @Resource
+  protected Application appT;
+
+  private static Application appT1;
+
+
+  @PostConstruct
+  private void prepare() {
+    appT1 = appT;
+  }
+
+  public static String dbPath() {
+    try {
+      return temporaryFolder.newFolder().toString();
+    } catch (IOException e) {
+      Assert.fail("create temp folder failed");
+    }
+    return null;
+  }
+
   @AfterClass
   public static void destroy() {
+    appT1.shutdown();
     Args.clearParam();
-    if (StringUtils.isNotEmpty(dbPath) && FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   public Protocol.Block getSignedBlock(ByteString witness, long time, byte[] privateKey) {

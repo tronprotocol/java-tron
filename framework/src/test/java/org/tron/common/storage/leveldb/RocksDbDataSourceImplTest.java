@@ -8,7 +8,10 @@ import static org.junit.Assert.assertNull;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -18,9 +21,12 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.ExpectedSystemExit;
+import org.junit.rules.TemporaryFolder;
 import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -32,7 +38,8 @@ import org.tron.core.db2.common.WrappedByteArray;
 @Slf4j
 public class RocksDbDataSourceImplTest {
 
-  private static final String dbPath = "output-Rocks-test";
+  @ClassRule
+  public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
   private static RocksDbDataSourceImpl dataSourceTest;
 
   private byte[] value1 = "10000".getBytes();
@@ -48,30 +55,23 @@ public class RocksDbDataSourceImplTest {
   private byte[] key5 = "00000005aa".getBytes();
   private byte[] key6 = "00000006aa".getBytes();
 
+  @Rule
+  public final ExpectedSystemExit exit = ExpectedSystemExit.none();
+
   /**
    * Release resources.
    */
   @AfterClass
   public static void destroy() {
-    String directory = Args.getInstance().getStorage().getDbDirectory();
     Args.clearParam();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
-
-    if (FileUtil.deleteDir(new File(dbPath  + directory))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   @BeforeClass
-  public static void initDb() {
-    Args.setParam(new String[]{"--output-directory", dbPath}, "config-test-dbbackup.conf");
-    dataSourceTest = new RocksDbDataSourceImpl(dbPath + File.separator, "test_rocksDb");
+  public static void initDb() throws IOException {
+    Args.setParam(new String[]{"--output-directory",
+        temporaryFolder.newFolder().toString()}, "config-test-dbbackup.conf");
+    dataSourceTest = new RocksDbDataSourceImpl(
+        Args.getInstance().getOutputDirectory() + File.separator, "test_rocksDb");
   }
 
   @Test
@@ -97,6 +97,13 @@ public class RocksDbDataSourceImplTest {
         Args.getInstance().getOutputDirectory(), "test_reset");
     dataSource.resetDb();
     assertEquals(0, dataSource.allKeys().size());
+    assertEquals("ROCKSDB", dataSource.getEngine());
+    assertEquals("test_reset", dataSource.getName());
+    assertEquals(Sets.newHashSet(), dataSource.getlatestValues(0));
+    assertEquals(Collections.emptyMap(), dataSource.getNext(key1, 0));
+    assertEquals(new ArrayList<>(), dataSource.getKeysNext(key1, 0));
+    assertEquals(Sets.newHashSet(), dataSource.getValuesNext(key1, 0));
+    assertEquals(Sets.newHashSet(), dataSource.getlatestValues(0));
     dataSource.closeDB();
   }
 
@@ -381,5 +388,24 @@ public class RocksDbDataSourceImplTest {
 
     dataSource.resetDb();
     dataSource.closeDB();
+  }
+
+  @Test
+  public void initDbTest() {
+    exit.expectSystemExitWithStatus(1);
+    makeExceptionDb("test_initDb");
+    RocksDbDataSourceImpl dataSource = new RocksDbDataSourceImpl(
+        Args.getInstance().getOutputDirectory(), "test_initDb");
+    dataSource.initDB();
+    dataSource.closeDB();
+  }
+
+  private void makeExceptionDb(String dbName) {
+    RocksDbDataSourceImpl dataSource = new RocksDbDataSourceImpl(
+        Args.getInstance().getOutputDirectory(), "test_initDb");
+    dataSource.initDB();
+    dataSource.closeDB();
+    FileUtil.saveData(dataSource.getDbPath().toString() + "/CURRENT",
+        "...", Boolean.FALSE);
   }
 }

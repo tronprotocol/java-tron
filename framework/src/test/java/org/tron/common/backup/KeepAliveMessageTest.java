@@ -2,8 +2,8 @@ package org.tron.common.backup;
 
 import static org.tron.common.backup.message.UdpMessageTypeEnum.BACKUP_KEEP_ALIVE;
 
+import org.junit.Assert;
 import org.junit.Test;
-import org.testng.Assert;
 import org.tron.common.backup.message.KeepAliveMessage;
 import org.tron.protos.Discover;
 
@@ -15,7 +15,7 @@ public class KeepAliveMessageTest {
     Assert.assertTrue(m1.getFlag());
     Assert.assertEquals(m1.getPriority(), 10);
     Assert.assertEquals(m1.getType(), BACKUP_KEEP_ALIVE);
-    Assert.assertEquals(m1.getFrom(), null);
+    Assert.assertNull(m1.getFrom());
     Assert.assertEquals(m1.getTimestamp(), 0);
     Assert.assertEquals(m1.getData().length + 1, m1.getSendData().length);
 
@@ -27,6 +27,6 @@ public class KeepAliveMessageTest {
     Assert.assertEquals(m2.getPriority(), 10);
     Assert.assertEquals(m2.getType(), BACKUP_KEEP_ALIVE);
 
-    Assert.assertEquals(m2.getMessageId().getBytes(), m1.getMessageId().getBytes());
+    Assert.assertArrayEquals(m2.getMessageId().getBytes(), m1.getMessageId().getBytes());
   }
 }

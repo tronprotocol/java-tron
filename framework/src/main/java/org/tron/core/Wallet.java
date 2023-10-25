@@ -21,6 +21,7 @@ package org.tron.core;
 import static org.tron.common.utils.Commons.getAssetIssueStoreFinal;
 import static org.tron.common.utils.Commons.getExchangeStoreFinal;
 import static org.tron.common.utils.WalletUtil.isConstant;
+import static org.tron.core.capsule.utils.TransactionUtil.buildInternalTransaction;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
@@ -28,6 +29,8 @@ import static org.tron.core.config.Parameter.DatabaseConstants.MARKET_COUNT_LIMI
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseEnergyFee;
 import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.EARLIEST_STR;
+import static org.tron.core.vm.utils.FreezeV2Util.getV2EnergyUsage;
+import static org.tron.core.vm.utils.FreezeV2Util.getV2NetUsage;
 import static org.tron.protos.contract.Common.ResourceCode;
 
 import com.google.common.collect.ContiguousSet;
@@ -81,6 +84,7 @@ import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NoteParameters;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.PaymentAddressMessage;
+import org.tron.api.GrpcAPI.PricesResponseMessage;
 import org.tron.api.GrpcAPI.PrivateParameters;
 import org.tron.api.GrpcAPI.PrivateParametersWithoutAsk;
 import org.tron.api.GrpcAPI.PrivateShieldedTRC20Parameters;
@@ -152,7 +156,6 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.MarketUtils;
-import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.BlockIndexStore;
@@ -191,6 +194,7 @@ import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.StoreFactory;
+import org.tron.core.utils.TransactionUtil;
 import org.tron.core.vm.program.Program;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder.ShieldedTRC20ParametersType;
@@ -782,6 +786,10 @@ public class Wallet {
           ByteString ownerAddress, long timestamp) {
     GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage.Builder builder =
             GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage.newBuilder();
+    if (timestamp < 0) {
+      return builder.build();
+    }
+
     long canWithdrawUnfreezeAmount;
 
     AccountStore accountStore = chainBaseManager.getAccountStore();
@@ -799,13 +807,8 @@ public class Wallet {
     long finalTimestamp = timestamp;
 
     canWithdrawUnfreezeAmount = unfrozenV2List
-            .stream()
-            .filter(unfrozenV2 ->
-                    (unfrozenV2.getUnfreezeAmount() > 0
-                    && unfrozenV2.getUnfreezeExpireTime() <= finalTimestamp))
-            .mapToLong(UnFreezeV2::getUnfreezeAmount)
-            .sum();
-
+            .stream().filter(unfrozenV2 -> unfrozenV2.getUnfreezeExpireTime() <= finalTimestamp)
+            .mapToLong(UnFreezeV2::getUnfreezeAmount).sum();
 
     builder.setAmount(canWithdrawUnfreezeAmount);
     return builder.build();
@@ -844,13 +847,7 @@ public class Wallet {
     }
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
 
-    List<UnFreezeV2> unfrozenV2List = accountCapsule.getInstance().getUnfrozenV2List();
-    long getUsedUnfreezeCount = unfrozenV2List
-            .stream()
-            .filter(unfrozenV2 ->
-                    (unfrozenV2.getUnfreezeAmount() > 0
-                     && unfrozenV2.getUnfreezeExpireTime() > now))
-            .count();
+    long getUsedUnfreezeCount = accountCapsule.getUnfreezingV2Count(now);
     getAvailableUnfreezeCount = UnfreezeBalanceV2Actuator.getUNFREEZE_MAX_TIMES()
             - getUsedUnfreezeCount;
     builder.setCount(getAvailableUnfreezeCount);
@@ -870,20 +867,15 @@ public class Wallet {
     processor.updateUsage(ownerCapsule);
 
     long accountNetUsage = ownerCapsule.getNetUsage();
-    accountNetUsage += org.tron.core.utils.TransactionUtil.estimateConsumeBandWidthSize(
-            ownerCapsule, chainBaseManager);
+    accountNetUsage += TransactionUtil.estimateConsumeBandWidthSize(dynamicStore,
+            ownerCapsule.getFrozenV2BalanceForBandwidth());
 
     long netUsage = (long) (accountNetUsage * TRX_PRECISION * ((double)
             (dynamicStore.getTotalNetWeight()) / dynamicStore.getTotalNetLimit()));
 
-    long remainNetUsage = netUsage
-            - ownerCapsule.getFrozenBalance()
-            - ownerCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
-            - ownerCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth();
+    long v2NetUsage = getV2NetUsage(ownerCapsule, netUsage);
 
-    remainNetUsage = Math.max(0, remainNetUsage);
-
-    long maxSize = ownerCapsule.getFrozenV2BalanceForBandwidth() - remainNetUsage;
+    long maxSize = ownerCapsule.getFrozenV2BalanceForBandwidth() - v2NetUsage;
     return Math.max(0, maxSize);
   }
 
@@ -901,14 +893,9 @@ public class Wallet {
     long energyUsage = (long) (ownerCapsule.getEnergyUsage() * TRX_PRECISION * ((double)
             (dynamicStore.getTotalEnergyWeight()) / dynamicStore.getTotalEnergyCurrentLimit()));
 
-    long remainEnergyUsage = energyUsage
-            - ownerCapsule.getEnergyFrozenBalance()
-            - ownerCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()
-            - ownerCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy();
+    long v2EnergyUsage = getV2EnergyUsage(ownerCapsule, energyUsage);
 
-    remainEnergyUsage = Math.max(0, remainEnergyUsage);
-
-    long maxSize =  ownerCapsule.getFrozenV2BalanceForEnergy() - remainEnergyUsage;
+    long maxSize =  ownerCapsule.getFrozenV2BalanceForEnergy() - v2EnergyUsage;
     return Math.max(0, maxSize);
   }
 
@@ -2058,7 +2045,7 @@ public class Wallet {
             .parseFrom(chainBaseManager.getMerkleTreeIndexStore().get(blockNum));
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error("GetMerkleTreeOfBlock failed, blockNum:{}", blockNum, ex);
     }
 
     return null;
@@ -3058,7 +3045,7 @@ public class Wallet {
     result.getLogInfoList().forEach(logInfo ->
         builder.addLogs(LogInfo.buildLog(logInfo)));
     result.getInternalTransactions().forEach(it ->
-        builder.addInternalTransactions(TransactionUtil.buildInternalTransaction(it)));
+        builder.addInternalTransactions(buildInternalTransaction(it)));
     ret.setStatus(0, code.SUCESS);
     if (StringUtils.isNoneEmpty(result.getRuntimeError())) {
       ret.setStatus(0, code.FAILED);
@@ -4113,7 +4100,7 @@ public class Wallet {
     }
   }
 
-  private byte[] getShieldedContractScalingFactor(byte[] contractAddress)
+  public byte[] getShieldedContractScalingFactor(byte[] contractAddress)
       throws ContractExeException {
     String methodSign = "scalingFactor()";
     byte[] selector = new byte[4];
@@ -4304,28 +4291,30 @@ public class Wallet {
 
       return energyFee;
     } catch (Exception e) {
-      logger.error("getEnergyFee timestamp={} failed, error is {}", timestamp, e.getMessage());
+      logger.error("GetEnergyFee timestamp={} failed", timestamp, e);
       return getEnergyFee();
     }
   }
 
-  public String getEnergyPrices() {
+  public PricesResponseMessage getEnergyPrices() {
+    PricesResponseMessage.Builder builder = PricesResponseMessage.newBuilder();
     try {
-      return chainBaseManager.getDynamicPropertiesStore().getEnergyPriceHistory();
+      builder.setPrices(chainBaseManager.getDynamicPropertiesStore().getEnergyPriceHistory());
+      return builder.build();
     } catch (Exception e) {
-      logger.error("getEnergyPrices failed, error is {}", e.getMessage());
+      logger.error("GetEnergyPrices failed", e);
     }
-
     return null;
   }
 
-  public String getBandwidthPrices() {
+  public PricesResponseMessage getBandwidthPrices() {
+    PricesResponseMessage.Builder builder = PricesResponseMessage.newBuilder();
     try {
-      return chainBaseManager.getDynamicPropertiesStore().getBandwidthPriceHistory();
+      builder.setPrices(chainBaseManager.getDynamicPropertiesStore().getBandwidthPriceHistory());
+      return builder.build();
     } catch (Exception e) {
-      logger.error("getBandwidthPrices failed, error is {}", e.getMessage());
+      logger.error("GetBandwidthPrices failed", e);
     }
-
     return null;
   }
 
@@ -4440,11 +4429,13 @@ public class Wallet {
     return block.toBuilder().clearTransactions().build();
   }
 
-  public String getMemoFeePrices() {
+  public PricesResponseMessage getMemoFeePrices() {
+    PricesResponseMessage.Builder builder = PricesResponseMessage.newBuilder();
     try {
-      return chainBaseManager.getDynamicPropertiesStore().getMemoFeeHistory();
+      builder.setPrices(chainBaseManager.getDynamicPropertiesStore().getMemoFeeHistory());
+      return builder.build();
     } catch (Exception e) {
-      logger.error("getMemoFeePrices failed, error is {}", e.getMessage());
+      logger.error("GetMemoFeePrices failed", e);
     }
     return null;
   }

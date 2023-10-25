@@ -1,7 +1,7 @@
 package org.tron.core.net.messagehandler;
 
-import java.io.File;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -9,11 +9,13 @@ import java.util.List;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
@@ -26,12 +28,13 @@ public class SyncBlockChainMsgHandlerTest {
   private TronApplicationContext context;
   private SyncBlockChainMsgHandler handler;
   private PeerConnection peer;
-  private String dbPath = "output-sync-chain-test";
+  @Rule
+  public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Before
   public void init() throws Exception {
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"},
-            Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory",
+        temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     handler = context.getBean(SyncBlockChainMsgHandler.class);
     peer = context.getBean(PeerConnection.class);
@@ -64,12 +67,26 @@ public class SyncBlockChainMsgHandlerTest {
     method.setAccessible(true);
     boolean f = (boolean)method.invoke(handler, peer, message);
     Assert.assertTrue(!f);
+
+    Method method1 = handler.getClass().getDeclaredMethod(
+        "getLostBlockIds", List.class, BlockId.class);
+    method1.setAccessible(true);
+    try {
+      method1.invoke(handler, blockIds, new BlockCapsule.BlockId());
+    } catch (InvocationTargetException e) {
+      Assert.assertEquals("unForkId is null", e.getTargetException().getMessage());
+    }
+
+    Method method2 = handler.getClass().getDeclaredMethod(
+        "getBlockIds", Long.class, BlockId.class);
+    method2.setAccessible(true);
+    List list = (List) method2.invoke(handler, 0L, new BlockCapsule.BlockId());
+    Assert.assertEquals(1, list.size());
   }
 
   @After
   public void destroy() {
     Args.clearParam();
-    FileUtil.deleteDir(new File(dbPath));
   }
 
 }

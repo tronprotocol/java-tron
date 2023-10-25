@@ -1,28 +1,36 @@
 package org.tron.core.services.filter;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
+
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.ServerCallStreamObserver;
-import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Rule;
+import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.tron.api.GrpcAPI;
+import org.junit.rules.TemporaryFolder;
+import org.tron.api.GrpcAPI.BlockExtention;
+import org.tron.api.GrpcAPI.BlockReq;
+import org.tron.api.GrpcAPI.BytesMessage;
+import org.tron.api.GrpcAPI.EmptyMessage;
+import org.tron.api.GrpcAPI.NumberMessage;
+import org.tron.api.GrpcAPI.TransactionIdList;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PublicMethod;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
@@ -30,28 +38,24 @@ import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.interfaceOnPBFT.RpcApiServiceOnPBFT;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
+import org.tron.protos.Protocol.Transaction;
 
 @Slf4j
 public class RpcApiAccessInterceptorTest {
 
   private static TronApplicationContext context;
-
   private static WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private static WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
   private static WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubPBFT = null;
-  private static Application appTest;
-
-  private static String dbPath = "output_rpc_api_access_interceptor_test";
-
-  @Rule
-  public ExpectedException thrown = ExpectedException.none();
+  @ClassRule
+  public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   /**
    * init logic.
    */
   @BeforeClass
-  public static void init() {
-    Args.setParam(new String[] {"-d", dbPath}, Constant.TEST_CONF);
+  public static void init() throws IOException {
+    Args.setParam(new String[] {"-d", temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
     Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
     Args.getInstance().setRpcOnSolidityPort(PublicMethod.chooseRandomPort());
     Args.getInstance().setRpcOnPBFTPort(PublicMethod.chooseRandomPort());
@@ -65,7 +69,7 @@ public class RpcApiAccessInterceptorTest {
     ManagedChannel channelFull = ManagedChannelBuilder.forTarget(fullNode)
         .usePlaintext()
         .build();
-    ManagedChannel channelpBFT = ManagedChannelBuilder.forTarget(pBFTNode)
+    ManagedChannel channelPBFT = ManagedChannelBuilder.forTarget(pBFTNode)
         .usePlaintext()
         .build();
     ManagedChannel channelSolidity = ManagedChannelBuilder.forTarget(solidityNode)
@@ -76,19 +80,17 @@ public class RpcApiAccessInterceptorTest {
 
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
-    blockingStubPBFT = WalletSolidityGrpc.newBlockingStub(channelpBFT);
+    blockingStubPBFT = WalletSolidityGrpc.newBlockingStub(channelPBFT);
 
     RpcApiService rpcApiService = context.getBean(RpcApiService.class);
     RpcApiServiceOnSolidity rpcApiServiceOnSolidity =
         context.getBean(RpcApiServiceOnSolidity.class);
     RpcApiServiceOnPBFT rpcApiServiceOnPBFT = context.getBean(RpcApiServiceOnPBFT.class);
 
-    appTest = ApplicationFactory.create(context);
+    Application appTest = ApplicationFactory.create(context);
     appTest.addService(rpcApiService);
     appTest.addService(rpcApiServiceOnSolidity);
     appTest.addService(rpcApiServiceOnPBFT);
-    appTest.initServices(Args.getInstance());
-    appTest.startServices();
     appTest.startup();
   }
 
@@ -97,15 +99,8 @@ public class RpcApiAccessInterceptorTest {
    */
   @AfterClass
   public static void destroy() {
+    context.close();
     Args.clearParam();
-    appTest.shutdownServices();
-    appTest.shutdown();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   @Test
@@ -115,59 +110,63 @@ public class RpcApiAccessInterceptorTest {
     disabledApiList.add("getblockbynum");
     Args.getInstance().setDisabledApiList(disabledApiList);
 
-    final GrpcAPI.NumberMessage message = GrpcAPI.NumberMessage.newBuilder().setNum(0).build();
-    thrown.expect(StatusRuntimeException.class);
-    thrown.expectMessage("this API is unavailable due to config");
-    blockingStubFull.getBlockByNum(message);
+    final NumberMessage message = NumberMessage.newBuilder().setNum(0).build();
+    assertThrows("this API is unavailable due to config", StatusRuntimeException.class,
+        () -> blockingStubFull.getBlockByNum(message));
   }
 
   @Test
   public void testRpcApiService() {
     RpcApiService rpcApiService = context.getBean(RpcApiService.class);
-    ServerCallStreamObserverTest serverCallStreamObserverTest = new ServerCallStreamObserverTest();
-    rpcApiService.getBlockCommon(GrpcAPI.BlockReq.getDefaultInstance(),
-        serverCallStreamObserverTest);
-    Assert.assertTrue("Get block Common failed!", serverCallStreamObserverTest.isReady());
+    ServerCallStreamObserverTest<BlockExtention> serverCallStreamObserverTest =
+        new ServerCallStreamObserverTest<>();
+    ServerCallStreamObserverTest<NumberMessage> serverCallStreamObserverTest1 =
+        new ServerCallStreamObserverTest<>();
+    ServerCallStreamObserverTest<Transaction> serverCallStreamObserverTest2 =
+        new ServerCallStreamObserverTest<>();
+    ServerCallStreamObserverTest<TransactionIdList> serverCallStreamObserverTest3 =
+        new ServerCallStreamObserverTest<>();
+    rpcApiService.getBlockCommon(BlockReq.getDefaultInstance(), serverCallStreamObserverTest);
+    assertTrue("Get block Common failed!", serverCallStreamObserverTest.isReady());
     serverCallStreamObserverTest.isCancelled();
-    rpcApiService.getBrokerageInfoCommon(GrpcAPI.BytesMessage.newBuilder().build(),
-        serverCallStreamObserverTest);
-    Assert.assertTrue("Get brokerage info Common failed!",
-        serverCallStreamObserverTest.isReady());
+    rpcApiService.getBrokerageInfoCommon(BytesMessage.newBuilder().build(),
+        serverCallStreamObserverTest1);
+    assertTrue("Get brokerage info Common failed!",
+        serverCallStreamObserverTest1.isReady());
     serverCallStreamObserverTest.isCancelled();
-    rpcApiService.getBurnTrxCommon(GrpcAPI.EmptyMessage.newBuilder().build(),
-        serverCallStreamObserverTest);
-    Assert.assertTrue("Get burn trx common failed!",
-        serverCallStreamObserverTest.isReady());
+    rpcApiService.getBurnTrxCommon(EmptyMessage.newBuilder().build(),
+        serverCallStreamObserverTest1);
+    assertTrue("Get burn trx common failed!",
+        serverCallStreamObserverTest1.isReady());
     serverCallStreamObserverTest.isCancelled();
-    rpcApiService.getPendingSizeCommon(GrpcAPI.EmptyMessage.getDefaultInstance(),
-        serverCallStreamObserverTest);
-    Assert.assertTrue("Get pending size common failed!",
-        serverCallStreamObserverTest.isReady());
+    rpcApiService.getPendingSizeCommon(EmptyMessage.getDefaultInstance(),
+        serverCallStreamObserverTest1);
+    assertTrue("Get pending size common failed!",
+        serverCallStreamObserverTest1.isReady());
     serverCallStreamObserverTest.isCancelled();
-    rpcApiService.getRewardInfoCommon(GrpcAPI.BytesMessage.newBuilder().build(),
-        serverCallStreamObserverTest);
-    Assert.assertTrue("Get reward info common failed!",
-        serverCallStreamObserverTest.isReady());
+    rpcApiService.getRewardInfoCommon(BytesMessage.newBuilder().build(),
+        serverCallStreamObserverTest1);
+    assertTrue("Get reward info common failed!",
+        serverCallStreamObserverTest1.isReady());
     serverCallStreamObserverTest.isCancelled();
     rpcApiService.getTransactionCountByBlockNumCommon(
-        GrpcAPI.NumberMessage.newBuilder().getDefaultInstanceForType(),
-        serverCallStreamObserverTest);
-    Assert.assertTrue("Get transaction count by block num failed!",
-        serverCallStreamObserverTest.isReady());
+        NumberMessage.newBuilder().getDefaultInstanceForType(),
+        serverCallStreamObserverTest1);
+    assertTrue("Get transaction count by block num failed!",
+        serverCallStreamObserverTest1.isReady());
     serverCallStreamObserverTest.isCancelled();
-    rpcApiService.getTransactionFromPendingCommon(GrpcAPI.BytesMessage.newBuilder().build(),
-        serverCallStreamObserverTest);
-    Assert.assertTrue("Get transaction from pending failed!",
-        serverCallStreamObserverTest.isReady() == false);
+    rpcApiService.getTransactionFromPendingCommon(BytesMessage.newBuilder().build(),
+        serverCallStreamObserverTest2);
+    assertFalse("Get transaction from pending failed!",
+        serverCallStreamObserverTest2.isReady());
     serverCallStreamObserverTest.isCancelled();
-    rpcApiService.getTransactionListFromPendingCommon(GrpcAPI.EmptyMessage.newBuilder()
-        .getDefaultInstanceForType(), serverCallStreamObserverTest);
-    Assert.assertTrue("Get transaction list from pending failed!",
-        serverCallStreamObserverTest.isReady());
+    rpcApiService.getTransactionListFromPendingCommon(EmptyMessage.newBuilder()
+        .getDefaultInstanceForType(), serverCallStreamObserverTest3);
+    assertTrue("Get transaction list from pending failed!",
+        serverCallStreamObserverTest3.isReady());
   }
 
-
-  class ServerCallStreamObserverTest extends ServerCallStreamObserver {
+  static class ServerCallStreamObserverTest<RespT> extends ServerCallStreamObserver<RespT> {
 
     Object ret;
 
@@ -228,10 +227,9 @@ public class RpcApiAccessInterceptorTest {
     disabledApiList.add("getblockbynum");
     Args.getInstance().setDisabledApiList(disabledApiList);
 
-    final GrpcAPI.NumberMessage message = GrpcAPI.NumberMessage.newBuilder().setNum(0).build();
-    thrown.expect(StatusRuntimeException.class);
-    thrown.expectMessage("this API is unavailable due to config");
-    blockingStubSolidity.getBlockByNum(message);
+    final NumberMessage message = NumberMessage.newBuilder().setNum(0).build();
+    assertThrows("this API is unavailable due to config", StatusRuntimeException.class,
+        () -> blockingStubSolidity.getBlockByNum(message));
   }
 
   @Test
@@ -241,20 +239,19 @@ public class RpcApiAccessInterceptorTest {
     disabledApiList.add("getblockbynum");
     Args.getInstance().setDisabledApiList(disabledApiList);
 
-    final GrpcAPI.NumberMessage message = GrpcAPI.NumberMessage.newBuilder().setNum(0).build();
-    thrown.expect(StatusRuntimeException.class);
-    thrown.expectMessage("this API is unavailable due to config");
-    blockingStubPBFT.getBlockByNum(message);
+    final NumberMessage message = NumberMessage.newBuilder().setNum(0).build();
+    assertThrows("this API is unavailable due to config", StatusRuntimeException.class,
+        () -> blockingStubPBFT.getBlockByNum(message));
   }
 
   @Test
   public void testAccessNoDisabled() {
     Args.getInstance().setDisabledApiList(Collections.emptyList());
 
-    final GrpcAPI.NumberMessage message = GrpcAPI.NumberMessage.newBuilder().setNum(0).build();
-    Assert.assertNotNull(blockingStubFull.getBlockByNum(message));
-    Assert.assertNotNull(blockingStubSolidity.getBlockByNum(message));
-    Assert.assertNotNull(blockingStubPBFT.getBlockByNum(message));
+    final NumberMessage message = NumberMessage.newBuilder().setNum(0).build();
+    assertNotNull(blockingStubFull.getBlockByNum(message));
+    assertNotNull(blockingStubSolidity.getBlockByNum(message));
+    assertNotNull(blockingStubPBFT.getBlockByNum(message));
   }
 
   @Test
@@ -263,10 +260,32 @@ public class RpcApiAccessInterceptorTest {
     disabledApiList.add("getaccount");
     Args.getInstance().setDisabledApiList(disabledApiList);
 
-    final GrpcAPI.NumberMessage message = GrpcAPI.NumberMessage.newBuilder().setNum(0).build();
-    Assert.assertNotNull(blockingStubFull.getBlockByNum(message));
-    Assert.assertNotNull(blockingStubSolidity.getBlockByNum(message));
-    Assert.assertNotNull(blockingStubPBFT.getBlockByNum(message));
+    final NumberMessage message = NumberMessage.newBuilder().setNum(0).build();
+    assertNotNull(blockingStubFull.getBlockByNum(message));
+    assertNotNull(blockingStubSolidity.getBlockByNum(message));
+    assertNotNull(blockingStubPBFT.getBlockByNum(message));
+  }
+
+  @Test
+  public void testGetBandwidthPrices() {
+    EmptyMessage message = EmptyMessage.newBuilder().build();
+    assertNotNull(blockingStubFull.getBandwidthPrices(message));
+    assertNotNull(blockingStubSolidity.getBandwidthPrices(message));
+    assertNotNull(blockingStubPBFT.getBandwidthPrices(message));
+  }
+
+  @Test
+  public void testGetEnergyPrices() {
+    EmptyMessage message = EmptyMessage.newBuilder().build();
+    assertNotNull(blockingStubFull.getEnergyPrices(message));
+    assertNotNull(blockingStubSolidity.getEnergyPrices(message));
+    assertNotNull(blockingStubPBFT.getEnergyPrices(message));
+  }
+
+  @Test
+  public void testGetMemoFee() {
+    EmptyMessage message = EmptyMessage.newBuilder().build();
+    assertNotNull(blockingStubFull.getMemoFee(message));
   }
 
 }
