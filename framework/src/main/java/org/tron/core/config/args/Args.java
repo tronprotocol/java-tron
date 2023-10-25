@@ -149,6 +149,7 @@ public class Args extends CommonParameter {
     PARAMETER.fullNodeHttpPort = 0;
     PARAMETER.solidityHttpPort = 0;
     PARAMETER.pBFTHttpPort = 0;
+    PARAMETER.pBFTExpireNum = 20;
     PARAMETER.jsonRpcHttpFullNodePort = 0;
     PARAMETER.jsonRpcHttpSolidityPort = 0;
     PARAMETER.jsonRpcHttpPBFTPort = 0;
@@ -973,6 +974,10 @@ public class Args extends CommonParameter {
     PARAMETER.allowPBFT =
         config.hasPath(Constant.COMMITTEE_ALLOW_PBFT) ? config
             .getLong(Constant.COMMITTEE_ALLOW_PBFT) : 0;
+
+    PARAMETER.pBFTExpireNum =
+        config.hasPath(Constant.COMMITTEE_PBFT_EXPIRE_NUM) ? config
+            .getLong(Constant.COMMITTEE_PBFT_EXPIRE_NUM) : 20;
 
     PARAMETER.agreeNodeCount = config.hasPath(Constant.NODE_AGREE_NODE_COUNT) ? config
         .getInt(Constant.NODE_AGREE_NODE_COUNT) : MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
