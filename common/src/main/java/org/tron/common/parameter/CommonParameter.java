@@ -518,6 +518,9 @@ public class CommonParameter {
   public int pBFTHttpPort;
   @Getter
   @Setter
+  public long pBFTExpireNum;
+  @Getter
+  @Setter
   public long oldSolidityBlockNum = -1;
 
   @Getter/**/
