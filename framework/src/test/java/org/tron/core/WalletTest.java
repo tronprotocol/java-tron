@@ -39,6 +39,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.api.GrpcAPI;
+import org.tron.api.GrpcAPI.AccountNetMessage;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.ExchangeList;
@@ -130,6 +131,7 @@ public class WalletTest extends BaseTest {
   private static Transaction transaction4;
   private static Transaction transaction5;
   private static AssetIssueCapsule Asset1;
+  private static AssetIssueCapsule Asset2;
 
   private static final String OWNER_ADDRESS;
   private static final String RECEIVER_ADDRESS;
@@ -235,11 +237,11 @@ public class WalletTest extends BaseTest {
   private static Transaction getBuildTransaction(
       TransferContract transferContract, long transactionTimestamp, long refBlockNum) {
     return Transaction.newBuilder().setRawData(
-        Transaction.raw.newBuilder().setTimestamp(transactionTimestamp)
-            .setRefBlockNum(refBlockNum)
-            .addContract(
-                Contract.newBuilder().setType(ContractType.TransferContract)
-                    .setParameter(Any.pack(transferContract)).build()).build())
+            Transaction.raw.newBuilder().setTimestamp(transactionTimestamp)
+                .setRefBlockNum(refBlockNum)
+                .addContract(
+                    Contract.newBuilder().setType(ContractType.TransferContract)
+                        .setParameter(Any.pack(transferContract)).build()).build())
         .build();
   }
 
@@ -288,18 +290,26 @@ public class WalletTest extends BaseTest {
   private static Block getBuildBlock(long timestamp, long num, long witnessId,
       String witnessAddress, Transaction transaction, Transaction transactionNext) {
     return Block.newBuilder().setBlockHeader(BlockHeader.newBuilder().setRawData(
-        raw.newBuilder().setTimestamp(timestamp).setNumber(num).setWitnessId(witnessId)
-            .setWitnessAddress(ByteString.copyFrom(ByteArray.fromHexString(witnessAddress)))
-            .build()).build()).addTransactions(transaction).addTransactions(transactionNext)
+            raw.newBuilder().setTimestamp(timestamp).setNumber(num).setWitnessId(witnessId)
+                .setWitnessAddress(ByteString.copyFrom(ByteArray.fromHexString(witnessAddress)))
+                .build()).build()).addTransactions(transaction).addTransactions(transactionNext)
         .build();
   }
 
 
   private void buildAssetIssue() {
     AssetIssueContract.Builder builder = AssetIssueContract.newBuilder();
+    builder.setOwnerAddress(ByteString.copyFromUtf8("Address1"));
     builder.setName(ByteString.copyFromUtf8("Asset1"));
     Asset1 = new AssetIssueCapsule(builder.build());
     chainBaseManager.getAssetIssueStore().put(Asset1.createDbKey(), Asset1);
+
+    AssetIssueContract.Builder builder2 = AssetIssueContract.newBuilder();
+    builder2.setOwnerAddress(ByteString.copyFromUtf8("Address2"));
+    builder2.setName(ByteString.copyFromUtf8("Asset2"));
+    builder2.setId("id2");
+    Asset2 = new AssetIssueCapsule(builder2.build());
+    chainBaseManager.getAssetIssueV2Store().put(Asset2.getId().getBytes(), Asset2);
   }
 
   private void buildProposal() {
@@ -500,6 +510,52 @@ public class WalletTest extends BaseTest {
   }
 
   @Test
+  public void testGetAssetIssueByAccount() {
+    buildAssetIssue();
+    //
+    AssetIssueList assetIssueList = wallet.getAssetIssueByAccount(
+        ByteString.copyFromUtf8("Address1"));
+    Assert.assertEquals(1, assetIssueList.getAssetIssueCount());
+  }
+
+  @Test
+  public void testGetAssetIssueList() {
+    buildAssetIssue();
+    //
+    AssetIssueList assetIssueList = wallet.getAssetIssueList();
+    Assert.assertEquals(1, assetIssueList.getAssetIssueCount());
+  }
+
+  @Test
+  public void testGetAssetIssueListByName() {
+    buildAssetIssue();
+    //
+    AssetIssueList assetIssueList = wallet.getAssetIssueListByName(
+        ByteString.copyFromUtf8("Asset1"));
+    Assert.assertEquals(1, assetIssueList.getAssetIssueCount());
+  }
+
+  @Test
+  public void testGetAssetIssueById() {
+    buildAssetIssue();
+    //
+    AssetIssueContract assetIssueContract = wallet.getAssetIssueById("id2");
+    Assert.assertNotNull(assetIssueContract);
+  }
+
+  @Test
+  public void testGetAccountNet() {
+    ByteString addressByte = ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS));
+    AccountCapsule accountCapsule =
+        new AccountCapsule(Protocol.Account.newBuilder().setAddress(addressByte).build());
+    accountCapsule.setBalance(1000_000_000L);
+    dbManager.getChainBaseManager().getAccountStore()
+        .put(accountCapsule.createDbKey(), accountCapsule);
+    AccountNetMessage accountNetMessage = wallet.getAccountNet(addressByte);
+    Assert.assertNotNull(accountNetMessage);
+  }
+
+  @Test
   public void getPaginatedProposalList() {
     buildProposal();
     //
@@ -686,8 +742,8 @@ public class WalletTest extends BaseTest {
   }
 
   private Any getDelegatedContractForCpu(String ownerAddress, String receiverAddress,
-                                         long frozenBalance,
-                                         long duration) {
+      long frozenBalance,
+      long duration) {
     return Any.pack(
         BalanceContract.FreezeBalanceContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
@@ -723,13 +779,13 @@ public class WalletTest extends BaseTest {
   }
 
   private Any getDelegateContractForBandwidth(String ownerAddress, String receiveAddress,
-                                              long unfreezeBalance) {
+      long unfreezeBalance) {
     return getLockedDelegateContractForBandwidth(ownerAddress, receiveAddress,
         unfreezeBalance, false);
   }
 
   private Any getLockedDelegateContractForBandwidth(String ownerAddress, String receiveAddress,
-                                                    long unfreezeBalance, boolean lock) {
+      long unfreezeBalance, boolean lock) {
     return Any.pack(BalanceContract.DelegateResourceContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
         .setReceiverAddress(ByteString.copyFrom(ByteArray.fromHexString(receiveAddress)))
@@ -949,7 +1005,7 @@ public class WalletTest extends BaseTest {
     chainBaseManager.getAccountIdIndexStore().put(ownerCapsule);
     Protocol.Account account = wallet.getAccountById(
         Protocol.Account.newBuilder().setAccountId(ByteString.copyFromUtf8("1001")).build());
-    Assert.assertEquals(ownerCapsule.getAddress(),account.getAddress());
+    Assert.assertEquals(ownerCapsule.getAddress(), account.getAddress());
   }
 
   @Test
@@ -967,18 +1023,18 @@ public class WalletTest extends BaseTest {
     String assetName = "My_asset";
     String id = "10001";
     AssetIssueCapsule assetCapsule = new AssetIssueCapsule(ByteArray.fromHexString(OWNER_ADDRESS),
-        id,assetName,"abbr", 1_000_000_000_000L,6);
+        id, assetName, "abbr", 1_000_000_000_000L, 6);
     chainBaseManager.getAssetIssueStore().put(assetCapsule.createDbKey(), assetCapsule);
     chainBaseManager.getAssetIssueV2Store().put(assetCapsule.createDbV2Key(), assetCapsule);
     try {
       AssetIssueContract assetIssue =
           wallet.getAssetIssueByName(ByteString.copyFromUtf8(assetName));
-      Assert.assertEquals(ByteString.copyFromUtf8(assetName),assetIssue.getName());
-      Assert.assertEquals(id,assetIssue.getId());
+      Assert.assertEquals(ByteString.copyFromUtf8(assetName), assetIssue.getName());
+      Assert.assertEquals(id, assetIssue.getId());
       chainBaseManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
       assetIssue = wallet.getAssetIssueByName(ByteString.copyFromUtf8(assetName));
-      Assert.assertEquals(ByteString.copyFromUtf8(assetName),assetIssue.getName());
-      Assert.assertEquals(id,assetIssue.getId());
+      Assert.assertEquals(ByteString.copyFromUtf8(assetName), assetIssue.getName());
+      Assert.assertEquals(id, assetIssue.getId());
     } catch (NonUniqueObjectException e) {
       Assert.fail(e.getMessage());
     }

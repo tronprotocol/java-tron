@@ -256,6 +256,8 @@ public class Constant {
 
   public static final String RATE_LIMITER_GLOBAL_IP_QPS = "rate.limiter.global.ip.qps";
 
+  public static final String RATE_LIMITER_GLOBAL_API_QPS = "rate.limiter.global.api.qps";
+
   public static final String COMMITTEE_CHANGED_DELEGATION = "committee.changedDelegation";
 
   public static final String CRYPTO_ENGINE = "crypto.engine";
@@ -301,6 +303,7 @@ public class Constant {
   public static final String SEED_NODE_IP_LIST = "seed.node.ip.list";
   public static final String NODE_METRICS_ENABLE = "node.metricsEnable";
   public static final String COMMITTEE_ALLOW_PBFT = "committee.allowPBFT";
+  public static final String COMMITTEE_PBFT_EXPIRE_NUM = "committee.pBFTExpireNum";
   public static final String NODE_AGREE_NODE_COUNT = "node.agreeNodeCount";
 
   public static final String COMMITTEE_ALLOW_TRANSACTION_FEE_POOL = "committee.allowTransactionFeePool";

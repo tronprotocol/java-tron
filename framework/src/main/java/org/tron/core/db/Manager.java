@@ -179,8 +179,8 @@ public class Manager {
   @Setter
   public boolean eventPluginLoaded = false;
   private int maxTransactionPendingSize = Args.getInstance().getMaxTransactionPendingSize();
-  @Autowired(required = false)
   @Getter
+  @Autowired
   private TransactionCache transactionCache;
   @Autowired
   private KhaosDatabase khaosDb;

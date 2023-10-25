@@ -52,7 +52,7 @@ jacocoTestReport {
         xml.enabled = true
         html.enabled = true
     }
-    executionData.from = '../framework/build/jacoco/jacocoTest.exec'
+    getExecutionData().setFrom(fileTree('../framework/build/jacoco').include("**.exec"))
     afterEvaluate {
         classDirectories.from = classDirectories.files.collect {
             fileTree(dir: it,)

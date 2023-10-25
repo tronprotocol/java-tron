@@ -22,6 +22,7 @@ import org.tron.core.services.http.GetAssetIssueByNameServlet;
 import org.tron.core.services.http.GetAssetIssueListByNameServlet;
 import org.tron.core.services.http.GetAssetIssueListServlet;
 import org.tron.core.services.http.GetAvailableUnfreezeCountServlet;
+import org.tron.core.services.http.GetBandwidthPricesServlet;
 import org.tron.core.services.http.GetBlockByIdServlet;
 import org.tron.core.services.http.GetBlockByLatestNumServlet;
 import org.tron.core.services.http.GetBlockByLimitNextServlet;
@@ -35,6 +36,7 @@ import org.tron.core.services.http.GetDelegatedResourceAccountIndexServlet;
 import org.tron.core.services.http.GetDelegatedResourceAccountIndexV2Servlet;
 import org.tron.core.services.http.GetDelegatedResourceServlet;
 import org.tron.core.services.http.GetDelegatedResourceV2Servlet;
+import org.tron.core.services.http.GetEnergyPricesServlet;
 import org.tron.core.services.http.GetExchangeByIdServlet;
 import org.tron.core.services.http.GetMarketOrderByAccountServlet;
 import org.tron.core.services.http.GetMarketOrderByIdServlet;
@@ -66,7 +68,6 @@ public class SolidityNodeHttpApiService extends HttpService {
 
   @Autowired
   private GetAccountServlet getAccountServlet;
-
   @Autowired
   private GetTransactionByIdSolidityServlet getTransactionByIdServlet;
   @Autowired
@@ -91,7 +92,6 @@ public class SolidityNodeHttpApiService extends HttpService {
   private GetExchangeByIdServlet getExchangeByIdServlet;
   @Autowired
   private ListExchangesServlet listExchangesServlet;
-
   @Autowired
   private ListWitnessesServlet listWitnessesServlet;
   @Autowired
@@ -154,15 +154,16 @@ public class SolidityNodeHttpApiService extends HttpService {
   private TriggerConstantContractServlet triggerConstantContractServlet;
   @Autowired
   private EstimateEnergyServlet estimateEnergyServlet;
-
   @Autowired
   private GetTransactionInfoByBlockNumServlet getTransactionInfoByBlockNumServlet;
-
   @Autowired
   private HttpApiAccessFilter httpApiAccessFilter;
-
   @Autowired
   private GetBlockServlet getBlockServlet;
+  @Autowired
+  private GetBandwidthPricesServlet getBandwidthPricesServlet;
+  @Autowired
+  private GetEnergyPricesServlet getEnergyPricesServlet;
 
 
   @Override
@@ -279,6 +280,10 @@ public class SolidityNodeHttpApiService extends HttpService {
       context.addServlet(new ServletHolder(getRewardServlet), "/walletsolidity/getReward");
       context.addServlet(new ServletHolder(getBurnTrxServlet), "/walletsolidity/getburntrx");
       context.addServlet(new ServletHolder(getBlockServlet), "/walletsolidity/getblock");
+      context.addServlet(new ServletHolder(getBandwidthPricesServlet),
+          "/walletsolidity/getbandwidthprices");
+      context.addServlet(new ServletHolder(getEnergyPricesServlet),
+          "/walletsolidity/getenergyprices");
 
       // http access filter
       context.addFilter(new FilterHolder(httpApiAccessFilter), "/walletsolidity/*",

@@ -2,6 +2,7 @@ package org.tron.common;
 
 import com.google.protobuf.ByteString;
 import java.io.IOException;
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
@@ -12,6 +13,7 @@ import org.junit.runner.RunWith;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.tron.common.application.Application;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Sha256Hash;
@@ -37,6 +39,16 @@ public abstract class BaseTest {
   @Resource
   protected ChainBaseManager chainBaseManager;
 
+  @Resource
+  protected Application appT;
+
+  private static Application appT1;
+
+
+  @PostConstruct
+  private void prepare() {
+    appT1 = appT;
+  }
 
   public static String dbPath() {
     try {
@@ -49,6 +61,7 @@ public abstract class BaseTest {
 
   @AfterClass
   public static void destroy() {
+    appT1.shutdown();
     Args.clearParam();
   }
 

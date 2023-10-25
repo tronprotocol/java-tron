@@ -1,6 +1,9 @@
 package org.tron.core.services.http;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
+import static org.apache.http.entity.ContentType.APPLICATION_FORM_URLENCODED;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -30,7 +33,9 @@ public class GetNowBlockServletTest extends BaseTest {
   public MockHttpServletRequest createRequest(String contentType) {
     MockHttpServletRequest request = new MockHttpServletRequest();
     request.setMethod("POST");
-    request.setContentType(contentType);
+    if (isNotEmpty(contentType)) {
+      request.setContentType(contentType);
+    }
     request.setCharacterEncoding("UTF-8");
     return request;
   }
@@ -40,6 +45,37 @@ public class GetNowBlockServletTest extends BaseTest {
     String jsonParam = "{\"visible\": true}";
     MockHttpServletRequest request = createRequest("application/json");
     request.setContent(jsonParam.getBytes());
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    getNowBlockServlet.doPost(request, response);
+    try {
+      String contentAsString = response.getContentAsString();
+      JSONObject result = JSONObject.parseObject(contentAsString);
+      assertTrue(result.containsKey("blockID"));
+    } catch (UnsupportedEncodingException e) {
+      fail(e.getMessage());
+    }
+  }
+
+  @Test
+  public void testGetNowBlockByJson2() {
+    String jsonParam = "{\"visible\": true}";
+    MockHttpServletRequest request = createRequest(APPLICATION_FORM_URLENCODED.getMimeType());
+    request.setContent(jsonParam.getBytes());
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    getNowBlockServlet.doPost(request, response);
+    try {
+      String contentAsString = response.getContentAsString();
+      JSONObject result = JSONObject.parseObject(contentAsString);
+      assertTrue(result.containsKey("blockID"));
+    } catch (UnsupportedEncodingException e) {
+      fail(e.getMessage());
+    }
+  }
+
+  @Test
+  public void testGetNowBlockByEmpty() {
+    MockHttpServletRequest request = createRequest(APPLICATION_FORM_URLENCODED.getMimeType());
+    request.setContent(EMPTY.getBytes());
     MockHttpServletResponse response = new MockHttpServletResponse();
     getNowBlockServlet.doPost(request, response);
     try {

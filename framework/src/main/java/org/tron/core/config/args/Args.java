@@ -149,6 +149,7 @@ public class Args extends CommonParameter {
     PARAMETER.fullNodeHttpPort = 0;
     PARAMETER.solidityHttpPort = 0;
     PARAMETER.pBFTHttpPort = 0;
+    PARAMETER.pBFTExpireNum = 20;
     PARAMETER.jsonRpcHttpFullNodePort = 0;
     PARAMETER.jsonRpcHttpSolidityPort = 0;
     PARAMETER.jsonRpcHttpPBFTPort = 0;
@@ -224,6 +225,7 @@ public class Args extends CommonParameter {
     PARAMETER.memoFee = 0;
     PARAMETER.rateLimiterGlobalQps = 50000;
     PARAMETER.rateLimiterGlobalIpQps = 10000;
+    PARAMETER.rateLimiterGlobalApiQps = 1000;
     PARAMETER.p2pDisable = false;
     PARAMETER.dynamicConfigEnable = false;
     PARAMETER.dynamicConfigCheckInterval = 600;
@@ -519,6 +521,8 @@ public class Args extends CommonParameter {
 
     PARAMETER.storage.setEstimatedBlockTransactions(
         Storage.getEstimatedTransactionsFromConfig(config));
+    PARAMETER.storage.setTxCacheInitOptimization(
+        Storage.getTxCacheInitOptimizationFromConfig(config));
     PARAMETER.storage.setMaxFlushCount(Storage.getSnapshotMaxFlushCountFromConfig(config));
 
     PARAMETER.storage.setDefaultDbOptions(config);
@@ -957,6 +961,10 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.RATE_LIMITER_GLOBAL_IP_QPS) ? config
             .getInt(Constant.RATE_LIMITER_GLOBAL_IP_QPS) : 10000;
 
+    PARAMETER.rateLimiterGlobalApiQps =
+      config.hasPath(Constant.RATE_LIMITER_GLOBAL_API_QPS) ? config
+        .getInt(Constant.RATE_LIMITER_GLOBAL_API_QPS) : 1000;
+
     PARAMETER.rateLimiterInitialization = getRateLimiterFromConfig(config);
 
     PARAMETER.changedDelegation =
@@ -966,6 +974,10 @@ public class Args extends CommonParameter {
     PARAMETER.allowPBFT =
         config.hasPath(Constant.COMMITTEE_ALLOW_PBFT) ? config
             .getLong(Constant.COMMITTEE_ALLOW_PBFT) : 0;
+
+    PARAMETER.pBFTExpireNum =
+        config.hasPath(Constant.COMMITTEE_PBFT_EXPIRE_NUM) ? config
+            .getLong(Constant.COMMITTEE_PBFT_EXPIRE_NUM) : 20;
 
     PARAMETER.agreeNodeCount = config.hasPath(Constant.NODE_AGREE_NODE_COUNT) ? config
         .getInt(Constant.NODE_AGREE_NODE_COUNT) : MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
@@ -1627,6 +1639,7 @@ public class Args extends CommonParameter {
     logger.info("Node effective check enable: {}", parameter.isNodeEffectiveCheckEnable());
     logger.info("Rate limiter global qps: {}", parameter.getRateLimiterGlobalQps());
     logger.info("Rate limiter global ip qps: {}", parameter.getRateLimiterGlobalIpQps());
+    logger.info("Rate limiter global api qps: {}", parameter.getRateLimiterGlobalApiQps());
     logger.info("************************ Backup config ************************");
     logger.info("Backup priority: {}", parameter.getBackupPriority());
     logger.info("Backup listen port: {}", parameter.getBackupPort());

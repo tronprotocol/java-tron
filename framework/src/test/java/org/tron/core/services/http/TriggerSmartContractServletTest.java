@@ -11,7 +11,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.tron.common.BaseTest;
-import org.tron.common.application.Application;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.client.Configuration;
 import org.tron.common.utils.client.utils.HttpMethed;
@@ -35,8 +34,6 @@ public class TriggerSmartContractServletTest extends BaseTest {
 
   @Resource
   private FullNodeHttpApiService httpApiService;
-  @Resource
-  private Application appT;
 
   @BeforeClass
   public static void init() throws Exception {

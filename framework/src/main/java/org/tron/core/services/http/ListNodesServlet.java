@@ -1,8 +1,5 @@
 package org.tron.core.services.http;
 
-import static org.tron.core.services.http.Util.existVisible;
-
-import java.io.IOException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +19,12 @@ public class ListNodesServlet extends RateLimiterServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
       boolean visible = Util.getVisible(request);
-      response(response, visible);
+      NodeList reply = wallet.listNodes();
+      if (reply != null) {
+        response.getWriter().println(JsonFormat.printToString(reply, visible));
+      } else {
+        response.getWriter().println("{}");
+      }
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -30,24 +32,6 @@ public class ListNodesServlet extends RateLimiterServlet {
 
   @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
-    try {
-      PostParams params = PostParams.getPostParams(request);
-      boolean visible = Util.getVisible(request);
-      if (!existVisible(request)) {
-        visible = params.isVisible();
-      }
-      response(response, visible);
-    } catch (Exception e) {
-      Util.processError(e, response);
-    }
-  }
-
-  private void response(HttpServletResponse response, boolean visible) throws IOException {
-    NodeList reply = wallet.listNodes();
-    if (reply != null) {
-      response.getWriter().println(JsonFormat.printToString(reply, visible));
-    } else {
-      response.getWriter().println("{}");
-    }
+    doGet(request, response);
   }
 }
