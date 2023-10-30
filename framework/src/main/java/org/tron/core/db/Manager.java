@@ -1460,8 +1460,8 @@ public class Manager {
       trxCap.setResult(trace.getTransactionContext());
     }
     chainBaseManager.getTransactionStore().put(trxCap.getTransactionId().getBytes(), trxCap);
+    TxMeter.incrWriteLength(trxCap.getTransactionId().getBytes().length);
     setTxMeterMetrics(trxCap);
-
     Optional.ofNullable(transactionCache)
         .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
             new BytesCapsule(ByteArray.fromLong(trxCap.getBlockNum()))));
@@ -1506,7 +1506,15 @@ public class Manager {
   }
 
   private void setTxMeterMetrics(TransactionCapsule trxCap) {
-    TxMeter.incrWriteLength(trxCap.getTransactionId().getBytes().length);
+
+    if (CollectionUtils.isNotEmpty(trxCap.getInstance().getSignatureList())) {
+      logger.info("TxMeter: SignatureList {}", trxCap.getInstance().getSignatureList().size());
+      for (ByteString sig : trxCap.getInstance().getSignatureList()) {
+        logger.info("TxMeter: Signature length {}", sig.toByteArray().length);
+        TxMeter.incrSigLength(sig.toByteArray().length);
+      }
+    }
+
     Metrics.histogramObserve(MetricKeys.Histogram.DB_BYTES,
             TxMeter.totalReadLength(),
             "read",
@@ -1764,13 +1772,6 @@ public class Manager {
         TxMeter.init(transactionCapsule);
         accountStateCallBack.preExeTrans();
         TransactionInfo result = processTransaction(transactionCapsule, block);
-        if (CollectionUtils.isNotEmpty(transactionCapsule.getInstance().getSignatureList())) {
-          logger.info("TxMeter: SignatureList {}", transactionCapsule.getInstance().getSignatureList().size());
-          for (ByteString sig : transactionCapsule.getInstance().getSignatureList()) {
-            logger.info("TxMeter: Signature length {}", sig.toByteArray().length);
-            TxMeter.incrSigLength(sig.toByteArray().length);
-          }
-        }
         accountStateCallBack.exeTransFinish();
         if (Objects.nonNull(result)) {
           results.add(result);
