@@ -1528,6 +1528,7 @@ public class Manager {
             trxCap.getInstance().getRawData().getContract(0).getType().toString()
     );
 
+    logger.info("TxMeter sig total:{}", TxMeter.totalSigLength());
     Metrics.histogramObserve(MetricKeys.Histogram.TX_SIG_BYTES,
             TxMeter.totalSigLength(),
             "sig"
@@ -1763,8 +1764,10 @@ public class Manager {
         TxMeter.init(transactionCapsule);
         accountStateCallBack.preExeTrans();
         TransactionInfo result = processTransaction(transactionCapsule, block);
-        if (CollectionUtils.isEmpty(transactionCapsule.getInstance().getSignatureList())) {
+        if (CollectionUtils.isNotEmpty(transactionCapsule.getInstance().getSignatureList())) {
+          logger.info("TxMeter: SignatureList {}", transactionCapsule.getInstance().getSignatureList().size());
           for (ByteString sig : transactionCapsule.getInstance().getSignatureList()) {
+            logger.info("TxMeter: Signature length {}", sig.toByteArray().length);
             TxMeter.incrSigLength(sig.toByteArray().length);
           }
         }
