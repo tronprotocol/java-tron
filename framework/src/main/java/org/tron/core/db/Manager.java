@@ -1650,6 +1650,7 @@ public class Manager {
       } catch (Exception e) {
         logger.warn("Process trx {} failed when generating block {}, {}.", trx.getTransactionId(),
             blockCapsule.getNum(), e.getMessage());
+        TxMeter.remove();
       }
     }
     blockCapsule.addAllTransactions(toBePacked);
