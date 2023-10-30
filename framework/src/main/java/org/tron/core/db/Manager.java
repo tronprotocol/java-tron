@@ -1761,11 +1761,13 @@ public class Manager {
           transactionCapsule.setVerified(true);
         }
         TxMeter.init(transactionCapsule);
-        if (transactionCapsule.isVerified()) {
-          TxMeter.incrSigLength(transactionCapsule.getInstance().getSerializedSize());
-        }
         accountStateCallBack.preExeTrans();
         TransactionInfo result = processTransaction(transactionCapsule, block);
+        if (transactionCapsule.isVerified()) {
+          for (ByteString sig : transactionCapsule.getInstance().getSignatureList()) {
+            TxMeter.incrSigLength(sig.toByteArray().length);
+          }
+        }
         accountStateCallBack.exeTransFinish();
         if (Objects.nonNull(result)) {
           results.add(result);
