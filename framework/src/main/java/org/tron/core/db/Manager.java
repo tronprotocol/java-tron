@@ -1763,7 +1763,7 @@ public class Manager {
         TxMeter.init(transactionCapsule);
         accountStateCallBack.preExeTrans();
         TransactionInfo result = processTransaction(transactionCapsule, block);
-        if (transactionCapsule.isVerified()) {
+        if (CollectionUtils.isEmpty(transactionCapsule.getInstance().getSignatureList())) {
           for (ByteString sig : transactionCapsule.getInstance().getSignatureList()) {
             TxMeter.incrSigLength(sig.toByteArray().length);
           }
