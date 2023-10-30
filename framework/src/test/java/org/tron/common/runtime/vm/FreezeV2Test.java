@@ -9,7 +9,6 @@ import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
 import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -19,7 +18,9 @@ import org.bouncycastle.util.encoders.Hex;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.RuntimeImpl;
@@ -27,9 +28,9 @@ import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.FastByteComparisons;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
+import org.tron.common.utils.client.utils.AbiUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -55,7 +56,6 @@ import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.contract.Common;
-import stest.tron.wallet.common.client.utils.AbiUtil;
 
 @Slf4j
 public class FreezeV2Test {
@@ -156,7 +156,8 @@ public class FreezeV2Test {
   private static final String userCStr = "27juXSbMvL6pb8VgmKRgW6ByCfw5RqZjUuo";
   private static final byte[] userC = Commons.decode58Check(userCStr);
 
-  private static String dbPath;
+  @Rule
+  public final TemporaryFolder temporaryFolder = new TemporaryFolder();
   private static TronApplicationContext context;
   private static Manager manager;
   private static byte[] owner;
@@ -164,8 +165,8 @@ public class FreezeV2Test {
 
   @Before
   public void init() throws Exception {
-    dbPath = "output_" + FreezeV2Test.class.getName();
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory",
+        temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     manager = context.getBean(Manager.class);
     owner = Hex.decode(Wallet.getAddressPreFixString()
@@ -842,20 +843,20 @@ public class FreezeV2Test {
       acquiredBalance = res == 0 ? oldReceiver.getAcquiredDelegatedFrozenV2BalanceForBandwidth() :
           oldReceiver.getAcquiredDelegatedFrozenV2BalanceForEnergy();
 
+      long unDelegateMaxUsage;
       if (res == 0) {
-        long unDelegateMaxUsage = (long) (amount / TRX_PRECISION
+        unDelegateMaxUsage = (long) (amount / TRX_PRECISION
             * ((double) (dynamicStore.getTotalNetLimit()) / dynamicStore.getTotalNetWeight()));
         transferUsage = (long) (oldReceiver.getNetUsage()
             * ((double) (amount) / oldReceiver.getAllFrozenBalanceForBandwidth()));
-        transferUsage = Math.min(unDelegateMaxUsage, transferUsage);
       } else {
-        long unDelegateMaxUsage = (long) (amount / TRX_PRECISION
+        unDelegateMaxUsage = (long) (amount / TRX_PRECISION
             * ((double) (dynamicStore.getTotalEnergyCurrentLimit())
             / dynamicStore.getTotalEnergyWeight()));
         transferUsage = (long) (oldReceiver.getEnergyUsage()
             * ((double) (amount) / oldReceiver.getAllFrozenBalanceForEnergy()));
-        transferUsage = Math.min(unDelegateMaxUsage, transferUsage);
       }
+      transferUsage = Math.min(unDelegateMaxUsage, transferUsage);
     }
 
     DelegatedResourceStore delegatedResourceStore = manager.getDelegatedResourceStore();
@@ -1002,28 +1003,18 @@ public class FreezeV2Test {
         newInheritor.getFrozenBalance() - oldInheritorFrozenBalance);
     if (oldInheritor != null) {
       if (oldContract.getNetUsage() > 0) {
-        long expectedNewNetUsage =
-            bandwidthProcessor.unDelegateIncrease(
-                oldInheritor,
-                oldContract,
-                oldContract.getNetUsage(),
-                Common.ResourceCode.BANDWIDTH,
-                now);
+        bandwidthProcessor.unDelegateIncrease(oldInheritor, oldContract, oldContract.getNetUsage(),
+            Common.ResourceCode.BANDWIDTH, now);
         Assert.assertEquals(
-            expectedNewNetUsage, newInheritor.getNetUsage() - oldInheritorBandwidthUsage);
+            oldInheritor.getNetUsage(), newInheritor.getNetUsage() - oldInheritorBandwidthUsage);
         Assert.assertEquals(
             ChainBaseManager.getInstance().getHeadSlot(), newInheritor.getLatestConsumeTime());
       }
       if (oldContract.getEnergyUsage() > 0) {
-        long expectedNewEnergyUsage =
-            energyProcessor.unDelegateIncrease(
-                oldInheritor,
-                oldContract,
-                oldContract.getEnergyUsage(),
-                Common.ResourceCode.ENERGY,
-                now);
+        energyProcessor.unDelegateIncrease(oldInheritor, oldContract,
+            oldContract.getEnergyUsage(), Common.ResourceCode.ENERGY, now);
         Assert.assertEquals(
-            expectedNewEnergyUsage, newInheritor.getEnergyUsage() - oldInheritorEnergyUsage);
+            oldInheritor.getEnergyUsage(), newInheritor.getEnergyUsage() - oldInheritorEnergyUsage);
         Assert.assertEquals(
             ChainBaseManager.getInstance().getHeadSlot(),
             newInheritor.getLatestConsumeTimeForEnergy());
@@ -1054,10 +1045,5 @@ public class FreezeV2Test {
     VMConfig.initVmHardFork(false);
     Args.clearParam();
     context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.error("Release resources failure.");
-    }
   }
 }

@@ -3,10 +3,13 @@ package org.tron.core.services.stop;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.io.File;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -15,12 +18,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.LocalWitnesses;
+import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.consensus.dpos.DposSlot;
@@ -40,17 +47,22 @@ import org.tron.protos.Protocol;
 @Slf4j
 public abstract class ConditionallyStopTest extends BlockGenerate {
 
+  @ClassRule
+  public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   static ChainBaseManager chainManager;
   private static DposSlot dposSlot;
-  private final String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
+
+  private final String key = PublicMethod.getRandomPrivateKey();
   private final byte[] privateKey = ByteArray.fromHexString(key);
+
   private final AtomicInteger port = new AtomicInteger(0);
   protected String dbPath;
   protected Manager dbManager;
   long currentHeader = -1;
   private TronNetDelegate tronNetDelegate;
   private TronApplicationContext context;
+
 
   static LocalDateTime localDateTime = LocalDateTime.now();
   private long time = ZonedDateTime.of(localDateTime,
@@ -60,17 +72,19 @@ public abstract class ConditionallyStopTest extends BlockGenerate {
 
   protected abstract void check() throws Exception;
 
-  protected abstract void initDbPath();
+  protected void initDbPath() throws IOException {
+    dbPath = temporaryFolder.newFolder().toString();
+  }
 
 
   @Before
   public void init() throws Exception {
 
     initDbPath();
-    FileUtil.deleteDir(new File(dbPath));
     logger.info("Full node running.");
     Args.setParam(new String[] {"-d", dbPath, "-w"}, Constant.TEST_CONF);
     Args.getInstance().setNodeListenPort(10000 + port.incrementAndGet());
+
     initParameter(Args.getInstance());
     context = new TronApplicationContext(DefaultConfig.class);
 
@@ -84,13 +98,22 @@ public abstract class ConditionallyStopTest extends BlockGenerate {
     tronNetDelegate.setExit(false);
     currentHeader = dbManager.getDynamicPropertiesStore()
         .getLatestBlockHeaderNumberFromDB();
+
+    byte[] address = PublicMethod.getAddressByteByPrivateKey(key);
+    ByteString addressByte = ByteString.copyFrom(address);
+    WitnessCapsule witnessCapsule = new WitnessCapsule(addressByte);
+    chainManager.getWitnessStore().put(addressByte.toByteArray(), witnessCapsule);
+    chainManager.addWitness(addressByte);
+
+    AccountCapsule accountCapsule =
+            new AccountCapsule(Protocol.Account.newBuilder().setAddress(addressByte).build());
+    chainManager.getAccountStore().put(addressByte.toByteArray(), accountCapsule);
   }
 
   @After
   public void destroy() {
     Args.clearParam();
     context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
   }
 
   private void generateBlock(Map<ByteString, String> witnessAndAccount) throws Exception {
@@ -107,8 +130,6 @@ public abstract class ConditionallyStopTest extends BlockGenerate {
 
   @Test
   public void testStop() throws Exception {
-
-
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
     Assert.assertNotNull(ecKey);
     byte[] address = ecKey.getAddress();

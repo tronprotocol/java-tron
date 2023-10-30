@@ -20,17 +20,19 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.utils.LocalWitnesses;
+import org.tron.common.utils.PublicMethod;
 
 public class LocalWitnessTest {
 
   private LocalWitnesses localWitness = new LocalWitnesses();
+  private static String PRIVATE_KEY = PublicMethod.getRandomPrivateKey();
 
   @Before
   public void setLocalWitness() {
     localWitness
         .setPrivateKeys(
             Lists.newArrayList(
-                "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62"));
+                    PRIVATE_KEY));
   }
 
   @Test
@@ -52,16 +54,16 @@ public class LocalWitnessTest {
   public void whenSetPrefixPrivateKey() {
     localWitness
         .setPrivateKeys(Lists
-            .newArrayList("0xf31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62"));
+            .newArrayList("0x" + PRIVATE_KEY));
     localWitness
         .setPrivateKeys(Lists
-            .newArrayList("0Xf31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62"));
+            .newArrayList("0X" + PRIVATE_KEY));
   }
 
   @Test
   public void getPrivateKey() {
     Assert.assertEquals(Lists
-            .newArrayList("f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62"),
+            .newArrayList(PRIVATE_KEY),
         localWitness.getPrivateKeys());
   }
 }

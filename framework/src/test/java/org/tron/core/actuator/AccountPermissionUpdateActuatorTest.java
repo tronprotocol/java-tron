@@ -1,30 +1,23 @@
 package org.tron.core.actuator;
 
-import static org.testng.Assert.fail;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.AccountType;
@@ -37,9 +30,8 @@ import org.tron.protos.contract.AccountContract.AccountCreateContract;
 import org.tron.protos.contract.AccountContract.AccountPermissionUpdateContract;
 
 @Slf4j
-public class AccountPermissionUpdateActuatorTest {
+public class AccountPermissionUpdateActuatorTest extends BaseTest {
 
-  private static final String dbPath = "output_transfer_test";
   private static final String OWNER_ADDRESS;
   private static final String WITNESS_ADDRESS;
   private static final String KEY_ADDRESS;
@@ -58,14 +50,9 @@ public class AccountPermissionUpdateActuatorTest {
   private static final String OWNER_ADDRESS_INVALID = "aaaa";
   private static final String OWNER_ADDRESS_NOACCOUNT;
   private static final String KEY_ADDRESS_INVALID = "bbbb";
-  public static Application AppT;
-  private static Manager dbManager;
-  private static TronApplicationContext context;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-    AppT = ApplicationFactory.create(context);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     WITNESS_ADDRESS = Wallet.getAddressPreFixString() + "8CFC572CC20CA18B636BDD93B4FB15EA84CC2B4E";
     KEY_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
@@ -99,34 +86,13 @@ public class AccountPermissionUpdateActuatorTest {
   }
 
   /**
-   * Init data.
-   */
-  @BeforeClass
-  public static void init() {
-    dbManager = context.getBean(Manager.class);
-    dbManager.getDynamicPropertiesStore().saveAllowMultiSign(1);
-    dbManager.getDynamicPropertiesStore().saveTotalSignNum(5);
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
-  }
-
-  /**
    * create temp Capsule test need.
    */
   @Before
   public void createCapsule() {
+    dbManager.getDynamicPropertiesStore().saveAllowMultiSign(1);
+    dbManager.getDynamicPropertiesStore().saveTotalSignNum(5);
+
     AccountCapsule ownerCapsule = new AccountCapsule(
         ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
         ByteString.copyFromUtf8("owner"), AccountType.Normal);
@@ -199,27 +165,23 @@ public class AccountPermissionUpdateActuatorTest {
       actuator.execute(ret);
 
       fail(failMsg);
-    } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
+    } catch (ContractValidateException | RuntimeException e) {
+      Assert.assertTrue(true);
       Assert.assertEquals(expectedMsg, e.getMessage());
     } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
-    } catch (RuntimeException e) {
-      Assert.assertTrue(e instanceof RuntimeException);
-      Assert.assertEquals(expectedMsg, e.getMessage());
+      Assert.fail();
     }
   }
 
   @Test
   public void successUpdatePermissionKey() {
-    String ownerAddress = OWNER_ADDRESS;
     String keyAddress = KEY_ADDRESS;
 
     // step 1, init
     addDefaultPermission();
 
     // step2, check init data
-    byte[] owner_name_array = ByteArray.fromHexString(ownerAddress);
+    byte[] owner_name_array = ByteArray.fromHexString(OWNER_ADDRESS);
     ByteString address = ByteString.copyFrom(owner_name_array);
     AccountCapsule owner = dbManager.getAccountStore().get(owner_name_array);
 
@@ -227,7 +189,7 @@ public class AccountPermissionUpdateActuatorTest {
     Permission activePermission = AccountCapsule.createDefaultActivePermission(address,
         dbManager.getDynamicPropertiesStore());
 
-    Assert.assertEquals(owner.getInstance().getActivePermissionCount(), 1);
+    Assert.assertEquals(1, owner.getInstance().getActivePermissionCount());
     Permission ownerPermission1 = owner.getInstance().getOwnerPermission();
     Permission activePermission1 = owner.getInstance().getActivePermission(0);
 
@@ -274,21 +236,19 @@ public class AccountPermissionUpdateActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+      Assert.assertEquals(code.SUCESS, ret.getInstance().getRet());
 
       // step 4, check result after update operation
       owner = dbManager.getAccountStore().get(owner_name_array);
-      Assert.assertEquals(owner.getInstance().getActivePermissionCount(), 1);
+      Assert.assertEquals(1, owner.getInstance().getActivePermissionCount());
       ownerPermission1 = owner.getInstance().getOwnerPermission();
       activePermission1 = owner.getInstance().getActivePermission(0);
 
       Assert.assertEquals(ownerPermission1, ownerPermission);
       Assert.assertEquals(activePermission1, activePermission);
 
-    } catch (ContractValidateException e) {
-      Assert.assertFalse(e instanceof ContractValidateException);
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
+    } catch (ContractValidateException | ContractExeException e) {
+      Assert.fail();
     }
   }
 
@@ -329,8 +289,7 @@ public class AccountPermissionUpdateActuatorTest {
     AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
         .setAny(getContract(OWNER_ADDRESS));
-    TransactionResultCapsule ret = null;
-    processAndCheckInvalid(actuator, ret, "TransactionResultCapsule is null",
+    processAndCheckInvalid(actuator, null, "TransactionResultCapsule is null",
         "TransactionResultCapsule is null");
   }
 
@@ -398,7 +357,7 @@ public class AccountPermissionUpdateActuatorTest {
     for (int i = 0; i <= 8; i++) {
       activeList.add(activePermission);
     }
-
+    assertNotNull(activeList);
     AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
         .setAny(getContract(address, ownerPermission, null, null));
@@ -964,12 +923,12 @@ public class AccountPermissionUpdateActuatorTest {
     // 7fff1fc0037e0000000000000000000000000000000000000000000000000000,
     // and it should call the addSystemContractAndSetPermission to add new contract
     // type
-    // When you add a new contact, you can add its to contractType,
+    // When you add a new contact, you can add it to contractType,
     // as '|| contractType = ContractType.XXX',
     // and you will get the value from the output,
     // then update the value to checkAvailableContractType
     // and checkActiveDefaultOperations
-    String validContractType = "7fff1fc0037ef807000000000000000000000000000000000000000000000000";
+    String validContractType = "7fff1fc0037ef80f000000000000000000000000000000000000000000000000";
 
     byte[] availableContractType = new byte[32];
     for (ContractType contractType : ContractType.values()) {
@@ -996,7 +955,7 @@ public class AccountPermissionUpdateActuatorTest {
     // 7fff1fc0033e0000000000000000000000000000000000000000000000000000,
     // and it should call the addSystemContractAndSetPermission to add new contract
     // type
-    String validContractType = "7fff1fc0033ef807000000000000000000000000000000000000000000000000";
+    String validContractType = "7fff1fc0033ef80f000000000000000000000000000000000000000000000000";
 
     byte[] availableContractType = new byte[32];
     for (ContractType contractType : ContractType.values()) {
@@ -1019,7 +978,7 @@ public class AccountPermissionUpdateActuatorTest {
 
   @Test
   public void checkAvailableContractType() {
-    String validContractType = "7fff1fc0037ef907000000000000000000000000000000000000000000000000";
+    String validContractType = "7fff1fc0037ef90f000000000000000000000000000000000000000000000000";
 
     byte[] availableContractType = new byte[32];
     for (ContractType contractType : ContractType.values()) {
@@ -1040,7 +999,7 @@ public class AccountPermissionUpdateActuatorTest {
 
   @Test
   public void checkActiveDefaultOperations() {
-    String validContractType = "7fff1fc0033ef907000000000000000000000000000000000000000000000000";
+    String validContractType = "7fff1fc0033ef90f000000000000000000000000000000000000000000000000";
 
     byte[] availableContractType = new byte[32];
     for (ContractType contractType : ContractType.values()) {

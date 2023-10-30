@@ -5,20 +5,17 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.config.Parameter;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.net.TronNetDelegate;
@@ -41,14 +38,12 @@ public class FetchBlockService {
 
   private final long fetchTimeOut = CommonParameter.getInstance().fetchBlockTimeout;
 
-  private static final int BLOCK_FETCH_TIME_OUT_LIMIT =
-      2 * Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
-
   private static final double BLOCK_FETCH_LEFT_TIME_PERCENT = 0.5;
 
+  private final String esName = "fetch-block";
+
   private final ScheduledExecutorService fetchBlockWorkerExecutor =
-      new ScheduledThreadPoolExecutor(1,
-          new BasicThreadFactory.Builder().namingPattern("FetchBlockWorkerSchedule-").build());
+      ExecutorServiceManager.newSingleThreadScheduledExecutor(esName);
 
   public void init() {
     fetchBlockWorkerExecutor.scheduleWithFixedDelay(() -> {
@@ -61,7 +56,7 @@ public class FetchBlockService {
   }
 
   public void close() {
-    fetchBlockWorkerExecutor.shutdown();
+    ExecutorServiceManager.shutdownAndAwaitTermination(fetchBlockWorkerExecutor, esName);
   }
 
   public void fetchBlock(List<Sha256Hash> sha256HashList, PeerConnection peer) {
@@ -76,12 +71,9 @@ public class FetchBlockService {
     sha256HashList.stream().filter(sha256Hash -> new BlockCapsule.BlockId(sha256Hash).getNum()
         == chainBaseManager.getHeadBlockNum() + 1)
         .findFirst().ifPresent(sha256Hash -> {
-          if (System.currentTimeMillis() - chainBaseManager.getHeadBlockTimeStamp()
-              < BLOCK_FETCH_TIME_OUT_LIMIT) {
-            fetchBlockInfo = new FetchBlockInfo(sha256Hash, peer, System.currentTimeMillis());
-            logger.info("Set fetchBlockInfo, block: {}, peer: {}, time: {}", sha256Hash,
-                fetchBlockInfo.getPeer().getInetAddress(), fetchBlockInfo.getTime());
-          }
+          fetchBlockInfo = new FetchBlockInfo(sha256Hash, peer, System.currentTimeMillis());
+          logger.info("Set fetchBlockInfo, block: {}, peer: {}, time: {}", sha256Hash,
+              fetchBlockInfo.getPeer().getInetAddress(), fetchBlockInfo.getTime());
         });
   }
 
@@ -99,13 +91,6 @@ public class FetchBlockService {
     if (null == fetchBlock) {
       return;
     }
-    if (System.currentTimeMillis() - chainBaseManager.getHeadBlockTimeStamp()
-        >= BLOCK_FETCH_TIME_OUT_LIMIT) {
-      this.fetchBlockInfo = null;
-      logger.info("Clear fetchBlockInfo due to {} ms past head block time",
-              BLOCK_FETCH_TIME_OUT_LIMIT);
-      return;
-    }
     Item item = new Item(fetchBlock.getHash(), InventoryType.BLOCK);
     Optional<PeerConnection> optionalPeerConnection = tronNetDelegate.getActivePeer().stream()
         .filter(PeerConnection::isIdle)
@@ -117,8 +102,8 @@ public class FetchBlockService {
 
     if (optionalPeerConnection.isPresent()) {
       optionalPeerConnection.ifPresent(firstPeer -> {
-        if (shouldFetchBlock(firstPeer, fetchBlock)) {
-          firstPeer.getAdvInvRequest().put(item, System.currentTimeMillis());
+        if (shouldFetchBlock(firstPeer, fetchBlock)
+            && firstPeer.checkAndPutAdvInvRequest(item, System.currentTimeMillis())) {
           firstPeer.sendMessage(new FetchInvDataMessage(Collections.singletonList(item.getHash()),
               item.getType()));
           this.fetchBlockInfo = null;

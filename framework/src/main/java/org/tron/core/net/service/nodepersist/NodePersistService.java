@@ -4,15 +4,17 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.es.ExecutorServiceManager;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.JsonUtil;
-import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.config.args.Args;
+import org.tron.core.db.CommonStore;
 import org.tron.core.net.TronNetService;
 import org.tron.p2p.discover.Node;
 
@@ -20,38 +22,34 @@ import org.tron.p2p.discover.Node;
 @Component
 public class NodePersistService {
   private static final byte[] DB_KEY_PEERS = "peers".getBytes();
-  private static final long DB_COMMIT_RATE = 1 * 60 * 1000L;
+  private static final long DB_COMMIT_RATE = 60 * 1000L;
   private static final int MAX_NODES_WRITE_TO_DB = 30;
+  private final boolean isNodePersist = CommonParameter.getInstance().isNodeDiscoveryPersist();
+  @Autowired
+  private CommonStore commonStore;
 
-  private boolean isNodePersist = Args.getInstance().isNodeDiscoveryPersist();
+  private ScheduledExecutorService nodePersistExecutor;
 
-  private ChainBaseManager chainBaseManager = ChainBaseManager.getInstance();
-
-  private Timer nodePersistTaskTimer = new Timer("NodePersistTaskTimer");
+  private final String name = "NodePersistTask";
 
   public void init() {
     if (isNodePersist) {
-      nodePersistTaskTimer.scheduleAtFixedRate(new TimerTask() {
-        @Override
-        public void run() {
-          dbWrite();
-        }
-      }, DB_COMMIT_RATE, DB_COMMIT_RATE);
+      nodePersistExecutor = ExecutorServiceManager.newSingleThreadScheduledExecutor(name);
+      nodePersistExecutor.scheduleAtFixedRate(this::dbWrite, DB_COMMIT_RATE, DB_COMMIT_RATE,
+          TimeUnit.MILLISECONDS);
     }
   }
 
   public void close() {
-    try {
-      nodePersistTaskTimer.cancel();
-    } catch (Exception e) {
-      logger.error("Close nodePersistTaskTimer failed", e);
+    if (isNodePersist) {
+      ExecutorServiceManager.shutdownAndAwaitTermination(nodePersistExecutor, name);
     }
   }
 
   public List<InetSocketAddress> dbRead() {
     List<InetSocketAddress> nodes = new ArrayList<>();
     try {
-      byte[] nodeBytes = chainBaseManager.getCommonStore().get(DB_KEY_PEERS).getData();
+      byte[] nodeBytes = commonStore.get(DB_KEY_PEERS).getData();
       if (ByteArray.isEmpty(nodeBytes)) {
         return nodes;
       }
@@ -70,7 +68,8 @@ public class NodePersistService {
       List<Node> tableNodes = TronNetService.getP2pService().getTableNodes();
       tableNodes.sort(Comparator.comparingLong(value -> -value.getUpdateTime()));
       for (Node n : tableNodes) {
-        batch.add(new DBNode(n.getHost(), n.getPort()));
+        batch.add(
+            new DBNode(n.getPreferInetSocketAddress().getAddress().getHostAddress(), n.getPort()));
       }
 
       if (batch.size() > MAX_NODES_WRITE_TO_DB) {
@@ -82,8 +81,7 @@ public class NodePersistService {
 
       logger.info("Write nodes to store: {}/{} nodes", batch.size(), tableNodes.size());
 
-      chainBaseManager.getCommonStore()
-              .put(DB_KEY_PEERS, new BytesCapsule(JsonUtil.obj2Json(dbNodes).getBytes()));
+      commonStore.put(DB_KEY_PEERS, new BytesCapsule(JsonUtil.obj2Json(dbNodes).getBytes()));
     } catch (Exception e) {
       logger.warn("DB write nodes failed, {}", e.getMessage());
     }

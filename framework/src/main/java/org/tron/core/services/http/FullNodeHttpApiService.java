@@ -1,13 +1,9 @@
 package org.tron.core.services.http;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.EnumSet;
 import javax.servlet.DispatcherType;
 import javax.servlet.Filter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.eclipse.jetty.server.ConnectionLimit;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.FilterHolder;
@@ -16,24 +12,17 @@ import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.application.Service;
+import org.tron.common.application.HttpService;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.common.zksnark.JLibrustzcash;
-import org.tron.common.zksnark.LibrustzcashParam.InitZksnarkParams;
 import org.tron.core.config.args.Args;
-import org.tron.core.exception.ZksnarkException;
 import org.tron.core.services.filter.HttpApiAccessFilter;
 import org.tron.core.services.filter.HttpInterceptor;
 import org.tron.core.services.filter.LiteFnQueryHttpFilter;
 
 
-@Component
+@Component("fullNodeHttpApiService")
 @Slf4j(topic = "API")
-public class FullNodeHttpApiService implements Service {
-
-  private int port = Args.getInstance().getFullNodeHttpPort();
-
-  private Server server;
+public class FullNodeHttpApiService extends HttpService {
 
   @Autowired
   private GetAccountServlet getAccountServlet;
@@ -41,8 +30,6 @@ public class FullNodeHttpApiService implements Service {
   private TransferServlet transferServlet;
   @Autowired
   private BroadcastServlet broadcastServlet;
-  @Autowired
-  private TransactionSignServlet transactionSignServlet;
   @Autowired
   private UpdateAccountServlet updateAccountServlet;
   @Autowired
@@ -114,18 +101,6 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetNextMaintenanceTimeServlet getNextMaintenanceTimeServlet;
   @Autowired
-  private EasyTransferServlet easyTransferServlet;
-  @Autowired
-  private EasyTransferByPrivateServlet easyTransferByPrivateServlet;
-  @Autowired
-  private EasyTransferAssetServlet easyTransferAssetServlet;
-  @Autowired
-  private EasyTransferAssetByPrivateServlet easyTransferAssetByPrivateServlet;
-  @Autowired
-  private CreateAddressServlet createAddressServlet;
-  @Autowired
-  private GenerateAddressServlet generateAddressServlet;
-  @Autowired
   private ValidateAddressServlet validateAddressServlet;
   @Autowired
   private DeployContractServlet deployContractServlet;
@@ -169,8 +144,6 @@ public class FullNodeHttpApiService implements Service {
   private GetAccountResourceServlet getAccountResourceServlet;
   @Autowired
   private GetNodeInfoServlet getNodeInfoServlet;
-  @Autowired
-  private AddTransactionSignServlet addTransactionSignServlet;
   @Autowired
   private GetTransactionSignWeightServlet getTransactionSignWeightServlet;
   @Autowired
@@ -318,44 +291,8 @@ public class FullNodeHttpApiService implements Service {
   private DelegateResourceServlet delegateResourceServlet;
   @Autowired
   private UnDelegateResourceServlet unDelegateResourceServlet;
-
-  private static String getParamsFile(String fileName) {
-    InputStream in = Thread.currentThread().getContextClassLoader()
-        .getResourceAsStream("params" + File.separator + fileName);
-    File fileOut = new File(System.getProperty("java.io.tmpdir")
-        + File.separator + fileName + "." + System.currentTimeMillis());
-    try {
-      FileUtils.copyToFile(in, fileOut);
-    } catch (IOException e) {
-      logger.error(e.getMessage(), e);
-    }
-    return fileOut.getAbsolutePath();
-  }
-
-  public static void librustzcashInitZksnarkParams() {
-    logger.info("init zk param begin");
-
-    if (!JLibrustzcash.isOpenZen()) {
-      logger.info("zen switch is off, zen will not start.");
-      return;
-    }
-
-    String spendPath = getParamsFile("sapling-spend.params");
-    String spendHash = "25fd9a0d1c1be0526c14662947ae95b758fe9f3d7fb7f55e9b4437830dcc6215a7ce3ea465"
-        + "914b157715b7a4d681389ea4aa84438190e185d5e4c93574d3a19a";
-
-    String outputPath = getParamsFile("sapling-output.params");
-    String outputHash = "a1cb23b93256adce5bce2cb09cefbc96a1d16572675ceb691e9a3626ec15b5b546926ff1c"
-        + "536cfe3a9df07d796b32fdfc3e5d99d65567257bf286cd2858d71a6";
-
-    try {
-      JLibrustzcash.librustzcashInitZksnarkParams(
-          new InitZksnarkParams(spendPath, spendHash, outputPath, outputHash));
-    } catch (ZksnarkException e) {
-      logger.error("librustzcashInitZksnarkParams fail!", e);
-    }
-    logger.info("init zk param done");
-  }
+  @Autowired
+  private CancelAllUnfreezeV2Servlet cancelAllUnfreezeV2Servlet;
 
   @Override
   public void init() {
@@ -363,21 +300,20 @@ public class FullNodeHttpApiService implements Service {
 
   @Override
   public void init(CommonParameter args) {
-    librustzcashInitZksnarkParams();
+    port = Args.getInstance().getFullNodeHttpPort();
   }
 
   @Override
   public void start() {
     try {
-      server = new Server(port);
+      apiServer = new Server(port);
       ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
       context.setContextPath("/");
-      server.setHandler(context);
+      apiServer.setHandler(context);
 
       context.addServlet(new ServletHolder(getAccountServlet), "/wallet/getaccount");
       context.addServlet(new ServletHolder(transferServlet), "/wallet/createtransaction");
       context.addServlet(new ServletHolder(broadcastServlet), "/wallet/broadcasttransaction");
-      context.addServlet(new ServletHolder(transactionSignServlet), "/wallet/gettransactionsign");
       context.addServlet(new ServletHolder(updateAccountServlet), "/wallet/updateaccount");
       context.addServlet(new ServletHolder(voteWitnessAccountServlet),
           "/wallet/votewitnessaccount");
@@ -430,14 +366,6 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(totalTransactionServlet), "/wallet/totaltransaction");
       context.addServlet(
           new ServletHolder(getNextMaintenanceTimeServlet), "/wallet/getnextmaintenancetime");
-      context.addServlet(new ServletHolder(createAddressServlet), "/wallet/createaddress");
-      context.addServlet(new ServletHolder(easyTransferServlet), "/wallet/easytransfer");
-      context.addServlet(new ServletHolder(easyTransferByPrivateServlet),
-          "/wallet/easytransferbyprivate");
-      context.addServlet(new ServletHolder(easyTransferAssetServlet), "/wallet/easytransferasset");
-      context.addServlet(new ServletHolder(easyTransferAssetByPrivateServlet),
-          "/wallet/easytransferassetbyprivate");
-      context.addServlet(new ServletHolder(generateAddressServlet), "/wallet/generateaddress");
       context.addServlet(new ServletHolder(validateAddressServlet), "/wallet/validateaddress");
       context.addServlet(new ServletHolder(deployContractServlet), "/wallet/deploycontract");
       context.addServlet(new ServletHolder(triggerSmartContractServlet),
@@ -464,8 +392,6 @@ public class FullNodeHttpApiService implements Service {
           "/wallet/getchainparameters");
       context.addServlet(new ServletHolder(getAccountResourceServlet),
           "/wallet/getaccountresource");
-      context.addServlet(new ServletHolder(addTransactionSignServlet),
-          "/wallet/addtransactionsign");
       context.addServlet(new ServletHolder(getTransactionSignWeightServlet),
           "/wallet/getsignweight");
       context.addServlet(new ServletHolder(getTransactionApprovedListServlet),
@@ -591,10 +517,12 @@ public class FullNodeHttpApiService implements Service {
           "/wallet/delegateresource");
       context.addServlet(new ServletHolder(unDelegateResourceServlet),
           "/wallet/undelegateresource");
+      context.addServlet(new ServletHolder(cancelAllUnfreezeV2Servlet),
+          "/wallet/cancelallunfreezev2");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
-        server.addBean(new ConnectionLimit(maxHttpConnectNumber, server));
+        apiServer.addBean(new ConnectionLimit(maxHttpConnectNumber, apiServer));
       }
 
       // filters the specified APIs
@@ -618,17 +546,7 @@ public class FullNodeHttpApiService implements Service {
           .addFilterWithMapping((Class<? extends Filter>) HttpInterceptor.class, "/*",
               EnumSet.of(DispatcherType.REQUEST));
       context.addFilter(fh, "/*", EnumSet.of(DispatcherType.REQUEST));
-
-      server.start();
-    } catch (Exception e) {
-      logger.debug("IOException: {}", e.getMessage());
-    }
-  }
-
-  @Override
-  public void stop() {
-    try {
-      server.stop();
+      super.start();
     } catch (Exception e) {
       logger.debug("IOException: {}", e.getMessage());
     }

@@ -21,6 +21,7 @@ package org.tron.core;
 import static org.tron.common.utils.Commons.getAssetIssueStoreFinal;
 import static org.tron.common.utils.Commons.getExchangeStoreFinal;
 import static org.tron.common.utils.WalletUtil.isConstant;
+import static org.tron.core.capsule.utils.TransactionUtil.buildInternalTransaction;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
@@ -28,6 +29,8 @@ import static org.tron.core.config.Parameter.DatabaseConstants.MARKET_COUNT_LIMI
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseEnergyFee;
 import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.EARLIEST_STR;
+import static org.tron.core.vm.utils.FreezeV2Util.getV2EnergyUsage;
+import static org.tron.core.vm.utils.FreezeV2Util.getV2NetUsage;
 import static org.tron.protos.contract.Common.ResourceCode;
 
 import com.google.common.collect.ContiguousSet;
@@ -81,6 +84,7 @@ import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NoteParameters;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.PaymentAddressMessage;
+import org.tron.api.GrpcAPI.PricesResponseMessage;
 import org.tron.api.GrpcAPI.PrivateParameters;
 import org.tron.api.GrpcAPI.PrivateParametersWithoutAsk;
 import org.tron.api.GrpcAPI.PrivateShieldedTRC20Parameters;
@@ -110,6 +114,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
 import org.tron.common.utils.WalletUtil;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
@@ -121,6 +126,7 @@ import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
 import org.tron.consensus.ConsensusDelegate;
 import org.tron.core.actuator.Actuator;
+import org.tron.core.actuator.ActuatorConstant;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.actuator.UnfreezeBalanceV2Actuator;
 import org.tron.core.actuator.VMActuator;
@@ -150,7 +156,6 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.MarketUtils;
-import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.BlockIndexStore;
@@ -189,6 +194,7 @@ import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.StoreFactory;
+import org.tron.core.utils.TransactionUtil;
 import org.tron.core.vm.program.Program;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder.ShieldedTRC20ParametersType;
@@ -533,6 +539,9 @@ public class Wallet {
       if (chainBaseManager.getDynamicPropertiesStore().supportVM()) {
         trx.resetResult();
       }
+      if (trx.getInstance().getRawData().getContractCount() == 0) {
+        throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
+      }
       dbManager.pushTransaction(trx);
       int num = tronNetService.fastBroadcastTransaction(message);
       if (num == 0 && minEffectiveConnection != 0) {
@@ -583,7 +592,7 @@ public class Wallet {
           .setMessage(ByteString.copyFromUtf8("Transaction expired"))
           .build();
     } catch (Exception e) {
-      logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
+      logger.warn("Broadcast transaction {} failed", txID, e);
       return builder.setResult(false).setCode(response_code.OTHER_ERROR)
           .setMessage(ByteString.copyFromUtf8("Error: " + e.getMessage()))
           .build();
@@ -646,18 +655,6 @@ public class Wallet {
 
     tswBuilder.setResult(resultBuilder);
     return tswBuilder.build();
-  }
-
-  public byte[] pass2Key(byte[] passPhrase) {
-    return Sha256Hash.hash(CommonParameter
-        .getInstance().isECKeyCryptoEngine(), passPhrase);
-  }
-
-  public byte[] createAddress(byte[] passPhrase) {
-    byte[] privateKey = pass2Key(passPhrase);
-    SignInterface ecKey = SignUtils.fromPrivate(privateKey,
-        Args.getInstance().isECKeyCryptoEngine());
-    return ecKey.getAddress();
   }
 
   public Block getNowBlock() {
@@ -765,23 +762,34 @@ public class Wallet {
         .createDbKeyV2(fromAddress.toByteArray(), toAddress.toByteArray(), false);
     DelegatedResourceCapsule unlockResource = chainBaseManager.getDelegatedResourceStore()
         .get(dbKey);
-    if (unlockResource != null) {
+    if (nonEmptyResource(unlockResource)) {
       builder.addDelegatedResource(unlockResource.getInstance());
     }
     dbKey = DelegatedResourceCapsule
         .createDbKeyV2(fromAddress.toByteArray(), toAddress.toByteArray(), true);
     DelegatedResourceCapsule lockResource = chainBaseManager.getDelegatedResourceStore()
         .get(dbKey);
-    if (lockResource != null) {
+    if (nonEmptyResource(lockResource)) {
       builder.addDelegatedResource(lockResource.getInstance());
     }
     return builder.build();
+  }
+
+  private boolean nonEmptyResource(DelegatedResourceCapsule resource) {
+    return Objects.nonNull(resource) && !(resource.getExpireTimeForBandwidth() == 0
+        && resource.getExpireTimeForEnergy() == 0
+        && resource.getFrozenBalanceForBandwidth() == 0
+        && resource.getFrozenBalanceForEnergy() == 0);
   }
 
   public GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage getCanWithdrawUnfreezeAmount(
           ByteString ownerAddress, long timestamp) {
     GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage.Builder builder =
             GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage.newBuilder();
+    if (timestamp < 0) {
+      return builder.build();
+    }
+
     long canWithdrawUnfreezeAmount;
 
     AccountStore accountStore = chainBaseManager.getAccountStore();
@@ -799,13 +807,8 @@ public class Wallet {
     long finalTimestamp = timestamp;
 
     canWithdrawUnfreezeAmount = unfrozenV2List
-            .stream()
-            .filter(unfrozenV2 ->
-                    (unfrozenV2.getUnfreezeAmount() > 0
-                    && unfrozenV2.getUnfreezeExpireTime() <= finalTimestamp))
-            .mapToLong(UnFreezeV2::getUnfreezeAmount)
-            .sum();
-
+            .stream().filter(unfrozenV2 -> unfrozenV2.getUnfreezeExpireTime() <= finalTimestamp)
+            .mapToLong(UnFreezeV2::getUnfreezeAmount).sum();
 
     builder.setAmount(canWithdrawUnfreezeAmount);
     return builder.build();
@@ -844,13 +847,7 @@ public class Wallet {
     }
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
 
-    List<UnFreezeV2> unfrozenV2List = accountCapsule.getInstance().getUnfrozenV2List();
-    long getUsedUnfreezeCount = unfrozenV2List
-            .stream()
-            .filter(unfrozenV2 ->
-                    (unfrozenV2.getUnfreezeAmount() > 0
-                     && unfrozenV2.getUnfreezeExpireTime() > now))
-            .count();
+    long getUsedUnfreezeCount = accountCapsule.getUnfreezingV2Count(now);
     getAvailableUnfreezeCount = UnfreezeBalanceV2Actuator.getUNFREEZE_MAX_TIMES()
             - getUsedUnfreezeCount;
     builder.setCount(getAvailableUnfreezeCount);
@@ -870,20 +867,15 @@ public class Wallet {
     processor.updateUsage(ownerCapsule);
 
     long accountNetUsage = ownerCapsule.getNetUsage();
-    accountNetUsage += org.tron.core.utils.TransactionUtil.estimateConsumeBandWidthSize(
-            ownerCapsule, chainBaseManager);
+    accountNetUsage += TransactionUtil.estimateConsumeBandWidthSize(dynamicStore,
+            ownerCapsule.getFrozenV2BalanceForBandwidth());
 
     long netUsage = (long) (accountNetUsage * TRX_PRECISION * ((double)
             (dynamicStore.getTotalNetWeight()) / dynamicStore.getTotalNetLimit()));
 
-    long remainNetUsage = netUsage
-            - ownerCapsule.getFrozenBalance()
-            - ownerCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
-            - ownerCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth();
+    long v2NetUsage = getV2NetUsage(ownerCapsule, netUsage);
 
-    remainNetUsage = Math.max(0, remainNetUsage);
-
-    long maxSize = ownerCapsule.getFrozenV2BalanceForBandwidth() - remainNetUsage;
+    long maxSize = ownerCapsule.getFrozenV2BalanceForBandwidth() - v2NetUsage;
     return Math.max(0, maxSize);
   }
 
@@ -901,14 +893,9 @@ public class Wallet {
     long energyUsage = (long) (ownerCapsule.getEnergyUsage() * TRX_PRECISION * ((double)
             (dynamicStore.getTotalEnergyWeight()) / dynamicStore.getTotalEnergyCurrentLimit()));
 
-    long remainEnergyUsage = energyUsage
-            - ownerCapsule.getEnergyFrozenBalance()
-            - ownerCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()
-            - ownerCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy();
+    long v2EnergyUsage = getV2EnergyUsage(ownerCapsule, energyUsage);
 
-    remainEnergyUsage = Math.max(0, remainEnergyUsage);
-
-    long maxSize =  ownerCapsule.getFrozenV2BalanceForEnergy() - remainEnergyUsage;
+    long maxSize =  ownerCapsule.getFrozenV2BalanceForEnergy() - v2EnergyUsage;
     return Math.max(0, maxSize);
   }
 
@@ -1320,6 +1307,21 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getDynamicEnergyMaxFactor())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowTvmShangHai")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmShangHai())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowCancelAllUnfreezeV2")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowCancelAllUnfreezeV2())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getMaxDelegateLockPeriod")
+        .setValue(dbManager.getDynamicPropertiesStore().getMaxDelegateLockPeriod())
+        .build());
+
     return builder.build();
   }
 
@@ -1713,7 +1715,7 @@ public class Wallet {
       proposalCapsule = chainBaseManager.getProposalStore()
           .get(proposalId.toByteArray());
     } catch (StoreException e) {
-      logger.error(e.getMessage());
+      logger.warn(e.getMessage());
     }
     if (proposalCapsule != null) {
       return proposalCapsule.getInstance();
@@ -2043,7 +2045,7 @@ public class Wallet {
             .parseFrom(chainBaseManager.getMerkleTreeIndexStore().get(blockNum));
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error("GetMerkleTreeOfBlock failed, blockNum:{}", blockNum, ex);
     }
 
     return null;
@@ -2631,7 +2633,7 @@ public class Wallet {
         }
       }
     } catch (BadItemException | ItemNotFoundException e) {
-      logger.error(e.getMessage());
+      logger.warn(e.getMessage());
     }
 
     return transactionInfoList.build();
@@ -2642,10 +2644,11 @@ public class Wallet {
     if (!Args.getInstance().p2pDisable) {
       TronNetService.getP2pService().getConnectableNodes().forEach(node -> {
         nodeListBuilder.addNodes(Node.newBuilder().setAddress(
-                Address.newBuilder()
-                        .setHost(ByteString
-                                .copyFrom(ByteArray.fromString(node.getHost())))
-                        .setPort(node.getPort())));
+            Address.newBuilder()
+                .setHost(ByteString
+                    .copyFrom(ByteArray.fromString(
+                        node.getPreferInetSocketAddress().getAddress().getHostAddress())))
+                .setPort(node.getPort())));
       });
     }
     return nodeListBuilder.build();
@@ -2662,7 +2665,7 @@ public class Wallet {
     try {
       return marketOrderStore.get(orderId.toByteArray()).getInstance();
     } catch (ItemNotFoundException e) {
-      logger.error("orderId = " + orderId.toString() + " not found");
+      logger.warn("orderId = {} not found", orderId);
       throw new IllegalStateException("order not found in store");
     }
 
@@ -2698,7 +2701,7 @@ public class Wallet {
             marketOrderListBuilder
                 .addOrders(orderCapsule.getInstance());
           } catch (ItemNotFoundException e) {
-            logger.error("orderId = " + orderId.toString() + " not found");
+            logger.warn("orderId = {} not found", orderId);
             throw new IllegalStateException("order not found in store");
           }
         }
@@ -2844,7 +2847,7 @@ public class Wallet {
         triggerSmartContract.getData().toByteArray());
 
     if (isConstant(abi, selector)) {
-      return callConstantContract(trxCap, builder, retBuilder);
+      return callConstantContract(trxCap, builder, retBuilder, false);
     } else {
       return trxCap.getInstance();
     }
@@ -2962,12 +2965,18 @@ public class Wallet {
     txExtBuilder.clear();
     txRetBuilder.clear();
     transaction = triggerConstantContract(
-        triggerSmartContract, txCap, txExtBuilder, txRetBuilder);
+        triggerSmartContract, txCap, txExtBuilder, txRetBuilder, true);
     return transaction;
   }
 
   public Transaction triggerConstantContract(TriggerSmartContract triggerSmartContract,
       TransactionCapsule trxCap, Builder builder, Return.Builder retBuilder)
+      throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
+    return triggerConstantContract(triggerSmartContract, trxCap, builder, retBuilder, false);
+  }
+
+  public Transaction triggerConstantContract(TriggerSmartContract triggerSmartContract,
+      TransactionCapsule trxCap, Builder builder, Return.Builder retBuilder, boolean isEstimating)
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
     if (triggerSmartContract.getContractAddress().isEmpty()) { // deploy contract
@@ -2993,11 +3002,11 @@ public class Wallet {
         throw new ContractValidateException("Smart contract is not exist.");
       }
     }
-    return callConstantContract(trxCap, builder, retBuilder);
+    return callConstantContract(trxCap, builder, retBuilder, isEstimating);
   }
 
   public Transaction callConstantContract(TransactionCapsule trxCap,
-      Builder builder, Return.Builder retBuilder)
+      Builder builder, Return.Builder retBuilder, boolean isEstimating)
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
     if (!Args.getInstance().isSupportConstant()) {
@@ -3013,7 +3022,8 @@ public class Wallet {
       headBlock = blockCapsuleList.get(0).getInstance();
     }
 
-    TransactionContext context = new TransactionContext(new BlockCapsule(headBlock), trxCap,
+    BlockCapsule headBlockCapsule = new BlockCapsule(headBlock);
+    TransactionContext context = new TransactionContext(headBlockCapsule, trxCap,
         StoreFactory.getInstance(), true, false);
     VMActuator vmActuator = new VMActuator(true);
 
@@ -3021,9 +3031,10 @@ public class Wallet {
     vmActuator.execute(context);
 
     ProgramResult result = context.getProgramResult();
-    if (result.getException() != null) {
+    if (!isEstimating && result.getException() != null
+        || result.getException() instanceof Program.OutOfTimeException) {
       RuntimeException e = result.getException();
-      logger.warn("Constant call has an error {}", e.getMessage());
+      logger.warn("Constant call failed for reason: {}", e.getMessage());
       throw e;
     }
 
@@ -3034,7 +3045,7 @@ public class Wallet {
     result.getLogInfoList().forEach(logInfo ->
         builder.addLogs(LogInfo.buildLog(logInfo)));
     result.getInternalTransactions().forEach(it ->
-        builder.addInternalTransactions(TransactionUtil.buildInternalTransaction(it)));
+        builder.addInternalTransactions(buildInternalTransaction(it)));
     ret.setStatus(0, code.SUCESS);
     if (StringUtils.isNoneEmpty(result.getRuntimeError())) {
       ret.setStatus(0, code.FAILED);
@@ -3055,9 +3066,9 @@ public class Wallet {
     byte[] address = bytesMessage.getValue().toByteArray();
     AccountCapsule accountCapsule = chainBaseManager.getAccountStore().get(address);
     if (accountCapsule == null) {
-      logger.error(
-          "Get contract failed, the account does not exist or the account "
-              + "does not have a code hash!");
+      logger.warn(
+          "Get contract failed, the account {} does not exist or the account "
+              + "does not have a code hash!", StringUtil.encode58Check(address));
       return null;
     }
 
@@ -3084,9 +3095,9 @@ public class Wallet {
     byte[] address = bytesMessage.getValue().toByteArray();
     AccountCapsule accountCapsule = chainBaseManager.getAccountStore().get(address);
     if (accountCapsule == null) {
-      logger.error(
-          "Get contract failed, the account does not exist or the account does not have a code "
-              + "hash!");
+      logger.warn(
+          "Get contract failed, the account {} does not exist or the account does not have a code "
+              + "hash!", StringUtil.encode58Check(address));
       return null;
     }
 
@@ -3858,7 +3869,7 @@ public class Wallet {
       retBuilder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
           .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
       trxExtBuilder.setResult(retBuilder);
-      logger.warn("When run constant call in VM, have RuntimeException: " + e.getMessage());
+      logger.warn("When run constant call in VM, failed for reason: " + e.getMessage());
     } catch (Exception e) {
       retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
           .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
@@ -4089,7 +4100,7 @@ public class Wallet {
     }
   }
 
-  private byte[] getShieldedContractScalingFactor(byte[] contractAddress)
+  public byte[] getShieldedContractScalingFactor(byte[] contractAddress)
       throws ContractExeException {
     String methodSign = "scalingFactor()";
     byte[] selector = new byte[4];
@@ -4122,7 +4133,7 @@ public class Wallet {
       retBuilder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
           .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
       trxExtBuilder.setResult(retBuilder);
-      logger.warn("When run constant call in VM, have RuntimeException: " + e.getMessage());
+      logger.warn("When run constant call in VM, failed for reason: " + e.getMessage());
     } catch (Exception e) {
       retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
           .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
@@ -4280,28 +4291,30 @@ public class Wallet {
 
       return energyFee;
     } catch (Exception e) {
-      logger.error("getEnergyFee timestamp={} failed, error is {}", timestamp, e.getMessage());
+      logger.error("GetEnergyFee timestamp={} failed", timestamp, e);
       return getEnergyFee();
     }
   }
 
-  public String getEnergyPrices() {
+  public PricesResponseMessage getEnergyPrices() {
+    PricesResponseMessage.Builder builder = PricesResponseMessage.newBuilder();
     try {
-      return chainBaseManager.getDynamicPropertiesStore().getEnergyPriceHistory();
+      builder.setPrices(chainBaseManager.getDynamicPropertiesStore().getEnergyPriceHistory());
+      return builder.build();
     } catch (Exception e) {
-      logger.error("getEnergyPrices failed, error is {}", e.getMessage());
+      logger.error("GetEnergyPrices failed", e);
     }
-
     return null;
   }
 
-  public String getBandwidthPrices() {
+  public PricesResponseMessage getBandwidthPrices() {
+    PricesResponseMessage.Builder builder = PricesResponseMessage.newBuilder();
     try {
-      return chainBaseManager.getDynamicPropertiesStore().getBandwidthPriceHistory();
+      builder.setPrices(chainBaseManager.getDynamicPropertiesStore().getBandwidthPriceHistory());
+      return builder.build();
     } catch (Exception e) {
-      logger.error("getBandwidthPrices failed, error is {}", e.getMessage());
+      logger.error("GetBandwidthPrices failed", e);
     }
-
     return null;
   }
 
@@ -4416,11 +4429,13 @@ public class Wallet {
     return block.toBuilder().clearTransactions().build();
   }
 
-  public String getMemoFeePrices() {
+  public PricesResponseMessage getMemoFeePrices() {
+    PricesResponseMessage.Builder builder = PricesResponseMessage.newBuilder();
     try {
-      return chainBaseManager.getDynamicPropertiesStore().getMemoFeeHistory();
+      builder.setPrices(chainBaseManager.getDynamicPropertiesStore().getMemoFeeHistory());
+      return builder.build();
     } catch (Exception e) {
-      logger.error("getMemoFeePrices failed, error is {}", e.getMessage());
+      logger.error("GetMemoFeePrices failed", e);
     }
     return null;
   }

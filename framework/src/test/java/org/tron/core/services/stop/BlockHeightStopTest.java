@@ -18,10 +18,4 @@ public class BlockHeightStopTest extends ConditionallyStopTest {
     Assert.assertEquals(height, dbManager.getDynamicPropertiesStore()
         .getLatestBlockHeaderNumberFromDB());
   }
-
-  @Override
-  protected void initDbPath() {
-    dbPath = "output-height-stop";
-  }
-
 }

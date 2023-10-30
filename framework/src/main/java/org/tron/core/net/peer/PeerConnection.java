@@ -71,6 +71,10 @@ public class PeerConnection {
   @Getter
   private volatile boolean fetchAble;
 
+  @Setter
+  @Getter
+  private volatile boolean isBadPeer;
+
   @Getter
   @Setter
   private ByteString address;
@@ -221,7 +225,7 @@ public class PeerConnection {
             + "blockInProcess:%d\n",
         channel.getInetSocketAddress(),
         (now - channel.getStartTime()) / Constant.ONE_THOUSAND,
-        channel.getLatency(),
+        channel.getAvgLatency(),
         fastForwardBlock != null ? fastForwardBlock.getNum() : blockBothHave.getNum(),
         isNeedSyncFromPeer(),
         isNeedSyncFromUs(),
@@ -290,6 +294,14 @@ public class PeerConnection {
       return false;
     }
 
+    return true;
+  }
+
+  public synchronized boolean checkAndPutAdvInvRequest(Item key, Long value) {
+    if (advInvRequest.containsKey(key)) {
+      return false;
+    }
+    advInvRequest.put(key, value);
     return true;
   }
 

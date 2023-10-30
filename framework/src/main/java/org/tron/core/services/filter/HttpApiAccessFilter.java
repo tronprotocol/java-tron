@@ -1,6 +1,7 @@
 package org.tron.core.services.filter;
 
 import com.alibaba.fastjson.JSONObject;
+import java.net.URI;
 import java.util.List;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -58,12 +59,13 @@ public class HttpApiAccessFilter implements Filter {
     boolean disabled = false;
 
     try {
+      endpoint = URI.create(endpoint).normalize().toString();
       List<String> disabledApiList = CommonParameter.getInstance().getDisabledApiList();
       if (!disabledApiList.isEmpty()) {
         disabled = disabledApiList.contains(endpoint.split("/")[2].toLowerCase());
       }
     } catch (Exception e) {
-      logger.error("check isDisabled except, endpoint={}, error is {}", endpoint, e.getMessage());
+      logger.warn("check isDisabled except, endpoint={}, {}", endpoint, e.getMessage());
     }
 
     return disabled;

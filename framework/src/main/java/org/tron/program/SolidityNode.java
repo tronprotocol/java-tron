@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.context.ApplicationContext;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
@@ -37,7 +38,7 @@ public class SolidityNode {
 
   private AtomicLong remoteBlockNum = new AtomicLong();
 
-  private LinkedBlockingDeque<Block> blockQueue = new LinkedBlockingDeque(100);
+  private LinkedBlockingDeque<Block> blockQueue = new LinkedBlockingDeque<>(100);
 
   private int exceptionSleepTime = 1000;
 
@@ -48,7 +49,7 @@ public class SolidityNode {
     this.chainBaseManager = dbManager.getChainBaseManager();
     resolveCompatibilityIssueIfUsingFullNodeDatabase();
     ID.set(chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
-    databaseGrpcClient = new DatabaseGrpcClient(Args.getInstance().getTrustNodeAddr());
+    databaseGrpcClient = new DatabaseGrpcClient(CommonParameter.getInstance().getTrustNodeAddr());
     remoteBlockNum.set(getLastSolidityBlockNum());
   }
 
@@ -58,19 +59,20 @@ public class SolidityNode {
   public static void main(String[] args) {
     logger.info("Solidity node is running.");
     Args.setParam(args, Constant.TESTNET_CONF);
-    CommonParameter parameter = Args.getInstance();
+    CommonParameter parameter = CommonParameter.getInstance();
 
     logger.info("index switch is {}",
         BooleanUtils.toStringOnOff(BooleanUtils
             .toBoolean(parameter.getStorage().getIndexSwitch())));
 
-    if (StringUtils.isEmpty(parameter.getTrustNodeAddr())) {
+    if (ObjectUtils.isEmpty(parameter.getTrustNodeAddr())) {
       logger.error("Trust node is not set.");
       return;
     }
     parameter.setSolidityNode(true);
 
-    ApplicationContext context = new TronApplicationContext(DefaultConfig.class);
+    TronApplicationContext context = new TronApplicationContext(DefaultConfig.class);
+    context.registerShutdownHook();
 
     if (parameter.isHelp()) {
       logger.info("Here is the help message.");
@@ -80,8 +82,6 @@ public class SolidityNode {
     Metrics.init();
 
     Application appT = ApplicationFactory.create(context);
-    FullNode.shutdown(appT);
-
     RpcApiService rpcApiService = context.getBean(RpcApiService.class);
     appT.addService(rpcApiService);
     //http
@@ -90,25 +90,21 @@ public class SolidityNode {
       appT.addService(httpApiService);
     }
 
-    appT.initServices(parameter);
-    appT.startServices();
-    appT.startup();
-
     SolidityNode node = new SolidityNode(appT.getDbManager());
     node.start();
-
-    rpcApiService.blockUntilShutdown();
+    appT.startup();
+    appT.blockUntilShutdown();
   }
 
   private void start() {
     try {
-      new Thread(() -> getBlock()).start();
-      new Thread(() -> processBlock()).start();
+      new Thread(this::getBlock).start();
+      new Thread(this::processBlock).start();
       logger.info("Success to start solid node, ID: {}, remoteBlockNum: {}.", ID.get(),
           remoteBlockNum);
     } catch (Exception e) {
-      logger
-          .error("Failed to start solid node, address: {}.", Args.getInstance().getTrustNodeAddr());
+      logger.error("Failed to start solid node, address: {}.",
+          CommonParameter.getInstance().getTrustNodeAddr());
       System.exit(0);
     }
   }

@@ -7,20 +7,21 @@ import java.util.Collections;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.testng.Assert;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.WalletUtil;
+import org.tron.common.utils.client.utils.AbiUtil;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
+
 import org.tron.protos.Protocol;
-import stest.tron.wallet.common.client.utils.AbiUtil;
 
 @Slf4j
 public class AllowTvmCompatibleEvmTest extends VMTestBase {
@@ -86,7 +87,7 @@ public class AllowTvmCompatibleEvmTest extends VMTestBase {
             factoryAddress, Hex.decode(hexInput), 0, feeLimit, manager, null);
     byte[] returnValue = result.getRuntime().getResult().getHReturn();
     Assert.assertNull(result.getRuntime().getRuntimeError());
-    Assert.assertEquals(returnValue,
+    Assert.assertArrayEquals(returnValue,
         hexToBytes("a76d892cc3522eab763529dfc84b12c080ee1"
             + "fe8000000000000000000000000"));
   }
@@ -211,7 +212,7 @@ public class AllowTvmCompatibleEvmTest extends VMTestBase {
             factoryAddress, Hex.decode(hexInput), 0, feeLimit, manager, null);
     byte[] returnValue = result.getRuntime().getResult().getHReturn();
     Assert.assertNull(result.getRuntime().getRuntimeError());
-    Assert.assertEquals(returnValue,
+    Assert.assertArrayEquals(returnValue,
         hexToBytes("ba80a53f981c4d0d6a2797b69f12f6e94c212f14685ac4b74b12bb6fdbffa2d17d87"
             + "c5392aab792dc252d5de4533cc9518d38aa8dbf1925ab92386edd4009923"));
   }
@@ -257,7 +258,7 @@ public class AllowTvmCompatibleEvmTest extends VMTestBase {
             factoryAddress, Hex.decode(hexInput), 0, feeLimit, manager, null);
     byte[] returnValue = result.getRuntime().getResult().getHReturn();
     Assert.assertNull(result.getRuntime().getRuntimeError());
-    Assert.assertEquals(returnValue,
+    Assert.assertArrayEquals(returnValue,
         longTo32Bytes(manager.getDynamicPropertiesStore().getEnergyFee()));
   }
 

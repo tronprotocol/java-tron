@@ -19,7 +19,9 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.Runtime;
@@ -30,6 +32,8 @@ import org.tron.common.utils.Commons;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
+import org.tron.common.utils.client.utils.AbiUtil;
+import org.tron.common.utils.client.utils.DataWord;
 import org.tron.consensus.dpos.MaintenanceManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -47,8 +51,6 @@ import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol;
-import stest.tron.wallet.common.client.utils.AbiUtil;
-import stest.tron.wallet.common.client.utils.DataWord;
 
 @Slf4j
 public class VoteTest {
@@ -264,7 +266,8 @@ public class VoteTest {
     return getConsumer("<", expected);
   }
 
-  private static String dbPath;
+  @Rule
+  public TemporaryFolder temporaryFolder = new TemporaryFolder();
   private static TronApplicationContext context;
   private static Manager manager;
   private static MaintenanceManager maintenanceManager;
@@ -275,8 +278,8 @@ public class VoteTest {
 
   @Before
   public void init() throws Exception {
-    dbPath = "output_" + VoteTest.class.getName();
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory",
+        temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
     CommonParameter.getInstance().setCheckFrozenTime(0);
     context = new TronApplicationContext(DefaultConfig.class);
     manager = context.getBean(Manager.class);
@@ -310,11 +313,6 @@ public class VoteTest {
     VMConfig.initVmHardFork(false);
     Args.clearParam();
     context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.error("Release resources failure.");
-    }
   }
 
   private byte[] deployContract(String contractName, String abi, String code) throws Exception {
