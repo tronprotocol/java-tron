@@ -581,8 +581,8 @@ public class Manager {
     } else {
       if (chainBaseManager.hasBlocks() && !Args.getInstance().isStressTest) {
         logger.error(
-            "Genesis block modify, please delete database directory({}) and restart.",
-            Args.getInstance().getOutputDirectory());
+            "Genesis block modify, please delete database directory({}) and restart. hasBlocks: {}, isStressTest: {}",
+            Args.getInstance().getOutputDirectory(), chainBaseManager.hasBlocks(), Args.getInstance().isStressTest);
         System.exit(1);
       } else if (Args.getInstance().isStressTest) {
         this.initAccount();
