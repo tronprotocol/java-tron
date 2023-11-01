@@ -1746,12 +1746,13 @@ public class Manager {
 
         // 2.
         TxMeter.setTxMeterMetrics(transactionCapsule);
+        // 3.
+        TxMeter.remove();
       }
       transactionRetCapsule.addAllTransactionInfos(results);
       accountStateCallBack.executePushFinish();
     } finally {
       accountStateCallBack.exceptionFinish();
-      // 3.
       TxMeter.remove();
     }
     merkleContainer.saveCurrentMerkleTreeAsBestMerkleTree(block.getNum());
