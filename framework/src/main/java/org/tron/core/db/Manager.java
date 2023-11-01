@@ -80,6 +80,7 @@ import org.tron.consensus.Consensus;
 import org.tron.consensus.base.Param.Miner;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
+import org.tron.core.TxMeter;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.ActuatorCreator;
 import org.tron.core.capsule.AccountCapsule;
@@ -814,7 +815,6 @@ public class Manager {
     return containsTransaction(transactionCapsule.getTransactionId().getBytes());
   }
 
-
   private boolean containsTransaction(byte[] transactionId) {
     if (transactionCache != null && !transactionCache.has(transactionId)) {
       // using the bloom filter only determines non-existent transaction
@@ -1469,7 +1469,6 @@ public class Manager {
       trxCap.setResult(trace.getTransactionContext());
     }
     chainBaseManager.getTransactionStore().put(trxCap.getTransactionId().getBytes(), trxCap);
-
     Optional.ofNullable(transactionCache)
         .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
             new BytesCapsule(ByteArray.fromLong(trxCap.getBlockNum()))));
@@ -1737,16 +1736,23 @@ public class Manager {
           transactionCapsule.setVerified(true);
         }
         accountStateCallBack.preExeTrans();
+        // 1.
+        TxMeter.init(transactionCapsule);
         TransactionInfo result = processTransaction(transactionCapsule, block);
         accountStateCallBack.exeTransFinish();
         if (Objects.nonNull(result)) {
           results.add(result);
         }
+
+        // 2.
+        TxMeter.setTxMeterMetrics(transactionCapsule);
       }
       transactionRetCapsule.addAllTransactionInfos(results);
       accountStateCallBack.executePushFinish();
     } finally {
       accountStateCallBack.exceptionFinish();
+      // 3.
+      TxMeter.remove();
     }
     merkleContainer.saveCurrentMerkleTreeAsBestMerkleTree(block.getNum());
     block.setResult(transactionRetCapsule);

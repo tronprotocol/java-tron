@@ -23,6 +23,7 @@ import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.storage.metric.DbStatService;
 import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
 import org.tron.common.utils.StorageUtils;
+import org.tron.core.TxMeter;
 import org.tron.core.capsule.ProtoCapsule;
 import org.tron.core.db.common.iterator.DBIterator;
 import org.tron.core.db2.common.DB;
@@ -106,25 +107,35 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     if (Objects.isNull(key) || Objects.isNull(item)) {
       return;
     }
-
+    TxMeter.incrWriteLength(item.getData().length);
     revokingDB.put(key, item.getData());
   }
 
   @Override
   public void delete(byte[] key) {
+    byte[] value = revokingDB.getUnchecked(key);
+    if (value != null && value.length > 0) {
+      TxMeter.incrWriteLength(value.length);
+    }
     revokingDB.delete(key);
   }
 
   @Override
   public T get(byte[] key) throws ItemNotFoundException, BadItemException {
-    return of(revokingDB.get(key));
+    byte[] value = revokingDB.get(key);
+    if (value != null && value.length > 0) {
+      TxMeter.incrReadLength(value.length);
+    }
+    return of(value);
   }
 
   @Override
   public T getUnchecked(byte[] key) {
     byte[] value = revokingDB.getUnchecked(key);
-
     try {
+      if (value != null && value.length > 0) {
+        TxMeter.incrReadLength(value.length);
+      }
       return of(value);
     } catch (BadItemException e) {
       return null;
@@ -134,7 +145,6 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   @Override
   public T getFromRoot(byte[] key) throws ItemNotFoundException, BadItemException{
     return of(revokingDB.getFromRoot(key)) ;
-
   }
 
   public T of(byte[] value) throws BadItemException {
@@ -150,6 +160,10 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
 
   @Override
   public boolean has(byte[] key) {
+    byte[] value = revokingDB.getUnchecked(key);
+    if (value != null && value.length > 0) {
+      TxMeter.incrReadLength(value.length);
+    }
     return revokingDB.has(key);
   }
 
