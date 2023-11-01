@@ -135,6 +135,7 @@ public class TxMeter {
     );
     Metrics.counterInc(MetricKeys.Counter.TX_SIZE_COUNT,
             1,
+            "size",
             type);
   }
 
