@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.TxMeter;
 import org.tron.core.db.TronDatabase;
 import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.protos.Protocol;
@@ -24,6 +25,9 @@ public class AccountAssetStore extends TronDatabase<byte[]> {
 
   @Override
   public void put(byte[] key, byte[] item) {
+    if (item != null && item.length > 0) {
+      TxMeter.incrWriteLength(item.length);
+    }
     dbSource.putData(key, item);
   }
 
@@ -34,18 +38,32 @@ public class AccountAssetStore extends TronDatabase<byte[]> {
 
   @Override
   public byte[] get(byte[] key) {
-    return dbSource.getData(key);
+    byte[] data = dbSource.getData(key);
+    if (data != null && data.length > 0) {
+      TxMeter.incrReadLength(data.length);
+    }
+    return data;
   }
 
   @Override
   public boolean has(byte[] key) {
-    return dbSource.getData(key) != null;
+    byte[] data = dbSource.getData(key);
+    if (data != null && data.length > 0) {
+      TxMeter.incrReadLength(data.length);
+    }
+    return data != null;
   }
 
   public void putAccount(Protocol.Account account) {
     Map<byte[], byte[]> assets = convert(getAssets(account));
     if (!assets.isEmpty()) {
       updateByBatch(assets);
+      long total = assets.
+              values()
+              .stream()
+              .mapToInt(b-> b.length)
+              .sum();
+      TxMeter.incrReadLength(total);
     }
   }
 
@@ -53,6 +71,12 @@ public class AccountAssetStore extends TronDatabase<byte[]> {
     Map<byte[], byte[]> assets = convert(getDeletedAssets(key));
     if (!assets.isEmpty()) {
       updateByBatch(assets);
+      long total = assets.
+              values()
+              .stream()
+              .mapToInt(b-> b.length)
+              .sum();
+      TxMeter.incrWriteLength(total);
     }
   }
 
@@ -71,8 +95,11 @@ public class AccountAssetStore extends TronDatabase<byte[]> {
 
   public Map<WrappedByteArray, WrappedByteArray> getDeletedAssets(byte[] key) {
     Map<WrappedByteArray, WrappedByteArray> assets = new HashMap<>();
-    prefixQuery(key).forEach((k, v) ->
-            assets.put(WrappedByteArray.of(k.getBytes()), WrappedByteArray.of(null)));
+    prefixQuery(key).forEach((k, v) -> {
+                assets.put(WrappedByteArray.of(k.getBytes()), WrappedByteArray.of(null));
+                TxMeter.incrReadLength(v.length);
+            }
+    );
     return assets;
   }
 

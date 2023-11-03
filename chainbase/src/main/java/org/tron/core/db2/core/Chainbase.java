@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Pair;
+import org.tron.core.TxMeter;
 import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.LevelDB;
@@ -122,6 +123,9 @@ public class Chainbase implements IRevokingDB {
   @Override
   public synchronized void put(byte[] key, byte[] value) {
     head().put(key, value);
+    if (value != null && value.length > 0) {
+      TxMeter.incrWriteLength(value.length);
+    }
   }
 
   @Override
@@ -150,7 +154,11 @@ public class Chainbase implements IRevokingDB {
 
   @Override
   public byte[] getUnchecked(byte[] key) {
-    return head().get(key);
+    byte[] bytes = head().get(key);
+    if (bytes != null && bytes.length > 0) {
+      TxMeter.incrReadLength(bytes.length);
+    }
+    return bytes;
   }
 
   @Override
