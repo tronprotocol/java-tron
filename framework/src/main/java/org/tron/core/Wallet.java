@@ -542,8 +542,8 @@ public class Wallet {
       if (trx.getInstance().getRawData().getContractCount() == 0) {
         throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
       }
-      dbManager.pushTransaction(trx);
-      int num = tronNetService.fastBroadcastTransaction(message);
+//      dbManager.pushTransaction(trx);
+//      int num = tronNetService.fastBroadcastTransaction(message);
 //      if (num == 0 && minEffectiveConnection != 0) {
 //        return builder.setResult(false).setCode(response_code.NOT_ENOUGH_EFFECTIVE_CONNECTION)
 //            .setMessage(ByteString.copyFromUtf8("P2P broadcast failed.")).build();
