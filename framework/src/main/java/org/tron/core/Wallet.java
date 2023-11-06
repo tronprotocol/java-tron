@@ -553,7 +553,7 @@ public class Wallet {
 //      }
 
       tronNetService.broadcast(message);
-      logger.info("Broadcast transaction fast {} to {} peers successfully.", txID, num);
+      logger.info("Broadcast transaction fast {}  successfully.", txID);
       return builder.setResult(true).setCode(response_code.SUCCESS).build();
     } catch (ValidateSignatureException e) {
       logger.warn(BROADCAST_TRANS_FAILED, txID, e.getMessage());
