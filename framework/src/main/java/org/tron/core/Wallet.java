@@ -544,13 +544,17 @@ public class Wallet {
       }
       dbManager.pushTransaction(trx);
       int num = tronNetService.fastBroadcastTransaction(message);
-      if (num == 0 && minEffectiveConnection != 0) {
-        return builder.setResult(false).setCode(response_code.NOT_ENOUGH_EFFECTIVE_CONNECTION)
-            .setMessage(ByteString.copyFromUtf8("P2P broadcast failed.")).build();
-      } else {
-        logger.info("Broadcast transaction {} to {} peers successfully.", txID, num);
-        return builder.setResult(true).setCode(response_code.SUCCESS).build();
-      }
+//      if (num == 0 && minEffectiveConnection != 0) {
+//        return builder.setResult(false).setCode(response_code.NOT_ENOUGH_EFFECTIVE_CONNECTION)
+//            .setMessage(ByteString.copyFromUtf8("P2P broadcast failed.")).build();
+//      } else {
+//        logger.info("Broadcast transaction {} to {} peers successfully.", txID, num);
+//        return builder.setResult(true).setCode(response_code.SUCCESS).build();
+//      }
+
+      tronNetService.broadcast(message);
+      logger.info("Broadcast transaction fast {} to {} peers successfully.", txID, num);
+      return builder.setResult(true).setCode(response_code.SUCCESS).build();
     } catch (ValidateSignatureException e) {
       logger.warn(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.SIGERROR)
