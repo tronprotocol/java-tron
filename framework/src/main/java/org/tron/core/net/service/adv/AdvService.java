@@ -262,8 +262,8 @@ public class AdvService {
 
   private void consumerInvToFetch() {
     Collection<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
-        .filter(peer -> peer.isIdle())
-        .collect(Collectors.toList());
+            .filter(peer -> peer.getAdvInvRequest().isEmpty())
+            .collect(Collectors.toList());
     InvSender invSender = new InvSender();
     synchronized (this) {
       if (invToFetch.isEmpty() || peers.isEmpty()) {
@@ -297,8 +297,7 @@ public class AdvService {
   private synchronized void consumerInvToSpread() {
 
     List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
-        .filter(peer -> !peer.isNeedSyncFromPeer() && !peer.isNeedSyncFromUs())
-        .collect(Collectors.toList());
+            .collect(Collectors.toList());
 
     if (invToSpread.isEmpty() || peers.isEmpty()) {
       return;
