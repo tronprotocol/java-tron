@@ -5,7 +5,7 @@ on:
     types: [ opened, synchronize ]
 jobs:
   demo:
-    name: trigger sonar
+    name: trigger sonar1
     runs-on: ubuntu-latest
     steps:
       - name: Get User Permission
