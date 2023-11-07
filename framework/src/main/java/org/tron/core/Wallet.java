@@ -501,6 +501,10 @@ public class Wallet {
     Sha256Hash txID = trx.getTransactionId();
     long t1 = 0;
     long t2 = 0;
+    incr++;
+    if (incr % 1000 == 0) {
+      logger.info("stress transaction count: {}", incr);
+    }
     try {
       TransactionMessage message = new TransactionMessage(signedTransaction.toByteArray());
       if (minEffectiveConnection != 0) {
