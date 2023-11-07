@@ -515,18 +515,18 @@ public class Wallet {
               .build();
         }
         t1 = System.currentTimeMillis() - timeMillis;
-        int count = (int) tronNetDelegate.getActivePeer().stream()
-            .filter(p -> !p.isNeedSyncFromUs() && !p.isNeedSyncFromPeer())
-            .count();
+//        int count = (int) tronNetDelegate.getActivePeer().stream()
+//            .filter(p -> !p.isNeedSyncFromUs() && !p.isNeedSyncFromPeer())
+//            .count();
         t2 = System.currentTimeMillis() - timeMillis;
-        if (count < minEffectiveConnection) {
-          String info = "Effective connection:" + count + " lt minEffectiveConnection:"
-              + minEffectiveConnection;
-          logger.warn("Broadcast transaction {} has failed. {}.", txID, info);
-          return builder.setResult(false).setCode(response_code.NOT_ENOUGH_EFFECTIVE_CONNECTION)
-              .setMessage(ByteString.copyFromUtf8(info))
-              .build();
-        }
+//        if (count < minEffectiveConnection) {
+//          String info = "Effective connection:" + count + " lt minEffectiveConnection:"
+//              + minEffectiveConnection;
+//          logger.warn("Broadcast transaction {} has failed. {}.", txID, info);
+//          return builder.setResult(false).setCode(response_code.NOT_ENOUGH_EFFECTIVE_CONNECTION)
+//              .setMessage(ByteString.copyFromUtf8(info))
+//              .build();
+//        }
       }
 
       if (dbManager.isTooManyPending()) {
