@@ -278,6 +278,8 @@ public class Wallet {
   @Autowired
   private ChainBaseManager chainBaseManager;
 
+  private long incr = 0;
+
   private int minEffectiveConnection = CommonParameter.getInstance().getMinEffectiveConnection();
   private boolean trxCacheEnable = CommonParameter.getInstance().isTrxCacheEnable();
   public static final String CONTRACT_VALIDATE_EXCEPTION = "ContractValidateException: {}";
@@ -494,8 +496,11 @@ public class Wallet {
   public GrpcAPI.Return broadcastTransaction(Transaction signedTransaction) {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
     TransactionCapsule trx = new TransactionCapsule(signedTransaction);
-    trx.setTime(System.currentTimeMillis());
+    long timeMillis = System.currentTimeMillis();
+    trx.setTime(timeMillis);
     Sha256Hash txID = trx.getTransactionId();
+    logger.info("stress broadcastTransaction, begin: txID {}", txID);
+
     try {
       TransactionMessage message = new TransactionMessage(signedTransaction.toByteArray());
       if (minEffectiveConnection != 0) {
@@ -542,19 +547,22 @@ public class Wallet {
       if (trx.getInstance().getRawData().getContractCount() == 0) {
         throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
       }
-//      dbManager.pushTransaction(trx);
-//      int num = tronNetService.fastBroadcastTransaction(message);
-//      if (num == 0 && minEffectiveConnection != 0) {
-//        return builder.setResult(false).setCode(response_code.NOT_ENOUGH_EFFECTIVE_CONNECTION)
-//            .setMessage(ByteString.copyFromUtf8("P2P broadcast failed.")).build();
-//      } else {
-//        logger.info("Broadcast transaction {} to {} peers successfully.", txID, num);
-//        return builder.setResult(true).setCode(response_code.SUCCESS).build();
-//      }
-
-      tronNetService.broadcast(message);
-      logger.info("Broadcast transaction fast {}  successfully.", txID);
-      return builder.setResult(true).setCode(response_code.SUCCESS).build();
+      dbManager.pushTransaction(trx);
+      int num = tronNetService.fastBroadcastTransaction(message);
+      if (num == 0 && minEffectiveConnection != 0) {
+        incr++;
+        logger.info("stress broadcastTransaction, end: txID {}", txID);
+        return builder.setResult(false).setCode(response_code.NOT_ENOUGH_EFFECTIVE_CONNECTION)
+            .setMessage(ByteString.copyFromUtf8("P2P broadcast failed.")).build();
+      } else {
+        incr++;
+        if (incr % 1000 == 0) {
+          logger.info("stress transaction count: {}", incr);
+        }
+        logger.info("Broadcast transaction {} to {} peers successfully.", txID, num);
+        logger.info("stress broadcastTransaction, end: txID {}, duration: {}", txID, System.currentTimeMillis() - timeMillis);
+        return builder.setResult(true).setCode(response_code.SUCCESS).build();
+      }
     } catch (ValidateSignatureException e) {
       logger.warn(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.SIGERROR)
