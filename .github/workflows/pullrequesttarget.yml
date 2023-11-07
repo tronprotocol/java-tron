@@ -33,7 +33,7 @@ jobs:
       - name: Trigger sonar
         uses: "buildkite/trigger-pipeline-action@v2.0.0"
         with:
-          buildkite_api_access_token: ${{ secrets.JUST_BUILD_KITE_2 }}
+          buildkite_api_access_token: ${{ secrets.JUST_BUILD_KITE }}
           pipeline: "tronprotocol/sonar-check-and-checkstyle"
   demo1:
     name: trigger debian unit test
@@ -64,5 +64,5 @@ jobs:
       - name: Trigger debian
         uses: "buildkite/trigger-pipeline-action@v2.0.0"
         with:
-          buildkite_api_access_token: ${{ secrets.JUST_BUILD_KITE_2 }}
+          buildkite_api_access_token: ${{ secrets.JUST_BUILD_KITE }}
           pipeline: "tronprotocol/build-on-debian-9-dot-8"
