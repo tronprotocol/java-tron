@@ -499,8 +499,8 @@ public class Wallet {
     long timeMillis = System.currentTimeMillis();
     trx.setTime(timeMillis);
     Sha256Hash txID = trx.getTransactionId();
-    logger.info("stress broadcastTransaction, begin: txID {}", txID);
-
+    long t1 = 0;
+    long t2 = 0;
     try {
       TransactionMessage message = new TransactionMessage(signedTransaction.toByteArray());
       if (minEffectiveConnection != 0) {
@@ -510,11 +510,11 @@ public class Wallet {
               .setMessage(ByteString.copyFromUtf8("No connection."))
               .build();
         }
-
+        t1 = System.currentTimeMillis() - timeMillis;
         int count = (int) tronNetDelegate.getActivePeer().stream()
             .filter(p -> !p.isNeedSyncFromUs() && !p.isNeedSyncFromPeer())
             .count();
-
+        t2 = System.currentTimeMillis() - timeMillis;
         if (count < minEffectiveConnection) {
           String info = "Effective connection:" + count + " lt minEffectiveConnection:"
               + minEffectiveConnection;
@@ -530,7 +530,7 @@ public class Wallet {
         return builder.setResult(false).setCode(response_code.SERVER_BUSY)
             .setMessage(ByteString.copyFromUtf8("Server busy.")).build();
       }
-
+      long t3 = System.currentTimeMillis() - timeMillis;
       if (trxCacheEnable) {
         if (dbManager.getTransactionIdCache().getIfPresent(txID) != null) {
           logger.warn("Broadcast transaction {} has failed, it already exists.", txID);
@@ -540,29 +540,37 @@ public class Wallet {
           dbManager.getTransactionIdCache().put(txID, true);
         }
       }
-
+      long t4 = System.currentTimeMillis() - timeMillis;
       if (chainBaseManager.getDynamicPropertiesStore().supportVM()) {
         trx.resetResult();
       }
+      long t5 = System.currentTimeMillis() - timeMillis;
+
       if (trx.getInstance().getRawData().getContractCount() == 0) {
         throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
       }
-      dbManager.pushTransaction(trx);
-      int num = tronNetService.fastBroadcastTransaction(message);
-      if (num == 0 && minEffectiveConnection != 0) {
-        incr++;
-        logger.info("stress broadcastTransaction, end: txID {}", txID);
-        return builder.setResult(false).setCode(response_code.NOT_ENOUGH_EFFECTIVE_CONNECTION)
-            .setMessage(ByteString.copyFromUtf8("P2P broadcast failed.")).build();
-      } else {
-        incr++;
-        if (incr % 1000 == 0) {
-          logger.info("stress transaction count: {}", incr);
-        }
-        logger.info("Broadcast transaction {} to {} peers successfully.", txID, num);
-        logger.info("stress broadcastTransaction, end: txID {}, duration: {}", txID, System.currentTimeMillis() - timeMillis);
-        return builder.setResult(true).setCode(response_code.SUCCESS).build();
-      }
+
+//      dbManager.pushTransaction(trx);
+//      int num = tronNetService.fastBroadcastTransaction(message);
+//      if (num == 0 && minEffectiveConnection != 0) {
+//        incr++;
+//        logger.info("stress broadcastTransaction, end: txID {}", txID);
+//        return builder.setResult(false).setCode(response_code.NOT_ENOUGH_EFFECTIVE_CONNECTION)
+//            .setMessage(ByteString.copyFromUtf8("P2P broadcast failed.")).build();
+//      } else {
+//        incr++;
+//        if (incr % 1000 == 0) {
+//          logger.info("stress transaction count: {}", incr);
+//        }
+//        logger.info("Broadcast transaction {} to {} peers successfully.", txID, num);
+//        logger.info("stress broadcastTransaction, end: txID {}, duration: {}", txID, System.currentTimeMillis() - timeMillis);
+//        return builder.setResult(true).setCode(response_code.SUCCESS).build();
+//      }
+
+      tronNetService.broadcast(message);
+      long t6 = System.currentTimeMillis() - timeMillis;
+      logger.info("Broadcast transaction {} fast peers successfully, {}, {}, {}, {}, {}, {}.", txID, t1, t2, t3, t4, t5, t6);
+      return builder.setResult(true).setCode(response_code.SUCCESS).build();
     } catch (ValidateSignatureException e) {
       logger.warn(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.SIGERROR)
