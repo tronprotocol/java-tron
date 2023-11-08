@@ -30,17 +30,18 @@ jobs:
       - name: Run tests
         run: |
           echo "x${{ secrets.JUST_BUILD_KITE }}"
+          echo "x${{ secrets.READ_BUILD }}"
       - name: Trigger sonar
         id: build
         uses: "buildkite/trigger-pipeline-action@v2.0.0"
         with:
-          buildkite_api_access_token: ${{ secrets.BUILD_DOWNLOAD }}
+          buildkite_api_access_token: ${{ secrets.JUST_BUILD_KITE }}
           pipeline: "tronprotocol/sonar-check-and-checkstyle"
       - name: Download Buildkite Artifacts
         id: download
         uses: EnricoMi/download-buildkite-artifact-action@v1
         with:
-          buildkite_token: ${{ secrets.BUILD_DOWNLOAD }}
+          buildkite_token: ${{ secrets.READ_BUILD }}
           buildkite_build_url: ${{ steps.build.outputs.url }}
           ignore_build_states: blocked,canceled,skipped,not_run
           ignore_job_states: timed_out,failed
