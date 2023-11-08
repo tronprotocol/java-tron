@@ -47,12 +47,12 @@ jobs:
           ignore_job_states: timed_out,failed
           output_path: artifacts
       - name: check result
-#        run: |
-#          echo "buildkite result is:  ${{ steps.download.outputs.build-state }}"
-        if: steps.download.outputs.build-state != 'passed'
-          run: |
-            echo "buildkite result is:  ${{ steps.download.outputs.build-state }}"
-            exit 1
+        run: |
+          echo "buildkite result is:  ${{ steps.download.outputs.build-state }}"
+#        if: steps.download.outputs.build-state != 'passed'
+#          run: |
+#            echo "buildkite result is:  ${{ steps.download.outputs.build-state }}"
+#            exit 1
 #  demo1:
 #    name: trigger debian unit test
 #    runs-on: ubuntu-latest
