@@ -48,11 +48,11 @@ jobs:
           output_path: artifacts
       - name: check result
         run: |
-          echo "buildkite result is:  ${{ steps.download.build-state }}"
-#        if: steps.download.build-state != 'passed'
-#          run: |
-#            echo "buildkite result is:  ${{ steps.download.build-state }}"
-#            exit 1
+          echo "buildkite result is:  ${{ steps.download.outputs.build-state }}"
+        if: steps.download.build-state != 'passed'
+          run: |
+            echo "buildkite result is:  ${{ steps.download.outputs.build-state }}"
+            exit 1
 #  demo1:
 #    name: trigger debian unit test
 #    runs-on: ubuntu-latest
