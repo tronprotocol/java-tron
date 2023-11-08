@@ -75,6 +75,7 @@ import org.tron.common.utils.Pair;
 import org.tron.common.utils.SessionOptional;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
+import org.tron.common.validator.TransactionValidator;
 import org.tron.common.zksnark.MerkleContainer;
 import org.tron.consensus.Consensus;
 import org.tron.consensus.base.Param.Miner;
@@ -259,6 +260,9 @@ public class Manager {
   private static final String triggerEsName = "event-trigger";
   private ExecutorService filterEs;
   private static final String filterEsName = "filter";
+
+  @Autowired
+  TransactionValidator transactionValidator;
 
   /**
    * Cycle thread to rePush Transactions
@@ -1419,22 +1423,24 @@ public class Manager {
       chainBaseManager.getBalanceTraceStore().initCurrentTransactionBalanceTrace(trxCap);
     }
 
-    validateTapos(trxCap);
-    validateCommon(trxCap);
+    if (blockCap == null || blockCap.hasWitnessSignature()) {
+      validateTapos(trxCap);
+      validateCommon(trxCap);
 
-    if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
-      throw new ContractSizeNotEqualToOneException(
-          String.format(
-              "tx %s contract size should be exactly 1, this is extend feature ,actual :%d",
-          txId, trxCap.getInstance().getRawData().getContractList().size()));
-    }
+      if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
+        throw new ContractSizeNotEqualToOneException(
+            String.format(
+                "tx %s contract size should be exactly 1, this is extend feature ,actual :%d",
+                txId, trxCap.getInstance().getRawData().getContractList().size()));
+      }
 
-    validateDup(trxCap);
+      validateDup(trxCap);
 
-    if (!trxCap.validateSignature(chainBaseManager.getAccountStore(),
-        chainBaseManager.getDynamicPropertiesStore())) {
-      throw new ValidateSignatureException(
-          String.format(" %s transaction signature validate failed", txId));
+      if (!trxCap.validateSignature(chainBaseManager.getAccountStore(),
+          chainBaseManager.getDynamicPropertiesStore())) {
+        throw new ValidateSignatureException(
+            String.format(" %s transaction signature validate failed", txId));
+      }
     }
 
     TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
@@ -1596,6 +1602,10 @@ public class Manager {
           > ChainConstant.BLOCK_SIZE) {
         postponedTrxCount++;
         continue; // try pack more small trx
+      }
+      // check transaction
+      if (!transactionValidator.validate(trx)) {
+        continue;
       }
       //shielded transaction
       Transaction transaction = trx.getInstance();

@@ -844,4 +844,17 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       return null;
     }
   }
+
+  public int getContractSize() {
+    return this.transaction.getRawData().getContractCount();
+  }
+
+  public byte[] getRefBlockHash() {
+    return this.transaction.getRawData().getRefBlockHash().toByteArray();
+  }
+
+  public byte[] getRefBlockBytes() {
+    return this.transaction.getRawData().getRefBlockBytes().toByteArray();
+  }
+
 }
