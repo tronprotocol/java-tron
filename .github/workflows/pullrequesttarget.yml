@@ -49,7 +49,7 @@ jobs:
       - name: check result
 #        run: |
 #          echo "buildkite result is:  ${{ steps.download.outputs.build-state }}"
-        if: steps.download.build-state != 'passed'
+        if: steps.download.outputs.build-state != 'passed'
           run: |
             echo "buildkite result is:  ${{ steps.download.outputs.build-state }}"
             exit 1
