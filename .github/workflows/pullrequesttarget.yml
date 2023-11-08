@@ -47,7 +47,7 @@ jobs:
           ignore_job_states: timed_out,failed
           output_path: artifacts
       - name: check result
-        run: |
+        run:
           echo "buildkite result is:  ${{ steps.download.outputs.build-state }}"
         if: steps.download.build-state != 'passed'
           run: |
