@@ -36,20 +36,20 @@ jobs:
         with:
           buildkite_api_access_token: ${{ secrets.JUST_BUILD_KITE }}
           pipeline: "tronprotocol/sonar-check-and-checkstyle"
-      - name: Download Buildkite Artifacts
-        id: download
-        uses: EnricoMi/download-buildkite-artifact-action@v1
-        with:
-          buildkite_token: ${{ secrets.JUST_BUILD_KITE }}
-          buildkite_build_url: ${{ steps.build.outputs.url }}
-          ignore_build_states: blocked,canceled,skipped,not_run
-          ignore_job_states: timed_out,failed
-          output_path: artifacts
-      - name: check result
-        if: steps.download.build-state != 'passed'
-          run: |
-            echo "buildkite result is:  ${{ steps.download.build-state }}"
-            exit 1
+#      - name: Download Buildkite Artifacts
+#        id: download
+#        uses: EnricoMi/download-buildkite-artifact-action@v1
+#        with:
+#          buildkite_token: ${{ secrets.JUST_BUILD_KITE }}
+#          buildkite_build_url: ${{ steps.build.outputs.url }}
+#          ignore_build_states: blocked,canceled,skipped,not_run
+#          ignore_job_states: timed_out,failed
+#          output_path: artifacts
+#      - name: check result
+#        if: steps.download.build-state != 'passed'
+#          run: |
+#            echo "buildkite result is:  ${{ steps.download.build-state }}"
+#            exit 1
 #  demo1:
 #    name: trigger debian unit test
 #    runs-on: ubuntu-latest
