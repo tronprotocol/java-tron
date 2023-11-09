@@ -7,11 +7,22 @@ jobs:
   demo:
     name: trigger sonar1
     runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
     steps:
+      - name: Get User Permission
+        id: checkAccess
+        uses: actions-cool/check-user-permission@v2
+        with:
+          require: write
+          username: ${{ github.triggering_actor }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check User Permission
+        if: steps.checkAccess.outputs.require-result == 'false'
+        run: |
+          echo "${{ github.triggering_actor }} does not have permissions on this repo."
+          echo "Current permission level is ${{ steps.checkAccess.outputs.user-permission }}"
+          echo "Job originally triggered by ${{ github.actor }}"
+          exit 1
       - name: Checkout code
         uses: actions/checkout@v3
         with:
@@ -41,53 +52,53 @@ jobs:
           echo "failed !!!!"
           echo "buildkite result is:  ${{ steps.download.outputs.build-state }}"
           exit 1
-#  demo1:
-#    name: trigger debian unit test
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Get User Permission2
-#        id: checkAccess1
-#        uses: actions-cool/check-user-permission@v2
-#        with:
-#          require: write
-#          username: ${{ github.triggering_actor }}
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#      - name: Check User Permission1
-#        if: steps.checkAccess1.outputs.require-result == 'false'
-#        run: |
-#          echo "${{ github.triggering_actor }} does not have permissions on this repo."
-#          echo "Current permission level is ${{ steps.checkAccess1.outputs.user-permission }}"
-#          echo "Job originally triggered by ${{ github.actor }}"
-#          exit 1
-#      - name: Checkout code1
-#        uses: actions/checkout@v3
-#        with:
-#          ref: ${{ github.event.pull_request.head.sha }} # This is dangerous without the first access check
-#      - name: Run tests2
-#        run: |
-#          echo "x${{ secrets.JUST_BUILD_KITE }}"
-#      - name: Trigger debian
-#        id: build1
-#        uses: "buildkite/trigger-pipeline-action@v2.0.0"
-#        with:
-#          buildkite_api_access_token: ${{ secrets.JUST_BUILD_KITE }}
-#          pipeline: "tronprotocol/build-on-debian-9-dot-8"
-#      - name: Download Buildkite Artifacts1
-#        id: download1
-#        uses: EnricoMi/download-buildkite-artifact-action@v1
-#        with:
-#          buildkite_token: ${{ secrets.READ_BUILD }}
-#          buildkite_build_url: ${{ steps.build1.outputs.url }}
-#          ignore_build_states: blocked,canceled,skipped,not_run
-#          ignore_job_states: timed_out,failed
-#          output_path: artifacts
-#      - name: check result1
-#        if: steps.download1.outputs.build-state != 'passed'
-#        run: |
-#          echo "failed !!!!"
-#          echo "buildkite result is:  ${{ steps.download1.outputs.build-state }}"
-#          exit 1
+  demo1:
+    name: trigger debian unit test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get User Permission2
+        id: checkAccess1
+        uses: actions-cool/check-user-permission@v2
+        with:
+          require: write
+          username: ${{ github.triggering_actor }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check User Permission1
+        if: steps.checkAccess1.outputs.require-result == 'false'
+        run: |
+          echo "${{ github.triggering_actor }} does not have permissions on this repo."
+          echo "Current permission level is ${{ steps.checkAccess1.outputs.user-permission }}"
+          echo "Job originally triggered by ${{ github.actor }}"
+          exit 1
+      - name: Checkout code1
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }} # This is dangerous without the first access check
+      - name: Run tests2
+        run: |
+          echo "x${{ secrets.JUST_BUILD_KITE }}"
+      - name: Trigger debian
+        id: build1
+        uses: "buildkite/trigger-pipeline-action@v2.0.0"
+        with:
+          buildkite_api_access_token: ${{ secrets.JUST_BUILD_KITE }}
+          pipeline: "tronprotocol/build-on-debian-9-dot-8"
+      - name: Download Buildkite Artifacts1
+        id: download1
+        uses: EnricoMi/download-buildkite-artifact-action@v1
+        with:
+          buildkite_token: ${{ secrets.READ_BUILD }}
+          buildkite_build_url: ${{ steps.build1.outputs.url }}
+          ignore_build_states: blocked,canceled,skipped,not_run
+          ignore_job_states: timed_out,failed
+          output_path: artifacts
+      - name: check result1
+        if: steps.download1.outputs.build-state != 'passed'
+        run: |
+          echo "failed !!!!"
+          echo "buildkite result is:  ${{ steps.download1.outputs.build-state }}"
+          exit 1
 #  demo2:
 #    name: trigger centos unit test
 #    runs-on: ubuntu-latest
