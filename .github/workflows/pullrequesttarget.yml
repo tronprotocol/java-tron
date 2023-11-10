@@ -44,7 +44,7 @@ jobs:
           ignore_job_states: timed_out,failed
           output_path: artifacts
       - name: Check Result
-        run:
+        run: |
           echo "buildkite link is: ${{ steps.build.outputs.url }}"
         if: steps.download.outputs.build-state != 'passed'
         run: |
@@ -91,7 +91,7 @@ jobs:
           ignore_job_states: timed_out,failed
           output_path: artifacts
       - name: Check Result
-        run:
+        run: |
           echo "buildkite link is: ${{ steps.build.outputs.url }}"
         if: steps.download.outputs.build-state != 'passed'
         run: |
