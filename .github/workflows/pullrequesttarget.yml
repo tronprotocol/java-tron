@@ -35,8 +35,8 @@ jobs:
           buildkite_api_access_token: ${{ secrets.JUST_BUILD_KITE }}
           pipeline: "tronprotocol/sonar-check-and-checkstyle"
       - name: Get URL
-          run: |
-            echo "buildkite link is: ${{ steps.build.outputs.url }}"
+        run: |
+          echo "buildkite link is: ${{ steps.build.outputs.url }}"
       - name: Waitting Buildkite Artifacts
         id: download
         uses: EnricoMi/download-buildkite-artifact-action@v1
