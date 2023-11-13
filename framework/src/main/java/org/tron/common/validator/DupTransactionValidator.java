@@ -1,7 +1,9 @@
 package org.tron.common.validator;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.api.GrpcAPI;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.TransactionCache;
 import org.tron.core.db.TransactionStore;
@@ -16,11 +18,11 @@ public class DupTransactionValidator extends AbstractTransactionValidator {
   private TransactionCache transactionCache;
 
   @Override
-  protected String doValidate(TransactionCapsule trx) {
+  protected Pair<GrpcAPI.Return.response_code, String> doValidate(TransactionCapsule trx) {
     byte[] transactionId = trx.getTransactionId().getBytes();
     if (transactionCache.has(transactionId) && transactionStore.has(transactionId)) {
-      return "dup trans";
+      return buildResponse(GrpcAPI.Return.response_code.DUP_TRANSACTION_ERROR, "dup trans");
     }
-    return null;
+    return SUCCESS;
   }
 }

@@ -262,7 +262,7 @@ public class Manager {
   private static final String filterEsName = "filter";
 
   @Autowired
-  TransactionValidator transactionValidator;
+  private TransactionValidator transactionValidator;
 
   /**
    * Cycle thread to rePush Transactions
@@ -1410,6 +1410,9 @@ public class Manager {
     if (trxCap == null) {
       return null;
     }
+    if (blockCap == null || blockCap.hasWitnessSignature()) {
+      transactionValidator.validate(trxCap);
+    }
     Contract contract = trxCap.getInstance().getRawData().getContract(0);
     Sha256Hash txId = trxCap.getTransactionId();
     final Histogram.Timer requestTimer = Metrics.histogramStartTimer(
@@ -1421,26 +1424,6 @@ public class Manager {
 
     if (Objects.nonNull(blockCap)) {
       chainBaseManager.getBalanceTraceStore().initCurrentTransactionBalanceTrace(trxCap);
-    }
-
-    if (blockCap == null || blockCap.hasWitnessSignature()) {
-      validateTapos(trxCap);
-      validateCommon(trxCap);
-
-      if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
-        throw new ContractSizeNotEqualToOneException(
-            String.format(
-                "tx %s contract size should be exactly 1, this is extend feature ,actual :%d",
-                txId, trxCap.getInstance().getRawData().getContractList().size()));
-      }
-
-      validateDup(trxCap);
-
-      if (!trxCap.validateSignature(chainBaseManager.getAccountStore(),
-          chainBaseManager.getDynamicPropertiesStore())) {
-        throw new ValidateSignatureException(
-            String.format(" %s transaction signature validate failed", txId));
-      }
     }
 
     TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
@@ -1604,7 +1587,7 @@ public class Manager {
         continue; // try pack more small trx
       }
       // check transaction
-      if (!transactionValidator.validate(trx)) {
+      if (!transactionValidator.silentValidate(trx)) {
         continue;
       }
       //shielded transaction

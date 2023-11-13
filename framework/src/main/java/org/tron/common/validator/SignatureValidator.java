@@ -1,7 +1,9 @@
 package org.tron.common.validator;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.api.GrpcAPI;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.store.AccountStore;
@@ -16,12 +18,12 @@ public class SignatureValidator extends AbstractTransactionValidator {
   private DynamicPropertiesStore dynamicPropertiesStore;
 
   @Override
-  protected String doValidate(TransactionCapsule trx) {
+  protected Pair<GrpcAPI.Return.response_code, String> doValidate(TransactionCapsule trx) {
     try {
       trx.validateSignature(accountStore, dynamicPropertiesStore);
-      return null;
+      return SUCCESS;
     } catch (ValidateSignatureException e) {
-      return e.getMessage();
+      return buildResponse(GrpcAPI.Return.response_code.SIGERROR, e.getMessage());
     }
   }
 }

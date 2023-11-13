@@ -1,5 +1,7 @@
 package org.tron.common.validator;
 
+import java.util.Random;
+import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Assert;
@@ -20,9 +22,6 @@ import org.tron.core.db.TransactionStore;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
-
-import javax.annotation.Resource;
-import java.util.Random;
 
 @Slf4j
 public class ValidatorTest extends BaseTest {
@@ -57,7 +56,7 @@ public class ValidatorTest extends BaseTest {
     TransactionCapsule transactionCapsule = Mockito.mock(TransactionCapsule.class);
     transactionStore.put(hash.getBytes(),  transactionCapsule);
     Mockito.when(transactionCapsule.getTransactionId()).thenReturn(hash);
-    Assert.assertFalse(transactionValidator.validate(transactionCapsule));
+    Assert.assertFalse(transactionValidator.silentValidate(transactionCapsule));
   }
 
   @Test
@@ -67,7 +66,7 @@ public class ValidatorTest extends BaseTest {
     TransactionCapsule transactionCapsule = Mockito.mock(TransactionCapsule.class);
     Mockito.when(transactionCapsule.getTransactionId()).thenReturn(hash);
     Mockito.when(transactionCapsule.getSerializedSize()).thenReturn(1024 * 1024 * 1024L);
-    Assert.assertFalse(transactionValidator.validate(transactionCapsule));
+    Assert.assertFalse(transactionValidator.silentValidate(transactionCapsule));
   }
 
   @Test
@@ -77,7 +76,7 @@ public class ValidatorTest extends BaseTest {
     TransactionCapsule transactionCapsule = Mockito.mock(TransactionCapsule.class);
     Mockito.when(transactionCapsule.getTransactionId()).thenReturn(hash);
     Mockito.when(transactionCapsule.getExpiration()).thenReturn(System.currentTimeMillis());
-    Assert.assertFalse(transactionValidator.validate(transactionCapsule));
+    Assert.assertFalse(transactionValidator.silentValidate(transactionCapsule));
   }
 
   @Test
@@ -90,7 +89,7 @@ public class ValidatorTest extends BaseTest {
     Mockito.when(tx.getExpiration()).thenReturn((long) new Random().nextInt((int)
         Constant.MAXIMUM_TIME_UNTIL_EXPIRATION));
     Mockito.when(tx.getContractSize()).thenReturn(2);
-    Assert.assertFalse(transactionValidator.validate(tx));
+    Assert.assertFalse(transactionValidator.silentValidate(tx));
   }
 
   @Test
@@ -111,13 +110,13 @@ public class ValidatorTest extends BaseTest {
         blockId.getBytes(), 8, 16));
     Mockito.when(tx.getRefBlockBytes()).thenReturn(ByteArray.subArray(
         ByteArray.fromLong(blockId.getNum()), 6, 8));
-    Assert.assertFalse(transactionValidator.validate(tx));
+    Assert.assertFalse(transactionValidator.silentValidate(tx));
     recentBlockStore.put(ByteArray.subArray(ByteArray.fromLong(blockId.getNum()), 6, 8),
         new BytesCapsule(ByteArray.subArray(blockId.getBytes(), 8, 16)));
-    Assert.assertTrue(transactionValidator.validate(tx));
+    Assert.assertTrue(transactionValidator.silentValidate(tx));
     recentBlockStore.put(ByteArray.subArray(ByteArray.fromLong(blockId.getNum()), 6, 8),
         new BytesCapsule(ByteArray.subArray(hash.getBytes(), 8, 16)));
-    Assert.assertFalse(transactionValidator.validate(tx));
+    Assert.assertFalse(transactionValidator.silentValidate(tx));
 
   }
 
@@ -141,7 +140,7 @@ public class ValidatorTest extends BaseTest {
         blockId.getBytes(), 8, 16));
     Mockito.when(tx.getRefBlockBytes()).thenReturn(ByteArray.subArray(
         ByteArray.fromLong(blockId.getNum()), 6, 8));
-    Assert.assertFalse(transactionValidator.validate(tx));
+    Assert.assertFalse(transactionValidator.silentValidate(tx));
   }
 
   @Test
@@ -164,6 +163,6 @@ public class ValidatorTest extends BaseTest {
         blockId.getBytes(), 8, 16));
     Mockito.when(tx.getRefBlockBytes()).thenReturn(ByteArray.subArray(
         ByteArray.fromLong(blockId.getNum()), 6, 8));
-    Assert.assertFalse(transactionValidator.validate(tx));
+    Assert.assertFalse(transactionValidator.silentValidate(tx));
   }
 }
