@@ -112,7 +112,6 @@ import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.BadNumberBlockException;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
-import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.EventBloomException;
@@ -761,57 +760,6 @@ public class Manager {
 
   public AccountIndexStore getAccountIndexStore() {
     return chainBaseManager.getAccountIndexStore();
-  }
-
-  void validateTapos(TransactionCapsule transactionCapsule) throws TaposException {
-    byte[] refBlockHash = transactionCapsule.getInstance()
-        .getRawData().getRefBlockHash().toByteArray();
-    byte[] refBlockNumBytes = transactionCapsule.getInstance()
-        .getRawData().getRefBlockBytes().toByteArray();
-    try {
-      byte[] blockHash = chainBaseManager.getRecentBlockStore().get(refBlockNumBytes).getData();
-      if (!Arrays.equals(blockHash, refBlockHash)) {
-        String str = String.format(
-            "Tapos failed, different block hash, %s, %s , recent block %s, "
-                + "solid block %s head block %s",
-            ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash),
-            Hex.toHexString(blockHash),
-            chainBaseManager.getSolidBlockId().getString(),
-            chainBaseManager.getHeadBlockId().getString());
-        throw new TaposException(str);
-      }
-    } catch (ItemNotFoundException e) {
-      String str = String
-          .format("Tapos failed, block not found, ref block %s, %s , solid block %s head block %s",
-              ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash),
-              chainBaseManager.getSolidBlockId().getString(),
-              chainBaseManager.getHeadBlockId().getString());
-      throw new TaposException(str);
-    }
-  }
-
-  void validateCommon(TransactionCapsule transactionCapsule)
-      throws TransactionExpirationException, TooBigTransactionException {
-    if (transactionCapsule.getData().length > Constant.TRANSACTION_MAX_BYTE_SIZE) {
-      throw new TooBigTransactionException(String.format(
-          "Too big transaction, the size is %d bytes", transactionCapsule.getData().length));
-    }
-    long transactionExpiration = transactionCapsule.getExpiration();
-    long headBlockTime = chainBaseManager.getHeadBlockTimeStamp();
-    if (transactionExpiration <= headBlockTime
-        || transactionExpiration > headBlockTime + Constant.MAXIMUM_TIME_UNTIL_EXPIRATION) {
-      throw new TransactionExpirationException(
-          String.format(
-          "Transaction expiration, transaction expiration time is %d, but headBlockTime is %d",
-              transactionExpiration, headBlockTime));
-    }
-  }
-
-  void validateDup(TransactionCapsule transactionCapsule) throws DupTransactionException {
-    if (containsTransaction(transactionCapsule)) {
-      throw new DupTransactionException(String.format("dup trans : %s ",
-          transactionCapsule.getTransactionId()));
-    }
   }
 
   private boolean containsTransaction(TransactionCapsule transactionCapsule) {

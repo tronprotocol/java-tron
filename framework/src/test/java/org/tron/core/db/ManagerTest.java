@@ -301,27 +301,15 @@ public class ManagerTest extends BlockGenerate {
             .setToAmount(10)
             .build();
     TransactionCapsule trans = new TransactionCapsule(trx1, ContractType.ShieldedTransferContract);
-    try {
-      dbManager.pushTransaction(trans0);
-      dbManager.pushTransaction(trans);
-    } catch (Exception e) {
-      Assert.assertTrue(e instanceof TaposException);
-    }
     dbManager.rePush(trans0);
     ReflectUtils.invokeMethod(dbManager,"filterOwnerAddress",
         new Class[]{trans.getClass(), Set.class},trans, Sets.newHashSet());
     Assert.assertNotNull(dbManager.getTxListFromPending());
-
-    try {
-      dbManager.validateTapos(trans);
-    } catch (Exception e) {
-      Assert.assertTrue(e instanceof TaposException);
-    }
     try {
       dbManager.pushVerifiedBlock(chainManager.getHead());
       dbManager.getBlockChainHashesOnFork(chainManager.getHeadBlockId());
     } catch (Exception e) {
-      Assert.assertTrue(e instanceof TaposException);
+      Assert.assertTrue(e instanceof TooBigTransactionResultException);
     }
   }
 
@@ -1045,26 +1033,5 @@ public class ManagerTest extends BlockGenerate {
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(ByteArray.fromHexString(addressToProvateKeys.get(witnessAddress)));
     return blockCapsule;
-  }
-
-  @Test
-  public void testExpireTransaction() {
-    TransferContract tc =
-        TransferContract.newBuilder()
-            .setAmount(10)
-            .setOwnerAddress(ByteString.copyFromUtf8("aaa"))
-            .setToAddress(ByteString.copyFromUtf8("bbb"))
-            .build();
-    TransactionCapsule trx = new TransactionCapsule(tc, ContractType.TransferContract);
-    long latestBlockTime = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
-    trx.setExpiration(latestBlockTime - 100);
-    try {
-      dbManager.validateCommon(trx);
-      Assert.fail();
-    } catch (TransactionExpirationException e) {
-      Assert.assertTrue(true);
-    } catch (TooBigTransactionException e) {
-      Assert.fail();
-    }
   }
 }
