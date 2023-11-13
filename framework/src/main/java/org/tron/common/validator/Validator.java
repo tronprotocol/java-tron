@@ -1,8 +1,8 @@
 package org.tron.common.validator;
 
-public interface Validator<V> {
+public interface Validator<T, V> {
 
-  String validate(final V v);
+  T validate(final V v);
 
-  Validator<V> nextValidator(Validator<V> next);
+  Validator<T, V> nextValidator(Validator<T, V> next);
 }
