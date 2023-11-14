@@ -21,7 +21,8 @@ public class DupTransactionValidator extends AbstractTransactionValidator {
   protected Pair<GrpcAPI.Return.response_code, String> doValidate(TransactionCapsule trx) {
     byte[] transactionId = trx.getTransactionId().getBytes();
     if (transactionCache.has(transactionId) && transactionStore.has(transactionId)) {
-      return buildResponse(GrpcAPI.Return.response_code.DUP_TRANSACTION_ERROR, "dup trans");
+      return buildResponse(GrpcAPI.Return.response_code.DUP_TRANSACTION_ERROR, "dup trans : %s ",
+          trx.getTransactionId());
     }
     return SUCCESS;
   }
