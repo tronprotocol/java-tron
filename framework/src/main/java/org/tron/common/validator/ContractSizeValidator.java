@@ -13,8 +13,8 @@ public class ContractSizeValidator extends AbstractTransactionValidator {
     int contractSize = trx.getContractSize();
     if (contractSize != 1) {
       return buildResponse(GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR,
-          "contract size should be exactly 1, this is extend feature ,actual :%d",
-          contractSize);
+          "tx %s contract size should be exactly 1, this is extend feature ,actual :%d",
+          trx.getTransactionId(), contractSize);
     }
     return SUCCESS;
   }
