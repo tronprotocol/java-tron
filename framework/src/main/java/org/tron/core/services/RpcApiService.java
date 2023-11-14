@@ -8,6 +8,7 @@ import com.google.protobuf.ProtocolStringList;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.netty.NettyServerBuilder;
+import io.grpc.protobuf.services.ProtoReflectionService;
 import io.grpc.stub.StreamObserver;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -249,6 +250,10 @@ public class RpcApiService extends RpcService {
 
       // add lite fullnode query interceptor
       serverBuilder.intercept(liteFnQueryGrpcInterceptor);
+
+      if (parameter.isRpcReflectionServiceEnable()) {
+        serverBuilder.addService(ProtoReflectionService.newInstance());
+      }
 
       apiServer = serverBuilder.build();
       rateLimiterInterceptor.init(apiServer);
