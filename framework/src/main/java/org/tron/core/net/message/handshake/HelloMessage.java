@@ -11,6 +11,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TronMessage;
 import org.tron.p2p.discover.Node;
+import org.tron.program.Version;
 import org.tron.protos.Discover.Endpoint;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.HelloMessage.Builder;
@@ -61,6 +62,7 @@ public class HelloMessage extends TronMessage {
     builder.setNodeType(chainBaseManager.getNodeType().getType());
     builder.setLowestBlockNum(chainBaseManager.isLiteNode()
         ? chainBaseManager.getLowestBlockNum() : 0);
+    builder.setCodeVersion(ByteString.copyFrom(Version.getVersion().getBytes()));
 
     this.helloMessage = builder.build();
     this.type = MessageTypes.P2P_HELLO.asByte();
@@ -127,15 +129,21 @@ public class HelloMessage extends TronMessage {
             .append("lowestBlockNum: ").append(helloMessage.getLowestBlockNum()).append("\n");
 
     ByteString address = helloMessage.getAddress();
-    if (address != null && !address.isEmpty()) {
+    if (!address.isEmpty()) {
       builder.append("address:")
               .append(StringUtil.encode58Check(address.toByteArray())).append("\n");
     }
 
     ByteString signature = helloMessage.getSignature();
-    if (signature != null && !signature.isEmpty()) {
+    if (!signature.isEmpty()) {
       builder.append("signature:")
               .append(signature.toByteArray().length).append("\n");
+    }
+
+    ByteString codeVersion = helloMessage.getCodeVersion();
+    if (!codeVersion.isEmpty()) {
+      builder.append("codeVersion:")
+          .append(new String(codeVersion.toByteArray())).append("\n");
     }
 
     return builder.toString();
