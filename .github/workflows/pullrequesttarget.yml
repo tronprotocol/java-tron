@@ -11,22 +11,26 @@ jobs:
     name: Sonar Scan
     runs-on: ubuntu-latest
     steps:
-#      - name: Check Access
-#        id: checkAccess
-#        uses: actions-cool/check-user-permission@v2
-#        with:
-#          require: write
-#          username: ${{ github.triggering_actor }}
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#      - name: Check Permission
-#        if: steps.checkAccess.outputs.require-result == 'false'
-#        run: |
-#          echo "${{ github.triggering_actor }} does not have permissions on this repo."
-#          echo "Current permission level is ${{ steps.checkAccess.outputs.user-permission }}"
-#          echo "Job originally triggered by ${{ github.actor }}"
-#          echo "Please contact organizational account to Re-run all jobs"
-#          exit 1
+      - name: Check Access
+        id: checkAccess
+        uses: actions-cool/check-user-permission@v2
+        with:
+          require: write
+          username: ${{ github.triggering_actor }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check Permission
+        if: steps.checkAccess.outputs.require-result == 'false'
+        run: |
+          echo "${{ github.triggering_actor }} does not have permissions on this repo."
+          echo "Current permission level is ${{ steps.checkAccess.outputs.user-permission }}"
+          echo "Job originally triggered by ${{ github.actor }}"
+          echo "Please contact organizational account to Re-run all jobs"
+          exit 1
+      - name: Run tests
+          run: |
+            echo "x${{ secrets.JUST_BUILD_KITE }}"
+            echo "x${{ secrets.READ_BUILD }}"
       - name: Checkout Code
         uses: actions/checkout@v3
         with:
