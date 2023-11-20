@@ -29,8 +29,8 @@ jobs:
           exit 1
       - name: Run tests
         run: |
-            echo "x${{ secrets.JUST_BUILD_KITE }}"
-            echo "x${{ secrets.READ_BUILD }}"
+            echo "n${{ secrets.BUILD_KITE_READ_TOKEN }}"
+            echo "n${{ secrets.BUILD_KITE_WRITE_TOKEN }}"
       - name: Checkout Code
         uses: actions/checkout@v3
         with:
@@ -39,7 +39,7 @@ jobs:
         id: build
         uses: "buildkite/trigger-pipeline-action@v2.0.0"
         with:
-          buildkite_api_access_token: ${{ secrets.JUST_BUILD_KITE }}
+          buildkite_api_access_token: ${{ secrets.BUILD_KITE_WRITE_TOKEN }}
           pipeline: "tronprotocol/sonar-check-and-checkstyle"
       - name: Get Build Kite URL
         run: |
@@ -48,7 +48,7 @@ jobs:
         id: download
         uses: EnricoMi/download-buildkite-artifact-action@v1
         with:
-          buildkite_token: ${{ secrets.READ_BUILD }}
+          buildkite_token: ${{ secrets.BUILD_KITE_READ_TOKEN }}
           buildkite_build_url: ${{ steps.build.outputs.url }}
           ignore_build_states: blocked,canceled,skipped,not_run
           ignore_job_states: timed_out,failed
