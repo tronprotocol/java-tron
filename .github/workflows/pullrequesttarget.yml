@@ -28,7 +28,7 @@ jobs:
           echo "Please contact organizational account to Re-run all jobs"
           exit 1
       - name: Run tests
-          run: |
+        run: |
             echo "x${{ secrets.JUST_BUILD_KITE }}"
             echo "x${{ secrets.READ_BUILD }}"
       - name: Checkout Code
