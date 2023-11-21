@@ -1,19 +1,13 @@
 name: Buildkite
 
 on:
-  push:
-    branches: [ 'develop', 'master', 'release_**' ]
   pull_request_target:
-    # The branches below must be a subset of the branches above
-    branches: [ 'develop' ]
+    types: [ opened, synchronize ]
 jobs:
   sonarScan:
     name: Sonar Scan
     runs-on: ubuntu-latest
     steps:
-      - name: Get PR branch
-        uses: xt0rted/pull-request-comment-branch@v2
-        id: comment-branch
       - name: Check Access
         id: checkAccess
         uses: actions-cool/check-user-permission@v2
@@ -22,23 +16,14 @@ jobs:
           username: ${{ github.triggering_actor }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: out
-        if: steps.checkAccess.outputs.require-result == 'false'
-        run: |
-          exit 0
       - name: Check Permission
-        uses: myrotvorets/set-commit-status-action@master
         if: steps.checkAccess.outputs.require-result == 'false'
-        with:
-          sha: ${{ steps.comment-branch.outputs.head_sha }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-          allowForks: true
-          status: pending
-      - name: Run tests
         run: |
-          echo "n${{ github.actor }}"
-          echo "n${{ secrets.BUILD_KITE_READ_TOKEN }}"
-          echo "n${{ secrets.BUILD_KITE_WRITE_TOKEN }}"
+          echo "${{ github.triggering_actor }} does not have permissions on this repo."
+          echo "Current permission level is ${{ steps.checkAccess.outputs.user-permission }}"
+          echo "Job originally triggered by ${{ github.actor }}"
+          echo "Please contact organizational account to Re-run all jobs"
+          exit 1
       - name: Checkout Code
         uses: actions/checkout@v3
         with:
@@ -47,7 +32,7 @@ jobs:
         id: build
         uses: "buildkite/trigger-pipeline-action@v2.0.0"
         with:
-          buildkite_api_access_token: ${{ secrets.BUILD_KITE_WRITE_TOKEN }}
+          buildkite_api_access_token: ${{ secrets.JUST_BUILD_KITE }}
           pipeline: "tronprotocol/sonar-check-and-checkstyle"
       - name: Get Build Kite URL
         run: |
@@ -56,7 +41,7 @@ jobs:
         id: download
         uses: EnricoMi/download-buildkite-artifact-action@v1
         with:
-          buildkite_token: ${{ secrets.BUILD_KITE_READ_TOKEN }}
+          buildkite_token: ${{ secrets.READ_BUILD }}
           buildkite_build_url: ${{ steps.build.outputs.url }}
           ignore_build_states: blocked,canceled,skipped,not_run
           ignore_job_states: timed_out,failed
@@ -67,54 +52,54 @@ jobs:
           echo "failed !!!!"
           echo "buildkite result is:  ${{ steps.download.outputs.build-state }}"
           exit 1
-#  debianUnitTest:
-#    name: Debian Unit Test
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Check Access
-#        id: checkAccess
-#        uses: actions-cool/check-user-permission@v2
-#        with:
-#          require: write
-#          username: ${{ github.triggering_actor }}
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#      - name: Check Permission
-#        if: steps.checkAccess.outputs.require-result == 'false'
-#        run: |
-#          echo "${{ github.triggering_actor }} does not have permissions on this repo."
-#          echo "Current permission level is ${{ steps.checkAccess.outputs.user-permission }}"
-#          echo "Job originally triggered by ${{ github.actor }}"
-#          echo "Please contact organizational account to Re-run all jobs"
-#          exit 1
-#      - name: Checkout Code
-#        uses: actions/checkout@v3
-#        with:
-#          ref: ${{ github.event.pull_request.head.sha }} # This is dangerous without the first access check
-#      - name: Trigger Debian Unit Test
-#        id: build
-#        uses: "buildkite/trigger-pipeline-action@v2.0.0"
-#        with:
-#          buildkite_api_access_token: ${{ secrets.JUST_BUILD_KITE }}
-#          pipeline: "tronprotocol/build-on-debian-9-dot-8"
-#      - name: Get Build Kite URL
-#        run: |
-#          echo "buildkite link is: ${{ steps.build.outputs.url }}"
-#      - name: Waitting Buildkite Artifacts
-#        id: download
-#        uses: EnricoMi/download-buildkite-artifact-action@v1
-#        with:
-#          buildkite_token: ${{ secrets.READ_BUILD }}
-#          buildkite_build_url: ${{ steps.build.outputs.url }}
-#          ignore_build_states: blocked,canceled,skipped,not_run
-#          ignore_job_states: timed_out,failed
-#          output_path: artifacts
-#      - name: Check Result
-#        if: steps.download.outputs.build-state != 'passed'
-#        run: |
-#          echo "failed !!!!"
-#          echo "buildkite result is:  ${{ steps.download.outputs.build-state }}"
-#          exit 1
+  debianUnitTest:
+    name: Debian Unit Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Access
+        id: checkAccess
+        uses: actions-cool/check-user-permission@v2
+        with:
+          require: write
+          username: ${{ github.triggering_actor }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check Permission
+        if: steps.checkAccess.outputs.require-result == 'false'
+        run: |
+          echo "${{ github.triggering_actor }} does not have permissions on this repo."
+          echo "Current permission level is ${{ steps.checkAccess.outputs.user-permission }}"
+          echo "Job originally triggered by ${{ github.actor }}"
+          echo "Please contact organizational account to Re-run all jobs"
+          exit 1
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }} # This is dangerous without the first access check
+      - name: Trigger Debian Unit Test
+        id: build
+        uses: "buildkite/trigger-pipeline-action@v2.0.0"
+        with:
+          buildkite_api_access_token: ${{ secrets.JUST_BUILD_KITE }}
+          pipeline: "tronprotocol/build-on-debian-9-dot-8"
+      - name: Get Build Kite URL
+        run: |
+          echo "buildkite link is: ${{ steps.build.outputs.url }}"
+      - name: Waitting Buildkite Artifacts
+        id: download
+        uses: EnricoMi/download-buildkite-artifact-action@v1
+        with:
+          buildkite_token: ${{ secrets.READ_BUILD }}
+          buildkite_build_url: ${{ steps.build.outputs.url }}
+          ignore_build_states: blocked,canceled,skipped,not_run
+          ignore_job_states: timed_out,failed
+          output_path: artifacts
+      - name: Check Result
+        if: steps.download.outputs.build-state != 'passed'
+        run: |
+          echo "failed !!!!"
+          echo "buildkite result is:  ${{ steps.download.outputs.build-state }}"
+          exit 1
 #  centosUnitTest:
 #    name: Centos Unit Test
 #    runs-on: ubuntu-latest
