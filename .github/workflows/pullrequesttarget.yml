@@ -22,6 +22,10 @@ jobs:
           username: ${{ github.triggering_actor }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: out
+        if: steps.checkAccess.outputs.require-result == 'false'
+        run: |
+          exit 0
       - name: Check Permission
         uses: myrotvorets/set-commit-status-action@master
         if: steps.checkAccess.outputs.require-result == 'false'
@@ -30,10 +34,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           allowForks: true
           status: pending
-      - name: out
-        if: steps.checkAccess.outputs.require-result == 'false'
-        run: |
-          exit 0
       - name: Run tests
         run: |
           echo "n${{ github.actor }}"
