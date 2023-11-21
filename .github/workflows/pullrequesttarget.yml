@@ -28,6 +28,7 @@ jobs:
         with:
           sha: ${{ steps.comment-branch.outputs.head_sha }}
           token: ${{ secrets.GITHUB_TOKEN }}
+          allowForks: true
           status: pending
       - name: Run tests
         run: |
