@@ -1,11 +1,8 @@
 name: Buildkite
 
 on:
-  push:
-    branches: [ 'develop', 'master', 'release_**' ]
-  pull_request:
-    # The branches below must be a subset of the branches above
-    branches: [ 'develop' ]
+  pull_request_target:
+    types: [ opened, synchronize ]
 jobs:
   sonarScan:
     name: Sonar Scan
