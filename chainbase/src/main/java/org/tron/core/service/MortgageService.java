@@ -243,6 +243,9 @@ public class MortgageService {
   }
 
   private long getOldReward(long beginCycle, long oldEndCycle, AccountCapsule accountCapsule) {
+    if (beginCycle + 1 == oldEndCycle) {
+      return rewardCalService.computeReward(beginCycle, accountCapsule.getInstance());
+    }
     long cacheData = rewardCalService.getReward(accountCapsule.createDbKey(), beginCycle);
     long reward = 0;
     for (long cycle = beginCycle; cycle < oldEndCycle; cycle++) {
