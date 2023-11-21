@@ -10,6 +10,7 @@ jobs:
   sonarScan:
     name: Sonar Scan
     runs-on: ubuntu-latest
+    if: ${{ github.actor == 'dependabot[bot]' }}
     steps:
       - name: Check Access
         id: checkAccess
