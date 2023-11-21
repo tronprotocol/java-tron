@@ -11,6 +11,9 @@ jobs:
     name: Sonar Scan
     runs-on: ubuntu-latest
     steps:
+      - name: Get PR branch
+        uses: xt0rted/pull-request-comment-branch@v1
+        id: comment-branch
       - name: Check Access
         id: checkAccess
         uses: actions-cool/check-user-permission@v2
