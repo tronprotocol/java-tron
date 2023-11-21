@@ -3,7 +3,7 @@ name: Buildkite
 on:
   push:
     branches: [ 'develop', 'master', 'release_**' ]
-  pull_request:
+  pull_request_target:
     # The branches below must be a subset of the branches above
     branches: [ 'develop' ]
 jobs:
@@ -20,14 +20,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Check Permission
+        uses: myrotvorets/set-commit-status-action@master
         if: steps.checkAccess.outputs.require-result == 'false'
         run: |
           echo "${{ github.triggering_actor }} does not have permissions on this repo."
           echo "Current permission level is ${{ steps.checkAccess.outputs.user-permission }}"
           echo "Job originally triggered by ${{ github.actor }}"
           echo "Please contact organizational account to Re-run all jobs"
-        uses: myrotvorets/set-commit-status-action@master
-        if: steps.checkAccess.outputs.require-result == 'false'
         with:
           sha: ${{ steps.comment-branch.outputs.head_sha }}
           token: ${{ secrets.GITHUB_TOKEN }}
