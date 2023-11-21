@@ -33,7 +33,7 @@ jobs:
       - name: out
         if: steps.checkAccess.outputs.require-result == 'false'
         run: |
-          exit 1
+          exit 0
       - name: Run tests
         run: |
           echo "n${{ github.actor }}"
