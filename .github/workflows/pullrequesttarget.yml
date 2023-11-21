@@ -6,7 +6,6 @@ on:
   pull_request:
     # The branches below must be a subset of the branches above
     branches: [ 'develop' ]
-  workflow_dispatch:
 jobs:
   sonarScan:
     name: Sonar Scan
@@ -27,7 +26,12 @@ jobs:
           echo "Current permission level is ${{ steps.checkAccess.outputs.user-permission }}"
           echo "Job originally triggered by ${{ github.actor }}"
           echo "Please contact organizational account to Re-run all jobs"
-          exit 1
+        uses: myrotvorets/set-commit-status-action@master
+        if: steps.checkAccess.outputs.require-result == 'false'
+        with:
+          sha: ${{ steps.comment-branch.outputs.head_sha }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          status: pending
       - name: Run tests
         run: |
           echo "n${{ github.actor }}"
