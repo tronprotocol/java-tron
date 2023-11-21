@@ -22,12 +22,10 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
         allowForks: true
         status: pending
-        context: Publish NPM package
     - name: Set final commit status
       uses: myrotvorets/set-commit-status-action@master
       if: always()
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         status: ${{ job.status }}
-        context: Publish NPM package
 
