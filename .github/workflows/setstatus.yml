@@ -12,9 +12,13 @@ jobs:
     name: Analyze
     runs-on: ubuntu-latest
     steps:
+    - name: Get PR branch
+      uses: xt0rted/pull-request-comment-branch@v2
+      id: comment-branch
     - name: Set commit status as pending
       uses: myrotvorets/set-commit-status-action@master
       with:
+        sha: ${{ steps.comment-branch.outputs.head_sha }}
         token: ${{ secrets.GITHUB_TOKEN }}
         allowForks: true
         status: pending
