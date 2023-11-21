@@ -11,7 +11,6 @@ jobs:
   sonarScan:
     name: Sonar Scan
     runs-on: ubuntu-latest
-    if: ${{ github.actor == 'dependabot[bot]' }}
     steps:
       - name: Check Access
         id: checkAccess
@@ -31,8 +30,9 @@ jobs:
           exit 1
       - name: Run tests
         run: |
-            echo "n${{ secrets.BUILD_KITE_READ_TOKEN }}"
-            echo "n${{ secrets.BUILD_KITE_WRITE_TOKEN }}"
+          echo "n${{ github.actor }}"
+          echo "n${{ secrets.BUILD_KITE_READ_TOKEN }}"
+          echo "n${{ secrets.BUILD_KITE_WRITE_TOKEN }}"
       - name: Checkout Code
         uses: actions/checkout@v3
         with:
