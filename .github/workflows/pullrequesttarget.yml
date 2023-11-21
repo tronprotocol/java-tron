@@ -30,7 +30,10 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           allowForks: true
           status: pending
-          phase: Pending
+      - name: out
+        if: steps.checkAccess.outputs.require-result == 'false'
+        run: |
+          exit 1
       - name: Run tests
         run: |
           echo "n${{ github.actor }}"
