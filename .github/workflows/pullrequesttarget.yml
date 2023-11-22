@@ -7,7 +7,7 @@ on:
 jobs:
   sonarScan:
     name: Sonar Scan
-    uses: ./.github/workflows/sonarResult.yml
+#    uses: ./.github/workflows/sonarResult.yml
     runs-on: ubuntu-latest
     steps:
       - name: Check Permission
