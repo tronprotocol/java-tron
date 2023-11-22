@@ -2,7 +2,7 @@ name: Buildkite
 
 on:
   workflow_run:
-    workflows: ["Callerwork"]
+    workflows: [Callerwork]
     types:
       - completed
 jobs:
