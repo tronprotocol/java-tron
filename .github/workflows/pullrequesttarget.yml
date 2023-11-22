@@ -1,10 +1,10 @@
 name: Buildkite
 
 on:
-workflow_run:
-  workflows: ["CodeQL"]
-  types:
-    - completed
+  workflow_run:
+    workflows: ["Callerwork"]
+    types:
+      - completed
 jobs:
   sonarScan:
     name: Sonar Scan
