@@ -47,6 +47,7 @@ jobs:
           ignore_job_states: timed_out,failed
           output_path: artifacts
       - name: Check Result
+        uses: actions/checkout@v3
         uses: ./.github/workflows/sonarResult.yml
         with:
           buildkite_build_url: ${{ steps.build.outputs.url }}
