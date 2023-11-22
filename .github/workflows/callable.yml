@@ -9,9 +9,5 @@ on:
 
 jobs:
   caller1:
-    name: Analyze
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    uses: ./.github/workflows/sonarResult.yml
 
