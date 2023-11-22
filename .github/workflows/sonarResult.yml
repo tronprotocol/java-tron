@@ -2,17 +2,17 @@ name: "SonarResult"
 
 on:
   workflow_call:
-    inputs:
-      buildkite_build_url:
-        description: 'buildkite_build_url'
-        default: ''
-        required: false
-        type: string
-      buildkite_result:
-        description: 'buildkite_result'
-        default: ''
-        required: false
-        type: string
+#    inputs:
+#      buildkite_build_url:
+#        description: 'buildkite_build_url'
+#        default: ''
+#        required: false
+#        type: string
+#      buildkite_result:
+#        description: 'buildkite_result'
+#        default: ''
+#        required: false
+#        type: string
 
 jobs:
   caller1:
@@ -21,13 +21,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Check Result
-        if: ${{ inputs.buildkite_result }} != 'passed'
-        run: |
-          echo "failed !!!!"
-          echo "buildkite url is:  ${{ inputs.buildkite_build_url }}"
-          exit 1
-        else:
-        run: |
-          echo "success !!!!"
-          echo "buildkite url is:  ${{ inputs.buildkite_build_url }}"
+#      - name: Check Result
+#        if: ${{ inputs.buildkite_result }} != 'passed'
+#        run: |
+#          echo "failed !!!!"
+#          echo "buildkite url is:  ${{ inputs.buildkite_build_url }}"
+#          exit 1
+#        else:
+#        run: |
+#          echo "success !!!!"
+#          echo "buildkite url is:  ${{ inputs.buildkite_build_url }}"
