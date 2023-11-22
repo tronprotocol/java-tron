@@ -9,5 +9,9 @@ on:
 
 jobs:
   caller1:
-    uses: ./.github/workflows/pullrequesttarget.yml
+    name: Analyze
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
 

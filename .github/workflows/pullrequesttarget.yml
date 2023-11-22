@@ -1,7 +1,9 @@
 name: Buildkite
 
 on:
-  workflow_call:
+  workflow_run:
+    workflows: [Callerwork]
+    types: [completed]
 jobs:
   sonarScan:
     name: Sonar Scan
