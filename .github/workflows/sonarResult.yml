@@ -1,4 +1,4 @@
-name: "Callerwork"
+name: "SonarResult"
 
 on:
   workflow_call:
