@@ -49,9 +49,9 @@ jobs:
       - name: Check Result
         - uses: actions/checkout@v3
         - uses: ./.github/workflows/sonarResult.yml
-        with:
-          buildkite_build_url: ${{ steps.build.outputs.url }}
-          buildkite_result: ${{ steps.download.outputs.build-state }}
+          with:
+            buildkite_build_url: ${{ steps.build.outputs.url }}
+            buildkite_result: ${{ steps.download.outputs.build-state }}
 #  debianUnitTest:
 #    name: Debian Unit Test
 #    runs-on: ubuntu-latest
