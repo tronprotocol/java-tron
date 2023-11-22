@@ -19,6 +19,8 @@ jobs:
     name: Analyze
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
       - name: Check Result
         if: ${{ inputs.buildkite_result }} != 'passed'
         run: |
