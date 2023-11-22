@@ -9,9 +9,12 @@ on:
 
 jobs:
   caller1:
-#    uses: ./.github/workflows/sonarResult.yml
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    uses: ./.github/workflows/sonarResult.yml
+      with:
+        buildkite_build_url: ${{ steps.build.outputs.url }}
+        buildkite_result: ${{ steps.download.outputs.build-state }}
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Checkout repository
+#        uses: actions/checkout@v3
 
