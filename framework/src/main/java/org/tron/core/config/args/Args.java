@@ -635,7 +635,7 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.NODE_LISTEN_PORT)
             ? config.getInt(Constant.NODE_LISTEN_PORT) : 0;
 
-    bindIp(config);
+    bindIp();
     externalIp(config);
 
     PARAMETER.nodeP2pVersion =
@@ -1521,22 +1521,12 @@ public class Args extends CommonParameter {
     return filter;
   }
 
-  private static void bindIp(final com.typesafe.config.Config config) {
-    if (!config.hasPath(Constant.NODE_DISCOVERY_BIND_IP)
-        || config.getString(Constant.NODE_DISCOVERY_BIND_IP)
-        .trim().isEmpty()) {
-      if (PARAMETER.nodeDiscoveryBindIp == null) {
-        logger.info("Bind address wasn't set, Punching to identify it...");
-        try (Socket s = new Socket("www.baidu.com", 80)) {
-          PARAMETER.nodeDiscoveryBindIp = s.getLocalAddress().getHostAddress();
-          logger.info("UDP local bound to: {}", PARAMETER.nodeDiscoveryBindIp);
-        } catch (IOException e) {
-          logger.warn("Can't get bind IP. Fall back to 127.0.0.1: " + e);
-          PARAMETER.nodeDiscoveryBindIp = "127.0.0.1";
-        }
-      }
-    } else {
-      PARAMETER.nodeDiscoveryBindIp = config.getString(Constant.NODE_DISCOVERY_BIND_IP).trim();
+  private static void bindIp() {
+    try (Socket s = new Socket("www.baidu.com", 80)) {
+      PARAMETER.nodeDiscoveryBindIp = s.getLocalAddress().getHostAddress();
+    } catch (IOException e) {
+      logger.warn("Can't get bind IP. Fall back to 127.0.0.1: " + e);
+      PARAMETER.nodeDiscoveryBindIp = "127.0.0.1";
     }
   }
 
