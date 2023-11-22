@@ -32,7 +32,7 @@ jobs:
         uses: "buildkite/trigger-pipeline-action@v2.0.0"
         with:
           buildkite_api_access_token: ${{ secrets.BUILD_KITE_WRITE_TOKEN }}
-          pipeline: "tronprotocol/sonar-check-and-checkstyle"
+          pipeline: "nnnnnnnnnnnn/notwell1"
       - name: Get Build Kite URL
         run: |
           echo "buildkite link is: ${{ steps.build.outputs.url }}"
