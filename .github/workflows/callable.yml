@@ -12,10 +12,6 @@ jobs:
     name: Caller1
     runs-on: ubuntu-latest
     steps:
-    - name: just trigger
-      uses: rshop/trigger-workflow-action@v1
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        repository: 'SecondBuildkite/java-tron'
-        workflowId: Buildkite
+    - name: trigger buildkite
+      uses: ./.github/workflows/pullrequesttarget.yml
 
