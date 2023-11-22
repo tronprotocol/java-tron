@@ -1,0 +1,31 @@
+name: "Callerwork"
+
+on:
+  workflow_call:
+    inputs:
+      buildkite_build_url:
+        description: 'buildkite_build_url'
+        default: ''
+        required: false
+        type: string
+      buildkite_result:
+        description: 'buildkite_result'
+        default: ''
+        required: false
+        type: string
+
+jobs:
+  caller1:
+    name: Analyze
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Result
+        if: ${{ inputs.buildkite_result }} != 'passed'
+        run: |
+          echo "failed !!!!"
+          echo "buildkite url is:  ${{ inputs.buildkite_build_url }}"
+          exit 1
+        else:
+        run: |
+          echo "success !!!!"
+          echo "buildkite url is:  ${{ inputs.buildkite_build_url }}"
