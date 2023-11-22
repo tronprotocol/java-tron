@@ -3,8 +3,8 @@ name: Buildkite
 on:
   workflow_run:
     workflows: [Callerwork]
-    types:
-      - completed
+    types: [completed]
+    branches: [ 'develop' ]
 jobs:
   sonarScan:
     name: Sonar Scan

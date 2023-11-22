@@ -6,27 +6,11 @@ on:
   pull_request:
     # The branches below must be a subset of the branches above
     branches: [ 'develop' ]
-  schedule:
-    - cron: '6 10 * * 0'
 
 jobs:
   caller1:
     name: Caller1
     runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
-
-    strategy:
-      fail-fast: false
-      matrix:
-        language: [ 'java' ]
-        # CodeQL supports [ 'cpp', 'csharp', 'go', 'java', 'javascript', 'python', 'ruby' ]
-        # Use only 'java' to analyze code written in Java, Kotlin or both
-        # Use only 'javascript' to analyze code written in JavaScript, TypeScript or both
-        # Learn more about CodeQL language support at https://aka.ms/codeql-docs/language-support
-
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
