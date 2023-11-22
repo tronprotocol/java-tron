@@ -12,6 +12,10 @@ jobs:
     name: Caller1
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+    - name: just trigger
+      uses: rshop/trigger-workflow-action@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        repository: 'SecondBuildkite/java-tron'
+        workflowId: Buildkite
 
