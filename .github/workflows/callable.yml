@@ -8,11 +8,10 @@ on:
     branches: [ 'develop' ]
 
 jobs:
-  caller1:
-    uses: ./.github/workflows/sonarResult.yml
+    - uses: ./.github/workflows/sonarResult.yml
       with:
-        buildkite_build_url: ${{ steps.build.outputs.url }}
-        buildkite_result: ${{ steps.download.outputs.build-state }}
+        buildkite_build_url: "1111"
+        buildkite_result: "2222"
 #    runs-on: ubuntu-latest
 #    steps:
 #      - name: Checkout repository
