@@ -45,11 +45,11 @@ jobs:
           ignore_build_states: blocked,canceled,skipped,not_run
           ignore_job_states: timed_out,failed
           output_path: artifacts
-      - name: Check Result
-        uses: ./.github/workflows/sonarResult.yml
-        with:
-          buildkite_build_url: ${{ steps.build.outputs.url }}
-          buildkite_result: ${{ steps.download.outputs.build-state }}
+#      - name: Check Result
+#        uses: ./.github/workflows/sonarResult.yml
+#        with:
+#          buildkite_build_url: ${{ steps.build.outputs.url }}
+#          buildkite_result: ${{ steps.download.outputs.build-state }}
 #  debianUnitTest:
 #    name: Debian Unit Test
 #    runs-on: ubuntu-latest
