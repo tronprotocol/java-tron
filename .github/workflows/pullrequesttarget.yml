@@ -2,7 +2,7 @@ name: Buildkite
 
 on:
   workflow_run:
-    workflows: [Callerwork]
+    workflows: [CodeQL]
     types: [completed]
     branches: [ 'develop' ]
 jobs:
