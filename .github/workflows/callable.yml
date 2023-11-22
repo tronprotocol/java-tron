@@ -9,5 +9,8 @@ on:
 
 jobs:
   caller1:
-    uses: ./.github/workflows/sonarResult.yml
+#    uses: ./.github/workflows/sonarResult.yml
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
