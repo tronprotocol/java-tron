@@ -9,9 +9,5 @@ on:
 
 jobs:
   caller1:
-    name: Caller1
-    runs-on: ubuntu-latest
-    steps:
-    - name: trigger buildkite
-      uses: ./.github/workflows/pullrequesttarget.yml
+    uses: ./.github/workflows/pullrequesttarget.yml
 
