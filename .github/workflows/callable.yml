@@ -9,7 +9,7 @@ on:
 
 jobs:
     - uses: ./.github/workflows/sonarResult.yml
-      with:
+      inputs:
         buildkite_build_url: "1111"
         buildkite_result: "2222"
 #    runs-on: ubuntu-latest
