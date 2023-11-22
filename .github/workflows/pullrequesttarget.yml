@@ -1,8 +1,7 @@
 name: Buildkite
 
 on:
-  pull_request_target:
-    types: [ opened, synchronize ]
+  workflow_call:
 jobs:
   sonarScan:
     name: Sonar Scan
