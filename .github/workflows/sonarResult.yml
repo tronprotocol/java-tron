@@ -1,33 +1,21 @@
-name: "SonarResult"
-
+name: 'test_post'
 on:
-  workflow_call:
-#    inputs:
-#      buildkite_build_url:
-#        description: 'buildkite_build_url'
-#        default: ''
-#        required: false
-#        type: string
-#      buildkite_result:
-#        description: 'buildkite_result'
-#        default: ''
-#        required: false
-#        type: string
+  workflow_run:
+    workflows: ["Callerwork"]
+    types:
+      - completed
 
 jobs:
-  sonarResult:
-    name: SonarResult
+  post-test-success:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-#      - name: Check Result
-#        if: ${{ inputs.buildkite_result }} != 'passed'
-#        run: |
-#          echo "failed !!!!"
-#          echo "buildkite url is:  ${{ inputs.buildkite_build_url }}"
-#          exit 1
-#        else:
-#        run: |
-#          echo "success !!!!"
-#          echo "buildkite url is:  ${{ inputs.buildkite_build_url }}"
+      - uses: haya14busa/action-workflow_run-status@v1
+      - uses: actions/checkout@v2
+      - run: exit 0
+
+  post-test-failure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: haya14busa/action-workflow_run-status@v1
+      - uses: actions/checkout@v2
+      - run: exit 1
