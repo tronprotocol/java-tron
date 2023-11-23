@@ -18,17 +18,17 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Just sleep
-        run: |
-          sleep 15
-          echo ${{ github.event.pull_request.head.sha }}
-      - name: Wait for tests to succeed
-        uses: lewagon/wait-on-check-action@v1.3.1
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          check-name: 'Sonar Scan'
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          verbose: true
-          allowed-conclusions: success
-          wait-interval: 10
+#      - name: Just sleep
+#        run: |
+#          sleep 15
+#          echo ${{ github.event.pull_request.head.sha }}
+#      - name: Wait for tests to succeed
+#        uses: lewagon/wait-on-check-action@v1.3.1
+#        with:
+#          ref: ${{ github.event.pull_request.head.sha }}
+#          check-name: 'Sonar Scan'
+#          repo-token: ${{ secrets.GITHUB_TOKEN }}
+#          verbose: true
+#          allowed-conclusions: success
+#          wait-interval: 10
 
