@@ -12,6 +12,7 @@ jobs:
     steps:
       - name: Check Access
         id: checkAccess
+        uses: haya14busa/action-workflow_run-status@v1
         uses: actions-cool/check-user-permission@v2
         with:
           require: write
@@ -49,7 +50,6 @@ jobs:
           ignore_job_states: timed_out,failed
           output_path: artifacts
       - name: Check Result
-        uses: haya14busa/action-workflow_run-status@v1
         if: steps.download.outputs.build-state != 'passed'
         run: |
           echo "failed !!!!"
