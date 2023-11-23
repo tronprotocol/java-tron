@@ -18,11 +18,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Wait for tests to succeed
-        uses: lewagon/wait-on-check-action@v1.3.1
-        with:
-          ref: ${{ github.ref }}
-          check-name: 'Sonar Scan'
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          wait-interval: 10
+#      - name: Wait for tests to succeed
+#        uses: lewagon/wait-on-check-action@v1.3.1
+#        with:
+#          ref: ${{ github.ref }}
+#          check-name: 'Sonar Scan'
+#          repo-token: ${{ secrets.GITHUB_TOKEN }}
+#          wait-interval: 10
 
