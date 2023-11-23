@@ -9,28 +9,29 @@ jobs:
     name: Sonar Scan
 #    uses: ./.github/workflows/sonarResult.yml
     runs-on: ubuntu-latest
+#    steps:
+#      - uses: haya14busa/action-workflow_run-status@v1
+#      - uses: actions/checkout@v2
+#      - run: exit 0
     steps:
       - uses: haya14busa/action-workflow_run-status@v1
       - uses: actions/checkout@v2
-      - run: exit 0
-#    steps:
-#      - uses: haya14busa/action-workflow_run-status@v1
-#      - name: Check Access
-#        id: checkAccess
-#        uses: actions-cool/check-user-permission@v2
-#        with:
-#          require: write
-#          username: ${{ github.triggering_actor }}
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#      - name: Check Permission
-#        if: steps.checkAccess.outputs.require-result == 'false'
-#        run: |
-#          echo "${{ github.triggering_actor }} does not have permissions on this repo."
-#          echo "Current permission level is ${{ steps.checkAccess.outputs.user-permission }}"
-#          echo "Job originally triggered by ${{ github.actor }}"
-#          echo "Please contact organizational account to Re-run all jobs"
-##          exit 1
+      - name: Check Access
+        id: checkAccess
+        uses: actions-cool/check-user-permission@v2
+        with:
+          require: write
+          username: ${{ github.triggering_actor }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check Permission
+        if: steps.checkAccess.outputs.require-result == 'false'
+        run: |
+          echo "${{ github.triggering_actor }} does not have permissions on this repo."
+          echo "Current permission level is ${{ steps.checkAccess.outputs.user-permission }}"
+          echo "Job originally triggered by ${{ github.actor }}"
+          echo "Please contact organizational account to Re-run all jobs"
+#          exit 1
 #      - name: Checkout Code
 #        uses: actions/checkout@v3
 ##        with:
