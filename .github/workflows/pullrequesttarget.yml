@@ -6,7 +6,7 @@ on:
     types: [in_progress]
 jobs:
   sonarScan:
-    name: Sonar Scan
+#    name: Sonar Scan
 #    uses: ./.github/workflows/sonarResult.yml
     runs-on: ubuntu-latest
 #    steps:
