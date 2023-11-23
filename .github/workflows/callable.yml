@@ -6,9 +6,6 @@ on:
   pull_request:
     # The branches below must be a subset of the branches above
     branches: [ 'develop' ]
-  pull_request_target:
-    # The branches below must be a subset of the branches above
-    branches: [ 'develop' ]
 
 jobs:
 #    - uses: ./.github/workflows/sonarResult.yml
@@ -21,4 +18,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+      - name: Wait for tests to succeed
+        uses: lewagon/wait-on-check-action@v1.3.1
+        with:
+          ref: ${{ github.ref }}
+          check-name: 'Sonar Scan'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
 
