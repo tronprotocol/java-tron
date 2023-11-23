@@ -255,6 +255,9 @@ public class CommonParameter {
   public int maxHeaderListSize;
   @Getter
   @Setter
+  public boolean isRpcReflectionServiceEnable;
+  @Getter
+  @Setter
   @Parameter(names = {"--validate-sign-thread"}, description = "Num of validate thread")
   public int validateSignThreadNum;
   @Getter

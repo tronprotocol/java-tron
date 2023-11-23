@@ -2,6 +2,7 @@ package org.tron.core.services.interfaceOnSolidity;
 
 import com.google.protobuf.ByteString;
 import io.grpc.netty.NettyServerBuilder;
+import io.grpc.protobuf.services.ProtoReflectionService;
 import io.grpc.stub.StreamObserver;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -123,6 +124,10 @@ public class RpcApiServiceOnSolidity extends RpcService {
 
       // add lite fullnode query interceptor
       serverBuilder.intercept(liteFnQueryGrpcInterceptor);
+
+      if (parameter.isRpcReflectionServiceEnable()) {
+        serverBuilder.addService(ProtoReflectionService.newInstance());
+      }
 
       apiServer = serverBuilder.build();
       rateLimiterInterceptor.init(apiServer);

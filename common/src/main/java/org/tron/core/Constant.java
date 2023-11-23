@@ -151,6 +151,8 @@ public class Constant {
 
   public static final String NODE_RPC_MAX_HEADER_LIST_SIZE = "node.rpc.maxHeaderListSize";
 
+  public static final String NODE_RPC_REFLECTION_SERVICE = "node.rpc.reflectionService";
+
   public static final String NODE_OPEN_HISTORY_QUERY_WHEN_LITEFN = "node.openHistoryQueryWhenLiteFN";
 
   public static final String BLOCK_MAINTENANCE_TIME_INTERVAL = "block.maintenanceTimeInterval";
