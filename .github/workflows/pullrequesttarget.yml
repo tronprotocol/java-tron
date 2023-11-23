@@ -1,11 +1,9 @@
 name: Buildkite
 
 on:
-  push:
-    branches: [ 'develop', 'master', 'release_**' ]
-  pull_request_target:
-    # The branches below must be a subset of the branches above
-    branches: [ 'develop' ]
+  workflow_run:
+    workflows: [Callerwork]
+    types: [in_progress]
 jobs:
   sonarScan:
     name: Sonar Scan
@@ -27,7 +25,7 @@ jobs:
           echo "Current permission level is ${{ steps.checkAccess.outputs.user-permission }}"
           echo "Job originally triggered by ${{ github.actor }}"
           echo "Please contact organizational account to Re-run all jobs"
-          exit 1
+#          exit 1
       - name: Checkout Code
         uses: actions/checkout@v3
 #        with:
@@ -50,12 +48,12 @@ jobs:
           ignore_build_states: blocked,canceled,skipped,not_run
           ignore_job_states: timed_out,failed
           output_path: artifacts
-##      - name: Check Result
-#      - uses: actions/checkout@v3
-#      - uses: ./.github/workflows/sonarResult.yml
-#        with:
-#          buildkite_build_url: ${{ steps.build.outputs.url }}
-#          buildkite_result: ${{ steps.download.outputs.build-state }}
+      - name: Check Result
+        if: steps.download.outputs.build-state != 'passed'
+        run: |
+          echo "failed !!!!"
+          echo "buildkite result is:  ${{ steps.download.outputs.build-state }}"
+          exit 1
 #  debianUnitTest:
 #    name: Debian Unit Test
 #    runs-on: ubuntu-latest
