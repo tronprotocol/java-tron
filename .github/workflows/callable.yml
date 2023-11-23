@@ -21,10 +21,11 @@ jobs:
       - name: Just sleep
         run: |
           sleep 15
+          echo ${{ github.event.pull_request.head.sha }}
       - name: Wait for tests to succeed
         uses: lewagon/wait-on-check-action@v1.3.1
         with:
-          ref: $${{github.sha}}
+          ref: ${{ github.event.pull_request.head.sha }}
           check-name: 'Sonar Scan'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           verbose: true
