@@ -10,9 +10,9 @@ jobs:
 #    uses: ./.github/workflows/sonarResult.yml
     runs-on: ubuntu-latest
     steps:
+      - uses: haya14busa/action-workflow_run-status@v1
       - name: Check Access
         id: checkAccess
-        uses: haya14busa/action-workflow_run-status@v1
         uses: actions-cool/check-user-permission@v2
         with:
           require: write
