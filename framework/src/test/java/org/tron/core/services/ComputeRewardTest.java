@@ -170,7 +170,7 @@ public class ComputeRewardTest {
   @Test
   public void query() throws IOException {
     rewardCalService.calRewardForTest();
-    Assert.assertEquals(3189, rewardCalService.getReward(OWNER_ADDRESS, 3));
+    Assert.assertEquals(3189, rewardCalService.getRewardCache(OWNER_ADDRESS, 3));
     rewardCalService.calRewardForTest();
   }
 

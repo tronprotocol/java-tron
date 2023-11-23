@@ -1,10 +1,14 @@
 package org.tron.core.service;
 
+import static org.tron.core.store.DelegationStore.REMARK;
+
 import com.google.common.primitives.Bytes;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.prometheus.client.Histogram;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -12,6 +16,7 @@ import java.util.stream.LongStream;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.prometheus.MetricKeys;
@@ -19,6 +24,7 @@ import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
 import org.tron.core.db.common.iterator.DBIterator;
+import org.tron.core.db2.common.DB;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
@@ -28,18 +34,14 @@ import org.tron.protos.Protocol;
 @Component
 @Slf4j(topic = "rewardCalService")
 public class RewardCalService {
-  @Autowired
-  private DynamicPropertiesStore propertiesStore;
-  @Autowired
-  private DelegationStore delegationStore;
 
-  @Autowired
-  private AccountStore accountStore;
+  private final DB<byte[], byte[]> propertiesStore;
+  private final DB<byte[], byte[]> delegationStore;
+  private final DB<byte[], byte[]> accountStore;
 
   @Autowired
   private RewardCacheStore rewardCacheStore;
 
-  private  DBIterator accountIterator;
 
   private  byte[] isDoneKey;
   private static final byte[] IS_DONE_VALUE = new byte[]{0x01};
@@ -54,16 +56,24 @@ public class RewardCalService {
   private final ExecutorService es = Executors.newSingleThreadExecutor(
       new ThreadFactoryBuilder().setNameFormat("rewardCalService").build());
 
+
+  @Autowired
+  public RewardCalService(@Autowired  DynamicPropertiesStore propertiesStore,
+      @Autowired DelegationStore delegationStore, @Autowired AccountStore accountStore) {
+    this.propertiesStore = propertiesStore.getDb();
+    this.delegationStore = delegationStore.getDb();
+    this.accountStore = accountStore.getDb();
+  }
+
   @PostConstruct
   private void init() throws IOException {
-    newRewardCalStartCycle = propertiesStore.getNewRewardAlgorithmEffectiveCycle();
+    this.newRewardCalStartCycle = this.getNewRewardAlgorithmEffectiveCycle();
     if (newRewardCalStartCycle != Long.MAX_VALUE) {
       isDoneKey = ByteArray.fromLong(newRewardCalStartCycle);
       if (rewardCacheStore.has(isDoneKey)) {
         logger.info("RewardCalService is already done");
         return;
       }
-      accountIterator = (DBIterator) accountStore.getDb().iterator();
       calReward();
     }
   }
@@ -79,13 +89,12 @@ public class RewardCalService {
   }
 
   public void calRewardForTest() throws IOException {
-    newRewardCalStartCycle = propertiesStore.getNewRewardAlgorithmEffectiveCycle();
+    this.newRewardCalStartCycle = this.getNewRewardAlgorithmEffectiveCycle();
     isDoneKey = ByteArray.fromLong(newRewardCalStartCycle);
     if (rewardCacheStore.has(isDoneKey)) {
       logger.info("RewardCalService is already done");
       return;
     }
-    accountIterator = (DBIterator) accountStore.getDb().iterator();
     initLastAccount();
     startRewardCal();
   }
@@ -107,7 +116,7 @@ public class RewardCalService {
       return;
     }
     logger.info("RewardCalService start from lastAccount: {}", ByteArray.toHexString(lastAccount));
-    ((DBIterator) delegationStore.getDb().iterator()).prefixQueryAfterThat(
+    ((DBIterator) delegationStore.iterator()).prefixQueryAfterThat(
         new byte[]{Constant.ADD_PRE_FIX_BYTE_MAINNET}, lastAccount).forEachRemaining(e -> {
           try {
             doRewardCal(e.getKey(), ByteArray.toLong(e.getValue()));
@@ -123,7 +132,7 @@ public class RewardCalService {
     if (beginCycle >= newRewardCalStartCycle) {
       return;
     }
-    long endCycle = delegationStore.getEndCycle(address);
+    long endCycle = this.getEndCycle(address);
     if (endCycle >= newRewardCalStartCycle) {
       return;
     }
@@ -136,42 +145,39 @@ public class RewardCalService {
       return;
     }
 
-    Protocol.Account account = getAccount(address);
-    if (account == null || account.getVotesList().isEmpty()) {
+    List<Protocol.Vote> votesList = this.getVotesList(address);
+    if (votesList.isEmpty()) {
       return;
     }
     Histogram.Timer requestTimer = Metrics.histogramStartTimer(
         MetricKeys.Histogram.DO_REWARD_CAL_DELAY,
         (newRewardCalStartCycle - beginCycle) / 100 + "");
     long reward = LongStream.range(beginCycle, newRewardCalStartCycle)
-        .map(i -> computeReward(i, account))
+        .map(i -> computeReward(i, votesList))
         .sum();
-    this.putReward(address, beginCycle, endCycle, reward, skipLastCycle);
+    this.putReward(address, beginCycle, endCycle, reward, votesList, skipLastCycle);
     Metrics.histogramObserve(requestTimer);
   }
 
-  private Protocol.Account getAccount(byte[] address) {
+  private List<Protocol.Vote> getVotesList(byte[] address) {
     try {
-      accountIterator.seek(address);
-      if (accountIterator.hasNext()) {
-        byte[] account = accountIterator.next().getValue();
-        return Protocol.Account.parseFrom(account);
-      }
-    } catch (InvalidProtocolBufferException e) {
+      byte[] account = this.accountStore.get(address);
+      return Protocol.Account.parseFrom(account).getVotesList();
+    } catch (Exception e) {
       logger.error("getAccount error: {}", e.getMessage());
     }
-    return null;
+    return new ArrayList<>();
   }
 
-  long computeReward(long cycle, Protocol.Account account) {
+  private long computeReward(long cycle, List<Protocol.Vote> votesList) {
     long reward = 0;
-    for (Protocol.Vote vote : account.getVotesList()) {
+    for (Protocol.Vote vote : votesList) {
       byte[] srAddress = vote.getVoteAddress().toByteArray();
-      long totalReward = delegationStore.getReward(cycle, srAddress);
+      long totalReward = this.getReward(cycle, srAddress);
       if (totalReward <= 0) {
         continue;
       }
-      long totalVote = delegationStore.getWitnessVote(cycle, srAddress);
+      long totalVote = this.getWitnessVote(cycle, srAddress);
       if (totalVote <= 0) {
         continue;
       }
@@ -182,19 +188,21 @@ public class RewardCalService {
     return reward;
   }
 
-  public long getReward(byte[] address, long cycle) {
+  public long getRewardCache(byte[] address, long cycle) {
     return rewardCacheStore.getReward(buildKey(address, cycle));
   }
 
-  private void putReward(byte[] address, long start, long end, long reward, boolean skipLastCycle) {
-    long startCycle = delegationStore.getBeginCycle(address);
-    long endCycle = delegationStore.getEndCycle(address);
+  private void putReward(byte[] address, long start, long end, long reward,
+                         List<Protocol.Vote>  votesList, boolean skipLastCycle) {
+    long startCycle = this.getBeginCycle(address);
+    long endCycle = this.getEndCycle(address);
     //skip the last cycle reward
     if (skipLastCycle) {
       startCycle += 1;
     }
+    List<Protocol.Vote> newVotesList = this.getVotesList(address);
     // check if the delegation is still valid
-    if (startCycle == start && endCycle == end) {
+    if (startCycle == start && endCycle == end && votesList.equals(newVotesList)) {
       rewardCacheStore.putReward(buildKey(address, start), reward);
     }
   }
@@ -202,4 +210,46 @@ public class RewardCalService {
   private byte[] buildKey(byte[] address, long beginCycle) {
     return Bytes.concat(address, ByteArray.fromLong(beginCycle));
   }
+
+  private long getBeginCycle(byte[] address) {
+    byte[] value = this.delegationStore.get(address);
+    return value == null ? 0 : ByteArray.toLong(value);
+  }
+
+  private long getEndCycle(byte[] address) {
+    byte[] value = this.delegationStore.get(generateKey("end", address, null));
+    return value == null ? REMARK : ByteArray.toLong(value);
+  }
+
+  private long getReward(long cycle, byte[] address) {
+    byte[] value = this.delegationStore.get(generateKey(cycle, address, "reward"));
+    return value == null ? 0 : ByteArray.toLong(value);
+  }
+
+  private long getWitnessVote(long cycle, byte[] address) {
+    byte[] value = this.delegationStore.get(generateKey(cycle, address, "vote"));
+    return value == null ? REMARK : ByteArray.toLong(value);
+  }
+
+  private byte[] generateKey(long cycle, byte[] address, String suffix) {
+    return generateKey(cycle + "", address, suffix);
+  }
+
+  private byte[] generateKey(String prefix, byte[] address, String suffix) {
+    StringBuilder sb = new StringBuilder();
+    if (prefix != null) {
+      sb.append(prefix).append("-");
+    }
+    sb.append(Hex.toHexString(address));
+    if (suffix != null) {
+      sb.append("-").append(suffix);
+    }
+    return sb.toString().getBytes();
+  }
+
+  private long getNewRewardAlgorithmEffectiveCycle() {
+    byte[] value =  this.propertiesStore.get("NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE".getBytes());
+    return value == null ? Long.MAX_VALUE : ByteArray.toLong(value);
+  }
 }
+
