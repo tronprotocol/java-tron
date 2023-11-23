@@ -2,7 +2,7 @@ name: Buildkite
 
 on:
   workflow_run:
-    workflows: [CodeQL]
+    workflows: [Callerwork]
     types: [in_progress]
 jobs:
   sonarScan:
