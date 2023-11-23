@@ -6,52 +6,53 @@ on:
     types: [completed]
 jobs:
   sonarScan:
-    name: Sonar Scan
-#    uses: ./.github/workflows/sonarResult.yml
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check Permission
-        if: steps.checkAccess.outputs.require-result == 'false'
-        run: |
-          echo "${{ github.triggering_actor }} does not have permissions on this repo."
-          echo "Current permission level is ${{ steps.checkAccess.outputs.user-permission }}"
-          echo "Job originally triggered by ${{ github.actor }}"
-          echo "Please contact organizational account to Re-run all jobs"
-      - name: Run tests
-        run: |
-          echo "${{ github.triggering_actor }} does not have permissions on this repo."
-          echo "Current permission level is ${{ steps.checkAccess.outputs.user-permission }}"
-          echo "Job originally triggered by ${{ github.actor }}"
-          echo "n${{ secrets.BUILD_KITE_READ_TOKEN }}"
-          echo "n${{ secrets.BUILD_KITE_WRITE_TOKEN }}"
-      - name: Checkout Code
-        uses: actions/checkout@v3
+    uses: ./.github/workflows/sonarResult.yml
+#    name: Sonar Scan
+##    uses: ./.github/workflows/sonarResult.yml
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Check Permission
+#        if: steps.checkAccess.outputs.require-result == 'false'
+#        run: |
+#          echo "${{ github.triggering_actor }} does not have permissions on this repo."
+#          echo "Current permission level is ${{ steps.checkAccess.outputs.user-permission }}"
+#          echo "Job originally triggered by ${{ github.actor }}"
+#          echo "Please contact organizational account to Re-run all jobs"
+#      - name: Run tests
+#        run: |
+#          echo "${{ github.triggering_actor }} does not have permissions on this repo."
+#          echo "Current permission level is ${{ steps.checkAccess.outputs.user-permission }}"
+#          echo "Job originally triggered by ${{ github.actor }}"
+#          echo "n${{ secrets.BUILD_KITE_READ_TOKEN }}"
+#          echo "n${{ secrets.BUILD_KITE_WRITE_TOKEN }}"
+#      - name: Checkout Code
+#        uses: actions/checkout@v3
+##        with:
+##          ref: ${{ github.event.pull_request.head.sha }} # This is dangerous without the first access check
+#      - name: Trigger Sonar Scan
+#        id: build
+#        uses: "buildkite/trigger-pipeline-action@v2.0.0"
 #        with:
-#          ref: ${{ github.event.pull_request.head.sha }} # This is dangerous without the first access check
-      - name: Trigger Sonar Scan
-        id: build
-        uses: "buildkite/trigger-pipeline-action@v2.0.0"
-        with:
-          buildkite_api_access_token: ${{ secrets.BUILD_KITE_WRITE_TOKEN }}
-          pipeline: "nnnnnnnnnnnn/notwell1"
-      - name: Get Build Kite URL
-        run: |
-          echo "buildkite link is: ${{ steps.build.outputs.url }}"
-      - name: Waitting Buildkite Artifacts
-        id: download
-        uses: EnricoMi/download-buildkite-artifact-action@v1
-        with:
-          buildkite_token: ${{ secrets.BUILD_KITE_READ_TOKEN }}
-          buildkite_build_url: ${{ steps.build.outputs.url }}
-          ignore_build_states: blocked,canceled,skipped,not_run
-          ignore_job_states: timed_out,failed
-          output_path: artifacts
-#      - name: Check Result
-      - uses: actions/checkout@v3
-      - uses: ./.github/workflows/sonarResult.yml
-        with:
-          buildkite_build_url: ${{ steps.build.outputs.url }}
-          buildkite_result: ${{ steps.download.outputs.build-state }}
+#          buildkite_api_access_token: ${{ secrets.BUILD_KITE_WRITE_TOKEN }}
+#          pipeline: "nnnnnnnnnnnn/notwell1"
+#      - name: Get Build Kite URL
+#        run: |
+#          echo "buildkite link is: ${{ steps.build.outputs.url }}"
+#      - name: Waitting Buildkite Artifacts
+#        id: download
+#        uses: EnricoMi/download-buildkite-artifact-action@v1
+#        with:
+#          buildkite_token: ${{ secrets.BUILD_KITE_READ_TOKEN }}
+#          buildkite_build_url: ${{ steps.build.outputs.url }}
+#          ignore_build_states: blocked,canceled,skipped,not_run
+#          ignore_job_states: timed_out,failed
+#          output_path: artifacts
+##      - name: Check Result
+#      - uses: actions/checkout@v3
+#      - uses: ./.github/workflows/sonarResult.yml
+#        with:
+#          buildkite_build_url: ${{ steps.build.outputs.url }}
+#          buildkite_result: ${{ steps.download.outputs.build-state }}
 #  debianUnitTest:
 #    name: Debian Unit Test
 #    runs-on: ubuntu-latest

@@ -8,12 +8,12 @@ on:
     branches: [ 'develop' ]
 
 jobs:
-    - uses: ./.github/workflows/sonarResult.yml
-      inputs:
-        buildkite_build_url: "1111"
-        buildkite_result: "2222"
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Checkout repository
-#        uses: actions/checkout@v3
+#    - uses: ./.github/workflows/sonarResult.yml
+#      inputs:
+#        buildkite_build_url: "1111"
+#        buildkite_result: "2222"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
