@@ -1,4 +1,4 @@
-name: Buildkite
+name: Add
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
     branches: [ 'develop' ]
 jobs:
   sonarScan:
-    name: Sonar Scan
+    name: add scan
 #    uses: ./.github/workflows/sonarResult.yml
     runs-on: ubuntu-latest
     steps:
