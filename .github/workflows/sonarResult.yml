@@ -1,7 +1,7 @@
 name: 'test_post'
 on:
   workflow_run:
-    workflows: ["Callerwork"]
+    workflows: ["Callerwork1111"]
     types:
       - completed
 
