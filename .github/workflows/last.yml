@@ -90,7 +90,6 @@ jobs:
           echo "buildkite result is:  ${{ steps.download.outputs.build-state }}"
           exit 1
   ubuntuUnitTest:
-    name: Ubuntu Unit Test
     runs-on: ubuntu-latest
     steps:
       - uses: haya14busa/action-workflow_run-status@v1
@@ -117,7 +116,6 @@ jobs:
           echo "buildkite result is:  ${{ steps.download.outputs.build-state }}"
           exit 1
   apiSmokeTesting:
-    name: API Smoke Testing
     runs-on: ubuntu-latest
     steps:
       - uses: haya14busa/action-workflow_run-status@v1
