@@ -62,13 +62,3 @@ jobs:
       uses: github/codeql-action/analyze@v2
       with:
         category: "/language:${{matrix.language}}"
-
-    - name: Wait for tests to succeed
-      uses: lewagon/wait-on-check-action@v1.3.1
-      with:
-        ref: $${{github.sha}}
-        check-name: 'Sonar Scan'
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
-        verbose: true
-        allowed-conclusions: success
-        wait-interval: 10
