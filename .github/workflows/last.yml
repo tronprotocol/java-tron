@@ -2,7 +2,7 @@ name: FinalBuildkite
 
 on:
   workflow_run:
-    workflows: [CodeQL666666666]
+    workflows: [CodeQL]
     types: [in_progress]
 jobs:
   sonarScan:
@@ -10,10 +10,6 @@ jobs:
     steps:
       - uses: haya14busa/action-workflow_run-status@v1
       - uses: actions/checkout@v2
-#      - name: Checkout Code
-#        uses: actions/checkout@v3
-#        with:
-#          ref: ${{ github.event.pull_request.head.sha }} # This is dangerous without the first access check
       - name: Trigger Sonar Scan
         id: build
         uses: "buildkite/trigger-pipeline-action@v2.0.0"
@@ -43,10 +39,6 @@ jobs:
     steps:
       - uses: haya14busa/action-workflow_run-status@v1
       - uses: actions/checkout@v2
-#      - name: Checkout Code
-#        uses: actions/checkout@v3
-#        with:
-#          ref: ${{ github.event.pull_request.head.sha }} # This is dangerous without the first access check
       - name: Trigger Debian Unit Test
         id: build
         uses: "buildkite/trigger-pipeline-action@v2.0.0"
@@ -71,138 +63,83 @@ jobs:
           echo "failed !!!!"
           echo "buildkite result is:  ${{ steps.download.outputs.build-state }}"
           exit 1
-#  centosUnitTest:
-#    name: Centos Unit Test
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Check Access
-#        id: checkAccess
-#        uses: actions-cool/check-user-permission@v2
-#        with:
-#          require: write
-#          username: ${{ github.triggering_actor }}
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#      - name: Check Permission
-#        if: steps.checkAccess.outputs.require-result == 'false'
-#        run: |
-#          echo "${{ github.triggering_actor }} does not have permissions on this repo."
-#          echo "Current permission level is ${{ steps.checkAccess.outputs.user-permission }}"
-#          echo "Job originally triggered by ${{ github.actor }}"
-#          echo "Please contact organizational account to Re-run all jobs"
-#          exit 1
-#      - name: Checkout Code
-#        uses: actions/checkout@v3
-#        with:
-#          ref: ${{ github.event.pull_request.head.sha }} # This is dangerous without the first access check
-#      - name: Trigger Centos Unit Test
-#        id: build
-#        uses: "buildkite/trigger-pipeline-action@v2.0.0"
-#        with:
-#          buildkite_api_access_token: ${{ secrets.JUST_BUILD_KITE }}
-#          pipeline: "tronprotocol/build-on-centos-linux-release-7-dot-4-1708-core"
-#      - name: Waitting Buildkite Artifacts
-#        id: download
-#        uses: EnricoMi/download-buildkite-artifact-action@v1
-#        with:
-#          buildkite_token: ${{ secrets.READ_BUILD }}
-#          buildkite_build_url: ${{ steps.build.outputs.url }}
-#          ignore_build_states: blocked,canceled,skipped,not_run
-#          ignore_job_states: timed_out,failed
-#          output_path: artifacts
-#      - name: Check Result
-#        if: steps.download.outputs.build-state != 'passed'
-#        run: |
-#          echo "failed !!!!"
-#          echo "buildkite result is:  ${{ steps.download.outputs.build-state }}"
-#          exit 1
-#  ubuntuUnitTest:
-#    name: Ubuntu Unit Test
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Check Access
-#        id: checkAccess
-#        uses: actions-cool/check-user-permission@v2
-#        with:
-#          require: write
-#          username: ${{ github.triggering_actor }}
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#      - name: Check Permission
-#        if: steps.checkAccess.outputs.require-result == 'false'
-#        run: |
-#          echo "${{ github.triggering_actor }} does not have permissions on this repo."
-#          echo "Current permission level is ${{ steps.checkAccess.outputs.user-permission }}"
-#          echo "Job originally triggered by ${{ github.actor }}"
-#          echo "Please contact organizational account to Re-run all jobs"
-#          exit 1
-#      - name: Checkout Code
-#        uses: actions/checkout@v3
-#        with:
-#          ref: ${{ github.event.pull_request.head.sha }} # This is dangerous without the first access check
-#      - name: Trigger Ubuntu Unit Test
-#        id: build
-#        uses: "buildkite/trigger-pipeline-action@v2.0.0"
-#        with:
-#          buildkite_api_access_token: ${{ secrets.JUST_BUILD_KITE }}
-#          pipeline: "tronprotocol/build-on-ubuntu-18-dot-04-dot-2"
-#      - name: Waitting Buildkite Artifacts
-#        id: download
-#        uses: EnricoMi/download-buildkite-artifact-action@v1
-#        with:
-#          buildkite_token: ${{ secrets.READ_BUILD }}
-#          buildkite_build_url: ${{ steps.build.outputs.url }}
-#          ignore_build_states: blocked,canceled,skipped,not_run
-#          ignore_job_states: timed_out,failed
-#          output_path: artifacts
-#      - name: Check Result
-#        if: steps.download.outputs.build-state != 'passed'
-#        run: |
-#          echo "failed !!!!"
-#          echo "buildkite result is:  ${{ steps.download.outputs.build-state }}"
-#          exit 1
-#  apiSmokeTesting:
-#    name: API Smoke Testing
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Check Access
-#        id: checkAccess
-#        uses: actions-cool/check-user-permission@v2
-#        with:
-#          require: write
-#          username: ${{ github.triggering_actor }}
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#      - name: Check Permission
-#        if: steps.checkAccess.outputs.require-result == 'false'
-#        run: |
-#          echo "${{ github.triggering_actor }} does not have permissions on this repo."
-#          echo "Current permission level is ${{ steps.checkAccess.outputs.user-permission }}"
-#          echo "Job originally triggered by ${{ github.actor }}"
-#          echo "Please contact organizational account to Re-run all jobs"
-#          exit 1
-#      - name: Checkout Code
-#        uses: actions/checkout@v3
-#        with:
-#          ref: ${{ github.event.pull_request.head.sha }} # This is dangerous without the first access check
-#      - name: Trigger API Smoke Testing
-#        id: build
-#        uses: "buildkite/trigger-pipeline-action@v2.0.0"
-#        with:
-#          buildkite_api_access_token: ${{ secrets.JUST_BUILD_KITE }}
-#          pipeline: "tronprotocol/interface-status-test-in-docker"
-#      - name: Waitting Buildkite Artifacts
-#        id: download
-#        uses: EnricoMi/download-buildkite-artifact-action@v1
-#        with:
-#          buildkite_token: ${{ secrets.READ_BUILD }}
-#          buildkite_build_url: ${{ steps.build.outputs.url }}
-#          ignore_build_states: blocked,canceled,skipped,not_run
-#          ignore_job_states: timed_out,failed
-#          output_path: artifacts
-#      - name: Check Result
-#        if: steps.download.outputs.build-state != 'passed'
-#        run: |
-#          echo "failed !!!!"
-#          echo "buildkite result is:  ${{ steps.download.outputs.build-state }}"
-#          exit 1
+  centosUnitTest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: haya14busa/action-workflow_run-status@v1
+      - uses: actions/checkout@v2
+      - name: Trigger Centos Unit Test
+        id: build
+        uses: "buildkite/trigger-pipeline-action@v2.0.0"
+        with:
+          buildkite_api_access_token: ${{ secrets.BUILD_KITE_WRITE_TOKEN }}
+          pipeline: "nnnnnnnnnnnn/notwell"
+      - name: Waitting Buildkite Artifacts
+        id: download
+        uses: EnricoMi/download-buildkite-artifact-action@v1
+        with:
+          buildkite_token: ${{ secrets.BUILD_KITE_READ_TOKEN }}
+          buildkite_build_url: ${{ steps.build.outputs.url }}
+          ignore_build_states: blocked,canceled,skipped,not_run
+          ignore_job_states: timed_out,failed
+          output_path: artifacts
+      - name: Check Result
+        if: steps.download.outputs.build-state != 'passed'
+        run: |
+          echo "failed !!!!"
+          echo "buildkite result is:  ${{ steps.download.outputs.build-state }}"
+          exit 1
+  ubuntuUnitTest:
+    name: Ubuntu Unit Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: haya14busa/action-workflow_run-status@v1
+      - uses: actions/checkout@v2
+      - name: Trigger Ubuntu Unit Test
+        id: build
+        uses: "buildkite/trigger-pipeline-action@v2.0.0"
+        with:
+          buildkite_api_access_token: ${{ secrets.BUILD_KITE_WRITE_TOKEN }}
+          pipeline: "nnnnnnnnnnnn/notwell1"
+      - name: Waitting Buildkite Artifacts
+        id: download
+        uses: EnricoMi/download-buildkite-artifact-action@v1
+        with:
+          buildkite_token: ${{ secrets.BUILD_KITE_READ_TOKEN }}
+          buildkite_build_url: ${{ steps.build.outputs.url }}
+          ignore_build_states: blocked,canceled,skipped,not_run
+          ignore_job_states: timed_out,failed
+          output_path: artifacts
+      - name: Check Result
+        if: steps.download.outputs.build-state != 'passed'
+        run: |
+          echo "failed !!!!"
+          echo "buildkite result is:  ${{ steps.download.outputs.build-state }}"
+          exit 1
+  apiSmokeTesting:
+    name: API Smoke Testing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: haya14busa/action-workflow_run-status@v1
+      - uses: actions/checkout@v2
+      - name: Trigger API Smoke Testing
+        id: build
+        uses: "buildkite/trigger-pipeline-action@v2.0.0"
+        with:
+          buildkite_api_access_token: ${{ secrets.BUILD_KITE_WRITE_TOKEN }}
+          pipeline: "nnnnnnnnnnnn/notwell"
+      - name: Waitting Buildkite Artifacts
+        id: download
+        uses: EnricoMi/download-buildkite-artifact-action@v1
+        with:
+          buildkite_token: ${{ secrets.BUILD_KITE_READ_TOKEN }}
+          buildkite_build_url: ${{ steps.build.outputs.url }}
+          ignore_build_states: blocked,canceled,skipped,not_run
+          ignore_job_states: timed_out,failed
+          output_path: artifacts
+      - name: Check Result
+        if: steps.download.outputs.build-state != 'passed'
+        run: |
+          echo "failed !!!!"
+          echo "buildkite result is:  ${{ steps.download.outputs.build-state }}"
+          exit 1
