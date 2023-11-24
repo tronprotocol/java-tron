@@ -74,6 +74,9 @@ jobs:
         with:
           buildkite_api_access_token: ${{ secrets.BUILD_KITE_WRITE_TOKEN }}
           pipeline: "nnnnnnnnnnnn/notwell"
+      - name: Get Build Kite URL
+        run: |
+          echo "buildkite link is: ${{ steps.build.outputs.url }}"
       - name: Waitting Buildkite Artifacts
         id: download
         uses: EnricoMi/download-buildkite-artifact-action@v1
@@ -100,6 +103,9 @@ jobs:
         with:
           buildkite_api_access_token: ${{ secrets.BUILD_KITE_WRITE_TOKEN }}
           pipeline: "nnnnnnnnnnnn/notwell1"
+      - name: Get Build Kite URL
+        run: |
+          echo "buildkite link is: ${{ steps.build.outputs.url }}"
       - name: Waitting Buildkite Artifacts
         id: download
         uses: EnricoMi/download-buildkite-artifact-action@v1
@@ -126,6 +132,9 @@ jobs:
         with:
           buildkite_api_access_token: ${{ secrets.BUILD_KITE_WRITE_TOKEN }}
           pipeline: "nnnnnnnnnnnn/notwell"
+      - name: Get Build Kite URL
+        run: |
+          echo "buildkite link is: ${{ steps.build.outputs.url }}"
       - name: Waitting Buildkite Artifacts
         id: download
         uses: EnricoMi/download-buildkite-artifact-action@v1
