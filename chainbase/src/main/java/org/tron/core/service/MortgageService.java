@@ -266,14 +266,12 @@ public class MortgageService {
       return computeReward(beginCycle, accountCapsule);
     }
     long cacheData = rewardCalService.getRewardCache(accountCapsule.createDbKey(), beginCycle);
+    if (cacheData != -1) {
+      return cacheData;
+    }
     long reward = 0;
     for (long cycle = beginCycle; cycle < oldEndCycle; cycle++) {
       reward += computeReward(cycle, accountCapsule);
-    }
-    if (cacheData != -1 && cacheData != reward) {
-      logger.error("Old reward algorithm reward not equal, address {}, beginCycle {}, "
-          + "oldEndCycle {}, cacheData {}, reward {}.", accountCapsule.createReadableString(),
-          beginCycle, oldEndCycle, cacheData, reward);
     }
     return reward;
   }
