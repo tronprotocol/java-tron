@@ -20,16 +20,16 @@ jobs:
 #          ref: ${{ github.event.pull_request.head.sha }} # This is dangerous without the first access check
       - name: ttt
         run: |
-          echo ${{ github.event.pull_request.head }}
-          echo ${{ github.event.pull_request }}
+          echo "head is: ${{ github.event.pull_request.head }}"
+          echo "pr is: ${{ github.event.pull_request }}"
       - name: Trigger Sonar Scan
         id: build
         uses: "buildkite/trigger-pipeline-action@v2.0.0"
         with:
           buildkite_api_access_token: ${{ secrets.BUILD_KITE_WRITE_TOKEN }}
           pipeline: "nnnnnnnnnnnn/notwell1"
-          branch: "master"
-          commit: "HEAD"
+          branch: "develop"
+          commit: ${{ github.event.pull_request.head.sha }}
           message: ":github: Triggered from a GitHub Action"
           build_env_vars: '{"TRIGGERED_FROM_GHA": "true"}'
           build_meta_data: '{"FOO": "bar"}'
