@@ -2,7 +2,7 @@ name: FinalBuildkite
 
 on:
   workflow_run:
-    workflows: [CodeQL]
+    workflows: [CodeQL111111]
     types: [in_progress]
 jobs:
   sonarScan:
