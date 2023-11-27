@@ -20,7 +20,9 @@ jobs:
 #          ref: ${{ github.event.pull_request.head.sha }} # This is dangerous without the first access check
       - name: ttt
         run: |
-          echo "workflow_run is: ${{ github.event.workflow_run }}"
+          echo "head_branch is: ${{ github.event.workflow_run.head_branch }}"
+          echo "ref is: ${{ github.event.workflow_run.pull_requests.ref }}"
+          echo "sha is: ${{ github.event.workflow_run.pull_requests.sha }}"
       - name: Trigger Sonar Scan
         id: build
         uses: "buildkite/trigger-pipeline-action@v2.0.0"
