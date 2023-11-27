@@ -21,8 +21,8 @@ jobs:
       - name: ttt
         run: |
           echo "head_branch is: ${{ github.event.workflow_run.head_branch }}"
-          echo "ref is: ${{ github.event.workflow_run.pull_requests.head.ref }}"
-          echo "sha is: ${{ github.event.workflow_run.pull_requests.head.sha }}"
+          echo "ref is: ${{ github.event.workflow_run.pull_requests.base.ref }}"
+          echo "sha is: ${{ github.event.workflow_run.pull_requests.base.sha }}"
       - name: Trigger Sonar Scan
         id: build
         uses: "buildkite/trigger-pipeline-action@v2.0.0"
