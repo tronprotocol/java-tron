@@ -24,7 +24,7 @@ jobs:
           echo "head_branch is: ${{ github.event.workflow_run.head_branch }}"
           echo "head_branch is: ${{ github.event.workflow_run.head_sha }}"
           echo "head_branch is: ${{ github.event.workflow_run.head_commit.id }}"
-          echo "pr number is: ${{ github.event.workflow_run.pull_requests.number }}"
+          echo "pr number is: ${{ github.event.workflow_run.pull_requests[0].number }}"
           echo "sha is: ${{ github.event.workflow_run.referenced_workflows.sha }}"
           echo "ref is: ${{ github.event.workflow_run.referenced_workflows.ref }}"
       - name: Trigger Sonar Scan
@@ -35,6 +35,7 @@ jobs:
           pipeline: "nnnnnnnnnnnn/notwell1"
           branch: ${{ github.event.workflow_run.head_branch }}
           commit: ${{ github.event.workflow_run.head_sha }}
+#          pull_request_id:
 #          message: ":github: Triggered from a GitHub Action"
 #          build_env_vars: '{"TRIGGERED_FROM_GHA": "true"}'
 #          build_meta_data: '{"FOO": "bar"}'
