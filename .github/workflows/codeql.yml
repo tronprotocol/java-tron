@@ -30,6 +30,9 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
+    - name: ttt
+      run: |
+        echo "${{ github.event.pull_request.labels[0].name }}"
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
