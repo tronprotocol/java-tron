@@ -20,7 +20,7 @@ jobs:
 #          ref: ${{ github.event.pull_request.head.sha }} # This is dangerous without the first access check
       - name: ttt
         run: |
-          echo "GITHUB_EVENT_PATH is: ${{ GITHUB_EVENT_PATH }}"
+          echo "GITHUB_EVENT_PATH is: $GITHUB_EVENT_PATH"
           echo "head_branch is: ${{ github.event.workflow_run.head_branch }}"
           echo "head_branch is: ${{ github.event.workflow_run.head_sha }}"
           echo "head_branch is: ${{ github.event.workflow_run.head_commit.id }}"
