@@ -21,7 +21,8 @@ jobs:
       - name: ttt
         run: |
           echo "head_branch is: ${{ github.event.workflow_run.head_branch }}"
-          echo "head_branch is: ${{ github.event.workflow_run.head_commit }}"
+          echo "head_branch is: ${{ github.event.workflow_run.head_sha }}"
+          echo "head_branch is: ${{ github.event.workflow_run.head_commit.id }}"
           echo "sha is: ${{ github.event.workflow_run.referenced_workflows.sha }}"
           echo "ref is: ${{ github.event.workflow_run.referenced_workflows.ref }}"
       - name: Trigger Sonar Scan
