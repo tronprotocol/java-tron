@@ -20,12 +20,12 @@ jobs:
 #          ref: ${{ github.event.pull_request.head.sha }} # This is dangerous without the first access check
       - name: ttt
         run: |
-          echo "GITHUB_EVENT_PATH is: $GITHUB_EVENT_PATH"
           echo "head_branch is: ${{ github.event.workflow_run.head_branch }}"
           echo "head_branch is: ${{ github.event.workflow_run.head_sha }}"
           echo "head_branch is: ${{ github.event.workflow_run.head_commit.id }}"
-          echo "sha is: ${{ github.event.workflow_run.referenced_workflows.sha }}"
-          echo "ref is: ${{ github.event.workflow_run.referenced_workflows.ref }}"
+          echo "pr number is: ${{ context.payload.workflow_run.pull_requests.number }}"
+          echo "sha is: ${{ context.payload.workflow_run.referenced_workflows.sha }}"
+          echo "ref is: ${{ context.payload.workflow_run.referenced_workflows.ref }}"
       - name: Trigger Sonar Scan
         id: build
         uses: "buildkite/trigger-pipeline-action@v2.0.0"
