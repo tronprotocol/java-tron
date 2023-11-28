@@ -32,9 +32,6 @@ jobs:
       uses: actions/checkout@v3
     - name: ttt
       run: |
-        echo "number is : ${{ github.event.number }}"
-        echo "pr title: ${{ github.event.pull_request.title }}"
-        echo "pr url: ${{ github.event.pull_request.url }}"
         echo "${{ github.event.pull_request.labels[0].name }}"
         echo "${{ github.event.pull_request.labels[0].id }}"
         echo "${{ github.event.pull_request.labels[0].description }}"
