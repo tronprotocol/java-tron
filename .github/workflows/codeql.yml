@@ -33,6 +33,9 @@ jobs:
     - name: ttt
       run: |
         echo "${{ github.event.pull_request.labels[0].name }}"
+        echo "${{ github.event.pull_request.labels[0].id }}"
+        echo "${{ github.event.pull_request.labels[0].description }}"
+        echo "${{ github.event.pull_request.labels[0].color }}"
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
