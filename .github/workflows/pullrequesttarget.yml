@@ -20,6 +20,17 @@ jobs:
       - uses: actions/checkout@v2
 #        with:
 #          ref: ${{ github.event.pull_request.head.sha }} # This is dangerous without the first access check
+      # Find the PR associated with this push, if there is one.
+      - uses: jwalton/gh-find-current-pr@v1
+        id: findPr
+        with:
+          # Can be "open", "closed", or "all".  Defaults to "open".
+          state: open
+      # This will echo "Your PR is 7", or be skipped if there is no current PR.
+      - run: echo "Your PR is ${PR}"
+        if: success() && steps.findPr.outputs.number
+        env:
+          PR: ${{ steps.findPr.outputs.pr }}
       - name: ttt
         run: |
           echo `cat $GITHUB_EVENT_PATH`
