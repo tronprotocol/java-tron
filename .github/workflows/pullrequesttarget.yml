@@ -4,6 +4,8 @@ on:
   workflow_run:
     workflows: [CodeQL]
     types: [in_progress]
+env:
+  PR_NUMBER: ${{ github.event.number }}
 jobs:
   sonarScan:
 #    name: Sonar Scan
@@ -20,10 +22,11 @@ jobs:
 #          ref: ${{ github.event.pull_request.head.sha }} # This is dangerous without the first access check
       - name: ttt
         run: |
-          echo "${{ github.event.workflow_run.pull_requests.number }}"
+          echo "PR_NUMBER is: $PR_NUMBER"
+          echo "pr number is: ${{ github.event.workflow_run.pull_requests.number }}"
           echo "head_branch is: ${{ github.event.workflow_run.head_branch }}"
-          echo "head_branch is: ${{ github.event.workflow_run.head_sha }}"
-          echo "head_branch is: ${{ github.event.workflow_run.head_commit.id }}"
+          echo "head_sha is: ${{ github.event.workflow_run.head_sha }}"
+          echo "head_commit.id is: ${{ github.event.workflow_run.head_commit.id }}"
       - name: Trigger Sonar Scan
         id: build
         uses: "buildkite/trigger-pipeline-action@v2.0.0"
