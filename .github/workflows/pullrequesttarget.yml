@@ -3,7 +3,7 @@ name: Buildkite
 on:
   workflow_run:
     workflows: [CodeQL]
-    types: [in_progress]
+    types: [completed]
 env:
   PR_NUMBER: ${{ github.event.number }}
 jobs:
