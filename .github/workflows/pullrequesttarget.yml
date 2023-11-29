@@ -3,7 +3,7 @@ name: Buildkite
 on:
   workflow_run:
     workflows: [CodeQL]
-    types: [completed]
+    types: [in_progress]
 env:
   PR_NUMBER: ${{ github.event.number }}
 jobs:
@@ -21,16 +21,16 @@ jobs:
 #        with:
 #          ref: ${{ github.event.pull_request.head.sha }} # This is dangerous without the first access check
       # Find the PR associated with this push, if there is one.
-      - uses: jwalton/gh-find-current-pr@v1
-        id: findPr
+      - name: Get the PR Number artifact
+        uses: dawidd6/action-download-artifact@v2
         with:
-          # Can be "open", "closed", or "all".  Defaults to "open".
-          state: open
-      # This will echo "Your PR is 7", or be skipped if there is no current PR.
-      - run: echo "Your PR is ${PR}"
-        if: success() && steps.findPr.outputs.number
-        env:
-          PR: ${{ steps.findPr.outputs.pr }}
+          workflow: ${{ github.event.workflow_run.workflow_id }}
+          workflow_conclusion: ""
+          name: pr-number
+      - name: Read PR Number into GitHub environment variables
+        run: echo "PR_NUMBER=$(cat pr-number.txt)" >> $GITHUB_ENV
+      - name: Confirm the PR Number (Debugging)
+        run: echo $PR_NUMBER
       - name: ttt
         run: |
           echo `cat $GITHUB_EVENT_PATH`
