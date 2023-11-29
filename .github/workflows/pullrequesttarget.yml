@@ -23,6 +23,7 @@ jobs:
       - name: ttt
         run: |
           echo "PR_NUMBER is: $PR_NUMBER"
+          echo "PR_NUMBER2 is: ${{ github.event.number }}"
           echo "pr number is: ${{ github.event.workflow_run.pull_requests.number }}"
           echo "head_branch is: ${{ github.event.workflow_run.head_branch }}"
           echo "head_sha is: ${{ github.event.workflow_run.head_sha }}"
