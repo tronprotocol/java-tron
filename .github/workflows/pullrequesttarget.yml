@@ -3,7 +3,7 @@ name: Buildkite
 on:
   workflow_run:
     workflows: [CodeQL]
-    types: [in_progress]
+    types: [completed]
 env:
   PR_NUMBER: ${{ github.event.number }}
 jobs:
@@ -31,6 +31,18 @@ jobs:
         run: echo "PR_NUMBER=$(cat pr-number.txt)" >> $GITHUB_ENV
       - name: Confirm the PR Number (Debugging)
         run: echo $PR_NUMBER
+      - name: Get the code coverage results file
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: ${{ github.event.workflow_run.workflow_id }}
+          workflow_conclusion: ""
+          name: code-coverage-results
+      - name: Add Coverage PR Comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          number: ${{ env.PR_NUMBER }}
+          recreate: true
+          path: code-coverage-results.md
       - name: ttt
         run: |
           echo `cat $GITHUB_EVENT_PATH`
