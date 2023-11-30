@@ -3,7 +3,7 @@ name: Buildkite
 on:
   workflow_run:
     workflows: [CodeQL]
-    types: [completed]
+    types: [in_progress]
 env:
   PR_NUMBER: ${{ github.event.number }}
 jobs:
@@ -20,31 +20,9 @@ jobs:
       - uses: actions/checkout@v2
 #        with:
 #          ref: ${{ github.event.pull_request.head.sha }} # This is dangerous without the first access check
-      # Find the PR associated with this push, if there is one.
-      - name: Get the PR Number artifact
-        uses: dawidd6/action-download-artifact@v2
-        with:
-          workflow: ${{ github.event.workflow_run.workflow_id }}
-          workflow_conclusion: ""
-          name: pr-number
-      - name: Read PR Number into GitHub environment variables
-        run: echo "PR_NUMBER=$(cat pr-number.txt)" >> $GITHUB_ENV
-      - name: Confirm the PR Number (Debugging)
-        run: echo $PR_NUMBER
-      - name: Get the code coverage results file
-        uses: dawidd6/action-download-artifact@v2
-        with:
-          workflow: ${{ github.event.workflow_run.workflow_id }}
-          workflow_conclusion: ""
-          name: code-coverage-results
-      - name: Add Coverage PR Comment
-        uses: marocchino/sticky-pull-request-comment@v2
-        with:
-          number: ${{ env.PR_NUMBER }}
-          recreate: true
-          path: code-coverage-results.md
       - name: ttt
         run: |
+          echo "github.ref_name is: ${{ github.ref_name }} "
           echo `cat $GITHUB_EVENT_PATH`
           echo "PR_NUMBER is: $PR_NUMBER"
           echo "PR_NUMBER2 is: ${{ github.event.number }}"
