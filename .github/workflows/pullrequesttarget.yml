@@ -22,7 +22,7 @@ jobs:
 #          ref: ${{ github.event.pull_request.head.sha }} # This is dangerous without the first access check
       - name: ttt
         run: |
-          echo "github.ref_name is: ${{ github.ref_name }} "
+          echo "github.ref is: ${{ github.ref }} "
           echo `cat $GITHUB_EVENT_PATH`
           echo "PR_NUMBER is: $PR_NUMBER"
           echo "PR_NUMBER2 is: ${{ github.event.number }}"
