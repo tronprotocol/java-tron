@@ -31,7 +31,9 @@ jobs:
           sourceRunId: ${{ github.event.workflow_run.id }}
       - name: ttt
         run: |
-          echo $pullRequestNumber
+          echo ${{ steps.source-run-info.outputs.pullRequestNumber }}
+          echo ${{ steps.source-run-info.outputs.sourceEvent }}
+          echo ${{ steps.source-run-info.outputs.sourceHeadSha }}
           echo "head_branch is: ${{ github.event.workflow_run.head_branch }}"
           echo "head_sha is: ${{ github.event.workflow_run.head_sha }}"
       - name: Trigger Sonar Scan
