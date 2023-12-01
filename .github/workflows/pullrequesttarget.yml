@@ -3,7 +3,7 @@ name: Buildkite
 on:
   workflow_run:
     workflows: [CodeQL]
-    types: [in_progress]
+    types: [completed]
 env:
   PR_NUMBER: ${{ github.event.number }}
 jobs:
@@ -11,15 +11,19 @@ jobs:
 #    name: Sonar Scan
 #    uses: ./.github/workflows/sonarResult.yml
     runs-on: ubuntu-latest
-#    steps:
-#      - uses: haya14busa/action-workflow_run-status@v1
-#      - uses: actions/checkout@v2
-#      - run: exit 0
     steps:
       - uses: haya14busa/action-workflow_run-status@v1
       - uses: actions/checkout@v2
-#        with:
-#          ref: ${{ github.event.pull_request.head.sha }} # This is dangerous without the first access check
+      - name: Get the PR Number artifact
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: ${{ github.event.workflow_run.workflow_id }}
+          workflow_conclusion: ""
+          name: pr-number
+      - name: Read PR Number into GitHub environment variables
+        run: echo "PR_NUMBER=$(cat pr-number.txt)" >> $GITHUB_ENV
+      - name: Confirm the PR Number (Debugging)
+        run: echo $PR_NUMBER
       - name: ttt
         run: |
           echo "github.ref is: ${{ github.ref }} "
@@ -38,7 +42,6 @@ jobs:
           pipeline: "nnnnnnnnnnnn/notwell1"
           branch: ${{ github.event.workflow_run.head_branch }}
           commit: ${{ github.event.workflow_run.head_sha }}
-          pull_request_id: 86
           build_env_vars: '{"TRIGGERED_FROM_GHA": "true", "PR_NUMBER": ${{ github.event.workflow_run.pull_requests.number }}" }'
       - name: Get Build Kite URL
         run: |
