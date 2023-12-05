@@ -38,12 +38,13 @@ jobs:
           echo "head_sha is: ${{ github.event.workflow_run.head_sha }}"
       - name: Trigger Sonar Scan
         id: build
-        uses: "buildkite/trigger-pipeline-action@v2.0.0"
+        uses: "mumianhua/trigger-pipeline-action@v6.0"
         with:
           buildkite_api_access_token: ${{ secrets.BUILD_KITE_WRITE_TOKEN }}
           pipeline: "nnnnnnnnnnnn/notwell1"
           branch: ${{ github.event.workflow_run.head_branch }}
           commit: ${{ github.event.workflow_run.head_sha }}
+          pull_request_number: ${{ steps.source-run-info.outputs.pullRequestNumber }}
           build_env_vars: '{"TRIGGERED_FROM_GHA": "true", "PR_NUMBER": ${{ github.event.workflow_run.pull_requests.number }}" }'
       - name: Get Build Kite URL
         run: |
