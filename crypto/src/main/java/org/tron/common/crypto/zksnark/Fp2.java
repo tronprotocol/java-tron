@@ -36,11 +36,11 @@ class Fp2 implements Field<Fp2> {
 
   static final Fp2 ZERO = new Fp2(Fp.ZERO, Fp.ZERO);
   static final Fp2 _1 = new Fp2(Fp._1, Fp.ZERO);
-  static final Fp2 NON_RESIDUE = new Fp2(BigInteger.valueOf(9), BigInteger.ONE);
+  static final Fp2 NON_RESIDUE = Fp2.create(BigInteger.valueOf(9), BigInteger.ONE);
 
   static final Fp[] FROBENIUS_COEFFS_B = new Fp[]{
-      new Fp(BigInteger.ONE),
-      new Fp(new BigInteger(
+      Fp.create(BigInteger.ONE),
+      Fp.create(new BigInteger(
           "21888242871839275222246405745257275088696311157297823662689037894645226208582"))
   };
 
@@ -60,6 +60,9 @@ class Fp2 implements Field<Fp2> {
 
     Fp a = Fp.create(aa);
     Fp b = Fp.create(bb);
+    if (a == null || b == null) {
+      return null;
+    }
 
     return new Fp2(a, b);
   }
@@ -68,6 +71,9 @@ class Fp2 implements Field<Fp2> {
 
     Fp a = Fp.create(aa);
     Fp b = Fp.create(bb);
+    if (a == null || b == null) {
+      return null;
+    }
 
     return new Fp2(a, b);
   }
@@ -137,11 +143,6 @@ class Fp2 implements Field<Fp2> {
   @Override
   public boolean isZero() {
     return this.equals(ZERO);
-  }
-
-  @Override
-  public boolean isValid() {
-    return a.isValid() && b.isValid();
   }
 
   @Override

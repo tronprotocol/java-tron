@@ -47,6 +47,11 @@ public class BN128Fp extends BN128<Fp> {
     Fp x = Fp.create(xx);
     Fp y = Fp.create(yy);
 
+    if (x == null || y == null) {
+      // It means that one or both coordinates are not elements of Fp
+      return null;
+    }
+
     // check for point at infinity
     if (x.isZero() && y.isZero()) {
       return ZERO;
@@ -55,7 +60,7 @@ public class BN128Fp extends BN128<Fp> {
     BN128<Fp> p = new BN128Fp(x, y, Fp._1);
 
     // check whether point is a valid one
-    if (p.isValid()) {
+    if (p.isOnCurve()) {
       return p;
     } else {
       return null;

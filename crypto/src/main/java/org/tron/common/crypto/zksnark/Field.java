@@ -40,6 +40,4 @@ interface Field<T> {
   T negate();
 
   boolean isZero();
-
-  boolean isValid();
 }
