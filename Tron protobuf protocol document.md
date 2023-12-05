@@ -546,11 +546,11 @@ Transaction and transaction-related messages.
   
   message `raw`
   
-   `ref_block_bytes`: now block bytes in transaction head.
+   `ref_block_bytes`: intercepted part of the now block bytes in transaction head.
   
    `ref_block_num`: Deprecated.
   
-   `ref_block_hash`: now block hash in transaction head.
+   `ref_block_hash`:intercepted part of the now block hash in transaction head..
   
    `expiration`: the expiration time in transaction head.
   
