@@ -4,7 +4,6 @@ import static org.tron.core.store.DelegationStore.REMARK;
 
 import com.google.common.primitives.Bytes;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.protobuf.InvalidProtocolBufferException;
 import io.prometheus.client.Histogram;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -22,7 +21,6 @@ import org.springframework.stereotype.Component;
 import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.db.common.iterator.DBIterator;
 import org.tron.core.db2.common.DB;
 import org.tron.core.store.AccountStore;
@@ -116,19 +114,25 @@ public class RewardCalService {
       return;
     }
     logger.info("RewardCalService start from lastAccount: {}", ByteArray.toHexString(lastAccount));
-    ((DBIterator) delegationStore.iterator()).prefixQueryAfterThat(
-        new byte[]{Constant.ADD_PRE_FIX_BYTE_MAINNET}, lastAccount).forEachRemaining(e -> {
-          try {
-            doRewardCal(e.getKey(), ByteArray.toLong(e.getValue()));
-          } catch (InterruptedException error) {
-            Thread.currentThread().interrupt();
-          }
-        });
+    DBIterator iterator = (DBIterator) accountStore.iterator();
+    iterator.seek(lastAccount);
+    iterator.forEachRemaining(e -> {
+      try {
+        doRewardCal(e.getKey(), e.getValue());
+      } catch (InterruptedException error) {
+        Thread.currentThread().interrupt();
+      }
+    });
     rewardCacheStore.put(this.isDoneKey, IS_DONE_VALUE);
     logger.info("RewardCalService is done");
   }
 
-  private void doRewardCal(byte[] address, long beginCycle) throws InterruptedException {
+  private void doRewardCal(byte[] address, byte[] account) throws InterruptedException {
+    List<Protocol.Vote> votesList = this.parseVotesList(account);
+    if (votesList.isEmpty()) {
+      return;
+    }
+    long beginCycle = this.getBeginCycle(address);
     if (beginCycle >= newRewardCalStartCycle) {
       return;
     }
@@ -144,11 +148,6 @@ public class RewardCalService {
     if (beginCycle >= newRewardCalStartCycle) {
       return;
     }
-
-    List<Protocol.Vote> votesList = this.getVotesList(address);
-    if (votesList.isEmpty()) {
-      return;
-    }
     Histogram.Timer requestTimer = Metrics.histogramStartTimer(
         MetricKeys.Histogram.DO_REWARD_CAL_DELAY,
         (newRewardCalStartCycle - beginCycle) / 100 + "");
@@ -160,11 +159,15 @@ public class RewardCalService {
   }
 
   private List<Protocol.Vote> getVotesList(byte[] address) {
+    byte[] account = this.accountStore.get(address);
+    return this.parseVotesList(account);
+  }
+
+  private List<Protocol.Vote> parseVotesList(byte[] account) {
     try {
-      byte[] account = this.accountStore.get(address);
       return Protocol.Account.parseFrom(account).getVotesList();
     } catch (Exception e) {
-      logger.error("getAccount error: {}", e.getMessage());
+      logger.error("parse account error: {}", e.getMessage());
     }
     return new ArrayList<>();
   }
