@@ -20,6 +20,7 @@ jobs:
       pullRequestNumber: ${{ steps.source-run-info.outputs.pullRequestNumber }}
       pullRequestLabels: ${{ steps.source-run-info.outputs.pullRequestLabels }}
       sourceEvent: ${{ steps.source-run-info.outputs.sourceEvent }}
+      targetBranch: ${{ steps.source-run-info.outputs.targetBranch }}
     steps:
       - uses: haya14busa/action-workflow_run-status@v1
       - uses: actions/checkout@v2
