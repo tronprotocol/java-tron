@@ -31,6 +31,7 @@ jobs:
           sourceRunId: ${{ github.event.workflow_run.id }}
       - name: ttt
         run: |
+          echo ${{ github.event.workflow_run.pull_requests[0].base.ref }}
           echo ${{ steps.source-run-info.outputs.pullRequestNumber }}
           echo ${{ steps.source-run-info.outputs.sourceEvent }}
           echo ${{ steps.source-run-info.outputs.sourceHeadSha }}
