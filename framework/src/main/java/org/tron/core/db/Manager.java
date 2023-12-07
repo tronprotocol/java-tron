@@ -66,6 +66,7 @@ import org.tron.common.logsfilter.trigger.Trigger;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.MetricKeys.Gauge;
 import org.tron.common.prometheus.MetricLabels;
 import org.tron.common.prometheus.Metrics;
 import org.tron.common.runtime.RuntimeImpl;
@@ -1968,6 +1969,7 @@ public class Manager {
       }
     } finally {
       Metrics.histogramObserve(requestTimer);
+      Metrics.gaugeSet(Gauge.VERIFY_SIGN_SIZE, txs.size());
     }
   }
 
