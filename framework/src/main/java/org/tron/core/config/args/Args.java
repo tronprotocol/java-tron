@@ -748,6 +748,10 @@ public class Args extends CommonParameter {
         ? config.getInt(Constant.NODE_RPC_MAX_HEADER_LIST_SIZE)
         : GrpcUtil.DEFAULT_MAX_HEADER_LIST_SIZE;
 
+    PARAMETER.isRpcReflectionServiceEnable =
+        config.hasPath(Constant.NODE_RPC_REFLECTION_SERVICE)
+            && config.getBoolean(Constant.NODE_RPC_REFLECTION_SERVICE);
+
     PARAMETER.maintenanceTimeInterval =
         config.hasPath(Constant.BLOCK_MAINTENANCE_TIME_INTERVAL) ? config
             .getInt(Constant.BLOCK_MAINTENANCE_TIME_INTERVAL) : 21600000L;
