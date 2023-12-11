@@ -305,7 +305,7 @@ public class UnfreezeBalanceV2Actuator extends AbstractActuator {
         Metrics.histogramObserve(STAKE_HISTOGRAM, unfreezeBalance,
             STAKE_VERSION_V2, STAKE_UNFREEZE, STAKE_ENERGY);
         Metrics.histogramObserve(UNFREEZE_CAN_WITHDRAW, unfreezeBalance,
-            STAKE_VERSION_V2, STAKE_ENERGY);
+            STAKE_VERSION_V2, STAKE_UNFREEZE, STAKE_ENERGY);
         break;
       case TRON_POWER:
         long oldTPWeight = accountCapsule.getTronPowerFrozenV2Balance() / TRX_PRECISION;
