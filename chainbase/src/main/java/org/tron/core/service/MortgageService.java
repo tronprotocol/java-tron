@@ -171,8 +171,11 @@ public class MortgageService {
     long reward = 0;
     for (Vote vote : accountCapsule.getVotesList()) {
       byte[] srAddress = vote.getVoteAddress().toByteArray();
-      long totalReward = delegationStore.getReward(cycle, srAddress);
-      long totalVote = delegationStore.getWitnessVote(cycle, srAddress);
+      long totalReward = this.getWitnessReward(cycle, srAddress);
+      if (totalReward == 0) {
+        continue;
+      }
+      long totalVote = this.getWitnessVote(cycle, srAddress);
       if (totalVote == DelegationStore.REMARK || totalVote == 0) {
         continue;
       }
@@ -184,6 +187,22 @@ public class MortgageService {
           userVote, totalVote, totalReward, reward);
     }
     return reward;
+  }
+
+  private long getWitnessReward(long cycle, byte[] address) {
+    long v = rewardCalService.getRewardCache(address, cycle);
+    if (DelegationStore.REMARK == v) {
+      v = delegationStore.getReward(cycle, address);
+    }
+    return v;
+  }
+
+  private long getWitnessVote(long cycle, byte[] address) {
+    long v = rewardCalService.getVoteCache(address, cycle);
+    if (DelegationStore.REMARK == v) {
+      v = delegationStore.getWitnessVote(cycle, address);
+    }
+    return v;
   }
 
   /**
@@ -204,7 +223,9 @@ public class MortgageService {
     long newAlgorithmCycle = dynamicPropertiesStore.getNewRewardAlgorithmEffectiveCycle();
     if (beginCycle < newAlgorithmCycle) {
       long oldEndCycle = Math.min(endCycle, newAlgorithmCycle);
-      reward = getOldReward(beginCycle, oldEndCycle, accountCapsule);
+      for (long cycle = beginCycle; cycle < oldEndCycle; cycle++) {
+        reward += computeReward(cycle, accountCapsule);
+      }
       beginCycle = oldEndCycle;
     }
     if (beginCycle < endCycle) {
@@ -259,22 +280,5 @@ public class MortgageService {
   private void sortWitness(List<ByteString> list) {
     list.sort(Comparator.comparingLong((ByteString b) -> getWitnessByAddress(b).getVoteCount())
         .reversed().thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
-  }
-
-  private long getOldReward(long beginCycle, long oldEndCycle, AccountCapsule accountCapsule) {
-    if (beginCycle + 1 == oldEndCycle) {
-      return computeReward(beginCycle, accountCapsule);
-    }
-    long cacheData = rewardCalService.getRewardCache(accountCapsule.createDbKey(), beginCycle);
-    long reward = 0;
-    for (long cycle = beginCycle; cycle < oldEndCycle; cycle++) {
-      reward += computeReward(cycle, accountCapsule);
-    }
-    if (cacheData != -1 && cacheData != reward) {
-      logger.error("Old reward algorithm reward not equal, address {}, beginCycle {}, "
-          + "oldEndCycle {}, cacheData {}, reward {}.", accountCapsule.createReadableString(),
-          beginCycle, oldEndCycle, cacheData, reward);
-    }
-    return reward;
   }
 }

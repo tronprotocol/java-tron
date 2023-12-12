@@ -2,12 +2,13 @@ package org.tron.core.service;
 
 import static org.tron.core.store.DelegationStore.REMARK;
 
-import com.google.common.primitives.Bytes;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.prometheus.client.Histogram;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -97,14 +98,15 @@ public class RewardCalService {
     startRewardCal();
   }
 
-  private void initLastAccount() throws IOException {
-    try (DBIterator iterator = rewardCacheStore.iterator()) {
-      iterator.seekToLast();
-      if (iterator.valid()) {
-        byte[] key  = iterator.getKey();
-        System.arraycopy(key, 0, lastAccount, 0, ADDRESS_SIZE);
-      }
+  private void initLastAccount() {
+    byte[] value = rewardCacheStore.get("lastAccount".getBytes());
+    if (value != null) {
+      lastAccount = value;
     }
+  }
+
+  private void updateLastAccount(byte[] address) {
+    rewardCacheStore.put("lastAccount".getBytes(), address);
   }
 
 
@@ -119,6 +121,7 @@ public class RewardCalService {
     iterator.forEachRemaining(e -> {
       try {
         doRewardCal(e.getKey(), e.getValue());
+        updateLastAccount(e.getKey());
       } catch (InterruptedException error) {
         Thread.currentThread().interrupt();
       }
@@ -151,16 +154,8 @@ public class RewardCalService {
     Histogram.Timer requestTimer = Metrics.histogramStartTimer(
         MetricKeys.Histogram.DO_REWARD_CAL_DELAY,
         (newRewardCalStartCycle - beginCycle) / 100 + "");
-    long reward = LongStream.range(beginCycle, newRewardCalStartCycle)
-        .map(i -> computeReward(i, votesList))
-        .sum();
-    this.putReward(address, beginCycle, endCycle, reward, votesList, skipLastCycle);
+    LongStream.range(beginCycle, newRewardCalStartCycle).forEach(i -> computeReward(i, votesList));
     Metrics.histogramObserve(requestTimer);
-  }
-
-  private List<Protocol.Vote> getVotesList(byte[] address) {
-    byte[] account = this.accountStore.get(address);
-    return this.parseVotesList(account);
   }
 
   private List<Protocol.Vote> parseVotesList(byte[] account) {
@@ -172,46 +167,33 @@ public class RewardCalService {
     return new ArrayList<>();
   }
 
-  private long computeReward(long cycle, List<Protocol.Vote> votesList) {
-    long reward = 0;
+  private void computeReward(long cycle, List<Protocol.Vote> votesList) {
     for (Protocol.Vote vote : votesList) {
       byte[] srAddress = vote.getVoteAddress().toByteArray();
       long totalReward = this.getReward(cycle, srAddress);
-      if (totalReward <= 0) {
-        continue;
-      }
       long totalVote = this.getWitnessVote(cycle, srAddress);
-      if (totalVote <= 0) {
-        continue;
-      }
-      long userVote = vote.getVoteCount();
-      double voteRate = (double) userVote / totalVote;
-      reward += voteRate * totalReward;
+      this.putWitnessCache(cycle, srAddress, totalReward, totalVote);
     }
-    return reward;
   }
 
   public long getRewardCache(byte[] address, long cycle) {
-    return rewardCacheStore.getReward(buildKey(address, cycle));
+    byte[] v = rewardCacheStore.get(generateKey(cycle, address, "reward"));
+    return v == null ? REMARK : ByteArray.toLong(v);
   }
 
-  private void putReward(byte[] address, long start, long end, long reward,
-                         List<Protocol.Vote>  votesList, boolean skipLastCycle) {
-    long startCycle = this.getBeginCycle(address);
-    long endCycle = this.getEndCycle(address);
-    //skip the last cycle reward
-    if (skipLastCycle) {
-      startCycle += 1;
-    }
-    List<Protocol.Vote> newVotesList = this.getVotesList(address);
-    // check if the delegation is still valid
-    if (startCycle == start && endCycle == end && votesList.equals(newVotesList)) {
-      rewardCacheStore.putReward(buildKey(address, start), reward);
-    }
+  public long getVoteCache(byte[] address, long cycle) {
+    byte[] v = rewardCacheStore.get(generateKey(cycle, address, "vote"));
+    return v == null ? REMARK : ByteArray.toLong(v);
   }
 
-  private byte[] buildKey(byte[] address, long beginCycle) {
-    return Bytes.concat(address, ByteArray.fromLong(beginCycle));
+  private void putWitnessCache(long cycle, byte[] address, long reward, long vote) {
+    if (getRewardCache(address, cycle) != REMARK && getVoteCache(address, cycle) != REMARK) {
+      return;
+    }
+    Map<byte[], byte[]> rows = new HashMap<>();
+    rows.put(generateKey(cycle, address, "reward"), ByteArray.fromLong(reward));
+    rows.put(generateKey(cycle, address, "vote"), ByteArray.fromLong(vote));
+    rewardCacheStore.updateByBatch(rows);
   }
 
   private long getBeginCycle(byte[] address) {

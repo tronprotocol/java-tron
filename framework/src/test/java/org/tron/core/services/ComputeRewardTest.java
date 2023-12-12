@@ -16,6 +16,7 @@ import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.service.MortgageService;
 import org.tron.core.service.RewardCalService;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DelegationStore;
@@ -91,6 +92,7 @@ public class ComputeRewardTest {
   private static DelegationStore delegationStore;
   private static AccountStore accountStore;
   private static RewardCalService rewardCalService;
+  private static MortgageService mortgageService;
   @ClassRule
   public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -112,6 +114,7 @@ public class ComputeRewardTest {
     delegationStore = context.getBean(DelegationStore.class);
     accountStore = context.getBean(AccountStore.class);
     rewardCalService = context.getBean(RewardCalService.class);
+    mortgageService = context.getBean(MortgageService.class);
     setUp();
   }
 
@@ -169,9 +172,10 @@ public class ComputeRewardTest {
 
   @Test
   public void query() throws IOException {
+    long v = mortgageService.queryReward(OWNER_ADDRESS);
     rewardCalService.calRewardForTest();
-    Assert.assertEquals(3189, rewardCalService.getRewardCache(OWNER_ADDRESS, 3));
-    rewardCalService.calRewardForTest();
+    Assert.assertEquals(v, mortgageService.queryReward(OWNER_ADDRESS));
+    Assert.assertEquals(3189, v);
   }
 
   static class Vote {
