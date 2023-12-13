@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -36,6 +37,7 @@ public class CancelAllUnfreezeV2ActuatorTest extends BaseTest {
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
+    CommonParameter.getInstance().setMetricsPrometheusEnable(true);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     RECEIVER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
     OWNER_ACCOUNT_INVALID =
