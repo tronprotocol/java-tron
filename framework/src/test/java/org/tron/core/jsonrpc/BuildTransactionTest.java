@@ -32,8 +32,7 @@ public class BuildTransactionTest extends BaseTest {
   private Wallet wallet;
 
   static {
-    dbPath = "output_build_transaction_test";
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
 
     OWNER_ADDRESS =
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";

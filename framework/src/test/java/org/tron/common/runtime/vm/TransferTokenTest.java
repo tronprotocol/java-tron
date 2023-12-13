@@ -44,8 +44,7 @@ public class TransferTokenTest extends BaseTest {
 
 
   static {
-    dbPath = "output_TransferTokenTest";
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"}, Constant.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     TRANSFER_TO = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
   }
@@ -132,7 +131,7 @@ public class TransferTokenTest extends BaseTest {
             triggerCallValue, feeLimit, tokenValue, id);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction, dbManager, null);
 
-    org.testng.Assert.assertNull(runtime.getRuntimeError());
+    Assert.assertNull(runtime.getRuntimeError());
     Assert.assertEquals(100 + tokenValue - 9,
         dbManager.getAccountStore().get(contractAddress).getAssetV2MapForTest()
                 .get(String.valueOf(id)).longValue());
@@ -157,7 +156,7 @@ public class TransferTokenTest extends BaseTest {
             triggerData2,
             triggerCallValue, feeLimit, 0, id);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction2, dbManager, null);
-    org.testng.Assert.assertNull(runtime.getRuntimeError());
+    Assert.assertNull(runtime.getRuntimeError());
     Assert.assertEquals(100 + tokenValue - 9 + 9,
         dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getAssetV2MapForTest()
             .get(String.valueOf(id)).longValue());

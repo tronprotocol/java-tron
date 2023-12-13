@@ -59,10 +59,9 @@ public class BandWidthRuntimeTest extends BaseTest {
 
   @BeforeClass
   public static void init() {
-    dbPath = "output_bandwidth_runtime_test";
     Args.setParam(
         new String[]{
-            "--output-directory", dbPath,
+            "--output-directory", dbPath(),
             "--storage-db-directory", dbDirectory,
             "--storage-index-directory", indexDirectory,
             "-w"

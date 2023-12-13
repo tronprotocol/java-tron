@@ -24,10 +24,9 @@ public class TransactionHistoryTest extends BaseTest {
   private static TransactionInfoCapsule transactionInfoCapsule;
 
   static {
-    dbPath = "output_TransactionHistoryStore_test";
     Args.setParam(
         new String[]{
-            "--output-directory", dbPath,
+            "--output-directory", dbPath(),
             "--storage-db-directory", dbDirectory,
             "--storage-index-directory", indexDirectory
         },

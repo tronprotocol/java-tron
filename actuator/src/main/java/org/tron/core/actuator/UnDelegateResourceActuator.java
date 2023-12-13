@@ -154,9 +154,8 @@ public class UnDelegateResourceActuator extends AbstractActuator {
 
         long now = chainBaseManager.getHeadSlot();
         if (Objects.nonNull(receiverCapsule) && transferUsage > 0) {
-          ownerCapsule.setNetUsage(processor.unDelegateIncrease(ownerCapsule, receiverCapsule,
-              transferUsage, BANDWIDTH, now));
-          ownerCapsule.setLatestConsumeTime(now);
+          processor.unDelegateIncrease(ownerCapsule, receiverCapsule,
+              transferUsage, BANDWIDTH, now);
         }
       }
       break;
@@ -170,9 +169,7 @@ public class UnDelegateResourceActuator extends AbstractActuator {
 
         long now = chainBaseManager.getHeadSlot();
         if (Objects.nonNull(receiverCapsule) && transferUsage > 0) {
-          ownerCapsule.setEnergyUsage(processor.unDelegateIncrease(ownerCapsule, receiverCapsule,
-              transferUsage, ENERGY, now));
-          ownerCapsule.setLatestConsumeTimeForEnergy(now);
+          processor.unDelegateIncrease(ownerCapsule, receiverCapsule, transferUsage, ENERGY, now);
         }
       }
       break;
@@ -252,7 +249,7 @@ public class UnDelegateResourceActuator extends AbstractActuator {
     }
 
     byte[] receiverAddress = unDelegateResourceContract.getReceiverAddress().toByteArray();
-    if (ArrayUtils.isEmpty(receiverAddress) || !DecodeUtil.addressValid(receiverAddress)) {
+    if (!DecodeUtil.addressValid(receiverAddress)) {
       throw new ContractValidateException("Invalid receiverAddress");
     }
     if (Arrays.equals(receiverAddress, ownerAddress)) {

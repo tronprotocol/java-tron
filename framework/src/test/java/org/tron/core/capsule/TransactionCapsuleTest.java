@@ -2,10 +2,10 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.testng.Assert;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
@@ -46,8 +46,7 @@ public class TransactionCapsuleTest extends BaseTest {
 
   @BeforeClass
   public static void init() {
-    dbPath = "output_transactioncapsule_test";
-    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "03702350064AD5C1A8AA6B4D74B051199CFF8EA7";
     /*TO_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ACCOUNT_NOT_Exist =

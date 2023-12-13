@@ -38,6 +38,7 @@ import org.tron.core.net.service.keepalive.KeepAliveService;
 import org.tron.p2p.P2pEventHandler;
 import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.ReasonCode;
 
 @Slf4j(topic = "net")
 @Component
@@ -232,7 +233,8 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
           code = Protocol.ReasonCode.BAD_BLOCK;
           break;
         case NO_SUCH_MESSAGE:
-        case MESSAGE_WITH_WRONG_LENGTH:
+          code = Protocol.ReasonCode.NO_SUCH_MESSAGE;
+          break;
         case BAD_MESSAGE:
           code = Protocol.ReasonCode.BAD_PROTOCOL;
           break;
