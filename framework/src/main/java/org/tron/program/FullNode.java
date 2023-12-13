@@ -29,8 +29,6 @@ import org.tron.core.services.jsonrpc.FullNodeJsonRpcHttpService;
 public class FullNode {
 
 
-  public static volatile boolean shutDownSign = false;
-
   public static void load(String path) {
     try {
       File file = new File(path);
@@ -80,7 +78,7 @@ public class FullNode {
     context.register(DefaultConfig.class);
     context.refresh();
     Application appT = ApplicationFactory.create(context);
-    shutdown(appT);
+    context.registerShutdownHook();
 
     // grpc api server
     RpcApiService rpcApiService = context.getBean(RpcApiService.class);
@@ -130,16 +128,7 @@ public class FullNode {
       JsonRpcServiceOnPBFT jsonRpcServiceOnPBFT = context.getBean(JsonRpcServiceOnPBFT.class);
       appT.addService(jsonRpcServiceOnPBFT);
     }
-
-    appT.initServices(parameter);
-    appT.startServices();
     appT.startup();
-
-    rpcApiService.blockUntilShutdown();
-  }
-
-  public static void shutdown(final Application app) {
-    logger.info("********register application shutdown hook********");
-    Runtime.getRuntime().addShutdownHook(new Thread(app::shutdown));
+    appT.blockUntilShutdown();
   }
 }

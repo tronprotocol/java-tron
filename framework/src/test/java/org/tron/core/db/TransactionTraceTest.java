@@ -60,10 +60,9 @@ public class TransactionTraceTest extends BaseTest {
   private static boolean init;
 
   static {
-    dbPath = "output_TransactionTrace_test";
     Args.setParam(
         new String[]{
-            "--output-directory", dbPath,
+            "--output-directory", dbPath(),
             "--storage-db-directory", dbDirectory,
             "--storage-index-directory", indexDirectory,
             "-w",

@@ -1,14 +1,15 @@
 package org.tron.core.actuator.vm;
 
-import java.io.File;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.List;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 import org.tron.core.vm.trace.Op;
@@ -16,17 +17,19 @@ import org.tron.core.vm.trace.OpActions;
 import org.tron.core.vm.trace.ProgramTrace;
 
 public class ProgramTraceTest {
-  private static final String dbPath = "output_programTrace_test";
+
+  @ClassRule
+  public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @BeforeClass
-  public static void init() {
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
+  public static void init() throws IOException {
+    Args.setParam(new String[]{"--output-directory",
+        temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
   }
 
   @AfterClass
   public static void destroy() {
     Args.clearParam();
-    FileUtil.deleteDir(new File(dbPath));
   }
 
   @Test

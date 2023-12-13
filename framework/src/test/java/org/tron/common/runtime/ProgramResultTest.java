@@ -9,9 +9,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.testng.Assert;
 import org.tron.common.BaseTest;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.Constant;
@@ -44,8 +44,7 @@ public class ProgramResultTest extends BaseTest {
   private static boolean init;
 
   static {
-    dbPath = "output_InternalTransactionComplexTest";
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug", "--support-constant"},
+    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug", "--support-constant"},
         Constant.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     TRANSFER_TO = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
@@ -281,30 +280,31 @@ public class ProgramResultTest extends BaseTest {
     List<InternalTransaction> internalTransactionsList = runtime.getResult()
         .getInternalTransactions();
     Assert.assertEquals(internalTransactionsList.get(0).getValue(), 10);
-    Assert.assertEquals(internalTransactionsList.get(0).getSender(), aContract);
-    Assert.assertEquals(
+    Assert.assertArrayEquals(internalTransactionsList.get(0).getSender(), aContract);
+    Assert.assertArrayEquals(
         new DataWord(internalTransactionsList.get(0).getTransferToAddress()).getLast20Bytes(),
         new DataWord(bContract).getLast20Bytes());
     Assert.assertEquals(internalTransactionsList.get(0).getNote(), "create");
     Assert.assertFalse(internalTransactionsList.get(0).isRejected());
     Assert.assertEquals(internalTransactionsList.get(1).getValue(), 5);
-    Assert.assertEquals(internalTransactionsList.get(1).getSender(), aContract);
-    Assert.assertEquals(
+    Assert.assertArrayEquals(internalTransactionsList.get(1).getSender(), aContract);
+    Assert.assertArrayEquals(
         new DataWord(internalTransactionsList.get(1).getTransferToAddress()).getLast20Bytes(),
         new DataWord(bContract).getLast20Bytes());
     Assert.assertEquals(internalTransactionsList.get(1).getNote(), "call");
     Assert.assertFalse(internalTransactionsList.get(1).isRejected());
     Assert.assertEquals(internalTransactionsList.get(2).getValue(), 0);
-    Assert.assertEquals(internalTransactionsList.get(2).getSender(), aContract);
-    Assert.assertEquals(
+    Assert.assertArrayEquals(internalTransactionsList.get(2).getSender(), aContract);
+    Assert.assertArrayEquals(
         new DataWord(internalTransactionsList.get(2).getTransferToAddress()).getLast20Bytes(),
         new DataWord(bContract).getLast20Bytes());
     Assert.assertEquals(internalTransactionsList.get(2).getNote(), "call");
     Assert.assertFalse(internalTransactionsList.get(2).isRejected());
     Assert.assertEquals(internalTransactionsList.get(3).getValue(), 1);
-    Assert.assertEquals(new DataWord(internalTransactionsList.get(3).getSender()).getLast20Bytes(),
+    Assert.assertArrayEquals(
+        new DataWord(internalTransactionsList.get(3).getSender()).getLast20Bytes(),
         new DataWord(bContract).getLast20Bytes());
-    Assert.assertEquals(internalTransactionsList.get(3).getTransferToAddress(), cContract);
+    Assert.assertArrayEquals(internalTransactionsList.get(3).getTransferToAddress(), cContract);
     Assert.assertEquals(internalTransactionsList.get(3).getNote(), "call");
     Assert.assertFalse(internalTransactionsList.get(3).isRejected());
     checkTransactionInfo(traceSuccess, trx1, null, internalTransactionsList);
@@ -326,31 +326,31 @@ public class ProgramResultTest extends BaseTest {
     List<InternalTransaction> internalTransactionsListFail = runtime.getResult()
         .getInternalTransactions();
     Assert.assertEquals(internalTransactionsListFail.get(0).getValue(), 10);
-    Assert.assertEquals(internalTransactionsListFail.get(0).getSender(), aContract);
-    Assert.assertEquals(
+    Assert.assertArrayEquals(internalTransactionsListFail.get(0).getSender(), aContract);
+    Assert.assertArrayEquals(
         new DataWord(internalTransactionsListFail.get(0).getTransferToAddress()).getLast20Bytes(),
         new DataWord(bContract2).getLast20Bytes());
     Assert.assertEquals(internalTransactionsListFail.get(0).getNote(), "create");
     Assert.assertTrue(internalTransactionsListFail.get(0).isRejected());
     Assert.assertEquals(internalTransactionsListFail.get(1).getValue(), 5);
-    Assert.assertEquals(internalTransactionsListFail.get(1).getSender(), aContract);
-    Assert.assertEquals(
+    Assert.assertArrayEquals(internalTransactionsListFail.get(1).getSender(), aContract);
+    Assert.assertArrayEquals(
         new DataWord(internalTransactionsListFail.get(1).getTransferToAddress()).getLast20Bytes(),
         new DataWord(bContract2).getLast20Bytes());
     Assert.assertEquals(internalTransactionsListFail.get(1).getNote(), "call");
     Assert.assertTrue(internalTransactionsListFail.get(1).isRejected());
     Assert.assertEquals(internalTransactionsListFail.get(2).getValue(), 0);
-    Assert.assertEquals(internalTransactionsListFail.get(2).getSender(), aContract);
-    Assert.assertEquals(
+    Assert.assertArrayEquals(internalTransactionsListFail.get(2).getSender(), aContract);
+    Assert.assertArrayEquals(
         new DataWord(internalTransactionsListFail.get(2).getTransferToAddress()).getLast20Bytes(),
         new DataWord(bContract2).getLast20Bytes());
     Assert.assertEquals(internalTransactionsListFail.get(2).getNote(), "call");
     Assert.assertTrue(internalTransactionsListFail.get(2).isRejected());
     Assert.assertEquals(internalTransactionsListFail.get(3).getValue(), 1);
-    Assert.assertEquals(
+    Assert.assertArrayEquals(
         new DataWord(internalTransactionsListFail.get(3).getSender()).getLast20Bytes(),
         new DataWord(bContract2).getLast20Bytes());
-    Assert.assertEquals(internalTransactionsListFail.get(3).getTransferToAddress(), cContract);
+    Assert.assertArrayEquals(internalTransactionsListFail.get(3).getTransferToAddress(), cContract);
     Assert.assertEquals(internalTransactionsListFail.get(3).getNote(), "call");
     Assert.assertTrue(internalTransactionsListFail.get(3).isRejected());
     checkTransactionInfo(traceFailed, trx2, null, internalTransactionsListFail);
@@ -501,9 +501,10 @@ public class ProgramResultTest extends BaseTest {
         .assertEquals(dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getBalance(), 1000);
     Assert.assertNull(dbManager.getAccountStore().get(suicideContract));
     Assert.assertEquals(internalTransactionsList.get(0).getValue(), 1000);
-    Assert.assertEquals(new DataWord(internalTransactionsList.get(0).getSender()).getLast20Bytes(),
+    Assert.assertArrayEquals(new DataWord(
+        internalTransactionsList.get(0).getSender()).getLast20Bytes(),
         new DataWord(suicideContract).getLast20Bytes());
-    Assert.assertEquals(internalTransactionsList.get(0).getTransferToAddress(),
+    Assert.assertArrayEquals(internalTransactionsList.get(0).getTransferToAddress(),
         Hex.decode(TRANSFER_TO));
     Assert.assertEquals(internalTransactionsList.get(0).getNote(), "suicide");
     Assert.assertFalse(internalTransactionsList.get(0).isRejected());
@@ -546,15 +547,16 @@ public class ProgramResultTest extends BaseTest {
     for (int i = 0; i < internalTransactionListFromProtocol.size(); i++) {
       Assert.assertEquals(internalTransactionListFromProtocol.get(i).getRejected(),
           internalTransactionsList.get(i).isRejected());
-      Assert
-          .assertEquals(internalTransactionListFromProtocol.get(i).getCallerAddress().toByteArray(),
+      Assert.assertArrayEquals(
+          internalTransactionListFromProtocol.get(i).getCallerAddress().toByteArray(),
               internalTransactionsList.get(i).getSender());
-      Assert.assertEquals(internalTransactionListFromProtocol.get(i).getHash().toByteArray(),
+      Assert.assertArrayEquals(
+          internalTransactionListFromProtocol.get(i).getHash().toByteArray(),
           internalTransactionsList.get(i).getHash());
       Assert.assertEquals(
           new String(internalTransactionListFromProtocol.get(i).getNote().toByteArray()),
           internalTransactionsList.get(i).getNote());
-      Assert.assertEquals(
+      Assert.assertArrayEquals(
           internalTransactionListFromProtocol.get(i).getTransferToAddress().toByteArray(),
           internalTransactionsList.get(i).getTransferToAddress());
       List<Protocol.InternalTransaction.CallValueInfo> callValueInfoListFromProtocol =

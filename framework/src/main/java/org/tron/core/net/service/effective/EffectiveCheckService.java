@@ -2,14 +2,12 @@ package org.tron.core.net.service.effective;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.net.InetSocketAddress;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -18,6 +16,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
@@ -42,12 +41,13 @@ public class EffectiveCheckService {
   @Setter
   private volatile InetSocketAddress cur;
   private final AtomicInteger count = new AtomicInteger(0);
-  private ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(
-      new ThreadFactoryBuilder().setNameFormat("effective-thread-%d").build());
+  private final String esName = "effective-check";
+  private ScheduledExecutorService executor;
   private long MAX_HANDSHAKE_TIME = 60_000;
 
   public void init() {
     if (isEffectiveCheck) {
+      executor = ExecutorServiceManager.newSingleThreadScheduledExecutor(esName);
       executor.scheduleWithFixedDelay(() -> {
         try {
           findEffectiveNode();
@@ -69,13 +69,7 @@ public class EffectiveCheckService {
   }
 
   public void close() {
-    if (executor != null) {
-      try {
-        executor.shutdown();
-      } catch (Exception e) {
-        logger.error("Exception in shutdown effective service worker, {}", e.getMessage());
-      }
-    }
+    ExecutorServiceManager.shutdownAndAwaitTermination(executor, esName);
   }
 
   public boolean isIsolateLand() {

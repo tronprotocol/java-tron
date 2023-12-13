@@ -40,8 +40,7 @@ public class RelayServiceTest extends BaseTest {
    */
   @BeforeClass
   public static void init() {
-    dbPath = "output-relay-service-test";
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"},
+    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"},
             Constant.TEST_CONF);
   }
 

@@ -37,10 +37,10 @@ import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ZksnarkException;
-import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.vm.PrecompiledContracts.VerifyBurnProof;
 import org.tron.core.vm.PrecompiledContracts.VerifyMintProof;
 import org.tron.core.vm.PrecompiledContracts.VerifyTransferProof;
+import org.tron.core.zen.ZksnarkInitService;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
 import org.tron.core.zen.address.FullViewingKey;
@@ -64,12 +64,11 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
   private static final byte[] PUBLIC_TO_ADDRESS;
 
   static {
-    dbPath = "output_Shielded_TRC20_Api_test";
-    Args.setParam(new String[]{"--output-directory", dbPath}, "config-test-mainnet.conf");
+    Args.setParam(new String[]{"--output-directory", dbPath()}, "config-test-mainnet.conf");
     SHIELDED_CONTRACT_ADDRESS = WalletClient.decodeFromBase58Check(SHIELDED_CONTRACT_ADDRESS_STR);
     DEFAULT_OVK = ByteArray
         .fromHexString("030c8c2bc59fb3eb8afb047a8ea4b028743d23e7d38c6fa30908358431e2314d");
-    FullNodeHttpApiService.librustzcashInitZksnarkParams();
+    ZksnarkInitService.librustzcashInitZksnarkParams();
     PUBLIC_TO_ADDRESS = WalletClient.decodeFromBase58Check(PUBLIC_TO_ADDRESS_STR);
   }
 

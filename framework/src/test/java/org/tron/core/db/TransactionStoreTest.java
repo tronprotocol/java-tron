@@ -50,9 +50,7 @@ public class TransactionStoreTest extends BaseTest {
    */
   @BeforeClass
   public static void init() {
-    dbPath = "output_TransactionStore_test";
-    Args.setParam(new String[]{"--output-directory", dbPath, "--storage-db-directory",
-        dbDirectory, "--storage-index-directory", indexDirectory, "-w"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath(), "-w"}, Constant.TEST_CONF);
   }
 
   /**

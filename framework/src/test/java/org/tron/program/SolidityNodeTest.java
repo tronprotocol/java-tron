@@ -1,33 +1,37 @@
 package org.tron.program;
 
 import java.io.File;
+import java.io.IOException;
+import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.client.DatabaseGrpcClient;
 import org.tron.core.Constant;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
+import org.tron.core.services.http.solidity.SolidityNodeHttpApiService;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DynamicProperties;
 
 @Slf4j
-public class SolidityNodeTest {
+public class SolidityNodeTest extends BaseTest {
 
-  private static TronApplicationContext context;
-
-  private static RpcApiService rpcApiService;
-  private static String dbPath = "output_sn_test";
+  @Resource
+  RpcApiService rpcApiService;
+  @Resource
+  SolidityNodeHttpApiService solidityNodeHttpApiService;
 
   static {
-    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
+    try {
+      Args.setParam(new String[]{"-d", temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
+    } catch (IOException e) {
+      Assert.fail("create temp directory failed.");
+    }
     Args.getInstance().setSolidityNode(true);
-    rpcApiService = context.getBean(RpcApiService.class);
   }
 
   /**
@@ -35,7 +39,6 @@ public class SolidityNodeTest {
    */
   @BeforeClass
   public static void init() {
-    rpcApiService.start();
   }
 
   /**
@@ -44,14 +47,6 @@ public class SolidityNodeTest {
   @AfterClass
   public static void removeDb() {
     Args.clearParam();
-    rpcApiService.stop();
-    context.destroy();
-    File dbFolder = new File(dbPath);
-    if (deleteFolder(dbFolder)) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   private static Boolean deleteFolder(File index) {
@@ -74,6 +69,8 @@ public class SolidityNodeTest {
 
   @Test
   public void testSolidityGrpcCall() {
+    rpcApiService.init(Args.getInstance());
+    rpcApiService.start();
     DatabaseGrpcClient databaseGrpcClient = null;
     String address = Args.getInstance().getTrustNodeAddr();
     try {
@@ -97,6 +94,14 @@ public class SolidityNodeTest {
       logger.error("Failed to create database grpc client {}", address);
     }
     databaseGrpcClient.shutdown();
+    rpcApiService.stop();
   }
 
+  @Test
+  public void testSolidityNodeHttpApiService() {
+    solidityNodeHttpApiService.init(Args.getInstance());
+    solidityNodeHttpApiService.start();
+    solidityNodeHttpApiService.stop();
+    Assert.assertTrue(true);
+  }
 }

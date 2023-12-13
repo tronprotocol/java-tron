@@ -36,10 +36,9 @@ public class AccountStoreTest extends BaseTest {
   private static boolean init;
 
   static {
-    dbPath = "output_AccountStore_test";
     Args.setParam(
         new String[]{
-            "--output-directory", dbPath,
+            "--output-directory", dbPath(),
             "--storage-db-directory", dbDirectory,
             "--storage-index-directory", indexDirectory
         },

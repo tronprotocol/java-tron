@@ -148,7 +148,7 @@ public class TronNetService {
   }
 
   private P2pConfig getConfig() {
-    P2pConfig config = new P2pConfig();
+    P2pConfig config = parameter.getP2pConfig();
     return updateConfig(config);
   }
 

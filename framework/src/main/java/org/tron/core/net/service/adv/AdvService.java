@@ -6,7 +6,6 @@ import static org.tron.core.config.Parameter.NetConstants.MSG_CACHE_DURATION_IN_
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -15,15 +14,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
@@ -43,11 +41,11 @@ import org.tron.protos.Protocol.Inventory.InventoryType;
 @Slf4j(topic = "net")
 @Component
 public class AdvService {
-
   private final int MAX_INV_TO_FETCH_CACHE_SIZE = 100_000;
   private final int MAX_TRX_CACHE_SIZE = 50_000;
   private final int MAX_BLOCK_CACHE_SIZE = 10;
   private final int MAX_SPREAD_SIZE = 1_000;
+  private final long TIMEOUT = MSG_CACHE_DURATION_IN_BLOCKS * BLOCK_PRODUCED_INTERVAL;
 
   @Autowired
   private TronNetDelegate tronNetDelegate;
@@ -73,9 +71,13 @@ public class AdvService {
       .maximumSize(MAX_BLOCK_CACHE_SIZE).expireAfterWrite(1, TimeUnit.MINUTES)
       .recordStats().build();
 
-  private ScheduledExecutorService spreadExecutor = Executors.newSingleThreadScheduledExecutor();
+  private final String spreadName = "adv-spread";
+  private final String fetchName = "adv-fetch";
+  private final ScheduledExecutorService spreadExecutor = ExecutorServiceManager
+      .newSingleThreadScheduledExecutor(spreadName);
 
-  private ScheduledExecutorService fetchExecutor = Executors.newSingleThreadScheduledExecutor();
+  private final ScheduledExecutorService fetchExecutor = ExecutorServiceManager
+      .newSingleThreadScheduledExecutor(fetchName);
 
   @Getter
   private MessageCount trxCount = new MessageCount();
@@ -102,8 +104,8 @@ public class AdvService {
   }
 
   public void close() {
-    spreadExecutor.shutdown();
-    fetchExecutor.shutdown();
+    ExecutorServiceManager.shutdownAndAwaitTermination(spreadExecutor, spreadName);
+    ExecutorServiceManager.shutdownAndAwaitTermination(fetchExecutor, fetchName);
   }
 
   public synchronized void addInvToCache(Item item) {
@@ -262,30 +264,30 @@ public class AdvService {
     Collection<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
         .filter(peer -> peer.isIdle())
         .collect(Collectors.toList());
-
     InvSender invSender = new InvSender();
-    long now = System.currentTimeMillis();
     synchronized (this) {
       if (invToFetch.isEmpty() || peers.isEmpty()) {
         return;
       }
+      long now = System.currentTimeMillis();
       invToFetch.forEach((item, time) -> {
-        if (time < now - MSG_CACHE_DURATION_IN_BLOCKS * BLOCK_PRODUCED_INTERVAL) {
+        if (time < now - TIMEOUT) {
           logger.info("This obj is too late to fetch, type: {} hash: {}", item.getType(),
                   item.getHash());
           invToFetch.remove(item);
           invToFetchCache.invalidate(item);
           return;
         }
-        peers.stream().filter(peer -> peer.getAdvInvReceive().getIfPresent(item) != null
-                && invSender.getSize(peer) < MAX_TRX_FETCH_PER_PEER)
-                .sorted(Comparator.comparingInt(peer -> invSender.getSize(peer)))
-                .findFirst().ifPresent(peer -> {
-                  if (peer.checkAndPutAdvInvRequest(item, now)) {
-                    invSender.add(item, peer);
-                  }
-                  invToFetch.remove(item);
-                });
+        peers.stream().filter(peer -> {
+          Long t = peer.getAdvInvReceive().getIfPresent(item);
+          return t != null && now - t < TIMEOUT && invSender.getSize(peer) < MAX_TRX_FETCH_PER_PEER;
+        }).sorted(Comparator.comparingInt(peer -> invSender.getSize(peer)))
+            .findFirst().ifPresent(peer -> {
+              if (peer.checkAndPutAdvInvRequest(item, now)) {
+                invSender.add(item, peer);
+              }
+              invToFetch.remove(item);
+            });
       });
     }
 
