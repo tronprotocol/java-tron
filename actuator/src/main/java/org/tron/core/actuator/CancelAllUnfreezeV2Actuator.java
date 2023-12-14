@@ -103,9 +103,9 @@ public class CancelAllUnfreezeV2Actuator extends AbstractActuator {
         STAKE_CANCEL_UNFREEZE, STAKE_RESOURCE);
 
     Metrics.histogramObserve(UNFREEZE_CAN_WITHDRAW, -triple.getLeft().getRight().get(),
-        STAKE_VERSION_V2, STAKE_NET);
+        STAKE_VERSION_V2, STAKE_CANCEL_UNFREEZE, STAKE_NET);
     Metrics.histogramObserve(UNFREEZE_CAN_WITHDRAW, -triple.getMiddle().getRight().get(),
-        STAKE_VERSION_V2, STAKE_ENERGY);
+        STAKE_VERSION_V2, STAKE_CANCEL_UNFREEZE, STAKE_ENERGY);
     logger.info("cancel all unfreezeV2 detail:{},{},{}",
         StringUtil.createReadableString(ownerCapsule.getAddress()), ownerCapsule.getType(), sum);
     return true;
