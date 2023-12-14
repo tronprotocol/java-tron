@@ -42,7 +42,7 @@ jobs:
           echo "head_sha is: ${{ github.event.workflow_run.head_sha }}"
       - name: Trigger Sonar Scan
         id: build
-        uses: "mumianhua/trigger-pipeline-action@v7.0"
+        uses: "mumianhua/trigger-pipeline-action@v8.0"
         with:
           buildkite_api_access_token: ${{ secrets.BUILD_KITE_WRITE_TOKEN }}
           pipeline: "nnnnnnnnnnnn/notwell1"
