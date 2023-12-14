@@ -49,6 +49,7 @@ jobs:
           branch: ${{ github.event.workflow_run.head_branch }}
           commit: ${{ github.event.workflow_run.head_sha }}
           pull_request_number: ${{ steps.source-run-info.outputs.pullRequestNumber }}
+          pull_request_base_branch: ${{ steps.source-run-info.outputs.targetBranch }}
       - name: Get Build Kite URL
         run: |
           echo "buildkite link is: ${{ steps.build.outputs.url }}"
