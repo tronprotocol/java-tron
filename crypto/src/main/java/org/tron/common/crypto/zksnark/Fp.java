@@ -30,7 +30,7 @@ public class Fp implements Field<Fp> {
   /**
    * "p" field parameter of F_p, F_p2, F_p6 and F_p12
    */
-  static final BigInteger P = new BigInteger(
+  protected static final BigInteger P = new BigInteger(
       "21888242871839275222246405745257275088696311157297823662689037894645226208583");
 
   /**
@@ -38,31 +38,33 @@ public class Fp implements Field<Fp> {
    * Field elements are represented in Montgomery form as a*{@link #REDUCER} mod {@link #P}. 
    * This specific value of {@link #REDUCER} is selected to facilitate efficient division 
    * by {@link #REDUCER} through simple shifting.
+   * This field is not used in the code but can be helpful for understanding
    */
-  static final BigInteger REDUCER = new BigInteger(
+  @SuppressWarnings("unused")
+  private static final BigInteger REDUCER = new BigInteger(
     "115792089237316195423570985008687907853269984665640564039457584007913129639936");
 
   /**
    * The number of bits in the {@link #REDUCER} value.
    */
-  static final int REDUCER_BITS = 256;
+  private static final int REDUCER_BITS = 256;
 
   /**
    * A precomputed value of {@link #REDUCER}^2 mod {@link #P}.
    */
-  static final BigInteger REDUCER_SQUARED = new BigInteger(
+  private static final BigInteger REDUCER_SQUARED = new BigInteger(
     "3096616502983703923843567936837374451735540968419076528771170197431451843209");
 
   /**
    * A precomputed value of {@link #REDUCER}^3 mod {@link #P}.
    */
-  static final BigInteger REDUCER_CUBED = new BigInteger(
+  private static final BigInteger REDUCER_CUBED = new BigInteger(
     "14921786541159648185948152738563080959093619838510245177710943249661917737183");
 
   /**
    * A precomputed value of -{@link #P}^{-1} mod {@link #REDUCER}.
    */
-  static final BigInteger FACTOR = new BigInteger(
+  private static final BigInteger FACTOR = new BigInteger(
     "111032442853175714102588374283752698368366046808579839647964533820976443843465");
 
   /**
@@ -70,15 +72,15 @@ public class Fp implements Field<Fp> {
    * with a bitwise AND using this value. This choice ensures that only the lower 256 bits
    * of a result are retained, effectively simulating the modulus operation.
    */
-  static final BigInteger MASK = new BigInteger(
+  private static final BigInteger MASK = new BigInteger(
     "115792089237316195423570985008687907853269984665640564039457584007913129639935");
 
-  static final Fp ZERO = Fp.create(BigInteger.ZERO);
-  static final Fp _1 = Fp.create(BigInteger.ONE);
-  static final Fp NON_RESIDUE = Fp.create(new BigInteger(
+  protected static final Fp ZERO = Fp.create(BigInteger.ZERO);
+  protected static final Fp _1 = Fp.create(BigInteger.ONE);
+  protected static final Fp NON_RESIDUE = Fp.create(new BigInteger(
       "21888242871839275222246405745257275088696311157297823662689037894645226208582"));
 
-  static final Fp _2_INV = Fp.create(BigInteger.valueOf(2).modInverse(P));
+  protected static final Fp _2_INV = Fp.create(BigInteger.valueOf(2).modInverse(P));
 
   BigInteger v;
 
