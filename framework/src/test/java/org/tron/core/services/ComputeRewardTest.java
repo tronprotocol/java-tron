@@ -14,12 +14,15 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.service.MortgageService;
 import org.tron.core.service.RewardCalService;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.WitnessStore;
 import org.tron.protos.Protocol;
 
 public class ComputeRewardTest {
@@ -91,6 +94,8 @@ public class ComputeRewardTest {
   private static DelegationStore delegationStore;
   private static AccountStore accountStore;
   private static RewardCalService rewardCalService;
+  private static WitnessStore witnessStore;
+  private static MortgageService mortgageService;
   @ClassRule
   public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -112,10 +117,13 @@ public class ComputeRewardTest {
     delegationStore = context.getBean(DelegationStore.class);
     accountStore = context.getBean(AccountStore.class);
     rewardCalService = context.getBean(RewardCalService.class);
+    witnessStore = context.getBean(WitnessStore.class);
+    mortgageService = context.getBean(MortgageService.class);
     setUp();
   }
 
   private static void setUp() {
+    propertiesStore.saveChangeDelegation(1);
     propertiesStore.saveCurrentCycleNumber(4);
     propertiesStore.saveNewRewardAlgorithmEffectiveCycle();
 
@@ -161,6 +169,10 @@ public class ComputeRewardTest {
       accountBuilder.addVotes(Protocol.Vote.newBuilder()
           .setVoteAddress(ByteString.copyFrom(vote.srAddress))
           .setVoteCount(vote.userVotes));
+      witnessStore.put(vote.srAddress, new WitnessCapsule(Protocol.Witness.newBuilder()
+          .setAddress(ByteString.copyFrom(vote.srAddress))
+          .setVoteCount(vote.totalVotes)
+          .build()));
     }
     accountStore.put(OWNER_ADDRESS, new AccountCapsule(accountBuilder.build()));
 
@@ -169,9 +181,9 @@ public class ComputeRewardTest {
 
   @Test
   public void query() throws IOException {
+    long totalReward = mortgageService.queryReward(OWNER_ADDRESS);
     rewardCalService.calRewardForTest();
-    Assert.assertEquals(3189, rewardCalService.getRewardCache(OWNER_ADDRESS, 3));
-    rewardCalService.calRewardForTest();
+    Assert.assertEquals(totalReward, mortgageService.queryReward(OWNER_ADDRESS));
   }
 
   static class Vote {

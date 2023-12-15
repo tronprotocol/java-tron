@@ -1,16 +1,13 @@
 package org.tron.core.service;
 
+import static org.tron.core.store.DelegationStore.DECIMAL_OF_VI_REWARD;
 import static org.tron.core.store.DelegationStore.REMARK;
 
-import com.google.common.primitives.Bytes;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import io.prometheus.client.Histogram;
-import java.io.IOException;
-import java.util.ArrayList;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.LongStream;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -18,16 +15,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.prometheus.MetricKeys;
-import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Pair;
 import org.tron.core.db.common.iterator.DBIterator;
 import org.tron.core.db2.common.DB;
-import org.tron.core.store.AccountStore;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.RewardCacheStore;
-import org.tron.protos.Protocol;
+import org.tron.core.store.RewardViStore;
+import org.tron.core.store.WitnessStore;
 
 @Component
 @Slf4j(topic = "rewardCalService")
@@ -35,21 +30,16 @@ public class RewardCalService {
 
   private final DB<byte[], byte[]> propertiesStore;
   private final DB<byte[], byte[]> delegationStore;
-  private final DB<byte[], byte[]> accountStore;
+  private final DB<byte[], byte[]> witnessStore;
 
   @Autowired
-  private RewardCacheStore rewardCacheStore;
+  private RewardViStore rewardViStore;
 
 
-  private  byte[] isDoneKey;
+  private static final byte[] IS_DONE_KEY = new byte[]{0x00};
   private static final byte[] IS_DONE_VALUE = new byte[]{0x01};
 
   private long newRewardCalStartCycle = Long.MAX_VALUE;
-  private static final int ADDRESS_SIZE = 21;
-  private byte[] lastAccount = new byte[ADDRESS_SIZE];
-
-  private final AtomicBoolean doing = new AtomicBoolean(false);
-
 
   private final ExecutorService es = Executors.newSingleThreadExecutor(
       new ThreadFactoryBuilder().setNameFormat("rewardCalService").build());
@@ -57,18 +47,17 @@ public class RewardCalService {
 
   @Autowired
   public RewardCalService(@Autowired  DynamicPropertiesStore propertiesStore,
-      @Autowired DelegationStore delegationStore, @Autowired AccountStore accountStore) {
+      @Autowired DelegationStore delegationStore, @Autowired WitnessStore witnessStore) {
     this.propertiesStore = propertiesStore.getDb();
     this.delegationStore = delegationStore.getDb();
-    this.accountStore = accountStore.getDb();
+    this.witnessStore = witnessStore.getDb();
   }
 
   @PostConstruct
-  private void init() throws IOException {
+  private void init() {
     this.newRewardCalStartCycle = this.getNewRewardAlgorithmEffectiveCycle();
     if (newRewardCalStartCycle != Long.MAX_VALUE) {
-      isDoneKey = ByteArray.fromLong(newRewardCalStartCycle);
-      if (rewardCacheStore.has(isDoneKey)) {
+      if (rewardViStore.has(IS_DONE_KEY)) {
         logger.info("RewardCalService is already done");
         return;
       }
@@ -81,147 +70,96 @@ public class RewardCalService {
     es.shutdownNow();
   }
 
-  public void calReward() throws IOException {
-    initLastAccount();
+  public void calReward() {
     es.submit(this::startRewardCal);
   }
 
-  public void calRewardForTest() throws IOException {
+  public void calRewardForTest() {
     this.newRewardCalStartCycle = this.getNewRewardAlgorithmEffectiveCycle();
-    isDoneKey = ByteArray.fromLong(newRewardCalStartCycle);
-    if (rewardCacheStore.has(isDoneKey)) {
+    if (rewardViStore.has(IS_DONE_KEY)) {
       logger.info("RewardCalService is already done");
       return;
     }
-    initLastAccount();
     startRewardCal();
   }
 
-  private void initLastAccount() throws IOException {
-    try (DBIterator iterator = rewardCacheStore.iterator()) {
-      iterator.seekToLast();
-      if (iterator.valid()) {
-        byte[] key  = iterator.getKey();
-        System.arraycopy(key, 0, lastAccount, 0, ADDRESS_SIZE);
-      }
-    }
-  }
 
-
-  private void startRewardCal() {
-    if (!doing.compareAndSet(false, true)) {
-      logger.info("RewardCalService is doing");
-      return;
+  public long getNewRewardAlgorithmReward(long beginCycle, long endCycle,
+                                          List<Pair<byte[], Long>> votes) {
+    if (!rewardViStore.has(IS_DONE_KEY)) {
+      return -1;
     }
-    logger.info("RewardCalService start from lastAccount: {}", ByteArray.toHexString(lastAccount));
-    DBIterator iterator = (DBIterator) accountStore.iterator();
-    iterator.seek(lastAccount);
-    iterator.forEachRemaining(e -> {
-      try {
-        doRewardCal(e.getKey(), e.getValue());
-      } catch (InterruptedException error) {
-        Thread.currentThread().interrupt();
-      }
-    });
-    rewardCacheStore.put(this.isDoneKey, IS_DONE_VALUE);
-    logger.info("RewardCalService is done");
-  }
-
-  private void doRewardCal(byte[] address, byte[] account) throws InterruptedException {
-    List<Protocol.Vote> votesList = this.parseVotesList(account);
-    if (votesList.isEmpty()) {
-      return;
-    }
-    long beginCycle = this.getBeginCycle(address);
-    if (beginCycle >= newRewardCalStartCycle) {
-      return;
-    }
-    long endCycle = this.getEndCycle(address);
-    if (endCycle >= newRewardCalStartCycle) {
-      return;
-    }
-    //skip the last cycle reward
-    boolean skipLastCycle = beginCycle + 1 == endCycle;
-    if (skipLastCycle) {
-      beginCycle += 1;
-    }
-    if (beginCycle >= newRewardCalStartCycle) {
-      return;
-    }
-    Histogram.Timer requestTimer = Metrics.histogramStartTimer(
-        MetricKeys.Histogram.DO_REWARD_CAL_DELAY,
-        (newRewardCalStartCycle - beginCycle) / 100 + "");
-    long reward = LongStream.range(beginCycle, newRewardCalStartCycle)
-        .map(i -> computeReward(i, votesList))
-        .sum();
-    this.putReward(address, beginCycle, endCycle, reward, votesList, skipLastCycle);
-    Metrics.histogramObserve(requestTimer);
-  }
-
-  private List<Protocol.Vote> getVotesList(byte[] address) {
-    byte[] account = this.accountStore.get(address);
-    return this.parseVotesList(account);
-  }
-
-  private List<Protocol.Vote> parseVotesList(byte[] account) {
-    try {
-      return Protocol.Account.parseFrom(account).getVotesList();
-    } catch (Exception e) {
-      logger.error("parse account error: {}", e.getMessage());
-    }
-    return new ArrayList<>();
-  }
-
-  private long computeReward(long cycle, List<Protocol.Vote> votesList) {
     long reward = 0;
-    for (Protocol.Vote vote : votesList) {
-      byte[] srAddress = vote.getVoteAddress().toByteArray();
-      long totalReward = this.getReward(cycle, srAddress);
-      if (totalReward <= 0) {
-        continue;
+    if (beginCycle < endCycle) {
+      for (Pair<byte[], Long> vote : votes) {
+        byte[] srAddress = vote.getKey();
+        BigInteger beginVi = getWitnessVi(beginCycle - 1, srAddress);
+        BigInteger endVi = getWitnessVi(endCycle - 1, srAddress);
+        BigInteger deltaVi = endVi.subtract(beginVi);
+        if (deltaVi.signum() <= 0) {
+          continue;
+        }
+        long userVote = vote.getValue();
+        reward += deltaVi.multiply(BigInteger.valueOf(userVote))
+            .divide(DelegationStore.DECIMAL_OF_VI_REWARD).longValue();
       }
-      long totalVote = this.getWitnessVote(cycle, srAddress);
-      if (totalVote <= 0) {
-        continue;
-      }
-      long userVote = vote.getVoteCount();
-      double voteRate = (double) userVote / totalVote;
-      reward += voteRate * totalReward;
     }
+    // TODO: remove this code after old reward algorithm optimization
+    // TODO: ADD PROPOSAL NEED TO CHECK IS_DONE
+    reward = -1;
     return reward;
   }
 
-  public long getRewardCache(byte[] address, long cycle) {
-    return rewardCacheStore.getReward(buildKey(address, cycle));
+  private void startRewardCal() {
+    logger.info("RewardCalService start");
+    rewardViStore.reset();
+    DBIterator iterator = (DBIterator) witnessStore.iterator();
+    iterator.seekToFirst();
+    iterator.forEachRemaining(e -> accumulateWitnessReward(e.getKey()));
+    rewardViStore.put(IS_DONE_KEY, IS_DONE_VALUE);
+    logger.info("RewardCalService is done");
   }
 
-  private void putReward(byte[] address, long start, long end, long reward,
-                         List<Protocol.Vote>  votesList, boolean skipLastCycle) {
-    long startCycle = this.getBeginCycle(address);
-    long endCycle = this.getEndCycle(address);
-    //skip the last cycle reward
-    if (skipLastCycle) {
-      startCycle += 1;
+  private void accumulateWitnessReward(byte[] witness) {
+    long startCycle = 1;
+    LongStream.range(startCycle, newRewardCalStartCycle)
+        .forEach(cycle -> accumulateWitnessVi(cycle, witness));
+  }
+
+  private void accumulateWitnessVi(long cycle, byte[] address) {
+    BigInteger preVi = getWitnessVi(cycle - 1, address);
+    long voteCount = getWitnessVote(cycle, address);
+    long reward = getReward(cycle, address);
+    if (reward == 0 || voteCount == 0) { // Just forward pre vi
+      if (!BigInteger.ZERO.equals(preVi)) { // Zero vi will not be record
+        setWitnessVi(cycle, address, preVi);
+      }
+    } else { // Accumulate delta vi
+      BigInteger deltaVi = BigInteger.valueOf(reward)
+          .multiply(DECIMAL_OF_VI_REWARD)
+          .divide(BigInteger.valueOf(voteCount));
+      setWitnessVi(cycle, address, preVi.add(deltaVi));
     }
-    List<Protocol.Vote> newVotesList = this.getVotesList(address);
-    // check if the delegation is still valid
-    if (startCycle == start && endCycle == end && votesList.equals(newVotesList)) {
-      rewardCacheStore.putReward(buildKey(address, start), reward);
+  }
+
+  private void setWitnessVi(long cycle, byte[] address, BigInteger value) {
+    byte[] k = buildViKey(cycle, address);
+    byte[] v = value.toByteArray();
+    rewardViStore.put(k, v);
+  }
+
+  private BigInteger getWitnessVi(long cycle, byte[] address) {
+
+    byte[] v = rewardViStore.get(buildViKey(cycle, address));
+    if (v == null) {
+      return BigInteger.ZERO;
+    } else {
+      return new BigInteger(v);
     }
   }
 
-  private byte[] buildKey(byte[] address, long beginCycle) {
-    return Bytes.concat(address, ByteArray.fromLong(beginCycle));
-  }
-
-  private long getBeginCycle(byte[] address) {
-    byte[] value = this.delegationStore.get(address);
-    return value == null ? 0 : ByteArray.toLong(value);
-  }
-
-  private long getEndCycle(byte[] address) {
-    byte[] value = this.delegationStore.get(generateKey("end", address, null));
-    return value == null ? REMARK : ByteArray.toLong(value);
+  private byte[] buildViKey(long cycle, byte[] address) {
+    return generateKey(cycle, address, "vi");
   }
 
   private long getReward(long cycle, byte[] address) {
