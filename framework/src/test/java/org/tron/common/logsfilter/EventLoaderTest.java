@@ -1,13 +1,24 @@
 package org.tron.common.logsfilter;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.tron.common.logsfilter.trigger.BlockLogTrigger;
 import org.tron.common.logsfilter.trigger.TransactionLogTrigger;
 
 public class EventLoaderTest {
+
+  @ClassRule
+  public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
   public void launchNativeQueue() {
@@ -30,6 +41,29 @@ public class EventLoaderTest {
 
     EventPluginLoader.getInstance().stopPlugin();
   }
+
+  @Test
+  public void testPluginManager() throws IOException {
+    EventPluginConfig config = new EventPluginConfig();
+    config.setUseNativeQueue(false);
+    config.setPluginPath(temporaryFolder.newFolder() + "/testPlugin.zip");
+    createPluginInPath(config.getPluginPath());
+    Assert.assertThrows(Exception.class, () -> EventPluginLoader.getInstance().start(config));
+  }
+
+  private void createPluginInPath(String pluginPath) {
+    String fileName = "../testPlugin.zip";
+    try (ZipOutputStream zipOutputStream = new ZipOutputStream(
+            Files.newOutputStream(Paths.get(pluginPath)))) {
+      ZipEntry zipEntry = new ZipEntry(fileName);
+      zipOutputStream.putNextEntry(zipEntry);
+      zipOutputStream.write("".getBytes());
+      zipOutputStream.closeEntry();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
 
   @Test
   public void testBlockLogTrigger() {
