@@ -1,7 +1,7 @@
 apply plugin: 'com.google.protobuf'
 
 def protobufVersion = '3.21.12'
-def grpcVersion = '1.52.1'
+def grpcVersion = '1.60.0'
 
 dependencies {
     compile group: 'com.google.protobuf', name: 'protobuf-java', version: protobufVersion
