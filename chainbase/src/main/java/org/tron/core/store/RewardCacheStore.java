@@ -37,14 +37,6 @@ public class RewardCacheStore extends TronDatabase<byte[]> {
     return dbSource.getData(key) != null;
   }
 
-  public void putReward(byte[] key, long reward) {
-    put(key, ByteArray.fromLong(reward));
-  }
-
-  public long getReward(byte[] key) {
-    byte[] value = get(key);
-    return value == null ? -1 : ByteArray.toLong(value);
-  }
 
   @Override
   public DBIterator iterator() {
