@@ -2,46 +2,16 @@ description = "chainbase – a decentralized database for blockchain."
 
 // Dependency versions
 // ---------------------------------------
-
-def junitVersion = "4.13.2"
-def mockitoVersion = "2.1.0"
-def testNgVersion = "6.11"
 def jacocoVersion = "0.8.0"
-def leveldbVersion = "1.8"
 def jansiVersion = "1.16"
 // --------------------------------------
 
-static def isWindows() {
-    return org.gradle.internal.os.OperatingSystem.current().isWindows()
-}
-
-if (isWindows()) {
-    ext {
-        leveldbGroup = "org.ethereum"
-        leveldbName = "leveldbjni-all"
-        leveldbVersion = "1.18.3"
-    }
-} else {
-    ext {
-        leveldbGroup = "org.fusesource.leveldbjni"
-        leveldbName = "leveldbjni-all"
-        leveldbVersion = "1.8"
-    }
-}
-
 dependencies {
-    testImplementation "junit:junit:$junitVersion"
-    testImplementation "org.mockito:mockito-core:$mockitoVersion"
-
-    compile group: leveldbGroup, name: leveldbName, version: leveldbVersion
-    compile "org.fusesource.jansi:jansi:$jansiVersion"
-    compile group: 'org.rocksdb', name: 'rocksdbjni', version: '5.15.10'
-    compile group: 'com.typesafe', name: 'config', version: '1.3.2'
-    compile 'io.github.tronprotocol:zksnark-java-sdk:1.0.0'
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.8.5'
     compile project(":protocol")
     compile project(":common")
     compile project(":crypto")
+    compile "org.fusesource.jansi:jansi:$jansiVersion"
+    compile 'io.github.tronprotocol:zksnark-java-sdk:1.0.0'
     compile 'org.reflections:reflections:0.9.11'
 }
 
