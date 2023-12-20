@@ -230,6 +230,7 @@ public class Args extends CommonParameter {
     PARAMETER.dynamicConfigEnable = false;
     PARAMETER.dynamicConfigCheckInterval = 600;
     PARAMETER.allowTvmShangHai = 0;
+    PARAMETER.allowOldRewardOpt = 0;
   }
 
   /**
@@ -1181,6 +1182,10 @@ public class Args extends CommonParameter {
     PARAMETER.allowTvmShangHai =
         config.hasPath(Constant.COMMITTEE_ALLOW_TVM_SHANGHAI) ? config
             .getInt(Constant.COMMITTEE_ALLOW_TVM_SHANGHAI) : 0;
+
+    PARAMETER.allowOldRewardOpt =
+        config.hasPath(Constant.COMMITTEE_ALLOW_OLD_REWARD_OPT) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_OLD_REWARD_OPT) : 0;
 
     logConfig();
   }

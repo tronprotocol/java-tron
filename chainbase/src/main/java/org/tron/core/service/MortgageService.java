@@ -5,7 +5,6 @@ import java.math.BigInteger;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
-
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +21,6 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.WitnessStore;
-import org.tron.protos.Protocol.Vote;
 
 @Slf4j(topic = "mortgage")
 @Component
@@ -43,7 +41,6 @@ public class MortgageService {
 
   @Autowired
   private RewardCalService rewardCalService;
-
 
   public void initStore(WitnessStore witnessStore, DelegationStore delegationStore,
       DynamicPropertiesStore dynamicPropertiesStore, AccountStore accountStore) {
@@ -265,11 +262,10 @@ public class MortgageService {
   }
 
   private long getOldReward(long begin, long end, List<Pair<byte[], Long>> votes) {
-    long reward = rewardCalService.getNewRewardAlgorithmReward(begin, end, votes);
-    if (reward >= 0) {
-      return reward;
+    if (dynamicPropertiesStore.allowOldRewardOpt()) {
+      return rewardCalService.getNewRewardAlgorithmReward(begin, end, votes);
     }
-    reward = 0;
+    long reward = 0;
     for (long cycle = begin; cycle < end; cycle++) {
       reward += computeReward(cycle, votes);
     }

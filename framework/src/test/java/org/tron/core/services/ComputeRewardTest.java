@@ -180,9 +180,10 @@ public class ComputeRewardTest {
   }
 
   @Test
-  public void query() throws IOException {
+  public void query() {
     long totalReward = mortgageService.queryReward(OWNER_ADDRESS);
     rewardCalService.calRewardForTest();
+    propertiesStore.saveAllowOldRewardOpt(1);
     Assert.assertEquals(totalReward, mortgageService.queryReward(OWNER_ADDRESS));
   }
 
