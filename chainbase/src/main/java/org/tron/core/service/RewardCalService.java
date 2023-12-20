@@ -87,7 +87,7 @@ public class RewardCalService {
   public long getNewRewardAlgorithmReward(long beginCycle, long endCycle,
                                           List<Pair<byte[], Long>> votes) {
     if (!rewardViStore.has(IS_DONE_KEY)) {
-      return -1;
+      throw new IllegalStateException("RewardCalService is not done");
     }
     long reward = 0;
     if (beginCycle < endCycle) {
@@ -104,9 +104,6 @@ public class RewardCalService {
             .divide(DelegationStore.DECIMAL_OF_VI_REWARD).longValue();
       }
     }
-    // TODO: remove this code after old reward algorithm optimization
-    // TODO: ADD PROPOSAL NEED TO CHECK IS_DONE
-    reward = -1;
     return reward;
   }
 

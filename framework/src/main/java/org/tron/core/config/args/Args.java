@@ -231,6 +231,7 @@ public class Args extends CommonParameter {
     PARAMETER.allowTvmShangHai = 0;
     PARAMETER.unsolidifiedBlockCheck = true;
     PARAMETER.maxUnsolidifiedBlocks = 1000;
+    PARAMETER.allowOldRewardOpt = 0;
   }
 
   /**
@@ -1190,6 +1191,10 @@ public class Args extends CommonParameter {
     PARAMETER.maxUnsolidifiedBlocks =
       config.hasPath(Constant.MAX_UNSOLIDIFIED_BLOCKS) ? config
         .getInt(Constant.MAX_UNSOLIDIFIED_BLOCKS) : 1000;
+
+    PARAMETER.allowOldRewardOpt =
+        config.hasPath(Constant.COMMITTEE_ALLOW_OLD_REWARD_OPT) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_OLD_REWARD_OPT) : 0;
 
     logConfig();
   }
