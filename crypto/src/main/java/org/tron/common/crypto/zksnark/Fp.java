@@ -91,15 +91,15 @@ public class Fp implements Field<Fp> {
   static Fp create(byte[] v) {
     BigInteger value = new BigInteger(1, v);
     if (value.compareTo(P) >= 0) {
-      // Only the values less than P are valid
+      // Only the positive values less than P are valid
       return null;
     }
     return new Fp(toMontgomery(value));
   }
 
   static Fp create(BigInteger v) {
-    if (v.compareTo(P) >= 0) {
-      // Only the values less than P are valid
+    if (v.compareTo(P) >= 0 || v.signum() == -1) {
+      // Only the positive values less than P are valid
       return null;
     }
     return new Fp(toMontgomery(v));
