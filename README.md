@@ -193,7 +193,7 @@ Thank you for considering to help out with the source code! If you'd like to con
 
 # Integrity Check
 
-- After January 3, 2023， releases are signed the gpg key:
+- After January 3, 2023, the release files will be signed using a GPG key pair, and the correctness of the signature will be verified using the following public key:
   ```
   pub: 1254 F859 D2B1 BD9F 66E7 107D F859 BCB4 4A28 290B
   uid: build@tron.network
