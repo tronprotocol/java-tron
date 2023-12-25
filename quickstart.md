@@ -100,7 +100,6 @@ If everything goes well, your terminal console output will look like following :
 
 <summary>Run Console Output </summary>
 <!-- **Run Output:** -->
-    ```
 
     [PM2] Spawning PM2 daemon with pm2_home=/root/.pm2
     [PM2] PM2 Successfully daemonized
@@ -166,25 +165,6 @@ If everything goes well, your terminal console output will look like following :
     (8) TYjQd4xrLZQGYMdLJqsTCuXVGapPqUp9ZX (10000 TRX)
     (9) THCw6hPZpFcLCWDcsZg3W77rXZ9rJQPncD (10000 TRX)
 
-    Private Keys
-    ==================
-
-    (0) 2b2bddbeea87cecedcaf51eef55877b65725f709d2c0fcdfea0cb52d80acd52b
-    (1) f08759925316dc6344af538ebe3a619aeab836a0c254adca903cc764f87b0ee9
-    (2) 1afc9f033cf9c6058db366b78a9f1b9c909b1b83397c9aed795afa05e9017511
-    (3) f8f5bc70e91fc177eefea43b68c97b66536ac317a9300639e9d32a9db2f18a1f
-    (4) 031015272915917056c117d3cc2a03491a8f22ef450af83f6783efddf7064c59
-    (5) 5eb25e2c1144f216aa99bbe2139d84bb6dedfb2c1ed72f3df6684a4c6d2cd96b
-    (6) f0b781da23992e6a3f536cb60917c3eb6a9c5434fcf441fcb8d7c58c01d6b70e
-    (7) 158f60a4379688a77d4a420e2f2a3e014ebf9ed0a1a093d7dc01ba23ebc5c970
-    (8) e9342bb9108f46573804890a5301530c2834dce3703cd51ab77fba6161afec00
-    (9) 2e9f0c507d2ea98dc4005a1afb1b743c629f7c145ccb55f38f75ae73cf8f605c
-
-    HD Wallet
-    ==================
-    Mnemonic:      border pulse twenty cruise grief shy need raw clean possible begin climb
-    Base HD Path:  m/44'/60'/0'/0/{account_index}
-    ```
 </details>
   
 
