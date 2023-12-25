@@ -220,21 +220,6 @@ public abstract class BN128<T extends Field<T>> {
     return z.isZero();
   }
 
-  protected boolean isValid() {
-
-    // check whether coordinates belongs to the Field
-    if (!x.isValid() || !y.isValid() || !z.isValid()) {
-      return false;
-    }
-
-    // check whether point is on the curve
-    if (!isOnCurve()) {
-      return false;
-    }
-
-    return true;
-  }
-
   @Override
   public String toString() {
     return String.format("(%s; %s; %s)", x.toString(), y.toString(), z.toString());
