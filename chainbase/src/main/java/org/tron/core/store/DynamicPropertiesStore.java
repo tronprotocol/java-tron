@@ -2525,6 +2525,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return getNewRewardAlgorithmEffectiveCycle() != Long.MAX_VALUE;
   }
 
+  public boolean useNewRewardAlgorithmFromStart() {
+    return getNewRewardAlgorithmEffectiveCycle() == 1;
+  }
+
   public void saveNewRewardAlgorithmEffectiveCycle() {
     if (getNewRewardAlgorithmEffectiveCycle() == Long.MAX_VALUE) {
       long currentCycle = getCurrentCycleNumber();
@@ -2837,16 +2841,26 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   /**
    * Ensure that the associated calculations have been completed before calling this method.
+   *  @require NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE != Long.MAX_VALUE
+   *  @require old reward vi calculations has been completed
+   *  @require NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE > 1
    */
   public void saveAllowOldRewardOpt(long allowOldRewardOpt) {
-    this.put(ALLOW_OLD_REWARD_OPT, new BytesCapsule(ByteArray.fromLong(allowOldRewardOpt)));
+    if (useNewRewardAlgorithm()) {
+      if (useNewRewardAlgorithmFromStart()) {
+        throw new IllegalStateException("no need old reward opt, ALLOW_NEW_REWARD from start");
+      }
+      this.put(ALLOW_OLD_REWARD_OPT, new BytesCapsule(ByteArray.fromLong(allowOldRewardOpt)));
+    } else {
+      throw new IllegalStateException("not support old reward opt, ALLOW_NEW_REWARD not set");
+    }
   }
 
   public boolean allowOldRewardOpt() {
     return Optional.ofNullable(getUnchecked(ALLOW_OLD_REWARD_OPT))
-        .map(BytesCapsule::getData)
-        .map(ByteArray::toLong)
-        .orElse(CommonParameter.getInstance().getAllowOldRewardOpt()) == 1L;
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElse(0L) == 1L;
   }
 
   private static class DynamicResourceProperties {

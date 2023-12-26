@@ -80,7 +80,7 @@ public class RewardCalService {
 
   private boolean enableNewRewardAlgorithm() {
     this.newRewardCalStartCycle = this.getNewRewardAlgorithmEffectiveCycle();
-    return newRewardCalStartCycle != Long.MAX_VALUE;
+    return this.newRewardCalStartCycle != Long.MAX_VALUE;
   }
 
   private boolean isDone() {
@@ -89,12 +89,16 @@ public class RewardCalService {
 
   private void maybeRun() {
     if (enableNewRewardAlgorithm()) {
-      if (isDone()) {
-        logger.info("RewardCalService is already done");
+      if (this.newRewardCalStartCycle > 1) {
+        if (isDone()) {
+          logger.info("RewardCalService is already done");
+        } else {
+          startRewardCal();
+        }
+        calcMerkleRoot();
       } else {
-        startRewardCal();
+        logger.info("RewardCalService is no need to run");
       }
-      calcMerkleRoot();
       es.shutdown();
     }
   }
