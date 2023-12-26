@@ -180,9 +180,11 @@ public class ComputeRewardTest {
   }
 
   @Test
-  public void query() {
+  public void query() throws InterruptedException {
     long totalReward = mortgageService.queryReward(OWNER_ADDRESS);
-    rewardCalService.calRewardForTest();
+    while (!rewardCalService.getEs().isTerminated()) {
+      Thread.sleep(10);
+    }
     propertiesStore.saveAllowOldRewardOpt(1);
     Assert.assertEquals(totalReward, mortgageService.queryReward(OWNER_ADDRESS));
   }

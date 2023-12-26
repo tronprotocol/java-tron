@@ -3,17 +3,19 @@ package org.tron.core.service;
 import static org.tron.core.store.DelegationStore.DECIMAL_OF_VI_REWARD;
 import static org.tron.core.store.DelegationStore.REMARK;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.common.annotations.VisibleForTesting;
 import java.math.BigInteger;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.LongStream;
 import javax.annotation.PreDestroy;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Pair;
 import org.tron.core.db.common.iterator.DBIterator;
@@ -34,14 +36,15 @@ public class RewardCalService {
   @Autowired
   private RewardViStore rewardViStore;
 
-
   private static final byte[] IS_DONE_KEY = new byte[]{0x00};
   private static final byte[] IS_DONE_VALUE = new byte[]{0x01};
 
   private long newRewardCalStartCycle = Long.MAX_VALUE;
 
-  private final ExecutorService es = Executors.newSingleThreadExecutor(
-      new ThreadFactoryBuilder().setNameFormat("rewardCalService").build());
+  @VisibleForTesting
+  @Getter
+  private final ScheduledExecutorService es = ExecutorServiceManager
+      .newSingleThreadScheduledExecutor("rewardCalService");
 
 
   @Autowired
@@ -53,32 +56,32 @@ public class RewardCalService {
   }
 
   public void init() {
+    es.scheduleWithFixedDelay(this::maybeRun, 0, 3, TimeUnit.SECONDS);
+  }
+
+  private boolean enableNewRewardAlgorithm() {
     this.newRewardCalStartCycle = this.getNewRewardAlgorithmEffectiveCycle();
-    if (newRewardCalStartCycle != Long.MAX_VALUE) {
-      if (rewardViStore.has(IS_DONE_KEY)) {
+    return newRewardCalStartCycle != Long.MAX_VALUE;
+  }
+
+  private boolean isDone() {
+    return rewardViStore.has(IS_DONE_KEY);
+  }
+
+  private void maybeRun() {
+    if (enableNewRewardAlgorithm()) {
+      if (isDone()) {
         logger.info("RewardCalService is already done");
-        return;
+      } else {
+        startRewardCal();
       }
-      calReward();
+      es.shutdown();
     }
   }
 
   @PreDestroy
   private void destroy() {
     es.shutdownNow();
-  }
-
-  public void calReward() {
-    es.submit(this::startRewardCal);
-  }
-
-  public void calRewardForTest() {
-    this.newRewardCalStartCycle = this.getNewRewardAlgorithmEffectiveCycle();
-    if (rewardViStore.has(IS_DONE_KEY)) {
-      logger.info("RewardCalService is already done");
-      return;
-    }
-    startRewardCal();
   }
 
 
