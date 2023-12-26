@@ -430,23 +430,29 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   private void calculateStateRoot(Map<WrappedByteArray, WrappedByteArray> batch) {
-    AtomicLong height = new AtomicLong();
+    AtomicLong height = new AtomicLong(-1);
+    MerklePatriciaTrie<org.apache.tuweni.bytes.Bytes, org.apache.tuweni.bytes.Bytes> root
+        = new SimpleMerklePatriciaTrie<>(Function.identity());
     Map<String, MerklePatriciaTrie<org.apache.tuweni.bytes.Bytes, org.apache.tuweni.bytes.Bytes>>
         trieMap = new HashMap<>();
     batch.forEach((k, v) -> {
-      byte[] key = k.getBytes();
-      byte[] value = v.getBytes();
-      String dbName = simpleDecode(key);
+      org.apache.tuweni.bytes.Bytes key = org.apache.tuweni.bytes.Bytes.wrap(k.getBytes());
+      org.apache.tuweni.bytes.Bytes value = org.apache.tuweni.bytes.Bytes.wrap(v.getBytes());
+      String dbName = simpleDecode(k.getBytes());
+      if (StateType.get(dbName) == StateType.UNDEFINED) {
+        return;
+      }
       trieMap.computeIfAbsent(dbName, s -> new SimpleMerklePatriciaTrie<>(Function.identity()))
-          .put(org.apache.tuweni.bytes.Bytes.wrap(key), org.apache.tuweni.bytes.Bytes.wrap(value));
-      if ("properties".equalsIgnoreCase(dbName)
+          .put(key, value);
+      root.put(key, value);
+      if (height.get() == -1 && "properties".equalsIgnoreCase(dbName)
           && Arrays.equals(Bytes.concat(simpleEncode("properties"),
-          "latest_block_header_number".getBytes()), key)) {
-        height.set(ByteArray.toLong(value));
+          "latest_block_header_number".getBytes()), k.getBytes())) {
+        height.set(ByteArray.toLong(v.getBytes()));
       }
     });
     StringBuilder sb = new StringBuilder();
-    sb.append("state-").append(height.get()).append(":");
+    sb.append("state-").append(height.get()).append(": ").append(root.getRootHash()).append(" ");
     sb.append("{");
     trieMap.entrySet().stream().sorted(Map.Entry.comparingByKey())
         .forEach(e -> sb.append(e.getKey()).append(":").append(e.getValue().getRootHash())
