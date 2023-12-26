@@ -530,6 +530,10 @@ public class CommonParameter {
   @Setter
   public long allowShieldedTRC20Transaction;
 
+  @Getter
+  @Setter
+  public long closeShieldedTRC20Transaction;
+
   @Getter/**/
   @Setter
   public long allowTvmIstanbul;

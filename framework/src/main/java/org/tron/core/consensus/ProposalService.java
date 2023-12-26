@@ -355,6 +355,10 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(entry.getValue());
           break;
         }
+        case CLOSE_SHIELDED_TRC20_TRANSACTION: {
+          manager.getDynamicPropertiesStore().saveCloseShieldedTRC20Transaction(entry.getValue());
+          break;
+        }
         default:
           find = false;
           break;

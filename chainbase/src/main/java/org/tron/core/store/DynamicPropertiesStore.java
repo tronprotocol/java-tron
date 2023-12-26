@@ -134,8 +134,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   //If the parameter is larger than 0, allow ZKsnark Transaction
   private static final byte[] ALLOW_SHIELDED_TRANSACTION = "ALLOW_SHIELDED_TRANSACTION".getBytes();
   private static final byte[] ALLOW_SHIELDED_TRC20_TRANSACTION =
-      "ALLOW_SHIELDED_TRC20_TRANSACTION"
-          .getBytes();
+      "ALLOW_SHIELDED_TRC20_TRANSACTION".getBytes();
+  private static final byte[] CLOSE_SHIELDED_TRC20_TRANSACTION =
+      "CLOSE_SHIELDED_TRC20_TRANSACTION".getBytes();
   private static final byte[] ALLOW_TVM_ISTANBUL = "ALLOW_TVM_ISTANBUL".getBytes();
   private static final byte[] ALLOW_TVM_CONSTANTINOPLE = "ALLOW_TVM_CONSTANTINOPLE".getBytes();
   private static final byte[] ALLOW_TVM_SOLIDITY_059 = "ALLOW_TVM_SOLIDITY_059".getBytes();
@@ -684,6 +685,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveAllowShieldedTRC20Transaction(
           CommonParameter.getInstance().getAllowShieldedTRC20Transaction());
+    }
+
+    try {
+      this.getCloseShieldedTRC20Transaction();
+    } catch (IllegalArgumentException e) {
+      this.saveCloseShieldedTRC20Transaction(
+          CommonParameter.getInstance().getCloseShieldedTRC20Transaction());
     }
 
     try {
@@ -2013,6 +2021,20 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public long getAllowShieldedTRC20Transaction() {
     String msg = "not found ALLOW_SHIELDED_TRC20_TRANSACTION";
     return Optional.ofNullable(getUnchecked(ALLOW_SHIELDED_TRC20_TRANSACTION))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException(msg));
+  }
+
+  public void saveCloseShieldedTRC20Transaction(long closeShieldedTRC20Transaction) {
+    this.put(DynamicPropertiesStore.CLOSE_SHIELDED_TRC20_TRANSACTION,
+        new BytesCapsule(ByteArray.fromLong(closeShieldedTRC20Transaction)));
+  }
+
+  public long getCloseShieldedTRC20Transaction() {
+    String msg = "not found CLOSE_SHIELDED_TRC20_TRANSACTION";
+    return Optional.ofNullable(getUnchecked(CLOSE_SHIELDED_TRC20_TRANSACTION))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(

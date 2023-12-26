@@ -1322,6 +1322,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getMaxDelegateLockPeriod())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getCloseShieldedTRC20Transaction")
+        .setValue(dbManager.getDynamicPropertiesStore().getCloseShieldedTRC20Transaction())
+        .build());
+
     return builder.build();
   }
 

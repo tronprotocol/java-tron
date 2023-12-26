@@ -175,6 +175,7 @@ public class RpcApiServicesTest {
     manager.getAccountStore().put(ownerCapsule.createDbKey(), ownerCapsule);
     manager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     manager.getDynamicPropertiesStore().saveAllowShieldedTRC20Transaction(1);
+    manager.getDynamicPropertiesStore().saveCloseShieldedTRC20Transaction(0);
     Application appTest = ApplicationFactory.create(context);
     appTest.addService(rpcApiService);
     appTest.addService(rpcApiServiceOnSolidity);

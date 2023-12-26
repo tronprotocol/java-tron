@@ -728,6 +728,17 @@ public class ProposalUtil {
         }
         break;
       }
+      case CLOSE_SHIELDED_TRC20_TRANSACTION: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_7_4)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [CLOSE_SHIELDED_TRC20_TRANSACTION]");
+        }
+        if (value < 0 || value > 3) {
+          throw new ContractValidateException(
+              "This value[CLOSE_SHIELDED_TRC20_TRANSACTION] is only allowed to be in the range 0-3");
+        }
+        break;
+      }
       default:
         break;
     }
@@ -803,7 +814,8 @@ public class ProposalUtil {
     DYNAMIC_ENERGY_MAX_FACTOR(75), // 0, [0, 100_000]
     ALLOW_TVM_SHANGHAI(76), // 0, 1
     ALLOW_CANCEL_ALL_UNFREEZE_V2(77), // 0, 1
-    MAX_DELEGATE_LOCK_PERIOD(78); // (86400, 10512000]
+    MAX_DELEGATE_LOCK_PERIOD(78), // (86400, 10512000]
+    CLOSE_SHIELDED_TRC20_TRANSACTION(79); // 0, {0,1,2,3}
 
     private long code;
 

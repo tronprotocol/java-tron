@@ -23,6 +23,8 @@ public class VMConfig {
 
   private static boolean ALLOW_SHIELDED_TRC20_TRANSACTION = false;
 
+  private static long CLOSE_SHIELDED_TRC20_TRANSACTION = 0;
+
   private static boolean ALLOW_TVM_ISTANBUL = false;
 
   private static boolean ALLOW_TVM_FREEZE = false;
@@ -82,6 +84,10 @@ public class VMConfig {
 
   public static void initAllowShieldedTRC20Transaction(long allow) {
     ALLOW_SHIELDED_TRC20_TRANSACTION = allow == 1;
+  }
+
+  public static void initCloseShieldedTRC20Transaction(long close) {
+    CLOSE_SHIELDED_TRC20_TRANSACTION = close;
   }
 
   public static void initAllowTvmIstanbul(long allow) {
@@ -158,6 +164,10 @@ public class VMConfig {
 
   public static boolean allowShieldedTRC20Transaction() {
     return ALLOW_SHIELDED_TRC20_TRANSACTION;
+  }
+
+  public static long closeShieldedTRC20Transaction() {
+    return CLOSE_SHIELDED_TRC20_TRANSACTION;
   }
 
   public static boolean allowTvmIstanbul() {

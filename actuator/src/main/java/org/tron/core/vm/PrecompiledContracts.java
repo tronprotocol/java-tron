@@ -1229,6 +1229,9 @@ public class PrecompiledContracts {
 
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
+      if (VMConfig.closeShieldedTRC20Transaction() >= 1) {
+        throw new RuntimeException("mint not allowed");
+      }
       if (data == null) {
         return Pair.of(true, DataWord.ZERO().getData());
       }
@@ -1307,6 +1310,9 @@ public class PrecompiledContracts {
 
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
+      if (VMConfig.closeShieldedTRC20Transaction() >= 2) {
+        throw new RuntimeException("transfer not allowed");
+      }
       if (data == null) {
         return Pair.of(true, DataWord.ZERO().getData());
       }
@@ -1584,6 +1590,9 @@ public class PrecompiledContracts {
 
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
+      if (VMConfig.closeShieldedTRC20Transaction() >= 3) {
+        throw new RuntimeException("burn not allowed");
+      }
       if (data == null) {
         return Pair.of(true, DataWord.ZERO().getData());
       }
