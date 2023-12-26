@@ -12,6 +12,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -96,6 +97,7 @@ public class ComputeRewardTest {
   private static RewardCalService rewardCalService;
   private static WitnessStore witnessStore;
   private static MortgageService mortgageService;
+  private static NodeInfoService nodeInfoService;
   @ClassRule
   public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -119,6 +121,7 @@ public class ComputeRewardTest {
     rewardCalService = context.getBean(RewardCalService.class);
     witnessStore = context.getBean(WitnessStore.class);
     mortgageService = context.getBean(MortgageService.class);
+    nodeInfoService = context.getBean(NodeInfoService.class);
     setUp();
   }
 
@@ -177,6 +180,8 @@ public class ComputeRewardTest {
     accountStore.put(OWNER_ADDRESS, new AccountCapsule(accountBuilder.build()));
 
     propertiesStore.saveCurrentCycleNumber(5);
+    rewardCalService.setRewardViRoot(Sha256Hash.wrap(
+        ByteString.fromHex("e0ebe2f3243391ed674dff816a07f589a3279420d6d88bc823b6a9d5778337ce")));
   }
 
   @Test
@@ -187,6 +192,8 @@ public class ComputeRewardTest {
     }
     propertiesStore.saveAllowOldRewardOpt(1);
     Assert.assertEquals(totalReward, mortgageService.queryReward(OWNER_ADDRESS));
+    Assert.assertEquals("e0ebe2f3243391ed674dff816a07f589a3279420d6d88bc823b6a9d5778337ce",
+        nodeInfoService.getNodeInfo().getRewardViRoot());
   }
 
   static class Vote {

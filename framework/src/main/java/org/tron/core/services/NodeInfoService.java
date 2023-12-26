@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Objects;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.collections4.CollectionUtils;
@@ -25,12 +26,14 @@ import org.tron.common.entity.NodeInfo.MachineInfo.MemoryDescInfo;
 import org.tron.common.entity.PeerInfo;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.MetricTime;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.db.Manager;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
 import org.tron.core.net.service.statistics.NodeStatistics;
+import org.tron.core.service.RewardCalService;
 import org.tron.core.services.WitnessProductBlockService.CheatWitnessInfo;
 import org.tron.p2p.P2pConfig;
 import org.tron.p2p.P2pService;
@@ -57,6 +60,9 @@ public class NodeInfoService {
   @Autowired
   private WitnessProductBlockService witnessProductBlockService;
 
+  @Autowired
+  private RewardCalService rewardCalService;
+
   @MetricTime
   public NodeInfo getNodeInfo() {
     NodeInfo nodeInfo = new NodeInfo();
@@ -65,6 +71,7 @@ public class NodeInfoService {
     setConfigNodeInfo(nodeInfo);
     setBlockInfo(nodeInfo);
     setCheatWitnessInfo(nodeInfo);
+    setRewardViRoot(nodeInfo);
     return nodeInfo;
   }
 
@@ -204,6 +211,13 @@ public class NodeInfoService {
     for (Entry<String, CheatWitnessInfo> entry : witnessProductBlockService.queryCheatWitnessInfo()
         .entrySet()) {
       nodeInfo.getCheatWitnessInfoMap().put(entry.getKey(), entry.getValue().toString());
+    }
+  }
+
+  private void setRewardViRoot(NodeInfo nodeInfo) {
+    Sha256Hash root = rewardCalService.getRewardViRootLocal();
+    if (Objects.nonNull(root)) {
+      nodeInfo.setRewardViRoot(root.toString());
     }
   }
 

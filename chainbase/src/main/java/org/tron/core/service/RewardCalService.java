@@ -4,20 +4,31 @@ import static org.tron.core.store.DelegationStore.DECIMAL_OF_VI_REWARD;
 import static org.tron.core.store.DelegationStore.REMARK;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Streams;
+import com.google.common.primitives.Bytes;
+import com.google.protobuf.ByteString;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 import javax.annotation.PreDestroy;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.es.ExecutorServiceManager;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Pair;
+import org.tron.common.utils.Sha256Hash;
+import org.tron.core.capsule.utils.MerkleTree;
 import org.tron.core.db.common.iterator.DBIterator;
 import org.tron.core.db2.common.DB;
 import org.tron.core.store.DelegationStore;
@@ -40,6 +51,14 @@ public class RewardCalService {
   private static final byte[] IS_DONE_VALUE = new byte[]{0x01};
 
   private long newRewardCalStartCycle = Long.MAX_VALUE;
+
+  @VisibleForTesting
+  @Setter
+  private Sha256Hash rewardViRoot = Sha256Hash.wrap(
+      ByteString.fromHex("9debcb9924055500aaae98cdee10501c5c39d4daa75800a996f4bdda73dbccd8"));
+
+  @Getter
+  private Sha256Hash rewardViRootLocal = null;
 
   @VisibleForTesting
   @Getter
@@ -75,6 +94,7 @@ public class RewardCalService {
       } else {
         startRewardCal();
       }
+      calcMerkleRoot();
       es.shutdown();
     }
   }
@@ -106,6 +126,28 @@ public class RewardCalService {
       }
     }
     return reward;
+  }
+
+  private void calcMerkleRoot() {
+    logger.info("calcMerkleRoot start");
+    DBIterator iterator = rewardViStore.iterator();
+    iterator.seekToFirst();
+    ArrayList<Sha256Hash> ids = Streams.stream(iterator)
+        .map(this::getMerkleHash)
+        .collect(Collectors.toCollection(ArrayList::new));
+
+    rewardViRootLocal = MerkleTree.getInstance().createTree(ids).getRoot().getHash();
+    if (!Objects.equals(rewardViRoot, rewardViRootLocal)) {
+      logger.error("merkle root check error, expect: {}, actual: {}",
+          rewardViRoot, rewardViRootLocal);
+      System.exit(1);
+    }
+    logger.info("calcMerkleRoot: {}", rewardViRootLocal);
+  }
+
+  private Sha256Hash getMerkleHash(Map.Entry<byte[], byte[]> entry) {
+    return Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(),
+        Bytes.concat(entry.getKey(), entry.getValue()));
   }
 
   private void startRewardCal() {

@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.db.TronDatabase;
+import org.tron.core.db.common.iterator.DBIterator;
 
 @Slf4j(topic = "DB")
 @Component
@@ -33,5 +34,10 @@ public class RewardViStore extends TronDatabase<byte[]> {
   @Override
   public boolean has(byte[] key) {
     return dbSource.getData(key) != null;
+  }
+
+  @Override
+  public DBIterator iterator() {
+    return ((DBIterator) dbSource.iterator());
   }
 }
