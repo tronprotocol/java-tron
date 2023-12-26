@@ -9,12 +9,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.File;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -435,21 +430,30 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   private void calculateStateRoot(Map<WrappedByteArray, WrappedByteArray> batch) {
-    final MerklePatriciaTrie<org.apache.tuweni.bytes.Bytes, org.apache.tuweni.bytes.Bytes>
-        trie = new SimpleMerklePatriciaTrie<>(Function.identity());
     AtomicLong height = new AtomicLong();
+    Map<String, MerklePatriciaTrie<org.apache.tuweni.bytes.Bytes, org.apache.tuweni.bytes.Bytes>>
+        trieMap = new HashMap<>();
     batch.forEach((k, v) -> {
       byte[] key = k.getBytes();
       byte[] value = v.getBytes();
       String dbName = simpleDecode(key);
-      trie.put(org.apache.tuweni.bytes.Bytes.wrap(key), org.apache.tuweni.bytes.Bytes.wrap(value));
+      trieMap.computeIfAbsent(dbName, s -> new SimpleMerklePatriciaTrie<>(Function.identity()))
+          .put(org.apache.tuweni.bytes.Bytes.wrap(key), org.apache.tuweni.bytes.Bytes.wrap(value));
       if ("properties".equalsIgnoreCase(dbName)
           && Arrays.equals(Bytes.concat(simpleEncode("properties"),
           "latest_block_header_number".getBytes()), key)) {
         height.set(ByteArray.toLong(value));
       }
     });
-    logger.info("height: {}, trie-root: {}", height.get(), trie.getRootHash());
+    StringBuilder sb = new StringBuilder();
+    sb.append("state-").append(height.get()).append(":");
+    sb.append("{");
+    trieMap.entrySet().stream().sorted(Map.Entry.comparingByKey())
+        .forEach(e -> sb.append(e.getKey()).append(":").append(e.getValue().getRootHash())
+            .append(","));
+    sb.deleteCharAt(sb.length() - 1);
+    sb.append("}");
+    logger.info("{}", sb);
   }
 
   private TronDatabase<byte[]> getCheckpointDB(String dbName) {
