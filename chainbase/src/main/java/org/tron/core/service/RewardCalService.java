@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.LongStream;
-import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
@@ -53,8 +52,7 @@ public class RewardCalService {
     this.witnessStore = witnessStore.getDb();
   }
 
-  @PostConstruct
-  private void init() {
+  public void init() {
     this.newRewardCalStartCycle = this.getNewRewardAlgorithmEffectiveCycle();
     if (newRewardCalStartCycle != Long.MAX_VALUE) {
       if (rewardViStore.has(IS_DONE_KEY)) {
