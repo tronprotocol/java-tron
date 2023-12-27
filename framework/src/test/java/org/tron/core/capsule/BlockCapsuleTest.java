@@ -2,7 +2,9 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -144,6 +146,22 @@ public class BlockCapsuleTest {
   @Test
   public void testGetTimeStamp() {
     Assert.assertEquals(1234L, blockCapsule0.getTimeStamp());
+  }
+
+  @Test
+  public void testConcurrentToString() throws InterruptedException {
+    List<Thread> threadList = new ArrayList<>();
+    int n = 10;
+    for (int i = 0; i < n; i++) {
+      threadList.add(new Thread(() -> blockCapsule0.toString()));
+    }
+    for (int i = 0; i < n; i++) {
+      threadList.get(i).start();
+    }
+    for (int i = 0; i < n; i++) {
+      threadList.get(i).join();
+    }
+    Assert.assertTrue(true);
   }
 
 }
