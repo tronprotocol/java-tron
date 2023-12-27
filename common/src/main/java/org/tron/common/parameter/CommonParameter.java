@@ -176,7 +176,7 @@ public class CommonParameter {
   public int nodeListenPort;
   @Getter
   @Setter
-  public String nodeDiscoveryBindIp;
+  public String nodeLanIp;
   @Getter
   @Setter
   public String nodeExternalIp;
