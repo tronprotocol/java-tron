@@ -172,6 +172,9 @@ public class MortgageService {
     for (Pair<byte[], Long> vote : votes) {
       byte[] srAddress = vote.getKey();
       long totalReward = delegationStore.getReward(cycle, srAddress);
+      if (totalReward <= 0) {
+        continue;
+      }
       long totalVote = delegationStore.getWitnessVote(cycle, srAddress);
       if (totalVote == DelegationStore.REMARK || totalVote == 0) {
         continue;
