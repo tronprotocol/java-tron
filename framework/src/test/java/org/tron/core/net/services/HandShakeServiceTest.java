@@ -38,6 +38,7 @@ import org.tron.p2p.base.Parameter;
 import org.tron.p2p.connection.Channel;
 import org.tron.p2p.discover.Node;
 import org.tron.p2p.utils.NetUtil;
+import org.tron.program.Version;
 import org.tron.protos.Discover.Endpoint;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.HelloMessage.Builder;
@@ -99,6 +100,9 @@ public class HandShakeServiceTest {
     Node node = new Node(NetUtil.getNodeId(), a1.getAddress().getHostAddress(), null, a1.getPort());
     HelloMessage helloMessage = new HelloMessage(node, System.currentTimeMillis(),
         ChainBaseManager.getChainBaseManager());
+
+    Assert.assertEquals(Version.getVersion(),
+        new String(helloMessage.getHelloMessage().getCodeVersion().toByteArray()));
     method.invoke(p2pEventHandler, peer, helloMessage.getSendBytes());
 
     //dup hello message
