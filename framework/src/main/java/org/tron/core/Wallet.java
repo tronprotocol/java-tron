@@ -520,6 +520,13 @@ public class Wallet {
         }
       }
 
+      if (tronNetDelegate.unsolidifiedBlockCheck()) {
+        logger.warn("Broadcast transaction {} has failed, block unsolidified.", txID);
+        return builder.setResult(false).setCode(response_code.BLOCK_UNSOLIDIFIED)
+          .setMessage(ByteString.copyFromUtf8("Bock unsolidified."))
+          .build();
+      }
+
       if (dbManager.isTooManyPending()) {
         logger.warn("Broadcast transaction {} has failed, too many pending.", txID);
         return builder.setResult(false).setCode(response_code.SERVER_BUSY)
