@@ -42,7 +42,7 @@ public class InventoryMsgHandlerTest {
     peer.setNeedSyncFromUs(false);
 
     TronNetDelegate tronNetDelegate = mock(TronNetDelegate.class);
-    Mockito.when(tronNetDelegate.unsolidifiedBlockCheck()).thenReturn(true);
+    Mockito.when(tronNetDelegate.isBlockUnsolidified()).thenReturn(true);
 
     Field field = handler.getClass().getDeclaredField("tronNetDelegate");
     field.setAccessible(true);

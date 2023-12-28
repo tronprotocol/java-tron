@@ -371,7 +371,7 @@ public class TronNetDelegate {
     return chainBaseManager.getDynamicPropertiesStore().getMaintenanceTimeInterval();
   }
 
-  public boolean unsolidifiedBlockCheck() {
+  public boolean isBlockUnsolidified() {
     if (!unsolidifiedBlockCheck) {
       return false;
     }

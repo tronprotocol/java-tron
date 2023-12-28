@@ -33,11 +33,11 @@ public class TronNetDelegateTest {
     field.setAccessible(true);
     field.set(tronNetDelegate, chainBaseManager);
 
-    Assert.assertTrue(!tronNetDelegate.unsolidifiedBlockCheck());
+    Assert.assertTrue(!tronNetDelegate.isBlockUnsolidified());
 
     blockId = new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 1L);
     Mockito.when(chainBaseManager.getSolidBlockId()).thenReturn(blockId);
-    Assert.assertTrue(tronNetDelegate.unsolidifiedBlockCheck());
+    Assert.assertTrue(tronNetDelegate.isBlockUnsolidified());
 
     parameter.setUnsolidifiedBlockCheck(false);
     tronNetDelegate = new TronNetDelegate();
@@ -46,6 +46,6 @@ public class TronNetDelegateTest {
     field.setAccessible(true);
     field.set(tronNetDelegate, false);
 
-    Assert.assertTrue(!tronNetDelegate.unsolidifiedBlockCheck());
+    Assert.assertTrue(!tronNetDelegate.isBlockUnsolidified());
   }
 }

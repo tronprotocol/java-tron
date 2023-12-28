@@ -53,7 +53,7 @@ public class InventoryMsgHandler implements TronMsgHandler {
       return false;
     }
 
-    if (type.equals(InventoryType.TRX) && tronNetDelegate.unsolidifiedBlockCheck()) {
+    if (type.equals(InventoryType.TRX) && tronNetDelegate.isBlockUnsolidified()) {
       logger.warn("Drop inv: {} size: {} from Peer {}, block unsolidified",
           type, size, peer.getInetAddress());
       return false;
