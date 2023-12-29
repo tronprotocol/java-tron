@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -136,7 +135,7 @@ public class Args extends CommonParameter {
     PARAMETER.maxTps = 1000;
     PARAMETER.minParticipationRate = 0;
     PARAMETER.nodeListenPort = 0;
-    PARAMETER.nodeDiscoveryBindIp = "";
+    PARAMETER.nodeLanIp = "";
     PARAMETER.nodeExternalIp = "";
     PARAMETER.nodeP2pVersion = 0;
     PARAMETER.nodeEnableIpv6 = false;
@@ -635,7 +634,7 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.NODE_LISTEN_PORT)
             ? config.getInt(Constant.NODE_LISTEN_PORT) : 0;
 
-    bindIp(config);
+    PARAMETER.nodeLanIp = PARAMETER.p2pConfig.getLanIp();
     externalIp(config);
 
     PARAMETER.nodeP2pVersion =
@@ -1247,7 +1246,7 @@ public class Args extends CommonParameter {
       if (filter) {
         String ip = inetSocketAddress.getAddress().getHostAddress();
         int port = inetSocketAddress.getPort();
-        if (!(PARAMETER.nodeDiscoveryBindIp.equals(ip)
+        if (!(PARAMETER.nodeLanIp.equals(ip)
             || PARAMETER.nodeExternalIp.equals(ip)
             || Constant.LOCAL_HOST.equals(ip))
             || PARAMETER.nodeListenPort != port) {
@@ -1525,25 +1524,6 @@ public class Args extends CommonParameter {
     return filter;
   }
 
-  private static void bindIp(final com.typesafe.config.Config config) {
-    if (!config.hasPath(Constant.NODE_DISCOVERY_BIND_IP)
-        || config.getString(Constant.NODE_DISCOVERY_BIND_IP)
-        .trim().isEmpty()) {
-      if (PARAMETER.nodeDiscoveryBindIp == null) {
-        logger.info("Bind address wasn't set, Punching to identify it...");
-        try (Socket s = new Socket("www.baidu.com", 80)) {
-          PARAMETER.nodeDiscoveryBindIp = s.getLocalAddress().getHostAddress();
-          logger.info("UDP local bound to: {}", PARAMETER.nodeDiscoveryBindIp);
-        } catch (IOException e) {
-          logger.warn("Can't get bind IP. Fall back to 127.0.0.1: " + e);
-          PARAMETER.nodeDiscoveryBindIp = "127.0.0.1";
-        }
-      }
-    } else {
-      PARAMETER.nodeDiscoveryBindIp = config.getString(Constant.NODE_DISCOVERY_BIND_IP).trim();
-    }
-  }
-
   private static void externalIp(final com.typesafe.config.Config config) {
     if (!config.hasPath(Constant.NODE_DISCOVERY_EXTERNAL_IP) || config
         .getString(Constant.NODE_DISCOVERY_EXTERNAL_IP).trim().isEmpty()) {
@@ -1551,7 +1531,7 @@ public class Args extends CommonParameter {
         logger.info("External IP wasn't set, using ipv4 from libp2p");
         PARAMETER.nodeExternalIp = PARAMETER.p2pConfig.getIp();
         if (StringUtils.isEmpty(PARAMETER.nodeExternalIp)) {
-          PARAMETER.nodeExternalIp = PARAMETER.nodeDiscoveryBindIp;
+          PARAMETER.nodeExternalIp = PARAMETER.nodeLanIp;
         }
       }
     } else {
@@ -1622,7 +1602,7 @@ public class Args extends CommonParameter {
     logger.info("\n");
     logger.info("************************ Net config ************************");
     logger.info("P2P version: {}", parameter.getNodeP2pVersion());
-    logger.info("Bind IP: {}", parameter.getNodeDiscoveryBindIp());
+    logger.info("LAN IP: {}", parameter.getNodeLanIp());
     logger.info("External IP: {}", parameter.getNodeExternalIp());
     logger.info("Listen port: {}", parameter.getNodeListenPort());
     logger.info("Node ipv6 enable: {}", parameter.isNodeEnableIpv6());

@@ -281,8 +281,6 @@ public class Constant {
   public static final String EVENT_SUBSCRIBE_CONTRACT_ADDRESS = "event.subscribe.filter.contractAddress";
   public static final String EVENT_SUBSCRIBE_CONTRACT_TOPIC = "event.subscribe.filter.contractTopic";
 
-  public static final String NODE_DISCOVERY_BIND_IP = "node.discovery.bind.ip";
-
   public static final String NODE_DISCOVERY_EXTERNAL_IP = "node.discovery.external.ip";
 
   public static final String NODE_BACKUP_PRIORITY = "node.backup.priority";
