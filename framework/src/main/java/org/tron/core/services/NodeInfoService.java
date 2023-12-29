@@ -33,7 +33,7 @@ import org.tron.core.net.TronNetService;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
 import org.tron.core.net.service.statistics.NodeStatistics;
-import org.tron.core.service.RewardCalService;
+import org.tron.core.service.RewardViCalService;
 import org.tron.core.services.WitnessProductBlockService.CheatWitnessInfo;
 import org.tron.p2p.P2pConfig;
 import org.tron.p2p.P2pService;
@@ -61,7 +61,7 @@ public class NodeInfoService {
   private WitnessProductBlockService witnessProductBlockService;
 
   @Autowired
-  private RewardCalService rewardCalService;
+  private RewardViCalService rewardCalService;
 
   @MetricTime
   public NodeInfo getNodeInfo() {

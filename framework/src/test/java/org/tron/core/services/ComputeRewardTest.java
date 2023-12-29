@@ -19,7 +19,7 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.service.MortgageService;
-import org.tron.core.service.RewardCalService;
+import org.tron.core.service.RewardViCalService;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
@@ -94,7 +94,7 @@ public class ComputeRewardTest {
   private static DynamicPropertiesStore propertiesStore;
   private static DelegationStore delegationStore;
   private static AccountStore accountStore;
-  private static RewardCalService rewardCalService;
+  private static RewardViCalService rewardViCalService;
   private static WitnessStore witnessStore;
   private static MortgageService mortgageService;
   private static NodeInfoService nodeInfoService;
@@ -118,7 +118,7 @@ public class ComputeRewardTest {
     propertiesStore = context.getBean(DynamicPropertiesStore.class);
     delegationStore = context.getBean(DelegationStore.class);
     accountStore = context.getBean(AccountStore.class);
-    rewardCalService = context.getBean(RewardCalService.class);
+    rewardViCalService = context.getBean(RewardViCalService.class);
     witnessStore = context.getBean(WitnessStore.class);
     mortgageService = context.getBean(MortgageService.class);
     nodeInfoService = context.getBean(NodeInfoService.class);
@@ -180,14 +180,14 @@ public class ComputeRewardTest {
     accountStore.put(OWNER_ADDRESS, new AccountCapsule(accountBuilder.build()));
 
     propertiesStore.saveCurrentCycleNumber(5);
-    rewardCalService.setRewardViRoot(Sha256Hash.wrap(
+    rewardViCalService.setRewardViRoot(Sha256Hash.wrap(
         ByteString.fromHex("e0ebe2f3243391ed674dff816a07f589a3279420d6d88bc823b6a9d5778337ce")));
   }
 
   @Test
   public void query() throws InterruptedException {
     long totalReward = mortgageService.queryReward(OWNER_ADDRESS);
-    while (!rewardCalService.getEs().isTerminated()) {
+    while (!rewardViCalService.getEs().isTerminated()) {
       Thread.sleep(10);
     }
     propertiesStore.saveAllowOldRewardOpt(1);

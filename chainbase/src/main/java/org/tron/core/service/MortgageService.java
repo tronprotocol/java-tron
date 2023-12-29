@@ -40,7 +40,7 @@ public class MortgageService {
   private AccountStore accountStore;
 
   @Autowired
-  private RewardCalService rewardCalService;
+  private RewardViCalService rewardViCalService;
 
   public void initStore(WitnessStore witnessStore, DelegationStore delegationStore,
       DynamicPropertiesStore dynamicPropertiesStore, AccountStore accountStore) {
@@ -266,7 +266,7 @@ public class MortgageService {
 
   private long getOldReward(long begin, long end, List<Pair<byte[], Long>> votes) {
     if (dynamicPropertiesStore.allowOldRewardOpt()) {
-      return rewardCalService.getNewRewardAlgorithmReward(begin, end, votes);
+      return rewardViCalService.getNewRewardAlgorithmReward(begin, end, votes);
     }
     long reward = 0;
     for (long cycle = begin; cycle < end; cycle++) {

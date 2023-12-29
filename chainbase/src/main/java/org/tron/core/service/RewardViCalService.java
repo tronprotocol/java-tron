@@ -37,8 +37,8 @@ import org.tron.core.store.RewardViStore;
 import org.tron.core.store.WitnessStore;
 
 @Component
-@Slf4j(topic = "rewardCalService")
-public class RewardCalService {
+@Slf4j(topic = "rewardViCalService")
+public class RewardViCalService {
 
   private final DB<byte[], byte[]> propertiesStore;
   private final DB<byte[], byte[]> delegationStore;
@@ -63,12 +63,12 @@ public class RewardCalService {
   @VisibleForTesting
   @Getter
   private final ScheduledExecutorService es = ExecutorServiceManager
-      .newSingleThreadScheduledExecutor("rewardCalService");
+      .newSingleThreadScheduledExecutor("rewardViCalService");
 
 
   @Autowired
-  public RewardCalService(@Autowired  DynamicPropertiesStore propertiesStore,
-      @Autowired DelegationStore delegationStore, @Autowired WitnessStore witnessStore) {
+  public RewardViCalService(@Autowired  DynamicPropertiesStore propertiesStore,
+                            @Autowired DelegationStore delegationStore, @Autowired WitnessStore witnessStore) {
     this.propertiesStore = propertiesStore.getDb();
     this.delegationStore = delegationStore.getDb();
     this.witnessStore = witnessStore.getDb();
@@ -91,13 +91,13 @@ public class RewardCalService {
     if (enableNewRewardAlgorithm()) {
       if (this.newRewardCalStartCycle > 1) {
         if (isDone()) {
-          logger.info("RewardCalService is already done");
+          logger.info("rewardViCalService is already done");
         } else {
           startRewardCal();
         }
         calcMerkleRoot();
       } else {
-        logger.info("RewardCalService is no need to run");
+        logger.info("rewardViCalService is no need to run");
       }
       es.shutdown();
     }
@@ -112,7 +112,7 @@ public class RewardCalService {
   public long getNewRewardAlgorithmReward(long beginCycle, long endCycle,
                                           List<Pair<byte[], Long>> votes) {
     if (!rewardViStore.has(IS_DONE_KEY)) {
-      throw new IllegalStateException("RewardCalService is not done");
+      throw new IllegalStateException("rewardViCalService is not done");
     }
     long reward = 0;
     if (beginCycle < endCycle) {
@@ -155,13 +155,13 @@ public class RewardCalService {
   }
 
   private void startRewardCal() {
-    logger.info("RewardCalService start");
+    logger.info("rewardViCalService start");
     rewardViStore.reset();
     DBIterator iterator = (DBIterator) witnessStore.iterator();
     iterator.seekToFirst();
     iterator.forEachRemaining(e -> accumulateWitnessReward(e.getKey()));
     rewardViStore.put(IS_DONE_KEY, IS_DONE_VALUE);
-    logger.info("RewardCalService is done");
+    logger.info("rewardViCalService is done");
   }
 
   private void accumulateWitnessReward(byte[] witness) {
