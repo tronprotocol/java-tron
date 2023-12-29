@@ -4,9 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import lombok.Getter;
-import lombok.Setter;
 import org.tron.common.entity.NodeInfo.MachineInfo.DeadLockThreadInfo;
 import org.tron.common.entity.NodeInfo.MachineInfo.MemoryDescInfo;
 import org.tron.protos.Protocol;
@@ -31,12 +28,6 @@ public class NodeInfo {
   private MachineInfo machineInfo;
 
   private Map<String, String> cheatWitnessInfoMap = new HashMap<>();
-
-  /* rewardViRoot */
-
-  @Getter
-  @Setter
-  private String rewardViRoot;
 
   public long getBeginSyncNum() {
     return beginSyncNum;
