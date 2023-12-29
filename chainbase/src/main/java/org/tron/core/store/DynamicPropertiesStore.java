@@ -2840,9 +2840,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   /**
-   * Ensure that the associated calculations have been completed before calling this method.
    *  @require NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE != Long.MAX_VALUE
-   *  @require old reward vi calculations has been completed
    *  @require NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE > 1
    */
   public void saveAllowOldRewardOpt(long allowOldRewardOpt) {
@@ -2857,10 +2855,14 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public boolean allowOldRewardOpt() {
+    return getAllowOldRewardOpt() == 1L;
+  }
+
+  public long getAllowOldRewardOpt() {
     return Optional.ofNullable(getUnchecked(ALLOW_OLD_REWARD_OPT))
-            .map(BytesCapsule::getData)
-            .map(ByteArray::toLong)
-            .orElse(0L) == 1L;
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(CommonParameter.getInstance().getAllowOldRewardOpt());
   }
 
   private static class DynamicResourceProperties {

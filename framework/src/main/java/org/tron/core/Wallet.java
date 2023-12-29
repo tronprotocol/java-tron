@@ -1329,6 +1329,10 @@ public class Wallet {
         .setKey("getMaxDelegateLockPeriod")
         .setValue(dbManager.getDynamicPropertiesStore().getMaxDelegateLockPeriod())
         .build());
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowOldRewardOpt")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowOldRewardOpt())
+        .build());
 
     return builder.build();
   }
