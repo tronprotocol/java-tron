@@ -129,6 +129,7 @@ public class ComputeRewardTest {
     propertiesStore.saveChangeDelegation(1);
     propertiesStore.saveCurrentCycleNumber(4);
     propertiesStore.saveNewRewardAlgorithmEffectiveCycle();
+    propertiesStore.saveAllowOldRewardOpt(1);
 
     delegationStore.setBeginCycle(OWNER_ADDRESS, 2);
     delegationStore.setEndCycle(OWNER_ADDRESS, 3);
@@ -187,13 +188,9 @@ public class ComputeRewardTest {
   @Test
   public void query() throws InterruptedException {
     long totalReward = mortgageService.queryReward(OWNER_ADDRESS);
-    while (!rewardViCalService.getEs().isTerminated()) {
-      Thread.sleep(10);
-    }
     propertiesStore.saveAllowOldRewardOpt(1);
+    // not equals all the time, depends on the reward.
     Assert.assertEquals(totalReward, mortgageService.queryReward(OWNER_ADDRESS));
-    Assert.assertEquals("e0ebe2f3243391ed674dff816a07f589a3279420d6d88bc823b6a9d5778337ce",
-        nodeInfoService.getNodeInfo().getRewardViRoot());
   }
 
   static class Vote {

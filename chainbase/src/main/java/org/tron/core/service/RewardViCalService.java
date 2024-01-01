@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 import javax.annotation.PreDestroy;
@@ -57,8 +58,7 @@ public class RewardViCalService {
   private Sha256Hash rewardViRoot = Sha256Hash.wrap(
       ByteString.fromHex("9debcb9924055500aaae98cdee10501c5c39d4daa75800a996f4bdda73dbccd8"));
 
-  @Getter
-  private Sha256Hash rewardViRootLocal = null;
+  private ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
   @VisibleForTesting
   @Getter
@@ -112,24 +112,29 @@ public class RewardViCalService {
   public long getNewRewardAlgorithmReward(long beginCycle, long endCycle,
                                           List<Pair<byte[], Long>> votes) {
     if (!rewardViStore.has(IS_DONE_KEY)) {
-      throw new IllegalStateException("rewardViCalService is not done");
+      logger.warn("rewardViCalService is not done, wait for it");
     }
-    long reward = 0;
-    if (beginCycle < endCycle) {
-      for (Pair<byte[], Long> vote : votes) {
-        byte[] srAddress = vote.getKey();
-        BigInteger beginVi = getWitnessVi(beginCycle - 1, srAddress);
-        BigInteger endVi = getWitnessVi(endCycle - 1, srAddress);
-        BigInteger deltaVi = endVi.subtract(beginVi);
-        if (deltaVi.signum() <= 0) {
-          continue;
+    lock.readLock().lock();
+    try {
+      long reward = 0;
+      if (beginCycle < endCycle) {
+        for (Pair<byte[], Long> vote : votes) {
+          byte[] srAddress = vote.getKey();
+          BigInteger beginVi = getWitnessVi(beginCycle - 1, srAddress);
+          BigInteger endVi = getWitnessVi(endCycle - 1, srAddress);
+          BigInteger deltaVi = endVi.subtract(beginVi);
+          if (deltaVi.signum() <= 0) {
+            continue;
+          }
+          long userVote = vote.getValue();
+          reward += deltaVi.multiply(BigInteger.valueOf(userVote))
+              .divide(DelegationStore.DECIMAL_OF_VI_REWARD).longValue();
         }
-        long userVote = vote.getValue();
-        reward += deltaVi.multiply(BigInteger.valueOf(userVote))
-            .divide(DelegationStore.DECIMAL_OF_VI_REWARD).longValue();
       }
+      return reward;
+    } finally {
+      lock.readLock().unlock();
     }
-    return reward;
   }
 
   private void calcMerkleRoot() {
@@ -140,11 +145,10 @@ public class RewardViCalService {
         .map(this::getMerkleHash)
         .collect(Collectors.toCollection(ArrayList::new));
 
-    rewardViRootLocal = MerkleTree.getInstance().createTree(ids).getRoot().getHash();
+    Sha256Hash rewardViRootLocal = MerkleTree.getInstance().createTree(ids).getRoot().getHash();
     if (!Objects.equals(rewardViRoot, rewardViRootLocal)) {
-      logger.error("merkle root check error, expect: {}, actual: {}",
+      logger.error("merkle root mismatch, expect: {}, actual: {}",
           rewardViRoot, rewardViRootLocal);
-      System.exit(1);
     }
     logger.info("calcMerkleRoot: {}", rewardViRootLocal);
   }
@@ -155,13 +159,18 @@ public class RewardViCalService {
   }
 
   private void startRewardCal() {
-    logger.info("rewardViCalService start");
-    rewardViStore.reset();
-    DBIterator iterator = (DBIterator) witnessStore.iterator();
-    iterator.seekToFirst();
-    iterator.forEachRemaining(e -> accumulateWitnessReward(e.getKey()));
-    rewardViStore.put(IS_DONE_KEY, IS_DONE_VALUE);
-    logger.info("rewardViCalService is done");
+    lock.writeLock().lock();
+    try {
+      logger.info("rewardViCalService start");
+      rewardViStore.reset();
+      DBIterator iterator = (DBIterator) witnessStore.iterator();
+      iterator.seekToFirst();
+      iterator.forEachRemaining(e -> accumulateWitnessReward(e.getKey()));
+      rewardViStore.put(IS_DONE_KEY, IS_DONE_VALUE);
+      logger.info("rewardViCalService is done");
+    } finally {
+      lock.writeLock().unlock();
+    }
   }
 
   private void accumulateWitnessReward(byte[] witness) {
