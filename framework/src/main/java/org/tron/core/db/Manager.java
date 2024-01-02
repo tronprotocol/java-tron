@@ -262,7 +262,7 @@ public class Manager {
   private static final String filterEsName = "filter";
 
   @Autowired
-  RewardViCalService rewardViCalService;
+  private RewardViCalService rewardViCalService;
 
   /**
    * Cycle thread to rePush Transactions
