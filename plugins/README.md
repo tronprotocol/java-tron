@@ -66,11 +66,6 @@ DB copy provides a helper which can copy LevelDB or RocksDB data quickly on the 
   java -jar Toolkit.jar db cp  output-directory/database /tmp/databse
 ```
 
-
-## DB Lite
-
-DB lite provides lite database, parameters are compatible with previous `LiteFullNodeTool`.
-
 ### Available parameters:
 
 - `-o | --operate`: [split,merge], default: split.
