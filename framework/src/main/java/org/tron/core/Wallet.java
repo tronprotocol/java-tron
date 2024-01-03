@@ -498,6 +498,14 @@ public class Wallet {
     Sha256Hash txID = trx.getTransactionId();
     try {
       TransactionMessage message = new TransactionMessage(signedTransaction.toByteArray());
+
+      if (tronNetDelegate.isBlockUnsolidified()) {
+        logger.warn("Broadcast transaction {} has failed, block unsolidified.", txID);
+        return builder.setResult(false).setCode(response_code.BLOCK_UNSOLIDIFIED)
+          .setMessage(ByteString.copyFromUtf8("Block unsolidified."))
+          .build();
+      }
+
       if (minEffectiveConnection != 0) {
         if (tronNetDelegate.getActivePeer().isEmpty()) {
           logger.warn("Broadcast transaction {} has failed, no connection.", txID);

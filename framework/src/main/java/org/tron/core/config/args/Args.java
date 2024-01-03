@@ -229,6 +229,8 @@ public class Args extends CommonParameter {
     PARAMETER.dynamicConfigEnable = false;
     PARAMETER.dynamicConfigCheckInterval = 600;
     PARAMETER.allowTvmShangHai = 0;
+    PARAMETER.unsolidifiedBlockCheck = true;
+    PARAMETER.maxUnsolidifiedBlocks = 1000;
   }
 
   /**
@@ -1180,6 +1182,14 @@ public class Args extends CommonParameter {
     PARAMETER.allowTvmShangHai =
         config.hasPath(Constant.COMMITTEE_ALLOW_TVM_SHANGHAI) ? config
             .getInt(Constant.COMMITTEE_ALLOW_TVM_SHANGHAI) : 0;
+
+    PARAMETER.unsolidifiedBlockCheck =
+      !config.hasPath(Constant.UNSOLIDIFIED_BLOCK_CHECK)
+      || config.getBoolean(Constant.UNSOLIDIFIED_BLOCK_CHECK);
+
+    PARAMETER.maxUnsolidifiedBlocks =
+      config.hasPath(Constant.MAX_UNSOLIDIFIED_BLOCKS) ? config
+        .getInt(Constant.MAX_UNSOLIDIFIED_BLOCKS) : 1000;
 
     logConfig();
   }
