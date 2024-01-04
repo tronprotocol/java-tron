@@ -142,7 +142,7 @@ public class RewardViCalService {
     DBIterator iterator = rewardViStore.iterator();
     iterator.seekToFirst();
     ArrayList<Sha256Hash> ids = Streams.stream(iterator)
-        .map(this::getMerkleHash)
+        .map(this::getHash)
         .collect(Collectors.toCollection(ArrayList::new));
 
     Sha256Hash rewardViRootLocal = MerkleTree.getInstance().createTree(ids).getRoot().getHash();
@@ -153,7 +153,7 @@ public class RewardViCalService {
     logger.info("calcMerkleRoot: {}", rewardViRootLocal);
   }
 
-  private Sha256Hash getMerkleHash(Map.Entry<byte[], byte[]> entry) {
+  private Sha256Hash getHash(Map.Entry<byte[], byte[]> entry) {
     return Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(),
         Bytes.concat(entry.getKey(), entry.getValue()));
   }
