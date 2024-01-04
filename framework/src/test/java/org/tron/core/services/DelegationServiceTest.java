@@ -56,7 +56,7 @@ public class DelegationServiceTest {
     } else if (cycle == 1) {
       rate = 0.2;
     }
-    mortgageService.payStandbyWitness();
+    mortgageService.payStandbyWitness(1);
     Wallet.setAddressPreFixByte(ADD_PRE_FIX_BYTE_MAINNET);
     byte[] sr1 = decodeFromBase58Check("TLTDZBcPoJ8tZ6TTEeEqEvwYFk2wgotSfD");
     long value = manager.getDelegationStore().getReward(cycle, sr1);
@@ -69,7 +69,7 @@ public class DelegationServiceTest {
     long brokerageAmount = (long) (rate * expect);
     expect -= brokerageAmount;
     Assert.assertEquals(expect, value);
-    mortgageService.payBlockReward(sr1, 32000000);
+    mortgageService.payBlockReward(sr1, 32000000,1);
     expect += 32000000;
     brokerageAmount = (long) (rate * 32000000);
     expect -= brokerageAmount;

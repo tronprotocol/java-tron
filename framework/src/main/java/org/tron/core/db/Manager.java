@@ -1794,15 +1794,15 @@ public class Manager {
             .getRawData().getWitnessAddress().toByteArray());
     if (getDynamicPropertiesStore().allowChangeDelegation()) {
       mortgageService.payBlockReward(witnessCapsule.getAddress().toByteArray(),
-          getDynamicPropertiesStore().getWitnessPayPerBlock());
-      mortgageService.payStandbyWitness();
+          getDynamicPropertiesStore().getWitnessPayPerBlock(), block.getNum());
+      mortgageService.payStandbyWitness(block.getNum());
 
       if (chainBaseManager.getDynamicPropertiesStore().supportTransactionFeePool()) {
         long transactionFeeReward = Math
             .floorDiv(chainBaseManager.getDynamicPropertiesStore().getTransactionFeePool(),
                 Constant.TRANSACTION_FEE_POOL_PERIOD);
         mortgageService.payTransactionFeeReward(witnessCapsule.getAddress().toByteArray(),
-            transactionFeeReward);
+            transactionFeeReward, block.getNum());
         chainBaseManager.getDynamicPropertiesStore().saveTransactionFeePool(
             chainBaseManager.getDynamicPropertiesStore().getTransactionFeePool()
                 - transactionFeeReward);

@@ -45,7 +45,7 @@ public class MortgageService {
     this.accountStore = accountStore;
   }
 
-  public void payStandbyWitness() {
+  public void payStandbyWitness(long block) {
     List<WitnessCapsule> witnessStandbys = witnessStore.getWitnessStandby();
     long voteSum = witnessStandbys.stream().mapToLong(WitnessCapsule::getVoteCount).sum();
     if (voteSum < 1) {
@@ -56,17 +56,17 @@ public class MortgageService {
     for (WitnessCapsule w : witnessStandbys) {
       long pay = (long) (w.getVoteCount() * eachVotePay);
       payReward(w.getAddress().toByteArray(), pay);
-      logger.debug("Pay {} stand reward {}.", Hex.toHexString(w.getAddress().toByteArray()), pay);
+      logger.debug("Pay {} stand reward {} for num {}.", Hex.toHexString(w.getAddress().toByteArray()), pay, block);
     }
   }
 
-  public void payBlockReward(byte[] witnessAddress, long value) {
-    logger.debug("Pay {} block reward {}.", Hex.toHexString(witnessAddress), value);
+  public void payBlockReward(byte[] witnessAddress, long value, long block) {
+    logger.debug("Pay {} block reward {} for num {}.", Hex.toHexString(witnessAddress), value, block);
     payReward(witnessAddress, value);
   }
 
-  public void payTransactionFeeReward(byte[] witnessAddress, long value) {
-    logger.debug("Pay {} transaction fee reward {}.", Hex.toHexString(witnessAddress), value);
+  public void payTransactionFeeReward(byte[] witnessAddress, long value, long block) {
+    logger.debug("Pay {} transaction fee reward {} for num {}.", Hex.toHexString(witnessAddress), value, block);
     payReward(witnessAddress, value);
   }
 

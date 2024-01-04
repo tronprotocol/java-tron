@@ -104,7 +104,7 @@ public class GetRewardServletTest extends BaseTest {
     int expect = 138181;
     MockHttpServletRequest request = createRequest("application/x-www-form-urlencoded");
     MockHttpServletResponse response = new MockHttpServletResponse();
-    mortgageService.payStandbyWitness();
+    mortgageService.payStandbyWitness(1);
     request.addParameter("address", "27VZHn9PFZwNh7o2EporxmLkpe157iWZVkh");
     getRewardServlet.doPost(request, response);
     try {
