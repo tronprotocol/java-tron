@@ -95,6 +95,7 @@
   <logger level="INFO" name="tool" additivity="false">
     <appender-ref ref="CONSOLE"/>
   </logger>
+  <logger level="DEBUG" name="mortgage"/>
 
 </configuration>
 
