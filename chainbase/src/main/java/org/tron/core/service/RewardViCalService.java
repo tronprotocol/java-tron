@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.error.TronDBException;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
@@ -117,7 +118,8 @@ public class RewardViCalService {
       try {
         lock.await();
       } catch (InterruptedException e) {
-        logger.error("rewardViCalService lock error: {}", e.getMessage());
+        Thread.currentThread().interrupt();
+        throw new TronDBException(e);
       }
     }
 
