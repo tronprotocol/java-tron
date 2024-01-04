@@ -97,7 +97,6 @@ public class ComputeRewardTest {
   private static RewardViCalService rewardViCalService;
   private static WitnessStore witnessStore;
   private static MortgageService mortgageService;
-  private static NodeInfoService nodeInfoService;
   @ClassRule
   public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -121,7 +120,6 @@ public class ComputeRewardTest {
     rewardViCalService = context.getBean(RewardViCalService.class);
     witnessStore = context.getBean(WitnessStore.class);
     mortgageService = context.getBean(MortgageService.class);
-    nodeInfoService = context.getBean(NodeInfoService.class);
     setUp();
   }
 
@@ -129,7 +127,6 @@ public class ComputeRewardTest {
     propertiesStore.saveChangeDelegation(1);
     propertiesStore.saveCurrentCycleNumber(4);
     propertiesStore.saveNewRewardAlgorithmEffectiveCycle();
-    propertiesStore.saveAllowOldRewardOpt(1);
 
     delegationStore.setBeginCycle(OWNER_ADDRESS, 2);
     delegationStore.setEndCycle(OWNER_ADDRESS, 3);
@@ -186,13 +183,9 @@ public class ComputeRewardTest {
   }
 
   @Test
-  public void query() throws InterruptedException {
-    long totalReward = mortgageService.queryReward(OWNER_ADDRESS);
+  public void query() {
     propertiesStore.saveAllowOldRewardOpt(1);
-    // wait for the reward calculation
-    Thread.sleep(1000*3);
-    // not equals all the time, depends on the reward.
-    Assert.assertEquals(totalReward, mortgageService.queryReward(OWNER_ADDRESS));
+    Assert.assertEquals(3189, mortgageService.queryReward(OWNER_ADDRESS));
   }
 
   static class Vote {

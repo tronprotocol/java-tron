@@ -12,9 +12,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 import javax.annotation.PreDestroy;
@@ -58,7 +58,7 @@ public class RewardViCalService {
   private Sha256Hash rewardViRoot = Sha256Hash.wrap(
       ByteString.fromHex("9debcb9924055500aaae98cdee10501c5c39d4daa75800a996f4bdda73dbccd8"));
 
-  private ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+  private final CountDownLatch lock = new CountDownLatch(1);
 
   @VisibleForTesting
   @Getter
@@ -95,6 +95,7 @@ public class RewardViCalService {
         } else {
           startRewardCal();
         }
+        lock.countDown();
         calcMerkleRoot();
       } else {
         logger.info("rewardViCalService is no need to run");
@@ -113,28 +114,30 @@ public class RewardViCalService {
                                           List<Pair<byte[], Long>> votes) {
     if (!rewardViStore.has(IS_DONE_KEY)) {
       logger.warn("rewardViCalService is not done, wait for it");
-    }
-    lock.readLock().lock();
-    try {
-      long reward = 0;
-      if (beginCycle < endCycle) {
-        for (Pair<byte[], Long> vote : votes) {
-          byte[] srAddress = vote.getKey();
-          BigInteger beginVi = getWitnessVi(beginCycle - 1, srAddress);
-          BigInteger endVi = getWitnessVi(endCycle - 1, srAddress);
-          BigInteger deltaVi = endVi.subtract(beginVi);
-          if (deltaVi.signum() <= 0) {
-            continue;
-          }
-          long userVote = vote.getValue();
-          reward += deltaVi.multiply(BigInteger.valueOf(userVote))
-              .divide(DelegationStore.DECIMAL_OF_VI_REWARD).longValue();
-        }
+      try {
+        lock.await();
+      } catch (InterruptedException e) {
+        logger.error("rewardViCalService lock error: {}", e.getMessage());
       }
-      return reward;
-    } finally {
-      lock.readLock().unlock();
     }
+
+    long reward = 0;
+    if (beginCycle < endCycle) {
+      for (Pair<byte[], Long> vote : votes) {
+        byte[] srAddress = vote.getKey();
+        BigInteger beginVi = getWitnessVi(beginCycle - 1, srAddress);
+        BigInteger endVi = getWitnessVi(endCycle - 1, srAddress);
+        BigInteger deltaVi = endVi.subtract(beginVi);
+        if (deltaVi.signum() <= 0) {
+          continue;
+        }
+        long userVote = vote.getValue();
+        reward += deltaVi.multiply(BigInteger.valueOf(userVote))
+            .divide(DelegationStore.DECIMAL_OF_VI_REWARD).longValue();
+      }
+    }
+    return reward;
+
   }
 
   private void calcMerkleRoot() {
@@ -159,18 +162,14 @@ public class RewardViCalService {
   }
 
   private void startRewardCal() {
-    lock.writeLock().lock();
-    try {
-      logger.info("rewardViCalService start");
-      rewardViStore.reset();
-      DBIterator iterator = (DBIterator) witnessStore.iterator();
-      iterator.seekToFirst();
-      iterator.forEachRemaining(e -> accumulateWitnessReward(e.getKey()));
-      rewardViStore.put(IS_DONE_KEY, IS_DONE_VALUE);
-      logger.info("rewardViCalService is done");
-    } finally {
-      lock.writeLock().unlock();
-    }
+    logger.info("rewardViCalService start");
+    rewardViStore.reset();
+    DBIterator iterator = (DBIterator) witnessStore.iterator();
+    iterator.seekToFirst();
+    iterator.forEachRemaining(e -> accumulateWitnessReward(e.getKey()));
+    rewardViStore.put(IS_DONE_KEY, IS_DONE_VALUE);
+    logger.info("rewardViCalService is done");
+
   }
 
   private void accumulateWitnessReward(byte[] witness) {
