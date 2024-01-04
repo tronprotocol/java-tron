@@ -189,6 +189,8 @@ public class ComputeRewardTest {
   public void query() throws InterruptedException {
     long totalReward = mortgageService.queryReward(OWNER_ADDRESS);
     propertiesStore.saveAllowOldRewardOpt(1);
+    // wait for the reward calculation
+    Thread.sleep(1000*3);
     // not equals all the time, depends on the reward.
     Assert.assertEquals(totalReward, mortgageService.queryReward(OWNER_ADDRESS));
   }
