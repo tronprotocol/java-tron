@@ -53,8 +53,10 @@ public class MortgageService {
     }
     long totalPay = dynamicPropertiesStore.getWitness127PayPerBlock();
     double eachVotePay = (double) totalPay / voteSum;
+    logger.debug("totalPay {} voteSum {} eachVotePay {} on block {} ", totalPay, voteSum, eachVotePay, block);
     for (WitnessCapsule w : witnessStandbys) {
       long pay = (long) (w.getVoteCount() * eachVotePay);
+      logger.debug("pay {} to {} for vote {} on block {} ", pay, Hex.toHexString(w.getAddress().toByteArray()), w.getVoteCount(), block);
       payReward(w.getAddress().toByteArray(), pay, block, "standby");
     }
   }
