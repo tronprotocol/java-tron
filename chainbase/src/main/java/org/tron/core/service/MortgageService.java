@@ -74,8 +74,11 @@ public class MortgageService {
     long brokerageAmount = (long) (brokerageRate * value);
     value -= brokerageAmount;
     delegationStore.addReward(cycle, witnessAddress, value);
-    if (value > 0) {
+    if (value != 0) {
       logger.debug("Pay {} reward {} for cycle {} num {} type {}.", Hex.toHexString(witnessAddress), value, cycle, block, type);
+    }
+    if (brokerageAmount != 0) {
+      logger.debug("Pay {} brokerageAmount {} for cycle {} num {} type {}.", Hex.toHexString(witnessAddress), brokerageAmount, cycle, block, type);
     }
     adjustAllowance(witnessAddress, brokerageAmount);
   }
