@@ -48,6 +48,8 @@ public class MetricsHistogram {
     init(MetricKeys.Histogram.BLOCK_FETCH_LATENCY, "fetch block latency.");
     init(MetricKeys.Histogram.BLOCK_RECEIVE_DELAY,
         "receive block delay time, receiveTime - blockTime.");
+    init(MetricKeys.Histogram.DO_REWARD_CAL_DELAY,
+        "do reward cal delay time.", "depth");
   }
 
   private MetricsHistogram() {
