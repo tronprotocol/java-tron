@@ -56,7 +56,9 @@ public class MortgageService {
     logger.debug("totalPay {} voteSum {} eachVotePay {} on block {} ", totalPay, voteSum, eachVotePay, block);
     for (WitnessCapsule w : witnessStandbys) {
       long pay = (long) (w.getVoteCount() * eachVotePay);
-      logger.debug("pay {} to {} for vote {} on block {} ", pay, Hex.toHexString(w.getAddress().toByteArray()), w.getVoteCount(), block);
+      if (pay > 0) {
+        logger.debug("pay {} to {} for vote {} on block {} ", pay, Hex.toHexString(w.getAddress().toByteArray()), w.getVoteCount(), block);
+      }
       payReward(w.getAddress().toByteArray(), pay, block, "standby");
     }
   }
