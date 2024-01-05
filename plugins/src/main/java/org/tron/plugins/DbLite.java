@@ -3,8 +3,6 @@ package org.tron.plugins;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.primitives.Bytes;
-import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -155,10 +153,10 @@ public class DbLite implements Callable<Integer> {
     long start = System.currentTimeMillis();
     snapshotDir = Paths.get(snapshotDir, SNAPSHOT_DIR_NAME).toString();
     try {
+      mergeCheckpoint(sourceDir);
       hasEnoughBlock(sourceDir);
       List<String> snapshotDbs = getSnapshotDbs(sourceDir);
       split(sourceDir, snapshotDir, snapshotDbs);
-      mergeCheckpoint2Snapshot(sourceDir, snapshotDir);
       // write genesisBlock , latest recent blocks and trans
       fillSnapshotBlockAndTransDb(sourceDir, snapshotDir);
       // save min block to info
@@ -192,9 +190,9 @@ public class DbLite implements Callable<Integer> {
         throw new IllegalStateException(
             String.format("Unavailable sourceDir: %s is not fullNode data.", sourceDir));
       }
+      mergeCheckpoint(sourceDir);
       hasEnoughBlock(sourceDir);
       split(sourceDir, historyDir, archiveDbs);
-      mergeCheckpoint2History(sourceDir, historyDir);
       // save max block to info
       generateInfoProperties(Paths.get(historyDir, INFO_FILE_NAME).toString(),
           getLatestBlockHeaderNum(sourceDir));
@@ -263,15 +261,6 @@ public class DbLite implements Callable<Integer> {
     return snapshotDbs;
   }
 
-  private void mergeCheckpoint2Snapshot(String sourceDir, String historyDir) {
-    List<String> snapshotDbs = getSnapshotDbs(sourceDir);
-    mergeCheckpoint(sourceDir, historyDir, snapshotDbs);
-  }
-
-  private void mergeCheckpoint2History(String sourceDir, String destDir) {
-    mergeCheckpoint(sourceDir, destDir, archiveDbs);
-  }
-
   private void split(String sourceDir, String destDir, List<String> dbs) throws IOException {
     logger.info("Begin to split the dbs.");
     spec.commandLine().getOut().println("Begin to split the dbs.");
@@ -289,7 +278,7 @@ public class DbLite implements Callable<Integer> {
     FileUtils.copyDatabases(Paths.get(sourceDir), Paths.get(destDir), dbs);
   }
 
-  private void mergeCheckpoint(String sourceDir, String destDir, List<String> destDbs) {
+  private void mergeCheckpoint(String sourceDir) {
     logger.info("Begin to merge checkpoint to dataset.");
     spec.commandLine().getOut().println("Begin to merge checkpoint to dataset.");
     try {
@@ -298,18 +287,18 @@ public class DbLite implements Callable<Integer> {
         for (String cp : cpList) {
           DBInterface checkpointDb = DbTool.getDB(
               sourceDir + "/" + DBUtils.CHECKPOINT_DB_V2, cp);
-          recover(checkpointDb, destDir, destDbs);
+          recover(checkpointDb, sourceDir);
         }
       } else if (Paths.get(sourceDir, CHECKPOINT_DB).toFile().exists()) {
         DBInterface tmpDb = DbTool.getDB(sourceDir, CHECKPOINT_DB);
-        recover(tmpDb, destDir, destDbs);
+        recover(tmpDb, sourceDir);
       }
     } catch (IOException | RocksDBException e) {
       throw new RuntimeException(e);
     }
   }
 
-  private void recover(DBInterface db, String destDir, List<String> destDbs)
+  private void recover(DBInterface db, String destDir)
       throws IOException, RocksDBException {
     try (DBIterator iterator = db.iterator()) {
       for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
@@ -323,17 +312,15 @@ public class DbLite implements Callable<Integer> {
         byte[] realKey = Arrays.copyOfRange(key, dbName.getBytes().length + 4, key.length);
         byte[] realValue =
             value.length == 1 ? null : Arrays.copyOfRange(value, 1, value.length);
-        if (destDbs != null && destDbs.contains(dbName)) {
-          DBInterface destDb = DbTool.getDB(destDir, dbName);
-          if (realValue != null) {
-            destDb.put(realKey, realValue);
+        DBInterface destDb = DbTool.getDB(destDir, dbName);
+        if (realValue != null) {
+          destDb.put(realKey, realValue);
+        } else {
+          byte op = value[0];
+          if (DBUtils.Operator.DELETE.getValue() == op) {
+            destDb.delete(realKey);
           } else {
-            byte op = value[0];
-            if (DBUtils.Operator.DELETE.getValue() == op) {
-              destDb.delete(realKey);
-            } else {
-              destDb.put(realKey, new byte[0]);
-            }
+            destDb.put(realKey, new byte[0]);
           }
         }
       }
@@ -353,36 +340,12 @@ public class DbLite implements Callable<Integer> {
   }
 
   private long getLatestBlockHeaderNum(String databaseDir) throws IOException, RocksDBException {
-    // query latest_block_header_number from checkpoint first
     final String latestBlockHeaderNumber = "latest_block_header_number";
-    List<String> cpList = getCheckpointV2List(databaseDir);
-    DBInterface checkpointDb;
-    if (cpList.size() > 0) {
-      String lastestCp = cpList.get(cpList.size() - 1);
-      checkpointDb = DbTool.getDB(
-          databaseDir + "/" + DBUtils.CHECKPOINT_DB_V2, lastestCp);
-    } else {
-      checkpointDb = DbTool.getDB(databaseDir, CHECKPOINT_DB);
-    }
-    Long blockNumber = getLatestBlockHeaderNumFromCP(checkpointDb,
-        latestBlockHeaderNumber.getBytes());
-    if (blockNumber != null) {
-      return blockNumber;
-    }
-    // query from propertiesDb if checkpoint not contains latest_block_header_number
     DBInterface propertiesDb = DbTool.getDB(databaseDir, PROPERTIES_DB_NAME);
     return Optional.ofNullable(propertiesDb.get(ByteArray.fromString(latestBlockHeaderNumber)))
             .map(ByteArray::toLong)
             .orElseThrow(
                 () -> new IllegalArgumentException("not found latest block header number"));
-  }
-
-  private Long getLatestBlockHeaderNumFromCP(DBInterface db, byte[] key) {
-    byte[] value = db.get(Bytes.concat(simpleEncode(PROPERTIES_DB_NAME), key));
-    if (value != null && value.length > 1) {
-      return ByteArray.toLong(Arrays.copyOfRange(value, 1, value.length));
-    }
-    return null;
   }
 
   /**
@@ -449,15 +412,6 @@ public class DbLite implements Callable<Integer> {
     // so should close this db and reopen it.
     DbTool.closeDB(parentDir, BLOCK_INDEX_DB_NAME);
     return result;
-  }
-
-  private static byte[] simpleEncode(String s) {
-    byte[] bytes = s.getBytes();
-    byte[] length = Ints.toByteArray(bytes.length);
-    byte[] r = new byte[4 + bytes.length];
-    System.arraycopy(length, 0, r, 0, 4);
-    System.arraycopy(bytes, 0, r, 4, bytes.length);
-    return r;
   }
 
   private BlockNumInfo checkAndGetBlockNumInfo(String historyDir, String liteDir)
@@ -531,7 +485,6 @@ public class DbLite implements Callable<Integer> {
     DBInterface transDb = DbTool.getDB(liteDir, TRANS_DB_NAME);
     DBInterface tranRetDb = DbTool.getDB(liteDir, TRANSACTION_RET_DB_NAME);
 
-
     ProgressBar.wrap(LongStream.rangeClosed(start, end)
         .boxed()
         .sorted((a, b) -> Long.compare(b, a)), "trimHistory").forEach(n -> {
@@ -566,7 +519,6 @@ public class DbLite implements Callable<Integer> {
       return;
     }
 
-
     Path bakDir = Paths.get(liteDir, BACKUP_DIR_PREFIX + START_TIME);
     logger.info("Begin to merge {} to database, start {} end {}.", bakDir, start, end);
     spec.commandLine().getOut()
@@ -593,17 +545,7 @@ public class DbLite implements Callable<Integer> {
 
   private byte[] getDataFromSourceDB(String sourceDir, String dbName, byte[] key)
           throws IOException, RocksDBException {
-    DBInterface sourceDb = DbTool.getDB(sourceDir, dbName);
-    DBInterface checkpointDb = DbTool.getDB(sourceDir, CHECKPOINT_DB);
-    // get data from tmp first.
-    byte[] valueFromTmp = checkpointDb.get(Bytes.concat(simpleEncode(dbName), key));
-    byte[] value;
-    if (isEmptyBytes(valueFromTmp)) {
-      value = sourceDb.get(key);
-    } else {
-      value = valueFromTmp.length == 1
-          ? null : Arrays.copyOfRange(valueFromTmp, 1, valueFromTmp.length);
-    }
+    byte[] value = DbTool.getDB(sourceDir, dbName).get(key);
     if (isEmptyBytes(value)) {
       throw new RuntimeException(String.format("data not found in store, dbName: %s, key: %s",
               dbName, Arrays.toString(key)));
