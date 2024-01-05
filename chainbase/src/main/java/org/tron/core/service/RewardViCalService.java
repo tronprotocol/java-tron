@@ -17,8 +17,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
+import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
@@ -54,6 +54,8 @@ public class RewardViCalService {
 
   private long newRewardCalStartCycle = Long.MAX_VALUE;
 
+  private volatile long lastBlockNumber = -1;
+
   @VisibleForTesting
   @Setter
   private Sha256Hash rewardViRoot = Sha256Hash.wrap(
@@ -61,8 +63,6 @@ public class RewardViCalService {
 
   private final CountDownLatch lock = new CountDownLatch(1);
 
-  @VisibleForTesting
-  @Getter
   private final ScheduledExecutorService es = ExecutorServiceManager
       .newSingleThreadScheduledExecutor("rewardViCalService");
 
@@ -75,13 +75,18 @@ public class RewardViCalService {
     this.witnessStore = witnessStore.getDb();
   }
 
-  public void init() {
+  @PostConstruct
+  private void init() {
     es.scheduleWithFixedDelay(this::maybeRun, 0, 3, TimeUnit.SECONDS);
   }
 
   private boolean enableNewRewardAlgorithm() {
     this.newRewardCalStartCycle = this.getNewRewardAlgorithmEffectiveCycle();
-    return this.newRewardCalStartCycle != Long.MAX_VALUE;
+    boolean ret = this.newRewardCalStartCycle != Long.MAX_VALUE;
+    if (ret && lastBlockNumber == -1) {
+      lastBlockNumber = this.getLatestBlockHeaderNumber();
+    }
+    return ret;
   }
 
   private boolean isDone() {
@@ -92,17 +97,30 @@ public class RewardViCalService {
     if (enableNewRewardAlgorithm()) {
       if (this.newRewardCalStartCycle > 1) {
         if (isDone()) {
+          this.clearUp(true);
           logger.info("rewardViCalService is already done");
         } else {
-          startRewardCal();
+          if (this.getLatestBlockHeaderNumber() > lastBlockNumber) {
+            // checkpoint is flushed to db, so we can start rewardViCalService
+            startRewardCal();
+            clearUp(true);
+          } else {
+            logger.info("startRewardCal will run after checkpoint is flushed to db");
+          }
         }
-        lock.countDown();
-        calcMerkleRoot();
       } else {
+        clearUp(false);
         logger.info("rewardViCalService is no need to run");
       }
-      es.shutdown();
     }
+  }
+
+  private void clearUp(boolean isDone) {
+    lock.countDown();
+    if (isDone) {
+      calcMerkleRoot();
+    }
+    es.shutdown();
   }
 
   @PreDestroy
@@ -245,6 +263,11 @@ public class RewardViCalService {
   private long getNewRewardAlgorithmEffectiveCycle() {
     byte[] value =  this.propertiesStore.get("NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE".getBytes());
     return value == null ? Long.MAX_VALUE : ByteArray.toLong(value);
+  }
+
+  private long getLatestBlockHeaderNumber() {
+    byte[] value =  this.propertiesStore.get("latest_block_header_number".getBytes());
+    return value == null ? 1 : ByteArray.toLong(value);
   }
 }
 

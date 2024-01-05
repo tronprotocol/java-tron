@@ -130,7 +130,6 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.service.MortgageService;
-import org.tron.core.service.RewardViCalService;
 import org.tron.core.store.AccountAssetStore;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
@@ -260,9 +259,6 @@ public class Manager {
   private static final String triggerEsName = "event-trigger";
   private ExecutorService filterEs;
   private static final String filterEsName = "filter";
-
-  @Autowired
-  private RewardViCalService rewardViCalService;
 
   /**
    * Cycle thread to rePush Transactions
@@ -469,7 +465,6 @@ public class Manager {
     revokingStore.disable();
     revokingStore.check();
     transactionCache.initCache();
-    rewardViCalService.init();
     this.setProposalController(ProposalController.createInstance(this));
     this.setMerkleContainer(
         merkleContainer.createInstance(chainBaseManager.getMerkleTreeStore(),

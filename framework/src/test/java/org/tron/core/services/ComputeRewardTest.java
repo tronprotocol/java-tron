@@ -1,16 +1,26 @@
 package org.tron.core.services;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import org.junit.AfterClass;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import org.junit.After;
 import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.error.TronDBException;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
@@ -97,11 +107,11 @@ public class ComputeRewardTest {
   private static RewardViCalService rewardViCalService;
   private static WitnessStore witnessStore;
   private static MortgageService mortgageService;
-  @ClassRule
-  public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @Rule
+  public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  @AfterClass
-  public static void destroy() {
+  @After
+  public void destroy() {
     context.destroy();
     Args.clearParam();
   }
@@ -109,8 +119,8 @@ public class ComputeRewardTest {
   /**
    * Init data.
    */
-  @BeforeClass
-  public static void init() throws IOException {
+  @Before
+  public void init() throws IOException {
     Args.setParam(new String[]{"--output-directory", temporaryFolder.newFolder().toString(),
         "--p2p-disable", "true"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
@@ -123,18 +133,43 @@ public class ComputeRewardTest {
     setUp();
   }
 
-  private static void setUp() {
-    propertiesStore.saveChangeDelegation(1);
-    propertiesStore.saveCurrentCycleNumber(4);
-    propertiesStore.saveNewRewardAlgorithmEffectiveCycle();
+  private void setUp() {
+    // mock flush service
+    Map<String, ListeningExecutorService> flushServices = new HashMap<>();
+    flushServices.put("propertiesStore", MoreExecutors.listeningDecorator(
+        ExecutorServiceManager.newSingleThreadExecutor(
+            "flush-service-propertiesStore")));
+    flushServices.put("delegationStore", MoreExecutors.listeningDecorator(
+        ExecutorServiceManager.newSingleThreadExecutor(
+            "flush-service-delegationStore")));
+    flushServices.put("accountStore", MoreExecutors.listeningDecorator(
+        ExecutorServiceManager.newSingleThreadExecutor("flush-service-accountStore")));
+    flushServices.put("witnessStore", MoreExecutors.listeningDecorator(
+        ExecutorServiceManager.newSingleThreadExecutor("flush-service-witnessStore")));
 
-    delegationStore.setBeginCycle(OWNER_ADDRESS, 2);
-    delegationStore.setEndCycle(OWNER_ADDRESS, 3);
+    List<ListenableFuture<?>> futures = new ArrayList<>(flushServices.size());
 
-    delegationStore.setBeginCycle(OWNER_ADDRESS_2, 1);
-    delegationStore.setEndCycle(OWNER_ADDRESS_2, 2);
+    try {
+      flushServices.get("propertiesStore").submit(() -> {
+        propertiesStore.saveChangeDelegation(1);
+        propertiesStore.saveCurrentCycleNumber(4);
+        propertiesStore.saveNewRewardAlgorithmEffectiveCycle();
+        propertiesStore.saveLatestBlockHeaderNumber(1);
+      }).get();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new TronDBException(e);
+    } catch (ExecutionException e) {
+      throw new TronDBException(e);
+    }
 
-    delegationStore.setBeginCycle(OWNER_ADDRESS_3, 5);
+    try {
+      Thread.sleep(1000 * 6);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new TronDBException(e);
+    }
+
     List<Vote> votes = new ArrayList<>(32);
     votes.add(new Vote(46188095536L, 5, 1496122605L, SR_ADDRESS_1));
     votes.add(new Vote(48618386224L, 5, 1582867684L, SR_ADDRESS_2));
@@ -162,29 +197,67 @@ public class ComputeRewardTest {
     votes.add(new Vote(40729360L, 5, 1817205L, SR_ADDRESS_24));
     votes.add(new Vote(31250017036L, 5, 1242358644L, SR_ADDRESS_25));
     votes.add(new Vote(15003660L, 5, 669546L, SR_ADDRESS_26));
-    Protocol.Account.Builder accountBuilder = Protocol.Account.newBuilder();
-    accountBuilder.setAddress(ByteString.copyFrom(OWNER_ADDRESS));
-    for (Vote vote : votes) {
-      delegationStore.addReward(3, vote.srAddress, vote.totalReward);
-      delegationStore.setWitnessVote(3, vote.srAddress, vote.totalVotes);
-      accountBuilder.addVotes(Protocol.Vote.newBuilder()
-          .setVoteAddress(ByteString.copyFrom(vote.srAddress))
-          .setVoteCount(vote.userVotes));
-      witnessStore.put(vote.srAddress, new WitnessCapsule(Protocol.Witness.newBuilder()
-          .setAddress(ByteString.copyFrom(vote.srAddress))
-          .setVoteCount(vote.totalVotes)
-          .build()));
-    }
-    accountStore.put(OWNER_ADDRESS, new AccountCapsule(accountBuilder.build()));
 
-    propertiesStore.saveCurrentCycleNumber(5);
+    futures.add(flushServices.get("delegationStore").submit(() -> {
+      delegationStore.setBeginCycle(OWNER_ADDRESS, 2);
+      delegationStore.setEndCycle(OWNER_ADDRESS, 3);
+      delegationStore.setBeginCycle(OWNER_ADDRESS_2, 1);
+      delegationStore.setEndCycle(OWNER_ADDRESS_2, 2);
+      delegationStore.setBeginCycle(OWNER_ADDRESS_3, 5);
+      for (Vote vote : votes) {
+        delegationStore.addReward(3, vote.srAddress, vote.totalReward);
+        delegationStore.setWitnessVote(3, vote.srAddress, vote.totalVotes);
+      }
+    }));
+
+    futures.add(flushServices.get("witnessStore").submit(() -> {
+      for (Vote vote : votes) {
+        witnessStore.put(vote.srAddress, new WitnessCapsule(Protocol.Witness.newBuilder()
+            .setAddress(ByteString.copyFrom(vote.srAddress))
+            .setVoteCount(vote.totalVotes)
+            .build()));
+      }
+    }));
+
+    futures.add(flushServices.get("accountStore").submit(() -> {
+      Protocol.Account.Builder accountBuilder = Protocol.Account.newBuilder();
+      accountBuilder.setAddress(ByteString.copyFrom(OWNER_ADDRESS));
+      for (Vote vote : votes) {
+        accountBuilder.addVotes(Protocol.Vote.newBuilder()
+            .setVoteAddress(ByteString.copyFrom(vote.srAddress))
+            .setVoteCount(vote.userVotes));
+
+      }
+      accountStore.put(OWNER_ADDRESS, new AccountCapsule(accountBuilder.build()));
+    }));
+    Future<?> future = Futures.allAsList(futures);
+    try {
+      future.get();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new TronDBException(e);
+    } catch (ExecutionException e) {
+      throw new TronDBException(e);
+    }
+    try {
+      flushServices.get("propertiesStore").submit(() -> {
+        propertiesStore.saveAllowOldRewardOpt(1);
+        propertiesStore.saveLatestBlockHeaderNumber(3);
+        propertiesStore.saveCurrentCycleNumber(5);
+      }).get();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new TronDBException(e);
+    } catch (ExecutionException e) {
+      throw new TronDBException(e);
+    }
+
     rewardViCalService.setRewardViRoot(Sha256Hash.wrap(
         ByteString.fromHex("e0ebe2f3243391ed674dff816a07f589a3279420d6d88bc823b6a9d5778337ce")));
   }
 
   @Test
   public void query() {
-    propertiesStore.saveAllowOldRewardOpt(1);
     Assert.assertEquals(3189, mortgageService.queryReward(OWNER_ADDRESS));
   }
 
