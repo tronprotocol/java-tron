@@ -55,28 +55,28 @@ public class MortgageService {
     double eachVotePay = (double) totalPay / voteSum;
     for (WitnessCapsule w : witnessStandbys) {
       long pay = (long) (w.getVoteCount() * eachVotePay);
-      payReward(w.getAddress().toByteArray(), pay);
-      logger.debug("Pay {} stand reward {} for num {}.", Hex.toHexString(w.getAddress().toByteArray()), pay, block);
+      payReward(w.getAddress().toByteArray(), pay, block, "standby");
     }
   }
 
   public void payBlockReward(byte[] witnessAddress, long value, long block) {
-    logger.debug("Pay {} block reward {} for num {}.", Hex.toHexString(witnessAddress), value, block);
-    payReward(witnessAddress, value);
+    payReward(witnessAddress, value, block, "block");
   }
 
   public void payTransactionFeeReward(byte[] witnessAddress, long value, long block) {
-    logger.debug("Pay {} transaction fee reward {} for num {}.", Hex.toHexString(witnessAddress), value, block);
-    payReward(witnessAddress, value);
+    payReward(witnessAddress, value, block, "transactionFee");
   }
 
-  private void payReward(byte[] witnessAddress, long value) {
+  private void payReward(byte[] witnessAddress, long value, long block, String type) {
     long cycle = dynamicPropertiesStore.getCurrentCycleNumber();
     int brokerage = delegationStore.getBrokerage(cycle, witnessAddress);
     double brokerageRate = (double) brokerage / 100;
     long brokerageAmount = (long) (brokerageRate * value);
     value -= brokerageAmount;
     delegationStore.addReward(cycle, witnessAddress, value);
+    if (value > 0) {
+      logger.debug("Pay {} reward {} for cycle {} num {} type {}.", Hex.toHexString(witnessAddress), value, cycle, block, type);
+    }
     adjustAllowance(witnessAddress, brokerageAmount);
   }
 
