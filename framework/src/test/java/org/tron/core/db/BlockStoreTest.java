@@ -67,4 +67,24 @@ public class BlockStoreTest extends BaseTest {
     }
   }
 
+  @Test
+  public void testDelete() {
+    long number = 1;
+    BlockCapsule blockCapsule = getBlockCapsule(number);
+
+    byte[] blockId = blockCapsule.getBlockId().getBytes();
+    blockStore.put(blockId, blockCapsule);
+    try {
+      BlockCapsule blockCapsule1 = blockStore.get(blockId);
+      Assert.assertNotNull(blockCapsule1);
+      Assert.assertEquals(number, blockCapsule1.getNum());
+
+      blockStore.delete(blockId);
+      BlockCapsule blockCapsule2 = blockStore.getUnchecked(blockId);
+      Assert.assertNull(blockCapsule2);
+    } catch (ItemNotFoundException | BadItemException e) {
+      e.printStackTrace();
+    }
+  }
+
 }
