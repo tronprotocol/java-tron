@@ -29,7 +29,8 @@ public class MarketAccountStoreTest extends BaseTest {
   public void testGet() throws Exception {
     String address = "Address1";
 
-    MarketAccountOrderCapsule marketAccountOrderCapsule = marketAccountStore.getUnchecked(address.getBytes());
+    MarketAccountOrderCapsule marketAccountOrderCapsule =
+            marketAccountStore.getUnchecked(address.getBytes());
     Assert.assertNull(marketAccountOrderCapsule);
 
     marketAccountStore.put(address.getBytes(),
