@@ -581,14 +581,24 @@ public class ManagerTest extends BlockGenerate {
       AccountResourceInsufficientException, EventBloomException {
 
     String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
+    String key2 = "c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4";
     byte[] privateKey = ByteArray.fromHexString(key);
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
     byte[] address = ecKey.getAddress();
-
+    WitnessCapsule sr1 = new WitnessCapsule(
+        ByteString.copyFrom(address), "www.tron.net/first");
+    sr1.setVoteCount(1000000000L);
+    byte[] privateKey2 = ByteArray.fromHexString(key2);
+    final ECKey ecKey2 = ECKey.fromPrivate(privateKey2);
+    byte[] address2 = ecKey2.getAddress();
+    WitnessCapsule sr2 = new WitnessCapsule(
+        ByteString.copyFrom(address2), "www.tron.net/second");
+    sr2.setVoteCount(100000L);
+    chainManager.getWitnessStore().put(address, sr1);
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
     chainManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
     chainManager.addWitness(ByteString.copyFrom(address));
-
+    List<WitnessCapsule> witnessStandby1 = chainManager.getWitnessStore().getWitnessStandby();
     Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
 
@@ -625,6 +635,9 @@ public class ManagerTest extends BlockGenerate {
     } catch (Exception e) {
       Assert.assertTrue(e instanceof Exception);
     }
+    chainManager.getWitnessStore().put(address, sr2);
+    List<WitnessCapsule> witnessStandby2 = chainManager.getWitnessStore().getWitnessStandby();
+    Assert.assertNotEquals(witnessStandby1, witnessStandby2);
   }
 
 
