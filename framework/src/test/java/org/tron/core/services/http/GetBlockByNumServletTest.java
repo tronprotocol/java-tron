@@ -1,12 +1,14 @@
 package org.tron.core.services.http;
 
-import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 import static org.junit.Assert.assertTrue;
+import static org.tron.common.utils.client.utils.HttpMethed.createRequest;
 
 import com.alibaba.fastjson.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import javax.annotation.Resource;
+
+import org.apache.http.client.methods.HttpPost;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -27,18 +29,27 @@ public class GetBlockByNumServletTest extends BaseTest {
     );
   }
 
-  public MockHttpServletRequest createRequest(String contentType) {
-    MockHttpServletRequest request = new MockHttpServletRequest();
-    request.setMethod("POST");
-    if (isNotEmpty(contentType)) {
-      request.setContentType(contentType);
+  @Test
+  public void testGetBlockByNum() {
+    String jsonParam = "{\"number\": 1}";
+    MockHttpServletRequest request = createRequest(HttpPost.METHOD_NAME);
+    request.setContentType("application/json");
+    request.setContent(jsonParam.getBytes());
+    MockHttpServletResponse response = new MockHttpServletResponse();
+
+    try {
+      getBlockByNumServlet.doPost(request, response);
+      String contentAsString = response.getContentAsString();
+      JSONObject result = JSONObject.parseObject(contentAsString);
+      assertTrue(result.containsKey("blockID"));
+      assertTrue(result.containsKey("transactions"));
+    } catch (UnsupportedEncodingException e) {
+      e.printStackTrace();
     }
-    request.setCharacterEncoding("UTF-8");
-    return request;
   }
 
   @Test
-  public void testGetBlockByNum() {
+  public void testGet() {
     String jsonParam = "{\"number\": 1}";
     MockHttpServletRequest request = createRequest("application/json");
     request.setContent(jsonParam.getBytes());
