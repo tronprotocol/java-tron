@@ -11,10 +11,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.tron.common.cache.CacheManager;
-import org.tron.common.cache.CacheStrategies;
-import org.tron.common.cache.CacheType;
-import org.tron.common.cache.TronCache;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter;
 import org.tron.core.db.TronStoreWithRevoking;
@@ -22,14 +18,10 @@ import org.tron.core.db.TronStoreWithRevoking;
 @Slf4j(topic = "DB")
 @Component
 public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
- // cache for 127 SR
-  private final TronCache<Integer, List<WitnessCapsule>> witnessStandbyCache;
 
   @Autowired
   protected WitnessStore(@Value("witness") String dbName) {
     super(dbName);
-    String strategy =  String.format(CacheStrategies.PATTERNS, 1, 1, "30s", 1);
-    witnessStandbyCache = CacheManager.allocate(CacheType.witnessStandby, strategy);
   }
 
   /**
@@ -48,19 +40,8 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
   }
 
   public List<WitnessCapsule> getWitnessStandby() {
-    List<WitnessCapsule> list =
-        witnessStandbyCache.getIfPresent(Parameter.ChainConstant.WITNESS_STANDBY_LENGTH);
-    if (list != null) {
-      return list;
-    }
-    return updateWitnessStandby(null);
-  }
-
-  public List<WitnessCapsule> updateWitnessStandby(List<WitnessCapsule> all) {
     List<WitnessCapsule> ret;
-    if (all == null) {
-      all = getAllWitnesses();
-    }
+    List<WitnessCapsule> all = getAllWitnesses();
     all.sort(Comparator.comparingLong(WitnessCapsule::getVoteCount)
         .reversed().thenComparing(Comparator.comparingInt(
             (WitnessCapsule w) -> w.getAddress().hashCode()).reversed()));
@@ -71,7 +52,6 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
     }
     // trim voteCount = 0
     ret.removeIf(w -> w.getVoteCount() < 1);
-    witnessStandbyCache.put(Parameter.ChainConstant.WITNESS_STANDBY_LENGTH, ret);
     return ret;
   }
 
