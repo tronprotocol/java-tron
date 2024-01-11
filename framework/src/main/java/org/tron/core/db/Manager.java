@@ -1843,6 +1843,7 @@ public class Manager {
         triggerCapsule.setTriggerName(Trigger.SOLIDITYLOG_TRIGGER_NAME);
         EventPluginLoader.getInstance().postSolidityLogTrigger(triggerCapsule);
       } else {
+        // when switch fork, block will be post to triggerCapsuleQueue, transaction may be not found
         logger.error("PostSolidityLogContractTrigger txId = {} not contains transaction.",
             triggerCapsule.getTransactionId());
       }

@@ -1,5 +1,7 @@
 package org.tron.core.capsule.utils;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -23,4 +25,14 @@ public class RLPListTest {
     Assert.assertEquals(new String(rlpList.getRLPData()), "rlpData");
   }
 
+  @Test
+  public void testToBytes()
+      throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    Method method = RLP.class.getDeclaredMethod("toBytes", Object.class);
+    method.setAccessible(true);
+
+    byte[] aBytes = new byte[10];
+    byte[] bBytes = (byte[]) method.invoke(RLP.class, aBytes);
+    Assert.assertArrayEquals(aBytes, bBytes);
+  }
 }
