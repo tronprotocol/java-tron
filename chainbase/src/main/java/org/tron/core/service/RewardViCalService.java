@@ -176,7 +176,7 @@ public class RewardViCalService {
 
     Sha256Hash rewardViRootLocal = MerkleTree.getInstance().createTree(ids).getRoot().getHash();
     if (!Objects.equals(rewardViRoot, rewardViRootLocal)) {
-      logger.error("merkle root mismatch, expect: {}, actual: {}",
+      logger.warn("merkle root mismatch, expect: {}, actual: {}",
           rewardViRoot, rewardViRootLocal);
     }
     logger.info("calcMerkleRoot: {}", rewardViRootLocal);
