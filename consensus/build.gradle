@@ -1,21 +1,8 @@
 description = "consensus – a distributed consensus arithmetic for blockchain."
 
-// Dependency versions
-// ---------------------------------------
-def junitVersion = "4.13.2"
-def mockitoVersion = "2.1.0"
-def testNgVersion = "6.11"
-def slf4jVersion = "1.7.25"
-// --------------------------------------
-
 dependencies {
     compile project(":chainbase")
     compile project(":protocol")
-    testImplementation "junit:junit:$junitVersion"
-    testImplementation "org.mockito:mockito-core:$mockitoVersion"
-    compile "org.slf4j:jcl-over-slf4j:$slf4jVersion"
-    compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.69'
-    compile group: 'commons-codec', name: 'commons-codec', version: '1.11'
 }
 
 test {

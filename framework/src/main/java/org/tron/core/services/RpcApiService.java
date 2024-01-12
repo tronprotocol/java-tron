@@ -8,6 +8,7 @@ import com.google.protobuf.ProtocolStringList;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.netty.NettyServerBuilder;
+import io.grpc.protobuf.services.ProtoReflectionService;
 import io.grpc.stub.StreamObserver;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -249,6 +250,10 @@ public class RpcApiService extends RpcService {
 
       // add lite fullnode query interceptor
       serverBuilder.intercept(liteFnQueryGrpcInterceptor);
+
+      if (parameter.isRpcReflectionServiceEnable()) {
+        serverBuilder.addService(ProtoReflectionService.newInstance());
+      }
 
       apiServer = serverBuilder.build();
       rateLimiterInterceptor.init(apiServer);
@@ -2470,9 +2475,13 @@ public class RpcApiService extends RpcService {
         ShieldedTRC20Parameters shieldedTRC20Parameters = wallet
             .createShieldedContractParameters(request);
         responseObserver.onNext(shieldedTRC20Parameters);
+      } catch (ZksnarkException | ContractValidateException e) {
+        responseObserver.onError(getRunTimeException(e));
+        logger.info("createShieldedContractParameters: {}", e.getMessage());
+        return;
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
-        logger.info("createShieldedContractParameters exception caught: " + e.getMessage());
+        logger.error("createShieldedContractParameters: ", e);
         return;
       }
       responseObserver.onCompleted();
@@ -2513,9 +2522,13 @@ public class RpcApiService extends RpcService {
             request.getNk().toByteArray(),
             request.getEventsList());
         responseObserver.onNext(decryptNotes);
+      } catch (BadItemException | ZksnarkException e) {
+        responseObserver.onError(getRunTimeException(e));
+        logger.info("scanShieldedTRC20NotesByIvk: {}", e.getMessage());
+        return;
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
-        logger.info("scanShieldedTRC20NotesByIvk exception caught: " + e.getMessage());
+        logger.error("scanShieldedTRC20NotesByIvk:", e);
         return;
       }
       responseObserver.onCompleted();
