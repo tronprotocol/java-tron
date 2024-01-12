@@ -21,6 +21,7 @@ import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
@@ -136,6 +137,37 @@ public class HandShakeServiceTest {
       Assert.fail();
     }
   }
+
+  @Test
+  public void testInvalidHelloMessage2() throws Exception {
+    Protocol.HelloMessage.Builder builder = getTestHelloMessageBuilder();
+    Assert.assertTrue(new HelloMessage(builder.build().toByteArray()).valid());
+
+    builder.setAddress(ByteString.copyFrom(new byte[201]));
+    HelloMessage helloMessage = new HelloMessage(builder.build().toByteArray());
+    Assert.assertFalse(helloMessage.valid());
+
+    builder.setAddress(ByteString.copyFrom(new byte[200]));
+    helloMessage = new HelloMessage(builder.build().toByteArray());
+    Assert.assertTrue(helloMessage.valid());
+
+    builder.setSignature(ByteString.copyFrom(new byte[201]));
+    helloMessage = new HelloMessage(builder.build().toByteArray());
+    Assert.assertFalse(helloMessage.valid());
+
+    builder.setSignature(ByteString.copyFrom(new byte[200]));
+    helloMessage = new HelloMessage(builder.build().toByteArray());
+    Assert.assertTrue(helloMessage.valid());
+
+    builder.setCodeVersion(ByteString.copyFrom(new byte[201]));
+    helloMessage = new HelloMessage(builder.build().toByteArray());
+    Assert.assertFalse(helloMessage.valid());
+
+    builder.setCodeVersion(ByteString.copyFrom(new byte[200]));
+    helloMessage = new HelloMessage(builder.build().toByteArray());
+    Assert.assertTrue(helloMessage.valid());
+  }
+
 
   @Test
   public void testRelayHelloMessage() throws NoSuchMethodException {
@@ -264,6 +296,15 @@ public class HandShakeServiceTest {
     builder.setLowestBlockNum(chainBaseManager.isLiteNode()
         ? chainBaseManager.getLowestBlockNum() : 0);
 
+    return builder;
+  }
+
+  private Protocol.HelloMessage.Builder getTestHelloMessageBuilder() {
+    InetSocketAddress a1 = new InetSocketAddress("127.0.0.1", 10001);
+    Node node = new Node(NetUtil.getNodeId(), a1.getAddress().getHostAddress(), null, a1.getPort());
+    Protocol.HelloMessage.Builder builder =
+        getHelloMessageBuilder(node, System.currentTimeMillis(),
+            ChainBaseManager.getChainBaseManager());
     return builder;
   }
 }
