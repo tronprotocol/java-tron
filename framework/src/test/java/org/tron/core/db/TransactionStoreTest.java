@@ -112,7 +112,7 @@ public class TransactionStoreTest extends BaseTest {
   public void getTransactionTest() throws BadItemException, ItemNotFoundException {
     final BlockStore blockStore = chainBaseManager.getBlockStore();
     final TransactionStore trxStore = chainBaseManager.getTransactionStore();
-    String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
+    String key = PublicMethod.getRandomPrivateKey();;
 
     BlockCapsule blockCapsule =
         new BlockCapsule(
