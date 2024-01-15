@@ -17,13 +17,19 @@ import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.tron.common.BaseTest;
+import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Utils;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.protos.Protocol;
 
-public class CreateAssetIssueServletTest extends BaseTest {
+public class CreateWitnessServletTest extends BaseTest {
+
+  @Resource
+  private CreateWitnessServlet createWitnessServlet;
 
   static {
     Args.setParam(
@@ -33,48 +39,39 @@ public class CreateAssetIssueServletTest extends BaseTest {
     );
   }
 
-  @Resource
-  private CreateAssetIssueServlet createAssetIssueServlet;
+  private static WitnessCapsule witnessCapsule;
+  private static AccountCapsule accountCapsule;
 
   @Before
   public void init() {
-    AccountCapsule accountCapsule = new AccountCapsule(
-            ByteString.copyFrom(ByteArray
-                    .fromHexString("A099357684BC659F5166046B56C95A0E99F1265CD1")),
-            ByteString.copyFromUtf8("owner"),
-            Protocol.AccountType.forNumber(1));
-    accountCapsule.setBalance(10000000000L);
+    ECKey ecKey = new ECKey(Utils.getRandom());
+    ByteString address = ByteString.copyFrom(ecKey.getAddress());
 
-    chainBaseManager.getAccountStore().put(accountCapsule.createDbKey(),
-            accountCapsule);
+    accountCapsule =
+            new AccountCapsule(Protocol.Account
+                    .newBuilder()
+                    .setAddress(address).build());
+    accountCapsule.setBalance(10000000L);
+    dbManager.getAccountStore().put(accountCapsule
+             .getAddress().toByteArray(), accountCapsule);
   }
 
   @Test
-  public void testCreate() {
-    String jsonParam = "{"
-            + "    \"owner_address\": \"A099357684BC659F5166046B56C95A0E99F1265CD1\","
-            + "    \"name\": \"0x6173736574497373756531353330383934333132313538\","
-            + "    \"abbr\": \"0x6162627231353330383934333132313538\","
-            + "    \"total_supply\": 4321,"
-            + "    \"trx_num\": 1,"
-            + "    \"num\": 1,"
-            + "    \"start_time\": 1530894315158,"
-            + "    \"end_time\": 1533894312158,"
-            + "    \"description\": \"007570646174654e616d6531353330363038383733343633\","
-            + "    \"url\": \"007570646174654e616d6531353330363038383733343633\","
-            + "    \"free_asset_net_limit\": 10000,"
-            + "    \"public_free_asset_net_limit\": 10000,"
-            + "    \"frozen_supply\": {"
-            + "        \"frozen_amount\": 1,"
-            + "        \"frozen_days\": 2"
-            + "    }"
-            + "}";
+  public void testCreateWitness() {
+    chainBaseManager.getDynamicPropertiesStore()
+            .saveAccountUpgradeCost(1L);
+    String hexAddress =  ByteArray
+            .toHexString(accountCapsule.getAddress().toByteArray());
+    String jsonParam = "{\"owner_address\":\""
+            + hexAddress  + "\","
+            + " \"url\": \"00757064617"
+            + "4654e616d6531353330363038383733343633\"}";
     MockHttpServletRequest request = createRequest(HttpPost.METHOD_NAME);
     request.setContentType("application/json");
     request.setContent(jsonParam.getBytes(UTF_8));
 
     MockHttpServletResponse response = new MockHttpServletResponse();
-    createAssetIssueServlet.doPost(request, response);
+    createWitnessServlet.doPost(request, response);
     Assert.assertEquals(200, response.getStatus());
     try {
       String contentAsString = response.getContentAsString();
@@ -84,7 +81,8 @@ public class CreateAssetIssueServletTest extends BaseTest {
     } catch (UnsupportedEncodingException e) {
       fail(e.getMessage());
     }
-
   }
 
 }
+
+
