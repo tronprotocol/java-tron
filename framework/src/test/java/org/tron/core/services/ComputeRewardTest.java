@@ -22,7 +22,6 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.error.TronDBException;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -251,9 +250,6 @@ public class ComputeRewardTest {
     } catch (ExecutionException e) {
       throw new TronDBException(e);
     }
-
-    rewardViCalService.setRewardViRoot(Sha256Hash.wrap(
-        ByteString.fromHex("e0ebe2f3243391ed674dff816a07f589a3279420d6d88bc823b6a9d5778337ce")));
   }
 
   @Test

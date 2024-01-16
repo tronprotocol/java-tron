@@ -17,7 +17,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
-import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -75,8 +74,14 @@ public class RewardViCalService {
     this.witnessStore = witnessStore.getDb();
   }
 
-  @PostConstruct
-  private void init() {
+  public void init() {
+    // after init, we can get the latest block header number from db
+    this.newRewardCalStartCycle = this.getNewRewardAlgorithmEffectiveCycle();
+    boolean ret = this.newRewardCalStartCycle != Long.MAX_VALUE;
+    if (ret) {
+      // checkpoint is flushed to db, we can start rewardViCalService immediately
+      lastBlockNumber = Long.MAX_VALUE;
+    }
     es.scheduleWithFixedDelay(this::maybeRun, 0, 3, TimeUnit.SECONDS);
   }
 
@@ -100,7 +105,8 @@ public class RewardViCalService {
           this.clearUp(true);
           logger.info("rewardViCalService is already done");
         } else {
-          if (this.getLatestBlockHeaderNumber() > lastBlockNumber) {
+          if (lastBlockNumber ==  Long.MAX_VALUE // start rewardViCalService immediately
+              || this.getLatestBlockHeaderNumber() > lastBlockNumber) {
             // checkpoint is flushed to db, so we can start rewardViCalService
             startRewardCal();
             clearUp(true);
@@ -170,7 +176,7 @@ public class RewardViCalService {
 
     Sha256Hash rewardViRootLocal = MerkleTree.getInstance().createTree(ids).getRoot().getHash();
     if (!Objects.equals(rewardViRoot, rewardViRootLocal)) {
-      logger.error("merkle root mismatch, expect: {}, actual: {}",
+      logger.warn("merkle root mismatch, expect: {}, actual: {}",
           rewardViRoot, rewardViRootLocal);
     }
     logger.info("calcMerkleRoot: {}", rewardViRootLocal);
