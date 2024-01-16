@@ -12,6 +12,7 @@ import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AccountTraceCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
@@ -54,4 +55,16 @@ public class AccountTraceStoreTest extends BaseTest {
     Assert.assertEquals((long)pair2.getKey(),3L);
     Assert.assertEquals((long)pair2.getValue(), 99L);
   }
+
+  @Test
+  public void testPut() {
+    long number = 2 ^ Long.MAX_VALUE;
+    long balance = 9999;
+    byte[] key = Bytes.concat(address, Longs.toByteArray(number));
+    accountTraceStore.put(key, new AccountTraceCapsule(balance));
+    Pair<Long, Long> pair = accountTraceStore.getPrevBalance(address,2);
+    Assert.assertEquals((long)pair.getKey(),2L);
+    Assert.assertEquals((long)pair.getValue(), 0L);
+  }
+
 }
