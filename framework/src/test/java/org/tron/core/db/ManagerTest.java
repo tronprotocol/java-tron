@@ -641,9 +641,9 @@ public class ManagerTest extends BlockGenerate {
       dbManager.pushBlock(blockCapsule2);
       Assert.assertTrue(false);
     } catch (BadBlockException e) {
-      Assert.assertFalse(true);
+      Assert.assertFalse(e instanceof BadBlockException);
     } catch (Exception e) {
-      Assert.assertTrue(true);
+      Assert.assertTrue(e instanceof Exception);
     }
     chainManager.getWitnessStore().put(address, sr2);
     List<WitnessCapsule> witnessStandby2 = chainManager.getWitnessStore().getWitnessStandby();
