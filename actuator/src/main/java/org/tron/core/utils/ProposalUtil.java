@@ -733,6 +733,10 @@ public class ProposalUtil {
           throw new ContractValidateException(
               "Bad chain parameter id [ALLOW_OLD_REWARD_OPT]");
         }
+        if (dynamicPropertiesStore.allowOldRewardOpt()) {
+          throw new ContractValidateException(
+              "[ALLOW_OLD_REWARD_OPT] has been valid, no need to propose again");
+        }
         if (value != 1) {
           throw new ContractValidateException(
               "This value[ALLOW_OLD_REWARD_OPT] is only allowed to be 1");
