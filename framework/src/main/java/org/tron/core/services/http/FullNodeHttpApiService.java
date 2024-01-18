@@ -55,6 +55,8 @@ public class FullNodeHttpApiService extends HttpService {
   @Autowired
   private WithdrawBalanceServlet withdrawBalanceServlet;
   @Autowired
+  private WithdrawBalanceToServlet withdrawBalanceToServlet;
+  @Autowired
   private UpdateAssetServlet updateAssetServlet;
   @Autowired
   private ListNodesServlet listNodesServlet;
@@ -328,6 +330,7 @@ public class FullNodeHttpApiService extends HttpService {
       context.addServlet(new ServletHolder(unFreezeBalanceServlet), "/wallet/unfreezebalance");
       context.addServlet(new ServletHolder(unFreezeAssetServlet), "/wallet/unfreezeasset");
       context.addServlet(new ServletHolder(withdrawBalanceServlet), "/wallet/withdrawbalance");
+      context.addServlet(new ServletHolder(withdrawBalanceToServlet), "/wallet/withdrawbalanceTo");
       context.addServlet(new ServletHolder(updateAssetServlet), "/wallet/updateasset");
       context.addServlet(new ServletHolder(listNodesServlet), "/wallet/listnodes");
       context.addServlet(

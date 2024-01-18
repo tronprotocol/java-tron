@@ -214,6 +214,7 @@ public class JsonRpcApiUtil {
       switch (contract.getType()) {
         case UnfreezeBalanceContract:
         case WithdrawBalanceContract:
+        case WithdrawBalanceToContract:
         case WithdrawExpireUnfreezeContract:
         case UnfreezeBalanceV2Contract:
         case CancelAllUnfreezeV2Contract:
@@ -291,6 +292,7 @@ public class JsonRpcApiUtil {
           break;
         case UnfreezeBalanceContract:
         case WithdrawBalanceContract:
+        case WithdrawBalanceToContract:
         case WithdrawExpireUnfreezeContract:
         case UnfreezeBalanceV2Contract:
         case CancelAllUnfreezeV2Contract:
@@ -322,6 +324,7 @@ public class JsonRpcApiUtil {
             amount = transactionInfo.getUnfreezeAmount();
             break;
           case WithdrawBalanceContract:
+          case WithdrawBalanceToContract:
             amount = transactionInfo.getWithdrawAmount();
             break;
           case ExchangeInjectContract:

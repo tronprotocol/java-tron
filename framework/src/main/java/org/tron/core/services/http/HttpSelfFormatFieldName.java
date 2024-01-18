@@ -98,6 +98,9 @@ public class HttpSelfFormatFieldName {
     AddressFieldNameMap.put("protocol.UnfreezeAssetContract.owner_address", 1);
     //WithdrawBalanceContract
     AddressFieldNameMap.put("protocol.WithdrawBalanceContract.owner_address", 1);
+    //WithdrawBalanceToContract
+    AddressFieldNameMap.put("protocol.WithdrawBalanceToContract.owner_address", 1);
+    AddressFieldNameMap.put("protocol.WithdrawBalanceToContract.receiver_address", 1);
     //UpdateAssetContract
     AddressFieldNameMap.put("protocol.UpdateAssetContract.owner_address", 1);
     //ProposalCreateContract

@@ -1,0 +1,393 @@
+package org.tron.core.actuator;
+
+import static junit.framework.TestCase.fail;
+
+import com.google.protobuf.Any;
+import com.google.protobuf.ByteString;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.tron.common.BaseTest;
+import org.tron.common.args.Witness;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.StringUtil;
+import org.tron.core.Constant;
+import org.tron.core.Wallet;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.config.args.Args;
+import org.tron.core.exception.BalanceInsufficientException;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
+import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
+import org.tron.protos.contract.BalanceContract.WithdrawBalanceToContract;
+
+@Slf4j
+public class WithdrawBalanceToActuatorTest extends BaseTest {
+
+  private static final String OWNER_ADDRESS;
+  private static final String OWNER_ADDRESS_INVALID = "aaaa";
+  private static final String OWNER_ACCOUNT_INVALID;
+  private static final String RECEIVER_ADDRESS;
+  private static final String RECEIVER_ADDRESS_INVALID = "bbbb";
+  private static final String RECEIVER_ACCOUNT_INVALID;
+  private static final long initBalance = 10_000_000_000L;
+  private static final long allowance = 32_000_000L;
+
+  static {
+    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
+    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+    OWNER_ACCOUNT_INVALID =
+        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3456";
+    RECEIVER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
+    RECEIVER_ACCOUNT_INVALID =
+        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3457";
+  }
+
+  /**
+   * create temp Capsule test need.
+   */
+  @Before
+  public void createAccountCapsule() {
+    AccountCapsule ownerCapsule = new AccountCapsule(ByteString.copyFromUtf8("owner"),
+        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), AccountType.Normal,
+        initBalance);
+    dbManager.getAccountStore().put(ownerCapsule.createDbKey(), ownerCapsule);
+
+    AccountCapsule receiverCapsule =
+        new AccountCapsule(
+            ByteString.copyFromUtf8("receiver"),
+            ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS)),
+            Protocol.AccountType.Normal,
+            0L);
+    dbManager.getAccountStore().put(receiverCapsule.getAddress().toByteArray(), receiverCapsule);
+  }
+
+  private Any getContract(String ownerAddress, String receiverAddress) {
+    return Any.pack(WithdrawBalanceToContract.newBuilder()
+        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
+        .setReceiverAddress(ByteString.copyFrom(ByteArray.fromHexString(receiverAddress))).build());
+  }
+
+  @Test
+  public void testWithdrawBalanceTo() {
+    long now = System.currentTimeMillis();
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
+    byte[] address = ByteArray.fromHexString(OWNER_ADDRESS);
+    try {
+      dbManager.getMortgageService()
+          .adjustAllowance(dbManager.getAccountStore(), address, allowance);
+    } catch (BalanceInsufficientException e) {
+      fail("BalanceInsufficientException");
+    }
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
+    Assert.assertEquals(initBalance, accountCapsule.getBalance());
+    Assert.assertEquals(allowance, accountCapsule.getAllowance());
+    Assert.assertEquals(0, accountCapsule.getLatestWithdrawTime());
+
+    WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address), 100,
+        "http://baidu.com");
+    dbManager.getWitnessStore().put(address, witnessCapsule);
+
+    WithdrawBalanceToActuator actuator = new WithdrawBalanceToActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, RECEIVER_ADDRESS));
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertEquals(code.SUCESS, ret.getInstance().getRet());
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule receiver = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(RECEIVER_ADDRESS));
+
+      Assert.assertEquals(initBalance, owner.getBalance());
+      Assert.assertEquals(0, owner.getAllowance());
+      Assert.assertEquals(allowance, receiver.getBalance());
+      Assert.assertNotEquals(owner.getLatestWithdrawTime(), 0);
+    } catch (ContractValidateException | ContractExeException e) {
+      Assert.fail();
+    }
+  }
+
+
+  @Test
+  public void invalidOwnerAddress() {
+    WithdrawBalanceToActuator actuator = new WithdrawBalanceToActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_INVALID, RECEIVER_ADDRESS));
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail("cannot run here.");
+
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(true);
+
+      Assert.assertEquals("Invalid owner address", e.getMessage());
+
+    } catch (ContractExeException e) {
+      Assert.assertTrue(true);
+    }
+
+  }
+
+  @Test
+  public void invalidReceiverAddress() {
+    WithdrawBalanceToActuator actuator = new WithdrawBalanceToActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, RECEIVER_ADDRESS_INVALID));
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail("cannot run here.");
+
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(true);
+
+      Assert.assertEquals("Invalid receiver address", e.getMessage());
+
+    } catch (ContractExeException e) {
+      Assert.assertTrue(true);
+    }
+
+  }
+
+  @Test
+  public void invalidOwnerAccount() {
+    WithdrawBalanceToActuator actuator = new WithdrawBalanceToActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ACCOUNT_INVALID, RECEIVER_ADDRESS));
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail("cannot run here.");
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(true);
+      Assert.assertEquals("Account[" + OWNER_ACCOUNT_INVALID + "] not exists", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.fail();
+    }
+  }
+
+  @Test
+  public void invalidReceiverAccount() {
+    WithdrawBalanceToActuator actuator = new WithdrawBalanceToActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, RECEIVER_ACCOUNT_INVALID));
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail("cannot run here.");
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(true);
+      Assert.assertEquals("Account[" + RECEIVER_ACCOUNT_INVALID + "] not exists", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.fail();
+    }
+  }
+
+  @Test
+  public void notWitness() {
+    WithdrawBalanceToActuator actuator = new WithdrawBalanceToActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, RECEIVER_ADDRESS));
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail("cannot run here.");
+
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(true);
+    } catch (ContractExeException e) {
+      Assert.fail();
+    }
+  }
+
+  @Test
+  public void noAllowance() {
+    long now = System.currentTimeMillis();
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
+
+    byte[] address = ByteArray.fromHexString(OWNER_ADDRESS);
+
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
+    Assert.assertEquals(0, accountCapsule.getAllowance());
+
+    WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address), 100,
+        "http://baidu.com");
+    dbManager.getWitnessStore().put(address, witnessCapsule);
+
+    WithdrawBalanceToActuator actuator = new WithdrawBalanceToActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, RECEIVER_ADDRESS));
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail("cannot run here.");
+
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(true);
+      Assert.assertEquals("witnessAccount does not have any reward", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.fail();
+    }
+  }
+
+  @Test
+  public void isGR() {
+    Witness w = Args.getInstance().getGenesisBlock().getWitnesses().get(0);
+    byte[] address = w.getAddress();
+    AccountCapsule grCapsule = new AccountCapsule(ByteString.copyFromUtf8("gr"),
+        ByteString.copyFrom(address), AccountType.Normal, initBalance);
+    dbManager.getAccountStore().put(grCapsule.createDbKey(), grCapsule);
+    long now = System.currentTimeMillis();
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
+
+    try {
+      dbManager.getMortgageService()
+          .adjustAllowance(dbManager.getAccountStore(), address, allowance);
+    } catch (BalanceInsufficientException e) {
+      fail("BalanceInsufficientException");
+    }
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
+    Assert.assertEquals(allowance, accountCapsule.getAllowance());
+
+    WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address), 100,
+        "http://google.com");
+
+    dbManager.getAccountStore().put(address, accountCapsule);
+    dbManager.getWitnessStore().put(address, witnessCapsule);
+
+    WithdrawBalanceToActuator actuator = new WithdrawBalanceToActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(ByteArray.toHexString(address), RECEIVER_ADDRESS));
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    Assert.assertTrue(dbManager.getWitnessStore().has(address));
+
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail("cannot run here.");
+
+    } catch (ContractValidateException e) {
+      String readableOwnerAddress = StringUtil.createReadableString(address);
+      Assert.assertTrue(true);
+      Assert.assertEquals("Account[" + readableOwnerAddress
+          + "] is a guard representative and is not allowed to withdraw Balance", e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.fail();
+    }
+  }
+
+  @Test
+  public void notTimeToWithdraw() {
+    long now = System.currentTimeMillis();
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
+
+    byte[] address = ByteArray.fromHexString(OWNER_ADDRESS);
+    try {
+      dbManager.getMortgageService()
+          .adjustAllowance(dbManager.getAccountStore(), address, allowance);
+    } catch (BalanceInsufficientException e) {
+      fail("BalanceInsufficientException");
+    }
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
+    accountCapsule.setLatestWithdrawTime(now);
+    Assert.assertEquals(allowance, accountCapsule.getAllowance());
+    Assert.assertEquals(accountCapsule.getLatestWithdrawTime(), now);
+
+    WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address), 100,
+        "http://baidu.com");
+
+    dbManager.getAccountStore().put(address, accountCapsule);
+    dbManager.getWitnessStore().put(address, witnessCapsule);
+
+    WithdrawBalanceToActuator actuator = new WithdrawBalanceToActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, RECEIVER_ADDRESS));
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail("cannot run here.");
+
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(true);
+      Assert
+          .assertEquals("The last withdraw time is " + now + ", less than 24 hours",
+              e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.fail();
+    }
+  }
+
+  @Test
+  public void commonErrorCheck() {
+
+    WithdrawBalanceToActuator actuator = new WithdrawBalanceToActuator();
+    ActuatorTest actuatorTest = new ActuatorTest(actuator, dbManager);
+    actuatorTest.noContract();
+
+    Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+        .build());
+    actuatorTest.setInvalidContract(invalidContractTypes);
+    actuatorTest.setInvalidContractTypeMsg("contract type error",
+        "contract type error, expected type [WithdrawBalanceToContract], real type[");
+    actuatorTest.invalidContractType();
+
+    long now = System.currentTimeMillis();
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
+    byte[] address = ByteArray.fromHexString(OWNER_ADDRESS);
+    try {
+      dbManager.getMortgageService()
+          .adjustAllowance(dbManager.getAccountStore(), address, allowance);
+    } catch (BalanceInsufficientException e) {
+      fail("BalanceInsufficientException");
+    }
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
+    Assert.assertEquals(allowance, accountCapsule.getAllowance());
+    Assert.assertEquals(0, accountCapsule.getLatestWithdrawTime());
+
+    WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address), 100,
+        "http://google.com");
+    dbManager.getWitnessStore().put(address, witnessCapsule);
+
+    actuatorTest.setContract(getContract(OWNER_ADDRESS, RECEIVER_ADDRESS));
+    actuatorTest.nullTransationResult();
+
+    actuatorTest.setNullDBManagerMsg("No account store or dynamic store!");
+    actuatorTest.nullDBManger();
+  }
+
+}
+

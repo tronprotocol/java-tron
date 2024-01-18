@@ -29,6 +29,11 @@ message WithdrawBalanceContract {
   bytes owner_address = 1;
 }
 
+message WithdrawBalanceToContract {
+  bytes owner_address = 1;
+  bytes receiver_address = 2;
+}
+
 message TransferContract {
   bytes owner_address = 1;
   bytes to_address = 2;

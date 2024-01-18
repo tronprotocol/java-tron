@@ -238,6 +238,7 @@ message Account {
 
   int64 delegated_frozenV2_balance_for_bandwidth = 36;
   int64 acquired_delegated_frozenV2_balance_for_bandwidth = 37;
+  int64 latest_withdraw_to_time = 0x26;
 }
 
 message Key {
@@ -377,6 +378,7 @@ message Transaction {
       DelegateResourceContract = 57;
       UnDelegateResourceContract = 58;
       CancelAllUnfreezeV2Contract = 59;
+      WithdrawBalanceToContract = 60;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;

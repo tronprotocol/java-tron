@@ -272,6 +272,9 @@ service Wallet {
   rpc WithdrawBalance2 (WithdrawBalanceContract) returns (TransactionExtention) {
   }
 
+  rpc WithdrawBalanceTo (WithdrawBalanceToContract) returns (TransactionExtention) {
+  }
+
   rpc WithdrawExpireUnfreeze (WithdrawExpireUnfreezeContract) returns (TransactionExtention) {
   }
 

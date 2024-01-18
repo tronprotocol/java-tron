@@ -137,6 +137,7 @@ import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.BalanceContract.UnDelegateResourceContract;
 import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
 import org.tron.protos.contract.BalanceContract.WithdrawBalanceContract;
+import org.tron.protos.contract.BalanceContract.WithdrawBalanceToContract;
 import org.tron.protos.contract.BalanceContract.WithdrawExpireUnfreezeContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeCreateContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeInjectContract;
@@ -1441,6 +1442,12 @@ public class RpcApiService extends RpcService {
     public void withdrawBalance2(WithdrawBalanceContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.WithdrawBalanceContract, responseObserver);
+    }
+
+    @Override
+    public void withdrawBalanceTo(WithdrawBalanceToContract request,
+                                 StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.WithdrawBalanceToContract, responseObserver);
     }
 
     @Override
