@@ -226,7 +226,6 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
-import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.BalanceContract;
@@ -4158,8 +4157,7 @@ public class Wallet {
       trx = trxExt.getTransaction();
     }
 
-    if (response_code.SUCCESS == trxExt.getResult().getCode()
-        && contractResult.SUCCESS == trx.getRet(0).getContractRet()) {
+    if (code.SUCESS == trx.getRet(0).getRet()) {
       List<ByteString> list = trxExt.getConstantResultList();
       byte[] listBytes = new byte[0];
       for (ByteString bs : list) {
