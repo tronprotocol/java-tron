@@ -59,7 +59,7 @@ public class RLPListTest {
     byte[] jBytes = (byte[]) method.invoke(RLP.class, bigInteger);
     Assert.assertArrayEquals(iBytes, jBytes);
 
-    Value v =  new Value(new byte[0]);
+    Value v = new Value(new byte[0]);
     byte[] kBytes = v.asBytes();
     byte[] lBytes = (byte[]) method.invoke(RLP.class, v);
     Assert.assertArrayEquals(kBytes, lBytes);
@@ -71,5 +71,11 @@ public class RLPListTest {
     } catch (Exception e) {
       Assert.assertTrue(true);
     }
+  }
+
+  @Test
+  public void testEncode() {
+    byte[] aBytes = RLP.encode(new byte[1]);
+    Assert.assertEquals(1, aBytes.length);
   }
 }
