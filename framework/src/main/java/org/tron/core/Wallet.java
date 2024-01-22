@@ -3862,11 +3862,12 @@ public class Wallet {
     TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
     Return.Builder retBuilder = Return.newBuilder();
     TransactionExtention trxExt;
+    Transaction trx;
 
     try {
       TransactionCapsule trxCap = createTransactionCapsule(trigger,
           ContractType.TriggerSmartContract);
-      Transaction trx = triggerConstantContract(trigger, trxCap, trxExtBuilder, retBuilder);
+      trx = triggerConstantContract(trigger, trxCap, trxExtBuilder, retBuilder);
 
       retBuilder.setResult(true).setCode(response_code.SUCCESS);
       trxExtBuilder.setTransaction(trx);
@@ -3889,10 +3890,10 @@ public class Wallet {
       logger.warn("unknown exception caught: " + e.getMessage(), e);
     } finally {
       trxExt = trxExtBuilder.build();
+      trx = trxExt.getTransaction();
     }
 
-    String code = trxExt.getResult().getCode().toString();
-    if ("SUCCESS".equals(code)) {
+    if (code.SUCESS == trx.getRet(0).getRet()) {
       List<ByteString> list = trxExt.getConstantResultList();
       byte[] listBytes = new byte[0];
       for (ByteString bs : list) {
