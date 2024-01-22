@@ -42,5 +42,15 @@ public class RLPListTest {
     byte[] cBytes = BigIntegers.asUnsignedByteArray(BigInteger.valueOf(i));
     byte[] dBytes = (byte[]) method.invoke(RLP.class, i);
     Assert.assertArrayEquals(cBytes, dBytes);
+
+    long j = new Random().nextInt();
+    byte[] eBytes = BigIntegers.asUnsignedByteArray(BigInteger.valueOf(j));
+    byte[] fBytes = (byte[]) method.invoke(RLP.class, j);
+    Assert.assertArrayEquals(eBytes, fBytes);
+
+    String test = "testA";
+    byte[] gBytes = test.getBytes();
+    byte[] hBytes = (byte[]) method.invoke(RLP.class, test);
+    Assert.assertArrayEquals(gBytes, hBytes);
   }
 }
