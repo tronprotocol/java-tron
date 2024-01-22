@@ -7,6 +7,7 @@ import java.util.Random;
 import org.bouncycastle.util.BigIntegers;
 import org.junit.Assert;
 import org.junit.Test;
+import org.tron.common.utils.Value;
 
 public class RLPListTest {
 
@@ -52,5 +53,23 @@ public class RLPListTest {
     byte[] gBytes = test.getBytes();
     byte[] hBytes = (byte[]) method.invoke(RLP.class, test);
     Assert.assertArrayEquals(gBytes, hBytes);
+
+    BigInteger bigInteger = BigInteger.valueOf(100);
+    byte[] iBytes = BigIntegers.asUnsignedByteArray(bigInteger);
+    byte[] jBytes = (byte[]) method.invoke(RLP.class, bigInteger);
+    Assert.assertArrayEquals(iBytes, jBytes);
+
+    Value v =  new Value(new byte[0]);
+    byte[] kBytes = v.asBytes();
+    byte[] lBytes = (byte[]) method.invoke(RLP.class, v);
+    Assert.assertArrayEquals(kBytes, lBytes);
+
+    char c = 'a';
+    try {
+      method.invoke(RLP.class, c);
+      Assert.fail();
+    } catch (Exception e) {
+      Assert.assertTrue(true);
+    }
   }
 }
