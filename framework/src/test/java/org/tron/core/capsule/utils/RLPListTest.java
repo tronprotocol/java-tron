@@ -2,6 +2,9 @@ package org.tron.core.capsule.utils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigInteger;
+import java.util.Random;
+import org.bouncycastle.util.BigIntegers;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -34,5 +37,10 @@ public class RLPListTest {
     byte[] aBytes = new byte[10];
     byte[] bBytes = (byte[]) method.invoke(RLP.class, aBytes);
     Assert.assertArrayEquals(aBytes, bBytes);
+
+    int i = new Random().nextInt();
+    byte[] cBytes = BigIntegers.asUnsignedByteArray(BigInteger.valueOf(i));
+    byte[] dBytes = (byte[]) method.invoke(RLP.class, i);
+    Assert.assertArrayEquals(cBytes, dBytes);
   }
 }
