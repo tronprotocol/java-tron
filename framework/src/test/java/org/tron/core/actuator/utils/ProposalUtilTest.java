@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -12,6 +13,7 @@ import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ForkController;
 import org.tron.core.Constant;
+import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.ForkBlockVersionEnum;
 import org.tron.core.config.args.Args;
@@ -26,6 +28,11 @@ public class ProposalUtilTest extends BaseTest {
   private static final long LONG_VALUE = 100_000_000_000_000_000L;
   private static final String LONG_VALUE_ERROR =
       "Bad chain parameter value, valid range is [0," + LONG_VALUE + "]";
+
+  @Resource
+  private DynamicPropertiesStore dynamicPropertiesStore;
+
+  ForkController forkUtils = ForkController.instance();
 
   /**
    * Init .
@@ -60,8 +67,6 @@ public class ProposalUtilTest extends BaseTest {
 
   @Test
   public void validateCheck() {
-    DynamicPropertiesStore dynamicPropertiesStore = null;
-    ForkController forkUtils = ForkController.instance();
     long invalidValue = -1;
 
     try {
@@ -325,6 +330,66 @@ public class ProposalUtilTest extends BaseTest {
       Assert.fail();
     } catch (ContractValidateException e) {
       Assert.assertEquals("Bad chain parameter value, valid range is [0, 1_000_000_000_000L]",
+          e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_OLD_REWARD_OPT.getCode(), 2);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "Bad chain parameter id [ALLOW_OLD_REWARD_OPT]",
+          e.getMessage());
+    }
+    hardForkTime =
+        ((ForkBlockVersionEnum.VERSION_4_7_4.getHardForkTime() - 1) / maintenanceTimeInterval + 1)
+            * maintenanceTimeInterval;
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .saveLatestBlockHeaderTimestamp(hardForkTime + 1);
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .statsByVersion(ForkBlockVersionEnum.VERSION_4_7_4.getValue(), stats);
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_OLD_REWARD_OPT.getCode(), 2);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "This value[ALLOW_OLD_REWARD_OPT] is only allowed to be 1",
+          e.getMessage());
+    }
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_OLD_REWARD_OPT.getCode(), 1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "[ALLOW_NEW_REWARD] proposal must be approved "
+              + "before [ALLOW_OLD_REWARD_OPT] can be proposed",
+          e.getMessage());
+    }
+    dynamicPropertiesStore.saveCurrentCycleNumber(0);
+    dynamicPropertiesStore.saveNewRewardAlgorithmEffectiveCycle();
+    dynamicPropertiesStore.saveAllowNewReward(1);
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_OLD_REWARD_OPT.getCode(), 1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "no need old reward opt, ALLOW_NEW_REWARD from start cycle 1",
+          e.getMessage());
+    }
+    dynamicPropertiesStore.put("NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE".getBytes(),
+        new BytesCapsule(ByteArray.fromLong(4000)));
+    dynamicPropertiesStore.saveAllowOldRewardOpt(1);
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_OLD_REWARD_OPT.getCode(), 1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "[ALLOW_OLD_REWARD_OPT] has been valid, no need to propose again",
           e.getMessage());
     }
 
