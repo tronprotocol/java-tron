@@ -226,6 +226,7 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.BalanceContract;
@@ -4126,11 +4127,12 @@ public class Wallet {
     TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
     Return.Builder retBuilder = Return.newBuilder();
     TransactionExtention trxExt;
+    Transaction trx;
 
     try {
       TransactionCapsule trxCap = createTransactionCapsule(trigger,
           ContractType.TriggerSmartContract);
-      Transaction trx = triggerConstantContract(trigger, trxCap, trxExtBuilder, retBuilder);
+      trx = triggerConstantContract(trigger, trxCap, trxExtBuilder, retBuilder);
 
       retBuilder.setResult(true).setCode(response_code.SUCCESS);
       trxExtBuilder.setTransaction(trx);
@@ -4153,10 +4155,11 @@ public class Wallet {
       logger.warn("Unknown exception caught: " + e.getMessage(), e);
     } finally {
       trxExt = trxExtBuilder.build();
+      trx = trxExt.getTransaction();
     }
 
-    String code = trxExt.getResult().getCode().toString();
-    if ("SUCCESS".equals(code)) {
+    if (response_code.SUCCESS == trxExt.getResult().getCode()
+        && contractResult.SUCCESS == trx.getRet(0).getContractRet()) {
       List<ByteString> list = trxExt.getConstantResultList();
       byte[] listBytes = new byte[0];
       for (ByteString bs : list) {
