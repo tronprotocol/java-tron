@@ -262,7 +262,7 @@ public class PbftMessageHandle {
   }
 
   //Cleanup related status
-  private void remove(String no) {
+  private synchronized void remove(String no) {
     String pre = String.valueOf(no) + "_";
     preVotes.remove(no);
     pareVoteMap.keySet().removeIf(vp -> StringUtils.startsWith(vp, pre));
