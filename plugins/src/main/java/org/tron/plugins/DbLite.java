@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -353,28 +354,12 @@ public class DbLite implements Callable<Integer> {
   }
 
   private long getLatestBlockHeaderNum(String databaseDir) throws IOException, RocksDBException {
-    // query latest_block_header_number from checkpoint first
-    final String latestBlockHeaderNumber = "latest_block_header_number";
-    DBInterface checkpointDb = getCheckpointDb(databaseDir);
-    Long blockNumber = getLatestBlockHeaderNumFromCP(checkpointDb,
-        latestBlockHeaderNumber.getBytes());
-    if (blockNumber != null) {
-      return blockNumber;
-    }
-    // query from propertiesDb if checkpoint not contains latest_block_header_number
-    DBInterface propertiesDb = DbTool.getDB(databaseDir, PROPERTIES_DB_NAME);
-    return Optional.ofNullable(propertiesDb.get(ByteArray.fromString(latestBlockHeaderNumber)))
-            .map(ByteArray::toLong)
-            .orElseThrow(
-                () -> new IllegalArgumentException("not found latest block header number"));
-  }
-
-  private Long getLatestBlockHeaderNumFromCP(DBInterface db, byte[] key) {
-    byte[] value = db.get(Bytes.concat(simpleEncode(PROPERTIES_DB_NAME), key));
-    if (value != null && value.length > 1) {
-      return ByteArray.toLong(Arrays.copyOfRange(value, 1, value.length));
-    }
-    return null;
+    final byte[] latestBlockHeaderNumber = "latest_block_header_number".getBytes();
+    byte[] value = getDataFromSourceDB(databaseDir, PROPERTIES_DB_NAME, latestBlockHeaderNumber);
+    return Optional.ofNullable(value)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found latest block header number"));
   }
 
   /**
@@ -585,16 +570,30 @@ public class DbLite implements Callable<Integer> {
 
   private byte[] getDataFromSourceDB(String sourceDir, String dbName, byte[] key)
           throws IOException, RocksDBException {
+    byte[] keyInCp = Bytes.concat(simpleEncode(dbName), key);
+    byte[] valueInCp = null;
     DBInterface sourceDb = DbTool.getDB(sourceDir, dbName);
-    DBInterface checkpointDb = getCheckpointDb(sourceDir);
-    // get data from tmp first.
-    byte[] valueFromTmp = checkpointDb.get(Bytes.concat(simpleEncode(dbName), key));
+    // get data from checkpoint first.
+    List<String> cpList = getCheckpointV2List(sourceDir);
+    if (cpList.size() > 0) {
+      // reverse iteration
+      Collections.reverse(cpList);
+      for (String cp: cpList) {
+        valueInCp = DbTool.getDB(
+            sourceDir + "/" + DBUtils.CHECKPOINT_DB_V2, cp).get(keyInCp);
+        if (!isEmptyBytes(valueInCp)) {
+          break;
+        }
+      }
+    } else {
+      valueInCp = DbTool.getDB(sourceDir, CHECKPOINT_DB).get(keyInCp);
+    }
     byte[] value;
-    if (isEmptyBytes(valueFromTmp)) {
+    if (isEmptyBytes(valueInCp)) {
       value = sourceDb.get(key);
     } else {
-      value = valueFromTmp.length == 1
-          ? null : Arrays.copyOfRange(valueFromTmp, 1, valueFromTmp.length);
+      value = DBUtils.Operator.DELETE.getValue() == valueInCp[0]
+          ? null : Arrays.copyOfRange(valueInCp, 1, valueInCp.length);
     }
     if (isEmptyBytes(value)) {
       throw new RuntimeException(String.format("data not found in store, dbName: %s, key: %s",
@@ -662,19 +661,6 @@ public class DbLite implements Callable<Integer> {
       num =  Longs.fromByteArray(iterator.getKey());
     }
     return num;
-  }
-
-  private DBInterface getCheckpointDb(String sourceDir) throws IOException, RocksDBException {
-    List<String> cpList = getCheckpointV2List(sourceDir);
-    DBInterface checkpointDb;
-    if (cpList.size() > 0) {
-      String latestCp = cpList.get(cpList.size() - 1);
-      checkpointDb = DbTool.getDB(
-          sourceDir + "/" + DBUtils.CHECKPOINT_DB_V2, latestCp);
-    } else {
-      checkpointDb = DbTool.getDB(sourceDir, CHECKPOINT_DB);
-    }
-    return checkpointDb;
   }
 
   @VisibleForTesting
