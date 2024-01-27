@@ -1914,10 +1914,6 @@ public class Manager {
         chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
             - revokingStore.size(),
         chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
-    return this.fetchSyncBeginNumber();
-  }
-
-  public long fetchSyncBeginNumber() {
     return chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
         - revokingStore.size();
   }
