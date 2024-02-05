@@ -15,51 +15,51 @@ public class EmptyTracer implements Tracer{
 
     @Override
     public void blockStart(Object block) {
-        logger.debug("blockStart triggered, Block: {}", block);
+        logger.info("blockStart triggered, Block: {}", block);
     }
 
     @Override
     public void blockEnd(Object block) {
-        logger.debug("blockEnd triggered, Block: {}", block);
+        logger.info("blockEnd triggered, Block: {}", block);
     }
 
     @Override
     public void captureStart(byte[] from, byte[] to, byte[] code, long gas) {
-        logger.debug("captureStart triggered");
+        logger.info("captureStart triggered");
     }
 
     @Override
     public void captureEnd(long energyUsed, RuntimeException error) {
-        logger.debug("captureEnd triggered");
+        logger.info("captureEnd triggered");
     }
 
     @Override
     public void captureEnter(byte[] from, byte[] to, byte[] data, long gas, byte[] value, int opCode, byte[] code) {
-        logger.debug("captureEnter triggered");
+        logger.info("captureEnter triggered");
     }
 
     @Override
     public void captureExit(long energyUsed, RuntimeException error) {
-        logger.debug("captureExit triggered");
+        logger.info("captureExit triggered");
     }
 
     @Override
     public void captureState(int opcodeNum, String opcodeName, long energy, int pc, int callDepth, RuntimeException error) {
-        logger.debug("captureState triggered");
+        logger.info("captureState triggered");
     }
 
     @Override
     public void captureFault(int opcodeNum, String opcodeName, long energy, Stack<DataWord> stackData, byte[] callerData, byte[] contractData, byte[] callValueData, int pc, byte[] memory, int callDepth, RuntimeException error) {
-        logger.debug("captureFault triggered");
+        logger.info("captureFault triggered");
     }
 
     @Override
     public void addLogToCaptureState(byte[] address, byte[] data, List<DataWord> topicsData, byte[] code) {
-        logger.debug("addLogToCaptureState triggered");
+        logger.info("addLogToCaptureState triggered");
     }
 
     @Override
     public void addStorageToCaptureState(byte[] address, byte[] loc, byte[] value) {
-        logger.debug("addStorageToCaptureState triggered");
+        logger.info("addStorageToCaptureState triggered");
     }
 }
