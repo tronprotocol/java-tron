@@ -1,4 +1,4 @@
-package org.tron.core.tracing;
+package org.tron.core.trace;
 
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.runtime.vm.DataWord;
@@ -15,12 +15,12 @@ public class EmptyTracer implements Tracer{
 
     @Override
     public void blockStart(Object block) {
-        logger.debug("blockStart {}",block);
+        logger.debug("blockStart {}", block);
     }
 
     @Override
     public void blockEnd(Object block) {
-        logger.debug("blockEnd {}",block);
+        logger.debug("blockEnd {}", block);
     }
 
     @Override

@@ -1,4 +1,4 @@
-package org.tron.core.tracing;
+package org.tron.core.trace;
 
 import org.tron.common.runtime.vm.DataWord;
 
@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Stack;
 
 public interface Tracer {
-
     public void init(String implementationConfigFile) throws Exception;
     public void blockStart(Object block);
     public void blockEnd(Object block);

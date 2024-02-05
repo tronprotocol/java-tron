@@ -154,7 +154,7 @@ import org.tron.core.store.TransactionRetStore;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
-import org.tron.core.tracing.TracerManager;
+import org.tron.core.trace.TracerManager;
 import org.tron.core.utils.TransactionRegister;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Permission;
@@ -162,7 +162,6 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.contract.BalanceContract;
-
 
 @Slf4j(topic = "DB")
 @Component
@@ -572,7 +571,7 @@ public class Manager {
     try{
       TracerManager.init();
     } catch (Exception e) {
-      logger.error("TracerManager init error: {}", e.getMessage());
+      logger.error("TracerManager initialization error: {}", e.getMessage());
       System.exit(1);
     }
 
