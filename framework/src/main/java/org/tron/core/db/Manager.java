@@ -2439,6 +2439,7 @@ public class Manager {
     chainBaseManager.shutdown();
     revokingStore.shutdown();
     session.reset();
+    TracerManager.getTracer().close();
   }
 
   private static class ValidateSignTask implements Callable<Boolean> {

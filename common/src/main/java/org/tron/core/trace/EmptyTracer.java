@@ -14,6 +14,11 @@ public class EmptyTracer implements Tracer{
     }
 
     @Override
+    public void close() {
+
+    }
+
+    @Override
     public void blockStart(Object block) {
         logger.info("blockStart triggered, Block: {}", block);
     }
