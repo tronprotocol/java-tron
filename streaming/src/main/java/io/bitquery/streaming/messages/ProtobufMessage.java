@@ -9,7 +9,6 @@ import org.tron.common.crypto.Hash;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.JsonUtil;
-import org.tron.core.config.args.StreamingConfig;
 import io.bitquery.streaming.blockchain.BlockMessageDescriptor;
 import io.bitquery.streaming.services.EllipticSigner;
 import io.bitquery.streaming.services.FileStorage;

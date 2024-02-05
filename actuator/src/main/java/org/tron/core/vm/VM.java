@@ -94,7 +94,7 @@ public class VM {
           /* exec op action */
           op.execute(program);
 
-          if(program.getResult().getException()!=null){
+          if (program.getResult().getException() != null) {
             TracerManager.getTracer().captureFault(
                     op.getOpcode(),
                     opName,

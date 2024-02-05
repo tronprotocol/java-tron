@@ -7,7 +7,6 @@ import java.util.Stack;
 
 public interface Tracer {
     public void init(String implementationConfigFile) throws Exception;
-
     public void close();
 
     public void blockStart(Object block);
