@@ -1030,6 +1030,9 @@ public class Manager {
       TooBigTransactionException, DupTransactionException, TaposException,
       ValidateScheduleException, ReceiptCheckErrException, VMIllegalException,
       TooBigTransactionResultException, ZksnarkException, BadBlockException, EventBloomException {
+
+    TracerManager.getTracer().blockStart(block);
+
     processBlock(block, txs);
     chainBaseManager.getBlockStore().put(block.getBlockId().getBytes(), block);
     chainBaseManager.getBlockIndexStore().put(block.getBlockId());
@@ -1054,6 +1057,9 @@ public class Manager {
     } else {
       revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MIN_FLUSH_COUNT);
     }
+
+    TracerManager.getTracer().blockEnd(block);
+
   }
 
   private void switchFork(BlockCapsule newHead)
