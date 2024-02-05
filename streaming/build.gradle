@@ -1,0 +1,14 @@
+// Dependency versions
+// ---------------------------------------
+def slf4jVersion = "1.7.25"
+// --------------------------------------
+
+dependencies {
+    compile group: 'org.lz4', name: 'lz4-java', version: '1.8.0'
+    compile "org.slf4j:jcl-over-slf4j:$slf4jVersion"
+    compile group: 'org.apache.kafka', name: 'kafka-clients', version: '3.6.0'
+
+    compile project(':chainbase')
+    compile project(':common')
+    compile project(':protocol')
+}
