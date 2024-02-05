@@ -154,6 +154,7 @@ import org.tron.core.store.TransactionRetStore;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
+import org.tron.core.tracing.TracerManager;
 import org.tron.core.utils.TransactionRegister;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Permission;
@@ -567,6 +568,14 @@ public class Manager {
     }
 
     maxFlushCount = CommonParameter.getInstance().getStorage().getMaxFlushCount();
+
+    try{
+      TracerManager.init();
+    } catch (Exception e) {
+      logger.error("TracerManager init error: {}", e.getMessage());
+      System.exit(1);
+    }
+
   }
 
   /**

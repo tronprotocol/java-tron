@@ -128,6 +128,12 @@ public class CommonParameter {
   @Parameter(names = {"--fast-forward"})
   public boolean fastForward = false;
   @Getter
+  @Parameter(names = {"--tracer-implementation-class"}, description = "Class name for tracer implementation, default is Empty tracer")
+  public String tracerImplementation = "";
+  @Getter
+  @Parameter(names = {"--tracer-config-file"}, description = "File name for tracer config file")
+  public String tracerConfigFile = "";
+  @Getter
   @Setter
   public String chainId;
   @Getter
