@@ -112,6 +112,8 @@ services:
       java -jar /app/jar/FullNode.jar
       -c /app/config/node/main_net_config.conf
       --log-config /app/config/node/logback.xml
+      --tracer-implementation-class io.bitquery.tron.StreamingTracer
+      --tracer-config /app/config/streaming.conf
       -d /app/node-data/snapshot/output-directory
       --es
     ports:
