@@ -2,7 +2,7 @@ package org.tron.core.tracing;
 
 public class TracerManager {
 
-    private static Tracer tracer;
+    private static Tracer tracer = new EmptyTracer();
 
 
     public static Tracer getTracer() {
