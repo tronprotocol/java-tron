@@ -35,6 +35,7 @@ import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.TransactionContext;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.tracing.TracerManager;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.vm.EnergyCost;
 import org.tron.core.vm.LogInfoTriggerParser;
@@ -186,6 +187,13 @@ public class VMActuator implements Actuator2 {
           throw e;
         }
 
+        TracerManager.getTracer().captureStart(
+                context.getTrxCap().getOwnerAddress(),
+                program.getContractAddress().getData(),
+                program.getCode(),
+                context.
+        );
+
         VM.play(program, OperationRegistry.getTable());
         result = program.getResult();
 
@@ -283,7 +291,7 @@ public class VMActuator implements Actuator2 {
     }
     //use program returned fill context
     context.setProgramResult(result);
-
+    TracerManager.getTracer().captureEnd(result.getEnergyUsed(),result.getException());
     if (VMConfig.vmTrace() && program != null) {
       String traceContent = program.getTrace()
           .result(result.getHReturn())
