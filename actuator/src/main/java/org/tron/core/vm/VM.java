@@ -89,10 +89,26 @@ public class VM {
           /* check if cpu time out */
           program.checkCPUTimeLimit(opName);
 
-          TracerManager.getTracer().captureState(op.getOpcode(), opName, energy, program.getPC(), program.getCallDeep(), program.getResult().getException());
+          TracerManager.getTracer().captureState(op.getOpcode(), opName, energy, program.getPC(), program.getCallDeep());
 
           /* exec op action */
           op.execute(program);
+
+          if(program.getResult().getException()!=null){
+            TracerManager.getTracer().captureFault(
+                    op.getOpcode(),
+                    opName,
+                    energy,
+                    program.getStack(),
+                    program.getCallerAddress().getData(),
+                    program.getContractAddress().getData(),
+                    program.getCallValue().getData(),
+                    program.getPC(),
+                    program.getMemory(),
+                    program.getCallDeep(),
+                    program.getResult().getException()
+            );
+          }
 
           program.setPreviouslyExecutedOp((byte) op.getOpcode());
         } catch (RuntimeException e) {
@@ -122,20 +138,6 @@ public class VM {
       } else {
         program.setRuntimeFailure(e);
       }
-
-      TracerManager.getTracer().captureFault(
-              op.getOpcode(),
-              opName,
-              energy,
-              program.getStack(),
-              program.getCallerAddress().getData(),
-              program.getContractAddress().getData(),
-              program.getCallValue().getData(),
-              program.getPC(),
-              program.getMemory(),
-              program.getCallDeep(),
-              program.getResult().getException()
-      );
 
     } catch (StackOverflowError soe) {
       logger.info("\n !!! StackOverflowError: update your java run command with -Xss !!!\n", soe);

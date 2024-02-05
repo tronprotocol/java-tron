@@ -44,7 +44,7 @@ public class EmptyTracer implements Tracer{
     }
 
     @Override
-    public void captureState(int opcodeNum, String opcodeName, long energy, int pc, int callDepth, RuntimeException error) {
+    public void captureState(int opcodeNum, String opcodeName, long energy, int pc, int callDepth) {
         logger.info("captureState triggered");
     }
 
