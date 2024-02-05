@@ -127,12 +127,14 @@ public class CommonParameter {
   @Getter
   @Parameter(names = {"--fast-forward"})
   public boolean fastForward = false;
+
   @Getter
-  @Parameter(names = {"--tracer-implementation-class"}, description = "Class name for tracer implementation, default is Empty tracer")
-  public String tracerImplementation = "";
+  @Parameter(names = {"--tracer-implementation-class"}, description = "Class name for tracer implementation (default: org.tron.core.trace.EmptyTracer")
+  public String tracerImplementationClass = "";
   @Getter
-  @Parameter(names = {"--tracer-config-file"}, description = "File name for tracer config file")
-  public String tracerConfigFile = "";
+  @Parameter(names = {"--tracer-config"}, description = "Path to tracer config")
+  public String tracerConfig = "";
+
   @Getter
   @Setter
   public String chainId;

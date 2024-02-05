@@ -7,6 +7,7 @@ import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
+import org.tron.core.trace.TracerManager;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.Program.JVMStackOverFlowException;
@@ -20,6 +21,10 @@ public class VM {
       Op.DELEGATECALL, Op.CALLCODE, Op.CALLTOKEN);
 
   public static void play(Program program, JumpTable jumpTable) {
+    Operation op = null;
+    String opName = null;
+    long energy = 0;
+
     try {
       long factor = DYNAMIC_ENERGY_FACTOR_DECIMAL;
       long energyUsage = 0L;
@@ -34,7 +39,7 @@ public class VM {
         }
 
         try {
-          Operation op = jumpTable.get(program.getCurrentOpIntValue());
+          op = jumpTable.get(program.getCurrentOpIntValue());
           if (!op.isEnabled()) {
             throw Program.Exception.invalidOpCode(program.getCurrentOp());
           }
@@ -44,9 +49,9 @@ public class VM {
           program.verifyStackSize(op.getRequire());
           program.verifyStackOverflow(op.getRequire(), op.getRet());
 
-          String opName = Op.getNameOf(op.getOpcode());
+          opName = Op.getNameOf(op.getOpcode());
           /* spend energy before execution */
-          long energy = op.getEnergyCost(program);
+          energy = op.getEnergyCost(program);
           if (VMConfig.allowDynamicEnergy()) {
             long actualEnergy = energy;
             // CALL Ops have special calculation on energy.
@@ -84,6 +89,8 @@ public class VM {
           /* check if cpu time out */
           program.checkCPUTimeLimit(opName);
 
+          TracerManager.getTracer().captureState(op.getOpcode(), opName, energy, program.getPC(), program.getCallDeep(), program.getResult().getException());
+
           /* exec op action */
           op.execute(program);
 
@@ -115,6 +122,21 @@ public class VM {
       } else {
         program.setRuntimeFailure(e);
       }
+
+      TracerManager.getTracer().captureFault(
+              op.getOpcode(),
+              opName,
+              energy,
+              program.getStack(),
+              program.getCallerAddress().getData(),
+              program.getContractAddress().getData(),
+              program.getCallValue().getData(),
+              program.getPC(),
+              program.getMemory(),
+              program.getCallDeep(),
+              program.getResult().getException()
+      );
+
     } catch (StackOverflowError soe) {
       logger.info("\n !!! StackOverflowError: update your java run command with -Xss !!!\n", soe);
       throw new JVMStackOverFlowException();

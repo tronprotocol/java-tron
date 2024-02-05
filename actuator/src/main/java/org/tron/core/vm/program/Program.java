@@ -53,6 +53,7 @@ import org.tron.core.db.EnergyProcessor;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
+import org.tron.core.trace.TracerManager;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.vm.EnergyCost;
 import org.tron.core.vm.MessageCall;
@@ -767,6 +768,16 @@ public class Program {
     DataWord energyLimit = this.getCreateEnergy(getEnergyLimitLeft());
     spendEnergy(energyLimit.longValue(), "internal call");
 
+    TracerManager.getTracer().captureEnter(
+            senderAddress,
+            newAddress,
+            programCode,
+            energyLimit.longValue(),
+            value.getNoLeadZeroesData(),
+            getCurrentOp(),
+            getContractState().getCode(newAddress)
+    );
+
     increaseNonce();
     // [5] COOK THE INVOKE AND EXECUTE
     InternalTransaction internalTx = addInternalTx(null, senderAddress, newAddress, endowment,
@@ -853,6 +864,12 @@ public class Program {
 
     // 5. REFUND THE REMAIN Energy
     refundEnergyAfterVM(energyLimit, createResult);
+
+    if (createResult != null) {
+      TracerManager.getTracer().captureExit(createResult.getEnergyUsed(), createResult.getException());
+    } else {
+      TracerManager.getTracer().captureExit(0, null);
+    }
   }
 
   public void refundEnergyAfterVM(DataWord energyLimit, ProgramResult result) {
@@ -988,6 +1005,16 @@ public class Program {
       }
     }
 
+    TracerManager.getTracer().captureEnter(
+            senderAddress,
+            contextAddress,
+            data,
+            msg.getEnergy().longValue(),
+            msg.getEndowment().getNoLeadZeroesData(),
+            msg.getOpCode(),
+            getContractState().getCode(contextAddress)
+    );
+
     // CREATE CALL INTERNAL TRANSACTION
     increaseNonce();
     HashMap<String, Long> tokenInfo = new HashMap<>();
@@ -1086,6 +1113,12 @@ public class Program {
     } else {
       refundEnergy(msg.getEnergy().longValue(), "remaining energy from the internal call");
     }
+
+    if (callResult != null) {
+      TracerManager.getTracer().captureExit(callResult.getEnergyUsed(), callResult.getException());
+    } else {
+      TracerManager.getTracer().captureExit(0, null);
+    }
   }
 
   public void increaseNonce() {
@@ -1160,6 +1193,8 @@ public class Program {
     DataWord keyWord = word1.clone();
     DataWord valWord = word2.clone();
     getContractState().putStorageValue(getContextAddress(), keyWord, valWord);
+
+    TracerManager.getTracer().addStorageToCaptureState(getContextAddress(), keyWord.getData(), valWord.getData());
   }
 
   public byte[] getCode() {

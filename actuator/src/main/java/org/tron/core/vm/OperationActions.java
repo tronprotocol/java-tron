@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
+import org.tron.core.trace.TracerManager;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.Stack;
@@ -697,6 +698,9 @@ public class OperationActions {
         new LogInfo(address.getLast20Bytes(), topics, data);
 
     program.getResult().addLogInfo(logInfo);
+
+    TracerManager.getTracer().addLogToCaptureState(address.getData(), data, topics, program.getContractState().getCode(address.getData()));
+
     program.step();
   }
 
