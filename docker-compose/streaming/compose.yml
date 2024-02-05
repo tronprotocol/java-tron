@@ -1,0 +1,156 @@
+x-common-dns: &common-dns
+  dns: ${LC_COMPOSE_NAMESERVER}
+  dns_search: ${LC_COMPOSE_CLUSTER}.local
+  dns_opt: ["ndots:1"]
+x-common-network: &common-network
+  networks:
+    - common
+x-common-restart: &common-restart
+  restart: on-failure
+x-graceful-stop: &graceful-stop
+  stop_grace_period: 1m
+  stop_signal: SIGINT
+x-elk-logging: &elk-logging
+  logging:
+    driver: gelf
+    options:
+      gelf-address: udp://logstash.services.local:12201
+      labels: __log_type
+x-common-logging: &common-logging
+  logging:
+    driver: "json-file"
+    options:
+      max-size: "100m"
+      max-file: "3"
+
+services:
+  runtime-config:
+    image: alpine:3.18
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        . /app/scripts/apply_env.sh
+    environment:
+      COMPOSE_NAME: ${LC_COMPOSE_NAME}
+      DATADIR: ${LC_COMPOSE_DATADIR}
+
+      KAFKA_SERVERS: ${LC_COMPOSE_KAFKA_SERVERS}
+      KAFKA_SECURITY_PROTOCOL: ${LC_COMPOSE_KAFKA_SECURITY_PROTOCOL}
+
+      BLOCKCHAIN_NETWORK_ID: ${LC_COMPOSE_BLOCKCHAIN_NETWORK_ID}
+      IPADDR: ${LC_COMPOSE_IPADDR}
+
+      STREAMING_ENABLE: ${LC_COMPOSE_STREAMING_ENABLE}
+      BLOCKS_STREAMING_KAFKA_TOPIC: ${LC_COMPOSE_BLOCKS_STREAMING_KAFKA_TOPIC}
+      BLOCKS_STREAMING_ENABLE: ${LC_COMPOSE_BLOCKS_STREAMING_ENABLE}
+
+      SIGNER_PRIVATE_KEY_HEX: ${LC_COMPOSE_SIGNER_PRIVATE_KEY_HEX}
+      MESSAGES_TTL_SEC: ${LC_COMPOSE_MESSAGES_TTL_SEC}
+      PATH_GENERATOR_SUFFIX: ${LC_COMPOSE_PATH_GENERATOR_SUFFIX}
+
+      NODE_WEB_PORT: ${LC_COMPOSE_NODE_WEB_PORT}
+    volumes:
+      - ./scripts:/app/scripts
+      - ./config:/config-source
+      - ../config/node:/config-source/node
+      - ./config-runtime:/config-destination
+    <<: [*common-network, *common-dns]
+  tron-node-snapshot:
+    image: alpine:3.18
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        . /app/scripts/get_snapshot.sh
+    volumes:
+      - node-data:/app/node-data
+      - ./scripts:/app/scripts
+    environment:
+      USE_SNAPSHOT: ${LC_COMPOSE_USE_SNAPSHOT}
+      CUSTOM_SNAPSHOT_URL: ${LC_COMPOSE_CUSTOM_SNAPSHOT_URL}
+    depends_on:
+      runtime-config:
+        condition: service_completed_successfully
+    <<: [*common-network]
+  create-topics:
+    image: python:3.9-alpine
+    command: /app/scripts/create-kafka-topics.sh
+    environment:
+      KAFKA_REPLICATION_FACTOR: ${LC_COMPOSE_KAFKA_REPLICATION_FACTOR}
+      KAFKA_NUM_PARTITIONS: ${LC_COMPOSE_KAFKA_NUM_PARTITIONS}
+      KAFKA_RETENTION_SEC: ${LC_COMPOSE_KAFKA_RETENTION_SEC}
+      KAFKA_SERVERS: ${LC_COMPOSE_KAFKA_SERVERS}
+      KAFKA_SECURITY_PROTOCOL: ${LC_COMPOSE_KAFKA_SECURITY_PROTOCOL}
+      BLOCKS_STREAMING_KAFKA_TOPIC: ${LC_COMPOSE_BLOCKS_STREAMING_KAFKA_TOPIC}
+      BLOCKS_STREAMING_ENABLE: ${LC_COMPOSE_BLOCKS_STREAMING_ENABLE}
+    volumes:
+      - ./config-runtime/ssl:/app/config/ssl
+      - ./scripts:/app/scripts
+    depends_on:
+      runtime-config:
+        condition: service_completed_successfully
+    <<: *common-network
+  nginx:
+    image: nginx:1.22-alpine
+    volumes:
+      - streaming-data:/app/streaming
+      - ./config-runtime/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - ${LC_COMPOSE_NODE_WEB_PORT}:80
+    depends_on:
+      runtime-config:
+        condition: service_completed_successfully
+    <<: [*common-network, *common-dns, *common-restart]
+  tron-node:
+    image: ${LC_COMPOSE_NODE_IMAGE}:${LC_COMPOSE_NODE_IMAGE_TAG}
+    volumes:
+      - node-data:/app/node-data
+      - streaming-data:/app/streaming
+      - ./config-runtime/node:/app/config/node
+      - ./config-runtime/ssl:/app/config/ssl
+      - ./config-runtime/streaming.conf:/app/config/streaming.conf
+    command: >
+      java -jar /app/jar/FullNode.jar
+      -c /app/config/node/main_net_config.conf
+      --log-config /app/config/node/logback.xml
+      -d /app/node-data/snapshot/output-directory
+      --es
+    ports:
+      - ${LC_COMPOSE_IPADDR}:${LC_COMPOSE_NODE_WALLET_PORT}:8090
+      - ${LC_COMPOSE_IPADDR}:${LC_COMPOSE_NODE_ZEROMQ_PORT}:5555
+      - ${LC_COMPOSE_IPADDR}:${LC_COMPOSE_NODE_JSONRPC_PORT}:50545
+    depends_on:
+      tron-node-snapshot:
+        condition: service_completed_successfully
+      create-topics:
+        condition: service_completed_successfully
+      nginx:
+        condition: service_started
+    # labels:
+    #   - __log_type=java-tron-streaming
+    <<:
+      [
+        *common-network,
+        *graceful-stop,
+        # *elk-logging
+      ]
+  exporter:
+    image: ${LC_COMPOSE_EXPORTER_IMAGE}:${LC_COMPOSE_EXPORTER_IMAGE_TAG}
+    environment:
+      - NODE_RPC_URL=http://${LC_COMPOSE_IPADDR}:${LC_COMPOSE_NODE_WALLET_PORT}
+      - NODE_NAME=${LC_COMPOSE_NAME}.${LC_COMPOSE_HOST}
+      - NODE_ROLE=${LC_COMPOSE_EXPORTER_ROLE}
+      - NODE_TAG=${LC_COMPOSE_EXPORTER_NODE_TAG}
+      - NODE_NETWORK=${LC_COMPOSE_BLOCKCHAIN_NETWORK_ID}
+      - NODE_PRIORITY=${LC_COMPOSE_EXPORTER_PRIORITY}
+    ports:
+      - ${LC_COMPOSE_IPADDR}:${LC_COMPOSE_EXPORTER_PORT}:9228
+    <<: [*common-logging, *common-network, *common-dns, *common-restart]
+
+networks:
+  common:
+    external: ${LC_COMPOSE_NETWORK_EXTERNAL:-false}
+    name: "${LC_COMPOSE_NETWORK_ID:-bridge-lan}"
+
+volumes:
+  node-data:
+  streaming-data:
