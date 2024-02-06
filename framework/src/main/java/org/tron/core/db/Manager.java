@@ -568,10 +568,10 @@ public class Manager {
 
     maxFlushCount = CommonParameter.getInstance().getStorage().getMaxFlushCount();
 
-    try{
+    try {
       TracerManager.init();
     } catch (Exception e) {
-      logger.error("TracerManager initialization error: {}", e.getMessage());
+      logger.error("TracerManager initialization error: {}", e.toString());
       System.exit(1);
     }
 
