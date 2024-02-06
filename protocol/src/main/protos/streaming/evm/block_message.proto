@@ -1,0 +1,287 @@
+syntax = "proto3";
+package evm_messages;
+
+message AddressCode {
+  bytes Hash = 1;
+  int32 Size = 2;
+  bool Suicided = 3;
+}
+
+message BlockHeader {
+
+  bytes Hash = 1;
+  bytes ParentHash = 2;
+  bytes UncleHash = 3;
+  bytes Root = 4;
+  bytes TxHash = 5;
+  bytes ReceiptHash = 6;
+  bytes MixDigest = 7;
+
+  bytes Coinbase = 8;
+  bytes Bloom = 9;
+  bytes Extra = 10;
+
+  uint64 Nonce = 11;
+  bytes Difficulty = 12;
+  bytes Number = 13;
+  uint64 GasLimit = 14;
+  uint64 GasUsed = 15;
+  uint64 Time = 16;
+  bytes BaseFee = 17;
+
+  // only applicable for optimism
+  optional uint64 SequenceNumber = 18;
+
+  // only applicable for optimism
+  optional bytes BatcherAddr = 19;
+
+  // only applicable for optimism
+  optional bytes L1FeeOverhead = 20;
+
+  // only applicable for optimism
+  optional bytes L1FeeScalar = 21;
+}
+
+message BlockResult {
+  uint64 Gas = 1;
+  string Errors = 2;
+}
+
+message Signature {
+  bytes R = 1;
+  bytes V = 2;
+  bytes S = 3;
+}
+
+message Topic {
+  uint64 Index = 1;
+  bytes Hash = 2;
+}
+
+message LogHeader {
+  uint64 Index = 1;
+  bytes Address = 2;
+  bytes Data = 3;
+  bool Removed = 4;
+  AddressCode AddressCode = 5;
+  optional bool IsSystem = 6;
+}
+
+message Log {
+  LogHeader LogHeader = 1;
+  repeated Topic Topics = 2;
+}
+
+message Store {
+  bytes Address = 1;
+  bytes Location = 2;
+  bytes Value  = 3;
+}
+
+message ReceiptHeader {
+  bytes Bloom = 1;
+  uint64 GasUsed = 2;
+  uint32 Type = 3;
+  bytes ContractAddress = 4;
+  uint64 CumulativeGasUsed = 5;
+  bytes PostState = 6;
+  uint64 Status = 7;
+  AddressCode ContractAddressCode = 8;
+  optional ReceiptL1Extension L1 = 9;
+}
+
+message ReceiptL1Extension {
+	bytes GasPrice = 1;
+  bytes GasUsed = 2;
+  bytes Fee = 3;
+}
+
+message Receipt {
+  ReceiptHeader ReceiptHeader = 1;
+  repeated Log Logs = 2;
+}
+
+message Opcode {
+  uint32 Code = 1;
+  string Name = 2;
+}
+
+message CaptureStart {
+  bytes From = 1;
+  bytes To = 2;
+  bool Create = 3;
+
+  bytes Input = 4;
+  uint64 Gas = 5;
+  bytes Value = 6;
+
+  AddressCode ToCode = 7;
+}
+
+message CaptureEnd {
+  bytes  Output  = 1;
+  uint64 GasUsed = 2;
+  string Error = 3;
+}
+
+message Contract {
+  bytes CallerAddress = 1;
+  bytes Caller = 2;
+  bytes Address = 3;
+  bytes CodeAddr = 4;
+  bytes Input = 5;
+  bytes Value = 6;
+}
+
+message CaptureFault {
+  uint64 Pc = 1;
+  Opcode Opcode = 2;
+  uint64 Gas = 3;
+  uint64 Cost = 4;
+
+  bytes Memory = 5;
+  uint64 Depth = 6;
+  repeated bytes Stack = 7;
+
+  Contract Contract = 8;
+
+  string Error = 9;
+}
+
+message CaptureEnter {
+  Opcode Opcode = 1;
+  bytes From = 2;
+  bytes To = 3;
+  bytes Input = 4;
+
+  uint64 Gas = 5;
+  bytes Value = 6;
+
+  AddressCode ToCode = 7;
+}
+
+message CaptureExit {
+  bytes Output = 1;
+  uint64 GasUsed = 2;
+  string Error = 3;
+}
+
+message CaptureStateHeader {
+
+  uint32 EnterIndex = 1;
+  uint32 ExitIndex = 2;
+
+  uint64 Pc = 3;
+  Opcode Opcode = 4;
+  uint64 Gas = 5;
+  uint64 Cost = 6;
+
+  bytes RData =  7;
+  uint64 Depth = 8;
+
+  string Error = 9;
+}
+
+message CaptureState {
+  CaptureStateHeader CaptureStateHeader = 1;
+  Log Log = 2;
+  Store Store = 3;
+}
+
+message Call {
+  uint32 Index = 1;
+  uint32 Depth = 2;
+  uint32 EnterIndex = 3;
+  uint32 ExitIndex = 4;
+
+  int32 CallerIndex = 5;
+
+  CaptureEnter  CaptureEnter = 6;
+  CaptureExit  CaptureExit = 7;
+
+  repeated CaptureState CaptureStates = 8;
+
+}
+
+message Trace {
+
+  repeated Call Calls = 1;
+
+  CaptureStart  CaptureStart = 2;
+  CaptureEnd  CaptureEnd = 3;
+  CaptureFault  CaptureFault = 4;
+
+  repeated CaptureState CaptureStates = 5;
+
+
+}
+
+message AccessTuple {
+  bytes Address = 1;
+  repeated bytes  StorageKeys = 2;
+}
+
+message TransactionHeader {
+  uint64 Index = 1;
+  bytes Hash = 2;
+  uint64 Gas = 3;
+  bytes Value = 4;
+  bytes Data = 5;
+  uint64 Nonce = 6;
+  bytes ChainId = 7;
+  bytes Cost = 8;
+  bytes GasFeeCap = 9;
+  bytes GasPrice = 10;
+  bytes GasTipCap = 11;
+  bool Protected = 12;
+  uint32 Type = 13;
+  bytes To = 14;
+  bytes From = 15;
+  AddressCode ToCode = 16;
+  repeated AccessTuple AccessList = 17;
+
+  // only applicable for arbitrum
+  optional uint64 GasL1 = 18;
+
+  // only applicable for optimism
+  optional bool IsSystemTx = 19;
+
+  // only applicable for optimism
+  optional uint64 EffectiveNonce = 20;
+
+  // only applicable for optimism
+  optional bytes SourceHash = 21;
+}
+
+message Transaction {
+  TransactionHeader TransactionHeader = 1;
+  Signature Signature = 2;
+  Receipt Receipt = 3;
+  Trace Trace = 4;
+  uint64 Time = 5;
+}
+
+message Chain {
+  bytes ChainId = 1;
+  string Config = 2;
+}
+
+message L1MessageInfo {
+  uint32 Kind = 1;
+  bytes Poster = 2;
+  uint64 BlockNumber = 3;
+  uint64 Timestamp = 4;
+  optional bytes RequestId = 5;
+  optional bytes L1BaseFee = 6;
+}
+
+message BlockMessage {
+  Chain Chain = 1;
+  BlockHeader Header = 2;
+  BlockResult Result = 3;
+
+  repeated BlockHeader Uncles = 4;
+  repeated Transaction Transactions = 5;
+  optional BlockHeader L1Header = 6;
+  optional L1MessageInfo L1MessageInfo = 7;
+}

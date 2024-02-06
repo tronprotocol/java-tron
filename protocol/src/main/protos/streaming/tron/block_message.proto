@@ -1,0 +1,126 @@
+syntax = "proto3";
+
+package tron_messages;
+
+import "streaming/evm/block_message.proto";
+
+option java_package = "org.tron.protos.streaming";
+option java_outer_classname = "TronMessage";
+
+// Tx message
+message TransactionHeader {
+  bytes Id = 1;
+  int64 Fee = 2;
+  int32 Index = 3;
+  int64 Expiration = 4;
+  bytes Data = 5;
+  int64 FeeLimit = 6;
+  int64 Timestamp = 7;
+  repeated bytes Signatures = 8;
+};
+
+message Argument {
+  string Name = 1;
+  oneof Value {
+    string String = 2;
+    uint64 UInt = 3;
+    double Float = 4;
+  }
+}
+
+message TransactionResult {
+  string Status = 1;
+  string Message = 2;
+};
+
+message Receipt {
+  string Result = 1;
+  int64 EnergyPenaltyTotal = 2;
+  int64 EnergyFee = 3;
+  int64 EnergyUsageTotal = 4;
+  int64 OriginEnergyUsage = 5;
+  int64 NetUsage = 6;
+  int64 NetFee = 7;
+};
+
+message Contract {
+  bytes Address = 1;
+  repeated bytes ExecutionResults = 2;
+  string Type = 3;
+  string TypeUrl = 4;
+  repeated Argument Arguments = 5;
+};
+
+message CancelUnfreezeV2Amount {
+  string Key = 1;
+  int64 Value = 2;
+};
+
+message Staking {
+  int64 WithdrawAmount = 1;
+  int64 UnfreezeAmount = 2;
+  int64 WithdrawExpireAmount = 3;
+  repeated CancelUnfreezeV2Amount CancelUnfreezeV2Amounts = 4;
+};
+
+message Log {
+  bytes Address = 1;
+  bytes Data = 2;
+  repeated bytes Topics = 3;
+  int32 Index = 4;
+};
+
+message CallValue {
+  int64 CallValue = 1;
+  string TokenId = 2;
+};
+
+message InternalTransaction {
+  bytes CallerAddress = 1;
+  string Note = 2;
+  bytes TransferToAddress = 3;
+  repeated CallValue CallValues = 4;
+  bytes Hash = 5;
+  int32 Index = 6;
+};
+
+// MORE INFORMATION: https://developers.tron.network/reference/gettransactioninfobyid-1
+message Transaction {
+  TransactionHeader Header = 1;
+  TransactionResult Result = 2;
+  Receipt Receipt = 3;
+  repeated Contract Contracts = 4;
+  Staking Staking = 5;
+  repeated Log Logs = 6;
+  repeated InternalTransaction InternalTransactions = 7;
+  evm_messages.Trace Trace = 8;
+};
+
+// Block message
+message BlockHeader {
+  int64 Number = 1;
+  bytes Hash = 2;
+  int64 Timestamp = 3;
+  bytes ParentHash = 4;
+  int32 Version = 5;
+  bytes TxTrieRoot = 6;
+  bytes AccountStateRoot = 7;
+};
+
+// Information about witness (or validator) who packed this block.
+message Witness {
+  bytes Address = 1;
+  int64 Id = 2;
+  bytes Signature = 3;
+}
+
+// MORE INFORMATION: https://developers.tron.network/reference/getblock-2
+message BlockMessage {
+  BlockHeader Header = 1;
+  Witness Witness = 2;
+  repeated Transaction Transactions = 3;
+};
+
+message TestCode {
+  string hello_world = 1;
+}
