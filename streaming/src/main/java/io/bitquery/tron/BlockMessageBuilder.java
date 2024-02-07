@@ -4,6 +4,7 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.Message;
+import evm_messages.BlockMessageOuterClass;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
@@ -39,19 +40,14 @@ public class BlockMessageBuilder {
 
     private BlockMessage.Builder messageBuilder;
 
-    @Getter
-    private EVMBuilder evmBuilder;
-
     public BlockMessageBuilder() {
         this.messageBuilder = BlockMessage.newBuilder();
     }
 
     public void buildBlockStartMessage(BlockCapsule block) {
-        this.block = block;
-
-        setBlockHeader();
-        setBlockWitness();
-        setBlockStartTransactions();
+        setBlockHeader(block);
+        setBlockWitness(block);
+        setBlockStartTransactions(block);
     }
 
     public void buildBlockEndMessage(BlockCapsule block) {
@@ -324,4 +320,7 @@ public class BlockMessageBuilder {
         return staking.build();
     }
 
+    public void appendTransaction(Transaction tx) {
+
+    }
 }

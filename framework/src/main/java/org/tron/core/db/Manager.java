@@ -1751,7 +1751,9 @@ public class Manager {
           transactionCapsule.setVerified(true);
         }
         accountStateCallBack.preExeTrans();
+        TracerManager.getTracer().transactionStart(transactionCapsule);
         TransactionInfo result = processTransaction(transactionCapsule, block);
+        TracerManager.getTracer().transactionEnd(transactionCapsule);
         accountStateCallBack.exeTransFinish();
         if (Objects.nonNull(result)) {
           results.add(result);

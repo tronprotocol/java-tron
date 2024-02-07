@@ -12,6 +12,9 @@ public interface Tracer {
     public void blockStart(Object block);
     public void blockEnd(Object block);
 
+    public void transactionStart(Object tx);
+    public void transactionEnd(Object tx);
+
     public void captureStart(byte[] from, byte[] to, byte[] code, long gas);
     public void captureEnd(long energyUsed, RuntimeException error);
     public void captureFault(int opcodeNum, String opcodeName, long energy, Stack<DataWord> stackData, byte[] callerData, byte[] contractData, byte[] callValueData, int pc, byte[] memory, int callDepth, RuntimeException error);

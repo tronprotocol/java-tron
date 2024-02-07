@@ -1,15 +1,19 @@
 package io.bitquery.tron;
 
+import evm_messages.BlockMessageOuterClass;
 import org.tron.common.runtime.vm.DataWord;
+import org.tron.protos.streaming.TronMessage;
 
 import java.util.List;
 import java.util.Stack;
 
 public class EVMBuilder {
 
+
     // private protobuf
 
     public void captureStart(byte[] from, byte[] to, byte[] code, long gas) {
+
     }
 
     public void captureEnd(long energyUsed, RuntimeException error) {
@@ -31,5 +35,9 @@ public class EVMBuilder {
     }
 
     public void addStorageToCaptureState(byte[] address, byte[] loc, byte[] value) {
+    }
+
+    public BlockMessageOuterClass.Trace getMessage() {
+
     }
 }

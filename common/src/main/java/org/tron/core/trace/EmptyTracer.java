@@ -22,6 +22,14 @@ public class EmptyTracer implements Tracer {
     public void blockEnd(Object block) {}
 
     @Override
+    public void transactionStart(Object tx) {}
+
+    @Override
+    public void transactionEnd(Object tx) {
+
+    }
+
+    @Override
     public void captureStart(byte[] from, byte[] to, byte[] code, long gas) {}
 
     @Override
