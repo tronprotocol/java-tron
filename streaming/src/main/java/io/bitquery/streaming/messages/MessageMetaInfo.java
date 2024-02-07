@@ -11,7 +11,7 @@ import java.util.List;
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy.class)
 public class MessageMetaInfo {
     private MessageAuthenticator authenticator;
-    private BlockMessageDescriptor descriptor;
+    private Descriptor descriptor;
     private String uri;
     private int size;
     private List<String> servers;

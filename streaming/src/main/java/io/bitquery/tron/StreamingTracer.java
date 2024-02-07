@@ -1,7 +1,9 @@
 package io.bitquery.tron;
 
-//import io.bitquery.streaming.StreamingProcessor;
 import com.google.protobuf.Message;
+import io.bitquery.streaming.StreamingProcessor;
+import io.bitquery.streaming.TracerConfig;
+import io.bitquery.streaming.blockchain.BlockMessageDescriptor;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.capsule.BlockCapsule;
@@ -14,28 +16,25 @@ import java.util.Stack;
 
 @Slf4j(topic = "tracer")
 public class StreamingTracer implements Tracer {
+    private TracerConfig config;
 
-//    private StreamingProcessor processor;
+    private StreamingProcessor processor;
+
     private BlockMessageBuilder currentBlock;
 
     private TransactionMessageBuilder currentTransaction;
 
     private EvmMessageBuilder currentTrace;
 
-    public StreamingTracer() {}
-
     @Override
-    public void init(String implementationConfigFile) throws Exception {
-//        this.processor = new StreamingProcessor(implementationConfigFile);
+    public void init(String tracerConfigPath) throws Exception {
+        config = new TracerConfig(tracerConfigPath);
+        this.processor = new StreamingProcessor(config);
     }
 
     @Override
     public void close() {
-//        if (this.processor != null){
-//            this.processor.close();
-//        }
-//
-//        this.processor = null;
+        processor.close();
     }
 
     @Override
@@ -52,9 +51,17 @@ public class StreamingTracer implements Tracer {
     @Override
     public void blockEnd(Object block) {
         try {
-            if (currentBlock == null) {
-                return;
-            }
+            BlockCapsule blockCap = (BlockCapsule) block;
+
+            BlockMessageDescriptor descriptor = new BlockMessageDescriptor();
+            descriptor.setBlockHash(blockCap.getBlockId().toString());
+            descriptor.setBlockNumber(blockCap.getNum());
+            descriptor.setParentHash(blockCap.getParentHash().toString());
+            descriptor.setParentNumber(blockCap.getParentBlockId().getNum());
+            descriptor.setChainId(config.getChainId());
+
+            processor.process(descriptor, currentBlock.getMessage().toByteArray());
+
         } catch (Exception e) {
             logger.error("blockEnd failed, error: {}", e.getMessage());
         }

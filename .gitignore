@@ -57,3 +57,7 @@ Wallet
 
 /framework/propPath
 .cache
+
+# tracing 
+/streaming-directory/
+/docker-compose/streaming/config-runtime/

@@ -1,17 +1,17 @@
 package io.bitquery.streaming.messages;
 
 import com.google.common.primitives.Bytes;
-import java.time.Instant;
+import io.bitquery.streaming.TracerConfig;
+import io.bitquery.streaming.services.EllipticSigner;
+import io.bitquery.streaming.services.FileStorage;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.JsonUtil;
-import io.bitquery.streaming.blockchain.BlockMessageDescriptor;
-import io.bitquery.streaming.services.EllipticSigner;
-import io.bitquery.streaming.services.FileStorage;
+
+import java.time.Instant;
 
 @Slf4j(topic = "streaming")
 public class ProtobufMessage {
@@ -24,22 +24,23 @@ public class ProtobufMessage {
     @Getter
     private String topic;
 
-    private StreamingConfig streamingConfig;
+    private final TracerConfig config;
 
-    private EllipticSigner signer;
-    private FileStorage fileStorage;
+    private final EllipticSigner signer;
+    private final FileStorage fileStorage;
 
-    public ProtobufMessage() {
-        this.streamingConfig = CommonParameter.getInstance().getStreamingConfig();
-        this.signer = new EllipticSigner();
-        this.fileStorage = new FileStorage(this);
+    public ProtobufMessage(TracerConfig config) {
+        this.config = config;
+
+        this.signer = new EllipticSigner(config);
+        this.fileStorage = new FileStorage(this, config);
     }
 
-    public void process(BlockMessageDescriptor descriptor, byte[] body, String topic) {
+    public void process(Descriptor descriptor, byte[] body, String topic) {
         getMeta().setDescriptor(descriptor);
         getMeta().setAuthenticator(new MessageAuthenticator());
         getMeta().setSize(body.length);
-        getMeta().setServers(this.streamingConfig.getFileStorageUrls());
+        getMeta().setServers(config.getFileStorageUrls());
 
         this.body = body;
         this.topic = topic;

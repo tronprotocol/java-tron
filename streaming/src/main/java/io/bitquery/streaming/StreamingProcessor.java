@@ -1,54 +1,39 @@
 package io.bitquery.streaming;
 
 import com.google.common.base.Stopwatch;
+import io.bitquery.streaming.messages.Descriptor;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.parameter.CommonParameter;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.exception.StreamingMessageValidateException;
-import org.tron.protos.streaming.TronMessage;
-import io.bitquery.tron.BlockMessageCreator;
-import io.bitquery.streaming.blockchain.BlockMessageDescriptor;
-import io.bitquery.tron.BlockMessageValidator;
 import io.bitquery.streaming.services.KafkaMessageBroker;
 import io.bitquery.streaming.messages.ProtobufMessage;
+
 @Slf4j(topic = "streaming")
 public class StreamingProcessor {
-    private final KafkaMessageBroker kafkaBroker;
-    private final ProtobufMessage protobufMessage;
+
+    private TracerConfig config;
     private final String topic;
     private final boolean topicEnabled;
 
-    public StreamingProcessor(String config) {
+    private final KafkaMessageBroker kafkaBroker;
 
-        this.kafkaBroker = new KafkaMessageBroker();
-        this.protobufMessage = new ProtobufMessage();
+    private final ProtobufMessage protobufMessage;
 
-        this.topic = kafkaTopicConf.getString("topic");
-        this.topicEnabled = kafkaTopicConf.getBoolean("enable");
+    public StreamingProcessor(TracerConfig config) {
+        this.config = config;
+        this.topic = config.getKafkaTopicBlocks().getString("topic");
+        this.topicEnabled = config.getKafkaTopicBlocks().getBoolean("enable");
+
+        this.protobufMessage = new ProtobufMessage(config);
+        this.kafkaBroker = new KafkaMessageBroker(config);
     }
 
-    public void process(BlockCapsule newBlock) throws StreamingMessageValidateException {
+     public void process(Descriptor descriptor, byte[] message) {
         Stopwatch timer = Stopwatch.createStarted();
 
-        BlockMessageCreator blockMessageCreator = new BlockMessageCreator(newBlock);
-        blockMessageCreator.create();
-        TronMessage.BlockMessage blockMessage = blockMessageCreator.getBlockMessage();
-
-        BlockMessageValidator validator = new BlockMessageValidator(blockMessage);
-        validator.validate();
-
-        BlockMessageDescriptor blockMsgDescriptor = new BlockMessageDescriptor();
-        blockMsgDescriptor.setBlockHash(newBlock.getBlockId().toString());
-        blockMsgDescriptor.setBlockNumber(newBlock.getNum());
-        blockMsgDescriptor.setParentHash(newBlock.getParentHash().toString());
-        blockMsgDescriptor.setParentNumber(newBlock.getParentBlockId().getNum());
-        blockMsgDescriptor.setChainId(CommonParameter.getInstance().getStreamingConfig().getChainId());
-
-        protobufMessage.process(blockMsgDescriptor, blockMessage.toByteArray(), topic);
+        protobufMessage.process(descriptor, message, topic);
         kafkaBroker.send(topic, protobufMessage);
 
-        logger.info(String.format("Streaming processing took %s, Num: %d", timer.stop(), newBlock.getNum()));
-    }
+        logger.info("Streaming processing took {}, Num: {}", timer.stop(), descriptor.getBlockNumber());
+     }
 
     public void close() {
         protobufMessage.close();
@@ -57,11 +42,11 @@ public class StreamingProcessor {
         logger.info("StreamingProcessor closed");
     }
 
-    public boolean enabled() {
-        if (!CommonParameter.getInstance().getStreamingConfig().isEnable()) {
-            return false;
-        }
-
-        return topicEnabled;
-    }
+//    public boolean enabled() {
+//        if (!CommonParameter.getInstance().getStreamingConfig().isEnable()) {
+//            return false;
+//        }
+//
+//        return topicEnabled;
+//    }
 }

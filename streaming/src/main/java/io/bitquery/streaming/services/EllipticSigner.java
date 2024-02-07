@@ -1,16 +1,15 @@
 package io.bitquery.streaming.services;
 
+import io.bitquery.streaming.TracerConfig;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.config.args.StreamingConfig;
 
 public class EllipticSigner {
-    private StreamingConfig streamingConfig;
+    private final TracerConfig config;
     private ECKey eckey;
 
-    public EllipticSigner() {
-        this.streamingConfig = CommonParameter.getInstance().getStreamingConfig();
+    public EllipticSigner(TracerConfig config) {
+        this.config = config;
 
         generateECKey();
     }
@@ -24,7 +23,7 @@ public class EllipticSigner {
     }
 
     private void generateECKey() {
-        String pk = streamingConfig.getEllipticSignerPrivateKeyHex();
+        String pk = config.getEllipticSignerPrivateKeyHex();
 
         // If private key is not specified, generate random one.
         if (pk.isEmpty()) {

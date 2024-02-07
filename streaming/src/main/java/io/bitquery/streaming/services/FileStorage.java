@@ -1,13 +1,15 @@
 package io.bitquery.streaming.services;
 
+import io.bitquery.streaming.TracerConfig;
+import io.bitquery.streaming.messages.ProtobufMessage;
 import lombok.extern.slf4j.Slf4j;
 import net.jpountz.lz4.LZ4FrameOutputStream;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
-import org.tron.core.config.args.StreamingConfig;
-import io.bitquery.streaming.messages.ProtobufMessage;
+//import org.tron.core.config.args.StreamingConfig;
+//import io.bitquery.streaming.messages.ProtobufMessage;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -21,15 +23,15 @@ public class FileStorage {
 
     private ProtobufMessage protobufMessage;
 
-    private StreamingConfig streamingConfig;
+    private TracerConfig config;
 
     private final String directoriesMonitor = "directories-monitor";
     private final ScheduledExecutorService directoriesMonitorExecutor = ExecutorServiceManager
             .newSingleThreadScheduledExecutor(directoriesMonitor);
 
-    public FileStorage(ProtobufMessage protobufMessage) {
+    public FileStorage(ProtobufMessage protobufMessage, TracerConfig config) {
         this.protobufMessage = protobufMessage;
-        this.streamingConfig = CommonParameter.getInstance().getStreamingConfig();
+        this.config = config;
 
         startDirectoriesMonitoring();
     }
@@ -52,7 +54,7 @@ public class FileStorage {
                 getPaddedBlockNumber(protobufMessage.getMeta().getDescriptor().getBlockNumber()),
                 protobufMessage.getMeta().getDescriptor().getBlockHash(),
                 ByteArray.toHexString(protobufMessage.getBodyHash()),
-                streamingConfig.getPathGeneratorSuffix()
+                config.getPathGeneratorSuffix()
         );
 
         String fullPath = Paths.get(directoryPath, fileName).toString();
@@ -62,8 +64,8 @@ public class FileStorage {
 
     private String getDirectoryName() {
         long currentBlockNum = protobufMessage.getMeta().getDescriptor().getBlockNumber();
-        int bucketSize = streamingConfig.getPathGeneratorBucketSize();
-        String folderPrefix = streamingConfig.getFileStorageRoot();
+        int bucketSize = config.getPathGeneratorBucketSize();
+        String folderPrefix = config.getFileStorageRoot();
 
         String paddedBlockNum = getPaddedBlockNumber(bucketSize * (currentBlockNum / bucketSize));
         String dirName = Paths.get(folderPrefix, protobufMessage.getTopic(), paddedBlockNum).toString();
@@ -75,8 +77,8 @@ public class FileStorage {
         String template = "%%%s%dd";
         String formattedBlockNumber = String.format(
                 template,
-                streamingConfig.getPathGeneratorSpacer(),
-                streamingConfig.getPathGeneratorBlockNumberPadding()
+                config.getPathGeneratorSpacer(),
+                config.getPathGeneratorBlockNumberPadding()
         );
 
         String blockNumber = String.format(formattedBlockNumber, number);
@@ -103,15 +105,15 @@ public class FileStorage {
 
     private String setUri(String fullPath) {
         // deletes folder prefix;
-        String uriPath = fullPath.replaceFirst(streamingConfig.getFileStorageRoot() + "/", "");
+        String uriPath = fullPath.replaceFirst(config.getFileStorageRoot() + "/", "");
         protobufMessage.getMeta().setUri(uriPath);
 
         return uriPath;
     }
 
     private void startDirectoriesMonitoring() {
-        int ttlSecs = streamingConfig.getFileStorageTtlSecs();
-        int poolPeriodSec = streamingConfig.getFileStoragePoolPeriodSec();
+        int ttlSecs = config.getFileStorageTtlSecs();
+        int poolPeriodSec = config.getFileStoragePoolPeriodSec();
 
         if (ttlSecs < 0) {
             return;
@@ -121,16 +123,16 @@ public class FileStorage {
             poolPeriodSec = ttlSecs;
         }
 
-        logger.info(String.format("Configuring directories monitoring, Period: %d, TTL: %d", poolPeriodSec, ttlSecs));
+        logger.info("Configuring directories monitoring, Period: {}, TTL: {}", poolPeriodSec, ttlSecs);
 
         directoriesMonitorExecutor.scheduleWithFixedDelay(() -> {
             try {
                 long maxDirectoriesTtl = System.currentTimeMillis() - ttlSecs * 1000;
-                File[] streamingDirs = new File(streamingConfig.getFileStorageRoot()).listFiles(File::isDirectory);
+                File[] streamingDirs = new File(config.getFileStorageRoot()).listFiles(File::isDirectory);
 
                 removeDirs(maxDirectoriesTtl, streamingDirs);
             } catch (Exception e) {
-                logger.error("Directories monitoring error", e);
+                logger.error("Directories monitoring error, error: {}", e.getMessage());
             }
         }, 1, poolPeriodSec, TimeUnit.SECONDS);
     }
@@ -138,7 +140,7 @@ public class FileStorage {
     private void removeDirs(long ttl, File[] streamingDirs) {
         for (File dir : streamingDirs) {
             if (dir.lastModified() < ttl) {
-                logger.info(String.format("Removing directory, Path: %s", dir.getAbsolutePath()));
+                logger.info("Removing directory, Path: {}", dir.getAbsolutePath());
                 dir.delete();
             }
 

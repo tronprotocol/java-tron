@@ -13,7 +13,7 @@ public class TracerManager {
         String tracerImpl = CommonParameter.getInstance().getTracerImplementationClass();
         String tracerConfig = CommonParameter.getInstance().getTracerConfig();
 
-        logger.info("TracerManager init, TracerImpl: {}, TracerConfigFile: {}", tracerImpl, tracerConfig);
+        logger.info("TracerManager init, TracerImpl: {}, tracerConfigPath: {}", tracerImpl, tracerConfig);
 
         if (tracerImpl.isEmpty()){
             return;
