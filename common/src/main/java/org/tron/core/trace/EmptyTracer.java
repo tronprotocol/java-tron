@@ -1,5 +1,6 @@
 package org.tron.core.trace;
 
+import com.google.protobuf.Message;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.runtime.vm.DataWord;
 
@@ -25,9 +26,7 @@ public class EmptyTracer implements Tracer {
     public void transactionStart(Object tx) {}
 
     @Override
-    public void transactionEnd(Object tx) {
-
-    }
+    public void transactionEnd(Message protobufResultMessage) {}
 
     @Override
     public void captureStart(byte[] from, byte[] to, byte[] code, long gas) {}

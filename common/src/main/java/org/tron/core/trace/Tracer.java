@@ -1,5 +1,6 @@
 package org.tron.core.trace;
 
+import com.google.protobuf.Message;
 import org.tron.common.runtime.vm.DataWord;
 
 import java.util.List;
@@ -13,7 +14,7 @@ public interface Tracer {
     public void blockEnd(Object block);
 
     public void transactionStart(Object tx);
-    public void transactionEnd(Object tx);
+    public void transactionEnd(Message protobufResultMessage);
 
     public void captureStart(byte[] from, byte[] to, byte[] code, long gas);
     public void captureEnd(long energyUsed, RuntimeException error);

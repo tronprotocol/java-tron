@@ -1753,7 +1753,7 @@ public class Manager {
         accountStateCallBack.preExeTrans();
         TracerManager.getTracer().transactionStart(transactionCapsule);
         TransactionInfo result = processTransaction(transactionCapsule, block);
-        TracerManager.getTracer().transactionEnd(transactionCapsule);
+        TracerManager.getTracer().transactionEnd(result);
         accountStateCallBack.exeTransFinish();
         if (Objects.nonNull(result)) {
           results.add(result);
