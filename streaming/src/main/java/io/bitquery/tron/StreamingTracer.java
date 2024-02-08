@@ -43,7 +43,7 @@ public class StreamingTracer implements Tracer {
             this.currentBlock = new BlockMessageBuilder();
             currentBlock.buildBlockStartMessage((BlockCapsule) block);
         } catch (Exception e) {
-            logger.error("blockStart failed, error: {}", e.getMessage());
+            logger.error("blockStart failed", e);
         }
     }
 
@@ -63,7 +63,7 @@ public class StreamingTracer implements Tracer {
             processor.process(descriptor, currentBlock.getMessage().toByteArray());
 
         } catch (Exception e) {
-            logger.error("blockEnd failed, error: {}", e.getMessage());
+            logger.error("blockEnd failed", e);
         }
     }
 
@@ -75,7 +75,7 @@ public class StreamingTracer implements Tracer {
 
             currentTransaction.buildTxStartMessage((TransactionCapsule) tx);
         } catch (Exception e) {
-            logger.error("transactionStart failed, error: {}", e.getMessage());
+            logger.error("transactionStart failed", e);
         }
     }
 
@@ -88,7 +88,7 @@ public class StreamingTracer implements Tracer {
 
             currentBlock.addTransaction(currentTransaction.getMessage());
         } catch (Exception e) {
-            logger.error("transactionEnd failed, error: {}", e.getMessage());
+            logger.error("transactionEnd failed", e);
         }
     }
 
@@ -97,7 +97,7 @@ public class StreamingTracer implements Tracer {
         try {
             currentTrace.captureStart(from, to, code, gas);
         } catch (Exception e) {
-            logger.error("captureStart failed, error: {}", e.getMessage());
+            logger.error("captureStart failed", e);
         }
     }
 
@@ -106,7 +106,7 @@ public class StreamingTracer implements Tracer {
         try {
             currentTrace.captureEnd(energyUsed, error);
         } catch (Exception e) {
-            logger.error("captureEnd failed, error: {}", e.getMessage());
+            logger.error("captureEnd failed", e);
         }
     }
 
@@ -115,7 +115,7 @@ public class StreamingTracer implements Tracer {
         try {
             currentTrace.captureFault(opcodeNum, opcodeName, energy, stackData, callerData, contractData, callValueData, pc, memory, callDepth, error);
         } catch (Exception e) {
-            logger.error("captureFault failed, error: {}", e.getMessage());
+            logger.error("captureFault failed", e);
         }
     }
 
@@ -124,7 +124,7 @@ public class StreamingTracer implements Tracer {
         try {
             currentTrace.captureEnter(from, to, data, gas, value, opCode, code);
         } catch (Exception e) {
-            logger.error("captureEnter failed, error: {}", e.getMessage());
+            logger.error("captureEnter failed", e);
         }
     }
 
@@ -133,7 +133,7 @@ public class StreamingTracer implements Tracer {
         try {
             currentTrace.captureExit(energyUsed, error);
         } catch (Exception e) {
-            logger.error("captureExit failed, error: {}", e.getMessage());
+            logger.error("captureExit failed", e);
         }
     }
 
@@ -142,7 +142,7 @@ public class StreamingTracer implements Tracer {
         try {
             currentTrace.captureState(opcodeNum, opcodeName, energy, pc, callDepth);
         } catch (Exception e) {
-            logger.error("captureState failed, error: {}", e.getMessage());
+            logger.error("captureState failed", e);
         }
     }
 
@@ -151,7 +151,7 @@ public class StreamingTracer implements Tracer {
         try {
             currentTrace.addLogToCaptureState(address, data, topicsData, code);
         } catch (Exception e) {
-            logger.error("addLogToCaptureState failed, error: {}", e.getMessage());
+            logger.error("addLogToCaptureState failed", e);
         }
     }
 
@@ -160,7 +160,7 @@ public class StreamingTracer implements Tracer {
         try {
             currentTrace.addStorageToCaptureState(address, loc, value);
         } catch (Exception e) {
-            logger.error("addStorageToCaptureState failed, error: {}", e.getMessage());
+            logger.error("addStorageToCaptureState failed", e);
         }
     }
 }

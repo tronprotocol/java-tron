@@ -26,19 +26,20 @@ public class KafkaMessageBroker {
 
         ProducerRecord msg = new ProducerRecord<>(topicName, value);
 
-        logger.info(String.format("Sending message, Num: %d, Topic: %s", block, topicName));
+        logger.info("Sending message, Num: {}, Topic: {}", block, topicName);
 
         producer.send(msg, new Callback() {
             public void onCompletion(RecordMetadata metadata, Exception e) {
                 if (e == null) {
-                    logger.info(String.format("Delivered message to topic, Num: %d, Topic: %s, Partition: %d, Offset: %d",
-                                    protobufMessage.getMeta().getDescriptor().getBlockNumber(),
-                                    metadata.topic(),
-                                    metadata.partition(),
-                                    metadata.offset())
-                            );
+                    logger.info(
+                        "Delivered message to topic, Num: {}, Topic: {}, Partition: {}, Offset: {}",
+                        protobufMessage.getMeta().getDescriptor().getBlockNumber(),
+                        metadata.topic(),
+                        metadata.partition(),
+                        metadata.offset()
+                    );
                 } else {
-                    logger.info(String.format("Delivery failed, Num: %d, Error: %s", block, e.getMessage()));
+                    logger.info("Delivery failed, Num: {}, Error: {}", block, e.getMessage());
                 }
             }
         });
