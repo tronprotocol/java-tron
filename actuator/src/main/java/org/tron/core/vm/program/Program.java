@@ -685,11 +685,11 @@ public class Program {
     byte[] newAddress = TransactionUtil
         .generateContractAddress(rootTransactionId, nonce);
 
-    createContractImpl(value, programCode, newAddress, false);
+    createContractImpl(value, programCode, newAddress, false, Op.CREATE);
   }
 
   private void createContractImpl(DataWord value, byte[] programCode, byte[] newAddress,
-      boolean isCreate2) {
+      boolean isCreate2, int opcode) {
     byte[] senderAddress = getContextAddress();
 
     if (logger.isDebugEnabled()) {
@@ -774,7 +774,7 @@ public class Program {
             programCode,
             energyLimit.longValue(),
             value.getNoLeadZeroesData(),
-            getCurrentOp(),
+            opcode,
             getContractState().getCode(newAddress)
     );
 
@@ -1542,7 +1542,7 @@ public class Program {
 
     byte[] contractAddress = WalletUtil
         .generateContractAddress2(senderAddress, salt.getData(), programCode);
-    createContractImpl(value, programCode, contractAddress, true);
+    createContractImpl(value, programCode, contractAddress, true, Op.CREATE2);
   }
 
   public void addListener(ProgramOutListener listener) {
