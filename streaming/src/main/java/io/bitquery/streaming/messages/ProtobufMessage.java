@@ -2,14 +2,13 @@ package io.bitquery.streaming.messages;
 
 import com.google.common.primitives.Bytes;
 import io.bitquery.streaming.TracerConfig;
+import io.bitquery.streaming.common.crypto.Hash;
 import io.bitquery.streaming.services.EllipticSigner;
 import io.bitquery.streaming.services.FileStorage;
+import io.bitquery.streaming.common.utils.ByteArray;
+import io.bitquery.streaming.common.utils.JsonUtil;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.crypto.ECKey;
-import org.tron.common.crypto.Hash;
-import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.JsonUtil;
 
 import java.time.Instant;
 
@@ -57,10 +56,10 @@ public class ProtobufMessage {
         prepareAuthenticator();
 
         byte[] message = ByteArray.fromHexString(getMeta().getAuthenticator().getId());
-        ECKey.ECDSASignature signature = this.signer.sign(message);
+        byte[] signature = this.signer.sign(message);
 
         getMeta().getAuthenticator().setSigner(this.signer.getAddress());
-        getMeta().getAuthenticator().setSignature(ByteArray.toHexString(signature.toByteArray()));
+        getMeta().getAuthenticator().setSignature(ByteArray.toHexString(signature));
     }
 
     public byte[] getBodyHash() {

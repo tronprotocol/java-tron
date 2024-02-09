@@ -2,7 +2,6 @@ package io.bitquery.streaming.messages;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
-import io.bitquery.streaming.blockchain.BlockMessageDescriptor;
 import lombok.Data;
 
 import java.util.List;

@@ -2,12 +2,12 @@ package io.bitquery.streaming.services;
 
 import io.bitquery.streaming.TracerConfig;
 import io.bitquery.streaming.messages.ProtobufMessage;
+import io.bitquery.streaming.common.utils.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
-import org.tron.common.utils.JsonUtil;
 
 import java.util.Properties;
 @Slf4j(topic = "streaming")

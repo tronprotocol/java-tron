@@ -1,37 +1,48 @@
 package io.bitquery.streaming.services;
 
 import io.bitquery.streaming.TracerConfig;
-import org.tron.common.crypto.ECKey;
-import org.tron.common.utils.ByteArray;
+import io.bitquery.streaming.common.crypto.ECKeyPair;
+import io.bitquery.streaming.common.utils.ByteArray;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
+import java.security.InvalidAlgorithmParameterException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+
+@Slf4j(topic = "streaming")
 public class EllipticSigner {
-    private final TracerConfig config;
-    private ECKey eckey;
+    private ECKeyPair ecKeyPair;
+
+    @Getter
+    private String address;
 
     public EllipticSigner(TracerConfig config) {
-        this.config = config;
+        try {
+            generateECKey(config);
+        } catch (Exception e) {
+            logger.error("EllipticSigner initialization failed", e);
+            System.exit(1);
+        }
 
-        generateECKey();
+        this.address = ecKeyPair.getAddress();
     }
 
-    public ECKey.ECDSASignature sign(byte[] message){
-       return this.eckey.sign(message);
+    public byte[] sign(byte[] message) {
+        return ecKeyPair.sign(message).toByteArray();
     }
 
-    public String getAddress() {
-        return ByteArray.toHexString(this.eckey.getAddress()).substring(2);
-    }
 
-    private void generateECKey() {
+    private void generateECKey(TracerConfig config) throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchProviderException {
         String pk = config.getEllipticSignerPrivateKeyHex();
 
         // If private key is not specified, generate random one.
         if (pk.isEmpty()) {
-            this.eckey = new ECKey();
+            this.ecKeyPair = ECKeyPair.createEcKeyPair();
             return;
         }
 
-        this.eckey = new ECKey(ByteArray.fromHexString(pk), true);
-    }
 
+        this.ecKeyPair = ECKeyPair.create(ByteArray.fromHexString(pk));
+    }
 }

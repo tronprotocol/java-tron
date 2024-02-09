@@ -1,15 +1,12 @@
 package io.bitquery.streaming.services;
 
 import io.bitquery.streaming.TracerConfig;
+import io.bitquery.streaming.common.es.ExecutorServiceManager;
 import io.bitquery.streaming.messages.ProtobufMessage;
+import io.bitquery.streaming.common.utils.ByteArray;
+import io.bitquery.streaming.common.utils.FileUtil;
 import lombok.extern.slf4j.Slf4j;
 import net.jpountz.lz4.LZ4FrameOutputStream;
-import org.tron.common.es.ExecutorServiceManager;
-import org.tron.common.parameter.CommonParameter;
-import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
-//import org.tron.core.config.args.StreamingConfig;
-//import io.bitquery.streaming.messages.ProtobufMessage;
 
 import java.io.File;
 import java.io.FileOutputStream;
