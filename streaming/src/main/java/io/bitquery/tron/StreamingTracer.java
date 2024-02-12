@@ -60,6 +60,9 @@ public class StreamingTracer implements Tracer {
             descriptor.setParentNumber(blockCap.getParentBlockId().getNum());
             descriptor.setChainId(config.getChainId());
 
+            BlockMessageValidator validator = new BlockMessageValidator(currentBlock.getMessage());
+            validator.validate();
+
             processor.process(descriptor, currentBlock.getMessage().toByteArray());
 
         } catch (Exception e) {
