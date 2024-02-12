@@ -2,9 +2,9 @@ syntax = "proto3";
 
 package tron_messages;
 
-import "streaming/evm/block_message.proto";
+import "evm/block_message.proto";
 
-option java_package = "org.tron.protos.streaming";
+option java_package = "io.bitquery.protos";
 option java_outer_classname = "TronMessage";
 
 // Tx message

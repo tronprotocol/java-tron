@@ -2,14 +2,15 @@ package io.bitquery.tron;
 
 import io.bitquery.tron.exception.BlockMessageValidateException;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.protos.streaming.TronMessage;
+import io.bitquery.protos.TronMessage.BlockMessage;
+import io.bitquery.protos.TronMessage.Transaction;
 
 @Slf4j(topic = "streaming")
 public class BlockMessageValidator {
-    TronMessage.BlockMessage message;
+    BlockMessage message;
     long blockNumber;
 
-    public BlockMessageValidator(TronMessage.BlockMessage message) {
+    public BlockMessageValidator(BlockMessage message) {
         this.message = message;
         this.blockNumber = message.getHeader().getNumber();
     }
@@ -21,13 +22,13 @@ public class BlockMessageValidator {
      }
 
      public void transactions() throws BlockMessageValidateException {
-         for (TronMessage.Transaction tx : message.getTransactionsList()) {
+         for (Transaction tx : message.getTransactionsList()) {
              internalTransactionsAndTraces(tx);
              logsAndCaptureStateLogs(tx);
          }
      }
 
-     private void internalTransactionsAndTraces(TronMessage.Transaction tx) throws BlockMessageValidateException {
+     private void internalTransactionsAndTraces(Transaction tx) throws BlockMessageValidateException {
          int expectedCount = tx.getInternalTransactionsCount();
          int actualCount = tx.getTrace().getCallsCount();
 
@@ -43,7 +44,7 @@ public class BlockMessageValidator {
          }
      }
 
-     private void logsAndCaptureStateLogs(TronMessage.Transaction tx) throws BlockMessageValidateException {
+     private void logsAndCaptureStateLogs(Transaction tx) throws BlockMessageValidateException {
          int expectedCount = tx.getLogsCount();
          long actualCount = tx.getTrace().getCaptureStatesList().stream()
                  .filter(x -> x.hasLog())

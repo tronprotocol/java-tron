@@ -1,17 +1,49 @@
-// Dependency versions
-// ---------------------------------------
+apply plugin: 'com.google.protobuf'
+
 def slf4jVersion = "1.7.25"
-// --------------------------------------
+def protobufVersion = '3.21.12'
 
 dependencies {
     compile group: 'org.lz4', name: 'lz4-java', version: '1.8.0'
-    compile "org.slf4j:jcl-over-slf4j:$slf4jVersion"
+    compile group: 'org.slf4j', name: 'jcl-over-slf4j', version: slf4jVersion
     compile group: 'org.apache.kafka', name: 'kafka-clients', version: '3.6.0'
 
-    compile project(':chainbase')
+    compile group: 'com.google.protobuf', name: 'protobuf-java', version: protobufVersion
+    compile group: 'com.google.protobuf', name: 'protobuf-java-util', version: protobufVersion
+
     compile project(':common')
     compile project(':protocol')
     compile project(':actuator')
+}
 
+sourceSets {
+    main {
+        proto {
+            srcDir 'src/main/java/io/bitquery/protos'
+        }
+        java {
+            srcDir 'src/main/gen'
+            srcDir 'src/main/java'
+        }
+    }
 
+}
+
+protobuf {
+    generatedFilesBaseDir = "$projectDir/src/"
+    protoc {
+        artifact = "com.google.protobuf:protoc:${protobufVersion}"
+    }
+
+    generateProtoTasks {
+        all().each { task ->
+            task.builtins {
+                java { outputSubDir = "java/generated_protobuf" }
+            }
+        }
+    }
+}
+
+clean.doFirst {
+    delete "src/main/java/generated_protobuf"
 }

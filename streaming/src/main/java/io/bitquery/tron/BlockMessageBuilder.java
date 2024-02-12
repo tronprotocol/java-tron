@@ -2,10 +2,10 @@ package io.bitquery.tron;
 
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.protos.streaming.TronMessage.Transaction;
-import org.tron.protos.streaming.TronMessage.Witness;
-import org.tron.protos.streaming.TronMessage.BlockHeader;
-import org.tron.protos.streaming.TronMessage.BlockMessage;
+import io.bitquery.protos.TronMessage.Transaction;
+import io.bitquery.protos.TronMessage.Witness;
+import io.bitquery.protos.TronMessage.BlockHeader;
+import io.bitquery.protos.TronMessage.BlockMessage;
 
 @Slf4j(topic = "tracer")
 public class BlockMessageBuilder {

@@ -60,4 +60,5 @@ Wallet
 
 # tracing 
 /streaming-directory/
+/streaming/src/main/java/generated_protobuf
 /docker-compose/streaming/config-runtime/

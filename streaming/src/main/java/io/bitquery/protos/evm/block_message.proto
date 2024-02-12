@@ -1,6 +1,9 @@
 syntax = "proto3";
 package evm_messages;
 
+option java_package = "io.bitquery.protos";
+option java_outer_classname = "EvmMessage";
+
 message AddressCode {
   bytes Hash = 1;
   int32 Size = 2;
