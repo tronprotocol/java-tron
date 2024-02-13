@@ -1,6 +1,7 @@
 package io.bitquery.streaming;
 
 import com.google.common.base.Stopwatch;
+import com.typesafe.config.Config;
 import io.bitquery.streaming.messages.Descriptor;
 import lombok.extern.slf4j.Slf4j;
 import io.bitquery.streaming.services.KafkaMessageBroker;
@@ -11,16 +12,14 @@ public class StreamingProcessor {
 
     private TracerConfig config;
     private final String topic;
-    private final boolean topicEnabled;
-
     private final KafkaMessageBroker kafkaBroker;
 
     private final ProtobufMessage protobufMessage;
 
-    public StreamingProcessor(TracerConfig config) {
+    public StreamingProcessor(TracerConfig config, Config kafkaTopic) {
         this.config = config;
-        this.topic = config.getKafkaTopicBlocks().getString("topic");
-        this.topicEnabled = config.getKafkaTopicBlocks().getBoolean("enable");
+
+        this.topic = kafkaTopic.getString("topic");
 
         this.protobufMessage = new ProtobufMessage(config);
         this.kafkaBroker = new KafkaMessageBroker(config);

@@ -27,9 +27,9 @@ public class StreamingTracer implements Tracer {
     private EvmMessageBuilder currentTrace;
 
     @Override
-    public void init(String tracerConfigPath) throws Exception {
-        config = new TracerConfig(tracerConfigPath);
-        this.processor = new StreamingProcessor(config);
+    public void init(String configFile) throws Exception {
+        this.config = new TracerConfig(configFile);
+        this.processor = new StreamingProcessor(config, config.getKafkaTopicBlocks());
     }
 
     @Override

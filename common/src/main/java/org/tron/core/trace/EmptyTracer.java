@@ -11,7 +11,7 @@ import java.util.Stack;
 public class EmptyTracer implements Tracer {
 
     @Override
-    public void init(String tracerConfig) {}
+    public void init(String configFile) {}
 
     @Override
     public void close() {}
