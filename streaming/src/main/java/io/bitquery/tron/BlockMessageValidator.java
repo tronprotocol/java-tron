@@ -4,6 +4,9 @@ import io.bitquery.tron.exception.BlockMessageValidateException;
 import lombok.extern.slf4j.Slf4j;
 import io.bitquery.protos.TronMessage.BlockMessage;
 import io.bitquery.protos.TronMessage.Transaction;
+import org.apache.commons.lang3.ArrayUtils;
+
+import java.util.Arrays;
 
 @Slf4j(topic = "streaming")
 public class BlockMessageValidator {
@@ -29,16 +32,22 @@ public class BlockMessageValidator {
      }
 
      private void internalTransactionsAndTraces(Transaction tx) throws BlockMessageValidateException {
-         int expectedCount = tx.getInternalTransactionsCount();
+         String[] internalTxsTypes = {"call", "create"};
+
+         long expectedCount = tx.getInternalTransactionsList().stream()
+                 .filter(x -> ArrayUtils.contains(internalTxsTypes, x.getNote()))
+                 .count();
+
          int actualCount = tx.getTrace().getCallsCount();
 
          if (expectedCount != actualCount) {
              throw new BlockMessageValidateException(
                      String.format(
-                             "'Internal Transaction' validation for block %s wasn't passed. Expected: %d, actual: %d",
+                             "'Internal Transaction' validation for block %s wasn't passed. Expected: %d, actual: %d. Calls dump: %s",
                              blockNumber,
                              expectedCount,
-                             actualCount
+                             actualCount,
+                             tx.getInternalTransactionsList().toString()
                      )
              );
          }
