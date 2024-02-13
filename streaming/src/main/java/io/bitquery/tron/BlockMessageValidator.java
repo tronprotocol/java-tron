@@ -32,7 +32,7 @@ public class BlockMessageValidator {
      }
 
      private void internalTransactionsAndTraces(Transaction tx) throws BlockMessageValidateException {
-         String[] internalTxsTypes = {"call", "create"};
+         String[] internalTxsTypes = {"call", "create", "suicide"};
 
          long expectedCount = tx.getInternalTransactionsList().stream()
                  .filter(x -> ArrayUtils.contains(internalTxsTypes, x.getNote()))

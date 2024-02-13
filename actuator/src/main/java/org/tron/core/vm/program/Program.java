@@ -455,6 +455,16 @@ public class Program {
 
     increaseNonce();
 
+    TracerManager.getTracer().captureEnter(
+            owner,
+            obtainer,
+            ByteUtil.EMPTY_BYTE_ARRAY,
+            0,
+            ByteUtil.longTo32Bytes(balance),
+            Op.SUICIDE,
+            getContractState().getCode(obtainer)
+    );
+
     InternalTransaction internalTx = addInternalTx(null, owner, obtainer, balance, null,
         "suicide", nonce, getContractState().getAccount(owner).getAssetMapV2());
 
@@ -500,6 +510,8 @@ public class Program {
       }
     }
     getResult().addDeleteAccount(this.getContractAddress());
+
+    TracerManager.getTracer().captureExit(0, null);
   }
 
   public Repository getContractState() {
