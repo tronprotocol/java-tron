@@ -880,6 +880,7 @@ public class Manager {
           }
 
           try (ISession tmpSession = revokingStore.buildSession()) {
+            logger.info("Processing pending transaction: {}", trx);
             processTransaction(trx, null);
             trx.setTrxTrace(null);
             pendingTransactions.add(trx);
