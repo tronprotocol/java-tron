@@ -233,6 +233,7 @@ public class VMActuator implements Actuator2 {
         if (result.getException() != null || result.isRevert()) {
           result.getDeleteAccounts().clear();
           result.getLogInfoList().clear();
+          TracerManager.getTracer().cleanLogFromCaptureState();
           //result.resetFutureRefund();
           result.rejectInternalTransactions();
 

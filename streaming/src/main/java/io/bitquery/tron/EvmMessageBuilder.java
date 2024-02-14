@@ -34,12 +34,18 @@ public class EvmMessageBuilder {
     private int enterIndex;
     private int exitIndex;
 
+    // Stores a list of captureStates indexes where the log is stored.
+    // In case the transaction failed, we run through this index and remove the log from captureState.
+    private List<Integer> captureStateLogIndexes;
+
     public EvmMessageBuilder() {
         this.messageBuilder = Trace.newBuilder();
         this.call = null;
 
         this.enterIndex = 0;
         this.exitIndex = 0;
+
+        this.captureStateLogIndexes = new ArrayList<>();
     }
 
     public Trace getMessage() {
@@ -162,6 +168,15 @@ public class EvmMessageBuilder {
         setLogToCaptureState(address, data, topicsData, addressCode);
     }
 
+    public void cleanLogFromCaptureState() {
+        Log emptyLog = Log.newBuilder().build();
+
+        for (int index : captureStateLogIndexes) {
+            CaptureState modifiedCaptureState = this.messageBuilder.getCaptureStates(index).toBuilder().setLog(emptyLog).build();
+            this.messageBuilder.setCaptureStates(index, modifiedCaptureState);
+        }
+    }
+
     public void addStorageToCaptureState(byte[] address, byte[] loc, byte[] value) {
         int lastIndex = this.messageBuilder.getCaptureStatesCount() - 1;
         if (lastIndex == -1) {
@@ -210,6 +225,8 @@ public class EvmMessageBuilder {
         CaptureState captureStateWithLog = this.messageBuilder.getCaptureStates(lastIndex).toBuilder()
                 .setLog(log)
                 .build();
+
+        this.captureStateLogIndexes.add(lastIndex);
 
         this.messageBuilder.setCaptureStates(lastIndex, captureStateWithLog);
     }

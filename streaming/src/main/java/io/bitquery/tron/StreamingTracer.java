@@ -159,6 +159,15 @@ public class StreamingTracer implements Tracer {
     }
 
     @Override
+    public void cleanLogFromCaptureState() {
+        try {
+            currentTrace.cleanLogFromCaptureState();
+        } catch (Exception e) {
+            logger.error("cleanLogFromCaptureState failed", e);
+        }
+    }
+
+    @Override
     public void addStorageToCaptureState(byte[] address, byte[] loc, byte[] value) {
         try {
             currentTrace.addStorageToCaptureState(address, loc, value);

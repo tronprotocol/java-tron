@@ -50,5 +50,8 @@ public class EmptyTracer implements Tracer {
     public void addLogToCaptureState(byte[] address, byte[] data, List<DataWord> topicsData, byte[] code) {}
 
     @Override
+    public void cleanLogFromCaptureState() {}
+
+    @Override
     public void addStorageToCaptureState(byte[] address, byte[] loc, byte[] value) {}
 }

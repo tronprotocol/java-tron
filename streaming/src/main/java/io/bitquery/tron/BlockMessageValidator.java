@@ -18,56 +18,56 @@ public class BlockMessageValidator {
         this.blockNumber = message.getHeader().getNumber();
     }
 
-     public void validate() throws BlockMessageValidateException {
-         logger.info("Validating block protobuf message, Num: {}", message.getHeader().getNumber());
+    public void validate() throws BlockMessageValidateException {
+        logger.info("Validating block protobuf message, Num: {}", message.getHeader().getNumber());
 
-         transactions();
-     }
+        transactions();
+    }
 
-     public void transactions() throws BlockMessageValidateException {
-         for (Transaction tx : message.getTransactionsList()) {
-             internalTransactionsAndTraces(tx);
-             logsAndCaptureStateLogs(tx);
-         }
-     }
+    public void transactions() throws BlockMessageValidateException {
+        for (Transaction tx : message.getTransactionsList()) {
+            internalTransactionsAndTraces(tx);
+            logsAndCaptureStateLogs(tx);
+        }
+    }
 
-     private void internalTransactionsAndTraces(Transaction tx) throws BlockMessageValidateException {
-         String[] internalTxsTypes = {"call", "create", "suicide"};
+    private void internalTransactionsAndTraces(Transaction tx) throws BlockMessageValidateException {
+        String[] internalTxsTypes = {"call", "create", "suicide"};
 
-         long expectedCount = tx.getInternalTransactionsList().stream()
-                 .filter(x -> ArrayUtils.contains(internalTxsTypes, x.getNote()))
-                 .count();
+        long expectedCount = tx.getInternalTransactionsList().stream()
+                .filter(x -> ArrayUtils.contains(internalTxsTypes, x.getNote()))
+                .count();
 
-         int actualCount = tx.getTrace().getCallsCount();
+        int actualCount = tx.getTrace().getCallsCount();
 
-         if (expectedCount != actualCount) {
-             throw new BlockMessageValidateException(
-                     String.format(
-                             "'Internal Transaction' validation for block %s wasn't passed. Expected: %d, actual: %d. Calls dump: %s",
-                             blockNumber,
-                             expectedCount,
-                             actualCount,
-                             tx.getInternalTransactionsList().toString()
-                     )
-             );
-         }
-     }
+        if (expectedCount != actualCount) {
+            throw new BlockMessageValidateException(
+                    String.format(
+                            "'Internal Transaction' validation for block %s wasn't passed. Expected: %d, actual: %d. Calls dump: %s",
+                            blockNumber,
+                            expectedCount,
+                            actualCount,
+                            tx.getInternalTransactionsList().toString()
+                    )
+            );
+        }
+    }
 
-     private void logsAndCaptureStateLogs(Transaction tx) throws BlockMessageValidateException {
-         int expectedCount = tx.getLogsCount();
-         long actualCount = tx.getTrace().getCaptureStatesList().stream()
-                 .filter(x -> x.hasLog())
-                 .count();
+    private void logsAndCaptureStateLogs(Transaction tx) throws BlockMessageValidateException {
+        int expectedCount = tx.getLogsCount();
+        long actualCount = tx.getTrace().getCaptureStatesList().stream()
+                .filter(x -> x.getLog().hasLogHeader())
+                .count();
 
-         if (expectedCount != actualCount) {
-             throw new BlockMessageValidateException(
-                     String.format(
-                             "'LOG' validation for block %s wasn't passed. Expected: %d, actual: %d",
-                             blockNumber,
-                             expectedCount,
-                             actualCount
-                     )
-             );
-         }
-     }
+        if (expectedCount != actualCount) {
+            throw new BlockMessageValidateException(
+                    String.format(
+                            "'LOG' validation for block %s wasn't passed. Expected: %d, actual: %d",
+                            blockNumber,
+                            expectedCount,
+                            actualCount
+                    )
+            );
+        }
+    }
 }
