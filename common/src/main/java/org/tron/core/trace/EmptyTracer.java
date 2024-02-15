@@ -29,7 +29,7 @@ public class EmptyTracer implements Tracer {
     public void transactionEnd(Message protobufResultMessage) {}
 
     @Override
-    public void captureStart(byte[] from, byte[] to, byte[] code, long gas) {}
+    public void captureStart(byte[] from, byte[] to, boolean create, byte[] input, byte[] code, long gas, byte[] value) {}
 
     @Override
     public void captureEnd(long energyUsed, RuntimeException error) {}

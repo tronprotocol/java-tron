@@ -18,6 +18,7 @@ import io.bitquery.protos.EvmMessage.CaptureEnter;
 import io.bitquery.protos.EvmMessage.AddressCode;
 import io.bitquery.protos.EvmMessage.CaptureEnd;
 import io.bitquery.protos.EvmMessage.CaptureStart;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.vm.Op;
 
@@ -52,16 +53,16 @@ public class EvmMessageBuilder {
         return messageBuilder.build();
     }
 
-    public void captureStart(byte[] from, byte[] to, byte[] code, long gas) {
+    public void captureStart(byte[] from, byte[] to, boolean create, byte[] input, byte[] code, long gas, byte[] value) {
         AddressCode addressCodeTo = addressCode(code);
 
         CaptureStart captureStart = CaptureStart.newBuilder()
                 .setFrom(ByteString.copyFrom(from))
                 .setTo(ByteString.copyFrom(to))
-//                .setCreate(create)
-//                .setInput(data)
+                .setCreate(create)
+                .setInput(ByteString.copyFrom(input))
                 .setGas(gas)
-//                .setValue(value)
+                .setValue(ByteString.copyFrom(value))
                 .setToCode(addressCodeTo)
                 .build();
 

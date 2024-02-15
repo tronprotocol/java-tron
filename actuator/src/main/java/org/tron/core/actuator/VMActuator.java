@@ -23,6 +23,7 @@ import org.tron.common.runtime.InternalTransaction.ExecutorType;
 import org.tron.common.runtime.InternalTransaction.TrxType;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.StorageUtils;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
@@ -187,12 +188,16 @@ public class VMActuator implements Actuator2 {
           throw e;
         }
 
-        byte[] to = program.getContractAddress().getData();
+        byte[] to = rootInternalTx.getReceiveAddress();
+        boolean create = rootInternalTx.getNote().equals("create");
         TracerManager.getTracer().captureStart(
-                context.getTrxCap().getOwnerAddress(),
+                rootInternalTx.getSender(),
                 to,
+                create,
+                rootInternalTx.getData(),
                 program.getContractState().getCode(to),
-                program.getEnergylimitLeftLong()
+                program.getEnergylimitLeftLong(),
+                ByteUtil.longTo32Bytes(rootInternalTx.getValue())
         );
 
         VM.play(program, OperationRegistry.getTable());

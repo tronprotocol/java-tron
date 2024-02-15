@@ -101,9 +101,9 @@ public class StreamingTracer implements Tracer {
     }
 
     @Override
-    public void captureStart(byte[] from, byte[] to, byte[] code, long gas) {
+    public void captureStart(byte[] from, byte[] to, boolean create, byte[] input, byte[] code, long gas, byte[] value) {
         try {
-            currentTrace.captureStart(from, to, code, gas);
+            currentTrace.captureStart(from, to, create, input, code, gas, value);
         } catch (Exception e) {
             logger.error("captureStart failed", e);
         }
