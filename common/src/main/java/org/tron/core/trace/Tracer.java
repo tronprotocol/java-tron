@@ -23,6 +23,5 @@ public interface Tracer {
     public void captureExit(long energyUsed, RuntimeException error);
     public void captureState(int opcodeNum, String opcodeName, long energy, int pc, int callDepth);
     public void addLogToCaptureState(byte[] address, byte[] data, List<DataWord> topicsData, byte[] code);
-    public void cleanLogFromCaptureState();
     public void addStorageToCaptureState(byte[] address, byte[] loc, byte[] value);
 }

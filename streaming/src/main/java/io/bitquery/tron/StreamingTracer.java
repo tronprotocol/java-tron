@@ -87,6 +87,11 @@ public class StreamingTracer implements Tracer {
         try {
             TransactionInfo txInfo = TransactionInfo.parseFrom(protobufResultMessage.toByteArray());
             currentTransaction.buildTxEndMessage(txInfo);
+
+            if (currentTransaction.getMessage().getResult().getStatus() != "SUCESS") {
+                currentTrace.cleanLogFromCaptureState();
+            }
+
             currentTransaction.addtrace(currentTrace.getMessage());
 
             currentBlock.addTransaction(currentTransaction.getMessage());
@@ -155,15 +160,6 @@ public class StreamingTracer implements Tracer {
             currentTrace.addLogToCaptureState(address, data, topicsData, code);
         } catch (Exception e) {
             logger.error("addLogToCaptureState failed", e);
-        }
-    }
-
-    @Override
-    public void cleanLogFromCaptureState() {
-        try {
-            currentTrace.cleanLogFromCaptureState();
-        } catch (Exception e) {
-            logger.error("cleanLogFromCaptureState failed", e);
         }
     }
 
