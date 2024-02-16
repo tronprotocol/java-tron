@@ -697,11 +697,11 @@ public class Program {
     byte[] newAddress = TransactionUtil
         .generateContractAddress(rootTransactionId, nonce);
 
-    createContractImpl(value, programCode, newAddress, false, Op.CREATE);
+    createContractImpl(value, programCode, newAddress, false);
   }
 
   private void createContractImpl(DataWord value, byte[] programCode, byte[] newAddress,
-      boolean isCreate2, int opcode) {
+      boolean isCreate2) {
     byte[] senderAddress = getContextAddress();
 
     if (logger.isDebugEnabled()) {
@@ -780,6 +780,7 @@ public class Program {
     DataWord energyLimit = this.getCreateEnergy(getEnergyLimitLeft());
     spendEnergy(energyLimit.longValue(), "internal call");
 
+    int opcode = isCreate2 ? Op.CREATE2 : Op.CREATE;
     TracerManager.getTracer().captureEnter(
             senderAddress,
             newAddress,
@@ -1554,7 +1555,7 @@ public class Program {
 
     byte[] contractAddress = WalletUtil
         .generateContractAddress2(senderAddress, salt.getData(), programCode);
-    createContractImpl(value, programCode, contractAddress, true, Op.CREATE2);
+    createContractImpl(value, programCode, contractAddress, true);
   }
 
   public void addListener(ProgramOutListener listener) {
