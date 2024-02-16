@@ -88,7 +88,7 @@ public class StreamingTracer implements Tracer {
             TransactionInfo txInfo = TransactionInfo.parseFrom(protobufResultMessage.toByteArray());
             currentTransaction.buildTxEndMessage(txInfo);
 
-            if (currentTransaction.getMessage().getResult().getStatus() != "SUCESS") {
+            if (!currentTransaction.getMessage().getResult().getStatus().equals("SUCESS")) {
                 currentTrace.cleanLogFromCaptureState();
             }
 
