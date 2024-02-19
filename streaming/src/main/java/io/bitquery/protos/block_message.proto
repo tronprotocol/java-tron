@@ -17,6 +17,8 @@ message TransactionHeader {
   int64 FeeLimit = 6;
   int64 Timestamp = 7;
   repeated bytes Signatures = 8;
+  // only applicable to broadcasted
+  optional uint64 Time = 9;
 };
 
 message Argument {
