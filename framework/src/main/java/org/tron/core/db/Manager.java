@@ -1421,6 +1421,9 @@ public class Manager {
     if (trxCap == null) {
       return null;
     }
+
+    TracerManager.getTracer().transactionStart(trxCap);
+
     Contract contract = trxCap.getInstance().getRawData().getContract(0);
     Sha256Hash txId = trxCap.getTransactionId();
     final Histogram.Timer requestTimer = Metrics.histogramStartTimer(
@@ -1525,6 +1528,9 @@ public class Manager {
              Hex.toHexString(transactionInfo.getId()), cost, type, contract.getType().name());
     }
     Metrics.histogramObserve(requestTimer);
+
+    TracerManager.getTracer().transactionEnd(transactionInfo.getInstance());
+
     return transactionInfo.getInstance();
   }
 
@@ -1752,9 +1758,7 @@ public class Manager {
           transactionCapsule.setVerified(true);
         }
         accountStateCallBack.preExeTrans();
-        TracerManager.getTracer().transactionStart(transactionCapsule);
         TransactionInfo result = processTransaction(transactionCapsule, block);
-        TracerManager.getTracer().transactionEnd(result);
         accountStateCallBack.exeTransFinish();
         if (Objects.nonNull(result)) {
           results.add(result);
