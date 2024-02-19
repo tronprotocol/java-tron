@@ -46,10 +46,10 @@ public class TransactionMessageBuilder {
           TransactionHeader mergedTxHeader = getBlockEndTxHeader(txInfo);
           Contract mergedTxContract = getBlockEndTxContract(txInfo);
 
+          List<Log> logs = getLogs(txInfo);
+
           TransactionResult result = getTransactionResult(txInfo);
           Receipt receipt = getTransactionReceipt(txInfo);
-          List<Log> logs = getLogs(txInfo);
-          List<InternalTransaction> internalTransactions = getInternalTransactions(txInfo);
           Staking staking = getStaking(txInfo);
 
           this.messageBuilder
@@ -58,7 +58,6 @@ public class TransactionMessageBuilder {
                   .setResult(result)
                   .setReceipt(receipt)
                   .addAllLogs(logs)
-                  .addAllInternalTransactions(internalTransactions)
                   .setStaking(staking)
                   .build();
      }
@@ -67,8 +66,9 @@ public class TransactionMessageBuilder {
           return messageBuilder.build();
      }
 
-     public void addtrace(Trace trace) {
-          this.messageBuilder.setTrace(trace);
+     public void addTrace(Trace trace) {
+          Contract newContract = this.messageBuilder.getContracts(0).toBuilder().setTrace(trace).build();
+          this.messageBuilder.setContracts(0, newContract);
      }
 
      private TransactionHeader getBlockEndTxHeader(TransactionInfo txInfo) {
@@ -81,9 +81,12 @@ public class TransactionMessageBuilder {
      }
 
      private Contract getBlockEndTxContract(TransactionInfo txInfo) {
+          List<InternalTransaction> internalTransactions = getInternalTransactions(txInfo);
+
           Contract mergedTxContract = messageBuilder.getContracts(0).toBuilder()
                   .setAddress(txInfo.getContractAddress())
                   .addAllExecutionResults(txInfo.getContractResultList())
+                  .addAllInternalTransactions(internalTransactions)
                   .build();
 
           return mergedTxContract;

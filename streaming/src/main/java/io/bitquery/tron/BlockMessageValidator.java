@@ -6,8 +6,6 @@ import io.bitquery.protos.TronMessage.BlockMessage;
 import io.bitquery.protos.TronMessage.Transaction;
 import org.apache.commons.lang3.ArrayUtils;
 
-import java.util.Arrays;
-
 @Slf4j(topic = "streaming")
 public class BlockMessageValidator {
     BlockMessage message;
@@ -34,11 +32,11 @@ public class BlockMessageValidator {
     private void internalTransactionsAndTraces(Transaction tx) throws BlockMessageValidateException {
         String[] internalTxsTypes = {"call", "create", "suicide"};
 
-        long expectedCount = tx.getInternalTransactionsList().stream()
+        long expectedCount = tx.getContracts(0).getInternalTransactionsList().stream()
                 .filter(x -> ArrayUtils.contains(internalTxsTypes, x.getNote()))
                 .count();
 
-        int actualCount = tx.getTrace().getCallsCount();
+        int actualCount = tx.getContracts(0).getTrace().getCallsCount();
 
         if (expectedCount != actualCount) {
             throw new BlockMessageValidateException(
@@ -47,7 +45,7 @@ public class BlockMessageValidator {
                             blockNumber,
                             expectedCount,
                             actualCount,
-                            tx.getInternalTransactionsList().toString()
+                            tx.getContracts(0).getInternalTransactionsList().toString()
                     )
             );
         }
@@ -55,7 +53,7 @@ public class BlockMessageValidator {
 
     private void logsAndCaptureStateLogs(Transaction tx) throws BlockMessageValidateException {
         int expectedCount = tx.getLogsCount();
-        long actualCount = tx.getTrace().getCaptureStatesList().stream()
+        long actualCount = tx.getContracts(0).getTrace().getCaptureStatesList().stream()
                 .filter(x -> x.getLog().hasLogHeader())
                 .count();
 
