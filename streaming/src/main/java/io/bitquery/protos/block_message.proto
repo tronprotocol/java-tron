@@ -107,6 +107,7 @@ message BlockHeader {
   int32 Version = 5;
   bytes TxTrieRoot = 6;
   bytes AccountStateRoot = 7;
+  uint32 TransactionsCount = 8;
 };
 
 // Information about witness (or validator) who packed this block.
@@ -122,7 +123,3 @@ message BlockMessage {
   Witness Witness = 2;
   repeated Transaction Transactions = 3;
 };
-
-message TestCode {
-  string hello_world = 1;
-}

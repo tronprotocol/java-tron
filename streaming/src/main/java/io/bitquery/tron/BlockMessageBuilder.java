@@ -21,9 +21,22 @@ public class BlockMessageBuilder {
         setBlockWitness(block);
     }
 
+    public void buildBlockEndMessage() {
+        setTransactionsCount();
+    }
+
    public BlockMessage getMessage() {
        return messageBuilder.build();
    }
+
+    public void addTransaction(Transaction tx) {
+        this.messageBuilder.addTransactions(tx);
+    }
+
+    private void setTransactionsCount() {
+        int count = messageBuilder.getTransactionsCount();
+        this.messageBuilder.getHeaderBuilder().setTransactionsCount(count);
+    }
 
     private void setBlockHeader(BlockCapsule block) {
         BlockHeader header = BlockHeader.newBuilder()
@@ -47,9 +60,5 @@ public class BlockMessageBuilder {
                 .build();
 
         this.messageBuilder.setWitness(witness).build();
-    }
-
-    public void addTransaction(Transaction tx) {
-        this.messageBuilder.addTransactions(tx);
     }
 }

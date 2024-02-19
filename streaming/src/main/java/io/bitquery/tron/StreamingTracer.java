@@ -51,6 +51,8 @@ public class StreamingTracer implements Tracer {
     @Override
     public void blockEnd(Object block) {
         try {
+            currentBlock.buildBlockEndMessage();
+
             BlockCapsule blockCap = (BlockCapsule) block;
 
             BlockMessageDescriptor descriptor = new BlockMessageDescriptor();
