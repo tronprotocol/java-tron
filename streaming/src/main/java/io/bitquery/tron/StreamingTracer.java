@@ -76,7 +76,8 @@ public class StreamingTracer implements Tracer {
             this.currentTransaction = new TransactionMessageBuilder();
             this.currentTrace = new EvmMessageBuilder();
 
-            currentTransaction.buildTxStartMessage((TransactionCapsule) tx);
+            int txIndex = currentBlock.getMessage().getTransactionsCount();
+            currentTransaction.buildTxStartMessage((TransactionCapsule) tx, txIndex);
         } catch (Exception e) {
             logger.error("transactionStart failed", e);
         }
@@ -92,7 +93,7 @@ public class StreamingTracer implements Tracer {
                 currentTrace.cleanLogFromCaptureState();
             }
 
-            currentTransaction.addtrace(currentTrace.getMessage());
+            currentTransaction.addTrace(currentTrace.getMessage());
 
             currentBlock.addTransaction(currentTransaction.getMessage());
         } catch (Exception e) {

@@ -35,8 +35,8 @@ public class TransactionMessageBuilder {
           this.messageBuilder = Transaction.newBuilder();
      }
 
-     public void buildTxStartMessage(TransactionCapsule tx) {
-          TransactionHeader header = getTxStartTxHeader(tx);
+     public void buildTxStartMessage(TransactionCapsule tx, int txIndex) {
+          TransactionHeader header = getTxStartTxHeader(tx, txIndex);
           List<Contract> contracts = getTxStartTxContract(tx);
 
           this.messageBuilder.setHeader(header).addAllContracts(contracts).build();
@@ -92,10 +92,9 @@ public class TransactionMessageBuilder {
           return mergedTxContract;
      }
 
-     private TransactionHeader getTxStartTxHeader(TransactionCapsule txCap) {
-          //TODO: add index
+     private TransactionHeader getTxStartTxHeader(TransactionCapsule txCap, int index) {
           TransactionHeader header = TransactionHeader.newBuilder()
-//                  .setIndex(index)
+                  .setIndex(index)
                   .setExpiration(txCap.getExpiration())
                   .setData(ByteString.copyFrom(txCap.getData()))
                   .setFeeLimit(txCap.getFeeLimit())
