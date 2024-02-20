@@ -20,11 +20,11 @@ public class StreamingTracer implements Tracer {
 
     private StreamingProcessor processor;
 
-    private BlockMessageBuilder currentBlock;
+    private ThreadLocal<BlockMessageBuilder> currentBlock = new ThreadLocal<>();
 
-    private TransactionMessageBuilder currentTransaction;
+    private ThreadLocal<TransactionMessageBuilder> currentTransaction = new ThreadLocal<>();
 
-    private EvmMessageBuilder currentTrace;
+    private ThreadLocal<EvmMessageBuilder> currentTrace = new ThreadLocal<>();
 
     @Override
     public void init(String configFile) throws Exception {
@@ -40,8 +40,8 @@ public class StreamingTracer implements Tracer {
     @Override
     public void blockStart(Object block) {
         try {
-            this.currentBlock = new BlockMessageBuilder();
-            currentBlock.buildBlockStartMessage((BlockCapsule) block);
+            this.currentBlock.set(new BlockMessageBuilder());
+            currentBlock.get().buildBlockStartMessage((BlockCapsule) block);
         } catch (Exception e) {
             logger.error("blockStart failed", e);
         }
@@ -51,7 +51,7 @@ public class StreamingTracer implements Tracer {
     @Override
     public void blockEnd(Object block) {
         try {
-            currentBlock.buildBlockEndMessage();
+            currentBlock.get().buildBlockEndMessage();
 
             BlockCapsule blockCap = (BlockCapsule) block;
 
@@ -62,11 +62,14 @@ public class StreamingTracer implements Tracer {
             descriptor.setParentNumber(blockCap.getParentBlockId().getNum());
             descriptor.setChainId(config.getChainId());
 
-            BlockMessageValidator validator = new BlockMessageValidator(currentBlock.getMessage());
+            BlockMessageValidator validator = new BlockMessageValidator(currentBlock.get().getMessage());
             validator.validate();
 
-            processor.process(descriptor, currentBlock.getMessage().toByteArray());
+            processor.process(descriptor, currentBlock.get().getMessage().toByteArray());
 
+            this.currentBlock.remove();
+            this.currentTransaction.remove();
+            this.currentTrace.remove();
         } catch (Exception e) {
             logger.error("blockEnd failed", e);
         }
@@ -75,11 +78,11 @@ public class StreamingTracer implements Tracer {
     @Override
     public void transactionStart(Object tx) {
         try {
-            this.currentTransaction = new TransactionMessageBuilder();
-            this.currentTrace = new EvmMessageBuilder();
+            this.currentTransaction.set(new TransactionMessageBuilder());
+            this.currentTrace.set(new EvmMessageBuilder());
 
-            int txIndex = currentBlock.getMessage().getTransactionsCount();
-            currentTransaction.buildTxStartMessage((TransactionCapsule) tx, txIndex);
+            int txIndex = currentBlock.get().getMessage().getTransactionsCount();
+            currentTransaction.get().buildTxStartMessage((TransactionCapsule) tx, txIndex);
         } catch (Exception e) {
             logger.error("transactionStart failed", e);
         }
@@ -89,15 +92,15 @@ public class StreamingTracer implements Tracer {
     public void transactionEnd(Message protobufResultMessage) {
         try {
             TransactionInfo txInfo = TransactionInfo.parseFrom(protobufResultMessage.toByteArray());
-            currentTransaction.buildTxEndMessage(txInfo);
+            currentTransaction.get().buildTxEndMessage(txInfo);
 
-            if (!currentTransaction.getMessage().getResult().getStatus().equals("SUCESS")) {
-                currentTrace.cleanLogFromCaptureState();
+            if (!currentTransaction.get().getMessage().getResult().getStatus().equals("SUCESS")) {
+                currentTrace.get().cleanLogFromCaptureState();
             }
 
-            currentTransaction.addTrace(currentTrace.getMessage());
+            currentTransaction.get().addTrace(currentTrace.get().getMessage());
 
-            currentBlock.addTransaction(currentTransaction.getMessage());
+            currentBlock.get().addTransaction(currentTransaction.get().getMessage());
         } catch (Exception e) {
             logger.error("transactionEnd failed", e);
         }
@@ -106,7 +109,7 @@ public class StreamingTracer implements Tracer {
     @Override
     public void captureStart(byte[] from, byte[] to, boolean create, byte[] input, byte[] code, long gas, byte[] value) {
         try {
-            currentTrace.captureStart(from, to, create, input, code, gas, value);
+            currentTrace.get().captureStart(from, to, create, input, code, gas, value);
         } catch (Exception e) {
             logger.error("captureStart failed", e);
         }
@@ -115,7 +118,7 @@ public class StreamingTracer implements Tracer {
     @Override
     public void captureEnd(long energyUsed, RuntimeException error) {
         try {
-            currentTrace.captureEnd(energyUsed, error);
+            currentTrace.get().captureEnd(energyUsed, error);
         } catch (Exception e) {
             logger.error("captureEnd failed", e);
         }
@@ -124,7 +127,7 @@ public class StreamingTracer implements Tracer {
     @Override
     public void captureFault(int opcodeNum, String opcodeName, long energy, Stack<DataWord> stackData, byte[] callerData, byte[] contractData, byte[] callValueData, int pc, byte[] memory, int callDepth, RuntimeException error) {
         try {
-            currentTrace.captureFault(opcodeNum, opcodeName, energy, stackData, callerData, contractData, callValueData, pc, memory, callDepth, error);
+            currentTrace.get().captureFault(opcodeNum, opcodeName, energy, stackData, callerData, contractData, callValueData, pc, memory, callDepth, error);
         } catch (Exception e) {
             logger.error("captureFault failed", e);
         }
@@ -133,7 +136,7 @@ public class StreamingTracer implements Tracer {
     @Override
     public void captureEnter(byte[] from, byte[] to, byte[] data, long gas, byte[] value, int opCode, byte[] code) {
         try {
-            currentTrace.captureEnter(from, to, data, gas, value, opCode, code);
+            currentTrace.get().captureEnter(from, to, data, gas, value, opCode, code);
         } catch (Exception e) {
             logger.error("captureEnter failed", e);
         }
@@ -142,7 +145,7 @@ public class StreamingTracer implements Tracer {
     @Override
     public void captureExit(long energyUsed, RuntimeException error) {
         try {
-            currentTrace.captureExit(energyUsed, error);
+            currentTrace.get().captureExit(energyUsed, error);
         } catch (Exception e) {
             logger.error("captureExit failed", e);
         }
@@ -151,7 +154,7 @@ public class StreamingTracer implements Tracer {
     @Override
     public void captureState(int opcodeNum, String opcodeName, long energy, int pc, int callDepth) {
         try {
-            currentTrace.captureState(opcodeNum, opcodeName, energy, pc, callDepth);
+            currentTrace.get().captureState(opcodeNum, opcodeName, energy, pc, callDepth);
         } catch (Exception e) {
             logger.error("captureState failed", e);
         }
@@ -160,7 +163,7 @@ public class StreamingTracer implements Tracer {
     @Override
     public void addLogToCaptureState(byte[] address, byte[] data, List<DataWord> topicsData, byte[] code) {
         try {
-            currentTrace.addLogToCaptureState(address, data, topicsData, code);
+            currentTrace.get().addLogToCaptureState(address, data, topicsData, code);
         } catch (Exception e) {
             logger.error("addLogToCaptureState failed", e);
         }
@@ -169,7 +172,7 @@ public class StreamingTracer implements Tracer {
     @Override
     public void addStorageToCaptureState(byte[] address, byte[] loc, byte[] value) {
         try {
-            currentTrace.addStorageToCaptureState(address, loc, value);
+            currentTrace.get().addStorageToCaptureState(address, loc, value);
         } catch (Exception e) {
             logger.error("addStorageToCaptureState failed", e);
         }
