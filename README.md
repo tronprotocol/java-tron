@@ -63,7 +63,7 @@ TRON enables large-scale development and engagement. With over 2000 transactions
 
 # Building the source
 
-Building java-tron requires `git` and 64-bit version of `Oracle JDK 1.8` to be installed, other JDK versions are not supported yet. Make sure you operate on `Linux` and `MacOS` operating systems.
+Building java-tron requires `git` package and 64-bit version of `Oracle JDK 1.8` to be installed, other JDK versions are not supported yet. Make sure you operate on `Linux` and `MacOS` operating systems.
 
 Clone the repo and switch to the `master` branch
 
@@ -73,7 +73,7 @@ $ cd java-tron
 $ git checkout -t origin/master
 ```
 
-then run the following command to build java-tron, the `FullNode.jar` file can be found in `java-tron/build/libs/` after build successful.
+then run the following command to build java-tron, the `FullNode.jar` file can be found in `java-tron/build/libs/` after build successfully.
 
 ```bash
 $ ./gradlew clean build -x test
@@ -120,7 +120,7 @@ $ nohup java -Xms9G -Xmx9G -XX:ReservedCodeCacheSize=256m \
 
 Adding the `--witness` parameter to the startup command, full node will run as a super representative node. The super representative node supports all the functions of the full node and also supports block production. Before running, make sure you have a super representative account and get votes from others. Once the number of obtained votes ranks in the top 27, your super representative node will participate in block production.
 
-Fill in the private key of super representative address into the `localwitness` list in the `main_net_config.conf`. Here is an example:
+Fill in the private key of a super representative address into the `localwitness` list in the `main_net_config.conf`. Here is an example:
 
 ```
  localwitness = [
