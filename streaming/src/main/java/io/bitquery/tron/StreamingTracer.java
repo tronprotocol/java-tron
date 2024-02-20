@@ -94,9 +94,7 @@ public class StreamingTracer implements Tracer {
             TransactionInfo txInfo = TransactionInfo.parseFrom(protobufResultMessage.toByteArray());
             currentTransaction.get().buildTxEndMessage(txInfo);
 
-            if (!currentTransaction.get().getMessage().getResult().getStatus().equals("SUCESS")) {
-                currentTrace.get().cleanLogFromCaptureState();
-            }
+            checkLogs();
 
             currentTransaction.get().addTrace(currentTrace.get().getMessage());
 
@@ -175,6 +173,15 @@ public class StreamingTracer implements Tracer {
             currentTrace.get().addStorageToCaptureState(address, loc, value);
         } catch (Exception e) {
             logger.error("addStorageToCaptureState failed", e);
+        }
+    }
+
+    private void checkLogs() {
+        int initialLogsCount = currentTransaction.get().getMessage().getContracts(0).getLogsCount();
+        int collectedLogsCount = currentTrace.get().getLogsCount();
+
+        if (initialLogsCount == 0 && initialLogsCount != collectedLogsCount) {
+            currentTrace.get().addRemovedFlagToLogs();
         }
     }
 }

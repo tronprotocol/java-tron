@@ -54,7 +54,7 @@ public class BlockMessageValidator {
     private void logsAndCaptureStateLogs(Transaction tx) throws BlockMessageValidateException {
         int expectedCount = tx.getContracts(0).getLogsCount();
         long actualCount = tx.getContracts(0).getTrace().getCaptureStatesList().stream()
-                .filter(x -> x.getLog().hasLogHeader())
+                .filter(x -> x.hasLog() && !x.getLog().getLogHeader().getRemoved())
                 .count();
 
         if (expectedCount != actualCount) {

@@ -166,38 +166,6 @@ public class EvmMessageBuilder {
     public void addLogToCaptureState(byte[] address, byte[] data, List<DataWord> topicsData, byte[] code) {
         AddressCode addressCode = addressCode(code);
 
-        setLogToCaptureState(address, data, topicsData, addressCode);
-    }
-
-    public void cleanLogFromCaptureState() {
-        Log emptyLog = Log.newBuilder().build();
-
-        for (int index : captureStateLogIndexes) {
-            CaptureState modifiedCaptureState = this.messageBuilder.getCaptureStates(index).toBuilder().setLog(emptyLog).build();
-            this.messageBuilder.setCaptureStates(index, modifiedCaptureState);
-        }
-    }
-
-    public void addStorageToCaptureState(byte[] address, byte[] loc, byte[] value) {
-        int lastIndex = this.messageBuilder.getCaptureStatesCount() - 1;
-        if (lastIndex == -1) {
-            return;
-        }
-
-        Store store = Store.newBuilder()
-                .setAddress(ByteString.copyFrom(address))
-                .setLocation(ByteString.copyFrom(loc))
-                .setValue(ByteString.copyFrom(value))
-                .build();
-
-        CaptureState captureStateWithStore = this.messageBuilder.getCaptureStates(lastIndex).toBuilder()
-                .setStore(store)
-                .build();
-
-        this.messageBuilder.setCaptureStates(lastIndex, captureStateWithStore);
-    }
-
-    private void setLogToCaptureState(byte[] address, byte[] data, List<DataWord> topicsData, AddressCode addressCode) {
         int lastIndex = this.messageBuilder.getCaptureStatesCount() - 1;
         if (lastIndex == -1) {
             return;
@@ -230,6 +198,35 @@ public class EvmMessageBuilder {
         this.captureStateLogIndexes.add(lastIndex);
 
         this.messageBuilder.setCaptureStates(lastIndex, captureStateWithLog);
+    }
+
+    public int getLogsCount() {
+        return captureStateLogIndexes.size();
+    }
+
+    public void addRemovedFlagToLogs() {
+        for (int index : captureStateLogIndexes) {
+            this.messageBuilder.getCaptureStatesBuilder(index).getLogBuilder().getLogHeaderBuilder().setRemoved(true);
+        }
+    }
+
+    public void addStorageToCaptureState(byte[] address, byte[] loc, byte[] value) {
+        int lastIndex = this.messageBuilder.getCaptureStatesCount() - 1;
+        if (lastIndex == -1) {
+            return;
+        }
+
+        Store store = Store.newBuilder()
+                .setAddress(ByteString.copyFrom(address))
+                .setLocation(ByteString.copyFrom(loc))
+                .setValue(ByteString.copyFrom(value))
+                .build();
+
+        CaptureState captureStateWithStore = this.messageBuilder.getCaptureStates(lastIndex).toBuilder()
+                .setStore(store)
+                .build();
+
+        this.messageBuilder.setCaptureStates(lastIndex, captureStateWithStore);
     }
 
     private void setCaptureEnter(ByteString from, ByteString to, ByteString data, long energy, ByteString value, Opcode opcode, AddressCode addressCodeTo) {
