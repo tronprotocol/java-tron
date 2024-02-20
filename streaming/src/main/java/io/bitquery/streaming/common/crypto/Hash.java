@@ -1,5 +1,6 @@
 package io.bitquery.streaming.common.crypto;
 
+import com.google.protobuf.ByteString;
 import io.bitquery.streaming.common.utils.Numeric;
 import org.bouncycastle.jcajce.provider.digest.Keccak;
 
@@ -24,6 +25,17 @@ public class Hash {
      */
     public static byte[] sha3(byte[] input) {
         return sha3(input, 0, input.length);
+    }
+
+    /**
+     * Keccak-256 hash function.
+     *
+     * @param input byte string encoded input data
+     * @return hash value
+     */
+    public static byte[] sha3(ByteString input) {
+        byte[] bytes = input.toByteArray();
+        return sha3(bytes, 0, bytes.length);
     }
 
     /**

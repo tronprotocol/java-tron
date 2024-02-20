@@ -52,7 +52,7 @@ public class BlockMessageValidator {
     }
 
     private void logsAndCaptureStateLogs(Transaction tx) throws BlockMessageValidateException {
-        int expectedCount = tx.getLogsCount();
+        int expectedCount = tx.getContracts(0).getLogsCount();
         long actualCount = tx.getContracts(0).getTrace().getCaptureStatesList().stream()
                 .filter(x -> x.getLog().hasLogHeader())
                 .count();

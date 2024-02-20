@@ -4,7 +4,9 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.Message;
+import io.bitquery.protos.EvmMessage;
 import io.bitquery.protos.EvmMessage.Trace;
+import io.bitquery.streaming.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.actuator.TransactionFactory;
 import org.tron.core.capsule.TransactionCapsule;
@@ -14,7 +16,6 @@ import io.bitquery.protos.TronMessage.Argument;
 import io.bitquery.protos.TronMessage.CallValue;
 import io.bitquery.protos.TronMessage.InternalTransaction;
 import io.bitquery.protos.TronMessage.Contract;
-import io.bitquery.protos.TronMessage.Log;
 import io.bitquery.protos.TronMessage.Receipt;
 import io.bitquery.protos.TronMessage.TransactionHeader;
 import io.bitquery.protos.TronMessage.TransactionResult;
@@ -46,8 +47,6 @@ public class TransactionMessageBuilder {
           TransactionHeader mergedTxHeader = getBlockEndTxHeader(txInfo);
           Contract mergedTxContract = getBlockEndTxContract(txInfo);
 
-          List<Log> logs = getLogs(txInfo);
-
           TransactionResult result = getTransactionResult(txInfo);
           Receipt receipt = getTransactionReceipt(txInfo);
           Staking staking = getStaking(txInfo);
@@ -57,7 +56,6 @@ public class TransactionMessageBuilder {
                   .setContracts(0, mergedTxContract)
                   .setResult(result)
                   .setReceipt(receipt)
-                  .addAllLogs(logs)
                   .setStaking(staking)
                   .build();
      }
@@ -82,11 +80,13 @@ public class TransactionMessageBuilder {
 
      private Contract getBlockEndTxContract(TransactionInfo txInfo) {
           List<InternalTransaction> internalTransactions = getInternalTransactions(txInfo);
+          List<EvmMessage.Log> logs = getLogs(txInfo);
 
           Contract mergedTxContract = messageBuilder.getContracts(0).toBuilder()
                   .setAddress(txInfo.getContractAddress())
                   .addAllExecutionResults(txInfo.getContractResultList())
                   .addAllInternalTransactions(internalTransactions)
+                  .addAllLogs(logs)
                   .build();
 
           return mergedTxContract;
@@ -181,19 +181,32 @@ public class TransactionMessageBuilder {
           return receipt;
      }
 
-     private List<Log> getLogs(TransactionInfo txInfo) {
-          List<Log> logs = new ArrayList();
+     private List<EvmMessage.Log> getLogs(TransactionInfo txInfo) {
+          List<EvmMessage.Log> logs = new ArrayList();
 
           int index = 0;
           for (TransactionInfo.Log txInfoLog : txInfo.getLogList()) {
-               Log log = Log.newBuilder()
+               EvmMessage.LogHeader header = EvmMessage.LogHeader.newBuilder()
                        .setAddress(txInfoLog.getAddress())
                        .setData(txInfoLog.getData())
-                       .addAllTopics(txInfoLog.getTopicsList())
                        .setIndex(index)
                        .build();
 
-               logs.add(log);
+               EvmMessage.Log.Builder log = EvmMessage.Log.newBuilder().setLogHeader(header);
+
+               int topicIndex = 0;
+               for (ByteString topicData : txInfoLog.getTopicsList()) {
+                    EvmMessage.Topic topic = EvmMessage.Topic.newBuilder()
+                            .setIndex(topicIndex)
+                            .setHash(ByteString.copyFrom(Hash.sha3(topicData)))
+                            .build();
+
+                    log.addTopics(topic);
+
+                    topicIndex++;
+               }
+
+               logs.add(log.build());
 
                index++;
           }
