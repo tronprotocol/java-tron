@@ -109,7 +109,8 @@ services:
       - ./config-runtime/ssl:/app/config/ssl
       - ./config-runtime/streaming.conf:/app/config/streaming.conf
     command: >
-      java -jar /app/jar/FullNode.jar
+      java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005
+      -jar /app/jar/FullNode.jar
       -c /app/config/node/main_net_config.conf
       --log-config /app/config/node/logback.xml
       --tracer-implementation-class io.bitquery.tron.StreamingTracer
@@ -120,6 +121,7 @@ services:
       - ${LC_COMPOSE_IPADDR}:${LC_COMPOSE_NODE_WALLET_PORT}:8090
       - ${LC_COMPOSE_IPADDR}:${LC_COMPOSE_NODE_ZEROMQ_PORT}:5555
       - ${LC_COMPOSE_IPADDR}:${LC_COMPOSE_NODE_JSONRPC_PORT}:50545
+      - ${LC_COMPOSE_IPADDR}:${LC_COMPOSE_NODE_DEBUG_PORT}:5005
     depends_on:
       tron-node-snapshot:
         condition: service_completed_successfully
