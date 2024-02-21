@@ -104,10 +104,11 @@ message BlockHeader {
   bytes Hash = 2;
   int64 Timestamp = 3;
   bytes ParentHash = 4;
-  int32 Version = 5;
-  bytes TxTrieRoot = 6;
-  bytes AccountStateRoot = 7;
-  uint32 TransactionsCount = 8;
+  int64 ParentNumber = 5;
+  int32 Version = 6;
+  bytes TxTrieRoot = 7;
+  bytes AccountStateRoot = 8;
+  uint32 TransactionsCount = 9;
 };
 
 // Information about witness (or validator) who packed this block.

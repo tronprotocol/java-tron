@@ -44,6 +44,7 @@ public class BlockMessageBuilder {
                 .setHash(block.getBlockId().getByteString())
                 .setTimestamp(block.getTimeStamp())
                 .setParentHash(block.getParentBlockId().getByteString())
+                .setParentNumber(block.getParentBlockId().getNum())
                 .setVersion(block.getInstance().getBlockHeader().getRawData().getVersion())
                 .setTxTrieRoot(block.getInstance().getBlockHeader().getRawData().getTxTrieRoot())
                 .setAccountStateRoot(block.getInstance().getBlockHeader().getRawData().getAccountStateRoot())
