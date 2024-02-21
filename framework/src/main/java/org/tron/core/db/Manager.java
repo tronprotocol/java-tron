@@ -1058,7 +1058,7 @@ public class Manager {
       revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MIN_FLUSH_COUNT);
     }
 
-    TracerManager.getTracer().blockEnd(block);
+    TracerManager.getTracer().blockEnd();
 
   }
 
@@ -1422,6 +1422,14 @@ public class Manager {
       return null;
     }
 
+    boolean isPending = Objects.isNull(blockCap);
+    if (isPending) {
+      try {
+        TracerManager.getTracer().blockStart(chainBaseManager.getHead());
+      } catch (Exception e) {
+        logger.error(e.getMessage(), e);
+      }
+    }
     TracerManager.getTracer().transactionStart(trxCap);
 
     Contract contract = trxCap.getInstance().getRawData().getContract(0);
@@ -1529,7 +1537,7 @@ public class Manager {
     }
     Metrics.histogramObserve(requestTimer);
 
-    TracerManager.getTracer().transactionEnd(transactionInfo.getInstance());
+    TracerManager.getTracer().transactionEnd(transactionInfo.getInstance(), isPending);
 
     return transactionInfo.getInstance();
   }

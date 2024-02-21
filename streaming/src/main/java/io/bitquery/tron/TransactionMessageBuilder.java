@@ -44,8 +44,8 @@ public class TransactionMessageBuilder {
      }
 
      public void buildTxEndMessage(TransactionInfo txInfo) {
-          TransactionHeader mergedTxHeader = getBlockEndTxHeader(txInfo);
-          Contract mergedTxContract = getBlockEndTxContract(txInfo);
+          TransactionHeader mergedTxHeader = getTxEndTxHeader(txInfo);
+          Contract mergedTxContract = getTxEndTxContract(txInfo);
 
           TransactionResult result = getTransactionResult(txInfo);
           Receipt receipt = getTransactionReceipt(txInfo);
@@ -69,7 +69,7 @@ public class TransactionMessageBuilder {
           this.messageBuilder.setContracts(0, newContract);
      }
 
-     private TransactionHeader getBlockEndTxHeader(TransactionInfo txInfo) {
+     private TransactionHeader getTxEndTxHeader(TransactionInfo txInfo) {
           TransactionHeader mergedTxHeader = messageBuilder.getHeader().toBuilder()
                   .setId(txInfo.getId())
                   .setFee(txInfo.getFee())
@@ -78,7 +78,7 @@ public class TransactionMessageBuilder {
           return mergedTxHeader;
      }
 
-     private Contract getBlockEndTxContract(TransactionInfo txInfo) {
+     private Contract getTxEndTxContract(TransactionInfo txInfo) {
           List<InternalTransaction> internalTransactions = getInternalTransactions(txInfo);
           List<EvmMessage.Log> logs = getLogs(txInfo);
 

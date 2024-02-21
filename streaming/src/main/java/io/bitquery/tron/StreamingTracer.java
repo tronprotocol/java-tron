@@ -1,9 +1,13 @@
 package io.bitquery.tron;
 
 import com.google.protobuf.Message;
+import io.bitquery.protos.TronMessage;
 import io.bitquery.streaming.StreamingProcessor;
 import io.bitquery.streaming.TracerConfig;
 import io.bitquery.streaming.blockchain.BlockMessageDescriptor;
+import io.bitquery.streaming.blockchain.BroadcastedMessageDescriptor;
+import io.bitquery.streaming.common.utils.ByteArray;
+import io.bitquery.streaming.messages.Descriptor;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.capsule.BlockCapsule;
@@ -11,7 +15,9 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.trace.Tracer;
 import org.tron.protos.Protocol.TransactionInfo;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Stack;
 
 @Slf4j(topic = "tracer")
@@ -29,7 +35,7 @@ public class StreamingTracer implements Tracer {
     @Override
     public void init(String configFile) throws Exception {
         this.config = new TracerConfig(configFile);
-        this.processor = new StreamingProcessor(config, config.getKafkaTopicBlocks());
+        this.processor = new StreamingProcessor(config);
     }
 
     @Override
@@ -49,23 +55,16 @@ public class StreamingTracer implements Tracer {
 
     // TODO: may be we need to throw ex from here to stop node
     @Override
-    public void blockEnd(Object block) {
+    public void blockEnd() {
         try {
             currentBlock.get().buildBlockEndMessage();
 
-            BlockCapsule blockCap = (BlockCapsule) block;
-
-            BlockMessageDescriptor descriptor = new BlockMessageDescriptor();
-            descriptor.setBlockHash(blockCap.getBlockId().toString());
-            descriptor.setBlockNumber(blockCap.getNum());
-            descriptor.setParentHash(blockCap.getParentHash().toString());
-            descriptor.setParentNumber(blockCap.getParentBlockId().getNum());
-            descriptor.setChainId(config.getChainId());
+            Descriptor descriptor = getDescriptor("blocks");
 
             BlockMessageValidator validator = new BlockMessageValidator(currentBlock.get().getMessage());
             validator.validate();
 
-            processor.process(descriptor, currentBlock.get().getMessage().toByteArray());
+            processor.process(descriptor, currentBlock.get().getMessage().toByteArray(), config.getKafkaTopicBlocks());
 
             this.currentBlock.remove();
             this.currentTransaction.remove();
@@ -89,7 +88,7 @@ public class StreamingTracer implements Tracer {
     }
 
     @Override
-    public void transactionEnd(Message protobufResultMessage) {
+    public void transactionEnd(Message protobufResultMessage, boolean isPending) {
         try {
             TransactionInfo txInfo = TransactionInfo.parseFrom(protobufResultMessage.toByteArray());
             currentTransaction.get().buildTxEndMessage(txInfo);
@@ -97,8 +96,23 @@ public class StreamingTracer implements Tracer {
             checkLogs();
 
             currentTransaction.get().addTrace(currentTrace.get().getMessage());
-
             currentBlock.get().addTransaction(currentTransaction.get().getMessage());
+
+            if (!isPending) {
+                return;
+            }
+
+            Descriptor descriptor = getDescriptor("broadcasted");
+
+            BlockMessageValidator validator = new BlockMessageValidator(currentBlock.get().getMessage());
+            validator.validate();
+
+            processor.process(descriptor, currentBlock.get().getMessage().toByteArray(), config.getKafkaTopicBroadcasted());
+
+            this.currentBlock.remove();
+            this.currentTransaction.remove();
+            this.currentTrace.remove();
+
         } catch (Exception e) {
             logger.error("transactionEnd failed", e);
         }
@@ -183,5 +197,36 @@ public class StreamingTracer implements Tracer {
         if (initialLogsCount == 0 && initialLogsCount != collectedLogsCount) {
             currentTrace.get().addRemovedFlagToLogs();
         }
+    }
+
+    private Descriptor getDescriptor(String type) {
+        TronMessage.BlockHeader blockMsgHeader = currentBlock.get().getMessage().getHeader();
+
+        String blockHash = ByteArray.toHexString(blockMsgHeader.getHash().toByteArray());
+        long blockNumber = blockMsgHeader.getNumber();
+        String parentHash = ByteArray.toHexString(blockMsgHeader.getParentHash().toByteArray());
+        long parentNumber = blockMsgHeader.getParentNumber();
+
+        Descriptor descriptor;
+
+        if (Objects.equals(type, "blocks")) {
+            descriptor = new BlockMessageDescriptor();
+        } else if (Objects.equals(type, "broadcasted")) {
+            BroadcastedMessageDescriptor broadcastedDescriptor = new BroadcastedMessageDescriptor();
+            List<String> txsList = Collections.singletonList(ByteArray.toHexString(currentTransaction.get().getMessage().getHeader().getId().toByteArray()));
+            broadcastedDescriptor.setTransactionsList(txsList);
+            descriptor = broadcastedDescriptor;
+        } else {
+            logger.error("Invalid descriptor type: {}", type);
+            throw new IllegalArgumentException("Invalid descriptor type: " + type);
+        }
+
+        descriptor.setBlockHash(blockHash);
+        descriptor.setBlockNumber(blockNumber);
+        descriptor.setParentHash(parentHash);
+        descriptor.setParentNumber(parentNumber);
+        descriptor.setChainId(config.getChainId());
+
+        return descriptor;
     }
 }

@@ -20,13 +20,13 @@ public class EmptyTracer implements Tracer {
     public void blockStart(Object block) {}
 
     @Override
-    public void blockEnd(Object block) {}
+    public void blockEnd() {}
 
     @Override
     public void transactionStart(Object tx) {}
 
     @Override
-    public void transactionEnd(Message protobufResultMessage) {}
+    public void transactionEnd(Message protobufResultMessage, boolean isPending) {}
 
     @Override
     public void captureStart(byte[] from, byte[] to, boolean create, byte[] input, byte[] code, long gas, byte[] value) {}

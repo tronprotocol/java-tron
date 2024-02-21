@@ -58,6 +58,9 @@ public class TracerConfig {
     @Getter
     private Config kafkaTopicBlocks;
 
+    @Getter
+    private Config kafkaTopicBroadcasted;
+
     /**
      * Kafka Broker config
      */
@@ -129,6 +132,8 @@ public class TracerConfig {
         ellipticSignerPrivateKeyHex = config.getString("elliptic_signer.private_key_hex");
 
         kafkaTopicBlocks = config.getConfig("kafka_topics.blocks");
+        kafkaTopicBroadcasted = config.getConfig("kafka_topics.broadcasted");
+
         kafkaBrokerBootstrapServers = config.getString("kafka_broker.bootstrap_servers");
         kafkaBrokerSecurityProtocol = config.getString("kafka_broker.security_protocol");
         kafkaBrokerSslTruststoreType = config.getString("kafka_broker.ssl_truststore_type");

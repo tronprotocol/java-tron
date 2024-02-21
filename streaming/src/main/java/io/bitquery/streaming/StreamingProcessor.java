@@ -10,23 +10,22 @@ import io.bitquery.streaming.messages.ProtobufMessage;
 @Slf4j(topic = "streaming")
 public class StreamingProcessor {
 
-    private TracerConfig config;
-    private final String topic;
+//    private final String topic;
     private final KafkaMessageBroker kafkaBroker;
 
     private final ProtobufMessage protobufMessage;
 
-    public StreamingProcessor(TracerConfig config, Config kafkaTopic) {
-        this.config = config;
-
-        this.topic = kafkaTopic.getString("topic");
+    public StreamingProcessor(TracerConfig config) {
+//        this.topic = kafkaTopic.getString("topic");
 
         this.protobufMessage = new ProtobufMessage(config);
         this.kafkaBroker = new KafkaMessageBroker(config);
     }
 
-     public void process(Descriptor descriptor, byte[] message) {
+     public void process(Descriptor descriptor, byte[] message, Config kafkaTopic) {
         Stopwatch timer = Stopwatch.createStarted();
+
+        String topic = kafkaTopic.getString("topic");
 
         protobufMessage.process(descriptor, message, topic);
         kafkaBroker.send(topic, protobufMessage);

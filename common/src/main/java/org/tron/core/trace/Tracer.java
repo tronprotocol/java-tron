@@ -11,10 +11,10 @@ public interface Tracer {
     public void close();
 
     public void blockStart(Object block);
-    public void blockEnd(Object block);
+    public void blockEnd();
 
     public void transactionStart(Object tx);
-    public void transactionEnd(Message protobufResultMessage);
+    public void transactionEnd(Message protobufResultMessage, boolean isPending);
 
     public void captureStart(byte[] from, byte[] to, boolean create, byte[] input, byte[] code, long gas, byte[] value);
     public void captureEnd(long energyUsed, RuntimeException error);
