@@ -1,9 +1,6 @@
 #!/usr/bin/python3
 
-# pip3 install --upgrade kafka-python
-
 import os
-import configparser
 from kafka.admin import KafkaAdminClient, NewTopic, ConfigResource
 from kafka.errors import TopicAlreadyExistsError
 
@@ -15,13 +12,19 @@ security_protocol = os.environ.get('KAFKA_SECURITY_PROTOCOL')
 
 blocks_streaming_kafka_topic = os.environ.get('BLOCKS_STREAMING_KAFKA_TOPIC')
 blocks_streaming_enable = os.environ.get('BLOCKS_STREAMING_ENABLE')
+broadcasted_streaming_kafka_topic = os.environ.get('BROADCASTED_STREAMING_KAFKA_TOPIC')
+broadcasted_streaming_enable = os.environ.get('BROADCASTED_STREAMING_ENABLE')
 
 def create_topics():
     topics = [
         {
             'name': blocks_streaming_kafka_topic,
             'enable': blocks_streaming_enable,
-        }
+        },
+        {
+            'name': broadcasted_streaming_kafka_topic,
+            'enable': broadcasted_streaming_enable,
+        },
     ] 
 
     client = KafkaAdminClient(
