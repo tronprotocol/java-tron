@@ -71,9 +71,8 @@ public class ProtobufMessage {
 
         byte[] bodyHash = getBodyHash();
 
-        Instant insTime = Instant.now();
-        String time = String.format("%d%d", insTime.getEpochSecond(), insTime.getNano());
-        byte[] timeBytes = ByteArray.fromLong(Long.parseLong(time));
+        long nanoseconds = Instant.now().toEpochMilli() * 1_000_000L;
+        byte[] timeBytes = ByteArray.fromLong(nanoseconds);
 
         byte[] descriptor = ByteArray.fromObject(JsonUtil.obj2Json(getMeta().getDescriptor()));
 
