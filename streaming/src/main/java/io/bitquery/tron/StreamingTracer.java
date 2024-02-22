@@ -15,6 +15,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.trace.Tracer;
 import org.tron.protos.Protocol.TransactionInfo;
 
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -96,6 +97,12 @@ public class StreamingTracer implements Tracer {
             checkLogs();
 
             currentTransaction.get().addTrace(currentTrace.get().getMessage());
+
+            if (isPending) {
+                long nanoseconds = Instant.now().toEpochMilli() * 1_000_000L;
+                currentTransaction.get().setBroadcastedTime(nanoseconds);
+            }
+
             currentBlock.get().addTransaction(currentTransaction.get().getMessage());
 
             if (!isPending) {
@@ -212,9 +219,13 @@ public class StreamingTracer implements Tracer {
         if (Objects.equals(type, "blocks")) {
             descriptor = new BlockMessageDescriptor();
         } else if (Objects.equals(type, "broadcasted")) {
+            TronMessage.TransactionHeader txHeader = currentTransaction.get().getMessage().getHeader();
+
             BroadcastedMessageDescriptor broadcastedDescriptor = new BroadcastedMessageDescriptor();
-            List<String> txsList = Collections.singletonList(ByteArray.toHexString(currentTransaction.get().getMessage().getHeader().getId().toByteArray()));
+            List<String> txsList = Collections.singletonList(ByteArray.toHexString(txHeader.getId().toByteArray()));
             broadcastedDescriptor.setTransactionsList(txsList);
+            broadcastedDescriptor.setTimeStart(txHeader.getTime());
+            broadcastedDescriptor.setTimeEnd(txHeader.getTime());
             descriptor = broadcastedDescriptor;
         } else {
             logger.error("Invalid descriptor type: {}", type);

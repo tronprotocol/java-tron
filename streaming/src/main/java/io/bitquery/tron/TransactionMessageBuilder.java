@@ -60,6 +60,10 @@ public class TransactionMessageBuilder {
                   .build();
      }
 
+     public void setBroadcastedTime(long time) {
+          this.messageBuilder.getHeaderBuilder().setTime(time);
+     }
+
      public Transaction getMessage() {
           return messageBuilder.build();
      }

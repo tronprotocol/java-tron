@@ -80,7 +80,7 @@ public class ProtobufMessage {
         idHash = Hash.sha3(idHash);
 
         getMeta().getAuthenticator().setBodyHash(ByteArray.toHexString(bodyHash));
-        getMeta().getAuthenticator().setTime(time);
+        getMeta().getAuthenticator().setTime(Long.toString(nanoseconds));
         getMeta().getAuthenticator().setId(ByteArray.toHexString(idHash));
     }
 }
