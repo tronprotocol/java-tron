@@ -880,7 +880,6 @@ public class Manager {
           }
 
           try (ISession tmpSession = revokingStore.buildSession()) {
-            logger.info("Processing pending transaction: {}", trx);
             processTransaction(trx, null);
             trx.setTrxTrace(null);
             pendingTransactions.add(trx);
@@ -1425,6 +1424,9 @@ public class Manager {
     boolean isPending = Objects.isNull(blockCap);
     if (isPending) {
       try {
+        logger.info("Processing broadcasted transaction, Hash: {}, Contract Type: {}",
+                trxCap.getTransactionId(),
+                trxCap.getInstance().getRawData().getContract(0).getType());
         TracerManager.getTracer().blockStart(chainBaseManager.getHead());
       } catch (Exception e) {
         logger.error(e.getMessage(), e);
