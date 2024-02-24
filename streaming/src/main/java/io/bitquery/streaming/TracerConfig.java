@@ -4,17 +4,19 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.Getter;
 
-;import java.io.File;
+import java.io.File;
 import java.util.List;
 
 public class TracerConfig {
-    private Config config;
+    private Config configFile;
+
+    private Config servicesConfig;
 
     /**
      * Keys (names) of config
      */
     private static final String ENABLE_KEY = "enable";
-    private static final String FILE_STORAGE_ROOT_KEY = "file_storage.root";
+    private static final String FILE_STORAGE_ROOT_KEY = "services_config.file_storage.root";
 
     /**
      * Default values
@@ -30,6 +32,12 @@ public class TracerConfig {
 
     @Getter
     private String chainId;
+
+    /**
+     * Embedded File Storage config
+     */
+    @Getter
+    private int embeddedFileStorageMessageMaxTotalSize;
 
     /**
      * File Storage config
@@ -119,34 +127,46 @@ public class TracerConfig {
     }
 
     public TracerConfig(String configPath) {
-        config = ConfigFactory.parseFile(new File(configPath));
+        configFile = ConfigFactory.parseFile(new File(configPath));
+        servicesConfig = configFile.getConfig("services_config");
 
-        enable = getEnableFromConfig(config);
-        chainId = config.getString("chain_id");
+        enable = getEnableFromConfig(configFile);
+        chainId = configFile.getString("chain_id");
 
-        fileStorageRoot = getFileStorageFromConfig(config);
-        fileStorageTtlSecs = config.getInt("file_storage.ttl_secs");
-        fileStoragePoolPeriodSec = config.getInt("file_storage.pool_period_sec");
-        fileStorageUrls = config.getStringList("file_storage.urls");
+        kafkaTopicBlocks = configFile.getConfig("kafka_topics.blocks");
+        kafkaTopicBroadcasted = configFile.getConfig("kafka_topics.broadcasted");
 
-        ellipticSignerPrivateKeyHex = config.getString("elliptic_signer.private_key_hex");
+        setServicesConfig();
+    }
 
-        kafkaTopicBlocks = config.getConfig("kafka_topics.blocks");
-        kafkaTopicBroadcasted = config.getConfig("kafka_topics.broadcasted");
+    private void setServicesConfig() {
+        // Embedded File Storage service
+        embeddedFileStorageMessageMaxTotalSize = servicesConfig.getInt("embedded_file_storage.message_max_total_size");
 
-        kafkaBrokerBootstrapServers = config.getString("kafka_broker.bootstrap_servers");
-        kafkaBrokerSecurityProtocol = config.getString("kafka_broker.security_protocol");
-        kafkaBrokerSslTruststoreType = config.getString("kafka_broker.ssl_truststore_type");
-        kafkaBrokerSslTruststoreLocation = config.getString("kafka_broker.ssl_truststore_location");
-        kafkaBrokerSslKeystoreType = config.getString("kafka_broker.ssl_keystore_type");
-        kafkaBrokerSslKeystoreLocation = config.getString("kafka_broker.ssl_keystore_location");
-        kafkaBrokerSslKeyPassword = config.getString("kafka_broker.ssl_key_password");
-        kafkaBrokerSslEndpointIdentificationAlgorithm = config.getString("kafka_broker.ssl_endpoint_identification_algorithm");
-        kafkaBrokerAllowAutoCreateTopics = config.getBoolean("kafka_broker.allow_auto_create_topics");
+        // File Storage service
+        fileStorageRoot = getFileStorageFromConfig(configFile);
+        fileStorageTtlSecs = servicesConfig.getInt("file_storage.ttl_secs");
+        fileStoragePoolPeriodSec = servicesConfig.getInt("file_storage.pool_period_sec");
+        fileStorageUrls = servicesConfig.getStringList("file_storage.urls");
 
-        pathGeneratorBucketSize = config.getInt("path_generator.bucket_size");
-        pathGeneratorBlockNumberPadding = config.getInt("path_generator.block_number_padding");
-        pathGeneratorSpacer = config.getString("path_generator.spacer");
-        pathGeneratorSuffix = config.getString("path_generator.suffix");
+        // Elliptic Signer service
+        ellipticSignerPrivateKeyHex = servicesConfig.getString("elliptic_signer.private_key_hex");
+
+        // Kafka Broker service
+        kafkaBrokerBootstrapServers = servicesConfig.getString("kafka_broker.bootstrap_servers");
+        kafkaBrokerSecurityProtocol = servicesConfig.getString("kafka_broker.security_protocol");
+        kafkaBrokerSslTruststoreType = servicesConfig.getString("kafka_broker.ssl_truststore_type");
+        kafkaBrokerSslTruststoreLocation = servicesConfig.getString("kafka_broker.ssl_truststore_location");
+        kafkaBrokerSslKeystoreType = servicesConfig.getString("kafka_broker.ssl_keystore_type");
+        kafkaBrokerSslKeystoreLocation = servicesConfig.getString("kafka_broker.ssl_keystore_location");
+        kafkaBrokerSslKeyPassword = servicesConfig.getString("kafka_broker.ssl_key_password");
+        kafkaBrokerSslEndpointIdentificationAlgorithm = servicesConfig.getString("kafka_broker.ssl_endpoint_identification_algorithm");
+        kafkaBrokerAllowAutoCreateTopics = servicesConfig.getBoolean("kafka_broker.allow_auto_create_topics");
+
+        // Path Generator service
+        pathGeneratorBucketSize = servicesConfig.getInt("path_generator.bucket_size");
+        pathGeneratorBlockNumberPadding = servicesConfig.getInt("path_generator.block_number_padding");
+        pathGeneratorSpacer = servicesConfig.getString("path_generator.spacer");
+        pathGeneratorSuffix = servicesConfig.getString("path_generator.suffix");
     }
 }
