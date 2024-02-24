@@ -7,6 +7,7 @@ import io.bitquery.streaming.common.utils.ByteArray;
 import io.bitquery.streaming.common.utils.FileUtil;
 import lombok.extern.slf4j.Slf4j;
 import net.jpountz.lz4.LZ4FrameOutputStream;
+import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -37,12 +38,23 @@ public class FileStorage {
         String fullPath = getBlockPath();
         writeOnceMessageToFile(fullPath);
 
-        String uriPath = setUri(fullPath);
+        String uriPath = getBlockPathWithoutStreamingDirectory();
+        protobufMessage.getMeta().setUri(uriPath);
+        protobufMessage.getMeta().setServers(config.getFileStorageUrls());
+        protobufMessage.getMeta().setCompressed(true);
+        protobufMessage.getMeta().setSize(FileUtil.sizeOf(fullPath));
+        protobufMessage.getMeta().setEmbeddedBody(null);
+
         logger.info("Stored message, Path: {}, Length: {}", uriPath, protobufMessage.getMeta().getSize());
     }
 
     public void close() {
         ExecutorServiceManager.shutdownAndAwaitTermination(directoriesMonitorExecutor, directoriesMonitor);
+    }
+
+    public String getBlockPathWithoutStreamingDirectory() {
+        // deletes folder prefix;
+        return getBlockPath().replaceFirst(config.getFileStorageRoot() + "/", "");
     }
 
     private String getBlockPath() {
@@ -88,7 +100,7 @@ public class FileStorage {
             return;
         }
 
-        new File(fullPath).getParentFile().mkdirs();
+        FileUtil.createParentDirectories(fullPath);
 
         try {
             LZ4FrameOutputStream outStream = new LZ4FrameOutputStream(new FileOutputStream(new File(fullPath)));
@@ -98,14 +110,6 @@ public class FileStorage {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    private String setUri(String fullPath) {
-        // deletes folder prefix;
-        String uriPath = fullPath.replaceFirst(config.getFileStorageRoot() + "/", "");
-        protobufMessage.getMeta().setUri(uriPath);
-
-        return uriPath;
     }
 
     private void startDirectoriesMonitoring() {

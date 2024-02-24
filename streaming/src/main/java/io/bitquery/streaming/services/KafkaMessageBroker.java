@@ -1,14 +1,18 @@
 package io.bitquery.streaming.services;
 
 import io.bitquery.streaming.TracerConfig;
+import io.bitquery.streaming.messages.MessageMetaInfo;
 import io.bitquery.streaming.messages.ProtobufMessage;
 import io.bitquery.streaming.common.utils.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.header.Header;
+import org.apache.kafka.common.header.internals.RecordHeader;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 @Slf4j(topic = "streaming")
 public class KafkaMessageBroker {
@@ -21,26 +25,22 @@ public class KafkaMessageBroker {
     }
 
     public void send(String topicName, ProtobufMessage protobufMessage) {
-        String value = JsonUtil.obj2Json(protobufMessage.getMeta()).toString();
-        long block = protobufMessage.getMeta().getDescriptor().getBlockNumber();
+        MessageMetaInfo protobufMetaInfo = protobufMessage.getMeta();
 
-        ProducerRecord msg = new ProducerRecord<>(topicName, value);
+        List<Header> headers = createHeadersIfNeeded(protobufMetaInfo);
+        String messageJson = JsonUtil.obj2Json(protobufMetaInfo);
+        long blockNum = protobufMetaInfo.getDescriptor().getBlockNumber();
 
-        logger.info("Sending message, Num: {}, Topic: {}", block, topicName);
+//        ProducerRecord msg = new ProducerRecord<>(topicName, value);
+        ProducerRecord msg = new ProducerRecord(topicName, null, (Object) null, messageJson, headers);
 
-        producer.send(msg, new Callback() {
-            public void onCompletion(RecordMetadata metadata, Exception e) {
-                if (e == null) {
-                    logger.info(
-                        "Delivered message to topic, Num: {}, Topic: {}, Partition: {}, Offset: {}",
-                        protobufMessage.getMeta().getDescriptor().getBlockNumber(),
-                        metadata.topic(),
-                        metadata.partition(),
-                        metadata.offset()
-                    );
-                } else {
-                    logger.info("Delivery failed, Num: {}, Error: {}", block, e.getMessage());
-                }
+        logger.info("Sending message, Num: {}, Topic: {}", blockNum, topicName);
+
+        producer.send(msg, (metadata, e) -> {
+            if (e == null) {
+                logSuccessMessage(metadata, blockNum);
+            } else {
+                logFailureMessage(e, blockNum);
             }
         });
     }
@@ -75,5 +75,22 @@ public class KafkaMessageBroker {
         properties.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
 
         return properties;
+    }
+
+    private List<Header> createHeadersIfNeeded(MessageMetaInfo protobufMetaInfo) {
+        List<Header> headers = new ArrayList<>();
+        if (protobufMetaInfo.getEmbeddedBody() != null && protobufMetaInfo.getServers() == null) {
+            headers.add(new RecordHeader(protobufMetaInfo.getUri(), protobufMetaInfo.getEmbeddedBody()));
+        }
+        return headers;
+    }
+
+    private void logSuccessMessage(RecordMetadata metadata, long blockNum) {
+        logger.info("Delivered message to topic, Num: {}, Topic: {}, Partition: {}, Offset: {}",
+                blockNum, metadata.topic(), metadata.partition(), metadata.offset());
+    }
+
+    private void logFailureMessage(Exception e, long blockNum) {
+        logger.error("Delivery failed, Num: {}, Error: {}", blockNum, e.getMessage());
     }
 }

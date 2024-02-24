@@ -4,7 +4,7 @@ import com.google.common.primitives.Bytes;
 import io.bitquery.streaming.TracerConfig;
 import io.bitquery.streaming.common.crypto.Hash;
 import io.bitquery.streaming.services.EllipticSigner;
-import io.bitquery.streaming.services.FileStorage;
+import io.bitquery.streaming.services.EmbeddedFileStorage;
 import io.bitquery.streaming.common.utils.ByteArray;
 import io.bitquery.streaming.common.utils.JsonUtil;
 import lombok.Getter;
@@ -23,23 +23,17 @@ public class ProtobufMessage {
     @Getter
     private String topic;
 
-    private final TracerConfig config;
-
     private final EllipticSigner signer;
-    private final FileStorage fileStorage;
+    private final EmbeddedFileStorage fileStorage;
 
     public ProtobufMessage(TracerConfig config) {
-        this.config = config;
-
         this.signer = new EllipticSigner(config);
-        this.fileStorage = new FileStorage(this, config);
+        this.fileStorage = new EmbeddedFileStorage(this, config);
     }
 
     public void process(Descriptor descriptor, byte[] body, String topic) {
         getMeta().setDescriptor(descriptor);
         getMeta().setAuthenticator(new MessageAuthenticator());
-        getMeta().setSize(body.length);
-        getMeta().setServers(config.getFileStorageUrls());
 
         this.body = body;
         this.topic = topic;
@@ -56,9 +50,9 @@ public class ProtobufMessage {
         prepareAuthenticator();
 
         byte[] message = ByteArray.fromHexString(getMeta().getAuthenticator().getId());
-        byte[] signature = this.signer.sign(message);
+        byte[] signature = signer.sign(message);
 
-        getMeta().getAuthenticator().setSigner(this.signer.getAddress());
+        getMeta().getAuthenticator().setSigner(signer.getAddress());
         getMeta().getAuthenticator().setSignature(ByteArray.toHexString(signature));
     }
 

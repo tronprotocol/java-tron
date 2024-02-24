@@ -16,10 +16,26 @@ package io.bitquery.streaming.common.utils;
  */
 
 import java.io.File;
+import java.io.IOException;
+
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 
 @Slf4j(topic = "utils")
 public class FileUtil {
+
+    public static void createParentDirectories(String path) {
+        try {
+            FileUtils.createParentDirectories(new File(path));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static long sizeOf(String path) {
+        return FileUtils.sizeOf(new File(path));
+    }
+
     public static boolean isExists(String path) {
         File file = new File(path);
         return file.exists();
