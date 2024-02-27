@@ -2,6 +2,7 @@ package org.tron.core.capsule;
 
 import static org.tron.common.crypto.Hash.computeAddress;
 
+import com.google.common.base.Objects;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
@@ -139,5 +140,22 @@ public class WitnessCapsule implements ProtoCapsule<Witness>, Comparable<Witness
 
   public void setUrl(final String url) {
     this.witness = this.witness.toBuilder().setUrl(url).build();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    WitnessCapsule that = (WitnessCapsule) o;
+    return Objects.equal(witness, that.witness);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(witness);
   }
 }

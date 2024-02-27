@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -13,11 +14,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter;
+import org.tron.core.db.TronCacheStore;
 import org.tron.core.db.TronStoreWithRevoking;
 
 @Slf4j(topic = "DB")
 @Component
 public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
+
+  @Autowired
+  private TronCacheStore tronCacheStore;
 
   @Autowired
   protected WitnessStore(@Value("witness") String dbName) {
@@ -40,8 +45,15 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
   }
 
   public List<WitnessCapsule> getWitnessStandby() {
+    return Optional.ofNullable(tronCacheStore.getWitnessStandby())
+        .orElse(updateWitnessStandby(null));
+  }
+
+  public List<WitnessCapsule> updateWitnessStandby(List<WitnessCapsule> all) {
     List<WitnessCapsule> ret;
-    List<WitnessCapsule> all = getAllWitnesses();
+    if (all == null) {
+      all = getAllWitnesses();
+    }
     all.sort(Comparator.comparingLong(WitnessCapsule::getVoteCount)
         .reversed().thenComparing(Comparator.comparingInt(
             (WitnessCapsule w) -> w.getAddress().hashCode()).reversed()));
@@ -52,7 +64,8 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
     }
     // trim voteCount = 0
     ret.removeIf(w -> w.getVoteCount() < 1);
-    return ret;
+    tronCacheStore.putWitnessStandby(ret);
+    return tronCacheStore.getWitnessStandby();
   }
 
 }
