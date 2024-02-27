@@ -164,8 +164,11 @@ public class TransactionMessageBuilder {
      }
 
      private TransactionResult getTransactionResult(TransactionInfo txInfo) {
+          boolean success = txInfo.getResult().toString() == "SUCESS";
+
           TransactionResult result = TransactionResult.newBuilder()
                   .setStatus(txInfo.getResult().toString())
+                  .setSuccess(success)
                   .setMessage(txInfo.getResMessage().toStringUtf8())
                   .build();
 

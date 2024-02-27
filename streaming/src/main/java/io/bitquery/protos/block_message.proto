@@ -32,7 +32,8 @@ message Argument {
 
 message TransactionResult {
   string Status = 1;
-  string Message = 2;
+  bool Success = 2;
+  string Message = 3;
 };
 
 message Receipt {

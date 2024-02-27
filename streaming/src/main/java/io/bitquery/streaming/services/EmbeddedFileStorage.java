@@ -25,6 +25,7 @@ public class EmbeddedFileStorage {
 
         // if size is too big, save the message on disk using file storage
         if (bodyLength > config.getEmbeddedFileStorageMessageMaxTotalSize()) {
+           logger.info("Message is too big, saving on disk, Size {}, Max: {}", bodyLength, config.getEmbeddedFileStorageMessageMaxTotalSize());
             fileStorage.store();
             return;
         }

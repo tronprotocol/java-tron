@@ -571,7 +571,7 @@ public class Manager {
     try {
       TracerManager.init();
     } catch (Exception e) {
-      logger.error("TracerManager initialization error: {}", e.toString());
+      logger.error("TracerManager initialization error", e);
       System.exit(1);
     }
 
