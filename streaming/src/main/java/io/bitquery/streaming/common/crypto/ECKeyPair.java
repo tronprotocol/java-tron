@@ -8,6 +8,8 @@ import org.bouncycastle.crypto.signers.ECDSASigner;
 import org.bouncycastle.crypto.signers.HMacDSAKCalculator;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
+import org.bouncycastle.jce.ECNamedCurveTable;
+import org.bouncycastle.jce.spec.ECParameterSpec;
 
 import java.math.BigInteger;
 import java.security.*;
@@ -35,13 +37,8 @@ public class ECKeyPair {
 
     public String getAddress() {
         String pubKey = Numeric.toHexStringWithPrefixZeroPadded(publicKey, 128);
-        String publicKeyNoPrefix = Numeric.cleanHexPrefix(pubKey);
-//        if (publicKeyNoPrefix.length() < 128) {
-//            String var10000 = Strings.zeros(128 - publicKeyNoPrefix.length());
-//            publicKeyNoPrefix = var10000 + publicKeyNoPrefix;
-//        }
 
-        String hash = Hash.sha3(publicKeyNoPrefix);
+        String hash = Hash.sha3(pubKey);
         return hash.substring(hash.length() - 40);
     }
 
@@ -69,13 +66,9 @@ public class ECKeyPair {
     }
 
     static KeyPair createSecp256k1KeyPair(SecureRandom random) throws NoSuchProviderException, NoSuchAlgorithmException, InvalidAlgorithmParameterException {
+        ECParameterSpec ecSpec = ECNamedCurveTable.getParameterSpec("secp256k1");
         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("ECDSA", "BC");
-        ECGenParameterSpec ecGenParameterSpec = new ECGenParameterSpec("secp256k1");
-        if (random != null) {
-            keyPairGenerator.initialize(ecGenParameterSpec, random);
-        } else {
-            keyPairGenerator.initialize(ecGenParameterSpec);
-        }
+        keyPairGenerator.initialize(ecSpec, random);
 
         return keyPairGenerator.generateKeyPair();
     }
