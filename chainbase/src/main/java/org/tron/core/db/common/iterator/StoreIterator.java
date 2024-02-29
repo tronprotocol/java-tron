@@ -93,14 +93,12 @@ public final class StoreIterator implements org.tron.core.db.common.iterator.DBI
 
   @Override
   public byte[] getKey() {
-    checkState();
     checkValid();
     return dbIterator.peekNext().getKey();
   }
 
   @Override
   public byte[] getValue() {
-    checkState();
     checkValid();
     return dbIterator.peekNext().getValue();
   }
