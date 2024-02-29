@@ -2526,7 +2526,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public boolean useNewRewardAlgorithmFromStart() {
-    return getNewRewardAlgorithmEffectiveCycle() == 1;
+    return getNewRewardAlgorithmEffectiveCycle() <= 1;
   }
 
   public void saveNewRewardAlgorithmEffectiveCycle() {
