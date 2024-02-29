@@ -99,25 +99,30 @@ public class RewardViCalService {
   }
 
   private void maybeRun() {
-    if (enableNewRewardAlgorithm()) {
-      if (this.newRewardCalStartCycle > 1) {
-        if (isDone()) {
-          this.clearUp(true);
-          logger.info("rewardViCalService is already done");
-        } else {
-          if (lastBlockNumber ==  Long.MAX_VALUE // start rewardViCalService immediately
-              || this.getLatestBlockHeaderNumber() > lastBlockNumber) {
-            // checkpoint is flushed to db, so we can start rewardViCalService
-            startRewardCal();
-            clearUp(true);
+    try {
+      if (enableNewRewardAlgorithm()) {
+        if (this.newRewardCalStartCycle > 1) {
+          if (isDone()) {
+            this.clearUp(true);
+            logger.info("rewardViCalService is already done");
           } else {
-            logger.info("startRewardCal will run after checkpoint is flushed to db");
+            if (lastBlockNumber ==  Long.MAX_VALUE // start rewardViCalService immediately
+                || this.getLatestBlockHeaderNumber() > lastBlockNumber) {
+              // checkpoint is flushed to db, so we can start rewardViCalService
+              startRewardCal();
+              clearUp(true);
+            } else {
+              logger.info("startRewardCal will run after checkpoint is flushed to db");
+            }
           }
+        } else {
+          clearUp(false);
+          logger.info("rewardViCalService is no need to run");
         }
-      } else {
-        clearUp(false);
-        logger.info("rewardViCalService is no need to run");
       }
+    } catch (Exception e) {
+      logger.error(" Find fatal error, program will be exited soon.", e);
+      System.exit(1);
     }
   }
 
