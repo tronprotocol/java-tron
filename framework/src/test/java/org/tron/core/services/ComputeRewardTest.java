@@ -17,13 +17,16 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.ExpectedSystemExit;
 import org.junit.rules.TemporaryFolder;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.error.TronDBException;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ReflectUtils;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -32,6 +35,7 @@ import org.tron.core.service.RewardViCalService;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.RewardViStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.protos.Protocol;
 
@@ -106,8 +110,12 @@ public class ComputeRewardTest {
   private static RewardViCalService rewardViCalService;
   private static WitnessStore witnessStore;
   private static MortgageService mortgageService;
+  private static RewardViStore rewardViStore;
   @Rule
   public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  @Rule
+  public final ExpectedSystemExit exit = ExpectedSystemExit.none();
 
   @After
   public void destroy() {
@@ -129,6 +137,7 @@ public class ComputeRewardTest {
     rewardViCalService = context.getBean(RewardViCalService.class);
     witnessStore = context.getBean(WitnessStore.class);
     mortgageService = context.getBean(MortgageService.class);
+    rewardViStore = context.getBean(RewardViStore.class);
     setUp();
   }
 
@@ -254,7 +263,32 @@ public class ComputeRewardTest {
 
   @Test
   public void query() {
+    exit.expectSystemExitWithStatus(1);
     Assert.assertEquals(3189, mortgageService.queryReward(OWNER_ADDRESS));
+    // mock root is error
+    rewardViStore.put("test".getBytes(), "test".getBytes());
+    ReflectUtils.invokeMethod(rewardViCalService,"maybeRun");
+
+    // mock no need
+    propertiesStore.saveCurrentCycleNumber(0);
+    // reset
+    propertiesStore.put("NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE".getBytes(),
+        new BytesCapsule(ByteArray.fromLong(Long.MAX_VALUE)));
+    // set
+    propertiesStore.saveNewRewardAlgorithmEffectiveCycle();
+    ReflectUtils.invokeMethod(rewardViCalService,"maybeRun");
+
+    // mock maybeRun exception
+    propertiesStore.saveCurrentCycleNumber(4);
+    // reset
+    propertiesStore.put("NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE".getBytes(),
+        new BytesCapsule(ByteArray.fromLong(Long.MAX_VALUE)));
+    // set
+    propertiesStore.saveNewRewardAlgorithmEffectiveCycle();
+    propertiesStore.saveCurrentCycleNumber(5);
+    rewardViStore.close();
+    ReflectUtils.invokeMethod(rewardViCalService,"maybeRun");
+
   }
 
   static class Vote {

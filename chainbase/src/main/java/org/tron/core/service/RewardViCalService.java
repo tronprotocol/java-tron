@@ -3,7 +3,6 @@ package org.tron.core.service;
 import static org.tron.core.store.DelegationStore.DECIMAL_OF_VI_REWARD;
 import static org.tron.core.store.DelegationStore.REMARK;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Streams;
 import com.google.common.primitives.Bytes;
 import com.google.protobuf.ByteString;
@@ -18,7 +17,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 import javax.annotation.PreDestroy;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,10 +53,11 @@ public class RewardViCalService {
 
   private volatile long lastBlockNumber = -1;
 
-  @VisibleForTesting
-  @Setter
-  private Sha256Hash rewardViRoot = Sha256Hash.wrap(
-      ByteString.fromHex("9debcb9924055500aaae98cdee10501c5c39d4daa75800a996f4bdda73dbccd8"));
+  private static final String MAIN_NET_ROOT_HEX =
+      "9debcb9924055500aaae98cdee10501c5c39d4daa75800a996f4bdda73dbccd8";
+
+  private final Sha256Hash rewardViRoot = CommonParameter.getInstance().getStorage().getDbRoot(
+      "reward-vi", Sha256Hash.wrap(ByteString.fromHex(MAIN_NET_ROOT_HEX)));
 
   private final CountDownLatch lock = new CountDownLatch(1);
 
@@ -142,7 +141,7 @@ public class RewardViCalService {
 
   public long getNewRewardAlgorithmReward(long beginCycle, long endCycle,
                                           List<Pair<byte[], Long>> votes) {
-    if (!rewardViStore.has(IS_DONE_KEY)) {
+    if (!isDone()) {
       logger.warn("rewardViCalService is not done, wait for it");
       try {
         lock.await();
@@ -181,8 +180,11 @@ public class RewardViCalService {
 
     Sha256Hash rewardViRootLocal = MerkleTree.getInstance().createTree(ids).getRoot().getHash();
     if (!Objects.equals(rewardViRoot, rewardViRootLocal)) {
-      logger.warn("merkle root mismatch, expect: {}, actual: {}",
-          rewardViRoot, rewardViRootLocal);
+      logger.warn("Merkle root mismatch, expect: {}, actual: {}."
+              + " If you are quite sure that there is no miscalculation (not on the main network)"
+              + ", please configure 'storage.merkleRoot.reward-vi = {}'"
+              + "(for a specific network such as Nile, etc.) in config.conf to fix the hints",
+          rewardViRoot, rewardViRootLocal, rewardViRootLocal);
     }
     logger.info("calcMerkleRoot: {}", rewardViRootLocal);
   }

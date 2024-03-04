@@ -530,6 +530,7 @@ public class Args extends CommonParameter {
     PARAMETER.storage.setDefaultDbOptions(config);
     PARAMETER.storage.setPropertyMapFromConfig(config);
     PARAMETER.storage.setCacheStrategies(config);
+    PARAMETER.storage.setDbRoots(config);
 
     PARAMETER.seedNode = new SeedNode();
     PARAMETER.seedNode.setAddressList(loadSeeds(config));
