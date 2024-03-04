@@ -54,7 +54,7 @@ public class DbRootTest {
     Assert.assertEquals(0, cli.execute(args));
 
     try (DBInterface errorDb = new LevelDBImpl(
-        DBUtils.newLevelDb(Paths.get(database.toString(), ERROR_DB)), ERROR_DB)){
+        DBUtils.newLevelDb(Paths.get(database.toString(), ERROR_DB)), ERROR_DB)) {
       for (int i = 0; i < 10; i++) {
         errorDb.put(("" + i).getBytes(), (ERROR_DB + "-" + i).getBytes());
       }

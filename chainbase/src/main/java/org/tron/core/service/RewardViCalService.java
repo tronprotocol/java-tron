@@ -25,9 +25,9 @@ import org.tron.common.error.TronDBException;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.MerkleRoot;
 import org.tron.common.utils.Pair;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.capsule.utils.MerkleTree;
 import org.tron.core.db.common.iterator.DBIterator;
 import org.tron.core.db2.common.DB;
 import org.tron.core.store.DelegationStore;
@@ -178,7 +178,7 @@ public class RewardViCalService {
         .map(this::getHash)
         .collect(Collectors.toCollection(ArrayList::new));
 
-    Sha256Hash rewardViRootLocal = MerkleTree.getInstance().createTree(ids).getRoot().getHash();
+    Sha256Hash rewardViRootLocal = MerkleRoot.root(ids);
     if (!Objects.equals(rewardViRoot, rewardViRootLocal)) {
       logger.warn("Merkle root mismatch, expect: {}, actual: {}."
               + " If you are quite sure that there is no miscalculation (not on the main network)"

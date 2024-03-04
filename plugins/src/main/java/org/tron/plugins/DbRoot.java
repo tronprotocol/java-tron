@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import me.tongfei.progressbar.ProgressBar;
 import org.rocksdb.RocksDBException;
-import org.tron.plugins.utils.MerkleTree;
+import org.tron.plugins.utils.MerkleRoot;
 import org.tron.plugins.utils.Sha256Hash;
 import org.tron.plugins.utils.db.DBInterface;
 import org.tron.plugins.utils.db.DBIterator;
@@ -83,7 +83,7 @@ public class DbRoot implements Callable<Integer> {
       ArrayList<Sha256Hash> ids = Streams.stream(iterator)
           .map(this::getHash)
           .collect(Collectors.toCollection(ArrayList::new));
-      Sha256Hash root = MerkleTree.getInstance().createTree(ids).getRoot().getHash();
+      Sha256Hash root = MerkleRoot.root(ids);
       logger.info("db: {},root: {}", database.getName(), root);
       spec.commandLine().getOut().println(String.format("db: %s,root: %s",
           database.getName(), root));

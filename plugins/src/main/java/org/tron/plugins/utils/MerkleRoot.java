@@ -1,44 +1,25 @@
 package org.tron.plugins.utils;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.Getter;
 
-@Getter
-public class MerkleTree {
+public class MerkleRoot {
 
-  private static volatile MerkleTree instance;
-  private List<Sha256Hash> hashList;
-  private List<Leaf> leaves;
-  private Leaf root;
+  private MerkleRoot() {
 
-  public static MerkleTree getInstance() {
-    if (instance == null) {
-      synchronized (MerkleTree.class) {
-        if (instance == null) {
-          instance = new MerkleTree();
-        }
-      }
-    }
-    return instance;
   }
 
-  public MerkleTree createTree(List<Sha256Hash> hashList) {
-    this.leaves = new ArrayList<>();
-    this.hashList = hashList;
+  public static Sha256Hash root(List<Sha256Hash> hashList) {
     List<Leaf> leaves = createLeaves(hashList);
-
     while (leaves.size() > 1) {
       leaves = createParentLeaves(leaves);
     }
-
-    this.root = leaves.isEmpty() ? createLeaf(Sha256Hash.ZERO_HASH) : leaves.get(0);
-    return this;
+    return leaves.isEmpty() ? Sha256Hash.ZERO_HASH : leaves.get(0).hash;
   }
 
-  private List<Leaf> createParentLeaves(List<Leaf> leaves) {
+  private static List<Leaf> createParentLeaves(List<Leaf> leaves) {
     int step = 2;
     int len = leaves.size();
     return IntStream.iterate(0, i -> i + step)
@@ -50,7 +31,7 @@ public class MerkleTree {
         }).collect(Collectors.toList());
   }
 
-  private List<Leaf> createLeaves(List<Sha256Hash> hashList) {
+  private static List<Leaf> createLeaves(List<Sha256Hash> hashList) {
     int step = 2;
     int len = hashList.size();
     return IntStream.iterate(0, i -> i + step)
@@ -62,33 +43,26 @@ public class MerkleTree {
         }).collect(Collectors.toList());
   }
 
-  private Leaf createLeaf(Leaf left, Leaf right) {
+  private static Leaf createLeaf(Leaf left, Leaf right) {
     Leaf leaf = new Leaf();
     leaf.hash = right == null ? left.hash : computeHash(left.hash, right.hash);
-    leaf.left = left;
-    leaf.right = right;
-    this.leaves.add(leaf);
     return leaf;
   }
 
-  private Leaf createLeaf(Sha256Hash hash) {
+  private static Leaf createLeaf(Sha256Hash hash) {
     Leaf leaf = new Leaf();
     leaf.hash = hash;
-    this.leaves.add(leaf);
     return leaf;
   }
 
-  private Sha256Hash computeHash(Sha256Hash leftHash, Sha256Hash rightHash) {
+  private static Sha256Hash computeHash(Sha256Hash leftHash, Sha256Hash rightHash) {
     return Sha256Hash.of(true,
         leftHash.getByteString().concat(rightHash.getByteString()).toByteArray());
   }
 
   @Getter
-  public class Leaf {
+  private static class Leaf {
 
     private Sha256Hash hash;
-
-    private Leaf left;
-    private Leaf right;
   }
 }
