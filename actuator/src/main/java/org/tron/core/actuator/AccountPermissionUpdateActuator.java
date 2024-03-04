@@ -71,81 +71,28 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
 
   private boolean checkPermission(Permission permission) throws ContractValidateException {
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
-    if (permission.getKeysCount() > dynamicStore.getTotalSignNum()) {
-      throw new ContractValidateException("number of keys in permission should not be greater "
-          + "than " + dynamicStore.getTotalSignNum());
-    }
-    if (permission.getKeysCount() == 0) {
-      throw new ContractValidateException("key's count should be greater than 0");
-    }
-    if (permission.getType() == PermissionType.Witness && permission.getKeysCount() != 1) {
-      throw new ContractValidateException("Witness permission's key count should be 1");
-    }
-    if (permission.getThreshold() <= 0) {
-      throw new ContractValidateException("permission's threshold should be greater than 0");
-    }
-    String name = permission.getPermissionName();
-    if (!StringUtils.isEmpty(name) && name.length() > 32) {
-      throw new ContractValidateException("permission's name is too long");
-    }
-    //check owner name ?
-    if (permission.getParentId() != 0) {
-      throw new ContractValidateException("permission's parent should be owner");
+
+    // Check key-related permissions
+    validateKeys(permission, dynamicStore);
+
+    // Check permission's name and parent
+    validateNameAndParent(permission);
+
+    // Validate addresses, weight sum, and threshold
+    validateAddressesAndWeights(permission);
+
+    // Check operations for Active permission
+    if (permission.getType() == PermissionType.Active) {
+      validateOperations(permission, dynamicStore);
+    } else {
+      // Non-Active permissions should not have operations
+      if (!permission.getOperations().isEmpty()) {
+        throw new ContractValidateException(permission.getType() + " permission doesn't need operations");
+      }
     }
 
-    long weightSum = 0;
-    List<ByteString> addressList = permission.getKeysList()
-        .stream()
-        .map(x -> x.getAddress())
-        .distinct()
-        .collect(toList());
-    if (addressList.size() != permission.getKeysList().size()) {
-      throw new ContractValidateException(
-          "address should be distinct in permission " + permission.getType());
-    }
-    for (Key key : permission.getKeysList()) {
-      if (!DecodeUtil.addressValid(key.getAddress().toByteArray())) {
-        throw new ContractValidateException("key is not a validate address");
-      }
-      if (key.getWeight() <= 0) {
-        throw new ContractValidateException("key's weight should be greater than 0");
-      }
-      try {
-        weightSum = Math.addExact(weightSum, key.getWeight());
-      } catch (ArithmeticException e) {
-        throw new ContractValidateException(e.getMessage());
-      }
-    }
-    if (weightSum < permission.getThreshold()) {
-      throw new ContractValidateException(
-          "sum of all key's weight should not be less than threshold in permission " + permission
-              .getType());
-    }
-
-    ByteString operations = permission.getOperations();
-    if (permission.getType() != PermissionType.Active) {
-      if (!operations.isEmpty()) {
-        throw new ContractValidateException(
-            permission.getType() + " permission needn't operations");
-      }
-      return true;
-    }
-    //check operations
-    if (operations.isEmpty() || operations.size() != 32) {
-      throw new ContractValidateException("operations size must 32");
-    }
-
-    byte[] types1 = dynamicStore.getAvailableContractType();
-    for (int i = 0; i < 256; i++) {
-      boolean b = (operations.byteAt(i / 8) & (1 << (i % 8))) != 0;
-      boolean t = ((types1[(i / 8)] & 0xff) & (1 << (i % 8))) != 0;
-      if (b && !t) {
-        throw new ContractValidateException(i + " isn't a validate ContractType");
-      }
-    }
     return true;
   }
-
   @Override
   public boolean validate() throws ContractValidateException {
 
@@ -238,4 +185,73 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
   public long calcFee() {
     return chainBaseManager.getDynamicPropertiesStore().getUpdateAccountPermissionFee();
   }
+
+
+  private void validateKeys(Permission permission, DynamicPropertiesStore dynamicStore) throws ContractValidateException {
+    int keysCount = permission.getKeysCount();
+    if (keysCount > dynamicStore.getTotalSignNum()) {
+      throw new ContractValidateException("Number of keys in permission should not be greater than " + dynamicStore.getTotalSignNum());
+    }
+    if (keysCount == 0) {
+      throw new ContractValidateException("Key's count should be greater than 0");
+    }
+    if (permission.getType() == PermissionType.Witness && keysCount != 1) {
+      throw new ContractValidateException("Witness permission's key count should be 1");
+    }
+  }
+
+  private void validateNameAndParent(Permission permission) throws ContractValidateException {
+    String name = permission.getPermissionName();
+    if (!StringUtils.isEmpty(name) && name.length() > 32) {
+      throw new ContractValidateException("Permission's name is too long");
+    }
+    if (permission.getParentId() != 0) {
+      throw new ContractValidateException("Permission's parent should be owner");
+    }
+  }
+
+  private void validateAddressesAndWeights(Permission permission) throws ContractValidateException {
+    Set<ByteString> uniqueAddresses = permission.getKeysList()
+            .stream()
+            .map(Key::getAddress)
+            .collect(Collectors.toSet());
+    if (uniqueAddresses.size() != permission.getKeysCount()) {
+      throw new ContractValidateException("Address should be distinct in permission " + permission.getType());
+    }
+
+    long weightSum = permission.getKeysList().stream()
+            .peek(key -> {
+              if (!DecodeUtil.addressValid(key.getAddress().toByteArray())) {
+                throw new ContractValidateException("Key is not a valid address");
+              }
+              if (key.getWeight() <= 0) {
+                throw new ContractValidateException("Key's weight should be greater than 0");
+              }
+            })
+            .mapToLong(Key::getWeight)
+            .sum();
+
+    if (weightSum < permission.getThreshold()) {
+      throw new ContractValidateException("Sum of all key's weight should not be less than threshold in permission " + permission.getType());
+    }
+  }
+
+  private void validateOperations(Permission permission, DynamicPropertiesStore dynamicStore) throws ContractValidateException {
+    ByteString operations = permission.getOperations();
+    if (operations.isEmpty() || operations.size() != 32) {
+      throw new ContractValidateException("Operations size must be 32");
+    }
+
+    // Check available contract types
+    byte[] types1 = dynamicStore.getAvailableContractType();
+    for (int i = 0; i < 256; i++) {
+      boolean b = (operations.byteAt(i / 8) & (1 << (i % 8))) != 0;
+      boolean t = ((types1[(i / 8)] & 0xff) & (1 << (i % 8))) != 0;
+      if (b && !t) {
+        throw new ContractValidateException(i + " isn't a valid ContractType");
+      }
+    }
+  }
+
+
 }
