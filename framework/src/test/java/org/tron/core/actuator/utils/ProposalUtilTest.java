@@ -364,20 +364,8 @@ public class ProposalUtilTest extends BaseTest {
       Assert.fail();
     } catch (ContractValidateException e) {
       Assert.assertEquals(
-          "[ALLOW_NEW_REWARD] proposal must be approved "
+          "[ALLOW_NEW_REWARD] or [ALLOW_TVM_VOTE] proposal must be approved "
               + "before [ALLOW_OLD_REWARD_OPT] can be proposed",
-          e.getMessage());
-    }
-    dynamicPropertiesStore.saveCurrentCycleNumber(0);
-    dynamicPropertiesStore.saveNewRewardAlgorithmEffectiveCycle();
-    dynamicPropertiesStore.saveAllowNewReward(1);
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.ALLOW_OLD_REWARD_OPT.getCode(), 1);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(
-          "no need old reward opt, ALLOW_NEW_REWARD from start cycle 1",
           e.getMessage());
     }
     dynamicPropertiesStore.put("NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE".getBytes(),
