@@ -134,3 +134,14 @@ Execute move command.
   java -jar Toolkit.jar db mv -c main_net_config.conf -d /data/tron/output-directory
 ```
 
+## DB Root
+
+DB root provides a helper which can compute merkle root for tiny db.
+
+NOTE: large db may GC overhead limit exceeded.
+
+### Available parameters:
+
+- `<src>`: Source path for database. Default: output-directory/database
+- `--db`: db name.
+- `-h | --help`: provide the help info
