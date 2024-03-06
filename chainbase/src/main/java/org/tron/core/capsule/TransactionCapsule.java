@@ -738,7 +738,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   @Override
   public String toString() {
     StringBuilder toStringBuff = new StringBuilder();
-    toStringBuff.setLength(0);
     toStringBuff.append("TransactionCapsule \n[ ");
 
     toStringBuff.append("hash=").append(getTransactionId()).append("\n");
