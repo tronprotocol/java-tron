@@ -30,30 +30,30 @@ if (isWindows()) {
 }
 
 dependencies {
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.13.4.1'
-    compile "com.cedarsoftware:java-util:1.8.0"
-    compile group: 'org.apache.httpcomponents', name: 'httpasyncclient', version: '4.1.1'
-    compile group: 'commons-codec', name: 'commons-codec', version: '1.11'
-    compile group: 'com.beust', name: 'jcommander', version: '1.72'
-    compile group: 'com.typesafe', name: 'config', version: '1.3.2'
-    compile group: leveldbGroup, name: leveldbName, version: leveldbVersion
-    compile group: 'org.rocksdb', name: 'rocksdbjni', version: '5.15.10'
+    api group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.13.4.2' // https://github.com/advisories/GHSA-jjjh-jjxp-wpff https://github.com/FasterXML/jackson-databind/issues/3627
+    api "com.cedarsoftware:java-util:1.8.0"
+    api group: 'org.apache.httpcomponents', name: 'httpasyncclient', version: '4.1.1'
+    api group: 'commons-codec', name: 'commons-codec', version: '1.11'
+    api group: 'com.beust', name: 'jcommander', version: '1.72'
+    api group: 'com.typesafe', name: 'config', version: '1.3.2'
+    api group: leveldbGroup, name: leveldbName, version: leveldbVersion
+    api group: 'org.rocksdb', name: 'rocksdbjni', version: '5.15.10'
     // https://mvnrepository.com/artifact/org.quartz-scheduler/quartz
-    compile group: 'org.quartz-scheduler', name: 'quartz', version: '2.3.2'
-    compile group: 'io.prometheus', name: 'simpleclient', version: '0.15.0'
-    compile group: 'io.prometheus', name: 'simpleclient_httpserver', version: '0.15.0'
-    compile group: 'io.prometheus', name: 'simpleclient_hotspot', version: '0.15.0'
-    compile 'org.aspectj:aspectjrt:1.8.13'
-    compile 'org.aspectj:aspectjweaver:1.8.13'
-    compile 'org.aspectj:aspectjtools:1.8.13'
-    compile group: 'io.github.tronprotocol', name: 'libp2p', version: '2.2.1',{
+    api group: 'org.quartz-scheduler', name: 'quartz', version: '2.3.2'
+    api group: 'io.prometheus', name: 'simpleclient', version: '0.15.0'
+    api group: 'io.prometheus', name: 'simpleclient_httpserver', version: '0.15.0'
+    api group: 'io.prometheus', name: 'simpleclient_hotspot', version: '0.15.0'
+    api 'org.aspectj:aspectjrt:1.8.13'
+    api 'org.aspectj:aspectjweaver:1.8.13'
+    api 'org.aspectj:aspectjtools:1.8.13'
+    api group: 'io.github.tronprotocol', name: 'libp2p', version: '2.2.1',{
         exclude group: 'io.grpc', module: 'grpc-context'
         exclude group: 'io.grpc', module: 'grpc-core'
         exclude group: 'io.grpc', module: 'grpc-netty'
         exclude group: 'com.google.protobuf', module: 'protobuf-java'
         exclude group: 'com.google.protobuf', module: 'protobuf-java-util'
     }
-    compile project(":protocol")
+    api project(":protocol")
 }
 
 jacocoTestReport {

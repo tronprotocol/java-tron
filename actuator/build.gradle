@@ -1,9 +1,7 @@
 description = "actuator – a series of transactions for blockchain."
 
 dependencies {
-    compile project(":chainbase")
-    compile project(":protocol")
-    compile project(":crypto")
+    api project(":chainbase")
 }
 
 test {

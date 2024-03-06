@@ -1,8 +1,7 @@
 description = "consensus – a distributed consensus arithmetic for blockchain."
 
 dependencies {
-    compile project(":chainbase")
-    compile project(":protocol")
+    api project(":chainbase")
 }
 
 test {

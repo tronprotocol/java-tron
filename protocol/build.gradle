@@ -4,20 +4,20 @@ def protobufVersion = '3.21.12'
 def grpcVersion = '1.52.1'
 
 dependencies {
-    compile group: 'com.google.protobuf', name: 'protobuf-java', version: protobufVersion
-    compile group: 'com.google.protobuf', name: 'protobuf-java-util', version: protobufVersion
-    compile group: 'net.jcip', name: 'jcip-annotations', version: '1.0'
+    api group: 'com.google.protobuf', name: 'protobuf-java', version: protobufVersion
+    api group: 'com.google.protobuf', name: 'protobuf-java-util', version: protobufVersion
+    api group: 'net.jcip', name: 'jcip-annotations', version: '1.0'
 
 //    checkstyleConfig "com.puppycrawl.tools:checkstyle:${versions.checkstyle}"
     // google grpc
-    compile group: 'io.grpc', name: 'grpc-netty', version: grpcVersion
-    compile group: 'io.grpc', name: 'grpc-protobuf', version: grpcVersion
-    compile group: 'io.grpc', name: 'grpc-stub', version: grpcVersion
-    compile group: 'io.grpc', name: 'grpc-services', version: grpcVersion
+    api group: 'io.grpc', name: 'grpc-netty', version: grpcVersion
+    api group: 'io.grpc', name: 'grpc-protobuf', version: grpcVersion
+    api group: 'io.grpc', name: 'grpc-stub', version: grpcVersion
+    api group: 'io.grpc', name: 'grpc-services', version: grpcVersion
 
     // end google grpc
 
-    compile group: 'com.google.api.grpc', name: 'proto-google-common-protos', version: '2.15.0'
+    api group: 'com.google.api.grpc', name: 'proto-google-common-protos', version: '2.15.0'
 }
 
 tasks.matching { it instanceof Test }.all {
@@ -66,3 +66,4 @@ clean.doFirst {
     delete "src/main/java"
 }
 
+processResources.dependsOn(generateProto) // explicit_dependency

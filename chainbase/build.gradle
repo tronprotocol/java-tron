@@ -7,12 +7,10 @@ def jansiVersion = "1.16"
 // --------------------------------------
 
 dependencies {
-    compile project(":protocol")
-    compile project(":common")
-    compile project(":crypto")
-    compile "org.fusesource.jansi:jansi:$jansiVersion"
-    compile 'io.github.tronprotocol:zksnark-java-sdk:1.0.0'
-    compile 'org.reflections:reflections:0.9.11'
+    api project(":crypto")
+    api "org.fusesource.jansi:jansi:$jansiVersion"
+    api 'io.github.tronprotocol:zksnark-java-sdk:1.0.0'
+    api 'org.reflections:reflections:0.9.11'
 }
 
 
@@ -46,6 +44,7 @@ jacoco {
 }
 
 jacocoTestReport {
+    dependsOn(processResources)  // explicit_dependency
     reports {
         xml.enabled = true
         html.enabled = true

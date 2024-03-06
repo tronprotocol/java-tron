@@ -25,17 +25,17 @@ configurations.getByName('checkstyleConfig') {
 
 dependencies {
     //local libraries
-    compile fileTree(dir: 'libs', include: '*.jar')
-    testCompile project(":framework")
-    testCompile project(":framework").sourceSets.test.output
-    compile group: 'info.picocli', name: 'picocli', version: '4.6.3'
-    compile group: 'com.typesafe', name: 'config', version: '1.3.2'
-    compile group: 'me.tongfei', name: 'progressbar', version: '0.9.3'
-    compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.69'
-    compile group: 'org.rocksdb', name: 'rocksdbjni', version: '5.15.10'
-    compile 'io.github.tronprotocol:leveldbjni-all:1.18.2'
-    compile 'io.github.tronprotocol:leveldb:1.18.2'
-    compile project(":protocol")
+    implementation fileTree(dir: 'libs', include: '*.jar')
+    testImplementation project(":framework")
+    testImplementation project(":framework").sourceSets.test.output
+    implementation group: 'info.picocli', name: 'picocli', version: '4.6.3'
+    implementation group: 'com.typesafe', name: 'config', version: '1.3.2'
+    implementation group: 'me.tongfei', name: 'progressbar', version: '0.9.3'
+    implementation group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.69'
+    implementation group: 'org.rocksdb', name: 'rocksdbjni', version: '5.15.10'
+    implementation 'io.github.tronprotocol:leveldbjni-all:1.18.2'
+    implementation 'io.github.tronprotocol:leveldb:1.18.2'
+    implementation project(":protocol")
 }
 
 check.dependsOn 'lint'
@@ -98,8 +98,10 @@ def binaryRelease(taskName, jarName, mainClass) {
             include "/**"
         }
 
+        dependsOn project(':protocol').jar // explicit_dependency
+
         from {
-            configurations.compile.collect {
+            configurations.runtimeClasspath.collect { // https://docs.gradle.org/current/userguide/upgrading_version_6.html#changes_6.3
                 it.isDirectory() ? it : zipTree(it)
             }
         }
@@ -120,7 +122,7 @@ def createScript(project, mainClass, name) {
         outputDir = new File(project.buildDir, 'scripts')
         mainClassName = mainClass
         applicationName = name
-        classpath = project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtime
+        classpath = project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtimeClasspath
     }
     project.tasks[name].dependsOn(project.jar)
     project.applicationDistribution.with {

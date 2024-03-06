@@ -38,38 +38,36 @@ task version(type: Exec) {
 
 dependencies {
     //local libraries
-    compile fileTree(dir: 'libs', include: '*.jar')
+    implementation fileTree(dir: 'libs', include: '*.jar')
     // end local libraries
-    testCompile group: 'org.hamcrest', name: 'hamcrest-junit', version: '1.0.0.1'
-    testCompile group: 'com.github.stefanbirkner', name: 'system-rules', version: '1.16.0'
+    testImplementation group: 'org.hamcrest', name: 'hamcrest-junit', version: '1.0.0.1'
+    testImplementation group: 'com.github.stefanbirkner', name: 'system-rules', version: '1.16.0'
 
-    compile group: 'com.google.inject', name: 'guice', version: '4.1.0'
-    compile group: 'io.dropwizard.metrics', name: 'metrics-core', version: '3.1.2'
-    compile group: 'com.github.davidb', name: 'metrics-influxdb', version: '0.8.2'
-    compile group: 'com.carrotsearch', name: 'java-sizeof', version: '0.0.5'
+    implementation group: 'com.google.inject', name: 'guice', version: '4.1.0'
+    implementation group: 'io.dropwizard.metrics', name: 'metrics-core', version: '3.1.2'
+    implementation group: 'com.github.davidb', name: 'metrics-influxdb', version: '0.8.2'
+    implementation group: 'com.carrotsearch', name: 'java-sizeof', version: '0.0.5'
     // http
-    compile 'org.eclipse.jetty:jetty-server:9.4.53.v20231009'
-    compile 'org.eclipse.jetty:jetty-servlet:9.4.53.v20231009'
-    compile 'com.alibaba:fastjson:1.2.83'
+    implementation 'org.eclipse.jetty:jetty-server:9.4.53.v20231009'
+    implementation 'org.eclipse.jetty:jetty-servlet:9.4.53.v20231009'
+    implementation 'com.alibaba:fastjson:1.2.83'
     // end http
 
     // https://mvnrepository.com/artifact/com.github.briandilley.jsonrpc4j/jsonrpc4j
-    compile group: 'com.github.briandilley.jsonrpc4j', name: 'jsonrpc4j', version: '1.6'
+    implementation group: 'com.github.briandilley.jsonrpc4j', name: 'jsonrpc4j', version: '1.6'
 
     // https://mvnrepository.com/artifact/javax.portlet/portlet-api
     compileOnly group: 'javax.portlet', name: 'portlet-api', version: '3.0.1'
 
-    compile "io.vavr:vavr:0.9.2"
-    compile group: 'org.pf4j', name: 'pf4j', version: '2.5.0'
+    implementation "io.vavr:vavr:0.9.2"
+    implementation group: 'org.pf4j', name: 'pf4j', version: '2.5.0'
 
     testImplementation group: 'org.springframework', name: 'spring-test', version: '5.2.0.RELEASE'
     testImplementation group: 'org.springframework', name: 'spring-web', version: '5.2.0.RELEASE'
 
-    compile group: 'org.zeromq', name: 'jeromq', version: '0.5.3'
-    compile project(":chainbase")
-    compile project(":protocol")
-    compile project(":actuator")
-    compile project(":consensus")
+    implementation group: 'org.zeromq', name: 'jeromq', version: '0.5.3'
+    api project(":actuator")
+    api project(":consensus")
 }
 
 check.dependsOn 'lint'
@@ -152,9 +150,11 @@ def binaryRelease(taskName, jarName, mainClass) {
         from(sourceSets.main.output) {
             include "/**"
         }
-
+        // explicit_dependency
+        dependsOn (project(':actuator').jar, project(':consensus').jar, project(':chainbase').jar,
+                project(':crypto').jar, project(':common').jar, project(':protocol').jar)
         from {
-            configurations.compile.collect {
+            configurations.runtimeClasspath.collect {
                 it.isDirectory() ? it : zipTree(it)
             }
         }
@@ -179,7 +179,7 @@ def createScript(project, mainClass, name) {
         outputDir = new File(project.buildDir, 'scripts')
         mainClassName = mainClass
         applicationName = name
-        classpath = project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtime
+        classpath = project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtimeClasspath
 //        defaultJvmOpts = ['-XX:+UseConcMarkSweepGC',
 //                          '-XX:+PrintGCDetails',
 //                          '-Xloggc:./gc.log',
