@@ -119,9 +119,14 @@ message Witness {
   bytes Signature = 3;
 }
 
+message Chain {
+  bytes ChainId = 1;
+}
+
 // MORE INFORMATION: https://developers.tron.network/reference/getblock-2
 message BlockMessage {
-  BlockHeader Header = 1;
-  Witness Witness = 2;
-  repeated Transaction Transactions = 3;
+  Chain Chain = 1;
+  BlockHeader Header = 2;
+  Witness Witness = 3;
+  repeated Transaction Transactions = 4;
 };

@@ -1,7 +1,10 @@
 package io.bitquery.tron;
 
+import com.google.protobuf.ByteString;
+import io.bitquery.streaming.common.utils.ByteArray;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.BlockCapsule;
+import io.bitquery.protos.TronMessage.Chain;
 import io.bitquery.protos.TronMessage.Transaction;
 import io.bitquery.protos.TronMessage.Witness;
 import io.bitquery.protos.TronMessage.BlockHeader;
@@ -16,7 +19,8 @@ public class BlockMessageBuilder {
         this.messageBuilder = BlockMessage.newBuilder();
     }
 
-    public void buildBlockStartMessage(BlockCapsule block) {
+    public void buildBlockStartMessage(BlockCapsule block, String chainId) {
+        setChain(chainId);
         setBlockHeader(block);
         setBlockWitness(block);
     }
@@ -36,6 +40,14 @@ public class BlockMessageBuilder {
     private void setTransactionsCount() {
         int count = messageBuilder.getTransactionsCount();
         this.messageBuilder.getHeaderBuilder().setTransactionsCount(count);
+    }
+
+    private void setChain(String chainId) {
+        Chain chain = Chain.newBuilder()
+                .setChainId(ByteString.copyFrom(chainId.getBytes()))
+                .build();
+
+        this.messageBuilder.setChain(chain).build();
     }
 
     private void setBlockHeader(BlockCapsule block) {

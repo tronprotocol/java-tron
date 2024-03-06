@@ -48,7 +48,7 @@ public class StreamingTracer implements Tracer {
     public void blockStart(Object block) {
         try {
             this.currentBlock.set(new BlockMessageBuilder());
-            currentBlock.get().buildBlockStartMessage((BlockCapsule) block);
+            currentBlock.get().buildBlockStartMessage((BlockCapsule) block, config.getChainId());
         } catch (Exception e) {
             logger.error("blockStart failed", e);
         }
