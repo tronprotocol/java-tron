@@ -5,10 +5,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.Getter;
+import net.jcip.annotations.NotThreadSafe;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Sha256Hash;
 
 @Getter
+@NotThreadSafe
 public class MerkleTree {
 
   private static volatile MerkleTree instance;

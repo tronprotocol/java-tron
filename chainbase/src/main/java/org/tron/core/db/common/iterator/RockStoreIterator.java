@@ -108,14 +108,12 @@ public final class RockStoreIterator implements DBIterator {
 
   @Override
   public byte[] getKey() {
-    checkState();
     checkValid();
     return dbIterator.key();
   }
 
   @Override
   public byte[] getValue() {
-    checkState();
     checkValid();
     return dbIterator.value();
   }

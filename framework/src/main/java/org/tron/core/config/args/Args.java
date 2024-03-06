@@ -530,6 +530,7 @@ public class Args extends CommonParameter {
     PARAMETER.storage.setDefaultDbOptions(config);
     PARAMETER.storage.setPropertyMapFromConfig(config);
     PARAMETER.storage.setCacheStrategies(config);
+    PARAMETER.storage.setDbRoots(config);
 
     PARAMETER.seedNode = new SeedNode();
     PARAMETER.seedNode.setAddressList(loadSeeds(config));
@@ -1192,9 +1193,17 @@ public class Args extends CommonParameter {
       config.hasPath(Constant.MAX_UNSOLIDIFIED_BLOCKS) ? config
         .getInt(Constant.MAX_UNSOLIDIFIED_BLOCKS) : 1000;
 
-    PARAMETER.allowOldRewardOpt =
-        config.hasPath(Constant.COMMITTEE_ALLOW_OLD_REWARD_OPT) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_OLD_REWARD_OPT) : 0;
+    long allowOldRewardOpt = config.hasPath(Constant.COMMITTEE_ALLOW_OLD_REWARD_OPT) ? config
+        .getInt(Constant.COMMITTEE_ALLOW_OLD_REWARD_OPT) : 0;
+    if (allowOldRewardOpt == 1 && PARAMETER.allowNewRewardAlgorithm != 1
+        && PARAMETER.allowNewReward != 1 && PARAMETER.allowTvmVote != 1) {
+      throw new IllegalArgumentException(
+          "At least one of the following proposals is required to be opened first: "
+          + "committee.allowNewRewardAlgorithm = 1"
+          + " or committee.allowNewReward = 1"
+          + " or committee.allowTvmVote = 1.");
+    }
+    PARAMETER.allowOldRewardOpt = allowOldRewardOpt;
 
     logConfig();
   }

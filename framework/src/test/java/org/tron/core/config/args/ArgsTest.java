@@ -25,7 +25,9 @@ import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
@@ -40,6 +42,9 @@ public class ArgsTest {
   private final String privateKey = PublicMethod.getRandomPrivateKey();
   private String address;
   private LocalWitnesses localWitnesses;
+
+  @Rule
+  public ExpectedException thrown = ExpectedException.none();
 
   @After
   public void destroy() {
@@ -137,6 +142,12 @@ public class ArgsTest {
     method2.invoke(Args.class, config3);
 
     Assert.assertNotEquals(configuredExternalIp, parameter.getNodeExternalIp());
+  }
+
+  @Test
+  public void testOldRewardOpt() {
+    thrown.expect(IllegalArgumentException.class);
+    Args.setParam(new String[] {"-w"}, "args-test.conf");
   }
 }
 
