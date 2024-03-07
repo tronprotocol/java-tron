@@ -67,16 +67,20 @@ public class DbRoot implements Callable<Integer> {
           .errorText("Specify at least one exit database: --db dbName."));
       return 404;
     }
-    if (dbs.size() > 1) {
-      ProgressBar.wrap(dbs.stream(), "root task").parallel().forEach(this::calcMerkleRoot);
-    } else {
-      calcMerkleRoot(dbs.get(0));
+    List<Ret> task = ProgressBar.wrap(dbs.stream(), "root task").parallel()
+        .map(this::calcMerkleRoot).collect(Collectors.toList());
+    task.forEach(this::printInfo);
+    int code = (int) task.stream().filter(r -> r.code == 1).count();
+    if (code > 0) {
+      spec.commandLine().getErr().println(spec.commandLine().getColorScheme()
+          .errorText("There are some errors, please check toolkit.log for detail."));
     }
     spec.commandLine().getOut().println("root task done.");
-    return 0;
+    return code;
   }
 
-  private void calcMerkleRoot(String name) {
+  private Ret calcMerkleRoot(String name) {
+    Ret info = new Ret();
     try (DBInterface database = DbTool.getDB(this.db, name)) {
       DBIterator iterator = database.iterator();
       iterator.seekToFirst();
@@ -85,15 +89,33 @@ public class DbRoot implements Callable<Integer> {
           .collect(Collectors.toCollection(ArrayList::new));
       Sha256Hash root = MerkleRoot.root(ids);
       logger.info("db: {},root: {}", database.getName(), root);
-      spec.commandLine().getOut().println(String.format("db: %s,root: %s",
-          database.getName(), root));
+      info.code = 0;
+      info.msg = String.format("db: %s,root: %s", database.getName(), root);
     } catch (RocksDBException | IOException e) {
       logger.error("calc db {} fail", name, e);
+      info.code = 1;
+      info.msg = String.format("db: %s,fail: %s",
+          name, e.getMessage());
     }
+    return info;
   }
 
   private Sha256Hash getHash(Map.Entry<byte[], byte[]> entry) {
     return Sha256Hash.of(true,
         Bytes.concat(entry.getKey(), entry.getValue()));
+  }
+
+  private void printInfo(Ret ret) {
+    if (ret.code == 0) {
+      spec.commandLine().getOut().println(ret.msg);
+    } else {
+      spec.commandLine().getErr().println(spec.commandLine().getColorScheme()
+          .errorText(ret.msg));
+    }
+  }
+
+  private static class Ret {
+    private int code;
+    private String msg;
   }
 }
