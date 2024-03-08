@@ -138,11 +138,11 @@ public class FileStorage {
         }, 1, poolPeriodSec, TimeUnit.SECONDS);
     }
 
-    private void removeDirs(long ttl, File[] streamingDirs) {
+    private void removeDirs(long ttl, File[] streamingDirs) throws IOException {
         for (File dir : streamingDirs) {
             if (dir.lastModified() < ttl) {
                 logger.info("Removing directory, Path: {}", dir.getAbsolutePath());
-                dir.delete();
+                FileUtils.deleteDirectory(dir);
             }
 
             if (dir.isDirectory()) {
