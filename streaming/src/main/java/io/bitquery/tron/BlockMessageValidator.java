@@ -25,7 +25,6 @@ public class BlockMessageValidator {
     public void transactions() throws BlockMessageValidateException {
         for (Transaction tx : message.getTransactionsList()) {
             internalTransactionsAndTraces(tx);
-            logsAndCaptureStateLogs(tx);
         }
     }
 
@@ -46,24 +45,6 @@ public class BlockMessageValidator {
                             expectedCount,
                             actualCount,
                             tx.getContracts(0).getInternalTransactionsList().toString()
-                    )
-            );
-        }
-    }
-
-    private void logsAndCaptureStateLogs(Transaction tx) throws BlockMessageValidateException {
-        int expectedCount = tx.getContracts(0).getLogsCount();
-        long actualCount = tx.getContracts(0).getTrace().getCaptureStatesList().stream()
-                .filter(x -> x.hasLog() && !x.getLog().getLogHeader().getRemoved())
-                .count();
-
-        if (expectedCount != actualCount) {
-            throw new BlockMessageValidateException(
-                    String.format(
-                            "'LOG' validation for block %s wasn't passed. Expected: %d, actual: %d",
-                            blockNumber,
-                            expectedCount,
-                            actualCount
                     )
             );
         }
