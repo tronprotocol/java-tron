@@ -217,6 +217,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] MAX_DELEGATE_LOCK_PERIOD =
       "MAX_DELEGATE_LOCK_PERIOD".getBytes();
 
+  private static final byte[] ALLOW_OLD_REWARD_OPT = "ALLOW_OLD_REWARD_OPT".getBytes();
+
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -2831,6 +2833,21 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public boolean supportMaxDelegateLockPeriod() {
     return (getMaxDelegateLockPeriod() > DELEGATE_PERIOD / BLOCK_PRODUCED_INTERVAL) &&
             getUnfreezeDelayDays() > 0;
+  }
+
+  public void saveAllowOldRewardOpt(long allowOldRewardOpt) {
+    this.put(ALLOW_OLD_REWARD_OPT, new BytesCapsule(ByteArray.fromLong(allowOldRewardOpt)));
+  }
+
+  public boolean allowOldRewardOpt() {
+    return getAllowOldRewardOpt() == 1L;
+  }
+
+  public long getAllowOldRewardOpt() {
+    return Optional.ofNullable(getUnchecked(ALLOW_OLD_REWARD_OPT))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(CommonParameter.getInstance().getAllowOldRewardOpt());
   }
 
   private static class DynamicResourceProperties {

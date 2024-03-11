@@ -498,6 +498,14 @@ public class Wallet {
     Sha256Hash txID = trx.getTransactionId();
     try {
       TransactionMessage message = new TransactionMessage(signedTransaction.toByteArray());
+
+      if (tronNetDelegate.isBlockUnsolidified()) {
+        logger.warn("Broadcast transaction {} has failed, block unsolidified.", txID);
+        return builder.setResult(false).setCode(response_code.BLOCK_UNSOLIDIFIED)
+          .setMessage(ByteString.copyFromUtf8("Block unsolidified."))
+          .build();
+      }
+
       if (minEffectiveConnection != 0) {
         if (tronNetDelegate.getActivePeer().isEmpty()) {
           logger.warn("Broadcast transaction {} has failed, no connection.", txID);
@@ -1320,6 +1328,10 @@ public class Wallet {
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getMaxDelegateLockPeriod")
         .setValue(dbManager.getDynamicPropertiesStore().getMaxDelegateLockPeriod())
+        .build());
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowOldRewardOpt")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowOldRewardOpt())
         .build());
 
     return builder.build();
@@ -4072,6 +4084,9 @@ public class Wallet {
       scalingFactor = ByteUtil.bytesToBigInteger(scalingFactorBytes);
     } catch (ContractExeException e) {
       throw new ContractExeException("Get shielded contract scalingFactor failed");
+    }
+    if (scalingFactor.compareTo(BigInteger.ZERO) <= 0) {
+      throw new ContractValidateException("scalingFactor must be positive");
     }
 
     // fromAmount and toAmount must be a multiple of scalingFactor

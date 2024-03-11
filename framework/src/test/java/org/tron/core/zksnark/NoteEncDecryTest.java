@@ -23,7 +23,6 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 public class NoteEncDecryTest extends BaseTest {
 
   private static final String FROM_ADDRESS;
-  private static final String ADDRESS_ONE_PRIVATE_KEY;
   private static final long OWNER_BALANCE = 100_000_000;
   private static final long FROM_AMOUNT = 110_000_000;
   private static final long tokenId = 1;
@@ -42,7 +41,6 @@ public class NoteEncDecryTest extends BaseTest {
   static {
     Args.setParam(new String[]{"--output-directory", dbPath()}, "config-localtest.conf");
     FROM_ADDRESS = Wallet.getAddressPreFixString() + "a7d8a35b260395c14aa456297662092ba3b76fc0";
-    ADDRESS_ONE_PRIVATE_KEY = "7f7f701e94d4f1dd60ee5205e7ea8ee31121427210417b608a6b2e96433549a7";
   }
 
   /**
