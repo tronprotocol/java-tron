@@ -40,40 +40,17 @@ dependencies {
     //local libraries
     compile fileTree(dir: 'libs', include: '*.jar')
     // end local libraries
-    testCompile group: 'junit', name: 'junit', version: '4.13.2'
-    testCompile group: 'org.mockito', name: 'mockito-core', version: '2.13.0'
     testCompile group: 'org.hamcrest', name: 'hamcrest-junit', version: '1.0.0.1'
     testCompile group: 'com.github.stefanbirkner', name: 'system-rules', version: '1.16.0'
 
-    compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.69'
-
-    compile group: 'com.typesafe', name: 'config', version: '1.3.2'
-
-    compile "com.cedarsoftware:java-util:1.8.0"
-
-    compile group: 'com.beust', name: 'jcommander', version: '1.72'
-
-    compile group: 'junit', name: 'junit', version: '4.13.2'
-
-    compile group: 'net.jcip', name: 'jcip-annotations', version: '1.0'
-
     compile group: 'com.google.inject', name: 'guice', version: '4.1.0'
-
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.8.5'
-
     compile group: 'io.dropwizard.metrics', name: 'metrics-core', version: '3.1.2'
     compile group: 'com.github.davidb', name: 'metrics-influxdb', version: '0.8.2'
-
     compile group: 'com.carrotsearch', name: 'java-sizeof', version: '0.0.5'
-
-    //compile 'com.googlecode.cqengine:cqengine:2.12.4'
-    compile group: 'com.google.api.grpc', name: 'proto-google-common-protos', version: '2.15.0'
-
     // http
-    compile 'org.eclipse.jetty:jetty-server:9.4.49.v20220914'
-    compile 'org.eclipse.jetty:jetty-servlet:9.4.49.v20220914'
+    compile 'org.eclipse.jetty:jetty-server:9.4.53.v20231009'
+    compile 'org.eclipse.jetty:jetty-servlet:9.4.53.v20231009'
     compile 'com.alibaba:fastjson:1.2.83'
-    compile group: 'org.apache.httpcomponents', name: 'httpasyncclient', version: '4.1.1'
     // end http
 
     // https://mvnrepository.com/artifact/com.github.briandilley.jsonrpc4j/jsonrpc4j
@@ -239,13 +216,11 @@ createScript(project, 'org.tron.program.SolidityNode', 'SolidityNode')
 createScript(project, 'org.tron.program.FullNode', 'FullNode')
 createScript(project, 'org.tron.program.KeystoreFactory', 'KeystoreFactory')
 createScript(project, 'org.tron.program.DBConvert', 'DBConvert')
-createScript(project, 'org.tron.tool.litefullnode.LiteFullNodeTool', 'LiteFullNodeTool')
 
 def releaseBinary = hasProperty('binaryRelease') ? getProperty('binaryRelease') : 'true'
 def skipSolidity = hasProperty('skipSolidity') ? true : false
 def skipKeystore = hasProperty('skipKeystore') ? true : false
 def skipConvert = hasProperty('skipConvert') ? true : false
-def skipLite = hasProperty('skipLite') ? true : false
 def skipAll = hasProperty('skipAll') ? true : false
 if (releaseBinary == 'true') {
     artifacts {
@@ -263,10 +238,6 @@ if (releaseBinary == 'true') {
         if (!skipConvert) {
             artifacts {
                 archives(binaryRelease('buildDBConvertJar', 'DBConvert', 'org.tron.program.DBConvert'))}
-        }
-        if (!skipLite) {
-            artifacts {
-                archives(binaryRelease('buildLiteFullNodeToolJar', 'LiteFullNodeTool', 'org.tron.tool.litefullnode.LiteFullNodeTool'))}
         }
     }
 

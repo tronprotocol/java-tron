@@ -546,11 +546,11 @@ Transaction and transaction-related messages.
   
   message `raw`
   
-   `ref_block_bytes`: Deprecated.
+   `ref_block_bytes`: intercepted part of the now block bytes in transaction head.
   
-   `ref_block_num`: now block number in transaction head.
+   `ref_block_num`: Deprecated.
   
-   `ref_block_hash`: now block hash in transaction head.
+   `ref_block_hash`:intercepted part of the now block hash in transaction head..
   
    `expiration`: the expiration time in transaction head.
   
@@ -565,15 +565,15 @@ Transaction and transaction-related messages.
    ```java
   message raw {
       bytes ref_block_bytes = 1;
-    int64 ref_block_num = 3;
+      int64 ref_block_num = 3;
       bytes ref_block_hash = 4;
-    int64 expiration = 8;
+      int64 expiration = 8;
       repeated authority auths = 9;
-    bytes data = 10;
+      bytes data = 10;
       repeated Contract contract = 11;
-    bytes scripts = 12;
+      bytes scripts = 12;
       int64 timestamp = 14;
-    int64 fee_limit = 18;
+      int64 fee_limit = 18;
     }
    ```
     

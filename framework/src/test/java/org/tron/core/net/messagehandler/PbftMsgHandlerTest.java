@@ -34,6 +34,7 @@ import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.p2p.P2pConfig;
 import org.tron.p2p.base.Parameter;
 import org.tron.p2p.connection.Channel;
@@ -110,6 +111,14 @@ public class PbftMsgHandlerTest {
     Param.getInstance().setPbftInterface(context.getBean(PbftBaseImpl.class));
     peer.setNeedSyncFromPeer(false);
     //Mockito.doNothing().when(pbftMessage).analyzeSignature();
+    try {
+      context.getBean(PbftMsgHandler.class).processMessage(peer, pbftMessage);
+    } catch (P2pException e) {
+      Assert.assertEquals(P2pException.TypeEnum.BAD_MESSAGE, e.getType());
+    }
+
+    DynamicPropertiesStore dynamicPropertiesStore = context.getBean(DynamicPropertiesStore.class);
+    dynamicPropertiesStore.saveAllowPBFT(1);
     try {
       context.getBean(PbftMsgHandler.class).processMessage(peer, pbftMessage);
     } catch (P2pException e) {

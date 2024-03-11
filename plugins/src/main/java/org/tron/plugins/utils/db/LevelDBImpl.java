@@ -2,6 +2,7 @@ package org.tron.plugins.utils.db;
 
 import com.google.common.collect.Streams;
 import java.io.IOException;
+import lombok.Getter;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.ReadOptions;
 
@@ -10,8 +11,12 @@ public class LevelDBImpl implements DBInterface {
 
   private DB leveldb;
 
-  public LevelDBImpl(DB leveldb) {
+  @Getter
+  private final String name;
+
+  public LevelDBImpl(DB leveldb, String name) {
     this.leveldb = leveldb;
+    this.name = name;
   }
 
   @Override
