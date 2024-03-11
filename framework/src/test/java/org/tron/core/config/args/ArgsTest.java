@@ -99,8 +99,8 @@ public class ArgsTest {
     Assert.assertEquals(0, parameter.getActiveNodes().size());
     Assert.assertEquals(30, parameter.getMaxConnections());
     Assert.assertEquals(43, parameter.getNodeP2pVersion());
-    Assert.assertEquals(1000, parameter.getMaxUnsolidifiedBlocks());
-    Assert.assertEquals(true, parameter.isUnsolidifiedBlockCheck());
+    Assert.assertEquals(54, parameter.getMaxUnsolidifiedBlocks());
+    Assert.assertEquals(false, parameter.isUnsolidifiedBlockCheck());
     //Assert.assertEquals(30, args.getSyncNodeCount());
 
     // gRPC network configs checking
