@@ -21,7 +21,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.common.io.ByteStreams;
 import com.google.common.primitives.Ints;
-import com.google.protobuf.ByteString;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -40,7 +39,7 @@ import org.bouncycastle.crypto.digests.SM3Digest;
 public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
 
   public static final int LENGTH = 32; // bytes
-  public static final Sha256Hash ZERO_HASH = wrap(new byte[LENGTH]);
+
   private final byte[] bytes;
 
   /**
@@ -183,13 +182,6 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
    */
   public byte[] getBytes() {
     return bytes;
-  }
-
-  /**
-   * For pb return ByteString.
-   */
-  public ByteString getByteString() {
-    return ByteString.copyFrom(bytes);
   }
 
 

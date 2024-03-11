@@ -262,7 +262,7 @@ public class PbftMessageHandle {
   }
 
   //Cleanup related status
-  private synchronized void remove(String no) {
+  private void remove(String no) {
     String pre = String.valueOf(no) + "_";
     preVotes.remove(no);
     pareVoteMap.keySet().removeIf(vp -> StringUtils.startsWith(vp, pre));
@@ -285,7 +285,7 @@ public class PbftMessageHandle {
     //just try once
     if (srPbftMessage != null && StringUtils.equals(no, srPbftMessage.getNo())) {
       try {
-        wait(100);
+        Thread.sleep(100);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
       } catch (Exception e) {

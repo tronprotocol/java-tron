@@ -117,8 +117,8 @@ public class DbLiteTest {
     cli.execute(argsForSnapshot);
     // start fullNode
     startApp();
-    // produce transactions
-    generateSomeTransactions(checkpointVersion == 1 ? 6 : 18);
+    // produce transactions for 6 seconds
+    generateSomeTransactions(6);
     // stop the node
     shutdown();
     // generate history
@@ -139,7 +139,7 @@ public class DbLiteTest {
     }
     // start and validate the snapshot
     startApp();
-    generateSomeTransactions(checkpointVersion == 1 ? 18 : 6);
+    generateSomeTransactions(6);
     // stop the node
     shutdown();
     // merge history

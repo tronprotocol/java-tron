@@ -64,10 +64,8 @@ public class NativeMessageQueue {
     }
 
     try {
-      synchronized (this) {
-        publisher.sendMore(topic);
-        publisher.send(data);
-      }
+      publisher.sendMore(topic);
+      publisher.send(data);
     } catch (RuntimeException e) {
       logger.error("write data to zeromq failed, data:{}, topic:{}, error:{}", data, topic,
           e.getMessage());

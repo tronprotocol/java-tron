@@ -176,7 +176,7 @@ public class CommonParameter {
   public int nodeListenPort;
   @Getter
   @Setter
-  public String nodeLanIp;
+  public String nodeDiscoveryBindIp;
   @Getter
   @Setter
   public String nodeExternalIp;
@@ -253,9 +253,6 @@ public class CommonParameter {
   @Getter
   @Setter
   public int maxHeaderListSize;
-  @Getter
-  @Setter
-  public boolean isRpcReflectionServiceEnable;
   @Getter
   @Setter
   @Parameter(names = {"--validate-sign-thread"}, description = "Num of validate thread")
@@ -653,18 +650,6 @@ public class CommonParameter {
   @Getter
   @Setter
   public long allowCancelAllUnfreezeV2;
-
-  @Getter
-  @Setter
-  public boolean unsolidifiedBlockCheck;
-
-  @Getter
-  @Setter
-  public int maxUnsolidifiedBlocks;
-
-  @Getter
-  @Setter
-  public long allowOldRewardOpt;
 
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));

@@ -59,11 +59,11 @@ public class RpcApiAccessInterceptorTest {
     Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
     Args.getInstance().setRpcOnSolidityPort(PublicMethod.chooseRandomPort());
     Args.getInstance().setRpcOnPBFTPort(PublicMethod.chooseRandomPort());
-    String fullNode = String.format("%s:%d", Args.getInstance().getNodeLanIp(),
+    String fullNode = String.format("%s:%d", Args.getInstance().getNodeDiscoveryBindIp(),
         Args.getInstance().getRpcPort());
-    String solidityNode = String.format("%s:%d", Args.getInstance().getNodeLanIp(),
+    String solidityNode = String.format("%s:%d", Args.getInstance().getNodeDiscoveryBindIp(),
         Args.getInstance().getRpcOnSolidityPort());
-    String pBFTNode = String.format("%s:%d", Args.getInstance().getNodeLanIp(),
+    String pBFTNode = String.format("%s:%d", Args.getInstance().getNodeDiscoveryBindIp(),
         Args.getInstance().getRpcOnPBFTPort());
 
     ManagedChannel channelFull = ManagedChannelBuilder.forTarget(fullNode)

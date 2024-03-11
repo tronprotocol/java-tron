@@ -48,7 +48,6 @@ public class ArgsTest {
     RateLimiterInitialization rateLimiter = Args.getInstance().getRateLimiterInitialization();
     Assert.assertEquals(rateLimiter.getHttpMap().size(), 1);
     Assert.assertEquals(rateLimiter.getRpcMap().size(), 0);
-    Assert.assertTrue(Args.getInstance().isRpcReflectionServiceEnable());
   }
 
   @Test

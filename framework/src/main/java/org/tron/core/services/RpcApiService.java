@@ -8,7 +8,6 @@ import com.google.protobuf.ProtocolStringList;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.netty.NettyServerBuilder;
-import io.grpc.protobuf.services.ProtoReflectionService;
 import io.grpc.stub.StreamObserver;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -89,7 +88,6 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BadItemException;
-import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonUniqueObjectException;
@@ -251,10 +249,6 @@ public class RpcApiService extends RpcService {
 
       // add lite fullnode query interceptor
       serverBuilder.intercept(liteFnQueryGrpcInterceptor);
-
-      if (parameter.isRpcReflectionServiceEnable()) {
-        serverBuilder.addService(ProtoReflectionService.newInstance());
-      }
 
       apiServer = serverBuilder.build();
       rateLimiterInterceptor.init(apiServer);
@@ -2476,13 +2470,9 @@ public class RpcApiService extends RpcService {
         ShieldedTRC20Parameters shieldedTRC20Parameters = wallet
             .createShieldedContractParameters(request);
         responseObserver.onNext(shieldedTRC20Parameters);
-      } catch (ZksnarkException | ContractValidateException | ContractExeException e) {
-        responseObserver.onError(getRunTimeException(e));
-        logger.info("createShieldedContractParameters: {}", e.getMessage());
-        return;
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
-        logger.error("createShieldedContractParameters: ", e);
+        logger.info("createShieldedContractParameters exception caught: " + e.getMessage());
         return;
       }
       responseObserver.onCompleted();
@@ -2523,13 +2513,9 @@ public class RpcApiService extends RpcService {
             request.getNk().toByteArray(),
             request.getEventsList());
         responseObserver.onNext(decryptNotes);
-      } catch (BadItemException | ZksnarkException e) {
-        responseObserver.onError(getRunTimeException(e));
-        logger.info("scanShieldedTRC20NotesByIvk: {}", e.getMessage());
-        return;
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
-        logger.error("scanShieldedTRC20NotesByIvk:", e);
+        logger.info("scanShieldedTRC20NotesByIvk exception caught: " + e.getMessage());
         return;
       }
       responseObserver.onCompleted();

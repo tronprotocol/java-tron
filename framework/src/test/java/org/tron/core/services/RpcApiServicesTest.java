@@ -138,11 +138,11 @@ public class RpcApiServicesTest {
     getInstance().setRpcPort(PublicMethod.chooseRandomPort());
     getInstance().setRpcOnSolidityPort(PublicMethod.chooseRandomPort());
     getInstance().setRpcOnPBFTPort(PublicMethod.chooseRandomPort());
-    String fullNode = String.format("%s:%d", getInstance().getNodeLanIp(),
+    String fullNode = String.format("%s:%d", getInstance().getNodeDiscoveryBindIp(),
         getInstance().getRpcPort());
-    String solidityNode = String.format("%s:%d", getInstance().getNodeLanIp(),
+    String solidityNode = String.format("%s:%d", getInstance().getNodeDiscoveryBindIp(),
         getInstance().getRpcOnSolidityPort());
-    String pBFTNode = String.format("%s:%d", getInstance().getNodeLanIp(),
+    String pBFTNode = String.format("%s:%d", getInstance().getNodeDiscoveryBindIp(),
         getInstance().getRpcOnPBFTPort());
 
     ManagedChannel channelFull = ManagedChannelBuilder.forTarget(fullNode)

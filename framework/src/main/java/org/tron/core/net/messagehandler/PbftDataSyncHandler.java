@@ -1,7 +1,5 @@
 package org.tron.core.net.messagehandler;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Sets;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -10,11 +8,12 @@ import java.io.Closeable;
 import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -38,9 +37,7 @@ import org.tron.protos.Protocol.PBFTMessage.Raw;
 @Service
 public class PbftDataSyncHandler implements TronMsgHandler, Closeable {
 
-  private static final Cache<Long, PbftCommitMessage> pbftCommitMessageCache =
-      CacheBuilder.newBuilder().initialCapacity(100).maximumSize(200)
-          .expireAfterWrite(10, TimeUnit.MINUTES).build();
+  private Map<Long, PbftCommitMessage> pbftCommitMessageCache = new ConcurrentHashMap<>();
 
   private final String esName = "valid-header-pbft-sign";
 
@@ -54,9 +51,6 @@ public class PbftDataSyncHandler implements TronMsgHandler, Closeable {
   public void processMessage(PeerConnection peer, TronMessage msg) throws P2pException {
     PbftCommitMessage pbftCommitMessage = (PbftCommitMessage) msg;
     try {
-      if (!chainBaseManager.getDynamicPropertiesStore().allowPBFT()) {
-        return;
-      }
       Raw raw = Raw.parseFrom(pbftCommitMessage.getPBFTCommitResult().getData());
       pbftCommitMessageCache.put(raw.getViewN(), pbftCommitMessage);
     } catch (InvalidProtocolBufferException e) {
@@ -70,8 +64,7 @@ public class PbftDataSyncHandler implements TronMsgHandler, Closeable {
         return;
       }
       long epoch = 0;
-      PbftCommitMessage pbftCommitMessage = pbftCommitMessageCache.getIfPresent(block.getNum());
-      pbftCommitMessageCache.invalidate(block.getNum());
+      PbftCommitMessage pbftCommitMessage = pbftCommitMessageCache.remove(block.getNum());
       long maintenanceTimeInterval = chainBaseManager.getDynamicPropertiesStore()
           .getMaintenanceTimeInterval();
       if (pbftCommitMessage == null) {
@@ -82,8 +75,7 @@ public class PbftDataSyncHandler implements TronMsgHandler, Closeable {
         Raw raw = Raw.parseFrom(pbftCommitMessage.getPBFTCommitResult().getData());
         epoch = raw.getEpoch();
       }
-      pbftCommitMessage = pbftCommitMessageCache.getIfPresent(epoch);
-      pbftCommitMessageCache.invalidate(epoch);
+      pbftCommitMessage = pbftCommitMessageCache.remove(epoch);
       if (pbftCommitMessage != null) {
         processPBFTCommitMessage(pbftCommitMessage);
       }
