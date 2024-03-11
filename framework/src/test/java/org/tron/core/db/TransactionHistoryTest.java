@@ -59,4 +59,11 @@ public class TransactionHistoryTest extends BaseTest {
     Assert.assertEquals(ByteArray.toHexString(transactionId),
         ByteArray.toHexString(resultCapsule.getId()));
   }
+
+  @Test
+  public void testDelete() throws BadItemException {
+    transactionHistoryStore.delete(transactionId);
+    TransactionInfoCapsule transactionInfoCapsule = transactionHistoryStore.get(transactionId);
+    Assert.assertNull(transactionInfoCapsule);
+  }
 }

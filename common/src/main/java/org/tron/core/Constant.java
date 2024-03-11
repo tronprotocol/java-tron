@@ -151,6 +151,8 @@ public class Constant {
 
   public static final String NODE_RPC_MAX_HEADER_LIST_SIZE = "node.rpc.maxHeaderListSize";
 
+  public static final String NODE_RPC_REFLECTION_SERVICE = "node.rpc.reflectionService";
+
   public static final String NODE_OPEN_HISTORY_QUERY_WHEN_LITEFN = "node.openHistoryQueryWhenLiteFN";
 
   public static final String BLOCK_MAINTENANCE_TIME_INTERVAL = "block.maintenanceTimeInterval";
@@ -279,8 +281,6 @@ public class Constant {
   public static final String EVENT_SUBSCRIBE_CONTRACT_ADDRESS = "event.subscribe.filter.contractAddress";
   public static final String EVENT_SUBSCRIBE_CONTRACT_TOPIC = "event.subscribe.filter.contractTopic";
 
-  public static final String NODE_DISCOVERY_BIND_IP = "node.discovery.bind.ip";
-
   public static final String NODE_DISCOVERY_EXTERNAL_IP = "node.discovery.external.ip";
 
   public static final String NODE_BACKUP_PRIORITY = "node.backup.priority";
@@ -371,4 +371,9 @@ public class Constant {
   public static final String DYNAMIC_CONFIG_CHECK_INTERVAL = "node.dynamicConfig.checkInterval";
 
   public static final String COMMITTEE_ALLOW_TVM_SHANGHAI = "committee.allowTvmShangHai";
+
+  public static final String UNSOLIDIFIED_BLOCK_CHECK = "node.unsolidifiedBlockCheck";
+
+  public static final String MAX_UNSOLIDIFIED_BLOCKS = "node.maxUnsolidifiedBlocks";
+  public static final String COMMITTEE_ALLOW_OLD_REWARD_OPT = "committee.allowOldRewardOpt";
 }
