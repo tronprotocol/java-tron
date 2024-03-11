@@ -597,7 +597,7 @@ public class ManagerTest extends BlockGenerate {
         ByteString.copyFrom(address), "www.tron.net/first");
     sr1.setVoteCount(1000000000L);
 
-        
+
     byte[] privateKey2 = ByteArray.fromHexString(key2);
     final ECKey ecKey2 = ECKey.fromPrivate(privateKey2);
     byte[] address2 = ecKey2.getAddress();
