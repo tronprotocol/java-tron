@@ -10,7 +10,6 @@ import org.tron.common.BaseTest;
 import org.tron.core.Constant;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.config.args.Args;
-import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.ExchangeStore;
 import org.tron.protos.Protocol;
 
@@ -49,30 +48,6 @@ public class ExchangeStoreTest extends BaseTest {
     final ExchangeCapsule result = exchangeStore.get(exchangeKey1);
     Assert.assertNotNull(result);
     Assert.assertEquals(result.getID(), 1);
-  }
-
-  @Test
-  public void testPut() throws ItemNotFoundException {
-    Protocol.Exchange.Builder builder = Protocol.Exchange.newBuilder();
-    builder.setExchangeId(1L).setCreatorAddress(ByteString.copyFromUtf8("Address1"));
-    ExchangeCapsule exchangeCapsule = new ExchangeCapsule(builder.build());
-    exchangeKey1 = exchangeCapsule.createDbKey();
-    chainBaseManager.getExchangeStore().put(exchangeKey1, exchangeCapsule);
-
-    final ExchangeCapsule result = exchangeStore.get(exchangeKey1);
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.getID(), 1);
-  }
-
-  @Test
-  public void testDelete() throws Exception {
-    final ExchangeCapsule result = exchangeStore.get(exchangeKey1);
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.getID(), 1);
-
-    exchangeStore.delete(exchangeKey1);
-    ExchangeCapsule exchangeCapsule = exchangeStore.getUnchecked(exchangeKey1);
-    Assert.assertNull(exchangeCapsule);
   }
 
   @Test

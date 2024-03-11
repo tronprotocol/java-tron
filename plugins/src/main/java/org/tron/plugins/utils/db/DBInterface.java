@@ -18,6 +18,4 @@ public interface DBInterface extends Closeable {
 
   void close() throws IOException;
 
-  String getName();
-
 }

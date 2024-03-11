@@ -4,15 +4,12 @@ import com.google.protobuf.ByteString;
 import java.math.BigInteger;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.bouncycastle.util.encoders.Hex;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.utils.Pair;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -21,6 +18,7 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.WitnessStore;
+import org.tron.protos.Protocol.Vote;
 
 @Slf4j(topic = "mortgage")
 @Component
@@ -38,9 +36,6 @@ public class MortgageService {
 
   @Setter
   private AccountStore accountStore;
-
-  @Autowired
-  private RewardViCalService rewardViCalService;
 
   public void initStore(WitnessStore witnessStore, DelegationStore delegationStore,
       DynamicPropertiesStore dynamicPropertiesStore, AccountStore accountStore) {
@@ -167,21 +162,21 @@ public class MortgageService {
     return reward + accountCapsule.getAllowance();
   }
 
-  private long computeReward(long cycle, List<Pair<byte[], Long>> votes) {
+  private long computeReward(long cycle, AccountCapsule accountCapsule) {
     long reward = 0;
-    for (Pair<byte[], Long> vote : votes) {
-      byte[] srAddress = vote.getKey();
+    for (Vote vote : accountCapsule.getVotesList()) {
+      byte[] srAddress = vote.getVoteAddress().toByteArray();
       long totalReward = delegationStore.getReward(cycle, srAddress);
-      if (totalReward <= 0) {
-        continue;
-      }
       long totalVote = delegationStore.getWitnessVote(cycle, srAddress);
       if (totalVote == DelegationStore.REMARK || totalVote == 0) {
         continue;
       }
-      long userVote = vote.getValue();
+      long userVote = vote.getVoteCount();
       double voteRate = (double) userVote / totalVote;
       reward += voteRate * totalReward;
+      logger.debug("ComputeReward {}, {}, {}, {}, {}, {}, {}.", cycle,
+          Hex.toHexString(accountCapsule.getAddress().toByteArray()), Hex.toHexString(srAddress),
+          userVote, totalVote, totalReward, reward);
     }
     return reward;
   }
@@ -202,24 +197,23 @@ public class MortgageService {
 
     long reward = 0;
     long newAlgorithmCycle = dynamicPropertiesStore.getNewRewardAlgorithmEffectiveCycle();
-    List<Pair<byte[], Long>> srAddresses = accountCapsule.getVotesList().stream()
-        .map(vote -> new Pair<>(vote.getVoteAddress().toByteArray(), vote.getVoteCount()))
-        .collect(Collectors.toList());
     if (beginCycle < newAlgorithmCycle) {
       long oldEndCycle = Math.min(endCycle, newAlgorithmCycle);
-      reward = getOldReward(beginCycle, oldEndCycle, srAddresses);
+      for (long cycle = beginCycle; cycle < oldEndCycle; cycle++) {
+        reward += computeReward(cycle, accountCapsule);
+      }
       beginCycle = oldEndCycle;
     }
     if (beginCycle < endCycle) {
-      for (Pair<byte[], Long>  vote : srAddresses) {
-        byte[] srAddress = vote.getKey();
+      for (Vote vote : accountCapsule.getVotesList()) {
+        byte[] srAddress = vote.getVoteAddress().toByteArray();
         BigInteger beginVi = delegationStore.getWitnessVi(beginCycle - 1, srAddress);
         BigInteger endVi = delegationStore.getWitnessVi(endCycle - 1, srAddress);
         BigInteger deltaVi = endVi.subtract(beginVi);
         if (deltaVi.signum() <= 0) {
           continue;
         }
-        long userVote = vote.getValue();
+        long userVote = vote.getVoteCount();
         reward += deltaVi.multiply(BigInteger.valueOf(userVote))
             .divide(DelegationStore.DECIMAL_OF_VI_REWARD).longValue();
       }
@@ -262,16 +256,5 @@ public class MortgageService {
   private void sortWitness(List<ByteString> list) {
     list.sort(Comparator.comparingLong((ByteString b) -> getWitnessByAddress(b).getVoteCount())
         .reversed().thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
-  }
-
-  private long getOldReward(long begin, long end, List<Pair<byte[], Long>> votes) {
-    if (dynamicPropertiesStore.allowOldRewardOpt()) {
-      return rewardViCalService.getNewRewardAlgorithmReward(begin, end, votes);
-    }
-    long reward = 0;
-    for (long cycle = begin; cycle < end; cycle++) {
-      reward += computeReward(cycle, votes);
-    }
-    return reward;
   }
 }

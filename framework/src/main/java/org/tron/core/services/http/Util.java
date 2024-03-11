@@ -475,7 +475,7 @@ public class Util {
   }
 
   public static void processError(Exception e, HttpServletResponse response) {
-    logger.debug(e.getMessage(), e);
+    logger.debug("Exception: {}", e.getMessage());
     try {
       response.getWriter().println(Util.printErrorMsg(e));
     } catch (IOException ioe) {
