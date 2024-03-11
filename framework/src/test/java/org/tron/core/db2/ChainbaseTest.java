@@ -1,5 +1,6 @@
 package org.tron.core.db2;
 
+import com.google.common.collect.Streams;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -82,6 +83,7 @@ public class ChainbaseTest {
     testDb(chainbase);
     testRoot(dataSource);
     chainbase.reset();
+    Assert.assertFalse(chainbase.iterator().hasNext());
     chainbase.close();
   }
 
@@ -95,6 +97,7 @@ public class ChainbaseTest {
     testDb(chainbase);
     testRoot(dataSource);
     chainbase.reset();
+    Assert.assertEquals(0, Streams.stream(chainbase.iterator()).count());
     chainbase.close();
   }
 

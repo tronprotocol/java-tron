@@ -115,8 +115,7 @@ public class Chainbase implements IRevokingDB {
   @Override
   public synchronized void reset() {
     head().reset();
-    head().close();
-    head = head.getRoot().newInstance();
+    head = head.getRoot();
   }
 
   @Override

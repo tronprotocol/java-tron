@@ -75,6 +75,7 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
 
   // add a persistent storage, the store name is: trans-cache
   // when fullnode startup, transactionCache initializes transactions from this store
+  @Getter
   private DB<byte[], byte[]> persistentStore;
 
   // replace persistentStore and optimizes startup performance
