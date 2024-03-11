@@ -2,6 +2,7 @@ package io.bitquery.tron;
 
 import com.google.protobuf.ByteString;
 import io.bitquery.protos.EvmMessage.Trace;
+import lombok.Getter;
 import org.tron.common.runtime.vm.DataWord;
 import io.bitquery.protos.EvmMessage.Contract;
 import io.bitquery.protos.EvmMessage.CaptureFault;
@@ -18,7 +19,6 @@ import io.bitquery.protos.EvmMessage.CaptureEnter;
 import io.bitquery.protos.EvmMessage.AddressCode;
 import io.bitquery.protos.EvmMessage.CaptureEnd;
 import io.bitquery.protos.EvmMessage.CaptureStart;
-import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.vm.Op;
 
@@ -35,9 +35,10 @@ public class EvmMessageBuilder {
     private int enterIndex;
     private int exitIndex;
 
-    // Stores a list of captureStates indexes where the log is stored.
-    // In case the transaction failed, we run through this index and remove the log from captureState.
-    private List<Integer> captureStateLogIndexes;
+    @Getter
+    private List<Log> collectedLogs;
+
+    private CaptureState currentCaptureState;
 
     public EvmMessageBuilder() {
         this.messageBuilder = Trace.newBuilder();
@@ -46,7 +47,8 @@ public class EvmMessageBuilder {
         this.enterIndex = 0;
         this.exitIndex = 0;
 
-        this.captureStateLogIndexes = new ArrayList<>();
+        this.collectedLogs = new ArrayList<>();
+        this.currentCaptureState = null;
     }
 
     public Trace getMessage() {
@@ -123,11 +125,16 @@ public class EvmMessageBuilder {
 
         CaptureState captureState = CaptureState.newBuilder()
                 .setCaptureStateHeader(header)
-//                .setLog()
-//                .setStore()
                 .build();
 
-        this.messageBuilder.addCaptureStates(captureState);
+        this.currentCaptureState = captureState;
+
+        if (call != null) {
+            this.call = call.toBuilder().addCaptureStates(currentCaptureState).build();
+            return;
+        }
+
+        this.messageBuilder.addCaptureStates(currentCaptureState);
     }
 
     public void captureFault(int opcodeNum, String opcodeName, long energy, Stack<DataWord> stackData, byte[] callerData, byte[] contractData, byte[] callValueData, int pc, byte[] memory, int callDepth, RuntimeException error) {
@@ -166,67 +173,43 @@ public class EvmMessageBuilder {
     public void addLogToCaptureState(byte[] address, byte[] data, List<DataWord> topicsData, byte[] code) {
         AddressCode addressCode = addressCode(code);
 
-        int lastIndex = this.messageBuilder.getCaptureStatesCount() - 1;
-        if (lastIndex == -1) {
-            return;
-        }
-
         LogHeader logHeader = LogHeader.newBuilder()
                 .setAddress(ByteString.copyFrom(address))
                 .setData(ByteString.copyFrom(data))
                 .setAddressCode(addressCode)
                 .build();
 
-        Log.Builder log = Log.newBuilder().setLogHeader(logHeader);
+        Log.Builder log = buildLog(logHeader, topicsData);
 
-        int index = 0;
-        for (DataWord topicData : topicsData) {
-            Topic topic = Topic.newBuilder()
-                    .setIndex(index)
-                    .setHash(ByteString.copyFrom(topicData.getData()))
-                    .build();
+        this.currentCaptureState = currentCaptureState.toBuilder().setLog(log).build();
 
-            log.addTopics(topic);
-
-            index++;
+        if (call != null) {
+            int lastCaptureStateIndex = call.getCaptureStatesCount() - 1;
+            this.call = call.toBuilder().setCaptureStates(lastCaptureStateIndex, currentCaptureState).build();
+        } else {
+            int lastCaptureStateIndex = messageBuilder.getCaptureStatesCount() - 1;
+            this.messageBuilder.setCaptureStates(lastCaptureStateIndex, currentCaptureState);
         }
 
-        CaptureState captureStateWithLog = this.messageBuilder.getCaptureStates(lastIndex).toBuilder()
-                .setLog(log)
-                .build();
-
-        this.captureStateLogIndexes.add(lastIndex);
-
-        this.messageBuilder.setCaptureStates(lastIndex, captureStateWithLog);
-    }
-
-    public int getLogsCount() {
-        return captureStateLogIndexes.size();
-    }
-
-    public void addRemovedFlagToLogs() {
-        for (int index : captureStateLogIndexes) {
-            this.messageBuilder.getCaptureStatesBuilder(index).getLogBuilder().getLogHeaderBuilder().setRemoved(true);
-        }
+        this.collectedLogs.add(log.build());
     }
 
     public void addStorageToCaptureState(byte[] address, byte[] loc, byte[] value) {
-        int lastIndex = this.messageBuilder.getCaptureStatesCount() - 1;
-        if (lastIndex == -1) {
-            return;
-        }
-
         Store store = Store.newBuilder()
                 .setAddress(ByteString.copyFrom(address))
                 .setLocation(ByteString.copyFrom(loc))
                 .setValue(ByteString.copyFrom(value))
                 .build();
 
-        CaptureState captureStateWithStore = this.messageBuilder.getCaptureStates(lastIndex).toBuilder()
-                .setStore(store)
-                .build();
+        this.currentCaptureState = currentCaptureState.toBuilder().setStore(store).build();
 
-        this.messageBuilder.setCaptureStates(lastIndex, captureStateWithStore);
+        if (call != null) {
+            int lastCaptureStateIndex = call.getCaptureStatesCount() - 1;
+            this.call = call.toBuilder().setCaptureStates(lastCaptureStateIndex, currentCaptureState).build();
+        } else {
+            int lastCaptureStateIndex = messageBuilder.getCaptureStatesCount() - 1;
+            this.messageBuilder.setCaptureStates(lastCaptureStateIndex, currentCaptureState);
+        }
     }
 
     private void setCaptureEnter(ByteString from, ByteString to, ByteString data, long energy, ByteString value, Opcode opcode, AddressCode addressCodeTo) {
@@ -290,6 +273,24 @@ public class EvmMessageBuilder {
         } else {
             this.call = null;
         }
+    }
+
+    private Log.Builder buildLog(LogHeader header, List<DataWord> topicsData) {
+        Log.Builder log = Log.newBuilder().setLogHeader(header);
+
+        int index = 0;
+        for (DataWord topicData : topicsData) {
+            Topic topic = Topic.newBuilder()
+                    .setIndex(index)
+                    .setHash(ByteString.copyFrom(topicData.getData()))
+                    .build();
+
+            log.addTopics(topic);
+
+            index++;
+        }
+
+        return log;
     }
 
     private Opcode opcode(int code, String name) {

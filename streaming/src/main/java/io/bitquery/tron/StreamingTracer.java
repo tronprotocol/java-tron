@@ -92,11 +92,13 @@ public class StreamingTracer implements Tracer {
     public void transactionEnd(Message protobufResultMessage, boolean isPending) {
         try {
             TransactionInfo txInfo = TransactionInfo.parseFrom(protobufResultMessage.toByteArray());
-            currentTransaction.get().buildTxEndMessage(txInfo);
+            EvmMessageBuilder trace = currentTrace.get();
 
-            checkLogs();
+            currentTransaction.get().buildTxEndMessage(txInfo, trace.getCollectedLogs());
 
-            currentTransaction.get().addTrace(currentTrace.get().getMessage());
+            addRemovedFlagToLogs(txInfo.getLogCount(), trace.getCollectedLogs().size());
+
+            currentTransaction.get().addTrace(trace.getMessage());
 
             if (isPending) {
                 long nanoseconds = Instant.now().toEpochMilli() * 1_000_000L;
@@ -197,12 +199,9 @@ public class StreamingTracer implements Tracer {
         }
     }
 
-    private void checkLogs() {
-        int initialLogsCount = currentTransaction.get().getMessage().getContracts(0).getLogsCount();
-        int collectedLogsCount = currentTrace.get().getLogsCount();
-
-        if (initialLogsCount == 0 && initialLogsCount != collectedLogsCount) {
-            currentTrace.get().addRemovedFlagToLogs();
+    private void addRemovedFlagToLogs(int nodeLogsCount, int collectedLogsCount) {
+        if (nodeLogsCount == 0 && nodeLogsCount != collectedLogsCount) {
+            currentTransaction.get().addRemovedFlagToLogs();
         }
     }
 

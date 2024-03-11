@@ -43,9 +43,9 @@ public class TransactionMessageBuilder {
           this.messageBuilder.setHeader(header).addAllContracts(contracts).build();
      }
 
-     public void buildTxEndMessage(TransactionInfo txInfo) {
+     public void buildTxEndMessage(TransactionInfo txInfo, List<EvmMessage.Log> log) {
           TransactionHeader mergedTxHeader = getTxEndTxHeader(txInfo);
-          Contract mergedTxContract = getTxEndTxContract(txInfo);
+          Contract mergedTxContract = getTxEndTxContract(txInfo, log);
 
           TransactionResult result = getTransactionResult(txInfo);
           Receipt receipt = getTransactionReceipt(txInfo);
@@ -73,6 +73,14 @@ public class TransactionMessageBuilder {
           this.messageBuilder.setContracts(0, newContract);
      }
 
+    public void addRemovedFlagToLogs() {
+         List<EvmMessage.Log.Builder> logs = messageBuilder.getContractsBuilder(0).getLogsBuilderList();
+
+         for (EvmMessage.Log.Builder log : logs) {
+              log.getLogHeaderBuilder().setRemoved(true);
+         }
+    }
+
      private TransactionHeader getTxEndTxHeader(TransactionInfo txInfo) {
           TransactionHeader mergedTxHeader = messageBuilder.getHeader().toBuilder()
                   .setId(txInfo.getId())
@@ -82,15 +90,14 @@ public class TransactionMessageBuilder {
           return mergedTxHeader;
      }
 
-     private Contract getTxEndTxContract(TransactionInfo txInfo) {
+     private Contract getTxEndTxContract(TransactionInfo txInfo, List<EvmMessage.Log> log) {
           List<InternalTransaction> internalTransactions = getInternalTransactions(txInfo);
-          List<EvmMessage.Log> logs = getLogs(txInfo);
 
           Contract mergedTxContract = messageBuilder.getContracts(0).toBuilder()
                   .setAddress(txInfo.getContractAddress())
                   .addAllExecutionResults(txInfo.getContractResultList())
                   .addAllInternalTransactions(internalTransactions)
-                  .addAllLogs(logs)
+                  .addAllLogs(log)
                   .build();
 
           return mergedTxContract;
@@ -186,39 +193,6 @@ public class TransactionMessageBuilder {
                   .build();
 
           return receipt;
-     }
-
-     private List<EvmMessage.Log> getLogs(TransactionInfo txInfo) {
-          List<EvmMessage.Log> logs = new ArrayList();
-
-          int index = 0;
-          for (TransactionInfo.Log txInfoLog : txInfo.getLogList()) {
-               EvmMessage.LogHeader header = EvmMessage.LogHeader.newBuilder()
-                       .setAddress(txInfoLog.getAddress())
-                       .setData(txInfoLog.getData())
-                       .setIndex(index)
-                       .build();
-
-               EvmMessage.Log.Builder log = EvmMessage.Log.newBuilder().setLogHeader(header);
-
-               int topicIndex = 0;
-               for (ByteString topicData : txInfoLog.getTopicsList()) {
-                    EvmMessage.Topic topic = EvmMessage.Topic.newBuilder()
-                            .setIndex(topicIndex)
-                            .setHash(ByteString.copyFrom(Hash.sha3(topicData)))
-                            .build();
-
-                    log.addTopics(topic);
-
-                    topicIndex++;
-               }
-
-               logs.add(log.build());
-
-               index++;
-          }
-
-          return logs;
      }
 
      private List<InternalTransaction> getInternalTransactions(TransactionInfo txInfo) {
