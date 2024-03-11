@@ -59,7 +59,7 @@ public class DbRootTest {
         errorDb.put(("" + i).getBytes(), (ERROR_DB + "-" + i).getBytes());
       }
       args = new String[] {"db", "root", database.toString(), "--db", ERROR_DB};
-      Assert.assertEquals(0, cli.execute(args));
+      Assert.assertEquals(1, cli.execute(args));
     }
 
   }
