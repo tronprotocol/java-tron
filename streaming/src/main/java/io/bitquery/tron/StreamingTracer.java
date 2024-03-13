@@ -155,9 +155,9 @@ public class StreamingTracer implements Tracer {
     }
 
     @Override
-    public void captureEnter(byte[] from, byte[] to, byte[] data, long gas, byte[] value, int opCode, byte[] code) {
+    public void captureEnter(byte[] from, byte[] to, byte[] data, long gas, byte[] value, List<byte[]> tokensId, int opCode, byte[] code) {
         try {
-            currentTrace.get().captureEnter(from, to, data, gas, value, opCode, code);
+            currentTrace.get().captureEnter(from, to, data, gas, value, tokensId, opCode, code);
         } catch (Exception e) {
             logger.error("captureEnter failed", e);
         }

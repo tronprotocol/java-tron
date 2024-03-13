@@ -16,10 +16,7 @@ import static org.tron.protos.contract.Common.ResourceCode.UNRECOGNIZED;
 
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
@@ -455,18 +452,27 @@ public class Program {
 
     increaseNonce();
 
+    Map<String, Long> assetsMap = getContractState().getAccount(owner).getAssetMapV2();
+
+    List<byte[]> tokensId = new ArrayList<>();
+    for (Map.Entry<String, Long> asset : assetsMap.entrySet()) {
+      String tokenId = asset.getKey();
+      tokensId.add(tokenId.getBytes());
+    }
+
     TracerManager.getTracer().captureEnter(
             owner,
             obtainer,
             ByteUtil.EMPTY_BYTE_ARRAY,
             0,
             ByteUtil.longTo32Bytes(balance),
+            tokensId,
             Op.SUICIDE,
             getContractState().getCode(obtainer)
     );
 
     InternalTransaction internalTx = addInternalTx(null, owner, obtainer, balance, null,
-        "suicide", nonce, getContractState().getAccount(owner).getAssetMapV2());
+        "suicide", nonce, assetsMap);
 
     if (FastByteComparisons.compareTo(owner, 0, 20, obtainer, 0, 20) == 0) {
       // if owner == obtainer just zeroing account according to Yellow Paper
@@ -780,6 +786,7 @@ public class Program {
     DataWord energyLimit = this.getCreateEnergy(getEnergyLimitLeft());
     spendEnergy(energyLimit.longValue(), "internal call");
 
+    List<byte[]> tokensId = new ArrayList<>();
     int opcode = isCreate2 ? Op.CREATE2 : Op.CREATE;
     TracerManager.getTracer().captureEnter(
             senderAddress,
@@ -787,6 +794,7 @@ public class Program {
             programCode,
             energyLimit.longValue(),
             value.getNoLeadZeroesData(),
+            tokensId,
             opcode,
             getContractState().getCode(newAddress)
     );
@@ -1018,12 +1026,17 @@ public class Program {
       }
     }
 
+    List<byte[]> tokensId = new ArrayList<>();
+    if (isTokenTransfer) {
+      tokensId.add(tokenId);
+    }
     TracerManager.getTracer().captureEnter(
             senderAddress,
             contextAddress,
             data,
             msg.getEnergy().longValue(),
             msg.getEndowment().getNoLeadZeroesData(),
+            tokensId,
             msg.getOpCode(),
             getContractState().getCode(contextAddress)
     );
@@ -1614,6 +1627,22 @@ public class Program {
     }
     byte[] data = this.memoryChunk(msg.getInDataOffs().intValue(),
         msg.getInDataSize().intValue());
+
+    List<byte[]> tokensId = new ArrayList<>();
+    if (isTokenTransfer) {
+      tokensId.add(tokenId);
+    }
+    TracerManager.getTracer().captureEnter(
+            senderAddress,
+            contextAddress,
+            data,
+            msg.getEnergy().longValue(),
+            msg.getEndowment().getNoLeadZeroesData(),
+            tokensId,
+            msg.getOpCode(),
+            getContractState().getCode(contextAddress)
+    );
+
 
     // Charge for endowment - is not reversible by rollback
     if (!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress)

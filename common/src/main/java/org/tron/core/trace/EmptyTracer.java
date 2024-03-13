@@ -35,7 +35,7 @@ public class EmptyTracer implements Tracer {
     public void captureEnd(long energyUsed, RuntimeException error) {}
 
     @Override
-    public void captureEnter(byte[] from, byte[] to, byte[] data, long gas, byte[] value, int opCode, byte[] code) {}
+    public void captureEnter(byte[] from, byte[] to, byte[] data, long gas, byte[] value, List<byte[]> tokensId, int opCode, byte[] code) {}
 
     @Override
     public void captureExit(long energyUsed, RuntimeException error) {}

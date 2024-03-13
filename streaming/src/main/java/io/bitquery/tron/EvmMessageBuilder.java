@@ -80,11 +80,16 @@ public class EvmMessageBuilder {
         this.messageBuilder.setCaptureEnd(captureEnd);
     }
 
-    public void captureEnter(byte[] from, byte[] to, byte[] data, long gas, byte[] value, int opCode, byte[] code) {
+    public void captureEnter(byte[] from, byte[] to, byte[] data, long gas, byte[] value, List<byte[]> tokensId, int opCode, byte[] code) {
         String opcodeName = Op.getNameOf(opCode);
 
 //        byte[] code = program.getContractState().getCode(to);
         AddressCode addressCodeTo = addressCode(code);
+
+        List<ByteString> byteStringTokensId = new ArrayList<>();
+        for (byte[] tokenId : tokensId) {
+            byteStringTokensId.add(ByteString.copyFrom(tokenId));
+        }
 
         Opcode opcode = Opcode.newBuilder()
                 .setCode(opCode)
@@ -97,6 +102,7 @@ public class EvmMessageBuilder {
                 ByteString.copyFrom(data),
                 gas,
                 ByteString.copyFrom(value),
+                byteStringTokensId,
                 opcode,
                 addressCodeTo
         );
@@ -212,7 +218,7 @@ public class EvmMessageBuilder {
         }
     }
 
-    private void setCaptureEnter(ByteString from, ByteString to, ByteString data, long energy, ByteString value, Opcode opcode, AddressCode addressCodeTo) {
+    private void setCaptureEnter(ByteString from, ByteString to, ByteString data, long energy, ByteString value, List<ByteString> tokensId, Opcode opcode, AddressCode addressCodeTo) {
         this.enterIndex += 1;
 
         CaptureEnter captureEnter = CaptureEnter.newBuilder()
@@ -222,6 +228,7 @@ public class EvmMessageBuilder {
                 .setInput(data)
                 .setGas(energy)
                 .setValue(value)
+                .addAllTokenId(tokensId)
                 .setToCode(addressCodeTo)
                 .build();
 
