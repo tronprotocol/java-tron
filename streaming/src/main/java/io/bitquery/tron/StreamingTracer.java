@@ -62,9 +62,6 @@ public class StreamingTracer implements Tracer {
 
             Descriptor descriptor = getDescriptor("blocks");
 
-            BlockMessageValidator validator = new BlockMessageValidator(currentBlock.get().getMessage());
-            validator.validate();
-
             processor.process(descriptor, currentBlock.get().getMessage().toByteArray(), config.getKafkaTopicBlocks());
 
             this.currentBlock.remove();
@@ -112,9 +109,6 @@ public class StreamingTracer implements Tracer {
             }
 
             Descriptor descriptor = getDescriptor("broadcasted");
-
-            BlockMessageValidator validator = new BlockMessageValidator(currentBlock.get().getMessage());
-            validator.validate();
 
             processor.process(descriptor, currentBlock.get().getMessage().toByteArray(), config.getKafkaTopicBroadcasted());
 
