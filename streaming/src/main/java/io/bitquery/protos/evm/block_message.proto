@@ -94,7 +94,7 @@ message ReceiptHeader {
 }
 
 message ReceiptL1Extension {
-	bytes GasPrice = 1;
+  bytes GasPrice = 1;
   bytes GasUsed = 2;
   bytes Fee = 3;
 }
@@ -159,8 +159,9 @@ message CaptureEnter {
 
   uint64 Gas = 5;
   bytes Value = 6;
+  repeated bytes TokenId = 7;
 
-  AddressCode ToCode = 7;
+  AddressCode ToCode = 8;
 }
 
 message CaptureExit {
@@ -254,6 +255,9 @@ message TransactionHeader {
 
   // only applicable for optimism
   optional bytes SourceHash = 21;
+
+  // only applicable to broadcasted
+  optional uint64 Time = 22;
 }
 
 message Transaction {
@@ -261,7 +265,6 @@ message Transaction {
   Signature Signature = 2;
   Receipt Receipt = 3;
   Trace Trace = 4;
-  uint64 Time = 5;
 }
 
 message Chain {
