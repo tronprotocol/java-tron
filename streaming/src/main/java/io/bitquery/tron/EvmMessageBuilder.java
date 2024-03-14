@@ -3,6 +3,7 @@ package io.bitquery.tron;
 import com.google.protobuf.ByteString;
 import io.bitquery.protos.EvmMessage.Trace;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.runtime.vm.DataWord;
 import io.bitquery.protos.EvmMessage.Contract;
 import io.bitquery.protos.EvmMessage.CaptureFault;
@@ -27,6 +28,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Stack;
 
+@Slf4j(topic = "tracer")
 public class EvmMessageBuilder {
     private Trace.Builder messageBuilder;
 
@@ -267,6 +269,7 @@ public class EvmMessageBuilder {
                 .build();
 
         if (this.call == null) {
+            logger.warn("captureExit event can't be set, since there is no call");
             return;
         }
 
