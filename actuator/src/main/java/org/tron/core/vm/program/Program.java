@@ -1702,6 +1702,8 @@ public class Program {
 
       this.memorySave(msg.getOutDataOffs().intValue(), out.getRight());
     }
+
+    TracerManager.getTracer().captureExit(0, null);
   }
 
   public boolean byTestingSuite() {
