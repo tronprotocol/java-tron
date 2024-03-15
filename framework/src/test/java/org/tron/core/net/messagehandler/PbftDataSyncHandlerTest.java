@@ -32,9 +32,6 @@ public class PbftDataSyncHandlerTest {
     Protocol.PBFTMessage.Raw raw = rawBuilder.build();
     PbftSignCapsule pbftSignCapsule = new PbftSignCapsule(raw.toByteString(), new ArrayList<>());
     PbftCommitMessage pbftCommitMessage = new PbftCommitMessage(pbftSignCapsule);
-    pbftDataSyncHandler.processMessage(null, pbftCommitMessage);
-    Assert.assertEquals(Protocol.PBFTMessage.Raw.parseFrom(
-        pbftCommitMessage.getPBFTCommitResult().getData()).getViewN(), 1);
 
     DynamicPropertiesStore dynamicPropertiesStore = Mockito.mock(DynamicPropertiesStore.class);
     PbftSignDataStore pbftSignDataStore = Mockito.mock(PbftSignDataStore.class);
@@ -47,6 +44,10 @@ public class PbftDataSyncHandlerTest {
     Field field = PbftDataSyncHandler.class.getDeclaredField("chainBaseManager");
     field.setAccessible(true);
     field.set(pbftDataSyncHandler, chainBaseManager);
+
+    pbftDataSyncHandler.processMessage(null, pbftCommitMessage);
+    Assert.assertEquals(Protocol.PBFTMessage.Raw.parseFrom(
+        pbftCommitMessage.getPBFTCommitResult().getData()).getViewN(), 1);
 
     pbftDataSyncHandler.processPBFTCommitData(blockCapsule);
     Field field1 = PbftDataSyncHandler.class.getDeclaredField("pbftCommitMessageCache");

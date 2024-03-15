@@ -14,6 +14,7 @@ import static org.tron.core.utils.TransactionUtil.validTokenAbbrName;
 
 import com.google.protobuf.ByteString;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -430,5 +431,23 @@ public class TransactionUtilTest extends BaseTest {
         builder.build().getSerializedSize() - builder2.build().getSerializedSize(), 0L);
     long actual = TransactionUtil.estimateConsumeBandWidthSize(dps, balance);
     Assert.assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testConcurrentToString() throws InterruptedException {
+    Transaction.Builder builder = Transaction.newBuilder();
+    TransactionCapsule trx = new TransactionCapsule(builder.build());
+    List<Thread> threadList = new ArrayList<>();
+    int n = 10;
+    for (int i = 0; i < n; i++) {
+      threadList.add(new Thread(() -> trx.toString()));
+    }
+    for (int i = 0; i < n; i++) {
+      threadList.get(i).start();
+    }
+    for (int i = 0; i < n; i++) {
+      threadList.get(i).join();
+    }
+    Assert.assertTrue(true);
   }
 }
