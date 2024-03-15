@@ -229,8 +229,8 @@ public class Args extends CommonParameter {
     PARAMETER.dynamicConfigEnable = false;
     PARAMETER.dynamicConfigCheckInterval = 600;
     PARAMETER.allowTvmShangHai = 0;
-    PARAMETER.unsolidifiedBlockCheck = true;
-    PARAMETER.maxUnsolidifiedBlocks = 1000;
+    PARAMETER.unsolidifiedBlockCheck = false;
+    PARAMETER.maxUnsolidifiedBlocks = 54;
     PARAMETER.allowOldRewardOpt = 0;
   }
 
@@ -530,6 +530,7 @@ public class Args extends CommonParameter {
     PARAMETER.storage.setDefaultDbOptions(config);
     PARAMETER.storage.setPropertyMapFromConfig(config);
     PARAMETER.storage.setCacheStrategies(config);
+    PARAMETER.storage.setDbRoots(config);
 
     PARAMETER.seedNode = new SeedNode();
     PARAMETER.seedNode.setAddressList(loadSeeds(config));
@@ -1185,16 +1186,24 @@ public class Args extends CommonParameter {
             .getInt(Constant.COMMITTEE_ALLOW_TVM_SHANGHAI) : 0;
 
     PARAMETER.unsolidifiedBlockCheck =
-      !config.hasPath(Constant.UNSOLIDIFIED_BLOCK_CHECK)
-      || config.getBoolean(Constant.UNSOLIDIFIED_BLOCK_CHECK);
+      config.hasPath(Constant.UNSOLIDIFIED_BLOCK_CHECK)
+      && config.getBoolean(Constant.UNSOLIDIFIED_BLOCK_CHECK);
 
     PARAMETER.maxUnsolidifiedBlocks =
       config.hasPath(Constant.MAX_UNSOLIDIFIED_BLOCKS) ? config
-        .getInt(Constant.MAX_UNSOLIDIFIED_BLOCKS) : 1000;
+        .getInt(Constant.MAX_UNSOLIDIFIED_BLOCKS) : 54;
 
-    PARAMETER.allowOldRewardOpt =
-        config.hasPath(Constant.COMMITTEE_ALLOW_OLD_REWARD_OPT) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_OLD_REWARD_OPT) : 0;
+    long allowOldRewardOpt = config.hasPath(Constant.COMMITTEE_ALLOW_OLD_REWARD_OPT) ? config
+        .getInt(Constant.COMMITTEE_ALLOW_OLD_REWARD_OPT) : 0;
+    if (allowOldRewardOpt == 1 && PARAMETER.allowNewRewardAlgorithm != 1
+        && PARAMETER.allowNewReward != 1 && PARAMETER.allowTvmVote != 1) {
+      throw new IllegalArgumentException(
+          "At least one of the following proposals is required to be opened first: "
+          + "committee.allowNewRewardAlgorithm = 1"
+          + " or committee.allowNewReward = 1"
+          + " or committee.allowTvmVote = 1.");
+    }
+    PARAMETER.allowOldRewardOpt = allowOldRewardOpt;
 
     logConfig();
   }

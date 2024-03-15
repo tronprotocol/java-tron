@@ -89,6 +89,7 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonUniqueObjectException;
@@ -2475,7 +2476,7 @@ public class RpcApiService extends RpcService {
         ShieldedTRC20Parameters shieldedTRC20Parameters = wallet
             .createShieldedContractParameters(request);
         responseObserver.onNext(shieldedTRC20Parameters);
-      } catch (ZksnarkException | ContractValidateException e) {
+      } catch (ZksnarkException | ContractValidateException | ContractExeException e) {
         responseObserver.onError(getRunTimeException(e));
         logger.info("createShieldedContractParameters: {}", e.getMessage());
         return;

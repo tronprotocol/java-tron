@@ -1,6 +1,7 @@
 package org.tron.plugins.utils.db;
 
 import java.io.IOException;
+import lombok.Getter;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 
@@ -8,8 +9,12 @@ public class RocksDBImpl implements DBInterface {
 
   private org.rocksdb.RocksDB rocksDB;
 
-  public RocksDBImpl(org.rocksdb.RocksDB rocksDB) {
+  @Getter
+  private final String name;
+
+  public RocksDBImpl(org.rocksdb.RocksDB rocksDB, String name) {
     this.rocksDB = rocksDB;
+    this.name = name;
   }
 
   @Override

@@ -68,4 +68,21 @@ public class DelegationStoreTest extends BaseTest {
     Assert.assertEquals(value, actualValue);
   }
 
+  @Test
+  public void testDelete() {
+    long value = 20_000_000;
+    byte[] key = buildRewardKey(CYCLE, ByteArray.fromHexString("33333333"));
+    delegationStore.put(key, new BytesCapsule(ByteArray
+            .fromLong(20_000_000)));
+
+    BytesCapsule bytesCapsule = delegationStore.get(key);
+    Assert.assertNotNull(bytesCapsule);
+    long actualValue = ByteArray.toLong(bytesCapsule.getData());
+    Assert.assertEquals(value, actualValue);
+
+    delegationStore.delete(key);
+    BytesCapsule bytesCapsule1 = delegationStore.getUnchecked(key);
+    Assert.assertNull(bytesCapsule1.getData());
+  }
+
 }

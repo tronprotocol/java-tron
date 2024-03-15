@@ -1,17 +1,27 @@
 package org.tron.core.capsule.utils;
 
+import com.google.protobuf.ByteString;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.MerkleRoot;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.utils.MerkleTree.Leaf;
 
 @Slf4j
 public class MerkleTreeTest {
+
+  @Rule
+  public ExpectedException exception = ExpectedException.none();
 
   private static List<Sha256Hash> getHash(int hashNum) {
     List<Sha256Hash> hashList = new ArrayList<Sha256Hash>();
@@ -172,5 +182,28 @@ public class MerkleTreeTest {
       Leaf root = tree.getRoot();
       pareTree(root, hashList, maxRank, 0, 0);
     }
+  }
+
+  @Test
+  public void testConcurrent() {
+    Sha256Hash root1 = Sha256Hash.wrap(
+        ByteString.fromHex("6cb38b4f493db8bacf26123cd4253bbfc530c708b97b3747e782f64097c3c482"));
+    Sha256Hash root2 = Sha256Hash.wrap(
+        ByteString.fromHex("4bfc60ea3de4f5d1476f839874df0aba38eec4e524d6fa63f5b19c4bf527eaf3"));
+    List<Sha256Hash> list1 = IntStream.range(0, 10000).mapToObj(i ->
+            Sha256Hash.of(true, ("byte1-" + i).getBytes(StandardCharsets.UTF_8)))
+        .collect(Collectors.toList());
+    List<Sha256Hash> list2 = IntStream.range(0, 10000).mapToObj(i ->
+            Sha256Hash.of(true, ("byte2-" + i).getBytes(StandardCharsets.UTF_8)))
+        .collect(Collectors.toList());
+    Assert.assertEquals(root1, MerkleTree.getInstance().createTree(list1).getRoot().getHash());
+    Assert.assertEquals(root2, MerkleTree.getInstance().createTree(list2).getRoot().getHash());
+    Assert.assertEquals(root1, MerkleRoot.root(list1));
+    Assert.assertEquals(root2, MerkleRoot.root(list2));
+    exception.expect(ArrayIndexOutOfBoundsException.class);
+    IntStream.range(0, 1000).parallel().forEach(i -> Assert.assertEquals(
+        MerkleTree.getInstance().createTree(i % 2 == 0 ? list1 : list2).getRoot().getHash(),
+        MerkleRoot.root(i % 2 == 0 ? list1 : list2))
+    );
   }
 }

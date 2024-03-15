@@ -16,12 +16,6 @@ public interface DBIterator extends Iterator<Entry<byte[], byte[]>>, AutoCloseab
 
   void seekToLast();
 
-  default UnmodifiableIterator<Entry<byte[], byte[]>> prefixQueryAfterThat
-      (byte[] key, byte[] afterThat) {
-    this.seek(afterThat == null ? key : afterThat);
-    return Iterators.filter(this, entry -> Bytes.indexOf(entry.getKey(), key) == 0);
-  }
-
   /**
    * An iterator is either positioned at a key/value pair, or
    * not valid.  This method returns true iff the iterator is valid.

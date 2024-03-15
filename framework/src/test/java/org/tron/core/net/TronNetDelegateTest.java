@@ -20,6 +20,7 @@ public class TronNetDelegateTest {
     Args.setParam(new String[] {"-w"}, Constant.TEST_CONF);
     CommonParameter parameter = Args.getInstance();
     Args.logConfig();
+    parameter.setUnsolidifiedBlockCheck(true);
 
     BlockCapsule.BlockId blockId = new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 10000L);
 

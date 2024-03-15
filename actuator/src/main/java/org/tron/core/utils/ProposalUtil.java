@@ -733,18 +733,18 @@ public class ProposalUtil {
           throw new ContractValidateException(
               "Bad chain parameter id [ALLOW_OLD_REWARD_OPT]");
         }
+        if (dynamicPropertiesStore.allowOldRewardOpt()) {
+          throw new ContractValidateException(
+              "[ALLOW_OLD_REWARD_OPT] has been valid, no need to propose again");
+        }
         if (value != 1) {
           throw new ContractValidateException(
               "This value[ALLOW_OLD_REWARD_OPT] is only allowed to be 1");
         }
         if (!dynamicPropertiesStore.useNewRewardAlgorithm()) {
           throw new ContractValidateException(
-              "[ALLOW_NEW_REWARD] proposal must be approved "
+              "[ALLOW_NEW_REWARD] or [ALLOW_TVM_VOTE] proposal must be approved "
                   + "before [ALLOW_OLD_REWARD_OPT] can be proposed");
-        }
-        if (dynamicPropertiesStore.useNewRewardAlgorithmFromStart()) {
-          throw new ContractValidateException(
-              "no need old reward opt, ALLOW_NEW_REWARD from start cycle 1");
         }
         break;
       }

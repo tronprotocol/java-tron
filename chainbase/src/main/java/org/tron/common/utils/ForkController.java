@@ -78,7 +78,7 @@ public class ForkController {
   private boolean passNew(int version) {
     ForkBlockVersionEnum versionEnum = ForkBlockVersionEnum.getForkBlockVersionEnum(version);
     if (versionEnum == null) {
-      logger.error("Not exist block version: {}.", version);
+      logger.warn("Not exist block version: {}.", version);
       return false;
     }
     long latestBlockTime = manager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();

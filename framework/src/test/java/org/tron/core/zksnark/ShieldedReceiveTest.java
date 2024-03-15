@@ -25,6 +25,7 @@ import org.tron.common.BaseTest;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.client.utils.TransactionUtils;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
@@ -124,8 +125,8 @@ public class ShieldedReceiveTest extends BaseTest {
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath()}, "config-localtest.conf");
-    FROM_ADDRESS = Wallet.getAddressPreFixString() + "a7d8a35b260395c14aa456297662092ba3b76fc0";
-    ADDRESS_ONE_PRIVATE_KEY = "7f7f701e94d4f1dd60ee5205e7ea8ee31121427210417b608a6b2e96433549a7";
+    ADDRESS_ONE_PRIVATE_KEY = PublicMethod.getRandomPrivateKey();
+    FROM_ADDRESS = PublicMethod.getHexAddressByPrivateKey(ADDRESS_ONE_PRIVATE_KEY);;
   }
 
   /**

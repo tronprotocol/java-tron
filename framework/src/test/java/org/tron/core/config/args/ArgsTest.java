@@ -25,7 +25,9 @@ import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
@@ -40,6 +42,9 @@ public class ArgsTest {
   private final String privateKey = PublicMethod.getRandomPrivateKey();
   private String address;
   private LocalWitnesses localWitnesses;
+
+  @Rule
+  public ExpectedException thrown = ExpectedException.none();
 
   @After
   public void destroy() {
@@ -94,8 +99,8 @@ public class ArgsTest {
     Assert.assertEquals(0, parameter.getActiveNodes().size());
     Assert.assertEquals(30, parameter.getMaxConnections());
     Assert.assertEquals(43, parameter.getNodeP2pVersion());
-    Assert.assertEquals(1000, parameter.getMaxUnsolidifiedBlocks());
-    Assert.assertEquals(true, parameter.isUnsolidifiedBlockCheck());
+    Assert.assertEquals(54, parameter.getMaxUnsolidifiedBlocks());
+    Assert.assertEquals(false, parameter.isUnsolidifiedBlockCheck());
     //Assert.assertEquals(30, args.getSyncNodeCount());
 
     // gRPC network configs checking
@@ -137,6 +142,12 @@ public class ArgsTest {
     method2.invoke(Args.class, config3);
 
     Assert.assertNotEquals(configuredExternalIp, parameter.getNodeExternalIp());
+  }
+
+  @Test
+  public void testOldRewardOpt() {
+    thrown.expect(IllegalArgumentException.class);
+    Args.setParam(new String[] {"-w"}, "args-test.conf");
   }
 }
 
