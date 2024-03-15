@@ -4085,6 +4085,9 @@ public class Wallet {
     } catch (ContractExeException e) {
       throw new ContractExeException("Get shielded contract scalingFactor failed");
     }
+    if (scalingFactor.compareTo(BigInteger.ZERO) <= 0) {
+      throw new ContractValidateException("scalingFactor must be positive");
+    }
 
     // fromAmount and toAmount must be a multiple of scalingFactor
     if (!(fromAmount.mod(scalingFactor).equals(BigInteger.ZERO)

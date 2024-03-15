@@ -3,7 +3,6 @@ package org.tron.core.service;
 import static org.tron.core.store.DelegationStore.DECIMAL_OF_VI_REWARD;
 import static org.tron.core.store.DelegationStore.REMARK;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Streams;
 import com.google.common.primitives.Bytes;
 import com.google.protobuf.ByteString;
@@ -17,9 +16,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
-import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,9 +25,9 @@ import org.tron.common.error.TronDBException;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.MerkleRoot;
 import org.tron.common.utils.Pair;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.capsule.utils.MerkleTree;
 import org.tron.core.db.common.iterator.DBIterator;
 import org.tron.core.db2.common.DB;
 import org.tron.core.store.DelegationStore;
@@ -56,10 +53,11 @@ public class RewardViCalService {
 
   private volatile long lastBlockNumber = -1;
 
-  @VisibleForTesting
-  @Setter
-  private Sha256Hash rewardViRoot = Sha256Hash.wrap(
-      ByteString.fromHex("9debcb9924055500aaae98cdee10501c5c39d4daa75800a996f4bdda73dbccd8"));
+  private static final String MAIN_NET_ROOT_HEX =
+      "9debcb9924055500aaae98cdee10501c5c39d4daa75800a996f4bdda73dbccd8";
+
+  private final Sha256Hash rewardViRoot = CommonParameter.getInstance().getStorage().getDbRoot(
+      "reward-vi", Sha256Hash.wrap(ByteString.fromHex(MAIN_NET_ROOT_HEX)));
 
   private final CountDownLatch lock = new CountDownLatch(1);
 
@@ -75,8 +73,14 @@ public class RewardViCalService {
     this.witnessStore = witnessStore.getDb();
   }
 
-  @PostConstruct
-  private void init() {
+  public void init() {
+    // after init, we can get the latest block header number from db
+    this.newRewardCalStartCycle = this.getNewRewardAlgorithmEffectiveCycle();
+    boolean ret = this.newRewardCalStartCycle != Long.MAX_VALUE;
+    if (ret) {
+      // checkpoint is flushed to db, we can start rewardViCalService immediately
+      lastBlockNumber = Long.MAX_VALUE;
+    }
     es.scheduleWithFixedDelay(this::maybeRun, 0, 3, TimeUnit.SECONDS);
   }
 
@@ -94,24 +98,30 @@ public class RewardViCalService {
   }
 
   private void maybeRun() {
-    if (enableNewRewardAlgorithm()) {
-      if (this.newRewardCalStartCycle > 1) {
-        if (isDone()) {
-          this.clearUp(true);
-          logger.info("rewardViCalService is already done");
-        } else {
-          if (this.getLatestBlockHeaderNumber() > lastBlockNumber) {
-            // checkpoint is flushed to db, so we can start rewardViCalService
-            startRewardCal();
-            clearUp(true);
+    try {
+      if (enableNewRewardAlgorithm()) {
+        if (this.newRewardCalStartCycle > 1) {
+          if (isDone()) {
+            this.clearUp(true);
+            logger.info("rewardViCalService is already done");
           } else {
-            logger.info("startRewardCal will run after checkpoint is flushed to db");
+            if (lastBlockNumber ==  Long.MAX_VALUE // start rewardViCalService immediately
+                || this.getLatestBlockHeaderNumber() > lastBlockNumber) {
+              // checkpoint is flushed to db, so we can start rewardViCalService
+              startRewardCal();
+              clearUp(true);
+            } else {
+              logger.info("startRewardCal will run after checkpoint is flushed to db");
+            }
           }
+        } else {
+          clearUp(false);
+          logger.info("rewardViCalService is no need to run");
         }
-      } else {
-        clearUp(false);
-        logger.info("rewardViCalService is no need to run");
       }
+    } catch (Exception e) {
+      logger.error(" Find fatal error, program will be exited soon.", e);
+      System.exit(1);
     }
   }
 
@@ -131,7 +141,7 @@ public class RewardViCalService {
 
   public long getNewRewardAlgorithmReward(long beginCycle, long endCycle,
                                           List<Pair<byte[], Long>> votes) {
-    if (!rewardViStore.has(IS_DONE_KEY)) {
+    if (!isDone()) {
       logger.warn("rewardViCalService is not done, wait for it");
       try {
         lock.await();
@@ -168,10 +178,13 @@ public class RewardViCalService {
         .map(this::getHash)
         .collect(Collectors.toCollection(ArrayList::new));
 
-    Sha256Hash rewardViRootLocal = MerkleTree.getInstance().createTree(ids).getRoot().getHash();
+    Sha256Hash rewardViRootLocal = MerkleRoot.root(ids);
     if (!Objects.equals(rewardViRoot, rewardViRootLocal)) {
-      logger.error("merkle root mismatch, expect: {}, actual: {}",
-          rewardViRoot, rewardViRootLocal);
+      logger.warn("Merkle root mismatch, expect: {}, actual: {}."
+              + " If you are quite sure that there is no miscalculation (not on the main network)"
+              + ", please configure 'storage.merkleRoot.reward-vi = {}'"
+              + "(for a specific network such as Nile, etc.) in config.conf to fix the hints",
+          rewardViRoot, rewardViRootLocal, rewardViRootLocal);
     }
     logger.info("calcMerkleRoot: {}", rewardViRootLocal);
   }

@@ -1,6 +1,5 @@
 package org.tron.core.services;
 
-import static org.tron.core.utils.ProposalUtil.ProposalType.ALLOW_OLD_REWARD_OPT;
 import static org.tron.core.utils.ProposalUtil.ProposalType.ENERGY_FEE;
 import static org.tron.core.utils.ProposalUtil.ProposalType.TRANSACTION_FEE;
 import static org.tron.core.utils.ProposalUtil.ProposalType.WITNESS_127_PAY_PER_BLOCK;
@@ -11,9 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.tron.common.BaseTest;
 import org.tron.core.Constant;
 import org.tron.core.capsule.ProposalCapsule;
@@ -24,9 +21,6 @@ import org.tron.protos.Protocol.Proposal;
 
 @Slf4j
 public class ProposalServiceTest extends BaseTest {
-
-  @Rule
-  public ExpectedException thrown = ExpectedException.none();
 
   private static boolean init;
 
@@ -69,9 +63,6 @@ public class ProposalServiceTest extends BaseTest {
         proposal = Proposal.newBuilder().putParameters(proposalType.getCode(), 1).build();
       }
       proposalCapsule = new ProposalCapsule(proposal);
-      if (proposalType == ALLOW_OLD_REWARD_OPT) {
-        thrown.expect(IllegalStateException.class);
-      }
       result = ProposalService.process(dbManager, proposalCapsule);
       Assert.assertTrue(result);
     }

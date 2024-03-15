@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
@@ -166,6 +167,22 @@ public class HelloMessage extends TronMessage {
 
     byte[] headBlockId = this.helloMessage.getHeadBlockId().getHash().toByteArray();
     if (headBlockId.length == 0) {
+      return false;
+    }
+
+    int maxByteSize = 200;
+    ByteString address = this.helloMessage.getAddress();
+    if (!address.isEmpty() && address.toByteArray().length > maxByteSize) {
+      return false;
+    }
+
+    ByteString sig = this.helloMessage.getSignature();
+    if (!sig.isEmpty() && sig.toByteArray().length > maxByteSize) {
+      return false;
+    }
+
+    ByteString codeVersion = this.helloMessage.getCodeVersion();
+    if (!codeVersion.isEmpty() && codeVersion.toByteArray().length > maxByteSize) {
       return false;
     }
 

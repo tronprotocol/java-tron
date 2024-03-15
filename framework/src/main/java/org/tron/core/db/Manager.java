@@ -130,6 +130,7 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.service.MortgageService;
+import org.tron.core.service.RewardViCalService;
 import org.tron.core.store.AccountAssetStore;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
@@ -259,6 +260,9 @@ public class Manager {
   private static final String triggerEsName = "event-trigger";
   private ExecutorService filterEs;
   private static final String filterEsName = "filter";
+
+  @Autowired
+  private RewardViCalService rewardViCalService;
 
   /**
    * Cycle thread to rePush Transactions
@@ -465,6 +469,7 @@ public class Manager {
     revokingStore.disable();
     revokingStore.check();
     transactionCache.initCache();
+    rewardViCalService.init();
     this.setProposalController(ProposalController.createInstance(this));
     this.setMerkleContainer(
         merkleContainer.createInstance(chainBaseManager.getMerkleTreeStore(),
@@ -1843,6 +1848,7 @@ public class Manager {
         triggerCapsule.setTriggerName(Trigger.SOLIDITYLOG_TRIGGER_NAME);
         EventPluginLoader.getInstance().postSolidityLogTrigger(triggerCapsule);
       } else {
+        // when switch fork, block will be post to triggerCapsuleQueue, transaction may be not found
         logger.error("PostSolidityLogContractTrigger txId = {} not contains transaction.",
             triggerCapsule.getTransactionId());
       }
@@ -1908,6 +1914,10 @@ public class Manager {
         chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
             - revokingStore.size(),
         chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+    return this.fetchSyncBeginNumber();
+  }
+
+  public long fetchSyncBeginNumber() {
     return chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
         - revokingStore.size();
   }
