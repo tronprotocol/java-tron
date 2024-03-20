@@ -232,8 +232,7 @@ public class EvmMessageBuilder {
                 .setInput(data)
                 .setGas(energy)
                 .setValue(value)
-                .setToCode(addressCodeTo)
-                .setTokenId(tokenId);
+                .setToCode(addressCodeTo);
 
         if (StringUtils.isNotBlank(tokenId)) {
             captureEnterBuilder.setTokenId(tokenId);
