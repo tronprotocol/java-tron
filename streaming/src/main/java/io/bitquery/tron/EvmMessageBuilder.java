@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import io.bitquery.protos.EvmMessage.Trace;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.tron.common.runtime.vm.DataWord;
 import io.bitquery.protos.EvmMessage.Contract;
 import io.bitquery.protos.EvmMessage.CaptureFault;
@@ -21,6 +22,7 @@ import io.bitquery.protos.EvmMessage.AddressCode;
 import io.bitquery.protos.EvmMessage.CaptureEnd;
 import io.bitquery.protos.EvmMessage.CaptureStart;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.vm.Op;
 
 import java.util.ArrayList;
@@ -60,18 +62,21 @@ public class EvmMessageBuilder {
     public void captureStart(byte[] from, byte[] to, boolean create, byte[] input, byte[] code, long gas, byte[] value, String tokenId) {
         AddressCode addressCodeTo = addressCode(code);
 
-        CaptureStart captureStart = CaptureStart.newBuilder()
+        CaptureStart.Builder captureStartBuilder = CaptureStart.newBuilder()
                 .setFrom(ByteString.copyFrom(from))
                 .setTo(ByteString.copyFrom(to))
                 .setCreate(create)
                 .setInput(ByteString.copyFrom(input))
                 .setGas(gas)
                 .setValue(ByteString.copyFrom(value))
-                .setToCode(addressCodeTo)
-                .setTokenId(tokenId)
-                .build();
+                .setToCode(addressCodeTo);
 
-        this.messageBuilder.setCaptureStart(captureStart);}
+        if (StringUtils.isNotBlank(tokenId)) {
+            captureStartBuilder.setTokenId(tokenId);
+        }
+
+        this.messageBuilder.setCaptureStart(captureStartBuilder.build());
+    }
 
     public void captureEnd(long energyUsed, RuntimeException error) {
         CaptureEnd captureEnd = CaptureEnd.newBuilder()
@@ -220,7 +225,7 @@ public class EvmMessageBuilder {
     private void setCaptureEnter(ByteString from, ByteString to, ByteString data, long energy, ByteString value, Opcode opcode, AddressCode addressCodeTo, String tokenId) {
         this.enterIndex += 1;
 
-        CaptureEnter captureEnter = CaptureEnter.newBuilder()
+        CaptureEnter.Builder captureEnterBuilder = CaptureEnter.newBuilder()
                 .setOpcode(opcode)
                 .setFrom(from)
                 .setTo(to)
@@ -228,8 +233,11 @@ public class EvmMessageBuilder {
                 .setGas(energy)
                 .setValue(value)
                 .setToCode(addressCodeTo)
-                .setTokenId(tokenId)
-                .build();
+                .setTokenId(tokenId);
+
+        if (StringUtils.isNotBlank(tokenId)) {
+            captureEnterBuilder.setTokenId(tokenId);
+        }
 
         int depth = 1;
         int callerIndex = -1;
@@ -241,7 +249,7 @@ public class EvmMessageBuilder {
 
         this.call = Call.newBuilder()
                 .setDepth(depth)
-                .setCaptureEnter(captureEnter)
+                .setCaptureEnter(captureEnterBuilder.build())
                 .setCallerIndex(callerIndex)
                 .setIndex(0)
                 .setEnterIndex(this.enterIndex)
