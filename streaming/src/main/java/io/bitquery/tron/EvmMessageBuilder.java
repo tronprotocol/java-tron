@@ -57,7 +57,7 @@ public class EvmMessageBuilder {
         return messageBuilder.build();
     }
 
-    public void captureStart(byte[] from, byte[] to, boolean create, byte[] input, byte[] code, long gas, byte[] value) {
+    public void captureStart(byte[] from, byte[] to, boolean create, byte[] input, byte[] code, long gas, byte[] value, String tokenId) {
         AddressCode addressCodeTo = addressCode(code);
 
         CaptureStart captureStart = CaptureStart.newBuilder()
@@ -68,6 +68,7 @@ public class EvmMessageBuilder {
                 .setGas(gas)
                 .setValue(ByteString.copyFrom(value))
                 .setToCode(addressCodeTo)
+                .setTokenId(tokenId)
                 .build();
 
         this.messageBuilder.setCaptureStart(captureStart);}
@@ -82,16 +83,11 @@ public class EvmMessageBuilder {
         this.messageBuilder.setCaptureEnd(captureEnd);
     }
 
-    public void captureEnter(byte[] from, byte[] to, byte[] data, long gas, byte[] value, List<byte[]> tokensId, int opCode, byte[] code) {
+    public void captureEnter(byte[] from, byte[] to, byte[] data, long gas, byte[] value, int opCode, byte[] code, String tokenId) {
         String opcodeName = Op.getNameOf(opCode);
 
 //        byte[] code = program.getContractState().getCode(to);
         AddressCode addressCodeTo = addressCode(code);
-
-        List<ByteString> byteStringTokensId = new ArrayList<>();
-        for (byte[] tokenId : tokensId) {
-            byteStringTokensId.add(ByteString.copyFrom(tokenId));
-        }
 
         Opcode opcode = Opcode.newBuilder()
                 .setCode(opCode)
@@ -104,9 +100,10 @@ public class EvmMessageBuilder {
                 ByteString.copyFrom(data),
                 gas,
                 ByteString.copyFrom(value),
-                byteStringTokensId,
+                // byteStringTokensId,
                 opcode,
-                addressCodeTo
+                addressCodeTo,
+                tokenId
         );
     }
 
@@ -220,7 +217,7 @@ public class EvmMessageBuilder {
         }
     }
 
-    private void setCaptureEnter(ByteString from, ByteString to, ByteString data, long energy, ByteString value, List<ByteString> tokensId, Opcode opcode, AddressCode addressCodeTo) {
+    private void setCaptureEnter(ByteString from, ByteString to, ByteString data, long energy, ByteString value, Opcode opcode, AddressCode addressCodeTo, String tokenId) {
         this.enterIndex += 1;
 
         CaptureEnter captureEnter = CaptureEnter.newBuilder()
@@ -230,8 +227,8 @@ public class EvmMessageBuilder {
                 .setInput(data)
                 .setGas(energy)
                 .setValue(value)
-                .addAllTokenId(tokensId)
                 .setToCode(addressCodeTo)
+                .setTokenId(tokenId)
                 .build();
 
         int depth = 1;

@@ -454,21 +454,15 @@ public class Program {
 
     Map<String, Long> assetsMap = getContractState().getAccount(owner).getAssetMapV2();
 
-    List<byte[]> tokensId = new ArrayList<>();
-    for (Map.Entry<String, Long> asset : assetsMap.entrySet()) {
-      String tokenId = asset.getKey();
-      tokensId.add(tokenId.getBytes());
-    }
-
     TracerManager.getTracer().captureEnter(
             owner,
             obtainer,
             ByteUtil.EMPTY_BYTE_ARRAY,
             0,
             ByteUtil.longTo32Bytes(balance),
-            tokensId,
             Op.SUICIDE,
-            getContractState().getCode(obtainer)
+            getContractState().getCode(obtainer),
+            null
     );
 
     InternalTransaction internalTx = addInternalTx(null, owner, obtainer, balance, null,
@@ -786,17 +780,16 @@ public class Program {
     DataWord energyLimit = this.getCreateEnergy(getEnergyLimitLeft());
     spendEnergy(energyLimit.longValue(), "internal call");
 
-    List<byte[]> tokensId = new ArrayList<>();
     int opcode = isCreate2 ? Op.CREATE2 : Op.CREATE;
     TracerManager.getTracer().captureEnter(
             senderAddress,
             newAddress,
             programCode,
             energyLimit.longValue(),
-            value.getNoLeadZeroesData(),
-            tokensId,
+            ByteUtil.longTo32Bytes(endowment),
             opcode,
-            getContractState().getCode(newAddress)
+            getContractState().getCode(newAddress),
+            null
     );
 
     increaseNonce();
@@ -1026,21 +1019,6 @@ public class Program {
       }
     }
 
-    List<byte[]> tokensId = new ArrayList<>();
-    if (isTokenTransfer) {
-      tokensId.add(tokenId);
-    }
-    TracerManager.getTracer().captureEnter(
-            senderAddress,
-            contextAddress,
-            data,
-            msg.getEnergy().longValue(),
-            msg.getEndowment().getNoLeadZeroesData(),
-            tokensId,
-            msg.getOpCode(),
-            getContractState().getCode(contextAddress)
-    );
-
     // CREATE CALL INTERNAL TRANSACTION
     increaseNonce();
     HashMap<String, Long> tokenInfo = new HashMap<>();
@@ -1050,6 +1028,22 @@ public class Program {
     InternalTransaction internalTx = addInternalTx(null, senderAddress, contextAddress,
         !isTokenTransfer ? endowment : 0, data, "call", nonce,
         !isTokenTransfer ? null : tokenInfo);
+
+    String tokenIdString = null;
+    if (isTokenTransfer) {
+      tokenIdString = new String(stripLeadingZeroes(tokenId));
+    }
+    TracerManager.getTracer().captureEnter(
+            senderAddress,
+            contextAddress,
+            data,
+            msg.getEnergy().longValue(),
+            ByteUtil.longTo32Bytes(endowment),
+            msg.getOpCode(),
+            getContractState().getCode(contextAddress),
+            tokenIdString
+    );
+
     ProgramResult callResult = null;
     if (isNotEmpty(programCode)) {
       long vmStartInUs = System.nanoTime() / 1000;
@@ -1628,19 +1622,19 @@ public class Program {
     byte[] data = this.memoryChunk(msg.getInDataOffs().intValue(),
         msg.getInDataSize().intValue());
 
-    List<byte[]> tokensId = new ArrayList<>();
+    String tokenIdString = null;
     if (isTokenTransfer) {
-      tokensId.add(tokenId);
+      tokenIdString = new String(stripLeadingZeroes(tokenId));
     }
     TracerManager.getTracer().captureEnter(
             senderAddress,
             contextAddress,
             data,
             msg.getEnergy().longValue(),
-            msg.getEndowment().getNoLeadZeroesData(),
-            tokensId,
+            ByteUtil.longTo32Bytes(endowment),
             msg.getOpCode(),
-            getContractState().getCode(contextAddress)
+            getContractState().getCode(contextAddress),
+            tokenIdString
     );
 
 

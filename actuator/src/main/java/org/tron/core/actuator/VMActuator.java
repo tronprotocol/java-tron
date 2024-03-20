@@ -10,6 +10,7 @@ import com.google.protobuf.ByteString;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
@@ -190,6 +191,16 @@ public class VMActuator implements Actuator2 {
 
         byte[] to = rootInternalTx.getReceiveAddress();
         boolean create = rootInternalTx.getNote().equals("create");
+        Map<String, Long> tokensInfo = rootInternalTx.getTokenInfo();
+        long value = rootInternalTx.getValue();
+        String tokenId = null;
+
+        if (!tokensInfo.isEmpty() && tokensInfo.get("0") != 0) {
+          Map.Entry<String,Long> firstToken = tokensInfo.entrySet().iterator().next();
+          tokenId = firstToken.getKey();
+          value = firstToken.getValue();
+        }
+
         TracerManager.getTracer().captureStart(
                 rootInternalTx.getSender(),
                 to,
@@ -197,7 +208,8 @@ public class VMActuator implements Actuator2 {
                 rootInternalTx.getData(),
                 program.getContractState().getCode(to),
                 program.getEnergylimitLeftLong(),
-                ByteUtil.longTo32Bytes(rootInternalTx.getValue())
+                ByteUtil.longTo32Bytes(value),
+                tokenId
         );
 
         VM.play(program, OperationRegistry.getTable());

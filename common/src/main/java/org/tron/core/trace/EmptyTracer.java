@@ -29,13 +29,13 @@ public class EmptyTracer implements Tracer {
     public void transactionEnd(Message protobufResultMessage, boolean isPending) {}
 
     @Override
-    public void captureStart(byte[] from, byte[] to, boolean create, byte[] input, byte[] code, long gas, byte[] value) {}
+    public void captureStart(byte[] from, byte[] to, boolean create, byte[] input, byte[] code, long gas, byte[] value, String tokenId) {}
 
     @Override
     public void captureEnd(long energyUsed, RuntimeException error) {}
 
     @Override
-    public void captureEnter(byte[] from, byte[] to, byte[] data, long gas, byte[] value, List<byte[]> tokensId, int opCode, byte[] code) {}
+    public void captureEnter(byte[] from, byte[] to, byte[] data, long gas, byte[] value, int opCode, byte[] code, String tokenId) {}
 
     @Override
     public void captureExit(long energyUsed, RuntimeException error) {}

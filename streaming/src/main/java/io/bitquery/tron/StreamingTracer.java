@@ -122,9 +122,9 @@ public class StreamingTracer implements Tracer {
     }
 
     @Override
-    public void captureStart(byte[] from, byte[] to, boolean create, byte[] input, byte[] code, long gas, byte[] value) {
+    public void captureStart(byte[] from, byte[] to, boolean create, byte[] input, byte[] code, long gas, byte[] value, String tokenId) {
         try {
-            currentTrace.get().captureStart(from, to, create, input, code, gas, value);
+            currentTrace.get().captureStart(from, to, create, input, code, gas, value, tokenId);
         } catch (Exception e) {
             logger.error("captureStart failed", e);
         }
@@ -149,9 +149,9 @@ public class StreamingTracer implements Tracer {
     }
 
     @Override
-    public void captureEnter(byte[] from, byte[] to, byte[] data, long gas, byte[] value, List<byte[]> tokensId, int opCode, byte[] code) {
+    public void captureEnter(byte[] from, byte[] to, byte[] data, long gas, byte[] value, int opCode, byte[] code, String tokenId) {
         try {
-            currentTrace.get().captureEnter(from, to, data, gas, value, tokensId, opCode, code);
+            currentTrace.get().captureEnter(from, to, data, gas, value, opCode, code, tokenId);
         } catch (Exception e) {
             logger.error("captureEnter failed", e);
         }

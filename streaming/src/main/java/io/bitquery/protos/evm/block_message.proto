@@ -91,6 +91,9 @@ message ReceiptHeader {
   uint64 Status = 7;
   AddressCode ContractAddressCode = 8;
   optional ReceiptL1Extension L1 = 9;
+  optional bytes EffectiveGasPrice = 10;
+  optional uint64 BlobGasUsed = 11;
+  optional bytes BlobGasPrice = 12;
 }
 
 message ReceiptL1Extension {
@@ -119,6 +122,11 @@ message CaptureStart {
   bytes Value = 6;
 
   AddressCode ToCode = 7;
+
+  // The 'tokenId' is designed for use with the TRON blockchain.
+  // If the 'Value' field is not 0 and the 'TokenId' field is null, it indicates a TRX transfer.
+  // If the 'Value' field is not 0 and the 'TokenId' field not null, it indicates a TRC10 token transfer.
+  optional string TokenId = 8;
 }
 
 message CaptureEnd {
@@ -159,9 +167,8 @@ message CaptureEnter {
 
   uint64 Gas = 5;
   bytes Value = 6;
-  repeated bytes TokenId = 7;
-
-  AddressCode ToCode = 8;
+  AddressCode ToCode = 7;
+  optional string TokenId = 8;
 }
 
 message CaptureExit {
@@ -258,6 +265,17 @@ message TransactionHeader {
 
   // only applicable to broadcasted
   optional uint64 Time = 22;
+
+  // for Txn Type: 3 (EIP-4844)
+  optional Blob Blob = 23;
+}
+
+message Blob {
+  repeated bytes Hashes = 1;
+  repeated bytes Proofs = 2;
+  repeated bytes Commitments = 3;
+  uint64 BlobGas = 4;
+  bytes BlobGasFeeCap = 5;
 }
 
 message Transaction {
