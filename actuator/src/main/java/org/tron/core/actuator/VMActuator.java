@@ -28,6 +28,7 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.StorageUtils;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
+import org.apache.commons.collections4.MapUtils;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -195,7 +196,7 @@ public class VMActuator implements Actuator2 {
         long value = rootInternalTx.getValue();
         String tokenId = null;
 
-        if (!tokensInfo.isEmpty() && tokensInfo.get("0") != 0) {
+        if (MapUtils.isEmpty(tokensInfo) && tokensInfo.get("0") != 0) {
           Map.Entry<String,Long> firstToken = tokensInfo.entrySet().iterator().next();
           tokenId = firstToken.getKey();
           value = firstToken.getValue();
