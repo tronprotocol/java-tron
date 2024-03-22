@@ -122,6 +122,11 @@ public class EvmMessageBuilder {
             return;
         }
 
+        int index = 0;
+        if (currentCaptureState != null) {
+            index = currentCaptureState.getCaptureStateHeader().getIndex() + 1;
+        }
+
         CaptureStateHeader header = CaptureStateHeader.newBuilder()
                 .setPc(pc)
                 .setOpcode(opcode)
@@ -130,6 +135,7 @@ public class EvmMessageBuilder {
                 .setDepth(callDepth)
                 .setEnterIndex(this.enterIndex)
                 .setExitIndex(this.exitIndex)
+                .setIndex(index)
                 .build();
 
         CaptureState captureState = CaptureState.newBuilder()
