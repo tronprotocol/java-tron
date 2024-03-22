@@ -22,7 +22,6 @@ import io.bitquery.protos.EvmMessage.AddressCode;
 import io.bitquery.protos.EvmMessage.CaptureEnd;
 import io.bitquery.protos.EvmMessage.CaptureStart;
 import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.StringUtil;
 import org.tron.core.vm.Op;
 
 import java.util.ArrayList;
@@ -191,6 +190,10 @@ public class EvmMessageBuilder {
                 .build();
 
         Log.Builder log = buildLog(logHeader, topicsData);
+
+        if (currentCaptureState.hasLog()) {
+            logger.warn("Current capture state already contains a Log field and will be overwritten. Capture state: {}", currentCaptureState);
+        }
 
         this.currentCaptureState = currentCaptureState.toBuilder().setLog(log).build();
 
