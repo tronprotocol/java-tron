@@ -205,6 +205,15 @@ public class EvmMessageBuilder {
             this.messageBuilder.setCaptureStates(lastCaptureStateIndex, currentCaptureState);
         }
 
+        if (this.call != null && this.call.getCaptureEnter().getOpcode().getName().equals("DELEGATECALL")) {
+            logger.warn("EXECUTION IN DELEGATECALL call!");
+            logger.warn("Current capture state: {}", currentCaptureState);
+            logger.warn("Current log: {}", log.build());
+
+            int index = call.getCaptureStatesCount() - 1;
+            logger.warn("Last opcode: {}", this.call.getCaptureStates(index));
+        }
+
         this.collectedLogs.add(log.build());
     }
 
