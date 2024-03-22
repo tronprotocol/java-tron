@@ -187,6 +187,7 @@ public class EvmMessageBuilder {
                 .setAddress(ByteString.copyFrom(address))
                 .setData(ByteString.copyFrom(data))
                 .setAddressCode(addressCode)
+                .setIndex(collectedLogs.size())
                 .build();
 
         Log.Builder log = buildLog(logHeader, topicsData);
