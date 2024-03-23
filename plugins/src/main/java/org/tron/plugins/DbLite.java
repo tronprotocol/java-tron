@@ -355,15 +355,7 @@ public class DbLite implements Callable<Integer> {
   private long getLatestBlockHeaderNum(String databaseDir) throws IOException, RocksDBException {
     // query latest_block_header_number from checkpoint first
     final String latestBlockHeaderNumber = "latest_block_header_number";
-    List<String> cpList = getCheckpointV2List(databaseDir);
-    DBInterface checkpointDb;
-    if (cpList.size() > 0) {
-      String lastestCp = cpList.get(cpList.size() - 1);
-      checkpointDb = DbTool.getDB(
-          databaseDir + "/" + DBUtils.CHECKPOINT_DB_V2, lastestCp);
-    } else {
-      checkpointDb = DbTool.getDB(databaseDir, CHECKPOINT_DB);
-    }
+    DBInterface checkpointDb = getCheckpointDb(databaseDir);
     Long blockNumber = getLatestBlockHeaderNumFromCP(checkpointDb,
         latestBlockHeaderNumber.getBytes());
     if (blockNumber != null) {
@@ -594,7 +586,7 @@ public class DbLite implements Callable<Integer> {
   private byte[] getDataFromSourceDB(String sourceDir, String dbName, byte[] key)
           throws IOException, RocksDBException {
     DBInterface sourceDb = DbTool.getDB(sourceDir, dbName);
-    DBInterface checkpointDb = DbTool.getDB(sourceDir, CHECKPOINT_DB);
+    DBInterface checkpointDb = getCheckpointDb(sourceDir);
     // get data from tmp first.
     byte[] valueFromTmp = checkpointDb.get(Bytes.concat(simpleEncode(dbName), key));
     byte[] value;
@@ -670,6 +662,19 @@ public class DbLite implements Callable<Integer> {
       num =  Longs.fromByteArray(iterator.getKey());
     }
     return num;
+  }
+
+  private DBInterface getCheckpointDb(String sourceDir) throws IOException, RocksDBException {
+    List<String> cpList = getCheckpointV2List(sourceDir);
+    DBInterface checkpointDb;
+    if (cpList.size() > 0) {
+      String latestCp = cpList.get(cpList.size() - 1);
+      checkpointDb = DbTool.getDB(
+          sourceDir + "/" + DBUtils.CHECKPOINT_DB_V2, latestCp);
+    } else {
+      checkpointDb = DbTool.getDB(sourceDir, CHECKPOINT_DB);
+    }
+    return checkpointDb;
   }
 
   @VisibleForTesting

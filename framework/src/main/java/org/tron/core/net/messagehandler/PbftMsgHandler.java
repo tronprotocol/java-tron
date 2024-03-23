@@ -33,6 +33,9 @@ public class PbftMsgHandler {
   private TronNetDelegate tronNetDelegate;
 
   public void processMessage(PeerConnection peer, PbftMessage msg) throws Exception {
+    if (!tronNetDelegate.allowPBFT()) {
+      return;
+    }
     if (Param.getInstance().getPbftInterface().isSyncing()) {
       return;
     }

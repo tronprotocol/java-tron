@@ -11,8 +11,6 @@ repositories {
 }
 
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.13.2'
-    compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.69'
     compile project(":common")
 }
 

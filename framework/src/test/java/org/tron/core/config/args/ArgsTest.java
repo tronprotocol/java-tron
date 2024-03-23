@@ -17,11 +17,6 @@ package org.tron.core.config.args;
 
 import com.google.common.collect.Lists;
 import com.typesafe.config.Config;
-import com.typesafe.config.ConfigMergeable;
-import com.typesafe.config.ConfigOrigin;
-import com.typesafe.config.ConfigRenderOptions;
-import com.typesafe.config.ConfigValue;
-import com.typesafe.config.ConfigValueType;
 import io.grpc.internal.GrpcUtil;
 import io.grpc.netty.NettyServerBuilder;
 import java.lang.reflect.InvocationTargetException;
@@ -30,16 +25,16 @@ import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
-import org.tron.common.utils.ReflectUtils;
 import org.tron.core.Constant;
 import org.tron.core.config.Configuration;
-import org.tron.core.net.peer.PeerManager;
 
 @Slf4j
 public class ArgsTest {
@@ -47,6 +42,9 @@ public class ArgsTest {
   private final String privateKey = PublicMethod.getRandomPrivateKey();
   private String address;
   private LocalWitnesses localWitnesses;
+
+  @Rule
+  public ExpectedException thrown = ExpectedException.none();
 
   @After
   public void destroy() {
@@ -95,13 +93,14 @@ public class ArgsTest {
 
     Assert.assertTrue(parameter.isNodeDiscoveryEnable());
     Assert.assertTrue(parameter.isNodeDiscoveryPersist());
-    Assert.assertEquals("127.0.0.1", parameter.getNodeDiscoveryBindIp());
     Assert.assertEquals("46.168.1.1", parameter.getNodeExternalIp());
     Assert.assertEquals(18888, parameter.getNodeListenPort());
     Assert.assertEquals(2000, parameter.getNodeConnectionTimeout());
     Assert.assertEquals(0, parameter.getActiveNodes().size());
     Assert.assertEquals(30, parameter.getMaxConnections());
     Assert.assertEquals(43, parameter.getNodeP2pVersion());
+    Assert.assertEquals(54, parameter.getMaxUnsolidifiedBlocks());
+    Assert.assertEquals(false, parameter.isUnsolidifiedBlockCheck());
     //Assert.assertEquals(30, args.getSyncNodeCount());
 
     // gRPC network configs checking
@@ -130,28 +129,25 @@ public class ArgsTest {
     Args.setParam(new String[] {"-w"}, Constant.TEST_CONF);
     CommonParameter parameter = Args.getInstance();
 
-    String configuredBindIp = parameter.getNodeDiscoveryBindIp();
     String configuredExternalIp = parameter.getNodeExternalIp();
-    Assert.assertEquals("127.0.0.1", configuredBindIp);
     Assert.assertEquals("46.168.1.1", configuredExternalIp);
 
     Config config = Configuration.getByFileName(null, Constant.TEST_CONF);
-    Config config2 = config.withoutPath(Constant.NODE_DISCOVERY_BIND_IP);
-    Config config3 = config2.withoutPath(Constant.NODE_DISCOVERY_EXTERNAL_IP);
+    Config config3 = config.withoutPath(Constant.NODE_DISCOVERY_EXTERNAL_IP);
 
-    CommonParameter.getInstance().setNodeDiscoveryBindIp(null);
     CommonParameter.getInstance().setNodeExternalIp(null);
-
-    Method method1 = Args.class.getDeclaredMethod("bindIp", Config.class);
-    method1.setAccessible(true);
-    method1.invoke(Args.class, config3);
 
     Method method2 = Args.class.getDeclaredMethod("externalIp", Config.class);
     method2.setAccessible(true);
     method2.invoke(Args.class, config3);
 
-    Assert.assertNotEquals(configuredBindIp, parameter.getNodeDiscoveryBindIp());
     Assert.assertNotEquals(configuredExternalIp, parameter.getNodeExternalIp());
+  }
+
+  @Test
+  public void testOldRewardOpt() {
+    thrown.expect(IllegalArgumentException.class);
+    Args.setParam(new String[] {"-w"}, "args-test.conf");
   }
 }
 

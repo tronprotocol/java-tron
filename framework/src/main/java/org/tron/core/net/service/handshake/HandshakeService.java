@@ -48,12 +48,15 @@ public class HandshakeService {
     }
 
     if (!msg.valid()) {
-      logger.warn("Peer {} invalid hello message parameters, "
-                      + "GenesisBlockId: {}, SolidBlockId: {}, HeadBlockId: {}",
-              peer.getInetSocketAddress(),
-              ByteArray.toHexString(msg.getInstance().getGenesisBlockId().getHash().toByteArray()),
-              ByteArray.toHexString(msg.getInstance().getSolidBlockId().getHash().toByteArray()),
-              ByteArray.toHexString(msg.getInstance().getHeadBlockId().getHash().toByteArray()));
+      logger.warn("Peer {} invalid hello message parameters, GenesisBlockId: {}, SolidBlockId: {}, "
+              + "HeadBlockId: {}, address: {}, sig: {}, codeVersion: {}",
+          peer.getInetSocketAddress(),
+          ByteArray.toHexString(msg.getInstance().getGenesisBlockId().getHash().toByteArray()),
+          ByteArray.toHexString(msg.getInstance().getSolidBlockId().getHash().toByteArray()),
+          ByteArray.toHexString(msg.getInstance().getHeadBlockId().getHash().toByteArray()),
+          msg.getInstance().getAddress().toByteArray().length,
+          msg.getInstance().getSignature().toByteArray().length,
+          msg.getInstance().getCodeVersion().toByteArray().length);
       peer.disconnect(ReasonCode.UNEXPECTED_IDENTITY);
       return;
     }
