@@ -44,7 +44,7 @@ public class AdvService {
   private final int MAX_INV_TO_FETCH_CACHE_SIZE = 300_000;
   private final int MAX_TRX_CACHE_SIZE = 80_000;
   private final int MAX_BLOCK_CACHE_SIZE = 40;
-  private final int MAX_SPREAD_SIZE = 10_000;
+  private final int MAX_SPREAD_SIZE = 400_000;
   private final long TIMEOUT = MSG_CACHE_DURATION_IN_BLOCKS * BLOCK_PRODUCED_INTERVAL;
 
   @Autowired
