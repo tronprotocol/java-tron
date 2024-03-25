@@ -550,6 +550,7 @@ public class Wallet {
       if (trx.getInstance().getRawData().getContractCount() == 0) {
         throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
       }
+      trx.setVerified(true);
       dbManager.pushTransaction(trx);
       int num = tronNetService.fastBroadcastTransaction(message);
       if (num == 0 && minEffectiveConnection != 0) {
