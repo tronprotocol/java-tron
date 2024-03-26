@@ -100,7 +100,7 @@ public class PeerConnection {
   @Getter
   private HelloMessage helloMessageSend;
 
-  private int invCacheSize = 20_000;
+  private int invCacheSize = 200_000;
 
   private long BAD_PEER_BAN_TIME = 3_600_000;
 
