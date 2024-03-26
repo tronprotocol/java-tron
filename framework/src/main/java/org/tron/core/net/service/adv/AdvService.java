@@ -16,6 +16,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +33,8 @@ import org.tron.core.net.message.adv.BlockMessage;
 import org.tron.core.net.message.adv.FetchInvDataMessage;
 import org.tron.core.net.message.adv.InventoryMessage;
 import org.tron.core.net.message.adv.TransactionMessage;
+import org.tron.core.net.messagehandler.InventoryMsgHandler;
+import org.tron.core.net.messagehandler.TransactionsMsgHandler;
 import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.service.fetchblock.FetchBlockService;
@@ -83,11 +86,35 @@ public class AdvService {
   private MessageCount trxCount = new MessageCount();
 
   private boolean fastForward = Args.getInstance().isFastForward();
+  private static long lastLogTime = 0;
+
+  private static long FETCH_INV_COUNT = 0;
+  private static long BROADCAST_COUNT = 0;
+  private static long INV_TO_FETCH = 0;
+  private static long INVENTORY_COUNT = 0;
+  private static long FAILED_COUNT = 0;
 
   public void init() {
 
     spreadExecutor.scheduleWithFixedDelay(() -> {
       try {
+        // 每隔1秒打印一次
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastLogTime >= 1000) {
+          lastLogTime = currentTime;
+          logger.info("FETCH_INV_COUNT: {}, BROADCAST_COUNT: {}, INV_TO_FETCH: {}, INVENTORY_COUNT: {}, FAILED_COUNT: {}",
+                  fetchInvCount.get() - FETCH_INV_COUNT,
+                  broadcastCount.get() - BROADCAST_COUNT,
+                  invToFetch.size() - INV_TO_FETCH,
+                  InventoryMsgHandler.invCount.get() - INVENTORY_COUNT,
+                  TransactionsMsgHandler.failedCount.get() - FAILED_COUNT);
+        }
+
+        FETCH_INV_COUNT = fetchInvCount.get();
+        BROADCAST_COUNT = broadcastCount.get();
+        INV_TO_FETCH = invToFetch.size();
+        INVENTORY_COUNT= InventoryMsgHandler.invCount.get();
+        FAILED_COUNT = TransactionsMsgHandler.failedCount.get();
         consumerInvToSpread();
       } catch (Exception exception) {
         logger.error("Spread thread error", exception);
@@ -101,6 +128,7 @@ public class AdvService {
         logger.error("Fetch thread error", exception);
       }
     }, 100, 30, TimeUnit.MILLISECONDS);
+
   }
 
   public void close() {
@@ -260,6 +288,7 @@ public class AdvService {
     }
   }
 
+  public static AtomicLong fetchInvCount = new AtomicLong(0);
   private void consumerInvToFetch() {
     Collection<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
         .filter(peer -> peer.isIdle())
@@ -269,6 +298,7 @@ public class AdvService {
       if (invToFetch.isEmpty() || peers.isEmpty()) {
         return;
       }
+      fetchInvCount.getAndAdd(invToFetch.size());
       long now = System.currentTimeMillis();
       invToFetch.forEach((item, time) -> {
         if (time < now - TIMEOUT) {
@@ -294,6 +324,8 @@ public class AdvService {
     invSender.sendFetch();
   }
 
+  public static AtomicLong broadcastCount = new AtomicLong(0);
+
   private synchronized void consumerInvToSpread() {
 
     List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
@@ -304,6 +336,7 @@ public class AdvService {
       return;
     }
 
+    broadcastCount.getAndAdd(invToSpread.size());
     InvSender invSender = new InvSender();
 
     invToSpread.forEach((item, time) -> peers.forEach(peer -> {
