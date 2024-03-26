@@ -13,6 +13,9 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.service.adv.AdvService;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+
 @Slf4j(topic = "net")
 @Component
 public class InventoryMsgHandler implements TronMsgHandler {
@@ -26,6 +29,8 @@ public class InventoryMsgHandler implements TronMsgHandler {
   @Autowired
   private TransactionsMsgHandler transactionsMsgHandler;
 
+  public static AtomicLong invCount = new AtomicLong(0);
+
   @Override
   public void processMessage(PeerConnection peer, TronMessage msg) {
     InventoryMessage inventoryMessage = (InventoryMessage) msg;
@@ -38,7 +43,9 @@ public class InventoryMsgHandler implements TronMsgHandler {
     for (Sha256Hash id : inventoryMessage.getHashList()) {
       Item item = new Item(id, type);
       peer.getAdvInvReceive().put(item, System.currentTimeMillis());
-      advService.addInv(item);
+      if (advService.addInv(item)) {
+        invCount.incrementAndGet();
+      }
     }
   }
 

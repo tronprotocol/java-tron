@@ -5,6 +5,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,8 +64,13 @@ public class TransactionsMsgHandler implements TronMsgHandler {
     return queue.size() + smartContractQueue.size() > MAX_TRX_SIZE;
   }
 
+  public static AtomicLong trxCount = new AtomicLong(0);
+  public static AtomicLong failedCount = new AtomicLong(0);
+
+
   @Override
   public void processMessage(PeerConnection peer, TronMessage msg) throws P2pException {
+    trxCount.incrementAndGet();
     TransactionsMessage transactionsMessage = (TransactionsMessage) msg;
     check(peer, transactionsMessage);
     int smartContractQueueSize = 0;
@@ -137,7 +144,9 @@ public class TransactionsMsgHandler implements TronMsgHandler {
         peer.setBadPeer(true);
         peer.disconnect(ReasonCode.BAD_TX);
       }
+      failedCount.incrementAndGet();
     } catch (Exception e) {
+      failedCount.incrementAndGet();
       logger.error("Trx {} from peer {} process failed", trx.getMessageId(), peer.getInetAddress(),
           e);
     }
