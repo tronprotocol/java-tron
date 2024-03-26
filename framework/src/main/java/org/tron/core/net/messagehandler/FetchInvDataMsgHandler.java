@@ -132,9 +132,9 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
 
     if (type == MessageTypes.TRX) {
       for (Sha256Hash hash : fetchInvDataMsg.getHashList()) {
-        if (peer.getAdvInvSpread().getIfPresent(new Item(hash, InventoryType.TRX)) == null) {
-          throw new P2pException(TypeEnum.BAD_MESSAGE, "not spread inv: " + hash);
-        }
+//        if (peer.getAdvInvSpread().getIfPresent(new Item(hash, InventoryType.TRX)) == null) {
+//          throw new P2pException(TypeEnum.BAD_MESSAGE, "not spread inv: " + hash);
+//        }
       }
       int fetchCount = peer.getPeerStatistics().messageStatistics.tronInTrxFetchInvDataElement
               .getCount(10);
