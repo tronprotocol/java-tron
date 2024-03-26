@@ -188,10 +188,10 @@ public class AdvService {
       return;
     }
 
-    if (invToSpread.size() > MAX_SPREAD_SIZE) {
-      logger.warn("Drop message, type: {}, ID: {}", msg.getType(), msg.getMessageId());
-      return;
-    }
+//    if (invToSpread.size() > MAX_SPREAD_SIZE) {
+//      logger.warn("Drop message, type: {}, ID: {}", msg.getType(), msg.getMessageId());
+//      return;
+//    }
 
     Item item;
     if (msg instanceof BlockMessage) {
