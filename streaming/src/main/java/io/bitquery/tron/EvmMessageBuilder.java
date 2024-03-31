@@ -201,6 +201,10 @@ public class EvmMessageBuilder {
             logger.warn("Current capture state already contains a Log field and will be overwritten. Capture state: {}", currentCaptureState);
         }
 
+        if (!currentCaptureState.getCaptureStateHeader().getOpcode().getName().startsWith("LOG")) {
+            logger.warn("Current capture state isn't LOG. Capture state: {}", currentCaptureState);
+        }
+
         this.currentCaptureState = currentCaptureState.toBuilder().setLog(log).build();
 
         if (call != null) {
@@ -209,15 +213,6 @@ public class EvmMessageBuilder {
         } else {
             int lastCaptureStateIndex = messageBuilder.getCaptureStatesCount() - 1;
             this.messageBuilder.setCaptureStates(lastCaptureStateIndex, currentCaptureState);
-        }
-
-        if (this.call != null && this.call.getCaptureEnter().getOpcode().getName().equals("DELEGATECALL")) {
-            logger.warn("EXECUTION IN DELEGATECALL call!");
-            logger.warn("Current capture state: {}", currentCaptureState);
-            logger.warn("Current log: {}", log.build());
-
-            int index = call.getCaptureStatesCount() - 1;
-            logger.warn("Last opcode: {}", this.call.getCaptureStates(index));
         }
 
         this.collectedLogs.add(log.build());
@@ -229,6 +224,14 @@ public class EvmMessageBuilder {
                 .setLocation(ByteString.copyFrom(loc))
                 .setValue(ByteString.copyFrom(value))
                 .build();
+
+        if (currentCaptureState.hasStore()) {
+            logger.warn("Current capture state already contains a Store field and will be overwritten. Capture state: {}", currentCaptureState);
+        }
+
+        if (!currentCaptureState.getCaptureStateHeader().getOpcode().getName().equals("SSTORE")) {
+            logger.warn("Current capture state isn't SSTORE. Capture state: {}", currentCaptureState);
+        }
 
         this.currentCaptureState = currentCaptureState.toBuilder().setStore(store).build();
 
