@@ -14,6 +14,7 @@ import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 import static org.tron.protos.contract.Common.ResourceCode.TRON_POWER;
 import static org.tron.protos.contract.Common.ResourceCode.UNRECOGNIZED;
 
+import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
 import java.util.*;
@@ -459,7 +460,7 @@ public class Program {
             obtainer,
             ByteUtil.EMPTY_BYTE_ARRAY,
             0,
-            ByteUtil.longTo32Bytes(balance),
+            Longs.toByteArray(balance),
             Op.SUICIDE,
             getContractState().getCode(obtainer),
             null
@@ -786,7 +787,7 @@ public class Program {
             newAddress,
             programCode,
             energyLimit.longValue(),
-            ByteUtil.longTo32Bytes(endowment),
+            Longs.toByteArray(endowment),
             opcode,
             getContractState().getCode(newAddress),
             null
@@ -1038,7 +1039,7 @@ public class Program {
             contextAddress,
             data,
             msg.getEnergy().longValue(),
-            ByteUtil.longTo32Bytes(endowment),
+            Longs.toByteArray(endowment),
             msg.getOpCode(),
             getContractState().getCode(contextAddress),
             tokenIdString
@@ -1631,7 +1632,7 @@ public class Program {
             contextAddress,
             data,
             msg.getEnergy().longValue(),
-            ByteUtil.longTo32Bytes(endowment),
+            Longs.toByteArray(endowment),
             msg.getOpCode(),
             getContractState().getCode(contextAddress),
             tokenIdString
