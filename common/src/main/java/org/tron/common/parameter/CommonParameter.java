@@ -18,6 +18,7 @@ import org.tron.core.Constant;
 import org.tron.core.config.args.Overlay;
 import org.tron.core.config.args.SeedNode;
 import org.tron.core.config.args.Storage;
+import org.tron.p2p.P2pConfig;
 import org.tron.p2p.dns.update.PublishConfig;
 
 public class CommonParameter {
@@ -169,6 +170,8 @@ public class CommonParameter {
   @Setter
   public int minParticipationRate;
   @Getter
+  public P2pConfig p2pConfig;
+  @Getter
   @Setter
   public int nodeListenPort;
   @Getter
@@ -179,19 +182,7 @@ public class CommonParameter {
   public String nodeExternalIp;
   @Getter
   @Setter
-  public boolean nodeDiscoveryPublicHomeNode;
-  @Getter
-  @Setter
-  public long nodeDiscoveryPingTimeout;
-  @Getter
-  @Setter
-  public long nodeP2pPingInterval;
-  @Getter
-  @Setter
   public int nodeP2pVersion;
-  @Getter
-  @Setter
-  public String p2pNodeId;
   @Getter
   @Setter
   public boolean nodeEnableIpv6 = false;
@@ -424,6 +415,8 @@ public class CommonParameter {
   @Setter
   public int rateLimiterGlobalIpQps;
   @Getter
+  public int rateLimiterGlobalApiQps;
+  @Getter
   public DbBackupConfig dbBackupConfig;
   @Getter
   public RocksDbSettings rocksDBCustomSettings;
@@ -535,6 +528,9 @@ public class CommonParameter {
   @Getter
   @Setter
   public int pBFTHttpPort;
+  @Getter
+  @Setter
+  public long pBFTExpireNum;
   @Getter
   @Setter
   public long oldSolidityBlockNum = -1;

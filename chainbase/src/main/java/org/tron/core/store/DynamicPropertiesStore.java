@@ -1,5 +1,6 @@
 package org.tron.core.store;
 
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_PERIOD;
 
 import com.google.protobuf.ByteString;
@@ -2831,11 +2832,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return Optional.ofNullable(getUnchecked(MAX_DELEGATE_LOCK_PERIOD))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
-        .orElse(DELEGATE_PERIOD / 3000);
+        .orElse(DELEGATE_PERIOD / BLOCK_PRODUCED_INTERVAL);
   }
 
   public boolean supportMaxDelegateLockPeriod() {
-    return (getMaxDelegateLockPeriod() > DELEGATE_PERIOD / 3000) && getUnfreezeDelayDays() > 0;
+    return (getMaxDelegateLockPeriod() > DELEGATE_PERIOD / BLOCK_PRODUCED_INTERVAL) &&
+            getUnfreezeDelayDays() > 0;
   }
 
   private static class DynamicResourceProperties {

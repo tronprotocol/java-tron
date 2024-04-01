@@ -1460,6 +1460,22 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     }
   }
 
+  public void setUsage(ResourceCode resourceCode, long usage) {
+    if (resourceCode == BANDWIDTH) {
+      setNetUsage(usage);
+    } else {
+      setEnergyUsage(usage);
+    }
+  }
+
+  public void setLatestTime(ResourceCode resourceCode, long time) {
+    if (resourceCode == BANDWIDTH) {
+      setLatestConsumeTime(time);
+    } else {
+      setLatestConsumeTimeForEnergy(time);
+    }
+  }
+
   private boolean hasAssetV2(byte[] key) {
     if (Bytes32.ZERO.equals(this.root)) {
       return AssetUtil.hasAssetV2(this.account, key);

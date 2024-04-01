@@ -90,7 +90,7 @@ DB lite provides lite database, parameters are compatible with previous `LiteFul
   #split and get a history dataset
   java -jar Toolkit.jar db lite -o split -t history --fn-data-path output-directory/database --dataset-path /tmp
   #merge history dataset and snapshot dataset
-  java -jar Toolkit.jar db lite -o split -t history --fn-data-path /tmp/snapshot --dataset-path /tmp/history
+  java -jar Toolkit.jar db lite -o merge --fn-data-path /tmp/snapshot --dataset-path /tmp/history
 ```
 
 ## DB Move

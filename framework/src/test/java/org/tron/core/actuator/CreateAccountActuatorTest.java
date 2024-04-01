@@ -1,6 +1,6 @@
 package org.tron.core.actuator;
 
-import static org.testng.Assert.fail;
+import static org.junit.Assert.fail;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -32,8 +32,7 @@ public class CreateAccountActuatorTest extends BaseTest {
   private static final String INVALID_ACCOUNT_ADDRESS;
 
   static {
-    dbPath = "output_CreateAccount_test";
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
     OWNER_ADDRESS_FIRST =
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ADDRESS_SECOND =

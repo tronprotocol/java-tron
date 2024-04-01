@@ -1,6 +1,7 @@
 package org.tron.common.logsfilter.capsule;
 
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.CreateSmartContract;
+import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -26,7 +27,14 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
+import org.tron.protos.contract.BalanceContract.CancelAllUnfreezeV2Contract;
+import org.tron.protos.contract.BalanceContract.DelegateResourceContract;
+import org.tron.protos.contract.BalanceContract.FreezeBalanceV2Contract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
+import org.tron.protos.contract.BalanceContract.UnDelegateResourceContract;
+import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
+import org.tron.protos.contract.BalanceContract.UnfreezeBalanceV2Contract;
+import org.tron.protos.contract.BalanceContract.WithdrawExpireUnfreezeContract;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
@@ -156,6 +164,88 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
                     StringUtil.encode58Check(createSmartContract.getOwnerAddress().toByteArray()));
               }
               break;
+            case UnfreezeBalanceContract:
+              UnfreezeBalanceContract unfreezeBalanceContract = contractParameter
+                  .unpack(UnfreezeBalanceContract.class);
+
+              transactionLogTrigger.setFromAddress(StringUtil
+                  .encode58Check(unfreezeBalanceContract.getOwnerAddress().toByteArray()));
+              if (!ByteString.EMPTY.equals(unfreezeBalanceContract.getReceiverAddress())) {
+                transactionLogTrigger.setToAddress(StringUtil
+                    .encode58Check(unfreezeBalanceContract.getReceiverAddress().toByteArray()));
+              }
+              transactionLogTrigger.setAssetName("trx");
+              if (Objects.nonNull(transactionInfo)) {
+                transactionLogTrigger.setAssetAmount(
+                    transactionInfo.getUnfreezeAmount());
+              }
+              break;
+            case FreezeBalanceV2Contract:
+              FreezeBalanceV2Contract freezeBalanceV2Contract = contractParameter
+                  .unpack(FreezeBalanceV2Contract.class);
+
+              transactionLogTrigger.setFromAddress(StringUtil
+                  .encode58Check(freezeBalanceV2Contract.getOwnerAddress().toByteArray()));
+              transactionLogTrigger.setAssetName("trx");
+              transactionLogTrigger.setAssetAmount(freezeBalanceV2Contract.getFrozenBalance());
+              break;
+            case UnfreezeBalanceV2Contract:
+              UnfreezeBalanceV2Contract unfreezeBalanceV2Contract = contractParameter
+                  .unpack(UnfreezeBalanceV2Contract.class);
+
+              transactionLogTrigger.setFromAddress(StringUtil
+                  .encode58Check(unfreezeBalanceV2Contract.getOwnerAddress().toByteArray()));
+              transactionLogTrigger.setAssetName("trx");
+              transactionLogTrigger.setAssetAmount(
+                  unfreezeBalanceV2Contract.getUnfreezeBalance());
+              break;
+            case WithdrawExpireUnfreezeContract:
+              WithdrawExpireUnfreezeContract withdrawExpireUnfreezeContract = contractParameter
+                  .unpack(WithdrawExpireUnfreezeContract.class);
+
+              transactionLogTrigger.setFromAddress(StringUtil.encode58Check(
+                  withdrawExpireUnfreezeContract.getOwnerAddress().toByteArray()));
+              transactionLogTrigger.setAssetName("trx");
+              if (Objects.nonNull(transactionInfo)) {
+                transactionLogTrigger.setAssetAmount(transactionInfo.getWithdrawExpireAmount());
+              }
+              break;
+            case DelegateResourceContract:
+              DelegateResourceContract delegateResourceContract = contractParameter
+                  .unpack(DelegateResourceContract.class);
+
+              transactionLogTrigger.setFromAddress(StringUtil
+                  .encode58Check(delegateResourceContract.getOwnerAddress().toByteArray()));
+              transactionLogTrigger.setToAddress(StringUtil
+                      .encode58Check(delegateResourceContract.getReceiverAddress().toByteArray()));
+              transactionLogTrigger.setAssetName("trx");
+              transactionLogTrigger.setAssetAmount(
+                      delegateResourceContract.getBalance());
+              break;
+            case UnDelegateResourceContract:
+              UnDelegateResourceContract unDelegateResourceContract = contractParameter
+                  .unpack(UnDelegateResourceContract.class);
+
+              transactionLogTrigger.setFromAddress(StringUtil
+                  .encode58Check(unDelegateResourceContract.getOwnerAddress().toByteArray()));
+              transactionLogTrigger.setToAddress(StringUtil.encode58Check(
+                  unDelegateResourceContract.getReceiverAddress().toByteArray()));
+
+              transactionLogTrigger.setAssetName("trx");
+              transactionLogTrigger.setAssetAmount(
+                    unDelegateResourceContract.getBalance());
+              break;
+            case CancelAllUnfreezeV2Contract:
+              CancelAllUnfreezeV2Contract cancelAllUnfreezeV2Contract = contractParameter
+                  .unpack(CancelAllUnfreezeV2Contract.class);
+
+              transactionLogTrigger.setFromAddress(StringUtil
+                  .encode58Check(cancelAllUnfreezeV2Contract.getOwnerAddress().toByteArray()));
+              transactionLogTrigger.setAssetName("trx");
+              if (Objects.nonNull(transactionInfo)) {
+                transactionLogTrigger.setExtMap(transactionInfo.getCancelUnfreezeV2AmountMap());
+              }
+              break;
             default:
               break;
           }
@@ -269,4 +359,5 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
   public void processTrigger() {
     EventPluginLoader.getInstance().postTransactionTrigger(transactionLogTrigger);
   }
+
 }

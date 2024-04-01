@@ -4,6 +4,7 @@ import static org.tron.core.capsule.TransactionCapsule.getShieldTransactionHashI
 
 import com.alibaba.fastjson.JSONArray;
 import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -18,7 +19,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.testng.collections.Lists;
 import org.tron.api.GrpcAPI;
 import org.tron.common.BaseTest;
 import org.tron.common.parameter.CommonParameter;
@@ -64,9 +64,9 @@ import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
-import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.ZenTransactionBuilder.SpendDescriptionInfo;
+import org.tron.core.zen.ZksnarkInitService;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
 import org.tron.core.zen.address.FullViewingKey;
@@ -110,8 +110,7 @@ public class SendCoinShieldTest extends BaseTest {
   private static boolean init;
 
   static {
-    dbPath = "output_ShieldedTransaction_test";
-    Args.setParam(new String[]{"--output-directory", dbPath}, "config-test-mainnet.conf");
+    Args.setParam(new String[]{"--output-directory", dbPath()}, "config-test-mainnet.conf");
     Args.getInstance().setZenTokenId(String.valueOf(tokenId));
     PUBLIC_ADDRESS_ONE =
         Wallet.getAddressPreFixString() + "a7d8a35b260395c14aa456297662092ba3b76fc0";
@@ -221,7 +220,7 @@ public class SendCoinShieldTest extends BaseTest {
   }
 
   private void librustzcashInitZksnarkParams() {
-    FullNodeHttpApiService.librustzcashInitZksnarkParams();
+    ZksnarkInitService.librustzcashInitZksnarkParams();
   }
 
   @Test

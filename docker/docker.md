@@ -62,7 +62,7 @@ Or use the `-c` parameter to specify your own configuration file, which will not
 If you want to see the logs of the java-tron service, please use the `--log` parameter
 
 ```shell
-$ sh docker.sh --log | grep 'pushBlock'
+$ sh docker.sh --log | grep 'PushBlock'
 ```
 ### Stop the service
 

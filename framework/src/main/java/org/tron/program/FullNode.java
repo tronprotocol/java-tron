@@ -30,8 +30,6 @@ import org.tron.core.services.jsonrpc.FullNodeJsonRpcHttpService;
 public class FullNode {
 
 
-  public static volatile boolean shutDownSign = false;
-
   public static void load(String path) {
     try {
       File file = new File(path);
@@ -81,17 +79,15 @@ public class FullNode {
     context.register(DefaultConfig.class);
     context.refresh();
     Application appT = ApplicationFactory.create(context);
-    shutdown(appT);
+    context.registerShutdownHook();
 
     // grpc api server
-    if (CommonParameter.getInstance().fullNodeRpcEnable) {
-      RpcApiService rpcApiService = context.getBean(RpcApiService.class);
-      appT.addService(rpcApiService);
-    }
+    RpcApiService rpcApiService = context.getBean(RpcApiService.class);
+    appT.addService(rpcApiService);
 
     // http api server
+    FullNodeHttpApiService httpApiService = context.getBean(FullNodeHttpApiService.class);
     if (CommonParameter.getInstance().fullNodeHttpEnable) {
-      FullNodeHttpApiService httpApiService = context.getBean(FullNodeHttpApiService.class);
       appT.addService(httpApiService);
     }
 
@@ -104,15 +100,12 @@ public class FullNode {
 
     // full node and solidity node fuse together
     // provide solidity rpc and http server on the full node.
-    if (CommonParameter.getInstance().solidityNodeRpcEnable) {
-      RpcApiServiceOnSolidity rpcApiServiceOnSolidity = context
-          .getBean(RpcApiServiceOnSolidity.class);
-      appT.addService(rpcApiServiceOnSolidity);
-    }
-
+    RpcApiServiceOnSolidity rpcApiServiceOnSolidity = context
+        .getBean(RpcApiServiceOnSolidity.class);
+    appT.addService(rpcApiServiceOnSolidity);
+    HttpApiOnSolidityService httpApiOnSolidityService = context
+        .getBean(HttpApiOnSolidityService.class);
     if (CommonParameter.getInstance().solidityNodeHttpEnable) {
-      HttpApiOnSolidityService httpApiOnSolidityService = context
-          .getBean(HttpApiOnSolidityService.class);
       appT.addService(httpApiOnSolidityService);
     }
 
@@ -124,32 +117,19 @@ public class FullNode {
     }
 
     // PBFT API (HTTP and GRPC)
-    if (CommonParameter.getInstance().PBFTNodeRpcEnable) {
-      RpcApiServiceOnPBFT rpcApiServiceOnPBFT = context
-          .getBean(RpcApiServiceOnPBFT.class);
-      appT.addService(rpcApiServiceOnPBFT);
-    }
-
-    if (CommonParameter.getInstance().PBFTNodeHttpEnable) {
-      HttpApiOnPBFTService httpApiOnPBFTService = context
-          .getBean(HttpApiOnPBFTService.class);
-      appT.addService(httpApiOnPBFTService);
-    }
-
+    RpcApiServiceOnPBFT rpcApiServiceOnPBFT = context
+        .getBean(RpcApiServiceOnPBFT.class);
+    appT.addService(rpcApiServiceOnPBFT);
+    HttpApiOnPBFTService httpApiOnPBFTService = context
+        .getBean(HttpApiOnPBFTService.class);
+    appT.addService(httpApiOnPBFTService);
 
     // JSON-RPC on PBFT
     if (CommonParameter.getInstance().jsonRpcHttpPBFTNodeEnable) {
       JsonRpcServiceOnPBFT jsonRpcServiceOnPBFT = context.getBean(JsonRpcServiceOnPBFT.class);
       appT.addService(jsonRpcServiceOnPBFT);
     }
-
-    appT.initServices(parameter);
-    appT.startServices();
     appT.startup();
-  }
-
-  public static void shutdown(final Application app) {
-    logger.info("********register application shutdown hook********");
-    Runtime.getRuntime().addShutdownHook(new Thread(app::shutdown));
+    appT.blockUntilShutdown();
   }
 }

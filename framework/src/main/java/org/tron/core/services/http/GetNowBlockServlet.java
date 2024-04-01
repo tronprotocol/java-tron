@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Block;
 
-
 @Component
 @Slf4j(topic = "API")
 public class GetNowBlockServlet extends RateLimiterServlet {
@@ -16,6 +15,7 @@ public class GetNowBlockServlet extends RateLimiterServlet {
   @Autowired
   private Wallet wallet;
 
+  @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
       boolean visible = Util.getVisible(request);
@@ -30,6 +30,7 @@ public class GetNowBlockServlet extends RateLimiterServlet {
     }
   }
 
+  @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     doGet(request, response);
   }

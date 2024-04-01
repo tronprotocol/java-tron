@@ -26,11 +26,7 @@ public class JsonRpcServlet extends RateLimiterServlet {
   private JsonRpcServer rpcServer = null;
 
   @Autowired
-  private NodeInfoService nodeInfoService;
-  @Autowired
-  private Wallet wallet;
-  @Autowired
-  private Manager manager;
+  private TronJsonRpc tronJsonRpc;
 
   @Autowired
   private JsonRpcInterceptor interceptor;
@@ -40,10 +36,9 @@ public class JsonRpcServlet extends RateLimiterServlet {
     super.init(config);
 
     ClassLoader cl = Thread.currentThread().getContextClassLoader();
-    TronJsonRpcImpl jsonRpcImpl = new TronJsonRpcImpl(nodeInfoService, wallet, manager);
     Object compositeService = ProxyUtil.createCompositeServiceProxy(
         cl,
-        new Object[] {jsonRpcImpl},
+        new Object[] {tronJsonRpc},
         new Class[] {TronJsonRpc.class},
         true);
 

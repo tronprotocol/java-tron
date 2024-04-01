@@ -10,7 +10,6 @@ import com.google.common.primitives.Bytes;
 import java.util.Arrays;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
@@ -48,7 +47,7 @@ public class UnDelegateResourceProcessor {
     }
 
     byte[] receiverAddress = param.getReceiverAddress();
-    if (ArrayUtils.isEmpty(receiverAddress) || !DecodeUtil.addressValid(receiverAddress)) {
+    if (!DecodeUtil.addressValid(receiverAddress)) {
       throw new ContractValidateException("Invalid receiverAddress");
     }
     if (Arrays.equals(receiverAddress, ownerAddress)) {
@@ -104,7 +103,9 @@ public class UnDelegateResourceProcessor {
                   repo.getAccountStore(),  repo.getAssetIssueStore(),
                   repo.getAssetIssueV2Store());
           bandwidthProcessor.updateUsageForDelegated(receiverCapsule);
-
+          /* For example, in a scenario where a regular account can be upgraded to a contract
+          account through an interface, the account information will be cleared after the
+          contract suicide, and this account will be converted to a regular account in the future */
           if (receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth()
               < unDelegateBalance) {
             // A TVM contract suicide, re-create will produce this situation
@@ -169,9 +170,8 @@ public class UnDelegateResourceProcessor {
                  repo.getAccountStore(),  repo.getAssetIssueStore(),
                  repo.getAssetIssueV2Store());
         if (Objects.nonNull(receiverCapsule) && transferUsage > 0) {
-          ownerCapsule.setNetUsage(processor.unDelegateIncrease(ownerCapsule, receiverCapsule,
-              transferUsage, BANDWIDTH, now));
-          ownerCapsule.setLatestConsumeTime(now);
+          processor.unDelegateIncrease(ownerCapsule, receiverCapsule,
+              transferUsage, BANDWIDTH, now);
         }
       }
       break;
@@ -184,9 +184,7 @@ public class UnDelegateResourceProcessor {
         EnergyProcessor processor =
             new EnergyProcessor(dynamicStore, repo.getAccountStore());
         if (Objects.nonNull(receiverCapsule) && transferUsage > 0) {
-          ownerCapsule.setEnergyUsage(processor.unDelegateIncrease(ownerCapsule, receiverCapsule,
-              transferUsage, ENERGY, now));
-          ownerCapsule.setLatestConsumeTimeForEnergy(now);
+          processor.unDelegateIncrease(ownerCapsule, receiverCapsule, transferUsage, ENERGY, now);
         }
       }
       break;

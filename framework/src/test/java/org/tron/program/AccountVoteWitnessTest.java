@@ -22,8 +22,7 @@ public class AccountVoteWitnessTest extends BaseTest {
   private MaintenanceManager maintenanceManager;
 
   static {
-    dbPath = "output_witness_test";
-    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
   }
 
   private static Boolean deleteFolder(File index) {

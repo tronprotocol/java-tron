@@ -1,7 +1,7 @@
 package org.tron.core.actuator;
 
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.fail;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -52,8 +52,7 @@ public class AccountPermissionUpdateActuatorTest extends BaseTest {
   private static final String KEY_ADDRESS_INVALID = "bbbb";
 
   static {
-    dbPath = "output_account_permission_update_test";
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     WITNESS_ADDRESS = Wallet.getAddressPreFixString() + "8CFC572CC20CA18B636BDD93B4FB15EA84CC2B4E";
     KEY_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";

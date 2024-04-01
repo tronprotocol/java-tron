@@ -45,8 +45,7 @@ public class UnfreezeBalanceV2ActuatorTest extends BaseTest {
   private WorldStateCallBack worldStateCallBack;
 
   static {
-    dbPath = "output_unfreeze_balance_v2_test";
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     RECEIVER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
     OWNER_ACCOUNT_INVALID =
@@ -702,8 +701,7 @@ public class UnfreezeBalanceV2ActuatorTest extends BaseTest {
             .build();
 
     long ret = actuator.calcUnfreezeExpireTime(now);
-
-    Assert.assertTrue(true);
+    Assert.assertTrue(ret > 0);
   }
 
   @Test

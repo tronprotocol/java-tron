@@ -8,8 +8,8 @@ import java.util.Collections;
 
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
+import org.junit.Assert;
 import org.junit.Test;
-import org.testng.Assert;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.runtime.VmStateTestUtil;
@@ -182,7 +182,7 @@ public class Create2Test extends VMTestBase {
     byte[] expectedContract =
         generateContractAddress2(address, new DataWord(salt).getData(), Hex.decode(testCode));
     // check deployed contract
-    Assert.assertEquals(actualContract, expectedContract);
+    Assert.assertArrayEquals(actualContract, expectedContract);
 
     // trigger deployed contract
     String methodToTrigger = "plusOne()";
@@ -193,7 +193,8 @@ public class Create2Test extends VMTestBase {
           .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
               actualContract, Hex.decode(hexInput), 0, fee, manager, null);
       Assert.assertNull(result.getRuntime().getRuntimeError());
-      Assert.assertEquals(result.getRuntime().getResult().getHReturn(), new DataWord(i).getData());
+      Assert.assertArrayEquals(result.getRuntime().getResult().getHReturn(),
+          new DataWord(i).getData());
     }
     testJsonRpc(actualContract, loop);
   }

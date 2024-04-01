@@ -32,6 +32,7 @@ import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 import org.rocksdb.Statistics;
+import org.rocksdb.Status;
 import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteOptions;
 import org.slf4j.LoggerFactory;
@@ -266,8 +267,13 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
           try {
             database = RocksDB.open(options, dbPath.toString());
           } catch (RocksDBException e) {
-            throw new RuntimeException(
-                String.format("failed to open database: %s", dataBaseName), e);
+            if (Objects.equals(e.getStatus().getCode(), Status.Code.Corruption)) {
+              logger.error("Database {} corrupted, please delete database directory({}) " +
+                      "and restart.", dataBaseName, parentPath, e);
+            } else {
+              logger.error("Open Database {} failed", dataBaseName, e);
+            }
+            System.exit(1);
           }
 
           alive = true;

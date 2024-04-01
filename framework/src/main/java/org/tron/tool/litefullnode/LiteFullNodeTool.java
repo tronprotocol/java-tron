@@ -39,6 +39,7 @@ import org.tron.tool.litefullnode.db.DBInterface;
 import org.tron.tool.litefullnode.iterator.DBIterator;
 
 @Slf4j(topic = "tool")
+@Deprecated
 public class LiteFullNodeTool {
 
   private static final long START_TIME = System.currentTimeMillis() / 1000;
@@ -556,6 +557,8 @@ public class LiteFullNodeTool {
    * main.
    */
   public static void main(String[] args) {
+    logger.info("LiteFullNodeTool is deprecated and it will be removed in the next major release,"
+            + " use Toolkit.jar db lite instead, parameters are fully compatible.");
     Args argv = new Args();
     CommonParameter.getInstance().setValidContractProtoThreadNum(1);
     LiteFullNodeTool tool = new LiteFullNodeTool();

@@ -22,7 +22,7 @@ FULL_NODE_DIR="FullNode"
 FULL_NODE_CONFIG_DIR="config"
 # config file
 FULL_NODE_CONFIG_MAIN_NET="main_net_config.conf"
-FULL_NODE_CONFIG_TEST_NET="test_net_config.conf.conf"
+FULL_NODE_CONFIG_TEST_NET="test_net_config.conf"
 FULL_NODE_CONFIG_PRIVATE_NET="private_net_config.conf"
 DEFAULT_FULL_NODE_CONFIG='config.conf'
 JAR_NAME="FullNode.jar"

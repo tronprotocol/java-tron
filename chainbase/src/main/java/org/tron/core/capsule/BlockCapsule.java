@@ -57,7 +57,6 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   private Block block;
   private List<TransactionCapsule> transactions = new ArrayList<>();
-  private StringBuilder toStringBuff = new StringBuilder();
   private boolean isSwitch;
   @Getter
   @Setter
@@ -327,7 +326,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   @Override
   public String toString() {
-    toStringBuff.setLength(0);
+    StringBuilder toStringBuff = new StringBuilder();
 
     toStringBuff.append("BlockCapsule \n[ ");
     toStringBuff.append("hash=").append(getBlockId()).append("\n");

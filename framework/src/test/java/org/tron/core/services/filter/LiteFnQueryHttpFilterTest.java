@@ -19,7 +19,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.application.Application;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.http.FullNodeHttpApiService;
@@ -32,8 +31,6 @@ public class LiteFnQueryHttpFilterTest extends BaseTest {
   private final String ip = "127.0.0.1";
   private int fullHttpPort;
   @Resource
-  private Application appTest;
-  @Resource
   private FullNodeHttpApiService httpApiService;
   @Resource
   private HttpApiOnSolidityService httpApiOnSolidityService;
@@ -42,8 +39,7 @@ public class LiteFnQueryHttpFilterTest extends BaseTest {
   private final CloseableHttpClient httpClient = HttpClients.createDefault();
 
   static {
-    dbPath = "output_http_filter_test";
-    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
     Args.getInstance().setFullNodeAllowShieldedTransactionArgs(false);
   }
 
@@ -52,12 +48,10 @@ public class LiteFnQueryHttpFilterTest extends BaseTest {
    */
   @Before
   public void init() {
-    appTest.addService(httpApiService);
-    appTest.addService(httpApiOnSolidityService);
-    appTest.addService(httpApiOnPBFTService);
-    appTest.initServices(Args.getInstance());
-    appTest.startServices();
-    appTest.startup();
+    appT.addService(httpApiService);
+    appT.addService(httpApiOnSolidityService);
+    appT.addService(httpApiOnPBFTService);
+    appT.startup();
   }
 
   @Test

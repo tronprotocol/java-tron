@@ -200,7 +200,14 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
 
   @Override
   public void close() {
-    revokingDB.close();
+    logger.info("******** Begin to close {}. ********", getName());
+    try {
+      revokingDB.close();
+    } catch (Exception e) {
+      logger.warn("Failed to close {}.", getName(), e);
+    } finally {
+      logger.info("******** End to close {}. ********", getName());
+    }
   }
 
   @Override
