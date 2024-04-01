@@ -542,6 +542,7 @@ public class Manager {
 
     // init liteFullNode
     initLiteNode();
+
     long headNum = chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     logger.info("Current headNum is: {}.", headNum);
     boolean isLite = chainBaseManager.isLiteNode();
