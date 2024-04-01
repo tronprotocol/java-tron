@@ -55,8 +55,6 @@ public class FullNodeJsonRpcHttpService extends HttpService {
 
       super.start();
 
-      logger.info("JsonRpcHttpService start at {}, success", port);
-
     } catch (Exception e) {
       logger.debug("IOException: {}", e.getMessage());
     }

@@ -8,7 +8,6 @@ sourceCompatibility = 1.8
 
 // Dependency versions
 // ---------------------------------------
-
 def leveldbVersion = "1.8"
 // --------------------------------------
 
@@ -30,13 +29,7 @@ if (isWindows()) {
     }
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.13.2'
-    compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.69'
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.13.4.1'
     compile "com.cedarsoftware:java-util:1.8.0"
     compile group: 'org.apache.httpcomponents', name: 'httpasyncclient', version: '4.1.1'
@@ -53,7 +46,7 @@ dependencies {
     compile 'org.aspectj:aspectjrt:1.8.13'
     compile 'org.aspectj:aspectjweaver:1.8.13'
     compile 'org.aspectj:aspectjtools:1.8.13'
-    compile group: 'io.github.tronprotocol', name: 'libp2p', version: '2.1.0',{
+    compile group: 'io.github.tronprotocol', name: 'libp2p', version: '2.2.1',{
         exclude group: 'io.grpc', module: 'grpc-context'
         exclude group: 'io.grpc', module: 'grpc-core'
         exclude group: 'io.grpc', module: 'grpc-netty'

@@ -728,6 +728,26 @@ public class ProposalUtil {
         }
         break;
       }
+      case ALLOW_OLD_REWARD_OPT: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_7_4)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_OLD_REWARD_OPT]");
+        }
+        if (dynamicPropertiesStore.allowOldRewardOpt()) {
+          throw new ContractValidateException(
+              "[ALLOW_OLD_REWARD_OPT] has been valid, no need to propose again");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_OLD_REWARD_OPT] is only allowed to be 1");
+        }
+        if (!dynamicPropertiesStore.useNewRewardAlgorithm()) {
+          throw new ContractValidateException(
+              "[ALLOW_NEW_REWARD] or [ALLOW_TVM_VOTE] proposal must be approved "
+                  + "before [ALLOW_OLD_REWARD_OPT] can be proposed");
+        }
+        break;
+      }
       default:
         break;
     }
@@ -803,7 +823,8 @@ public class ProposalUtil {
     DYNAMIC_ENERGY_MAX_FACTOR(75), // 0, [0, 100_000]
     ALLOW_TVM_SHANGHAI(76), // 0, 1
     ALLOW_CANCEL_ALL_UNFREEZE_V2(77), // 0, 1
-    MAX_DELEGATE_LOCK_PERIOD(78); // (86400, 10512000]
+    MAX_DELEGATE_LOCK_PERIOD(78), // (86400, 10512000]
+    ALLOW_OLD_REWARD_OPT(79); // 0, 1
 
     private long code;
 

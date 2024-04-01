@@ -13,6 +13,8 @@ dependencies {
     compile group: 'io.grpc', name: 'grpc-netty', version: grpcVersion
     compile group: 'io.grpc', name: 'grpc-protobuf', version: grpcVersion
     compile group: 'io.grpc', name: 'grpc-stub', version: grpcVersion
+    compile group: 'io.grpc', name: 'grpc-services', version: grpcVersion
+
     // end google grpc
 
     compile group: 'com.google.api.grpc', name: 'proto-google-common-protos', version: '2.15.0'

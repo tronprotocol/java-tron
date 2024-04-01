@@ -159,11 +159,16 @@ public class WorldStateCallBack {
     if (!exe()) {
       return;
     }
+    logger.trace("block num: {}, before root: {}", blockCapsule.getNum(), trie.getRootHashByte32());
+    trieEntryList.forEach((key, value) ->
+        logger.trace("StateType: {}, key: {}, value: {}",
+            StateType.decodeType(key).getName(), key, value));
     clear();
     trie.commit();
     trie.flush();
     Bytes32 newRoot = trie.getRootHashByte32();
     blockCapsule.setArchiveRoot(newRoot.toArray());
+    logger.trace("block num: {}, after root: {}", blockCapsule.getNum(), trie.getRootHashByte32());
     execute = false;
   }
 

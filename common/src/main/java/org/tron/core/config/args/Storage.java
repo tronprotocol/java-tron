@@ -16,6 +16,7 @@
 package org.tron.core.config.args;
 
 import com.google.common.collect.Maps;
+import com.google.protobuf.ByteString;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
 import java.io.File;
@@ -33,6 +34,7 @@ import org.tron.common.cache.CacheType;
 import org.tron.common.utils.DbOptionalsUtils;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Property;
+import org.tron.common.utils.Sha256Hash;
 
 /**
  * Custom storage configurations
@@ -80,6 +82,7 @@ public class Storage {
   private static final String CACHE_STRATEGIES = "storage.cache.strategies";
   public static final String TX_CACHE_INIT_OPTIMIZATION = "storage.txCache.initOptimization";
 
+  private static final String MERKLE_ROOT = "storage.merkleRoot";
   private static final String STATE_ROOT_SWITCH_KEY = "storage.stateRoot.switch";
   private static final String STATE_DB_MAX_OPEN_FILES_KEY = "storage.stateRoot.db.maxOpenFiles";
   private static final String STATE_DB_WRITE_BUFFER_SIZE_KEY =
@@ -184,6 +187,9 @@ public class Storage {
   @Getter
   private Map<String, Property> propertyMap;
 
+  // db root
+  private final Map<String, Sha256Hash> dbRoots = Maps.newConcurrentMap();
+
   public static String getDbEngineFromConfig(final Config config) {
     return config.hasPath(DB_ENGINE_CONFIG_KEY)
         ? config.getString(DB_ENGINE_CONFIG_KEY) : DEFAULT_DB_ENGINE;
@@ -277,6 +283,18 @@ public class Storage {
 
   public String getCacheStrategy(CacheType dbName) {
     return this.cacheStrategies.getOrDefault(dbName, CacheStrategies.getCacheStrategy(dbName));
+  }
+
+  public Sha256Hash getDbRoot(String dbName, Sha256Hash defaultV) {
+    return this.dbRoots.getOrDefault(dbName, defaultV);
+  }
+
+  public void setDbRoots(Config config) {
+    if (config.hasPath(MERKLE_ROOT)) {
+      config.getConfig(MERKLE_ROOT).resolve().entrySet().forEach(c ->
+          this.dbRoots.put(c.getKey(),  Sha256Hash.wrap(
+              ByteString.fromHex(c.getValue().unwrapped().toString()))));
+    }
   }
 
   public void setStateConfig(final Config config) {

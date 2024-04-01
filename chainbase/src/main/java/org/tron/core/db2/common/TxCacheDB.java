@@ -156,9 +156,6 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   }
 
   public void init() {
-    if (CommonParameter.getInstance().isP2pDisable()) {
-      return;
-    }
     if (recovery()) {
       isValid.set(true);
       setAlive(true);

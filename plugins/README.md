@@ -65,7 +65,6 @@ DB copy provides a helper which can copy LevelDB or RocksDB data quickly on the 
   java -jar Toolkit.jar db cp  output-directory/database /tmp/databse
 ```
 
-
 ## DB Lite
 
 DB lite provides lite database, parameters are compatible with previous `LiteFullNodeTool`.
@@ -134,6 +133,17 @@ Execute move command.
   java -jar Toolkit.jar db mv -c main_net_config.conf -d /data/tron/output-directory
 ```
 
+## DB Root
+
+DB root provides a helper which can compute merkle root for tiny db.
+
+NOTE: large db may GC overhead limit exceeded.
+
+### Available parameters:
+
+- `<src>`: Source path for database. Default: output-directory/database
+- `--db`: db name.
+- `-h | --help`: provide the help info
 
 ## DB Prune
 
