@@ -30,7 +30,7 @@ if (isWindows()) {
 }
 
 dependencies {
-    api group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.13.4.1'
+    api group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.13.4.2' // https://github.com/FasterXML/jackson-databind/issues/3627
     api "com.cedarsoftware:java-util:1.8.0"
     api group: 'org.apache.httpcomponents', name: 'httpasyncclient', version: '4.1.1'
     api group: 'commons-codec', name: 'commons-codec', version: '1.11'
