@@ -1,12 +1,10 @@
 allprojects {
     version = "1.0.0"
-    apply plugin: "java"
+    apply plugin: "java-library"
 }
 
 subprojects {
-    apply plugin: "java"
     apply plugin: "jacoco"
-    apply plugin: "maven"
     apply plugin: "maven-publish"
 
     sourceCompatibility = JavaVersion.VERSION_1_8
