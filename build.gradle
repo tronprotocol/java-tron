@@ -59,12 +59,14 @@ subprojects {
     task sourcesJar(type: Jar, dependsOn: classes) {
         classifier = "sources"
         from sourceSets.main.allSource
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE // allow duplicates
     }
 
 
     tasks.withType(AbstractArchiveTask) {
         preserveFileTimestamps = false
         reproducibleFileOrder = true
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE // allow duplicates
     }
 
     configurations.all {
