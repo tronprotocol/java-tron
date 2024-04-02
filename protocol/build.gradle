@@ -66,3 +66,4 @@ clean.doFirst {
     delete "src/main/java"
 }
 
+processResources.dependsOn(generateProto) // explicit_dependency

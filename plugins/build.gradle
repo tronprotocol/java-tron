@@ -98,6 +98,8 @@ def binaryRelease(taskName, jarName, mainClass) {
             include "/**"
         }
 
+        dependsOn project(':protocol').jar // explicit_dependency
+
         from {
             configurations.runtimeClasspath.collect { // https://docs.gradle.org/current/userguide/upgrading_version_6.html#changes_6.3
                 it.isDirectory() ? it : zipTree(it)

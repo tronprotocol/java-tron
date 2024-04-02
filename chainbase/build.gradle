@@ -46,6 +46,7 @@ jacoco {
 }
 
 jacocoTestReport {
+    dependsOn(processResources)  // explicit_dependency
     reports {
         xml.enabled = true
         html.enabled = true
