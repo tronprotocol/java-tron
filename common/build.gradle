@@ -52,6 +52,14 @@ dependencies {
         exclude group: 'io.grpc', module: 'grpc-netty'
         exclude group: 'com.google.protobuf', module: 'protobuf-java'
         exclude group: 'com.google.protobuf', module: 'protobuf-java-util'
+        // https://github.com/dom4j/dom4j/pull/116
+        // https://github.com/gradle/gradle/issues/13656
+        // https://github.com/dom4j/dom4j/issues/99
+        exclude group: 'jaxen', module: 'jaxen'
+        exclude group: 'javax.xml.stream', module: 'stax-api'
+        exclude group: 'net.java.dev.msv', module: 'xsdlib'
+        exclude group: 'pull-parser', module: 'pull-parser'
+        exclude group: 'xpp3', module: 'xpp3'
     }
     api project(":protocol")
 }
