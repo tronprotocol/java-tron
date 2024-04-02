@@ -312,7 +312,12 @@ public class VMActuator implements Actuator2 {
     context.setProgramResult(result);
 
     if (result != null) {
-      TracerManager.getTracer().captureEnd(result.getEnergyUsed(), result.getException());
+      RuntimeException error = result.getException();
+      if (result.getRuntimeError() != null) {
+        error = new RuntimeException(result.getRuntimeError());
+      }
+
+      TracerManager.getTracer().captureEnd(result.getEnergyUsed(), error);
     } else {
       TracerManager.getTracer().captureEnd(0, null);
     }
