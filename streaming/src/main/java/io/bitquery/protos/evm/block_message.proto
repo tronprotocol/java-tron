@@ -192,7 +192,7 @@ message CaptureStateHeader {
 
   string Error = 9;
 
-  uint32 Index = 10;
+  optional uint32 Index = 10;
 }
 
 message CaptureState {
