@@ -33,7 +33,7 @@ import java.util.Stack;
 public class EvmMessageBuilder {
     private Trace.Builder messageBuilder;
 
-    private Call call;
+    private Call.Builder callBuilder;
 
     private int enterIndex;
     private int exitIndex;
@@ -45,7 +45,7 @@ public class EvmMessageBuilder {
 
     public EvmMessageBuilder() {
         this.messageBuilder = Trace.newBuilder();
-        this.call = null;
+        this.callBuilder = null;
 
         this.enterIndex = 0;
         this.exitIndex = 0;
@@ -112,7 +112,34 @@ public class EvmMessageBuilder {
     }
 
     public void captureExit(long energyUsed, RuntimeException error) {
-        setCaptureExit(energyUsed, error);
+        this.exitIndex += 1;
+
+        CaptureExit captureExit = CaptureExit.newBuilder()
+                // .setOutput(output)
+                .setGasUsed(energyUsed)
+                .setError(getErrorString(error))
+                .build();
+
+        if (this.callBuilder == null) {
+            logger.warn("captureExit event can't be set, since there is no call");
+            return;
+        }
+
+        if (this.callBuilder.hasCaptureExit()) {
+            logger.warn("Current Call already has captureExit event. It will be overwritten!, call: {}", this.callBuilder);
+        }
+
+        // Add captureExit to already existed call record.
+        this.callBuilder.setCaptureExit(captureExit);
+
+        this.messageBuilder.setCalls(this.callBuilder.getIndex(), this.callBuilder);
+
+        int callerIndex = callBuilder.getCallerIndex();
+        if (callerIndex >= 0) {
+            this.callBuilder = messageBuilder.getCallsBuilder(callerIndex);
+        } else {
+            this.callBuilder = null;
+        }
     }
 
     public void captureState(int opcodeNum, String opcodeName, long energy, int pc, int callDepth) {
@@ -144,8 +171,8 @@ public class EvmMessageBuilder {
 
         this.currentCaptureState = captureState;
 
-        if (call != null) {
-            this.call = call.toBuilder().addCaptureStates(currentCaptureState).build();
+        if (callBuilder != null) {
+            this.callBuilder.addCaptureStates(currentCaptureState);
             return;
         }
 
@@ -207,9 +234,9 @@ public class EvmMessageBuilder {
 
         this.currentCaptureState = currentCaptureState.toBuilder().setLog(log).build();
 
-        if (call != null) {
-            int lastCaptureStateIndex = call.getCaptureStatesCount() - 1;
-            this.call = call.toBuilder().setCaptureStates(lastCaptureStateIndex, currentCaptureState).build();
+        if (callBuilder != null) {
+            int lastCaptureStateIndex = callBuilder.getCaptureStatesCount() - 1;
+            this.callBuilder.setCaptureStates(lastCaptureStateIndex, currentCaptureState);
         } else {
             int lastCaptureStateIndex = messageBuilder.getCaptureStatesCount() - 1;
             this.messageBuilder.setCaptureStates(lastCaptureStateIndex, currentCaptureState);
@@ -235,9 +262,9 @@ public class EvmMessageBuilder {
 
         this.currentCaptureState = currentCaptureState.toBuilder().setStore(store).build();
 
-        if (call != null) {
-            int lastCaptureStateIndex = call.getCaptureStatesCount() - 1;
-            this.call = call.toBuilder().setCaptureStates(lastCaptureStateIndex, currentCaptureState).build();
+        if (callBuilder != null) {
+            int lastCaptureStateIndex = callBuilder.getCaptureStatesCount() - 1;
+            this.callBuilder.setCaptureStates(lastCaptureStateIndex, currentCaptureState);
         } else {
             int lastCaptureStateIndex = messageBuilder.getCaptureStatesCount() - 1;
             this.messageBuilder.setCaptureStates(lastCaptureStateIndex, currentCaptureState);
@@ -263,57 +290,25 @@ public class EvmMessageBuilder {
         int depth = 1;
         int callerIndex = -1;
 
-        if (this.call != null) {
-            depth = this.call.getDepth() + 1;
-            callerIndex = this.call.getIndex();
+        if (this.callBuilder != null) {
+            depth = this.callBuilder.getDepth() + 1;
+            callerIndex = this.callBuilder.getIndex();
         }
 
-        this.call = Call.newBuilder()
+        this.callBuilder = Call.newBuilder()
                 .setDepth(depth)
                 .setCaptureEnter(captureEnterBuilder.build())
                 .setCallerIndex(callerIndex)
                 .setIndex(0)
                 .setEnterIndex(this.enterIndex)
-                .setExitIndex(this.exitIndex)
-                .build();
+                .setExitIndex(this.exitIndex);
 
         int callsCount = this.messageBuilder.getCallsCount();
         if (callsCount != 0) {
-            this.call = this.call.toBuilder().setIndex(callsCount).build();
+            this.callBuilder.setIndex(callsCount);
         }
 
-        this.messageBuilder.addCalls(this.call);
-    }
-
-    private void setCaptureExit(long energyUsed, RuntimeException error) {
-        this.exitIndex += 1;
-
-        CaptureExit captureExit = CaptureExit.newBuilder()
-                // .setOutput(output)
-                .setGasUsed(energyUsed)
-                .setError(getErrorString(error))
-                .build();
-
-        if (this.call == null) {
-            logger.warn("captureExit event can't be set, since there is no call");
-            return;
-        }
-
-        if (this.call.hasCaptureExit()) {
-            logger.warn("Current Call already has captureExit event. It will be overwritten!, call: {}", this.call);
-        }
-
-        // Add captureExit to already existed call record.
-        this.call = this.call.toBuilder().setCaptureExit(captureExit).build();
-
-        this.messageBuilder.setCalls(this.call.getIndex(), this.call);
-
-        int callerIndex = this.call.getCallerIndex();
-        if (callerIndex >= 0) {
-            this.call = this.messageBuilder.getCalls(callerIndex);
-        } else {
-            this.call = null;
-        }
+        this.messageBuilder.addCalls(this.callBuilder);
     }
 
     private Log.Builder buildLog(LogHeader header, List<DataWord> topicsData) {
