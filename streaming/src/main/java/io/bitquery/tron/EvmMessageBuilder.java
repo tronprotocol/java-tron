@@ -272,6 +272,11 @@ public class EvmMessageBuilder {
     }
 
     private void setCaptureEnter(ByteString from, ByteString to, ByteString data, long energy, ByteString value, Opcode opcode, AddressCode addressCodeTo, String tokenId) {
+        // before creating new call, we need to apply previously collected call in messageBuilder.
+        if (this.callBuilder != null) {
+            this.messageBuilder.setCalls(this.callBuilder.getIndex(), this.callBuilder);
+        }
+
         this.enterIndex += 1;
 
         CaptureEnter.Builder captureEnterBuilder = CaptureEnter.newBuilder()
