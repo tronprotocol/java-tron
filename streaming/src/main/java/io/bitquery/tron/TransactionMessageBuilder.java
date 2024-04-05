@@ -6,7 +6,7 @@ import com.google.protobuf.Descriptors;
 import com.google.protobuf.Message;
 import io.bitquery.protos.EvmMessage;
 import io.bitquery.protos.EvmMessage.Trace;
-import io.bitquery.streaming.common.crypto.Hash;
+import io.bitquery.protos.TronMessage.RewardWithdraw;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.actuator.TransactionFactory;
 import org.tron.core.capsule.TransactionCapsule;
@@ -50,6 +50,7 @@ public class TransactionMessageBuilder {
           TransactionResult result = getTransactionResult(txInfo);
           Receipt receipt = getTransactionReceipt(txInfo);
           Staking staking = getStaking(txInfo);
+          RewardWithdraw rw = getRewardWithdraw(txInfo);
 
           this.messageBuilder
                   .setHeader(mergedTxHeader)
@@ -57,6 +58,7 @@ public class TransactionMessageBuilder {
                   .setResult(result)
                   .setReceipt(receipt)
                   .setStaking(staking)
+                  .setRewardWithdraw(rw)
                   .build();
      }
 
@@ -253,5 +255,22 @@ public class TransactionMessageBuilder {
           }
 
           return staking.build();
+     }
+
+     private RewardWithdraw getRewardWithdraw(TransactionInfo txInfo) {
+          RewardWithdraw.Builder rw = RewardWithdraw.newBuilder();
+
+          long amount = txInfo.getWithdrawAmount();
+          Contract contract = messageBuilder.getContracts(0);
+
+          if (amount <= 0 && contract.getType() != "WithdrawBalanceContract") {
+               return rw.build();
+          }
+
+          ByteString receiver = ByteString.copyFrom(ByteArray.fromString(contract.getArguments(0).getString()));
+
+          rw.setAmount(amount).setReceiver(receiver);
+
+          return rw.build();
      }
 }

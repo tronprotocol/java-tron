@@ -90,6 +90,11 @@ message InternalTransaction {
   int32 Index = 6;
 };
 
+message RewardWithdraw {
+  bytes Receiver = 1;
+  uint64 Amount = 2;
+};
+
 // MORE INFORMATION: https://developers.tron.network/reference/gettransactioninfobyid-1
 message Transaction {
   TransactionHeader Header = 1;
@@ -97,6 +102,7 @@ message Transaction {
   Receipt Receipt = 3;
   repeated Contract Contracts = 4;
   Staking Staking = 5;
+  RewardWithdraw RewardWithdraw = 6;
 };
 
 // Block message
