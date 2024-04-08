@@ -113,6 +113,7 @@ public class TransactionMessageBuilder {
                   .setFeeLimit(txCap.getFeeLimit())
                   .setTimestamp(txCap.getTimestamp())
                   .addAllSignatures(txCap.getInstance().getSignatureList())
+                  .setFeePayer(ByteString.copyFrom(txCap.getOwnerAddress()))
                   .build();
 
           return header;

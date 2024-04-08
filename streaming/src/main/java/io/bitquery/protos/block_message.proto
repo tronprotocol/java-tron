@@ -19,6 +19,7 @@ message TransactionHeader {
   repeated bytes Signatures = 8;
   // only applicable to broadcasted
   optional uint64 Time = 9;
+  bytes FeePayer = 10;
 };
 
 message Argument {
