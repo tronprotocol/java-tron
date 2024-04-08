@@ -83,8 +83,6 @@ public class WorldStateQueryTest {
 
     Args.setParam(new String[]{"-d", temporaryFolder.newFolder().toString()},
         "config-localtest.conf");
-    // disable p2p
-    Args.getInstance().setP2pDisable(true);
     // allow account root
     Args.getInstance().setAllowAccountStateRoot(1);
     // init dbBackupConfig to avoid NPE
@@ -336,6 +334,14 @@ public class WorldStateQueryTest {
                     ByteArray.toJsonHex(blockNum)),
             tronJsonRpc.getToken10(
                     ByteArray.toHexString(account2Prikey.getAddress()), "latest"));
+    List<String> addressList = new ArrayList<>();
+    addressList.add(ByteArray.toHexString(account1Prikey.getAddress()));
+    addressList.add(ByteArray.toHexString(account2Prikey.getAddress()));
+
+    Assert.assertEquals(tronJsonRpc.getAccounts(
+            addressList.toArray(new String[0]), ByteArray.toJsonHex(blockNum)),
+        tronJsonRpc.getAccounts(
+            addressList.toArray(new String[0]), "latest"));
 
     Map<String, Long> asset = new HashMap<>();
     for (TronJsonRpc.Token10Result t : tronJsonRpc.getToken10(
