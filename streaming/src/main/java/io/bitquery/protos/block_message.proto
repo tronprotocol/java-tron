@@ -9,7 +9,7 @@ option java_outer_classname = "TronMessage";
 
 // Tx message
 message TransactionHeader {
-  bytes Id = 1;
+  bytes Hash = 1;
   int64 Fee = 2;
   int32 Index = 3;
   int64 Expiration = 4;

@@ -215,7 +215,7 @@ public class StreamingTracer implements Tracer {
             TronMessage.TransactionHeader txHeader = currentTransaction.get().getMessage().getHeader();
 
             BroadcastedMessageDescriptor broadcastedDescriptor = new BroadcastedMessageDescriptor();
-            List<String> txsList = Collections.singletonList(ByteArray.toHexString(txHeader.getId().toByteArray()));
+            List<String> txsList = Collections.singletonList(ByteArray.toHexString(txHeader.getHash().toByteArray()));
             broadcastedDescriptor.setTransactionsList(txsList);
             broadcastedDescriptor.setTimeStart(txHeader.getTime());
             broadcastedDescriptor.setTimeEnd(txHeader.getTime());

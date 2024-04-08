@@ -85,7 +85,7 @@ public class TransactionMessageBuilder {
 
      private TransactionHeader getTxEndTxHeader(TransactionInfo txInfo) {
           TransactionHeader mergedTxHeader = messageBuilder.getHeader().toBuilder()
-                  .setId(txInfo.getId())
+                  .setHash(txInfo.getId())
                   .setFee(txInfo.getFee())
                   .build();
 
