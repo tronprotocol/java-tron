@@ -10,19 +10,21 @@ retention_sec = os.environ.get('KAFKA_RETENTION_SEC') or 60 * 60 * 24 * 20
 bootstrap_servers = os.environ.get('KAFKA_SERVERS')
 security_protocol = os.environ.get('KAFKA_SECURITY_PROTOCOL')
 
-blocks_streaming_kafka_topic = os.environ.get('BLOCKS_STREAMING_KAFKA_TOPIC')
+kafka_topic_prefix = os.environ.get('KAFKA_TOPIC_PREFIX', 'tron')
+
+# blocks_streaming_kafka_topic = os.environ.get('BLOCKS_STREAMING_KAFKA_TOPIC')
 blocks_streaming_enable = os.environ.get('BLOCKS_STREAMING_ENABLE')
-broadcasted_streaming_kafka_topic = os.environ.get('BROADCASTED_STREAMING_KAFKA_TOPIC')
+# broadcasted_streaming_kafka_topic = os.environ.get('BROADCASTED_STREAMING_KAFKA_TOPIC')
 broadcasted_streaming_enable = os.environ.get('BROADCASTED_STREAMING_ENABLE')
 
 def create_topics():
     topics = [
         {
-            'name': blocks_streaming_kafka_topic,
+            'name': kafka_topic_prefix + '.blocks',
             'enable': blocks_streaming_enable,
         },
         {
-            'name': broadcasted_streaming_kafka_topic,
+            'name': kafka_topic_prefix + '.broadcasted',
             'enable': broadcasted_streaming_enable,
         },
     ] 
