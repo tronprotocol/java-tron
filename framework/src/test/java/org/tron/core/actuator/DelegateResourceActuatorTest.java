@@ -15,8 +15,8 @@ import static org.tron.protos.contract.Common.ResourceCode.TRON_POWER;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
