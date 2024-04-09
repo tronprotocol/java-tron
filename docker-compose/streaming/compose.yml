@@ -120,7 +120,6 @@ services:
       --tracer-config /app/config/streaming.conf
       -d /app/node-data/snapshot/output-directory
       --es
-      --debug
     ports:
       - ${LC_COMPOSE_IPADDR}:${LC_COMPOSE_NODE_WALLET_PORT}:8090
       - ${LC_COMPOSE_IPADDR}:${LC_COMPOSE_NODE_ZEROMQ_PORT}:5555
