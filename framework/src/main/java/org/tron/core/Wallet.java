@@ -52,6 +52,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -187,10 +188,14 @@ import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.adv.TransactionMessage;
 import org.tron.core.state.WorldStateQueryInstance;
+import org.tron.core.state.store.AccountStateStore;
+import org.tron.core.state.store.AssetIssueV2StateStore;
+import org.tron.core.state.store.DynamicPropertiesStateStore;
 import org.tron.core.state.store.StorageRowStateStore;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AccountTraceStore;
+import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.BalanceTraceStore;
 import org.tron.core.store.ContractStore;
 import org.tron.core.store.DynamicPropertiesStore;
@@ -359,6 +364,57 @@ public class Wallet {
       return null;
     }
     return accountCapsule.getInstance();
+  }
+
+  public List<Account> getAccounts(List<byte[]> addressList) {
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
+    EnergyProcessor energyProcessor = new EnergyProcessor(
+        chainBaseManager.getDynamicPropertiesStore(),
+        chainBaseManager.getAccountStore());
+    return addressList.stream().map(address -> {
+      AccountCapsule accountCapsule = accountStore.get(address);
+      if (accountCapsule == null) {
+        return Account.getDefaultInstance();
+      }
+      return enrichAccount(accountCapsule, processor, energyProcessor).getInstance();
+    }).collect(Collectors.toList());
+  }
+
+  public List<Account> getAccounts(List<byte[]> addressList, long blockNumber) {
+    Bytes32 rootHash = getRootHashByNumber(blockNumber);
+    WorldStateQueryInstance worldStateQueryInstance = initWorldStateQueryInstance(rootHash);
+    DynamicPropertiesStore propertiesStore =
+        new DynamicPropertiesStateStore(worldStateQueryInstance);
+    AccountStore accountStore = new AccountStateStore(worldStateQueryInstance);
+    AssetIssueV2Store assetIssueV2Store = new AssetIssueV2StateStore(worldStateQueryInstance);
+    final BandwidthProcessor processor = new BandwidthProcessor(propertiesStore, accountStore,
+        assetIssueV2Store, assetIssueV2Store);
+    final EnergyProcessor energyProcessor = new EnergyProcessor(propertiesStore, accountStore);
+    return addressList.stream().map(address -> {
+      AccountCapsule accountCapsule = worldStateQueryInstance.getAccount(address);
+      if (accountCapsule == null) {
+        return Account.getDefaultInstance();
+      }
+      return enrichAccount(accountCapsule, processor, energyProcessor).getInstance();
+    }).collect(Collectors.toList());
+  }
+
+  private AccountCapsule enrichAccount(AccountCapsule accountCapsule,
+                             BandwidthProcessor processor, EnergyProcessor energyProcessor) {
+    accountCapsule.importAllAsset();
+    processor.updateUsage(accountCapsule);
+    energyProcessor.updateUsage(accountCapsule);
+
+    long genesisTimeStamp = chainBaseManager.getGenesisBlock().getTimeStamp();
+    accountCapsule.setLatestConsumeTime(genesisTimeStamp
+        + BLOCK_PRODUCED_INTERVAL * accountCapsule.getLatestConsumeTime());
+    accountCapsule.setLatestConsumeFreeTime(genesisTimeStamp
+        + BLOCK_PRODUCED_INTERVAL * accountCapsule.getLatestConsumeFreeTime());
+    accountCapsule.setLatestConsumeTimeForEnergy(genesisTimeStamp
+        + BLOCK_PRODUCED_INTERVAL * accountCapsule.getLatestConsumeTimeForEnergy());
+    sortFrozenV2List(accountCapsule);
+    return accountCapsule;
   }
 
 

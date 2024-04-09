@@ -11,6 +11,7 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTxID;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.triggerCallContract;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessageV3;
 import java.io.Closeable;
@@ -19,6 +20,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -30,6 +32,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -111,6 +115,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
 
   private static final String FILTER_NOT_FOUND = "filter not found";
   public static final int EXPIRE_SECONDS = 5 * 60;
+  public static final int MAX_BATCH_SIZE = 100; // max batch size for getAccounts
   /**
    * for log filter in Full Json-RPC
    */
@@ -1030,6 +1035,44 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   @Override
   public String[] getAccounts() {
     return new String[0];
+  }
+
+  @Override
+  public List<JSONObject> getAccounts(String[] addressList, String blockNumOrTag)
+      throws JsonRpcInvalidParamsException {
+    if (addressList == null || addressList.length == 0) {
+      return Collections.emptyList();
+    }
+    if (addressList.length > MAX_BATCH_SIZE) {
+      throw new JsonRpcInvalidParamsException("The maximum number of addresses is "
+          + MAX_BATCH_SIZE);
+    }
+    List<byte[]> addressToQuery = new ArrayList<>();
+    for (String address : addressList) {
+      byte[] addressData = addressCompatibleToByteArray(address);
+      addressToQuery.add(addressData);
+    }
+    List<Account> reply;
+    if (EARLIEST_STR.equalsIgnoreCase(blockNumOrTag)
+        || PENDING_STR.equalsIgnoreCase(blockNumOrTag)) {
+      throw new JsonRpcInvalidParamsException(TAG_NOT_SUPPORT_ERROR);
+    } else if (LATEST_STR.equalsIgnoreCase(blockNumOrTag)) {
+      reply = wallet.getAccounts(addressToQuery);
+    } else {
+      BigInteger blockNumber;
+      try {
+        blockNumber = ByteArray.hexToBigInteger(blockNumOrTag);
+      } catch (Exception e) {
+        throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
+      }
+      if (allowStateRoot) {
+        reply = wallet.getAccounts(addressToQuery, blockNumber.longValue());
+      } else {
+        throw new JsonRpcInvalidParamsException(QUANTITY_NOT_SUPPORT_ERROR);
+      }
+    }
+    return reply.stream().map(Util::convertOutput).map(JSONObject::parseObject)
+        .collect(Collectors.toList());
   }
 
   private TransactionJson buildCreateSmartContractTransaction(byte[] ownerAddress,
