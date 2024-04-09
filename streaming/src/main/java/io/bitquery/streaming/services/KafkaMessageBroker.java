@@ -29,7 +29,7 @@ public class KafkaMessageBroker {
 
         List<Header> headers = createHeadersIfNeeded(protobufMetaInfo);
         String messageJson = JsonUtil.obj2Json(protobufMetaInfo);
-        long blockNum = protobufMetaInfo.getDescriptor().getBlockNumber();
+        String blockNum = protobufMetaInfo.getDescriptor().getBlockNumber();
 
 //        ProducerRecord msg = new ProducerRecord<>(topicName, value);
         ProducerRecord msg = new ProducerRecord(topicName, null, (Object) null, messageJson, headers);
@@ -85,12 +85,12 @@ public class KafkaMessageBroker {
         return headers;
     }
 
-    private void logSuccessMessage(RecordMetadata metadata, long blockNum) {
+    private void logSuccessMessage(RecordMetadata metadata, String blockNum) {
         logger.info("Delivered message to topic, Num: {}, Topic: {}, Partition: {}, Offset: {}",
                 blockNum, metadata.topic(), metadata.partition(), metadata.offset());
     }
 
-    private void logFailureMessage(Exception e, long blockNum) {
+    private void logFailureMessage(Exception e, String blockNum) {
         logger.error("Delivery failed, Num: {}, Error: {}", blockNum, e.getMessage());
     }
 }

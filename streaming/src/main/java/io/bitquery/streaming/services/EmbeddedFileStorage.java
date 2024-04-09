@@ -33,7 +33,7 @@ public class EmbeddedFileStorage {
         protobufMessage.getMeta().setUri(fileStorage.getBlockPathWithoutStreamingDirectory());
         protobufMessage.getMeta().setServers(null);
         protobufMessage.getMeta().setCompressed(false);
-        protobufMessage.getMeta().setSize(bodyLength);
+        protobufMessage.getMeta().setSize(String.valueOf(bodyLength));
         protobufMessage.getMeta().setEmbeddedBody(protobufMessage.getBody());
     }
 

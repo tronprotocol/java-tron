@@ -9,8 +9,8 @@ import lombok.Data;
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy.class)
 public class BlockMessageDescriptor implements Descriptor {
   private String blockHash;
-  private long blockNumber;
+  private String blockNumber;
   private String parentHash;
-  private long parentNumber;
+  private String parentNumber;
   private String chainId;
 }

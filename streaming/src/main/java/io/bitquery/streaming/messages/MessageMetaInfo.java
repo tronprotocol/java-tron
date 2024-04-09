@@ -13,7 +13,7 @@ public class MessageMetaInfo {
     private MessageAuthenticator authenticator;
     private Descriptor descriptor;
     private String uri;
-    private long size;
+    private String size;
     private List<String> servers;
     private boolean compressed;
 

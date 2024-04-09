@@ -42,7 +42,7 @@ public class FileStorage {
         protobufMessage.getMeta().setUri(uriPath);
         protobufMessage.getMeta().setServers(config.getFileStorageUrls());
         protobufMessage.getMeta().setCompressed(true);
-        protobufMessage.getMeta().setSize(FileUtil.sizeOf(fullPath));
+        protobufMessage.getMeta().setSize(String.valueOf(FileUtil.sizeOf(fullPath)));
         protobufMessage.getMeta().setEmbeddedBody(null);
 
         logger.info("Stored message, Path: {}, Length: {}", uriPath, protobufMessage.getMeta().getSize());
@@ -60,7 +60,7 @@ public class FileStorage {
     private String getBlockPath() {
         String directoryPath = getDirectoryName();
         String fileName = String.format("%s_%s_%s%s",
-                getPaddedBlockNumber(protobufMessage.getMeta().getDescriptor().getBlockNumber()),
+                getPaddedBlockNumber(Long.parseLong(protobufMessage.getMeta().getDescriptor().getBlockNumber())),
                 protobufMessage.getMeta().getDescriptor().getBlockHash(),
                 ByteArray.toHexString(protobufMessage.getBodyHash()),
                 config.getPathGeneratorSuffix()
@@ -72,7 +72,7 @@ public class FileStorage {
     }
 
     private String getDirectoryName() {
-        long currentBlockNum = protobufMessage.getMeta().getDescriptor().getBlockNumber();
+        long currentBlockNum = Long.parseLong(protobufMessage.getMeta().getDescriptor().getBlockNumber());
         int bucketSize = config.getPathGeneratorBucketSize();
         String folderPrefix = config.getFileStorageRoot();
 

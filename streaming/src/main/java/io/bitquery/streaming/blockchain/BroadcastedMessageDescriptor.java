@@ -11,12 +11,12 @@ import java.util.List;
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy.class)
 public class BroadcastedMessageDescriptor implements Descriptor {
     private String blockHash;
-    private long blockNumber;
+    private String blockNumber;
     private String parentHash;
-    private long parentNumber;
+    private String parentNumber;
     private String chainId;
 
-    private long timeStart;
-    private long timeEnd;
+    private String timeStart;
+    private String timeEnd;
     private List<String> transactionsList;
 }

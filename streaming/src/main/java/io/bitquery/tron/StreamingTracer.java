@@ -203,9 +203,9 @@ public class StreamingTracer implements Tracer {
         TronMessage.BlockHeader blockMsgHeader = currentBlock.get().getMessage().getHeader();
 
         String blockHash = ByteArray.toHexString(blockMsgHeader.getHash().toByteArray());
-        long blockNumber = blockMsgHeader.getNumber();
+        String blockNumber = String.valueOf(blockMsgHeader.getNumber());
         String parentHash = ByteArray.toHexString(blockMsgHeader.getParentHash().toByteArray());
-        long parentNumber = blockMsgHeader.getParentNumber();
+        String parentNumber = String.valueOf(blockMsgHeader.getParentNumber());
 
         Descriptor descriptor;
 
@@ -217,8 +217,8 @@ public class StreamingTracer implements Tracer {
             BroadcastedMessageDescriptor broadcastedDescriptor = new BroadcastedMessageDescriptor();
             List<String> txsList = Collections.singletonList(ByteArray.toHexString(txHeader.getHash().toByteArray()));
             broadcastedDescriptor.setTransactionsList(txsList);
-            broadcastedDescriptor.setTimeStart(txHeader.getTime());
-            broadcastedDescriptor.setTimeEnd(txHeader.getTime());
+            broadcastedDescriptor.setTimeStart(String.valueOf(txHeader.getTime()));
+            broadcastedDescriptor.setTimeEnd(String.valueOf(txHeader.getTime()));
             descriptor = broadcastedDescriptor;
         } else {
             logger.error("Invalid descriptor type: {}", type);
