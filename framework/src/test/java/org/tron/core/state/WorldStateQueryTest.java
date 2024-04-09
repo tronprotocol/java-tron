@@ -4,6 +4,7 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
@@ -31,6 +33,7 @@ import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.WalletUtil;
 import org.tron.core.ChainBaseManager;
+import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -45,6 +48,7 @@ import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.core.exception.JsonRpcInvalidRequestException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.services.jsonrpc.TronJsonRpc;
+import org.tron.core.services.jsonrpc.TronJsonRpcImpl;
 import org.tron.core.services.jsonrpc.types.CallArguments;
 import org.tron.core.state.store.StorageRowStateStore;
 import org.tron.core.vm.program.Storage;
@@ -63,6 +67,9 @@ public class WorldStateQueryTest {
   private static Manager manager;
 
   private static TronJsonRpc tronJsonRpc;
+  private static Wallet wallet;
+  @ClassRule
+  public static final ExpectedException thrown = ExpectedException.none();
   private static final long TOKEN_ID1 = 1000001L;
   private static final long TOKEN_ID2 = 1000002L;
 
@@ -100,7 +107,7 @@ public class WorldStateQueryTest {
     worldStateCallBack.setExecute(false);
     manager = context.getBean(Manager.class);
     tronJsonRpc = context.getBean(TronJsonRpc.class);
-
+    wallet = context.getBean(Wallet.class);
     Protocol.Account acc = Protocol.Account.newBuilder()
         .setAccountName(ByteString.copyFrom(Objects.requireNonNull(ByteArray.fromString("acc"))))
         .setAddress(ByteString.copyFrom(account1Prikey.getAddress()))
@@ -343,6 +350,12 @@ public class WorldStateQueryTest {
         tronJsonRpc.getAccounts(
             addressList.toArray(new String[0]), "latest"));
 
+    Assert.assertEquals(wallet.getAccount(
+        Protocol.Account.newBuilder().setAddress(ByteString.copyFrom(account1Prikey.getAddress()))
+            .build()),
+        wallet.getAccounts(Collections.singletonList(account1Prikey.getAddress()), blockNum)
+            .get(0));
+
     Map<String, Long> asset = new HashMap<>();
     for (TronJsonRpc.Token10Result t : tronJsonRpc.getToken10(
             ByteArray.toHexString(account2Prikey.getAddress()), "latest")) {
@@ -390,6 +403,18 @@ public class WorldStateQueryTest {
     } catch (StoreException e) {
       Assert.fail();
     }
+  }
+
+  @Test
+  public void testGetAccounts() {
+    List<String> addressList2 = new ArrayList<>();
+    for (int i = 0; i < 101; i++) {
+      addressList2.add("0x" + i);
+    }
+    Assert.assertThrows("The maximum number of addresses is "
+           + TronJsonRpcImpl.MAX_BATCH_SIZE,
+        JsonRpcInvalidParamsException.class, () ->
+            tronJsonRpc.getAccounts(addressList2.toArray(new String[0]), "latest"));
   }
 
   private BlockCapsule buildTransferBlock(BlockCapsule parentBlock) {

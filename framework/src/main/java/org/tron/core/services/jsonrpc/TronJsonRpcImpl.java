@@ -115,6 +115,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
 
   private static final String FILTER_NOT_FOUND = "filter not found";
   public static final int EXPIRE_SECONDS = 5 * 60;
+  public static final int MAX_BATCH_SIZE = 100; // max batch size for getAccounts
   /**
    * for log filter in Full Json-RPC
    */
@@ -1041,6 +1042,10 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       throws JsonRpcInvalidParamsException {
     if (addressList == null || addressList.length == 0) {
       return Collections.emptyList();
+    }
+    if (addressList.length > MAX_BATCH_SIZE) {
+      throw new JsonRpcInvalidParamsException("The maximum number of addresses is "
+          + MAX_BATCH_SIZE);
     }
     List<byte[]> addressToQuery = new ArrayList<>();
     for (String address : addressList) {
