@@ -41,6 +41,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.EstimateEnergyMessage;
 import org.tron.api.GrpcAPI.Return;
@@ -1072,6 +1073,46 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       }
     }
     return reply.stream().map(Util::convertOutput).map(JSONObject::parseObject)
+        .collect(Collectors.toList());
+  }
+
+  @Override
+  public List<JSONObject> getAccountResources(String[] addressList, String blockNumOrTag)
+      throws JsonRpcInvalidParamsException {
+    if (addressList == null || addressList.length == 0) {
+      return Collections.emptyList();
+    }
+    if (addressList.length > MAX_BATCH_SIZE) {
+      throw new JsonRpcInvalidParamsException("The maximum number of addresses is "
+          + MAX_BATCH_SIZE);
+    }
+    List<byte[]> addressToQuery = new ArrayList<>();
+    for (String address : addressList) {
+      byte[] addressData = addressCompatibleToByteArray(address);
+      addressToQuery.add(addressData);
+    }
+    List<GrpcAPI.AccountResourceMessage> reply;
+    if (EARLIEST_STR.equalsIgnoreCase(blockNumOrTag)
+        || PENDING_STR.equalsIgnoreCase(blockNumOrTag)) {
+      throw new JsonRpcInvalidParamsException(TAG_NOT_SUPPORT_ERROR);
+    } else if (LATEST_STR.equalsIgnoreCase(blockNumOrTag)) {
+      reply = wallet.getAccountResources(addressToQuery);
+    } else {
+      BigInteger blockNumber;
+      try {
+        blockNumber = ByteArray.hexToBigInteger(blockNumOrTag);
+      } catch (Exception e) {
+        throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
+      }
+      if (allowStateRoot) {
+        reply = wallet.getAccountResources(addressToQuery, blockNumber.longValue());
+      } else {
+        throw new JsonRpcInvalidParamsException(QUANTITY_NOT_SUPPORT_ERROR);
+      }
+    }
+    return reply.stream()
+        .map(r -> JsonFormat.printToString(r, false))
+        .map(JSONObject::parseObject)
         .collect(Collectors.toList());
   }
 
