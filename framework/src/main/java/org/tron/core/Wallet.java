@@ -417,6 +417,85 @@ public class Wallet {
     return accountCapsule;
   }
 
+  public List<AccountResourceMessage> getAccountResources(List<byte[]> addressList) {
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore propertiesStore = chainBaseManager.getDynamicPropertiesStore();
+    BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
+    EnergyProcessor energyProcessor = new EnergyProcessor(propertiesStore, accountStore);
+    return queryAccountResources(addressList, processor, energyProcessor, propertiesStore,
+        accountStore);
+  }
+
+  public List<AccountResourceMessage> getAccountResources(List<byte[]> addressList,
+                                                          long blockNumber) {
+    Bytes32 rootHash = getRootHashByNumber(blockNumber);
+    WorldStateQueryInstance instance = initWorldStateQueryInstance(rootHash);
+    AccountStore accountStore = new AccountStateStore(instance);
+    DynamicPropertiesStore propertiesStore = new DynamicPropertiesStateStore(instance);
+    AssetIssueV2Store assetIssueV2Store = new AssetIssueV2StateStore(instance);
+    BandwidthProcessor processor = new BandwidthProcessor(propertiesStore, accountStore,
+        assetIssueV2Store, assetIssueV2Store);
+    EnergyProcessor energyProcessor = new EnergyProcessor(propertiesStore, accountStore);
+    return queryAccountResources(addressList, processor, energyProcessor, propertiesStore,
+        accountStore);
+  }
+
+  private List<AccountResourceMessage> queryAccountResources(List<byte[]> addressList,
+                                                             BandwidthProcessor processor,
+                                                             EnergyProcessor energyProcessor,
+                                                             DynamicPropertiesStore propertiesStore,
+                                                             AccountStore accountStore) {
+    return addressList.stream().map(address -> {
+      AccountCapsule accountCapsule = accountStore.get(address);
+      return buildAccountResource(accountCapsule, processor, energyProcessor, propertiesStore);
+    }).collect(Collectors.toList());
+  }
+
+  private AccountResourceMessage buildAccountResource(AccountCapsule accountCapsule,
+                                                      BandwidthProcessor processor,
+                                                      EnergyProcessor energyProcessor,
+                                                      DynamicPropertiesStore propertiesStore) {
+    if (accountCapsule == null) {
+      return AccountResourceMessage.getDefaultInstance();
+    }
+    processor.updateUsage(accountCapsule);
+    energyProcessor.updateUsage(accountCapsule);
+    long netLimit = processor.calculateGlobalNetLimit(accountCapsule);
+    long freeNetLimit = propertiesStore.getFreeNetLimit();
+    long totalNetLimit = propertiesStore.getTotalNetLimit();
+    long totalNetWeight = propertiesStore.getTotalNetWeight();
+    long totalTronPowerWeight = propertiesStore.getTotalTronPowerWeight();
+    long energyLimit = energyProcessor.calculateGlobalEnergyLimit(accountCapsule);
+    long totalEnergyLimit = propertiesStore.getTotalEnergyCurrentLimit();
+    long totalEnergyWeight = propertiesStore.getTotalEnergyWeight();
+    long storageLimit = accountCapsule.getAccountResource().getStorageLimit();
+    long storageUsage = accountCapsule.getAccountResource().getStorageUsage();
+    long allTronPowerUsage = accountCapsule.getTronPowerUsage();
+    long allTronPower = accountCapsule.getAllTronPower() / TRX_PRECISION;
+
+    Map<String, Long> assetNetLimitMap = new HashMap<>();
+    Map<String, Long> allFreeAssetNetUsage = setAssetNetLimit(assetNetLimitMap, accountCapsule);
+    AccountResourceMessage.Builder builder = AccountResourceMessage.newBuilder();
+    builder.setFreeNetUsed(accountCapsule.getFreeNetUsage())
+        .setFreeNetLimit(freeNetLimit)
+        .setNetUsed(accountCapsule.getNetUsage())
+        .setNetLimit(netLimit)
+        .setTotalNetLimit(totalNetLimit)
+        .setTotalNetWeight(totalNetWeight)
+        .setTotalTronPowerWeight(totalTronPowerWeight)
+        .setEnergyLimit(energyLimit)
+        .setEnergyUsed(accountCapsule.getAccountResource().getEnergyUsage())
+        .setTronPowerUsed(allTronPowerUsage)
+        .setTronPowerLimit(allTronPower)
+        .setTotalEnergyLimit(totalEnergyLimit)
+        .setTotalEnergyWeight(totalEnergyWeight)
+        .setStorageLimit(storageLimit)
+        .setStorageUsed(storageUsage)
+        .putAllAssetNetUsed(allFreeAssetNetUsage)
+        .putAllAssetNetLimit(assetNetLimitMap);
+    return builder.build();
+  }
+
 
   private void sortFrozenV2List(AccountCapsule accountCapsule) {
     List<FreezeV2> oldFreezeV2List = accountCapsule.getFrozenV2List();

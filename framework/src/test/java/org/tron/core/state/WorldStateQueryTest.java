@@ -356,6 +356,16 @@ public class WorldStateQueryTest {
         wallet.getAccounts(Collections.singletonList(account1Prikey.getAddress()), blockNum)
             .get(0));
 
+    Assert.assertEquals(tronJsonRpc.getAccountResources(
+            addressList.toArray(new String[0]), ByteArray.toJsonHex(blockNum)),
+        tronJsonRpc.getAccountResources(
+            addressList.toArray(new String[0]), "latest"));
+
+    Assert.assertEquals(wallet.getAccountResource(
+            ByteString.copyFrom(account1Prikey.getAddress())),
+        wallet.getAccountResources(Collections.singletonList(account1Prikey.getAddress()), blockNum)
+            .get(0));
+
     Map<String, Long> asset = new HashMap<>();
     for (TronJsonRpc.Token10Result t : tronJsonRpc.getToken10(
             ByteArray.toHexString(account2Prikey.getAddress()), "latest")) {
