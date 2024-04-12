@@ -47,14 +47,12 @@ public class TransactionMessageBuilder {
 
           TransactionResult result = getTransactionResult(txInfo);
           Receipt receipt = getTransactionReceipt(txInfo);
-          RewardWithdraw rw = getRewardWithdraw(txInfo);
 
           this.messageBuilder
                   .setHeader(mergedTxHeader)
                   .setContracts(0, mergedTxContract)
                   .setResult(result)
                   .setReceipt(receipt)
-                  .setRewardWithdraw(rw)
                   .build();
      }
 
@@ -90,12 +88,14 @@ public class TransactionMessageBuilder {
 
      private Contract getTxEndTxContract(TransactionInfo txInfo, List<EvmMessage.Log> log) {
           List<InternalTransaction> internalTransactions = getInternalTransactions(txInfo);
+          RewardWithdraw rw = getRewardWithdraw(txInfo);
 
           Contract mergedTxContract = messageBuilder.getContracts(0).toBuilder()
                   .setAddress(txInfo.getContractAddress())
                   .addAllExecutionResults(txInfo.getContractResultList())
                   .addAllInternalTransactions(internalTransactions)
                   .addAllLogs(log)
+                  .setRewardWithdraw(rw)
                   .build();
 
           return mergedTxContract;

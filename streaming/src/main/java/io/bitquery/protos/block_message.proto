@@ -56,6 +56,11 @@ message Contract {
   repeated InternalTransaction InternalTransactions = 6;
   repeated evm_messages.Log Logs = 7;
   evm_messages.Trace Trace = 8;
+
+  // It stores information about users who have received a reward for
+  // participating in block processing.
+  // They can do this by calling WithdrawnBalanceContract.
+  RewardWithdraw RewardWithdraw = 9;
 };
 
 message CancelUnfreezeV2Amount {
@@ -95,7 +100,6 @@ message Transaction {
   TransactionResult Result = 2;
   Receipt Receipt = 3;
   repeated Contract Contracts = 4;
-  RewardWithdraw RewardWithdraw = 6;
 };
 
 // Block message
