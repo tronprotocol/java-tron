@@ -10,8 +10,6 @@ import io.bitquery.protos.TronMessage.RewardWithdraw;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.actuator.TransactionFactory;
 import org.tron.core.capsule.TransactionCapsule;
-import io.bitquery.protos.TronMessage.CancelUnfreezeV2Amount;
-import io.bitquery.protos.TronMessage.Staking;
 import io.bitquery.protos.TronMessage.Argument;
 import io.bitquery.protos.TronMessage.CallValue;
 import io.bitquery.protos.TronMessage.InternalTransaction;
@@ -49,7 +47,6 @@ public class TransactionMessageBuilder {
 
           TransactionResult result = getTransactionResult(txInfo);
           Receipt receipt = getTransactionReceipt(txInfo);
-          Staking staking = getStaking(txInfo);
           RewardWithdraw rw = getRewardWithdraw(txInfo);
 
           this.messageBuilder
@@ -57,7 +54,6 @@ public class TransactionMessageBuilder {
                   .setContracts(0, mergedTxContract)
                   .setResult(result)
                   .setReceipt(receipt)
-                  .setStaking(staking)
                   .setRewardWithdraw(rw)
                   .build();
      }
@@ -235,27 +231,6 @@ public class TransactionMessageBuilder {
           }
 
           return callValues;
-     }
-
-     private Staking getStaking(TransactionInfo txInfo) {
-          Map<String, Long> cancelUnfreeze = txInfo.getCancelUnfreezeV2AmountMap();
-
-          Staking.Builder staking = Staking.newBuilder();
-
-          staking.setWithdrawAmount(txInfo.getWithdrawAmount())
-                  .setUnfreezeAmount(txInfo.getUnfreezeAmount())
-                  .setWithdrawExpireAmount(txInfo.getWithdrawExpireAmount());
-
-          for (Map.Entry<String, Long> cu : cancelUnfreeze.entrySet()){
-               CancelUnfreezeV2Amount cancelUnfreezeV2Amount = CancelUnfreezeV2Amount.newBuilder()
-                       .setKey(cu.getKey())
-                       .setValue(cu.getValue())
-                       .build();
-
-               staking.addCancelUnfreezeV2Amounts(cancelUnfreezeV2Amount);
-          }
-
-          return staking.build();
      }
 
      private RewardWithdraw getRewardWithdraw(TransactionInfo txInfo) {

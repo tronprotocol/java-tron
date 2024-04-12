@@ -63,13 +63,6 @@ message CancelUnfreezeV2Amount {
   int64 Value = 2;
 };
 
-message Staking {
-  int64 WithdrawAmount = 1;
-  int64 UnfreezeAmount = 2;
-  int64 WithdrawExpireAmount = 3;
-  repeated CancelUnfreezeV2Amount CancelUnfreezeV2Amounts = 4;
-};
-
 message Log {
   bytes Address = 1;
   bytes Data = 2;
@@ -102,7 +95,6 @@ message Transaction {
   TransactionResult Result = 2;
   Receipt Receipt = 3;
   repeated Contract Contracts = 4;
-  Staking Staking = 5;
   RewardWithdraw RewardWithdraw = 6;
 };
 
