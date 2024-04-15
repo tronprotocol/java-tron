@@ -359,7 +359,6 @@ public class SnapshotManager implements RevokingDatabase {
           deleteCheckpoint();
         }
         createCheckpoint();
-
         long checkPointEnd = System.currentTimeMillis();
         refresh();
         flushCount = 0;

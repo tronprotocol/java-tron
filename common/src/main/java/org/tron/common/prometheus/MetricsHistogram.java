@@ -55,6 +55,9 @@ public class MetricsHistogram {
 
     init(MetricKeys.Histogram.STAKE_HISTOGRAM, "stake net aggregate.",
         LABEL_STAKE_VERSION, LABEL_CONTRACT_TYPE, LABEL_RESOURCE_TYPE);
+
+    init(MetricKeys.Histogram.UNFREEZE_CAN_WITHDRAW, "unfreeze can withdraw.",
+        LABEL_STAKE_VERSION, LABEL_CONTRACT_TYPE, LABEL_RESOURCE_TYPE);
   }
 
   private MetricsHistogram() {
