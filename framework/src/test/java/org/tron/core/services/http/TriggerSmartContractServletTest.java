@@ -11,7 +11,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.tron.common.BaseTest;
-import org.tron.common.application.Application;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.client.Configuration;
 import org.tron.common.utils.client.utils.HttpMethed;
@@ -35,14 +34,11 @@ public class TriggerSmartContractServletTest extends BaseTest {
 
   @Resource
   private FullNodeHttpApiService httpApiService;
-  @Resource
-  private Application appT;
 
   @BeforeClass
   public static void init() throws Exception {
-    dbPath = "output_" + TriggerSmartContractServletTest.class.getName();
     Args.setParam(
-        new String[]{"--output-directory", dbPath, "--debug", "--witness"}, Constant.TEST_CONF);
+        new String[]{"--output-directory", dbPath(), "--debug", "--witness"}, Constant.TEST_CONF);
     Args.getInstance().needSyncCheck = false;
 
     // build app context
@@ -55,8 +51,6 @@ public class TriggerSmartContractServletTest extends BaseTest {
     appT.addService(httpApiService);
 
     // start services
-    appT.initServices(Args.getInstance());
-    appT.startServices();
     appT.startup();
 
     // create contract for testing

@@ -15,8 +15,7 @@ public class ExchangeProcessorTest extends BaseTest {
   private static ExchangeProcessor processor;
 
   static {
-    dbPath = "output_buy_exchange_processor_test";
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
   }
 
   /**

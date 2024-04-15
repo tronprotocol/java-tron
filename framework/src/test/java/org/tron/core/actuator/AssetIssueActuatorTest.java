@@ -1,6 +1,6 @@
 package org.tron.core.actuator;
 
-import static org.testng.Assert.fail;
+import static org.junit.Assert.fail;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -47,8 +47,7 @@ public class AssetIssueActuatorTest extends BaseTest {
   private static long endTime = 0;
 
   static {
-    dbPath = "output_assetIssue_test";
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
     OWNER_ADDRESS_SECOND = Wallet
         .getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";

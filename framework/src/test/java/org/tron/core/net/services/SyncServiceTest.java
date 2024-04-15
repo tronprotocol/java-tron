@@ -3,7 +3,6 @@ package org.tron.core.net.services;
 import static org.mockito.Mockito.mock;
 
 import com.google.common.cache.Cache;
-import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
@@ -13,11 +12,12 @@ import java.util.Map;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
@@ -38,7 +38,8 @@ public class SyncServiceTest {
   private PeerConnection peer;
   private P2pEventHandlerImpl p2pEventHandler;
   private ApplicationContext ctx;
-  private String dbPath = "output-sync-service-test";
+  @Rule
+  public TemporaryFolder temporaryFolder = new TemporaryFolder();
   private InetSocketAddress inetSocketAddress =
           new InetSocketAddress("127.0.0.2", 10001);
 
@@ -50,8 +51,8 @@ public class SyncServiceTest {
    */
   @Before
   public void init() throws Exception {
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"},
-            Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory",
+            temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     service = context.getBean(SyncService.class);
     p2pEventHandler = context.getBean(P2pEventHandlerImpl.class);
@@ -65,7 +66,6 @@ public class SyncServiceTest {
   public void destroy() {
     Args.clearParam();
     context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
   }
 
   @Test
@@ -150,6 +150,13 @@ public class SyncServiceTest {
 
     PeerManager.add(ctx, c1);
     peer = PeerManager.getPeers().get(0);
+
+    Method method1 = PeerManager.class.getDeclaredMethod("check");
+    method1.setAccessible(true);
+    method1.invoke(PeerManager.class);
+    Method method2 = PeerManager.class.getDeclaredMethod("logPeerStats");
+    method2.setAccessible(true);
+    method2.invoke(PeerManager.class);
 
     method.invoke(service);
     Assert.assertTrue(peer.getSyncBlockRequested().get(blockId) == null);

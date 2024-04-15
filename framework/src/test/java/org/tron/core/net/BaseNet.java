@@ -14,13 +14,17 @@ import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.rules.TemporaryFolder;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
@@ -36,7 +40,8 @@ import org.tron.core.services.RpcApiService;
 @Slf4j
 public class BaseNet {
 
-  private static String dbPath = "output-net";
+  @ClassRule
+  public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
   private static String dbDirectory = "net-database";
   private static String indexDirectory = "net-index";
   private static int port = 10000;
@@ -77,14 +82,18 @@ public class BaseNet {
   public static void init() throws Exception {
     executorService.execute(() -> {
       logger.info("Full node running.");
-      Args.setParam(
-          new String[]{
-              "--output-directory", dbPath,
-              "--storage-db-directory", dbDirectory,
-              "--storage-index-directory", indexDirectory
-          },
-          "config.conf"
-      );
+      try {
+        Args.setParam(
+            new String[]{
+                "--output-directory", temporaryFolder.newFolder().toString(),
+                "--storage-db-directory", dbDirectory,
+                "--storage-index-directory", indexDirectory
+            },
+            "config.conf"
+        );
+      } catch (IOException e) {
+        Assert.fail("create temp db directory failed");
+      }
       CommonParameter parameter = Args.getInstance();
       parameter.setNodeListenPort(port);
       parameter.getSeedNode().getAddressList().clear();
@@ -93,8 +102,6 @@ public class BaseNet {
       appT = ApplicationFactory.create(context);
       rpcApiService = context.getBean(RpcApiService.class);
       appT.addService(rpcApiService);
-      appT.initServices(parameter);
-      appT.startServices();
       appT.startup();
       try {
         Thread.sleep(2000);
@@ -102,7 +109,7 @@ public class BaseNet {
         //ignore
       }
       tronNetDelegate = context.getBean(TronNetDelegate.class);
-      rpcApiService.blockUntilShutdown();
+      appT.blockUntilShutdown();
     });
     int tryTimes = 0;
     do {
@@ -119,6 +126,5 @@ public class BaseNet {
     }
     Args.clearParam();
     context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
   }
 }

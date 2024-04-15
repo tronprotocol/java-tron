@@ -25,13 +25,13 @@ import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.PedersenHashCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ZksnarkException;
-import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.vm.PrecompiledContracts.MerkleHash;
 import org.tron.core.vm.PrecompiledContracts.VerifyBurnProof;
 import org.tron.core.vm.PrecompiledContracts.VerifyMintProof;
 import org.tron.core.vm.PrecompiledContracts.VerifyTransferProof;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder.ShieldedTRC20ParametersType;
+import org.tron.core.zen.ZksnarkInitService;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
 import org.tron.core.zen.address.FullViewingKey;
@@ -58,13 +58,12 @@ public class PrecompiledContractsVerifyProofTest extends BaseTest {
 
   @BeforeClass
   public static void init() {
-    dbPath = "output_PrecompiledContracts_VerifyProof_test";
-    Args.setParam(new String[]{"--output-directory", dbPath}, "config-test.conf");
+    Args.setParam(new String[]{"--output-directory", dbPath()}, "config-test.conf");
     DEFAULT_OVK = ByteArray
         .fromHexString("030c8c2bc59fb3eb8afb047a8ea4b028743d23e7d38c6fa30908358431e2314d");
     SHIELDED_CONTRACT_ADDRESS = WalletClient.decodeFromBase58Check(SHIELDED_CONTRACT_ADDRESS_STR);
     PUBLIC_TO_ADDRESS = WalletClient.decodeFromBase58Check(PUBLIC_TO_ADDRESS_STR);
-    FullNodeHttpApiService.librustzcashInitZksnarkParams();
+    ZksnarkInitService.librustzcashInitZksnarkParams();
   }
 
   @Test

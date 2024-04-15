@@ -2,6 +2,7 @@ package org.tron.core.zksnark;
 
 import com.alibaba.fastjson.JSONArray;
 import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.google.protobuf.ByteString;
 import java.io.File;
@@ -9,7 +10,6 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.testng.collections.Lists;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
@@ -31,10 +31,9 @@ public class MerkleTreeTest extends BaseTest {
   private static boolean init;
 
   static {
-    dbPath = "output_ShieldedTransaction_test";
     Args.setParam(
         new String[]{
-            "--output-directory", dbPath,
+            "--output-directory", dbPath(),
             "--storage-db-directory", dbDirectory,
             "--storage-index-directory", indexDirectory,
             "-w",

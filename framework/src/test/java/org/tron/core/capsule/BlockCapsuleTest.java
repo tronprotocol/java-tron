@@ -1,16 +1,18 @@
 package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
-
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
@@ -33,18 +35,18 @@ public class BlockCapsuleTest {
               .fromHexString("9938a342238077182498b464ac0292229938a342238077182498b464ac029222"))),
       1234,
       ByteString.copyFrom("1234567".getBytes()));
-  private static String dbPath = "output_bloackcapsule_test";
+  @ClassRule
+  public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @BeforeClass
-  public static void init() {
-    Args.setParam(new String[]{"-d", dbPath},
+  public static void init() throws IOException {
+    Args.setParam(new String[]{"-d", temporaryFolder.newFolder().toString()},
         Constant.TEST_CONF);
   }
 
   @AfterClass
   public static void removeDb() {
     Args.clearParam();
-    FileUtil.deleteDir(new File(dbPath));
   }
 
   @Test
@@ -144,6 +146,22 @@ public class BlockCapsuleTest {
   @Test
   public void testGetTimeStamp() {
     Assert.assertEquals(1234L, blockCapsule0.getTimeStamp());
+  }
+
+  @Test
+  public void testConcurrentToString() throws InterruptedException {
+    List<Thread> threadList = new ArrayList<>();
+    int n = 10;
+    for (int i = 0; i < n; i++) {
+      threadList.add(new Thread(() -> blockCapsule0.toString()));
+    }
+    for (int i = 0; i < n; i++) {
+      threadList.get(i).start();
+    }
+    for (int i = 0; i < n; i++) {
+      threadList.get(i).join();
+    }
+    Assert.assertTrue(true);
   }
 
 }

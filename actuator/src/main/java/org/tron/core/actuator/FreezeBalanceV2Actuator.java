@@ -13,7 +13,6 @@ import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.DecodeUtil;
@@ -27,6 +26,13 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.BalanceContract.FreezeBalanceV2Contract;
+
+import java.util.Objects;
+
+import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
+import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 
 @Slf4j(topic = "actuator")
 public class FreezeBalanceV2Actuator extends AbstractActuator {
@@ -60,8 +66,9 @@ public class FreezeBalanceV2Actuator extends AbstractActuator {
       accountCapsule.initializeOldTronPower();
     }
 
-    long newBalance = accountCapsule.getBalance() - freezeBalanceV2Contract.getFrozenBalance();
     long frozenBalance = freezeBalanceV2Contract.getFrozenBalance();
+    long newBalance = accountCapsule.getBalance() - frozenBalance;
+
     switch (freezeBalanceV2Contract.getResource()) {
       case BANDWIDTH:
         long oldNetWeight = accountCapsule.getFrozenV2BalanceWithDelegated(BANDWIDTH) / TRX_PRECISION;
@@ -149,11 +156,11 @@ public class FreezeBalanceV2Actuator extends AbstractActuator {
       throw new ContractValidateException("frozenBalance must be positive");
     }
     if (frozenBalance < TRX_PRECISION) {
-      throw new ContractValidateException("frozenBalance must be more than 1TRX");
+      throw new ContractValidateException("frozenBalance must be greater than or equal to 1 TRX");
     }
 
     if (frozenBalance > accountCapsule.getBalance()) {
-      throw new ContractValidateException("frozenBalance must be less than accountBalance");
+      throw new ContractValidateException("frozenBalance must be less than or equal to accountBalance");
     }
 
     switch (freezeBalanceV2Contract.getResource()) {

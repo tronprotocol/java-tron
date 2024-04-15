@@ -41,8 +41,7 @@ public class BlockMsgHandlerTest extends BaseTest {
    */
   @BeforeClass
   public static void init() {
-    dbPath = "output_blockmsghandler_test";
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"},
+    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"},
         Constant.TEST_CONF);
 
   }

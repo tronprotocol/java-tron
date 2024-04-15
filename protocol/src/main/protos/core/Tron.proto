@@ -601,6 +601,8 @@ enum ReasonCode {
   TOO_MANY_PEERS_WITH_SAME_IP = 0x22;
   LIGHT_NODE_SYNC_FAIL = 0x23;
   BELOW_THAN_ME = 0X24;
+  NOT_WITNESS = 0x25;
+  NO_SUCH_MESSAGE = 0x26;
   UNKNOWN = 0xFF;
 }
 
@@ -624,6 +626,7 @@ message HelloMessage {
   bytes signature = 8;
   int32 nodeType = 9;
   int64 lowestBlockNum = 10;
+  bytes codeVersion = 11;
 }
 
 message InternalTransaction {

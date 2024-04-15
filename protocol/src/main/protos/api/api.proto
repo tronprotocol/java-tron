@@ -767,6 +767,15 @@ service Wallet {
 
   rpc GetBlock (BlockReq) returns (BlockExtention) {
   }
+
+  rpc GetBandwidthPrices (EmptyMessage) returns (PricesResponseMessage) {
+  }
+
+  rpc GetEnergyPrices (EmptyMessage) returns (PricesResponseMessage) {
+  }
+
+  rpc GetMemoFee (EmptyMessage) returns (PricesResponseMessage) {
+  }
 };
 
 service WalletSolidity {
@@ -963,6 +972,11 @@ service WalletSolidity {
   }
   rpc GetBlock (BlockReq) returns (BlockExtention) {
   }
+  rpc GetBandwidthPrices (EmptyMessage) returns (PricesResponseMessage) {
+  }
+
+  rpc GetEnergyPrices (EmptyMessage) returns (PricesResponseMessage) {
+  }
 };
 
 service WalletExtension {
@@ -1037,6 +1051,8 @@ message Return {
     SERVER_BUSY = 9;
     NO_CONNECTION = 10;
     NOT_ENOUGH_EFFECTIVE_CONNECTION = 11;
+    BLOCK_UNSOLIDIFIED = 12;
+
     OTHER_ERROR = 20;
   }
 
@@ -1105,6 +1121,10 @@ message CanWithdrawUnfreezeAmountRequestMessage {
 }
 message CanWithdrawUnfreezeAmountResponseMessage {
   int64 amount = 1;
+}
+
+message PricesResponseMessage {
+  string prices = 1;
 }
 
 // Gossip node list

@@ -1,5 +1,6 @@
 package org.tron.core.witness;
 
+import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import java.util.HashMap;
 import java.util.List;
@@ -8,7 +9,6 @@ import javax.annotation.Resource;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.testng.collections.Lists;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
@@ -29,8 +29,7 @@ public class ProposalControllerTest extends BaseTest {
   private static boolean init;
 
   static {
-    dbPath = "output_proposal_controller_test";
-    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
   }
 
   @Before

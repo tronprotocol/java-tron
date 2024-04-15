@@ -101,10 +101,6 @@ public class Constant {
   public static final String NODE_MAX_CONNECTIONS_WITH_SAME_IP = "node.maxConnectionsWithSameIp";
   public static final String NODE_MIN_PARTICIPATION_RATE = "node.minParticipationRate";
   public static final String NODE_LISTEN_PORT = "node.listen.port";
-  public static final String NODE_DISCOVERY_PUBLIC_HOME_NODE = "node.discovery.public.home.node";
-  public static final String NODE_DISCOVERY_PING_TIMEOUT = "node.discovery.ping.timeout";
-
-  public static final String NODE_P2P_PING_INTERVAL = "node.p2p.pingInterval";
   public static final String NODE_P2P_VERSION = "node.p2p.version";
   public static final String NODE_ENABLE_IPV6  = "node.enableIpv6";
   public static final String NODE_DNS_TREE_URLS = "node.dns.treeUrls";
@@ -154,6 +150,8 @@ public class Constant {
   public static final String NODE_RPC_MAX_MESSAGE_SIZE = "node.rpc.maxMessageSize";
 
   public static final String NODE_RPC_MAX_HEADER_LIST_SIZE = "node.rpc.maxHeaderListSize";
+
+  public static final String NODE_RPC_REFLECTION_SERVICE = "node.rpc.reflectionService";
 
   public static final String NODE_OPEN_HISTORY_QUERY_WHEN_LITEFN = "node.openHistoryQueryWhenLiteFN";
 
@@ -260,6 +258,8 @@ public class Constant {
 
   public static final String RATE_LIMITER_GLOBAL_IP_QPS = "rate.limiter.global.ip.qps";
 
+  public static final String RATE_LIMITER_GLOBAL_API_QPS = "rate.limiter.global.api.qps";
+
   public static final String COMMITTEE_CHANGED_DELEGATION = "committee.changedDelegation";
 
   public static final String CRYPTO_ENGINE = "crypto.engine";
@@ -281,10 +281,7 @@ public class Constant {
   public static final String EVENT_SUBSCRIBE_CONTRACT_ADDRESS = "event.subscribe.filter.contractAddress";
   public static final String EVENT_SUBSCRIBE_CONTRACT_TOPIC = "event.subscribe.filter.contractTopic";
 
-  public static final String NODE_DISCOVERY_BIND_IP = "node.discovery.bind.ip";
-
   public static final String NODE_DISCOVERY_EXTERNAL_IP = "node.discovery.external.ip";
-  public static final String AMAZONAWS_URL = "http://checkip.amazonaws.com";
 
   public static final String NODE_BACKUP_PRIORITY = "node.backup.priority";
   public static final String NODE_BACKUP_PORT = "node.backup.port";
@@ -306,6 +303,7 @@ public class Constant {
   public static final String SEED_NODE_IP_LIST = "seed.node.ip.list";
   public static final String NODE_METRICS_ENABLE = "node.metricsEnable";
   public static final String COMMITTEE_ALLOW_PBFT = "committee.allowPBFT";
+  public static final String COMMITTEE_PBFT_EXPIRE_NUM = "committee.pBFTExpireNum";
   public static final String NODE_AGREE_NODE_COUNT = "node.agreeNodeCount";
 
   public static final String COMMITTEE_ALLOW_TRANSACTION_FEE_POOL = "committee.allowTransactionFeePool";
@@ -373,4 +371,9 @@ public class Constant {
   public static final String DYNAMIC_CONFIG_CHECK_INTERVAL = "node.dynamicConfig.checkInterval";
 
   public static final String COMMITTEE_ALLOW_TVM_SHANGHAI = "committee.allowTvmShangHai";
+
+  public static final String UNSOLIDIFIED_BLOCK_CHECK = "node.unsolidifiedBlockCheck";
+
+  public static final String MAX_UNSOLIDIFIED_BLOCKS = "node.maxUnsolidifiedBlocks";
+  public static final String COMMITTEE_ALLOW_OLD_REWARD_OPT = "committee.allowOldRewardOpt";
 }

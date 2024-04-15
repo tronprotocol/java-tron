@@ -65,6 +65,11 @@ public class CancelAllUnfreezeV2Actuator extends AbstractActuator {
     List<UnFreezeV2> unfrozenV2List = ownerCapsule.getUnfrozenV2List();
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
     AtomicLong atomicWithdrawExpireBalance = new AtomicLong(0L);
+    /* The triple object is defined by resource type, with left representing the pair object
+    corresponding to bandwidth, middle representing the pair object corresponding to energy, and
+    right representing the pair object corresponding to tron power. The pair object for each
+    resource type, left represents resource weight, and right represents the number of unfreeze
+    resources for that resource type. */
     Triple<Pair<AtomicLong, AtomicLong>, Pair<AtomicLong, AtomicLong>, Pair<AtomicLong, AtomicLong>>
         triple = Triple.of(
         Pair.of(new AtomicLong(0L), new AtomicLong(0L)),
