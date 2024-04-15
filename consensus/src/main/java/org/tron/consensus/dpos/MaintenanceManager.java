@@ -182,7 +182,6 @@ public class MaintenanceManager {
             delegationStore.getBrokerage(witness.createDbKey()));
         delegationStore.setWitnessVote(nextCycle, witness.createDbKey(), witness.getVoteCount());
       });
-      consensusDelegate.updateWitnessStandby(all);
 
 
       long totalVote = consensusDelegate.getWitnessStandby().stream()
