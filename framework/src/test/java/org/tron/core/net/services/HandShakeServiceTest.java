@@ -4,7 +4,6 @@ import static org.mockito.Mockito.mock;
 import static org.tron.core.net.message.handshake.HelloMessage.getEndpointFromNode;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -16,15 +15,15 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.consensus.pbft.message.PbftMessage;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
@@ -33,7 +32,6 @@ import org.tron.core.config.args.Args;
 import org.tron.core.net.P2pEventHandlerImpl;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.handshake.HelloMessage;
-import org.tron.core.net.message.keepalive.PingMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
 import org.tron.p2p.P2pConfig;
@@ -41,6 +39,7 @@ import org.tron.p2p.base.Parameter;
 import org.tron.p2p.connection.Channel;
 import org.tron.p2p.discover.Node;
 import org.tron.p2p.utils.NetUtil;
+import org.tron.program.Version;
 import org.tron.protos.Discover.Endpoint;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.HelloMessage.Builder;
@@ -51,13 +50,13 @@ public class HandShakeServiceTest {
   private PeerConnection peer;
   private static P2pEventHandlerImpl p2pEventHandler;
   private static ApplicationContext ctx;
-  private static String dbPath = "output-message-handler-test";
-
+  @ClassRule
+  public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @BeforeClass
   public static void init() throws Exception {
-    Args.setParam(new String[] {"--output-directory", dbPath, "--debug"},
-        Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory",
+        temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     p2pEventHandler = context.getBean(P2pEventHandlerImpl.class);
     ctx = (ApplicationContext) ReflectUtils.getFieldObject(p2pEventHandler, "ctx");
@@ -71,7 +70,6 @@ public class HandShakeServiceTest {
   public static void destroy() {
     Args.clearParam();
     context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
   }
 
   @Before
@@ -103,6 +101,9 @@ public class HandShakeServiceTest {
     Node node = new Node(NetUtil.getNodeId(), a1.getAddress().getHostAddress(), null, a1.getPort());
     HelloMessage helloMessage = new HelloMessage(node, System.currentTimeMillis(),
         ChainBaseManager.getChainBaseManager());
+
+    Assert.assertEquals(Version.getVersion(),
+        new String(helloMessage.getHelloMessage().getCodeVersion().toByteArray()));
     method.invoke(p2pEventHandler, peer, helloMessage.getSendBytes());
 
     //dup hello message
@@ -136,6 +137,37 @@ public class HandShakeServiceTest {
       Assert.fail();
     }
   }
+
+  @Test
+  public void testInvalidHelloMessage2() throws Exception {
+    Protocol.HelloMessage.Builder builder = getTestHelloMessageBuilder();
+    Assert.assertTrue(new HelloMessage(builder.build().toByteArray()).valid());
+
+    builder.setAddress(ByteString.copyFrom(new byte[201]));
+    HelloMessage helloMessage = new HelloMessage(builder.build().toByteArray());
+    Assert.assertFalse(helloMessage.valid());
+
+    builder.setAddress(ByteString.copyFrom(new byte[200]));
+    helloMessage = new HelloMessage(builder.build().toByteArray());
+    Assert.assertTrue(helloMessage.valid());
+
+    builder.setSignature(ByteString.copyFrom(new byte[201]));
+    helloMessage = new HelloMessage(builder.build().toByteArray());
+    Assert.assertFalse(helloMessage.valid());
+
+    builder.setSignature(ByteString.copyFrom(new byte[200]));
+    helloMessage = new HelloMessage(builder.build().toByteArray());
+    Assert.assertTrue(helloMessage.valid());
+
+    builder.setCodeVersion(ByteString.copyFrom(new byte[201]));
+    helloMessage = new HelloMessage(builder.build().toByteArray());
+    Assert.assertFalse(helloMessage.valid());
+
+    builder.setCodeVersion(ByteString.copyFrom(new byte[200]));
+    helloMessage = new HelloMessage(builder.build().toByteArray());
+    Assert.assertTrue(helloMessage.valid());
+  }
+
 
   @Test
   public void testRelayHelloMessage() throws NoSuchMethodException {
@@ -264,6 +296,15 @@ public class HandShakeServiceTest {
     builder.setLowestBlockNum(chainBaseManager.isLiteNode()
         ? chainBaseManager.getLowestBlockNum() : 0);
 
+    return builder;
+  }
+
+  private Protocol.HelloMessage.Builder getTestHelloMessageBuilder() {
+    InetSocketAddress a1 = new InetSocketAddress("127.0.0.1", 10001);
+    Node node = new Node(NetUtil.getNodeId(), a1.getAddress().getHostAddress(), null, a1.getPort());
+    Protocol.HelloMessage.Builder builder =
+        getHelloMessageBuilder(node, System.currentTimeMillis(),
+            ChainBaseManager.getChainBaseManager());
     return builder;
   }
 }

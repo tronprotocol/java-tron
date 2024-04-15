@@ -27,8 +27,7 @@ public class AssetUpdateHelperTest extends BaseTest {
   private static boolean init;
 
   static {
-    dbPath = "output_AssetUpdateHelperTest_test";
-    Args.setParam(new String[]{"-d", dbPath, "-w"}, "config-test-index.conf");
+    Args.setParam(new String[]{"-d", dbPath(), "-w"}, "config-test-index.conf");
     Args.getInstance().setSolidityNode(true);
   }
 

@@ -176,19 +176,11 @@ public class MaintenanceManager {
     if (dynamicPropertiesStore.allowChangeDelegation()) {
       long nextCycle = dynamicPropertiesStore.getCurrentCycleNumber() + 1;
       dynamicPropertiesStore.saveCurrentCycleNumber(nextCycle);
-      List<WitnessCapsule> all = consensusDelegate.getAllWitnesses();
-      all.forEach(witness -> {
+      consensusDelegate.getAllWitnesses().forEach(witness -> {
         delegationStore.setBrokerage(nextCycle, witness.createDbKey(),
             delegationStore.getBrokerage(witness.createDbKey()));
         delegationStore.setWitnessVote(nextCycle, witness.createDbKey(), witness.getVoteCount());
       });
-      consensusDelegate.updateWitnessStandby(all);
-
-
-      long totalVote = consensusDelegate.getWitnessStandby().stream()
-          .mapToLong(WitnessCapsule::getVoteCount).sum();
-      dynamicPropertiesStore.saveTotalVoteWeight(totalVote);
-      Metrics.gaugeSet(TOTAL_RESOURCE_WEIGHT, totalVote, STAKE_VERSION_V1, STAKE_VOTE);
     }
   }
 

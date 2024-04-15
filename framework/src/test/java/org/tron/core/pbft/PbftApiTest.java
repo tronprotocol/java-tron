@@ -35,8 +35,7 @@ public class PbftApiTest extends BaseTest {
 
   @BeforeClass
   public static void init() {
-    dbPath = "output_pbftAPI_test";
-    Args.setParam(new String[]{"-d", dbPath, "-w"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath(), "-w"}, Constant.TEST_CONF);
   }
 
   @Test
@@ -59,6 +58,7 @@ public class PbftApiTest extends BaseTest {
 
     Assert.assertTrue(dynamicPropertiesStore.getLatestBlockHeaderNumber() >= 10);
     commonDataBase.saveLatestPbftBlockNum(6);
+    httpApiOnPBFTService.init(Args.getInstance());
     httpApiOnPBFTService.start();
     CloseableHttpResponse response;
     try (CloseableHttpClient httpClient = HttpClients.createDefault()) {

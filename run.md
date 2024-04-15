@@ -14,9 +14,9 @@ Use the [Testnet Config](https://github.com/tronprotocol/TronDeployment/blob/mas
 **Use the executable JAR(Recommended way):**
 
 ```bash
-java -jar FullNode.jar -p your private key --witness -c your config.conf(Example：/data/java-tron/config.conf)
+java -jar FullNode.jar -p <your_private_key> --witness -c your config.conf(Example：/data/java-tron/config.conf)
 Example:
-java -jar FullNode.jar -p 650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812 --witness -c /data/java-tron/config.conf
+java -jar FullNode.jar -p <your_private_key> --witness -c /data/java-tron/config.conf
 
 ```
 
@@ -65,9 +65,9 @@ Then observe whether block synchronization success，If synchronization successf
 
 ```bash
 cd build/libs
-java -jar FullNode.jar -p your private key --witness -c your config.conf (Example：/data/java-tron/config.conf)
+java -jar FullNode.jar -p <your_private_key> --witness -c your config.conf (Example：/data/java-tron/config.conf)
 Example:
-java -jar FullNode.jar -p 650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812 --witness -c /data/java-tron/config.conf
+java -jar FullNode.jar -p <your_private_key> --witness -c /data/java-tron/config.conf
 
 ```
   
@@ -81,7 +81,7 @@ java -jar FullNode.jar -p 650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F
 Using TaskInputs.file() with something that doesn't resolve to a File object has been deprecated and is scheduled to be removed in Gradle 5.0. Use TaskInputs.files() instead.
 
 > Task :run 
-20:39:22.749 INFO [o.t.c.c.a.Args] private.key = 63e62a71ed39e30bac7223097a173924aad5855959de517ff2987b0e0ec89f1a
+20:39:22.749 INFO [o.t.c.c.a.Args] private.key = 63e62a71ed3...
 20:39:22.816 WARN [o.t.c.c.a.Args] localwitness size must be one, get the first one
 20:39:22.832 INFO [o.t.p.FullNode] Here is the help message.output-directory/
 三月 22, 2018 8:39:23 下午 org.tron.core.services.RpcApiService start

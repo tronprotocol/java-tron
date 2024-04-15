@@ -17,6 +17,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.DecryptNotes;
+import org.tron.api.GrpcAPI.DecryptNotesMarked;
 import org.tron.api.GrpcAPI.ReceiveNote;
 import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.GrpcAPI.TransactionExtention;
@@ -24,6 +25,7 @@ import org.tron.common.BaseTest;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.client.utils.TransactionUtils;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
@@ -66,11 +68,11 @@ import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
-import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.ZenTransactionBuilder.ReceiveDescriptionInfo;
 import org.tron.core.zen.ZenTransactionBuilder.SpendDescriptionInfo;
+import org.tron.core.zen.ZksnarkInitService;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
 import org.tron.core.zen.address.FullViewingKey;
@@ -122,10 +124,9 @@ public class ShieldedReceiveTest extends BaseTest {
   private static boolean init;
 
   static {
-    dbPath = "receive_description_test";
-    Args.setParam(new String[]{"--output-directory", dbPath}, "config-localtest.conf");
-    FROM_ADDRESS = Wallet.getAddressPreFixString() + "a7d8a35b260395c14aa456297662092ba3b76fc0";
-    ADDRESS_ONE_PRIVATE_KEY = "7f7f701e94d4f1dd60ee5205e7ea8ee31121427210417b608a6b2e96433549a7";
+    Args.setParam(new String[]{"--output-directory", dbPath()}, "config-localtest.conf");
+    ADDRESS_ONE_PRIVATE_KEY = PublicMethod.getRandomPrivateKey();
+    FROM_ADDRESS = PublicMethod.getHexAddressByPrivateKey(ADDRESS_ONE_PRIVATE_KEY);;
   }
 
   /**
@@ -142,7 +143,7 @@ public class ShieldedReceiveTest extends BaseTest {
   }
 
   private static void librustzcashInitZksnarkParams() {
-    FullNodeHttpApiService.librustzcashInitZksnarkParams();
+    ZksnarkInitService.librustzcashInitZksnarkParams();
   }
 
   private static byte[] randomUint256() {
@@ -2378,8 +2379,8 @@ public class ShieldedReceiveTest extends BaseTest {
     chainBaseManager.addWitness(ByteString.copyFrom(witnessAddress));
 
     //sometimes generate block failed, try several times.
-
-    Block block = getSignedBlock(witnessCapsule.getAddress(), 0, privateKey);
+    long time = System.currentTimeMillis();
+    Block block = getSignedBlock(witnessCapsule.getAddress(), time, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
 
     //create transactions
@@ -2427,16 +2428,24 @@ public class ShieldedReceiveTest extends BaseTest {
 
     Thread.sleep(500);
     //package transaction to block
-    block = getSignedBlock(witnessCapsule.getAddress(), 0, privateKey);
+    block = getSignedBlock(witnessCapsule.getAddress(), time + 3000, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
 
     BlockCapsule blockCapsule3 = new BlockCapsule(wallet.getNowBlock());
     Assert.assertEquals("blocknum != 2", 2, blockCapsule3.getNum());
 
+    block = getSignedBlock(witnessCapsule.getAddress(), time + 6000, privateKey);
+    dbManager.pushBlock(new BlockCapsule(block));
+
     // scan note by ivk
     byte[] receiverIvk = incomingViewingKey.getValue();
     DecryptNotes notes1 = wallet.scanNoteByIvk(0, 100, receiverIvk);
     Assert.assertEquals(2, notes1.getNoteTxsCount());
+
+    // scan note by ivk and mark
+    DecryptNotesMarked notes3 = wallet.scanAndMarkNoteByIvk(0, 100, receiverIvk,
+        fullViewingKey.getAk(), fullViewingKey.getNk());
+    Assert.assertEquals(2, notes3.getNoteTxsCount());
 
     // scan note by ovk
     DecryptNotes notes2 = wallet.scanNoteByOvk(0, 100, senderOvk);
@@ -2453,6 +2462,7 @@ public class ShieldedReceiveTest extends BaseTest {
       outPointBuild.setIndex(i);
       request.addOutPoints(outPointBuild.build());
     }
+    request.setBlockNum(1);
     IncrementalMerkleVoucherInfo merkleVoucherInfo = wallet
         .getMerkleTreeVoucherInfo(request.build());
 

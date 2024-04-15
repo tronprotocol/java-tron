@@ -23,8 +23,7 @@ import org.tron.protos.Protocol.MarketPrice;
 public class MarketPairPriceToOrderStoreTest extends BaseTest {
 
   static {
-    dbPath = "output-MarketPairPriceToOrderStore-test";
-    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
   }
 
   @After

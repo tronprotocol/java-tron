@@ -1,50 +1,50 @@
 package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
-import java.lang.reflect.Array;
+import java.io.IOException;
 import java.util.Arrays;
-
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.Return.response_code;
+import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.store.WitnessScheduleStore;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 
 @Slf4j
 public class TransactionExpireTest {
 
-  private String dbPath = "output_expire_test";
+  @ClassRule
+  public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
   private TronApplicationContext context;
   private Wallet wallet;
   private Manager dbManager;
   private BlockCapsule blockCapsule;
 
   @Before
-  public void init() {
-    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
+  public void init() throws IOException {
+    Args.setParam(new String[] {"--output-directory",
+        temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
     CommonParameter.PARAMETER.setMinEffectiveConnection(0);
 
     context = new TronApplicationContext(DefaultConfig.class);
@@ -77,11 +77,6 @@ public class TransactionExpireTest {
   public void removeDb() {
     Args.clearParam();
     context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   @Test
@@ -104,5 +99,49 @@ public class TransactionExpireTest {
 
     GrpcAPI.Return result = wallet.broadcastTransaction(transactionCapsule.getInstance());
     Assert.assertEquals(response_code.TRANSACTION_EXPIRATION_ERROR, result.getCode());
+  }
+
+  @Test
+  public void testTransactionApprovedList() {
+    byte[] address = Args.getLocalWitnesses()
+        .getWitnessAccountAddress(CommonParameter.getInstance().isECKeyCryptoEngine());
+    TransferContract transferContract = TransferContract.newBuilder()
+        .setAmount(1L)
+        .setOwnerAddress(ByteString.copyFrom(address))
+        .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(
+            (Wallet.getAddressPreFixString() + "A389132D6639FBDA4FBC8B659264E6B7C90DB086"))))
+        .build();
+    TransactionCapsule transactionCapsule =
+        new TransactionCapsule(transferContract, ContractType.TransferContract);
+    transactionCapsule.setReference(blockCapsule.getNum(), blockCapsule.getBlockId().getBytes());
+    transactionCapsule.sign(ByteArray.fromHexString(Args.getLocalWitnesses().getPrivateKey()));
+
+    TransactionApprovedList transactionApprovedList = wallet.getTransactionApprovedList(
+        transactionCapsule.getInstance());
+    Assert.assertTrue(
+        transactionApprovedList.getResult().getMessage().contains("Account does not exist!"));
+
+    ByteString addressByte = ByteString.copyFrom(address);
+    AccountCapsule accountCapsule =
+        new AccountCapsule(Protocol.Account.newBuilder().setAddress(addressByte).build());
+    accountCapsule.setBalance(1000_000_000L);
+    dbManager.getChainBaseManager().getAccountStore()
+        .put(accountCapsule.createDbKey(), accountCapsule);
+    transactionApprovedList = wallet.getTransactionApprovedList(transactionCapsule.getInstance());
+    Assert.assertEquals("", transactionApprovedList.getResult().getMessage());
+
+    byte[] randomSig = org.tron.keystore.Wallet.generateRandomBytes(64);
+    Transaction transaction = transactionCapsule.getInstance().toBuilder().clearSignature()
+        .addSignature(ByteString.copyFrom(randomSig)).build();
+    transactionApprovedList = wallet.getTransactionApprovedList(transaction);
+    Assert.assertEquals(TransactionApprovedList.Result.response_code.SIGNATURE_FORMAT_ERROR,
+        transactionApprovedList.getResult().getCode());
+
+    randomSig = org.tron.keystore.Wallet.generateRandomBytes(65);
+    transaction = transactionCapsule.getInstance().toBuilder().clearSignature()
+        .addSignature(ByteString.copyFrom(randomSig)).build();
+    transactionApprovedList = wallet.getTransactionApprovedList(transaction);
+    Assert.assertEquals(TransactionApprovedList.Result.response_code.COMPUTE_ADDRESS_ERROR,
+        transactionApprovedList.getResult().getCode());
   }
 }

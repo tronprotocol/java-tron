@@ -11,9 +11,12 @@ import org.tron.consensus.base.Param;
 import org.tron.consensus.pbft.PbftManager;
 import org.tron.consensus.pbft.message.PbftBaseMessage;
 import org.tron.consensus.pbft.message.PbftMessage;
+import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
+import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.peer.PeerConnection;
+import org.tron.protos.Protocol.PBFTMessage.DataType;
 
 @Component
 public class PbftMsgHandler {
@@ -26,8 +29,25 @@ public class PbftMsgHandler {
   @Autowired
   private PbftManager pbftManager;
 
+  @Autowired
+  private TronNetDelegate tronNetDelegate;
+
   public void processMessage(PeerConnection peer, PbftMessage msg) throws Exception {
+    if (!tronNetDelegate.allowPBFT()) {
+      return;
+    }
     if (Param.getInstance().getPbftInterface().isSyncing()) {
+      return;
+    }
+    if (msg.getDataType().equals(DataType.BLOCK)
+        && tronNetDelegate.getHeadBlockId().getNum() - msg.getNumber()
+        > Args.getInstance().getPBFTExpireNum()) {
+      return;
+    }
+    long currentEpoch = tronNetDelegate.getNextMaintenanceTime();
+    long expireEpoch = 2 * tronNetDelegate.getMaintenanceTimeInterval();
+    if (msg.getDataType().equals(DataType.SRL)
+        && currentEpoch - msg.getEpoch() > expireEpoch) {
       return;
     }
     msg.analyzeSignature();

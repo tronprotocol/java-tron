@@ -60,8 +60,9 @@ public class FreezeBalanceV2Actuator extends AbstractActuator {
       accountCapsule.initializeOldTronPower();
     }
 
-    long newBalance = accountCapsule.getBalance() - freezeBalanceV2Contract.getFrozenBalance();
     long frozenBalance = freezeBalanceV2Contract.getFrozenBalance();
+    long newBalance = accountCapsule.getBalance() - frozenBalance;
+
     switch (freezeBalanceV2Contract.getResource()) {
       case BANDWIDTH:
         long oldNetWeight = accountCapsule.getFrozenV2BalanceWithDelegated(BANDWIDTH) / TRX_PRECISION;
@@ -149,11 +150,11 @@ public class FreezeBalanceV2Actuator extends AbstractActuator {
       throw new ContractValidateException("frozenBalance must be positive");
     }
     if (frozenBalance < TRX_PRECISION) {
-      throw new ContractValidateException("frozenBalance must be more than 1TRX");
+      throw new ContractValidateException("frozenBalance must be greater than or equal to 1 TRX");
     }
 
     if (frozenBalance > accountCapsule.getBalance()) {
-      throw new ContractValidateException("frozenBalance must be less than accountBalance");
+      throw new ContractValidateException("frozenBalance must be less than or equal to accountBalance");
     }
 
     switch (freezeBalanceV2Contract.getResource()) {

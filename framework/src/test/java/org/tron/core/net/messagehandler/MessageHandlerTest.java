@@ -3,7 +3,6 @@ package org.tron.core.net.messagehandler;
 import static org.mockito.Mockito.mock;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -12,11 +11,12 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.consensus.pbft.message.PbftMessage;
@@ -39,13 +39,15 @@ public class MessageHandlerTest {
   private PeerConnection peer;
   private static P2pEventHandlerImpl p2pEventHandler;
   private static ApplicationContext ctx;
-  private static String dbPath = "output-message-handler-test";
+
+  @ClassRule
+  public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
 
   @BeforeClass
   public static void init() throws Exception {
-    Args.setParam(new String[] {"--output-directory", dbPath, "--debug"},
-        Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory",
+        temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     p2pEventHandler = context.getBean(P2pEventHandlerImpl.class);
     ctx = (ApplicationContext) ReflectUtils.getFieldObject(p2pEventHandler, "ctx");
@@ -59,7 +61,6 @@ public class MessageHandlerTest {
   public static void destroy() {
     Args.clearParam();
     context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
   }
 
   @Before

@@ -24,10 +24,9 @@ public class TransactionHistoryTest extends BaseTest {
   private static TransactionInfoCapsule transactionInfoCapsule;
 
   static {
-    dbPath = "output_TransactionHistoryStore_test";
     Args.setParam(
         new String[]{
-            "--output-directory", dbPath,
+            "--output-directory", dbPath(),
             "--storage-db-directory", dbDirectory,
             "--storage-index-directory", indexDirectory
         },
@@ -59,5 +58,12 @@ public class TransactionHistoryTest extends BaseTest {
     Assert.assertEquals(200L, resultCapsule.getBlockTimeStamp());
     Assert.assertEquals(ByteArray.toHexString(transactionId),
         ByteArray.toHexString(resultCapsule.getId()));
+  }
+
+  @Test
+  public void testDelete() throws BadItemException {
+    transactionHistoryStore.delete(transactionId);
+    TransactionInfoCapsule transactionInfoCapsule = transactionHistoryStore.get(transactionId);
+    Assert.assertNull(transactionInfoCapsule);
   }
 }
