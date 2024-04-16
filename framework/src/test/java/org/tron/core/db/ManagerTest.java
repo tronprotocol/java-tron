@@ -580,15 +580,35 @@ public class ManagerTest extends BlockGenerate {
       TaposException, ReceiptCheckErrException, TooBigTransactionException,
       AccountResourceInsufficientException, EventBloomException {
 
-    String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
+    String key = PublicMethod.getRandomPrivateKey();
+    String key2 = PublicMethod.getRandomPrivateKey();
     byte[] privateKey = ByteArray.fromHexString(key);
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
     byte[] address = ecKey.getAddress();
 
+    ByteString addressByte = ByteString.copyFrom(address);
+    AccountCapsule accountCapsule =
+            new AccountCapsule(Protocol.Account.newBuilder()
+                    .setAddress(addressByte).build());
+    chainManager.getAccountStore()
+            .put(addressByte.toByteArray(), accountCapsule);
+
+    WitnessCapsule sr1 = new WitnessCapsule(
+        ByteString.copyFrom(address), "www.tron.net/first");
+    sr1.setVoteCount(1000000000L);
+
+
+    byte[] privateKey2 = ByteArray.fromHexString(key2);
+    final ECKey ecKey2 = ECKey.fromPrivate(privateKey2);
+    byte[] address2 = ecKey2.getAddress();
+    WitnessCapsule sr2 = new WitnessCapsule(
+        ByteString.copyFrom(address2), "www.tron.net/second");
+    sr2.setVoteCount(100000L);
+    chainManager.getWitnessStore().put(address, sr1);
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
     chainManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
     chainManager.addWitness(ByteString.copyFrom(address));
-
+    List<WitnessCapsule> witnessStandby1 = chainManager.getWitnessStore().getWitnessStandby();
     Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
 
@@ -625,6 +645,9 @@ public class ManagerTest extends BlockGenerate {
     } catch (Exception e) {
       Assert.assertTrue(e instanceof Exception);
     }
+    chainManager.getWitnessStore().put(address, sr2);
+    List<WitnessCapsule> witnessStandby2 = chainManager.getWitnessStore().getWitnessStandby();
+    Assert.assertNotEquals(witnessStandby1, witnessStandby2);
   }
 
 
@@ -690,13 +713,23 @@ public class ManagerTest extends BlockGenerate {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     //  System.out.print("block store size:" + size + "\n");
-    String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
+    String key = PublicMethod.getRandomPrivateKey();
     byte[] privateKey = ByteArray.fromHexString(key);
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
     byte[] address = ecKey.getAddress();
+
+    ByteString addressByte = ByteString.copyFrom(address);
+    AccountCapsule accountCapsule =
+            new AccountCapsule(Protocol.Account.newBuilder()
+                    .setAddress(addressByte).build());
+    chainManager.getAccountStore()
+            .put(addressByte.toByteArray(), accountCapsule);
+
+
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
     chainManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
     chainManager.addWitness(ByteString.copyFrom(address));
+    chainManager.getWitnessStore().put(address, witnessCapsule);
 
     Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
 
@@ -809,14 +842,20 @@ public class ManagerTest extends BlockGenerate {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
-    String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
+    String key = PublicMethod.getRandomPrivateKey();
     byte[] privateKey = ByteArray.fromHexString(key);
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
     byte[] address = ecKey.getAddress();
-
+    ByteString addressByte = ByteString.copyFrom(address);
+    AccountCapsule accountCapsule =
+            new AccountCapsule(Protocol.Account.newBuilder()
+                    .setAddress(addressByte).build());
+    chainManager.getAccountStore()
+            .put(addressByte.toByteArray(), accountCapsule);
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
     chainManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
     chainManager.addWitness(ByteString.copyFrom(address));
+    chainManager.getWitnessStore().put(address, witnessCapsule);
 
     Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
@@ -915,14 +954,22 @@ public class ManagerTest extends BlockGenerate {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
-    String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
+    String key = PublicMethod.getRandomPrivateKey();;
     byte[] privateKey = ByteArray.fromHexString(key);
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
     byte[] address = ecKey.getAddress();
+
+    ByteString addressByte = ByteString.copyFrom(address);
+    AccountCapsule accountCapsule =
+            new AccountCapsule(Protocol.Account.newBuilder()
+                    .setAddress(addressByte).build());
+    chainManager.getAccountStore()
+            .put(addressByte.toByteArray(), accountCapsule);
+
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
     chainManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
     chainManager.addWitness(ByteString.copyFrom(address));
-
+    chainManager.getWitnessStore().put(address, witnessCapsule);
     Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
 

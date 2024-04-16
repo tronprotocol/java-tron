@@ -58,11 +58,11 @@ public class LiteFnQueryGrpcInterceptorTest {
     Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
     Args.getInstance().setRpcOnSolidityPort(PublicMethod.chooseRandomPort());
     Args.getInstance().setRpcOnPBFTPort(PublicMethod.chooseRandomPort());
-    String fullnode = String.format("%s:%d", Args.getInstance().getNodeDiscoveryBindIp(),
+    String fullnode = String.format("%s:%d", Args.getInstance().getNodeLanIp(),
             Args.getInstance().getRpcPort());
-    String solidityNode = String.format("%s:%d", Args.getInstance().getNodeDiscoveryBindIp(),
+    String solidityNode = String.format("%s:%d", Args.getInstance().getNodeLanIp(),
             Args.getInstance().getRpcOnSolidityPort());
-    String pBFTNode = String.format("%s:%d", Args.getInstance().getNodeDiscoveryBindIp(),
+    String pBFTNode = String.format("%s:%d", Args.getInstance().getNodeLanIp(),
         Args.getInstance().getRpcOnPBFTPort());
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
             .usePlaintext()

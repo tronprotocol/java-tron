@@ -57,6 +57,21 @@ public class DelegatedResourceStoreTest extends BaseTest {
     Assert.assertEquals(BALANCE, delegatedResourceCapsule1.getFrozenBalanceForEnergy());
   }
 
+  @Test
+  public void testDelete() {
+    DelegatedResourceCapsule delegatedResourceCapsule = create("444444444");
+    byte[] key = delegatedResourceCapsule.createDbKey();
+    delegatedResourceStore.put(key, delegatedResourceCapsule);
+    DelegatedResourceCapsule delegatedResourceCapsule1 = delegatedResourceStore.get(key);
+    Assert.assertNotNull(delegatedResourceCapsule1);
+    Assert.assertEquals(BALANCE, delegatedResourceCapsule1.getFrozenBalanceForEnergy());
+
+    delegatedResourceStore.delete(key);
+    DelegatedResourceCapsule delegatedResourceCapsule2 = delegatedResourceStore.get(key);
+    Assert.assertNull(delegatedResourceCapsule2);
+
+  }
+
   public DelegatedResourceCapsule create(String address) {
     byte[] ownerAddress = ByteArray.fromHexString(address);
     byte[] receiverAddress = ByteArray.fromHexString(RECEIVER_ADDRESS);
