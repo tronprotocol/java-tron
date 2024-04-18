@@ -104,7 +104,7 @@ services:
         condition: service_completed_successfully
     <<: [*common-network, *common-dns, *common-restart]
   tron-node:
-    image: ${LC_COMPOSE_NODE_IMAGE}:${LC_COMPOSE_NODE_IMAGE_TAG}
+    image: ${LC_COMPOSE_NODE_IMAGE}:${LC_COMPOSE_IMAGE_TAG}
     volumes:
       - node-data:/app/node-data
       - streaming-data:/app/streaming
