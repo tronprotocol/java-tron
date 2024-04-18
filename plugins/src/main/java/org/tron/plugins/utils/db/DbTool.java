@@ -23,7 +23,7 @@ public class DbTool {
 
   private static final Map<String, DBInterface> dbMap = Maps.newConcurrentMap();
 
-  enum DbType {
+  public enum DbType {
     LevelDB,
     RocksDB
   }
@@ -83,11 +83,11 @@ public class DbTool {
     DBInterface db;
     switch (type) {
       case LevelDB:
-        db = openLevelDb(path);
+        db = openLevelDb(path, dbName);
         dbMap.put(path.toString(), db);
         break;
       case RocksDB:
-        db = openRocksDb(path);
+        db = openRocksDb(path, dbName);
         dbMap.put(path.toString(), db);
         break;
       default:
@@ -114,9 +114,9 @@ public class DbTool {
     DbType type = getDbType(sourceDir.toString(), dbName);
     switch (type) {
       case LevelDB:
-        return openLevelDb(path);
+        return openLevelDb(path, dbName);
       case RocksDB:
-        return openRocksDb(path);
+        return openRocksDb(path, dbName);
       default:
         throw new IllegalStateException("Unexpected value: " + type);
     }
@@ -175,12 +175,12 @@ public class DbTool {
     }
   }
 
-  private static LevelDBImpl openLevelDb(Path db) throws IOException {
-    return new LevelDBImpl(DBUtils.newLevelDb(db));
+  private static LevelDBImpl openLevelDb(Path db, String name) throws IOException {
+    return new LevelDBImpl(DBUtils.newLevelDb(db), name);
   }
 
-  private static RocksDBImpl openRocksDb(Path db) throws RocksDBException {
-    return new RocksDBImpl(DBUtils.newRocksDb(db));
+  private static RocksDBImpl openRocksDb(Path db, String name) throws RocksDBException {
+    return new RocksDBImpl(DBUtils.newRocksDb(db), name);
   }
 
 

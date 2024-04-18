@@ -29,6 +29,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.PbftSignCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
@@ -97,6 +98,11 @@ public class TronNetDelegate {
 
   @Setter
   private volatile boolean exit = true;
+
+  private int maxUnsolidifiedBlocks = Args.getInstance().getMaxUnsolidifiedBlocks();
+
+  private boolean unsolidifiedBlockCheck
+      = Args.getInstance().isUnsolidifiedBlockCheck();
 
   private Cache<BlockId, Long> freshBlockId = CacheBuilder.newBuilder()
           .maximumSize(blockIdCacheSize).expireAfterWrite(1, TimeUnit.HOURS)
@@ -363,6 +369,15 @@ public class TronNetDelegate {
 
   public long getMaintenanceTimeInterval() {
     return chainBaseManager.getDynamicPropertiesStore().getMaintenanceTimeInterval();
+  }
+
+  public boolean isBlockUnsolidified() {
+    if (!unsolidifiedBlockCheck) {
+      return false;
+    }
+    long headNum = chainBaseManager.getHeadBlockNum();
+    long solidNum = chainBaseManager.getSolidBlockId().getNum();
+    return headNum - solidNum >= maxUnsolidifiedBlocks;
   }
 
 }

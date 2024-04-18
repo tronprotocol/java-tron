@@ -626,6 +626,7 @@ message HelloMessage {
   bytes signature = 8;
   int32 nodeType = 9;
   int64 lowestBlockNum = 10;
+  bytes codeVersion = 11;
 }
 
 message InternalTransaction {
