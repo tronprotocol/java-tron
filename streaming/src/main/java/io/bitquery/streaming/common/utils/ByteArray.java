@@ -9,6 +9,7 @@ import java.math.BigInteger;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.encoders.Hex;
 
 /*
@@ -175,5 +176,30 @@ public class ByteArray {
             x = "0" + x;
         }
         return x;
+    }
+
+    public static byte[] addressWithout41(byte[] address) {
+        if (address == null || address.length == 0) {
+            return address;
+        }
+
+        if (address[0] != 65) {
+            return address;
+        }
+
+        // 65 is a 41 prefix in hex
+        return Arrays.copyOfRange(address, 1, address.length);
+    }
+
+    public static String stringAddressWithout41(String address) {
+        if (address == null || address.isEmpty()) {
+            return address;
+        }
+
+        if (!address.startsWith("41")) {
+            return address;
+        }
+
+        return address.substring(2);
     }
 }

@@ -90,8 +90,12 @@ public class TransactionMessageBuilder {
           List<InternalTransaction> internalTransactions = getInternalTransactions(txInfo);
           RewardWithdraw rw = getRewardWithdraw(txInfo);
 
+          ByteString address = ByteString.copyFrom(
+                  io.bitquery.streaming.common.utils.ByteArray.addressWithout41(txInfo.getContractAddress().toByteArray())
+          );
+
           Contract mergedTxContract = messageBuilder.getContracts(0).toBuilder()
-                  .setAddress(txInfo.getContractAddress())
+                  .setAddress(address)
                   .addAllExecutionResults(txInfo.getContractResultList())
                   .addAllInternalTransactions(internalTransactions)
                   .addAllLogs(log)
@@ -102,6 +106,8 @@ public class TransactionMessageBuilder {
      }
 
      private TransactionHeader getTxStartTxHeader(TransactionCapsule txCap, int index) {
+          byte[] feePayer = io.bitquery.streaming.common.utils.ByteArray.addressWithout41(txCap.getOwnerAddress());
+
           TransactionHeader header = TransactionHeader.newBuilder()
                   .setIndex(index)
                   .setExpiration(txCap.getExpiration())
@@ -109,7 +115,7 @@ public class TransactionMessageBuilder {
                   .setFeeLimit(txCap.getFeeLimit())
                   .setTimestamp(txCap.getTimestamp())
                   .addAllSignatures(txCap.getInstance().getSignatureList())
-                  .setFeePayer(ByteString.copyFrom(txCap.getOwnerAddress()))
+                  .setFeePayer(ByteString.copyFrom(feePayer))
                   .build();
 
           return header;
@@ -158,6 +164,8 @@ public class TransactionMessageBuilder {
 
                if(value instanceof ByteString){
                     String decodedValue = ByteArray.toHexString(((ByteString) value).toByteArray());
+                    decodedValue = io.bitquery.streaming.common.utils.ByteArray.stringAddressWithout41(decodedValue);
+
                     argument.setString(decodedValue);
                } else if (value instanceof Long) {
                     argument.setUInt((Long) value);
@@ -201,10 +209,18 @@ public class TransactionMessageBuilder {
           for (Protocol.InternalTransaction txInternalTx : txInfo.getInternalTransactionsList()) {
                List<CallValue> callValues = getCallValues(txInternalTx);
 
+               ByteString callerAddress = ByteString.copyFrom(
+                       io.bitquery.streaming.common.utils.ByteArray.addressWithout41(txInternalTx.getCallerAddress().toByteArray())
+               );
+
+               ByteString transferToAddress = ByteString.copyFrom(
+                       io.bitquery.streaming.common.utils.ByteArray.addressWithout41(txInternalTx.getTransferToAddress().toByteArray())
+               );
+
                InternalTransaction internalTx = InternalTransaction.newBuilder()
-                       .setCallerAddress(txInternalTx.getCallerAddress())
+                       .setCallerAddress(callerAddress)
                        .setNote(txInternalTx.getNote().toStringUtf8())
-                       .setTransferToAddress(txInternalTx.getTransferToAddress())
+                       .setTransferToAddress(transferToAddress)
                        .addAllCallValues(callValues)
                        .setHash(txInternalTx.getHash())
                        .setIndex(index)

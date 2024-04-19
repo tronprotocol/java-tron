@@ -66,8 +66,10 @@ public class BlockMessageBuilder {
     }
 
     private void setBlockWitness(BlockCapsule block) {
+        ByteString witnessAddress = ByteString.copyFrom(ByteArray.addressWithout41(block.getWitnessAddress().toByteArray()));
+
         Witness witness = Witness.newBuilder()
-                .setAddress(block.getWitnessAddress())
+                .setAddress(witnessAddress)
                 .setId(block.getInstance().getBlockHeader().getRawData().getWitnessId())
                 .setSignature(block.getInstance().getBlockHeader().getWitnessSignature())
                 .build();

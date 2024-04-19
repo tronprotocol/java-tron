@@ -2,6 +2,7 @@ package io.bitquery.tron;
 
 import com.google.protobuf.ByteString;
 import io.bitquery.protos.EvmMessage.Trace;
+import io.bitquery.streaming.common.utils.ByteArray;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -61,6 +62,9 @@ public class EvmMessageBuilder {
     public void captureStart(byte[] from, byte[] to, boolean create, byte[] input, byte[] code, long gas, byte[] value, String tokenId) {
         AddressCode addressCodeTo = addressCode(code);
 
+        from = ByteArray.addressWithout41(from);
+        to = ByteArray.addressWithout41(to);
+
         CaptureStart.Builder captureStartBuilder = CaptureStart.newBuilder()
                 .setFrom(ByteString.copyFrom(from))
                 .setTo(ByteString.copyFrom(to))
@@ -97,6 +101,9 @@ public class EvmMessageBuilder {
                 .setCode(opCode)
                 .setName(opcodeName)
                 .build();
+
+        from = ByteArray.addressWithout41(from);
+        to = ByteArray.addressWithout41(to);
 
         setCaptureEnter(
                 ByteString.copyFrom(from),
@@ -188,6 +195,9 @@ public class EvmMessageBuilder {
             stack.add(byteStr);
         }
 
+        callerData = ByteArray.addressWithout41(callerData);
+        contractData = ByteArray.addressWithout41(contractData);
+
         Contract contract = Contract.newBuilder()
                 .setCallerAddress(ByteString.copyFrom(callerData))
 //                .setCaller()
@@ -214,6 +224,8 @@ public class EvmMessageBuilder {
 
     public void addLogToCaptureState(byte[] address, byte[] data, List<DataWord> topicsData, byte[] code) {
         AddressCode addressCode = addressCode(code);
+
+        address = ByteArray.addressWithout41(address);
 
         LogHeader logHeader = LogHeader.newBuilder()
                 .setAddress(ByteString.copyFrom(address))
@@ -246,6 +258,8 @@ public class EvmMessageBuilder {
     }
 
     public void addStorageToCaptureState(byte[] address, byte[] loc, byte[] value) {
+        address = ByteArray.addressWithout41(address);
+
         Store store = Store.newBuilder()
                 .setAddress(ByteString.copyFrom(address))
                 .setLocation(ByteString.copyFrom(loc))

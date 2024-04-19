@@ -699,7 +699,7 @@ public class OperationActions {
 
     program.getResult().addLogInfo(logInfo);
 
-    TracerManager.getTracer().addLogToCaptureState(address.getNoLeadZeroesData(), data, topics, program.getContractState().getCode(address.getData()));
+    TracerManager.getTracer().addLogToCaptureState(address.getLast20Bytes(), data, topics, program.getContractState().getCode(address.getData()));
 
     program.step();
   }
