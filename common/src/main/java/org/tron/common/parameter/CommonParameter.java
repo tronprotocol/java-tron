@@ -68,12 +68,12 @@ public class CommonParameter {
   @Getter
   @Setter
   @Parameter(names = {"--min-time-ratio"}, description = "Maximum CPU tolerance when executing "
-      + "non-timeout transactions while synchronizing blocks. (default: 5.0)")
+      + "timeout transactions while synchronizing blocks. (default: 0.0)")
   public double minTimeRatio = 0.0;
   @Getter
   @Setter
   @Parameter(names = {"--max-time-ratio"}, description = "Maximum CPU tolerance when executing "
-      + "timeout transactions while synchronizing blocks. (default: 0.0)")
+      + "non-timeout transactions while synchronizing blocks. (default: 5.0)")
   public double maxTimeRatio = calcMaxTimeRatio();
   @Getter
   @Setter
