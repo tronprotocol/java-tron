@@ -259,7 +259,7 @@ public class TransactionMessageBuilder {
                return rw.build();
           }
 
-          ByteString receiver = ByteString.copyFrom(ByteArray.fromString(contract.getArguments(0).getString()));
+          ByteString receiver = ByteString.copyFrom(ByteArray.fromHexString(contract.getArguments(0).getString()));
 
           rw.setAmount(amount).setReceiver(receiver);
 
