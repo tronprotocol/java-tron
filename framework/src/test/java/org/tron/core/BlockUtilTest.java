@@ -69,9 +69,7 @@ public class BlockUtilTest {
                 .fromHexString(blockCapsule2.getBlockId().toString())))
         )).build());
 
-    Assert.assertEquals(false, BlockUtil.isParentOf(blockCapsule1, blockCapsule2));
     Assert.assertFalse(BlockUtil.isParentOf(blockCapsule1, blockCapsule2));
-    Assert.assertEquals(true, BlockUtil.isParentOf(blockCapsule2, blockCapsule3));
     Assert.assertTrue(BlockUtil.isParentOf(blockCapsule2, blockCapsule3));
   }
 }

@@ -145,19 +145,19 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     try {
       database = factory.open(dbPath.toFile(), dbOptions);
       if (!this.getDBName().startsWith("checkpoint")) {
-        logger.info("DB {} open success with writeBufferSize {} M, cacheSize {} M, maxOpenFiles {}.",
-            this.getDBName(), dbOptions.writeBufferSize() / 1024 / 1024,
-            dbOptions.cacheSize() / 1024 / 1024, dbOptions.maxOpenFiles());
+        logger
+            .info("DB {} open success with writeBufferSize {} M, cacheSize {} M, maxOpenFiles {}.",
+                this.getDBName(), dbOptions.writeBufferSize() / 1024 / 1024,
+                dbOptions.cacheSize() / 1024 / 1024, dbOptions.maxOpenFiles());
       }
     } catch (IOException e) {
       if (e.getMessage().contains("Corruption:")) {
-        logger.warn("DB {} corruption detected, try to repair it.", this.getDBName(), e);
-        factory.repair(dbPath.toFile(), dbOptions);
-        logger.warn("DB {} corruption detected, repair done.", this.getDBName());
-        database = factory.open(dbPath.toFile(), dbOptions);
+        logger.error("Database {} corrupted, please delete database directory({}) and restart.",
+            dataBaseName, parentPath, e);
       } else {
-        throw e;
+        logger.error("Open Database {} failed", dataBaseName, e);
       }
+      System.exit(1);
     }
   }
 

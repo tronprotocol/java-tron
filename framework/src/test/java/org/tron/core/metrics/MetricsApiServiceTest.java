@@ -1,16 +1,17 @@
 package org.tron.core.metrics;
 
-import java.io.File;
+import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -21,7 +22,8 @@ import org.tron.protos.Protocol;
 @Slf4j
 public class MetricsApiServiceTest {
 
-  private static String dbPath = "output-metrics";
+  @ClassRule
+  public static TemporaryFolder temporaryFolder = new TemporaryFolder();
   private static String dbDirectory = "metrics-database";
   private static String indexDirectory = "metrics-index";
   private static int port = 10001;
@@ -32,7 +34,8 @@ public class MetricsApiServiceTest {
 
 
   @Before
-  public void init() {
+  public void init() throws IOException {
+    String dbPath = temporaryFolder.newFolder().toString();
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug"},
         Constant.TEST_CONF);
     Args.setParam(
@@ -45,15 +48,13 @@ public class MetricsApiServiceTest {
     );
     CommonParameter parameter = Args.getInstance();
     parameter.setNodeListenPort(port);
-    parameter.getSeedNode().getIpList().clear();
+    parameter.getSeedNode().getAddressList().clear();
     parameter.setNodeExternalIp("127.0.0.1");
     context = new TronApplicationContext(DefaultConfig.class);
     appT = ApplicationFactory.create(context);
     rpcApiService = context.getBean(RpcApiService.class);
     metricsApiService = context.getBean(MetricsApiService.class);
     appT.addService(rpcApiService);
-    appT.initServices(parameter);
-    appT.startServices();
     appT.startup();
   }
 
@@ -105,6 +106,5 @@ public class MetricsApiServiceTest {
   @After
   public void destroy() {
     context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
   }
 }

@@ -11,16 +11,17 @@ import static org.tron.core.utils.ProposalUtil.ProposalType.CREATE_NEW_ACCOUNT_F
 import static org.tron.core.utils.ProposalUtil.ProposalType.TRANSACTION_FEE;
 import static org.tron.core.utils.ProposalUtil.ProposalType.WITNESS_127_PAY_PER_BLOCK;
 
-import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.capsule.ProposalCapsule;
@@ -36,7 +37,8 @@ public class BandwidthPriceHistoryLoaderTest {
 
   private static ChainBaseManager chainBaseManager;
   private static TronApplicationContext context;
-  private static final String dbPath = "output-BandwidthPriceHistoryLoaderTest-test";
+  @ClassRule
+  public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
   private static long t1;
   private static long price1;
   private static long t2;
@@ -47,8 +49,9 @@ public class BandwidthPriceHistoryLoaderTest {
   // Note, here use @Before and @After instead of @BeforeClass and @AfterClass,
   // because it needs to initialize DB before the single test every time
   @Before
-  public void init() {
-    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
+  public void init() throws IOException {
+    Args.setParam(new String[] {"--output-directory",
+        temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     chainBaseManager = context.getBean(ChainBaseManager.class);
   }
@@ -57,11 +60,6 @@ public class BandwidthPriceHistoryLoaderTest {
   public void destroy() {
     Args.clearParam();
     context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   public void initDB() {

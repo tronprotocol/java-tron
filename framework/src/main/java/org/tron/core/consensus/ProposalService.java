@@ -339,6 +339,26 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveDynamicEnergyMaxFactor(entry.getValue());
           break;
         }
+        case ALLOW_TVM_SHANGHAI: {
+          manager.getDynamicPropertiesStore().saveAllowTvmShangHai(entry.getValue());
+          break;
+        }
+        case ALLOW_CANCEL_ALL_UNFREEZE_V2: {
+          if (manager.getDynamicPropertiesStore().getAllowCancelAllUnfreezeV2() == 0) {
+            manager.getDynamicPropertiesStore().saveAllowCancelAllUnfreezeV2(entry.getValue());
+            manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(
+                ContractType.CancelAllUnfreezeV2Contract_VALUE);
+          }
+          break;
+        }
+        case MAX_DELEGATE_LOCK_PERIOD: {
+          manager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(entry.getValue());
+          break;
+        }
+        case ALLOW_OLD_REWARD_OPT: {
+          manager.getDynamicPropertiesStore().saveAllowOldRewardOpt(entry.getValue());
+          break;
+        }
         default:
           find = false;
           break;

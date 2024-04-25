@@ -7,7 +7,6 @@ import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS
 import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
 import java.util.Arrays;
 import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +14,9 @@ import org.bouncycastle.util.encoders.Hex;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.RuntimeImpl;
@@ -23,9 +24,9 @@ import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.FastByteComparisons;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
+import org.tron.common.utils.client.utils.AbiUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -46,7 +47,6 @@ import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
-import stest.tron.wallet.common.client.utils.AbiUtil;
 
 @Slf4j
 public class FreezeTest {
@@ -121,7 +121,8 @@ public class FreezeTest {
   private static final String userCStr = "27juXSbMvL6pb8VgmKRgW6ByCfw5RqZjUuo";
   private static final byte[] userC = Commons.decode58Check(userCStr);
 
-  private static String dbPath;
+  @Rule
+  public final TemporaryFolder temporaryFolder = new TemporaryFolder();
   private static TronApplicationContext context;
   private static Manager manager;
   private static byte[] owner;
@@ -129,8 +130,8 @@ public class FreezeTest {
 
   @Before
   public void init() throws Exception {
-    dbPath = "output_" + FreezeTest.class.getName();
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory",
+        temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     manager = context.getBean(Manager.class);
     owner = Hex.decode(Wallet.getAddressPreFixString()
@@ -1042,10 +1043,5 @@ public class FreezeTest {
     VMConfig.initVmHardFork(false);
     Args.clearParam();
     context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.error("Release resources failure.");
-    }
   }
 }

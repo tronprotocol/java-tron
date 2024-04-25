@@ -2,7 +2,9 @@ package org.tron.core.net.message.handshake;
 
 import com.google.protobuf.ByteString;
 import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
@@ -10,6 +12,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TronMessage;
 import org.tron.p2p.discover.Node;
+import org.tron.program.Version;
 import org.tron.protos.Discover.Endpoint;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.HelloMessage.Builder;
@@ -31,11 +34,7 @@ public class HelloMessage extends TronMessage {
 
   public HelloMessage(Node from, long timestamp, ChainBaseManager chainBaseManager) {
 
-    Endpoint fromEndpoint = Endpoint.newBuilder()
-        .setNodeId(ByteString.copyFrom(from.getId()))
-        .setPort(from.getPort())
-        .setAddress(ByteString.copyFrom(ByteArray.fromString(from.getHost())))
-        .build();
+    Endpoint fromEndpoint = getEndpointFromNode(from);
 
     BlockCapsule.BlockId gid = chainBaseManager.getGenesisBlockId();
     Protocol.HelloMessage.BlockId gBlockId = Protocol.HelloMessage.BlockId.newBuilder()
@@ -64,6 +63,7 @@ public class HelloMessage extends TronMessage {
     builder.setNodeType(chainBaseManager.getNodeType().getType());
     builder.setLowestBlockNum(chainBaseManager.isLiteNode()
         ? chainBaseManager.getLowestBlockNum() : 0);
+    builder.setCodeVersion(ByteString.copyFrom(Version.getVersion().getBytes()));
 
     this.helloMessage = builder.build();
     this.type = MessageTypes.P2P_HELLO.asByte();
@@ -94,7 +94,8 @@ public class HelloMessage extends TronMessage {
   public Node getFrom() {
     Endpoint from = this.helloMessage.getFrom();
     return new Node(from.getNodeId().toByteArray(),
-        ByteArray.toStr(from.getAddress().toByteArray()), from.getPort());
+        ByteArray.toStr(from.getAddress().toByteArray()),
+        ByteArray.toStr(from.getAddressIpv6().toByteArray()), from.getPort());
   }
 
   public BlockCapsule.BlockId getGenesisBlockId() {
@@ -122,22 +123,28 @@ public class HelloMessage extends TronMessage {
     StringBuilder builder = new StringBuilder();
 
     builder.append(super.toString())
-            .append("from: ").append(getFrom().getInetSocketAddress()).append("\n")
+            .append("from: ").append(getFrom().getPreferInetSocketAddress()).append("\n")
             .append("timestamp: ").append(getTimestamp()).append("\n")
             .append("headBlockId: ").append(getHeadBlockId().getString()).append("\n")
             .append("nodeType: ").append(helloMessage.getNodeType()).append("\n")
             .append("lowestBlockNum: ").append(helloMessage.getLowestBlockNum()).append("\n");
 
     ByteString address = helloMessage.getAddress();
-    if (address != null && !address.isEmpty()) {
+    if (!address.isEmpty()) {
       builder.append("address:")
               .append(StringUtil.encode58Check(address.toByteArray())).append("\n");
     }
 
     ByteString signature = helloMessage.getSignature();
-    if (signature != null && !signature.isEmpty()) {
+    if (!signature.isEmpty()) {
       builder.append("signature:")
               .append(signature.toByteArray().length).append("\n");
+    }
+
+    ByteString codeVersion = helloMessage.getCodeVersion();
+    if (!codeVersion.isEmpty()) {
+      builder.append("codeVersion:")
+          .append(new String(codeVersion.toByteArray())).append("\n");
     }
 
     return builder.toString();
@@ -163,6 +170,39 @@ public class HelloMessage extends TronMessage {
       return false;
     }
 
+    int maxByteSize = 200;
+    ByteString address = this.helloMessage.getAddress();
+    if (!address.isEmpty() && address.toByteArray().length > maxByteSize) {
+      return false;
+    }
+
+    ByteString sig = this.helloMessage.getSignature();
+    if (!sig.isEmpty() && sig.toByteArray().length > maxByteSize) {
+      return false;
+    }
+
+    ByteString codeVersion = this.helloMessage.getCodeVersion();
+    if (!codeVersion.isEmpty() && codeVersion.toByteArray().length > maxByteSize) {
+      return false;
+    }
+
     return true;
+  }
+
+  public static Endpoint getEndpointFromNode(Node node) {
+    Endpoint.Builder builder = Endpoint.newBuilder()
+        .setPort(node.getPort());
+    if (node.getId() != null) {
+      builder.setNodeId(ByteString.copyFrom(node.getId()));
+    }
+    if (StringUtils.isNotEmpty(node.getHostV4())) {
+      builder.setAddress(
+          ByteString.copyFrom(org.tron.p2p.utils.ByteArray.fromString(node.getHostV4())));
+    }
+    if (StringUtils.isNotEmpty(node.getHostV6())) {
+      builder.setAddressIpv6(
+          ByteString.copyFrom(org.tron.p2p.utils.ByteArray.fromString(node.getHostV6())));
+    }
+    return builder.build();
   }
 }

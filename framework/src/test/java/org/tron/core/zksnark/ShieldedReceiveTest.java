@@ -4,30 +4,30 @@ import com.google.common.primitives.Bytes;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.io.File;
 import java.security.SignatureException;
 import java.util.List;
 import java.util.Optional;
+import javax.annotation.Resource;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.DecryptNotes;
+import org.tron.api.GrpcAPI.DecryptNotesMarked;
 import org.tron.api.GrpcAPI.ReceiveNote;
 import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.GrpcAPI.TransactionExtention;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.client.utils.TransactionUtils;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.JLibrustzcash;
@@ -37,7 +37,6 @@ import org.tron.common.zksnark.LibrustzcashParam.CheckSpendParams;
 import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.common.zksnark.LibrustzcashParam.OutputProofParams;
 import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
-import org.tron.core.ChainBaseManager;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorCreator;
@@ -52,11 +51,8 @@ import org.tron.core.capsule.SpendDescriptionCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ConsensusService;
-import org.tron.core.db.BlockGenerate;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
@@ -72,11 +68,11 @@ import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
-import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.ZenTransactionBuilder.ReceiveDescriptionInfo;
 import org.tron.core.zen.ZenTransactionBuilder.SpendDescriptionInfo;
+import org.tron.core.zen.ZksnarkInitService;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
 import org.tron.core.zen.address.FullViewingKey;
@@ -93,7 +89,6 @@ import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
-import org.tron.protos.Protocol.TransactionSign;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.ShieldContract.IncrementalMerkleVoucherInfo;
 import org.tron.protos.contract.ShieldContract.OutputPoint;
@@ -104,9 +99,8 @@ import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
 import org.tron.protos.contract.ShieldContract.SpendDescription;
 
 @Slf4j
-public class ShieldedReceiveTest extends BlockGenerate {
+public class ShieldedReceiveTest extends BaseTest {
 
-  private static final String dbPath = "receive_description_test";
   private static final String FROM_ADDRESS;
   private static final String ADDRESS_ONE_PRIVATE_KEY;
   private static final long OWNER_BALANCE = 100_000_000;
@@ -120,56 +114,36 @@ public class ShieldedReceiveTest extends BlockGenerate {
   private static final int VOTE_SCORE = 2;
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
-  private static Manager dbManager;
-  private static ChainBaseManager chainBaseManager;
-  private static ConsensusService consensusService;
-  private static TronApplicationContext context;
-  private static Wallet wallet;
-  private static TransactionUtil transactionUtil;
+  @Resource
+  private ConsensusService consensusService;
+  @Resource
+  private Wallet wallet;
+  @Resource
+  private TransactionUtil transactionUtil;
+
+  private static boolean init;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, "config-localtest.conf");
-    context = new TronApplicationContext(DefaultConfig.class);
-    FROM_ADDRESS = Wallet.getAddressPreFixString() + "a7d8a35b260395c14aa456297662092ba3b76fc0";
-    ADDRESS_ONE_PRIVATE_KEY = "7f7f701e94d4f1dd60ee5205e7ea8ee31121427210417b608a6b2e96433549a7";
+    Args.setParam(new String[]{"--output-directory", dbPath()}, "config-localtest.conf");
+    ADDRESS_ONE_PRIVATE_KEY = PublicMethod.getRandomPrivateKey();
+    FROM_ADDRESS = PublicMethod.getHexAddressByPrivateKey(ADDRESS_ONE_PRIVATE_KEY);;
   }
 
   /**
    * Init data.
    */
-  @BeforeClass
-  public static void init() {
-    FileUtil.deleteDir(new File(dbPath));
-
-    wallet = context.getBean(Wallet.class);
-    transactionUtil = context.getBean(TransactionUtil.class);
-    dbManager = context.getBean(Manager.class);
-    chainBaseManager = context.getBean(ChainBaseManager.class);
-    setManager(dbManager);
-    consensusService = context.getBean(ConsensusService.class);
-    consensusService.start();
-    //give a big value for pool, avoid for
-    chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(10_000_000_000L);
-    // Args.getInstance().setAllowShieldedTransaction(1);
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
+  @Before
+  public void init() {
+    if (init) {
+      return;
     }
+    consensusService.start();
+    chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(10_000_000_000L);
+    init = true;
   }
 
   private static void librustzcashInitZksnarkParams() {
-    FullNodeHttpApiService.librustzcashInitZksnarkParams();
+    ZksnarkInitService.librustzcashInitZksnarkParams();
   }
 
   private static byte[] randomUint256() {
@@ -329,13 +303,8 @@ public class ShieldedReceiveTest extends BlockGenerate {
     TransactionCapsule transactionCap = builder.build();
 
     //Add public address sign
-    TransactionSign.Builder transactionSignBuild = TransactionSign.newBuilder();
-    transactionSignBuild.setTransaction(transactionCap.getInstance());
-    transactionSignBuild.setPrivateKey(ByteString.copyFrom(
-        ByteArray.fromHexString(ADDRESS_ONE_PRIVATE_KEY)));
-
-    transactionCap = transactionUtil.addSign(transactionSignBuild.build());
-
+    transactionCap = TransactionUtils.addTransactionSign(transactionCap.getInstance(),
+            ADDRESS_ONE_PRIVATE_KEY, chainBaseManager.getAccountStore());
     try {
       dbManager.pushTransaction(transactionCap);
       Assert.assertFalse(true);
@@ -2410,8 +2379,8 @@ public class ShieldedReceiveTest extends BlockGenerate {
     chainBaseManager.addWitness(ByteString.copyFrom(witnessAddress));
 
     //sometimes generate block failed, try several times.
-
-    Block block = getSignedBlock(witnessCapsule.getAddress(), 0, privateKey);
+    long time = System.currentTimeMillis();
+    Block block = getSignedBlock(witnessCapsule.getAddress(), time, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
 
     //create transactions
@@ -2459,16 +2428,24 @@ public class ShieldedReceiveTest extends BlockGenerate {
 
     Thread.sleep(500);
     //package transaction to block
-    block = getSignedBlock(witnessCapsule.getAddress(), 0, privateKey);
+    block = getSignedBlock(witnessCapsule.getAddress(), time + 3000, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
 
     BlockCapsule blockCapsule3 = new BlockCapsule(wallet.getNowBlock());
     Assert.assertEquals("blocknum != 2", 2, blockCapsule3.getNum());
 
+    block = getSignedBlock(witnessCapsule.getAddress(), time + 6000, privateKey);
+    dbManager.pushBlock(new BlockCapsule(block));
+
     // scan note by ivk
     byte[] receiverIvk = incomingViewingKey.getValue();
     DecryptNotes notes1 = wallet.scanNoteByIvk(0, 100, receiverIvk);
     Assert.assertEquals(2, notes1.getNoteTxsCount());
+
+    // scan note by ivk and mark
+    DecryptNotesMarked notes3 = wallet.scanAndMarkNoteByIvk(0, 100, receiverIvk,
+        fullViewingKey.getAk(), fullViewingKey.getNk());
+    Assert.assertEquals(2, notes3.getNoteTxsCount());
 
     // scan note by ovk
     DecryptNotes notes2 = wallet.scanNoteByOvk(0, 100, senderOvk);
@@ -2485,6 +2462,7 @@ public class ShieldedReceiveTest extends BlockGenerate {
       outPointBuild.setIndex(i);
       request.addOutPoints(outPointBuild.build());
     }
+    request.setBlockNum(1);
     IncrementalMerkleVoucherInfo merkleVoucherInfo = wallet
         .getMerkleTreeVoucherInfo(request.build());
 

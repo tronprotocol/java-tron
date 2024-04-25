@@ -6,11 +6,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import org.bouncycastle.util.Arrays;
+import org.junit.Assert;
 import org.junit.Test;
-import org.testng.Assert;
 import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.WalletUtil;
 import org.tron.core.Wallet;
 import org.tron.core.vm.LogInfoTriggerParser;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
@@ -57,6 +58,8 @@ public class EventParserTest {
         + "000000000";
     ABI abi = TvmTestUtils.jsonStr2Abi(abiStr);
 
+    Assert.assertFalse(WalletUtil.isConstant(abi, new byte[3]));
+
     byte[] data = ByteArray.fromHexString(dataStr);
     List<byte[]> topicList = new LinkedList<>();
     topicList.add(Hash.sha3(eventSign.getBytes()));
@@ -73,7 +76,7 @@ public class EventParserTest {
     }
 
     Assert.assertEquals(LogInfoTriggerParser.getEntrySignature(entry), eventSign);
-    Assert.assertEquals(Hash.sha3(LogInfoTriggerParser.getEntrySignature(entry).getBytes()),
+    Assert.assertArrayEquals(Hash.sha3(LogInfoTriggerParser.getEntrySignature(entry).getBytes()),
         topicList.get(0));
     Assert.assertNotNull(entry);
     Map<String, String> dataMap = ContractEventParserAbi.parseEventData(data, topicList, entry);

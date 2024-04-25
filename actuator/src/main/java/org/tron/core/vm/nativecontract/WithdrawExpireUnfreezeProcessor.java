@@ -60,8 +60,8 @@ public class WithdrawExpireUnfreezeProcessor {
   }
 
   private List<Protocol.Account.UnFreezeV2> getTotalWithdrawList(List<Protocol.Account.UnFreezeV2> unfrozenV2List, long now) {
-    return unfrozenV2List.stream().filter(unfrozenV2 -> (unfrozenV2.getUnfreezeAmount() > 0
-        && unfrozenV2.getUnfreezeExpireTime() <= now)).collect(Collectors.toList());
+    return unfrozenV2List.stream().filter(unfrozenV2 -> unfrozenV2.getUnfreezeExpireTime() <= now)
+        .collect(Collectors.toList());
   }
 
   public long execute(WithdrawExpireUnfreezeParam param, Repository repo) throws ContractExeException {

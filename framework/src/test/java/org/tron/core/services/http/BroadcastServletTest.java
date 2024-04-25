@@ -25,7 +25,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.Test;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.services.http.solidity.mockito.HttpUrlStreamHandler;
 
@@ -47,7 +47,12 @@ public class BroadcastServletTest {
   public static void init() {
     // Allows for mocking URL connections
     URLStreamHandlerFactory urlStreamHandlerFactory = mock(URLStreamHandlerFactory.class);
-    URL.setURLStreamHandlerFactory(urlStreamHandlerFactory);
+    try {
+      URL.setURLStreamHandlerFactory(urlStreamHandlerFactory);
+    } catch (Error e) {
+      logger.info("Ignore error: {}", e.getMessage());
+    }
+
 
     httpUrlStreamHandler = new HttpUrlStreamHandler();
     given(urlStreamHandlerFactory.createURLStreamHandler("http")).willReturn(httpUrlStreamHandler);
@@ -57,10 +62,9 @@ public class BroadcastServletTest {
   /**
    * set up.
    *
-   * @throws InterruptedException .
    */
   @Before
-  public void setUp() throws InterruptedException {
+  public void setUp() {
     broadcastServlet = new BroadcastServlet();
     this.request = mock(HttpServletRequest.class);
     this.response = mock(HttpServletResponse.class);
@@ -82,10 +86,8 @@ public class BroadcastServletTest {
   }
 
   @Test
-  public void testDoPost() throws IOException {
+  public void doPostTest() throws IOException {
     URLStreamHandlerFactory urlStreamHandlerFactory = mock(URLStreamHandlerFactory.class);
-    URL.setURLStreamHandlerFactory(urlStreamHandlerFactory);
-
     httpUrlStreamHandler = new HttpUrlStreamHandler();
     given(urlStreamHandlerFactory.createURLStreamHandler("http")).willReturn(httpUrlStreamHandler);
 
@@ -115,7 +117,7 @@ public class BroadcastServletTest {
         + "eapis.com/protocol.TransferContract\"},\"type\":\"TransferCon"
         + "tract\"}],\"ref_block_bytes\":\"267e\",\"ref_block_hash\":\"9a447d222e8"
         + "de9f2\",\"expiration\":1530893064000,\"timestamp\":1530893006233}}";
-    httpUrlConnection.setRequestProperty("Content-Length", "" + postData.length());
+    httpUrlConnection.setRequestProperty("Content-Length", String.valueOf(postData.length()));
 
     when(httpUrlConnection.getOutputStream()).thenReturn(outContent);
     OutputStreamWriter out = new OutputStreamWriter(httpUrlConnection.getOutputStream(),
@@ -140,14 +142,15 @@ public class BroadcastServletTest {
     while ((line = in.readLine()) != null) {
       result.append(line).append("\n");
     }
+    Assert.assertNotNull(result);
     in.close();
     writer.flush();
     FileInputStream fileInputStream = new FileInputStream("temp.txt");
     InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream);
     BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
 
-    StringBuffer sb = new StringBuffer();
-    String text = null;
+    StringBuilder sb = new StringBuilder();
+    String text;
     while ((text = bufferedReader.readLine()) != null) {
       sb.append(text);
     }

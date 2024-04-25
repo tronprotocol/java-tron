@@ -14,13 +14,17 @@ import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.rules.TemporaryFolder;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
@@ -34,20 +38,21 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.services.RpcApiService;
 
 @Slf4j
-public abstract class BaseNet {
+public class BaseNet {
 
-  private static String dbPath = "output-net";
+  @ClassRule
+  public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
   private static String dbDirectory = "net-database";
   private static String indexDirectory = "net-index";
   private static int port = 10000;
 
-  protected TronApplicationContext context;
+  protected static TronApplicationContext context;
 
-  private RpcApiService rpcApiService;
-  private Application appT;
-  private TronNetDelegate tronNetDelegate;
+  private static RpcApiService rpcApiService;
+  private static Application appT;
+  private static TronNetDelegate tronNetDelegate;
 
-  private ExecutorService executorService = Executors.newFixedThreadPool(1);
+  private static ExecutorService executorService = Executors.newFixedThreadPool(1);
 
   public static Channel connect(ByteToMessageDecoder decoder) throws InterruptedException {
     NioEventLoopGroup group = new NioEventLoopGroup(1);
@@ -73,50 +78,53 @@ public abstract class BaseNet {
     return b.connect(Constant.LOCAL_HOST, port).sync().channel();
   }
 
-  @Before
-  public void init() throws Exception {
-    executorService.execute(new Runnable() {
-      @Override
-      public void run() {
-        logger.info("Full node running.");
+  @BeforeClass
+  public static void init() throws Exception {
+    executorService.execute(() -> {
+      logger.info("Full node running.");
+      try {
         Args.setParam(
             new String[]{
-                "--output-directory", dbPath,
+                "--output-directory", temporaryFolder.newFolder().toString(),
                 "--storage-db-directory", dbDirectory,
                 "--storage-index-directory", indexDirectory
             },
             "config.conf"
         );
-        CommonParameter parameter = Args.getInstance();
-        parameter.setNodeListenPort(port);
-        parameter.getSeedNode().getIpList().clear();
-        parameter.setNodeExternalIp(Constant.LOCAL_HOST);
-        context = new TronApplicationContext(DefaultConfig.class);
-        appT = ApplicationFactory.create(context);
-        rpcApiService = context.getBean(RpcApiService.class);
-        appT.addService(rpcApiService);
-        appT.initServices(parameter);
-        appT.startServices();
-        appT.startup();
-        tronNetDelegate = context.getBean(TronNetDelegate.class);
-        rpcApiService.blockUntilShutdown();
+      } catch (IOException e) {
+        Assert.fail("create temp db directory failed");
       }
+      CommonParameter parameter = Args.getInstance();
+      parameter.setNodeListenPort(port);
+      parameter.getSeedNode().getAddressList().clear();
+      parameter.setNodeExternalIp(Constant.LOCAL_HOST);
+      context = new TronApplicationContext(DefaultConfig.class);
+      appT = ApplicationFactory.create(context);
+      rpcApiService = context.getBean(RpcApiService.class);
+      appT.addService(rpcApiService);
+      appT.startup();
+      try {
+        Thread.sleep(2000);
+      } catch (InterruptedException e) {
+        //ignore
+      }
+      tronNetDelegate = context.getBean(TronNetDelegate.class);
+      appT.blockUntilShutdown();
     });
     int tryTimes = 0;
-    while (++tryTimes < 100 && tronNetDelegate == null) {
-      Thread.sleep(3000);
-    }
+    do {
+      Thread.sleep(3000); //coverage consumerInvToSpread,consumerInvToFetch in AdvService.init
+    } while (++tryTimes < 100 && tronNetDelegate == null);
   }
 
-  @After
-  public void destroy() {
+  @AfterClass
+  public static void destroy() {
     Collection<PeerConnection> peerConnections = ReflectUtils
         .invokeMethod(tronNetDelegate, "getActivePeer");
     for (PeerConnection peer : peerConnections) {
       peer.getChannel().close();
     }
-
+    Args.clearParam();
     context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
   }
 }

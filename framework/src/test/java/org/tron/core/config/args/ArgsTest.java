@@ -16,19 +16,35 @@
 package org.tron.core.config.args;
 
 import com.google.common.collect.Lists;
+import com.typesafe.config.Config;
 import io.grpc.internal.GrpcUtil;
 import io.grpc.netty.NettyServerBuilder;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.LocalWitnesses;
+import org.tron.common.utils.PublicMethod;
 import org.tron.core.Constant;
+import org.tron.core.config.Configuration;
 
 @Slf4j
 public class ArgsTest {
+
+  private final String privateKey = PublicMethod.getRandomPrivateKey();
+  private String address;
+  private LocalWitnesses localWitnesses;
+
+  @Rule
+  public ExpectedException thrown = ExpectedException.none();
 
   @After
   public void destroy() {
@@ -37,11 +53,18 @@ public class ArgsTest {
 
   @Test
   public void get() {
-    Args.setParam(new String[]{"-w"}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-w"}, Constant.TEST_CONF);
 
     CommonParameter parameter = Args.getInstance();
 
     Args.logConfig();
+
+    localWitnesses = new LocalWitnesses();
+    localWitnesses.setPrivateKeys(Arrays.asList(privateKey));
+    localWitnesses.initWitnessAccountAddress(true);
+    Args.setLocalWitnesses(localWitnesses);
+    address = ByteArray.toHexString(Args.getLocalWitnesses()
+        .getWitnessAccountAddress(CommonParameter.getInstance().isECKeyCryptoEngine()));
 
     Assert.assertEquals(0, parameter.getBackupPriority());
 
@@ -51,7 +74,7 @@ public class ArgsTest {
 
     Assert.assertEquals("database", parameter.getStorage().getDbDirectory());
 
-    Assert.assertEquals(11, parameter.getSeedNode().getIpList().size());
+    Assert.assertEquals(11, parameter.getSeedNode().getAddressList().size());
 
     GenesisBlock genesisBlock = parameter.getGenesisBlock();
 
@@ -65,18 +88,19 @@ public class ArgsTest {
         genesisBlock.getParentHash());
 
     Assert.assertEquals(
-        Lists.newArrayList("f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62"),
+        Lists.newArrayList(privateKey),
         Args.getLocalWitnesses().getPrivateKeys());
 
     Assert.assertTrue(parameter.isNodeDiscoveryEnable());
     Assert.assertTrue(parameter.isNodeDiscoveryPersist());
-    Assert.assertEquals("127.0.0.1", parameter.getNodeDiscoveryBindIp());
     Assert.assertEquals("46.168.1.1", parameter.getNodeExternalIp());
     Assert.assertEquals(18888, parameter.getNodeListenPort());
     Assert.assertEquals(2000, parameter.getNodeConnectionTimeout());
     Assert.assertEquals(0, parameter.getActiveNodes().size());
     Assert.assertEquals(30, parameter.getMaxConnections());
     Assert.assertEquals(43, parameter.getNodeP2pVersion());
+    Assert.assertEquals(54, parameter.getMaxUnsolidifiedBlocks());
+    Assert.assertEquals(false, parameter.isUnsolidifiedBlockCheck());
     //Assert.assertEquals(30, args.getSyncNodeCount());
 
     // gRPC network configs checking
@@ -91,10 +115,39 @@ public class ArgsTest {
     Assert.assertEquals(GrpcUtil.DEFAULT_MAX_HEADER_LIST_SIZE, parameter.getMaxHeaderListSize());
     Assert.assertEquals(1L, parameter.getAllowCreationOfContracts());
 
-    Assert.assertEquals("f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62",
+    Assert.assertEquals(privateKey,
         Args.getLocalWitnesses().getPrivateKey());
-    Assert.assertEquals("a0299f3db80a24b20a254b89ce639d59132f157f13",
+
+    Assert.assertEquals(address,
         ByteArray.toHexString(Args.getLocalWitnesses()
             .getWitnessAccountAddress(CommonParameter.getInstance().isECKeyCryptoEngine())));
   }
+
+  @Test
+  public void testIpFromLibP2p()
+      throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    Args.setParam(new String[] {"-w"}, Constant.TEST_CONF);
+    CommonParameter parameter = Args.getInstance();
+
+    String configuredExternalIp = parameter.getNodeExternalIp();
+    Assert.assertEquals("46.168.1.1", configuredExternalIp);
+
+    Config config = Configuration.getByFileName(null, Constant.TEST_CONF);
+    Config config3 = config.withoutPath(Constant.NODE_DISCOVERY_EXTERNAL_IP);
+
+    CommonParameter.getInstance().setNodeExternalIp(null);
+
+    Method method2 = Args.class.getDeclaredMethod("externalIp", Config.class);
+    method2.setAccessible(true);
+    method2.invoke(Args.class, config3);
+
+    Assert.assertNotEquals(configuredExternalIp, parameter.getNodeExternalIp());
+  }
+
+  @Test
+  public void testOldRewardOpt() {
+    thrown.expect(IllegalArgumentException.class);
+    Args.setParam(new String[] {"-w"}, "args-test.conf");
+  }
 }
+

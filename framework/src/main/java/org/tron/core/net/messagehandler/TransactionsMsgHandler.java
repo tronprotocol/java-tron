@@ -2,15 +2,14 @@ package org.tron.core.net.messagehandler;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
@@ -42,18 +41,21 @@ public class TransactionsMsgHandler implements TronMsgHandler {
   private BlockingQueue<Runnable> queue = new LinkedBlockingQueue();
 
   private int threadNum = Args.getInstance().getValidateSignThreadNum();
-  private ExecutorService trxHandlePool = new ThreadPoolExecutor(threadNum, threadNum, 0L,
-      TimeUnit.MILLISECONDS, queue);
-
-  private ScheduledExecutorService smartContractExecutor = Executors
-      .newSingleThreadScheduledExecutor();
+  private final String trxEsName = "trx-msg-handler";
+  private ExecutorService trxHandlePool = ExecutorServiceManager.newThreadPoolExecutor(
+      threadNum, threadNum, 0L,
+      TimeUnit.MILLISECONDS, queue, trxEsName);
+  private final String smartEsName = "contract-msg-handler";
+  private final ScheduledExecutorService smartContractExecutor = ExecutorServiceManager
+      .newSingleThreadScheduledExecutor(smartEsName);
 
   public void init() {
     handleSmartContract();
   }
 
   public void close() {
-    smartContractExecutor.shutdown();
+    ExecutorServiceManager.shutdownAndAwaitTermination(trxHandlePool, trxEsName);
+    ExecutorServiceManager.shutdownAndAwaitTermination(smartContractExecutor, smartEsName);
   }
 
   public boolean isBusy() {
@@ -101,7 +103,7 @@ public class TransactionsMsgHandler implements TronMsgHandler {
   private void handleSmartContract() {
     smartContractExecutor.scheduleWithFixedDelay(() -> {
       try {
-        while (queue.size() < MAX_SMART_CONTRACT_SUBMIT_SIZE) {
+        while (queue.size() < MAX_SMART_CONTRACT_SUBMIT_SIZE && smartContractQueue.size() > 0) {
           TrxEvent event = smartContractQueue.take();
           trxHandlePool.submit(() -> handleTransaction(event.getPeer(), event.getMsg()));
         }
@@ -115,8 +117,8 @@ public class TransactionsMsgHandler implements TronMsgHandler {
   }
 
   private void handleTransaction(PeerConnection peer, TransactionMessage trx) {
-    if (peer.isDisconnect()) {
-      logger.warn("Drop trx {} from {}, peer is disconnect", trx.getMessageId(),
+    if (peer.isBadPeer()) {
+      logger.warn("Drop trx {} from {}, peer is bad peer", trx.getMessageId(),
           peer.getInetAddress());
       return;
     }
@@ -132,6 +134,7 @@ public class TransactionsMsgHandler implements TronMsgHandler {
       logger.warn("Trx {} from peer {} process failed. type: {}, reason: {}",
           trx.getMessageId(), peer.getInetAddress(), e.getType(), e.getMessage());
       if (e.getType().equals(TypeEnum.BAD_TRX)) {
+        peer.setBadPeer(true);
         peer.disconnect(ReasonCode.BAD_TX);
       }
     } catch (Exception e) {

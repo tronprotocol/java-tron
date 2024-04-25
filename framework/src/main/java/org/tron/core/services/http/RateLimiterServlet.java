@@ -16,6 +16,7 @@ import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.MetricLabels;
 import org.tron.common.prometheus.Metrics;
 import org.tron.core.config.args.Args;
+import org.tron.core.services.ratelimiter.GlobalRateLimiter;
 import org.tron.core.services.ratelimiter.RateLimiterContainer;
 import org.tron.core.services.ratelimiter.RuntimeData;
 import org.tron.core.services.ratelimiter.adapter.DefaultBaseQqsAdapter;
@@ -24,10 +25,10 @@ import org.tron.core.services.ratelimiter.adapter.IPQPSRateLimiterAdapter;
 import org.tron.core.services.ratelimiter.adapter.IPreemptibleRateLimiter;
 import org.tron.core.services.ratelimiter.adapter.IRateLimiter;
 import org.tron.core.services.ratelimiter.adapter.QpsRateLimiterAdapter;
+import org.tron.core.services.ratelimiter.strategy.QpsStrategy;
 
 @Slf4j
 public abstract class RateLimiterServlet extends HttpServlet {
-
   private static final String KEY_PREFIX_HTTP = "http_";
   private static final String ADAPTER_PREFIX = "org.tron.core.services.ratelimiter.adapter.";
 
@@ -36,12 +37,9 @@ public abstract class RateLimiterServlet extends HttpServlet {
 
   @PostConstruct
   private void addRateContainer() {
-
     RateLimiterInitialization.HttpRateLimiterItem item = Args.getInstance()
         .getRateLimiterInitialization().getHttpMap().get(getClass().getSimpleName());
-
     boolean success = false;
-
     if (item != null) {
       String cName = "";
       String params = "";
@@ -49,7 +47,6 @@ public abstract class RateLimiterServlet extends HttpServlet {
       try {
         cName = item.getStrategy();
         params = item.getParams();
-
         // add the specific rate limiter strategy of servlet.
         Class<?> c = Class.forName(ADAPTER_PREFIX + cName);
         Constructor constructor;
@@ -58,45 +55,44 @@ public abstract class RateLimiterServlet extends HttpServlet {
           constructor = c.getConstructor(String.class);
           obj = constructor.newInstance(params);
           container.add(KEY_PREFIX_HTTP, getClass().getSimpleName(), (IRateLimiter) obj);
-
         } else {
           constructor = c.getConstructor();
-          obj = constructor.newInstance();
+          obj = constructor.newInstance(QpsStrategy.DEFAULT_QPS_PARAM);
           container.add(KEY_PREFIX_HTTP, getClass().getSimpleName(), (IRateLimiter) obj);
         }
         success = true;
       } catch (Exception e) {
-        logger.warn(
-            "failure to add the rate limiter strategy. servlet = {}, "
+        logger.warn("failure to add the rate limiter strategy. servlet = {}, "
                 + "strategy name = {}, params = \"{}\".",
             getClass().getSimpleName(), cName, params);
       }
     }
-
     if (!success) {
       // if the specific rate limiter strategy of servlet is not defined or fail to add,
       // then add a default Strategy.
       try {
-        IRateLimiter rateLimiter = new DefaultBaseQqsAdapter("qps=1000");
+        IRateLimiter rateLimiter = new DefaultBaseQqsAdapter(QpsStrategy.DEFAULT_QPS_PARAM);
         container.add(KEY_PREFIX_HTTP, getClass().getSimpleName(), rateLimiter);
       } catch (Exception e) {
-        logger.warn(
-            "failure to add the default rate limiter strategy. servlet = {}.",
+        logger.warn("failure to add the default rate limiter strategy. servlet = {}.",
             getClass().getSimpleName());
       }
     }
-
   }
 
   @Override
   protected void service(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
+    
+    RuntimeData runtimeData = new RuntimeData(req);
+    GlobalRateLimiter.acquire(runtimeData);
+
     IRateLimiter rateLimiter = container.get(KEY_PREFIX_HTTP, getClass().getSimpleName());
 
     boolean acquireResource = true;
 
     if (rateLimiter != null) {
-      acquireResource = rateLimiter.acquire(new RuntimeData(req));
+      acquireResource = rateLimiter.acquire(runtimeData);
     }
     String url = Strings.isNullOrEmpty(req.getRequestURI())
         ? MetricLabels.UNDEFINED : req.getRequestURI();

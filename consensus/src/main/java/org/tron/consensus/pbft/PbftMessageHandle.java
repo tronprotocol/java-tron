@@ -91,9 +91,15 @@ public class PbftMessageHandle {
     }
   }
 
-  public List<Miner> getSrMinerList() {
+  public List<Miner> getSrMinerList(long epoch) {
+    List<ByteString> compareList;
+    if (epoch > maintenanceManager.getBeforeMaintenanceTime()) {
+      compareList = maintenanceManager.getCurrentWitness();
+    } else {
+      compareList = maintenanceManager.getBeforeWitness();
+    }
     return Param.getInstance().getMiners().stream()
-        .filter(miner -> chainBaseManager.getWitnesses().contains(miner.getWitnessAddress()))
+        .filter(miner -> compareList.contains(miner.getWitnessAddress()))
         .collect(Collectors.toList());
   }
 
@@ -115,10 +121,11 @@ public class PbftMessageHandle {
     //
     checkPrepareMsgCache(key);
     //Into the preparation phase, if not the sr node does not need to be prepared
-    if (!checkIsCanSendMsg(message)) {
+    long epoch = message.getPbftMessage().getRawData().getEpoch();
+    if (!checkIsCanSendMsg(epoch)) {
       return;
     }
-    for (Miner miner : getSrMinerList()) {
+    for (Miner miner : getSrMinerList(epoch)) {
       PbftMessage paMessage = message.buildPrePareMessage(miner);
       forwardMessage(paMessage);
       try {
@@ -153,7 +160,8 @@ public class PbftMessageHandle {
     pareVoteMap.put(key, message);
     //
     checkCommitMsgCache(message.getNo());
-    if (!checkIsCanSendMsg(message)) {
+    long epoch = message.getPbftMessage().getRawData().getEpoch();
+    if (!checkIsCanSendMsg(epoch)) {
       return;
     }
     //The number of votes plus 1
@@ -162,7 +170,7 @@ public class PbftMessageHandle {
       if (agCou >= Param.getInstance().getAgreeNodeCount()) {
         agreePare.remove(message.getDataKey());
         //Entering the submission stage
-        for (Miner miner : getSrMinerList()) {
+        for (Miner miner : getSrMinerList(epoch)) {
           PbftMessage cmMessage = message.buildCommitMessage(miner);
           doneMsg.put(message.getNo(), cmMessage);
           forwardMessage(cmMessage);
@@ -239,19 +247,11 @@ public class PbftMessageHandle {
     }
   }
 
-  public boolean checkIsCanSendMsg(PbftMessage msg) {
+  public boolean checkIsCanSendMsg(long epoch) {
     if (!Param.getInstance().isEnable()) {//is witness
       return false;
     }
-    ByteString publicKey = Param.getInstance().getMiner().getPrivateKeyAddress();
-    List<ByteString> compareList;
-    long epoch = msg.getPbftMessage().getRawData().getEpoch();
-    if (epoch > maintenanceManager.getBeforeMaintenanceTime()) {
-      compareList = maintenanceManager.getCurrentWitness();
-    } else {
-      compareList = maintenanceManager.getBeforeWitness();
-    }
-    if (!compareList.contains(publicKey)) {
+    if (getSrMinerList(epoch).isEmpty()) {
       return false;
     }
     return !isSyncing();
@@ -262,7 +262,7 @@ public class PbftMessageHandle {
   }
 
   //Cleanup related status
-  private void remove(String no) {
+  private synchronized void remove(String no) {
     String pre = String.valueOf(no) + "_";
     preVotes.remove(no);
     pareVoteMap.keySet().removeIf(vp -> StringUtils.startsWith(vp, pre));
@@ -285,7 +285,7 @@ public class PbftMessageHandle {
     //just try once
     if (srPbftMessage != null && StringUtils.equals(no, srPbftMessage.getNo())) {
       try {
-        Thread.sleep(100);
+        wait(100);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
       } catch (Exception e) {

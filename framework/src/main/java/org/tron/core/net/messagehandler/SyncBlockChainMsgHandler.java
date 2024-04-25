@@ -29,13 +29,16 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
 
     SyncBlockChainMessage syncBlockChainMessage = (SyncBlockChainMessage) msg;
 
-    check(peer, syncBlockChainMessage);
+    if (!check(peer, syncBlockChainMessage)) {
+      peer.disconnect(Protocol.ReasonCode.BAD_PROTOCOL);
+      return;
+    }
 
     long remainNum = 0;
 
     List<BlockId> summaryChainIds = syncBlockChainMessage.getBlockIds();
-
-    LinkedList<BlockId> blockIds = getLostBlockIds(summaryChainIds);
+    BlockId headID = tronNetDelegate.getHeadBlockId();
+    LinkedList<BlockId> blockIds = getLostBlockIds(summaryChainIds, headID);
 
     if (blockIds.size() == 0) {
       logger.warn("Can't get lost block Ids");
@@ -45,7 +48,7 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
       peer.setNeedSyncFromUs(false);
     } else {
       peer.setNeedSyncFromUs(true);
-      remainNum = tronNetDelegate.getHeadBlockId().getNum() - blockIds.peekLast().getNum();
+      remainNum = headID.getNum() - blockIds.peekLast().getNum();
     }
 
     peer.setLastSyncBlockId(blockIds.peekLast());
@@ -53,7 +56,7 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
     peer.sendMessage(new ChainInventoryMessage(blockIds, remainNum));
   }
 
-  private void check(PeerConnection peer, SyncBlockChainMessage msg) throws P2pException {
+  private boolean check(PeerConnection peer, SyncBlockChainMessage msg) throws P2pException {
     List<BlockId> blockIds = msg.getBlockIds();
     if (CollectionUtils.isEmpty(blockIds)) {
       throw new P2pException(TypeEnum.BAD_MESSAGE, "SyncBlockChain blockIds is empty");
@@ -61,7 +64,9 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
 
     BlockId firstId = blockIds.get(0);
     if (!tronNetDelegate.containBlockInMainChain(firstId)) {
-      throw new P2pException(TypeEnum.BAD_MESSAGE, "No first block:" + firstId.getString());
+      logger.warn("Sync message from peer {} without the first block: {}",
+              peer.getInetSocketAddress(), firstId.getString());
+      return false;
     }
 
     long headNum = tronNetDelegate.getHeadBlockId().getNum();
@@ -76,10 +81,25 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
       throw new P2pException(TypeEnum.BAD_MESSAGE,
           "lastSyncNum:" + lastSyncBlockId.getNum() + " gt lastNum:" + lastNum);
     }
+
+    return true;
   }
 
-  private LinkedList<BlockId> getLostBlockIds(List<BlockId> blockIds) throws P2pException {
+  private LinkedList<BlockId> getLostBlockIds(List<BlockId> blockIds, BlockId headID)
+      throws P2pException {
 
+    BlockId unForkId = getUnForkId(blockIds);
+    LinkedList<BlockId> ids = getBlockIds(unForkId.getNum(), headID);
+
+    if (ids.isEmpty() || !unForkId.equals(ids.peekFirst())) {
+      unForkId = getUnForkId(blockIds);
+      ids = getBlockIds(unForkId.getNum(), headID);
+    }
+
+    return ids;
+  }
+
+  private BlockId getUnForkId(List<BlockId> blockIds) throws P2pException {
     BlockId unForkId = null;
     for (int i = blockIds.size() - 1; i >= 0; i--) {
       if (tronNetDelegate.containBlockInMainChain(blockIds.get(i))) {
@@ -92,13 +112,16 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
       throw new P2pException(TypeEnum.SYNC_FAILED, "unForkId is null");
     }
 
-    BlockId headID = tronNetDelegate.getHeadBlockId();
+    return unForkId;
+  }
+
+  private LinkedList<BlockId> getBlockIds(Long unForkNum, BlockId headID) throws P2pException {
     long headNum = headID.getNum();
 
-    long len = Math.min(headNum, unForkId.getNum() + NetConstants.SYNC_FETCH_BATCH_NUM);
+    long len = Math.min(headNum, unForkNum + NetConstants.SYNC_FETCH_BATCH_NUM);
 
     LinkedList<BlockId> ids = new LinkedList<>();
-    for (long i = unForkId.getNum(); i <= len; i++) {
+    for (long i = unForkNum; i <= len; i++) {
       if (i == headNum) {
         ids.add(headID);
       } else {

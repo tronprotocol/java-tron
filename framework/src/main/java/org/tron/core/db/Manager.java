@@ -1,6 +1,7 @@
 package org.tron.core.db;
 
 import static org.tron.common.utils.Commons.adjustBalance;
+import static org.tron.core.exception.BadBlockException.TypeEnum.CALC_MERKLE_ROOT_FAILED;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
 
@@ -28,7 +29,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
@@ -48,6 +48,7 @@ import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.bloom.Bloom;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.capsule.BlockFilterCapsule;
@@ -103,7 +104,6 @@ import org.tron.core.db.api.EnergyPriceHistoryLoader;
 import org.tron.core.db.api.MoveAbiHelper;
 import org.tron.core.db2.ISession;
 import org.tron.core.db2.core.Chainbase;
-import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
@@ -130,6 +130,7 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.service.MortgageService;
+import org.tron.core.service.RewardViCalService;
 import org.tron.core.store.AccountAssetStore;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
@@ -179,8 +180,8 @@ public class Manager {
   @Setter
   public boolean eventPluginLoaded = false;
   private int maxTransactionPendingSize = Args.getInstance().getMaxTransactionPendingSize();
-  @Autowired(required = false)
   @Getter
+  @Autowired
   private TransactionCache transactionCache;
   @Autowired
   private KhaosDatabase khaosDb;
@@ -192,7 +193,8 @@ public class Manager {
   @Getter
   @Setter
   private boolean isSyncMode;
-
+  @Getter
+  private Object forkLock = new Object();
   // map<Long, IncrementalMerkleTree>
   @Getter
   @Setter
@@ -204,6 +206,7 @@ public class Manager {
   @Setter
   private MerkleContainer merkleContainer;
   private ExecutorService validateSignService;
+  private String validateSignName = "validate-sign";
   private boolean isRunRePushThread = true;
   private boolean isRunTriggerCapsuleProcessThread = true;
   private BlockingQueue<TransactionCapsule> pushTransactionQueue = new LinkedBlockingQueue<>();
@@ -241,6 +244,8 @@ public class Manager {
   @Getter
   private volatile long latestSolidityNumShutDown;
   @Getter
+  private long lastUsedSolidityNum = -1;
+  @Getter
   private int maxFlushCount;
 
   @Getter
@@ -248,6 +253,16 @@ public class Manager {
 
   private AtomicInteger blockWaitLock = new AtomicInteger(0);
   private Object transactionLock = new Object();
+
+  private ExecutorService rePushEs;
+  private static final String rePushEsName = "repush";
+  private ExecutorService triggerEs;
+  private static final String triggerEsName = "event-trigger";
+  private ExecutorService filterEs;
+  private static final String filterEsName = "filter";
+
+  @Autowired
+  private RewardViCalService rewardViCalService;
 
   /**
    * Cycle thread to rePush Transactions
@@ -425,14 +440,21 @@ public class Manager {
 
   public void stopRePushThread() {
     isRunRePushThread = false;
+    ExecutorServiceManager.shutdownAndAwaitTermination(rePushEs, rePushEsName);
   }
 
   public void stopRePushTriggerThread() {
     isRunTriggerCapsuleProcessThread = false;
+    ExecutorServiceManager.shutdownAndAwaitTermination(triggerEs, triggerEsName);
   }
 
   public void stopFilterProcessThread() {
     isRunFilterProcessThread = false;
+    ExecutorServiceManager.shutdownAndAwaitTermination(filterEs, filterEsName);
+  }
+
+  public void stopValidateSignThread() {
+    ExecutorServiceManager.shutdownAndAwaitTermination(validateSignService, "validate-sign");
   }
 
   @PostConstruct
@@ -446,6 +468,8 @@ public class Manager {
     trieService.setChainBaseManager(chainBaseManager);
     revokingStore.disable();
     revokingStore.check();
+    transactionCache.initCache();
+    rewardViCalService.init();
     this.setProposalController(ProposalController.createInstance(this));
     this.setMerkleContainer(
         merkleContainer.createInstance(chainBaseManager.getMerkleTreeStore(),
@@ -517,23 +541,21 @@ public class Manager {
       logger.info("Lite node lowestNum: {}", chainBaseManager.getLowestBlockNum());
     }
     revokingStore.enable();
-    validateSignService = Executors
-        .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
-    Thread rePushThread = new Thread(rePushLoop);
-    rePushThread.setDaemon(true);
-    rePushThread.start();
+    validateSignService = ExecutorServiceManager
+        .newFixedThreadPool(validateSignName, Args.getInstance().getValidateSignThreadNum());
+    rePushEs = ExecutorServiceManager.newSingleThreadExecutor(rePushEsName, true);
+    rePushEs.submit(rePushLoop);
     // add contract event listener for subscribing
     if (Args.getInstance().isEventSubscribe()) {
       startEventSubscribing();
-      Thread triggerCapsuleProcessThread = new Thread(triggerCapsuleProcessLoop);
-      triggerCapsuleProcessThread.setDaemon(true);
-      triggerCapsuleProcessThread.start();
+      triggerEs = ExecutorServiceManager.newSingleThreadExecutor(triggerEsName, true);
+      triggerEs.submit(triggerCapsuleProcessLoop);
     }
 
     // start json rpc filter process
     if (CommonParameter.getInstance().isJsonRpcFilterEnabled()) {
-      Thread filterProcessThread = new Thread(filterProcessLoop);
-      filterProcessThread.start();
+      filterEs = ExecutorServiceManager.newSingleThreadExecutor(filterEsName);
+      filterEs.submit(filterProcessLoop);
     }
 
     //initStoreFactory
@@ -1211,8 +1233,8 @@ public class Manager {
             if (!block.calcMerkleRoot().equals(block.getMerkleRoot())) {
               logger.warn("Num: {}, the merkle root doesn't match, expect is {} , actual is {}.",
                   block.getNum(), block.getMerkleRoot(), block.calcMerkleRoot());
-              throw new BadBlockException(String.format("The merkle hash is not validated for %d",
-                  block.getNum()));
+              throw new BadBlockException(CALC_MERKLE_ROOT_FAILED,
+                      String.format("The merkle hash is not validated for %d", block.getNum()));
             }
             consensus.receiveBlock(block);
           }
@@ -1266,8 +1288,9 @@ public class Manager {
                   chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp(),
                   khaosDb.getHead(), khaosDb.getMiniStore().size(),
                   khaosDb.getMiniUnlinkedStore().size());
-
-              switchFork(newBlock);
+              synchronized (forkLock) {
+                switchFork(newBlock);
+              }
               logger.info(SAVE_BLOCK, newBlock);
 
               logger.warn(
@@ -1607,7 +1630,7 @@ public class Manager {
         toBePacked.add(trx);
         currentSize += trxPackSize;
       } catch (Exception e) {
-        logger.error("Process trx {} failed when generating block {}, {}.", trx.getTransactionId(),
+        logger.warn("Process trx {} failed when generating block {}, {}.", trx.getTransactionId(),
             blockCapsule.getNum(), e.getMessage());
       }
     }
@@ -1741,14 +1764,18 @@ public class Manager {
 
     payReward(block);
 
-    if (chainBaseManager.getDynamicPropertiesStore().getNextMaintenanceTime()
-        <= block.getTimeStamp()) {
+    boolean flag = chainBaseManager.getDynamicPropertiesStore().getNextMaintenanceTime()
+        <= block.getTimeStamp();
+    if (flag) {
       proposalController.processProposals();
-      chainBaseManager.getForkController().reset();
     }
 
     if (!consensus.applyBlock(block)) {
       throw new BadBlockException("consensus apply block failed");
+    }
+
+    if (flag) {
+      chainBaseManager.getForkController().reset();
     }
 
     updateTransHashCache(block);
@@ -1821,6 +1848,7 @@ public class Manager {
         triggerCapsule.setTriggerName(Trigger.SOLIDITYLOG_TRIGGER_NAME);
         EventPluginLoader.getInstance().postSolidityLogTrigger(triggerCapsule);
       } else {
+        // when switch fork, block will be post to triggerCapsuleQueue, transaction may be not found
         logger.error("PostSolidityLogContractTrigger txId = {} not contains transaction.",
             triggerCapsule.getTransactionId());
       }
@@ -1886,6 +1914,10 @@ public class Manager {
         chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
             - revokingStore.size(),
         chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+    return this.fetchSyncBeginNumber();
+  }
+
+  public long fetchSyncBeginNumber() {
     return chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
         - revokingStore.size();
   }
@@ -1905,23 +1937,6 @@ public class Manager {
 
   public NullifierStore getNullifierStore() {
     return chainBaseManager.getNullifierStore();
-  }
-
-  public void closeAllStore() {
-    logger.info("******** Begin to close db. ********");
-    chainBaseManager.closeAllStore();
-    logger.info("******** End to close db. ********");
-  }
-
-  public void closeOneStore(ITronChainBase database) {
-    logger.info("******** Begin to close {}. ********", database.getName());
-    try {
-      database.close();
-    } catch (Exception e) {
-      logger.info("Failed to close {}.", database.getName(), e);
-    } finally {
-      logger.info("******** End to close {}. ********", database.getName());
-    }
   }
 
   public boolean isTooManyPending() {
@@ -2030,17 +2045,11 @@ public class Manager {
       return;
     }
 
-    BlockCapsule blockCapsule;
-    try {
-      blockCapsule = chainBaseManager.getBlockByNum(latestSolidifiedBlockNumber);
-    } catch (Exception e) {
-      logger.error("PostSolidityFilter getBlockByNum = {} except, {}.",
-          latestSolidifiedBlockNumber, e.getMessage());
-      return;
+    List<BlockCapsule> capsuleList = getContinuousBlockCapsule(latestSolidifiedBlockNumber);
+    for (BlockCapsule blockCapsule : capsuleList) {
+      postBlockFilter(blockCapsule, true);
+      postLogsFilter(blockCapsule, true, false);
     }
-
-    postBlockFilter(blockCapsule, true);
-    postLogsFilter(blockCapsule, true, false);
   }
 
   private void postSolidityTrigger(final long oldSolidNum, final long latestSolidifiedBlockNumber) {
@@ -2057,28 +2066,23 @@ public class Manager {
     }
 
     if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityTriggerEnable()) {
-      SolidityTriggerCapsule solidityTriggerCapsule
-          = new SolidityTriggerCapsule(latestSolidifiedBlockNumber);
-
-      BlockCapsule blockCapsule;
-      try {
-        blockCapsule = chainBaseManager.getBlockByNum(latestSolidifiedBlockNumber);
+      List<BlockCapsule> capsuleList = getContinuousBlockCapsule(latestSolidifiedBlockNumber);
+      for (BlockCapsule blockCapsule : capsuleList) {
+        SolidityTriggerCapsule solidityTriggerCapsule
+            = new SolidityTriggerCapsule(blockCapsule.getNum());//unique key
         solidityTriggerCapsule.setTimeStamp(blockCapsule.getTimeStamp());
-      } catch (Exception e) {
-        logger.error("PostSolidityTrigger getBlockByNum = {} except, {}.",
-            latestSolidifiedBlockNumber, e.getMessage());
-      }
-
-      boolean result = triggerCapsuleQueue.offer(solidityTriggerCapsule);
-      if (!result) {
-        logger.info("Too many trigger, lost solidified trigger, block number: {}.",
-            latestSolidifiedBlockNumber);
+        boolean result = triggerCapsuleQueue.offer(solidityTriggerCapsule);
+        if (!result) {
+          logger.info("Too many trigger, lost solidified trigger, block number: {}.",
+              blockCapsule.getNum());
+        }
       }
     }
 
     if (CommonParameter.getInstance().isJsonRpcHttpSolidityNodeEnable()) {
       postSolidityFilter(oldSolidNum, latestSolidifiedBlockNumber);
     }
+    lastUsedSolidityNum = latestSolidifiedBlockNumber;
   }
 
   private void processTransactionTrigger(BlockCapsule newBlock) {
@@ -2189,8 +2193,6 @@ public class Manager {
   }
 
   private void postBlockTrigger(final BlockCapsule blockCapsule) {
-    BlockCapsule newBlock = blockCapsule;
-
     // post block and logs for jsonrpc
     if (CommonParameter.getInstance().isJsonRpcHttpFullNodeEnable()) {
       postBlockFilter(blockCapsule, false);
@@ -2198,44 +2200,56 @@ public class Manager {
     }
 
     // process block trigger
+    long solidityBlkNum = getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
     if (eventPluginLoaded && EventPluginLoader.getInstance().isBlockLogTriggerEnable()) {
+      List<BlockCapsule> capsuleList = new ArrayList<>();
       if (EventPluginLoader.getInstance().isBlockLogTriggerSolidified()) {
-        long solidityBlkNum = getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
-        try {
-          newBlock = chainBaseManager
-              .getBlockByNum(solidityBlkNum);
-        } catch (Exception e) {
-          logger.error("PostBlockTrigger getBlockByNum blkNum = {} except, error is {}.",
-              solidityBlkNum, e.getMessage());
-        }
+        capsuleList = getContinuousBlockCapsule(solidityBlkNum);
+      } else {
+        capsuleList.add(blockCapsule);
       }
 
-      BlockLogTriggerCapsule blockLogTriggerCapsule = new BlockLogTriggerCapsule(newBlock);
-      blockLogTriggerCapsule.setLatestSolidifiedBlockNumber(getDynamicPropertiesStore()
-          .getLatestSolidifiedBlockNum());
-      if (!triggerCapsuleQueue.offer(blockLogTriggerCapsule)) {
-        logger.info("Too many triggers, block trigger lost: {}.", newBlock.getBlockId());
+      for (BlockCapsule capsule : capsuleList) {
+        BlockLogTriggerCapsule blockLogTriggerCapsule = new BlockLogTriggerCapsule(capsule);
+        blockLogTriggerCapsule.setLatestSolidifiedBlockNumber(solidityBlkNum);
+        if (!triggerCapsuleQueue.offer(blockLogTriggerCapsule)) {
+          logger.info("Too many triggers, block trigger lost: {}.", capsule.getBlockId());
+        }
       }
     }
 
     // process transaction trigger
     if (eventPluginLoaded && EventPluginLoader.getInstance().isTransactionLogTriggerEnable()) {
-      // set newBlock
+      List<BlockCapsule> capsuleList = new ArrayList<>();
       if (EventPluginLoader.getInstance().isTransactionLogTriggerSolidified()) {
-        long solidityBlkNum = getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
-        try {
-          newBlock = chainBaseManager.getBlockByNum(solidityBlkNum);
-        } catch (Exception e) {
-          logger.error("PostBlockTrigger getBlockByNum blkNum = {} except, error is {}.",
-              solidityBlkNum, e.getMessage());
-        }
+        capsuleList = getContinuousBlockCapsule(solidityBlkNum);
       } else {
         // need to reset block
-        newBlock = blockCapsule;
+        capsuleList.add(blockCapsule);
       }
 
-      processTransactionTrigger(newBlock);
+      for (BlockCapsule capsule : capsuleList) {
+        processTransactionTrigger(capsule);
+      }
     }
+  }
+
+  private List<BlockCapsule> getContinuousBlockCapsule(long solidityBlkNum) {
+    List<BlockCapsule> capsuleList = new ArrayList<>();
+    long start = lastUsedSolidityNum < 0 ? solidityBlkNum : (lastUsedSolidityNum + 1);
+    if (solidityBlkNum > start) {
+      logger.info("Continuous block start:{}, end:{}", start, solidityBlkNum);
+    }
+    for (long blockNum = start; blockNum <= solidityBlkNum; blockNum++) {
+      try {
+        BlockCapsule capsule = chainBaseManager.getBlockByNum(blockNum);
+        capsuleList.add(capsule);
+      } catch (Exception e) {
+        logger.error("GetContinuousBlockCapsule getBlockByNum blkNum = {} except, error is {}.",
+            solidityBlkNum, e.getMessage());
+      }
+    }
+    return capsuleList;
   }
 
   // return energyUsageTotal of the current transaction
@@ -2410,6 +2424,17 @@ public class Manager {
 
   private boolean isBlockWaitingLock() {
     return blockWaitLock.get() > NO_BLOCK_WAITING_LOCK;
+  }
+
+  public void close() {
+    stopRePushThread();
+    stopRePushTriggerThread();
+    EventPluginLoader.getInstance().stopPlugin();
+    stopFilterProcessThread();
+    stopValidateSignThread();
+    chainBaseManager.shutdown();
+    revokingStore.shutdown();
+    session.reset();
   }
 
   private static class ValidateSignTask implements Callable<Boolean> {

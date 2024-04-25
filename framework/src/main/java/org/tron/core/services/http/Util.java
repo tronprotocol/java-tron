@@ -1,5 +1,6 @@
 package org.tron.core.services.http;
 
+import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.tron.common.utils.Commons.decodeFromBase58Check;
 
 import com.alibaba.fastjson.JSON;
@@ -11,23 +12,30 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
+
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.Objects;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
+import org.eclipse.jetty.http.HttpMethod;
+import org.eclipse.jetty.http.MimeTypes;
+import org.eclipse.jetty.util.MultiMap;
 import org.eclipse.jetty.util.StringUtil;
+import org.eclipse.jetty.util.UrlEncoded;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.BlockList;
-import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionIdList;
@@ -64,6 +72,13 @@ public class Util {
   public static final String CONTRACT_TYPE = "contractType";
   public static final String EXTRA_DATA = "extra_data";
   public static final String PARAMETER = "parameter";
+
+  // Used for TVM http interfaces
+  public static final String OWNER_ADDRESS = "owner_address";
+  public static final String CONTRACT_ADDRESS = "contract_address";
+  public static final String FUNCTION_SELECTOR = "function_selector";
+  public static final String FUNCTION_PARAMETER = "parameter";
+  public static final String CALL_DATA = "data";
 
   public static String printTransactionFee(String transactionFee) {
     JSONObject jsonObject = new JSONObject();
@@ -127,12 +142,6 @@ public class Util {
     list.stream().forEach(transactionCapsule -> transactions
         .add(printTransactionToJSON(transactionCapsule.getInstance(), selfType)));
     return transactions;
-  }
-
-  public static String printEasyTransferResponse(EasyTransferResponse response, boolean selfType) {
-    JSONObject jsonResponse = JSONObject.parseObject(JsonFormat.printToString(response, selfType));
-    jsonResponse.put(TRANSACTION, printTransactionToJSON(response.getTransaction(), selfType));
-    return jsonResponse.toJSONString();
   }
 
   public static String printTransaction(Transaction transaction, boolean selfType) {
@@ -220,7 +229,7 @@ public class Util {
                 .parseObject(JsonFormat.printToString(deployContract, selfType));
             byte[] ownerAddress = deployContract.getOwnerAddress().toByteArray();
             byte[] contractAddress = generateContractAddress(transaction, ownerAddress);
-            jsonTransaction.put("contract_address", ByteArray.toHexString(contractAddress));
+            jsonTransaction.put(CONTRACT_ADDRESS, ByteArray.toHexString(contractAddress));
             break;
           default:
             Class clazz = TransactionFactory.getContract(contract.getType());
@@ -303,7 +312,7 @@ public class Util {
       } catch (JSONException e) {
         logger.debug("JSONException: {}", e.getMessage());
       } catch (Exception e) {
-        logger.error("", e);
+        logger.warn("{}", contractType, e);
       }
     }
     rawData.put("contract", contracts);
@@ -333,12 +342,16 @@ public class Util {
     return visible;
   }
 
+  public static boolean existVisible(final HttpServletRequest request) {
+    return Objects.nonNull(request.getParameter(VISIBLE));
+  }
+
   public static boolean getVisiblePost(final String input) {
     boolean visible = false;
     if (StringUtil.isNotBlank(input)) {
       JSONObject jsonObject = JSON.parseObject(input);
       if (jsonObject.containsKey(VISIBLE)) {
-        visible = jsonObject.getBoolean(VISIBLE);
+        visible = Boolean.parseBoolean(jsonObject.getString(VISIBLE));
       }
     }
 
@@ -462,7 +475,7 @@ public class Util {
   }
 
   public static void processError(Exception e, HttpServletResponse response) {
-    logger.debug("Exception: {}", e.getMessage());
+    logger.debug(e.getMessage(), e);
     try {
       response.getWriter().println(Util.printErrorMsg(e));
     } catch (IOException ioe) {
@@ -498,16 +511,7 @@ public class Util {
   public static byte[] getAddress(HttpServletRequest request) throws Exception {
     byte[] address = null;
     String addressParam = "address";
-    String addressStr = request.getParameter(addressParam);
-    if (StringUtils.isBlank(addressStr)) {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      JSONObject jsonObject = JSON.parseObject(input);
-      if (jsonObject != null) {
-        addressStr = jsonObject.getString(addressParam);
-      }
-    }
+    String addressStr = checkGetParam(request, addressParam);
     if (StringUtils.isNotBlank(addressStr)) {
       if (StringUtils.startsWith(addressStr, Constant.ADD_PRE_FIX_STRING_MAINNET)) {
         address = Hex.decode(addressStr);
@@ -516,6 +520,45 @@ public class Util {
       }
     }
     return address;
+  }
+
+  private static String checkGetParam(HttpServletRequest request, String key) throws Exception {
+    String method = request.getMethod();
+
+    if (HttpMethod.GET.toString().toUpperCase().equalsIgnoreCase(method)) {
+      return request.getParameter(key);
+    }
+    if (HttpMethod.POST.toString().toUpperCase().equals(method)) {
+      String contentType = request.getContentType();
+      if (StringUtils.isBlank(contentType)) {
+        return null;
+      }
+      if (contentType.contains(MimeTypes.Type.FORM_ENCODED.asString())) {
+        return request.getParameter(key);
+      } else {
+        String value = getRequestValue(request);
+        if (StringUtils.isBlank(value)) {
+          return null;
+        }
+
+        JSONObject jsonObject = JSON.parseObject(value);
+        if (jsonObject != null) {
+          return jsonObject.getString(key);
+        }
+        return null;
+      }
+    }
+    return null;
+  }
+
+  public static String getRequestValue(HttpServletRequest request) throws IOException {
+    BufferedReader reader = new BufferedReader(new InputStreamReader(request.getInputStream()));
+    String line;
+    StringBuilder sb = new StringBuilder();
+    while ((line = reader.readLine()) != null) {
+      sb.append(line);
+    }
+    return sb.toString();
   }
 
   public static List<Log> convertLogAddressToTronAddress(TransactionInfo transactionInfo) {
@@ -543,4 +586,60 @@ public class Util {
     return newLogList;
   }
 
+  /**
+   * Validate parameters for trigger constant and estimate energy
+   * - Rule-1: owner address must be set
+   * - Rule-2: either contract address is set or call data is set
+   * - Rule-3: if try to deploy, function selector and call data can not be both set
+   * @param contract parameters in json format
+   * @throws InvalidParameterException if validation is not passed, this kind of exception is thrown
+   */
+  public static void validateParameter(String contract) throws InvalidParameterException {
+    JSONObject jsonObject = JSONObject.parseObject(contract);
+    if (StringUtils.isEmpty(jsonObject.getString(OWNER_ADDRESS))) {
+      throw new InvalidParameterException(OWNER_ADDRESS + " isn't set.");
+    }
+    if (StringUtils.isEmpty(jsonObject.getString(CONTRACT_ADDRESS))
+        && StringUtils.isEmpty(jsonObject.getString(CALL_DATA))) {
+      throw new InvalidParameterException("At least one of "
+          + CONTRACT_ADDRESS + " and " + CALL_DATA + " must be set.");
+    }
+    if (StringUtils.isEmpty(jsonObject.getString(CONTRACT_ADDRESS))
+        && !StringUtils.isEmpty(jsonObject.getString(FUNCTION_SELECTOR))
+        && !StringUtils.isEmpty(jsonObject.getString(CALL_DATA))) {
+      throw new InvalidParameterException("While trying to deploy, "
+          + FUNCTION_SELECTOR + " and " + CALL_DATA + " can not be both set.");
+    }
+  }
+
+  public static String getJsonString(String str) {
+    if (StringUtils.isEmpty(str)) {
+      return EMPTY;
+    }
+    if (isValidJson(str)) {
+      return str;
+    }
+    MultiMap<String> params = new MultiMap<>();
+    UrlEncoded.decodeUtf8To(str, params);
+    JSONObject json = new JSONObject();
+    for (Map.Entry<String, List<String>> entry : params.entrySet()) {
+      String key = entry.getKey();
+      List<String> values = entry.getValue();
+      if (values.size() == 1) {
+        json.put(key, values.get(0));
+      } else {
+        json.put(key, values);
+      }
+    }
+    return json.toString();
+  }
+
+  public static boolean isValidJson(String json) {
+    try {
+      JSON.parse(json);
+      return true;
+    } catch (Exception e) {
+      return false;
+    }
+  }
 }

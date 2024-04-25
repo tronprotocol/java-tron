@@ -1,43 +1,90 @@
 package org.tron.core.db;
 
-import java.io.File;
+import com.google.protobuf.ByteString;
+import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.Assert;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
-import org.tron.common.utils.FileUtil;
+import org.tron.common.BaseTest;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
-import org.tron.core.config.DefaultConfig;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ItemNotFoundException;
+
 
 @Slf4j
-public class BlockStoreTest {
+public class BlockStoreTest extends BaseTest {
 
-  private static final String dbPath = "output-blockStore-test";
-  private static TronApplicationContext context;
+  @Resource
+  private BlockStore blockStore;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath},
+    Args.setParam(new String[]{"--output-directory", dbPath()},
         Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
   }
 
-  BlockStore blockStore;
-
-  @Before
-  public void init() {
-    blockStore = context.getBean(BlockStore.class);
-  }
-
-  @After
-  public void destroy() {
-    Args.clearParam();
-    context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
+  private BlockCapsule getBlockCapsule(long number) {
+    return new BlockCapsule(number, Sha256Hash.ZERO_HASH,
+            System.currentTimeMillis(), ByteString.EMPTY);
   }
 
   @Test
   public void testCreateBlockStore() {
   }
+
+  @Test
+  public void testPut() {
+    long number = 1;
+    BlockCapsule blockCapsule = getBlockCapsule(number);
+
+    byte[] blockId = blockCapsule.getBlockId().getBytes();
+    blockStore.put(blockId, blockCapsule);
+    try {
+      BlockCapsule blockCapsule1 = blockStore.get(blockId);
+      Assert.assertNotNull(blockCapsule1);
+      Assert.assertEquals(number, blockCapsule1.getNum());
+    } catch (ItemNotFoundException | BadItemException e) {
+      e.printStackTrace();
+    }
+  }
+
+  @Test
+  public void testGet() {
+    long number = 2;
+    BlockCapsule blockCapsule = getBlockCapsule(number);
+    byte[] blockId = blockCapsule.getBlockId().getBytes();
+    blockStore.put(blockId, blockCapsule);
+    try {
+      boolean has = blockStore.has(blockId);
+      Assert.assertTrue(has);
+      BlockCapsule blockCapsule1 = blockStore.get(blockId);
+
+      Assert.assertEquals(number, blockCapsule1.getNum());
+    } catch (ItemNotFoundException | BadItemException e) {
+      e.printStackTrace();
+    }
+  }
+
+  @Test
+  public void testDelete() {
+    long number = 1;
+    BlockCapsule blockCapsule = getBlockCapsule(number);
+
+    byte[] blockId = blockCapsule.getBlockId().getBytes();
+    blockStore.put(blockId, blockCapsule);
+    try {
+      BlockCapsule blockCapsule1 = blockStore.get(blockId);
+      Assert.assertNotNull(blockCapsule1);
+      Assert.assertEquals(number, blockCapsule1.getNum());
+
+      blockStore.delete(blockId);
+      BlockCapsule blockCapsule2 = blockStore.getUnchecked(blockId);
+      Assert.assertNull(blockCapsule2);
+    } catch (ItemNotFoundException | BadItemException e) {
+      e.printStackTrace();
+    }
+  }
+
 }

@@ -3,7 +3,6 @@ package org.tron.common.application;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
@@ -11,8 +10,6 @@ import org.tron.core.consensus.ConsensusService;
 import org.tron.core.db.Manager;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.net.TronNetService;
-import org.tron.program.FullNode;
-import org.tron.program.SolidityNode;
 
 @Slf4j(topic = "app")
 @Component
@@ -57,6 +54,8 @@ public class ApplicationImpl implements Application {
    * start up the app.
    */
   public void startup() {
+    this.initServices(Args.getInstance());
+    this.startServices();
     if ((!Args.getInstance().isSolidityNode()) && (!Args.getInstance().isP2pDisable())) {
       tronNetService.start();
     }
@@ -66,27 +65,22 @@ public class ApplicationImpl implements Application {
 
   @Override
   public void shutdown() {
-    logger.info("******** start to shutdown ********");
+    this.shutdownServices();
+    consensusService.stop();
     if (!Args.getInstance().isSolidityNode() && (!Args.getInstance().p2pDisable)) {
       tronNetService.close();
     }
-    consensusService.stop();
-    synchronized (dbManager.getRevokingStore()) {
-      dbManager.getSession().reset();
-      closeRevokingStore();
-      closeAllStore();
-    }
-    dbManager.stopRePushThread();
-    dbManager.stopRePushTriggerThread();
-    EventPluginLoader.getInstance().stopPlugin();
-    dbManager.stopFilterProcessThread();
-    logger.info("******** end to shutdown ********");
-    FullNode.shutDownSign = true;
+    dbManager.close();
   }
 
   @Override
   public void startServices() {
     services.start();
+  }
+
+  @Override
+  public void blockUntilShutdown() {
+    services.blockUntilShutdown();
   }
 
   @Override
@@ -102,15 +96,6 @@ public class ApplicationImpl implements Application {
   @Override
   public ChainBaseManager getChainBaseManager() {
     return chainBaseManager;
-  }
-
-  private void closeRevokingStore() {
-    logger.info("******** start to closeRevokingStore ********");
-    dbManager.getRevokingStore().shutdown();
-  }
-
-  private void closeAllStore() {
-    dbManager.closeAllStore();
   }
 
 }

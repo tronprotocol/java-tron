@@ -3,12 +3,13 @@ package org.tron.common.runtime.vm;
 import java.util.Collections;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
+import org.junit.Assert;
 import org.junit.Test;
-import org.testng.Assert;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
+import org.tron.common.utils.client.utils.AbiUtil;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
@@ -22,7 +23,6 @@ import org.tron.core.vm.program.invoke.ProgramInvokeFactory;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol.Transaction;
-import stest.tron.wallet.common.client.utils.AbiUtil;
 
 @Slf4j
 public class IsSRCandidateTest extends VMTestBase {
