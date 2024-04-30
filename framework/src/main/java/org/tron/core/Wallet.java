@@ -1334,6 +1334,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowOldRewardOpt())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowEnergyAdjustment")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowEnergyAdjustment())
+        .build());
+
     return builder.build();
   }
 

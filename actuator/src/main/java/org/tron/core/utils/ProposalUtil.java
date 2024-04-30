@@ -748,6 +748,16 @@ public class ProposalUtil {
         }
         break;
       }
+      case ALLOW_ENERGY_ADJUSTMENT: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_7_5)) {
+          throw new ContractValidateException(
+                  "Bad chain parameter id [ALLOW_ENERGY_ADJUSTMENT]");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+                  "This value[ALLOW_ENERGY_ADJUSTMENT] is only allowed to be 1");
+        }
+      }
       default:
         break;
     }
@@ -824,7 +834,8 @@ public class ProposalUtil {
     ALLOW_TVM_SHANGHAI(76), // 0, 1
     ALLOW_CANCEL_ALL_UNFREEZE_V2(77), // 0, 1
     MAX_DELEGATE_LOCK_PERIOD(78), // (86400, 10512000]
-    ALLOW_OLD_REWARD_OPT(79); // 0, 1
+    ALLOW_OLD_REWARD_OPT(79), // 0, 1
+    ALLOW_ENERGY_ADJUSTMENT(80); // 0, 1
 
     private long code;
 

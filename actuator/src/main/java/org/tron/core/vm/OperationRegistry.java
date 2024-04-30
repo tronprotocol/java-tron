@@ -67,6 +67,10 @@ public class OperationRegistry {
       adjustMemOperations(table);
     }
 
+    if (VMConfig.allowEnergyAdjustment()) {
+      ajustForFairEnergy(table);
+    }
+
     return table;
   }
 
@@ -634,5 +638,18 @@ public class OperationRegistry {
         EnergyCost::getBaseTierCost,
         OperationActions::push0Action,
         proposal));
+  }
+
+  public static void ajustForFairEnergy(JumpTable table) {
+    table.set(new Operation(
+        Op.VOTEWITNESS, 4, 1,
+        EnergyCost::getVoteWitnessCost2,
+        OperationActions::voteWitnessAction,
+        VMConfig::allowTvmVote));
+
+    table.set(new Operation(
+        Op.SUICIDE, 1, 0,
+        EnergyCost::getSuicideCost2,
+        OperationActions::suicideAction));
   }
 }

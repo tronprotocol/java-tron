@@ -189,6 +189,13 @@ public class VMActuator implements Actuator2 {
         VM.play(program, OperationRegistry.getTable());
         result = program.getResult();
 
+        if (VMConfig.allowEnergyAdjustment()) {
+          // If the last op consumed too much execution time, the CPU time limit for the whole tx can be exceeded.
+          // This is not fair for other txs in the same block.
+          // So when allowFairEnergyAdjustment is on, the CPU time limit will be checked at the end of tx execution.
+          program.checkCPUTimeLimit("TX_LAST_OP");
+        }
+
         if (TrxType.TRX_CONTRACT_CREATION_TYPE == trxType && !result.isRevert()) {
           byte[] code = program.getResult().getHReturn();
           if (code.length != 0 && VMConfig.allowTvmLondon() && code[0] == (byte) 0xEF) {

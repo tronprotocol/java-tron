@@ -18,6 +18,8 @@ public class Constant {
   public static final String ADD_PRE_FIX_STRING_MAINNET = "41";
   public static final byte ADD_PRE_FIX_BYTE_TESTNET = (byte) 0xa0;   //a0 + address
   public static final String ADD_PRE_FIX_STRING_TESTNET = "a0";
+  public static final int STANDARD_ADDRESS_SIZE = 20;
+  public static final int TRON_ADDRESS_SIZE = 21;
 
   public static final int NODE_TYPE_FULL_NODE = 0;
   public static final int NODE_TYPE_LIGHT_NODE = 1;
@@ -376,4 +378,6 @@ public class Constant {
 
   public static final String MAX_UNSOLIDIFIED_BLOCKS = "node.maxUnsolidifiedBlocks";
   public static final String COMMITTEE_ALLOW_OLD_REWARD_OPT = "committee.allowOldRewardOpt";
+
+  public static final String COMMITTEE_ALLOW_ENERGY_ADJUSTMENT = "committee.allowEnergyAdjustment";
 }

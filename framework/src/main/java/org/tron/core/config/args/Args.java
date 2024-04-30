@@ -232,6 +232,7 @@ public class Args extends CommonParameter {
     PARAMETER.unsolidifiedBlockCheck = false;
     PARAMETER.maxUnsolidifiedBlocks = 54;
     PARAMETER.allowOldRewardOpt = 0;
+    PARAMETER.allowEnergyAdjustment = 0;
   }
 
   /**
@@ -1204,6 +1205,10 @@ public class Args extends CommonParameter {
           + " or committee.allowTvmVote = 1.");
     }
     PARAMETER.allowOldRewardOpt = allowOldRewardOpt;
+
+    PARAMETER.allowEnergyAdjustment =
+            config.hasPath(Constant.COMMITTEE_ALLOW_ENERGY_ADJUSTMENT) ? config
+                    .getInt(Constant.COMMITTEE_ALLOW_ENERGY_ADJUSTMENT) : 0;
 
     logConfig();
   }
