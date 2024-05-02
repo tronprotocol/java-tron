@@ -18,5 +18,5 @@ public class BroadcastedMessageDescriptor implements Descriptor {
 
     private String timeStart;
     private String timeEnd;
-    private List<String> transactionsList;
+    private List<String> TransactionHashes;
 }

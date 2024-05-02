@@ -216,7 +216,7 @@ public class StreamingTracer implements Tracer {
 
             BroadcastedMessageDescriptor broadcastedDescriptor = new BroadcastedMessageDescriptor();
             List<String> txsList = Collections.singletonList(ByteArray.toHexString(txHeader.getHash().toByteArray()));
-            broadcastedDescriptor.setTransactionsList(txsList);
+            broadcastedDescriptor.setTransactionHashes(txsList);
             broadcastedDescriptor.setTimeStart(String.valueOf(txHeader.getTime()));
             broadcastedDescriptor.setTimeEnd(String.valueOf(txHeader.getTime()));
             descriptor = broadcastedDescriptor;
