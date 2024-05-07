@@ -108,12 +108,16 @@ public class TransactionMessageBuilder {
      private TransactionHeader getTxStartTxHeader(TransactionCapsule txCap, int index) {
           byte[] feePayer = io.bitquery.streaming.common.utils.ByteArray.addressWithout41(txCap.getOwnerAddress());
 
+          // convert milliseconds to nanoseconds
+          long timestamp = txCap.getTimestamp() * 1000000;
+          long expiration = txCap.getExpiration() * 1000000;
+
           TransactionHeader header = TransactionHeader.newBuilder()
                   .setIndex(index)
-                  .setExpiration(txCap.getExpiration())
+                  .setExpiration(expiration)
                   .setData(ByteString.copyFrom(txCap.getData()))
                   .setFeeLimit(txCap.getFeeLimit())
-                  .setTimestamp(txCap.getTimestamp())
+                  .setTimestamp(timestamp)
                   .addAllSignatures(txCap.getInstance().getSignatureList())
                   .setFeePayer(ByteString.copyFrom(feePayer))
                   .build();
