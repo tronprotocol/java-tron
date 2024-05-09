@@ -757,6 +757,7 @@ public class ProposalUtil {
           throw new ContractValidateException(
                   "This value[ALLOW_ENERGY_ADJUSTMENT] is only allowed to be 1");
         }
+        break;
       }
       default:
         break;
