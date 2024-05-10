@@ -8,8 +8,8 @@ x-common-network: &common-network
 x-common-restart: &common-restart
   restart: on-failure
 x-graceful-stop: &graceful-stop
-  stop_grace_period: 1m
-  stop_signal: SIGINT
+  stop_grace_period: 10m
+  stop_signal: SIGTERM
 x-elk-logging: &elk-logging
   logging:
     driver: gelf
