@@ -275,6 +275,10 @@ public class Program {
     this.lastOp = op;
   }
 
+  public byte getLastOp() {
+    return this.lastOp;
+  }
+
   /**
    * Returns the last fully executed OP.
    */
