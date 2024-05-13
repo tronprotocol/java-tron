@@ -107,7 +107,7 @@ public class SyncService {
     peer.setNeedSyncFromPeer(true);
     peer.getSyncBlockToFetch().clear();
     peer.setRemainNum(0);
-    peer.setBlockBothHave(tronNetDelegate.getGenesisBlockId());
+    peer.setBlockBothHaves(tronNetDelegate.getGenesisBlockId());
     syncNext(peer);
   }
 
@@ -324,7 +324,7 @@ public class SyncService {
       if (blockId.equals(peer.getSyncBlockToFetch().peek())) {
         peer.getSyncBlockToFetch().pop();
         if (flag) {
-          peer.setBlockBothHave(blockId);
+          peer.setBlockBothHaves(blockId);
           if (peer.getSyncBlockToFetch().isEmpty() && peer.isFetchAble()) {
             syncNext(peer);
           }

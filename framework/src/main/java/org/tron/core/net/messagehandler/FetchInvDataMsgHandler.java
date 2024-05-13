@@ -77,7 +77,7 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
       if (type == InventoryType.BLOCK) {
         BlockId blockId = ((BlockMessage) message).getBlockCapsule().getBlockId();
         if (peer.getBlockBothHave().getNum() < blockId.getNum()) {
-          peer.setBlockBothHave(blockId);
+          peer.setBlockBothHaves(blockId);
         }
         sendPbftCommitMessage(peer, ((BlockMessage) message).getBlockCapsule());
         peer.sendMessage(message);
