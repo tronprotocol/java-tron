@@ -753,6 +753,10 @@ public class ProposalUtil {
           throw new ContractValidateException(
                   "Bad chain parameter id [ALLOW_ENERGY_ADJUSTMENT]");
         }
+        if (dynamicPropertiesStore.getAllowEnergyAdjustment() == 1) {
+          throw new ContractValidateException(
+              "[ALLOW_ENERGY_ADJUSTMENT] has been valid, no need to propose again");
+        }
         if (value != 1) {
           throw new ContractValidateException(
                   "This value[ALLOW_ENERGY_ADJUSTMENT] is only allowed to be 1");
