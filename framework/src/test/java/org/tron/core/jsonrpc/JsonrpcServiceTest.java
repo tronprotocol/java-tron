@@ -21,6 +21,7 @@ import org.tron.common.BaseTest;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -66,9 +67,13 @@ public class JsonrpcServiceTest extends BaseTest {
   static {
     Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
     CommonParameter.getInstance().setJsonRpcHttpFullNodeEnable(true);
+    CommonParameter.getInstance().setJsonRpcHttpFullNodePort(PublicMethod.chooseRandomPort());
     CommonParameter.getInstance().setJsonRpcHttpPBFTNodeEnable(true);
+    CommonParameter.getInstance().setJsonRpcHttpPBFTPort(PublicMethod.chooseRandomPort());
     CommonParameter.getInstance().setJsonRpcHttpSolidityNodeEnable(true);
+    CommonParameter.getInstance().setJsonRpcHttpSolidityPort(PublicMethod.chooseRandomPort());
     CommonParameter.getInstance().setMetricsPrometheusEnable(true);
+    CommonParameter.getInstance().setMetricsPrometheusPort(PublicMethod.chooseRandomPort());
     Metrics.init();
 
     OWNER_ADDRESS =
@@ -265,7 +270,6 @@ public class JsonrpcServiceTest extends BaseTest {
 
   @Test
   public void testGetBlockByNumber2() {
-    fullNodeJsonRpcHttpService.init(Args.getInstance());
     fullNodeJsonRpcHttpService.start();
     JsonArray params = new JsonArray();
     params.add(ByteArray.toJsonHex(blockCapsule.getNum()));
@@ -277,7 +281,8 @@ public class JsonrpcServiceTest extends BaseTest {
     requestBody.addProperty("id", 1);
     CloseableHttpResponse response;
     try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-      HttpPost httpPost = new HttpPost("http://127.0.0.1:8545/jsonrpc");
+      HttpPost httpPost = new HttpPost("http://127.0.0.1:"
+          + CommonParameter.getInstance().getJsonRpcHttpFullNodePort() + "/jsonrpc");
       httpPost.addHeader("Content-Type", "application/json");
       httpPost.setEntity(new StringEntity(requestBody.toString()));
       response = httpClient.execute(httpPost);
@@ -303,9 +308,7 @@ public class JsonrpcServiceTest extends BaseTest {
   @Test
   public void testServicesInit() {
     try {
-      jsonRpcServiceOnPBFT.init(Args.getInstance());
       jsonRpcServiceOnPBFT.start();
-      jsonRpcServiceOnSolidity.init(Args.getInstance());
       jsonRpcServiceOnSolidity.start();
     } finally {
       jsonRpcServiceOnPBFT.stop();

@@ -27,6 +27,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.PublicMethod;
 import org.tron.core.services.http.solidity.mockito.HttpUrlStreamHandler;
 
 
@@ -91,7 +92,8 @@ public class GetTransactionByIdSolidityServletTest {
 
     final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
     System.setOut(new PrintStream(outContent));
-    String href = "http://127.0.0.1:8091/walletsolidity/gettransactioninfobyid";
+    String href = "http://127.0.0.1:"
+        + PublicMethod.chooseRandomPort() + "/walletsolidity/gettransactioninfobyid";
     httpUrlStreamHandler.addConnection(new URL(href), httpUrlConnection);
     httpUrlConnection.setRequestMethod("POST");
     httpUrlConnection.setRequestProperty("Content-Type", "application/json");
@@ -146,7 +148,8 @@ public class GetTransactionByIdSolidityServletTest {
 
     final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
     System.setOut(new PrintStream(outContent));
-    String href = "http://127.0.0.1:8091/walletsolidity/gettransactioninfobyid";
+    String href = "http://127.0.0.1:"
+        + PublicMethod.chooseRandomPort() + "/walletsolidity/gettransactioninfobyid";
     httpUrlStreamHandler.addConnection(new URL(href), httpUrlConnection);
     httpUrlConnection.setRequestMethod("GET");
     httpUrlConnection.setRequestProperty("Content-Type", "application/json");
