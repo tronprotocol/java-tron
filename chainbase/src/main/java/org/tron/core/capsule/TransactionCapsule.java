@@ -114,6 +114,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   @Getter
   @Setter
   private boolean isTransactionCreate = false;
+  @Getter
+  @Setter
+  private boolean isInBlock = false;
 
   public byte[] getOwnerAddress() {
     if (this.ownerAddress == null) {
