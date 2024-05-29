@@ -31,6 +31,7 @@ public class Constant {
   public static final long SUN_PER_ENERGY = 100; // 1 us = 100 SUN = 100 * 10^-6 TRX
   public static final long ENERGY_LIMIT_IN_CONSTANT_TX = 3_000_000L; // ref: 1 us = 1 energy
   public static final long MAX_RESULT_SIZE_IN_TX = 64; // max 8 * 8 items in result
+  public static final long MAX_CONTRACT_RESULT_SIZE = 2L;
   public static final long PB_DEFAULT_ENERGY_LIMIT = 0L;
   public static final long CREATOR_DEFAULT_ENERGY_LIMIT = 1000 * 10_000L;
 

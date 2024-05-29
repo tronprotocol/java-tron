@@ -17,6 +17,7 @@ package org.tron.core.capsule;
 
 import static org.tron.common.utils.StringUtil.encode58Check;
 import static org.tron.common.utils.WalletUtil.checkPermissionOperations;
+import static org.tron.core.Constant.MAX_CONTRACT_RESULT_SIZE;
 import static org.tron.core.exception.P2pException.TypeEnum.PROTOBUF_ERROR;
 
 import com.google.common.primitives.Bytes;
@@ -730,6 +731,15 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return size;
   }
 
+  public long getResultSizeWithMaxContractRet() {
+    long size = 0;
+    for (Result result : this.transaction.getRetList()) {
+      size += result.toBuilder().clearContractRet().build().getSerializedSize()
+          + MAX_CONTRACT_RESULT_SIZE;
+    }
+    return size;
+  }
+
   @Override
   public Transaction getInstance() {
     return this.transaction;
@@ -840,6 +850,20 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           .unpack(BalanceContract.TransferContract.class);
     } catch (InvalidProtocolBufferException e) {
       return null;
+    }
+  }
+
+  public void removeRedundantRet() {
+    Transaction tx = this.getInstance();
+    List<Result> tmpList = new ArrayList<>(tx.getRetList());
+    int contractCount = tx.getRawData().getContractCount();
+    if (tx.getRetCount() > contractCount && contractCount > 0) {
+      Transaction.Builder transactionBuilder = tx.toBuilder().clearRet();
+      for (int i = 0; i < contractCount; i++) {
+        Result result = tmpList.get(i);
+        transactionBuilder.addRet(result);
+      }
+      this.transaction = transactionBuilder.build();
     }
   }
 }

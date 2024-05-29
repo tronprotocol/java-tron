@@ -97,6 +97,13 @@ public class BandwidthProcessor extends ResourceProcessor {
       throws ContractValidateException, AccountResourceInsufficientException,
       TooBigTransactionResultException {
     List<Contract> contracts = trx.getInstance().getRawData().getContractList();
+    long resultSizeWithMaxContractRet = trx.getResultSizeWithMaxContractRet();
+    if (!trx.isInBlock() && resultSizeWithMaxContractRet >
+        Constant.MAX_RESULT_SIZE_IN_TX * contracts.size()) {
+      throw new TooBigTransactionResultException(String.format(
+          "Too big transaction result, TxId %s, the result size is %d bytes, maxResultSize %d",
+          trx.getTransactionId(), resultSizeWithMaxContractRet, Constant.MAX_RESULT_SIZE_IN_TX));
+    }
     if (trx.getResultSerializedSize() > Constant.MAX_RESULT_SIZE_IN_TX * contracts.size()) {
       throw new TooBigTransactionResultException();
     }

@@ -407,6 +407,7 @@ message Transaction {
       UNKNOWN = 13;
       TRANSFER_FAILED = 14;
       INVALID_CODE = 15;
+      // please fill in the order according to the serial number
     }
     int64 fee = 1;
     code ret = 2;
