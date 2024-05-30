@@ -60,9 +60,9 @@ public class PeerConnectionTest {
 
     peerConnection.onDisconnect();
 
-    //Assert.assertEquals(0, peerConnection.getAdvInvReceive().size());
-    //Assert.assertEquals(0, peerConnection.getAdvInvSpread().size());
-    //Assert.assertEquals(0, peerConnection.getSyncBlockIdCache().size());
+    Assert.assertEquals(0, peerConnection.getAdvInvReceive().size());
+    Assert.assertEquals(0, peerConnection.getAdvInvSpread().size());
+    Assert.assertEquals(0, peerConnection.getSyncBlockIdCache().size());
     Assert.assertEquals(0, peerConnection.getSyncBlockToFetch().size());
     Assert.assertEquals(0, peerConnection.getSyncBlockRequested().size());
     Assert.assertEquals(0, peerConnection.getSyncBlockInProcess().size());

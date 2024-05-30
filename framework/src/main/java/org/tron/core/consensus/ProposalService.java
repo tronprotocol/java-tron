@@ -359,6 +359,14 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveAllowOldRewardOpt(entry.getValue());
           break;
         }
+        case ALLOW_ENERGY_ADJUSTMENT: {
+          manager.getDynamicPropertiesStore().saveAllowEnergyAdjustment(entry.getValue());
+          break;
+        }
+        case MAX_CREATE_ACCOUNT_TX_SIZE: {
+          manager.getDynamicPropertiesStore().saveMaxCreateAccountTxSize(entry.getValue());
+          break;
+        }
         default:
           find = false;
           break;

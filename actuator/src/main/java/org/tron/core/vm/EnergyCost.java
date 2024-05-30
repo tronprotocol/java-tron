@@ -259,12 +259,19 @@ public class EnergyCost {
     return SUICIDE;
   }
 
+  public static long getSuicideCost2(Program program) {
+    DataWord inheritorAddress = program.getStack().peek();
+    if (isDeadAccount(program, inheritorAddress)) {
+      return getSuicideCost(program) + NEW_ACCT_CALL;
+    }
+    return getSuicideCost(program);
+  }
+
   public static long getBalanceCost(Program ignored) {
     return BALANCE;
   }
 
   public static long getFreezeCost(Program program) {
-
     Stack stack = program.getStack();
     DataWord receiverAddressWord = stack.get(stack.size() - 3);
     if (isDeadAccount(program, receiverAddressWord)) {
@@ -306,7 +313,6 @@ public class EnergyCost {
   }
 
   public static long getVoteWitnessCost(Program program) {
-
     Stack stack = program.getStack();
     long oldMemSize = program.getMemSize();
     DataWord amountArrayLength = stack.get(stack.size() - 1).clone();
@@ -320,6 +326,29 @@ public class EnergyCost {
     BigInteger amountArrayMemoryNeeded = memNeeded(amountArrayOffset, amountArrayLength);
 
     witnessArrayLength.mul(wordSize);
+    BigInteger witnessArrayMemoryNeeded = memNeeded(witnessArrayOffset, witnessArrayLength);
+
+    return VOTE_WITNESS + calcMemEnergy(oldMemSize,
+        (amountArrayMemoryNeeded.compareTo(witnessArrayMemoryNeeded) > 0
+            ? amountArrayMemoryNeeded : witnessArrayMemoryNeeded), 0, Op.VOTEWITNESS);
+  }
+
+  public static long getVoteWitnessCost2(Program program) {
+    Stack stack = program.getStack();
+    long oldMemSize = program.getMemSize();
+    DataWord amountArrayLength = stack.get(stack.size() - 1).clone();
+    DataWord amountArrayOffset = stack.get(stack.size() - 2);
+    DataWord witnessArrayLength = stack.get(stack.size() - 3).clone();
+    DataWord witnessArrayOffset = stack.get(stack.size() - 4);
+
+    DataWord wordSize = new DataWord(DataWord.WORD_SIZE);
+
+    amountArrayLength.mul(wordSize);
+    amountArrayLength.add(wordSize); // dynamic array length is at least 32 bytes
+    BigInteger amountArrayMemoryNeeded = memNeeded(amountArrayOffset, amountArrayLength);
+
+    witnessArrayLength.mul(wordSize);
+    witnessArrayLength.add(wordSize); // dynamic array length is at least 32 bytes
     BigInteger witnessArrayMemoryNeeded = memNeeded(witnessArrayOffset, witnessArrayLength);
 
     return VOTE_WITNESS + calcMemEnergy(oldMemSize,

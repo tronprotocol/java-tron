@@ -3,6 +3,8 @@ package org.tron.common.runtime.vm;
 import static org.junit.Assert.assertEquals;
 
 import java.util.List;
+import java.util.Random;
+
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
@@ -15,6 +17,7 @@ import org.springframework.util.StringUtils;
 import org.tron.common.BaseTest;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractValidateException;
@@ -864,6 +867,73 @@ public class OperationsTest extends BaseTest {
     VMConfig.initAllowTvmShangHai(0);
   }
 
+  @Test
+  public void testSuicideCost() throws ContractValidateException {
+    invoke = new ProgramInvokeMockImpl(StoreFactory.getInstance(), new byte[0], new byte[21]);
+    program = new Program(null, null, invoke,
+        new InternalTransaction(
+            Protocol.Transaction.getDefaultInstance(),
+            InternalTransaction.TrxType.TRX_UNKNOWN_TYPE));
+
+    byte[] receiver1 = generateRandomAddress();
+    program.stackPush(new DataWord(receiver1));
+    Assert.assertEquals(0, EnergyCost.getSuicideCost(program));
+    invoke.getDeposit().createAccount(receiver1, Protocol.AccountType.Normal);
+    Assert.assertEquals(0, EnergyCost.getSuicideCost(program));
+
+    byte[] receiver2 = generateRandomAddress();
+    program.stackPush(new DataWord(receiver2));
+    Assert.assertEquals(25000, EnergyCost.getSuicideCost2(program));
+    invoke.getDeposit().createAccount(receiver2, Protocol.AccountType.Normal);
+    Assert.assertEquals(0, EnergyCost.getSuicideCost2(program));
+  }
+
+  @Test
+  public void testSuicideAction() throws ContractValidateException {
+    invoke = new ProgramInvokeMockImpl(
+        StoreFactory.getInstance(),
+        new byte[0],
+        Hex.decode("41471fd3ad3e9eeadeec4608b92d16ce6b500704cc"));
+
+    program = new Program(null, null, invoke,
+        new InternalTransaction(
+            Protocol.Transaction.getDefaultInstance(),
+            InternalTransaction.TrxType.TRX_UNKNOWN_TYPE));
+
+    VMConfig.initAllowEnergyAdjustment(1);
+    byte prePrefixByte = DecodeUtil.addressPreFixByte;
+    DecodeUtil.addressPreFixByte = Constant.ADD_PRE_FIX_BYTE_MAINNET;
+
+    program.suicide(new DataWord(
+        dbManager.getAccountStore().getBlackhole().getAddress().toByteArray()));
+
+    DecodeUtil.addressPreFixByte = prePrefixByte;
+    VMConfig.initAllowEnergyAdjustment(0);
+  }
+
+  @Test
+  public void testVoteWitnessCost() throws ContractValidateException {
+    // Build stack environment, the stack from top to bottom is 0x00, 0x80, 0x00, 0x80
+    program = new Program(null, null, new ProgramInvokeMockImpl(),
+        new InternalTransaction(
+            Protocol.Transaction.getDefaultInstance(),
+            InternalTransaction.TrxType.TRX_UNKNOWN_TYPE));
+    program.stackPush(DataWord.of((byte) 0x80));
+    program.stackPush(DataWord.of((byte) 0x00));
+    program.stackPush(DataWord.of((byte) 0x80));
+    program.stackPush(DataWord.of((byte) 0x00));
+
+    // Test VoteWitness before EnergyAdjustment, should not have memory expand energy
+    Assert.assertEquals(30000, EnergyCost.getVoteWitnessCost(program));
+
+    // Test VoteWitness after EnergyAdjustment, should have memory expand energy
+    VMConfig.initAllowEnergyAdjustment(1);
+
+    long memWords = (0x80 + 32) / 32;
+    long memoryExpandEnergy = 3 * memWords + memWords * memWords / 512;
+    Assert.assertEquals(30000 + memoryExpandEnergy, EnergyCost.getVoteWitnessCost2(program));
+  }
+
   private void testOperations(Program program) {
     try {
       while (!program.isStopped()) {
@@ -954,4 +1024,10 @@ public class OperationsTest extends BaseTest {
     return new BytecodeCompiler().compile(code);
   }
 
+  private byte[] generateRandomAddress() {
+    byte[] address = new byte[21];
+    new Random().nextBytes(address);
+    address[0] = DecodeUtil.addressPreFixByte;
+    return address;
+  }
 }
