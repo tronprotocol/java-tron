@@ -200,7 +200,6 @@ public class AdvService {
       logger.info("Ready to broadcast block {}", blockMsg.getBlockId().getString());
       blockMsg.getBlockCapsule().getTransactions().forEach(transactionCapsule -> {
         Sha256Hash tid = transactionCapsule.getTransactionId();
-        invToSpread.remove(tid);
         trxCache.put(new Item(tid, InventoryType.TRX),
             new TransactionMessage(transactionCapsule.getInstance()));
       });
