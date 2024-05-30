@@ -22,6 +22,7 @@ import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TooBigTransactionResultException;
 import org.tron.core.store.StoreFactory;
 import org.tron.protos.Protocol;
@@ -680,6 +681,8 @@ public class BandwidthProcessorTest extends BaseTest {
       Assert.assertFalse(e instanceof TooBigTransactionResultException);
     } catch (AccountResourceInsufficientException e) {
       Assert.assertFalse(e instanceof AccountResourceInsufficientException);
+    } catch (TooBigTransactionException e) {
+      Assert.fail();
     } finally {
       chainBaseManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS));
       chainBaseManager.getAccountStore().delete(ByteArray.fromHexString(TO_ADDRESS));
@@ -786,6 +789,8 @@ public class BandwidthProcessorTest extends BaseTest {
       Assert.assertFalse(e instanceof TooBigTransactionResultException);
     } catch (AccountResourceInsufficientException e) {
       Assert.assertFalse(e instanceof AccountResourceInsufficientException);
+    } catch (TooBigTransactionException e) {
+      Assert.fail();
     } finally {
       chainBaseManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS));
       chainBaseManager.getAccountStore().delete(ByteArray.fromHexString(TO_ADDRESS));
@@ -855,6 +860,8 @@ public class BandwidthProcessorTest extends BaseTest {
       Assert.assertFalse(e instanceof TooBigTransactionResultException);
     } catch (AccountResourceInsufficientException e) {
       Assert.assertFalse(e instanceof AccountResourceInsufficientException);
+    } catch (TooBigTransactionException e) {
+      Assert.fail();
     } finally {
       chainBaseManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS));
       chainBaseManager.getAccountStore().delete(ByteArray.fromHexString(TO_ADDRESS));

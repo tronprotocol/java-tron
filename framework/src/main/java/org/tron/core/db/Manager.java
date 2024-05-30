@@ -807,7 +807,9 @@ public class Manager {
     }
     if (transactionCapsule.getData().length > Constant.TRANSACTION_MAX_BYTE_SIZE) {
       throw new TooBigTransactionException(String.format(
-          "Too big transaction, the size is %d bytes", transactionCapsule.getData().length));
+          "Too big transaction, TxId %s, the size is %d bytes, maxTxSize %d",
+          transactionCapsule.getTransactionId(), transactionCapsule.getData().length,
+          TRANSACTION_MAX_BYTE_SIZE));
     }
     long transactionExpiration = transactionCapsule.getExpiration();
     long headBlockTime = chainBaseManager.getHeadBlockTimeStamp();
@@ -978,7 +980,7 @@ public class Manager {
 
   public void consumeBandwidth(TransactionCapsule trx, TransactionTrace trace)
       throws ContractValidateException, AccountResourceInsufficientException,
-      TooBigTransactionResultException {
+      TooBigTransactionResultException, TooBigTransactionException {
     BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     processor.consume(trx, trace);
   }
@@ -1440,6 +1442,7 @@ public class Manager {
 
     if (Objects.nonNull(blockCap)) {
       chainBaseManager.getBalanceTraceStore().initCurrentTransactionBalanceTrace(trxCap);
+      trxCap.setInBlock(true);
     }
 
     validateTapos(trxCap);
