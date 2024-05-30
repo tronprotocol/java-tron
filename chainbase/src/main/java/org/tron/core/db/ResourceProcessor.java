@@ -11,6 +11,7 @@ import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TooBigTransactionResultException;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
@@ -35,7 +36,7 @@ abstract class ResourceProcessor {
   }
 
   abstract void consume(TransactionCapsule trx, TransactionTrace trace)
-      throws ContractValidateException, AccountResourceInsufficientException, TooBigTransactionResultException;
+      throws ContractValidateException, AccountResourceInsufficientException, TooBigTransactionResultException, TooBigTransactionException;
 
   protected long increase(long lastUsage, long usage, long lastTime, long now) {
     return increase(lastUsage, usage, lastTime, now, windowSize);

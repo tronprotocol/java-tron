@@ -49,6 +49,8 @@ public class VMConfig {
 
   private static boolean ALLOW_TVM_SHANGHAI = false;
 
+  private static boolean ALLOW_ENERGY_ADJUSTMENT = false;
+
   private VMConfig() {
   }
 
@@ -136,6 +138,10 @@ public class VMConfig {
     ALLOW_TVM_SHANGHAI = allow == 1;
   }
 
+  public static void initAllowEnergyAdjustment(long allow) {
+    ALLOW_ENERGY_ADJUSTMENT = allow == 1;
+  }
+
   public static boolean getEnergyLimitHardFork() {
     return CommonParameter.ENERGY_LIMIT_HARD_FORK;
   }
@@ -210,5 +216,9 @@ public class VMConfig {
 
   public static boolean allowTvmShanghai() {
     return ALLOW_TVM_SHANGHAI;
+  }
+
+  public static boolean allowEnergyAdjustment() {
+    return ALLOW_ENERGY_ADJUSTMENT;
   }
 }
