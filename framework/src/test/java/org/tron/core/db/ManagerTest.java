@@ -1131,9 +1131,9 @@ public class ManagerTest extends BlockGenerate {
     for (int i = 0; i < 6666; i++) {
       sb.append("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
     }
-    Transaction transaction = Transaction.newBuilder().setRawData(raw.newBuilder()
-            .setData(ByteString.copyFrom(sb.toString().getBytes(StandardCharsets.UTF_8)))
-            .addContract(Transaction.Contract.newBuilder().setParameter(Any.pack(transferContract))
+    Transaction transaction = Transaction.newBuilder().setRawData(Transaction.raw.newBuilder()
+        .setData(ByteString.copyFrom(sb.toString().getBytes(StandardCharsets.UTF_8)))
+        .addContract(Transaction.Contract.newBuilder().setParameter(Any.pack(transferContract))
             .setType(ContractType.TransferContract))).build();
     TransactionCapsule trx = new TransactionCapsule(transaction);
     trx.setInBlock(false);
@@ -1141,14 +1141,14 @@ public class ManagerTest extends BlockGenerate {
         "Too big transaction with result, "
             + "TxId 1c05e9fca6a2d0c366ed4430456527eb40198e70c8b20f5ceca4739c68a79af8, "
             + "the size is 533483 bytes, maxTxSize 512000",
-        TooBigTransactionException.class, ()-> dbManager.validateCommon(trx));
+        TooBigTransactionException.class, () -> dbManager.validateCommon(trx));
 
     trx.setInBlock(true);
     assertThrows(
         "Too big transaction, "
             + "TxId 1c05e9fca6a2d0c366ed4430456527eb40198e70c8b20f5ceca4739c68a79af8, "
             + "the size is 1066643 bytes, maxTxSize 512000",
-        TooBigTransactionException.class, ()-> dbManager.validateCommon(trx));
+        TooBigTransactionException.class, () -> dbManager.validateCommon(trx));
 
   }
 }
