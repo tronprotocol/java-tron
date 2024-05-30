@@ -889,6 +889,29 @@ public class OperationsTest extends BaseTest {
   }
 
   @Test
+  public void testSuicideAction() throws ContractValidateException {
+    invoke = new ProgramInvokeMockImpl(
+        StoreFactory.getInstance(),
+        new byte[0],
+        Hex.decode("41471fd3ad3e9eeadeec4608b92d16ce6b500704cc"));
+
+    program = new Program(null, null, invoke,
+        new InternalTransaction(
+            Protocol.Transaction.getDefaultInstance(),
+            InternalTransaction.TrxType.TRX_UNKNOWN_TYPE));
+
+    VMConfig.initAllowEnergyAdjustment(1);
+    byte prePrefixByte = DecodeUtil.addressPreFixByte;
+    DecodeUtil.addressPreFixByte = Constant.ADD_PRE_FIX_BYTE_MAINNET;
+
+    program.suicide(new DataWord(
+        dbManager.getAccountStore().getBlackhole().getAddress().toByteArray()));
+
+    DecodeUtil.addressPreFixByte = prePrefixByte;
+    VMConfig.initAllowEnergyAdjustment(0);
+  }
+
+  @Test
   public void testVoteWitnessCost() throws ContractValidateException {
     // Build stack environment, the stack from top to bottom is 0x00, 0x80, 0x00, 0x80
     program = new Program(null, null, new ProgramInvokeMockImpl(),

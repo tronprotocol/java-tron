@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -13,7 +14,6 @@ import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ForkController;
-import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ProposalCapsule;
@@ -21,10 +21,8 @@ import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.ForkBlockVersionEnum;
 import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ProposalService;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.StoreFactory;
 import org.tron.core.utils.ProposalUtil;
 import org.tron.core.utils.ProposalUtil.ProposalType;
 
@@ -440,10 +438,9 @@ public class ProposalUtilTest extends BaseTest {
     }
 
     ProposalCapsule proposalCapsule = new ProposalCapsule(ByteString.empty(), 0);
-    proposalCapsule.setParameters(new HashMap<Long, Long>(){{
-      put(81L, 1L);
-    }});
-
+    Map<Long, Long> parameter = new HashMap<>();
+    parameter.put(81L, 1L);
+    proposalCapsule.setParameters(parameter);
     ProposalService.process(dbManager, proposalCapsule);
 
     try {
