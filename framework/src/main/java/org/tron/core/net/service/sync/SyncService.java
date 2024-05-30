@@ -321,8 +321,9 @@ public class SyncService {
     }
 
     for (PeerConnection peer : tronNetDelegate.getActivePeer()) {
-      if (blockId.equals(peer.getSyncBlockToFetch().peek())) {
-        peer.getSyncBlockToFetch().pop();
+      BlockId bid = peer.getSyncBlockToFetch().peek();
+      if (blockId.equals(bid)) {
+        peer.getSyncBlockToFetch().remove(bid);
         if (flag) {
           peer.setBlockBothHave(blockId);
           if (peer.getSyncBlockToFetch().isEmpty() && peer.isFetchAble()) {
