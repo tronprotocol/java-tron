@@ -1,5 +1,6 @@
 package org.tron.core.db;
 
+import static org.junit.Assert.assertThrows;
 import static org.tron.common.utils.Commons.adjustAssetBalanceV2;
 import static org.tron.common.utils.Commons.adjustBalance;
 import static org.tron.common.utils.Commons.adjustTotalShieldedPoolValue;
@@ -8,8 +9,10 @@ import static org.tron.core.exception.BadBlockException.TypeEnum.CALC_MERKLE_ROO
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -85,6 +88,7 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.Transaction.raw;
 import org.tron.protos.contract.AccountContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.BalanceContract.TransferContract;
@@ -1113,5 +1117,38 @@ public class ManagerTest extends BlockGenerate {
     } catch (TooBigTransactionException e) {
       Assert.fail();
     }
+  }
+
+  @Test
+  public void testTooBigTransaction() {
+    TransferContract transferContract =
+        TransferContract.newBuilder()
+            .setAmount(10)
+            .setOwnerAddress(ByteString.copyFromUtf8("aaa"))
+            .setToAddress(ByteString.copyFromUtf8("bbb"))
+            .build();
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < 6666; i++) {
+      sb.append("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    }
+    Transaction transaction = Transaction.newBuilder().setRawData(Transaction.raw.newBuilder()
+        .setData(ByteString.copyFrom(sb.toString().getBytes(StandardCharsets.UTF_8)))
+        .addContract(Transaction.Contract.newBuilder().setParameter(Any.pack(transferContract))
+            .setType(ContractType.TransferContract))).build();
+    TransactionCapsule trx = new TransactionCapsule(transaction);
+    trx.setInBlock(false);
+    assertThrows(
+        "Too big transaction with result, "
+            + "TxId 1c05e9fca6a2d0c366ed4430456527eb40198e70c8b20f5ceca4739c68a79af8, "
+            + "the size is 533483 bytes, maxTxSize 512000",
+        TooBigTransactionException.class, () -> dbManager.validateCommon(trx));
+
+    trx.setInBlock(true);
+    assertThrows(
+        "Too big transaction, "
+            + "TxId 1c05e9fca6a2d0c366ed4430456527eb40198e70c8b20f5ceca4739c68a79af8, "
+            + "the size is 1066643 bytes, maxTxSize 512000",
+        TooBigTransactionException.class, () -> dbManager.validateCommon(trx));
+
   }
 }

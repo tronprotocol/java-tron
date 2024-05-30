@@ -18,12 +18,16 @@ public class Constant {
   public static final String ADD_PRE_FIX_STRING_MAINNET = "41";
   public static final byte ADD_PRE_FIX_BYTE_TESTNET = (byte) 0xa0;   //a0 + address
   public static final String ADD_PRE_FIX_STRING_TESTNET = "a0";
+  public static final int STANDARD_ADDRESS_SIZE = 20;
+  public static final int TRON_ADDRESS_SIZE = 21;
 
   public static final int NODE_TYPE_FULL_NODE = 0;
   public static final int NODE_TYPE_LIGHT_NODE = 1;
 
   // config for transaction
   public static final long TRANSACTION_MAX_BYTE_SIZE = 500 * 1_024L;
+  public static final int CREATE_ACCOUNT_TRANSACTION_MIN_BYTE_SIZE = 500;
+  public static final int CREATE_ACCOUNT_TRANSACTION_MAX_BYTE_SIZE = 10000;
   public static final long MAXIMUM_TIME_UNTIL_EXPIRATION = 24 * 60 * 60 * 1_000L; //one day
   public static final long TRANSACTION_DEFAULT_EXPIRATION_TIME = 60 * 1_000L; //60 seconds
   public static final long TRANSACTION_FEE_POOL_PERIOD = 1; //1 blocks
@@ -31,6 +35,8 @@ public class Constant {
   public static final long SUN_PER_ENERGY = 100; // 1 us = 100 SUN = 100 * 10^-6 TRX
   public static final long ENERGY_LIMIT_IN_CONSTANT_TX = 3_000_000L; // ref: 1 us = 1 energy
   public static final long MAX_RESULT_SIZE_IN_TX = 64; // max 8 * 8 items in result
+  public static final long PER_SIGN_LENGTH = 65L;
+  public static final long MAX_CONTRACT_RESULT_SIZE = 2L;
   public static final long PB_DEFAULT_ENERGY_LIMIT = 0L;
   public static final long CREATOR_DEFAULT_ENERGY_LIMIT = 1000 * 10_000L;
 
@@ -376,4 +382,6 @@ public class Constant {
 
   public static final String MAX_UNSOLIDIFIED_BLOCKS = "node.maxUnsolidifiedBlocks";
   public static final String COMMITTEE_ALLOW_OLD_REWARD_OPT = "committee.allowOldRewardOpt";
+
+  public static final String COMMITTEE_ALLOW_ENERGY_ADJUSTMENT = "committee.allowEnergyAdjustment";
 }
