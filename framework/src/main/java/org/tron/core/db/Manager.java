@@ -966,7 +966,7 @@ public class Manager {
 
   public void consumeBandwidth(TransactionCapsule trx, TransactionTrace trace)
       throws ContractValidateException, AccountResourceInsufficientException,
-      TooBigTransactionResultException {
+      TooBigTransactionResultException, TooBigTransactionException {
     BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     processor.consume(trx, trace);
   }
@@ -1422,6 +1422,7 @@ public class Manager {
 
     if (Objects.nonNull(blockCap)) {
       chainBaseManager.getBalanceTraceStore().initCurrentTransactionBalanceTrace(trxCap);
+      trxCap.setInBlock(true);
     }
 
     validateTapos(trxCap);
