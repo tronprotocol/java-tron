@@ -1335,6 +1335,11 @@ public class Wallet {
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowEnergyAdjustment")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowEnergyAdjustment())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getMaxCreateAccountTxSize")
         .setValue(dbManager.getDynamicPropertiesStore().getMaxCreateAccountTxSize())
         .build());

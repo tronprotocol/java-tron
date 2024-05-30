@@ -750,6 +750,21 @@ public class ProposalUtil {
         }
         break;
       }
+      case ALLOW_ENERGY_ADJUSTMENT: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_7_5)) {
+          throw new ContractValidateException(
+                  "Bad chain parameter id [ALLOW_ENERGY_ADJUSTMENT]");
+        }
+        if (dynamicPropertiesStore.getAllowEnergyAdjustment() == 1) {
+          throw new ContractValidateException(
+              "[ALLOW_ENERGY_ADJUSTMENT] has been valid, no need to propose again");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+                  "This value[ALLOW_ENERGY_ADJUSTMENT] is only allowed to be 1");
+        }
+        break;
+      }
       case MAX_CREATE_ACCOUNT_TX_SIZE: {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_7_5)) {
           throw new ContractValidateException(
@@ -841,6 +856,7 @@ public class ProposalUtil {
     ALLOW_CANCEL_ALL_UNFREEZE_V2(77), // 0, 1
     MAX_DELEGATE_LOCK_PERIOD(78), // (86400, 10512000]
     ALLOW_OLD_REWARD_OPT(79), // 0, 1
+    ALLOW_ENERGY_ADJUSTMENT(81), // 0, 1
     MAX_CREATE_ACCOUNT_TX_SIZE(82); // [500, 10000]
 
     private long code;

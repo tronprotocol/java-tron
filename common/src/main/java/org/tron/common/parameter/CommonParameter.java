@@ -668,6 +668,10 @@ public class CommonParameter {
 
   @Getter
   @Setter
+  public long allowEnergyAdjustment;
+
+  @Getter
+  @Setter
   public long maxCreateAccountTxSize = 1000L;
 
   private static double calcMaxTimeRatio() {
