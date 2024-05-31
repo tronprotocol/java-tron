@@ -18,6 +18,8 @@ dependencies {
     // end google grpc
 
     compile group: 'com.google.api.grpc', name: 'proto-google-common-protos', version: '2.15.0'
+
+    compile group: 'javax.annotation', name: 'javax.annotation-api', version: '1.3.2'
 }
 
 tasks.matching { it instanceof Test }.all {
