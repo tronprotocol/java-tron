@@ -1,5 +1,7 @@
 package org.tron.core.db;
 
+import static org.tron.common.prometheus.MetricKeys.Counter.TX_ATTACK;
+import static org.tron.common.prometheus.MetricLabels.ATTACK_BIG_TX;
 import static org.tron.common.utils.Commons.adjustBalance;
 import static org.tron.core.Constant.TRANSACTION_MAX_BYTE_SIZE;
 import static org.tron.core.exception.BadBlockException.TypeEnum.CALC_MERKLE_ROOT_FAILED;
@@ -801,6 +803,7 @@ public class Manager {
           transactionCapsule.getInstance().toBuilder().clearRet().build().getSerializedSize()
               + Constant.MAX_RESULT_SIZE_IN_TX + Constant.MAX_RESULT_SIZE_IN_TX;
       if (generalBytesSize > TRANSACTION_MAX_BYTE_SIZE) {
+        Metrics.counterInc(TX_ATTACK, 1, ATTACK_BIG_TX);
         throw new TooBigTransactionException(String.format(
             "Too big transaction with result, TxId %s, the size is %d bytes, maxTxSize %d",
             transactionCapsule.getTransactionId(), generalBytesSize, TRANSACTION_MAX_BYTE_SIZE));

@@ -24,6 +24,11 @@ public class MetricLabels {
   public static final String STAKE_VERSION_V1 = "v1";
   public static final String STAKE_VERSION_V2 = "v2";
   public static final String STAKE_VERSION_V2_1 = "v2.1";
+  public static final String ATTACK_CREATE_ACCOUNT = "createaccount";
+  public static final String ATTACK_BIG_TX = "bigtx";
+  public static final String ATTACK_BIG_TX_RET = "bigtxret";
+  public static final String ATTACK_BIG_BLK = "bigblk";
+  public static final String ATTACK_LONG_GAP = "longgap";
   /**
    * label keys
    */
@@ -31,6 +36,7 @@ public class MetricLabels {
   public static final String LABEL_RESOURCE_TYPE = "resource";
   public static final String LABEL_CONTRACT_TYPE = "contract";
   public static final String ACCOUNT_ADDRESS = "address";
+  public static final String ATTACK_TYPE = "attack";
 
   private MetricLabels() {
     throw new IllegalStateException("MetricsLabels");

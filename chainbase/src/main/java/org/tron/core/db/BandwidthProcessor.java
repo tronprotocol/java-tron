@@ -1,5 +1,8 @@
 package org.tron.core.db;
 
+import static org.tron.common.prometheus.MetricKeys.Counter.TX_ATTACK;
+import static org.tron.common.prometheus.MetricLabels.ATTACK_BIG_TX_RET;
+import static org.tron.common.prometheus.MetricLabels.ATTACK_CREATE_ACCOUNT;
 import static org.tron.core.Constant.PER_SIGN_LENGTH;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.ShieldedTransferContract;
@@ -11,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.StringUtil;
@@ -101,6 +105,7 @@ public class BandwidthProcessor extends ResourceProcessor {
     long resultSizeWithMaxContractRet = trx.getResultSizeWithMaxContractRet();
     if (!trx.isInBlock() && resultSizeWithMaxContractRet >
         Constant.MAX_RESULT_SIZE_IN_TX * contracts.size()) {
+      Metrics.counterInc(TX_ATTACK, 1, ATTACK_BIG_TX_RET);
       throw new TooBigTransactionResultException(String.format(
           "Too big transaction result, TxId %s, the result size is %d bytes, maxResultSize %d",
           trx.getTransactionId(), resultSizeWithMaxContractRet, Constant.MAX_RESULT_SIZE_IN_TX));
@@ -141,6 +146,7 @@ public class BandwidthProcessor extends ResourceProcessor {
           long createAccountBytesSize = trx.getInstance().toBuilder().clearRet()
               .build().getSerializedSize() - (signatureCount * PER_SIGN_LENGTH);
           if (createAccountBytesSize > maxCreateAccountTxSize) {
+            Metrics.counterInc(TX_ATTACK, 1, ATTACK_CREATE_ACCOUNT);
             throw new TooBigTransactionException(String.format(
                 "Too big new account transaction, TxId %s, the size is %d bytes, maxTxSize %d",
                 trx.getTransactionId(), createAccountBytesSize, maxCreateAccountTxSize));
