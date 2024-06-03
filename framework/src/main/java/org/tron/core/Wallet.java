@@ -497,8 +497,6 @@ public class Wallet {
     trx.setTime(System.currentTimeMillis());
     Sha256Hash txID = trx.getTransactionId();
     try {
-      TransactionMessage message = new TransactionMessage(signedTransaction.toByteArray());
-
       if (tronNetDelegate.isBlockUnsolidified()) {
         logger.warn("Broadcast transaction {} has failed, block unsolidified.", txID);
         return builder.setResult(false).setCode(response_code.BLOCK_UNSOLIDIFIED)
@@ -550,6 +548,7 @@ public class Wallet {
       if (trx.getInstance().getRawData().getContractCount() == 0) {
         throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
       }
+      TransactionMessage message = new TransactionMessage(trx.getInstance().toByteArray());
       dbManager.pushTransaction(trx);
       int num = tronNetService.fastBroadcastTransaction(message);
       if (num == 0 && minEffectiveConnection != 0) {
@@ -592,8 +591,7 @@ public class Wallet {
     } catch (TooBigTransactionException e) {
       logger.warn(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.TOO_BIG_TRANSACTION_ERROR)
-          .setMessage(ByteString.copyFromUtf8("Transaction size is too big."))
-          .build();
+          .setMessage(ByteString.copyFromUtf8(e.getMessage())).build();
     } catch (TransactionExpirationException e) {
       logger.warn(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.TRANSACTION_EXPIRATION_ERROR)
@@ -1332,6 +1330,16 @@ public class Wallet {
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAllowOldRewardOpt")
         .setValue(dbManager.getDynamicPropertiesStore().getAllowOldRewardOpt())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowEnergyAdjustment")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowEnergyAdjustment())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getMaxCreateAccountTxSize")
+        .setValue(dbManager.getDynamicPropertiesStore().getMaxCreateAccountTxSize())
         .build());
 
     return builder.build();

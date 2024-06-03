@@ -28,8 +28,9 @@ cd java-tron
 
 #### Build the docker image
 
-Use below command to start the build:
+Use the command below to navigate to the docker directory and start the build:
 ```
+cd docker
 docker build -t tronprotocol/java-tron .
 ```
 
