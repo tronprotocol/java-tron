@@ -1,5 +1,7 @@
 package org.tron.common.prometheus;
 
+import static org.tron.common.prometheus.MetricLabels.ATTACK_TYPE;
+
 import io.prometheus.client.Counter;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,6 +19,8 @@ class MetricsCounter {
     init(MetricKeys.Counter.P2P_ERROR, "tron p2p error  info .", "type");
     init(MetricKeys.Counter.P2P_DISCONNECT, "tron p2p disconnect .", "type");
     init(MetricKeys.Counter.INTERNAL_SERVICE_FAIL, "internal Service fail.", "class", "method");
+    init(MetricKeys.Counter.TX_ATTACK, "transaction attack.", ATTACK_TYPE);
+    init(MetricKeys.Counter.BLK_ATTACK, "block attack.", ATTACK_TYPE);
   }
 
   private MetricsCounter() {

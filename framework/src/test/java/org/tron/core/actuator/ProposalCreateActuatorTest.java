@@ -1,6 +1,10 @@
 package org.tron.core.actuator;
 
 import static junit.framework.TestCase.fail;
+import static org.junit.Assert.assertThrows;
+import static org.tron.core.Constant.CREATE_ACCOUNT_TRANSACTION_MAX_BYTE_SIZE;
+import static org.tron.core.Constant.CREATE_ACCOUNT_TRANSACTION_MIN_BYTE_SIZE;
+import static org.tron.core.config.Parameter.ChainConstant.ONE_YEAR_BLOCK_NUMBERS;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -9,8 +13,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ForkController;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -279,6 +285,50 @@ public class ProposalCreateActuatorTest extends BaseTest {
       Assert.assertEquals("This value[REMOVE_THE_POWER_OF_THE_GR] is only allowed to be 1",
           e.getMessage());
     }
+    // verify Proposal No. 78
+    paras = new HashMap<>();
+    paras.put(78L, 10L);
+    actuator = new ProposalCreateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setForkUtils(dbManager.getChainBaseManager().getForkController())
+        .setAny(getContract(OWNER_ADDRESS_FIRST, paras));
+    assertThrows(
+        "Bad chain parameter id [MAX_DELEGATE_LOCK_PERIOD]",
+        ContractValidateException.class, actuator::validate);
+
+    actuator = new ProposalCreateActuator();
+    ForkController forkController = Mockito.mock(ForkController.class);
+    Mockito.when(forkController.pass(Mockito.any())).thenReturn(true);
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setForkUtils(forkController)
+        .setAny(getContract(OWNER_ADDRESS_FIRST, paras));
+    dbManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(86400L);
+    long maxDelegateLockPeriod = dbManager.getDynamicPropertiesStore().getMaxDelegateLockPeriod();
+    assertThrows(
+        "This value[MAX_DELEGATE_LOCK_PERIOD] is only allowed to be greater than "
+            + maxDelegateLockPeriod + " and less than or equal to " + ONE_YEAR_BLOCK_NUMBERS + "!",
+        ContractValidateException.class, actuator::validate);
+
+    // verify Proposal No. 82
+    paras = new HashMap<>();
+    paras.put(82L, 0L);
+    actuator = new ProposalCreateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setForkUtils(dbManager.getChainBaseManager().getForkController())
+        .setAny(getContract(OWNER_ADDRESS_FIRST, paras));
+    assertThrows(
+        "Bad chain parameter id [ALLOW_ENERGY_ADJUSTMENT]",
+        ContractValidateException.class, actuator::validate);
+
+    actuator = new ProposalCreateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setForkUtils(forkController)
+        .setAny(getContract(OWNER_ADDRESS_FIRST, paras));
+    assertThrows(
+        "This value[MAX_CREATE_ACCOUNT_TX_SIZE] is only allowed to be greater than or equal "
+            + "to " + CREATE_ACCOUNT_TRANSACTION_MIN_BYTE_SIZE + " and less than or equal to "
+            + CREATE_ACCOUNT_TRANSACTION_MAX_BYTE_SIZE + "!",
+        ContractValidateException.class, actuator::validate);
   }
 
   /**
