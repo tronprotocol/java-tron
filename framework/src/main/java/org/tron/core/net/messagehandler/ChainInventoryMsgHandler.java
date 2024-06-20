@@ -52,7 +52,6 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
 
     if (blockIdWeGet.size() == 1 && tronNetDelegate.containBlock(blockIdWeGet.peek())) {
       peer.setTronState(TronState.SYNC_COMPLETED);
-      peer.setBlockBothHave(blockIdWeGet.peek());
       peer.setNeedSyncFromPeer(false);
       return;
     }
