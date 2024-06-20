@@ -34,6 +34,7 @@ import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
+import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TooBigTransactionResultException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.VMIllegalException;
@@ -198,7 +199,7 @@ public class BandWidthRuntimeWithCheckTest extends BaseTest {
   private byte[] createContract()
       throws ContractValidateException, AccountResourceInsufficientException,
       TooBigTransactionResultException, ContractExeException, ReceiptCheckErrException,
-      VMIllegalException {
+      VMIllegalException, TooBigTransactionException {
     AccountCapsule owner = dbManager.getAccountStore()
         .get(Commons.decodeFromBase58Check(OwnerAddress));
     long energy = owner.getEnergyUsage();

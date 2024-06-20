@@ -35,6 +35,7 @@ import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TooBigTransactionResultException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.VMIllegalException;
@@ -43,6 +44,8 @@ import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.Transaction.Result;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.Transaction.raw;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
@@ -186,7 +189,8 @@ public class BandWidthRuntimeTest extends BaseTest {
 
   private byte[] createContract()
       throws ContractValidateException, AccountResourceInsufficientException,
-      TooBigTransactionResultException, ContractExeException, VMIllegalException {
+      TooBigTransactionResultException, ContractExeException, VMIllegalException,
+      TooBigTransactionException {
     AccountCapsule owner = dbManager.getAccountStore()
         .get(Commons.decodeFromBase58Check(OwnerAddress));
     long energy = owner.getEnergyUsage();
@@ -234,5 +238,18 @@ public class BandWidthRuntimeTest extends BaseTest {
             balance + energy * Constant.SUN_PER_ENERGY);
     Assert.assertNull(trace.getRuntimeError());
     return trace.getRuntimeResult().getContractAddress();
+  }
+
+  @Test
+  public void testMaxContractResultSize() {
+    int maxSize = 0;
+    for (contractResult cr : contractResult.values()) {
+      if (cr.name().equals("UNRECOGNIZED")) {
+        continue;
+      }
+      Result result = Result.newBuilder().setContractRet(cr).build();
+      maxSize = Math.max(maxSize, result.getSerializedSize());
+    }
+    Assert.assertEquals(2, maxSize);
   }
 }

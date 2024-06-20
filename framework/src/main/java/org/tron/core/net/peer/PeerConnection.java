@@ -161,7 +161,7 @@ public class PeerConnection {
     this.nodeStatistics = TronStatsManager.getNodeStatistics(channel.getInetAddress());
   }
 
-  public void setBlockBothHaves(BlockId blockId) {
+  public void setBlockBothHave(BlockId blockId) {
     this.blockBothHave = blockId;
     this.blockBothHaveUpdateTime = System.currentTimeMillis();
   }
