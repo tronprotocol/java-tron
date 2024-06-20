@@ -45,11 +45,9 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
       peer.disconnect(Protocol.ReasonCode.INCOMPATIBLE_CHAIN);
       return;
     } else if (blockIds.size() == 1) {
-      peer.setBlockBothHave(blockIds.getFirst());
       peer.setNeedSyncFromUs(false);
     } else {
       peer.setNeedSyncFromUs(true);
-      peer.setBlockBothHave(blockIds.getFirst());
       remainNum = headID.getNum() - blockIds.peekLast().getNum();
     }
 
