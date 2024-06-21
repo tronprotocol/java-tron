@@ -97,7 +97,7 @@ public class DbLite implements Callable<Integer> {
       required = true,
       description = "when operation is `split`,"
           + "`dataset-path` is the path that store the `snapshot` or `history`,"
-          + "when operation is `split`,"
+          + "when operation is `merge`,"
           + "`dataset-path` is the `history` data path.",
       order = 4)
   private String datasetPath;
