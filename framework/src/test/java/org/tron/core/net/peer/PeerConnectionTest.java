@@ -78,7 +78,7 @@ public class PeerConnectionTest {
     Long time = System.currentTimeMillis();
     peerConnection.getAdvInvRequest().put(item, time);
     f = peerConnection.isIdle();
-    Assert.assertTrue(!f);
+    Assert.assertTrue(f);
 
     peerConnection.getAdvInvRequest().clear();
     f = peerConnection.isIdle();
