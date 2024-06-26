@@ -16,7 +16,7 @@ public class ResilienceConfig {
 
   @Getter
   @Setter
-  private int peerNotActiveTime = 300;
+  private int peerNotActiveTime = 600;
 
   @Getter
   @Setter
