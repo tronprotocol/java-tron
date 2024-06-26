@@ -37,6 +37,11 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
     long remainNum = 0;
 
     List<BlockId> summaryChainIds = syncBlockChainMessage.getBlockIds();
+    if (peer.isNeedSyncFromUs() && summaryChainIds.size() == 1 && summaryChainIds.get(0).getNum()
+        == peer.getHelloMessageReceive().getHeadBlockId().getNum()) {
+      peer.getMaliciousFeature().updateBadFeature2();
+    }
+
     BlockId headID = tronNetDelegate.getHeadBlockId();
     LinkedList<BlockId> blockIds = getLostBlockIds(summaryChainIds, headID);
 
@@ -46,6 +51,7 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
       return;
     } else if (blockIds.size() == 1) {
       peer.setNeedSyncFromUs(false);
+      peer.updateAdvStartTime();
     } else {
       peer.setNeedSyncFromUs(true);
       remainNum = headID.getNum() - blockIds.peekLast().getNum();

@@ -77,6 +77,7 @@ public class BlockMsgHandler implements TronMsgHandler {
       check(peer, blockMessage);
     }
 
+    peer.getChannel().setLastActiveTime(System.currentTimeMillis());
     if (peer.getSyncBlockRequested().containsKey(blockId)) {
       peer.getSyncBlockRequested().remove(blockId);
       peer.getSyncBlockInProcess().add(blockId);

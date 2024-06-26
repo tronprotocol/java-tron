@@ -56,6 +56,7 @@ import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.parameter.RateLimiterInitialization;
+import org.tron.common.parameter.ResilienceConfig;
 import org.tron.common.setting.RocksDbSettings;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
@@ -172,6 +173,7 @@ public class Args extends CommonParameter {
     PARAMETER.estimateEnergyMaxRetry = 3;
     PARAMETER.receiveTcpMinDataLength = 2048;
     PARAMETER.isOpenFullTcpDisconnect = false;
+    PARAMETER.peerNoBlockTime = 300_000;
     PARAMETER.nodeDetectEnable = false;
     PARAMETER.supportConstant = false;
     PARAMETER.debug = false;
@@ -569,6 +571,8 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.NODE_EFFECTIVE_CHECK_ENABLE)
             && config.getBoolean(Constant.NODE_EFFECTIVE_CHECK_ENABLE);
 
+    PARAMETER.resilienceConfig = loadResilienceConfig(config);
+
     PARAMETER.nodeConnectionTimeout =
         config.hasPath(Constant.NODE_CONNECTION_TIMEOUT)
             ? config.getInt(Constant.NODE_CONNECTION_TIMEOUT) * 1000
@@ -841,6 +845,8 @@ public class Args extends CommonParameter {
 
     PARAMETER.isOpenFullTcpDisconnect = config.hasPath(Constant.NODE_IS_OPEN_FULL_TCP_DISCONNECT)
         && config.getBoolean(Constant.NODE_IS_OPEN_FULL_TCP_DISCONNECT);
+    PARAMETER.peerNoBlockTime = config.hasPath(Constant.NODE_PEER_NO_BLOCK_TIME)
+        ? config.getInt(Constant.NODE_PEER_NO_BLOCK_TIME) : 300_000;
 
     PARAMETER.nodeDetectEnable = config.hasPath(Constant.NODE_DETECT_ENABLE)
           && config.getBoolean(Constant.NODE_DETECT_ENABLE);
@@ -1481,6 +1487,32 @@ public class Args extends CommonParameter {
 
   private static void logEmptyError(String arg) {
     throw new IllegalArgumentException(String.format("Check %s, must not be null or empty", arg));
+  }
+
+  private static ResilienceConfig loadResilienceConfig(final com.typesafe.config.Config config) {
+    ResilienceConfig resilienceConfig = new ResilienceConfig();
+    if (config.hasPath(Constant.NODE_RESILIENCE_ENABLE)) {
+      resilienceConfig.setEnabled(config.getBoolean(Constant.NODE_RESILIENCE_ENABLE));
+    }
+    if (resilienceConfig.isEnabled()) {
+      if (config.hasPath(Constant.NODE_RESILIENCE_CHECK_INTERVAL)) {
+        resilienceConfig.setCheckInterval(config.getInt(Constant.NODE_RESILIENCE_CHECK_INTERVAL));
+      }
+      if (config.hasPath(Constant.NODE_RESILIENCE_ZOMBIE_THRESHOLD)) {
+        resilienceConfig.setZombieThreshold(
+            config.getInt(Constant.NODE_RESILIENCE_ZOMBIE_THRESHOLD));
+      }
+      if (config.hasPath(Constant.NODE_RESILIENCE_BLOCK_NOT_CHANGE_TIME)) {
+        resilienceConfig.setBlockNotChangeTime(
+            config.getInt(Constant.NODE_RESILIENCE_BLOCK_NOT_CHANGE_TIME));
+      }
+      if (config.hasPath(Constant.NODE_RESILIENCE_DISCONNECT_NUMBER)) {
+        resilienceConfig.setDisconnectNumber(
+            config.getInt(Constant.NODE_RESILIENCE_DISCONNECT_NUMBER));
+      }
+    }
+
+    return resilienceConfig;
   }
 
   private static TriggerConfig createTriggerConfig(ConfigObject triggerObject) {

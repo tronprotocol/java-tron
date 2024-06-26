@@ -5,6 +5,9 @@ import com.google.common.cache.CacheBuilder;
 import com.google.protobuf.ByteString;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
@@ -21,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.Pair;
@@ -33,6 +37,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.net.TronNetDelegate;
+import org.tron.core.net.message.adv.BlockMessage;
 import org.tron.core.net.message.adv.InventoryMessage;
 import org.tron.core.net.message.adv.TransactionsMessage;
 import org.tron.core.net.message.base.DisconnectMessage;
@@ -74,6 +79,16 @@ public class PeerConnection {
   @Setter
   @Getter
   private volatile boolean isBadPeer;
+
+  @Getter
+  private final MaliciousFeature maliciousFeature = new MaliciousFeature();
+
+  @Getter
+  private long advStartTime = -1;
+
+  @Getter
+  private final long zombieThreshold = Args.getInstance().getResilienceConfig()
+      .getZombieThreshold();
 
   @Getter
   @Setter
@@ -166,6 +181,12 @@ public class PeerConnection {
     this.blockBothHaveUpdateTime = System.currentTimeMillis();
   }
 
+  public void updateAdvStartTime() {
+    if (!needSyncFromPeer && !needSyncFromUs) {
+      this.advStartTime = System.currentTimeMillis();
+    }
+  }
+
   public boolean isIdle() {
     return advInvRequest.isEmpty() && syncBlockRequested.isEmpty() && syncChainRequested == null;
   }
@@ -175,6 +196,9 @@ public class PeerConnection {
       logger.info("Send peer {} message {}", channel.getInetSocketAddress(), message);
     }
     channel.send(message.getSendBytes());
+    if (message instanceof BlockMessage) {
+      this.channel.setLastActiveTime(System.currentTimeMillis());
+    }
     peerStatistics.messageStatistics.addTcpOutMessage(message);
   }
 
@@ -192,6 +216,7 @@ public class PeerConnection {
       }
       setTronState(TronState.SYNC_COMPLETED);
     }
+    updateAdvStartTime();
   }
 
   public void onDisconnect() {
@@ -302,6 +327,65 @@ public class PeerConnection {
     }
     advInvRequest.put(key, value);
     return true;
+  }
+
+
+  @Getter
+  public  class MaliciousFeature {
+
+    private boolean hasBadSyncBlockChain = false;
+    private long badSyncBlockChainTime;
+    private boolean hasBadChainInventory = false;
+    private long badChainInventoryTime;
+    private boolean isZombie = false;
+    private long zombieBeginTime;
+
+    //it can only be set from false to true
+    public void updateBadFeature1() {
+      if (!hasBadSyncBlockChain) {
+        hasBadSyncBlockChain = true;
+        badSyncBlockChainTime = System.currentTimeMillis();
+      }
+    }
+
+    //it can only be set from false to true
+    public void updateBadFeature2() {
+      if (!hasBadChainInventory) {
+        hasBadChainInventory = true;
+        badChainInventoryTime = System.currentTimeMillis();
+      }
+    }
+
+    // if peer is in adv status and no block received and sent between us for too long,
+    // it is a zombie
+    public void updateBadFeature3() {
+      isZombie = false;
+      if (!needSyncFromPeer && !needSyncFromUs
+          && System.currentTimeMillis() - Math.max(channel.getLastActiveTime(), advStartTime)
+          > zombieThreshold * 1000) {
+        this.isZombie = true;
+        this.zombieBeginTime = Math.max(channel.getLastActiveTime(), advStartTime);
+      }
+    }
+
+    public long getOldestTime() {
+      List<Long> times = new ArrayList<>();
+      if (hasBadSyncBlockChain) {
+        times.add(badSyncBlockChainTime);
+      }
+      if (hasBadChainInventory) {
+        times.add(badChainInventoryTime);
+      }
+      if (isZombie) {
+        times.add(zombieBeginTime);
+      }
+      return Collections.min(times);
+    }
+  }
+
+  public boolean isMalicious() {
+    return maliciousFeature.hasBadSyncBlockChain || maliciousFeature.hasBadChainInventory
+        || maliciousFeature.isZombie;
   }
 
   @Override

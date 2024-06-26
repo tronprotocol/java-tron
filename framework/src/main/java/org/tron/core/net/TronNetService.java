@@ -22,6 +22,7 @@ import org.tron.core.net.peer.PeerManager;
 import org.tron.core.net.peer.PeerStatusCheck;
 import org.tron.core.net.service.adv.AdvService;
 import org.tron.core.net.service.effective.EffectiveCheckService;
+import org.tron.core.net.service.effective.ResilienceService;
 import org.tron.core.net.service.fetchblock.FetchBlockService;
 import org.tron.core.net.service.nodepersist.NodePersistService;
 import org.tron.core.net.service.relay.RelayService;
@@ -73,6 +74,9 @@ public class TronNetService {
   @Autowired
   private EffectiveCheckService effectiveCheckService;
 
+  @Autowired
+  private ResilienceService resilienceService;
+
   private volatile boolean init;
 
   private static void setP2pConfig(P2pConfig config) {
@@ -95,6 +99,7 @@ public class TronNetService {
       PeerManager.init();
       relayService.init();
       effectiveCheckService.init();
+      resilienceService.init();
       logger.info("Net service start successfully");
     } catch (Exception e) {
       logger.error("Net service start failed", e);
@@ -178,6 +183,7 @@ public class TronNetService {
     config.setPort(parameter.getNodeListenPort());
     config.setNetworkId(parameter.getNodeP2pVersion());
     config.setDisconnectionPolicyEnable(parameter.isOpenFullTcpDisconnect());
+    config.setNotActiveInterval(parameter.peerNoBlockTime);
     config.setNodeDetectEnable(parameter.isNodeDetectEnable());
     config.setDiscoverEnable(parameter.isNodeDiscoveryEnable());
     if (StringUtils.isEmpty(config.getIp()) && hasIpv4Stack(NetUtil.getAllLocalAddress())) {

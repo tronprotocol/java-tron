@@ -244,6 +244,10 @@ public class ChainBaseManager {
   @Setter
   private long lowestBlockNum = -1; // except num = 0.
 
+  @Getter
+  @Setter
+  private long latestSaveBlockTime = System.currentTimeMillis();
+
   // for test only
   public List<ByteString> getWitnesses() {
     return witnessScheduleStore.getActiveWitnesses();

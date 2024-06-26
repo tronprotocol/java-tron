@@ -51,8 +51,12 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
     Deque<BlockId> blockIdWeGet = new LinkedList<>(chainInventoryMessage.getBlockIds());
 
     if (blockIdWeGet.size() == 1 && tronNetDelegate.containBlock(blockIdWeGet.peek())) {
+      if (blockIdWeGet.peek().getNum() < peer.getHelloMessageReceive().getSolidBlockId().getNum()) {
+        peer.getMaliciousFeature().updateBadFeature1();
+      }
       peer.setTronState(TronState.SYNC_COMPLETED);
       peer.setNeedSyncFromPeer(false);
+      peer.updateAdvStartTime();
       return;
     }
 

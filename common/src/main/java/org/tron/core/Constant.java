@@ -124,6 +124,12 @@ public class Constant {
   public static final String NODE_DNS_AWS_REGION = "node.dns.awsRegion";
   public static final String NODE_DNS_AWS_HOST_ZONE_ID = "node.dns.awsHostZoneId";
 
+  public static final String NODE_RESILIENCE_ENABLE = "node.resilience.enable";
+  public static final String NODE_RESILIENCE_CHECK_INTERVAL = "node.resilience.checkInterval";
+  public static final String NODE_RESILIENCE_ZOMBIE_THRESHOLD = "node.resilience.zombieThreshold";
+  public static final String NODE_RESILIENCE_BLOCK_NOT_CHANGE_TIME = "node.resilience.blockNotChangeTime";
+  public static final String NODE_RESILIENCE_DISCONNECT_NUMBER = "node.resilience.disconnectNumber";
+
   public static final String NODE_RPC_PORT = "node.rpc.port";
   public static final String NODE_RPC_SOLIDITY_PORT = "node.rpc.solidityPort";
   public static final String NODE_RPC_PBFT_PORT = "node.rpc.PBFTPort";
@@ -197,6 +203,7 @@ public class Constant {
   public static final String NODE_RECEIVE_TCP_MIN_DATA_LENGTH = "node.receiveTcpMinDataLength";
 
   public static final String NODE_IS_OPEN_FULL_TCP_DISCONNECT = "node.isOpenFullTcpDisconnect";
+  public static final String NODE_PEER_NO_BLOCK_TIME = "node.peerNoBlockTime";
 
   public static final String NODE_DETECT_ENABLE = "node.nodeDetectEnable";
 

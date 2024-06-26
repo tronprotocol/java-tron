@@ -144,6 +144,9 @@ public class CommonParameter {
   public boolean nodeEffectiveCheckEnable;
   @Getter
   @Setter
+  public ResilienceConfig resilienceConfig;
+  @Getter
+  @Setter
   public int nodeConnectionTimeout;
   @Getter
   @Setter
@@ -331,6 +334,9 @@ public class CommonParameter {
   @Getter
   @Setter
   public boolean isOpenFullTcpDisconnect;
+  @Getter
+  @Setter
+  public int peerNoBlockTime;
   @Getter
   @Setter
   public boolean nodeDetectEnable;

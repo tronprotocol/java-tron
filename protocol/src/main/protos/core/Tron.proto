@@ -604,6 +604,7 @@ enum ReasonCode {
   BELOW_THAN_ME = 0X24;
   NOT_WITNESS = 0x25;
   NO_SUCH_MESSAGE = 0x26;
+  MALICIOUS_NODE = 0X27;
   UNKNOWN = 0xFF;
 }
 
