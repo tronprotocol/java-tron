@@ -1498,9 +1498,9 @@ public class Args extends CommonParameter {
       if (config.hasPath(Constant.NODE_RESILIENCE_CHECK_INTERVAL)) {
         resilienceConfig.setCheckInterval(config.getInt(Constant.NODE_RESILIENCE_CHECK_INTERVAL));
       }
-      if (config.hasPath(Constant.NODE_RESILIENCE_ZOMBIE_THRESHOLD)) {
-        resilienceConfig.setZombieThreshold(
-            config.getInt(Constant.NODE_RESILIENCE_ZOMBIE_THRESHOLD));
+      if (config.hasPath(Constant.NODE_RESILIENCE_PEER_NOT_ACTIVE_TIME)) {
+        resilienceConfig.setPeerNotActiveTime(
+            config.getInt(Constant.NODE_RESILIENCE_PEER_NOT_ACTIVE_TIME));
       }
       if (config.hasPath(Constant.NODE_RESILIENCE_BLOCK_NOT_CHANGE_TIME)) {
         resilienceConfig.setBlockNotChangeTime(

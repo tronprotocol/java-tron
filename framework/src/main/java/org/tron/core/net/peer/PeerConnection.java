@@ -6,7 +6,6 @@ import com.google.protobuf.ByteString;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
@@ -24,7 +23,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.Pair;
@@ -87,8 +85,8 @@ public class PeerConnection {
   private long advStartTime = -1;
 
   @Getter
-  private final long zombieThreshold = Args.getInstance().getResilienceConfig()
-      .getZombieThreshold();
+  private final long peerNotActiveTime = Args.getInstance().getResilienceConfig()
+      .getPeerNotActiveTime();
 
   @Getter
   @Setter
@@ -365,7 +363,7 @@ public class PeerConnection {
       isZombie = false;
       if (!needSyncFromPeer && !needSyncFromUs
           && System.currentTimeMillis() - Math.max(channel.getLastActiveTime(), advStartTime)
-          > zombieThreshold * 1000) {
+          > peerNotActiveTime * 1000) {
         this.isZombie = true;
         this.zombieBeginTime = Math.max(channel.getLastActiveTime(), advStartTime);
       }

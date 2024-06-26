@@ -16,7 +16,7 @@ public class ResilienceConfig {
 
   @Getter
   @Setter
-  private int zombieThreshold = 300;
+  private int peerNotActiveTime = 300;
 
   @Getter
   @Setter

@@ -126,7 +126,7 @@ public class Constant {
 
   public static final String NODE_RESILIENCE_ENABLE = "node.resilience.enable";
   public static final String NODE_RESILIENCE_CHECK_INTERVAL = "node.resilience.checkInterval";
-  public static final String NODE_RESILIENCE_ZOMBIE_THRESHOLD = "node.resilience.zombieThreshold";
+  public static final String NODE_RESILIENCE_PEER_NOT_ACTIVE_TIME = "node.resilience.peerNotActiveTime";
   public static final String NODE_RESILIENCE_BLOCK_NOT_CHANGE_TIME = "node.resilience.blockNotChangeTime";
   public static final String NODE_RESILIENCE_DISCONNECT_NUMBER = "node.resilience.disconnectNumber";
 
