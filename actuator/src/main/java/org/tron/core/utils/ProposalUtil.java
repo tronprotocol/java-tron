@@ -780,7 +780,7 @@ public class ProposalUtil {
         break;
       }
       case ALLOW_TVM_CANCUN: {
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_7_5)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_8_0)) {
           throw new ContractValidateException(
               "Bad chain parameter id [ALLOW_TVM_CANCUN]");
         }

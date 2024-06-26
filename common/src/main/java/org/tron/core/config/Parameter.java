@@ -24,7 +24,8 @@ public class Parameter {
     VERSION_4_7_1(27, 1596780000000L, 80),
     VERSION_4_7_2(28, 1596780000000L, 80),
     VERSION_4_7_4(29, 1596780000000L, 80),
-    VERSION_4_7_5(30, 1596780000000L, 80);
+    VERSION_4_7_5(30, 1596780000000L, 80),
+    VERSION_4_8_0(31, 1596780000000L, 80);
     // if add a version, modify BLOCK_VERSION simultaneously
 
     @Getter
@@ -73,7 +74,7 @@ public class Parameter {
     public static final int SINGLE_REPEAT = 1;
     public static final int BLOCK_FILLED_SLOTS_NUMBER = 128;
     public static final int MAX_FROZEN_NUMBER = 1;
-    public static final int BLOCK_VERSION = 30;
+    public static final int BLOCK_VERSION = 31;
     public static final long FROZEN_PERIOD = 86_400_000L;
     public static final long DELEGATE_PERIOD = 3 * 86_400_000L;
     public static final long TRX_PRECISION = 1000_000L;
