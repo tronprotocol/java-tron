@@ -1353,6 +1353,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getConsensusLogicOptimization())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowTvmCancun")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmCancun())
+        .build());
+
     return builder.build();
   }
 

@@ -643,6 +643,37 @@ public class OperationActions {
     program.step();
   }
 
+  public static void tLoadAction(Program program) {
+    DataWord key = program.stackPop();
+    DataWord address = program.getContractAddress();
+
+    byte[] data =
+        program.getContractState().getTransientStorageValue(address.getData(), key.getData());
+    DataWord value = data != null ? new DataWord(data) : DataWord.ZERO;
+
+    program.stackPush(value);
+    program.step();
+  }
+
+  public static void tStoreAction(Program program) {
+    DataWord key = program.stackPop();
+    DataWord value = program.stackPop();
+    DataWord address = program.getContractAddress();
+
+    program.getContractState()
+        .updateTransientStorageValue(address.getData(), key.getData(), value.getData());
+    program.step();
+  }
+
+  public static void mCopyAction(Program program) {
+    int dstOffset = program.stackPop().intValueSafe();
+    int srcOffset = program.stackPop().intValueSafe();
+    int length = program.stackPop().intValueSafe();
+
+    program.memoryCopy(dstOffset, srcOffset, length);
+    program.step();
+  }
+
   public static void push0Action(Program program) {
     program.stackPush(DataWord.ZERO());
     program.step();
