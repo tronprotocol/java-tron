@@ -246,7 +246,8 @@ public class PeerConnection {
             + "syncBlockRequestedSize:%d\n"
             + "remainNum:%d\n"
             + "syncChainRequested:%d\n"
-            + "blockInProcess:%d\n",
+            + "blockInProcess:%d\n"
+            + "feature:%s\n",
         channel.getInetSocketAddress(),
         (now - channel.getStartTime()) / Constant.ONE_THOUSAND,
         channel.getAvgLatency(),
@@ -259,7 +260,8 @@ public class PeerConnection {
         remainNum,
         requested == null ? 0 : (now - requested.getValue())
                 / Constant.ONE_THOUSAND,
-        syncBlockInProcess.size());
+        syncBlockInProcess.size(),
+        maliciousFeature);
   }
 
   public boolean isSyncFinish() {
@@ -293,6 +295,7 @@ public class PeerConnection {
       case BAD_PROTOCOL:
       case BAD_BLOCK:
       case BAD_TX:
+      case MALICIOUS_NODE:
         channel.close(BAD_PEER_BAN_TIME);
         break;
       default:
@@ -380,6 +383,14 @@ public class PeerConnection {
         times.add(zombieBeginTime);
       }
       return Collections.min(times);
+    }
+
+    @Override
+    public String toString() {
+      return String.format("(1:[%s][%d] 2:[%s][%d] 3:[%s][%d])",
+          hasBadSyncBlockChain, badSyncBlockChainTime,
+          hasBadChainInventory, badChainInventoryTime,
+          isZombie, zombieBeginTime);
     }
   }
 
