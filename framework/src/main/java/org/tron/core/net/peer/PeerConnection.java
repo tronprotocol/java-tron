@@ -82,7 +82,7 @@ public class PeerConnection {
   private final MaliciousFeature maliciousFeature = new MaliciousFeature();
 
   @Getter
-  private long advStartTime = -1;
+  private long advStartTime = System.currentTimeMillis();
 
   @Getter
   private final long peerNotActiveTime = Args.getInstance().getResilienceConfig()
@@ -257,7 +257,7 @@ public class PeerConnection {
         syncBlockRequested.size(),
         remainNum,
         requested == null ? 0 : (now - requested.getValue())
-                / Constant.ONE_THOUSAND,
+            / Constant.ONE_THOUSAND,
         syncBlockInProcess.size(),
         maliciousFeature);
   }
@@ -332,7 +332,7 @@ public class PeerConnection {
 
 
   @Getter
-  public  class MaliciousFeature {
+  public class MaliciousFeature {
 
     private boolean hasBadSyncBlockChain = false;
     private long badSyncBlockChainTime;
@@ -361,11 +361,11 @@ public class PeerConnection {
     // it is a zombie
     public void updateBadFeature3() {
       isZombie = false;
+      long tempTime = Math.max(channel.getLastActiveTime(), advStartTime);
       if (!needSyncFromPeer && !needSyncFromUs
-          && System.currentTimeMillis() - Math.max(channel.getLastActiveTime(), advStartTime)
-          > peerNotActiveTime * 1000) {
+          && System.currentTimeMillis() - tempTime > peerNotActiveTime * 1000) {
         this.isZombie = true;
-        this.zombieBeginTime = Math.max(channel.getLastActiveTime(), advStartTime);
+        this.zombieBeginTime = tempTime;
       }
     }
 

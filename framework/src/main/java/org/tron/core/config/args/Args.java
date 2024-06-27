@@ -1682,6 +1682,7 @@ public class Args extends CommonParameter {
     logger.info("Open full tcp disconnect: {}", parameter.isOpenFullTcpDisconnect());
     logger.info("Node detect enable: {}", parameter.isNodeDetectEnable());
     logger.info("Node effective check enable: {}", parameter.isNodeEffectiveCheckEnable());
+    logger.info("Node resilience check enable: {}", parameter.resilienceConfig.isEnabled());
     logger.info("Rate limiter global qps: {}", parameter.getRateLimiterGlobalQps());
     logger.info("Rate limiter global ip qps: {}", parameter.getRateLimiterGlobalIpQps());
     logger.info("Rate limiter global api qps: {}", parameter.getRateLimiterGlobalApiQps());
