@@ -38,7 +38,7 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
 
     List<BlockId> summaryChainIds = syncBlockChainMessage.getBlockIds();
     if (peer.isNeedSyncFromUs() && summaryChainIds.size() == 1 && summaryChainIds.get(0).getNum()
-        == peer.getHelloMessageReceive().getHeadBlockId().getNum()) {
+        == peer.getHelloMessageSend().getHeadBlockId().getNum()) {
       peer.getMaliciousFeature().updateBadFeature2();
     }
 
