@@ -62,4 +62,29 @@ public class FetchInvDataMsgHandlerTest {
         new FetchInvDataMessage(blockIds, Protocol.Inventory.InventoryType.BLOCK));
     Assert.assertNotNull(syncBlockIdCache.getIfPresent(blockId));
   }
+
+  @Test
+  public void testIsAdvInv() {
+    FetchInvDataMsgHandler fetchInvDataMsgHandler = new FetchInvDataMsgHandler();
+
+    List<Sha256Hash> list = new LinkedList<>();
+    list.add(Sha256Hash.ZERO_HASH);
+    FetchInvDataMessage msg =
+        new FetchInvDataMessage(list, Protocol.Inventory.InventoryType.TRX);
+
+    boolean isAdv = fetchInvDataMsgHandler.isAdvInv(null, msg);
+    Assert.assertTrue(isAdv);
+
+    PeerConnection peer = Mockito.mock(PeerConnection.class);
+    Cache<Item, Long> advInvSpread = CacheBuilder.newBuilder().build();
+    Mockito.when(peer.getAdvInvSpread()).thenReturn(advInvSpread);
+
+    msg = new FetchInvDataMessage(list, Protocol.Inventory.InventoryType.BLOCK);
+    isAdv = fetchInvDataMsgHandler.isAdvInv(peer, msg);
+    Assert.assertTrue(!isAdv);
+
+    advInvSpread.put(new Item(Sha256Hash.ZERO_HASH, Protocol.Inventory.InventoryType.BLOCK), 1L);
+    isAdv = fetchInvDataMsgHandler.isAdvInv(peer, msg);
+    Assert.assertTrue(isAdv);
+  }
 }
