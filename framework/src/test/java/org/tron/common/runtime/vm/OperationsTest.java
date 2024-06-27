@@ -944,21 +944,22 @@ public class OperationsTest extends BaseTest {
     InternalTransaction interTrx =
         new InternalTransaction(trx, InternalTransaction.TrxType.TRX_UNKNOWN_TYPE);
 
-    // TLOAD = 0x5c;
-    byte[] op = new byte[] {0x60, 0x01, 0x5c};
-    program = new Program(op, op, invoke, interTrx);
-    testOperations(program);
-    Assert.assertEquals(103, program.getResult().getEnergyUsed());
-    Assert.assertEquals(new DataWord(0x00), program.getStack().pop());
-
     // TSTORE = 0x5d;
-    op = new byte[] {0x60, 0x01, 0x60, 0x01, 0x5d};
+    byte[] op = new byte[] {0x60, 0x01, 0x60, 0x01, 0x5d};
     program = new Program(op, op, invoke, interTrx);
     testOperations(program);
     Assert.assertEquals(106, program.getResult().getEnergyUsed());
-    Assert.assertEquals("0000000000000000000000000000000000000000000000000000000000000001",
-        Hex.toHexString(program.getContractState().getTransientStorageValue(
-            program.getContractAddress().getData(), new DataWord(0x01).getData())));
+    Assert.assertArrayEquals(new DataWord(0x01).getData(),
+        program.getContractState().getTransientStorageValue(
+            program.getContractAddress().getData(), new DataWord(0x01).getData()));
+
+    // TLOAD = 0x5c;
+    op = new byte[] {0x60, 0x01, 0x5c};
+    program = new Program(op, op, invoke, interTrx);
+    testOperations(program);
+    Assert.assertEquals(103, program.getResult().getEnergyUsed());
+    Assert.assertEquals(new DataWord(0x01), program.getStack().pop());
+
     VMConfig.initAllowTvmCancun(0);
   }
 
@@ -977,6 +978,13 @@ public class OperationsTest extends BaseTest {
     testOperations(program);
     Assert.assertEquals(21, program.getResult().getEnergyUsed());
     Assert.assertEquals(64, program.getMemSize());
+
+    op =
+        new byte[] {
+          0x60, 0x01, 0x60, 0x01, 0x52, 0x60, 0x20, 0x60, 0x01, 0x60, 0x20, 0x5e, 0x60, 0x20, 0x51};
+    program = new Program(op, op, invoke, interTrx);
+    testOperations(program);
+    Assert.assertEquals(new DataWord(0x01), program.getStack().pop());
 
     VMConfig.initAllowTvmCancun(0);
   }
