@@ -98,10 +98,7 @@ public class ResilienceService {
           peerList = peerList.subList(0, resilienceConfig.getDisconnectNumber());
         }
         if (!peerList.isEmpty()) {
-          peerList.forEach(p -> {
-            logger.info("feature {}: {}", p.getInetSocketAddress(), p.getMaliciousFeature());
-            p.disconnect(ReasonCode.MALICIOUS_NODE);
-          });
+          peerList.forEach(this::disconnectMaliciousPeer);
           findCount = peerList.size();
         }
       }
@@ -126,11 +123,15 @@ public class ResilienceService {
             Long::compareTo));
 
     if (p.isPresent()) {
-      logger.info("feature {}: {}", p.get().getInetSocketAddress(), p.get().getMaliciousFeature());
-      p.get().disconnect(ReasonCode.MALICIOUS_NODE);
+      disconnectMaliciousPeer(p.get());
       return true;
     }
     return false;
+  }
+
+  private void disconnectMaliciousPeer(PeerConnection p) {
+    logger.info("feature {}: {}", p.getInetSocketAddress(), p.getMaliciousFeature());
+    p.disconnect(ReasonCode.MALICIOUS_NODE);
   }
 
   public void close() {
