@@ -173,7 +173,7 @@ public class Args extends CommonParameter {
     PARAMETER.estimateEnergyMaxRetry = 3;
     PARAMETER.receiveTcpMinDataLength = 2048;
     PARAMETER.isOpenFullTcpDisconnect = false;
-    PARAMETER.peerNoBlockTime = 300_000;
+    PARAMETER.peerNoBlockTime = 300;
     PARAMETER.nodeDetectEnable = false;
     PARAMETER.supportConstant = false;
     PARAMETER.debug = false;
@@ -846,7 +846,7 @@ public class Args extends CommonParameter {
     PARAMETER.isOpenFullTcpDisconnect = config.hasPath(Constant.NODE_IS_OPEN_FULL_TCP_DISCONNECT)
         && config.getBoolean(Constant.NODE_IS_OPEN_FULL_TCP_DISCONNECT);
     PARAMETER.peerNoBlockTime = config.hasPath(Constant.NODE_PEER_NO_BLOCK_TIME)
-        ? config.getInt(Constant.NODE_PEER_NO_BLOCK_TIME) : 300_000;
+        ? config.getInt(Constant.NODE_PEER_NO_BLOCK_TIME) : 300;
 
     PARAMETER.nodeDetectEnable = config.hasPath(Constant.NODE_DETECT_ENABLE)
           && config.getBoolean(Constant.NODE_DETECT_ENABLE);

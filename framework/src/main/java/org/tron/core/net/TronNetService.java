@@ -183,7 +183,7 @@ public class TronNetService {
     config.setPort(parameter.getNodeListenPort());
     config.setNetworkId(parameter.getNodeP2pVersion());
     config.setDisconnectionPolicyEnable(parameter.isOpenFullTcpDisconnect());
-    config.setNotActiveInterval(parameter.peerNoBlockTime);
+    config.setNotActiveInterval(parameter.peerNoBlockTime * 1000L);
     config.setNodeDetectEnable(parameter.isNodeDetectEnable());
     config.setDiscoverEnable(parameter.isNodeDiscoveryEnable());
     if (StringUtils.isEmpty(config.getIp()) && hasIpv4Stack(NetUtil.getAllLocalAddress())) {
