@@ -119,6 +119,7 @@ public class TronNetService {
     transactionsMsgHandler.close();
     fetchBlockService.close();
     effectiveCheckService.close();
+    resilienceService.close();
     p2pService.close();
     relayService.close();
     logger.info("Net service closed successfully");
