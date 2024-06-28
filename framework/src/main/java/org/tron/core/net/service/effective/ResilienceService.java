@@ -72,9 +72,10 @@ public class ResilienceService {
       int advPeerCount = (int) tronNetDelegate.getActivePeer().stream()
           .filter(peer -> !peer.isNeedSyncFromPeer() && !peer.isNeedSyncFromUs())
           .count();
+      long diff = System.currentTimeMillis() - chainBaseManager.getLatestSaveBlockTime();
       if (advPeerCount >= 1 && peerSize >= CommonParameter.getInstance().minConnections
-          && System.currentTimeMillis() - chainBaseManager.getLatestSaveBlockTime()
-          >= resilienceConfig.getBlockNotChangeTime() * 1000L) {
+          && diff >= resilienceConfig.getBlockNotChangeTime() * 1000L) {
+        logger.warn("Node has been isolated for {} ms, try to disconnect some peers", diff);
 
         //prefer to disconnect with active peer. if all are same, choose the oldest
         List<PeerConnection> peerList = tronNetDelegate.getActivePeer().stream()
