@@ -63,7 +63,7 @@ public class ResilienceService {
 
     //1. if local node belongs to a lan network, disconnect with first malicious node if necessary
     if (peerSize == activePeerSize && peerSize >= CommonParameter.getInstance().minConnections) {
-      findCount = findAndDisconnect(false) ? 1 : 0;
+      findCount = findAndDisconnect(false, "case1") ? 1 : 0;
     }
 
     //2. if local node's latestSaveBlockTime has not changed more than several minutes,
@@ -99,7 +99,7 @@ public class ResilienceService {
           peerList = peerList.subList(0, resilienceConfig.getDisconnectNumber());
         }
         if (!peerList.isEmpty()) {
-          peerList.forEach(this::disconnectMaliciousPeer);
+          peerList.forEach(peer -> disconnectMaliciousPeer(peer, "case2"));
           findCount = peerList.size();
         }
       }
@@ -107,7 +107,7 @@ public class ResilienceService {
 
     //3. if peers' number is equal or larger than maxConnections, disconnect with oldest peer
     if (findCount == 0 && peerSize >= CommonParameter.getInstance().maxConnections) {
-      findCount = findAndDisconnect(true) ? 1 : 0;
+      findCount = findAndDisconnect(true, "case3") ? 1 : 0;
     }
 
     if (findCount > 0) {
@@ -115,7 +115,7 @@ public class ResilienceService {
     }
   }
 
-  private boolean findAndDisconnect(boolean excludeActive) {
+  private boolean findAndDisconnect(boolean excludeActive, String condition) {
     Optional<PeerConnection> p = tronNetDelegate.getActivePeer().stream()
         .filter(peer -> !peer.isDisconnect())
         .filter(peer -> !peer.getChannel().isTrustPeer())
@@ -125,14 +125,15 @@ public class ResilienceService {
             Long::compareTo));
 
     if (p.isPresent()) {
-      disconnectMaliciousPeer(p.get());
+      disconnectMaliciousPeer(p.get(), condition);
       return true;
     }
     return false;
   }
 
-  private void disconnectMaliciousPeer(PeerConnection p) {
-    logger.info("feature {}: {}", p.getInetSocketAddress(), p.getMaliciousFeature());
+  private void disconnectMaliciousPeer(PeerConnection p, String condition) {
+    logger.info("feature {}: {}, condition:{}", p.getInetSocketAddress(), p.getMaliciousFeature(),
+        condition);
     p.disconnect(ReasonCode.MALICIOUS_NODE);
   }
 
