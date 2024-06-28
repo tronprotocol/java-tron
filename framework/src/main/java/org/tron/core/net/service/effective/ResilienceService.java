@@ -63,7 +63,7 @@ public class ResilienceService {
 
     //1. if local node belongs to a lan network, disconnect with first malicious node if necessary
     if (peerSize == activePeerSize && peerSize >= CommonParameter.getInstance().minConnections) {
-      findCount = findAndDisconnect() ? 1 : 0;
+      findCount = findAndDisconnect(false) ? 1 : 0;
     }
 
     //2. if local node's latestSaveBlockTime has not changed more than several minutes,
@@ -106,7 +106,7 @@ public class ResilienceService {
 
     //3. if peers' number is equal or larger than maxConnections, disconnect with oldest peer
     if (findCount == 0 && peerSize >= CommonParameter.getInstance().maxConnections) {
-      findCount = findAndDisconnect() ? 1 : 0;
+      findCount = findAndDisconnect(true) ? 1 : 0;
     }
 
     if (findCount > 0) {
@@ -114,11 +114,12 @@ public class ResilienceService {
     }
   }
 
-  private boolean findAndDisconnect() {
+  private boolean findAndDisconnect(boolean excludeActive) {
     Optional<PeerConnection> p = tronNetDelegate.getActivePeer().stream()
         .filter(peer -> !peer.isDisconnect())
         .filter(peer -> !peer.getChannel().isTrustPeer())
         .filter(PeerConnection::isMalicious)
+        .filter(peer -> !excludeActive || !peer.getChannel().isActive())
         .min(Comparator.comparing(peer -> peer.getMaliciousFeature().getOldestTime(),
             Long::compareTo));
 
