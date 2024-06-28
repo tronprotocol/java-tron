@@ -334,25 +334,20 @@ public class PeerConnection {
   @Getter
   public class MaliciousFeature {
 
-    private boolean hasBadSyncBlockChain = false;
-    private long badSyncBlockChainTime;
-    private boolean hasBadChainInventory = false;
-    private long badChainInventoryTime;
-    private boolean isZombie = false;
-    private long zombieBeginTime;
+    private long badSyncBlockChainTime = -1;
+    private long badChainInventoryTime = -1;
+    private long zombieBeginTime = -1;
 
-    //it can only be set from false to true
+    //it can only be set from -1 to positive
     public void updateBadFeature1() {
-      if (!hasBadSyncBlockChain) {
-        hasBadSyncBlockChain = true;
+      if (badSyncBlockChainTime < 0) {
         badSyncBlockChainTime = System.currentTimeMillis();
       }
     }
 
-    //it can only be set from false to true
+    //it can only be set from -1 to positive
     public void updateBadFeature2() {
-      if (!hasBadChainInventory) {
-        hasBadChainInventory = true;
+      if (badChainInventoryTime < 0) {
         badChainInventoryTime = System.currentTimeMillis();
       }
     }
@@ -360,41 +355,40 @@ public class PeerConnection {
     // if peer is in adv status and no block received and sent between us for too long,
     // it is a zombie
     public void updateBadFeature3() {
-      isZombie = false;
       long tempTime = Math.max(channel.getLastActiveTime(), advStartTime);
       if (!needSyncFromPeer && !needSyncFromUs
           && System.currentTimeMillis() - tempTime > peerNotActiveTime * 1000) {
-        this.isZombie = true;
-        this.zombieBeginTime = tempTime;
+        zombieBeginTime = tempTime;
       }
     }
 
     public long getOldestTime() {
       List<Long> times = new ArrayList<>();
-      if (hasBadSyncBlockChain) {
+      if (badSyncBlockChainTime > 0) {
         times.add(badSyncBlockChainTime);
       }
-      if (hasBadChainInventory) {
+      if (badChainInventoryTime > 0) {
         times.add(badChainInventoryTime);
       }
-      if (isZombie) {
+      if (zombieBeginTime > 0) {
         times.add(zombieBeginTime);
+      }
+      if (times.isEmpty()) {
+        return -1;
       }
       return Collections.min(times);
     }
 
     @Override
     public String toString() {
-      return String.format("(1:[%s][%d] 2:[%s][%d] 3:[%s][%d])",
-          hasBadSyncBlockChain, badSyncBlockChainTime,
-          hasBadChainInventory, badChainInventoryTime,
-          isZombie, zombieBeginTime);
+      return String.format("(1:[%d] 2:[%d] 3:[%d])",
+          badSyncBlockChainTime, badChainInventoryTime, zombieBeginTime);
     }
   }
 
   public boolean isMalicious() {
-    return maliciousFeature.hasBadSyncBlockChain || maliciousFeature.hasBadChainInventory
-        || maliciousFeature.isZombie;
+    return maliciousFeature.badSyncBlockChainTime > 0 || maliciousFeature.badChainInventoryTime > 0
+        || maliciousFeature.zombieBeginTime > 0;
   }
 
   @Override
