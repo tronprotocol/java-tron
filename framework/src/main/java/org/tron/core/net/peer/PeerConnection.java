@@ -78,6 +78,8 @@ public class PeerConnection {
   @Getter
   private volatile boolean isBadPeer;
 
+  private final boolean isResilienceEnabled = Args.getInstance().getResilienceConfig().isEnabled();
+
   @Getter
   private final MaliciousFeature maliciousFeature = new MaliciousFeature();
 
@@ -85,8 +87,7 @@ public class PeerConnection {
   private long advStartTime = System.currentTimeMillis();
 
   @Getter
-  private final long peerNotActiveTime = Args.getInstance().getResilienceConfig()
-      .getPeerNotActiveTime();
+  private long peerNotActiveTime = Args.getInstance().getResilienceConfig().getPeerNotActiveTime();
 
   @Getter
   @Setter
@@ -233,7 +234,7 @@ public class PeerConnection {
     long now = System.currentTimeMillis();
     BlockId syncBlockId = syncBlockToFetch.peek();
     Pair<Deque<BlockId>, Long> requested = syncChainRequested;
-    return String.format(
+    String data = String.format(
         "Peer %s\n"
             + "connect time: %ds [%sms]\n"
             + "last know block num: %s\n"
@@ -244,8 +245,7 @@ public class PeerConnection {
             + "syncBlockRequestedSize:%d\n"
             + "remainNum:%d\n"
             + "syncChainRequested:%d\n"
-            + "blockInProcess:%d\n"
-            + "feature:%s\n",
+            + "blockInProcess:%d\n",
         channel.getInetSocketAddress(),
         (now - channel.getStartTime()) / Constant.ONE_THOUSAND,
         channel.getAvgLatency(),
@@ -257,9 +257,12 @@ public class PeerConnection {
         syncBlockRequested.size(),
         remainNum,
         requested == null ? 0 : (now - requested.getValue())
-            / Constant.ONE_THOUSAND,
-        syncBlockInProcess.size(),
-        maliciousFeature);
+                / Constant.ONE_THOUSAND,
+        syncBlockInProcess.size());
+    if (isResilienceEnabled) {
+      data += String.format("feature:%s\n", maliciousFeature);
+    }
+    return data;
   }
 
   public boolean isSyncFinish() {
