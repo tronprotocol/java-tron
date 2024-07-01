@@ -41,6 +41,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.filter.LiteFnQueryGrpcInterceptor;
+import org.tron.core.services.ratelimiter.PrometheusInterceptor;
 import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
 import org.tron.core.services.ratelimiter.RpcApiAccessInterceptor;
 import org.tron.protos.Protocol.Account;
@@ -78,6 +79,9 @@ public class RpcApiServiceOnPBFT extends RpcService {
 
   @Autowired
   private RpcApiAccessInterceptor apiAccessInterceptor;
+
+  @Autowired
+  private PrometheusInterceptor prometheusInterceptor;
 
   private final String executorName = "rpc-pbft-executor";
 
@@ -123,6 +127,11 @@ public class RpcApiServiceOnPBFT extends RpcService {
 
       // add lite fullnode query interceptor
       serverBuilder.intercept(liteFnQueryGrpcInterceptor);
+
+      // add prometheus interceptor
+      if (args.isMetricsPrometheusEnable()) {
+        serverBuilder.intercept(prometheusInterceptor);
+      }
 
       if (args.isRpcReflectionServiceEnable()) {
         serverBuilder.addService(ProtoReflectionService.newInstance());

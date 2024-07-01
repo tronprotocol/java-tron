@@ -98,6 +98,7 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.metrics.MetricsApiService;
 import org.tron.core.services.filter.LiteFnQueryGrpcInterceptor;
+import org.tron.core.services.ratelimiter.PrometheusInterceptor;
 import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
 import org.tron.core.services.ratelimiter.RpcApiAccessInterceptor;
 import org.tron.core.utils.TransactionUtil;
@@ -189,6 +190,8 @@ public class RpcApiService extends RpcService {
   private RpcApiAccessInterceptor apiAccessInterceptor;
   @Autowired
   private MetricsApiService metricsApiService;
+  @Autowired
+  private PrometheusInterceptor prometheusInterceptor;
   @Getter
   private DatabaseApi databaseApi = new DatabaseApi();
   private WalletApi walletApi = new WalletApi();
@@ -251,6 +254,11 @@ public class RpcApiService extends RpcService {
 
       // add lite fullnode query interceptor
       serverBuilder.intercept(liteFnQueryGrpcInterceptor);
+
+      // add prometheus interceptor
+      if (parameter.isMetricsPrometheusEnable()) {
+        serverBuilder.intercept(prometheusInterceptor);
+      }
 
       if (parameter.isRpcReflectionServiceEnable()) {
         serverBuilder.addService(ProtoReflectionService.newInstance());
