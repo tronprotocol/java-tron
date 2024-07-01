@@ -18,7 +18,6 @@ import org.tron.core.metrics.MetricsUtil;
 @Slf4j(topic = "httpInterceptor")
 public class HttpInterceptor implements Filter {
 
-  private String endpoint;
   private final int HTTP_SUCCESS = 200;
   private final int HTTP_BAD_REQUEST = 400;
   private final int HTTP_NOT_ACCEPTABLE = 406;
@@ -29,6 +28,7 @@ public class HttpInterceptor implements Filter {
 
   @Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) {
+    String endpoint = MetricLabels.UNDEFINED;
     try {
       if (!(request instanceof HttpServletRequest)) {
         chain.doFilter(request, response);

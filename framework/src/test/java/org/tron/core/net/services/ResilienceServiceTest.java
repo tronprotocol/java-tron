@@ -1,6 +1,5 @@
 package org.tron.core.net.services;
 
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.spy;
 

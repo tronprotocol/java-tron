@@ -87,7 +87,8 @@ public class PeerConnection {
   private long advStartTime = System.currentTimeMillis();
 
   @Getter
-  private final long PeerNotActiveTime = Args.getInstance().getResilienceConfig().getPeerNotActiveTime();
+  private final long PeerNotActiveTime = Args.getInstance().getResilienceConfig()
+      .getPeerNotActiveTime();
 
   @Getter
   @Setter

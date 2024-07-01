@@ -40,6 +40,8 @@ import org.tron.protos.Protocol.ReasonCode;
 @Component
 public class RelayService {
 
+  private static final int MAX_PEER_COUNT_PER_ADDRESS = 2;
+
   @Autowired
   private ChainBaseManager chainBaseManager;
 
@@ -139,6 +141,13 @@ public class RelayService {
       return false;
     }
 
+    if (getPeerCountByAddress(msg.getAddress()) >= MAX_PEER_COUNT_PER_ADDRESS) {
+      logger.warn("HelloMessage from {}, the number of peers of {} exceeds 2.",
+          channel.getInetAddress(),
+          ByteArray.toHexString(msg.getAddress().toByteArray()));
+      return false;
+    }
+
     boolean flag;
     try {
       Sha256Hash hash = Sha256Hash.of(CommonParameter
@@ -162,6 +171,12 @@ public class RelayService {
       logger.error("Check hello message failed, msg: {}, {}", message, channel.getInetAddress(), e);
       return false;
     }
+  }
+
+  private long getPeerCountByAddress(ByteString address) {
+    return tronNetDelegate.getActivePeer().stream()
+      .filter(peer -> peer.getAddress() != null && peer.getAddress().equals(address))
+      .count();
   }
 
   private boolean isActiveWitness() {
