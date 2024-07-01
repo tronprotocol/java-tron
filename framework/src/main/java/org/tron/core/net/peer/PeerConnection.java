@@ -167,6 +167,10 @@ public class PeerConnection {
   }
 
   public boolean isIdle() {
+    return advInvRequest.isEmpty() && isSyncIdle();
+  }
+
+  public boolean isSyncIdle() {
     return syncBlockRequested.isEmpty() && syncChainRequested == null;
   }
 
