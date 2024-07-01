@@ -21,8 +21,6 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.service.adv.AdvService;
 import org.tron.protos.Protocol;
 
-
-
 public class FetchInvDataMsgHandlerTest {
 
   @Test
@@ -61,5 +59,38 @@ public class FetchInvDataMsgHandlerTest {
     fetchInvDataMsgHandler.processMessage(peer,
         new FetchInvDataMessage(blockIds, Protocol.Inventory.InventoryType.BLOCK));
     Assert.assertNotNull(syncBlockIdCache.getIfPresent(blockId));
+  }
+
+  @Test
+  public void testSyncFetchCheck() {
+    BlockCapsule.BlockId blockId = new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 10000L);
+    List<Sha256Hash> blockIds = new LinkedList<>();
+    blockIds.add(blockId);
+    FetchInvDataMessage msg =
+        new FetchInvDataMessage(blockIds, Protocol.Inventory.InventoryType.BLOCK);
+
+    PeerConnection peer = Mockito.mock(PeerConnection.class);
+    Mockito.when(peer.isNeedSyncFromUs()).thenReturn(true);
+    Cache<Item, Long> advInvSpread = CacheBuilder.newBuilder().maximumSize(100)
+        .expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
+    Mockito.when(peer.getAdvInvSpread()).thenReturn(advInvSpread);
+
+    FetchInvDataMsgHandler fetchInvDataMsgHandler = new FetchInvDataMsgHandler();
+
+    try {
+      Mockito.when(peer.getLastSyncBlockId())
+        .thenReturn(new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 1000L));
+      fetchInvDataMsgHandler.processMessage(peer, msg);
+    } catch (Exception e) {
+      Assert.assertEquals(e.getMessage(), "maxBlockNum: 1000, blockNum: 10000");
+    }
+
+    try {
+      Mockito.when(peer.getLastSyncBlockId())
+        .thenReturn(new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 20000L));
+      fetchInvDataMsgHandler.processMessage(peer, msg);
+    } catch (Exception e) {
+      Assert.assertEquals(e.getMessage(), "minBlockNum: 16000, blockNum: 10000");
+    }
   }
 }
