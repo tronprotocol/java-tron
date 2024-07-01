@@ -95,7 +95,7 @@ public class PeerManager {
 
   public static synchronized void sortPeers() {
     try {
-      peers.sort(Comparator.comparingDouble(c -> c.getChannel().getAvgLatency()));
+      peers.sort(Comparator.comparingLong(c -> c.getChannel().getAvgLatency()));
     } catch (Exception e) {
       logger.warn("Sort peers failed. {}", e.getMessage());
     }
