@@ -1,4 +1,5 @@
 plugins {
+    id "org.gradle.test-retry" version "1.5.9"
     id "org.sonarqube" version "2.6"
     id "com.gorylenko.gradle-git-properties" version "2.4.1"
 }
@@ -113,6 +114,10 @@ run {
 }
 
 test {
+    retry {
+        maxRetries = 5
+        maxFailures = 20
+    }
     testLogging {
         exceptionFormat = 'full'
     }
