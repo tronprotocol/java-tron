@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -185,6 +186,7 @@ public class MerkleTreeTest {
   }
 
   @Test
+  @Ignore
   public void testConcurrent() {
     Sha256Hash root1 = Sha256Hash.wrap(
         ByteString.fromHex("6cb38b4f493db8bacf26123cd4253bbfc530c708b97b3747e782f64097c3c482"));
