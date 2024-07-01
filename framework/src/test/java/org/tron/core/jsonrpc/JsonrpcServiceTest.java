@@ -265,7 +265,6 @@ public class JsonrpcServiceTest extends BaseTest {
 
   @Test
   public void testGetBlockByNumber2() {
-    fullNodeJsonRpcHttpService.init(Args.getInstance());
     fullNodeJsonRpcHttpService.start();
     JsonArray params = new JsonArray();
     params.add(ByteArray.toJsonHex(blockCapsule.getNum()));
@@ -303,9 +302,7 @@ public class JsonrpcServiceTest extends BaseTest {
   @Test
   public void testServicesInit() {
     try {
-      jsonRpcServiceOnPBFT.init(Args.getInstance());
       jsonRpcServiceOnPBFT.start();
-      jsonRpcServiceOnSolidity.init(Args.getInstance());
       jsonRpcServiceOnSolidity.start();
     } finally {
       jsonRpcServiceOnPBFT.stop();

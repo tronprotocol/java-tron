@@ -17,11 +17,15 @@ package org.tron.core.config.args;
 
 import com.google.common.collect.Lists;
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import io.grpc.internal.GrpcUtil;
 import io.grpc.netty.NettyServerBuilder;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
@@ -149,6 +153,95 @@ public class ArgsTest {
   public void testOldRewardOpt() {
     thrown.expect(IllegalArgumentException.class);
     Args.setParam(new String[] {"-w"}, "args-test.conf");
+  }
+
+  @Test
+  public void testInitService() {
+    Map<String,String> storage = new HashMap<>();
+    // avoid the exception for the missing storage
+    storage.put("storage.db.directory", "database");
+    Config config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
+    // test default value
+    Args.setParam(new String[] {}, config);
+    Assert.assertTrue(Args.getInstance().isRpcEnable());
+    Assert.assertTrue(Args.getInstance().isRpcSolidityEnable());
+    Assert.assertTrue(Args.getInstance().isRpcPBFTEnable());
+    Assert.assertTrue(Args.getInstance().isFullNodeHttpEnable());
+    Assert.assertTrue(Args.getInstance().isSolidityNodeHttpEnable());
+    Assert.assertTrue(Args.getInstance().isPBFTHttpEnable());
+    Assert.assertFalse(Args.getInstance().isJsonRpcHttpFullNodeEnable());
+    Assert.assertFalse(Args.getInstance().isJsonRpcHttpSolidityNodeEnable());
+    Assert.assertFalse(Args.getInstance().isJsonRpcHttpPBFTNodeEnable());
+    Args.clearParam();
+    // test set all true value
+    storage.put("node.rpc.enable", "true");
+    storage.put("node.rpc.solidityEnable", "true");
+    storage.put("node.rpc.PBFTEnable", "true");
+    storage.put("node.http.fullNodeEnable", "true");
+    storage.put("node.http.solidityEnable", "true");
+    storage.put("node.http.PBFTEnable", "true");
+    storage.put("node.jsonrpc.httpFullNodeEnable", "true");
+    storage.put("node.jsonrpc.httpSolidityEnable", "true");
+    storage.put("node.jsonrpc.httpPBFTEnable", "true");
+    config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
+    // test value
+    Args.setParam(new String[] {}, config);
+    Assert.assertTrue(Args.getInstance().isRpcEnable());
+    Assert.assertTrue(Args.getInstance().isRpcSolidityEnable());
+    Assert.assertTrue(Args.getInstance().isRpcPBFTEnable());
+    Assert.assertTrue(Args.getInstance().isFullNodeHttpEnable());
+    Assert.assertTrue(Args.getInstance().isSolidityNodeHttpEnable());
+    Assert.assertTrue(Args.getInstance().isPBFTHttpEnable());
+    Assert.assertTrue(Args.getInstance().isJsonRpcHttpFullNodeEnable());
+    Assert.assertTrue(Args.getInstance().isJsonRpcHttpSolidityNodeEnable());
+    Assert.assertTrue(Args.getInstance().isJsonRpcHttpPBFTNodeEnable());
+    Args.clearParam();
+    // test set all false value
+    storage.put("node.rpc.enable", "false");
+    storage.put("node.rpc.solidityEnable", "false");
+    storage.put("node.rpc.PBFTEnable", "false");
+    storage.put("node.http.fullNodeEnable", "false");
+    storage.put("node.http.solidityEnable", "false");
+    storage.put("node.http.PBFTEnable", "false");
+    storage.put("node.jsonrpc.httpFullNodeEnable", "false");
+    storage.put("node.jsonrpc.httpSolidityEnable", "false");
+    storage.put("node.jsonrpc.httpPBFTEnable", "false");
+    config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
+    // test value
+    Args.setParam(new String[] {}, config);
+    Assert.assertFalse(Args.getInstance().isRpcEnable());
+    Assert.assertFalse(Args.getInstance().isRpcSolidityEnable());
+    Assert.assertFalse(Args.getInstance().isRpcPBFTEnable());
+    Assert.assertFalse(Args.getInstance().isFullNodeHttpEnable());
+    Assert.assertFalse(Args.getInstance().isSolidityNodeHttpEnable());
+    Assert.assertFalse(Args.getInstance().isPBFTHttpEnable());
+    Assert.assertFalse(Args.getInstance().isJsonRpcHttpFullNodeEnable());
+    Assert.assertFalse(Args.getInstance().isJsonRpcHttpSolidityNodeEnable());
+    Assert.assertFalse(Args.getInstance().isJsonRpcHttpPBFTNodeEnable());
+    Args.clearParam();
+    // test set random value
+    storage.put("node.rpc.enable", "false");
+    storage.put("node.rpc.solidityEnable", "false");
+    storage.put("node.rpc.PBFTEnable", "true");
+    storage.put("node.http.fullNodeEnable", "false");
+    storage.put("node.http.solidityEnable", "true");
+    storage.put("node.http.PBFTEnable", "false");
+    storage.put("node.jsonrpc.httpFullNodeEnable", "true");
+    storage.put("node.jsonrpc.httpSolidityEnable", "false");
+    storage.put("node.jsonrpc.httpPBFTEnable", "true");
+    config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
+    // test value
+    Args.setParam(new String[] {}, config);
+    Assert.assertFalse(Args.getInstance().isRpcEnable());
+    Assert.assertFalse(Args.getInstance().isRpcSolidityEnable());
+    Assert.assertTrue(Args.getInstance().isRpcPBFTEnable());
+    Assert.assertFalse(Args.getInstance().isFullNodeHttpEnable());
+    Assert.assertTrue(Args.getInstance().isSolidityNodeHttpEnable());
+    Assert.assertFalse(Args.getInstance().isPBFTHttpEnable());
+    Assert.assertTrue(Args.getInstance().isJsonRpcHttpFullNodeEnable());
+    Assert.assertFalse(Args.getInstance().isJsonRpcHttpSolidityNodeEnable());
+    Assert.assertTrue(Args.getInstance().isJsonRpcHttpPBFTNodeEnable());
+    Args.clearParam();
   }
 }
 

@@ -1,5 +1,6 @@
 package org.tron.common.application;
 
+import java.util.concurrent.CountDownLatch;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -15,6 +16,7 @@ import org.tron.core.net.TronNetService;
 @Component
 public class ApplicationImpl implements Application {
 
+  @Autowired
   private ServiceContainer services;
 
   @Autowired
@@ -29,6 +31,8 @@ public class ApplicationImpl implements Application {
   @Autowired
   private ConsensusService consensusService;
 
+  private final CountDownLatch shutdown = new CountDownLatch(1);
+
   @Override
   public void setOptions(Args args) {
     // not used
@@ -37,24 +41,23 @@ public class ApplicationImpl implements Application {
   @Override
   @Autowired
   public void init(CommonParameter parameter) {
-    services = new ServiceContainer();
+    // not used
   }
 
   @Override
   public void addService(Service service) {
-    services.add(service);
+    // used by test
   }
 
   @Override
   public void initServices(CommonParameter parameter) {
-    services.init(parameter);
+    // not used
   }
 
   /**
    * start up the app.
    */
   public void startup() {
-    this.initServices(Args.getInstance());
     this.startServices();
     if ((!Args.getInstance().isSolidityNode()) && (!Args.getInstance().isP2pDisable())) {
       tronNetService.start();
@@ -71,16 +74,27 @@ public class ApplicationImpl implements Application {
       tronNetService.close();
     }
     dbManager.close();
+    shutdown.countDown();
   }
 
   @Override
   public void startServices() {
-    services.start();
+    try {
+      services.start();
+    } catch (Exception e) {
+      logger.error("Failed to start services", e);
+      System.exit(1);
+    }
   }
 
   @Override
   public void blockUntilShutdown() {
-    services.blockUntilShutdown();
+    try {
+      shutdown.await();
+    } catch (final InterruptedException e) {
+      logger.debug("Interrupted, exiting", e);
+      Thread.currentThread().interrupt();
+    }
   }
 
   @Override

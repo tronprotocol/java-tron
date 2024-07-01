@@ -56,8 +56,11 @@ public class RpcApiAccessInterceptorTest {
   @BeforeClass
   public static void init() throws IOException {
     Args.setParam(new String[] {"-d", temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
+    Args.getInstance().setRpcEnable(true);
     Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setRpcSolidityEnable(true);
     Args.getInstance().setRpcOnSolidityPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setRpcPBFTEnable(true);
     Args.getInstance().setRpcOnPBFTPort(PublicMethod.chooseRandomPort());
     String fullNode = String.format("%s:%d", Args.getInstance().getNodeLanIp(),
         Args.getInstance().getRpcPort());
