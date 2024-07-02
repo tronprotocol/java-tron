@@ -76,7 +76,7 @@ DB lite provides lite database, parameters are compatible with previous `LiteFul
 - `-t | --type`: Only used with operate=split: [snapshot,history], default: snapshot.
 - `-fn | --fn-data-path`: The database path to be split or merged.
 - `-ds | --dataset-path`: When operation is `split`,`dataset-path` is the path that store the `snapshot` or `history`, when
-  operation is `split`, `dataset-path` is the `history` data path.
+  operation is `merge`, `dataset-path` is the `history` data path.
 - `-h | --help`: Provide the help info.
 
 ### Examples:
