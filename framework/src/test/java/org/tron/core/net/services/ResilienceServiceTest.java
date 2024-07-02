@@ -107,7 +107,8 @@ public class ResilienceServiceTest {
     // peer 11 ~ 20 are active, needSyncFromPeer = false, needSyncFromUs = false
     int totalNumber = 20;
     List<Channel> channelList = new ArrayList<>();
-    long t1 = System.currentTimeMillis() - resilienceConfig.getPeerNotActiveTime() * 1000L - 1000L;
+    long t1 =
+        System.currentTimeMillis() - resilienceConfig.getPeerNotActiveThreshold() * 1000L - 1000L;
     for (int i = 0; i < totalNumber; i++) {
       InetSocketAddress inetSocketAddress = new InetSocketAddress("201.0.0." + i, 10001);
       Channel c1 = spy(Channel.class);
@@ -139,12 +140,12 @@ public class ResilienceServiceTest {
     Assert.assertEquals(10,
         PeerManager.getPeers().stream().filter(p -> p.getChannel().isActive()).count());
 
-    int blockNotChangeTime = resilienceConfig.getBlockNotChangeTime();
+    int blockNotChangeThreshold = resilienceConfig.getBlockNotChangeThreshold();
     int disconnectNumber = resilienceConfig.getDisconnectNumber();
     Assert.assertEquals(2, disconnectNumber);
     // trigger that node is isolated
     chainBaseManager.setLatestSaveBlockTime(
-        System.currentTimeMillis() - blockNotChangeTime * 1000L - 1000L);
+        System.currentTimeMillis() - blockNotChangeThreshold * 1000L - 1000L);
 
     //disconnect some peer if node is isolated, prefer to disconnect active nodes
     service.resilienceNode();

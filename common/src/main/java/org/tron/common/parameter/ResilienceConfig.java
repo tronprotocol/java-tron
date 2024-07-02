@@ -16,11 +16,11 @@ public class ResilienceConfig {
 
   @Getter
   @Setter
-  private int peerNotActiveTime = 600;
+  private int peerNotActiveThreshold = 600;
 
   @Getter
   @Setter
-  private int blockNotChangeTime = 300;
+  private int blockNotChangeThreshold = 300;
 
   @Getter
   @Setter

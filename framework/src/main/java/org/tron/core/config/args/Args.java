@@ -1498,13 +1498,13 @@ public class Args extends CommonParameter {
       if (config.hasPath(Constant.NODE_RESILIENCE_CHECK_INTERVAL)) {
         resilienceConfig.setCheckInterval(config.getInt(Constant.NODE_RESILIENCE_CHECK_INTERVAL));
       }
-      if (config.hasPath(Constant.NODE_RESILIENCE_PEER_NOT_ACTIVE_TIME)) {
-        resilienceConfig.setPeerNotActiveTime(
-            config.getInt(Constant.NODE_RESILIENCE_PEER_NOT_ACTIVE_TIME));
+      if (config.hasPath(Constant.NODE_RESILIENCE_PEER_NOT_ACTIVE_THRESHOLD)) {
+        resilienceConfig.setPeerNotActiveThreshold(
+            config.getInt(Constant.NODE_RESILIENCE_PEER_NOT_ACTIVE_THRESHOLD));
       }
-      if (config.hasPath(Constant.NODE_RESILIENCE_BLOCK_NOT_CHANGE_TIME)) {
-        resilienceConfig.setBlockNotChangeTime(
-            config.getInt(Constant.NODE_RESILIENCE_BLOCK_NOT_CHANGE_TIME));
+      if (config.hasPath(Constant.NODE_RESILIENCE_BLOCK_NOT_CHANGE_THRESHOLD)) {
+        resilienceConfig.setBlockNotChangeThreshold(
+            config.getInt(Constant.NODE_RESILIENCE_BLOCK_NOT_CHANGE_THRESHOLD));
       }
       if (config.hasPath(Constant.NODE_RESILIENCE_DISCONNECT_NUMBER)) {
         resilienceConfig.setDisconnectNumber(

@@ -74,7 +74,7 @@ public class ResilienceService {
           .count();
       long diff = System.currentTimeMillis() - chainBaseManager.getLatestSaveBlockTime();
       if (advPeerCount >= 1 && peerSize >= CommonParameter.getInstance().minConnections
-          && diff >= resilienceConfig.getBlockNotChangeTime() * 1000L) {
+          && diff >= resilienceConfig.getBlockNotChangeThreshold() * 1000L) {
         logger.warn("Node has been isolated for {} ms, try to disconnect some peers", diff);
 
         //prefer to disconnect with active peer. if all are same, choose the oldest

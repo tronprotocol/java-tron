@@ -87,8 +87,8 @@ public class PeerConnection {
   private long advStartTime = System.currentTimeMillis();
 
   @Getter
-  private final long PeerNotActiveTime = Args.getInstance().getResilienceConfig()
-      .getPeerNotActiveTime();
+  private final long PeerNotActiveThreshold = Args.getInstance().getResilienceConfig()
+      .getPeerNotActiveThreshold();
 
   @Getter
   @Setter
@@ -361,7 +361,7 @@ public class PeerConnection {
     public void updateBadFeature3() {
       long tempTime = Math.max(channel.getLastActiveTime(), advStartTime);
       if (!needSyncFromPeer && !needSyncFromUs
-          && System.currentTimeMillis() - tempTime > PeerNotActiveTime * 1000) {
+          && System.currentTimeMillis() - tempTime > PeerNotActiveThreshold * 1000) {
         zombieBeginTime = tempTime;
       }
     }
