@@ -181,6 +181,14 @@ public class Memory implements ProgramListenerAware {
     return new LinkedList<>(chunks);
   }
 
+  public void copy(int destPos, int srcPos, int size) {
+    if (size <= 0) {
+      return;
+    }
+    byte[] data = read(srcPos, size);
+    write(destPos, data, size, false);
+  }
+
   private int captureMax(int chunkIndex, int chunkOffset, int size, byte[] src, int srcPos) {
 
     byte[] chunk = chunks.get(chunkIndex);

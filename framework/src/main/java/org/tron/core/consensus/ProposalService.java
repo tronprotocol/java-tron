@@ -367,6 +367,10 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveMaxCreateAccountTxSize(entry.getValue());
           break;
         }
+        case ALLOW_TVM_CANCUN: {
+          manager.getDynamicPropertiesStore().saveAllowTvmCancun(entry.getValue());
+          break;
+        }
         default:
           find = false;
           break;
