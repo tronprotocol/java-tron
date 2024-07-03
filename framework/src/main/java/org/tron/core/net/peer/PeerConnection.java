@@ -430,7 +430,8 @@ public class PeerConnection {
     public boolean isMalicious() {
       boolean isMalicious = testStopInv ? (maliciousFeature.zombieBeginTime2 > 0)
           : (maliciousFeature.zombieBeginTime > 0);
-      return maliciousFeature.badSyncBlockChainTime > 0 || maliciousFeature.badChainInventoryTime > 0
+      return maliciousFeature.badSyncBlockChainTime > 0
+          || maliciousFeature.badChainInventoryTime > 0
           || isMalicious;
     }
 

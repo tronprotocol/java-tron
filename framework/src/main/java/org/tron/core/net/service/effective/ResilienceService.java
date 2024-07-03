@@ -43,7 +43,7 @@ public class ResilienceService {
         } catch (Exception e) {
           logger.error("Resilience node failed", e);
         }
-      }, 5 * 60, resilienceConfig.getCheckInterval(), TimeUnit.SECONDS);
+      }, 300, resilienceConfig.getCheckInterval(), TimeUnit.SECONDS);
     } else {
       logger.info("ResilienceService is disabled");
     }

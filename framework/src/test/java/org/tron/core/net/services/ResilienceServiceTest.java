@@ -229,12 +229,16 @@ public class ResilienceServiceTest {
     Assert.assertEquals(maxConnection, PeerManager.getPeers().size());
 
     //set two passive peers to malicious (any feature is ok)
+    String firstIp = PeerManager.getPeers().get(activeNumber).getChannel().getInetAddress()
+        .getHostName();
     PeerManager.getPeers().get(activeNumber).getMaliciousFeature().updateBadFeature2();
     try {
       Thread.sleep(100);
     } catch (InterruptedException e) {
       Assert.fail();
     }
+    String secondIp = PeerManager.getPeers().get(activeNumber + 5).getChannel().getInetAddress()
+        .getHostName();
     PeerManager.getPeers().get(activeNumber + 5).getMaliciousFeature().updateBadFeature2();
     //verify that disconnect one malicious peer
     service.resilienceNode();
@@ -245,8 +249,8 @@ public class ResilienceServiceTest {
     for (PeerConnection p : PeerManager.getPeers()) {
       ipSet.add(p.getChannel().getInetAddress().getHostName());
     }
-    Assert.assertFalse(ipSet.contains("201.0.0." + activeNumber));
-    Assert.assertTrue(ipSet.contains("201.0.0." + (activeNumber + 5)));
+    Assert.assertFalse(ipSet.contains(firstIp));
+    Assert.assertTrue(ipSet.contains(secondIp));
   }
 
   private void clearPeers() {
