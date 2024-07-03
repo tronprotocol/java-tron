@@ -51,9 +51,11 @@ public class ResilienceService {
 
 
   public void resilienceNode() {
-    //update peers' bad feature 3 at first
-    tronNetDelegate.getActivePeer()
-        .forEach(peer -> peer.getMaliciousFeature().updateBadFeature3());
+    if (!resilienceConfig.isTestStopInv()) {
+      //update peers' bad feature 3 at first
+      tronNetDelegate.getActivePeer()
+          .forEach(peer -> peer.getMaliciousFeature().updateBadFeature3());
+    }
 
     int peerSize = tronNetDelegate.getActivePeer().size();
     int activePeerSize = (int) tronNetDelegate.getActivePeer().stream()

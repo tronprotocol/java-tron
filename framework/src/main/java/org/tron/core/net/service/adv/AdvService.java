@@ -46,7 +46,8 @@ public class AdvService {
   private final int MAX_BLOCK_CACHE_SIZE = 10;
   private final int MAX_SPREAD_SIZE = 1_000;
   private final long TIMEOUT = MSG_CACHE_DURATION_IN_BLOCKS * BLOCK_PRODUCED_INTERVAL;
-  private final boolean isResilienceEnabled = Args.getInstance().getResilienceConfig().isEnabled();
+  private final boolean testStopInv = Args.getInstance().getResilienceConfig().isEnabled()
+      && Args.getInstance().getResilienceConfig().isTestStopInv();
 
   @Autowired
   private TronNetDelegate tronNetDelegate;
@@ -373,7 +374,7 @@ public class AdvService {
         }
         if (key.equals(InventoryType.BLOCK)) {
           value.sort(Comparator.comparingLong(value1 -> new BlockId(value1).getNum()));
-          if (isResilienceEnabled && peer.isNotActiveTooLong()
+          if (testStopInv && peer.isNotActiveTooLong()
               && peer.getMaliciousFeature().getStopBlockInvTime() == -1) {
             //if peer is not active for too long, test if peer will broadcast block inventory to me
             //after I stop broadcasting block inventory to it
