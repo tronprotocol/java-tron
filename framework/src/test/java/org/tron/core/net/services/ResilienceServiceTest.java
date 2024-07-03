@@ -96,6 +96,47 @@ public class ResilienceServiceTest {
   }
 
   @Test
+  public void testCondition1StopInv() {
+
+    int minConnection = 8;
+    Assert.assertEquals(minConnection, Args.getInstance().getMinConnections());
+    Assert.assertFalse(resilienceConfig.isTestStopInv());
+    clearPeers();
+    Assert.assertEquals(0, PeerManager.getPeers().size());
+
+    // test stop inventory
+    resilienceConfig.setTestStopInv(true);
+
+    long t1 =
+        System.currentTimeMillis() - resilienceConfig.getPeerNotActiveThreshold() * 1000L - 1000L;
+    for (int i = 0; i < minConnection; i++) {
+      InetSocketAddress inetSocketAddress = new InetSocketAddress("201.0.0." + i, 10001);
+      Channel c1 = spy(Channel.class);
+      ReflectUtils.setFieldValue(c1, "inetSocketAddress", inetSocketAddress);
+      ReflectUtils.setFieldValue(c1, "inetAddress", inetSocketAddress.getAddress());
+      ReflectUtils.setFieldValue(c1, "isActive", true);
+      ReflectUtils.setFieldValue(c1, "ctx", spy(ChannelHandlerContext.class));
+      ReflectUtils.setFieldValue(c1, "lastActiveTime", t1);
+      Mockito.doNothing().when(c1).send((byte[]) any());
+      PeerManager.add(context, c1);
+    }
+
+    service.resilienceNode();
+    Assert.assertEquals(minConnection, PeerManager.getPeers().size());
+
+    PeerConnection p = PeerManager.getPeers().get(0);
+    p.getMaliciousFeature().setAdvStartTime(t1);
+    p.getMaliciousFeature().setLastRecBlockInvTime(t1);
+    p.getMaliciousFeature().setStopBlockInvTime(t1 + 1);
+    p.getMaliciousFeature().updateBadFeature4();
+    service.resilienceNode();
+    Assert.assertEquals(minConnection - 1, PeerManager.getPeers().size());
+
+    //resume config
+    resilienceConfig.setTestStopInv(false);
+  }
+
+  @Test
   public void testCondition2() {
     Assert.assertEquals(8, Args.getInstance().getMinConnections());
     Assert.assertEquals(30, Args.getInstance().getMaxConnections());

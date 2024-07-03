@@ -83,7 +83,7 @@ public class ResilienceService {
         List<PeerConnection> peerList = tronNetDelegate.getActivePeer().stream()
             .filter(peer -> !peer.isDisconnect())
             .filter(peer -> !peer.getChannel().isTrustPeer())
-            .filter(PeerConnection::isMalicious)
+            .filter(peer -> peer.getMaliciousFeature().isMalicious())
             .sorted((o1, o2) -> {
               if (o1.getChannel().isActive() && !o2.getChannel().isActive()) {
                 return -1;
@@ -121,7 +121,7 @@ public class ResilienceService {
     Optional<PeerConnection> p = tronNetDelegate.getActivePeer().stream()
         .filter(peer -> !peer.isDisconnect())
         .filter(peer -> !peer.getChannel().isTrustPeer())
-        .filter(PeerConnection::isMalicious)
+        .filter(peer -> peer.getMaliciousFeature().isMalicious())
         .filter(peer -> !excludeActive || !peer.getChannel().isActive())
         .min(Comparator.comparing(peer -> peer.getMaliciousFeature().getEarliestTime(),
             Long::compareTo));

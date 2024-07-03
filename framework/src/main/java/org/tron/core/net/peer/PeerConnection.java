@@ -427,18 +427,18 @@ public class PeerConnection {
       return Collections.min(times);
     }
 
+    public boolean isMalicious() {
+      boolean isMalicious = testStopInv ? (maliciousFeature.zombieBeginTime2 > 0)
+          : (maliciousFeature.zombieBeginTime > 0);
+      return maliciousFeature.badSyncBlockChainTime > 0 || maliciousFeature.badChainInventoryTime > 0
+          || isMalicious;
+    }
+
     @Override
     public String toString() {
       return String.format("(1:[%d] 2:[%d] 3:[%d] 4:[%d])",
           badSyncBlockChainTime, badChainInventoryTime, zombieBeginTime, zombieBeginTime2);
     }
-  }
-
-  public boolean isMalicious() {
-    boolean isMalicious = resilienceConfig.isTestStopInv() ? (maliciousFeature.zombieBeginTime2 > 0)
-        : (maliciousFeature.zombieBeginTime > 0);
-    return maliciousFeature.badSyncBlockChainTime > 0 || maliciousFeature.badChainInventoryTime > 0
-        || isMalicious;
   }
 
   @Override
