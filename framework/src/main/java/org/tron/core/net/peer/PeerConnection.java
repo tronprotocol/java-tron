@@ -330,10 +330,10 @@ public class PeerConnection {
   }
 
   // if peer is in adv status and no block received and sent between us for too long, and we
-  // don't receive block inventory also, then the peer is not active. Use only half of threshold.
+  // don't receive block inventory also, then the peer is not active.
   public boolean isNotActiveTooLong() {
     return System.currentTimeMillis() - getLatestTime()
-        > resilienceConfig.getPeerNotActiveThreshold() / 2 * 1000L;
+        > resilienceConfig.getPeerNotActiveThreshold() * 1000L;
   }
 
   private long getLatestTime() {
