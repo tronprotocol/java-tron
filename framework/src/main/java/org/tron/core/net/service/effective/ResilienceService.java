@@ -88,8 +88,8 @@ public class ResilienceService {
               } else if (!o1.getChannel().isActive() && o2.getChannel().isActive()) {
                 return 1;
               } else {
-                return Long.compare(o1.getMaliciousFeature().getOldestTime(),
-                    o2.getMaliciousFeature().getOldestTime());
+                return Long.compare(o1.getMaliciousFeature().getEarliestTime(),
+                    o2.getMaliciousFeature().getEarliestTime());
               }
             })
             .collect(Collectors.toList());
@@ -121,7 +121,7 @@ public class ResilienceService {
         .filter(peer -> !peer.getChannel().isTrustPeer())
         .filter(PeerConnection::isMalicious)
         .filter(peer -> !excludeActive || !peer.getChannel().isActive())
-        .min(Comparator.comparing(peer -> peer.getMaliciousFeature().getOldestTime(),
+        .min(Comparator.comparing(peer -> peer.getMaliciousFeature().getEarliestTime(),
             Long::compareTo));
 
     if (p.isPresent()) {

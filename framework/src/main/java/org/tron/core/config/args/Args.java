@@ -1506,6 +1506,9 @@ public class Args extends CommonParameter {
         resilienceConfig.setBlockNotChangeThreshold(
             config.getInt(Constant.NODE_RESILIENCE_BLOCK_NOT_CHANGE_THRESHOLD));
       }
+      if (config.hasPath(Constant.NODE_RESILIENCE_TEST_STOP_INV)) {
+        resilienceConfig.setTestStopInv(config.getBoolean(Constant.NODE_RESILIENCE_TEST_STOP_INV));
+      }
       if (config.hasPath(Constant.NODE_RESILIENCE_DISCONNECT_NUMBER)) {
         resilienceConfig.setDisconnectNumber(
             config.getInt(Constant.NODE_RESILIENCE_DISCONNECT_NUMBER));

@@ -129,7 +129,7 @@ public class ResilienceServiceTest {
       if (p.getChannel().isActive()) {
         p.setNeedSyncFromPeer(false);
         p.setNeedSyncFromUs(false);
-        ReflectUtils.setFieldValue(p, "advStartTime", t1);
+        p.getMaliciousFeature().setAdvStartTime(t1);
         p.getMaliciousFeature().updateBadFeature3();
       }
     }

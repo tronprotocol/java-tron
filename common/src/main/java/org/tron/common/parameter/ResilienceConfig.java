@@ -24,6 +24,10 @@ public class ResilienceConfig {
 
   @Getter
   @Setter
+  private boolean testStopInv = false;
+
+  @Getter
+  @Setter
   private int disconnectNumber = 1;
 
 }

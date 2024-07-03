@@ -46,6 +46,7 @@ public class AdvService {
   private final int MAX_BLOCK_CACHE_SIZE = 10;
   private final int MAX_SPREAD_SIZE = 1_000;
   private final long TIMEOUT = MSG_CACHE_DURATION_IN_BLOCKS * BLOCK_PRODUCED_INTERVAL;
+  private final boolean isResilienceEnabled = Args.getInstance().getResilienceConfig().isEnabled();
 
   @Autowired
   private TronNetDelegate tronNetDelegate;
@@ -73,11 +74,15 @@ public class AdvService {
 
   private final String spreadName = "adv-spread";
   private final String fetchName = "adv-fetch";
+  private final String invCheckName = "inv-check";
   private final ScheduledExecutorService spreadExecutor = ExecutorServiceManager
       .newSingleThreadScheduledExecutor(spreadName);
 
   private final ScheduledExecutorService fetchExecutor = ExecutorServiceManager
       .newSingleThreadScheduledExecutor(fetchName);
+
+  private final ScheduledExecutorService invCheckExecutor = ExecutorServiceManager
+      .newSingleThreadScheduledExecutor(invCheckName);
 
   @Getter
   private MessageCount trxCount = new MessageCount();
@@ -368,7 +373,16 @@ public class AdvService {
         }
         if (key.equals(InventoryType.BLOCK)) {
           value.sort(Comparator.comparingLong(value1 -> new BlockId(value1).getNum()));
-          peer.sendMessage(new InventoryMessage(value, key));
+          if (isResilienceEnabled && peer.isNotActiveTooLong()
+              && peer.getMaliciousFeature().getStopBlockInvTime() == -1) {
+            //if peer is not active for too long, test if peer will broadcast block inventory to me
+            //after I stop broadcasting block inventory to it
+            peer.getMaliciousFeature().setStopBlockInvTime(System.currentTimeMillis());
+            invCheckExecutor.schedule(() -> peer.getMaliciousFeature().updateBadFeature4(),
+                10, TimeUnit.SECONDS);
+          } else {
+            peer.sendMessage(new InventoryMessage(value, key));
+          }
         } else {
           peer.sendMessage(new InventoryMessage(value, key));
         }
