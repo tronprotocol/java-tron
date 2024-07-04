@@ -352,6 +352,8 @@ public class PeerConnection {
     @Setter
     private long stopBlockInvTime = -1;
     @Setter
+    private long stopBlockInvEndTime = -1;
+    @Setter
     private long lastRecBlockInvTime = System.currentTimeMillis();
     //if testStopInv=true, we use feature 4, else use feature 3. We an only use one of them.
     private final boolean testStopInv;
