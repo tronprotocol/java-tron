@@ -127,7 +127,7 @@ public class ResilienceServiceTest {
     PeerConnection p = PeerManager.getPeers().get(0);
     p.getMaliciousFeature().setAdvStartTime(t1);
     p.getMaliciousFeature().setLastRecBlockInvTime(t1);
-    p.getMaliciousFeature().setStopBlockInvTime(t1 + 1);
+    p.getMaliciousFeature().setStopBlockInvStartTime(t1 + 1);
     p.getMaliciousFeature().updateBadFeature4();
     service.resilienceNode();
     Assert.assertEquals(minConnection - 1, PeerManager.getPeers().size());

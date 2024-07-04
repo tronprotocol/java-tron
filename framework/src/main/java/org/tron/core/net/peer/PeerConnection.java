@@ -350,7 +350,7 @@ public class PeerConnection {
     @Setter
     private long advStartTime = System.currentTimeMillis();
     @Setter
-    private long stopBlockInvTime = -1;
+    private long stopBlockInvStartTime = -1;
     @Setter
     private long stopBlockInvEndTime = -1;
     @Setter
@@ -396,14 +396,14 @@ public class PeerConnection {
     // else it's malicious. it can only be set from -1 to positive
     public void updateBadFeature4() {
       if (zombieBeginTime2 < 0
-          && maliciousFeature.lastRecBlockInvTime < maliciousFeature.stopBlockInvTime) {
+          && maliciousFeature.lastRecBlockInvTime < maliciousFeature.stopBlockInvStartTime) {
         zombieBeginTime2 = getLatestTime();
       }
     }
 
-    public void resetStopBlockInvTime() {
-      stopBlockInvTime = -1;
-    }
+    //public void resetStopBlockInvTime() {
+    //  stopBlockInvTime = -1;
+    //}
 
     public long getEarliestTime() {
       List<Long> times = new ArrayList<>();

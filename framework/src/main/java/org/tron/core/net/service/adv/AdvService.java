@@ -45,6 +45,7 @@ public class AdvService {
   private final int MAX_TRX_CACHE_SIZE = 50_000;
   private final int MAX_BLOCK_CACHE_SIZE = 10;
   private final int MAX_SPREAD_SIZE = 1_000;
+  private final int TEST_PAUSE_INV_SECONDS = 10;
   private final long TIMEOUT = MSG_CACHE_DURATION_IN_BLOCKS * BLOCK_PRODUCED_INTERVAL;
   private final boolean testStopInv = Args.getInstance().getResilienceConfig().isEnabled()
       && Args.getInstance().getResilienceConfig().isTestStopInv();
@@ -369,7 +370,6 @@ public class AdvService {
 
     public void sendInv() {
       long now = System.currentTimeMillis();
-      int pauseTime = 10;
       send.forEach((peer, ids) -> ids.forEach((key, value) -> {
         if (peer.isRelayPeer() && key.equals(InventoryType.TRX)) {
           return;
@@ -378,21 +378,21 @@ public class AdvService {
           value.sort(Comparator.comparingLong(value1 -> new BlockId(value1).getNum()));
           boolean canSendBlockInventory = true;
           if (testStopInv && peer.isNotActiveTooLong()
-              && peer.getMaliciousFeature().getStopBlockInvTime() == -1) {
+              && peer.getMaliciousFeature().getStopBlockInvStartTime() == -1) {
             //if peer is not active for too long, test if peer will broadcast block inventory to me
             //after I stop broadcasting block inventory to it
             logger.info("Test to stop broadcast block inv to {}", peer.getInetSocketAddress());
-            peer.getMaliciousFeature().setStopBlockInvTime(now);
-            peer.getMaliciousFeature().setStopBlockInvEndTime(now + pauseTime * 1000L);
+            peer.getMaliciousFeature().setStopBlockInvStartTime(now);
+            peer.getMaliciousFeature().setStopBlockInvEndTime(now + TEST_PAUSE_INV_SECONDS * 1000L);
             invCheckExecutor.schedule(() -> peer.getMaliciousFeature().updateBadFeature4(),
-                pauseTime, TimeUnit.SECONDS);
+                TEST_PAUSE_INV_SECONDS, TimeUnit.SECONDS);
             canSendBlockInventory = false;
           }
-          if (peer.getMaliciousFeature().getStopBlockInvTime() <= now
+          if (peer.getMaliciousFeature().getStopBlockInvStartTime() <= now
               && now <= peer.getMaliciousFeature().getStopBlockInvEndTime()) {
             canSendBlockInventory = false;
           }
-          if(peer.getMaliciousFeature().getZombieBeginTime2() > 0){
+          if (peer.getMaliciousFeature().getZombieBeginTime2() > 0) {
             canSendBlockInventory = false;
           }
           if (canSendBlockInventory) {
