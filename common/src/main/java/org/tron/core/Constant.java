@@ -204,7 +204,6 @@ public class Constant {
   public static final String NODE_RECEIVE_TCP_MIN_DATA_LENGTH = "node.receiveTcpMinDataLength";
 
   public static final String NODE_IS_OPEN_FULL_TCP_DISCONNECT = "node.isOpenFullTcpDisconnect";
-  public static final String NODE_PEER_NO_BLOCK_TIME = "node.peerNoBlockTime";
 
   public static final String NODE_DETECT_ENABLE = "node.nodeDetectEnable";
 

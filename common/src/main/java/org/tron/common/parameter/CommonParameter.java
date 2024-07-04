@@ -336,9 +336,6 @@ public class CommonParameter {
   public boolean isOpenFullTcpDisconnect;
   @Getter
   @Setter
-  public int peerNoBlockTime;
-  @Getter
-  @Setter
   public boolean nodeDetectEnable;
   @Getter
   @Setter

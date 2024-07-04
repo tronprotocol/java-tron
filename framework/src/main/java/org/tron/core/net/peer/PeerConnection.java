@@ -354,7 +354,7 @@ public class PeerConnection {
     @Setter
     private long stopBlockInvEndTime = -1;
     @Setter
-    private long lastRecBlockInvTime = System.currentTimeMillis();
+    private long lastRecBlockInvTime = -1;
     //if testStopInv=true, we use feature 4, else use feature 3. We an only use one of them.
     private final boolean testStopInv;
 
@@ -400,10 +400,6 @@ public class PeerConnection {
         zombieBeginTime2 = getLatestTime();
       }
     }
-
-    //public void resetStopBlockInvTime() {
-    //  stopBlockInvTime = -1;
-    //}
 
     public long getEarliestTime() {
       List<Long> times = new ArrayList<>();
