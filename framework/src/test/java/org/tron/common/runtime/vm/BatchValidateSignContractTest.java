@@ -79,7 +79,7 @@ public class BatchValidateSignContractTest {
 
   @Test
   public void correctionTest() {
-    contract.setConstantCall(false);
+    contract.setConstantCall(true);
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(longData);

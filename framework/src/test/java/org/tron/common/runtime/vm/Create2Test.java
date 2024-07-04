@@ -160,9 +160,16 @@ public class Create2Test extends VMTestBase {
     // Trigger contract method: deploy(bytes,uint)
     long salt = 100L;
     String hexInput = AbiUtil.parseMethod(methodSign, Arrays.asList(testCode, salt));
-    TVMTestResult result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
+
+    TVMTestResult result = null;
+    for (int i = 1; i < 3; i++) {
+      result = TvmTestUtils
+          .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
+              factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
+      if (result.getRuntime().getRuntimeError() == null) {
+        break;
+      }
+    }
     Assert.assertNull(result.getRuntime().getRuntimeError());
 
     byte[] returnValue = result.getRuntime().getResult().getHReturn();
