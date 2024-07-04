@@ -84,7 +84,7 @@ public class UnfreezeBalanceV2Processor {
 
     if (!checkUnfreezeBalance(accountCapsule, param.getUnfreezeBalance(), param.getResourceType())) {
       throw new ContractValidateException(
-          "Invalid unfreeze_balance, [" + param.getUnfreezeBalance() + "] is error");
+          "Invalid unfreeze_balance, [" + param.getUnfreezeBalance() + "] is too large");
     }
   }
 
