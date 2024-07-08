@@ -123,7 +123,7 @@ public class HandShakeServiceTest {
     Protocol.HelloMessage.Builder builder =
         getHelloMessageBuilder(node, System.currentTimeMillis(),
             ChainBaseManager.getChainBaseManager());
-    //block hash is empty
+    //block hash length is not valid
     try {
       BlockCapsule.BlockId hid = ChainBaseManager.getChainBaseManager().getHeadBlockId();
       Protocol.HelloMessage.BlockId hBlockId = Protocol.HelloMessage.BlockId.newBuilder()
@@ -132,7 +132,15 @@ public class HandShakeServiceTest {
           .build();
       builder.setHeadBlockId(hBlockId);
       HelloMessage helloMessage = new HelloMessage(builder.build().toByteArray());
-      Assert.assertTrue(!helloMessage.valid());
+      Assert.assertFalse(helloMessage.valid());
+
+      hBlockId = Protocol.HelloMessage.BlockId.newBuilder()
+          .setHash(ByteString.copyFrom(new byte[1]))
+          .setNumber(hid.getNum())
+          .build();
+      builder.setHeadBlockId(hBlockId);
+      helloMessage = new HelloMessage(builder.build().toByteArray());
+      Assert.assertFalse(helloMessage.valid());
     } catch (Exception e) {
       Assert.fail();
     }
