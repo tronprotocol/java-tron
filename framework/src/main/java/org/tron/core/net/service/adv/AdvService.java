@@ -378,21 +378,21 @@ public class AdvService {
           value.sort(Comparator.comparingLong(value1 -> new BlockId(value1).getNum()));
           boolean canSendBlockInventory = true;
           if (testStopInv && peer.isNotActiveTooLong()
-              && peer.getMaliciousFeature().getStopBlockInvStartTime() == -1) {
+              && peer.getFeature().getStopBlockInvStartTime() == 0) {
             //if peer is not active for too long, test if peer will broadcast block inventory to me
             //after I stop broadcasting block inventory to it
             logger.info("Test to stop broadcast block inv to {}", peer.getInetSocketAddress());
-            peer.getMaliciousFeature().setStopBlockInvStartTime(now);
-            peer.getMaliciousFeature().setStopBlockInvEndTime(now + TEST_PAUSE_INV_SECONDS * 1000L);
-            invCheckExecutor.schedule(() -> peer.getMaliciousFeature().updateBadFeature4(),
+            peer.getFeature().setStopBlockInvStartTime(now);
+            peer.getFeature().setStopBlockInvEndTime(now + TEST_PAUSE_INV_SECONDS * 1000L);
+            invCheckExecutor.schedule(() -> peer.getFeature().updateNoInvBackTime(),
                 TEST_PAUSE_INV_SECONDS, TimeUnit.SECONDS);
             canSendBlockInventory = false;
           }
-          if (peer.getMaliciousFeature().getStopBlockInvStartTime() <= now
-              && now <= peer.getMaliciousFeature().getStopBlockInvEndTime()) {
+          if (peer.getFeature().getStopBlockInvStartTime() <= now
+              && now <= peer.getFeature().getStopBlockInvEndTime()) {
             canSendBlockInventory = false;
           }
-          if (peer.getMaliciousFeature().getZombieBeginTime2() > 0) {
+          if (peer.getFeature().getNoInvBackTime() > 0) {
             canSendBlockInventory = false;
           }
           if (canSendBlockInventory) {

@@ -86,7 +86,7 @@ public class PeerConnection {
       && Args.getInstance().getResilienceConfig().isTestStopInv();
 
   @Getter
-  private final MaliciousFeature maliciousFeature = new MaliciousFeature();
+  private final Feature feature = new Feature();
 
   @Getter
   @Setter
@@ -180,14 +180,14 @@ public class PeerConnection {
   public void setNeedSyncFromPeer(boolean flag) {
     needSyncFromPeer = flag;
     if (!needSyncFromPeer && !needSyncFromUs) {
-      this.getMaliciousFeature().advStartTime = System.currentTimeMillis();
+      this.getFeature().advStartTime = System.currentTimeMillis();
     }
   }
 
   public void setNeedSyncFromUs(boolean flag) {
     needSyncFromUs = flag;
     if (!needSyncFromPeer && !needSyncFromUs) {
-      this.getMaliciousFeature().advStartTime = System.currentTimeMillis();
+      this.getFeature().advStartTime = System.currentTimeMillis();
     }
   }
 
@@ -264,7 +264,7 @@ public class PeerConnection {
                 / Constant.ONE_THOUSAND,
         syncBlockInProcess.size());
     if (resilienceConfig.isEnabled()) {
-      data += String.format("feature:%s\n", maliciousFeature);
+      data += String.format("feature:%s\n", feature);
     }
     return data;
   }
@@ -347,63 +347,64 @@ public class PeerConnection {
   private long getLatestTime() {
     List<Long> times = Arrays.asList(
         channel.getLastActiveTime(), //last block time
-        getMaliciousFeature().getAdvStartTime(), //adv begin time
-        getMaliciousFeature().getLastRecBlockInvTime()); //inventory
+        getFeature().getAdvStartTime(), //adv begin time
+        getFeature().getLastRecBlockInvTime()); //last receive inventory time
     return Collections.max(times);
   }
 
   @Getter
-  public class MaliciousFeature {
+  public class Feature {
 
     @Setter
     private long advStartTime;
     @Setter
-    private long stopBlockInvStartTime = -1;
+    private long stopBlockInvStartTime;
     @Setter
-    private long stopBlockInvEndTime = -1;
+    private long stopBlockInvEndTime;
     @Setter
-    private long lastRecBlockInvTime = -1;
+    private long lastRecBlockInvTime;
 
     //four features
-    private long badSyncBlockChainTime = -1; //feature 1
-    private long badChainInventoryTime = -1; //feature 2
-    private long zombieBeginTime = -1;       //feature 3
-    private long zombieBeginTime2 = -1;      //feature 4
+    private long badSyncBlockChainTime;
+    private long badChainInventoryTime;
+    private long noInteractionTime;
+    private long noInvBackTime;
 
-    public MaliciousFeature() {
+    public Feature() {
       advStartTime = System.currentTimeMillis();
     }
 
-    //it can only be set from -1 to positive
-    public void updateBadFeature1() {
-      if (badSyncBlockChainTime < 0) {
+    //If SyncBlockChain's blockId size is 1 and the block number is equal to block number of
+    // HelloMessage that i sent to peer, it's malicious. it can only be set from 0 to positive.
+    public void updateBadSyncBlockChainTime() {
+      if (badSyncBlockChainTime == 0) {
         badSyncBlockChainTime = System.currentTimeMillis();
       }
     }
 
-    //it can only be set from -1 to positive
-    public void updateBadFeature2() {
-      if (badChainInventoryTime < 0) {
+    // if ChainInventory's blockId size is 1 and its number is smaller than received HelloMessage's
+    // solid block number, it's malicious. it can only be set from 0 to positive
+    public void updateBadChainInventoryTime() {
+      if (badChainInventoryTime == 0) {
         badChainInventoryTime = System.currentTimeMillis();
       }
     }
 
-    // if peer is in adv status and no block received and sent between us for too long,
-    // it is a zombie.
-    public void updateBadFeature3() {
+    // if peer is in adv status and no block received and sent between us for too long, it is
+    // malicious.
+    public void updateNoInteractionTime() {
       long tempTime = Math.max(channel.getLastActiveTime(), advStartTime);
       if (!needSyncFromPeer && !needSyncFromUs && System.currentTimeMillis() - tempTime
           > resilienceConfig.getPeerNotActiveThreshold() * 1000L) {
-        zombieBeginTime = tempTime;
+        noInteractionTime = tempTime;
       }
     }
 
-    //if receive block inventory from peer 0 ~ 10 seconds later after inventory check, it's ok.
-    // else it's malicious. it can only be set from -1 to positive
-    public void updateBadFeature4() {
-      if (zombieBeginTime2 < 0
-          && maliciousFeature.lastRecBlockInvTime < maliciousFeature.stopBlockInvStartTime) {
-        zombieBeginTime2 = getLatestTime();
+    // if i receive any block inventory from peer during 0 ~ 10 seconds later after inventory check,
+    // it's ok, else it's malicious. it can only be set from 0 to positive
+    public void updateNoInvBackTime() {
+      if (noInvBackTime == 0 && lastRecBlockInvTime < stopBlockInvStartTime) {
+        noInvBackTime = getLatestTime();
       }
     }
 
@@ -417,12 +418,12 @@ public class PeerConnection {
       }
 
       if (!testStopInv) {
-        if (zombieBeginTime > 0) {
-          times.add(zombieBeginTime);
+        if (noInteractionTime > 0) {
+          times.add(noInteractionTime);
         }
       } else {
-        if (zombieBeginTime2 > 0) {
-          times.add(zombieBeginTime2);
+        if (noInvBackTime > 0) {
+          times.add(noInvBackTime);
         }
       }
       if (times.isEmpty()) {
@@ -432,18 +433,16 @@ public class PeerConnection {
     }
 
     public boolean isMalicious() {
-      //if testStopInv=true, we use feature 4, else use feature 3. We an only use one of them.
-      boolean isMalicious = testStopInv ? (maliciousFeature.zombieBeginTime2 > 0)
-          : (maliciousFeature.zombieBeginTime > 0);
-      return maliciousFeature.badSyncBlockChainTime > 0
-          || maliciousFeature.badChainInventoryTime > 0
-          || isMalicious;
+      //if testStopInv=true, we use noInvBackTime, else use noInteractionTime.
+      // We an only use one of them.
+      boolean isMalicious = testStopInv ? (noInvBackTime > 0) : (noInteractionTime > 0);
+      return badSyncBlockChainTime > 0 || badChainInventoryTime > 0 || isMalicious;
     }
 
     @Override
     public String toString() {
       return String.format("(1:[%d] 2:[%d] 3:[%d] 4:[%d])",
-          badSyncBlockChainTime, badChainInventoryTime, zombieBeginTime, zombieBeginTime2);
+          badSyncBlockChainTime, badChainInventoryTime, noInteractionTime, noInvBackTime);
     }
   }
 

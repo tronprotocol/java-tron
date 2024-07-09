@@ -52,7 +52,7 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
 
     if (blockIdWeGet.size() == 1 && tronNetDelegate.containBlock(blockIdWeGet.peek())) {
       if (blockIdWeGet.peek().getNum() < peer.getHelloMessageReceive().getSolidBlockId().getNum()) {
-        peer.getMaliciousFeature().updateBadFeature1();
+        peer.getFeature().updateBadChainInventoryTime();
       }
       peer.setTronState(TronState.SYNC_COMPLETED);
       peer.setNeedSyncFromPeer(false);

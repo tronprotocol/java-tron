@@ -57,7 +57,7 @@ public class ResilienceServiceTest {
   }
 
   @Test
-  public void testCondition1() {
+  public void testLanNode() {
 
     int minConnection = 8;
     Assert.assertEquals(minConnection, Args.getInstance().getMinConnections());
@@ -82,7 +82,7 @@ public class ResilienceServiceTest {
     }
     Assert.assertEquals(minConnection - 1, PeerManager.getPeers().size());
 
-    PeerManager.getPeers().get(0).getMaliciousFeature().updateBadFeature1();
+    PeerManager.getPeers().get(0).getFeature().updateBadSyncBlockChainTime();
     //not enough peers
     service.resilienceNode();
     Assert.assertEquals(minConnection - 1, PeerManager.getPeers().size());
@@ -96,7 +96,7 @@ public class ResilienceServiceTest {
   }
 
   @Test
-  public void testCondition1StopInv() {
+  public void testLanNodeStopInv() {
 
     int minConnection = 8;
     Assert.assertEquals(minConnection, Args.getInstance().getMinConnections());
@@ -125,10 +125,10 @@ public class ResilienceServiceTest {
     Assert.assertEquals(minConnection, PeerManager.getPeers().size());
 
     PeerConnection p = PeerManager.getPeers().get(0);
-    p.getMaliciousFeature().setAdvStartTime(t1);
-    p.getMaliciousFeature().setLastRecBlockInvTime(t1);
-    p.getMaliciousFeature().setStopBlockInvStartTime(t1 + 1);
-    p.getMaliciousFeature().updateBadFeature4();
+    p.getFeature().setAdvStartTime(t1);
+    p.getFeature().setLastRecBlockInvTime(t1);
+    p.getFeature().setStopBlockInvStartTime(t1 + 1);
+    p.getFeature().updateNoInvBackTime();
     service.resilienceNode();
     Assert.assertEquals(minConnection - 1, PeerManager.getPeers().size());
 
@@ -137,7 +137,7 @@ public class ResilienceServiceTest {
   }
 
   @Test
-  public void testCondition2() {
+  public void testIsolated() {
     Assert.assertEquals(8, Args.getInstance().getMinConnections());
     Assert.assertEquals(30, Args.getInstance().getMaxConnections());
     clearPeers();
@@ -170,8 +170,8 @@ public class ResilienceServiceTest {
       if (p.getChannel().isActive()) {
         p.setNeedSyncFromPeer(false);
         p.setNeedSyncFromUs(false);
-        p.getMaliciousFeature().setAdvStartTime(t1);
-        p.getMaliciousFeature().updateBadFeature3();
+        p.getFeature().setAdvStartTime(t1);
+        p.getFeature().updateNoInteractionTime();
       }
     }
     Assert.assertEquals(totalNumber, PeerManager.getPeers().size());
@@ -198,7 +198,7 @@ public class ResilienceServiceTest {
   }
 
   @Test
-  public void testCondition3() {
+  public void testFullConnection() {
     int maxConnection = 30;
     Assert.assertEquals(maxConnection, Args.getInstance().getMaxConnections());
     clearPeers();
@@ -224,14 +224,14 @@ public class ResilienceServiceTest {
     Assert.assertEquals(maxConnection, PeerManager.getPeers().size());
 
     //set one active peer to malicious (any feature is ok)
-    PeerManager.getPeers().get(0).getMaliciousFeature().updateBadFeature1();
+    PeerManager.getPeers().get(0).getFeature().updateBadSyncBlockChainTime();
     service.resilienceNode();
     Assert.assertEquals(maxConnection, PeerManager.getPeers().size());
 
     //set two passive peers to malicious (any feature is ok)
     String firstIp = PeerManager.getPeers().get(activeNumber).getChannel().getInetAddress()
         .getHostName();
-    PeerManager.getPeers().get(activeNumber).getMaliciousFeature().updateBadFeature2();
+    PeerManager.getPeers().get(activeNumber).getFeature().updateBadChainInventoryTime();
     try {
       Thread.sleep(100);
     } catch (InterruptedException e) {
@@ -239,7 +239,7 @@ public class ResilienceServiceTest {
     }
     String secondIp = PeerManager.getPeers().get(activeNumber + 5).getChannel().getInetAddress()
         .getHostName();
-    PeerManager.getPeers().get(activeNumber + 5).getMaliciousFeature().updateBadFeature2();
+    PeerManager.getPeers().get(activeNumber + 5).getFeature().updateBadChainInventoryTime();
     //verify that disconnect one malicious peer
     service.resilienceNode();
     Assert.assertEquals(maxConnection - 1, PeerManager.getPeers().size());
