@@ -51,7 +51,6 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
       return;
     } else if (blockIds.size() == 1) {
       peer.setNeedSyncFromUs(false);
-      peer.updateAdvStartTime();
     } else {
       peer.setNeedSyncFromUs(true);
       remainNum = headID.getNum() - blockIds.peekLast().getNum();

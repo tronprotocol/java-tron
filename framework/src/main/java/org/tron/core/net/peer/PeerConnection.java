@@ -159,10 +159,8 @@ public class PeerConnection {
   @Setter
   @Getter
   private Set<BlockId> syncBlockInProcess = new HashSet<>();
-  @Setter
   @Getter
   private volatile boolean needSyncFromPeer = true;
-  @Setter
   @Getter
   private volatile boolean needSyncFromUs = true;
 
@@ -179,7 +177,15 @@ public class PeerConnection {
     this.blockBothHaveUpdateTime = System.currentTimeMillis();
   }
 
-  public void updateAdvStartTime() {
+  public void setNeedSyncFromPeer(boolean flag) {
+    needSyncFromPeer = flag;
+    if (!needSyncFromPeer && !needSyncFromUs) {
+      this.getMaliciousFeature().advStartTime = System.currentTimeMillis();
+    }
+  }
+
+  public void setNeedSyncFromUs(boolean flag) {
+    needSyncFromUs = flag;
     if (!needSyncFromPeer && !needSyncFromUs) {
       this.getMaliciousFeature().advStartTime = System.currentTimeMillis();
     }
@@ -205,16 +211,15 @@ public class PeerConnection {
     long peerHeadBlockNum = helloMessageReceive.getHeadBlockId().getNum();
 
     if (peerHeadBlockNum > headBlockNum) {
-      needSyncFromUs = false;
+      setNeedSyncFromUs(false);
       syncService.startSync(this);
     } else {
-      needSyncFromPeer = false;
+      setNeedSyncFromPeer(false);
       if (peerHeadBlockNum == headBlockNum) {
-        needSyncFromUs = false;
+        setNeedSyncFromUs(false);
       }
       setTronState(TronState.SYNC_COMPLETED);
     }
-    updateAdvStartTime();
   }
 
   public void onDisconnect() {

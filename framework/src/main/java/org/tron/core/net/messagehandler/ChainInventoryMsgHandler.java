@@ -56,7 +56,6 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
       }
       peer.setTronState(TronState.SYNC_COMPLETED);
       peer.setNeedSyncFromPeer(false);
-      peer.updateAdvStartTime();
       return;
     }
 
