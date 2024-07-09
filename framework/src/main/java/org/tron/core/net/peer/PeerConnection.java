@@ -82,6 +82,9 @@ public class PeerConnection {
 
   private final ResilienceConfig resilienceConfig = Args.getInstance().getResilienceConfig();
 
+  private final boolean testStopInv = Args.getInstance().getResilienceConfig().isEnabled()
+      && Args.getInstance().getResilienceConfig().isTestStopInv();
+
   @Getter
   private final MaliciousFeature maliciousFeature = new MaliciousFeature();
 
@@ -348,15 +351,13 @@ public class PeerConnection {
   public class MaliciousFeature {
 
     @Setter
-    private long advStartTime = System.currentTimeMillis();
+    private long advStartTime;
     @Setter
     private long stopBlockInvStartTime = -1;
     @Setter
     private long stopBlockInvEndTime = -1;
     @Setter
     private long lastRecBlockInvTime = -1;
-    //if testStopInv=true, we use feature 4, else use feature 3. We an only use one of them.
-    private final boolean testStopInv;
 
     //four features
     private long badSyncBlockChainTime = -1; //feature 1
@@ -365,7 +366,7 @@ public class PeerConnection {
     private long zombieBeginTime2 = -1;      //feature 4
 
     public MaliciousFeature() {
-      testStopInv = Args.getInstance().getResilienceConfig().isTestStopInv();
+      advStartTime = System.currentTimeMillis();
     }
 
     //it can only be set from -1 to positive
@@ -426,6 +427,7 @@ public class PeerConnection {
     }
 
     public boolean isMalicious() {
+      //if testStopInv=true, we use feature 4, else use feature 3. We an only use one of them.
       boolean isMalicious = testStopInv ? (maliciousFeature.zombieBeginTime2 > 0)
           : (maliciousFeature.zombieBeginTime > 0);
       return maliciousFeature.badSyncBlockChainTime > 0
