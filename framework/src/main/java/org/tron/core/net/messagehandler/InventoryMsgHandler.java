@@ -43,6 +43,7 @@ public class InventoryMsgHandler implements TronMsgHandler {
       if (type.equals(InventoryType.BLOCK) && flag
           && peer.getAdvInvSpread().getIfPresent(item) == null) {
         peer.getFeature().setLastRecBlockInvTime(System.currentTimeMillis());
+        peer.getFeature().resetNoInvBackTime();
       }
     }
   }

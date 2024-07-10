@@ -300,7 +300,6 @@ public class PeerConnection {
       case BAD_PROTOCOL:
       case BAD_BLOCK:
       case BAD_TX:
-      case MALICIOUS_NODE:
         channel.close(BAD_PEER_BAN_TIME);
         break;
       default:
@@ -407,6 +406,17 @@ public class PeerConnection {
     public void updateNoInvBackTime() {
       if (noInvBackTime == 0 && lastRecBlockInvTime < stopBlockInvStartTime) {
         noInvBackTime = getLatestTime();
+      }
+    }
+
+    // if i receive valid block inventory from malicious peer with noInvBackTime > 0 before it is
+    // disconnected, then i reset this peer to normal
+    public void resetNoInvBackTime() {
+      if (stopInvEnable && noInvBackTime > 0) {
+        logger.info("resetNoInvBackTime peer {}", channel.getInetSocketAddress());
+        noInvBackTime = 0;
+        stopBlockInvStartTime = 0;
+        stopBlockInvEndTime = 0;
       }
     }
 

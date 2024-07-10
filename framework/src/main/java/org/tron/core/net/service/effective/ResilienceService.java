@@ -136,7 +136,7 @@ public class ResilienceService {
   private void disconnectMaliciousPeer(PeerConnection p, DisconnectStrategy strategy) {
     logger.info("feature {}: {}, strategy: {}", p.getInetSocketAddress(), p.getFeature(),
         strategy);
-    p.disconnect(ReasonCode.MALICIOUS_NODE);
+    p.disconnect(ReasonCode.BAD_PROTOCOL);
   }
 
   public enum DisconnectStrategy {
