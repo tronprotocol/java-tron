@@ -128,7 +128,7 @@ public class Constant {
   public static final String NODE_RESILIENCE_CHECK_INTERVAL = "node.resilience.checkInterval";
   public static final String NODE_RESILIENCE_PEER_NOT_ACTIVE_THRESHOLD = "node.resilience.peerNotActiveThreshold";
   public static final String NODE_RESILIENCE_BLOCK_NOT_CHANGE_THRESHOLD = "node.resilience.blockNotChangeThreshold";
-  public static final String NODE_RESILIENCE_TEST_STOP_INV = "node.resilience.testStopInv";
+  public static final String NODE_RESILIENCE_STOP_INV_ENABLE = "node.resilience.stopInvEnable";
   public static final String NODE_RESILIENCE_DISCONNECT_NUMBER = "node.resilience.disconnectNumber";
 
   public static final String NODE_RPC_PORT = "node.rpc.port";

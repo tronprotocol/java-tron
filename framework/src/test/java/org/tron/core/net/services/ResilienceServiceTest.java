@@ -100,15 +100,15 @@ public class ResilienceServiceTest {
 
     int minConnection = 8;
     Assert.assertEquals(minConnection, Args.getInstance().getMinConnections());
-    Assert.assertFalse(resilienceConfig.isTestStopInv());
+    Assert.assertFalse(resilienceConfig.isStopInvEnable());
     clearPeers();
     Assert.assertEquals(0, PeerManager.getPeers().size());
 
     // test stop inventory
-    resilienceConfig.setTestStopInv(true);
+    resilienceConfig.setStopInvEnable(true);
 
     long t1 =
-        System.currentTimeMillis() - resilienceConfig.getPeerNotActiveThreshold() * 1000L - 1000L;
+        System.currentTimeMillis() - resilienceConfig.getPeerInactiveThreshold() * 1000L - 1000L;
     for (int i = 0; i < minConnection; i++) {
       InetSocketAddress inetSocketAddress = new InetSocketAddress("201.0.0." + i, 10001);
       Channel c1 = spy(Channel.class);
@@ -133,7 +133,7 @@ public class ResilienceServiceTest {
     Assert.assertEquals(minConnection - 1, PeerManager.getPeers().size());
 
     //resume config
-    resilienceConfig.setTestStopInv(false);
+    resilienceConfig.setStopInvEnable(false);
   }
 
   @Test
@@ -149,7 +149,7 @@ public class ResilienceServiceTest {
     int totalNumber = 20;
     List<Channel> channelList = new ArrayList<>();
     long t1 =
-        System.currentTimeMillis() - resilienceConfig.getPeerNotActiveThreshold() * 1000L - 1000L;
+        System.currentTimeMillis() - resilienceConfig.getPeerInactiveThreshold() * 1000L - 1000L;
     for (int i = 0; i < totalNumber; i++) {
       InetSocketAddress inetSocketAddress = new InetSocketAddress("201.0.0." + i, 10001);
       Channel c1 = spy(Channel.class);
@@ -171,7 +171,7 @@ public class ResilienceServiceTest {
         p.setNeedSyncFromPeer(false);
         p.setNeedSyncFromUs(false);
         p.getFeature().setAdvStartTime(t1);
-        p.getFeature().updateNoInteractionTime();
+        p.getFeature().updateInactiveTime();
       }
     }
     Assert.assertEquals(totalNumber, PeerManager.getPeers().size());

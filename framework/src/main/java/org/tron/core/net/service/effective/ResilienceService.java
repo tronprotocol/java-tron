@@ -51,10 +51,10 @@ public class ResilienceService {
 
 
   public void resilienceNode() {
-    if (!resilienceConfig.isTestStopInv()) {
+    if (!resilienceConfig.isStopInvEnable()) {
       //update peers' bad feature 3 at first
       tronNetDelegate.getActivePeer()
-          .forEach(peer -> peer.getFeature().updateNoInteractionTime());
+          .forEach(peer -> peer.getFeature().updateInactiveTime());
     }
 
     int peerSize = tronNetDelegate.getActivePeer().size();

@@ -47,8 +47,8 @@ public class AdvService {
   private final int MAX_SPREAD_SIZE = 1_000;
   private final int TEST_PAUSE_INV_SECONDS = 10;
   private final long TIMEOUT = MSG_CACHE_DURATION_IN_BLOCKS * BLOCK_PRODUCED_INTERVAL;
-  private final boolean testStopInv = Args.getInstance().getResilienceConfig().isEnabled()
-      && Args.getInstance().getResilienceConfig().isTestStopInv();
+  private final boolean stopInvEnable = Args.getInstance().getResilienceConfig().isEnabled()
+      && Args.getInstance().getResilienceConfig().isStopInvEnable();
 
   @Autowired
   private TronNetDelegate tronNetDelegate;
@@ -326,6 +326,30 @@ public class AdvService {
     invSender.sendInv();
   }
 
+  private boolean canSendBlockInventory(PeerConnection peer) {
+    long now = System.currentTimeMillis();
+    boolean canSend = true;
+    //if peer is not active for too long, test if peer will broadcast block inventory to me
+    //after I stop broadcasting block inventory to it
+    if (stopInvEnable && peer.isInactiveTooLong()
+        && peer.getFeature().getStopBlockInvStartTime() == 0) {
+      logger.info("Test to stop broadcast block inventory to {}", peer.getInetSocketAddress());
+      peer.getFeature().setStopBlockInvStartTime(now);
+      peer.getFeature().setStopBlockInvEndTime(now + TEST_PAUSE_INV_SECONDS * 1000L);
+      invCheckExecutor.schedule(() -> peer.getFeature().updateNoInvBackTime(),
+          TEST_PAUSE_INV_SECONDS, TimeUnit.SECONDS);
+      canSend = false;
+    }
+    if (peer.getFeature().getStopBlockInvStartTime() <= now
+        && now <= peer.getFeature().getStopBlockInvEndTime()) {
+      canSend = false;
+    }
+    if (peer.getFeature().getNoInvBackTime() > 0) {
+      canSend = false;
+    }
+    return canSend;
+  }
+
   class InvSender {
 
     private HashMap<PeerConnection, HashMap<InventoryType, LinkedList<Sha256Hash>>> send
@@ -369,33 +393,14 @@ public class AdvService {
     }
 
     public void sendInv() {
-      long now = System.currentTimeMillis();
       send.forEach((peer, ids) -> ids.forEach((key, value) -> {
         if (peer.isRelayPeer() && key.equals(InventoryType.TRX)) {
           return;
         }
         if (key.equals(InventoryType.BLOCK)) {
           value.sort(Comparator.comparingLong(value1 -> new BlockId(value1).getNum()));
-          boolean canSendBlockInventory = true;
-          if (testStopInv && peer.isNotActiveTooLong()
-              && peer.getFeature().getStopBlockInvStartTime() == 0) {
-            //if peer is not active for too long, test if peer will broadcast block inventory to me
-            //after I stop broadcasting block inventory to it
-            logger.info("Test to stop broadcast block inv to {}", peer.getInetSocketAddress());
-            peer.getFeature().setStopBlockInvStartTime(now);
-            peer.getFeature().setStopBlockInvEndTime(now + TEST_PAUSE_INV_SECONDS * 1000L);
-            invCheckExecutor.schedule(() -> peer.getFeature().updateNoInvBackTime(),
-                TEST_PAUSE_INV_SECONDS, TimeUnit.SECONDS);
-            canSendBlockInventory = false;
-          }
-          if (peer.getFeature().getStopBlockInvStartTime() <= now
-              && now <= peer.getFeature().getStopBlockInvEndTime()) {
-            canSendBlockInventory = false;
-          }
-          if (peer.getFeature().getNoInvBackTime() > 0) {
-            canSendBlockInventory = false;
-          }
-          if (canSendBlockInventory) {
+          boolean canSend = canSendBlockInventory(peer);
+          if (canSend) {
             peer.sendMessage(new InventoryMessage(value, key));
           }
         } else {

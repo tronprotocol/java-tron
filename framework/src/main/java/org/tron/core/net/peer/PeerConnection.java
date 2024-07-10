@@ -82,8 +82,8 @@ public class PeerConnection {
 
   private final ResilienceConfig resilienceConfig = Args.getInstance().getResilienceConfig();
 
-  private final boolean testStopInv = Args.getInstance().getResilienceConfig().isEnabled()
-      && Args.getInstance().getResilienceConfig().isTestStopInv();
+  private final boolean stopInvEnable = Args.getInstance().getResilienceConfig().isEnabled()
+      && Args.getInstance().getResilienceConfig().isStopInvEnable();
 
   @Getter
   private final Feature feature = new Feature();
@@ -339,9 +339,9 @@ public class PeerConnection {
 
   // if peer is in adv status and no block received and sent between us for too long, and we
   // don't receive block inventory also, then the peer is not active.
-  public boolean isNotActiveTooLong() {
+  public boolean isInactiveTooLong() {
     return System.currentTimeMillis() - getLatestTime()
-        > resilienceConfig.getPeerNotActiveThreshold() * 1000L;
+        > resilienceConfig.getPeerInactiveThreshold() * 1000L;
   }
 
   private long getLatestTime() {
@@ -367,7 +367,7 @@ public class PeerConnection {
     //four features
     private long badSyncBlockChainTime;
     private long badChainInventoryTime;
-    private long noInteractionTime;
+    private long inactiveTime;
     private long noInvBackTime;
 
     public Feature() {
@@ -391,12 +391,14 @@ public class PeerConnection {
     }
 
     // if peer is in adv status and no block received and sent between us for too long, it is
-    // malicious.
-    public void updateNoInteractionTime() {
-      long tempTime = Math.max(channel.getLastActiveTime(), advStartTime);
-      if (!needSyncFromPeer && !needSyncFromUs && System.currentTimeMillis() - tempTime
-          > resilienceConfig.getPeerNotActiveThreshold() * 1000L) {
-        noInteractionTime = tempTime;
+    // malicious. It can recover to normal.
+    public void updateInactiveTime() {
+      long maxTime = Math.max(channel.getLastActiveTime(), advStartTime);
+      if (!needSyncFromPeer && !needSyncFromUs && System.currentTimeMillis() - maxTime
+          > resilienceConfig.getPeerInactiveThreshold() * 1000L) {
+        inactiveTime = maxTime;
+      } else {
+        inactiveTime = 0;
       }
     }
 
@@ -417,9 +419,9 @@ public class PeerConnection {
         times.add(badChainInventoryTime);
       }
 
-      if (!testStopInv) {
-        if (noInteractionTime > 0) {
-          times.add(noInteractionTime);
+      if (!stopInvEnable) {
+        if (inactiveTime > 0) {
+          times.add(inactiveTime);
         }
       } else {
         if (noInvBackTime > 0) {
@@ -435,14 +437,14 @@ public class PeerConnection {
     public boolean isMalicious() {
       //if testStopInv=true, we use noInvBackTime, else use noInteractionTime.
       // We an only use one of them.
-      boolean isMalicious = testStopInv ? (noInvBackTime > 0) : (noInteractionTime > 0);
+      boolean isMalicious = stopInvEnable ? (noInvBackTime > 0) : (inactiveTime > 0);
       return badSyncBlockChainTime > 0 || badChainInventoryTime > 0 || isMalicious;
     }
 
     @Override
     public String toString() {
       return String.format("(1:[%d] 2:[%d] 3:[%d] 4:[%d])",
-          badSyncBlockChainTime, badChainInventoryTime, noInteractionTime, noInvBackTime);
+          badSyncBlockChainTime, badChainInventoryTime, inactiveTime, noInvBackTime);
     }
   }
 

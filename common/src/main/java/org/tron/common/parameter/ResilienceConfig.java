@@ -16,7 +16,7 @@ public class ResilienceConfig {
 
   @Getter
   @Setter
-  private int peerNotActiveThreshold = 600;
+  private int peerInactiveThreshold = 600;
 
   @Getter
   @Setter
@@ -24,7 +24,7 @@ public class ResilienceConfig {
 
   @Getter
   @Setter
-  private boolean testStopInv = false;
+  private boolean stopInvEnable = false;
 
   @Getter
   @Setter
