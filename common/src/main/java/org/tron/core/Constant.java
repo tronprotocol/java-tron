@@ -221,6 +221,7 @@ public class Constant {
   public static final String VM_SAVE_INTERNAL_TX = "vm.saveInternalTx";
 
   public static final String VM_SAVE_FEATURED_INTERNAL_TX = "vm.saveFeaturedInternalTx";
+  public static final String VM_SAVE_CANCEL_ALL_UNFREEZE_V2_DETAILS = "vm.saveCancelAllUnfreezeV2Details";
 
   // public static final String COMMITTEE_ALLOW_SHIELDED_TRANSACTION = "committee.allowShieldedTransaction";
 

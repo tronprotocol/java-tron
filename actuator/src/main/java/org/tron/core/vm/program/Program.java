@@ -1996,13 +1996,22 @@ public class Program {
 
       CancelAllUnfreezeV2Processor processor = new CancelAllUnfreezeV2Processor();
       processor.validate(param, repository);
-      long withdrawExpireBalance = processor.execute(param, repository);
+      Map<String, Long> result = processor.execute(param, repository);
       repository.commit();
-      if (withdrawExpireBalance > 0) {
+
+      if (result.get(VMConstant.WITHDRAW_EXPIRE_BALANCE) > 0) {
         increaseNonce();
-        addInternalTx(null, owner, owner, withdrawExpireBalance, null,
+        addInternalTx(null, owner, owner, result.get(VMConstant.WITHDRAW_EXPIRE_BALANCE), null,
             "withdrawExpireUnfreezeWhileCanceling", nonce, null);
       }
+
+      if (internalTx != null && CommonParameter.getInstance().saveCancelAllUnfreezeV2Details) {
+        internalTx.setExtra(String.format("{\"%s\":%s,\"%s\":%d,\"%s\":%d}",
+            BANDWIDTH.name(), result.getOrDefault(BANDWIDTH.name(), 0L),
+            ENERGY.name(), result.getOrDefault(ENERGY.name(), 0L),
+            TRON_POWER.name(), result.getOrDefault(TRON_POWER.name(), 0L)));
+      }
+
       return true;
     } catch (ContractValidateException e) {
       logger.warn("TVM CancelAllUnfreezeV2: validate failure. Reason: {}", e.getMessage());
