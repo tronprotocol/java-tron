@@ -172,6 +172,7 @@ public class Args extends CommonParameter {
     PARAMETER.estimateEnergyMaxRetry = 3;
     PARAMETER.receiveTcpMinDataLength = 2048;
     PARAMETER.isOpenFullTcpDisconnect = false;
+    PARAMETER.inactiveThreshold = 600;
     PARAMETER.nodeDetectEnable = false;
     PARAMETER.supportConstant = false;
     PARAMETER.debug = false;
@@ -841,6 +842,9 @@ public class Args extends CommonParameter {
 
     PARAMETER.isOpenFullTcpDisconnect = config.hasPath(Constant.NODE_IS_OPEN_FULL_TCP_DISCONNECT)
         && config.getBoolean(Constant.NODE_IS_OPEN_FULL_TCP_DISCONNECT);
+
+    PARAMETER.inactiveThreshold = config.hasPath(Constant.NODE_INACTIVE_THRESHOLD)
+        ? config.getInt(Constant.NODE_INACTIVE_THRESHOLD) : 600;
 
     PARAMETER.nodeDetectEnable = config.hasPath(Constant.NODE_DETECT_ENABLE)
           && config.getBoolean(Constant.NODE_DETECT_ENABLE);

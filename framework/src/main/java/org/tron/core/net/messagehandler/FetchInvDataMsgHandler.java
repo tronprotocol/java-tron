@@ -171,6 +171,7 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
           peer.getSyncBlockIdCache().put(hash, System.currentTimeMillis());
         }
       }
+      peer.setLastActiveTime(System.currentTimeMillis());
     }
   }
 

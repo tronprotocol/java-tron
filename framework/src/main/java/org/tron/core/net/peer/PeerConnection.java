@@ -81,6 +81,10 @@ public class PeerConnection {
 
   @Getter
   @Setter
+  private long lastActiveTime;
+
+  @Getter
+  @Setter
   private TronState tronState = TronState.INIT;
 
   @Autowired
@@ -158,6 +162,7 @@ public class PeerConnection {
     if (relayNodes.stream().anyMatch(n -> n.getAddress().equals(channel.getInetAddress()))) {
       this.isRelayPeer = true;
     }
+    lastActiveTime = System.currentTimeMillis();
     this.nodeStatistics = TronStatsManager.getNodeStatistics(channel.getInetAddress());
   }
 
@@ -220,6 +225,7 @@ public class PeerConnection {
             + "syncToFetchSizePeekNum:%d\n"
             + "syncBlockRequestedSize:%d\n"
             + "remainNum:%d\n"
+            + "inactiveSeconds:%d\n"
             + "syncChainRequested:%d\n"
             + "blockInProcess:%d\n",
         channel.getInetSocketAddress(),
@@ -232,6 +238,7 @@ public class PeerConnection {
         syncBlockId != null ? syncBlockId.getNum() : -1,
         syncBlockRequested.size(),
         remainNum,
+        (int) ((System.currentTimeMillis() - lastActiveTime) / 1000),
         requested == null ? 0 : (now - requested.getValue())
                 / Constant.ONE_THOUSAND,
         syncBlockInProcess.size());
