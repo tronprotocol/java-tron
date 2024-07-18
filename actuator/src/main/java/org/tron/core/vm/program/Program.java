@@ -2006,7 +2006,7 @@ public class Program {
       }
 
       if (internalTx != null && CommonParameter.getInstance().saveCancelAllUnfreezeV2Details) {
-        internalTx.setExtra(String.format("{\"%s\":%s,\"%s\":%d,\"%s\":%d}",
+        internalTx.setExtra(String.format("{\"%s\":%d,\"%s\":%d,\"%s\":%d}",
             BANDWIDTH.name(), result.getOrDefault(BANDWIDTH.name(), 0L),
             ENERGY.name(), result.getOrDefault(ENERGY.name(), 0L),
             TRON_POWER.name(), result.getOrDefault(TRON_POWER.name(), 0L)));
