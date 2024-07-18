@@ -235,6 +235,7 @@ public class Args extends CommonParameter {
     PARAMETER.allowOldRewardOpt = 0;
     PARAMETER.allowEnergyAdjustment = 0;
     PARAMETER.allowStrictMath = 0;
+    PARAMETER.consensusLogicOptimization = 0;
   }
 
   /**
@@ -1221,6 +1222,10 @@ public class Args extends CommonParameter {
     PARAMETER.allowStrictMath =
         config.hasPath(Constant.COMMITTEE_ALLOW_STRICT_MATH) ? config
             .getInt(Constant.COMMITTEE_ALLOW_STRICT_MATH) : 0;
+
+    PARAMETER.consensusLogicOptimization =
+        config.hasPath(Constant.COMMITTEE_CONSENSUS_LOGIC_OPTIMIZATION) ? config
+            .getInt(Constant.COMMITTEE_CONSENSUS_LOGIC_OPTIMIZATION) : 0;
 
     logConfig();
   }

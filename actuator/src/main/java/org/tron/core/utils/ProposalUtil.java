@@ -782,15 +782,26 @@ public class ProposalUtil {
       case ALLOW_STRICT_MATH: {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_7_7)) {
           throw new ContractValidateException(
-              "Bad chain parameter id [ALLOW_STRICT_MATH]");
+            "Bad chain parameter id [ALLOW_STRICT_MATH]");
         }
         if (dynamicPropertiesStore.allowStrictMath()) {
           throw new ContractValidateException(
-              "[ALLOW_STRICT_MATH] has been valid, no need to propose again");
+            "[ALLOW_STRICT_MATH] has been valid, no need to propose again");
         }
         if (value != 1) {
           throw new ContractValidateException(
-              "This value[ALLOW_STRICT_MATH] is only allowed to be 1");
+            "This value[ALLOW_STRICT_MATH] is only allowed to be 1");
+        }
+        break;
+      }
+      case CONSENSUS_LOGIC_OPTIMIZATION: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_8_0)) {
+          throw new ContractValidateException(
+            "Bad chain parameter id [CONSENSUS_LOGIC_OPTIMIZATION]");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+            "This value[CONSENSUS_LOGIC_OPTIMIZATION] is only allowed to be 1");
         }
         break;
       }
@@ -873,7 +884,8 @@ public class ProposalUtil {
     ALLOW_OLD_REWARD_OPT(79), // 0, 1
     ALLOW_ENERGY_ADJUSTMENT(81), // 0, 1
     MAX_CREATE_ACCOUNT_TX_SIZE(82), // [500, 10000]
-    ALLOW_STRICT_MATH(87); // 0, 1
+    ALLOW_STRICT_MATH(87), // 0, 1
+    CONSENSUS_LOGIC_OPTIMIZATION(88); // 0, 1
 
     private long code;
 
