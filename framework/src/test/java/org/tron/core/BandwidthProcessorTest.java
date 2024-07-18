@@ -1,7 +1,10 @@
 package org.tron.core;
 
+import static org.junit.Assert.assertThrows;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import java.nio.charset.StandardCharsets;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.junit.Assert;
@@ -19,10 +22,16 @@ import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TooBigTransactionResultException;
 import org.tron.core.store.StoreFactory;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Contract;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.Transaction.Result;
+import org.tron.protos.Protocol.Transaction.raw;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
@@ -539,6 +548,32 @@ public class BandwidthProcessorTest extends BaseTest {
     dbManager.consumeBandwidth(trx, trace);
   }
 
+  @Test
+  public void testConsumeBandwidthTooBigTransactionResultException() {
+    TransferContract transferContract =
+        TransferContract.newBuilder()
+            .setAmount(10)
+            .setOwnerAddress(ByteString.copyFromUtf8("aaa"))
+            .setToAddress(ByteString.copyFromUtf8("bbb"))
+            .build();
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < 6666; i++) {
+      sb.append("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    }
+    Transaction transaction = Transaction.newBuilder().setRawData(raw.newBuilder()
+            .setData(ByteString.copyFrom(sb.toString().getBytes(StandardCharsets.UTF_8)))
+            .addContract(Contract.newBuilder().setParameter(Any.pack(transferContract))
+                .setType(ContractType.TransferContract)))
+        .addRet(Result.newBuilder().setAssetIssueID(sb.toString()).build()).build();
+    TransactionCapsule trx = new TransactionCapsule(transaction);
+    trx.setInBlock(false);
+    TransactionTrace trace = new TransactionTrace(trx, StoreFactory
+        .getInstance(), new RuntimeImpl());
+    assertThrows(
+        "Too big transaction result, TxId %s, the result size is %d bytes, maxResultSize %d",
+        TooBigTransactionResultException.class, () -> dbManager.consumeBandwidth(trx, trace));
+  }
+
   /**
    * sameTokenName close, consume success assetIssueCapsule.getOwnerAddress() !=
    * fromAccount.getAddress()) contract.getType() = TransferAssetContract
@@ -646,6 +681,8 @@ public class BandwidthProcessorTest extends BaseTest {
       Assert.assertFalse(e instanceof TooBigTransactionResultException);
     } catch (AccountResourceInsufficientException e) {
       Assert.assertFalse(e instanceof AccountResourceInsufficientException);
+    } catch (TooBigTransactionException e) {
+      Assert.fail();
     } finally {
       chainBaseManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS));
       chainBaseManager.getAccountStore().delete(ByteArray.fromHexString(TO_ADDRESS));
@@ -752,6 +789,8 @@ public class BandwidthProcessorTest extends BaseTest {
       Assert.assertFalse(e instanceof TooBigTransactionResultException);
     } catch (AccountResourceInsufficientException e) {
       Assert.assertFalse(e instanceof AccountResourceInsufficientException);
+    } catch (TooBigTransactionException e) {
+      Assert.fail();
     } finally {
       chainBaseManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS));
       chainBaseManager.getAccountStore().delete(ByteArray.fromHexString(TO_ADDRESS));
@@ -821,6 +860,8 @@ public class BandwidthProcessorTest extends BaseTest {
       Assert.assertFalse(e instanceof TooBigTransactionResultException);
     } catch (AccountResourceInsufficientException e) {
       Assert.assertFalse(e instanceof AccountResourceInsufficientException);
+    } catch (TooBigTransactionException e) {
+      Assert.fail();
     } finally {
       chainBaseManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS));
       chainBaseManager.getAccountStore().delete(ByteArray.fromHexString(TO_ADDRESS));
