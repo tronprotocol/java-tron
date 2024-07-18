@@ -24,14 +24,20 @@ public class ResilienceService {
 
   private final long inactiveThreshold =
       CommonParameter.getInstance().getInactiveThreshold() * 1000L;
+  public static final long blockNotChangeThreshold = 90 * 1000L;
+
+  //when node is isolated, retention percent peers will not be disconnected
+  public static final double retentionPercent = 0.8;
+  private static final int initialDelay = 300;
+  private final String esName = "resilience-service";
+
   @Autowired
   private TronNetDelegate tronNetDelegate;
+
   @Autowired
   private ChainBaseManager chainBaseManager;
 
-  private final String esName = "resilience-service";
   private ScheduledExecutorService executor;
-  private static final int initialDelay = 300;
 
   public void init() {
     executor = ExecutorServiceManager.newSingleThreadScheduledExecutor(esName);
@@ -86,7 +92,7 @@ public class ResilienceService {
       // disconnect from the node that has keep inactive for more than inactiveThreshold
       // and its lastActiveTime is smallest
       int peerSize = tronNetDelegate.getActivePeer().size();
-      if (peerSize >= CommonParameter.getInstance().getMaxConnections()) {
+      if (peerSize >= CommonParameter.getInstance().getMinConnections()) {
         long now = System.currentTimeMillis();
         Optional<PeerConnection> one = tronNetDelegate.getActivePeer().stream()
             .filter(peer -> !peer.isDisconnect())
@@ -115,9 +121,9 @@ public class ResilienceService {
         one.ifPresent(peer -> disconnectFromPeer(peer, ReasonCode.BAD_PROTOCOL));
       }
 
-      //disconnect from some Not Active nodes, make sure that left nodes' num <= 0.8 * maxConnection
+      //disconnect from some passive nodes, make sure retention nodes' num <= 0.8 * maxConnection
       peerSize = tronNetDelegate.getActivePeer().size();
-      int threshold = (int) (CommonParameter.getInstance().getMaxConnections() * 0.8);
+      int threshold = (int) (CommonParameter.getInstance().getMaxConnections() * retentionPercent);
       if (peerSize > threshold) {
         int disconnectSize = peerSize - threshold;
         List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
@@ -140,7 +146,7 @@ public class ResilienceService {
     int activePeerSize = (int) tronNetDelegate.getActivePeer().stream()
         .filter(peer -> peer.getChannel().isActive())
         .count();
-    return peerSize == activePeerSize;
+    return peerSize > 0 && peerSize == activePeerSize;
   }
 
   private boolean isIsolateLand2() {
@@ -148,7 +154,7 @@ public class ResilienceService {
         .filter(peer -> !peer.isNeedSyncFromPeer() && !peer.isNeedSyncFromUs())
         .count();
     long diff = System.currentTimeMillis() - chainBaseManager.getLatestSaveBlockTime();
-    return advPeerCount >= 1 && diff >= inactiveThreshold;
+    return advPeerCount >= 1 && diff >= blockNotChangeThreshold;
   }
 
   private void disconnectFromPeer(PeerConnection peer, ReasonCode reasonCode) {
