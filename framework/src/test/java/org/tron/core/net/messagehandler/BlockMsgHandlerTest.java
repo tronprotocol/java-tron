@@ -148,7 +148,8 @@ public class BlockMsgHandlerTest extends BaseTest {
           ByteString.copyFrom("1234567".getBytes()));
 
       peer.getAdvInvReceive()
-          .put(new Item(blockCapsule0.getBlockId(), InventoryType.BLOCK), System.currentTimeMillis());
+          .put(new Item(blockCapsule0.getBlockId(), InventoryType.BLOCK),
+              System.currentTimeMillis());
 
       Mockito.doReturn(true).when(tronNetDelegate).validBlock(any(BlockCapsule.class));
       Mockito.doReturn(true).when(tronNetDelegate).containBlock(any(BlockId.class));
