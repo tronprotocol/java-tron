@@ -81,7 +81,7 @@ public class PeerConnection {
 
   @Getter
   @Setter
-  private long lastActiveTime;
+  private volatile long lastActiveTime;
 
   @Getter
   @Setter

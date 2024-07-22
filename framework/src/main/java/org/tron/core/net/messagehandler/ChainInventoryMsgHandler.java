@@ -142,7 +142,6 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
             + msg.getRemainNum() + " > futureMaxNum: " + maxFutureNum);
       }
     }
-    peer.setLastActiveTime(System.currentTimeMillis());
   }
 
 }

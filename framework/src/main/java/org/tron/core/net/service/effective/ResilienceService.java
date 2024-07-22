@@ -22,14 +22,16 @@ import org.tron.protos.Protocol.ReasonCode;
 @Component
 public class ResilienceService {
 
-  private final long inactiveThreshold =
+  private static final long inactiveThreshold =
       CommonParameter.getInstance().getInactiveThreshold() * 1000L;
   public static final long blockNotChangeThreshold = 90 * 1000L;
 
   //when node is isolated, retention percent peers will not be disconnected
   public static final double retentionPercent = 0.8;
   private static final int initialDelay = 300;
-  private final String esName = "resilience-service";
+  private static final String esName = "resilience-service";
+  private final ScheduledExecutorService executor = ExecutorServiceManager
+      .newSingleThreadScheduledExecutor(esName);
 
   @Autowired
   private TronNetDelegate tronNetDelegate;
@@ -37,11 +39,7 @@ public class ResilienceService {
   @Autowired
   private ChainBaseManager chainBaseManager;
 
-  private ScheduledExecutorService executor;
-
   public void init() {
-    executor = ExecutorServiceManager.newSingleThreadScheduledExecutor(esName);
-
     if (Args.getInstance().isOpenFullTcpDisconnect) {
       executor.scheduleWithFixedDelay(() -> {
         try {

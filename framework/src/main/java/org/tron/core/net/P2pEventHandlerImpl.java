@@ -19,6 +19,7 @@ import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.PbftMessageFactory;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.message.TronMessageFactory;
+import org.tron.core.net.message.adv.FetchInvDataMessage;
 import org.tron.core.net.message.adv.InventoryMessage;
 import org.tron.core.net.message.base.DisconnectMessage;
 import org.tron.core.net.message.handshake.HelloMessage;
@@ -38,6 +39,7 @@ import org.tron.core.net.service.keepalive.KeepAliveService;
 import org.tron.p2p.P2pEventHandler;
 import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.ReasonCode;
 
 @Slf4j(topic = "net")
@@ -183,9 +185,11 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
           break;
         case SYNC_BLOCK_CHAIN:
           syncBlockChainMsgHandler.processMessage(peer, msg);
+          peer.setLastActiveTime(System.currentTimeMillis());
           break;
         case BLOCK_CHAIN_INVENTORY:
           chainInventoryMsgHandler.processMessage(peer, msg);
+          peer.setLastActiveTime(System.currentTimeMillis());
           break;
         case INVENTORY:
           inventoryMsgHandler.processMessage(peer, msg);
@@ -195,6 +199,7 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
           break;
         case BLOCK:
           blockMsgHandler.processMessage(peer, msg);
+          peer.setLastActiveTime(System.currentTimeMillis());
           break;
         case TRXS:
           transactionsMsgHandler.processMessage(peer, msg);
