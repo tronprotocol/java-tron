@@ -185,11 +185,9 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
           break;
         case SYNC_BLOCK_CHAIN:
           syncBlockChainMsgHandler.processMessage(peer, msg);
-          peer.setLastActiveTime(System.currentTimeMillis());
           break;
         case BLOCK_CHAIN_INVENTORY:
           chainInventoryMsgHandler.processMessage(peer, msg);
-          peer.setLastActiveTime(System.currentTimeMillis());
           break;
         case INVENTORY:
           inventoryMsgHandler.processMessage(peer, msg);
@@ -199,7 +197,6 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
           break;
         case BLOCK:
           blockMsgHandler.processMessage(peer, msg);
-          peer.setLastActiveTime(System.currentTimeMillis());
           break;
         case TRXS:
           transactionsMsgHandler.processMessage(peer, msg);
@@ -210,6 +207,7 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
         default:
           throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE, msg.getType().toString());
       }
+      updateLastActiveTime(peer, msg);
     } catch (Exception e) {
       processException(peer, msg, e);
     } finally {
@@ -222,6 +220,27 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
                   costs / Metrics.MILLISECONDS_PER_SECOND, type.name());
         }
       }
+    }
+  }
+
+  private void updateLastActiveTime(PeerConnection peer, TronMessage msg) {
+    MessageTypes type = msg.getType();
+
+    boolean flag = false;
+    switch (type) {
+      case SYNC_BLOCK_CHAIN:
+      case BLOCK_CHAIN_INVENTORY:
+      case BLOCK:
+        flag = true;
+        break;
+      case FETCH_INV_DATA:
+        flag = ((FetchInvDataMessage) msg).getInventoryType().equals(InventoryType.BLOCK);
+        break;
+      default:
+        break;
+    }
+    if (flag) {
+      peer.setLastActiveTime(System.currentTimeMillis());
     }
   }
 
