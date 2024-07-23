@@ -226,7 +226,7 @@ public class PeerConnection {
         (now - channel.getStartTime()) / Constant.ONE_THOUSAND,
         channel.getAvgLatency(),
         fastForwardBlock != null ? fastForwardBlock.getNum() : String.format("%d [%ds]",
-            blockBothHave.getNum(), (System.currentTimeMillis() - blockBothHaveUpdateTime) / 1000),
+            blockBothHave.getNum(), (now - blockBothHaveUpdateTime) / Constant.ONE_THOUSAND),
         isNeedSyncFromPeer(),
         isNeedSyncFromUs(),
         syncBlockToFetch.size(),
