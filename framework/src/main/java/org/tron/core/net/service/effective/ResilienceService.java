@@ -92,12 +92,12 @@ public class ResilienceService {
       int peerSize = tronNetDelegate.getActivePeer().size();
       if (peerSize >= CommonParameter.getInstance().getMinConnections()) {
         long now = System.currentTimeMillis();
-        Optional<PeerConnection> one = tronNetDelegate.getActivePeer().stream()
+        List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
             .filter(peer -> !peer.isDisconnect())
             .filter(peer -> now - peer.getLastActiveTime() >= inactiveThreshold)
             .filter(peer -> !peer.getChannel().isTrustPeer())
-            .min(Comparator.comparing(PeerConnection::getLastActiveTime, Long::compareTo));
-
+            .collect(Collectors.toList());
+        Optional<PeerConnection> one = getEarliestPeer(peers);
         one.ifPresent(peer -> disconnectFromPeer(peer, ReasonCode.BAD_PROTOCOL));
       }
     }
@@ -110,12 +110,13 @@ public class ResilienceService {
 
       //disconnect from the node whose lastActiveTime is smallest
       if (peerSize >= CommonParameter.getInstance().getMinActiveConnections()) {
-        Optional<PeerConnection> one = tronNetDelegate.getActivePeer().stream()
+        List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
             .filter(peer -> !peer.isDisconnect())
             .filter(peer -> !peer.getChannel().isTrustPeer())
             .filter(peer -> peer.getChannel().isActive())
-            .min(Comparator.comparing(PeerConnection::getLastActiveTime, Long::compareTo));
+            .collect(Collectors.toList());
 
+        Optional<PeerConnection> one = getEarliestPeer(peers);
         one.ifPresent(peer -> disconnectFromPeer(peer, ReasonCode.BAD_PROTOCOL));
       }
 
@@ -133,7 +134,7 @@ public class ResilienceService {
         try {
           peers.sort(Comparator.comparing(PeerConnection::getLastActiveTime, Long::compareTo));
         } catch (Exception e) {
-          logger.warn("Sort peers failed: {}", e.getMessage());
+          logger.warn("Sort disconnectIsolated2 peers failed: {}", e.getMessage());
           return;
         }
 
@@ -143,6 +144,17 @@ public class ResilienceService {
         peers.forEach(peer -> disconnectFromPeer(peer, ReasonCode.BAD_PROTOCOL));
       }
     }
+  }
+
+  private Optional<PeerConnection> getEarliestPeer(List<PeerConnection> pees) {
+    Optional<PeerConnection> one = Optional.empty();
+    try {
+      one = pees.stream()
+          .min(Comparator.comparing(PeerConnection::getLastActiveTime, Long::compareTo));
+    } catch (Exception e) {
+      logger.warn("Get earliest peer failed: {}", e.getMessage());
+    }
+    return one;
   }
 
   private boolean isLanNode() {
