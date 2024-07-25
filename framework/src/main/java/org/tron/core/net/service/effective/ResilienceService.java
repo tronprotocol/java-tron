@@ -119,7 +119,8 @@ public class ResilienceService {
         one.ifPresent(peer -> disconnectFromPeer(peer, ReasonCode.BAD_PROTOCOL));
       }
 
-      //disconnect from some passive nodes, make sure retention nodes' num <= 0.8 * maxConnection
+      //disconnect from some passive nodes, make sure retention nodes' num <= 0.8 * maxConnection,
+      //so new peers can come in
       peerSize = tronNetDelegate.getActivePeer().size();
       int threshold = (int) (CommonParameter.getInstance().getMaxConnections() * retentionPercent);
       if (peerSize > threshold) {
@@ -128,8 +129,13 @@ public class ResilienceService {
             .filter(peer -> !peer.isDisconnect())
             .filter(peer -> !peer.getChannel().isTrustPeer())
             .filter(peer -> !peer.getChannel().isActive())
-            .sorted(Comparator.comparing(PeerConnection::getLastActiveTime, Long::compareTo))
             .collect(Collectors.toList());
+        try {
+          peers.sort(Comparator.comparing(PeerConnection::getLastActiveTime, Long::compareTo));
+        } catch (Exception e) {
+          logger.warn("Sort peers failed: {}", e.getMessage());
+          return;
+        }
 
         if (peers.size() > disconnectSize) {
           peers = peers.subList(0, disconnectSize);
