@@ -151,6 +151,13 @@ public class BlockMsgHandler implements TronMsgHandler {
     try {
       tronNetDelegate.processBlock(block, false);
       witnessProductBlockService.validWitnessProductTwoBlock(block);
+
+      Item item = new Item(blockId, InventoryType.BLOCK);
+      tronNetDelegate.getActivePeer().forEach(p -> {
+        if (p.getAdvInvReceive().getIfPresent(item) != null) {
+          p.setBlockBothHave(blockId);
+        }
+      });
     } catch (Exception e) {
       logger.warn("Process adv block {} from peer {} failed. reason: {}",
               blockId, peer.getInetAddress(), e.getMessage());
