@@ -81,6 +81,10 @@ public class PeerConnection {
 
   @Getter
   @Setter
+  private volatile long lastActiveTime;
+
+  @Getter
+  @Setter
   private TronState tronState = TronState.INIT;
 
   @Autowired
@@ -159,6 +163,7 @@ public class PeerConnection {
       this.isRelayPeer = true;
     }
     this.nodeStatistics = TronStatsManager.getNodeStatistics(channel.getInetAddress());
+    lastActiveTime = System.currentTimeMillis();
   }
 
   public void setBlockBothHave(BlockId blockId) {
