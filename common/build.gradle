@@ -43,9 +43,11 @@ dependencies {
     api group: 'io.prometheus', name: 'simpleclient', version: '0.15.0'
     api group: 'io.prometheus', name: 'simpleclient_httpserver', version: '0.15.0'
     api group: 'io.prometheus', name: 'simpleclient_hotspot', version: '0.15.0'
-    api 'org.aspectj:aspectjrt:1.8.13'
-    api 'org.aspectj:aspectjweaver:1.8.13'
-    api 'org.aspectj:aspectjtools:1.8.13'
+    // https://openjdk.org/jeps/396, JEP 396: Strongly Encapsulate JDK Internals by Default
+    // https://eclipse.dev/aspectj/doc/latest/release/JavaVersionCompatibility.html
+    api 'org.aspectj:aspectjrt:1.9.8'
+    api 'org.aspectj:aspectjweaver:1.9.8'
+    api 'org.aspectj:aspectjtools:1.9.8'
     api group: 'io.github.tronprotocol', name: 'libp2p', version: '2.2.5',{
         exclude group: 'io.grpc', module: 'grpc-context'
         exclude group: 'io.grpc', module: 'grpc-core'
