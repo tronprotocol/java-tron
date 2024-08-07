@@ -230,6 +230,7 @@ public class PeerConnection {
             + "syncBlockRequestedSize:%d\n"
             + "remainNum:%d\n"
             + "syncChainRequested:%d\n"
+            + "inactiveSeconds:%d\n"
             + "blockInProcess:%d\n",
         channel.getInetSocketAddress(),
         (now - channel.getStartTime()) / Constant.ONE_THOUSAND,
@@ -244,6 +245,7 @@ public class PeerConnection {
         remainNum,
         requested == null ? 0 : (now - requested.getValue())
                 / Constant.ONE_THOUSAND,
+        (now - lastActiveTime) / Constant.ONE_THOUSAND,
         syncBlockInProcess.size());
   }
 

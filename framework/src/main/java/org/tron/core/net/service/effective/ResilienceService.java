@@ -80,7 +80,7 @@ public class ResilienceService {
           .collect(Collectors.toList());
       if (!peers.isEmpty()) {
         int index = new Random().nextInt(peers.size());
-        disconnectFromPeer(peers.get(index), ReasonCode.RANDOM_ELIMINATION);
+        disconnectFromPeer(peers.get(index), ReasonCode.RANDOM_ELIMINATION, "random");
       }
     }
   }
@@ -98,14 +98,14 @@ public class ResilienceService {
             .filter(peer -> !peer.getChannel().isTrustPeer())
             .collect(Collectors.toList());
         Optional<PeerConnection> one = getEarliestPeer(peers);
-        one.ifPresent(peer -> disconnectFromPeer(peer, ReasonCode.BAD_PROTOCOL));
+        one.ifPresent(peer -> disconnectFromPeer(peer, ReasonCode.BAD_PROTOCOL, "lan node"));
       }
     }
   }
 
   private void disconnectIsolated2() {
     if (isIsolateLand2()) {
-      logger.info("Node is isolated, try to disconnect from peers");
+      logger.warn("Node is isolated, try to disconnect from peers");
       int peerSize = tronNetDelegate.getActivePeer().size();
 
       //disconnect from the node whose lastActiveTime is smallest
@@ -117,7 +117,8 @@ public class ResilienceService {
             .collect(Collectors.toList());
 
         Optional<PeerConnection> one = getEarliestPeer(peers);
-        one.ifPresent(peer -> disconnectFromPeer(peer, ReasonCode.BAD_PROTOCOL));
+        one.ifPresent(
+            peer -> disconnectFromPeer(peer, ReasonCode.BAD_PROTOCOL, "isolate2 and active"));
       }
 
       //disconnect from some passive nodes, make sure retention nodes' num <= 0.8 * maxConnection,
@@ -141,7 +142,10 @@ public class ResilienceService {
         if (peers.size() > disconnectSize) {
           peers = peers.subList(0, disconnectSize);
         }
-        peers.forEach(peer -> disconnectFromPeer(peer, ReasonCode.BAD_PROTOCOL));
+        logger.info("All peer Size:{}, avail:{}, disconnectSize:{}, ", peerSize, peers.size(),
+            disconnectSize);
+        peers.forEach(
+            peer -> disconnectFromPeer(peer, ReasonCode.BAD_PROTOCOL, "isolate2 and passive"));
       }
     }
   }
@@ -173,10 +177,10 @@ public class ResilienceService {
     return advPeerCount >= 1 && diff >= blockNotChangeThreshold;
   }
 
-  private void disconnectFromPeer(PeerConnection peer, ReasonCode reasonCode) {
+  private void disconnectFromPeer(PeerConnection peer, ReasonCode reasonCode, String cause) {
     int inactiveSeconds = (int) ((System.currentTimeMillis() - peer.getLastActiveTime()) / 1000);
-    logger.info("Disconnect from peer {}, inactive seconds {}", peer.getInetSocketAddress(),
-        inactiveSeconds);
+    logger.info("Disconnect from peer {}, inactive seconds {}, cause: {}",
+        peer.getInetSocketAddress(), inactiveSeconds, cause);
     peer.disconnect(reasonCode);
   }
 
