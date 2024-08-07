@@ -138,12 +138,12 @@ public class ResilienceService {
           logger.warn("Sort disconnectIsolated2 peers failed: {}", e.getMessage());
           return;
         }
-
+        int candidateSize = peers.size();
         if (peers.size() > disconnectSize) {
           peers = peers.subList(0, disconnectSize);
         }
-        logger.info("All peer Size:{}, avail:{}, disconnectSize:{}, ", peerSize, peers.size(),
-            disconnectSize);
+        logger.info("All peer Size:{}, plan size:{}, candidate size:{}, real size:{}", peerSize,
+            disconnectSize, candidateSize, peers.size());
         peers.forEach(
             peer -> disconnectFromPeer(peer, ReasonCode.BAD_PROTOCOL, "isolate2 and passive"));
       }
