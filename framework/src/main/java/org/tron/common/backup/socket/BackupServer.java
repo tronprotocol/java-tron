@@ -95,7 +95,6 @@ public class BackupServer implements AutoCloseable {
   public void close() {
     logger.info("Closing backup server...");
     shutdown = true;
-    ExecutorServiceManager.shutdownAndAwaitTermination(executor, name);
     backupManager.stop();
     if (channel != null) {
       try {
@@ -104,6 +103,7 @@ public class BackupServer implements AutoCloseable {
         logger.warn("Closing backup server failed.", e);
       }
     }
+    ExecutorServiceManager.shutdownAndAwaitTermination(executor, name);
     logger.info("Backup server closed.");
   }
 }

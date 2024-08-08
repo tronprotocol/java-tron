@@ -37,8 +37,10 @@ public class BackupServerTest {
     Args.clearParam();
   }
 
-  @Test
+  @Test(timeout = 60_000)
   public void test() throws InterruptedException {
     backupServer.initServer();
+    // wait for the server to start
+    Thread.sleep(1000);
   }
 }

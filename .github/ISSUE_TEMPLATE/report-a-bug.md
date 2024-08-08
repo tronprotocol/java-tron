@@ -11,29 +11,18 @@ assignees: ''
 <!--   * Reproduced the issue in the latest version of the software -->
 <!--   * Duplicate Issue check:  https://github.com/search?q=+is%3Aissue+repo%3Atronprotocol/java-tron -->
 
-#### System information
+#### Software Versions
+<!-- `java -jar FullNode.jar -v` -->
 
-
-**Versions**
-* Software version: [`java -jar FullNode.jar -v`]
-* Java version: [`java -version`]
-* OS Name & Version: [`cat /etc/*release`]
-* Kernel Version: [`uname -a`]
-* Virtual Machine software & version: [`vmware -v`]
-* Docker Version: [`docker version`]
-* Cloud VM, type, size: [Amazon Web Services I3-large]
-* Node Type: [e.g. fullNode, liteFullNode]
-* Blockchain Net: [e.g. main, test or private ]
-* Commit hash : [if `develop`]
-
-**Smart contract information (If you're reporting an issue arising from deploying or calling a smart contract, please supply related information)**
-* Solidity version [`solc --version`]
-* Repo with minimal set of deployable/reproducible contract code - please provide a link
-* Please include specifics on how you are deploying/calling the contract
-
-**Additional Information (Add any of the following or anything else that may be relevant)**
-* setup info - startup script, config options
-* System info - memory、 CPU、network bandwidth, disk type-
+<!-- 
+```
+OS : Linux
+JVM : Oracle Corporation 1.8.0_161 amd64
+Git : b1fc2f0f2bd79527099bc3027b9aba165c2e20c2
+Version : 4.7.4
+Code : 18260
+```
+-->
 
 #### Expected behaviour
 <!--[What you expect to happen] -->
