@@ -848,6 +848,9 @@ public class Args extends CommonParameter {
 
     PARAMETER.inactiveThreshold = config.hasPath(Constant.NODE_INACTIVE_THRESHOLD)
         ? config.getInt(Constant.NODE_INACTIVE_THRESHOLD) : 600;
+    if (PARAMETER.inactiveThreshold < 1) {
+      PARAMETER.inactiveThreshold = 1;
+    }
 
     PARAMETER.maxTransactionPendingSize = config.hasPath(Constant.NODE_MAX_TRANSACTION_PENDING_SIZE)
         ? config.getInt(Constant.NODE_MAX_TRANSACTION_PENDING_SIZE) : 2000;
