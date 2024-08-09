@@ -74,7 +74,6 @@ public class ResilienceService {
     if (peerSize >= CommonParameter.getInstance().getMaxConnections()) {
       long now = System.currentTimeMillis();
       List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
-          .filter(peer -> !peer.isDisconnect())
           .filter(peer -> now - peer.getLastActiveTime() >= inactiveThreshold)
           .filter(peer -> !peer.getChannel().isTrustPeer())
           .collect(Collectors.toList());
@@ -95,7 +94,6 @@ public class ResilienceService {
     if (peerSize >= CommonParameter.getInstance().getMinConnections()) {
       long now = System.currentTimeMillis();
       List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
-          .filter(peer -> !peer.isDisconnect())
           .filter(peer -> now - peer.getLastActiveTime() >= inactiveThreshold)
           .filter(peer -> !peer.getChannel().isTrustPeer())
           .collect(Collectors.toList());
@@ -114,7 +112,6 @@ public class ResilienceService {
     //disconnect from the node whose lastActiveTime is smallest
     if (peerSize >= CommonParameter.getInstance().getMinActiveConnections()) {
       List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
-          .filter(peer -> !peer.isDisconnect())
           .filter(peer -> !peer.getChannel().isTrustPeer())
           .filter(peer -> peer.getChannel().isActive())
           .collect(Collectors.toList());
@@ -131,7 +128,6 @@ public class ResilienceService {
     if (peerSize > threshold) {
       int disconnectSize = peerSize - threshold;
       List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
-          .filter(peer -> !peer.isDisconnect())
           .filter(peer -> !peer.getChannel().isTrustPeer())
           .filter(peer -> !peer.getChannel().isActive())
           .collect(Collectors.toList());
