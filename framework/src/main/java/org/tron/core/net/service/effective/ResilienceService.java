@@ -80,7 +80,8 @@ public class ResilienceService {
           .collect(Collectors.toList());
       if (!peers.isEmpty()) {
         int index = new Random().nextInt(peers.size());
-        disconnectFromPeer(peers.get(index), ReasonCode.RANDOM_ELIMINATION, "random");
+        disconnectFromPeer(peers.get(index), ReasonCode.RANDOM_ELIMINATION,
+            DisConnectCause.RANDOM_ELIMINATION);
       }
     }
   }
@@ -99,7 +100,8 @@ public class ResilienceService {
           .filter(peer -> !peer.getChannel().isTrustPeer())
           .collect(Collectors.toList());
       Optional<PeerConnection> one = getEarliestPeer(peers);
-      one.ifPresent(peer -> disconnectFromPeer(peer, ReasonCode.BAD_PROTOCOL, "lan node"));
+      one.ifPresent(
+          peer -> disconnectFromPeer(peer, ReasonCode.BAD_PROTOCOL, DisConnectCause.LAN_NODE));
     }
   }
 
@@ -118,8 +120,8 @@ public class ResilienceService {
           .collect(Collectors.toList());
 
       Optional<PeerConnection> one = getEarliestPeer(peers);
-      one.ifPresent(
-          peer -> disconnectFromPeer(peer, ReasonCode.BAD_PROTOCOL, "isolate2 and active"));
+      one.ifPresent(peer -> disconnectFromPeer(peer, ReasonCode.BAD_PROTOCOL,
+          DisConnectCause.ISOLATE2_ACTIVE));
     }
 
     //disconnect from some passive nodes, make sure retention nodes' num <= 0.8 * maxConnection,
@@ -144,8 +146,8 @@ public class ResilienceService {
       }
       logger.info("All peer Size:{}, plan size:{}, candidate size:{}, real size:{}", peerSize,
           disconnectSize, candidateSize, peers.size());
-      peers.forEach(
-          peer -> disconnectFromPeer(peer, ReasonCode.BAD_PROTOCOL, "isolate2 and passive"));
+      peers.forEach(peer -> disconnectFromPeer(peer, ReasonCode.BAD_PROTOCOL,
+          DisConnectCause.ISOLATE2_PASSIVE));
     }
   }
 
@@ -177,11 +179,19 @@ public class ResilienceService {
     return advPeerCount >= 1 && diff >= blockNotChangeThreshold;
   }
 
-  private void disconnectFromPeer(PeerConnection peer, ReasonCode reasonCode, String cause) {
+  private void disconnectFromPeer(PeerConnection peer, ReasonCode reasonCode,
+      DisConnectCause cause) {
     int inactiveSeconds = (int) ((System.currentTimeMillis() - peer.getLastActiveTime()) / 1000);
     logger.info("Disconnect from peer {}, inactive seconds {}, cause: {}",
         peer.getInetSocketAddress(), inactiveSeconds, cause);
     peer.disconnect(reasonCode);
+  }
+
+  private enum DisConnectCause {
+    RANDOM_ELIMINATION,
+    LAN_NODE,
+    ISOLATE2_ACTIVE,
+    ISOLATE2_PASSIVE,
   }
 
   public void close() {
