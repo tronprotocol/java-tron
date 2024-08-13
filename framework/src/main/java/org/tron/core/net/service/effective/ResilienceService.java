@@ -167,7 +167,7 @@ public class ResilienceService {
     int activePeerSize = (int) tronNetDelegate.getActivePeer().stream()
         .filter(peer -> peer.getChannel().isActive())
         .count();
-    return peerSize > CommonParameter.getInstance().getMinActiveConnections()
+    return peerSize >= CommonParameter.getInstance().getMinActiveConnections()
         && peerSize == activePeerSize;
   }
 
