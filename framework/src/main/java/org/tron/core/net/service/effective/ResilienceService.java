@@ -76,6 +76,7 @@ public class ResilienceService {
       List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
           .filter(peer -> now - peer.getLastActiveTime() >= inactiveThreshold)
           .filter(peer -> !peer.getChannel().isTrustPeer())
+          .filter(peer -> !peer.isNeedSyncFromUs() && !peer.isNeedSyncFromPeer())
           .collect(Collectors.toList());
       if (!peers.isEmpty()) {
         int index = new Random().nextInt(peers.size());
