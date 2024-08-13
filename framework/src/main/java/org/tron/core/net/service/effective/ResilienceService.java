@@ -97,6 +97,7 @@ public class ResilienceService {
       long now = System.currentTimeMillis();
       List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
           .filter(peer -> now - peer.getLastActiveTime() >= inactiveThreshold)
+          .filter(peer -> !peer.isNeedSyncFromPeer() && !peer.isNeedSyncFromUs())
           .filter(peer -> !peer.getChannel().isTrustPeer())
           .collect(Collectors.toList());
       Optional<PeerConnection> one = getEarliestPeer(peers);
