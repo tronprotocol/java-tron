@@ -61,6 +61,10 @@ public class ResilienceServiceTest {
 
       PeerManager.add(context, c1);
     }
+    for (PeerConnection peer : PeerManager.getPeers()) {
+      peer.setNeedSyncFromPeer(false);
+      peer.setNeedSyncFromUs(false);
+    }
     ReflectUtils.invokeMethod(service, "disconnectRandom");
     Assert.assertEquals(maxConnection, PeerManager.getPeers().size());
 
@@ -93,7 +97,10 @@ public class ResilienceServiceTest {
 
       PeerManager.add(context, c1);
     }
-
+    for (PeerConnection peer : PeerManager.getPeers()) {
+      peer.setNeedSyncFromPeer(false);
+      peer.setNeedSyncFromUs(false);
+    }
     Assert.assertEquals(9, PeerManager.getPeers().size());
 
     boolean isLan = ReflectUtils.invokeMethod(service, "isLanNode");
