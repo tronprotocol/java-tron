@@ -111,10 +111,12 @@ public class ResilienceService {
       return;
     }
     logger.warn("Node is isolated, try to disconnect from peers");
-    int peerSize = tronNetDelegate.getActivePeer().size();
 
     //disconnect from the node whose lastActiveTime is smallest
-    if (peerSize >= CommonParameter.getInstance().getMinActiveConnections()) {
+    int activePeerSize = (int) tronNetDelegate.getActivePeer().stream()
+        .filter(peer -> peer.getChannel().isActive())
+        .count();
+    if (activePeerSize >= CommonParameter.getInstance().getMinActiveConnections()) {
       List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
           .filter(peer -> !peer.getChannel().isTrustPeer())
           .filter(peer -> peer.getChannel().isActive())
@@ -127,7 +129,7 @@ public class ResilienceService {
 
     //disconnect from some passive nodes, make sure retention nodes' num <= 0.8 * maxConnection,
     //so new peers can come in
-    peerSize = tronNetDelegate.getActivePeer().size();
+    int peerSize = tronNetDelegate.getActivePeer().size();
     int threshold = (int) (CommonParameter.getInstance().getMaxConnections() * retentionPercent);
     if (peerSize > threshold) {
       int disconnectSize = peerSize - threshold;
