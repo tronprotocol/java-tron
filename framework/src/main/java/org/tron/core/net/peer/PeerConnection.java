@@ -81,7 +81,7 @@ public class PeerConnection {
 
   @Getter
   @Setter
-  private volatile long lastActiveTime;
+  private volatile long lastInteractiveTime;
 
   @Getter
   @Setter
@@ -163,7 +163,7 @@ public class PeerConnection {
       this.isRelayPeer = true;
     }
     this.nodeStatistics = TronStatsManager.getNodeStatistics(channel.getInetAddress());
-    lastActiveTime = System.currentTimeMillis();
+    lastInteractiveTime = System.currentTimeMillis();
   }
 
   public void setBlockBothHave(BlockId blockId) {
@@ -245,7 +245,7 @@ public class PeerConnection {
         remainNum,
         requested == null ? 0 : (now - requested.getValue())
                 / Constant.ONE_THOUSAND,
-        (now - lastActiveTime) / Constant.ONE_THOUSAND,
+        (now - lastInteractiveTime) / Constant.ONE_THOUSAND,
         syncBlockInProcess.size());
   }
 

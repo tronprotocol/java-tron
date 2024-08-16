@@ -40,7 +40,7 @@ public class InventoryMsgHandler implements TronMsgHandler {
       peer.getAdvInvReceive().put(item, System.currentTimeMillis());
       advService.addInv(item);
       if (type.equals(InventoryType.BLOCK) && peer.getAdvInvSpread().getIfPresent(item) == null) {
-        peer.setLastActiveTime(System.currentTimeMillis());
+        peer.setLastInteractiveTime(System.currentTimeMillis());
       }
     }
   }
