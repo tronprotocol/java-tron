@@ -121,7 +121,7 @@ public class P2pEventHandlerImplTest {
     P2pEventHandlerImpl p2pEventHandler = new P2pEventHandlerImpl();
 
     Method method = p2pEventHandler.getClass()
-        .getDeclaredMethod("updateLastActiveTime", PeerConnection.class, TronMessage.class);
+        .getDeclaredMethod("updateLastInteractiveTime", PeerConnection.class, TronMessage.class);
     method.setAccessible(true);
 
     long t1 = System.currentTimeMillis();
