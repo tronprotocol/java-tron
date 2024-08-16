@@ -113,7 +113,7 @@ public class P2pEventHandlerImplTest {
   }
 
   @Test
-  public void testUpdateLastActiveTime() throws Exception {
+  public void testUpdateLastInteractiveTime() throws Exception {
     String[] a = new String[0];
     Args.setParam(a, Constant.TESTNET_CONF);
 
@@ -127,6 +127,6 @@ public class P2pEventHandlerImplTest {
     long t1 = System.currentTimeMillis();
     FetchInvDataMessage message = new FetchInvDataMessage(new ArrayList<>(), InventoryType.BLOCK);
     method.invoke(p2pEventHandler, peer, message);
-    Assert.assertTrue(peer.getLastActiveTime() >= t1);
+    Assert.assertTrue(peer.getLastInteractiveTime() >= t1);
   }
 }

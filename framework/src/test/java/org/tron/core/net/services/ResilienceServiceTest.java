@@ -69,10 +69,10 @@ public class ResilienceServiceTest {
     Assert.assertEquals(maxConnection, PeerManager.getPeers().size());
 
     PeerConnection p1 = PeerManager.getPeers().get(1);
-    p1.setLastActiveTime(
+    p1.setLastInteractiveTime(
         System.currentTimeMillis() - Args.getInstance().inactiveThreshold * 1000L - 1000);
     PeerConnection p2 = PeerManager.getPeers().get(10);
-    p2.setLastActiveTime(
+    p2.setLastInteractiveTime(
         System.currentTimeMillis() - Args.getInstance().inactiveThreshold * 1000L - 2000);
 
     ReflectUtils.invokeMethod(service, "disconnectRandom");
@@ -108,11 +108,11 @@ public class ResilienceServiceTest {
 
     PeerConnection p1 = PeerManager.getPeers().get(1);
     InetSocketAddress address1 = p1.getChannel().getInetSocketAddress();
-    p1.setLastActiveTime(
+    p1.setLastInteractiveTime(
         System.currentTimeMillis() - Args.getInstance().inactiveThreshold * 1000L - 1000);
     PeerConnection p2 = PeerManager.getPeers().get(2);
     InetSocketAddress address2 = p2.getChannel().getInetSocketAddress();
-    p2.setLastActiveTime(
+    p2.setLastInteractiveTime(
         System.currentTimeMillis() - Args.getInstance().inactiveThreshold * 1000L - 2000);
 
     ReflectUtils.invokeMethod(service, "disconnectLan");

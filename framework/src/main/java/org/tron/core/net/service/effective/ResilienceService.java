@@ -74,7 +74,7 @@ public class ResilienceService {
     if (peerSize >= CommonParameter.getInstance().getMaxConnections()) {
       long now = System.currentTimeMillis();
       List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
-          .filter(peer -> now - peer.getLastActiveTime() >= inactiveThreshold)
+          .filter(peer -> now - peer.getLastInteractiveTime() >= inactiveThreshold)
           .filter(peer -> !peer.getChannel().isTrustPeer())
           .filter(peer -> !peer.isNeedSyncFromUs() && !peer.isNeedSyncFromPeer())
           .collect(Collectors.toList());
@@ -96,7 +96,7 @@ public class ResilienceService {
     if (peerSize >= CommonParameter.getInstance().getMinConnections()) {
       long now = System.currentTimeMillis();
       List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
-          .filter(peer -> now - peer.getLastActiveTime() >= inactiveThreshold)
+          .filter(peer -> now - peer.getLastInteractiveTime() >= inactiveThreshold)
           .filter(peer -> !peer.isNeedSyncFromPeer() && !peer.isNeedSyncFromUs())
           .filter(peer -> !peer.getChannel().isTrustPeer())
           .collect(Collectors.toList());
@@ -138,7 +138,7 @@ public class ResilienceService {
           .filter(peer -> !peer.getChannel().isActive())
           .collect(Collectors.toList());
       try {
-        peers.sort(Comparator.comparing(PeerConnection::getLastActiveTime, Long::compareTo));
+        peers.sort(Comparator.comparing(PeerConnection::getLastInteractiveTime, Long::compareTo));
       } catch (Exception e) {
         logger.warn("Sort disconnectIsolated2 peers failed: {}", e.getMessage());
         return;
@@ -158,7 +158,7 @@ public class ResilienceService {
     Optional<PeerConnection> one = Optional.empty();
     try {
       one = pees.stream()
-          .min(Comparator.comparing(PeerConnection::getLastActiveTime, Long::compareTo));
+          .min(Comparator.comparing(PeerConnection::getLastInteractiveTime, Long::compareTo));
     } catch (Exception e) {
       logger.warn("Get earliest peer failed: {}", e.getMessage());
     }
@@ -184,7 +184,8 @@ public class ResilienceService {
 
   private void disconnectFromPeer(PeerConnection peer, ReasonCode reasonCode,
       DisconnectCause cause) {
-    int inactiveSeconds = (int) ((System.currentTimeMillis() - peer.getLastActiveTime()) / 1000);
+    int inactiveSeconds = (int) ((System.currentTimeMillis() - peer.getLastInteractiveTime())
+        / 1000);
     logger.info("Disconnect from peer {}, inactive seconds {}, cause: {}",
         peer.getInetSocketAddress(), inactiveSeconds, cause);
     peer.disconnect(reasonCode);

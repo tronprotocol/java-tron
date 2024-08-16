@@ -40,7 +40,6 @@ import org.tron.p2p.P2pEventHandler;
 import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Inventory.InventoryType;
-import org.tron.protos.Protocol.ReasonCode;
 
 @Slf4j(topic = "net")
 @Component
@@ -207,7 +206,7 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
         default:
           throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE, msg.getType().toString());
       }
-      updateLastActiveTime(peer, msg);
+      updateLastInteractiveTime(peer, msg);
     } catch (Exception e) {
       processException(peer, msg, e);
     } finally {
@@ -223,7 +222,7 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
     }
   }
 
-  private void updateLastActiveTime(PeerConnection peer, TronMessage msg) {
+  private void updateLastInteractiveTime(PeerConnection peer, TronMessage msg) {
     MessageTypes type = msg.getType();
 
     boolean flag = false;
@@ -240,7 +239,7 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
         break;
     }
     if (flag) {
-      peer.setLastActiveTime(System.currentTimeMillis());
+      peer.setLastInteractiveTime(System.currentTimeMillis());
     }
   }
 
