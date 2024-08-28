@@ -37,26 +37,31 @@ public class FilterQueryTest {
 
   @Test
   public synchronized void testMatchFilter() {
-    String[] addrList = {"address1", "address2"};
+    String[] adrList = {"address1", "address2"};
     String[] topList = {"top1", "top2"};
-    Map topMap = new HashMap<String, String>();
+    Map<String, String> topMap = new HashMap<>();
     List<byte[]> addressList = new ArrayList<>();
-    addressList.add(addrList[0].getBytes());
-    addressList.add(addrList[1].getBytes());
+    addressList.add(adrList[0].getBytes());
+    addressList.add(adrList[1].getBytes());
     topMap.put("1", topList[0]);
     topMap.put("2", topList[1]);
     LogEventWrapper event = new LogEventWrapper();
-    ((LogEventWrapper) event).setTopicList(addressList);
-    ((LogEventWrapper) event).setData(new byte[]{});
-    ((LogEventWrapper) event).setEventSignature("");
-    ((LogEventWrapper) event).setAbiEntry(Entry.newBuilder().setName("testABI").build());
-    event.setBlockNumber(new Long(123));
+    event.setTopicList(addressList);
+    event.setData(new byte[]{});
+    event.setEventSignature("");
+    event.setAbiEntry(Entry.newBuilder().setName("testABI").build());
+    event.setBlockNumber(123L);
     ContractEventTriggerCapsule capsule = new ContractEventTriggerCapsule(event);
+    capsule.setContractEventTrigger(capsule.getContractEventTrigger());
     capsule.getContractEventTrigger().setContractAddress("address1");
+    capsule.setLatestSolidifiedBlockNumber(0);
+    capsule.setData(capsule.getData());
+    capsule.setTopicList(capsule.getTopicList());
+    capsule.setAbiEntry(capsule.getAbiEntry());
     capsule.getContractEventTrigger().setTopicMap(topMap);
 
     {
-      Assert.assertEquals(true, matchFilter(capsule.getContractEventTrigger()));
+      Assert.assertTrue(matchFilter(capsule.getContractEventTrigger()));
     }
 
     {
@@ -64,7 +69,7 @@ public class FilterQueryTest {
       filterQuery.setFromBlock(1);
       filterQuery.setToBlock(100);
       EventPluginLoader.getInstance().setFilterQuery(filterQuery);
-      Assert.assertEquals(false, matchFilter(capsule.getContractEventTrigger()));
+      Assert.assertFalse(matchFilter(capsule.getContractEventTrigger()));
     }
 
     {
@@ -72,17 +77,18 @@ public class FilterQueryTest {
       filterQuery.setFromBlock(133);
       filterQuery.setToBlock(190);
       EventPluginLoader.getInstance().setFilterQuery(filterQuery);
-      Assert.assertEquals(false, matchFilter(capsule.getContractEventTrigger()));
+      Assert.assertFalse(matchFilter(capsule.getContractEventTrigger()));
     }
 
     {
       FilterQuery filterQuery = new FilterQuery();
       filterQuery.setFromBlock(100);
       filterQuery.setToBlock(190);
-      filterQuery.setContractAddressList(Arrays.asList(addrList));
+      filterQuery.setContractAddressList(Arrays.asList(adrList));
       filterQuery.setContractTopicList(Arrays.asList(topList));
       EventPluginLoader.getInstance().setFilterQuery(filterQuery);
-      Assert.assertEquals(true, matchFilter(capsule.getContractEventTrigger()));
+      Assert.assertTrue(matchFilter(capsule.getContractEventTrigger()));
+      capsule.processTrigger();
     }
   }
 }
