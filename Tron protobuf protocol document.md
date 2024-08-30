@@ -478,7 +478,7 @@ Transaction and transaction-related messages.
     
     ```java
     enum code {
-          SUCCESS = 0;
+          SUCESS = 0;
           FAILED = 1;
         }
     ```
@@ -509,7 +509,7 @@ Transaction and transaction-related messages.
      ```java
        message Result {
            enum code {
-           SUCCESS = 0;
+           SUCESS = 0;
              FAILED = 1;
          }
            enum contractResult {
@@ -638,7 +638,7 @@ Transaction and transaction-related messages.
     
       message Result {
         enum code {
-          SUCCESS = 0;
+          SUCESS = 0;
           FAILED = 1;
         }
         enum contractResult {
@@ -698,7 +698,7 @@ Transaction and transaction-related messages.
   
     ```java
     enum code {
-      SUCCESS = 0;
+      SUCESS = 0;
       FAILED = 1;
     }
     ```
@@ -760,7 +760,7 @@ Transaction and transaction-related messages.
    ```java
   message TransactionInfo {
       enum code {
-      SUCCESS = 0;
+      SUCESS = 0;
         FAILED = 1;
     }
       message Log {
