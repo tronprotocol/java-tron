@@ -47,7 +47,7 @@ public class ResilienceService {
         } catch (Exception e) {
           logger.error("DisconnectRandom node failed", e);
         }
-      }, initialDelay, 60, TimeUnit.SECONDS);
+      }, initialDelay, 30, TimeUnit.SECONDS);
     } else {
       logger.info("OpenFullTcpDisconnect is disabled");
     }
@@ -72,13 +72,19 @@ public class ResilienceService {
   private void disconnectRandom() {
     int peerSize = tronNetDelegate.getActivePeer().size();
     if (peerSize >= CommonParameter.getInstance().getMaxConnections()) {
-      long now = System.currentTimeMillis();
       List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
-          .filter(peer -> now - peer.getLastInteractiveTime() >= inactiveThreshold)
           .filter(peer -> !peer.getChannel().isTrustPeer())
           .filter(peer -> !peer.isNeedSyncFromUs() && !peer.isNeedSyncFromPeer())
           .collect(Collectors.toList());
-      if (!peers.isEmpty()) {
+      if (peers.size() >= 3) {
+        Optional<PeerConnection> one = getEarliestPeer(peers);
+        one.ifPresent(peer -> disconnectFromPeer(peer, ReasonCode.RANDOM_ELIMINATION,
+            DisconnectCause.RANDOM_ELIMINATION));
+      } else {
+        peers = tronNetDelegate.getActivePeer().stream()
+            .filter(peer -> !peer.getChannel().isTrustPeer())
+            .filter(peer -> peer.isNeedSyncFromUs() || peer.isNeedSyncFromPeer())
+            .collect(Collectors.toList());
         int index = new Random().nextInt(peers.size());
         disconnectFromPeer(peers.get(index), ReasonCode.RANDOM_ELIMINATION,
             DisconnectCause.RANDOM_ELIMINATION);
