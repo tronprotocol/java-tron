@@ -29,6 +29,7 @@ public class ResilienceService {
   //when node is isolated, retention percent peers will not be disconnected
   public static final double retentionPercent = 0.8;
   private static final int initialDelay = 300;
+  public static final int broadcastPeerSize = 3;
   private static final String esName = "resilience-service";
   private final ScheduledExecutorService executor = ExecutorServiceManager
       .newSingleThreadScheduledExecutor(esName);
@@ -76,7 +77,7 @@ public class ResilienceService {
           .filter(peer -> !peer.getChannel().isTrustPeer())
           .filter(peer -> !peer.isNeedSyncFromUs() && !peer.isNeedSyncFromPeer())
           .collect(Collectors.toList());
-      if (peers.size() >= 3) {
+      if (peers.size() >= broadcastPeerSize) {
         Optional<PeerConnection> one = getEarliestPeer(peers);
         one.ifPresent(peer -> disconnectFromPeer(peer, ReasonCode.RANDOM_ELIMINATION,
             DisconnectCause.RANDOM_ELIMINATION));
