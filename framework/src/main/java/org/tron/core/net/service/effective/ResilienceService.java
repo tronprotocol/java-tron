@@ -1,7 +1,9 @@
 package org.tron.core.net.service.effective;
 
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.ScheduledExecutorService;
@@ -72,26 +74,39 @@ public class ResilienceService {
 
   private void disconnectRandom() {
     int peerSize = tronNetDelegate.getActivePeer().size();
-    if (peerSize >= CommonParameter.getInstance().getMaxConnections()) {
-      List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
-          .filter(peer -> !peer.getChannel().isTrustPeer())
-          .filter(peer -> !peer.isNeedSyncFromUs() && !peer.isNeedSyncFromPeer())
-          .collect(Collectors.toList());
-      if (peers.size() >= broadcastPeerSize) {
-        Optional<PeerConnection> one = getEarliestPeer(peers);
-        one.ifPresent(peer -> disconnectFromPeer(peer, ReasonCode.RANDOM_ELIMINATION,
-            DisconnectCause.RANDOM_ELIMINATION));
-      } else {
-        peers = tronNetDelegate.getActivePeer().stream()
-            .filter(peer -> !peer.getChannel().isTrustPeer())
-            .filter(peer -> peer.isNeedSyncFromUs() || peer.isNeedSyncFromPeer())
-            .collect(Collectors.toList());
-        int index = new Random().nextInt(peers.size());
-        disconnectFromPeer(peers.get(index), ReasonCode.RANDOM_ELIMINATION,
-            DisconnectCause.RANDOM_ELIMINATION);
+    if (peerSize < CommonParameter.getInstance().getMaxConnections()) {
+      return;
+    }
+    List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
+        .filter(peer -> !peer.getChannel().isTrustPeer())
+        .filter(peer -> !peer.isNeedSyncFromUs() && !peer.isNeedSyncFromPeer())
+        .collect(Collectors.toList());
+
+    if (peers.size() >= broadcastPeerSize) {
+      long now = System.currentTimeMillis();
+      Map<Object, Integer> weights = new HashMap<>();
+      peers.forEach(peer -> weights.put(peer,
+          (int) Math.ceil((double) (now - peer.getLastInteractiveTime()) / 500)));
+      WeightedRandom weightedRandom = new WeightedRandom(weights);
+      PeerConnection one;
+      try {
+        one = (PeerConnection) weightedRandom.next();
+      } catch (Exception e) {
+        logger.warn("Get random peer failed: {}", e.getMessage());
+        return;
       }
+      disconnectFromPeer(one, ReasonCode.RANDOM_ELIMINATION, DisconnectCause.RANDOM_ELIMINATION);
+    } else {
+      peers = tronNetDelegate.getActivePeer().stream()
+          .filter(peer -> !peer.getChannel().isTrustPeer())
+          .filter(peer -> peer.isNeedSyncFromUs() || peer.isNeedSyncFromPeer())
+          .collect(Collectors.toList());
+      int index = new Random().nextInt(peers.size());
+      disconnectFromPeer(peers.get(index), ReasonCode.RANDOM_ELIMINATION,
+          DisconnectCause.RANDOM_ELIMINATION);
     }
   }
+
 
   private void disconnectLan() {
     if (!isLanNode()) {
@@ -203,6 +218,32 @@ public class ResilienceService {
     LAN_NODE,
     ISOLATE2_ACTIVE,
     ISOLATE2_PASSIVE,
+  }
+
+  class WeightedRandom {
+
+    private final Map<Object, Integer> weights;
+    private final Random random;
+
+    public WeightedRandom(Map<Object, Integer> weights) {
+      this.weights = weights;
+      this.random = new Random();
+    }
+
+    public Object next() {
+      int totalWeight = 0;
+      for (int weight : weights.values()) {
+        totalWeight += weight;
+      }
+      int randomNum = random.nextInt(totalWeight);
+      for (Object key : weights.keySet()) {
+        randomNum -= weights.get(key);
+        if (randomNum < 0) {
+          return key;
+        }
+      }
+      throw new IllegalStateException("Sum of weights should not be negative.");
+    }
   }
 
   public void close() {
