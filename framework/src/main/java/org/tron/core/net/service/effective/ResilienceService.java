@@ -31,7 +31,7 @@ public class ResilienceService {
   //when node is isolated, retention percent peers will not be disconnected
   public static final double retentionPercent = 0.8;
   private static final int initialDelay = 300;
-  public static final int broadcastPeerSize = 3;
+  public static final int minBroadcastPeerSize = 3;
   private static final String esName = "resilience-service";
   private final ScheduledExecutorService executor = ExecutorServiceManager
       .newSingleThreadScheduledExecutor(esName);
@@ -82,25 +82,35 @@ public class ResilienceService {
         .filter(peer -> !peer.isNeedSyncFromUs() && !peer.isNeedSyncFromPeer())
         .collect(Collectors.toList());
 
-    if (peers.size() >= broadcastPeerSize) {
+    if (peers.size() >= minBroadcastPeerSize) {
       long now = System.currentTimeMillis();
       Map<Object, Integer> weights = new HashMap<>();
-      peers.forEach(peer -> weights.put(peer,
-          (int) Math.ceil((double) (now - peer.getLastInteractiveTime()) / 500)));
+      peers.forEach(peer -> {
+        int weight = (int) Math.ceil((double) (now - peer.getLastInteractiveTime()) / 500);
+        weights.put(peer, Math.max(weight, 1));
+      });
       WeightedRandom weightedRandom = new WeightedRandom(weights);
-      PeerConnection one;
-      try {
-        one = (PeerConnection) weightedRandom.next();
-      } catch (Exception e) {
-        logger.warn("Get random peer failed: {}", e.getMessage());
-        return;
-      }
+      PeerConnection one = (PeerConnection) weightedRandom.next();
       disconnectFromPeer(one, ReasonCode.RANDOM_ELIMINATION, DisconnectCause.RANDOM_ELIMINATION);
-    } else {
+      return;
+    }
+
+    int needSyncFromPeerCount = (int) tronNetDelegate.getActivePeer().stream()
+        .filter(peer -> !peer.getChannel().isTrustPeer())
+        .filter(PeerConnection::isNeedSyncFromPeer)
+        .count();
+    if (needSyncFromPeerCount >= 2) {
       peers = tronNetDelegate.getActivePeer().stream()
           .filter(peer -> !peer.getChannel().isTrustPeer())
           .filter(peer -> peer.isNeedSyncFromUs() || peer.isNeedSyncFromPeer())
           .collect(Collectors.toList());
+    } else {
+      peers = tronNetDelegate.getActivePeer().stream()
+          .filter(peer -> !peer.getChannel().isTrustPeer())
+          .filter(PeerConnection::isNeedSyncFromUs)
+          .collect(Collectors.toList());
+    }
+    if (!peers.isEmpty()) {
       int index = new Random().nextInt(peers.size());
       disconnectFromPeer(peers.get(index), ReasonCode.RANDOM_ELIMINATION,
           DisconnectCause.RANDOM_ELIMINATION);
@@ -220,7 +230,7 @@ public class ResilienceService {
     ISOLATE2_PASSIVE,
   }
 
-  class WeightedRandom {
+  static class WeightedRandom {
 
     private final Map<Object, Integer> weights;
     private final Random random;

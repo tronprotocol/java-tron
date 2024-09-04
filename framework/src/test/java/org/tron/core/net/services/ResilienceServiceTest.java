@@ -62,20 +62,20 @@ public class ResilienceServiceTest {
       PeerManager.add(context, c1);
     }
     for (PeerConnection peer : PeerManager.getPeers()
-        .subList(0, ResilienceService.broadcastPeerSize)) {
+        .subList(0, ResilienceService.minBroadcastPeerSize)) {
       peer.setNeedSyncFromPeer(false);
       peer.setNeedSyncFromUs(false);
       peer.setLastInteractiveTime(System.currentTimeMillis() - 1000);
     }
     for (PeerConnection peer : PeerManager.getPeers()
-        .subList(ResilienceService.broadcastPeerSize, maxConnection + 1)) {
+        .subList(ResilienceService.minBroadcastPeerSize, maxConnection + 1)) {
       peer.setNeedSyncFromPeer(false);
       peer.setNeedSyncFromUs(true);
     }
     int size1 = (int) PeerManager.getPeers().stream()
         .filter(peer -> !peer.isNeedSyncFromUs() && !peer.isNeedSyncFromPeer())
         .count();
-    Assert.assertEquals(ResilienceService.broadcastPeerSize, size1);
+    Assert.assertEquals(ResilienceService.minBroadcastPeerSize, size1);
     Assert.assertEquals(maxConnection + 1, PeerManager.getPeers().size());
 
     //disconnect from broadcasting peer
@@ -83,7 +83,7 @@ public class ResilienceServiceTest {
     size1 = (int) PeerManager.getPeers().stream()
         .filter(peer -> !peer.isNeedSyncFromUs() && !peer.isNeedSyncFromPeer())
         .count();
-    Assert.assertEquals(ResilienceService.broadcastPeerSize - 1, size1);
+    Assert.assertEquals(ResilienceService.minBroadcastPeerSize - 1, size1);
     Assert.assertEquals(maxConnection, PeerManager.getPeers().size());
 
     //disconnect from syncing peer
@@ -91,7 +91,7 @@ public class ResilienceServiceTest {
     size1 = (int) PeerManager.getPeers().stream()
         .filter(peer -> !peer.isNeedSyncFromUs() && !peer.isNeedSyncFromPeer())
         .count();
-    Assert.assertEquals(ResilienceService.broadcastPeerSize - 1, size1);
+    Assert.assertEquals(ResilienceService.minBroadcastPeerSize - 1, size1);
     Assert.assertEquals(maxConnection - 1, PeerManager.getPeers().size());
   }
 
