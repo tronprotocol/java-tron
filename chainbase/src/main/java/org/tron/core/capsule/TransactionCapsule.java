@@ -59,6 +59,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.SignatureFormatException;
+import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
@@ -867,6 +868,14 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         transactionBuilder.addRet(result);
       }
       this.transaction = transactionBuilder.build();
+    }
+  }
+
+  public void checkExpiration(long nextSlotTime) throws TransactionExpirationException {
+    if (getExpiration() < nextSlotTime) {
+      throw new TransactionExpirationException(String.format(
+          "Transaction expiration time is %d, but next slot time is %d",
+          getExpiration(), nextSlotTime));
     }
   }
 }
