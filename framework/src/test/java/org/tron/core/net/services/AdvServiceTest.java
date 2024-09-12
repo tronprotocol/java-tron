@@ -5,7 +5,6 @@ import static org.mockito.Mockito.mock;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
-import com.google.protobuf.Any;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
