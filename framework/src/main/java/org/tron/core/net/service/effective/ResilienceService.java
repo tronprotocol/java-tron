@@ -1,7 +1,9 @@
 package org.tron.core.net.service.effective;
 
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.ScheduledExecutorService;
@@ -29,6 +31,7 @@ public class ResilienceService {
   //when node is isolated, retention percent peers will not be disconnected
   public static final double retentionPercent = 0.8;
   private static final int initialDelay = 300;
+  public static final int minBroadcastPeerSize = 3;
   private static final String esName = "resilience-service";
   private final ScheduledExecutorService executor = ExecutorServiceManager
       .newSingleThreadScheduledExecutor(esName);
@@ -47,7 +50,7 @@ public class ResilienceService {
         } catch (Exception e) {
           logger.error("DisconnectRandom node failed", e);
         }
-      }, initialDelay, 60, TimeUnit.SECONDS);
+      }, initialDelay, 30, TimeUnit.SECONDS);
     } else {
       logger.info("OpenFullTcpDisconnect is disabled");
     }
@@ -71,20 +74,49 @@ public class ResilienceService {
 
   private void disconnectRandom() {
     int peerSize = tronNetDelegate.getActivePeer().size();
-    if (peerSize >= CommonParameter.getInstance().getMaxConnections()) {
+    if (peerSize < CommonParameter.getInstance().getMaxConnections()) {
+      return;
+    }
+    List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
+        .filter(peer -> !peer.getChannel().isTrustPeer())
+        .filter(peer -> !peer.isNeedSyncFromUs() && !peer.isNeedSyncFromPeer())
+        .collect(Collectors.toList());
+
+    if (peers.size() >= minBroadcastPeerSize) {
       long now = System.currentTimeMillis();
-      List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
-          .filter(peer -> now - peer.getLastInteractiveTime() >= inactiveThreshold)
+      Map<Object, Integer> weights = new HashMap<>();
+      peers.forEach(peer -> {
+        int weight = (int) Math.ceil((double) (now - peer.getLastInteractiveTime()) / 500);
+        weights.put(peer, Math.max(weight, 1));
+      });
+      WeightedRandom weightedRandom = new WeightedRandom(weights);
+      PeerConnection one = (PeerConnection) weightedRandom.next();
+      disconnectFromPeer(one, ReasonCode.RANDOM_ELIMINATION, DisconnectCause.RANDOM_ELIMINATION);
+      return;
+    }
+
+    int needSyncFromPeerCount = (int) tronNetDelegate.getActivePeer().stream()
+        .filter(peer -> !peer.getChannel().isTrustPeer())
+        .filter(PeerConnection::isNeedSyncFromPeer)
+        .count();
+    if (needSyncFromPeerCount >= 2) {
+      peers = tronNetDelegate.getActivePeer().stream()
           .filter(peer -> !peer.getChannel().isTrustPeer())
-          .filter(peer -> !peer.isNeedSyncFromUs() && !peer.isNeedSyncFromPeer())
+          .filter(peer -> peer.isNeedSyncFromUs() || peer.isNeedSyncFromPeer())
           .collect(Collectors.toList());
-      if (!peers.isEmpty()) {
-        int index = new Random().nextInt(peers.size());
-        disconnectFromPeer(peers.get(index), ReasonCode.RANDOM_ELIMINATION,
-            DisconnectCause.RANDOM_ELIMINATION);
-      }
+    } else {
+      peers = tronNetDelegate.getActivePeer().stream()
+          .filter(peer -> !peer.getChannel().isTrustPeer())
+          .filter(PeerConnection::isNeedSyncFromUs)
+          .collect(Collectors.toList());
+    }
+    if (!peers.isEmpty()) {
+      int index = new Random().nextInt(peers.size());
+      disconnectFromPeer(peers.get(index), ReasonCode.RANDOM_ELIMINATION,
+          DisconnectCause.RANDOM_ELIMINATION);
     }
   }
+
 
   private void disconnectLan() {
     if (!isLanNode()) {
@@ -196,6 +228,32 @@ public class ResilienceService {
     LAN_NODE,
     ISOLATE2_ACTIVE,
     ISOLATE2_PASSIVE,
+  }
+
+  static class WeightedRandom {
+
+    private final Map<Object, Integer> weights;
+    private final Random random;
+
+    public WeightedRandom(Map<Object, Integer> weights) {
+      this.weights = weights;
+      this.random = new Random();
+    }
+
+    public Object next() {
+      int totalWeight = 0;
+      for (int weight : weights.values()) {
+        totalWeight += weight;
+      }
+      int randomNum = random.nextInt(totalWeight);
+      for (Object key : weights.keySet()) {
+        randomNum -= weights.get(key);
+        if (randomNum < 0) {
+          return key;
+        }
+      }
+      throw new IllegalStateException("Sum of weights should not be negative.");
+    }
   }
 
   public void close() {

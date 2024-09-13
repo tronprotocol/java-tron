@@ -51,7 +51,7 @@ public class ResilienceServiceTest {
     clearPeers();
     Assert.assertEquals(0, PeerManager.getPeers().size());
 
-    for (int i = 0; i < maxConnection; i++) {
+    for (int i = 0; i < maxConnection + 1; i++) {
       InetSocketAddress inetSocketAddress = new InetSocketAddress("201.0.0." + i, 10001);
       Channel c1 = spy(Channel.class);
       ReflectUtils.setFieldValue(c1, "inetSocketAddress", inetSocketAddress);
@@ -61,21 +61,37 @@ public class ResilienceServiceTest {
 
       PeerManager.add(context, c1);
     }
-    for (PeerConnection peer : PeerManager.getPeers()) {
+    for (PeerConnection peer : PeerManager.getPeers()
+        .subList(0, ResilienceService.minBroadcastPeerSize)) {
       peer.setNeedSyncFromPeer(false);
       peer.setNeedSyncFromUs(false);
+      peer.setLastInteractiveTime(System.currentTimeMillis() - 1000);
     }
+    for (PeerConnection peer : PeerManager.getPeers()
+        .subList(ResilienceService.minBroadcastPeerSize, maxConnection + 1)) {
+      peer.setNeedSyncFromPeer(false);
+      peer.setNeedSyncFromUs(true);
+    }
+    int size1 = (int) PeerManager.getPeers().stream()
+        .filter(peer -> !peer.isNeedSyncFromUs() && !peer.isNeedSyncFromPeer())
+        .count();
+    Assert.assertEquals(ResilienceService.minBroadcastPeerSize, size1);
+    Assert.assertEquals(maxConnection + 1, PeerManager.getPeers().size());
+
+    //disconnect from broadcasting peer
     ReflectUtils.invokeMethod(service, "disconnectRandom");
+    size1 = (int) PeerManager.getPeers().stream()
+        .filter(peer -> !peer.isNeedSyncFromUs() && !peer.isNeedSyncFromPeer())
+        .count();
+    Assert.assertEquals(ResilienceService.minBroadcastPeerSize - 1, size1);
     Assert.assertEquals(maxConnection, PeerManager.getPeers().size());
 
-    PeerConnection p1 = PeerManager.getPeers().get(1);
-    p1.setLastInteractiveTime(
-        System.currentTimeMillis() - Args.getInstance().inactiveThreshold * 1000L - 1000);
-    PeerConnection p2 = PeerManager.getPeers().get(10);
-    p2.setLastInteractiveTime(
-        System.currentTimeMillis() - Args.getInstance().inactiveThreshold * 1000L - 2000);
-
+    //disconnect from syncing peer
     ReflectUtils.invokeMethod(service, "disconnectRandom");
+    size1 = (int) PeerManager.getPeers().stream()
+        .filter(peer -> !peer.isNeedSyncFromUs() && !peer.isNeedSyncFromPeer())
+        .count();
+    Assert.assertEquals(ResilienceService.minBroadcastPeerSize - 1, size1);
     Assert.assertEquals(maxConnection - 1, PeerManager.getPeers().size());
   }
 
