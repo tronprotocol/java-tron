@@ -136,6 +136,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   public static final String EARLIEST_STR = "earliest";
   public static final String PENDING_STR = "pending";
   public static final String LATEST_STR = "latest";
+  public static final String FINALIZED_STR = "finalized";
+  public static final String TAG_PENDING_SUPPORT_ERROR = "TAG pending not supported";
 
   private static final String JSON_ERROR = "invalid json request";
   private static final String BLOCK_NUM_ERROR = "invalid block number";

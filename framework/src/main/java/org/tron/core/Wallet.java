@@ -29,6 +29,10 @@ import static org.tron.core.config.Parameter.DatabaseConstants.MARKET_COUNT_LIMI
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseEnergyFee;
 import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.EARLIEST_STR;
+import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.FINALIZED_STR;
+import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.LATEST_STR;
+import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.PENDING_STR;
+import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.TAG_PENDING_SUPPORT_ERROR;
 import static org.tron.core.vm.utils.FreezeV2Util.getV2EnergyUsage;
 import static org.tron.core.vm.utils.FreezeV2Util.getV2NetUsage;
 import static org.tron.protos.contract.Common.ResourceCode;
@@ -681,6 +685,16 @@ public class Wallet {
     }
   }
 
+  public Block getFinalizedBlock() {
+    try {
+      long blockNum = chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
+      return chainBaseManager.getBlockByNum(blockNum).getInstance();
+    } catch (StoreException e) {
+      logger.info(e.getMessage());
+      return null;
+    }
+  }
+
   public BlockCapsule getBlockCapsuleByNum(long blockNum) {
     try {
       return chainBaseManager.getBlockByNum(blockNum);
@@ -706,10 +720,12 @@ public class Wallet {
   public Block getByJsonBlockId(String id) throws JsonRpcInvalidParamsException {
     if (EARLIEST_STR.equalsIgnoreCase(id)) {
       return getBlockByNum(0);
-    } else if ("latest".equalsIgnoreCase(id)) {
+    } else if (LATEST_STR.equalsIgnoreCase(id)) {
       return getNowBlock();
-    } else if ("pending".equalsIgnoreCase(id)) {
-      throw new JsonRpcInvalidParamsException("TAG pending not supported");
+    } else if (FINALIZED_STR.equalsIgnoreCase(id)) {
+      return getFinalizedBlock();
+    } else if (PENDING_STR.equalsIgnoreCase(id)) {
+      throw new JsonRpcInvalidParamsException(TAG_PENDING_SUPPORT_ERROR);
     } else {
       long blockNumber;
       try {
@@ -724,8 +740,8 @@ public class Wallet {
 
   public List<Transaction> getTransactionsByJsonBlockId(String id)
       throws JsonRpcInvalidParamsException {
-    if ("pending".equalsIgnoreCase(id)) {
-      throw new JsonRpcInvalidParamsException("TAG pending not supported");
+    if (PENDING_STR.equalsIgnoreCase(id)) {
+      throw new JsonRpcInvalidParamsException(TAG_PENDING_SUPPORT_ERROR);
     } else {
       Block block = getByJsonBlockId(id);
       return block != null ? block.getTransactionsList() : null;
