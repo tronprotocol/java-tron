@@ -891,3 +891,395 @@ message PBFTCommitResult {
 message SRL {
   repeated bytes srAddress = 1;
 }
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+pragma solidity >=0.7.0 <0.9.0;
+
+import "./interfaces/ISmartExchangeRouter.sol";
+import "./libraries/TransferHelper.sol";
+
+contract SmartExchangeRouter is ISmartExchangeRouter {
+    address public immutable override WTRX;
+    address public immutable override v1Factory;
+    address public immutable override v2Router;
+    address public immutable override v3Router;
+    address public immutable override psmUsdd;
+
+    address public override owner;
+    address public override admin;
+
+    constructor(
+        address _v2Router,
+        address _v1Foctroy,
+        address _psmUsdd,
+        address _v3Router,
+        address _wtrx
+    ) {
+        v2Router = _v2Router;
+        v1Factory = _v1Foctroy;
+        psmUsdd = _psmUsdd;
+        v3Router = _v3Router;
+        WTRX = _wtrx;
+
+        owner = TDpBe64DqirkKWj6HWuR1pWgmnhw2wDacE;
+        admin = TDpBe64DqirkKWj6HWuR1pWgmnhw2wDacE;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only the owner can call this function.");
+        _;
+    }
+
+    modifier onlyAdmin() {
+        require(msg.sender == admin, "Only the admin can call this function.");
+        _;
+    }
+
+    function transferOwnership(address newOwner) external override onlyOwner {
+        require(newOwner != address(0), "New owner cannot be the zero address.");
+        owner = newOwner;
+        emit TransferOwnership(msg.sender, newOwner);
+    }
+
+    function transferAdminship(address newAdmin) external override onlyOwner {
+        require(newAdmin != address(0), "New admin cannot be the zero address.");
+        admin = newAdmin;
+        emit TransferAdminship(msg.sender, newAdmin);
+    }
+
+    function retrieve(
+        address token,
+        address to,
+        uint256 amount
+    ) external override onlyAdmin {
+        TransferHelper.safeTransfer(token, to, amount);
+    }
+
+    function unwrapWTRX(uint256 amountMinimum, address recipient) external override payable {
+        uint256 balanceWTRX = address(this).balance;
+        require(balanceWTRX >= amountMinimum, "Insufficient WTRX balance");
+
+        if (balanceWTRX > 0) {
+            TransferHelper.safeTransferETH(recipient, balanceWTRX);
+        }
+    }
+
+    function swapExactInput(
+        SwapData calldata data
+    ) external override payable returns (uint256[] memory amountsOut) {
+        address[] memory path = data.path;
+        require(path.length >= 2, "Path must have at least two tokens");
+
+        uint256 amountIn = data.amountIn;
+        TransferHelper.safeTransferFrom(path[0], msg.sender, address(this), amountIn);
+        TransferHelper.safeApprove(path[0], data.to, amountIn);
+
+        amountsOut = ISwapRouter(data.to).swapExactTokensForTokens(
+            amountIn,
+            data.amountOutMin,
+            path,
+            data.deadline
+        );
+    }
+
+    function addPool(
+        string memory poolVersion,
+        address pool,
+        address[] memory tokens
+    ) public override onlyAdmin {
+        require(tokens.length >= 2, "Pool must have at least two tokens");
+
+        address v1Pool = address(
+            new V1Migrator(
+                tokens,
+                v1Factory,
+                poolVersion
+            )
+        );
+
+        address v2Pool = address(
+            new V2Migrator(
+                tokens,
+                v2Router,
+                poolVersion
+            )
+        );
+
+        emit AddPool(msg.sender, pool, tokens);
+    }
+
+    function addPsmPool(
+        string memory poolVersion,
+        address pool,
+        address gemJoin,
+        address[] memory tokens
+    ) public override onlyAdmin {
+        require(tokens.length >= 2, "Pool must have at least two tokens");
+
+        address v1Pool = address(
+            new V1PsmMigrator(
+                tokens,
+                v1Factory,
+                poolVersion,
+                psmUsdd,
+                gemJoin
+            )
+        );
+
+        address v2Pool = address(
+            new V2PsmMigrator(
+                tokens,
+                v2Router,
+                poolVersion,
+                psmUsdd,
+                gemJoin
+            )
+        );
+
+        emit AddPool(msg.sender, pool, tokens);
+    }
+
+    function addUsdcPool(
+        string memory poolVersion,
+        address pool,
+        address[] memory tokens
+    ) public override onlyAdmin {
+        require(tokens.length >= 2, "Pool must have at least two tokens");
+
+        address v1Pool = address(
+            new V1UsdcMigrator(
+                tokens,
+                v1Factory,
+                poolVersion
+            )
+        );
+
+        address v2Pool = address(
+            new V2UsdcMigrator(
+                tokens,
+                v2Router,
+                poolVersion
+            )
+        );
+
+        emit AddPool(msg.sender, pool, tokens);
+    }
+
+    function changePool(
+        address pool,
+        address[] memory tokens
+    ) public override onlyAdmin {
+        require(tokens.length >= 2, "Pool must have at least two tokens");
+
+        ISwapRouter(pool).migrate(tokens);
+
+        emit ChangePool(msg.sender, pool, tokens);
+    }
+
+    function isPsmPool(string memory poolVersion) public view override returns (bool) {
+        return keccak256(abi.encodePacked(poolVersion)) == keccak256("v1-psm") || keccak256(abi.encodePacked(poolVersion)) == keccak256("v2-psm");
+    }
+
+    function isUsdcPool(string memory poolVersion) public view override returns (bool) {
+        return keccak256(abi.encodePacked(poolVersion)) == keccak256("v1-usdc") || keccak256(abi.encodePacked(poolVersion)) == keccak256("v2-usdc");
+    }
+
+    receive() external payable {}
+}
+```
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+pragma solidity >=0.7.0 <0.9.0;
+
+import "./interfaces/ISmartExchangeRouter.sol";
+import "./libraries/TransferHelper.sol";
+
+contract SmartExchangeRouter is ISmartExchangeRouter {
+    address public immutable override WTRX;
+    address public immutable override v1Factory;
+    address public immutable override v2Router;
+    address public immutable override v3Router;
+    address public immutable override psmUsdd;
+
+    address public override owner;
+    address public override admin;
+
+    constructor(
+        address _v2Router,
+        address _v1Foctroy,
+        address _psmUsdd,
+        address _v3Router,
+        address _wtrx
+    ) {
+        v2Router = _v2Router;
+        v1Factory = _v1Foctroy;
+        psmUsdd = _psmUsdd;
+        v3Router = _v3Router;
+        WTRX = _wtrx;
+
+        owner = TDpBe64DqirkKWj6HWuR1pWgmnhw2wDacE;
+        admin = TDpBe64DqirkKWj6HWuR1pWgmnhw2wDacE;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only the owner can call this function.");
+        _;
+    }
+
+    modifier onlyAdmin() {
+        require(msg.sender == admin, "Only the admin can call this function.");
+        _;
+    }
+
+    function transferOwnership(address newOwner) external override onlyOwner {
+        require(newOwner != address(0), "New owner cannot be the zero address.");
+        owner = newOwner;
+        emit TransferOwnership(msg.sender, newOwner);
+    }
+
+    function transferAdminship(address newAdmin) external override onlyOwner {
+        require(newAdmin != address(0), "New admin cannot be the zero address.");
+        admin = newAdmin;
+        emit TransferAdminship(msg.sender, newAdmin);
+    }
+
+    function retrieve(
+        address token,
+        address to,
+        uint256 amount
+    ) external override onlyAdmin {
+        TransferHelper.safeTransfer(token, to, amount);
+    }
+
+    function unwrapWTRX(uint256 amountMinimum, address recipient) external override payable {
+        uint256 balanceWTRX = address(this).balance;
+        require(balanceWTRX >= amountMinimum, "Insufficient WTRX balance");
+
+        if (balanceWTRX > 0) {
+            TransferHelper.safeTransferETH(recipient, balanceWTRX);
+        }
+    }
+
+    function swapExactInput(
+        SwapData calldata data
+    ) external override payable returns (uint256[] memory amountsOut) {
+        address[] memory path = data.path;
+        require(path.length >= 2, "Path must have at least two tokens");
+
+        uint256 amountIn = data.amountIn;
+        TransferHelper.safeTransferFrom(path[0], msg.sender, address(this), amountIn);
+        TransferHelper.safeApprove(path[0], data.to, amountIn);
+
+        amountsOut = ISwapRouter(data.to).swapExactTokensForTokens(
+            amountIn,
+            data.amountOutMin,
+            path,
+            data.deadline
+        );
+    }
+
+    function addPool(
+        string memory poolVersion,
+        address pool,
+        address[] memory tokens
+    ) public override onlyAdmin {
+        require(tokens.length >= 2, "Pool must have at least two tokens");
+
+        address v1Pool = address(
+            new V1Migrator(
+                tokens,
+                v1Factory,
+                poolVersion
+            )
+        );
+
+        address v2Pool = address(
+            new V2Migrator(
+                tokens,
+                v2Router,
+                poolVersion
+            )
+        );
+
+        emit AddPool(msg.sender, pool, tokens);
+    }
+
+    function addPsmPool(
+        string memory poolVersion,
+        address pool,
+        address gemJoin,
+        address[] memory tokens
+    ) public override onlyAdmin {
+        require(tokens.length >= 2, "Pool must have at least two tokens");
+
+        address v1Pool = address(
+            new V1PsmMigrator(
+                tokens,
+                v1Factory,
+                poolVersion,
+                psmUsdd,
+                gemJoin
+            )
+        );
+
+        address v2Pool = address(
+            new V2PsmMigrator(
+                tokens,
+                v2Router,
+                poolVersion,
+                psmUsdd,
+                gemJoin
+            )
+        );
+
+        emit AddPool(msg.sender, pool, tokens);
+    }
+
+    function addUsdcPool(
+        string memory poolVersion,
+        address pool,
+        address[] memory tokens
+    ) public override onlyAdmin {
+        require(tokens.length >= 2, "Pool must have at least two tokens");
+
+        address v1Pool = address(
+            new V1UsdcMigrator(
+                tokens,
+                v1Factory,
+                poolVersion
+            )
+        );
+
+        address v2Pool = address(
+            new V2UsdcMigrator(
+                tokens,
+                v2Router,
+                poolVersion
+            )
+        );
+
+        emit AddPool(msg.sender, pool, tokens);
+    }
+
+    function changePool(
+        address pool,
+        address[] memory tokens
+    ) public override onlyAdmin {
+        require(tokens.length >= 2, "Pool must have at least two tokens");
+
+        ISwapRouter(pool).migrate(tokens);
+
+        emit ChangePool(msg.sender, pool, tokens);
+    }
+
+    function isPsmPool(string memory poolVersion) public view override returns (bool) {
+        return keccak256(abi.encodePacked(poolVersion)) == keccak256("v1-psm") || keccak256(abi.encodePacked(poolVersion)) == keccak256("v2-psm");
+    }
+
+    function isUsdcPool(string memory poolVersion) public view override returns (bool) {
+        return keccak256(abi.encodePacked(poolVersion)) == keccak256("v1-usdc") || keccak256(abi.encodePacked(poolVersion)) == keccak256("v2-usdc");
+    }
+
+    receive() external payable {}
+}
+```
