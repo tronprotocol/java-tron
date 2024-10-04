@@ -50,19 +50,6 @@ public class TransactionExpireTest {
     context = new TronApplicationContext(DefaultConfig.class);
     wallet = context.getBean(Wallet.class);
     dbManager = context.getBean(Manager.class);
-
-    blockCapsule = new BlockCapsule(
-        1,
-        Sha256Hash.wrap(ByteString.copyFrom(
-            ByteArray.fromHexString(
-                "0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b81"))),
-        1,
-        ByteString.copyFromUtf8("testAddress"));
-    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(blockCapsule.getNum());
-    dbManager.getDynamicPropertiesStore()
-        .saveLatestBlockHeaderTimestamp(blockCapsule.getTimeStamp());
-    dbManager.updateRecentBlock(blockCapsule);
-    initLocalWitness();
   }
 
   private void initLocalWitness() {
@@ -81,6 +68,19 @@ public class TransactionExpireTest {
 
   @Test
   public void testExpireTransaction() {
+    blockCapsule = new BlockCapsule(
+        1,
+        Sha256Hash.wrap(ByteString.copyFrom(
+            ByteArray.fromHexString(
+                "0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b81"))),
+        1,
+        ByteString.copyFromUtf8("testAddress"));
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(blockCapsule.getNum());
+    dbManager.getDynamicPropertiesStore()
+        .saveLatestBlockHeaderTimestamp(blockCapsule.getTimeStamp());
+    dbManager.updateRecentBlock(blockCapsule);
+    initLocalWitness();
+
     TransferContract transferContract = TransferContract.newBuilder()
         .setAmount(1L)
         .setOwnerAddress(ByteString.copyFrom(Args.getLocalWitnesses()
@@ -102,7 +102,60 @@ public class TransactionExpireTest {
   }
 
   @Test
+  public void testExpireTransactionNew() {
+    blockCapsule = new BlockCapsule(
+        1,
+        Sha256Hash.wrap(ByteString.copyFrom(
+            ByteArray.fromHexString(
+                "0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b81"))),
+        System.currentTimeMillis(),
+        ByteString.copyFromUtf8("testAddress"));
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(blockCapsule.getNum());
+    dbManager.getDynamicPropertiesStore()
+        .saveLatestBlockHeaderTimestamp(blockCapsule.getTimeStamp());
+    dbManager.updateRecentBlock(blockCapsule);
+    initLocalWitness();
+    byte[] address = Args.getLocalWitnesses()
+        .getWitnessAccountAddress(CommonParameter.getInstance().isECKeyCryptoEngine());
+    ByteString addressByte = ByteString.copyFrom(address);
+    AccountCapsule accountCapsule =
+        new AccountCapsule(Protocol.Account.newBuilder().setAddress(addressByte).build());
+    accountCapsule.setBalance(1000_000_000L);
+    dbManager.getChainBaseManager().getAccountStore()
+        .put(accountCapsule.createDbKey(), accountCapsule);
+
+    TransferContract transferContract = TransferContract.newBuilder()
+        .setAmount(1L)
+        .setOwnerAddress(addressByte)
+        .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(
+            (Wallet.getAddressPreFixString() + "A389132D6639FBDA4FBC8B659264E6B7C90DB086"))))
+        .build();
+    TransactionCapsule transactionCapsule =
+        new TransactionCapsule(transferContract, ContractType.TransferContract);
+    transactionCapsule.setReference(blockCapsule.getNum(), blockCapsule.getBlockId().getBytes());
+
+    transactionCapsule.setExpiration(System.currentTimeMillis());
+    transactionCapsule.sign(ByteArray.fromHexString(Args.getLocalWitnesses().getPrivateKey()));
+
+    GrpcAPI.Return result = wallet.broadcastTransaction(transactionCapsule.getInstance());
+    Assert.assertEquals(response_code.TRANSACTION_EXPIRATION_ERROR, result.getCode());
+  }
+
+  @Test
   public void testTransactionApprovedList() {
+    blockCapsule = new BlockCapsule(
+        1,
+        Sha256Hash.wrap(ByteString.copyFrom(
+            ByteArray.fromHexString(
+                "0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b81"))),
+        1,
+        ByteString.copyFromUtf8("testAddress"));
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(blockCapsule.getNum());
+    dbManager.getDynamicPropertiesStore()
+        .saveLatestBlockHeaderTimestamp(blockCapsule.getTimeStamp());
+    dbManager.updateRecentBlock(blockCapsule);
+    initLocalWitness();
+
     byte[] address = Args.getLocalWitnesses()
         .getWitnessAccountAddress(CommonParameter.getInstance().isECKeyCryptoEngine());
     TransferContract transferContract = TransferContract.newBuilder()

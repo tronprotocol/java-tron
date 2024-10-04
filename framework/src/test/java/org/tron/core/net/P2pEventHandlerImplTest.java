@@ -12,10 +12,13 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
+import org.tron.core.net.message.TronMessage;
+import org.tron.core.net.message.adv.FetchInvDataMessage;
 import org.tron.core.net.message.adv.InventoryMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.service.statistics.PeerStatistics;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.Inventory.InventoryType;
 
 public class P2pEventHandlerImplTest {
 
@@ -107,5 +110,23 @@ public class P2pEventHandlerImplTest {
 
     Assert.assertEquals(300, count);
 
+  }
+
+  @Test
+  public void testUpdateLastInteractiveTime() throws Exception {
+    String[] a = new String[0];
+    Args.setParam(a, Constant.TESTNET_CONF);
+
+    PeerConnection peer = new PeerConnection();
+    P2pEventHandlerImpl p2pEventHandler = new P2pEventHandlerImpl();
+
+    Method method = p2pEventHandler.getClass()
+        .getDeclaredMethod("updateLastInteractiveTime", PeerConnection.class, TronMessage.class);
+    method.setAccessible(true);
+
+    long t1 = System.currentTimeMillis();
+    FetchInvDataMessage message = new FetchInvDataMessage(new ArrayList<>(), InventoryType.BLOCK);
+    method.invoke(p2pEventHandler, peer, message);
+    Assert.assertTrue(peer.getLastInteractiveTime() >= t1);
   }
 }

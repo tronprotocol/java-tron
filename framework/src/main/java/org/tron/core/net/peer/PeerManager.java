@@ -94,7 +94,11 @@ public class PeerManager {
   }
 
   public static synchronized void sortPeers() {
-    peers.sort(Comparator.comparingDouble(c -> c.getChannel().getAvgLatency()));
+    try {
+      peers.sort(Comparator.comparingLong(c -> c.getChannel().getAvgLatency()));
+    } catch (Exception e) {
+      logger.warn("Sort peers failed. {}", e.getMessage());
+    }
   }
 
   public static PeerConnection getPeerConnection(Channel channel) {
