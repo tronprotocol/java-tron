@@ -99,6 +99,36 @@ public class PeerConnectionTest {
   }
 
   @Test
+  public void testIsSyncIdle() {
+    PeerConnection peerConnection = new PeerConnection();
+    boolean f = peerConnection.isSyncIdle();
+    Assert.assertTrue(f);
+
+    Item item = new Item(Sha256Hash.ZERO_HASH, Protocol.Inventory.InventoryType.TRX);
+    Long time = System.currentTimeMillis();
+    peerConnection.getAdvInvRequest().put(item, time);
+    f = peerConnection.isSyncIdle();
+    Assert.assertTrue(f);
+
+    peerConnection.getAdvInvRequest().clear();
+    f = peerConnection.isSyncIdle();
+    Assert.assertTrue(f);
+
+    BlockCapsule.BlockId blockId = new BlockCapsule.BlockId();
+    peerConnection.getSyncBlockRequested().put(blockId, time);
+    f = peerConnection.isSyncIdle();
+    Assert.assertTrue(!f);
+
+    peerConnection.getSyncBlockRequested().clear();
+    f = peerConnection.isSyncIdle();
+    Assert.assertTrue(f);
+
+    peerConnection.setSyncChainRequested(new Pair<>(new LinkedList<>(), time));
+    f = peerConnection.isSyncIdle();
+    Assert.assertTrue(!f);
+  }
+
+  @Test
   public void testOnConnect() {
     PeerConnection peerConnection = new PeerConnection();
     SyncService syncService = mock(SyncService.class);
