@@ -333,6 +333,9 @@ public class CommonParameter {
   public boolean isOpenFullTcpDisconnect;
   @Getter
   @Setter
+  public int inactiveThreshold;
+  @Getter
+  @Setter
   public boolean nodeDetectEnable;
   @Getter
   @Setter

@@ -263,6 +263,10 @@ public class ChainBaseManager {
   @Setter
   private long lowestBlockNum = -1; // except num = 0.
 
+  @Getter
+  @Setter
+  private long latestSaveBlockTime;
+
   // for test only
   public List<ByteString> getWitnesses() {
     return witnessScheduleStore.getActiveWitnesses();
@@ -408,6 +412,7 @@ public class ChainBaseManager {
     this.lowestBlockNum = this.blockIndexStore.getLimitNumber(1, 1).stream()
             .map(BlockId::getNum).findFirst().orElse(0L);
     this.nodeType = getLowestBlockNum() > 1 ? NodeType.LITE : NodeType.FULL;
+    this.latestSaveBlockTime = System.currentTimeMillis();
   }
 
   public void shutdown() {
