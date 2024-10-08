@@ -22,6 +22,7 @@ import org.tron.core.net.peer.PeerManager;
 import org.tron.core.net.peer.PeerStatusCheck;
 import org.tron.core.net.service.adv.AdvService;
 import org.tron.core.net.service.effective.EffectiveCheckService;
+import org.tron.core.net.service.effective.ResilienceService;
 import org.tron.core.net.service.fetchblock.FetchBlockService;
 import org.tron.core.net.service.nodepersist.NodePersistService;
 import org.tron.core.net.service.relay.RelayService;
@@ -49,6 +50,9 @@ public class TronNetService {
 
   @Autowired
   private PeerStatusCheck peerStatusCheck;
+
+  @Autowired
+  private ResilienceService resilienceService;
 
   @Autowired
   private TransactionsMsgHandler transactionsMsgHandler;
@@ -88,6 +92,7 @@ public class TronNetService {
       advService.init();
       syncService.init();
       peerStatusCheck.init();
+      resilienceService.init();
       transactionsMsgHandler.init();
       fetchBlockService.init();
       nodePersistService.init();
@@ -110,6 +115,7 @@ public class TronNetService {
     nodePersistService.close();
     advService.close();
     syncService.close();
+    resilienceService.close();
     peerStatusCheck.close();
     transactionsMsgHandler.close();
     fetchBlockService.close();
@@ -177,7 +183,7 @@ public class TronNetService {
     config.setMaxConnectionsWithSameIp(parameter.getMaxConnectionsWithSameIp());
     config.setPort(parameter.getNodeListenPort());
     config.setNetworkId(parameter.getNodeP2pVersion());
-    config.setDisconnectionPolicyEnable(parameter.isOpenFullTcpDisconnect());
+    config.setDisconnectionPolicyEnable(false);
     config.setNodeDetectEnable(parameter.isNodeDetectEnable());
     config.setDiscoverEnable(parameter.isNodeDiscoveryEnable());
     if (StringUtils.isEmpty(config.getIp()) && hasIpv4Stack(NetUtil.getAllLocalAddress())) {

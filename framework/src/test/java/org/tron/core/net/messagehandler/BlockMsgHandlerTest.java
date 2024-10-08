@@ -1,26 +1,33 @@
 package org.tron.core.net.messagehandler;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
-
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Resource;
-
 import lombok.extern.slf4j.Slf4j;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.tron.common.BaseTest;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
+import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.adv.BlockMessage;
 import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
@@ -41,9 +48,8 @@ public class BlockMsgHandlerTest extends BaseTest {
    */
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"},
+    Args.setParam(new String[] {"--output-directory", dbPath(), "--debug"},
         Constant.TEST_CONF);
-
   }
 
   @Before
@@ -121,6 +127,44 @@ public class BlockMsgHandlerTest extends BaseTest {
       handler.processMessage(peer, msg);
     } catch (NullPointerException | P2pException e) {
       logger.error("error", e);
+    }
+  }
+
+  @Test
+  public void testProcessBlock() {
+    TronNetDelegate tronNetDelegate = Mockito.mock(TronNetDelegate.class);
+
+    try {
+      Field field = handler.getClass().getDeclaredField("tronNetDelegate");
+      field.setAccessible(true);
+      field.set(handler, tronNetDelegate);
+
+      BlockCapsule blockCapsule0 = new BlockCapsule(1,
+          Sha256Hash.wrap(ByteString
+              .copyFrom(ByteArray
+                  .fromHexString(
+                      "9938a342238077182498b464ac0292229938a342238077182498b464ac029222"))),
+          1234,
+          ByteString.copyFrom("1234567".getBytes()));
+
+      peer.getAdvInvReceive()
+          .put(new Item(blockCapsule0.getBlockId(), InventoryType.BLOCK),
+              System.currentTimeMillis());
+
+      Mockito.doReturn(true).when(tronNetDelegate).validBlock(any(BlockCapsule.class));
+      Mockito.doReturn(true).when(tronNetDelegate).containBlock(any(BlockId.class));
+      Mockito.doReturn(blockCapsule0.getBlockId()).when(tronNetDelegate).getHeadBlockId();
+      Mockito.doNothing().when(tronNetDelegate).processBlock(any(BlockCapsule.class), anyBoolean());
+      List<PeerConnection> peers = new ArrayList<>();
+      peers.add(peer);
+      Mockito.doReturn(peers).when(tronNetDelegate).getActivePeer();
+
+      Method method = handler.getClass()
+          .getDeclaredMethod("processBlock", PeerConnection.class, BlockCapsule.class);
+      method.setAccessible(true);
+      method.invoke(handler, peer, blockCapsule0);
+    } catch (Exception e) {
+      Assert.fail();
     }
   }
 }
