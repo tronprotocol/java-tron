@@ -19,6 +19,7 @@ import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
+import org.tron.core.net.message.sync.BlockInventoryMessage;
 import org.tron.core.net.message.sync.SyncBlockChainMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.p2p.connection.Channel;
@@ -56,7 +57,7 @@ public class SyncBlockChainMsgHandlerTest {
     try {
       handler.processMessage(peer, new SyncBlockChainMessage(new ArrayList<>()));
     } catch (P2pException e) {
-      Assert.assertTrue(e.getMessage().equals("SyncBlockChain blockIds is empty"));
+      Assert.assertEquals("SyncBlockChain blockIds is empty", e.getMessage());
     }
 
     List<BlockCapsule.BlockId> blockIds = new ArrayList<>();
@@ -66,7 +67,10 @@ public class SyncBlockChainMsgHandlerTest {
             "check", PeerConnection.class, SyncBlockChainMessage.class);
     method.setAccessible(true);
     boolean f = (boolean)method.invoke(handler, peer, message);
-    Assert.assertTrue(!f);
+    Assert.assertNotNull(message.getAnswerMessage());
+    Assert.assertNotNull(message.toString());
+    Assert.assertNotNull(((BlockInventoryMessage) message).getAnswerMessage());
+    Assert.assertFalse(f);
 
     Method method1 = handler.getClass().getDeclaredMethod(
         "getLostBlockIds", List.class, BlockId.class);
@@ -80,7 +84,7 @@ public class SyncBlockChainMsgHandlerTest {
     Method method2 = handler.getClass().getDeclaredMethod(
         "getBlockIds", Long.class, BlockId.class);
     method2.setAccessible(true);
-    List list = (List) method2.invoke(handler, 0L, new BlockCapsule.BlockId());
+    List<BlockId> list = (List<BlockId>) method2.invoke(handler, 0L, new BlockCapsule.BlockId());
     Assert.assertEquals(1, list.size());
   }
 
