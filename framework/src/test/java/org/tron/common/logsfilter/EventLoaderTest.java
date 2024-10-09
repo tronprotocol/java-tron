@@ -1,5 +1,9 @@
 package org.tron.common.logsfilter;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.Assert;
@@ -15,18 +19,31 @@ public class EventLoaderTest {
     config.setSendQueueLength(1000);
     config.setBindPort(5555);
     config.setUseNativeQueue(true);
+    config.setPluginPath("pluginPath");
+    config.setServerAddress("serverAddress");
+    config.setDbConfig("dbConfig");
+    assertEquals("pluginPath", config.getPluginPath());
+    assertEquals("serverAddress", config.getServerAddress());
+    assertEquals("dbConfig", config.getDbConfig());
 
     List<TriggerConfig> triggerConfigList = new ArrayList<>();
 
-    TriggerConfig blockTriggerConfig = new TriggerConfig();
-    blockTriggerConfig.setTriggerName("block");
-    blockTriggerConfig.setEnabled(true);
-    blockTriggerConfig.setTopic("block");
-    triggerConfigList.add(blockTriggerConfig);
+    TriggerConfig triggerConfig = new TriggerConfig();
+    triggerConfig.setTriggerName("block");
+    triggerConfig.setEnabled(true);
+    triggerConfig.setTopic("topic");
+    triggerConfig.setRedundancy(false);
+    triggerConfig.setEthCompatible(false);
+    triggerConfig.setSolidified(false);
+    assertFalse(triggerConfig.isRedundancy());
+    assertFalse(triggerConfig.isEthCompatible());
+    assertFalse(triggerConfig.isSolidified());
+    assertEquals("topic", triggerConfig.getTopic());
+    triggerConfigList.add(triggerConfig);
 
     config.setTriggerConfigList(triggerConfigList);
 
-    Assert.assertTrue(EventPluginLoader.getInstance().start(config));
+    assertTrue(EventPluginLoader.getInstance().start(config));
 
     EventPluginLoader.getInstance().stopPlugin();
   }

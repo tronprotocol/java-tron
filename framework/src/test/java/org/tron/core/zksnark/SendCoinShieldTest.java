@@ -1695,6 +1695,7 @@ public class SendCoinShieldTest extends BaseTest {
           System.out.println(
               "rk:" + ByteArray.toHexString(spendDescriptionCapsule.getRk().toByteArray()));
           spendDescriptionCapsule.setRk(fakeRk);
+          spendDescriptionCapsule.setRk(ByteString.copyFrom(fakeRk));
           return spendDescriptionCapsule;
         }
       };
@@ -1737,6 +1738,9 @@ public class SendCoinShieldTest extends BaseTest {
               .toHexString(spendDescriptionCapsule.getZkproof().toByteArray()));
 
           spendDescriptionCapsule.setZkproof(fakeProof);
+          spendDescriptionCapsule.setZkproof(ByteString.copyFrom(fakeProof));
+          spendDescriptionCapsule.setSpendAuthoritySignature(spendDescriptionCapsule
+              .getSpendAuthoritySignature());
           return spendDescriptionCapsule;
         }
       };
@@ -1775,6 +1779,7 @@ public class SendCoinShieldTest extends BaseTest {
           System.out.println(
               "nf:" + ByteArray.toHexString(spendDescriptionCapsule.getNullifier().toByteArray()));
           spendDescriptionCapsule.setNullifier(bytes);
+          spendDescriptionCapsule.setNullifier(ByteString.copyFrom(bytes));
           return spendDescriptionCapsule;
         }
       };
@@ -1811,6 +1816,9 @@ public class SendCoinShieldTest extends BaseTest {
           System.out.println(
               "bytes:" + ByteArray.toHexString(spendDescriptionCapsule.getAnchor().toByteArray()));
           spendDescriptionCapsule.setAnchor(bytes);
+          spendDescriptionCapsule.setAnchor(ByteString.copyFrom(bytes));
+          spendDescriptionCapsule.setValueCommitment(new byte[32]);
+          spendDescriptionCapsule.setValueCommitment(ByteString.copyFrom(new byte[32]));
           return spendDescriptionCapsule;
         }
       };
@@ -1827,5 +1835,14 @@ public class SendCoinShieldTest extends BaseTest {
         System.out.println("Done");
       }
     }
+
+    SpendDescriptionCapsule c = new SpendDescriptionCapsule(new byte[32]);
+    SpendDescriptionCapsule c1 = new SpendDescriptionCapsule(ByteString.copyFrom(new byte[32]),
+        ByteString.copyFrom(new byte[32]),
+        ByteString.copyFrom(new byte[32]),
+        ByteString.copyFrom(new byte[32]),
+        ByteString.copyFrom(new byte[32]),ByteString.copyFrom(new byte[32]));
+    Assert.assertNotNull(c);
+    Assert.assertNotNull(c1);
   }
 }
