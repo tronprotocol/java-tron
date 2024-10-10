@@ -43,7 +43,7 @@
 ## Table of Contents
 
 - [What’s TRON?](#whats-tron)
-- [Building the Source Code](#building-the-source)
+- [Building the Source Code](#building-the-source-code)
 - [Running java-tron](#running-java-tron)
 - [Community](#community)
 - [Contribution](#contribution)
@@ -51,7 +51,7 @@
 - [Integrity Check](#integrity-check)
 - [License](#license)
 
-## What's TRON?
+# What's TRON?
 
 TRON is a project dedicated to building the infrastructure for a truly decentralized Internet.
 
@@ -61,7 +61,7 @@ TRON is a project dedicated to building the infrastructure for a truly decentral
 
 TRON enables large-scale development and engagement. With over 2000 transactions per second (TPS), high concurrency, low latency, and massive data transmission. It is ideal for building decentralized entertainment applications. Free features and incentive systems allow developers to create premium app experiences for users.
 
-# Building the source
+# Building the Source Code
 
 Building java-tron requires `git` package and 64-bit version of `Oracle JDK 1.8` to be installed, other JDK versions are not supported yet. Make sure you operate on `Linux` and `MacOS` operating systems.
 
