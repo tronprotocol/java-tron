@@ -22,7 +22,7 @@ public class TransactionLogTriggerCapsuleTest {
 
   private static final String OWNER_ADDRESS = "41548794500882809695a8a687866e76d4271a1abc";
   private static final String RECEIVER_ADDRESS = "41abd4b9367799eaa3197fecb144eb71de1e049150";
-  private static final String CONTRACT_ADDRESS = "111111";
+  private static final String CONTRACT_ADDRESS = "A0B4750E2CD76E19DCA331BF5D089B71C3C2798548";
 
   public TransactionCapsule transactionCapsule;
   public BlockCapsule blockCapsule;

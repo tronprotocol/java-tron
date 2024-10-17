@@ -41,7 +41,7 @@ public class TransactionLogTriggerCapsuleMockTest {
 
   private static final String OWNER_ADDRESS = "41548794500882809695a8a687866e76d4271a1abc";
   private static final String RECEIVER_ADDRESS = "41abd4b9367799eaa3197fecb144eb71de1e049150";
-  private static final String CONTRACT_ADDRESS = "111111";
+  private static final String CONTRACT_ADDRESS = "A0B4750E2CD76E19DCA331BF5D089B71C3C2798548";
 
   private TransactionCapsule transactionCapsule;
   private BlockCapsule blockCapsule;
@@ -72,7 +72,7 @@ public class TransactionLogTriggerCapsuleMockTest {
 
     TransactionTrace trace = mock(TransactionTrace.class);
     ReceiptCapsule receiptCapsule = new ReceiptCapsule(Sha256Hash.ZERO_HASH);
-    RuntimeImpl runtime =  mock(RuntimeImpl.class);
+    RuntimeImpl runtime = mock(RuntimeImpl.class);
     List<Protocol.TransactionInfo.Log> logs = new ArrayList<>();
     logs.add(Protocol.TransactionInfo.Log.newBuilder()
         .setAddress(ByteString.copyFrom("address".getBytes()))
