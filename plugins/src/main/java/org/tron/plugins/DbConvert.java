@@ -49,13 +49,7 @@ public class DbConvert implements Callable<Integer> {
       description = "Output path for rocksdb. Default: ${DEFAULT-VALUE}")
   private File dest;
 
-  @CommandLine.Option(names = {"--safe"},
-      description = "In safe mode, read data from leveldb then put rocksdb."
-          + "If not, just change engine.properties from leveldb to rocksdb,"
-          + "rocksdb is compatible with leveldb for current version."
-          + "This may not be the case in the future."
-          + "Default: ${DEFAULT-VALUE}")
-  private boolean safe;
+  private final boolean safe = true;
 
   @CommandLine.Option(names = {"-h", "--help"})
   private boolean help;
