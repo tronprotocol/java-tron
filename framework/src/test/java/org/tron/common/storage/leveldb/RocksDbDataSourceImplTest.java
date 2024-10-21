@@ -456,6 +456,32 @@ public class RocksDbDataSourceImplTest {
   }
 
   @Test
+  public void testRocksDbOpenLevelDb2() {
+    String name = "test_openLevelDb2";
+    String output = Paths
+        .get(StorageUtils.getOutputDirectoryByDbName(name), CommonParameter
+            .getInstance().getStorage().getDbDirectory()).toString();
+    LevelDbDataSourceImpl levelDb = new LevelDbDataSourceImpl(
+        StorageUtils.getOutputDirectoryByDbName(name), name);
+    levelDb.initDB();
+    levelDb.putData(key1, value1);
+    levelDb.closeDB();
+    // delete engine.properties file to simulate the case that db.engine is not set.
+    File engineFile = Paths
+        .get(output, name, "engine.properties").toFile();
+    if (engineFile.exists()) {
+      engineFile.delete();
+    }
+    Assert.assertFalse(engineFile.exists());
+    RocksDbDataSourceImpl rocksDb = new RocksDbDataSourceImpl(output, name);
+    expectedException.expectMessage(
+        String.format(
+            "Cannot open LevelDB database '%s' with RocksDB engine."
+                + " Set db.engine=LEVELDB or use RocksDB database. ", name));
+    rocksDb.initDB();
+  }
+
+  @Test
   public void testNewInstance() {
     dataSourceTest.closeDB();
     RocksDbDataSourceImpl newInst = dataSourceTest.newInstance();

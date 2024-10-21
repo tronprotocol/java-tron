@@ -49,14 +49,6 @@ public class DbConvert implements Callable<Integer> {
       description = "Output path for rocksdb. Default: ${DEFAULT-VALUE}")
   private File dest;
 
-  @CommandLine.Option(names = {"--safe"},
-      description = "In safe mode, read data from leveldb then put rocksdb."
-          + "If not, just change engine.properties from leveldb to rocksdb,"
-          + "rocksdb is compatible with leveldb for current version."
-          + "This may not be the case in the future."
-          + "Default: ${DEFAULT-VALUE}")
-  private boolean safe;
-
   @CommandLine.Option(names = {"-h", "--help"})
   private boolean help;
 
@@ -95,12 +87,12 @@ public class DbConvert implements Callable<Integer> {
     final long time = System.currentTimeMillis();
     List<Converter> services = new ArrayList<>();
     files.forEach(f -> services.add(
-        new DbConverter(src.getPath(), dest.getPath(), f.getName(), safe)));
+        new DbConverter(src.getPath(), dest.getPath(), f.getName())));
     cpList.forEach(f -> services.add(
         new DbConverter(
             Paths.get(src.getPath(), DBUtils.CHECKPOINT_DB_V2).toString(),
             Paths.get(dest.getPath(), DBUtils.CHECKPOINT_DB_V2).toString(),
-            f.getName(), safe)));
+            f.getName())));
     List<String> fails = ProgressBar.wrap(services.stream(), "convert task").parallel().map(
         dbConverter -> {
           try {
@@ -140,15 +132,12 @@ public class DbConvert implements Callable<Integer> {
     private long srcDbValueSum = 0L;
     private long dstDbValueSum = 0L;
 
-    private boolean safe;
-
-    public DbConverter(String srcDir, String dstDir, String name, boolean safe) {
+    public DbConverter(String srcDir, String dstDir, String name) {
       this.srcDir = srcDir;
       this.dstDir = dstDir;
       this.dbName = name;
       this.srcDbPath = Paths.get(this.srcDir, name);
       this.dstDbPath = Paths.get(this.dstDir, name);
-      this.safe = safe;
     }
 
     @Override
@@ -178,23 +167,15 @@ public class DbConvert implements Callable<Integer> {
       FileUtils.createDirIfNotExists(dstDir);
 
       logger.info("Convert database {} start", this.dbName);
-      if (safe) {
-        convertLevelToRocks();
-        compact();
-      } else {
-        FileUtils.copyDir(Paths.get(srcDir), Paths.get(dstDir), dbName);
-      }
+      convertLevelToRocks();
+      compact();
+
       boolean result = check() && createEngine(dstDbPath.toString());
       long etime = System.currentTimeMillis();
 
       if (result) {
-        if (safe) {
-          logger.info("Convert database {} successful end with {} key-value {} minutes",
-              this.dbName, this.srcDbKeyCount, (etime - startTime) / 1000.0 / 60);
-        } else {
-          logger.info("Convert database {} successful end  {} minutes",
-              this.dbName, (etime - startTime) / 1000.0 / 60);
-        }
+        logger.info("Convert database {} successful end with {} key-value {} minutes",
+            this.dbName, this.srcDbKeyCount, (etime - startTime) / 1000.0 / 60);
 
       } else {
         logger.info("Convert database {} failure", this.dbName);
@@ -310,9 +291,6 @@ public class DbConvert implements Callable<Integer> {
     }
 
     private boolean check() throws RocksDBException {
-      if (!safe) {
-        return true;
-      }
       try (
           RocksDB rocks  = DBUtils.newRocksDbReadOnly(this.dstDbPath);
           org.rocksdb.ReadOptions r = new org.rocksdb.ReadOptions().setFillCache(false);
