@@ -196,7 +196,12 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   public boolean checkOrInitEngine() {
     String dir = getDbPath().toString();
     String enginePath = dir + File.separator + "engine.properties";
-
+    File currentFile = new File(dir, "CURRENT");
+    if (currentFile.exists() && !Paths.get(enginePath).toFile().exists()) {
+      // if the CURRENT file exists, but the engine.properties file does not exist, it is LevelDB
+      logger.error(" You are trying to open a LevelDB database with RocksDB engine.");
+      return false;
+    }
     if (FileUtil.createDirIfNotExists(dir)) {
       if (!FileUtil.createFileIfNotExists(enginePath)) {
         return false;

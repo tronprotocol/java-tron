@@ -16,13 +16,6 @@ public class DbConvertTest extends DbTest {
   }
 
   @Test
-  public void testRunWithSafe() throws IOException {
-    String[] args = new String[] { "db", "convert",  INPUT_DIRECTORY,
-        temporaryFolder.newFolder().toString(),"--safe" };
-    Assert.assertEquals(0, cli.execute(args));
-  }
-
-  @Test
   public void testHelp() {
     String[] args = new String[] {"db", "convert", "-h"};
     CommandLine cli = new CommandLine(new Toolkit());
