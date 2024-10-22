@@ -135,4 +135,32 @@ public class PeerManagerTest {
     Assert.assertEquals(2, peers.size());
   }
 
+  @Test
+  public void testSortPeers() throws Exception {
+    PeerConnection p1 = new PeerConnection();
+    PeerConnection p2 = new PeerConnection();
+
+    List<PeerConnection> peers = new ArrayList<>();
+    peers.add(p1);
+    peers.add(p2);
+
+    Field field = PeerManager.class.getDeclaredField("peers");
+    field.setAccessible(true);
+    field.set(PeerManager.class, Collections.synchronizedList(peers));
+
+    PeerManager.sortPeers();
+
+    Channel c1 = new Channel();
+    c1.updateAvgLatency(100000L);
+    ReflectUtils.setFieldValue(p1, "channel", c1);
+
+    Channel c2 = new Channel();
+    c2.updateAvgLatency(1000L);
+    ReflectUtils.setFieldValue(p2, "channel", c2);
+
+    PeerManager.sortPeers();
+
+    Assert.assertEquals(PeerManager.getPeers().get(0), p2);
+  }
+
 }

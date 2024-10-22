@@ -81,6 +81,10 @@ public class PeerConnection {
 
   @Getter
   @Setter
+  private volatile long lastInteractiveTime;
+
+  @Getter
+  @Setter
   private TronState tronState = TronState.INIT;
 
   @Autowired
@@ -159,6 +163,7 @@ public class PeerConnection {
       this.isRelayPeer = true;
     }
     this.nodeStatistics = TronStatsManager.getNodeStatistics(channel.getInetAddress());
+    lastInteractiveTime = System.currentTimeMillis();
   }
 
   public void setBlockBothHave(BlockId blockId) {
@@ -167,7 +172,11 @@ public class PeerConnection {
   }
 
   public boolean isIdle() {
-    return advInvRequest.isEmpty() && syncBlockRequested.isEmpty() && syncChainRequested == null;
+    return advInvRequest.isEmpty() && isSyncIdle();
+  }
+
+  public boolean isSyncIdle() {
+    return syncBlockRequested.isEmpty() && syncChainRequested == null;
   }
 
   public void sendMessage(Message message) {
@@ -221,11 +230,13 @@ public class PeerConnection {
             + "syncBlockRequestedSize:%d\n"
             + "remainNum:%d\n"
             + "syncChainRequested:%d\n"
+            + "inactiveSeconds:%d\n"
             + "blockInProcess:%d\n",
         channel.getInetSocketAddress(),
         (now - channel.getStartTime()) / Constant.ONE_THOUSAND,
         channel.getAvgLatency(),
-        fastForwardBlock != null ? fastForwardBlock.getNum() : blockBothHave.getNum(),
+        fastForwardBlock != null ? fastForwardBlock.getNum() : String.format("%d [%ds]",
+            blockBothHave.getNum(), (now - blockBothHaveUpdateTime) / Constant.ONE_THOUSAND),
         isNeedSyncFromPeer(),
         isNeedSyncFromUs(),
         syncBlockToFetch.size(),
@@ -234,6 +245,7 @@ public class PeerConnection {
         remainNum,
         requested == null ? 0 : (now - requested.getValue())
                 / Constant.ONE_THOUSAND,
+        (now - lastInteractiveTime) / Constant.ONE_THOUSAND,
         syncBlockInProcess.size());
   }
 

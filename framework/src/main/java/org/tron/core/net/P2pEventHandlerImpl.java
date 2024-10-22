@@ -19,6 +19,7 @@ import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.PbftMessageFactory;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.message.TronMessageFactory;
+import org.tron.core.net.message.adv.FetchInvDataMessage;
 import org.tron.core.net.message.adv.InventoryMessage;
 import org.tron.core.net.message.base.DisconnectMessage;
 import org.tron.core.net.message.handshake.HelloMessage;
@@ -38,7 +39,7 @@ import org.tron.core.net.service.keepalive.KeepAliveService;
 import org.tron.p2p.P2pEventHandler;
 import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol;
-import org.tron.protos.Protocol.ReasonCode;
+import org.tron.protos.Protocol.Inventory.InventoryType;
 
 @Slf4j(topic = "net")
 @Component
@@ -205,6 +206,7 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
         default:
           throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE, msg.getType().toString());
       }
+      updateLastInteractiveTime(peer, msg);
     } catch (Exception e) {
       processException(peer, msg, e);
     } finally {
@@ -217,6 +219,27 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
                   costs / Metrics.MILLISECONDS_PER_SECOND, type.name());
         }
       }
+    }
+  }
+
+  private void updateLastInteractiveTime(PeerConnection peer, TronMessage msg) {
+    MessageTypes type = msg.getType();
+
+    boolean flag = false;
+    switch (type) {
+      case SYNC_BLOCK_CHAIN:
+      case BLOCK_CHAIN_INVENTORY:
+      case BLOCK:
+        flag = true;
+        break;
+      case FETCH_INV_DATA:
+        flag = ((FetchInvDataMessage) msg).getInventoryType().equals(InventoryType.BLOCK);
+        break;
+      default:
+        break;
+    }
+    if (flag) {
+      peer.setLastInteractiveTime(System.currentTimeMillis());
     }
   }
 
