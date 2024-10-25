@@ -162,7 +162,7 @@ Get the latest released version.
 sh start.sh --release --run
 ```
 
-Following file structure will be generated after executed the above command and the `FullNode.jar` will be started. 
+Following file structure will be generated after executing the above command and the `FullNode.jar` will be started. 
 
 ```
 ├── ...
