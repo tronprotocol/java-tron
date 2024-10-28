@@ -68,7 +68,7 @@ public class FetchInvDataMsgHandlerTest {
     List<Sha256Hash> list = new LinkedList<>();
     list.add(Sha256Hash.ZERO_HASH);
     FetchInvDataMessage msg =
-      new FetchInvDataMessage(list, Protocol.Inventory.InventoryType.TRX);
+        new FetchInvDataMessage(list, Protocol.Inventory.InventoryType.TRX);
 
     boolean isAdv = fetchInvDataMsgHandler.isAdvInv(null, msg);
     Assert.assertTrue(isAdv);
