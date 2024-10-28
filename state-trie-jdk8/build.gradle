@@ -29,6 +29,7 @@ dependencies {
     compile group: 'org.immutables', name: 'value', version: '2.9.3'
     compile group: 'org.immutables', name: 'value-annotations', version: '2.9.3'
     compile group: 'org.rocksdb', name: 'rocksdbjni', version: '7.7.3'
+    implementation group: 'com.google.guava', name: 'guava', version: '32.0.1-jre'
 
 
     testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: '5.9.1'
