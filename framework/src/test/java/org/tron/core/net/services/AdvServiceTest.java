@@ -4,6 +4,7 @@ import static org.mockito.Mockito.mock;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -105,12 +106,28 @@ public class AdvServiceTest {
   }
 
   private void testTrxBroadcast() {
-    Protocol.Transaction trx = Protocol.Transaction.newBuilder().build();
+    Protocol.Transaction trx = Protocol.Transaction.newBuilder()
+        .setRawData(
+        Protocol.Transaction.raw.newBuilder()
+            .setRefBlockNum(1)
+            .setExpiration(System.currentTimeMillis() + 3000).build()).build();
     CommonParameter.getInstance().setValidContractProtoThreadNum(1);
     TransactionMessage msg = new TransactionMessage(trx);
     service.broadcast(msg);
     Item item = new Item(msg.getMessageId(), InventoryType.TRX);
     Assert.assertNotNull(service.getMessage(item));
+
+    Protocol.Transaction expiredTrx = Protocol.Transaction.newBuilder()
+        .setRawData(
+            Protocol.Transaction.raw.newBuilder()
+            .setRefBlockNum(1)
+            .setExpiration(System.currentTimeMillis() - 1).build())
+        .build();
+    CommonParameter.getInstance().setValidContractProtoThreadNum(1);
+    TransactionMessage msg1 = new TransactionMessage(expiredTrx);
+    service.broadcast(msg);
+    Item item1 = new Item(msg1.getMessageId(), InventoryType.TRX);
+    Assert.assertNull(service.getMessage(item1));
   }
 
 }

@@ -1,12 +1,10 @@
 allprojects {
     version = "1.0.0"
-    apply plugin: "java"
+    apply plugin: "java-library"
 }
 
 subprojects {
-    apply plugin: "java"
     apply plugin: "jacoco"
-    apply plugin: "maven"
     apply plugin: "maven-publish"
 
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -36,18 +34,17 @@ subprojects {
     }
 
     dependencies {
-        compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
-        compile group: 'org.slf4j', name: 'jcl-over-slf4j', version: '1.7.25'
-        compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.9'
-        compile group: 'com.google.guava', name: 'guava', version: '30.1-jre'
-        compile "com.google.code.findbugs:jsr305:3.0.0"
-        compile group: 'org.springframework', name: 'spring-context', version: '5.3.18'
-        compile group: 'org.springframework', name: 'spring-tx', version: '5.3.18'
-        compile "org.apache.commons:commons-lang3:3.4"
-        compile group: 'org.apache.commons', name: 'commons-math', version: '2.2'
-        compile "org.apache.commons:commons-collections4:4.1"
-        compile group: 'joda-time', name: 'joda-time', version: '2.3'
-        compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.69'
+        implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
+        implementation group: 'org.slf4j', name: 'jcl-over-slf4j', version: '1.7.25'
+        implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.9'
+        implementation "com.google.code.findbugs:jsr305:3.0.0"
+        implementation group: 'org.springframework', name: 'spring-context', version: '5.3.18'
+        implementation group: 'org.springframework', name: 'spring-tx', version: '5.3.18'
+        implementation "org.apache.commons:commons-lang3:3.4"
+        implementation group: 'org.apache.commons', name: 'commons-math', version: '2.2'
+        implementation "org.apache.commons:commons-collections4:4.1"
+        implementation group: 'joda-time', name: 'joda-time', version: '2.3'
+        implementation group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.69'
 
         compileOnly 'org.projectlombok:lombok:1.18.12'
         annotationProcessor 'org.projectlombok:lombok:1.18.12'
@@ -55,24 +52,23 @@ subprojects {
         testAnnotationProcessor 'org.projectlombok:lombok:1.18.12'
 
         testImplementation group: 'junit', name: 'junit', version: '4.13.2'
-        testImplementation "org.mockito:mockito-core:2.13.0"
+        testImplementation "org.mockito:mockito-core:3.10.0"
+        testImplementation group: 'org.powermock', name: 'powermock-module-junit4', version: '2.0.9'
+        testImplementation group: 'org.powermock', name: 'powermock-api-mockito2', version: '2.0.9'
+
     }
 
     task sourcesJar(type: Jar, dependsOn: classes) {
         classifier = "sources"
         from sourceSets.main.allSource
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE // allow duplicates
     }
 
 
     tasks.withType(AbstractArchiveTask) {
         preserveFileTimestamps = false
         reproducibleFileOrder = true
-    }
-
-    configurations.all {
-        resolutionStrategy {
-            force group: 'com.google.guava', name: 'guava', version: '30.1-jre'
-        }
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE // allow duplicates
     }
 }
 

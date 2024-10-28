@@ -1,12 +1,15 @@
 plugins {
+    id "org.gradle.test-retry" version "1.5.9"
     id "org.sonarqube" version "2.6"
     id "com.gorylenko.gradle-git-properties" version "2.4.1"
+    id "io.github.surpsg.offlins" version "0.3.0"
 }
 
 gitProperties.failOnNoGitDirectory = false;
 
 apply plugin: 'application'
 apply plugin: 'checkstyle'
+apply plugin: "io.github.surpsg.offlins"
 
 mainClassName = 'org.tron.program.FullNode'
 
@@ -15,7 +18,7 @@ def versions = [
 ]
 
 jacoco {
-    toolVersion = "0.8.1"
+    toolVersion = "0.8.8"
 }
 
 
@@ -38,38 +41,38 @@ task version(type: Exec) {
 
 dependencies {
     //local libraries
-    compile fileTree(dir: 'libs', include: '*.jar')
+    implementation fileTree(dir: 'libs', include: '*.jar')
     // end local libraries
-    testCompile group: 'org.hamcrest', name: 'hamcrest-junit', version: '1.0.0.1'
-    testCompile group: 'com.github.stefanbirkner', name: 'system-rules', version: '1.16.0'
+    testImplementation group: 'org.hamcrest', name: 'hamcrest-junit', version: '1.0.0.1'
+    testImplementation group: 'com.github.stefanbirkner', name: 'system-rules', version: '1.16.0'
 
-    compile group: 'com.google.inject', name: 'guice', version: '4.1.0'
-    compile group: 'io.dropwizard.metrics', name: 'metrics-core', version: '3.1.2'
-    compile group: 'com.github.davidb', name: 'metrics-influxdb', version: '0.8.2'
-    compile group: 'com.carrotsearch', name: 'java-sizeof', version: '0.0.5'
+    implementation group: 'com.google.inject', name: 'guice', version: '4.1.0'
+    implementation group: 'io.dropwizard.metrics', name: 'metrics-core', version: '3.1.2'
+    implementation group: 'com.github.davidb', name: 'metrics-influxdb', version: '0.8.2'
+    implementation group: 'com.carrotsearch', name: 'java-sizeof', version: '0.0.5'
     // http
-    compile 'org.eclipse.jetty:jetty-server:9.4.53.v20231009'
-    compile 'org.eclipse.jetty:jetty-servlet:9.4.53.v20231009'
-    compile 'com.alibaba:fastjson:1.2.83'
+    implementation 'org.eclipse.jetty:jetty-server:9.4.53.v20231009'
+    implementation 'org.eclipse.jetty:jetty-servlet:9.4.53.v20231009'
+    implementation 'com.alibaba:fastjson:1.2.83'
     // end http
 
     // https://mvnrepository.com/artifact/com.github.briandilley.jsonrpc4j/jsonrpc4j
-    compile group: 'com.github.briandilley.jsonrpc4j', name: 'jsonrpc4j', version: '1.6'
+    implementation group: 'com.github.briandilley.jsonrpc4j', name: 'jsonrpc4j', version: '1.6'
 
     // https://mvnrepository.com/artifact/javax.portlet/portlet-api
     compileOnly group: 'javax.portlet', name: 'portlet-api', version: '3.0.1'
 
-    compile "io.vavr:vavr:0.9.2"
-    compile group: 'org.pf4j', name: 'pf4j', version: '2.5.0'
+    implementation "io.vavr:vavr:0.9.2"
+    implementation group: 'org.pf4j', name: 'pf4j', version: '2.5.0'
 
     testImplementation group: 'org.springframework', name: 'spring-test', version: '5.2.0.RELEASE'
     testImplementation group: 'org.springframework', name: 'spring-web', version: '5.2.0.RELEASE'
 
-    compile group: 'org.zeromq', name: 'jeromq', version: '0.5.3'
-    compile project(":chainbase")
-    compile project(":protocol")
-    compile project(":actuator")
-    compile project(":consensus")
+    implementation group: 'org.zeromq', name: 'jeromq', version: '0.5.3'
+    api project(":chainbase")
+    api project(":protocol")
+    api project(":actuator")
+    api project(":consensus")
 }
 
 check.dependsOn 'lint'
@@ -113,13 +116,19 @@ run {
 }
 
 test {
+    retry {
+        maxRetries = 5
+        maxFailures = 20
+    }
     testLogging {
         exceptionFormat = 'full'
     }
+    /*
     jacoco {
         destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
         classDumpDir = file("$buildDir/jacoco/classpathdumps")
     }
+    */
     if (isWindows()) {
         exclude '**/ShieldedTransferActuatorTest.class'
         exclude '**/BackupDbUtilTest.class'
@@ -136,6 +145,7 @@ test {
     }
 }
 
+/*
 jacocoTestReport {
     reports {
         xml.enabled true
@@ -144,6 +154,26 @@ jacocoTestReport {
     }
     getExecutionData().setFrom(fileTree('../framework/build/jacoco').include("**.exec"))
 }
+ */
+
+offlinsCoverage {
+    jacocoVersion = '0.8.8' // Optional. By default `0.8.8`
+
+    reports {
+        html.enabled.set true // Optional. By default `true`
+        html.location.set project.file('build/reports/jacoco/test/html') // Optional. By default `build/reports/jacoco/html`
+
+        xml.enabled.set true // Optional. By default `false`
+        xml.location.set project.file('build/reports/jacoco/test/jacocoTestReport.xml')
+        // Optional. By default `build/reports/jacoco/coverageReport.xml`
+
+        csv.enabled.set true // Optional. By default `false`
+        csv.location.set project.file('build/reports/jacoco/test/csvCoverage.csv')
+        // Optional. By default `build/reports/jacoco/coverageReport.csv`
+    }
+}
+
+
 
 def binaryRelease(taskName, jarName, mainClass) {
     return tasks.create("${taskName}", Jar) {
@@ -154,7 +184,7 @@ def binaryRelease(taskName, jarName, mainClass) {
         }
 
         from {
-            configurations.compile.collect {
+            configurations.runtimeClasspath.collect {
                 it.isDirectory() ? it : zipTree(it)
             }
         }
@@ -179,7 +209,7 @@ def createScript(project, mainClass, name) {
         outputDir = new File(project.buildDir, 'scripts')
         mainClassName = mainClass
         applicationName = name
-        classpath = project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtime
+        classpath = project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtimeClasspath
 //        defaultJvmOpts = ['-XX:+UseConcMarkSweepGC',
 //                          '-XX:+PrintGCDetails',
 //                          '-Xloggc:./gc.log',

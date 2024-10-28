@@ -198,6 +198,8 @@ public class Constant {
 
   public static final String NODE_IS_OPEN_FULL_TCP_DISCONNECT = "node.isOpenFullTcpDisconnect";
 
+  public static final String NODE_INACTIVE_THRESHOLD = "node.inactiveThreshold";
+
   public static final String NODE_DETECT_ENABLE = "node.nodeDetectEnable";
 
   public static final String NODE_MAX_TRANSACTION_PENDING_SIZE = "node.maxTransactionPendingSize";
