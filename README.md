@@ -91,13 +91,13 @@ Minimum:
 
 - CPU with 8 cores
 - 16GB RAM
-- 2TB free storage space to sync the Mainnet
+- 3TB free storage space to sync the Mainnet
 
 Recommended:
 
 - CPU with 16+ cores(32+ cores for a super representative)
 - 32GB+ RAM(64GB+ for a super representative)
-- High Performance SSD with at least 2.5TB free space
+- High Performance SSD with at least 4TB free space
 - 100+ MB/s download Internet service
 
 ## Running a full node for mainnet
