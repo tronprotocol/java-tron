@@ -1,0 +1,54 @@
+import org.gradle.nativeplatform.platform.internal.Architectures
+
+description = "platform – a distributed consensus arithmetic for blockchain."
+
+
+static def isX86() {
+    def arch = System.getProperty("os.arch").toLowerCase()
+    return Architectures.X86_64.isAlias(arch) || Architectures.X86.isAlias(arch)
+}
+
+static def isArm64() {
+    def arch = System.getProperty("os.arch").toLowerCase()
+    return new Architectures.KnownArchitecture("arm64", "aarch64").isAlias(arch)
+}
+
+if (isX86()) {
+    ext {
+        leveldbGroup = "org.fusesource.leveldbjni"
+        leveldbName = "leveldbjni-all"
+        leveldbVersion = "1.8"
+        rocksDBVersion = "5.15.10"
+    }
+} else if (isArm64()) {
+    ext {
+        leveldbGroup = "com.halibobor"
+        leveldbName = "leveldbjni-all"
+        leveldbVersion = "1.18.3"
+        rocksDBVersion = "7.7.3"
+    }
+} else {
+    throw new GradleException("Unsupported architecture: ${System.getProperty("os.arch")}")
+}
+
+sourceSets {
+    x86 {
+        java {
+            srcDirs 'src/main/java/x86', 'src/main/java/common'
+        }
+    }
+    arm {
+        java {
+            srcDirs 'src/main/java/arm', 'src/main/java/common'
+        }
+    }
+}
+
+dependencies {
+    api group: leveldbGroup, name: leveldbName, version: leveldbVersion
+    api group: 'org.rocksdb', name: 'rocksdbjni', version: rocksDBVersion
+}
+
+tasks.withType(JavaCompile).configureEach {
+    source = isX86() ? sourceSets.x86.java : sourceSets.arm.java
+}

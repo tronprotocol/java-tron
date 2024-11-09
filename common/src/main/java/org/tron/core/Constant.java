@@ -24,6 +24,10 @@ public class Constant {
   public static final int NODE_TYPE_FULL_NODE = 0;
   public static final int NODE_TYPE_LIGHT_NODE = 1;
 
+  // DB NAME
+  public static final String MARKET_PAIR_PRICE_TO_ORDER = "market_pair_price_to_order";
+  // DB NAME
+
   // config for transaction
   public static final long TRANSACTION_MAX_BYTE_SIZE = 500 * 1_024L;
   public static final int CREATE_ACCOUNT_TRANSACTION_MIN_BYTE_SIZE = 500;
