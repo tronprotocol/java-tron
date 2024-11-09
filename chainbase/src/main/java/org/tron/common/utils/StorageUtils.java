@@ -52,9 +52,15 @@ public class StorageUtils {
   }
 
   public static Options getOptionsByDbName(String dbName) {
+    Options options;
     if (hasProperty(dbName)) {
-      return getProperty(dbName).getDbOptions();
+      options = getProperty(dbName).getDbOptions();
+    } else {
+      options = CommonParameter.getInstance().getStorage().newDefaultDbOptions(dbName);
     }
-    return CommonParameter.getInstance().getStorage().newDefaultDbOptions(dbName);
+    if ("market_pair_price_to_order".equals(dbName)) {
+      options.comparator(new MarketOrderPriceComparatorForLevelDB());
+    }
+    return options;
   }
 }
