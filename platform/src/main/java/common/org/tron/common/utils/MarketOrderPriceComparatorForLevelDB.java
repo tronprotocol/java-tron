@@ -1,7 +1,5 @@
 package org.tron.common.utils;
 
-import org.tron.core.capsule.utils.MarketUtils;
-
 public class MarketOrderPriceComparatorForLevelDB implements org.iq80.leveldb.DBComparator {
 
   @Override
@@ -26,7 +24,7 @@ public class MarketOrderPriceComparatorForLevelDB implements org.iq80.leveldb.DB
    */
   @Override
   public int compare(byte[] o1, byte[] o2) {
-    return MarketUtils.comparePriceKey(o1, o2);
+    return MarketComparator.comparePriceKey(o1, o2);
   }
 
 }

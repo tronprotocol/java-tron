@@ -34,7 +34,7 @@ import org.rocksdb.RocksIterator;
 import org.rocksdb.Status;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.MarketOrderPriceComparatorForLevelDB;
-import org.tron.common.utils.MarketOrderPriceComparatorForRockDB;
+import org.tron.common.utils.MarketOrderPriceComparatorForRocksDB;
 import org.tron.common.utils.PropUtil;
 
 @Slf4j
@@ -195,7 +195,7 @@ public class DBConvert implements Callable<Boolean> {
     options.setLevel0FileNumCompactionTrigger(4);
     options.setLevelCompactionDynamicLevelBytes(true);
     if ("market_pair_price_to_order".equalsIgnoreCase(this.dbName)) {
-      options.setComparator(new MarketOrderPriceComparatorForRockDB(new ComparatorOptions()));
+      options.setComparator(new MarketOrderPriceComparatorForRocksDB(new ComparatorOptions()));
     }
     final BlockBasedTableConfig tableCfg;
     options.setTableFormatConfig(tableCfg = new BlockBasedTableConfig());
