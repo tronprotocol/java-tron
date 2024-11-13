@@ -141,7 +141,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
 
   private static final String JSON_ERROR = "invalid json request";
   private static final String BLOCK_NUM_ERROR = "invalid block number";
-  private static final String TAG_NOT_SUPPORT_ERROR = "TAG [earliest | pending] not supported";
+  private static final String TAG_NOT_SUPPORT_ERROR =
+      "TAG [earliest | pending | finalized] not supported";
   private static final String QUANTITY_NOT_SUPPORT_ERROR =
       "QUANTITY not supported, just support TAG as latest";
   private static final String NO_BLOCK_HEADER = "header not found";
@@ -353,7 +354,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   public String getTrxBalance(String address, String blockNumOrTag)
       throws JsonRpcInvalidParamsException {
     if (EARLIEST_STR.equalsIgnoreCase(blockNumOrTag)
-        || PENDING_STR.equalsIgnoreCase(blockNumOrTag)) {
+        || PENDING_STR.equalsIgnoreCase(blockNumOrTag)
+        || FINALIZED_STR.equalsIgnoreCase(blockNumOrTag)) {
       throw new JsonRpcInvalidParamsException(TAG_NOT_SUPPORT_ERROR);
     } else if (LATEST_STR.equalsIgnoreCase(blockNumOrTag)) {
       byte[] addressData = addressCompatibleToByteArray(address);
@@ -490,7 +492,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   public String getStorageAt(String address, String storageIdx, String blockNumOrTag)
       throws JsonRpcInvalidParamsException {
     if (EARLIEST_STR.equalsIgnoreCase(blockNumOrTag)
-        || PENDING_STR.equalsIgnoreCase(blockNumOrTag)) {
+        || PENDING_STR.equalsIgnoreCase(blockNumOrTag)
+        || FINALIZED_STR.equalsIgnoreCase(blockNumOrTag)) {
       throw new JsonRpcInvalidParamsException(TAG_NOT_SUPPORT_ERROR);
     } else if (LATEST_STR.equalsIgnoreCase(blockNumOrTag)) {
       byte[] addressByte = addressCompatibleToByteArray(address);
@@ -525,7 +528,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   public String getABIOfSmartContract(String contractAddress, String blockNumOrTag)
       throws JsonRpcInvalidParamsException {
     if (EARLIEST_STR.equalsIgnoreCase(blockNumOrTag)
-        || PENDING_STR.equalsIgnoreCase(blockNumOrTag)) {
+        || PENDING_STR.equalsIgnoreCase(blockNumOrTag)
+        || FINALIZED_STR.equalsIgnoreCase(blockNumOrTag)) {
       throw new JsonRpcInvalidParamsException(TAG_NOT_SUPPORT_ERROR);
     } else if (LATEST_STR.equalsIgnoreCase(blockNumOrTag)) {
       byte[] addressData = addressCompatibleToByteArray(contractAddress);
@@ -825,7 +829,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     }
 
     if (EARLIEST_STR.equalsIgnoreCase(blockNumOrTag)
-        || PENDING_STR.equalsIgnoreCase(blockNumOrTag)) {
+        || PENDING_STR.equalsIgnoreCase(blockNumOrTag)
+        || FINALIZED_STR.equalsIgnoreCase(blockNumOrTag)) {
       throw new JsonRpcInvalidParamsException(TAG_NOT_SUPPORT_ERROR);
     } else if (LATEST_STR.equalsIgnoreCase(blockNumOrTag)) {
       byte[] addressData = addressCompatibleToByteArray(transactionCall.getFrom());

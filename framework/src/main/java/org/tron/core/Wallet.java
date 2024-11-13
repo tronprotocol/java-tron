@@ -685,14 +685,18 @@ public class Wallet {
     }
   }
 
-  public Block getFinalizedBlock() {
+  public Block getSolidBlock() {
     try {
-      long blockNum = chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
+      long blockNum = getSolidBlockNum();
       return chainBaseManager.getBlockByNum(blockNum).getInstance();
     } catch (StoreException e) {
       logger.info(e.getMessage());
       return null;
     }
+  }
+
+  public long getSolidBlockNum() {
+      return chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
   }
 
   public BlockCapsule getBlockCapsuleByNum(long blockNum) {
@@ -723,7 +727,7 @@ public class Wallet {
     } else if (LATEST_STR.equalsIgnoreCase(id)) {
       return getNowBlock();
     } else if (FINALIZED_STR.equalsIgnoreCase(id)) {
-      return getFinalizedBlock();
+      return getSolidBlock();
     } else if (PENDING_STR.equalsIgnoreCase(id)) {
       throw new JsonRpcInvalidParamsException(TAG_PENDING_SUPPORT_ERROR);
     } else {

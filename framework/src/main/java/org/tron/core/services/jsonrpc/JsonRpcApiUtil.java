@@ -1,6 +1,7 @@
 package org.tron.core.services.jsonrpc;
 
 import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.EARLIEST_STR;
+import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.FINALIZED_STR;
 import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.LATEST_STR;
 import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.PENDING_STR;
 import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.TAG_PENDING_SUPPORT_ERROR;
@@ -514,7 +515,8 @@ public class JsonRpcApiUtil {
     return -1;
   }
 
-  public static long getByJsonBlockId(String blockNumOrTag) throws JsonRpcInvalidParamsException {
+  public static long getByJsonBlockId(String blockNumOrTag, Wallet wallet)
+      throws JsonRpcInvalidParamsException {
     if (PENDING_STR.equalsIgnoreCase(blockNumOrTag)) {
       throw new JsonRpcInvalidParamsException(TAG_PENDING_SUPPORT_ERROR);
     }
@@ -522,6 +524,8 @@ public class JsonRpcApiUtil {
       return -1;
     } else if (EARLIEST_STR.equalsIgnoreCase(blockNumOrTag)) {
       return 0;
+    } else if (FINALIZED_STR.equalsIgnoreCase(blockNumOrTag)) {
+      return wallet.getSolidBlockNum();
     } else {
       return ByteArray.jsonHexToLong(blockNumOrTag);
     }
