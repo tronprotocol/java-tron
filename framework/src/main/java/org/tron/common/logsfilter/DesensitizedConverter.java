@@ -27,18 +27,17 @@ public class DesensitizedConverter extends ClassicConverter {
   }
 
   public String desensitization(String content) {
-    if (sensitiveCache.size() > 0) {
-      Matcher matcher = pattern.matcher(content);
-      while (matcher.find()) {
-        String key = matcher.group();
-        String value = sensitiveCache.getIfPresent(key);
-        if (value != null) {
-          content = content.replaceAll(key, value);
-        } else {
-          content = content.replaceAll(key, "unknown");
-        }
+    Matcher matcher = pattern.matcher(content);
+    while (matcher.find()) {
+      String key = matcher.group();
+      String value = sensitiveCache.getIfPresent(key);
+      if (value != null) {
+        content = content.replaceAll(key, value);
+      } else {
+        content = content.replaceAll(key, "unknown");
       }
     }
+
     return content;
   }
 
