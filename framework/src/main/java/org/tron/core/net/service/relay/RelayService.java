@@ -161,7 +161,7 @@ public class RelayService {
         TronNetService.getP2pConfig().getTrustNodes().add(channel.getInetAddress());
         byte[] addressByte = ByteUtil.merge(new byte[] {DecodeUtil.addressPreFixByte},
             msg.getAddress().toByteArray());
-        DesensitizedConverter.addSensitive(channel.getInetAddress().toString(),
+        DesensitizedConverter.addSensitive(channel.getInetAddress().toString().substring(1),
             ByteArray.toHexString(addressByte));
       }
       return flag;

@@ -15,7 +15,7 @@ public class DesensitizedConverter extends ClassicConverter {
   private static final int SENSITIVE_WORD_SIZE = 1_000;
 
   private static final Pattern pattern = Pattern.compile(
-      "/(((25[0-5]|2[0-4]\\d|((1\\d{2})|([1-9]?\\d)))\\.){3}(25[0-5]|2[0-4]\\d|((1\\d{2})|"
+      "(((25[0-5]|2[0-4]\\d|((1\\d{2})|([1-9]?\\d)))\\.){3}(25[0-5]|2[0-4]\\d|((1\\d{2})|"
           + "([1-9]?\\d))))");
 
   private static final Cache<String, String> sensitiveCache = CacheBuilder.newBuilder()
