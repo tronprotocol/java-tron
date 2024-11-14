@@ -26,7 +26,7 @@ public class DesensitizedConverter extends ClassicConverter {
     sensitiveCache.put(key, value);
   }
 
-  public String desensitization(String content) {
+  private String desensitization(String content) {
     Matcher matcher = pattern.matcher(content);
     while (matcher.find()) {
       String key = matcher.group();
@@ -34,7 +34,7 @@ public class DesensitizedConverter extends ClassicConverter {
       if (value != null) {
         content = content.replaceAll(key, value);
       } else {
-        content = content.replaceAll(key, "unknown");
+        content = content.replaceAll(key, "IP");
       }
     }
 
