@@ -3,6 +3,10 @@ allprojects {
     apply plugin: "java-library"
 }
 
+ext {
+    jacocoVersion = "0.8.8"
+}
+
 subprojects {
     apply plugin: "maven-publish"
 
