@@ -4,6 +4,7 @@ plugins {
 
 apply plugin: 'application'
 apply plugin: 'checkstyle'
+apply plugin: "jacoco"
 
 jacoco {
     toolVersion = "0.8.4"

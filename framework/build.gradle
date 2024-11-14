@@ -17,9 +17,6 @@ def versions = [
         checkstyle: '8.7',
 ]
 
-jacoco {
-    toolVersion = "0.8.8"
-}
 
 
 configurations {

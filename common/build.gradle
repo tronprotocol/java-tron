@@ -64,15 +64,3 @@ dependencies {
     api project(":protocol")
 }
 
-jacocoTestReport {
-    reports {
-        xml.enabled = true
-        html.enabled = true
-    }
-    getExecutionData().setFrom(fileTree('../framework/build/jacoco').include("**.exec"))
-    afterEvaluate {
-        classDirectories.from = classDirectories.files.collect {
-            fileTree(dir: it,)
-        }
-    }
-}
