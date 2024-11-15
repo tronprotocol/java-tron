@@ -1,5 +1,11 @@
 description = "actuator – a series of transactions for blockchain."
 
+apply plugin: "jacoco"
+
+jacoco {
+    toolVersion = rootProject.ext.jacocoVersion
+}
+
 dependencies {
     api project(":chainbase")
     api project(":protocol")
@@ -28,5 +34,18 @@ test {
 
     if (System.getenv("CI") == null) {
         maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+    }
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled = true
+        html.enabled = true
+    }
+    getExecutionData().setFrom(fileTree('../framework/build/jacoco').include("**.exec"))
+    afterEvaluate {
+        classDirectories.from = classDirectories.files.collect {
+            fileTree(dir: it,)
+        }
     }
 }

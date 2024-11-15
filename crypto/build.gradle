@@ -6,6 +6,12 @@ version '1.0.0'
 
 sourceCompatibility = 1.8
 
+apply plugin: "jacoco"
+
+jacoco {
+    toolVersion = rootProject.ext.jacocoVersion
+}
+
 repositories {
     mavenCentral()
 }
@@ -14,3 +20,15 @@ dependencies {
     api project(":common")
 }
 
+jacocoTestReport {
+    reports {
+        xml.enabled = true
+        html.enabled = true
+    }
+    getExecutionData().setFrom(fileTree('../framework/build/jacoco').include("**.exec"))
+    afterEvaluate {
+        classDirectories.from = classDirectories.files.collect {
+            fileTree(dir: it,)
+        }
+    }
+}

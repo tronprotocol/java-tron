@@ -6,6 +6,12 @@ def jacocoVersion = "0.8.0"
 def jansiVersion = "1.16"
 // --------------------------------------
 
+apply plugin: "jacoco"
+
+jacoco {
+    toolVersion = rootProject.ext.jacocoVersion
+}
+
 dependencies {
     api project(":protocol")
     api project(":common")
@@ -41,3 +47,21 @@ test {
     }
 }
 
+jacoco {
+    toolVersion = jacocoVersion // See http://www.eclemma.org/jacoco/.
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled = true
+        html.enabled = true
+    }
+    getExecutionData().setFrom(fileTree('../framework/build/jacoco').include("**.exec"))
+    afterEvaluate {
+        classDirectories.from = classDirectories.files.collect {
+            fileTree(dir: it,)
+        }
+    }
+}
+
+build.dependsOn jacocoTestReport
