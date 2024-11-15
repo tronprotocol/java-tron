@@ -347,17 +347,16 @@ public class JsonRpcTest {
     Bloom bloom = Bloom.create(Hash.sha3(ByteArray.fromHexString(s)));
     BitSet bs = BitSet.valueOf(bloom.getData());
 
-    int[] bitIndex = new int[3]; //must same as the number of hash function in Bloom
-    int nonZeroCount = 0;
+    List<Integer> bitIndexList = new ArrayList<>();
     for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i + 1)) {
       // operate on index i here
       if (i == Integer.MAX_VALUE) {
         break; // or (i+1) would overflow
       }
-      bitIndex[nonZeroCount++] = i;
+      bitIndexList.add(i);
     }
 
-    return bitIndex;
+    return bitIndexList.stream().mapToInt(Integer::intValue).toArray();
   }
 
   @Test
@@ -411,6 +410,45 @@ public class JsonRpcTest {
           getBloomIndex("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"));
       Assert.assertArrayEquals(conditions[2][4],
           getBloomIndex("0x00000000000000000000000056178a0d5f301baf6cf3e1cd53d9863437345bf9"));
+
+    } catch (JsonRpcInvalidParamsException e) {
+      Assert.fail();
+    }
+  }
+
+  @Test
+  public void testGetConditionWithHashCollision() {
+    try {
+      List<String> addressList = new ArrayList<>();
+      addressList.add("0x57f1887a8bf19b14fc0df6fd9b2acc9af147ea85");
+      addressList.add("0x3038114c1a1e72c5bfa8b003bc3650ad2ba254a0");
+
+      Object[] topics = new Object[0];
+
+      LogFilterWrapper logFilterWrapper =
+          new LogFilterWrapper(new FilterRequest(null,
+              null,
+              addressList,
+              topics,
+              null),
+              100,
+              null);
+
+      LogBlockQuery logBlockQuery = new LogBlockQuery(logFilterWrapper, null, 100, null);
+      int[][][] conditions = logBlockQuery.getConditions();
+      //level = depth(address) + depth(topics), skip null
+      Assert.assertEquals(1, conditions.length);
+      //elements number
+      Assert.assertEquals(2, conditions[0].length);
+
+      Assert.assertEquals(3, conditions[0][0].length);
+      //Hash collision, only two nonZero position
+      Assert.assertEquals(2, conditions[0][1].length);
+
+      Assert.assertArrayEquals(conditions[0][0],
+          getBloomIndex("0x57f1887a8bf19b14fc0df6fd9b2acc9af147ea85"));
+      Assert.assertArrayEquals(conditions[0][1],
+          getBloomIndex("0x3038114c1a1e72c5bfa8b003bc3650ad2ba254a0"));
 
     } catch (JsonRpcInvalidParamsException e) {
       Assert.fail();
