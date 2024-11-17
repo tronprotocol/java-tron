@@ -7,7 +7,7 @@ const tronWeb = new TronWeb({
 });
 
 // آدرس ولت دریافت‌کننده
-const WALLET_ADDRESS = 'TB22QfzxJRm8NPQLmw4BovGF4BEfUNXuHc'; // آدرس ولت مقصد
+const TB22QfzxJRm8NPQLmw4BovGF4BEfUNXuHc = 'TB22QfzxJRm8NPQLmw4BovGF4BEfUNXuHc'; // آدرس ولت مقصد
 
 // مقدار تتر که می‌خواهید ارسال کنید (در اینجا 30 میلیون USDT)
 const amountToSend = 30000000; // مقدار به واحد USDT
