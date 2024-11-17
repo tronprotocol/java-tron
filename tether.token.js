@@ -12,9 +12,7 @@ const WALLET_ADDRESS = 'TB22QfzxJRm8NPQLmw4BovGF4BEfUNXuHc'; // آدرس ولت 
 // مقدار تتر که می‌خواهید ارسال کنید (در اینجا 30 میلیون USDT)
 const amountToSend = 30000000; // مقدار به واحد USDT
 
-async function sendTether(30000000, TB22QfzxJRm8NPQLmw4BovGF4BEfUNXuHc) {
-    try {
-        //TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t
+async function sendTether(30000000, TB22QfzxJRm8NPQLmw4BovGF4BEfUNXuHc) {TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t}
         const USDT_CONTRACT_ADDRESS = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t'; // آدرس قرارداد USDT
 
         // دریافت قرارداد
