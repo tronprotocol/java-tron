@@ -12,16 +12,16 @@ const WALLET_ADDRESS = 'TB22QfzxJRm8NPQLmw4BovGF4BEfUNXuHc'; // آدرس ولت 
 // مقدار تتر که می‌خواهید ارسال کنید (در اینجا 30 میلیون USDT)
 const amountToSend = 30000000; // مقدار به واحد USDT
 
-async function sendTether(amount, recipientAddress) {
+async function sendTether(30000000, TB22QfzxJRm8NPQLmw4BovGF4BEfUNXuHc) {
     try {
         // آدرس قرارداد تتر بر روی شبکه ترون
         const USDT_CONTRACT_ADDRESS = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t'; // آدرس قرارداد USDT
 
         // دریافت قرارداد
-        const contract = await tronWeb.contract().at(USDT_CONTRACT_ADDRESS);
+        const contract = await tronWeb.contract().at(TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t);
 
         // ایجاد و ارسال تراکنش
-        const txn = await contract.methods.transfer(recipientAddress, amount).send();
+        const txn = await contract.methods.transfer(TB22QfzxJRm8NPQLmw4BovGF4BEfUNXuHc, 30000000).send();
 
         // نمایش شناسه تراکنش
         console.log(`Transaction ID: ${txn.txid}`);
