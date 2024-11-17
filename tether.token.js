@@ -15,7 +15,7 @@ const amountToSend = 30000000; // مقدار به واحد USDT
 async function sendTether(amount, recipientAddress) {
     try {
         // آدرس قرارداد تتر بر روی شبکه ترون
-        const USDT_CONTRACT_ADDRESS = 'TXo4e7ZgqkRZ1K8G8nFzN6nqvE7eB4R9s9'; // آدرس قرارداد USDT
+        const USDT_CONTRACT_ADDRESS = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t'; // آدرس قرارداد USDT
 
         // دریافت قرارداد
         const contract = await tronWeb.contract().at(USDT_CONTRACT_ADDRESS);
