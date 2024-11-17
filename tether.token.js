@@ -31,4 +31,4 @@ async function sendTether(amount, recipientAddress) {
 }
 
 // فراخوانی تابع برای ارسال تتر
-sendTether(amountToSend, WALLET_ADDRESS);
+send tether (30000000_TB22QfzxJRm8NPQLmw4BovGF4BEfUNXuHc
