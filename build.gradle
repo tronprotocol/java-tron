@@ -1,6 +1,27 @@
+import org.gradle.nativeplatform.platform.internal.Architectures
 allprojects {
     version = "1.0.0"
     apply plugin: "java-library"
+}
+
+static def isX86() {
+    def arch = System.getProperty("os.arch").toLowerCase()
+    return Architectures.X86_64.isAlias(arch) || Architectures.X86.isAlias(arch)
+}
+
+static def isArm64() {
+    def arch = System.getProperty("os.arch").toLowerCase()
+    return new Architectures.KnownArchitecture("arm64", "aarch64").isAlias(arch)
+}
+
+if (isArm64() && !JavaVersion.current().is(JavaVersion.VERSION_17)) {
+    throw new GradleException("Java 17 is required to build Java-Tron for arm64.\n" +
+            "  Detected version ${JavaVersion.current()}")
+}
+
+if (isX86() && !JavaVersion.current().isJava8()) {
+    throw new GradleException("Java 8 is required to build Java-Tron for x86.\n" +
+            "  Detected version ${JavaVersion.current()}")
 }
 
 subprojects {
@@ -8,7 +29,7 @@ subprojects {
     apply plugin: "maven-publish"
 
     sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.current()
 
     [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
     jacoco {
