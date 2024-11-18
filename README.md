@@ -59,8 +59,20 @@ TRON enables large-scale development and engagement. With over 2000 transactions
 
 # Building the Source Code
 
-Building java-tron requires `git` package and 64-bit version of `Oracle JDK 1.8` to be installed, other JDK versions are not supported yet. Make sure you operate on `Linux` and `MacOS` operating systems.
+Building java-tron requires `git` package
 
+## Operating systems
+Make sure you operate on `Linux` or `MacOS` operating systems, other operating systems are not supported yet.
+
+## Architecture
+
+### x86_64
+64-bit version of `Oracle JDK 1.8` to be installed, other JDK versions are not supported yet.
+
+### ARM64
+64-bit version of `JDK 17` to be installed, other JDK versions are not supported yet.
+
+### build
 Clone the repo and switch to the `master` branch
 
 ```bash
@@ -77,8 +89,19 @@ $ ./gradlew clean build -x test
 
 # Running java-tron
 
-Running java-tron requires 64-bit version of `Oracle JDK 1.8` to be installed, other JDK versions are not supported yet. Make sure you operate on `Linux` and `MacOS` operating systems.
+## Operating systems
+Make sure you operate on `Linux` or `MacOS` operating systems, other operating systems are not supported yet.
 
+## Architecture
+
+### X86_64
+Requires 64-bit version of `Oracle JDK 1.8` to be installed, other JDK versions are not supported yet.
+
+### ARM64
+Requires 64-bit version of `JDK 17` to be installed, other JDK versions are not supported yet.
+
+
+## Configuration flile
 Get the mainnet configuration file: [main_net_config.conf](https://github.com/tronprotocol/tron-deployment/blob/master/main_net_config.conf), other network configuration files can be found [here](https://github.com/tronprotocol/tron-deployment).
 
 ## Hardware Requirements
@@ -100,6 +123,7 @@ Recommended:
 
 Full node has full historical data, it is the entry point into the TRON network, it can be used by other processes as a gateway into the TRON network via HTTP and GRPC endpoints. You can interact with the TRON network through full node：transfer assets, deploy contracts, interact with contracts and so on. `-c` parameter specifies a configuration file to run a full node:
 
+### x86_64 JDK 1.8
 ```bash
 $ nohup java -Xms9G -Xmx9G -XX:ReservedCodeCacheSize=256m \
              -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m \
@@ -111,6 +135,19 @@ $ nohup java -Xms9G -Xmx9G -XX:ReservedCodeCacheSize=256m \
              -XX:+UseCMSInitiatingOccupancyOnly  -XX:CMSInitiatingOccupancyFraction=70 \
              -jar FullNode.jar -c main_net_config.conf >> start.log 2>&1 &
 ```
+### ARM64 JDK 17
+```bash
+$ nohup java -Xms9G -Xmx9G -XX:+UseZGC \
+             -Xlog:gc*:file=gc.log:time,uptime,level,tags:filecount=50,filesize=100M \
+             -XX:ReservedCodeCacheSize=256m \
+             -XX:+UseCodeCacheFlushing \
+             -XX:MetaspaceSize=256m \
+             -XX:MaxMetaspaceSize=512m \
+             -XX:MaxDirectMemorySize=1g \
+             -XX:+HeapDumpOnOutOfMemoryError \
+             -jar FullNode.jar -c main_net_config.conf >> start.log 2>&1 &
+```
+
 
 ## Running a super representative node for mainnet
 
@@ -126,6 +163,7 @@ Fill in the private key of a super representative address into the `localwitness
 
 then run the following command to start the node:
 
+### x86_64 JDK 1.8
 ```bash
 $ nohup java -Xms9G -Xmx9G -XX:ReservedCodeCacheSize=256m \
              -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m \
@@ -137,9 +175,22 @@ $ nohup java -Xms9G -Xmx9G -XX:ReservedCodeCacheSize=256m \
              -XX:+UseCMSInitiatingOccupancyOnly  -XX:CMSInitiatingOccupancyFraction=70 \
              -jar FullNode.jar --witness -c main_net_config.conf >> start.log 2>&1 &
 ```
+### ARM64 JDK 17
+```bash
+$ nohup java -Xms9G -Xmx9G -XX:+UseZGC \
+             -Xlog:gc*:file=gc.log:time,uptime,level,tags:filecount=50,filesize=100M \
+             -XX:ReservedCodeCacheSize=256m \
+             -XX:+UseCodeCacheFlushing \
+             -XX:MetaspaceSize=256m \
+             -XX:MaxMetaspaceSize=512m \
+             -XX:MaxDirectMemorySize=1g \
+             -XX:+HeapDumpOnOutOfMemoryError \
+             -jar FullNode.jar --witness -c main_net_config.conf >> start.log 2>&1 &
+```
 
 ## Quick Start Tool
 
+### x86_64 JDK 1.8
 An easier way to build and run java-tron is to use `start.sh`. `start.sh` is a quick start script written in the Shell language. You can use it to build and run java-tron quickly and easily.
 
 Here are some common use cases of the scripting tool
@@ -149,6 +200,18 @@ Here are some common use cases of the scripting tool
 - Use `start.sh` to download the latest source code and compile a `FullNode.jar` and then start a full node.
 
 For more details, please refer to the tool [guide](./shell.md).
+
+### ARM64 JDK 17
+You can refer to the [start.sh.simple](start.sh.simple).
+
+```bash
+# cp start.sh.simple start.sh
+# Usage:
+#   sh start.sh           # Start the java-tron FullNode
+#   sh start.sh -s        # Stop the java-tron FullNode
+#   sh start.sh [options] # Start with additional java-tron options,such as: -c config.conf -d /path_to_data, etc.
+#
+```
 
 ## Run inside Docker container
 
