@@ -203,9 +203,17 @@ def createScript(project, mainClass, name) {
         }
     }
 }
-
-applicationDistribution.from("../gradle/java-tron.vmoptions") {
-    into "bin"
+if (JavaVersion.current().is(JavaVersion.VERSION_17)) {
+    applicationDistribution.from("${project.rootDir}/gradle/jdk17/java-tron.vmoptions") {
+        into "bin"
+    }
+} else if (JavaVersion.current().isJava8()){
+    applicationDistribution.from("${project.rootDir}/gradle/java-tron.vmoptions") {
+        into "bin"
+    }
+} else {
+    throw new GradleException("Java 8 or Java17 is supported to build Java-Tron.\n" +
+            "  Detected version ${JavaVersion.current()}")
 }
 //distZip {
 //    doLast {
