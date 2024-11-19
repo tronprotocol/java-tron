@@ -145,6 +145,12 @@ test {
     }
 }
 
+if (!hasProperty("isJacocoEnable")) {
+    tasks.withType(Test) {
+        jacoco.excludes = ['**']
+    }
+}
+
 /*
 jacocoTestReport {
     reports {
