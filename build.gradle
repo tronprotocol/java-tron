@@ -2,6 +2,7 @@ allprojects {
     version = "1.0.0"
     apply plugin: "java-library"
 }
+apply  from : "config.gradle"
 
 subprojects {
     apply plugin: "jacoco"
