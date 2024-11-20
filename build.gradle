@@ -52,10 +52,7 @@ subprojects {
         testAnnotationProcessor 'org.projectlombok:lombok:1.18.12'
 
         testImplementation group: 'junit', name: 'junit', version: '4.13.2'
-        testImplementation "org.mockito:mockito-core:3.10.0"
-        testImplementation group: 'org.powermock', name: 'powermock-module-junit4', version: '2.0.9'
-        testImplementation group: 'org.powermock', name: 'powermock-api-mockito2', version: '2.0.9'
-
+        testImplementation "org.mockito:mockito-core:2.13.0"
     }
 
     task sourcesJar(type: Jar, dependsOn: classes) {

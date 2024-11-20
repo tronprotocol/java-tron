@@ -2,14 +2,12 @@ plugins {
     id "org.gradle.test-retry" version "1.5.9"
     id "org.sonarqube" version "2.6"
     id "com.gorylenko.gradle-git-properties" version "2.4.1"
-    id "io.github.surpsg.offlins" version "0.3.0"
 }
 
 gitProperties.failOnNoGitDirectory = false;
 
 apply plugin: 'application'
 apply plugin: 'checkstyle'
-apply plugin: "io.github.surpsg.offlins"
 
 mainClassName = 'org.tron.program.FullNode'
 
@@ -18,7 +16,7 @@ def versions = [
 ]
 
 jacoco {
-    toolVersion = "0.8.8"
+    toolVersion = "0.8.1"
 }
 
 
@@ -123,12 +121,10 @@ test {
     testLogging {
         exceptionFormat = 'full'
     }
-    /*
     jacoco {
         destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
         classDumpDir = file("$buildDir/jacoco/classpathdumps")
     }
-    */
     if (isWindows()) {
         exclude '**/ShieldedTransferActuatorTest.class'
         exclude '**/BackupDbUtilTest.class'
@@ -145,7 +141,6 @@ test {
     }
 }
 
-/*
 jacocoTestReport {
     reports {
         xml.enabled true
@@ -154,26 +149,6 @@ jacocoTestReport {
     }
     getExecutionData().setFrom(fileTree('../framework/build/jacoco').include("**.exec"))
 }
- */
-
-offlinsCoverage {
-    jacocoVersion = '0.8.8' // Optional. By default `0.8.8`
-
-    reports {
-        html.enabled.set true // Optional. By default `true`
-        html.location.set project.file('build/reports/jacoco/test/html') // Optional. By default `build/reports/jacoco/html`
-
-        xml.enabled.set true // Optional. By default `false`
-        xml.location.set project.file('build/reports/jacoco/test/jacocoTestReport.xml')
-        // Optional. By default `build/reports/jacoco/coverageReport.xml`
-
-        csv.enabled.set true // Optional. By default `false`
-        csv.location.set project.file('build/reports/jacoco/test/csvCoverage.csv')
-        // Optional. By default `build/reports/jacoco/coverageReport.csv`
-    }
-}
-
-
 
 def binaryRelease(taskName, jarName, mainClass) {
     return tasks.create("${taskName}", Jar) {
