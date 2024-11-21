@@ -28,8 +28,9 @@ tasks.withType(Test) {
             file.absolutePath.replace(project.buildDir.absolutePath + '/', '')
         }.findAll { it.endsWith('.class') }.forEach {
             if (it.indexOf("/test/")==-1
-                    && it.indexOf("classes/")!=-1
                     && it.indexOf("classes-instrumented/")==-1
+                    && it.indexOf("classes/")!=-1
+                    && it.indexOf("org/")!=-1
             ) {
                 def start = it.indexOf("org");
                 def end = it.indexOf("\$") == -1 ? it.indexOf(".") : it.indexOf("\$")
