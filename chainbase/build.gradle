@@ -2,7 +2,6 @@ description = "chainbase – a decentralized database for blockchain."
 
 // Dependency versions
 // ---------------------------------------
-def jacocoVersion = "0.8.0"
 def jansiVersion = "1.16"
 // --------------------------------------
 
@@ -42,7 +41,7 @@ test {
 }
 
 jacoco {
-    toolVersion = jacocoVersion // See http://www.eclemma.org/jacoco/.
+    toolVersion = rootProject.ext.jacocoVersion // See http://www.eclemma.org/jacoco/.
 }
 
 jacocoTestReport {

@@ -18,7 +18,7 @@ def versions = [
 ]
 
 jacoco {
-    toolVersion = "0.8.8"
+    toolVersion = rootProject.ext.jacocoVersion
 }
 
 tasks.withType(Test) {
@@ -160,7 +160,7 @@ jacocoTestReport {
  */
 
 offlinsCoverage {
-    jacocoVersion = '0.8.8' // Optional. By default `0.8.8`
+    jacocoVersion = rootProject.ext.jacocoVersion // Optional. By default `0.8.8`
 
     reports {
         html.enabled.set true // Optional. By default `true`
