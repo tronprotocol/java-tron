@@ -48,6 +48,7 @@ import org.tron.api.GrpcAPI.PricesResponseMessage;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.common.BaseTest;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.actuator.DelegateResourceActuator;
@@ -72,6 +73,8 @@ import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.ProposalUtil.ProposalType;
 import org.tron.core.utils.TransactionUtil;
+import org.tron.core.vm.config.ConfigLoader;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Block;
@@ -1041,6 +1044,72 @@ public class WalletTest extends BaseTest {
     chainBaseManager.getAssetIssueStore().delete(assetCapsule.createDbKey());
     chainBaseManager.getAssetIssueV2Store().delete(assetCapsule.createDbV2Key());
     chainBaseManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+  }
+
+  @Test
+  @SneakyThrows
+  public void testTriggerConstant() {
+    boolean preDebug = CommonParameter.getInstance().debug;
+    CommonParameter.getInstance().debug = true;
+    ConfigLoader.disable = true;
+    VMConfig.initAllowTvmTransferTrc10(1);
+    VMConfig.initAllowTvmConstantinople(1);
+    VMConfig.initAllowTvmShangHai(1);
+
+    String contractAddress = Wallet.getAddressPreFixString() + "1A622D84ed49f01045f5f1a5AfcEb9c57e9cC3cc";
+
+    AccountCapsule accountCap = new AccountCapsule(ByteString.copyFrom(ByteArray.fromHexString(contractAddress)),
+        Protocol.AccountType.Normal);
+    dbManager.getAccountStore().put(accountCap.createDbKey(), accountCap);
+
+    SmartContractOuterClass.SmartContract smartContract =
+        SmartContractOuterClass.SmartContract.newBuilder().build();
+    ContractCapsule contractCap = new ContractCapsule(smartContract);
+    dbManager.getContractStore().put(ByteArray.fromHexString(contractAddress), contractCap);
+
+    String codeString = "608060405234801561000f575f80fd5b50d3801561001b575f80fd5b50d28015610027575f80fd5b50600436106" +
+        "1004c575f3560e01c80638da5cb5b14610050578063f8a8fd6d1461006e575b5f80fd5b61005861008c565b60405161006591906102" +
+        "69565b60405180910390f35b6100766100af565b6040516100839190610269565b60405180910390f35b5f8054906101000a900473f" +
+        "fffffffffffffffffffffffffffffffffffffff1681565b5f60017fbe0166938e2ea2f3f3e0746fdaf46e25c4d8de37ce56d70400cf" +
+        "284c80d47bbe601b7f10afab946e2be82aa3e4280cf24e2cab294911c3beb06ca9dd7ead06081265d07f1e1855bcdc3ed57c6f3c387" +
+        "4cde035782427d1236e2d819bd16c75676ecc003a6040515f8152602001604052604051610133949392919061038f565b6020604051" +
+        "602081039080840390855afa158015610153573d5f803e3d5ffd5b505050602060405103515f806101000a81548173fffffffffffff" +
+        "fffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff160217905550734c95a52686a9b3" +
+        "ff9cf787b94b8549a988334c5773ffffffffffffffffffffffffffffffffffffffff165f8054906101000a900473fffffffffffffff" +
+        "fffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1614610205575f80fd5b5f8054906101000a90" +
+        "0473ffffffffffffffffffffffffffffffffffffffff16905090565b5f73ffffffffffffffffffffffffffffffffffffffff8216905" +
+        "0919050565b5f6102538261022a565b9050919050565b61026381610249565b82525050565b5f60208201905061027c5f8301846102" +
+        "5a565b92915050565b5f819050919050565b5f819050919050565b5f815f1b9050919050565b5f6102b96102b46102af84610282565" +
+        "b610294565b61028b565b9050919050565b6102c98161029f565b82525050565b5f819050919050565b5f60ff82169050919050565b" +
+        "5f819050919050565b5f6103076103026102fd846102cf565b6102e4565b6102d8565b9050919050565b610317816102ed565b82525" +
+        "050565b5f819050919050565b5f61034061033b6103368461031d565b610294565b61028b565b9050919050565b6103508161032656" +
+        "5b82525050565b5f819050919050565b5f61037961037461036f84610356565b610294565b61028b565b9050919050565b610389816" +
+        "1035f565b82525050565b5f6080820190506103a25f8301876102c0565b6103af602083018661030e565b6103bc6040830185610347" +
+        "565b6103c96060830184610380565b9594505050505056fea26474726f6e58221220e967690f9c06386434cbe4d8dd6dce394130f19" +
+        "0d17621cbd4ae4cabdef4ad7964736f6c63430008140033";
+    CodeCapsule codeCap = new CodeCapsule(ByteArray.fromHexString(codeString));
+    dbManager.getCodeStore().put(ByteArray.fromHexString(contractAddress), codeCap);
+
+    SmartContractOuterClass.TriggerSmartContract contract =
+        SmartContractOuterClass.TriggerSmartContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(contractAddress)))
+            .setContractAddress(ByteString.copyFrom(ByteArray.fromHexString(contractAddress)))
+            .setData(ByteString.copyFrom(ByteArray.fromHexString("f8a8fd6d")))
+            .build();
+    TransactionCapsule trxCap = wallet.createTransactionCapsule(contract,
+        ContractType.TriggerSmartContract);
+
+    GrpcAPI.TransactionExtention.Builder trxExtBuilder = GrpcAPI.TransactionExtention.newBuilder();
+    GrpcAPI.Return.Builder retBuilder = GrpcAPI.Return.newBuilder();
+
+    Transaction tx = wallet.triggerConstantContract(contract, trxCap, trxExtBuilder, retBuilder);
+    Assert.assertEquals(Transaction.Result.code.SUCESS, tx.getRet(0).getRet());
+
+    VMConfig.initAllowTvmTransferTrc10(0);
+    VMConfig.initAllowTvmConstantinople(0);
+    VMConfig.initAllowTvmShangHai(0);
+    ConfigLoader.disable = false;
+    CommonParameter.getInstance().debug = preDebug;
   }
 
   @Test
