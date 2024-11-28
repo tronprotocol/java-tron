@@ -989,6 +989,9 @@ public class OperationActions {
     PrecompiledContracts.PrecompiledContract contract =
         PrecompiledContracts.getContractForAddress(codeAddress);
     if (contract != null) {
+      if (program.isConstantCall()) {
+        contract =  PrecompiledContracts.getOptimizedContractForConstant(contract);
+      }
       program.callToPrecompiledAddress(msg, contract);
     } else {
       program.callToAddress(msg);
