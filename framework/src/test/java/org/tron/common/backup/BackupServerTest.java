@@ -7,6 +7,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.rules.Timeout;
 import org.tron.common.backup.socket.BackupServer;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.Constant;
@@ -17,6 +18,9 @@ public class BackupServerTest {
 
   @Rule
   public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  @Rule
+  public Timeout globalTimeout = Timeout.seconds(60);
   private BackupServer backupServer;
 
   @Before
@@ -40,5 +44,7 @@ public class BackupServerTest {
   @Test
   public void test() throws InterruptedException {
     backupServer.initServer();
+    // wait for the server to start
+    Thread.sleep(1000);
   }
 }

@@ -778,6 +778,21 @@ public class ProposalUtil {
         }
         break;
       }
+      case ALLOW_STRICT_MATH: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_7_7)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_STRICT_MATH]");
+        }
+        if (dynamicPropertiesStore.allowStrictMath()) {
+          throw new ContractValidateException(
+              "[ALLOW_STRICT_MATH] has been valid, no need to propose again");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_STRICT_MATH] is only allowed to be 1");
+        }
+        break;
+      }
       default:
         break;
     }
@@ -856,7 +871,8 @@ public class ProposalUtil {
     MAX_DELEGATE_LOCK_PERIOD(78), // (86400, 10512000]
     ALLOW_OLD_REWARD_OPT(79), // 0, 1
     ALLOW_ENERGY_ADJUSTMENT(81), // 0, 1
-    MAX_CREATE_ACCOUNT_TX_SIZE(82); // [500, 10000]
+    MAX_CREATE_ACCOUNT_TX_SIZE(82), // [500, 10000]
+    ALLOW_STRICT_MATH(87); // 0, 1
 
     private long code;
 

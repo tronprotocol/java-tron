@@ -234,6 +234,7 @@ public class Args extends CommonParameter {
     PARAMETER.maxUnsolidifiedBlocks = 54;
     PARAMETER.allowOldRewardOpt = 0;
     PARAMETER.allowEnergyAdjustment = 0;
+    PARAMETER.allowStrictMath = 0;
   }
 
   /**
@@ -1216,6 +1217,10 @@ public class Args extends CommonParameter {
     PARAMETER.allowEnergyAdjustment =
             config.hasPath(Constant.COMMITTEE_ALLOW_ENERGY_ADJUSTMENT) ? config
                     .getInt(Constant.COMMITTEE_ALLOW_ENERGY_ADJUSTMENT) : 0;
+
+    PARAMETER.allowStrictMath =
+        config.hasPath(Constant.COMMITTEE_ALLOW_STRICT_MATH) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_STRICT_MATH) : 0;
 
     logConfig();
   }
