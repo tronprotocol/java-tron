@@ -2247,12 +2247,10 @@ public class Program {
           contractState.getDynamicPropertiesStore().getCurrentCycleNumber(),
           VMConfig.getDynamicEnergyThreshold(),
           VMConfig.getDynamicEnergyIncreaseFactor(),
-          VMConfig.getDynamicEnergyMaxFactor())) {
-        contractState.updateContractState(getContextAddress(), contractStateCapsule);
-        if (contractStateCapsule.getEnergyFactor() != oldEnergyFactor) {
-          Metrics.gaugeSet(MetricKeys.Gauge.CONTRACT_FACTOR,
-              contractStateCapsule.getEnergyFactor(), contractAddress);
-        }
+          VMConfig.getDynamicEnergyMaxFactor(),
+          VMConfig.allowStrictMath())) {
+        contractState.updateContractState(getContextAddress(), contractStateCapsule
+        );
       }
     }
     contextContractFactor = contractStateCapsule.getEnergyFactor()
