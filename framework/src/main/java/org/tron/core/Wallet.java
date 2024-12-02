@@ -1343,6 +1343,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getMaxCreateAccountTxSize())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowStrictMath")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowStrictMath())
+        .build());
+
     return builder.build();
   }
 

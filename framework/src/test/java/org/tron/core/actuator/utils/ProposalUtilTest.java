@@ -25,6 +25,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.ProposalUtil;
 import org.tron.core.utils.ProposalUtil.ProposalType;
+import org.tron.protos.Protocol;
 
 @Slf4j(topic = "actuator")
 public class ProposalUtilTest extends BaseTest {
@@ -382,6 +383,51 @@ public class ProposalUtilTest extends BaseTest {
     } catch (ContractValidateException e) {
       Assert.assertEquals(
           "[ALLOW_OLD_REWARD_OPT] has been valid, no need to propose again",
+          e.getMessage());
+    }
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_STRICT_MATH.getCode(), 2);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "Bad chain parameter id [ALLOW_STRICT_MATH]",
+          e.getMessage());
+    }
+    hardForkTime =
+        ((ForkBlockVersionEnum.VERSION_4_7_7.getHardForkTime() - 1) / maintenanceTimeInterval + 1)
+            * maintenanceTimeInterval;
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .saveLatestBlockHeaderTimestamp(hardForkTime + 1);
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .statsByVersion(ForkBlockVersionEnum.VERSION_4_7_7.getValue(), stats);
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_STRICT_MATH.getCode(), 2);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "This value[ALLOW_STRICT_MATH] is only allowed to be 1",
+          e.getMessage());
+    }
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_STRICT_MATH.getCode(), 1);
+    } catch (ContractValidateException e) {
+      Assert.fail(e.getMessage());
+    }
+    Protocol.Proposal proposal = Protocol.Proposal.newBuilder().putParameters(
+        ProposalType.ALLOW_STRICT_MATH.getCode(), 1).build();
+    ProposalCapsule proposalCapsule = new ProposalCapsule(proposal);
+    ProposalService.process(dbManager, proposalCapsule);
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_STRICT_MATH.getCode(), 1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "[ALLOW_STRICT_MATH] has been valid, no need to propose again",
           e.getMessage());
     }
 
