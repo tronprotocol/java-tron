@@ -52,7 +52,8 @@ subprojects {
         testAnnotationProcessor 'org.projectlombok:lombok:1.18.12'
 
         testImplementation group: 'junit', name: 'junit', version: '4.13.2'
-        testImplementation "org.mockito:mockito-core:2.13.0"
+        testImplementation "org.mockito:mockito-core:4.11.0"
+        testImplementation "org.mockito:mockito-inline:4.11.0"
     }
 
     task sourcesJar(type: Jar, dependsOn: classes) {
