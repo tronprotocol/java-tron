@@ -1,12 +1,14 @@
 package org.tron.common.runtime;
 
+import java.lang.reflect.Method;
+
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.core.vm.program.Program;
 
-import java.lang.reflect.Method;
+
 
 @Slf4j
 public class RuntimeImplMockTest {

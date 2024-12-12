@@ -18,6 +18,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.LazyStringArrayList;
+import com.google.protobuf.ProtocolStringList;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -28,7 +29,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import com.google.protobuf.ProtocolStringList;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

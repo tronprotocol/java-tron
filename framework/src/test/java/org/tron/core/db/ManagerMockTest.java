@@ -68,12 +68,13 @@ public class ManagerMockTest {
   public void processTransactionCostTimeMoreThan100() throws Exception {
     TransactionTrace traceMock = mock(TransactionTrace.class);
     BandwidthProcessor bandwidthProcessorMock = mock(BandwidthProcessor.class);
-    try (MockedConstruction<TransactionTrace> mockedConstruction2 = mockConstruction(TransactionTrace.class,(mock, context) -> {
-           when(mock).thenReturn(traceMock);
-         });
-         MockedConstruction<BandwidthProcessor> mockedConstruction3 = mockConstruction(BandwidthProcessor.class,(mock, context) -> {
-           when(mock).thenReturn(bandwidthProcessorMock);
-         });
+    try (MockedConstruction<TransactionTrace> mockedConstruction2
+             = mockConstruction(TransactionTrace.class,(mock, context) -> {
+               when(mock).thenReturn(traceMock); });
+         MockedConstruction<BandwidthProcessor> mockedConstruction3
+             = mockConstruction(BandwidthProcessor.class,(mock, context) -> {
+               when(mock).thenReturn(bandwidthProcessorMock);
+             });
          MockedStatic<TransactionUtil> mockedStatic = mockStatic(TransactionUtil.class)) {
       Manager dbManager = mock(Manager.class);
       BalanceContract.TransferContract transferContract =

@@ -1,5 +1,8 @@
 package org.tron.common.logsfilter;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 import com.google.protobuf.ByteString;
 
@@ -26,9 +29,7 @@ import org.tron.p2p.utils.ByteArray;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.BalanceContract;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
+
 
 
 public class TransactionLogTriggerCapsuleMockTest {
