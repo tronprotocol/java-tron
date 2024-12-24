@@ -98,6 +98,10 @@ public class TransactionsMsgHandler implements TronMsgHandler {
             "trx: " + msg.getMessageId() + " without request.");
       }
       peer.getAdvInvRequest().remove(item);
+      if (trx.getRawData().getContractCount() < 1) {
+        throw new P2pException(TypeEnum.BAD_TRX,
+            "tx " + item.getHash() + " contract size should be greater than 0");
+      }
     }
   }
 
