@@ -11,6 +11,9 @@ subprojects {
     targetCompatibility = JavaVersion.VERSION_1_8
 
     [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+    jacoco {
+        toolVersion = "0.8.12" // see https://www.jacoco.org/jacoco/trunk/doc/changes.html
+    }
 
     buildscript {
         repositories {

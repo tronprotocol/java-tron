@@ -5,9 +5,6 @@ plugins {
 apply plugin: 'application'
 apply plugin: 'checkstyle'
 
-jacoco {
-    toolVersion = "0.8.8"
-}
 def versions = [
         checkstyle: '8.7',
 ]
