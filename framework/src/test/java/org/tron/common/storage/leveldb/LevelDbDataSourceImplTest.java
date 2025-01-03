@@ -43,7 +43,7 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.ExpectedSystemExit;
+import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -51,6 +51,7 @@ import org.tron.common.utils.PublicMethod;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db2.common.WrappedByteArray;
+import org.tron.core.exception.TronError;
 
 @Slf4j
 public class LevelDbDataSourceImplTest {
@@ -74,7 +75,7 @@ public class LevelDbDataSourceImplTest {
   private byte[] key6 = "00000006aa".getBytes();
 
   @Rule
-  public final ExpectedSystemExit exit = ExpectedSystemExit.none();
+  public final ExpectedException exception = ExpectedException.none();
 
   /**
    * Release resources.
@@ -350,7 +351,7 @@ public class LevelDbDataSourceImplTest {
 
   @Test
   public void initDbTest() {
-    exit.expectSystemExitWithStatus(1);
+    exception.expect(TronError.class);
     makeExceptionDb("test_initDb");
     LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
         Args.getInstance().getOutputDirectory(), "test_initDb");

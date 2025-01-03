@@ -12,6 +12,7 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.client.DatabaseGrpcClient;
+import org.tron.common.exit.ExitManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.Metrics;
 import org.tron.core.ChainBaseManager;
@@ -20,6 +21,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.TronError;
 import org.tron.protos.Protocol.Block;
 
 @Slf4j(topic = "app")
@@ -54,6 +56,7 @@ public class SolidityNode {
    * Start the SolidityNode.
    */
   public static void main(String[] args) {
+    ExitManager.initExceptionHandler();
     logger.info("Solidity node is running.");
     Args.setParam(args, Constant.TESTNET_CONF);
     CommonParameter parameter = CommonParameter.getInstance();
@@ -98,7 +101,7 @@ public class SolidityNode {
     } catch (Exception e) {
       logger.error("Failed to start solid node, address: {}.",
           CommonParameter.getInstance().getTrustNodeAddr());
-      System.exit(0);
+      throw new TronError(e, TronError.ErrCode.SOLID_NODE_INIT);
     }
   }
 

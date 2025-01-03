@@ -25,7 +25,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.ExpectedSystemExit;
+import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
@@ -34,6 +34,7 @@ import org.tron.common.utils.PropUtil;
 import org.tron.common.utils.PublicMethod;
 import org.tron.core.config.args.Args;
 import org.tron.core.db2.common.WrappedByteArray;
+import org.tron.core.exception.TronError;
 
 @Slf4j
 public class RocksDbDataSourceImplTest {
@@ -56,7 +57,7 @@ public class RocksDbDataSourceImplTest {
   private byte[] key6 = "00000006aa".getBytes();
 
   @Rule
-  public final ExpectedSystemExit exit = ExpectedSystemExit.none();
+  public final ExpectedException exception = ExpectedException.none();
 
   /**
    * Release resources.
@@ -392,7 +393,7 @@ public class RocksDbDataSourceImplTest {
 
   @Test
   public void initDbTest() {
-    exit.expectSystemExitWithStatus(1);
+    exception.expect(TronError.class);
     makeExceptionDb("test_initDb");
     RocksDbDataSourceImpl dataSource = new RocksDbDataSourceImpl(
         Args.getInstance().getOutputDirectory(), "test_initDb");

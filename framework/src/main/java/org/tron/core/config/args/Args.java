@@ -66,6 +66,7 @@ import org.tron.core.config.Configuration;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.exception.CipherException;
+import org.tron.core.exception.TronError;
 import org.tron.core.store.AccountStore;
 import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
@@ -433,9 +434,8 @@ public class Args extends CommonParameter {
             String prikey = ByteArray.toHexString(sign.getPrivateKey());
             privateKeys.add(prikey);
           } catch (IOException | CipherException e) {
-            logger.error(e.getMessage());
             logger.error("Witness node start failed!");
-            exit(-1);
+            throw new TronError(e, TronError.ErrCode.WITNESS_KEYSTORE_LOAD);
           }
         }
       }
