@@ -18,7 +18,7 @@ import org.tron.common.backup.BackupManager.BackupStatusEnum;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.es.ExecutorServiceManager;
-import org.tron.common.logsfilter.DesensitizedConverter;
+import org.tron.common.log.layout.DesensitizedConverter;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;

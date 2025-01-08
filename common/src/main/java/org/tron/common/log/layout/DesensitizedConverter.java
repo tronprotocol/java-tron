@@ -1,4 +1,4 @@
-package org.tron.common.logsfilter;
+package org.tron.common.log.layout;
 
 import ch.qos.logback.classic.pattern.ClassicConverter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -7,7 +7,7 @@ import com.google.common.cache.CacheBuilder;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.core.config.args.Args;
+import org.tron.common.parameter.CommonParameter;
 
 @Slf4j(topic = "Parser")
 public class DesensitizedConverter extends ClassicConverter {
@@ -44,6 +44,6 @@ public class DesensitizedConverter extends ClassicConverter {
   @Override
   public String convert(ILoggingEvent iLoggingEvent) {
     String source = iLoggingEvent.getFormattedMessage();
-    return Args.getInstance().isFastForward() ? desensitization(source) : source;
+    return CommonParameter.getInstance().isFastForward() ? desensitization(source) : source;
   }
 }

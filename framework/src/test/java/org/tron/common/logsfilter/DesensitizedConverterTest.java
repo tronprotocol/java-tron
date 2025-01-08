@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import org.junit.Assert;
 import org.junit.Test;
+import org.tron.common.log.layout.DesensitizedConverter;
 
 public class DesensitizedConverterTest {
 
