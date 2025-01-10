@@ -105,8 +105,6 @@ public class WalletMockTest {
         "setTransaction", TransactionCapsule.class);
     privateMethod.setAccessible(true);
     privateMethod.invoke(wallet, transactionCapsuleMock);
-
-    assertTrue(true);
   }
 
   @Test
@@ -130,7 +128,6 @@ public class WalletMockTest {
             long.class);
       privateMethod.setAccessible(true);
       privateMethod.invoke(wallet, message, contractType, timeout);
-      assertTrue(true);
     }
   }
 
@@ -164,8 +161,6 @@ public class WalletMockTest {
           long.class);
       privateMethod.setAccessible(true);
       privateMethod.invoke(wallet, message, contractType, timeout);
-
-      assertTrue(true);
     }
   }
 
@@ -1108,7 +1103,6 @@ public class WalletMockTest {
     } catch (Exception e) {
       assertTrue(false);
     }
-    assertTrue(true);
   }
 
 
@@ -1141,7 +1135,6 @@ public class WalletMockTest {
     } catch (Exception e) {
       assertTrue(false);
     }
-    assertTrue(true);
   }
 
   @Test
@@ -1222,7 +1215,6 @@ public class WalletMockTest {
           builder,
           spendNote,
           ak, nk);
-      assertTrue(true);
     }
 
   }

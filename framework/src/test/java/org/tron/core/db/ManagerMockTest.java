@@ -34,7 +34,6 @@ import org.mockito.stubbing.Answer;
 import org.quartz.CronExpression;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.ProgramResult;
-import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
@@ -327,8 +326,6 @@ public class ManagerMockTest {
         TransactionCapsule.class, BlockCapsule.class);
     privateMethod.setAccessible(true);
     privateMethod.invoke(dbManager, transactionCapsuleMock, blockCapsuleMock);
-
-    assertTrue(true);
   }
 
   @Test
@@ -369,7 +366,6 @@ public class ManagerMockTest {
     when(transactionStoreMock.has(any())).thenReturn(true);
 
     dbManager.rePush(trx);
-    assertTrue(true);
   }
 
   @SneakyThrows
@@ -409,7 +405,6 @@ public class ManagerMockTest {
 
     doThrow(new TooBigTransactionResultException()).when(dbManager).pushTransaction(any());
     dbManager.rePush(trx);
-    assertTrue(true);
   }
 
   @Test
@@ -420,7 +415,6 @@ public class ManagerMockTest {
         "postSolidityFilter", long.class, long.class);
     privateMethod.setAccessible(true);
     privateMethod.invoke(dbManager, 100L, 10L);
-    assertTrue(true);
   }
 
   @Test
@@ -442,7 +436,6 @@ public class ManagerMockTest {
     Method privateMethod = Manager.class.getDeclaredMethod("reOrgLogsFilter");
     privateMethod.setAccessible(true);
     privateMethod.invoke(dbManager);
-    assertTrue(true);
   }
 
 }

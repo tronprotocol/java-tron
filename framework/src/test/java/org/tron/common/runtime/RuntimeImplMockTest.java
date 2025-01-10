@@ -4,7 +4,6 @@ import java.lang.reflect.Method;
 
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Test;
 import org.tron.core.vm.program.Program;
 
@@ -49,8 +48,6 @@ public class RuntimeImplMockTest {
         = new Program.JVMStackOverFlowException();
     programResult.setException(jvmStackOverFlowException);
     privateMethod.invoke(runtime, programResult);
-
-    Assert.assertTrue(true);
   }
 
 }
