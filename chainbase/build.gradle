@@ -2,7 +2,6 @@ description = "chainbase – a decentralized database for blockchain."
 
 // Dependency versions
 // ---------------------------------------
-def jacocoVersion = "0.8.0"
 def jansiVersion = "1.16"
 // --------------------------------------
 
@@ -39,10 +38,6 @@ test {
     if (System.getenv("CI") == null) {
         maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
     }
-}
-
-jacoco {
-    toolVersion = jacocoVersion // See http://www.eclemma.org/jacoco/.
 }
 
 jacocoTestReport {
