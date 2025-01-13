@@ -696,7 +696,7 @@ public class Wallet {
   }
 
   public long getSolidBlockNum() {
-      return chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
+    return chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
   }
 
   public BlockCapsule getBlockCapsuleByNum(long blockNum) {
