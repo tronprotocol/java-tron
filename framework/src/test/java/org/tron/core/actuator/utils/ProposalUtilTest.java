@@ -537,6 +537,18 @@ public class ProposalUtilTest extends BaseTest {
           "This value[CONSENSUS_LOGIC_OPTIMIZATION] is only allowed to be 1",
           e.getMessage());
     }
+
+    dynamicPropertiesStore.saveConsensusLogicOptimization(1);
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.CONSENSUS_LOGIC_OPTIMIZATION.getCode(), 1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "[CONSENSUS_LOGIC_OPTIMIZATION] has been valid, no need to propose again",
+          e.getMessage());
+    }
+
   }
 
   @Test

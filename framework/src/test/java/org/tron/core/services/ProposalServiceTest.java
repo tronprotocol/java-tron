@@ -111,6 +111,7 @@ public class ProposalServiceTest extends BaseTest {
   public void testUpdateConsensusLogicOptimization() {
     long v = dbManager.getDynamicPropertiesStore().getConsensusLogicOptimization();
     Assert.assertEquals(v, 0);
+    Assert.assertTrue(!dbManager.getDynamicPropertiesStore().allowConsensusLogicOptimization());
 
     long value = 1;
     Proposal proposal =
@@ -122,6 +123,8 @@ public class ProposalServiceTest extends BaseTest {
 
     v = dbManager.getDynamicPropertiesStore().getConsensusLogicOptimization();
     Assert.assertEquals(v, value);
+
+    Assert.assertTrue(dbManager.getDynamicPropertiesStore().allowConsensusLogicOptimization());
   }
 
 }

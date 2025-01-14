@@ -782,26 +782,30 @@ public class ProposalUtil {
       case ALLOW_STRICT_MATH: {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_7_7)) {
           throw new ContractValidateException(
-            "Bad chain parameter id [ALLOW_STRICT_MATH]");
+              "Bad chain parameter id [ALLOW_STRICT_MATH]");
         }
         if (dynamicPropertiesStore.allowStrictMath()) {
           throw new ContractValidateException(
-            "[ALLOW_STRICT_MATH] has been valid, no need to propose again");
+              "[ALLOW_STRICT_MATH] has been valid, no need to propose again");
         }
         if (value != 1) {
           throw new ContractValidateException(
-            "This value[ALLOW_STRICT_MATH] is only allowed to be 1");
+              "This value[ALLOW_STRICT_MATH] is only allowed to be 1");
         }
         break;
       }
       case CONSENSUS_LOGIC_OPTIMIZATION: {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_8_0)) {
           throw new ContractValidateException(
-            "Bad chain parameter id [CONSENSUS_LOGIC_OPTIMIZATION]");
+              "Bad chain parameter id [CONSENSUS_LOGIC_OPTIMIZATION]");
+        }
+        if (dynamicPropertiesStore.getConsensusLogicOptimization() == 1) {
+          throw new ContractValidateException(
+              "[CONSENSUS_LOGIC_OPTIMIZATION] has been valid, no need to propose again");
         }
         if (value != 1) {
           throw new ContractValidateException(
-            "This value[CONSENSUS_LOGIC_OPTIMIZATION] is only allowed to be 1");
+              "This value[CONSENSUS_LOGIC_OPTIMIZATION] is only allowed to be 1");
         }
         break;
       }

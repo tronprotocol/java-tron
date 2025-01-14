@@ -2906,6 +2906,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       .orElse(CommonParameter.getInstance().getConsensusLogicOptimization());
   }
 
+  public boolean allowConsensusLogicOptimization() {
+    return getConsensusLogicOptimization() == 1L;
+  }
+
   private static class DynamicResourceProperties {
 
     private static final byte[] ONE_DAY_NET_LIMIT = "ONE_DAY_NET_LIMIT".getBytes();
