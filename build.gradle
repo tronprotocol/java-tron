@@ -11,6 +11,9 @@ subprojects {
     targetCompatibility = JavaVersion.VERSION_1_8
 
     [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+    jacoco {
+        toolVersion = "0.8.12" // see https://www.jacoco.org/jacoco/trunk/doc/changes.html
+    }
 
     buildscript {
         repositories {
@@ -37,7 +40,6 @@ subprojects {
         implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
         implementation group: 'org.slf4j', name: 'jcl-over-slf4j', version: '1.7.25'
         implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.9'
-        implementation group: 'com.google.guava', name: 'guava', version: '30.1-jre'
         implementation "com.google.code.findbugs:jsr305:3.0.0"
         implementation group: 'org.springframework', name: 'spring-context', version: '5.3.18'
         implementation group: 'org.springframework', name: 'spring-tx', version: '5.3.18'
@@ -53,7 +55,8 @@ subprojects {
         testAnnotationProcessor 'org.projectlombok:lombok:1.18.12'
 
         testImplementation group: 'junit', name: 'junit', version: '4.13.2'
-        testImplementation "org.mockito:mockito-core:2.13.0"
+        testImplementation "org.mockito:mockito-core:4.11.0"
+        testImplementation "org.mockito:mockito-inline:4.11.0"
     }
 
     task sourcesJar(type: Jar, dependsOn: classes) {
@@ -67,12 +70,6 @@ subprojects {
         preserveFileTimestamps = false
         reproducibleFileOrder = true
         duplicatesStrategy = DuplicatesStrategy.INCLUDE // allow duplicates
-    }
-
-    configurations.all {
-        resolutionStrategy {
-            force group: 'com.google.guava', name: 'guava', version: '30.1-jre'
-        }
     }
 }
 

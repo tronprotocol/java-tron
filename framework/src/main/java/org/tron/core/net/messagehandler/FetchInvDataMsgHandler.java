@@ -164,6 +164,10 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
             throw new P2pException(TypeEnum.BAD_MESSAGE,
                 "minBlockNum: " + minBlockNum + ", blockNum: " + blockNum);
           }
+          if (blockNum > peer.getLastSyncBlockId().getNum()) {
+            throw new P2pException(TypeEnum.BAD_MESSAGE,
+                "maxBlockNum: " + peer.getLastSyncBlockId().getNum() + ", blockNum: " + blockNum);
+          }
           if (peer.getSyncBlockIdCache().getIfPresent(hash) != null) {
             throw new P2pException(TypeEnum.BAD_MESSAGE,
                 new BlockId(hash).getString() + " is exist");

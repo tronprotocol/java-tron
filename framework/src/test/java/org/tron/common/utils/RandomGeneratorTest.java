@@ -1,19 +1,42 @@
 package org.tron.common.utils;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import com.beust.jcommander.internal.Lists;
 import com.google.protobuf.ByteString;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.core.capsule.WitnessCapsule;
 
 @Slf4j
-@Ignore
 public class RandomGeneratorTest {
 
+  private RandomGenerator<Integer> randomGenerator;
+
+  @Before
+  public void setUp() {
+    randomGenerator = new RandomGenerator<>();
+  }
+
+  @Test
+  public void testShufflePreservesElements() {
+    List<Integer> list = Arrays.asList(1, 2, 3, 4, 5);
+    List<Integer> shuffledList = randomGenerator.shuffle(list, System.currentTimeMillis());
+
+    assertEquals(list.size(), shuffledList.size());
+    for (Integer num : list) {
+      assertTrue(shuffledList.contains(num));
+    }
+  }
+
+  @Ignore
   @Test
   public void shuffle() {
     final List<WitnessCapsule> witnessCapsuleListBefore = this.getWitnessList();

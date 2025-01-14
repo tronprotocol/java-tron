@@ -138,6 +138,8 @@ public class RpcApiServicesTest {
     getInstance().setRpcPort(PublicMethod.chooseRandomPort());
     getInstance().setRpcOnSolidityPort(PublicMethod.chooseRandomPort());
     getInstance().setRpcOnPBFTPort(PublicMethod.chooseRandomPort());
+    getInstance().setMetricsPrometheusPort(PublicMethod.chooseRandomPort());
+    getInstance().setMetricsPrometheusEnable(true);
     String fullNode = String.format("%s:%d", getInstance().getNodeLanIp(),
         getInstance().getRpcPort());
     String solidityNode = String.format("%s:%d", getInstance().getNodeLanIp(),
