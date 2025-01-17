@@ -34,7 +34,7 @@ dependencies {
     api "com.cedarsoftware:java-util:1.8.0"
     api group: 'org.apache.httpcomponents', name: 'httpasyncclient', version: '4.1.1'
     api group: 'commons-codec', name: 'commons-codec', version: '1.11'
-    api group: 'com.beust', name: 'jcommander', version: '1.72'
+    api group: 'com.beust', name: 'jcommander', version: '1.78'
     api group: 'com.typesafe', name: 'config', version: '1.3.2'
     api group: leveldbGroup, name: leveldbName, version: leveldbVersion
     api group: 'org.rocksdb', name: 'rocksdbjni', version: '5.15.10'

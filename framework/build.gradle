@@ -58,7 +58,9 @@ dependencies {
     compileOnly group: 'javax.portlet', name: 'portlet-api', version: '3.0.1'
 
     implementation "io.vavr:vavr:0.9.2"
-    implementation group: 'org.pf4j', name: 'pf4j', version: '2.5.0'
+    implementation (group: 'org.pf4j', name: 'pf4j', version: '3.10.0') {
+        exclude group: "org.slf4j", module: "slf4j-api"
+    }
 
     testImplementation group: 'org.springframework', name: 'spring-test', version: '5.2.0.RELEASE'
     testImplementation group: 'org.springframework', name: 'spring-web', version: '5.2.0.RELEASE'

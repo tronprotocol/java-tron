@@ -253,14 +253,15 @@ public class Args extends CommonParameter {
     } catch (IOException e) {
       logger.error(e.getMessage());
     }
-    JCommander.getConsole().println("OS : " + System.getProperty("os.name"));
-    JCommander.getConsole().println("JVM : " + System.getProperty("java.vendor") + " "
+    JCommander jCommander = new JCommander();
+    jCommander.getConsole().println("OS : " + System.getProperty("os.name"));
+    jCommander.getConsole().println("JVM : " + System.getProperty("java.vendor") + " "
         + System.getProperty("java.version") + " " + System.getProperty("os.arch"));
     if (!noGitProperties) {
-      JCommander.getConsole().println("Git : " + properties.getProperty("git.commit.id"));
+      jCommander.getConsole().println("Git : " + properties.getProperty("git.commit.id"));
     }
-    JCommander.getConsole().println("Version : " + Version.getVersion());
-    JCommander.getConsole().println("Code : " + Version.VERSION_CODE);
+    jCommander.getConsole().println("Version : " + Version.getVersion());
+    jCommander.getConsole().println("Code : " + Version.VERSION_CODE);
   }
 
   public static void printHelp(JCommander jCommander) {
@@ -304,7 +305,7 @@ public class Args extends CommonParameter {
         helpStr.append(tmpOptionDesc);
       }
     }
-    JCommander.getConsole().println(helpStr.toString());
+    jCommander.getConsole().println(helpStr.toString());
   }
 
   public static String upperFirst(String name) {
