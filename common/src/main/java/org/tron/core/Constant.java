@@ -387,4 +387,7 @@ public class Constant {
 
   public static final String COMMITTEE_ALLOW_ENERGY_ADJUSTMENT = "committee.allowEnergyAdjustment";
   public static final String COMMITTEE_ALLOW_STRICT_MATH = "committee.allowStrictMath";
+
+  public static final String COMMITTEE_CONSENSUS_LOGIC_OPTIMIZATION
+      = "committee.consensusLogicOptimization";
 }
