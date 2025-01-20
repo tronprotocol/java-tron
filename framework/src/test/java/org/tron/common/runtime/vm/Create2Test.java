@@ -160,9 +160,16 @@ public class Create2Test extends VMTestBase {
     // Trigger contract method: deploy(bytes,uint)
     long salt = 100L;
     String hexInput = AbiUtil.parseMethod(methodSign, Arrays.asList(testCode, salt));
+
+    long preTime = manager.getDynamicPropertiesStore().getMaxCpuTimeOfOneTx();
+    // set max cpu time to 500
+    manager.getDynamicPropertiesStore().saveMaxCpuTimeOfOneTx(500L);
     TVMTestResult result = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
+    // restore max cpu time
+    manager.getDynamicPropertiesStore().saveMaxCpuTimeOfOneTx(preTime);
+
     Assert.assertNull(result.getRuntime().getRuntimeError());
 
     byte[] returnValue = result.getRuntime().getResult().getHReturn();
