@@ -185,7 +185,7 @@ public class SM2Signer
   }
 
   /**
-   * verfify the hash signature
+   * verify the hash signature
    */
   public boolean verifyHashSignature(byte[] hash, BigInteger r, BigInteger s) {
     BigInteger n = ecParams.getN();
