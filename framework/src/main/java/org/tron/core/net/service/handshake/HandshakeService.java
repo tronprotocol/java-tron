@@ -127,7 +127,7 @@ public class HandshakeService {
         TronNetService.getP2pConfig().getIp(),
         TronNetService.getP2pConfig().getIpv6(),
         TronNetService.getP2pConfig().getPort());
-    HelloMessage message = new HelloMessage(node, time, ChainBaseManager.getChainBaseManager());
+    HelloMessage message = new HelloMessage(node, time, chainBaseManager);
     relayService.fillHelloMessage(message, peer.getChannel());
     peer.sendMessage(message);
     peer.setHelloMessageSend(message);
