@@ -10,12 +10,16 @@ import org.tron.core.consensus.ConsensusService;
 import org.tron.core.db.Manager;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.net.TronNetService;
+import org.tron.core.services.event.EventService;
 
 @Slf4j(topic = "app")
 @Component
 public class ApplicationImpl implements Application {
 
   private ServiceContainer services;
+
+  @Autowired
+  private EventService eventService;
 
   @Autowired
   private TronNetService tronNetService;
@@ -56,6 +60,7 @@ public class ApplicationImpl implements Application {
   public void startup() {
     this.initServices(Args.getInstance());
     this.startServices();
+    eventService.init();
     if ((!Args.getInstance().isSolidityNode()) && (!Args.getInstance().isP2pDisable())) {
       tronNetService.start();
     }
@@ -66,6 +71,7 @@ public class ApplicationImpl implements Application {
   @Override
   public void shutdown() {
     this.shutdownServices();
+    eventService.close();
     consensusService.stop();
     if (!Args.getInstance().isSolidityNode() && (!Args.getInstance().p2pDisable)) {
       tronNetService.close();

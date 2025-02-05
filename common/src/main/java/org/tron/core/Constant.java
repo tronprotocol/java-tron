@@ -280,6 +280,8 @@ public class Constant {
 
   public static final String NATIVE_QUEUE_SEND_LENGTH = "event.subscribe.native.sendqueuelength";
 
+  public static final String EVENT_SUBSCRIBE_VERSION = "event.subscribe.version";
+  public static final String EVENT_SUBSCRIBE_START_SYNC_BLOCK_NUM = "event.subscribe.startSyncBlockNum";
   public static final String EVENT_SUBSCRIBE_PATH = "event.subscribe.path";
   public static final String EVENT_SUBSCRIBE_SERVER = "event.subscribe.server";
   public static final String EVENT_SUBSCRIBE_DB_CONFIG = "event.subscribe.dbconfig";
