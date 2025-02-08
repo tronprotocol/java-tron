@@ -55,6 +55,8 @@ public class VMConfig {
 
   private static boolean ALLOW_TVM_CANCUN = false;
 
+  private static Boolean ALLOW_STRICT_MATH_2 = false;
+
   private VMConfig() {
   }
 
@@ -154,6 +156,10 @@ public class VMConfig {
     ALLOW_TVM_CANCUN = allow == 1;
   }
 
+  public static void initAllowStrictMath2(long allow) {
+    ALLOW_STRICT_MATH_2 = allow == 1;
+  }
+
   public static boolean getEnergyLimitHardFork() {
     return CommonParameter.ENERGY_LIMIT_HARD_FORK;
   }
@@ -240,5 +246,9 @@ public class VMConfig {
 
   public static boolean allowTvmCancun() {
     return ALLOW_TVM_CANCUN;
+  }
+
+  public static boolean allowStrictMath2() {
+    return ALLOW_STRICT_MATH_2;
   }
 }

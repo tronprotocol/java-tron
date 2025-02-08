@@ -1,5 +1,6 @@
 package org.tron.common.runtime.vm;
 
+import static org.tron.common.math.Maths.max;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.REVERT;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
@@ -863,7 +864,8 @@ public class VoteTest {
     long rewardBySystem = mortgageService.queryReward(contract);
     long beginCycle = manager.getDelegationStore().getBeginCycle(contract);
     long currentCycle = manager.getDynamicPropertiesStore().getCurrentCycleNumber();
-    long passedCycle = Math.max(0, currentCycle - beginCycle);
+    long passedCycle = max(0, currentCycle - beginCycle,
+        manager.getDynamicPropertiesStore().allowStrictMath2());
     Assert.assertTrue(isZero ? rewardBySystem == 0 : rewardBySystem > 0);
     triggerContract(contract, SUCCESS,
         getConsumer(">=", rewardBySystem)

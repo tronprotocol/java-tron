@@ -1,5 +1,6 @@
 package org.tron.core.store;
 
+import static org.tron.common.math.Maths.max;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_PERIOD;
 
@@ -2245,7 +2246,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     long totalNetWeight = getTotalNetWeight();
     totalNetWeight += amount;
     if (allowNewReward()) {
-      totalNetWeight = Math.max(0, totalNetWeight);
+      totalNetWeight = max(0, totalNetWeight, allowStrictMath2());
     }
     saveTotalNetWeight(totalNetWeight);
   }
@@ -2258,7 +2259,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     long totalEnergyWeight = getTotalEnergyWeight();
     totalEnergyWeight += amount;
     if (allowNewReward()) {
-      totalEnergyWeight = Math.max(0, totalEnergyWeight);
+      totalEnergyWeight = max(0, totalEnergyWeight, allowStrictMath2());
     }
     saveTotalEnergyWeight(totalEnergyWeight);
   }
@@ -2271,7 +2272,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     long totalWeight = getTotalTronPowerWeight();
     totalWeight += amount;
     if (allowNewReward()) {
-      totalWeight = Math.max(0, totalWeight);
+      totalWeight = max(0, totalWeight, allowStrictMath2());
     }
     saveTotalTronPowerWeight(totalWeight);
   }
@@ -2894,6 +2895,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public boolean allowStrictMath() {
     return getAllowStrictMath() == 1L;
+  }
+
+  public boolean allowStrictMath2() {
+    return this.allowConsensusLogicOptimization();
   }
 
   public void saveConsensusLogicOptimization(long value) {

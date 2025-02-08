@@ -1,6 +1,8 @@
 package org.tron.core.vm.repository;
 
-import static java.lang.Long.max;
+import static org.tron.common.math.Maths.addExact;
+import static org.tron.common.math.Maths.max;
+import static org.tron.common.math.Maths.round;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
@@ -187,7 +189,7 @@ public class RepositoryImpl implements Repository {
 
     long newEnergyUsage = recover(energyUsage, latestConsumeTime, now, windowSize);
 
-    return max(energyLimit - newEnergyUsage, 0); // us
+    return max(energyLimit - newEnergyUsage, 0, VMConfig.allowStrictMath2()); // us
   }
 
   @Override
@@ -709,7 +711,7 @@ public class RepositoryImpl implements Repository {
           StringUtil.createReadableString(accountCapsule.createDbKey())
               + " insufficient balance");
     }
-    accountCapsule.setBalance(Math.addExact(balance, value));
+    accountCapsule.setBalance(addExact(balance, value, VMConfig.allowStrictMath2()));
     Key key = Key.create(address);
     accountCache.put(key, Value.create(accountCapsule,
          accountCache.get(key).getType().addType(Type.DIRTY)));
@@ -875,7 +877,7 @@ public class RepositoryImpl implements Repository {
       if (lastTime + windowSize > now) {
         long delta = now - lastTime;
         double decay = (windowSize - delta) / (double) windowSize;
-        averageLastUsage = Math.round(averageLastUsage * decay);
+        averageLastUsage = round(averageLastUsage * decay, VMConfig.allowStrictMath2());
       } else {
         averageLastUsage = 0;
       }

@@ -90,7 +90,7 @@ public class AccountCapsuleTest extends BaseTest {
     String nameAdd = "TokenX";
     long amountAdd = 222L;
     boolean addBoolean = accountCapsuleTest
-        .addAssetAmount(nameAdd.getBytes(), amountAdd);
+        .addAssetAmount(nameAdd.getBytes(), amountAdd, true);
 
     Assert.assertTrue(addBoolean);
 
@@ -102,7 +102,7 @@ public class AccountCapsuleTest extends BaseTest {
     long amountReduce = 22L;
 
     boolean reduceBoolean = accountCapsuleTest
-        .reduceAssetAmount(ByteArray.fromString("TokenX"), amountReduce);
+        .reduceAssetAmount(ByteArray.fromString("TokenX"), amountReduce, false);
     Assert.assertTrue(reduceBoolean);
 
     Map<String, Long> assetMapAfter = accountCapsuleTest.getAssetMapForTest();

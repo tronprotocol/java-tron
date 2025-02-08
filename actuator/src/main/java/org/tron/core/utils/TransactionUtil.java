@@ -16,6 +16,7 @@
 package org.tron.core.utils;
 
 import static org.tron.common.crypto.Hash.sha3omit12;
+import static org.tron.common.math.Maths.max;
 import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_COST_BASE_SIZE;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
@@ -270,7 +271,7 @@ public class TransactionUtil {
     DelegateResourceContract.Builder builder2 = DelegateResourceContract.newBuilder()
         .setBalance(TRX_PRECISION);
     long builder2Size = builder2.build().getSerializedSize();
-    long addSize = Math.max(builderSize - builder2Size, 0L);
+    long addSize = max(builderSize - builder2Size, 0L, dps.allowStrictMath2());
 
     return DELEGATE_COST_BASE_SIZE + addSize;
   }
