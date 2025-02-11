@@ -549,6 +549,7 @@ public class Wallet {
         throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
       }
       TransactionMessage message = new TransactionMessage(trx.getInstance().toByteArray());
+      trx.checkExpiration(tronNetDelegate.getNextBlockSlotTime());
       dbManager.pushTransaction(trx);
       int num = tronNetService.fastBroadcastTransaction(message);
       if (num == 0 && minEffectiveConnection != 0) {
@@ -1340,6 +1341,16 @@ public class Wallet {
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getMaxCreateAccountTxSize")
         .setValue(dbManager.getDynamicPropertiesStore().getMaxCreateAccountTxSize())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowStrictMath")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowStrictMath())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getConsensusLogicOptimization")
+        .setValue(dbManager.getDynamicPropertiesStore().getConsensusLogicOptimization())
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()

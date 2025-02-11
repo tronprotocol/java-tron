@@ -333,6 +333,9 @@ public class CommonParameter {
   public boolean isOpenFullTcpDisconnect;
   @Getter
   @Setter
+  public int inactiveThreshold;
+  @Getter
+  @Setter
   public boolean nodeDetectEnable;
   @Getter
   @Setter
@@ -673,6 +676,14 @@ public class CommonParameter {
   @Getter
   @Setter
   public long maxCreateAccountTxSize = 1000L;
+
+  @Getter
+  @Setter
+  public long allowStrictMath;
+
+  @Getter
+  @Setter
+  public long  consensusLogicOptimization;
 
   @Getter
   @Setter

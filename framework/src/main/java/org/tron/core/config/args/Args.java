@@ -173,6 +173,7 @@ public class Args extends CommonParameter {
     PARAMETER.receiveTcpMinDataLength = 2048;
     PARAMETER.isOpenFullTcpDisconnect = false;
     PARAMETER.nodeDetectEnable = false;
+    PARAMETER.inactiveThreshold = 600;
     PARAMETER.supportConstant = false;
     PARAMETER.debug = false;
     PARAMETER.minTimeRatio = 0.0;
@@ -233,6 +234,8 @@ public class Args extends CommonParameter {
     PARAMETER.maxUnsolidifiedBlocks = 54;
     PARAMETER.allowOldRewardOpt = 0;
     PARAMETER.allowEnergyAdjustment = 0;
+    PARAMETER.allowStrictMath = 0;
+    PARAMETER.consensusLogicOptimization = 0;
     PARAMETER.allowTvmCancun = 0;
   }
 
@@ -846,6 +849,12 @@ public class Args extends CommonParameter {
     PARAMETER.nodeDetectEnable = config.hasPath(Constant.NODE_DETECT_ENABLE)
           && config.getBoolean(Constant.NODE_DETECT_ENABLE);
 
+    PARAMETER.inactiveThreshold = config.hasPath(Constant.NODE_INACTIVE_THRESHOLD)
+        ? config.getInt(Constant.NODE_INACTIVE_THRESHOLD) : 600;
+    if (PARAMETER.inactiveThreshold < 1) {
+      PARAMETER.inactiveThreshold = 1;
+    }
+
     PARAMETER.maxTransactionPendingSize = config.hasPath(Constant.NODE_MAX_TRANSACTION_PENDING_SIZE)
         ? config.getInt(Constant.NODE_MAX_TRANSACTION_PENDING_SIZE) : 2000;
 
@@ -1210,6 +1219,14 @@ public class Args extends CommonParameter {
     PARAMETER.allowEnergyAdjustment =
             config.hasPath(Constant.COMMITTEE_ALLOW_ENERGY_ADJUSTMENT) ? config
                     .getInt(Constant.COMMITTEE_ALLOW_ENERGY_ADJUSTMENT) : 0;
+
+    PARAMETER.allowStrictMath =
+        config.hasPath(Constant.COMMITTEE_ALLOW_STRICT_MATH) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_STRICT_MATH) : 0;
+
+    PARAMETER.consensusLogicOptimization =
+        config.hasPath(Constant.COMMITTEE_CONSENSUS_LOGIC_OPTIMIZATION) ? config
+            .getInt(Constant.COMMITTEE_CONSENSUS_LOGIC_OPTIMIZATION) : 0;
 
     PARAMETER.allowTvmCancun =
         config.hasPath(Constant.COMMITTEE_ALLOW_TVM_CANCUN) ? config
