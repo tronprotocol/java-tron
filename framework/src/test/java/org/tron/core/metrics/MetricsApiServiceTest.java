@@ -44,7 +44,7 @@ public class MetricsApiServiceTest {
             "--storage-db-directory", dbDirectory,
             "--storage-index-directory", indexDirectory
         },
-        "config.conf"
+        Constant.TEST_CONF
     );
     CommonParameter parameter = Args.getInstance();
     parameter.setNodeListenPort(port);
@@ -52,9 +52,7 @@ public class MetricsApiServiceTest {
     parameter.setNodeExternalIp("127.0.0.1");
     context = new TronApplicationContext(DefaultConfig.class);
     appT = ApplicationFactory.create(context);
-    rpcApiService = context.getBean(RpcApiService.class);
     metricsApiService = context.getBean(MetricsApiService.class);
-    appT.addService(rpcApiService);
     appT.startup();
   }
 

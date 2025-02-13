@@ -6,9 +6,8 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
-import org.springframework.context.ApplicationContext;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.util.ObjectUtils;
-import org.springframework.util.StringUtils;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
@@ -21,8 +20,6 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.core.services.RpcApiService;
-import org.tron.core.services.http.solidity.SolidityNodeHttpApiService;
 import org.tron.protos.Protocol.Block;
 
 @Slf4j(topic = "app")
@@ -71,9 +68,6 @@ public class SolidityNode {
     }
     parameter.setSolidityNode(true);
 
-    TronApplicationContext context = new TronApplicationContext(DefaultConfig.class);
-    context.registerShutdownHook();
-
     if (parameter.isHelp()) {
       logger.info("Here is the help message.");
       return;
@@ -81,18 +75,17 @@ public class SolidityNode {
     // init metrics first
     Metrics.init();
 
+    DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
+    beanFactory.setAllowCircularReferences(false);
+    TronApplicationContext context =
+        new TronApplicationContext(beanFactory);
+    context.register(DefaultConfig.class);
+    context.refresh();
     Application appT = ApplicationFactory.create(context);
-    RpcApiService rpcApiService = context.getBean(RpcApiService.class);
-    appT.addService(rpcApiService);
-    //http
-    SolidityNodeHttpApiService httpApiService = context.getBean(SolidityNodeHttpApiService.class);
-    if (CommonParameter.getInstance().solidityNodeHttpEnable) {
-      appT.addService(httpApiService);
-    }
-
+    context.registerShutdownHook();
+    appT.startup();
     SolidityNode node = new SolidityNode(appT.getDbManager());
     node.start();
-    appT.startup();
     appT.blockUntilShutdown();
   }
 
