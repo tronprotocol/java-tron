@@ -46,7 +46,7 @@ dependencies {
     api 'org.aspectj:aspectjrt:1.8.13'
     api 'org.aspectj:aspectjweaver:1.8.13'
     api 'org.aspectj:aspectjtools:1.8.13'
-    api group: 'io.github.tronprotocol', name: 'libp2p', version: '2.2.4',{
+    api group: 'io.github.tronprotocol', name: 'libp2p', version: '2.2.5',{
         exclude group: 'io.grpc', module: 'grpc-context'
         exclude group: 'io.grpc', module: 'grpc-core'
         exclude group: 'io.grpc', module: 'grpc-netty'
@@ -60,6 +60,8 @@ dependencies {
         exclude group: 'net.java.dev.msv', module: 'xsdlib'
         exclude group: 'pull-parser', module: 'pull-parser'
         exclude group: 'xpp3', module: 'xpp3'
+        exclude group: 'org.bouncycastle', module: 'bcprov-jdk18on'
+        exclude group: 'org.bouncycastle', module: 'bcutil-jdk18on'
     }
     api project(":protocol")
 }
