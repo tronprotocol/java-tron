@@ -115,6 +115,7 @@ public class ArgsTest {
     Assert.assertEquals(GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE, parameter.getMaxMessageSize());
     Assert.assertEquals(GrpcUtil.DEFAULT_MAX_HEADER_LIST_SIZE, parameter.getMaxHeaderListSize());
     Assert.assertEquals(1L, parameter.getAllowCreationOfContracts());
+    Assert.assertEquals(0, parameter.getConsensusLogicOptimization());
 
     Assert.assertEquals(privateKey,
         Args.getLocalWitnesses().getPrivateKey());
