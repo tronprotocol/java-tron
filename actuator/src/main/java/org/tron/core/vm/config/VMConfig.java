@@ -51,6 +51,8 @@ public class VMConfig {
 
   private static boolean ALLOW_ENERGY_ADJUSTMENT = false;
 
+  private static boolean ALLOW_STRICT_MATH = false;
+
   private VMConfig() {
   }
 
@@ -142,6 +144,10 @@ public class VMConfig {
     ALLOW_ENERGY_ADJUSTMENT = allow == 1;
   }
 
+  public static void initAllowStrictMath(long allow) {
+    ALLOW_STRICT_MATH = allow == 1;
+  }
+
   public static boolean getEnergyLimitHardFork() {
     return CommonParameter.ENERGY_LIMIT_HARD_FORK;
   }
@@ -220,5 +226,9 @@ public class VMConfig {
 
   public static boolean allowEnergyAdjustment() {
     return ALLOW_ENERGY_ADJUSTMENT;
+  }
+
+  public static boolean allowStrictMath() {
+    return ALLOW_STRICT_MATH;
   }
 }

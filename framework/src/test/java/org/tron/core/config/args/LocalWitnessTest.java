@@ -24,8 +24,8 @@ import org.tron.common.utils.PublicMethod;
 
 public class LocalWitnessTest {
 
-  private LocalWitnesses localWitness = new LocalWitnesses();
-  private static String PRIVATE_KEY = PublicMethod.getRandomPrivateKey();
+  private final LocalWitnesses localWitness = new LocalWitnesses();
+  private static final String PRIVATE_KEY = PublicMethod.getRandomPrivateKey();
 
   @Before
   public void setLocalWitness() {
@@ -38,11 +38,15 @@ public class LocalWitnessTest {
   @Test
   public void whenSetNullPrivateKey() {
     localWitness.setPrivateKeys(null);
+    Assert.assertNotNull(localWitness.getPrivateKey());
+    Assert.assertNotNull(localWitness.getPublicKey());
   }
 
   @Test
   public void whenSetEmptyPrivateKey() {
     localWitness.setPrivateKeys(Lists.newArrayList(""));
+    Assert.assertNotNull(localWitness.getPrivateKey());
+    Assert.assertNotNull(localWitness.getPublicKey());
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -58,6 +62,7 @@ public class LocalWitnessTest {
     localWitness
         .setPrivateKeys(Lists
             .newArrayList("0X" + PRIVATE_KEY));
+    Assert.assertNotNull(localWitness.getPrivateKey());
   }
 
   @Test
@@ -65,5 +70,21 @@ public class LocalWitnessTest {
     Assert.assertEquals(Lists
             .newArrayList(PRIVATE_KEY),
         localWitness.getPrivateKeys());
+  }
+
+  @Test
+  public void testConstructor() {
+    LocalWitnesses localWitnesses = new LocalWitnesses(PublicMethod.getRandomPrivateKey());
+    LocalWitnesses localWitnesses1 =
+        new LocalWitnesses(Lists.newArrayList(PublicMethod.getRandomPrivateKey()));
+    localWitnesses.setWitnessAccountAddress(new byte[0]);
+    Assert.assertNotNull(localWitnesses1.getPublicKey());
+
+    LocalWitnesses localWitnesses2 = new LocalWitnesses();
+    Assert.assertNull(localWitnesses2.getPrivateKey());
+    Assert.assertNull(localWitnesses2.getPublicKey());
+    localWitnesses2.initWitnessAccountAddress(true);
+    LocalWitnesses localWitnesses3 = new LocalWitnesses();
+    Assert.assertNotNull(localWitnesses3.getWitnessAccountAddress(true));
   }
 }
