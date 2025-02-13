@@ -25,6 +25,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.ProposalUtil;
 import org.tron.core.utils.ProposalUtil.ProposalType;
+import org.tron.protos.Protocol;
 
 @Slf4j(topic = "actuator")
 public class ProposalUtilTest extends BaseTest {
@@ -385,7 +386,54 @@ public class ProposalUtilTest extends BaseTest {
           e.getMessage());
     }
 
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_STRICT_MATH.getCode(), 2);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "Bad chain parameter id [ALLOW_STRICT_MATH]",
+          e.getMessage());
+    }
+    hardForkTime =
+        ((ForkBlockVersionEnum.VERSION_4_7_7.getHardForkTime() - 1) / maintenanceTimeInterval + 1)
+            * maintenanceTimeInterval;
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .saveLatestBlockHeaderTimestamp(hardForkTime + 1);
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .statsByVersion(ForkBlockVersionEnum.VERSION_4_7_7.getValue(), stats);
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_STRICT_MATH.getCode(), 2);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "This value[ALLOW_STRICT_MATH] is only allowed to be 1",
+          e.getMessage());
+    }
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_STRICT_MATH.getCode(), 1);
+    } catch (ContractValidateException e) {
+      Assert.fail(e.getMessage());
+    }
+    Protocol.Proposal proposal = Protocol.Proposal.newBuilder().putParameters(
+        ProposalType.ALLOW_STRICT_MATH.getCode(), 1).build();
+    ProposalCapsule proposalCapsule = new ProposalCapsule(proposal);
+    ProposalService.process(dbManager, proposalCapsule);
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_STRICT_MATH.getCode(), 1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "[ALLOW_STRICT_MATH] has been valid, no need to propose again",
+          e.getMessage());
+    }
+
     testEnergyAdjustmentProposal();
+
+    testConsensusLogicOptimizationProposal();
 
     forkUtils.getManager().getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionEnum.ENERGY_LIMIT.getValue(), stats);
@@ -452,6 +500,55 @@ public class ProposalUtilTest extends BaseTest {
           "[ALLOW_ENERGY_ADJUSTMENT] has been valid, no need to propose again",
           e.getMessage());
     }
+  }
+
+  private void testConsensusLogicOptimizationProposal() {
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.CONSENSUS_LOGIC_OPTIMIZATION.getCode(), 1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "Bad chain parameter id [CONSENSUS_LOGIC_OPTIMIZATION]",
+          e.getMessage());
+    }
+
+    long maintenanceTimeInterval = forkUtils.getManager().getDynamicPropertiesStore()
+        .getMaintenanceTimeInterval();
+
+    long hardForkTime =
+        ((ForkBlockVersionEnum.VERSION_4_8_0.getHardForkTime() - 1) / maintenanceTimeInterval + 1)
+        * maintenanceTimeInterval;
+    forkUtils.getManager().getDynamicPropertiesStore()
+      .saveLatestBlockHeaderTimestamp(hardForkTime + 1);
+
+    byte[] stats = new byte[27];
+    Arrays.fill(stats, (byte) 1);
+    forkUtils.getManager().getDynamicPropertiesStore()
+      .statsByVersion(ForkBlockVersionEnum.VERSION_4_8_0.getValue(), stats);
+
+    // Should fail because the proposal value is invalid
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.CONSENSUS_LOGIC_OPTIMIZATION.getCode(), 2);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "This value[CONSENSUS_LOGIC_OPTIMIZATION] is only allowed to be 1",
+          e.getMessage());
+    }
+
+    dynamicPropertiesStore.saveConsensusLogicOptimization(1);
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.CONSENSUS_LOGIC_OPTIMIZATION.getCode(), 1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "[CONSENSUS_LOGIC_OPTIMIZATION] has been valid, no need to propose again",
+          e.getMessage());
+    }
+
   }
 
   @Test

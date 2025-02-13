@@ -1,8 +1,10 @@
 package org.tron.program;
 
+import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.tron.keystore.WalletUtils.passwordValid;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,6 +23,7 @@ import org.tron.common.utils.Value;
 import org.tron.core.Constant;
 import org.tron.core.capsule.StorageRowCapsule;
 import org.tron.core.capsule.utils.RLP;
+import org.tron.core.config.TronLogShutdownHook;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.http.HttpSelfFormatFieldName;
 import org.tron.core.store.StorageRowStore;
@@ -128,6 +131,20 @@ public class SupplementTest extends BaseTest {
     RLP.decode2(new byte[] {1,2,3,4,5,6,7});
     thrown.expect(ClassCastException.class);
     RLP.unwrapList(new byte[] {1,2,3,4,5,6,7});
+  }
+
+  @Test
+  public void testPasswordValid() {
+    assertFalse(passwordValid(EMPTY));
+    assertFalse(passwordValid("12345"));
+    assertTrue(passwordValid("123456"));
+  }
+
+  @Test
+  public void testRun() {
+    TronLogShutdownHook hook = new TronLogShutdownHook();
+    hook.run();
+    assertTrue(true);
   }
 
 }
