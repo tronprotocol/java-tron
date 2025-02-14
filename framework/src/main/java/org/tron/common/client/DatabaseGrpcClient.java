@@ -1,7 +1,9 @@
 package org.tron.common.client;
 
+import io.grpc.LoadBalancerRegistry;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.internal.PickFirstLoadBalancerProvider;
 import org.tron.api.DatabaseGrpc;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.NumberMessage;
@@ -12,6 +14,12 @@ public class DatabaseGrpcClient {
 
   private final ManagedChannel channel;
   private final DatabaseGrpc.DatabaseBlockingStub databaseBlockingStub;
+
+  static {
+    LoadBalancerRegistry
+        .getDefaultRegistry()
+        .register(new PickFirstLoadBalancerProvider());
+  }
 
   public DatabaseGrpcClient(String host, int port) {
     channel = ManagedChannelBuilder.forAddress(host, port)
