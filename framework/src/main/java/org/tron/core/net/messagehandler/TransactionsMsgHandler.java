@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.es.ExecutorServiceManager;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
@@ -36,6 +37,8 @@ public class TransactionsMsgHandler implements TronMsgHandler {
   private TronNetDelegate tronNetDelegate;
   @Autowired
   private AdvService advService;
+  @Autowired
+  private ChainBaseManager chainBaseManager;
 
   private BlockingQueue<TrxEvent> smartContractQueue = new LinkedBlockingQueue(MAX_TRX_SIZE);
 
@@ -133,7 +136,7 @@ public class TransactionsMsgHandler implements TronMsgHandler {
     }
 
     try {
-      trx.getTransactionCapsule().checkExpiration(tronNetDelegate.getNextBlockSlotTime());
+      trx.getTransactionCapsule().checkExpiration(chainBaseManager.getNextBlockSlotTime());
       tronNetDelegate.pushTransaction(trx.getTransactionCapsule());
       advService.broadcast(trx);
     } catch (P2pException e) {
