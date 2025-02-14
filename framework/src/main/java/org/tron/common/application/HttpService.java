@@ -15,67 +15,61 @@
 
 package org.tron.common.application;
 
-import com.google.common.base.Objects;
+import java.util.concurrent.CompletableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.jetty.server.ConnectionLimit;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.tron.core.config.args.Args;
 
 @Slf4j(topic = "rpc")
-public abstract class HttpService implements Service {
+public abstract class HttpService extends AbstractService {
 
   protected Server apiServer;
-  protected int port;
+
+  protected String contextPath;
 
   @Override
-  public void blockUntilShutdown() {
-    if (apiServer != null) {
-      try {
-        apiServer.join();
-      } catch (InterruptedException e) {
-        logger.warn("{}", e.getMessage());
-        Thread.currentThread().interrupt();
-      }
+  public void innerStart() throws Exception {
+    if (this.apiServer != null) {
+      this.apiServer.start();
     }
   }
 
   @Override
-  public void start() {
-    if (apiServer != null) {
-      try {
-        apiServer.start();
-        logger.info("{} started, listening on {}", this.getClass().getSimpleName(), port);
-      } catch (Exception e) {
-        logger.error("{}", this.getClass().getSimpleName(), e);
-      }
+  public void innerStop() throws Exception {
+    if (this.apiServer != null) {
+      this.apiServer.stop();
     }
   }
 
   @Override
-  public void stop() {
-    if (apiServer != null) {
-      logger.info("{} shutdown...", this.getClass().getSimpleName());
-      try {
-        apiServer.stop();
-      } catch (Exception e) {
-        logger.warn("{}", this.getClass().getSimpleName(), e);
-      }
-      logger.info("{} shutdown complete", this.getClass().getSimpleName());
+  public CompletableFuture<Boolean> start() {
+    initServer();
+    ServletContextHandler context = initContextHandler();
+    addServlet(context);
+    addFilter(context);
+    return super.start();
+  }
+
+  protected void initServer() {
+    this.apiServer = new Server(this.port);
+    int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
+    if (maxHttpConnectNumber > 0) {
+      this.apiServer.addBean(new ConnectionLimit(maxHttpConnectNumber, this.apiServer));
     }
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    HttpService that = (HttpService) o;
-    return port == that.port;
+  protected ServletContextHandler initContextHandler() {
+    ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+    context.setContextPath(this.contextPath);
+    this.apiServer.setHandler(context);
+    return context;
   }
 
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(getClass().getSimpleName(), port);
+  protected abstract void addServlet(ServletContextHandler context);
+
+  protected void addFilter(ServletContextHandler context) {
+
   }
 }

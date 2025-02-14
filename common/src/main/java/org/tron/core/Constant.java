@@ -124,15 +124,21 @@ public class Constant {
   public static final String NODE_DNS_AWS_REGION = "node.dns.awsRegion";
   public static final String NODE_DNS_AWS_HOST_ZONE_ID = "node.dns.awsHostZoneId";
 
+  // config for rpc
   public static final String NODE_RPC_PORT = "node.rpc.port";
   public static final String NODE_RPC_SOLIDITY_PORT = "node.rpc.solidityPort";
   public static final String NODE_RPC_PBFT_PORT = "node.rpc.PBFTPort";
+  public static final String NODE_RPC_ENABLE = "node.rpc.enable";
+  public static final String NODE_RPC_SOLIDITY_ENABLE = "node.rpc.solidityEnable";
+  public static final String NODE_RPC_PBFT_ENABLE = "node.rpc.PBFTEnable";
+  // config for http
   public static final String NODE_HTTP_FULLNODE_PORT = "node.http.fullNodePort";
   public static final String NODE_HTTP_SOLIDITY_PORT = "node.http.solidityPort";
   public static final String NODE_HTTP_FULLNODE_ENABLE = "node.http.fullNodeEnable";
   public static final String NODE_HTTP_SOLIDITY_ENABLE = "node.http.solidityEnable";
+  public static final String NODE_HTTP_PBFT_ENABLE = "node.http.PBFTEnable";
   public static final String NODE_HTTP_PBFT_PORT = "node.http.PBFTPort";
-
+  // config for jsonrpc
   public static final String NODE_JSONRPC_HTTP_FULLNODE_ENABLE = "node.jsonrpc.httpFullNodeEnable";
   public static final String NODE_JSONRPC_HTTP_FULLNODE_PORT = "node.jsonrpc.httpFullNodePort";
   public static final String NODE_JSONRPC_HTTP_SOLIDITY_ENABLE = "node.jsonrpc.httpSolidityEnable";
