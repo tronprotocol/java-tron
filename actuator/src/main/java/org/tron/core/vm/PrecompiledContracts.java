@@ -16,6 +16,8 @@ import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.protobuf.ByteString;
+
+import java.lang.reflect.Constructor;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -194,6 +196,14 @@ public class PrecompiledContracts {
   private static final DataWord blake2FAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000020009");
 
+  public static PrecompiledContract getOptimizedContractForConstant(PrecompiledContract contract) {
+    try {
+      Constructor<?> constructor = contract.getClass().getDeclaredConstructor();
+      return  (PrecompiledContracts.PrecompiledContract) constructor.newInstance();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
 
   public static PrecompiledContract getContractForAddress(DataWord address) {
 

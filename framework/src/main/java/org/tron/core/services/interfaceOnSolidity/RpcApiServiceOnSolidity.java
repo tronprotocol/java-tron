@@ -42,6 +42,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.filter.LiteFnQueryGrpcInterceptor;
+import org.tron.core.services.ratelimiter.PrometheusInterceptor;
 import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
 import org.tron.core.services.ratelimiter.RpcApiAccessInterceptor;
 import org.tron.protos.Protocol.Account;
@@ -80,6 +81,9 @@ public class RpcApiServiceOnSolidity extends RpcService {
 
   @Autowired
   private RpcApiAccessInterceptor apiAccessInterceptor;
+
+  @Autowired
+  private PrometheusInterceptor prometheusInterceptor;
 
   private final String executorName = "rpc-solidity-executor";
 
@@ -124,6 +128,11 @@ public class RpcApiServiceOnSolidity extends RpcService {
 
       // add lite fullnode query interceptor
       serverBuilder.intercept(liteFnQueryGrpcInterceptor);
+
+      // add prometheus interceptor
+      if (parameter.isMetricsPrometheusEnable()) {
+        serverBuilder.intercept(prometheusInterceptor);
+      }
 
       if (parameter.isRpcReflectionServiceEnable()) {
         serverBuilder.addService(ProtoReflectionService.newInstance());

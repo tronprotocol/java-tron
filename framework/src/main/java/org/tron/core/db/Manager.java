@@ -1321,23 +1321,17 @@ public class Manager {
 
               return;
             }
+            long oldSolidNum = getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
             try (ISession tmpSession = revokingStore.buildSession()) {
-
-              long oldSolidNum =
-                      chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
-
               applyBlock(newBlock, txs);
               tmpSession.commit();
-              // if event subscribe is enabled, post block trigger to queue
-              postBlockTrigger(newBlock);
-              // if event subscribe is enabled, post solidity trigger to queue
-              postSolidityTrigger(oldSolidNum,
-                      getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
             } catch (Throwable throwable) {
               logger.error(throwable.getMessage(), throwable);
               khaosDb.removeBlk(block.getBlockId());
               throw throwable;
             }
+            long newSolidNum = getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
+            blockTrigger(newBlock, oldSolidNum, newSolidNum);
           }
           logger.info(SAVE_BLOCK, newBlock);
         }
@@ -1367,6 +1361,19 @@ public class Manager {
     }
   }
 
+  void blockTrigger(final BlockCapsule block, long oldSolid, long newSolid) {
+    try {
+      // if event subscribe is enabled, post block trigger to queue
+      postBlockTrigger(block);
+      // if event subscribe is enabled, post solidity trigger to queue
+      postSolidityTrigger(oldSolid, newSolid);
+    } catch (Exception e) {
+      logger.error("Block trigger failed. head: {}, oldSolid: {}, newSolid: {}",
+          block.getNum(), oldSolid, newSolid, e);
+      System.exit(1);
+    }
+  }
+
   public void updateDynamicProperties(BlockCapsule block) {
 
     chainBaseManager.getDynamicPropertiesStore()
@@ -1384,6 +1391,7 @@ public class Manager {
         (chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
             - chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum()
             + 1));
+    chainBaseManager.setLatestSaveBlockTime(System.currentTimeMillis());
     Metrics.gaugeSet(MetricKeys.Gauge.HEADER_HEIGHT, block.getNum());
     Metrics.gaugeSet(MetricKeys.Gauge.HEADER_TIME, block.getTimeStamp());
   }
@@ -1568,6 +1576,7 @@ public class Manager {
     List<TransactionCapsule> toBePacked = new ArrayList<>();
     long currentSize = blockCapsule.getInstance().getSerializedSize();
     boolean isSort = Args.getInstance().isOpenTransactionSort();
+    int[] logSize = new int[] {pendingTransactions.size(), rePushTransactions.size(), 0, 0};
     while (pendingTransactions.size() > 0 || rePushTransactions.size() > 0) {
       boolean fromPending = false;
       TransactionCapsule trx;
@@ -1643,6 +1652,11 @@ public class Manager {
         tmpSession.merge();
         toBePacked.add(trx);
         currentSize += trxPackSize;
+        if (fromPending) {
+          logSize[2] += 1;
+        } else {
+          logSize[3] += 1;
+        }
       } catch (Exception e) {
         logger.warn("Process trx {} failed when generating block {}, {}.", trx.getTransactionId(),
             blockCapsule.getNum(), e.getMessage());
@@ -1659,11 +1673,14 @@ public class Manager {
     BlockCapsule capsule = new BlockCapsule(blockCapsule.getInstance());
     capsule.generatedByMyself = true;
     Metrics.histogramObserve(timer);
-    logger.info("Generate block {} success, trxs:{}, pendingCount: {}, rePushCount: {},"
-                    + " postponedCount: {}, blockSize: {} B",
-            capsule.getNum(), capsule.getTransactions().size(),
-            pendingTransactions.size(), rePushTransactions.size(), postponedTrxCount,
-            capsule.getSerializedSize());
+    logger.info("Generate block {} success, trxs:{}, before pendingCount: {}, rePushCount: {}, "
+            + "from pending: {}, rePush: {}, after pendingCount: {}, rePushCount: {}, "
+            + "postponedCount: {}, blockSize: {} B",
+        capsule.getNum(), capsule.getTransactions().size(),
+        logSize[0], logSize[1], logSize[2], logSize[3],
+        pendingTransactions.size(), rePushTransactions.size(), postponedTrxCount,
+        capsule.getSerializedSize());
+
     return capsule;
   }
 
@@ -2206,7 +2223,7 @@ public class Manager {
     }
   }
 
-  private void postBlockTrigger(final BlockCapsule blockCapsule) {
+  void postBlockTrigger(final BlockCapsule blockCapsule) {
     // post block and logs for jsonrpc
     if (CommonParameter.getInstance().isJsonRpcHttpFullNodeEnable()) {
       postBlockFilter(blockCapsule, false);
