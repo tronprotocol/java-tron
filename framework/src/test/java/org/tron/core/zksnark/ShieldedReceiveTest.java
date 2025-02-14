@@ -369,6 +369,8 @@ public class ShieldedReceiveTest extends BaseTest {
 
     // generate checkSpendParams
     SpendDescription spendDescription = builder.getContractBuilder().getSpendDescription(0);
+    SpendDescriptionCapsule spendDescriptionCapsule = new SpendDescriptionCapsule(spendDescription);
+    Assert.assertNotNull(spendDescriptionCapsule);
     CheckSpendParams checkSpendParams = new CheckSpendParams(ctx,
         spendDescription.getValueCommitment().toByteArray(),
         spendDescription.getAnchor().toByteArray(),
@@ -873,20 +875,43 @@ public class ShieldedReceiveTest extends BaseTest {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new ZksnarkException("Output proof failed");
     }
-
+    ReceiveDescriptionCapsule c = new ReceiveDescriptionCapsule(new byte[32]);
+    ReceiveDescriptionCapsule c1 =
+        new ReceiveDescriptionCapsule(ReceiveDescription.newBuilder().build());
+    ReceiveDescriptionCapsule c2 =
+        new ReceiveDescriptionCapsule(ByteString.copyFrom(new byte[32]),
+            ByteString.copyFrom(new byte[32]),
+            ByteString.copyFrom(new byte[32]),
+            ByteString.copyFrom(new byte[32]),
+            ByteString.copyFrom(new byte[32]),
+            ByteString.copyFrom(new byte[32]));
+    Assert.assertNotNull(c);
+    Assert.assertNotNull(c1);
+    Assert.assertNotNull(c2);
     ReceiveDescriptionCapsule receiveDescriptionCapsule = new ReceiveDescriptionCapsule();
     receiveDescriptionCapsule.setValueCommitment(cv);
+    receiveDescriptionCapsule.setValueCommitment(ByteString.copyFrom(cv));
     receiveDescriptionCapsule.setNoteCommitment(cm);
+    receiveDescriptionCapsule.setNoteCommitment(ByteString.copyFrom(cm));
     receiveDescriptionCapsule.setEpk(encryptor.getEpk());
+    receiveDescriptionCapsule.setEpk(ByteString.copyFrom(encryptor.getEpk()));
     receiveDescriptionCapsule.setCEnc(enc.getEncCiphertext());
+    receiveDescriptionCapsule.setCEnc(ByteString.copyFrom(enc.getEncCiphertext()));
     receiveDescriptionCapsule.setZkproof(zkProof);
+    receiveDescriptionCapsule.setZkproof(ByteString.copyFrom(zkProof));
+    receiveDescriptionCapsule.getEphemeralKey();
+    receiveDescriptionCapsule.getData();
+    receiveDescriptionCapsule.getZkproof();
+    receiveDescriptionCapsule.getOutCiphertext();
 
     OutgoingPlaintext outPlaintext =
         new OutgoingPlaintext(output.getNote().getPkD(), encryptor.getEsk());
-    receiveDescriptionCapsule.setCOut(outPlaintext
+    byte[] bytes = outPlaintext
         .encrypt(output.getOvk(), receiveDescriptionCapsule.getValueCommitment().toByteArray(),
             receiveDescriptionCapsule.getCm().toByteArray(),
-            encryptor).getData());
+            encryptor).getData();
+    receiveDescriptionCapsule.setCOut(bytes);
+    receiveDescriptionCapsule.setCOut(ByteString.copyFrom(bytes));
 
     Note newNote = output.getNote();
     byte[] newCm;

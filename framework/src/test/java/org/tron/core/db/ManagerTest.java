@@ -367,12 +367,12 @@ public class ManagerTest extends BlockGenerate {
     Assert.assertTrue(trie.isEmpty());
     AccountStateEntity entity = new AccountStateEntity();
     AccountStateEntity parsedEntity = AccountStateEntity.parse("".getBytes());
-    Assert.assertTrue(parsedEntity != null);
-    Assert.assertTrue(parsedEntity.getAccount() != null);
-    Assert.assertTrue(org.tron.core.db.api.pojo.Account.of() != null);
-    Assert.assertTrue(org.tron.core.db.api.pojo.AssetIssue.of() != null);
-    Assert.assertTrue(org.tron.core.db.api.pojo.Block.of() != null);
-    Assert.assertTrue(org.tron.core.db.api.pojo.Transaction.of() != null);
+    Assert.assertNotNull(parsedEntity);
+    Assert.assertNotNull(parsedEntity.getAccount());
+    Assert.assertNotNull(org.tron.core.db.api.pojo.Account.of());
+    Assert.assertNotNull(org.tron.core.db.api.pojo.AssetIssue.of());
+    Assert.assertNotNull(org.tron.core.db.api.pojo.Block.of());
+    Assert.assertNotNull(org.tron.core.db.api.pojo.Transaction.of());
 
   }
 
@@ -618,7 +618,8 @@ public class ManagerTest extends BlockGenerate {
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
     chainManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
     chainManager.addWitness(ByteString.copyFrom(address));
-    List<WitnessCapsule> witnessStandby1 = chainManager.getWitnessStore().getWitnessStandby();
+    List<WitnessCapsule> witnessStandby1 = chainManager.getWitnessStore().getWitnessStandby(
+        chainManager.getDynamicPropertiesStore().allowWitnessSortOptimization());
     Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
 
@@ -656,7 +657,8 @@ public class ManagerTest extends BlockGenerate {
       Assert.assertTrue(e instanceof Exception);
     }
     chainManager.getWitnessStore().put(address, sr2);
-    List<WitnessCapsule> witnessStandby2 = chainManager.getWitnessStore().getWitnessStandby();
+    List<WitnessCapsule> witnessStandby2 = chainManager.getWitnessStore().getWitnessStandby(
+        chainManager.getDynamicPropertiesStore().allowWitnessSortOptimization());
     Assert.assertNotEquals(witnessStandby1, witnessStandby2);
   }
 

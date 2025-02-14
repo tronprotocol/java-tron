@@ -26,6 +26,7 @@ import java.util.Map;
 import org.bouncycastle.util.Arrays;
 import org.junit.Assert;
 import org.junit.Test;
+import org.tron.core.capsule.utils.FastByteComparisons;
 import org.tron.core.capsule.utils.RLP;
 import org.tron.core.trie.TrieImpl;
 import org.tron.core.trie.TrieImpl.Node;
@@ -149,6 +150,13 @@ public class TrieTest {
 
   private void assertFalse(byte[] key1, byte[] key2, TrieImpl trieCopy) {
     Assert.assertFalse(trieCopy.verifyProof(trieCopy.getRootHash(), key2, trieCopy.prove(key1)));
+  }
+
+  @Test
+  public void testFastByteComparisons() {
+    byte[] test1 = new byte[] {0x00, 0x00, 0x01, 0x02, 0x03, 0x04};
+    byte[] test2 = new byte[] {0x00, 0x01, 0x02, 0x03, 0x04};
+    Assert.assertEquals(0, FastByteComparisons.compareTo(test1, 1, 5, test2, 0, 5));
   }
 
 }
