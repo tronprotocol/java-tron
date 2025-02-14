@@ -191,17 +191,17 @@ public class LogBlockQuery {
         Bloom bloom = Bloom.create(hash);
         BitSet bs = BitSet.valueOf(bloom.getData());
 
-        int[] bitIndex = new int[3]; //must same as the number of hash function in Bloom
-        int nonZeroCount = 0;
+        //number of nonZero positions may be equal or less than number(3) of hash function in Bloom
+        List<Integer> bitIndexList = new ArrayList<>();
         for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i + 1)) {
           // operate on index i here
           if (i == Integer.MAX_VALUE) {
             break; // or (i+1) would overflow
           }
-          bitIndex[nonZeroCount++] = i;
+          bitIndexList.add(i);
         }
 
-        bitIndexes[j] = bitIndex;
+        bitIndexes[j] = bitIndexList.stream().mapToInt(Integer::intValue).toArray();
       }
       allConditionsIndex[k] = bitIndexes;
     }
