@@ -19,6 +19,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
 import org.tron.core.exception.JsonRpcInvalidParamsException;
+import org.tron.core.services.jsonrpc.JsonRpcApiUtil;
 import org.tron.core.services.jsonrpc.TronJsonRpc.FilterRequest;
 import org.tron.core.services.jsonrpc.filters.LogBlockQuery;
 import org.tron.core.services.jsonrpc.filters.LogFilter;
@@ -351,5 +352,10 @@ public class JsonRpcTest {
     } catch (JsonRpcInvalidParamsException e) {
       Assert.fail();
     }
+  }
+
+  @Test
+  public void testGenerateFilterId() {
+    Assert.assertEquals(32, JsonRpcApiUtil.generateFilterId().length());
   }
 }
