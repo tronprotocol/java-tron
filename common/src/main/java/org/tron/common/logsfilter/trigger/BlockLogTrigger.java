@@ -34,7 +34,7 @@ public class BlockLogTrigger extends Trigger {
   @Override
   public String toString() {
     return new StringBuilder().append("triggerName: ").append(getTriggerName())
-        .append("timestamp: ")
+        .append(", timestamp: ")
         .append(timeStamp)
         .append(", blockNumber: ")
         .append(blockNumber)
