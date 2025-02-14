@@ -433,6 +433,8 @@ public class ProposalUtilTest extends BaseTest {
 
     testEnergyAdjustmentProposal();
 
+    testConsensusLogicOptimizationProposal();
+
     forkUtils.getManager().getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionEnum.ENERGY_LIMIT.getValue(), stats);
     forkUtils.reset();
@@ -498,6 +500,55 @@ public class ProposalUtilTest extends BaseTest {
           "[ALLOW_ENERGY_ADJUSTMENT] has been valid, no need to propose again",
           e.getMessage());
     }
+  }
+
+  private void testConsensusLogicOptimizationProposal() {
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.CONSENSUS_LOGIC_OPTIMIZATION.getCode(), 1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "Bad chain parameter id [CONSENSUS_LOGIC_OPTIMIZATION]",
+          e.getMessage());
+    }
+
+    long maintenanceTimeInterval = forkUtils.getManager().getDynamicPropertiesStore()
+        .getMaintenanceTimeInterval();
+
+    long hardForkTime =
+        ((ForkBlockVersionEnum.VERSION_4_8_0.getHardForkTime() - 1) / maintenanceTimeInterval + 1)
+        * maintenanceTimeInterval;
+    forkUtils.getManager().getDynamicPropertiesStore()
+      .saveLatestBlockHeaderTimestamp(hardForkTime + 1);
+
+    byte[] stats = new byte[27];
+    Arrays.fill(stats, (byte) 1);
+    forkUtils.getManager().getDynamicPropertiesStore()
+      .statsByVersion(ForkBlockVersionEnum.VERSION_4_8_0.getValue(), stats);
+
+    // Should fail because the proposal value is invalid
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.CONSENSUS_LOGIC_OPTIMIZATION.getCode(), 2);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "This value[CONSENSUS_LOGIC_OPTIMIZATION] is only allowed to be 1",
+          e.getMessage());
+    }
+
+    dynamicPropertiesStore.saveConsensusLogicOptimization(1);
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.CONSENSUS_LOGIC_OPTIMIZATION.getCode(), 1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "[CONSENSUS_LOGIC_OPTIMIZATION] has been valid, no need to propose again",
+          e.getMessage());
+    }
+
   }
 
   @Test

@@ -24,8 +24,6 @@ import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Utils;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.services.RpcApiService;
-import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import picocli.CommandLine;
 
 @Slf4j
@@ -49,8 +47,6 @@ public class DbLiteTest {
   public void startApp() {
     context = new TronApplicationContext(DefaultConfig.class);
     appTest = ApplicationFactory.create(context);
-    appTest.addService(context.getBean(RpcApiService.class));
-    appTest.addService(context.getBean(RpcApiServiceOnSolidity.class));
     appTest.startup();
 
     String fullNode = String.format("%s:%d", "127.0.0.1",
@@ -78,6 +74,7 @@ public class DbLiteTest {
     // allow account root
     Args.getInstance().setAllowAccountStateRoot(1);
     Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setRpcEnable(true);
     databaseDir = Args.getInstance().getStorage().getDbDirectory();
     // init dbBackupConfig to avoid NPE
     Args.getInstance().dbBackupConfig = DbBackupConfig.getInstance();

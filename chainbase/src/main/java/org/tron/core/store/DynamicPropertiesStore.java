@@ -224,6 +224,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] MAX_CREATE_ACCOUNT_TX_SIZE = "MAX_CREATE_ACCOUNT_TX_SIZE".getBytes();
   private static final byte[] ALLOW_STRICT_MATH = "ALLOW_STRICT_MATH".getBytes();
 
+  private static final byte[] CONSENSUS_LOGIC_OPTIMIZATION
+      = "CONSENSUS_LOGIC_OPTIMIZATION".getBytes();
+
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -2889,6 +2892,26 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public boolean allowStrictMath() {
     return getAllowStrictMath() == 1L;
+  }
+
+  public void saveConsensusLogicOptimization(long value) {
+    this.put(CONSENSUS_LOGIC_OPTIMIZATION,
+      new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getConsensusLogicOptimization() {
+    return Optional.ofNullable(getUnchecked(CONSENSUS_LOGIC_OPTIMIZATION))
+      .map(BytesCapsule::getData)
+      .map(ByteArray::toLong)
+      .orElse(CommonParameter.getInstance().getConsensusLogicOptimization());
+  }
+
+  public boolean allowConsensusLogicOptimization() {
+    return getConsensusLogicOptimization() == 1L;
+  }
+
+  public boolean allowWitnessSortOptimization() {
+    return this.allowConsensusLogicOptimization();
   }
 
   private static class DynamicResourceProperties {
