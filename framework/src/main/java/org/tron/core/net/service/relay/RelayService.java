@@ -40,7 +40,7 @@ import org.tron.protos.Protocol.ReasonCode;
 @Component
 public class RelayService {
 
-  private static final int MAX_PEER_COUNT_PER_ADDRESS = 2;
+  private static final int MAX_PEER_COUNT_PER_ADDRESS = 5;
 
   @Autowired
   private ChainBaseManager chainBaseManager;
