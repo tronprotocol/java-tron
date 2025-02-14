@@ -1,5 +1,6 @@
 package org.tron.consensus.dpos;
 
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
 import static org.tron.core.config.Parameter.ChainConstant.SOLIDIFIED_THRESHOLD;
 
@@ -116,6 +117,12 @@ public class DposService implements ConsensusInterface {
     }
     ByteString witnessAddress = blockCapsule.getWitnessAddress();
     long timeStamp = blockCapsule.getTimeStamp();
+    if (timeStamp % BLOCK_PRODUCED_INTERVAL != 0
+      && consensusDelegate.getDynamicPropertiesStore().allowConsensusLogicOptimization()) {
+      logger.warn("ValidBlock failed: witness: {}, timeStamp: {}",
+        ByteArray.toHexString(witnessAddress.toByteArray()), timeStamp);
+      return false;
+    }
     long bSlot = dposSlot.getAbSlot(timeStamp);
     long hSlot = dposSlot.getAbSlot(consensusDelegate.getLatestBlockHeaderTimestamp());
     if (bSlot <= hSlot) {

@@ -17,7 +17,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.ExpectedSystemExit;
+import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.error.TronDBException;
@@ -30,6 +30,7 @@ import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.TronError;
 import org.tron.core.service.MortgageService;
 import org.tron.core.service.RewardViCalService;
 import org.tron.core.store.AccountStore;
@@ -115,7 +116,7 @@ public class ComputeRewardTest {
   public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Rule
-  public final ExpectedSystemExit exit = ExpectedSystemExit.none();
+  public final ExpectedException exception = ExpectedException.none();
 
   @After
   public void destroy() {
@@ -263,7 +264,7 @@ public class ComputeRewardTest {
 
   @Test
   public void query() {
-    exit.expectSystemExitWithStatus(1);
+    exception.expect(TronError.class);
     Assert.assertEquals(3189, mortgageService.queryReward(OWNER_ADDRESS));
     // mock root is error
     rewardViStore.put("test".getBytes(), "test".getBytes());
