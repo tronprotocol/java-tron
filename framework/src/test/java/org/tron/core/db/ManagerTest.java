@@ -618,7 +618,8 @@ public class ManagerTest extends BlockGenerate {
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
     chainManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
     chainManager.addWitness(ByteString.copyFrom(address));
-    List<WitnessCapsule> witnessStandby1 = chainManager.getWitnessStore().getWitnessStandby();
+    List<WitnessCapsule> witnessStandby1 = chainManager.getWitnessStore().getWitnessStandby(
+        chainManager.getDynamicPropertiesStore().allowWitnessSortOptimization());
     Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
 
@@ -656,7 +657,8 @@ public class ManagerTest extends BlockGenerate {
       Assert.assertTrue(e instanceof Exception);
     }
     chainManager.getWitnessStore().put(address, sr2);
-    List<WitnessCapsule> witnessStandby2 = chainManager.getWitnessStore().getWitnessStandby();
+    List<WitnessCapsule> witnessStandby2 = chainManager.getWitnessStore().getWitnessStandby(
+        chainManager.getDynamicPropertiesStore().allowWitnessSortOptimization());
     Assert.assertNotEquals(witnessStandby1, witnessStandby2);
   }
 
