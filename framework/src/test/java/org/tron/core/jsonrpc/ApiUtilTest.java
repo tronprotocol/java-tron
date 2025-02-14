@@ -1,6 +1,5 @@
 package org.tron.core.jsonrpc;
 
-
 import static org.tron.common.utils.Commons.decodeFromBase58Check;
 import static org.tron.keystore.Wallet.generateRandomBytes;
 
