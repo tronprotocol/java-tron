@@ -983,7 +983,7 @@ public class Args extends CommonParameter {
     PARAMETER.fastForwardNodes = getInetSocketAddress(config, Constant.NODE_FAST_FORWARD, true);
 
     PARAMETER.maxFastForwardNum = config.hasPath(Constant.NODE_MAX_FAST_FORWARD_NUM) ? config
-            .getInt(Constant.NODE_MAX_FAST_FORWARD_NUM) : 3;
+            .getInt(Constant.NODE_MAX_FAST_FORWARD_NUM) : 4;
     if (PARAMETER.maxFastForwardNum > MAX_ACTIVE_WITNESS_NUM) {
       PARAMETER.maxFastForwardNum = MAX_ACTIVE_WITNESS_NUM;
     }

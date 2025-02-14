@@ -90,7 +90,7 @@ public class SyncService {
       } catch (Exception e) {
         logger.error("Handle sync block error", e);
       }
-    }, 10, 1, TimeUnit.SECONDS);
+    }, 10000, 100, TimeUnit.MILLISECONDS);
   }
 
   public void close() {
