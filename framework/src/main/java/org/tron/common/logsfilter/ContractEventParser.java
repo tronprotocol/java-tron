@@ -1,5 +1,7 @@
 package org.tron.common.logsfilter;
 
+import static org.tron.common.math.Maths.min;
+
 import java.math.BigInteger;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
@@ -76,7 +78,7 @@ public class ContractEventParser {
       throw new OutputLengthException("data start:" + start + ", length:" + length);
     }
     byte[] dst = new byte[length];
-    System.arraycopy(src, start, dst, 0, Math.min(length, src.length - start));
+    System.arraycopy(src, start, dst, 0, min(length, src.length - start, true));
     return dst;
   }
 

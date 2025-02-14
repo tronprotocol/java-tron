@@ -15,6 +15,8 @@
 
 package org.tron.common.runtime.vm;
 
+import static org.tron.common.math.Maths.max;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import org.junit.Assert;
@@ -248,7 +250,8 @@ public class BandWidthRuntimeTest extends BaseTest {
         continue;
       }
       Result result = Result.newBuilder().setContractRet(cr).build();
-      maxSize = Math.max(maxSize, result.getSerializedSize());
+      maxSize = max(maxSize, result.getSerializedSize(),
+          dbManager.getDynamicPropertiesStore().allowStrictMath2());
     }
     Assert.assertEquals(2, maxSize);
   }

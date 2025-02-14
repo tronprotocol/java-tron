@@ -1,5 +1,7 @@
 package org.tron.core.service;
 
+import static org.tron.common.math.Maths.min;
+
 import java.math.BigInteger;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -205,7 +207,8 @@ public class MortgageService {
         .map(vote -> new Pair<>(vote.getVoteAddress().toByteArray(), vote.getVoteCount()))
         .collect(Collectors.toList());
     if (beginCycle < newAlgorithmCycle) {
-      long oldEndCycle = Math.min(endCycle, newAlgorithmCycle);
+      long oldEndCycle = min(endCycle, newAlgorithmCycle,
+          dynamicPropertiesStore.allowStrictMath2());
       reward = getOldReward(beginCycle, oldEndCycle, srAddresses);
       beginCycle = oldEndCycle;
     }

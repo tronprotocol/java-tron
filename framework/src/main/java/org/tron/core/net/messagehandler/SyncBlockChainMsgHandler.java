@@ -1,5 +1,7 @@
 package org.tron.core.net.messagehandler;
 
+import static org.tron.common.math.Maths.min;
+
 import java.util.LinkedList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -117,7 +119,7 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
   private LinkedList<BlockId> getBlockIds(Long unForkNum, BlockId headID) throws P2pException {
     long headNum = headID.getNum();
 
-    long len = Math.min(headNum, unForkNum + NetConstants.SYNC_FETCH_BATCH_NUM);
+    long len = min(headNum, unForkNum + NetConstants.SYNC_FETCH_BATCH_NUM, true);
 
     LinkedList<BlockId> ids = new LinkedList<>();
     for (long i = unForkNum; i <= len; i++) {

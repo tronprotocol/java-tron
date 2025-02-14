@@ -130,8 +130,8 @@ public class MarketUtils {
   public static int comparePrice(long price1SellQuantity, long price1BuyQuantity,
                                  long price2SellQuantity, long price2BuyQuantity) {
     try {
-      return Long.compare(Math.multiplyExact(price1BuyQuantity, price2SellQuantity),
-          Math.multiplyExact(price2BuyQuantity, price1SellQuantity));
+      return Long.compare(StrictMath.multiplyExact(price1BuyQuantity, price2SellQuantity),
+          StrictMath.multiplyExact(price2BuyQuantity, price1SellQuantity));
 
     } catch (ArithmeticException ex) {
       // do nothing here, because we will use BigInteger to compute again

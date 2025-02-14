@@ -1,5 +1,7 @@
 package org.tron.core.capsule.utils;
 
+import static org.tron.common.math.Maths.pow;
+
 import com.google.protobuf.ByteString;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -86,7 +88,7 @@ public class MerkleTreeTest {
       num = num >> 1;
       rank++;
     }
-    if (temp == Math.pow(2, rank - 1)) {
+    if (temp == pow(2, rank - 1, true)) {
       rank -= 1;
     }
     return rank;

@@ -18,6 +18,8 @@
 
 package org.tron.common.utils;
 
+import static org.tron.common.math.Maths.min;
+
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.UnsignedBytes;
 import java.io.ByteArrayOutputStream;
@@ -70,7 +72,7 @@ public class ByteUtil {
     byte[] bytes = new byte[numBytes];
     byte[] biBytes = b.toByteArray();
     int start = (biBytes.length == numBytes + 1) ? 1 : 0;
-    int length = Math.min(biBytes.length, numBytes);
+    int length = min(biBytes.length, numBytes, true);
     System.arraycopy(biBytes, start, bytes, numBytes - length, length);
     return bytes;
   }
@@ -346,7 +348,7 @@ public class ByteUtil {
     }
 
     byte[] bytes = new byte[len];
-    System.arraycopy(input, offset, bytes, 0, Math.min(input.length - offset, len));
+    System.arraycopy(input, offset, bytes, 0, min(input.length - offset, len, true));
     return bytes;
   }
 

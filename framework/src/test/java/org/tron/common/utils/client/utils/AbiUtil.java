@@ -1,5 +1,7 @@
 package org.tron.common.utils.client.utils;
 
+import static org.tron.common.math.Maths.abs;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -340,7 +342,7 @@ public class AbiUtil {
     @Override
     byte[] encode(String value) {
       long n = Long.valueOf(value);
-      DataWord word = new DataWord(Math.abs(n));
+      DataWord word = new DataWord(abs(n, true));
       if (n < 0) {
         word.negate();
       }
