@@ -10,6 +10,7 @@ import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.exit.ExitManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.Metrics;
 import org.tron.core.Constant;
@@ -40,6 +41,7 @@ public class FullNode {
    * Start the FullNode.
    */
   public static void main(String[] args) {
+    ExitManager.initExceptionHandler();
     logger.info("Full node running.");
     Args.setParam(args, Constant.TESTNET_CONF);
     CommonParameter parameter = Args.getInstance();
