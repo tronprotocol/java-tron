@@ -170,11 +170,7 @@ public class DposService implements ConsensusInterface {
   }
 
   public void updateWitness(List<ByteString> list) {
-    list.sort(Comparator.comparingLong((ByteString b) ->
-        consensusDelegate.getWitness(b.toByteArray()).getVoteCount())
-        .reversed()
-        .thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
-
+    consensusDelegate.sortWitness(list);
     if (list.size() > MAX_ACTIVE_WITNESS_NUM) {
       consensusDelegate
           .saveActiveWitnesses(list.subList(0, MAX_ACTIVE_WITNESS_NUM));
