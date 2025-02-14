@@ -39,7 +39,6 @@ dependencies {
     implementation fileTree(dir: 'libs', include: '*.jar')
     // end local libraries
     testImplementation group: 'org.hamcrest', name: 'hamcrest-junit', version: '1.0.0.1'
-    testImplementation group: 'com.github.stefanbirkner', name: 'system-rules', version: '1.16.0'
 
     implementation group: 'com.google.inject', name: 'guice', version: '4.1.0'
     implementation group: 'io.dropwizard.metrics', name: 'metrics-core', version: '3.1.2'

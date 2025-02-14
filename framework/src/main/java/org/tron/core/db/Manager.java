@@ -123,6 +123,7 @@ import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TooBigTransactionResultException;
 import org.tron.core.exception.TransactionExpirationException;
+import org.tron.core.exception.TronError;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
@@ -498,13 +499,13 @@ public class Manager {
       logger.error(
           "Please delete database directory({}) and restart",
           Args.getInstance().getOutputDirectory());
-      System.exit(1);
+      throw new TronError(e, TronError.ErrCode.KHAOS_DB_INIT);
     } catch (BadItemException e) {
       logger.error("DB data broken {}.", e.getMessage());
       logger.error(
           "Please delete database directory({}) and restart.",
           Args.getInstance().getOutputDirectory());
-      System.exit(1);
+      throw new TronError(e, TronError.ErrCode.KHAOS_DB_INIT);
     }
     getChainBaseManager().getForkController().init(this.chainBaseManager);
 
@@ -569,7 +570,7 @@ public class Manager {
       initAutoStop();
     } catch (IllegalArgumentException e) {
       logger.error("Auto-stop params error: {}", e.getMessage());
-      System.exit(1);
+      throw new TronError(e, TronError.ErrCode.AUTO_STOP_PARAMS);
     }
 
     maxFlushCount = CommonParameter.getInstance().getStorage().getMaxFlushCount();
@@ -586,10 +587,9 @@ public class Manager {
       Args.getInstance().setChainId(genesisBlock.getBlockId().toString());
     } else {
       if (chainBaseManager.hasBlocks()) {
-        logger.error(
-            "Genesis block modify, please delete database directory({}) and restart.",
-            Args.getInstance().getOutputDirectory());
-        System.exit(1);
+        String msg = String.format("Genesis block modify, please delete database directory(%s) and "
+                + "restart.", Args.getInstance().getOutputDirectory());
+        throw new TronError(msg, TronError.ErrCode.GENESIS_BLOCK_INIT);
       } else {
         logger.info("Create genesis block.");
         Args.getInstance().setChainId(genesisBlock.getBlockId().toString());
@@ -1370,7 +1370,7 @@ public class Manager {
     } catch (Exception e) {
       logger.error("Block trigger failed. head: {}, oldSolid: {}, newSolid: {}",
           block.getNum(), oldSolid, newSolid, e);
-      System.exit(1);
+      throw new TronError(e, TronError.ErrCode.EVENT_SUBSCRIBE_ERROR);
     }
   }
 

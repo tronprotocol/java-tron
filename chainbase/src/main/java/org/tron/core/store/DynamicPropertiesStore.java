@@ -227,6 +227,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] CONSENSUS_LOGIC_OPTIMIZATION
       = "CONSENSUS_LOGIC_OPTIMIZATION".getBytes();
 
+  private static final byte[] ALLOW_TVM_CANCUN = "ALLOW_TVM_CANCUN".getBytes();
+
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -2908,6 +2910,22 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public boolean allowConsensusLogicOptimization() {
     return getConsensusLogicOptimization() == 1L;
+  }
+
+  public boolean allowWitnessSortOptimization() {
+    return this.allowConsensusLogicOptimization();
+  }
+
+  public void saveAllowTvmCancun(long allowTvmCancun) {
+    this.put(ALLOW_TVM_CANCUN,
+        new BytesCapsule(ByteArray.fromLong(allowTvmCancun)));
+  }
+
+  public long getAllowTvmCancun() {
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_CANCUN))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(CommonParameter.getInstance().getAllowTvmCancun());
   }
 
   private static class DynamicResourceProperties {

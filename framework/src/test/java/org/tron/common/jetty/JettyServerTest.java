@@ -15,6 +15,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.tron.common.utils.PublicMethod;
 
 @Slf4j
 public class JettyServerTest {
@@ -25,7 +26,7 @@ public class JettyServerTest {
   public static void startJetty() throws Exception {
     server = new Server();
     ServerConnector connector = new ServerConnector(server);
-    connector.setPort(0);
+    connector.setPort(PublicMethod.chooseRandomPort());
     server.addConnector(connector);
 
     ServletContextHandler context = new ServletContextHandler();
