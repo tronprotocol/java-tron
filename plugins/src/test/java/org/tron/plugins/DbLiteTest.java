@@ -1,5 +1,7 @@
 package org.tron.plugins;
 
+import static org.tron.common.utils.PublicMethod.getRandomPrivateKey;
+
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.io.File;
@@ -156,7 +158,7 @@ public class DbLiteTest {
       ECKey ecKey2 = new ECKey(Utils.getRandom());
       byte[] address = ecKey2.getAddress();
 
-      String sunPri = "cba92a516ea09f620a16ff7ee95ce0df1d56550a8babe9964981a7144c8a784a";
+      String sunPri = getRandomPrivateKey();
       byte[] sunAddress = PublicMethod.getFinalAddress(sunPri);
       PublicMethod.sendcoin(address, 1L,
               sunAddress, sunPri, blockingStubFull);

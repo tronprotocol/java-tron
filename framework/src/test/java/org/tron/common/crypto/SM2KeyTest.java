@@ -6,6 +6,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.tron.common.utils.client.utils.AbiUtil.generateOccupationConstantPrivateKey;
 
 import java.math.BigInteger;
 import java.security.KeyPairGenerator;
@@ -30,19 +31,20 @@ public class SM2KeyTest {
   //private String IDa = "ALICE123@YAHOO.COM";
   private static BigInteger SM2_N = new BigInteger("FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFF7203DF6"
       + "B21C6052B53BBF40939D54123", 16);
-  private String privString = "128B2FA8BD433C6C068C8D803DFF79792A519A55171B1B650C23661D15897263";
+  // For safety reasons, test with a placeholder private key
+  private String privString = generateOccupationConstantPrivateKey();
   private BigInteger privateKey = new BigInteger(privString, 16);
-  private String pubString = "04d5548c7825cbb56150a3506cd57464af8a1ae0519dfaf3c58221dc810caf28d"
-      + "d921073768fe3d59ce54e79a49445cf73fed23086537027264d168946d479533e";
+  private String pubString = "04dc3547dbbc4c90a9cde599848e26cb145e805b3d11daaf9daae0680d9c6824058ac"
+      + "35ddecb12f3a8bbc3104a2b91a2b7d04851d773d9b4ab8d5e0359243c8628";
   private String compressedPubString =
-      "02d5548c7825cbb56150a3506cd57464af8a1ae0519dfaf3c58221dc810caf28dd";
+      "02dc3547dbbc4c90a9cde599848e26cb145e805b3d11daaf9daae0680d9c682405";
   private byte[] pubKey = Hex.decode(pubString);
   private byte[] compressedPubKey = Hex.decode(compressedPubString);
-  private String address = "62e49e4c2f4e3c0653a02f8859c1e6991b759e87";
+  private String address = "6cb22f88564bdd61eb4cdb36215add53bc702ff1";
 
   @Test
   public void testHashCode() {
-    assertEquals(1126288006, SM2.fromPrivate(privateKey).hashCode());
+    assertEquals(578690511, SM2.fromPrivate(privateKey).hashCode());
   }
 
   @Test
@@ -114,7 +116,7 @@ public class SM2KeyTest {
     SM2Signer signer = key.getSM2SignerForHash();
     String message = "message digest";
     byte[] hash = signer.generateSM3Hash(message.getBytes());
-    assertEquals("299C7DDB0D8DD2A85381BACBB92F738F390210A493A144C78E18C67B430DA882",
+    assertEquals("2A723761EAE35429DF643648FD69FB7787E7FC32F321BFAF7E294390F529BAF4",
         Hex.toHexString(hash).toUpperCase());
   }
 

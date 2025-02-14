@@ -7,6 +7,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.tron.common.utils.client.utils.AbiUtil.generateOccupationConstantPrivateKey;
 
 import java.math.BigInteger;
 import java.security.KeyPairGenerator;
@@ -27,16 +28,17 @@ import org.tron.core.Wallet;
 @Slf4j
 public class ECKeyTest {
 
-  private String privString = "c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4";
+  // For safety reasons, test with a placeholder private key
+  private String privString = generateOccupationConstantPrivateKey();
   private BigInteger privateKey = new BigInteger(privString, 16);
 
-  private String pubString = "040947751e3022ecf3016be03ec77ab0ce3c2662b4843898cb068d74f698ccc"
-      + "8ad75aa17564ae80a20bb044ee7a6d903e8e8df624b089c95d66a0570f051e5a05b";
+  private String pubString = "04e90c7d3640a1568839c31b70a893ab6714ef8415b9de90cedfc1c8f353a6983e62"
+      + "5529392df7fa514bdd65a2003f6619567d79bee89830e63e932dbd42362d34";
   private String compressedPubString =
-      "030947751e3022ecf3016be03ec77ab0ce3c2662b4843898cb068d74f6" + "98ccc8ad";
+      "02e90c7d3640a1568839c31b70a893ab6714ef8415b9de90cedfc1c8f353a6983e";
   private byte[] pubKey = Hex.decode(pubString);
   private byte[] compressedPubKey = Hex.decode(compressedPubString);
-  private String address = "cd2a3d9f938e13cd947ec05abc7fe734df8dd826";
+  private String address = "2e988a386a799f506693793c6a5af6b54dfaabfb";
   String eventSign = "eventBytesL(address,bytes,bytes32,uint256,string)";
 
   @Test
@@ -46,7 +48,7 @@ public class ECKeyTest {
 
   @Test
   public void testHashCode() {
-    assertEquals(-351262686, ECKey.fromPrivate(privateKey).hashCode());
+    assertEquals(-827927068, ECKey.fromPrivate(privateKey).hashCode());
   }
 
   @Test
