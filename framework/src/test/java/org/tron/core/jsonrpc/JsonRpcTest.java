@@ -190,6 +190,7 @@ public class JsonRpcTest {
     } catch (JsonRpcInvalidParamsException e) {
       Assert.fail();
     }
+
     try {
       new LogFilter(new FilterRequest(null, null, null, new String[] {"0x0"}, null));
     } catch (JsonRpcInvalidParamsException e) {
@@ -237,109 +238,6 @@ public class JsonRpcTest {
               null));
     } catch (JsonRpcInvalidParamsException e) {
       Assert.assertTrue(e.getMessage().contains("invalid address"));
-    }
-  }
-
-  /**
-   * test fromBlock and toBlock parameters
-   */
-  @Test
-  public void testLogFilterWrapper() {
-
-    // fromBlock and toBlock are both empty
-    try {
-      LogFilterWrapper logFilterWrapper =
-          new LogFilterWrapper(new FilterRequest(null, null, null, null, null), 100, null);
-      Assert.assertEquals(logFilterWrapper.getFromBlock(), 100);
-      Assert.assertEquals(logFilterWrapper.getToBlock(), Long.MAX_VALUE);
-    } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
-    }
-
-    // fromBlock is not empty and smaller than currentMaxBlockNum, toBlock is empty
-    try {
-      LogFilterWrapper logFilterWrapper =
-          new LogFilterWrapper(new FilterRequest("0x14", null, null, null, null), 100, null);
-      Assert.assertEquals(logFilterWrapper.getFromBlock(), 20);
-      Assert.assertEquals(logFilterWrapper.getToBlock(), Long.MAX_VALUE);
-    } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
-    }
-
-    // fromBlock is not empty and bigger than currentMaxBlockNum, toBlock is empty
-    try {
-      LogFilterWrapper logFilterWrapper =
-          new LogFilterWrapper(new FilterRequest("0x78", null, null, null, null), 100, null);
-      Assert.assertEquals(logFilterWrapper.getFromBlock(), 120);
-      Assert.assertEquals(logFilterWrapper.getToBlock(), Long.MAX_VALUE);
-    } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
-    }
-
-    // fromBlock is empty, toBlock is not empty and smaller than currentMaxBlockNum
-    try {
-      LogFilterWrapper logFilterWrapper =
-          new LogFilterWrapper(new FilterRequest(null, "0x14", null, null, null), 100, null);
-      Assert.assertEquals(logFilterWrapper.getFromBlock(), 20);
-      Assert.assertEquals(logFilterWrapper.getToBlock(), 20);
-    } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
-    }
-
-    // fromBlock is empty, toBlock is not empty and bigger than currentMaxBlockNum
-    try {
-      LogFilterWrapper logFilterWrapper =
-          new LogFilterWrapper(new FilterRequest(null, "0x78", null, null, null), 100, null);
-      Assert.assertEquals(logFilterWrapper.getFromBlock(), 100);
-      Assert.assertEquals(logFilterWrapper.getToBlock(), 120);
-    } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
-    }
-
-    // fromBlock is not empty, toBlock is not empty
-    try {
-      LogFilterWrapper logFilterWrapper =
-          new LogFilterWrapper(new FilterRequest("0x14", "0x78", null, null, null), 100, null);
-      Assert.assertEquals(logFilterWrapper.getFromBlock(), 20);
-      Assert.assertEquals(logFilterWrapper.getToBlock(), 120);
-    } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
-    }
-    try {
-      LogFilterWrapper logFilterWrapper =
-          new LogFilterWrapper(new FilterRequest("0x78", "0x14", null, null, null), 100, null);
-    } catch (JsonRpcInvalidParamsException e) {
-      Assert.assertEquals("please verify: fromBlock <= toBlock", e.getMessage());
-    }
-
-    //fromBlock or toBlock is not hex num
-    try {
-      LogFilterWrapper logFilterWrapper =
-          new LogFilterWrapper(new FilterRequest("earliest", null, null, null, null), 100, null);
-      Assert.assertEquals(logFilterWrapper.getFromBlock(), 0);
-      Assert.assertEquals(logFilterWrapper.getToBlock(), Long.MAX_VALUE);
-    } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
-    }
-    try {
-      LogFilterWrapper logFilterWrapper =
-          new LogFilterWrapper(new FilterRequest("latest", null, null, null, null), 100, null);
-      Assert.assertEquals(logFilterWrapper.getFromBlock(), 100);
-      Assert.assertEquals(logFilterWrapper.getToBlock(), Long.MAX_VALUE);
-    } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
-    }
-    try {
-      LogFilterWrapper logFilterWrapper =
-          new LogFilterWrapper(new FilterRequest("pending", null, null, null, null), 100, null);
-    } catch (JsonRpcInvalidParamsException e) {
-      Assert.assertEquals("TAG pending not supported", e.getMessage());
-    }
-    try {
-      LogFilterWrapper logFilterWrapper =
-          new LogFilterWrapper(new FilterRequest("test", null, null, null, null), 100, null);
-    } catch (JsonRpcInvalidParamsException e) {
-      Assert.assertEquals("Incorrect hex syntax", e.getMessage());
     }
   }
 

@@ -66,6 +66,7 @@ import org.tron.core.config.Configuration;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.exception.CipherException;
+import org.tron.core.exception.TronError;
 import org.tron.core.store.AccountStore;
 import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
@@ -96,6 +97,7 @@ public class Args extends CommonParameter {
 
 
   public static void clearParam() {
+    PARAMETER.shellConfFileName = "";
     PARAMETER.outputDirectory = "output-directory";
     PARAMETER.help = false;
     PARAMETER.witness = false;
@@ -190,8 +192,12 @@ public class Args extends CommonParameter {
     PARAMETER.validContractProtoThreadNum = 1;
     PARAMETER.shieldedTransInPendingMaxCounts = 10;
     PARAMETER.changedDelegation = 0;
+    PARAMETER.rpcEnable = true;
+    PARAMETER.rpcSolidityEnable = true;
+    PARAMETER.rpcPBFTEnable = true;
     PARAMETER.fullNodeHttpEnable = true;
     PARAMETER.solidityNodeHttpEnable = true;
+    PARAMETER.pBFTHttpEnable = true;
     PARAMETER.jsonRpcHttpFullNodeEnable = false;
     PARAMETER.jsonRpcHttpSolidityNodeEnable = false;
     PARAMETER.jsonRpcHttpPBFTNodeEnable = false;
@@ -236,6 +242,7 @@ public class Args extends CommonParameter {
     PARAMETER.allowEnergyAdjustment = 0;
     PARAMETER.allowStrictMath = 0;
     PARAMETER.consensusLogicOptimization = 0;
+    PARAMETER.allowTvmCancun = 0;
   }
 
   /**
@@ -364,6 +371,13 @@ public class Args extends CommonParameter {
     }
 
     Config config = Configuration.getByFileName(PARAMETER.shellConfFileName, confFileName);
+    setParam(config);
+  }
+
+  /**
+   * set parameters.
+   */
+  public static void setParam(final Config config) {
 
     if (config.hasPath(Constant.NET_TYPE)
         && Constant.TESTNET.equalsIgnoreCase(config.getString(Constant.NET_TYPE))) {
@@ -421,9 +435,8 @@ public class Args extends CommonParameter {
             String prikey = ByteArray.toHexString(sign.getPrivateKey());
             privateKeys.add(prikey);
           } catch (IOException | CipherException e) {
-            logger.error(e.getMessage());
             logger.error("Witness node start failed!");
-            exit(-1);
+            throw new TronError(e, TronError.ErrCode.WITNESS_KEYSTORE_LOAD);
           }
         }
       }
@@ -451,12 +464,28 @@ public class Args extends CommonParameter {
       PARAMETER.lruCacheSize = config.getInt(Constant.VM_LRU_CACHE_SIZE);
     }
 
+    if (config.hasPath(Constant.NODE_RPC_ENABLE)) {
+      PARAMETER.rpcEnable = config.getBoolean(Constant.NODE_RPC_ENABLE);
+    }
+
+    if (config.hasPath(Constant.NODE_RPC_SOLIDITY_ENABLE)) {
+      PARAMETER.rpcSolidityEnable = config.getBoolean(Constant.NODE_RPC_SOLIDITY_ENABLE);
+    }
+
+    if (config.hasPath(Constant.NODE_RPC_PBFT_ENABLE)) {
+      PARAMETER.rpcPBFTEnable = config.getBoolean(Constant.NODE_RPC_PBFT_ENABLE);
+    }
+
     if (config.hasPath(Constant.NODE_HTTP_FULLNODE_ENABLE)) {
       PARAMETER.fullNodeHttpEnable = config.getBoolean(Constant.NODE_HTTP_FULLNODE_ENABLE);
     }
 
     if (config.hasPath(Constant.NODE_HTTP_SOLIDITY_ENABLE)) {
       PARAMETER.solidityNodeHttpEnable = config.getBoolean(Constant.NODE_HTTP_SOLIDITY_ENABLE);
+    }
+
+    if (config.hasPath(Constant.NODE_HTTP_PBFT_ENABLE)) {
+      PARAMETER.pBFTHttpEnable = config.getBoolean(Constant.NODE_HTTP_PBFT_ENABLE);
     }
 
     if (config.hasPath(Constant.NODE_JSONRPC_HTTP_FULLNODE_ENABLE)) {
@@ -1226,6 +1255,10 @@ public class Args extends CommonParameter {
     PARAMETER.consensusLogicOptimization =
         config.hasPath(Constant.COMMITTEE_CONSENSUS_LOGIC_OPTIMIZATION) ? config
             .getInt(Constant.COMMITTEE_CONSENSUS_LOGIC_OPTIMIZATION) : 0;
+
+    PARAMETER.allowTvmCancun =
+        config.hasPath(Constant.COMMITTEE_ALLOW_TVM_CANCUN) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_TVM_CANCUN) : 0;
 
     logConfig();
   }

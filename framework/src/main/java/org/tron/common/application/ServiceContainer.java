@@ -15,59 +15,80 @@
 
 package org.tron.common.application;
 
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.parameter.CommonParameter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.tron.core.exception.TronError;
 
 @Slf4j(topic = "app")
+@Component
 public class ServiceContainer {
 
-  private final Set<Service> services;
+  @Autowired
+  private List<Service> services;
+
+  private List<Service> enabledServices;
 
   public ServiceContainer() {
-    this.services = Collections.synchronizedSet(new LinkedHashSet<>());
   }
 
-  public void add(Service service) {
-    this.services.add(service);
+  @PostConstruct
+  private void initEnabledServices() {
+    this.enabledServices = this.services.stream()
+        .filter(Service::isEnable)
+        .collect(Collectors.toList());
   }
 
-
-  public void init() {
-    this.services.forEach(service -> {
-      logger.debug("Initing {}.", service.getClass().getSimpleName());
-      service.init();
-    });
-  }
-
-  public void init(CommonParameter parameter) {
-    this.services.forEach(service -> {
-      logger.debug("Initing {}.", service.getClass().getSimpleName());
-      service.init(parameter);
-    });
-  }
-
-  public void start() {
+  void start() {
     logger.info("Starting api services.");
-    this.services.forEach(service -> {
-      logger.debug("Starting {}.", service.getClass().getSimpleName());
-      service.start();
-    });
+    this.enabledServices.forEach(this::waitForServiceToStart);
     logger.info("All api services started.");
   }
 
-  public void stop() {
+  void stop() {
     logger.info("Stopping api services.");
-    this.services.forEach(service -> {
-      logger.debug("Stopping {}.", service.getClass().getSimpleName());
-      service.stop();
-    });
+    this.enabledServices.forEach(this::waitForServiceToStop);
     logger.info("All api services stopped.");
   }
 
-  public void blockUntilShutdown() {
-    this.services.stream().findFirst().ifPresent(Service::blockUntilShutdown);
+  private void waitForServiceToStart(Service service) {
+    final String serviceName = service.getName();
+    final CompletableFuture<?> startFuture = service.start();
+    do {
+      try {
+        startFuture.get(60, TimeUnit.SECONDS);
+      } catch (final InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new TronError("Interrupted while waiting for service to start", e,
+            TronError.ErrCode.API_SERVER_INIT);
+      } catch (final ExecutionException e) {
+        throw new TronError("Service " + serviceName + " failed to start", e,
+            TronError.ErrCode.API_SERVER_INIT);
+      } catch (final TimeoutException e) {
+        logger.warn("Service {} is taking an unusually long time to start", serviceName);
+      }
+    } while (!startFuture.isDone());
+  }
+
+  private void waitForServiceToStop(Service service) {
+    final String serviceName = service.getName();
+    final CompletableFuture<?> stopFuture = service.stop();
+    try {
+      stopFuture.get(30, TimeUnit.SECONDS);
+    } catch (final InterruptedException e) {
+      logger.debug("Interrupted while waiting for service {} to complete", serviceName, e);
+      Thread.currentThread().interrupt();
+    } catch (final ExecutionException e) {
+      logger.error("Service {} failed to shutdown", serviceName, e);
+    } catch (final TimeoutException e) {
+      logger.error("Service {} did not shut down cleanly", serviceName);
+    }
   }
 }

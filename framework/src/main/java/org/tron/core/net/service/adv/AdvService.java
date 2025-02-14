@@ -121,8 +121,16 @@ public class AdvService {
     if (item.getType().equals(InventoryType.TRX) && trxCache.getIfPresent(item) != null) {
       return false;
     }
-    if (item.getType().equals(InventoryType.BLOCK) && blockCache.getIfPresent(item) != null) {
-      return false;
+
+    if (item.getType().equals(InventoryType.BLOCK)) {
+      if (blockCache.getIfPresent(item) != null) {
+        return false;
+      }
+
+      long solidNum = tronNetDelegate.getSolidifiedBlockNum();
+      if (new BlockId(item.getHash()).getNum() <= solidNum) {
+        return false;
+      }
     }
 
     synchronized (this) {
