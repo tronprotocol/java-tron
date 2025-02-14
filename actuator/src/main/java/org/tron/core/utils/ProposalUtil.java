@@ -809,6 +809,21 @@ public class ProposalUtil {
         }
         break;
       }
+      case ALLOW_TVM_CANCUN: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_8_0)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_TVM_CANCUN]");
+        }
+        if (dynamicPropertiesStore.getAllowTvmCancun() == 1) {
+          throw new ContractValidateException(
+              "[ALLOW_TVM_CANCUN] has been valid, no need to propose again");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_TVM_CANCUN] is only allowed to be 1");
+        }
+        break;
+      }
       default:
         break;
     }
@@ -888,6 +903,7 @@ public class ProposalUtil {
     ALLOW_OLD_REWARD_OPT(79), // 0, 1
     ALLOW_ENERGY_ADJUSTMENT(81), // 0, 1
     MAX_CREATE_ACCOUNT_TX_SIZE(82), // [500, 10000]
+    ALLOW_TVM_CANCUN(83), // 0, 1
     ALLOW_STRICT_MATH(87), // 0, 1
     CONSENSUS_LOGIC_OPTIMIZATION(88); // 0, 1
 

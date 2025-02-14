@@ -396,4 +396,6 @@ public class Constant {
 
   public static final String COMMITTEE_CONSENSUS_LOGIC_OPTIMIZATION
       = "committee.consensusLogicOptimization";
+
+  public static final String COMMITTEE_ALLOW_TVM_CANCUN = "committee.allowTvmCancun";
 }
