@@ -371,6 +371,11 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveAllowStrictMath(entry.getValue());
           break;
         }
+        case CONSENSUS_LOGIC_OPTIMIZATION: {
+          manager.getDynamicPropertiesStore()
+            .saveConsensusLogicOptimization(entry.getValue());
+          break;
+        }
         default:
           find = false;
           break;
