@@ -1162,6 +1162,30 @@ public class ManagerTest extends BlockGenerate {
   }
 
   @Test
+  public void testExpiration() {
+    dbManager.getDynamicPropertiesStore().saveConsensusLogicOptimization(1);
+    TransferContract transferContract =
+        TransferContract.newBuilder()
+            .setAmount(10)
+            .setOwnerAddress(ByteString.copyFromUtf8("aaa"))
+            .setToAddress(ByteString.copyFromUtf8("bbb"))
+            .build();
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < 100; i++) {
+      sb.append("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    }
+    Transaction transaction = Transaction.newBuilder().setRawData(Transaction.raw.newBuilder()
+        .setData(ByteString.copyFrom(sb.toString().getBytes(StandardCharsets.UTF_8)))
+        .addContract(Transaction.Contract.newBuilder().setParameter(Any.pack(transferContract))
+            .setType(ContractType.TransferContract))).build();
+    TransactionCapsule trx = new TransactionCapsule(transaction);
+    trx.setInBlock(true);
+
+    assertThrows(TransactionExpirationException.class, () -> dbManager.validateCommon(trx));
+
+  }
+
+  @Test
   public void blockTrigger() {
     exception.expect(TronError.class);
     Manager manager = spy(new Manager());
