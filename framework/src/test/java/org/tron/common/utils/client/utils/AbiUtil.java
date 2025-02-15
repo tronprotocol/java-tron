@@ -240,6 +240,16 @@ public class AbiUtil {
     return pack(coders, items);
   }
 
+  public static String generateOccupationConstantPrivateKey() {
+    StringBuilder privateKey = new StringBuilder();
+    String baseKey = "1234567890";
+    for (int i = 0; i < 6; i++) {
+      privateKey.append(baseKey);
+    }
+    privateKey.append("1234");
+    return privateKey.toString();
+  }
+
   public static void main(String[] args) {
     String method = "test(string,int2,string)";
     String params = "asdf,3123,adf";
