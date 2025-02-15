@@ -90,7 +90,7 @@ public class SyncService {
       } catch (Exception e) {
         logger.error("Handle sync block error", e);
       }
-    }, 10, 1, TimeUnit.SECONDS);
+    }, 10000, 100, TimeUnit.MILLISECONDS);
   }
 
   public void close() {
@@ -134,7 +134,7 @@ public class SyncService {
       blockJustReceived.put(blockMessage, peer);
     }
     handleFlag = true;
-    if (peer.isIdle()) {
+    if (peer.isSyncIdle()) {
       if (peer.getRemainNum() > 0
           && peer.getSyncBlockToFetch().size() <= syncFetchBatchNum) {
         syncNext(peer);
@@ -226,7 +226,7 @@ public class SyncService {
   private void startFetchSyncBlock() {
     HashMap<PeerConnection, List<BlockId>> send = new HashMap<>();
     tronNetDelegate.getActivePeer().stream()
-        .filter(peer -> peer.isNeedSyncFromPeer() && peer.isIdle())
+        .filter(peer -> peer.isNeedSyncFromPeer() && peer.isSyncIdle())
         .filter(peer -> peer.isFetchAble())
         .forEach(peer -> {
           if (!send.containsKey(peer)) {

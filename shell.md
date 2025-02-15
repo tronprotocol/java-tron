@@ -20,7 +20,7 @@ The script is available in the java-tron project at [github](https://github.com/
   sh start.sh --run
   ```
   
-  Start the servive with options.
+  Start the service with options.
   
   ```
   sh start.sh --run -j /data/FullNode.jar -c /data/config.conf -d /data/output-directory
@@ -162,7 +162,7 @@ Get the latest released version.
 sh start.sh --release --run
 ```
 
-Following file structure will be generated after executed the above command and the `FullNode.jar` will be started. 
+Following file structure will be generated after executing the above command and the `FullNode.jar` will be started. 
 
 ```
 ├── ...

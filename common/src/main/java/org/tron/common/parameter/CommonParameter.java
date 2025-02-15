@@ -339,6 +339,9 @@ public class CommonParameter {
   public boolean isOpenFullTcpDisconnect;
   @Getter
   @Setter
+  public int inactiveThreshold;
+  @Getter
+  @Setter
   public boolean nodeDetectEnable;
   @Getter
   @Setter
@@ -459,12 +462,30 @@ public class CommonParameter {
   @Getter
   @Setter
   public String cryptoEngine = Constant.ECKey_ENGINE;
+
+  @Getter
+  @Setter
+  public boolean rpcEnable = true;
+
+  @Getter
+  @Setter
+  public boolean rpcSolidityEnable = true;
+
+  @Getter
+  @Setter
+  public boolean rpcPBFTEnable = true;
+
   @Getter
   @Setter
   public boolean fullNodeHttpEnable = true;
   @Getter
   @Setter
   public boolean solidityNodeHttpEnable = true;
+
+  @Getter
+  @Setter
+  public boolean pBFTHttpEnable = true;
+
   @Getter
   @Setter
   public boolean jsonRpcHttpFullNodeEnable = false;
@@ -679,6 +700,18 @@ public class CommonParameter {
   @Getter
   @Setter
   public long maxCreateAccountTxSize = 1000L;
+
+  @Getter
+  @Setter
+  public long allowStrictMath;
+
+  @Getter
+  @Setter
+  public long  consensusLogicOptimization;
+
+  @Getter
+  @Setter
+  public long allowTvmCancun;
 
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));

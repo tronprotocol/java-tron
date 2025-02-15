@@ -27,6 +27,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.PublicMethod;
 import org.tron.core.services.http.solidity.mockito.HttpUrlStreamHandler;
 
 @Slf4j
@@ -100,7 +101,8 @@ public class BroadcastServletTest {
 
     final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
     System.setOut(new PrintStream(outContent));
-    String href = "http://127.0.0.1:8090/wallet/broadcasttransaction";
+    String href = "http://127.0.0.1:"
+        + PublicMethod.chooseRandomPort() + "/wallet/broadcasttransaction";
     httpUrlStreamHandler.addConnection(new URL(href), httpUrlConnection);
     httpUrlConnection.setRequestMethod("POST");
     httpUrlConnection.setRequestProperty("Content-Type", "application/json");

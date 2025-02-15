@@ -7,7 +7,6 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
@@ -58,13 +57,13 @@ public class TransferActuator extends AbstractActuator {
         fee = fee + dynamicStore.getCreateNewAccountFeeInSystemContract();
       }
 
-      Commons.adjustBalance(accountStore, ownerAddress, -(Math.addExact(fee, amount)));
+      adjustBalance(accountStore, ownerAddress, -(addExact(fee, amount)));
       if (dynamicStore.supportBlackHoleOptimization()) {
         dynamicStore.burnTrx(fee);
       } else {
-        Commons.adjustBalance(accountStore, accountStore.getBlackhole(), fee);
+        adjustBalance(accountStore, accountStore.getBlackhole(), fee);
       }
-      Commons.adjustBalance(accountStore, toAddress, amount);
+      adjustBalance(accountStore, toAddress, amount);
       ret.setStatus(fee, code.SUCESS);
     } catch (BalanceInsufficientException | ArithmeticException | InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
@@ -156,7 +155,7 @@ public class TransferActuator extends AbstractActuator {
         }
       }
 
-      if (balance < Math.addExact(amount, fee)) {
+      if (balance < addExact(amount, fee)) {
         logger.warn("Balance is not sufficient. Account: {}, balance: {}, amount: {}, fee: {}.",
             StringUtil.encode58Check(ownerAddress), balance, amount, fee);
         throw new ContractValidateException(
@@ -164,7 +163,7 @@ public class TransferActuator extends AbstractActuator {
       }
 
       if (toAccount != null) {
-        Math.addExact(toAccount.getBalance(), amount);
+        addExact(toAccount.getBalance(), amount);
       }
     } catch (ArithmeticException e) {
       logger.debug(e.getMessage(), e);

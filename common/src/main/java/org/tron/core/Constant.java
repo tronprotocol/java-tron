@@ -124,15 +124,21 @@ public class Constant {
   public static final String NODE_DNS_AWS_REGION = "node.dns.awsRegion";
   public static final String NODE_DNS_AWS_HOST_ZONE_ID = "node.dns.awsHostZoneId";
 
+  // config for rpc
   public static final String NODE_RPC_PORT = "node.rpc.port";
   public static final String NODE_RPC_SOLIDITY_PORT = "node.rpc.solidityPort";
   public static final String NODE_RPC_PBFT_PORT = "node.rpc.PBFTPort";
+  public static final String NODE_RPC_ENABLE = "node.rpc.enable";
+  public static final String NODE_RPC_SOLIDITY_ENABLE = "node.rpc.solidityEnable";
+  public static final String NODE_RPC_PBFT_ENABLE = "node.rpc.PBFTEnable";
+  // config for http
   public static final String NODE_HTTP_FULLNODE_PORT = "node.http.fullNodePort";
   public static final String NODE_HTTP_SOLIDITY_PORT = "node.http.solidityPort";
   public static final String NODE_HTTP_FULLNODE_ENABLE = "node.http.fullNodeEnable";
   public static final String NODE_HTTP_SOLIDITY_ENABLE = "node.http.solidityEnable";
+  public static final String NODE_HTTP_PBFT_ENABLE = "node.http.PBFTEnable";
   public static final String NODE_HTTP_PBFT_PORT = "node.http.PBFTPort";
-
+  // config for jsonrpc
   public static final String NODE_JSONRPC_HTTP_FULLNODE_ENABLE = "node.jsonrpc.httpFullNodeEnable";
   public static final String NODE_JSONRPC_HTTP_FULLNODE_PORT = "node.jsonrpc.httpFullNodePort";
   public static final String NODE_JSONRPC_HTTP_SOLIDITY_ENABLE = "node.jsonrpc.httpSolidityEnable";
@@ -197,6 +203,8 @@ public class Constant {
   public static final String NODE_RECEIVE_TCP_MIN_DATA_LENGTH = "node.receiveTcpMinDataLength";
 
   public static final String NODE_IS_OPEN_FULL_TCP_DISCONNECT = "node.isOpenFullTcpDisconnect";
+
+  public static final String NODE_INACTIVE_THRESHOLD = "node.inactiveThreshold";
 
   public static final String NODE_DETECT_ENABLE = "node.nodeDetectEnable";
 
@@ -385,4 +393,10 @@ public class Constant {
   public static final String COMMITTEE_ALLOW_OLD_REWARD_OPT = "committee.allowOldRewardOpt";
 
   public static final String COMMITTEE_ALLOW_ENERGY_ADJUSTMENT = "committee.allowEnergyAdjustment";
+  public static final String COMMITTEE_ALLOW_STRICT_MATH = "committee.allowStrictMath";
+
+  public static final String COMMITTEE_CONSENSUS_LOGIC_OPTIMIZATION
+      = "committee.consensusLogicOptimization";
+
+  public static final String COMMITTEE_ALLOW_TVM_CANCUN = "committee.allowTvmCancun";
 }

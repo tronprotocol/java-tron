@@ -13,6 +13,7 @@ import org.tron.common.es.ExecutorServiceManager;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
+import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.message.adv.TransactionMessage;
@@ -97,6 +98,10 @@ public class TransactionsMsgHandler implements TronMsgHandler {
             "trx: " + msg.getMessageId() + " without request.");
       }
       peer.getAdvInvRequest().remove(item);
+      if (trx.getRawData().getContractCount() < 1) {
+        throw new P2pException(TypeEnum.BAD_TRX,
+            "tx " + item.getHash() + " contract size should be greater than 0");
+      }
     }
   }
 
@@ -128,6 +133,7 @@ public class TransactionsMsgHandler implements TronMsgHandler {
     }
 
     try {
+      trx.getTransactionCapsule().checkExpiration(tronNetDelegate.getNextBlockSlotTime());
       tronNetDelegate.pushTransaction(trx.getTransactionCapsule());
       advService.broadcast(trx);
     } catch (P2pException e) {
@@ -137,6 +143,9 @@ public class TransactionsMsgHandler implements TronMsgHandler {
         peer.setBadPeer(true);
         peer.disconnect(ReasonCode.BAD_TX);
       }
+    } catch (TransactionExpirationException e) {
+      logger.warn("{}. trx: {}, peer: {}",
+          e.getMessage(), trx.getMessageId(), peer.getInetAddress());
     } catch (Exception e) {
       logger.error("Trx {} from peer {} process failed", trx.getMessageId(), peer.getInetAddress(),
           e);

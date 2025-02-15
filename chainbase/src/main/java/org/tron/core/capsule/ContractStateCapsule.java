@@ -1,5 +1,8 @@
 package org.tron.core.capsule;
 
+import static org.tron.common.math.Maths.max;
+import static org.tron.common.math.Maths.min;
+import static org.tron.common.math.Maths.pow;
 import static org.tron.core.Constant.DYNAMIC_ENERGY_DECREASE_DIVISION;
 import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
 
@@ -77,12 +80,15 @@ public class ContractStateCapsule implements ProtoCapsule<ContractState> {
         dps.getCurrentCycleNumber(),
         dps.getDynamicEnergyThreshold(),
         dps.getDynamicEnergyIncreaseFactor(),
-        dps.getDynamicEnergyMaxFactor()
+        dps.getDynamicEnergyMaxFactor(),
+        dps.allowStrictMath(),
+        dps.allowStrictMath2()
     );
   }
 
   public boolean catchUpToCycle(
-      long newCycle, long threshold, long increaseFactor, long maxFactor
+      long newCycle, long threshold, long increaseFactor, long maxFactor,
+      boolean useStrictMath, boolean useStrictMath2
   ) {
     long lastCycle = getUpdateCycle();
 
@@ -106,9 +112,10 @@ public class ContractStateCapsule implements ProtoCapsule<ContractState> {
       double increasePercent = 1 + (double) increaseFactor / precisionFactor;
       this.contractState = ContractState.newBuilder()
           .setUpdateCycle(lastCycle)
-          .setEnergyFactor(Math.min(
+          .setEnergyFactor(min(
               maxFactor,
-              (long) ((getEnergyFactor() + precisionFactor) * increasePercent) - precisionFactor))
+              (long) ((getEnergyFactor() + precisionFactor) * increasePercent) - precisionFactor,
+              useStrictMath2))
           .build();
     }
 
@@ -119,9 +126,9 @@ public class ContractStateCapsule implements ProtoCapsule<ContractState> {
     }
 
     // Calc the decrease percent (decrease factor [75% ~ 100%])
-    double decreasePercent = Math.pow(
+    double decreasePercent = pow(
         1 - (double) increaseFactor / DYNAMIC_ENERGY_DECREASE_DIVISION / precisionFactor,
-        cycleCount
+        cycleCount, useStrictMath
     );
 
     // Decrease to this cycle
@@ -130,9 +137,10 @@ public class ContractStateCapsule implements ProtoCapsule<ContractState> {
     //  That means we merge this special case to normal cases)
     this.contractState = ContractState.newBuilder()
         .setUpdateCycle(newCycle)
-        .setEnergyFactor(Math.max(
+        .setEnergyFactor(max(
             0,
-            (long) ((getEnergyFactor() + precisionFactor) * decreasePercent) - precisionFactor))
+            (long) ((getEnergyFactor() + precisionFactor) * decreasePercent) - precisionFactor,
+            useStrictMath2))
         .build();
 
     return true;

@@ -1,6 +1,8 @@
 package org.tron.core.vm;
 
 import static java.util.Arrays.copyOfRange;
+import static org.tron.common.math.Maths.max;
+import static org.tron.common.math.Maths.min;
 import static org.tron.common.runtime.vm.DataWord.WORD_SIZE;
 import static org.tron.common.utils.BIUtil.addSafely;
 import static org.tron.common.utils.BIUtil.isLessThan;
@@ -16,6 +18,8 @@ import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.protobuf.ByteString;
+
+import java.lang.reflect.Constructor;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -194,6 +198,14 @@ public class PrecompiledContracts {
   private static final DataWord blake2FAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000020009");
 
+  public static PrecompiledContract getOptimizedContractForConstant(PrecompiledContract contract) {
+    try {
+      Constructor<?> constructor = contract.getClass().getDeclaredConstructor();
+      return  (PrecompiledContracts.PrecompiledContract) constructor.newInstance();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
 
   public static PrecompiledContract getContractForAddress(DataWord address) {
 
@@ -614,14 +626,17 @@ public class PrecompiledContracts {
       int expLen = parseLen(data, 1);
       int modLen = parseLen(data, 2);
 
-      byte[] expHighBytes = parseBytes(data, addSafely(ARGS_OFFSET, baseLen), Math.min(expLen, 32));
+      boolean allowStrictMath2 = VMConfig.allowStrictMath2();
 
-      long multComplexity = getMultComplexity(Math.max(baseLen, modLen));
+      byte[] expHighBytes = parseBytes(data, addSafely(ARGS_OFFSET, baseLen), min(expLen, 32,
+          allowStrictMath2));
+
+      long multComplexity = getMultComplexity(max(baseLen, modLen, allowStrictMath2));
       long adjExpLen = getAdjustedExponentLength(expHighBytes, expLen);
 
       // use big numbers to stay safe in case of overflow
       BigInteger energy = BigInteger.valueOf(multComplexity)
-          .multiply(BigInteger.valueOf(Math.max(adjExpLen, 1)))
+          .multiply(BigInteger.valueOf(max(adjExpLen, 1, allowStrictMath2)))
           .divide(GQUAD_DIVISOR);
 
       return isLessThan(energy, BigInteger.valueOf(Long.MAX_VALUE)) ? energy.longValueExact()

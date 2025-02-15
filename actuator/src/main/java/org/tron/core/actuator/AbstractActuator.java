@@ -2,9 +2,14 @@ package org.tron.core.actuator;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.GeneratedMessageV3;
+import org.tron.common.math.Maths;
+import org.tron.common.utils.Commons;
 import org.tron.common.utils.ForkController;
 import org.tron.core.ChainBaseManager;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.exception.BalanceInsufficientException;
+import org.tron.core.store.AccountStore;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
@@ -63,4 +68,61 @@ public abstract class AbstractActuator implements Actuator {
     return this;
   }
 
+  public long addExact(long x, long y) {
+    return Maths.addExact(x, y, chainBaseManager.getDynamicPropertiesStore().allowStrictMath2());
+  }
+
+  public long addExact(int x, int y) {
+    return Maths.addExact(x, y, chainBaseManager.getDynamicPropertiesStore().allowStrictMath2());
+  }
+
+  public long floorDiv(long x, long y) {
+    return Maths.floorDiv(x, y, chainBaseManager.getDynamicPropertiesStore().allowStrictMath2());
+  }
+
+  public long floorDiv(long x, int y) {
+    return this.floorDiv(x, (long) y);
+  }
+
+  public long multiplyExact(long x, long y) {
+    return Maths.multiplyExact(x, y,
+        chainBaseManager.getDynamicPropertiesStore().allowStrictMath2());
+  }
+
+  public long multiplyExact(long x, int y) {
+    return this.multiplyExact(x, (long) y);
+  }
+
+  public int multiplyExact(int x, int y) {
+    return Maths.multiplyExact(x, y,
+        chainBaseManager.getDynamicPropertiesStore().allowStrictMath2());
+  }
+
+  public long subtractExact(long x, long y) {
+    return Maths.subtractExact(x, y,
+        chainBaseManager.getDynamicPropertiesStore().allowStrictMath2());
+  }
+
+  public int min(int a, int b) {
+    return Maths.min(a, b, chainBaseManager.getDynamicPropertiesStore().allowStrictMath2());
+  }
+
+  public long min(long a, long b) {
+    return Maths.min(a, b, chainBaseManager.getDynamicPropertiesStore().allowStrictMath2());
+  }
+
+  public void adjustBalance(AccountStore accountStore, byte[] accountAddress, long amount)
+      throws BalanceInsufficientException {
+    AccountCapsule account = accountStore.getUnchecked(accountAddress);
+    this.adjustBalance(accountStore, account, amount);
+  }
+
+  /**
+   * judge balance.
+   */
+  public void adjustBalance(AccountStore accountStore, AccountCapsule account, long amount)
+      throws BalanceInsufficientException {
+    Commons.adjustBalance(accountStore, account, amount,
+        chainBaseManager.getDynamicPropertiesStore().allowStrictMath2());
+  }
 }

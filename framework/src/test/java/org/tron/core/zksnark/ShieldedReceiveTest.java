@@ -1,5 +1,8 @@
 package org.tron.core.zksnark;
 
+import static org.tron.common.utils.PublicMethod.getHexAddressByPrivateKey;
+import static org.tron.common.utils.PublicMethod.getRandomPrivateKey;
+
 import com.google.common.primitives.Bytes;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -125,8 +128,8 @@ public class ShieldedReceiveTest extends BaseTest {
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath()}, "config-localtest.conf");
-    ADDRESS_ONE_PRIVATE_KEY = PublicMethod.getRandomPrivateKey();
-    FROM_ADDRESS = PublicMethod.getHexAddressByPrivateKey(ADDRESS_ONE_PRIVATE_KEY);;
+    ADDRESS_ONE_PRIVATE_KEY = getRandomPrivateKey();
+    FROM_ADDRESS = getHexAddressByPrivateKey(ADDRESS_ONE_PRIVATE_KEY);;
   }
 
   /**
@@ -369,6 +372,8 @@ public class ShieldedReceiveTest extends BaseTest {
 
     // generate checkSpendParams
     SpendDescription spendDescription = builder.getContractBuilder().getSpendDescription(0);
+    SpendDescriptionCapsule spendDescriptionCapsule = new SpendDescriptionCapsule(spendDescription);
+    Assert.assertNotNull(spendDescriptionCapsule);
     CheckSpendParams checkSpendParams = new CheckSpendParams(ctx,
         spendDescription.getValueCommitment().toByteArray(),
         spendDescription.getAnchor().toByteArray(),
@@ -873,20 +878,43 @@ public class ShieldedReceiveTest extends BaseTest {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new ZksnarkException("Output proof failed");
     }
-
+    ReceiveDescriptionCapsule c = new ReceiveDescriptionCapsule(new byte[32]);
+    ReceiveDescriptionCapsule c1 =
+        new ReceiveDescriptionCapsule(ReceiveDescription.newBuilder().build());
+    ReceiveDescriptionCapsule c2 =
+        new ReceiveDescriptionCapsule(ByteString.copyFrom(new byte[32]),
+            ByteString.copyFrom(new byte[32]),
+            ByteString.copyFrom(new byte[32]),
+            ByteString.copyFrom(new byte[32]),
+            ByteString.copyFrom(new byte[32]),
+            ByteString.copyFrom(new byte[32]));
+    Assert.assertNotNull(c);
+    Assert.assertNotNull(c1);
+    Assert.assertNotNull(c2);
     ReceiveDescriptionCapsule receiveDescriptionCapsule = new ReceiveDescriptionCapsule();
     receiveDescriptionCapsule.setValueCommitment(cv);
+    receiveDescriptionCapsule.setValueCommitment(ByteString.copyFrom(cv));
     receiveDescriptionCapsule.setNoteCommitment(cm);
+    receiveDescriptionCapsule.setNoteCommitment(ByteString.copyFrom(cm));
     receiveDescriptionCapsule.setEpk(encryptor.getEpk());
+    receiveDescriptionCapsule.setEpk(ByteString.copyFrom(encryptor.getEpk()));
     receiveDescriptionCapsule.setCEnc(enc.getEncCiphertext());
+    receiveDescriptionCapsule.setCEnc(ByteString.copyFrom(enc.getEncCiphertext()));
     receiveDescriptionCapsule.setZkproof(zkProof);
+    receiveDescriptionCapsule.setZkproof(ByteString.copyFrom(zkProof));
+    receiveDescriptionCapsule.getEphemeralKey();
+    receiveDescriptionCapsule.getData();
+    receiveDescriptionCapsule.getZkproof();
+    receiveDescriptionCapsule.getOutCiphertext();
 
     OutgoingPlaintext outPlaintext =
         new OutgoingPlaintext(output.getNote().getPkD(), encryptor.getEsk());
-    receiveDescriptionCapsule.setCOut(outPlaintext
+    byte[] bytes = outPlaintext
         .encrypt(output.getOvk(), receiveDescriptionCapsule.getValueCommitment().toByteArray(),
             receiveDescriptionCapsule.getCm().toByteArray(),
-            encryptor).getData());
+            encryptor).getData();
+    receiveDescriptionCapsule.setCOut(bytes);
+    receiveDescriptionCapsule.setCOut(ByteString.copyFrom(bytes));
 
     Note newNote = output.getNote();
     byte[] newCm;
@@ -2370,10 +2398,10 @@ public class ShieldedReceiveTest extends BaseTest {
    */
   @Test
   public void pushSameSkAndScanAndSpend() throws Exception {
-
-    byte[] privateKey = ByteArray
-        .fromHexString("f4df789d3210ac881cb900464dd30409453044d2777060a0c391cbdf4c6a4f57");
+    List<String> localPrivateKeys = Args.getLocalWitnesses().getPrivateKeys();
+    byte[] privateKey = ByteArray.fromHexString(localPrivateKeys.get(0));
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
+    assert ecKey != null;
     byte[] witnessAddress = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(witnessAddress));
     chainBaseManager.addWitness(ByteString.copyFrom(witnessAddress));

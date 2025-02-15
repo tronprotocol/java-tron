@@ -1,11 +1,13 @@
 package org.tron.core.db2;
 
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
+
 import com.google.common.collect.Maps;
-import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import java.io.File;
-import java.util.Iterator;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -13,7 +15,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
@@ -29,6 +33,7 @@ import org.tron.core.db2.core.Chainbase;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.exception.TronError;
 
 @Slf4j
 public class SnapshotManagerTest {
@@ -37,6 +42,9 @@ public class SnapshotManagerTest {
   private TronApplicationContext context;
   private Application appT;
   private TestRevokingTronStore tronDatabase;
+
+  @Rule
+  public ExpectedException thrown = ExpectedException.none();
 
   @Before
   public void init() {
@@ -110,5 +118,23 @@ public class SnapshotManagerTest {
     Assert.assertEquals(null,
         tronDatabase.get(protoCapsule.getData()));
 
+  }
+
+  @Test
+  public void testCheckError() {
+    thrown.expect(TronError.class);
+    SnapshotManager manager = spy(new SnapshotManager(""));
+    when(manager.getCheckpointList()).thenReturn(Arrays.asList("check1", "check2"));
+    manager.check();
+  }
+
+  @Test
+  public void testFlushError() {
+    thrown.expect(TronError.class);
+    SnapshotManager manager = spy(new SnapshotManager(""));
+    manager.setUnChecked(false);
+    when(manager.getCheckpointList()).thenReturn(Arrays.asList("check1", "check2"));
+    when(manager.shouldBeRefreshed()).thenReturn(true);
+    manager.flush();
   }
 }
