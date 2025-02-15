@@ -48,6 +48,7 @@ import org.tron.api.GrpcAPI.PricesResponseMessage;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.common.BaseTest;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.actuator.DelegateResourceActuator;
@@ -72,6 +73,8 @@ import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.ProposalUtil.ProposalType;
 import org.tron.core.utils.TransactionUtil;
+import org.tron.core.vm.config.ConfigLoader;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Block;
@@ -139,7 +142,7 @@ public class WalletTest extends BaseTest {
   private static boolean init;
 
   static {
-    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-d", dbPath()}, Constant.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     RECEIVER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
   }
@@ -152,7 +155,8 @@ public class WalletTest extends BaseTest {
     }
     initTransaction();
     initBlock();
-    chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(5);
+    chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(BLOCK_NUM_FIVE);
+    chainBaseManager.getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(BLOCK_NUM_TWO);
     chainBaseManager.getDelegatedResourceStore().reset();
     init = true;
   }
@@ -166,6 +170,7 @@ public class WalletTest extends BaseTest {
         TRANSACTION_TIMESTAMP_ONE, BLOCK_NUM_ONE);
     addTransactionToStore(transaction1);
 
+    // solidified
     transaction2 = getBuildTransaction(
         getBuildTransferContract(ACCOUNT_ADDRESS_TWO, ACCOUNT_ADDRESS_THREE),
         TRANSACTION_TIMESTAMP_TWO, BLOCK_NUM_TWO);
@@ -284,6 +289,7 @@ public class WalletTest extends BaseTest {
 
   private void addBlockToStore(Block block) {
     BlockCapsule blockCapsule = new BlockCapsule(block);
+    chainBaseManager.getBlockIndexStore().put(blockCapsule.getBlockId());
     chainBaseManager.getBlockStore().put(blockCapsule.getBlockId().getBytes(), blockCapsule);
   }
 
@@ -1045,6 +1051,79 @@ public class WalletTest extends BaseTest {
 
   @Test
   @SneakyThrows
+  public void testTriggerConstant() {
+    boolean preDebug = CommonParameter.getInstance().debug;
+    CommonParameter.getInstance().debug = true;
+    ConfigLoader.disable = true;
+    VMConfig.initAllowTvmTransferTrc10(1);
+    VMConfig.initAllowTvmConstantinople(1);
+    VMConfig.initAllowTvmShangHai(1);
+
+    String contractAddress =
+        Wallet.getAddressPreFixString() + "1A622D84ed49f01045f5f1a5AfcEb9c57e9cC3cc";
+
+    AccountCapsule accountCap = new AccountCapsule(
+        ByteString.copyFrom(ByteArray.fromHexString(contractAddress)),
+        Protocol.AccountType.Normal);
+    dbManager.getAccountStore().put(accountCap.createDbKey(), accountCap);
+
+    SmartContractOuterClass.SmartContract smartContract =
+        SmartContractOuterClass.SmartContract.newBuilder().build();
+    ContractCapsule contractCap = new ContractCapsule(smartContract);
+    dbManager.getContractStore().put(ByteArray.fromHexString(contractAddress), contractCap);
+
+    String codeString = "608060405234801561000f575f80fd5b50d3801561001b575f80fd5b50d280156100"
+        + "27575f80fd5b506004361061004c575f3560e01c80638da5cb5b14610050578063f8a8fd6d1461006e57"
+        + "5b5f80fd5b61005861008c565b6040516100659190610269565b60405180910390f35b6100766100af565b"
+        + "6040516100839190610269565b60405180910390f35b5f8054906101000a900473ffffffffffffffffffff"
+        + "ffffffffffffffffffff1681565b5f60017fbe0166938e2ea2f3f3e0746fdaf46e25c4d8de37ce56d70400"
+        + "cf284c80d47bbe601b7f10afab946e2be82aa3e4280cf24e2cab294911c3beb06ca9dd7ead06081265d07f"
+        + "1e1855bcdc3ed57c6f3c3874cde035782427d1236e2d819bd16c75676ecc003a6040515f81526020016040"
+        + "52604051610133949392919061038f565b6020604051602081039080840390855afa158015610153573d5f"
+        + "803e3d5ffd5b505050602060405103515f806101000a81548173ffffffffffffffffffffffffffffffffff"
+        + "ffffff021916908373ffffffffffffffffffffffffffffffffffffffff160217905550734c95a52686a9b3"
+        + "ff9cf787b94b8549a988334c5773ffffffffffffffffffffffffffffffffffffffff165f8054906101000a"
+        + "900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffff"
+        + "ffff1614610205575f80fd5b5f8054906101000a900473ffffffffffffffffffffffffffffffffffffffff"
+        + "16905090565b5f73ffffffffffffffffffffffffffffffffffffffff82169050919050565b5f6102538261"
+        + "022a565b9050919050565b61026381610249565b82525050565b5f60208201905061027c5f83018461025a"
+        + "565b92915050565b5f819050919050565b5f819050919050565b5f815f1b9050919050565b5f6102b96102"
+        + "b46102af84610282565b610294565b61028b565b9050919050565b6102c98161029f565b82525050565b5f"
+        + "819050919050565b5f60ff82169050919050565b5f819050919050565b5f6103076103026102fd846102cf"
+        + "565b6102e4565b6102d8565b9050919050565b610317816102ed565b82525050565b5f819050919050565b"
+        + "5f61034061033b6103368461031d565b610294565b61028b565b9050919050565b61035081610326565b82"
+        + "525050565b5f819050919050565b5f61037961037461036f84610356565b610294565b61028b565b905091"
+        + "9050565b6103898161035f565b82525050565b5f6080820190506103a25f8301876102c0565b6103af6020"
+        + "83018661030e565b6103bc6040830185610347565b6103c96060830184610380565b9594505050505056fe"
+        + "a26474726f6e58221220e967690f9c06386434cbe4d8dd6dce394130f190d17621cbd4ae4cabdef4ad7964"
+        + "736f6c63430008140033";
+    CodeCapsule codeCap = new CodeCapsule(ByteArray.fromHexString(codeString));
+    dbManager.getCodeStore().put(ByteArray.fromHexString(contractAddress), codeCap);
+
+    SmartContractOuterClass.TriggerSmartContract contract =
+        SmartContractOuterClass.TriggerSmartContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(contractAddress)))
+            .setContractAddress(ByteString.copyFrom(ByteArray.fromHexString(contractAddress)))
+            .setData(ByteString.copyFrom(ByteArray.fromHexString("f8a8fd6d")))
+            .build();
+    TransactionCapsule trxCap = wallet.createTransactionCapsule(contract,
+        ContractType.TriggerSmartContract);
+
+    GrpcAPI.TransactionExtention.Builder trxExtBuilder = GrpcAPI.TransactionExtention.newBuilder();
+    GrpcAPI.Return.Builder retBuilder = GrpcAPI.Return.newBuilder();
+
+    Transaction tx = wallet.triggerConstantContract(contract, trxCap, trxExtBuilder, retBuilder);
+    Assert.assertEquals(Transaction.Result.code.SUCESS, tx.getRet(0).getRet());
+
+    VMConfig.initAllowTvmTransferTrc10(0);
+    VMConfig.initAllowTvmConstantinople(0);
+    VMConfig.initAllowTvmShangHai(0);
+    ConfigLoader.disable = false;
+    CommonParameter.getInstance().debug = preDebug;
+  }
+
+  @Test
+  @SneakyThrows
   public void testEstimateEnergy() {
     dbManager.getDynamicPropertiesStore().put("ALLOW_TVM_TRANSFER_TRC10".getBytes(),
         new BytesCapsule(ByteArray.fromHexString("0x01")));
@@ -1169,19 +1248,19 @@ public class WalletTest extends BaseTest {
    *    delegate_balance = 1000_000L; => 277
    *    delegate_balance = 1000_000_000L; => 279
    *    delegate_balance = 1000_000_000_000L => 280
-   *
+   * <p>
    *  We initialize account information as follows
    *    account balance = 1000_000_000_000L
    *    account frozen_balance = 1000_000_000L
-   *
+   * <p>
    *  then estimateConsumeBandWidthSize cost 279
-   *
+   * <p>
    *  so we have following result:
    *  TransactionUtil.estimateConsumeBandWidthSize(
    *    dynamicStore,ownerCapsule.getBalance())   ===> false
    *  TransactionUtil.estimateConsumeBandWidthSize(
    *    dynamicStore,ownerCapsule.getFrozenV2BalanceForBandwidth()) ===> true
-   *
+   * <p>
    *  This test case is used to verify the above conclusions
    */
   @Test
@@ -1206,5 +1285,13 @@ public class WalletTest extends BaseTest {
     chainBaseManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(DELEGATE_PERIOD / 3000);
   }
 
+  @Test
+  public void testGetSolidBlock() {
+    long blkNum = wallet.getSolidBlockNum();
+    Assert.assertEquals(BLOCK_NUM_TWO, blkNum);
+
+    Block block = wallet.getSolidBlock();
+    assertEquals(block2, block);
+  }
 }
 

@@ -63,11 +63,19 @@ public class TronStatsManager {
     Metrics.histogramObserve(MetricKeys.Histogram.TCP_BYTES,
             stats.getTcpInSize() - TCP_TRAFFIC_IN,
             MetricLabels.Histogram.TRAFFIC_IN);
+
     MetricsUtil.meterMark(MetricsKey.NET_TCP_OUT_TRAFFIC,
             stats.getTcpOutSize() - TCP_TRAFFIC_OUT);
+    Metrics.histogramObserve(MetricKeys.Histogram.TCP_BYTES,
+            stats.getTcpOutSize() - TCP_TRAFFIC_OUT,
+            MetricLabels.Histogram.TRAFFIC_OUT);
+
+    MetricsUtil.meterMark(MetricsKey.NET_UDP_IN_TRAFFIC,
+            stats.getUdpInSize() - UDP_TRAFFIC_IN);
     Metrics.histogramObserve(MetricKeys.Histogram.UDP_BYTES,
             stats.getUdpInSize() - UDP_TRAFFIC_IN,
             MetricLabels.Histogram.TRAFFIC_IN);
+
     MetricsUtil.meterMark(MetricsKey.NET_UDP_OUT_TRAFFIC,
             stats.getUdpOutSize() - UDP_TRAFFIC_OUT);
     Metrics.histogramObserve(MetricKeys.Histogram.UDP_BYTES,

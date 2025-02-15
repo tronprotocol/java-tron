@@ -151,7 +151,7 @@ Please make sure your submission meets the following code style:
 
 ### Commit Messages
 
-Commit messages should follow the rule below, we provide a template corresponding instructions.
+Commit messages should follow the rule below, we provide a template with corresponding instructions.
 
 Template:
 ```
@@ -182,7 +182,7 @@ The subject contains a succinct description of the change:
 4. Do not end the subject line with a period.
 5. Avoid meaningless commits. It is recommended to use the git rebase command.
 
-Message body use the imperative, present tense: "change" not "changed" nor "changes". The body should include the motivation for the change and contrast this with previous behavior.
+Message body uses the imperative, present tense: "change" not "changed" nor "changes". The body should include the motivation for the change and contrast this with previous behavior.
 
 Here is an example:
 ```
@@ -217,7 +217,7 @@ If the purpose of this submission is to modify one issue, you need to refer to t
 
 
 ### Special Situations And How To Deal With Them
-As a reviewer, you may find yourself in one of the sitations below. Here’s how to deal with those:
+As a reviewer, you may find yourself in one of the situations below. Here’s how to deal with those:
 
 The author doesn’t follow up: ping them after a while (i.e. after a few days). If there is no further response, close the PR or complete the work yourself.
 

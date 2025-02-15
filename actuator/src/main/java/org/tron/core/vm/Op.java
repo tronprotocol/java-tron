@@ -145,6 +145,12 @@ public class Op {
   // (0x5a) Get the amount of available gas
   public static final int GAS = 0x5a;
   public static final int JUMPDEST = 0x5b;
+  // (0x5c) Load word from transient storage
+  public static final int TLOAD = 0x5c;
+  // (0x5d) Save word to transient storage
+  public static final int TSTORE = 0x5d;
+  // (0x5e) Copy word from memory
+  public static final int MCOPY = 0x5e;
 
   /*  Push Operations */
   // Place item on stack

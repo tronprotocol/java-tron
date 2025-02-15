@@ -9,6 +9,7 @@ import org.tron.common.utils.Pair;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.exception.P2pException;
+import org.tron.core.net.message.keepalive.PingMessage;
 import org.tron.core.net.message.sync.ChainInventoryMessage;
 import org.tron.core.net.peer.PeerConnection;
 
@@ -20,11 +21,11 @@ public class ChainInventoryMsgHandlerTest {
   private List<BlockId> blockIds = new ArrayList<>();
 
   @Test
-  public void testProcessMessage() {
+  public void testProcessMessage() throws Exception {
     try {
       handler.processMessage(peer, msg);
     } catch (P2pException e) {
-      Assert.assertTrue(e.getMessage().equals("not send syncBlockChainMsg"));
+      Assert.assertEquals("not send syncBlockChainMsg", e.getMessage());
     }
 
     peer.setSyncChainRequested(new Pair<>(new LinkedList<>(), System.currentTimeMillis()));
@@ -32,7 +33,7 @@ public class ChainInventoryMsgHandlerTest {
     try {
       handler.processMessage(peer, msg);
     } catch (P2pException e) {
-      Assert.assertTrue(e.getMessage().equals("blockIds is empty"));
+      Assert.assertEquals("blockIds is empty", e.getMessage());
     }
 
     long size = NetConstants.SYNC_FETCH_BATCH_NUM + 2;
@@ -44,7 +45,7 @@ public class ChainInventoryMsgHandlerTest {
     try {
       handler.processMessage(peer, msg);
     } catch (P2pException e) {
-      Assert.assertTrue(e.getMessage().equals("big blockIds size: " + size));
+      Assert.assertEquals(e.getMessage(), "big blockIds size: " + size);
     }
 
     blockIds.clear();
@@ -57,8 +58,10 @@ public class ChainInventoryMsgHandlerTest {
     try {
       handler.processMessage(peer, msg);
     } catch (P2pException e) {
-      Assert.assertTrue(e.getMessage().equals("remain: 100, blockIds size: " + size));
+      Assert.assertEquals(e.getMessage(), "remain: 100, blockIds size: " + size);
     }
+    Assert.assertNotNull(msg.toString());
+    Assert.assertNull(msg.getAnswerMessage());
   }
 
 }

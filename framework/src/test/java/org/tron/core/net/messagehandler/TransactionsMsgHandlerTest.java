@@ -6,13 +6,18 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+
+import lombok.Getter;
 import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.tron.common.BaseTest;
+import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
@@ -75,10 +80,71 @@ public class TransactionsMsgHandlerTest extends BaseTest {
       transactionsMsgHandler.processMessage(peer, new TransactionsMessage(transactionList));
       Assert.assertNull(advInvRequest.get(item));
       //Thread.sleep(10);
+      transactionsMsgHandler.close();
+      BlockingQueue<TrxEvent> smartContractQueue =
+          new LinkedBlockingQueue(2);
+      smartContractQueue.offer(new TrxEvent(null, null));
+      smartContractQueue.offer(new TrxEvent(null, null));
+      Field field1 = TransactionsMsgHandler.class.getDeclaredField("smartContractQueue");
+      field1.setAccessible(true);
+      field1.set(transactionsMsgHandler, smartContractQueue);
+      Protocol.Transaction trx1 = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(
+          ByteArray.fromHexString("121212a9cf"),
+          ByteArray.fromHexString("121212a9cf"),
+          ByteArray.fromHexString("123456"),
+          100, 100000000, 0, 0);
+      Map<Item, Long> advInvRequest1 = new ConcurrentHashMap<>();
+      Item item1 = new Item(new TransactionMessage(trx1).getMessageId(),
+          Protocol.Inventory.InventoryType.TRX);
+      advInvRequest1.put(item1, 0L);
+      Mockito.when(peer.getAdvInvRequest()).thenReturn(advInvRequest1);
+      List<Protocol.Transaction> transactionList1 = new ArrayList<>();
+      transactionList1.add(trx1);
+      transactionsMsgHandler.processMessage(peer, new TransactionsMessage(transactionList1));
+      Assert.assertNull(advInvRequest.get(item1));
+
+      // test 0 contract
+      Protocol.Transaction trx2 = Protocol.Transaction.newBuilder().setRawData(
+          Protocol.Transaction.raw.newBuilder().setTimestamp(transactionTimestamp)
+              .setRefBlockNum(1).build())
+          .build();
+      List<Protocol.Transaction> transactionList2 = new ArrayList<>();
+      transactionList2.add(trx2);
+      try {
+        transactionsMsgHandler.processMessage(peer, new TransactionsMessage(transactionList2));
+      } catch (Exception ep) {
+        Assert.assertTrue(true);
+      }
+      Map<Item, Long> advInvRequest2 = new ConcurrentHashMap<>();
+      Item item2 = new Item(new TransactionMessage(trx2).getMessageId(),
+          Protocol.Inventory.InventoryType.TRX);
+      advInvRequest2.put(item2, 0L);
+      Mockito.when(peer.getAdvInvRequest()).thenReturn(advInvRequest2);
+      try {
+        transactionsMsgHandler.processMessage(peer, new TransactionsMessage(transactionList2));
+      } catch (Exception ep) {
+        Assert.assertTrue(true);
+      }
     } catch (Exception e) {
       Assert.fail();
     } finally {
       transactionsMsgHandler.close();
+    }
+  }
+
+  class TrxEvent {
+
+    @Getter
+    private PeerConnection peer;
+    @Getter
+    private TransactionMessage msg;
+    @Getter
+    private long time;
+
+    public TrxEvent(PeerConnection peer, TransactionMessage msg) {
+      this.peer = peer;
+      this.msg = msg;
+      this.time = System.currentTimeMillis();
     }
   }
 }
