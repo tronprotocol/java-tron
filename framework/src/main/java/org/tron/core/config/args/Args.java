@@ -1360,6 +1360,15 @@ public class Args extends CommonParameter {
           final com.typesafe.config.Config config) {
     EventPluginConfig eventPluginConfig = new EventPluginConfig();
 
+    if (config.hasPath(Constant.EVENT_SUBSCRIBE_VERSION)) {
+      eventPluginConfig.setVersion(config.getInt(Constant.EVENT_SUBSCRIBE_VERSION));
+    }
+
+    if (config.hasPath(Constant.EVENT_SUBSCRIBE_START_SYNC_BLOCK_NUM)) {
+      eventPluginConfig.setStartSyncBlockNum(config
+          .getLong(Constant.EVENT_SUBSCRIBE_START_SYNC_BLOCK_NUM));
+    }
+
     boolean useNativeQueue = false;
     int bindPort = 0;
     int sendQueueLength = 0;
