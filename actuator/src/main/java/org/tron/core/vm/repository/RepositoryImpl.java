@@ -456,7 +456,7 @@ public class RepositoryImpl implements Repository {
     byte[] value;
     if (parent != null) {
       value = parent.getTransientStorageValue(address, key);
-    } else{
+    } else {
       value = null;
     }
 
