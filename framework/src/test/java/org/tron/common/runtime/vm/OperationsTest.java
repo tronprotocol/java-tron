@@ -960,6 +960,10 @@ public class OperationsTest extends BaseTest {
         program.getContractState().getTransientStorageValue(
             program.getContractAddress().getData(), new DataWord(0x01).getData()));
 
+    op = new byte[] {0x60, 0x02, 0x60, 0x01, 0x5c, 0x16};
+    program = new Program(op, op, invoke, interTrx);
+    testOperations(program);
+
     // TLOAD = 0x5c;
     op = new byte[] {0x60, 0x01, 0x5c};
     program = new Program(op, op, invoke, interTrx);
