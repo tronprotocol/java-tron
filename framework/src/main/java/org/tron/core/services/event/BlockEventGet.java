@@ -59,7 +59,6 @@ public class BlockEventGet {
     blockEvent.setBlockId(block.getBlockId());
     blockEvent.setParentId(block.getParentBlockId());
     blockEvent.setSolidId(manager.getChainBaseManager().getBlockIdByNum(solidNum));
-    blockEvent.setBlockTime(block.getTimeStamp());
     if (instance.isBlockLogTriggerEnable()) {
       blockEvent.setBlockLogTriggerCapsule(getBlockLogTrigger(block, solidNum));
     }
@@ -145,36 +144,7 @@ public class BlockEventGet {
 
     Map<String, String> addrMap = new HashMap<>();
     Map<String, SmartContractOuterClass.SmartContract.ABI> abiMap = new HashMap<>();
-
-    for (Protocol.TransactionInfo.Log log : logs) {
-
-      byte[] contractAddress = TransactionTrace
-          .convertToTronAddress(log.getAddress().toByteArray());
-      String strContractAddr =
-          ArrayUtils.isEmpty(contractAddress) ? "" : StringUtil.encode58Check(contractAddress);
-      if (addrMap.get(strContractAddr) != null) {
-        continue;
-      }
-      ContractCapsule contract = manager.getContractStore().get(contractAddress);
-      if (contract == null) {
-        // never
-        addrMap.put(strContractAddr, originAddress);
-        abiMap.put(strContractAddr, SmartContractOuterClass.SmartContract.ABI.getDefaultInstance());
-        continue;
-      }
-      AbiCapsule abiCapsule = StoreFactory.getInstance().getChainBaseManager()
-          .getAbiStore().get(contractAddress);
-      SmartContractOuterClass.SmartContract.ABI abi;
-      if (abiCapsule == null || abiCapsule.getInstance() == null) {
-        abi = SmartContractOuterClass.SmartContract.ABI.getDefaultInstance();
-      } else {
-        abi = abiCapsule.getInstance();
-      }
-      String creatorAddr = StringUtil.encode58Check(TransactionTrace
-          .convertToTronAddress(contract.getInstance().getOriginAddress().toByteArray()));
-      addrMap.put(strContractAddr, creatorAddr);
-      abiMap.put(strContractAddr, abi);
-    }
+    parseLogs(logs, originAddress, addrMap, abiMap);
 
     int index = 1;
     for (Protocol.TransactionInfo.Log log : logs) {
@@ -203,6 +173,41 @@ public class BlockEventGet {
     }
 
     return list;
+  }
+
+  private void parseLogs(List<Protocol.TransactionInfo.Log> logs,
+                         String originAddress,
+                         Map<String, String> addrMap, Map<String,
+                         SmartContractOuterClass.SmartContract.ABI> abiMap) {
+    for (Protocol.TransactionInfo.Log log : logs) {
+
+      byte[] contractAddress = TransactionTrace
+        .convertToTronAddress(log.getAddress().toByteArray());
+      String strContractAddr =
+          ArrayUtils.isEmpty(contractAddress) ? "" : StringUtil.encode58Check(contractAddress);
+      if (addrMap.get(strContractAddr) != null) {
+        continue;
+      }
+      ContractCapsule contract = manager.getContractStore().get(contractAddress);
+      if (contract == null) {
+        // never
+        addrMap.put(strContractAddr, originAddress);
+        abiMap.put(strContractAddr, SmartContractOuterClass.SmartContract.ABI.getDefaultInstance());
+        continue;
+      }
+      AbiCapsule abiCapsule = StoreFactory.getInstance().getChainBaseManager()
+          .getAbiStore().get(contractAddress);
+      SmartContractOuterClass.SmartContract.ABI abi;
+      if (abiCapsule == null || abiCapsule.getInstance() == null) {
+        abi = SmartContractOuterClass.SmartContract.ABI.getDefaultInstance();
+      } else {
+        abi = abiCapsule.getInstance();
+      }
+      String creatorAddr = StringUtil.encode58Check(TransactionTrace
+          .convertToTronAddress(contract.getInstance().getOriginAddress().toByteArray()));
+      addrMap.put(strContractAddr, creatorAddr);
+      abiMap.put(strContractAddr, abi);
+    }
   }
 
   private LogInfo buildLogInfo(Protocol.TransactionInfo.Log log) {

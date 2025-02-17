@@ -61,8 +61,11 @@ public class HistoryEventService {
         Thread.sleep(30);
       }
       initEventService(manager.getChainBaseManager().getBlockIdByNum(endNum));
-    } catch (Exception e) {
-      logger.error("Sync event failed.", e);
+    } catch (InterruptedException e1) {
+      logger.warn("Sync event interrupted.");
+      Thread.currentThread().interrupt();
+    } catch (Exception e2) {
+      logger.error("Sync event failed.", e2);
     }
   }
 
