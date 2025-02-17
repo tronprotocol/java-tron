@@ -18,6 +18,9 @@
 
 package org.tron.core;
 
+import static org.tron.common.math.Maths.addExact;
+import static org.tron.common.math.Maths.ceil;
+import static org.tron.common.math.Maths.max;
 import static org.tron.common.utils.Commons.getAssetIssueStoreFinal;
 import static org.tron.common.utils.Commons.getExchangeStoreFinal;
 import static org.tron.common.utils.WalletUtil.isConstant;
@@ -29,6 +32,10 @@ import static org.tron.core.config.Parameter.DatabaseConstants.MARKET_COUNT_LIMI
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseEnergyFee;
 import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.EARLIEST_STR;
+import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.FINALIZED_STR;
+import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.LATEST_STR;
+import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.PENDING_STR;
+import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.TAG_PENDING_SUPPORT_ERROR;
 import static org.tron.core.vm.utils.FreezeV2Util.getV2EnergyUsage;
 import static org.tron.core.vm.utils.FreezeV2Util.getV2NetUsage;
 import static org.tron.protos.contract.Common.ResourceCode;
@@ -549,7 +556,7 @@ public class Wallet {
         throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
       }
       TransactionMessage message = new TransactionMessage(trx.getInstance().toByteArray());
-      trx.checkExpiration(tronNetDelegate.getNextBlockSlotTime());
+      trx.checkExpiration(chainBaseManager.getNextBlockSlotTime());
       dbManager.pushTransaction(trx);
       int num = tronNetService.fastBroadcastTransaction(message);
       if (num == 0 && minEffectiveConnection != 0) {
@@ -682,6 +689,20 @@ public class Wallet {
     }
   }
 
+  public Block getSolidBlock() {
+    try {
+      long blockNum = getSolidBlockNum();
+      return chainBaseManager.getBlockByNum(blockNum).getInstance();
+    } catch (StoreException e) {
+      logger.info(e.getMessage());
+      return null;
+    }
+  }
+
+  public long getSolidBlockNum() {
+    return chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
+  }
+
   public BlockCapsule getBlockCapsuleByNum(long blockNum) {
     try {
       return chainBaseManager.getBlockByNum(blockNum);
@@ -707,10 +728,12 @@ public class Wallet {
   public Block getByJsonBlockId(String id) throws JsonRpcInvalidParamsException {
     if (EARLIEST_STR.equalsIgnoreCase(id)) {
       return getBlockByNum(0);
-    } else if ("latest".equalsIgnoreCase(id)) {
+    } else if (LATEST_STR.equalsIgnoreCase(id)) {
       return getNowBlock();
-    } else if ("pending".equalsIgnoreCase(id)) {
-      throw new JsonRpcInvalidParamsException("TAG pending not supported");
+    } else if (FINALIZED_STR.equalsIgnoreCase(id)) {
+      return getSolidBlock();
+    } else if (PENDING_STR.equalsIgnoreCase(id)) {
+      throw new JsonRpcInvalidParamsException(TAG_PENDING_SUPPORT_ERROR);
     } else {
       long blockNumber;
       try {
@@ -725,8 +748,8 @@ public class Wallet {
 
   public List<Transaction> getTransactionsByJsonBlockId(String id)
       throws JsonRpcInvalidParamsException {
-    if ("pending".equalsIgnoreCase(id)) {
-      throw new JsonRpcInvalidParamsException("TAG pending not supported");
+    if (PENDING_STR.equalsIgnoreCase(id)) {
+      throw new JsonRpcInvalidParamsException(TAG_PENDING_SUPPORT_ERROR);
     } else {
       Block block = getByJsonBlockId(id);
       return block != null ? block.getTransactionsList() : null;
@@ -880,10 +903,10 @@ public class Wallet {
     long netUsage = (long) (accountNetUsage * TRX_PRECISION * ((double)
             (dynamicStore.getTotalNetWeight()) / dynamicStore.getTotalNetLimit()));
 
-    long v2NetUsage = getV2NetUsage(ownerCapsule, netUsage);
+    long v2NetUsage = getV2NetUsage(ownerCapsule, netUsage, dynamicStore.allowStrictMath2());
 
     long maxSize = ownerCapsule.getFrozenV2BalanceForBandwidth() - v2NetUsage;
-    return Math.max(0, maxSize);
+    return max(0, maxSize, dynamicStore.allowStrictMath2());
   }
 
   public long calcCanDelegatedEnergyMaxSize(ByteString ownerAddress) {
@@ -900,10 +923,11 @@ public class Wallet {
     long energyUsage = (long) (ownerCapsule.getEnergyUsage() * TRX_PRECISION * ((double)
             (dynamicStore.getTotalEnergyWeight()) / dynamicStore.getTotalEnergyCurrentLimit()));
 
-    long v2EnergyUsage = getV2EnergyUsage(ownerCapsule, energyUsage);
+    long v2EnergyUsage = getV2EnergyUsage(ownerCapsule, energyUsage,
+        dynamicStore.allowStrictMath2());
 
     long maxSize =  ownerCapsule.getFrozenV2BalanceForEnergy() - v2EnergyUsage;
-    return Math.max(0, maxSize);
+    return max(0, maxSize, dynamicStore.allowStrictMath2());
   }
 
   public DelegatedResourceAccountIndex getDelegatedResourceAccountIndex(ByteString address) {
@@ -1351,6 +1375,11 @@ public class Wallet {
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getConsensusLogicOptimization")
         .setValue(dbManager.getDynamicPropertiesStore().getConsensusLogicOptimization())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowTvmCancun")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmCancun())
         .build());
 
     return builder.build();
@@ -2980,7 +3009,8 @@ public class Wallet {
     if (transaction.getRet(0).getRet().equals(code.SUCESS)) {
       txRetBuilder.setResult(true);
       txRetBuilder.setCode(response_code.SUCCESS);
-      estimateBuilder.setEnergyRequired((long) Math.ceil((double) high / dps.getEnergyFee()));
+      estimateBuilder.setEnergyRequired((long) ceil((double) high / dps.getEnergyFee(),
+          dps.allowStrictMath2()));
     }
 
     return transaction;
@@ -3448,6 +3478,9 @@ public class Wallet {
         if (spendNote.getNote().getValue() < 0) {
           throw new ContractValidateException("The value in SpendNoteTRC20 must >= 0");
         }
+        if (StringUtils.isEmpty(spendNote.getNote().getPaymentAddress())) {
+          throw new ContractValidateException("Payment Address in SpendNote should not be empty");
+        }
       }
     }
 
@@ -3455,6 +3488,9 @@ public class Wallet {
       for (ReceiveNote receiveNote : receiveNotes) {
         if (receiveNote.getNote().getValue() < 0) {
           throw new ContractValidateException("The value in ReceiveNote must >= 0");
+        }
+        if (StringUtils.isEmpty(receiveNote.getNote().getPaymentAddress())) {
+          throw new ContractValidateException("Payment Address in ReceiveNote should not be empty");
         }
       }
     }
@@ -3534,8 +3570,9 @@ public class Wallet {
     long totalToAmount = 0;
     if (scaledToAmount > 0) {
       try {
-        totalToAmount = receiveSize == 0 ? scaledToAmount
-            : (Math.addExact(scaledToAmount, shieldedReceives.get(0).getNote().getValue()));
+        totalToAmount = receiveSize == 0 ? scaledToAmount : (addExact(
+                scaledToAmount, shieldedReceives.get(0).getNote().getValue(),
+            dbManager.getDynamicPropertiesStore().allowStrictMath2()));
       } catch (ArithmeticException e) {
         throw new ZksnarkException("Unbalanced burn!");
       }
@@ -3666,8 +3703,9 @@ public class Wallet {
     long totalToAmount = 0;
     if (scaledToAmount > 0) {
       try {
-        totalToAmount = receiveSize == 0 ? scaledToAmount
-            : Math.addExact(scaledToAmount, shieldedReceives.get(0).getNote().getValue());
+        totalToAmount = receiveSize == 0 ? scaledToAmount : addExact(
+            scaledToAmount, shieldedReceives.get(0).getNote().getValue(),
+            chainBaseManager.getDynamicPropertiesStore().allowStrictMath2());
       } catch (ArithmeticException e) {
         throw new ZksnarkException("Unbalanced burn!");
       }

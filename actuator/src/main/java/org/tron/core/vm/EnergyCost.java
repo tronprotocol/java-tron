@@ -1,5 +1,7 @@
 package org.tron.core.vm;
 
+import static org.tron.common.math.Maths.max;
+
 import java.math.BigInteger;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.vm.config.VMConfig;
@@ -57,6 +59,8 @@ public class EnergyCost {
   private static final long SUICIDE = 0;
   private static final long STOP = 0;
   private static final long CREATE_DATA = 200;
+  private static final long TLOAD = 100;
+  private static final long TSTORE = 100;
 
   public static long getZeroTierCost(Program ignored) {
     return ZERO_TIER;
@@ -230,6 +234,26 @@ public class EnergyCost {
     // [2] oldValue != null && newValue != 0
     return RESET_SSTORE;
 
+  }
+
+  public static long getTLoadCost(Program ignored) {
+    return TLOAD;
+  }
+
+  public static long getTStoreCost(Program ignored) {
+    return TSTORE;
+  }
+
+  public static long getMCopyCost(Program program) {
+    Stack stack = program.getStack();
+    long oldMemSize = program.getMemSize();
+    
+    int dstOffset = stack.peek().intValue();
+    int srcOffset = stack.get(stack.size() - 2).intValue();
+    DataWord maxOffset = new DataWord(max(dstOffset, srcOffset, VMConfig.allowStrictMath2()));
+    return VERY_LOW_TIER + calcMemEnergy(oldMemSize,
+        memNeeded(maxOffset, stack.get(stack.size() - 3)),
+        stack.get(stack.size() - 3).longValueSafe(), Op.MCOPY);
   }
 
   public static long getLogCost(Program program) {

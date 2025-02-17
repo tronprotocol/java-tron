@@ -54,6 +54,7 @@ public class DelegateResourceProcessor {
       throw new ContractValidateException("delegateBalance must be greater than or equal to 1 TRX");
     }
 
+    boolean allowStrictMath2 = dynamicStore.allowStrictMath2();
     switch (param.getResourceType()) {
       case BANDWIDTH: {
         BandwidthProcessor processor = new BandwidthProcessor(ChainBaseManager.getInstance());
@@ -62,7 +63,7 @@ public class DelegateResourceProcessor {
         long netUsage = (long) (ownerCapsule.getNetUsage() * TRX_PRECISION * ((double)
             (repo.getTotalNetWeight()) / dynamicStore.getTotalNetLimit()));
 
-        long v2NetUsage = getV2NetUsage(ownerCapsule, netUsage);
+        long v2NetUsage = getV2NetUsage(ownerCapsule, netUsage, allowStrictMath2);
 
         if (ownerCapsule.getFrozenV2BalanceForBandwidth() - v2NetUsage < delegateBalance) {
           throw new ContractValidateException(
@@ -78,7 +79,7 @@ public class DelegateResourceProcessor {
         long energyUsage = (long) (ownerCapsule.getEnergyUsage() * TRX_PRECISION * ((double)
             (repo.getTotalEnergyWeight()) / dynamicStore.getTotalEnergyCurrentLimit()));
 
-        long v2EnergyUsage = getV2EnergyUsage(ownerCapsule, energyUsage);
+        long v2EnergyUsage = getV2EnergyUsage(ownerCapsule, energyUsage, allowStrictMath2);
 
         if (ownerCapsule.getFrozenV2BalanceForEnergy() - v2EnergyUsage < delegateBalance) {
           throw new ContractValidateException(

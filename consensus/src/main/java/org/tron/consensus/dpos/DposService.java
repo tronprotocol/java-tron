@@ -131,6 +131,12 @@ public class DposService implements ConsensusInterface {
     }
 
     long slot = dposSlot.getSlot(timeStamp);
+    if (slot == 0
+      && consensusDelegate.getDynamicPropertiesStore().allowConsensusLogicOptimization()) {
+      logger.warn("ValidBlock failed: slot error, witness: {}, timeStamp: {}",
+        ByteArray.toHexString(witnessAddress.toByteArray()), new DateTime(timeStamp));
+      return false;
+    }
     final ByteString scheduledWitness = dposSlot.getScheduledWitness(slot);
     if (!scheduledWitness.equals(witnessAddress)) {
       logger.warn("ValidBlock failed: sWitness: {}, bWitness: {}, bTimeStamp: {}, slot: {}",

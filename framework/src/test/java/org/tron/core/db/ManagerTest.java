@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.tron.common.utils.Commons.adjustAssetBalanceV2;
-import static org.tron.common.utils.Commons.adjustBalance;
 import static org.tron.common.utils.Commons.adjustTotalShieldedPoolValue;
 import static org.tron.common.utils.Commons.getExchangeStoreFinal;
 import static org.tron.core.exception.BadBlockException.TypeEnum.CALC_MERKLE_ROOT_FAILED;
@@ -30,12 +29,13 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.ExpectedSystemExit;
+import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Commons;
 import org.tron.common.utils.JsonUtil;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
@@ -76,11 +76,13 @@ import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TooBigTransactionResultException;
 import org.tron.core.exception.TransactionExpirationException;
+import org.tron.core.exception.TronError;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.store.AccountStore;
 import org.tron.core.store.CodeStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ExchangeStore;
@@ -92,7 +94,6 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
-import org.tron.protos.Protocol.Transaction.raw;
 import org.tron.protos.contract.AccountContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.BalanceContract.TransferContract;
@@ -112,7 +113,7 @@ public class ManagerTest extends BlockGenerate {
   @Rule
   public TemporaryFolder temporaryFolder = new TemporaryFolder();
   @Rule
-  public final ExpectedSystemExit exit = ExpectedSystemExit.none();
+  public final ExpectedException exception = ExpectedException.none();
   private static AtomicInteger port = new AtomicInteger(0);
   private static String accountAddress =
       Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
@@ -1161,10 +1162,40 @@ public class ManagerTest extends BlockGenerate {
   }
 
   @Test
+  public void testExpiration() {
+    dbManager.getDynamicPropertiesStore().saveConsensusLogicOptimization(1);
+    TransferContract transferContract =
+        TransferContract.newBuilder()
+            .setAmount(10)
+            .setOwnerAddress(ByteString.copyFromUtf8("aaa"))
+            .setToAddress(ByteString.copyFromUtf8("bbb"))
+            .build();
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < 100; i++) {
+      sb.append("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    }
+    Transaction transaction = Transaction.newBuilder().setRawData(Transaction.raw.newBuilder()
+        .setData(ByteString.copyFrom(sb.toString().getBytes(StandardCharsets.UTF_8)))
+        .addContract(Transaction.Contract.newBuilder().setParameter(Any.pack(transferContract))
+            .setType(ContractType.TransferContract))).build();
+    TransactionCapsule trx = new TransactionCapsule(transaction);
+    trx.setInBlock(true);
+
+    assertThrows(TransactionExpirationException.class, () -> dbManager.validateCommon(trx));
+
+  }
+
+  @Test
   public void blockTrigger() {
-    exit.expectSystemExitWithStatus(1);
+    exception.expect(TronError.class);
     Manager manager = spy(new Manager());
     doThrow(new RuntimeException("postBlockTrigger mock")).when(manager).postBlockTrigger(any());
     manager.blockTrigger(new BlockCapsule(Block.newBuilder().build()), 1, 1);
+  }
+
+  public void adjustBalance(AccountStore accountStore, byte[] accountAddress, long amount)
+      throws BalanceInsufficientException {
+    Commons.adjustBalance(accountStore, accountAddress, amount,
+        chainManager.getDynamicPropertiesStore().allowStrictMath2());
   }
 }
