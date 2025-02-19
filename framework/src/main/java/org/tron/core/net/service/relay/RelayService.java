@@ -145,9 +145,10 @@ public class RelayService {
     }
 
     if (getPeerCountByAddress(msg.getAddress()) >= MAX_PEER_COUNT_PER_ADDRESS) {
-      logger.warn("HelloMessage from {}, the number of peers of {} exceeds 2.",
+      logger.warn("HelloMessage from {}, the number of peers of {} exceeds {}.",
           channel.getInetAddress(),
-          ByteArray.toHexString(msg.getAddress().toByteArray()));
+          ByteArray.toHexString(msg.getAddress().toByteArray()),
+          MAX_PEER_COUNT_PER_ADDRESS);
       return false;
     }
 
