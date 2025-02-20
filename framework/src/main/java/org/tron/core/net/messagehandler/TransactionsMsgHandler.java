@@ -83,7 +83,8 @@ public class TransactionsMsgHandler implements TronMsgHandler {
           dropSmartContractCount++;
         }
       } else {
-        trxHandlePool.submit(() -> handleTransaction(peer, new TransactionMessage(trx)));
+        ExecutorServiceManager.submit(
+            trxHandlePool, () -> handleTransaction(peer, new TransactionMessage(trx)));
       }
     }
 
@@ -109,11 +110,12 @@ public class TransactionsMsgHandler implements TronMsgHandler {
   }
 
   private void handleSmartContract() {
-    smartContractExecutor.scheduleWithFixedDelay(() -> {
+    ExecutorServiceManager.scheduleWithFixedDelay(smartContractExecutor, () -> {
       try {
         while (queue.size() < MAX_SMART_CONTRACT_SUBMIT_SIZE && smartContractQueue.size() > 0) {
           TrxEvent event = smartContractQueue.take();
-          trxHandlePool.submit(() -> handleTransaction(event.getPeer(), event.getMsg()));
+          ExecutorServiceManager.submit(
+              trxHandlePool, () -> handleTransaction(event.getPeer(), event.getMsg()));
         }
       } catch (InterruptedException e) {
         logger.warn("Handle smart server interrupted");

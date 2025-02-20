@@ -82,7 +82,7 @@ public class RewardViCalService {
       // checkpoint is flushed to db, we can start rewardViCalService immediately
       lastBlockNumber = Long.MAX_VALUE;
     }
-    es.scheduleWithFixedDelay(this::maybeRun, 0, 3, TimeUnit.SECONDS);
+    ExecutorServiceManager.scheduleWithFixedDelay(es, this::maybeRun, 0, 3, TimeUnit.SECONDS);
   }
 
   private boolean enableNewRewardAlgorithm() {

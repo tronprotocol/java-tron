@@ -70,7 +70,7 @@ public class SyncService {
   private final long syncFetchBatchNum = Args.getInstance().getSyncFetchBatchNum();
 
   public void init() {
-    fetchExecutor.scheduleWithFixedDelay(() -> {
+    ExecutorServiceManager.scheduleWithFixedDelay(fetchExecutor, () -> {
       try {
         if (fetchFlag) {
           fetchFlag = false;
@@ -81,7 +81,7 @@ public class SyncService {
       }
     }, 10, 1, TimeUnit.SECONDS);
 
-    blockHandleExecutor.scheduleWithFixedDelay(() -> {
+    ExecutorServiceManager.scheduleWithFixedDelay(blockHandleExecutor, () -> {
       try {
         if (handleFlag) {
           handleFlag = false;

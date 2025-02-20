@@ -44,7 +44,7 @@ public class ExitManager {
     return Optional.empty();
   }
 
-  private static void logAndExit(TronError exit) {
+  public static void logAndExit(TronError exit) {
     final int code = exit.getErrCode().getCode();
     logger.error("Shutting down with code: {}.", exit.getErrCode(), exit);
     Thread exitThread = exitThreadFactory.newThread(() -> System.exit(code));
