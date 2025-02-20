@@ -915,17 +915,24 @@ public class Args extends CommonParameter {
     PARAMETER.vmTrace =
         config.hasPath(Constant.VM_TRACE) && config.getBoolean(Constant.VM_TRACE);
 
-    PARAMETER.saveInternalTx =
-        config.hasPath(Constant.VM_SAVE_INTERNAL_TX)
-            && config.getBoolean(Constant.VM_SAVE_INTERNAL_TX);
+    if (config.hasPath(Constant.VM_SAVE_INTERNAL_TX)) {
+      PARAMETER.saveInternalTx = config.getBoolean(Constant.VM_SAVE_INTERNAL_TX);
+    }
 
-    PARAMETER.saveFeaturedInternalTx =
-        config.hasPath(Constant.VM_SAVE_FEATURED_INTERNAL_TX)
-            && config.getBoolean(Constant.VM_SAVE_FEATURED_INTERNAL_TX);
+    if (config.hasPath(Constant.VM_SAVE_FEATURED_INTERNAL_TX)) {
+      PARAMETER.saveFeaturedInternalTx = config.getBoolean(Constant.VM_SAVE_FEATURED_INTERNAL_TX);
+    }
 
-    PARAMETER.saveCancelAllUnfreezeV2Details =
-        config.hasPath(Constant.VM_SAVE_CANCEL_ALL_UNFREEZE_V2_DETAILS)
-            && config.getBoolean(Constant.VM_SAVE_CANCEL_ALL_UNFREEZE_V2_DETAILS);
+    if (config.hasPath(Constant.VM_SAVE_CANCEL_ALL_UNFREEZE_V2_DETAILS)) {
+      PARAMETER.saveCancelAllUnfreezeV2Details =
+          config.getBoolean(Constant.VM_SAVE_CANCEL_ALL_UNFREEZE_V2_DETAILS);
+    }
+
+    if (PARAMETER.saveCancelAllUnfreezeV2Details
+        && (!PARAMETER.saveInternalTx || !PARAMETER.saveFeaturedInternalTx)) {
+      logger.warn("Configuring [vm.saveCancelAllUnfreezeV2Details] won't work as "
+          + "vm.saveInternalTx or vm.saveFeaturedInternalTx is off.");
+    }
 
     // PARAMETER.allowShieldedTransaction =
     //     config.hasPath(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) ? config
