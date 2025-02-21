@@ -29,8 +29,8 @@ public class SolidEventService {
     executor.scheduleWithFixedDelay(() -> {
       try {
         work();
-      } catch (Exception exception) {
-        logger.error("Spread thread error", exception);
+      } catch (Exception e) {
+        logger.error("Solid event service fail.", e);
       }
     }, 1, 1, TimeUnit.SECONDS);
     logger.info("Solid event service start.");
@@ -67,7 +67,7 @@ public class SolidEventService {
 
     if (instance.isTransactionLogTriggerEnable() && instance.isTransactionLogTriggerSolidified()) {
       if (blockEvent.getTransactionLogTriggerCapsules() == null) {
-        logger.info("TransactionLogTrigger is null. {}", blockEvent.getBlockId());
+        logger.warn("TransactionLogTrigger is null. {}", blockEvent.getBlockId());
       } else {
         blockEvent.getTransactionLogTriggerCapsules().forEach(v ->
             manager.getTriggerCapsuleQueue().offer(v));
@@ -76,7 +76,7 @@ public class SolidEventService {
 
     if (instance.isSolidityEventTriggerEnable()) {
       if (blockEvent.getSmartContractTrigger() == null) {
-        logger.info("SmartContractTrigger is null. {}", blockEvent.getBlockId());
+        logger.warn("SmartContractTrigger is null. {}", blockEvent.getBlockId());
       } else {
         blockEvent.getSmartContractTrigger().getContractEventTriggers().forEach(v -> {
           v.setTriggerName(Trigger.SOLIDITYEVENT_TRIGGER_NAME);
@@ -100,7 +100,7 @@ public class SolidEventService {
 
     if (instance.isSolidityTriggerEnable()) {
       if (blockEvent.getSolidityTriggerCapsule() == null) {
-        logger.info("SolidityTrigger is null. {}", blockEvent.getBlockId());
+        logger.warn("SolidityTrigger is null. {}", blockEvent.getBlockId());
       } else {
         manager.getTriggerCapsuleQueue().offer(blockEvent.getSolidityTriggerCapsule());
       }

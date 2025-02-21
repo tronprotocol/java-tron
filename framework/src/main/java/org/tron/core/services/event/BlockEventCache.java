@@ -43,7 +43,7 @@ public class BlockEventCache {
   }
 
   public static void add(BlockEvent blockEvent) throws EventException {
-    logger.info("Add block event, {}", blockEvent.getBlockId().getString(),
+    logger.info("Add block event, {}, {}", blockEvent.getBlockId().getString(),
         blockEvent.getParentId().getString());
     if (blockEventMap.get(blockEvent.getParentId()) == null) {
       throw new EventException("unlink BlockEvent, "
