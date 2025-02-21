@@ -53,6 +53,7 @@ import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.bloom.Bloom;
 import org.tron.common.es.ExecutorServiceManager;
+import org.tron.common.exit.ExitManager;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.capsule.BlockFilterCapsule;
@@ -293,6 +294,9 @@ public class Manager {
               Metrics.counterInc(MetricKeys.Counter.TXS, 1,
                   MetricLabels.Counter.TXS_FAIL, MetricLabels.Counter.TXS_FAIL_ERROR);
             }
+            ExitManager.findTronError(ex).ifPresent(e -> {
+              throw e;
+            });
           } finally {
             if (tx != null && getRePushTransactions().remove(tx)) {
               Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, -1,
@@ -550,18 +554,18 @@ public class Manager {
     validateSignService = ExecutorServiceManager
         .newFixedThreadPool(validateSignName, Args.getInstance().getValidateSignThreadNum());
     rePushEs = ExecutorServiceManager.newSingleThreadExecutor(rePushEsName, true);
-    rePushEs.submit(rePushLoop);
+    ExecutorServiceManager.submit(rePushEs, rePushLoop);
     // add contract event listener for subscribing
     if (Args.getInstance().isEventSubscribe()) {
       startEventSubscribing();
       triggerEs = ExecutorServiceManager.newSingleThreadExecutor(triggerEsName, true);
-      triggerEs.submit(triggerCapsuleProcessLoop);
+      ExecutorServiceManager.submit(triggerEs, triggerCapsuleProcessLoop);
     }
 
     // start json rpc filter process
     if (CommonParameter.getInstance().isJsonRpcFilterEnabled()) {
       filterEs = ExecutorServiceManager.newSingleThreadExecutor(filterEsName);
-      filterEs.submit(filterProcessLoop);
+      ExecutorServiceManager.submit(filterEs, filterProcessLoop);
     }
 
     //initStoreFactory
