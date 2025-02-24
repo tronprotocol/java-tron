@@ -82,13 +82,13 @@ public class ContractStateCapsule implements ProtoCapsule<ContractState> {
         dps.getDynamicEnergyIncreaseFactor(),
         dps.getDynamicEnergyMaxFactor(),
         dps.allowStrictMath(),
-        dps.allowStrictMath2()
+        dps.disableJavaLangMath()
     );
   }
 
   public boolean catchUpToCycle(
       long newCycle, long threshold, long increaseFactor, long maxFactor,
-      boolean useStrictMath, boolean useStrictMath2
+      boolean useStrictMath, boolean disableMath
   ) {
     long lastCycle = getUpdateCycle();
 
@@ -115,7 +115,7 @@ public class ContractStateCapsule implements ProtoCapsule<ContractState> {
           .setEnergyFactor(min(
               maxFactor,
               (long) ((getEnergyFactor() + precisionFactor) * increasePercent) - precisionFactor,
-              useStrictMath2))
+              disableMath))
           .build();
     }
 
@@ -140,7 +140,7 @@ public class ContractStateCapsule implements ProtoCapsule<ContractState> {
         .setEnergyFactor(max(
             0,
             (long) ((getEnergyFactor() + precisionFactor) * decreasePercent) - precisionFactor,
-            useStrictMath2))
+            disableMath))
         .build();
 
     return true;

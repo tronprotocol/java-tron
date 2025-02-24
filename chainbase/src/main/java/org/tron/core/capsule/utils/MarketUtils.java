@@ -282,10 +282,10 @@ public class MarketUtils {
     }
   }
 
-  public static long multiplyAndDivide(long a, long b, long c, boolean useStrictMath2) {
+  public static long multiplyAndDivide(long a, long b, long c, boolean disableMath) {
     try {
-      long tmp = multiplyExact(a, b, useStrictMath2);
-      return floorDiv(tmp, c, useStrictMath2);
+      long tmp = multiplyExact(a, b, disableMath);
+      return floorDiv(tmp, c, disableMath);
     } catch (ArithmeticException ex) {
       // do nothing here, because we will use BigInteger to compute again
     }
@@ -307,7 +307,7 @@ public class MarketUtils {
     if (Arrays.equals(sellTokenId, "_".getBytes())) {
       accountCapsule.setBalance(addExact(
           accountCapsule.getBalance(), sellTokenQuantityRemain,
-          dynamicStore.allowStrictMath2()));
+          dynamicStore.disableJavaLangMath()));
     } else {
       accountCapsule
           .addAssetAmountV2(sellTokenId, sellTokenQuantityRemain, dynamicStore, assetIssueStore);

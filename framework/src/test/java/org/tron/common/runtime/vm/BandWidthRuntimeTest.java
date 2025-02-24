@@ -251,7 +251,7 @@ public class BandWidthRuntimeTest extends BaseTest {
       }
       Result result = Result.newBuilder().setContractRet(cr).build();
       maxSize = max(maxSize, result.getSerializedSize(),
-          dbManager.getDynamicPropertiesStore().allowStrictMath2());
+          dbManager.getDynamicPropertiesStore().disableJavaLangMath());
     }
     Assert.assertEquals(2, maxSize);
   }

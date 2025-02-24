@@ -168,7 +168,7 @@ public class Program {
     for (int i = 0; i < binData.length; i += 16) {
       ret.append(Utils.align("" + Integer.toHexString(startPC + (i)) + ":", ' ', 8, false));
       ret.append(Hex.toHexString(binData, i, min(16, binData.length - i,
-          VMConfig.allowStrictMath2()))).append('\n');
+          VMConfig.disableJavaLangMath()))).append('\n');
     }
     return ret.toString();
   }
@@ -638,7 +638,7 @@ public class Program {
       long balance = ownerCapsule.getBalance();
       long allowance = ownerCapsule.getAllowance();
       ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
-          .setBalance(addExact(balance, allowance, VMConfig.allowStrictMath2()))
+          .setBalance(addExact(balance, allowance, VMConfig.disableJavaLangMath()))
           .setAllowance(0)
           .setLatestWithdrawTime(getTimestamp().longValue() * 1000)
           .build());
@@ -1237,7 +1237,7 @@ public class Program {
   public DataWord getBlockHash(int index) {
     if (index < this.getNumber().longValue()
         && index >= max(256, this.getNumber().longValue(),
-        VMConfig.allowStrictMath2()) - 256) {
+        VMConfig.disableJavaLangMath()) - 256) {
 
       BlockCapsule blockCapsule = contractState.getBlockByNum(index);
 
@@ -2170,7 +2170,7 @@ public class Program {
     try {
       VoteWitnessParam param = new VoteWitnessParam();
       param.setVoterAddress(owner);
-      boolean allowStrictMath2 = VMConfig.allowStrictMath2();
+      boolean allowStrictMath2 = VMConfig.disableJavaLangMath();
       byte[] witnessArrayData = memoryChunk(
           addExact(witnessArrayOffset, DataWord.WORD_SIZE, allowStrictMath2),
           multiplyExact(witnessArrayLength, DataWord.WORD_SIZE, allowStrictMath2));
@@ -2253,7 +2253,7 @@ public class Program {
           VMConfig.getDynamicEnergyIncreaseFactor(),
           VMConfig.getDynamicEnergyMaxFactor(),
           VMConfig.allowStrictMath(),
-          VMConfig.allowStrictMath2())) {
+          VMConfig.disableJavaLangMath())) {
         contractState.updateContractState(getContextAddress(), contractStateCapsule
         );
       }

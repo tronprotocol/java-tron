@@ -117,7 +117,7 @@ public class UnDelegateResourceProcessor {
                 * dynamicStore.getTotalNetLimit() / repo.getTotalNetWeight());
             transferUsage = (long) (receiverCapsule.getNetUsage()
                 * ((double) (unDelegateBalance) / receiverCapsule.getAllFrozenBalanceForBandwidth()));
-            transferUsage = min(unDelegateMaxUsage, transferUsage, VMConfig.allowStrictMath2());
+            transferUsage = min(unDelegateMaxUsage, transferUsage, VMConfig.disableJavaLangMath());
 
             receiverCapsule.addAcquiredDelegatedFrozenV2BalanceForBandwidth(-unDelegateBalance);
           }
@@ -141,7 +141,7 @@ public class UnDelegateResourceProcessor {
                 * dynamicStore.getTotalEnergyCurrentLimit() / repo.getTotalEnergyWeight());
             transferUsage = (long) (receiverCapsule.getEnergyUsage()
                 * ((double) (unDelegateBalance) / receiverCapsule.getAllFrozenBalanceForEnergy()));
-            transferUsage = min(unDelegateMaxUsage, transferUsage, VMConfig.allowStrictMath2());
+            transferUsage = min(unDelegateMaxUsage, transferUsage, VMConfig.disableJavaLangMath());
 
             receiverCapsule.addAcquiredDelegatedFrozenV2BalanceForEnergy(-unDelegateBalance);
           }

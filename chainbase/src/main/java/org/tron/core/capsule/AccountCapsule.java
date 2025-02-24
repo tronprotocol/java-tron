@@ -733,7 +733,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   public boolean addAssetAmountV2(byte[] key, long amount,
       DynamicPropertiesStore dynamicPropertiesStore, AssetIssueStore assetIssueStore) {
     importAsset(key);
-    boolean useStrict2 = dynamicPropertiesStore.allowStrictMath2();
+    boolean useStrict2 = dynamicPropertiesStore.disableJavaLangMath();
     //key is token name
     if (dynamicPropertiesStore.getAllowSameTokenName() == 0) {
       Map<String, Long> assetMap = this.account.getAssetMap();
@@ -781,7 +781,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
                                      DynamicPropertiesStore dynamicPropertiesStore, AssetIssueStore assetIssueStore) {
     importAsset(key);
     //key is token name
-    boolean useStrict2 = dynamicPropertiesStore.allowStrictMath2();
+    boolean useStrict2 = dynamicPropertiesStore.disableJavaLangMath();
     if (dynamicPropertiesStore.getAllowSameTokenName() == 0) {
       Map<String, Long> assetMap = this.account.getAssetMap();
       AssetIssueCapsule assetIssueCapsule = assetIssueStore.get(key);

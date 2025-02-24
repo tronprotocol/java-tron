@@ -400,10 +400,10 @@ public class MarketSellAssetActuator extends AbstractActuator {
     // => takerBuyTokenQuantityCurrent_A = takerSellTokenQuantityRemain_TRX *
     //   makerSellTokenQuantity_A/makerBuyTokenQuantity_TRX
 
-    boolean useStrictMath2 = dynamicStore.allowStrictMath2();
+    boolean disableMath = dynamicStore.disableJavaLangMath();
     long takerBuyTokenQuantityRemain = MarketUtils
         .multiplyAndDivide(takerSellRemainQuantity, makerSellQuantity, makerBuyQuantity,
-            useStrictMath2);
+            disableMath);
 
     if (takerBuyTokenQuantityRemain == 0) {
       // quantity too small, return sellToken to user
@@ -427,7 +427,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
       makerBuyTokenQuantityReceive = MarketUtils
           .multiplyAndDivide(makerSellRemainQuantity, makerBuyQuantity, makerSellQuantity,
-              chainBaseManager.getDynamicPropertiesStore().allowStrictMath2());
+              chainBaseManager.getDynamicPropertiesStore().disableJavaLangMath());
       takerBuyTokenQuantityReceive = makerOrderCapsule.getSellTokenQuantityRemain();
 
       long takerSellTokenLeft =
@@ -462,7 +462,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
       //   makerSellTokenQuantity_A/makerBuyTokenQuantity_TRX
       makerBuyTokenQuantityReceive = MarketUtils
           .multiplyAndDivide(makerSellRemainQuantity, makerBuyQuantity, makerSellQuantity,
-              chainBaseManager.getDynamicPropertiesStore().allowStrictMath2());
+              chainBaseManager.getDynamicPropertiesStore().disableJavaLangMath());
 
       MarketUtils.updateOrderState(makerOrderCapsule, State.INACTIVE, marketAccountStore);
       if (makerBuyTokenQuantityReceive == 0) {

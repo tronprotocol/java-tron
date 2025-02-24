@@ -2246,7 +2246,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     long totalNetWeight = getTotalNetWeight();
     totalNetWeight += amount;
     if (allowNewReward()) {
-      totalNetWeight = max(0, totalNetWeight, allowStrictMath2());
+      totalNetWeight = max(0, totalNetWeight, disableJavaLangMath());
     }
     saveTotalNetWeight(totalNetWeight);
   }
@@ -2259,7 +2259,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     long totalEnergyWeight = getTotalEnergyWeight();
     totalEnergyWeight += amount;
     if (allowNewReward()) {
-      totalEnergyWeight = max(0, totalEnergyWeight, allowStrictMath2());
+      totalEnergyWeight = max(0, totalEnergyWeight, disableJavaLangMath());
     }
     saveTotalEnergyWeight(totalEnergyWeight);
   }
@@ -2272,7 +2272,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     long totalWeight = getTotalTronPowerWeight();
     totalWeight += amount;
     if (allowNewReward()) {
-      totalWeight = max(0, totalWeight, allowStrictMath2());
+      totalWeight = max(0, totalWeight, disableJavaLangMath());
     }
     saveTotalTronPowerWeight(totalWeight);
   }
@@ -2897,7 +2897,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return getAllowStrictMath() == 1L;
   }
 
-  public boolean allowStrictMath2() {
+  public boolean disableJavaLangMath() {
     return this.allowConsensusLogicOptimization();
   }
 

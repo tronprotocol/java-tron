@@ -4,7 +4,6 @@ import static org.tron.common.math.Maths.max;
 import static org.tron.common.math.Maths.min;
 import static org.tron.common.runtime.InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE;
 import static org.tron.common.runtime.InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE;
-import static org.tron.core.config.Parameter.ChainConstant.WINDOW_SIZE_PRECISION;
 import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 
 import java.util.Objects;
@@ -41,7 +40,6 @@ import org.tron.core.store.StoreFactory;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
-import org.tron.protos.contract.Common;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
@@ -246,11 +244,11 @@ public class TransactionTrace {
 
         callerAccount = callContract.getOwnerAddress().toByteArray();
         originAccount = contractCapsule.getOriginAddress();
-        boolean useStrictMath2 = dynamicPropertiesStore.allowStrictMath2();
+        boolean disableMath = dynamicPropertiesStore.disableJavaLangMath();
         percent = max(Constant.ONE_HUNDRED - contractCapsule.getConsumeUserResourcePercent(
-            useStrictMath2), 0, useStrictMath2);
+            disableMath), 0, disableMath);
         percent = min(percent, Constant.ONE_HUNDRED,
-            useStrictMath2);
+            disableMath);
         originEnergyLimit = contractCapsule.getOriginEnergyLimit();
         break;
       default:
@@ -303,7 +301,7 @@ public class TransactionTrace {
     // If area merging happened during suicide, use the current window size
     long newSize = mergedSize == currentSize ? size : currentSize;
     // Calc new usage by fixed x-axes
-    long newUsage = max(0, newArea / newSize, dynamicPropertiesStore.allowStrictMath2());
+    long newUsage = max(0, newArea / newSize, dynamicPropertiesStore.disableJavaLangMath());
     // Reset account usage and window size
     accountCap.setEnergyUsage(newUsage);
     accountCap.setNewWindowSize(ENERGY, newUsage == 0 ? 0L : newSize);
@@ -320,7 +318,7 @@ public class TransactionTrace {
     long newSize = mergedSize == currentSize ? size : currentSize;
     long newSize2 = mergedSize == currentSize ? size2 : currentSize2;
     // Calc new usage by fixed x-axes
-    long newUsage = max(0, newArea / newSize, dynamicPropertiesStore.allowStrictMath2());
+    long newUsage = max(0, newArea / newSize, dynamicPropertiesStore.disableJavaLangMath());
     // Reset account usage and window size
     accountCap.setEnergyUsage(newUsage);
     accountCap.setNewWindowSizeV2(ENERGY, newUsage == 0 ? 0L : newSize2);

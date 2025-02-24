@@ -5,7 +5,6 @@ import static org.tron.protos.Protocol.Transaction.Result.contractResult;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.REVERT;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,7 +29,6 @@ import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.Commons;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
 import org.tron.common.utils.client.utils.AbiUtil;
@@ -865,7 +863,7 @@ public class VoteTest {
     long beginCycle = manager.getDelegationStore().getBeginCycle(contract);
     long currentCycle = manager.getDynamicPropertiesStore().getCurrentCycleNumber();
     long passedCycle = max(0, currentCycle - beginCycle,
-        manager.getDynamicPropertiesStore().allowStrictMath2());
+        manager.getDynamicPropertiesStore().disableJavaLangMath());
     Assert.assertTrue(isZero ? rewardBySystem == 0 : rewardBySystem > 0);
     triggerContract(contract, SUCCESS,
         getConsumer(">=", rewardBySystem)

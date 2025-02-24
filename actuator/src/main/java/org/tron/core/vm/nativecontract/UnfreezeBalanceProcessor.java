@@ -137,11 +137,11 @@ public class UnfreezeBalanceProcessor {
         switch (param.getResourceType()) {
           case BANDWIDTH:
             receiverCapsule.safeAddAcquiredDelegatedFrozenBalanceForBandwidth(-unfreezeBalance,
-                VMConfig.allowStrictMath2());
+                VMConfig.disableJavaLangMath());
             break;
           case ENERGY:
             receiverCapsule.safeAddAcquiredDelegatedFrozenBalanceForEnergy(-unfreezeBalance,
-                VMConfig.allowStrictMath2());
+                VMConfig.disableJavaLangMath());
             break;
           default:
             //this should never happen

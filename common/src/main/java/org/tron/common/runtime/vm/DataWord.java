@@ -169,7 +169,7 @@ public class DataWord implements Comparable<DataWord> {
     byte[] ret = ByteUtil.EMPTY_BYTE_ARRAY;
     if (data != null) {
       ret = new byte[WORD_SIZE];
-      int dataSize = min(data.length, WORD_SIZE, VMConfig.allowStrictMath2());
+      int dataSize = min(data.length, WORD_SIZE, VMConfig.disableJavaLangMath());
       System.arraycopy(data, 0, ret, 0, dataSize);
     }
     return ret;
@@ -488,7 +488,7 @@ public class DataWord implements Comparable<DataWord> {
         data, 0, data.length,
         o.getData(), 0, o.getData().length);
     // Convert result into -1, 0 or 1 as is the convention
-    return (int) signum(result, VMConfig.allowStrictMath2());
+    return (int) signum(result, VMConfig.disableJavaLangMath());
   }
 
   public void signExtend(byte k) {

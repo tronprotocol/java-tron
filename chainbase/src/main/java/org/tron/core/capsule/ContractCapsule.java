@@ -109,9 +109,9 @@ public class ContractCapsule implements ProtoCapsule<SmartContract> {
     return this.smartContract.getOriginAddress().toByteArray();
   }
 
-  public long getConsumeUserResourcePercent(boolean useStrictMath2) {
+  public long getConsumeUserResourcePercent(boolean disableMath) {
     long percent = this.smartContract.getConsumeUserResourcePercent();
-    return max(0, min(percent, Constant.ONE_HUNDRED, useStrictMath2), useStrictMath2);
+    return max(0, min(percent, Constant.ONE_HUNDRED, disableMath), disableMath);
   }
 
   public long getOriginEnergyLimit() {

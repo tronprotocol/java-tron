@@ -903,10 +903,10 @@ public class Wallet {
     long netUsage = (long) (accountNetUsage * TRX_PRECISION * ((double)
             (dynamicStore.getTotalNetWeight()) / dynamicStore.getTotalNetLimit()));
 
-    long v2NetUsage = getV2NetUsage(ownerCapsule, netUsage, dynamicStore.allowStrictMath2());
+    long v2NetUsage = getV2NetUsage(ownerCapsule, netUsage, dynamicStore.disableJavaLangMath());
 
     long maxSize = ownerCapsule.getFrozenV2BalanceForBandwidth() - v2NetUsage;
-    return max(0, maxSize, dynamicStore.allowStrictMath2());
+    return max(0, maxSize, dynamicStore.disableJavaLangMath());
   }
 
   public long calcCanDelegatedEnergyMaxSize(ByteString ownerAddress) {
@@ -924,10 +924,10 @@ public class Wallet {
             (dynamicStore.getTotalEnergyWeight()) / dynamicStore.getTotalEnergyCurrentLimit()));
 
     long v2EnergyUsage = getV2EnergyUsage(ownerCapsule, energyUsage,
-        dynamicStore.allowStrictMath2());
+        dynamicStore.disableJavaLangMath());
 
     long maxSize =  ownerCapsule.getFrozenV2BalanceForEnergy() - v2EnergyUsage;
-    return max(0, maxSize, dynamicStore.allowStrictMath2());
+    return max(0, maxSize, dynamicStore.disableJavaLangMath());
   }
 
   public DelegatedResourceAccountIndex getDelegatedResourceAccountIndex(ByteString address) {
@@ -3010,7 +3010,7 @@ public class Wallet {
       txRetBuilder.setResult(true);
       txRetBuilder.setCode(response_code.SUCCESS);
       estimateBuilder.setEnergyRequired((long) ceil((double) high / dps.getEnergyFee(),
-          dps.allowStrictMath2()));
+          dps.disableJavaLangMath()));
     }
 
     return transaction;
@@ -3572,7 +3572,7 @@ public class Wallet {
       try {
         totalToAmount = receiveSize == 0 ? scaledToAmount : (addExact(
                 scaledToAmount, shieldedReceives.get(0).getNote().getValue(),
-            dbManager.getDynamicPropertiesStore().allowStrictMath2()));
+            dbManager.getDynamicPropertiesStore().disableJavaLangMath()));
       } catch (ArithmeticException e) {
         throw new ZksnarkException("Unbalanced burn!");
       }
@@ -3705,7 +3705,7 @@ public class Wallet {
       try {
         totalToAmount = receiveSize == 0 ? scaledToAmount : addExact(
             scaledToAmount, shieldedReceives.get(0).getNote().getValue(),
-            chainBaseManager.getDynamicPropertiesStore().allowStrictMath2());
+            chainBaseManager.getDynamicPropertiesStore().disableJavaLangMath());
       } catch (ArithmeticException e) {
         throw new ZksnarkException("Unbalanced burn!");
       }

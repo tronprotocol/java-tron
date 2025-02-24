@@ -189,7 +189,7 @@ public class RepositoryImpl implements Repository {
 
     long newEnergyUsage = recover(energyUsage, latestConsumeTime, now, windowSize);
 
-    return max(energyLimit - newEnergyUsage, 0, VMConfig.allowStrictMath2()); // us
+    return max(energyLimit - newEnergyUsage, 0, VMConfig.disableJavaLangMath()); // us
   }
 
   @Override
@@ -711,7 +711,7 @@ public class RepositoryImpl implements Repository {
           StringUtil.createReadableString(accountCapsule.createDbKey())
               + " insufficient balance");
     }
-    accountCapsule.setBalance(addExact(balance, value, VMConfig.allowStrictMath2()));
+    accountCapsule.setBalance(addExact(balance, value, VMConfig.disableJavaLangMath()));
     Key key = Key.create(address);
     accountCache.put(key, Value.create(accountCapsule,
          accountCache.get(key).getType().addType(Type.DIRTY)));
@@ -877,7 +877,7 @@ public class RepositoryImpl implements Repository {
       if (lastTime + windowSize > now) {
         long delta = now - lastTime;
         double decay = (windowSize - delta) / (double) windowSize;
-        averageLastUsage = round(averageLastUsage * decay, VMConfig.allowStrictMath2());
+        averageLastUsage = round(averageLastUsage * decay, VMConfig.disableJavaLangMath());
       } else {
         averageLastUsage = 0;
       }

@@ -930,20 +930,20 @@ public class Manager {
       throws AccountResourceInsufficientException {
     if (trx.getInstance().getSignatureCount() > 1) {
       long fee = getDynamicPropertiesStore().getMultiSignFee();
-      boolean useStrictMath2 = getDynamicPropertiesStore().allowStrictMath2();
+      boolean disableMath = getDynamicPropertiesStore().disableJavaLangMath();
       List<Contract> contracts = trx.getInstance().getRawData().getContractList();
       for (Contract contract : contracts) {
         byte[] address = TransactionCapsule.getOwner(contract);
         AccountCapsule accountCapsule = getAccountStore().get(address);
         try {
           if (accountCapsule != null) {
-            adjustBalance(getAccountStore(), accountCapsule, -fee, useStrictMath2);
+            adjustBalance(getAccountStore(), accountCapsule, -fee, disableMath);
 
             if (getDynamicPropertiesStore().supportBlackHoleOptimization()) {
               getDynamicPropertiesStore().burnTrx(fee);
             } else {
               adjustBalance(getAccountStore(), this.getAccountStore().getBlackhole(), +fee,
-                  useStrictMath2);
+                  disableMath);
             }
           }
         } catch (BalanceInsufficientException e) {
@@ -968,20 +968,20 @@ public class Manager {
     if (fee == 0) {
       return;
     }
-    boolean useStrictMath2 = getDynamicPropertiesStore().allowStrictMath2();
+    boolean disableMath = getDynamicPropertiesStore().disableJavaLangMath();
     List<Contract> contracts = trx.getInstance().getRawData().getContractList();
     for (Contract contract : contracts) {
       byte[] address = TransactionCapsule.getOwner(contract);
       AccountCapsule accountCapsule = getAccountStore().get(address);
       try {
         if (accountCapsule != null) {
-          adjustBalance(getAccountStore(), accountCapsule, -fee, useStrictMath2);
+          adjustBalance(getAccountStore(), accountCapsule, -fee, disableMath);
 
           if (getDynamicPropertiesStore().supportBlackHoleOptimization()) {
             getDynamicPropertiesStore().burnTrx(fee);
           } else {
             adjustBalance(getAccountStore(), this.getAccountStore().getBlackhole(), +fee,
-                useStrictMath2);
+                disableMath);
           }
         }
       } catch (BalanceInsufficientException e) {
@@ -1871,7 +1871,7 @@ public class Manager {
         long transactionFeeReward = floorDiv(
             chainBaseManager.getDynamicPropertiesStore().getTransactionFeePool(),
                 Constant.TRANSACTION_FEE_POOL_PERIOD,
-            chainBaseManager.getDynamicPropertiesStore().allowStrictMath2());
+            chainBaseManager.getDynamicPropertiesStore().disableJavaLangMath());
         mortgageService.payTransactionFeeReward(witnessCapsule.getAddress().toByteArray(),
             transactionFeeReward);
         chainBaseManager.getDynamicPropertiesStore().saveTransactionFeePool(
@@ -1888,7 +1888,7 @@ public class Manager {
         long transactionFeeReward = floorDiv(
             chainBaseManager.getDynamicPropertiesStore().getTransactionFeePool(),
                 Constant.TRANSACTION_FEE_POOL_PERIOD,
-            chainBaseManager.getDynamicPropertiesStore().allowStrictMath2());
+            chainBaseManager.getDynamicPropertiesStore().disableJavaLangMath());
         account.setAllowance(account.getAllowance() + transactionFeeReward);
         chainBaseManager.getDynamicPropertiesStore().saveTransactionFeePool(
             chainBaseManager.getDynamicPropertiesStore().getTransactionFeePool()
@@ -2458,9 +2458,9 @@ public class Manager {
         transactionCount += trx.getTransactionIds().size();
         long blockNum = trx.getNum();
         maxBlock = max(maxBlock, blockNum,
-            chainBaseManager.getDynamicPropertiesStore().allowStrictMath2());
+            chainBaseManager.getDynamicPropertiesStore().disableJavaLangMath());
         minBlock = min(minBlock, blockNum,
-            chainBaseManager.getDynamicPropertiesStore().allowStrictMath2());
+            chainBaseManager.getDynamicPropertiesStore().disableJavaLangMath());
         item.setBlockNum(blockNum);
         trx.getTransactionIds().forEach(
             tid -> chainBaseManager.getTransactionStore().put(Hex.decode(tid), item));

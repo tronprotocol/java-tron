@@ -69,15 +69,15 @@ public abstract class AbstractActuator implements Actuator {
   }
 
   public long addExact(long x, long y) {
-    return Maths.addExact(x, y, chainBaseManager.getDynamicPropertiesStore().allowStrictMath2());
+    return Maths.addExact(x, y, this.disableJavaLangMath());
   }
 
   public long addExact(int x, int y) {
-    return Maths.addExact(x, y, chainBaseManager.getDynamicPropertiesStore().allowStrictMath2());
+    return Maths.addExact(x, y, this.disableJavaLangMath());
   }
 
   public long floorDiv(long x, long y) {
-    return Maths.floorDiv(x, y, chainBaseManager.getDynamicPropertiesStore().allowStrictMath2());
+    return Maths.floorDiv(x, y, this.disableJavaLangMath());
   }
 
   public long floorDiv(long x, int y) {
@@ -85,8 +85,7 @@ public abstract class AbstractActuator implements Actuator {
   }
 
   public long multiplyExact(long x, long y) {
-    return Maths.multiplyExact(x, y,
-        chainBaseManager.getDynamicPropertiesStore().allowStrictMath2());
+    return Maths.multiplyExact(x, y, this.disableJavaLangMath());
   }
 
   public long multiplyExact(long x, int y) {
@@ -94,21 +93,19 @@ public abstract class AbstractActuator implements Actuator {
   }
 
   public int multiplyExact(int x, int y) {
-    return Maths.multiplyExact(x, y,
-        chainBaseManager.getDynamicPropertiesStore().allowStrictMath2());
+    return Maths.multiplyExact(x, y, this.disableJavaLangMath());
   }
 
   public long subtractExact(long x, long y) {
-    return Maths.subtractExact(x, y,
-        chainBaseManager.getDynamicPropertiesStore().allowStrictMath2());
+    return Maths.subtractExact(x, y, this.disableJavaLangMath());
   }
 
   public int min(int a, int b) {
-    return Maths.min(a, b, chainBaseManager.getDynamicPropertiesStore().allowStrictMath2());
+    return Maths.min(a, b, this.disableJavaLangMath());
   }
 
   public long min(long a, long b) {
-    return Maths.min(a, b, chainBaseManager.getDynamicPropertiesStore().allowStrictMath2());
+    return Maths.min(a, b, this.disableJavaLangMath());
   }
 
   public void adjustBalance(AccountStore accountStore, byte[] accountAddress, long amount)
@@ -122,7 +119,10 @@ public abstract class AbstractActuator implements Actuator {
    */
   public void adjustBalance(AccountStore accountStore, AccountCapsule account, long amount)
       throws BalanceInsufficientException {
-    Commons.adjustBalance(accountStore, account, amount,
-        chainBaseManager.getDynamicPropertiesStore().allowStrictMath2());
+    Commons.adjustBalance(accountStore, account, amount, this.disableJavaLangMath());
+  }
+
+  private boolean disableJavaLangMath() {
+    return chainBaseManager.getDynamicPropertiesStore().disableJavaLangMath();
   }
 }
