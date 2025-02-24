@@ -170,7 +170,7 @@ public final class VMUtils {
             "Validate InternalTransfer error, balance is not sufficient.");
       }
 
-      addExact(toAccount.getBalance(), amount, VMConfig.allowStrictMath2());
+      addExact(toAccount.getBalance(), amount, VMConfig.disableJavaLangMath());
     } catch (ArithmeticException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
@@ -232,7 +232,7 @@ public final class VMUtils {
       if (assetBalance != null) {
         try {
           addExact(assetBalance, amount,
-              VMConfig.allowStrictMath2()); //check if overflow
+              VMConfig.disableJavaLangMath()); //check if overflow
         } catch (Exception e) {
           logger.debug(e.getMessage(), e);
           throw new ContractValidateException(e.getMessage());

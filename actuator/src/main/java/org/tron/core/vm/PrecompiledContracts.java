@@ -626,7 +626,7 @@ public class PrecompiledContracts {
       int expLen = parseLen(data, 1);
       int modLen = parseLen(data, 2);
 
-      boolean allowStrictMath2 = VMConfig.allowStrictMath2();
+      boolean allowStrictMath2 = VMConfig.disableJavaLangMath();
 
       byte[] expHighBytes = parseBytes(data, addSafely(ARGS_OFFSET, baseLen), min(expLen, 32,
           allowStrictMath2));

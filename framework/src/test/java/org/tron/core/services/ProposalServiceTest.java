@@ -113,7 +113,7 @@ public class ProposalServiceTest extends BaseTest {
     Assert.assertEquals(v, 0);
     Assert.assertTrue(!dbManager.getDynamicPropertiesStore().allowConsensusLogicOptimization());
     Assert.assertFalse(dbManager.getDynamicPropertiesStore().allowWitnessSortOptimization());
-    Assert.assertFalse(dbManager.getDynamicPropertiesStore().allowStrictMath2());
+    Assert.assertFalse(dbManager.getDynamicPropertiesStore().disableJavaLangMath());
 
     long value = 1;
     Proposal proposal =
@@ -128,7 +128,7 @@ public class ProposalServiceTest extends BaseTest {
 
     Assert.assertTrue(dbManager.getDynamicPropertiesStore().allowConsensusLogicOptimization());
     Assert.assertTrue(dbManager.getDynamicPropertiesStore().allowWitnessSortOptimization());
-    Assert.assertTrue(dbManager.getDynamicPropertiesStore().allowStrictMath2());
+    Assert.assertTrue(dbManager.getDynamicPropertiesStore().disableJavaLangMath());
   }
 
 }

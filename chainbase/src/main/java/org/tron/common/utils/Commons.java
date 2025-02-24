@@ -144,7 +144,7 @@ public class Commons {
       DynamicPropertiesStore dynamicPropertiesStore) throws BalanceInsufficientException {
     long totalShieldedPoolValue = subtractExact(
         dynamicPropertiesStore.getTotalShieldedPoolValue(), valueBalance,
-        dynamicPropertiesStore.allowStrictMath2());
+        dynamicPropertiesStore.disableJavaLangMath());
     if (totalShieldedPoolValue < 0) {
       throw new BalanceInsufficientException(String.format(
           "total shielded pool value can not below 0, actual: %d", totalShieldedPoolValue));

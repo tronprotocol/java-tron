@@ -1196,6 +1196,6 @@ public class ManagerTest extends BlockGenerate {
   public void adjustBalance(AccountStore accountStore, byte[] accountAddress, long amount)
       throws BalanceInsufficientException {
     Commons.adjustBalance(accountStore, accountAddress, amount,
-        chainManager.getDynamicPropertiesStore().allowStrictMath2());
+        chainManager.getDynamicPropertiesStore().disableJavaLangMath());
   }
 }

@@ -109,6 +109,6 @@ public abstract class BaseTest {
   public void adjustBalance(AccountStore accountStore, byte[] accountAddress, long amount)
       throws BalanceInsufficientException {
     Commons.adjustBalance(accountStore, accountAddress, amount,
-        chainBaseManager.getDynamicPropertiesStore().allowStrictMath2());
+        chainBaseManager.getDynamicPropertiesStore().disableJavaLangMath());
   }
 }

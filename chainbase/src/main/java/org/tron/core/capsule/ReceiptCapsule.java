@@ -218,7 +218,7 @@ public class ReceiptCapsule {
           receipt.getEnergyUsageTotal(), receipt.getResult(), energyProcessor, now);
       return;
     }
-    boolean useStrict2 = dynamicPropertiesStore.allowStrictMath2();
+    boolean useStrict2 = dynamicPropertiesStore.disableJavaLangMath();
 
     if ((!Objects.isNull(origin)) && caller.getAddress().equals(origin.getAddress())) {
       payEnergyBill(dynamicPropertiesStore, accountStore, forkController, caller,
@@ -240,7 +240,7 @@ public class ReceiptCapsule {
   private long getOriginUsage(DynamicPropertiesStore dynamicPropertiesStore, AccountCapsule origin,
       long originEnergyLimit,
       EnergyProcessor energyProcessor, long originUsage) {
-    boolean useStrict2 = dynamicPropertiesStore.allowStrictMath2();
+    boolean useStrict2 = dynamicPropertiesStore.disableJavaLangMath();
     if (dynamicPropertiesStore.getAllowTvmFreeze() == 1
         || dynamicPropertiesStore.supportUnfreezeDelay()) {
       return min(originUsage, min(originEnergyLeft, originEnergyLimit, useStrict2), useStrict2);
@@ -306,7 +306,7 @@ public class ReceiptCapsule {
       } else {
         //send to blackHole
         Commons.adjustBalance(accountStore, accountStore.getBlackhole(),
-            energyFee, dynamicPropertiesStore.allowStrictMath2());
+            energyFee, dynamicPropertiesStore.disableJavaLangMath());
       }
 
     }

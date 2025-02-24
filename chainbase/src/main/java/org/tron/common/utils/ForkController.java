@@ -100,7 +100,7 @@ public class ForkController {
       }
     }
     return count >= ceil((double) versionEnum.getHardForkRate() * stats.length / 100,
-        manager.getDynamicPropertiesStore().allowStrictMath2());
+        manager.getDynamicPropertiesStore().disableJavaLangMath());
   }
 
 

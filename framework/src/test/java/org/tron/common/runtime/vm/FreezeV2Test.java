@@ -860,7 +860,7 @@ public class FreezeV2Test {
             * ((double) (amount) / oldReceiver.getAllFrozenBalanceForEnergy()));
       }
       transferUsage = min(unDelegateMaxUsage, transferUsage,
-          manager.getDynamicPropertiesStore().allowStrictMath2());
+          manager.getDynamicPropertiesStore().disableJavaLangMath());
     }
 
     DelegatedResourceStore delegatedResourceStore = manager.getDelegatedResourceStore();

@@ -128,7 +128,7 @@ public class VMActuator implements Actuator2 {
     if (isConstantCall && trx.getRawData().getFeeLimit() > 0) {
       maxEnergyLimit = min(maxEnergyLimit, trx.getRawData().getFeeLimit()
           / context.getStoreFactory().getChainBaseManager()
-          .getDynamicPropertiesStore().getEnergyFee(), VMConfig.allowStrictMath2());
+          .getDynamicPropertiesStore().getEnergyFee(), VMConfig.disableJavaLangMath());
     }
     blockCap = context.getBlockCap();
     if ((VMConfig.allowTvmFreeze() || VMConfig.allowTvmFreezeV2())
@@ -566,9 +566,9 @@ public class VMActuator implements Actuator2 {
     }
 
     long energyFromBalance = max(account.getBalance() - callValue, 0,
-        VMConfig.allowStrictMath2()) / sunPerEnergy;
+        VMConfig.disableJavaLangMath()) / sunPerEnergy;
     long availableEnergy = addExact(leftFrozenEnergy, energyFromBalance,
-        VMConfig.allowStrictMath2());
+        VMConfig.disableJavaLangMath());
 
     long energyFromFeeLimit = feeLimit / sunPerEnergy;
     if (VMConfig.allowTvmFreezeV2()) {
@@ -585,12 +585,12 @@ public class VMActuator implements Actuator2 {
       account.setEnergyUsage(
           energyProcessor.increase(account, ENERGY,
               account.getEnergyUsage(), min(leftFrozenEnergy, energyFromFeeLimit,
-                  VMConfig.allowStrictMath2()), now, now));
+                  VMConfig.disableJavaLangMath()), now, now));
       receipt.setCallerEnergyMergedUsage(account.getEnergyUsage());
       receipt.setCallerEnergyMergedWindowSize(account.getWindowSize(ENERGY));
       rootRepository.updateAccount(account.createDbKey(), account);
     }
-    return min(availableEnergy, energyFromFeeLimit, VMConfig.allowStrictMath2());
+    return min(availableEnergy, energyFromFeeLimit, VMConfig.disableJavaLangMath());
 
   }
 
@@ -603,7 +603,7 @@ public class VMActuator implements Actuator2 {
     }
     // can change the calc way
     long leftEnergyFromFreeze = rootRepository.getAccountLeftEnergyFromFreeze(account);
-    boolean isStrict2 = VMConfig.allowStrictMath2();
+    boolean isStrict2 = VMConfig.disableJavaLangMath();
     callValue = max(callValue, 0, isStrict2);
     long energyFromBalance = floorDiv(max(
         account.getBalance() - callValue, 0, isStrict2), sunPerEnergy, isStrict2);
@@ -627,12 +627,12 @@ public class VMActuator implements Actuator2 {
       } else {
         energyFromFeeLimit = addExact(
             leftEnergyFromFreeze, (feeLimit - leftBalanceForEnergyFreeze) / sunPerEnergy,
-            VMConfig.allowStrictMath2());
+            VMConfig.disableJavaLangMath());
       }
     }
 
     return min(addExact(leftEnergyFromFreeze, energyFromBalance,
-            VMConfig.allowStrictMath2()), energyFromFeeLimit, VMConfig.allowStrictMath2());
+            VMConfig.disableJavaLangMath()), energyFromFeeLimit, VMConfig.disableJavaLangMath());
   }
 
   public long getTotalEnergyLimit(AccountCapsule creator, AccountCapsule caller,
@@ -708,7 +708,7 @@ public class VMActuator implements Actuator2 {
     ContractCapsule contractCapsule = rootRepository
         .getContract(contract.getContractAddress().toByteArray());
     long consumeUserResourcePercent = contractCapsule.getConsumeUserResourcePercent(
-        VMConfig.allowStrictMath2());
+        VMConfig.disableJavaLangMath());
 
     long originEnergyLimit = contractCapsule.getOriginEnergyLimit();
     if (originEnergyLimit < 0) {
@@ -724,7 +724,7 @@ public class VMActuator implements Actuator2 {
     }
     if (consumeUserResourcePercent <= 0) {
       creatorEnergyLimit = min(originEnergyLeft, originEnergyLimit,
-          VMConfig.allowStrictMath2());
+          VMConfig.disableJavaLangMath());
     } else {
       if (consumeUserResourcePercent < VMConstant.ONE_HUNDRED) {
         // creatorEnergyLimit =
@@ -735,8 +735,8 @@ public class VMActuator implements Actuator2 {
             BigInteger.valueOf(callerEnergyLimit)
                 .multiply(BigInteger.valueOf(VMConstant.ONE_HUNDRED - consumeUserResourcePercent))
                 .divide(BigInteger.valueOf(consumeUserResourcePercent)).longValueExact(),
-            min(originEnergyLeft, originEnergyLimit, VMConfig.allowStrictMath2()),
-            VMConfig.allowStrictMath2());
+            min(originEnergyLeft, originEnergyLimit, VMConfig.disableJavaLangMath()),
+            VMConfig.disableJavaLangMath());
       }
     }
     if (VMConfig.allowTvmFreezeV2()) {
@@ -758,7 +758,7 @@ public class VMActuator implements Actuator2 {
       rootRepository.updateAccount(creator.createDbKey(), creator);
     }
     return addExact(callerEnergyLimit, creatorEnergyLimit,
-        VMConfig.allowStrictMath2());
+        VMConfig.disableJavaLangMath());
   }
 
   private long getTotalEnergyLimitWithFloatRatio(AccountCapsule creator, AccountCapsule caller,
@@ -775,16 +775,16 @@ public class VMActuator implements Actuator2 {
     ContractCapsule contractCapsule = rootRepository
         .getContract(contract.getContractAddress().toByteArray());
     long consumeUserResourcePercent = contractCapsule.getConsumeUserResourcePercent(
-        VMConfig.allowStrictMath2());
+        VMConfig.disableJavaLangMath());
 
     if (creatorEnergyLimit * consumeUserResourcePercent
         > (VMConstant.ONE_HUNDRED - consumeUserResourcePercent) * callerEnergyLimit) {
       return floorDiv(
           callerEnergyLimit * VMConstant.ONE_HUNDRED, consumeUserResourcePercent,
-          VMConfig.allowStrictMath2());
+          VMConfig.disableJavaLangMath());
     } else {
       return addExact(callerEnergyLimit, creatorEnergyLimit,
-          VMConfig.allowStrictMath2());
+          VMConfig.disableJavaLangMath());
     }
   }
 

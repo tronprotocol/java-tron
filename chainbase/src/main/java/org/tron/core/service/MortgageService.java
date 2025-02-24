@@ -208,7 +208,7 @@ public class MortgageService {
         .collect(Collectors.toList());
     if (beginCycle < newAlgorithmCycle) {
       long oldEndCycle = min(endCycle, newAlgorithmCycle,
-          dynamicPropertiesStore.allowStrictMath2());
+          dynamicPropertiesStore.disableJavaLangMath());
       reward = getOldReward(beginCycle, oldEndCycle, srAddresses);
       beginCycle = oldEndCycle;
     }

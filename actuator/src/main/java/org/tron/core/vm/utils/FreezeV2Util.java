@@ -136,7 +136,7 @@ public class FreezeV2Util {
     long now = repository.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
     int unfreezingV2Count = accountCapsule.getUnfreezingV2Count(now);
     return max(UnfreezeBalanceV2Actuator.getUNFREEZE_MAX_TIMES() - unfreezingV2Count, 0L,
-        VMConfig.allowStrictMath2());
+        VMConfig.disableJavaLangMath());
   }
 
   public static long queryDelegatableResource(byte[] address, long type, Repository repository) {
@@ -144,7 +144,7 @@ public class FreezeV2Util {
       return 0L;
     }
 
-    boolean allowStrictMath2 = VMConfig.allowStrictMath2();
+    boolean allowStrictMath2 = VMConfig.disableJavaLangMath();
     AccountCapsule accountCapsule = repository.getAccount(address);
     if (accountCapsule == null) {
       return 0L;
@@ -223,7 +223,7 @@ public class FreezeV2Util {
       return Triple.of(0L, 0L, 0L);
     }
 
-    amount = min(amount, resourceLimit, VMConfig.allowStrictMath2());
+    amount = min(amount, resourceLimit, VMConfig.disableJavaLangMath());
     if (resourceLimit <= usagePair.getLeft()) {
       return Triple.of(0L, amount, usagePair.getRight());
     }

@@ -109,7 +109,7 @@ public class UpdateSettingContractActuatorTest extends BaseTest {
       Assert.assertEquals(
           dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS))
               .getConsumeUserResourcePercent(
-                  dbManager.getDynamicPropertiesStore().allowStrictMath2()), TARGET_PERCENT);
+                  dbManager.getDynamicPropertiesStore().disableJavaLangMath()), TARGET_PERCENT);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -246,7 +246,7 @@ public class UpdateSettingContractActuatorTest extends BaseTest {
       Assert.assertEquals(
           dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS))
               .getConsumeUserResourcePercent(
-                  dbManager.getDynamicPropertiesStore().allowStrictMath2()), TARGET_PERCENT);
+                  dbManager.getDynamicPropertiesStore().disableJavaLangMath()), TARGET_PERCENT);
 
       // second
       secondActuator.validate();
@@ -256,7 +256,7 @@ public class UpdateSettingContractActuatorTest extends BaseTest {
       Assert.assertEquals(
           dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS))
               .getConsumeUserResourcePercent(
-                  dbManager.getDynamicPropertiesStore().allowStrictMath2()), 90L);
+                  dbManager.getDynamicPropertiesStore().disableJavaLangMath()), 90L);
 
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);

@@ -105,7 +105,7 @@ public class Memory implements ProgramListenerAware {
     if (size <= 0) {
       return;
     }
-    boolean allowStrictMath2 = VMConfig.allowStrictMath2();
+    boolean allowStrictMath2 = VMConfig.disableJavaLangMath();
     final int newSize = addExact(address, size, allowStrictMath2);
     int toAllocate = newSize - internalSize();
     if (toAllocate > 0) {
@@ -194,7 +194,7 @@ public class Memory implements ProgramListenerAware {
   private int captureMax(int chunkIndex, int chunkOffset, int size, byte[] src, int srcPos) {
 
     byte[] chunk = chunks.get(chunkIndex);
-    int toCapture = min(size, chunk.length - chunkOffset, VMConfig.allowStrictMath2());
+    int toCapture = min(size, chunk.length - chunkOffset, VMConfig.disableJavaLangMath());
 
     System.arraycopy(src, srcPos, chunk, chunkOffset, toCapture);
     return toCapture;
@@ -203,7 +203,7 @@ public class Memory implements ProgramListenerAware {
   private int grabMax(int chunkIndex, int chunkOffset, int size, byte[] dest, int destPos) {
 
     byte[] chunk = chunks.get(chunkIndex);
-    int toGrab = min(size, chunk.length - chunkOffset, VMConfig.allowStrictMath2());
+    int toGrab = min(size, chunk.length - chunkOffset, VMConfig.disableJavaLangMath());
 
     System.arraycopy(chunk, chunkOffset, dest, destPos, toGrab);
 
