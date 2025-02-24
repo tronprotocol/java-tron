@@ -38,7 +38,7 @@ public class RealtimeEventService {
       try {
         work();
       } catch (Exception e) {
-        logger.info("Real-time event service fail. {}", e);
+        logger.error("Realtime event service fail.", e);
       }
     }, 1, 1, TimeUnit.SECONDS);
     logger.info("Realtime event service start.");
@@ -81,7 +81,7 @@ public class RealtimeEventService {
         && !instance.isTransactionLogTriggerSolidified()
         && !isRemove) {
       if (blockEvent.getTransactionLogTriggerCapsules() == null) {
-        logger.info("TransactionLogTriggerCapsules is null. {}",
+        logger.warn("TransactionLogTriggerCapsules is null. {}",
             blockEvent.getBlockId().getString());
       } else {
         blockEvent.getTransactionLogTriggerCapsules().forEach(v ->
@@ -91,7 +91,7 @@ public class RealtimeEventService {
 
     if (instance.isContractEventTriggerEnable()) {
       if (blockEvent.getSmartContractTrigger() == null) {
-        logger.info("SmartContractTrigger is null. {}", blockEvent.getBlockId().getString());
+        logger.warn("SmartContractTrigger is null. {}", blockEvent.getBlockId().getString());
       } else {
         blockEvent.getSmartContractTrigger().getContractEventTriggers().forEach(v -> {
           v.setTriggerName(Trigger.CONTRACTEVENT_TRIGGER_NAME);

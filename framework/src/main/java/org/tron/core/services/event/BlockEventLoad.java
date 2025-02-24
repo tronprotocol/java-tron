@@ -33,9 +33,9 @@ public class BlockEventLoad {
     executor.scheduleWithFixedDelay(() -> {
       try {
         load();
-      } catch (Exception exception) {
+      } catch (Exception e) {
         close();
-        logger.error("Spread thread error", exception);
+        logger.error("Event load service fail.", e);
       }
     }, 100, 100, TimeUnit.MILLISECONDS);
     logger.info("Event load service start.");

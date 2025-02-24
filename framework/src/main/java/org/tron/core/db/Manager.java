@@ -2107,8 +2107,6 @@ public class Manager {
 
   private void postSolidityFilter(final long oldSolidNum, final long latestSolidifiedBlockNumber) {
     if (oldSolidNum >= latestSolidifiedBlockNumber) {
-      logger.warn("Post solidity filter failed, oldSolidity: {} >= latestSolidity: {}.",
-          oldSolidNum, latestSolidifiedBlockNumber);
       return;
     }
 
