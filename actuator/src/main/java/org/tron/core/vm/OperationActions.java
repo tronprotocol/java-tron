@@ -656,6 +656,9 @@ public class OperationActions {
   }
 
   public static void tStoreAction(Program program) {
+    if (program.isStaticCall()) {
+      throw new Program.StaticCallModificationException();
+    }
     DataWord key = program.stackPop();
     DataWord value = program.stackPop();
     DataWord address = program.getContractAddress();

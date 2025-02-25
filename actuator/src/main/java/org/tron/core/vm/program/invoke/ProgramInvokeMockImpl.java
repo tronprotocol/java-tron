@@ -210,6 +210,10 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
     this.ownerAddress = Arrays.clone(ownerAddress);
   }
 
+  public void setStaticCall(boolean isStatic) {
+    isStaticCall = isStatic;
+  }
+
   @Override
   public boolean isStaticCall() {
     return isStaticCall;
