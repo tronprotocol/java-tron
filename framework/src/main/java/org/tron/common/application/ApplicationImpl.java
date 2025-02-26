@@ -42,10 +42,10 @@ public class ApplicationImpl implements Application {
   public void startup() {
     this.startServices();
     eventService.init();
+    consensusService.start();
     if ((!Args.getInstance().isSolidityNode()) && (!Args.getInstance().isP2pDisable())) {
       tronNetService.start();
     }
-    consensusService.start();
     MetricsUtil.init();
   }
 
@@ -53,10 +53,10 @@ public class ApplicationImpl implements Application {
   public void shutdown() {
     this.shutdownServices();
     eventService.close();
-    consensusService.stop();
     if (!Args.getInstance().isSolidityNode() && (!Args.getInstance().p2pDisable)) {
       tronNetService.close();
     }
+    consensusService.stop();
     dbManager.close();
     shutdown.countDown();
   }
