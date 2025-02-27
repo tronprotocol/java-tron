@@ -101,7 +101,7 @@ public class BandwidthProcessor extends ResourceProcessor {
     long resultSizeWithMaxContractRet = trx.getResultSizeWithMaxContractRet();
     boolean optimizeTxs = !trx.isInBlock() || chainBaseManager
         .getDynamicPropertiesStore().allowConsensusLogicOptimization();
-    if (optimizeTxs && resultSizeWithMaxContractRet >
+    if (!trx.isInBlock() && resultSizeWithMaxContractRet >
         Constant.MAX_RESULT_SIZE_IN_TX * contracts.size()) {
       throw new TooBigTransactionResultException(String.format(
           "Too big transaction result, TxId %s, the result size is %d bytes, maxResultSize %d",
