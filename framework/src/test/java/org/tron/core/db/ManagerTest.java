@@ -7,8 +7,11 @@ import static org.mockito.Mockito.spy;
 import static org.tron.common.utils.Commons.adjustAssetBalanceV2;
 import static org.tron.common.utils.Commons.adjustTotalShieldedPoolValue;
 import static org.tron.common.utils.Commons.getExchangeStoreFinal;
+import static org.tron.common.utils.StringUtil.encode58Check;
 import static org.tron.core.exception.BadBlockException.TypeEnum.CALC_MERKLE_ROOT_FAILED;
+import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
 
+import com.beust.jcommander.internal.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.protobuf.Any;
@@ -481,7 +484,7 @@ public class ManagerTest extends BlockGenerate {
     } catch (BalanceInsufficientException e) {
       Assert.assertTrue(e instanceof BalanceInsufficientException);
       Assert.assertEquals(
-          "reduceAssetAmount failed! account: " + StringUtil.encode58Check(account.createDbKey()),
+          "reduceAssetAmount failed! account: " + encode58Check(account.createDbKey()),
               e.getMessage());
     }
 
@@ -744,7 +747,7 @@ public class ManagerTest extends BlockGenerate {
     chainManager.addWitness(ByteString.copyFrom(address));
     chainManager.getWitnessStore().put(address, witnessCapsule);
 
-    Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
+    Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947000L, privateKey);
 
     dbManager.pushBlock(new BlockCapsule(block));
 
@@ -754,7 +757,7 @@ public class ManagerTest extends BlockGenerate {
     long num = chainManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     BlockCapsule blockCapsule0 =
         createTestBlockCapsule(
-            1533529947843L + 3000,
+            1533529947000L + 3000,
             num + 1,
             chainManager.getDynamicPropertiesStore().getLatestBlockHeaderHash()
                 .getByteString(),
@@ -762,7 +765,7 @@ public class ManagerTest extends BlockGenerate {
 
     BlockCapsule blockCapsule1 =
         createTestBlockCapsule(
-            1533529947843L + 3000,
+            1533529947000L + 3000,
             num + 1,
             chainManager.getDynamicPropertiesStore().getLatestBlockHeaderHash()
                 .getByteString(),
@@ -773,7 +776,7 @@ public class ManagerTest extends BlockGenerate {
 
     BlockCapsule blockCapsule2 =
         createTestBlockCapsule(
-            1533529947843L + 6000,
+            1533529947000L + 6000,
             num + 2, blockCapsule1.getBlockId().getByteString(), addressToProvateKeys);
 
     dbManager.pushBlock(blockCapsule2);
@@ -800,6 +803,24 @@ public class ManagerTest extends BlockGenerate {
     Assert.assertEquals(
         chainManager.getHead().getBlockId(),
         chainManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
+
+    dbManager.getDynamicPropertiesStore().saveConsensusLogicOptimization(1);
+    BlockCapsule blockCapsule3 =
+        createTestBlockCapsule2(1533529947000L + 9000,
+            num + 3, blockCapsule2.getBlockId().getByteString(), addressToProvateKeys);
+
+    assertThrows(BadBlockException.class, () -> dbManager.pushBlock(blockCapsule3));
+  }
+
+  private Transaction buildTransaction(com.google.protobuf.Message message,
+                                       ContractType contractType) {
+    Transaction.raw.Builder rawBuilder = Transaction.raw.newBuilder().addContract(
+        Transaction.Contract.newBuilder().setType(contractType).setParameter(
+            (message instanceof Any ? (Any) message : Any.pack(message))).build());
+    Transaction.Builder transactionBuilder = Transaction.newBuilder().setRawData(rawBuilder)
+        .addRet(Transaction.Result.newBuilder().setContractRet(SUCCESS).build())
+        .addRet(Transaction.Result.newBuilder().setContractRet(SUCCESS).build());
+    return transactionBuilder.build();
   }
 
   @Test
@@ -1089,6 +1110,36 @@ public class ManagerTest extends BlockGenerate {
     ByteString witnessAddress = dposSlot.getScheduledWitness(dposSlot.getSlot(time));
     BlockCapsule blockCapsule = new BlockCapsule(number, Sha256Hash.wrap(hash), time,
         witnessAddress);
+    blockCapsule.generatedByMyself = true;
+    blockCapsule.setMerkleRoot();
+    blockCapsule.sign(ByteArray.fromHexString(addressToProvateKeys.get(witnessAddress)));
+    return blockCapsule;
+  }
+
+  private BlockCapsule createTestBlockCapsule2(long time, long number, ByteString hash,
+                                              Map<ByteString, String> addressToProvateKeys) {
+    TransferContract c1 = TransferContract.newBuilder()
+        .setOwnerAddress(ByteString.copyFrom("f1".getBytes()))
+        .setAmount(1).build();
+    ByteString witnessAddress = dposSlot.getScheduledWitness(dposSlot.getSlot(time));
+    Protocol.BlockHeader.raw.Builder blockHeaderRawBuild = Protocol.BlockHeader.raw.newBuilder();
+    Protocol.BlockHeader.raw blockHeaderRaw = blockHeaderRawBuild
+        .setTimestamp(time)
+        .setParentHash(hash)
+        .setWitnessAddress(witnessAddress)
+        .setNumber(number)
+        .build();
+
+    // block header
+    Protocol.BlockHeader.Builder blockHeaderBuild = Protocol.BlockHeader.newBuilder();
+    Protocol.BlockHeader blockHeader = blockHeaderBuild.setRawData(blockHeaderRaw).build();
+
+    // block
+    Block.Builder blockBuild = Block.newBuilder();
+    List<Transaction> transactions = Lists.newArrayList(buildTransaction(c1,
+        ContractType.TransferContract));
+    transactions.forEach(blockBuild::addTransactions);
+    BlockCapsule blockCapsule = new BlockCapsule(blockBuild.setBlockHeader(blockHeader).build());
     blockCapsule.generatedByMyself = true;
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(ByteArray.fromHexString(addressToProvateKeys.get(witnessAddress)));

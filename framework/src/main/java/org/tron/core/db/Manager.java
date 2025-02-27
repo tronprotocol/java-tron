@@ -1802,6 +1802,12 @@ public class Manager {
       List<TransactionInfo> results = new ArrayList<>();
       long num = block.getNum();
       for (TransactionCapsule transactionCapsule : block.getTransactions()) {
+        if (chainBaseManager.getDynamicPropertiesStore().allowConsensusLogicOptimization()
+            && transactionCapsule.retCountIsGreatThanContractCount()) {
+          throw new BadBlockException(String.format("The result count %d of this transaction %s is "
+                  + "greater than its contract count %d", transactionCapsule.getRetCount(),
+              transactionCapsule.getTransactionId(), transactionCapsule.getContractCount()));
+        }
         transactionCapsule.setBlockNum(num);
         if (block.generatedByMyself) {
           transactionCapsule.setVerified(true);
