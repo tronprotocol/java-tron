@@ -47,7 +47,14 @@ public class SolidEventService {
       return;
     }
 
-    List<BlockEvent> blockEvents = BlockEventCache.getSolidBlockEvents(solidId);
+    List<BlockEvent> blockEvents;
+
+    try {
+      blockEvents = BlockEventCache.getSolidBlockEvents(solidId);
+    } catch (Exception e) {
+      logger.warn("Get solid events failed. {}", e.getMessage());
+      return;
+    }
 
     blockEvents.forEach(v -> flush(v));
 
