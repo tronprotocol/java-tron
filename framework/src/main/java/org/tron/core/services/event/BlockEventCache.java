@@ -43,8 +43,8 @@ public class BlockEventCache {
   }
 
   public static void add(BlockEvent blockEvent) throws EventException {
-    logger.info("Add block event, {}, {}", blockEvent.getBlockId().getString(),
-        blockEvent.getParentId().getString());
+    logger.info("Add block event, {}, {}, {}", blockEvent.getBlockId().getString(),
+        blockEvent.getParentId().getString(), blockEvent.getSolidId().getString());
     if (blockEventMap.get(blockEvent.getParentId()) == null) {
       throw new EventException("unlink BlockEvent, "
         + blockEvent.getBlockId().getString() + ", "
@@ -83,6 +83,7 @@ public class BlockEventCache {
   }
 
   public static List<BlockEvent> getSolidBlockEvents(BlockCapsule.BlockId solidId) {
+    logger.info("Get solid events {}, {}", solidNum, solidId);
     List<BlockEvent> blockEvents = new ArrayList<>();
     BlockCapsule.BlockId tmp = solidId;
     while (tmp.getNum() > solidNum) {
