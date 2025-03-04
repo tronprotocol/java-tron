@@ -322,12 +322,7 @@ public class BlockEventGet {
                                                                      long solidNum) {
     List<TransactionLogTriggerCapsule> transactionLogTriggerCapsules = new ArrayList<>();
     if (!EventPluginLoader.getInstance().isTransactionLogTriggerEthCompatible()) {
-      for (TransactionCapsule t : block.getTransactions()) {
-        TransactionLogTriggerCapsule trx = new TransactionLogTriggerCapsule(t, block);
-        trx.setLatestSolidifiedBlockNumber(solidNum);
-        transactionLogTriggerCapsules.add(trx);
-      }
-      return transactionLogTriggerCapsules;
+      return getTransactionTriggers(block, solidNum);
     }
     List<TransactionCapsule> transactionCapsuleList = block.getTransactions();
     GrpcAPI.TransactionInfoList transactionInfoList = GrpcAPI
@@ -388,5 +383,45 @@ public class BlockEventGet {
       }
     }
     return energyPrice;
+  }
+
+  public List<TransactionLogTriggerCapsule> getTransactionTriggers(BlockCapsule block,
+                                                                   long solidNum) {
+    List<TransactionLogTriggerCapsule> list = new ArrayList<>();
+    if (block.getTransactions().size() == 0) {
+      return list;
+    }
+    GrpcAPI.TransactionInfoList transactionInfoList = GrpcAPI
+        .TransactionInfoList.newBuilder().build();
+    GrpcAPI.TransactionInfoList.Builder transactionInfoListBuilder = GrpcAPI
+        .TransactionInfoList.newBuilder();
+    try {
+      TransactionRetCapsule result = manager.getChainBaseManager().getTransactionRetStore()
+          .getTransactionInfoByBlockNum(ByteArray.fromLong(block.getNum()));
+      if (!Objects.isNull(result) && !Objects.isNull(result.getInstance())) {
+        result.getInstance().getTransactioninfoList()
+            .forEach(transactionInfoListBuilder::addTransactionInfo);
+        transactionInfoList = transactionInfoListBuilder.build();
+      }
+    } catch (Exception e) {
+      logger.warn("Get TransactionInfo failed, blockNum {}, {}.", block.getNum(), e.getMessage());
+    }
+
+    if (block.getTransactions().size() != transactionInfoList.getTransactionInfoCount()) {
+      for (TransactionCapsule t : block.getTransactions()) {
+        TransactionLogTriggerCapsule triggerCapsule = new TransactionLogTriggerCapsule(t, block);
+        triggerCapsule.setLatestSolidifiedBlockNumber(solidNum);
+        list.add(triggerCapsule);
+      }
+    } else {
+      for (int i = 0; i < transactionInfoList.getTransactionInfoCount(); i++) {
+        TransactionLogTriggerCapsule triggerCapsule = new TransactionLogTriggerCapsule(
+            block.getTransactions().get(i), block, transactionInfoList.getTransactionInfo(i));
+        triggerCapsule.setLatestSolidifiedBlockNumber(solidNum);
+        list.add(triggerCapsule);
+      }
+    }
+
+    return list;
   }
 }

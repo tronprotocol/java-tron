@@ -49,6 +49,12 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
     this(trxCapsule, blockCapsule, 0, 0, 0, null, 0);
   }
 
+  public TransactionLogTriggerCapsule(TransactionCapsule trxCapsule,
+                                      BlockCapsule blockCapsule,
+                                      TransactionInfo transactionInfo) {
+    this(trxCapsule, blockCapsule, 0, 0, 0, transactionInfo, 0);
+  }
+
   public TransactionLogTriggerCapsule(TransactionCapsule trxCapsule, BlockCapsule blockCapsule,
       int txIndex, long preCumulativeEnergyUsed, long preCumulativeLogCount,
       TransactionInfo transactionInfo, long energyUnitPrice) {
@@ -63,7 +69,7 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
     String transactionHash = trxCapsule.getTransactionId().toString();
     transactionLogTrigger.setTransactionId(transactionHash);
     transactionLogTrigger.setTimeStamp(blockCapsule.getTimeStamp());
-    transactionLogTrigger.setBlockNumber(trxCapsule.getBlockNum());
+    transactionLogTrigger.setBlockNumber(blockCapsule.getNum());
     transactionLogTrigger.setData(Hex.toHexString(trxCapsule
         .getInstance().getRawData().getData().toByteArray()));
 
@@ -281,6 +287,7 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
 
       if (Objects.nonNull(contractAddress) && contractAddress.size() > 0) {
         if (Objects.nonNull(transactionInfo)
+            && EventPluginLoader.getInstance().isTransactionLogTriggerEthCompatible()
             && contractType != null && contractType != CreateSmartContract) {
           transactionLogTrigger.setContractAddress(null);
         } else {
@@ -294,8 +301,38 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
           getInternalTransactionList(programResult.getInternalTransactions()));
     }
 
+    if (Objects.isNull(trxTrace) && Objects.nonNull(transactionInfo)) {
+      Protocol.ResourceReceipt receipt = transactionInfo.getReceipt();
+      energyUsageTotal = receipt.getEnergyUsageTotal();
+      transactionLogTrigger.setEnergyFee(receipt.getEnergyFee());
+      transactionLogTrigger.setOriginEnergyUsage(receipt.getOriginEnergyUsage());
+      transactionLogTrigger.setEnergyUsageTotal(energyUsageTotal);
+      transactionLogTrigger.setNetUsage(receipt.getNetUsage());
+      transactionLogTrigger.setNetFee(receipt.getNetFee());
+      transactionLogTrigger.setEnergyUsage(receipt.getEnergyUsage());
+
+      if (transactionInfo.getContractResultCount() > 0) {
+        ByteString contractResult = transactionInfo.getContractResult(0);
+        if (Objects.nonNull(contractResult) && contractResult.size() > 0) {
+          transactionLogTrigger.setContractResult(Hex.toHexString(contractResult.toByteArray()));
+        }
+      }
+
+      ByteString contractAddress = transactionInfo.getContractAddress();
+      if (Objects.nonNull(contractAddress) && contractAddress.size() > 0) {
+        if (EventPluginLoader.getInstance().isTransactionLogTriggerEthCompatible()
+            && contractType != null && contractType != CreateSmartContract) {
+          transactionLogTrigger.setContractAddress(null);
+        } else {
+          transactionLogTrigger
+              .setContractAddress(StringUtil.encode58Check((contractAddress.toByteArray())));
+        }
+      }
+    }
+
     // process transactionInfo list, only enabled when ethCompatible is true
-    if (Objects.nonNull(transactionInfo)) {
+    if (Objects.nonNull(transactionInfo)
+        && EventPluginLoader.getInstance().isTransactionLogTriggerEthCompatible()) {
       transactionLogTrigger.setTransactionIndex(txIndex);
       transactionLogTrigger.setCumulativeEnergyUsed(preCumulativeEnergyUsed + energyUsageTotal);
       transactionLogTrigger.setPreCumulativeLogCount(preCumulativeLogCount);
@@ -309,7 +346,7 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
         logPojo.setAddress((log.getAddress() != null)
             ? Hex.toHexString(log.getAddress().toByteArray()) : "");
         logPojo.setBlockHash(blockHash);
-        logPojo.setBlockNumber(trxCapsule.getBlockNum());
+        logPojo.setBlockNumber(blockCapsule.getNum());
         logPojo.setData(Hex.toHexString(log.getData().toByteArray()));
         logPojo.setLogIndex(preCumulativeLogCount + index);
 

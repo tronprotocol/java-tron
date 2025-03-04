@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
@@ -18,9 +19,11 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.TriggerConfig;
+import org.tron.common.logsfilter.capsule.TransactionLogTriggerCapsule;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.PublicMethod;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
@@ -181,5 +184,30 @@ public class BlockEventGetTest extends BlockGenerate {
     } catch (Exception e) {
       Assert.fail();
     }
+  }
+
+  @Test
+  public void getTransactionTriggers() {
+    BlockEventGet blockEventGet = new BlockEventGet();
+    BlockCapsule bc = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
+        100, Sha256Hash.ZERO_HASH.getByteString());
+
+    List<TransactionLogTriggerCapsule> list = blockEventGet.getTransactionTriggers(bc, 1);
+    Assert.assertEquals(0, list.size());
+
+    List<Protocol.Transaction> transactionList = new ArrayList<>();
+
+    Protocol.Transaction.raw rw = Protocol.Transaction.raw.newBuilder()
+        .addContract(Protocol.Transaction.Contract.newBuilder().build()).build();
+
+    Protocol.Transaction transaction = Protocol.Transaction.newBuilder().setRawData(rw).build();
+
+    transactionList.add(transaction);
+
+    bc = new BlockCapsule(100, ByteString.empty(), 1, transactionList);
+
+    list = blockEventGet.getTransactionTriggers(bc, 1);
+    Assert.assertEquals(1, list.size());
+    Assert.assertEquals(100, list.get(0).getTransactionLogTrigger().getTimeStamp());
   }
 }

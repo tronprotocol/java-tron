@@ -39,7 +39,7 @@ public class HistoryEventService {
 
     isRunning = true;
 
-    new Thread(() -> syncEvent()).start();
+    new Thread(() -> syncEvent(), "history-event").start();
 
     logger.info("History event service start.");
   }
