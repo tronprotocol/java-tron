@@ -35,6 +35,7 @@ public class TriggerSmartContractServletTest extends BaseTest {
     Args.getInstance().needSyncCheck = false;
     Args.getInstance().setFullNodeHttpEnable(true);
     Args.getInstance().setFullNodeHttpPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setP2pDisable(true);
     httpNode = String.format("%s:%d", "127.0.0.1",
         Args.getInstance().getFullNodeHttpPort());
   }

@@ -44,6 +44,7 @@ public class LiteFnQueryHttpFilterTest extends BaseTest {
     Args.getInstance().setJsonRpcHttpFullNodeEnable(false);
     Args.getInstance().setJsonRpcHttpSolidityNodeEnable(false);
     Args.getInstance().setJsonRpcHttpPBFTNodeEnable(false);
+    Args.getInstance().setP2pDisable(true);
   }
 
   /**

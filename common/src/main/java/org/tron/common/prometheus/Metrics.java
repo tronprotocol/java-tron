@@ -5,9 +5,9 @@ import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.Histogram;
 import io.prometheus.client.exporter.HTTPServer;
 import io.prometheus.client.hotspot.DefaultExports;
-import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.core.exception.TronError;
 
 @Slf4j(topic = "metrics")
 public class Metrics {
@@ -32,9 +32,8 @@ public class Metrics {
         new HTTPServer.Builder().withPort(port).build();
         logger.info("prometheus exposed on port : {}", port);
         initialized = true;
-      } catch (IOException e) {
-        CommonParameter.getInstance().setMetricsPrometheusEnable(false);
-        logger.error("{}", e.getMessage());
+      } catch (Exception e) {
+        throw new TronError(e, TronError.ErrCode.PROMETHEUS_INIT);
       }
     }
   }

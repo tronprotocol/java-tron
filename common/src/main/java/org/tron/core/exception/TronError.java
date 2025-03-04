@@ -40,6 +40,11 @@ public class TronError extends Error {
     EVENT_SUBSCRIBE_ERROR(1),
     AUTO_STOP_PARAMS(1),
     API_SERVER_INIT(1),
+    EVENT_SUBSCRIBE_INIT(1),
+    PROMETHEUS_INIT(1),
+    TRON_NET_SERVICE_INIT(1),
+    ZCASH_INIT(1),
+    LOG_LOAD(1),
     SOLID_NODE_INIT(0);
 
     private final int code;
