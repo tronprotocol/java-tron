@@ -9,6 +9,7 @@ import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Component;
 import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam;
+import org.tron.core.exception.TronError;
 import org.tron.core.exception.ZksnarkException;
 
 @Slf4j(topic = "API")
@@ -40,7 +41,7 @@ public class ZksnarkInitService {
       JLibrustzcash.librustzcashInitZksnarkParams(
           new LibrustzcashParam.InitZksnarkParams(spendPath, spendHash, outputPath, outputHash));
     } catch (ZksnarkException e) {
-      logger.error("librustzcashInitZksnarkParams fail!", e);
+      throw new TronError(e, TronError.ErrCode.ZCASH_INIT);
     }
     logger.info("init zk param done");
   }

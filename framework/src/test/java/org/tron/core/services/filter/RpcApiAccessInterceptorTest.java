@@ -62,6 +62,7 @@ public class RpcApiAccessInterceptorTest {
     Args.getInstance().setRpcOnSolidityPort(PublicMethod.chooseRandomPort());
     Args.getInstance().setRpcPBFTEnable(true);
     Args.getInstance().setRpcOnPBFTPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setP2pDisable(true);
     String fullNode = String.format("%s:%d", Args.getInstance().getNodeLanIp(),
         Args.getInstance().getRpcPort());
     String solidityNode = String.format("%s:%d", Args.getInstance().getNodeLanIp(),

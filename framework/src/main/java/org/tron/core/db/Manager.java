@@ -137,6 +137,7 @@ import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.service.MortgageService;
 import org.tron.core.service.RewardViCalService;
+import org.tron.core.services.event.exception.EventException;
 import org.tron.core.store.AccountAssetStore;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
@@ -2098,7 +2099,7 @@ public class Manager {
           .start(Args.getInstance().getEventPluginConfig());
 
       if (!eventPluginLoaded) {
-        logger.error("Failed to load eventPlugin.");
+        throw new EventException("Failed to load eventPlugin.");
       }
 
       FilterQuery eventFilter = Args.getInstance().getEventFilter();
@@ -2107,7 +2108,7 @@ public class Manager {
       }
 
     } catch (Exception e) {
-      logger.error("{}", e);
+      throw new TronError(e, TronError.ErrCode.EVENT_SUBSCRIBE_INIT);
     }
   }
 
