@@ -915,15 +915,18 @@ public class Args extends CommonParameter {
     PARAMETER.vmTrace =
         config.hasPath(Constant.VM_TRACE) && config.getBoolean(Constant.VM_TRACE);
 
-    if (config.hasPath(Constant.VM_SAVE_INTERNAL_TX)) {
+    if (!PARAMETER.saveInternalTx
+        && config.hasPath(Constant.VM_SAVE_INTERNAL_TX)) {
       PARAMETER.saveInternalTx = config.getBoolean(Constant.VM_SAVE_INTERNAL_TX);
     }
 
-    if (config.hasPath(Constant.VM_SAVE_FEATURED_INTERNAL_TX)) {
+    if (!PARAMETER.saveFeaturedInternalTx
+        && config.hasPath(Constant.VM_SAVE_FEATURED_INTERNAL_TX)) {
       PARAMETER.saveFeaturedInternalTx = config.getBoolean(Constant.VM_SAVE_FEATURED_INTERNAL_TX);
     }
 
-    if (config.hasPath(Constant.VM_SAVE_CANCEL_ALL_UNFREEZE_V2_DETAILS)) {
+    if (!PARAMETER.saveCancelAllUnfreezeV2Details
+        && config.hasPath(Constant.VM_SAVE_CANCEL_ALL_UNFREEZE_V2_DETAILS)) {
       PARAMETER.saveCancelAllUnfreezeV2Details =
           config.getBoolean(Constant.VM_SAVE_CANCEL_ALL_UNFREEZE_V2_DETAILS);
     }
