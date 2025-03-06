@@ -953,6 +953,15 @@ public class OperationsTest extends BaseTest {
 
     // TSTORE = 0x5d;
     op = new byte[] {0x60, 0x01, 0x60, 0x01, 0x5d};
+
+    invoke.setStaticCall(true);
+    program = new Program(op, op, invoke, interTrx);
+    testOperations(program);
+    Assert.assertEquals(20000, program.getResult().getEnergyUsed());
+    Assert.assertTrue(program.getResult().getException()
+        instanceof Program.StaticCallModificationException);
+
+    invoke.setStaticCall(false);
     program = new Program(op, op, invoke, interTrx);
     testOperations(program);
     Assert.assertEquals(106, program.getResult().getEnergyUsed());
