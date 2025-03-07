@@ -6,7 +6,9 @@ import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
@@ -50,14 +52,20 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
   }
 
   public TransactionLogTriggerCapsule(TransactionCapsule trxCapsule,
-                                      BlockCapsule blockCapsule,
-                                      TransactionInfo transactionInfo) {
-    this(trxCapsule, blockCapsule, 0, 0, 0, transactionInfo, 0);
+      BlockCapsule blockCapsule, TransactionInfo transactionInfo) {
+    this(trxCapsule, blockCapsule, 0, 0, 0, transactionInfo, 0, true);
   }
 
   public TransactionLogTriggerCapsule(TransactionCapsule trxCapsule, BlockCapsule blockCapsule,
       int txIndex, long preCumulativeEnergyUsed, long preCumulativeLogCount,
       TransactionInfo transactionInfo, long energyUnitPrice) {
+    this(trxCapsule, blockCapsule, txIndex, preCumulativeEnergyUsed, preCumulativeLogCount,
+        transactionInfo, energyUnitPrice, false);
+  }
+
+  public TransactionLogTriggerCapsule(TransactionCapsule trxCapsule, BlockCapsule blockCapsule,
+      int txIndex, long preCumulativeEnergyUsed, long preCumulativeLogCount,
+      TransactionInfo transactionInfo, long energyUnitPrice, boolean flag) {
     transactionLogTrigger = new TransactionLogTrigger();
 
     String blockHash = "";
@@ -69,7 +77,7 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
     String transactionHash = trxCapsule.getTransactionId().toString();
     transactionLogTrigger.setTransactionId(transactionHash);
     transactionLogTrigger.setTimeStamp(blockCapsule.getTimeStamp());
-    transactionLogTrigger.setBlockNumber(blockCapsule.getNum());
+    transactionLogTrigger.setBlockNumber(trxCapsule.getBlockNum());
     transactionLogTrigger.setData(Hex.toHexString(trxCapsule
         .getInstance().getRawData().getData().toByteArray()));
 
@@ -301,7 +309,7 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
           getInternalTransactionList(programResult.getInternalTransactions()));
     }
 
-    if (Objects.isNull(trxTrace) && Objects.nonNull(transactionInfo)) {
+    if (Objects.isNull(trxTrace) && Objects.nonNull(transactionInfo) && flag) {
       Protocol.ResourceReceipt receipt = transactionInfo.getReceipt();
       energyUsageTotal = receipt.getEnergyUsageTotal();
       transactionLogTrigger.setEnergyFee(receipt.getEnergyFee());
@@ -346,7 +354,7 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
         logPojo.setAddress((log.getAddress() != null)
             ? Hex.toHexString(log.getAddress().toByteArray()) : "");
         logPojo.setBlockHash(blockHash);
-        logPojo.setBlockNumber(blockCapsule.getNum());
+        logPojo.setBlockNumber(trxCapsule.getBlockNum());
         logPojo.setData(Hex.toHexString(log.getData().toByteArray()));
         logPojo.setLogIndex(preCumulativeLogCount + index);
 

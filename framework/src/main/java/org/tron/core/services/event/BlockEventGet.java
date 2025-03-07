@@ -54,6 +54,7 @@ public class BlockEventGet {
 
   public BlockEvent getBlockEvent(long blockNum) throws Exception {
     BlockCapsule block = manager.getChainBaseManager().getBlockByNum(blockNum);
+    block.getTransactions().forEach(t -> t.setBlockNum(block.getNum()));
     long solidNum = manager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
     BlockEvent blockEvent = new BlockEvent();
     blockEvent.setBlockId(block.getBlockId());
@@ -359,7 +360,7 @@ public class BlockEventGet {
       TransactionCapsule transactionCapsule = transactionCapsuleList.get(i);
       transactionCapsule.setBlockNum(block.getNum());
       TransactionLogTriggerCapsule trx = new TransactionLogTriggerCapsule(transactionCapsule, block,
-          i, cumulativeEnergyUsed, cumulativeLogCount, transactionInfo, energyUnitPrice);
+          i, cumulativeEnergyUsed, cumulativeLogCount, transactionInfo, energyUnitPrice, true);
       trx.setLatestSolidifiedBlockNumber(solidNum);
       cumulativeEnergyUsed += trx.getTransactionLogTrigger().getEnergyUsageTotal();
       cumulativeLogCount += transactionInfo.getLogCount();
@@ -391,6 +392,7 @@ public class BlockEventGet {
     if (block.getTransactions().size() == 0) {
       return list;
     }
+
     GrpcAPI.TransactionInfoList transactionInfoList = GrpcAPI
         .TransactionInfoList.newBuilder().build();
     GrpcAPI.TransactionInfoList.Builder transactionInfoListBuilder = GrpcAPI

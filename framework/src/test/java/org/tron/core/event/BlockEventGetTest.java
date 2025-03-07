@@ -1,5 +1,7 @@
 package org.tron.core.event;
 
+import static org.mockito.Mockito.mock;
+
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -15,6 +17,7 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.EventPluginLoader;
@@ -23,11 +26,13 @@ import org.tron.common.logsfilter.capsule.TransactionLogTriggerCapsule;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.PublicMethod;
+import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -38,6 +43,7 @@ import org.tron.core.net.TronNetDelegate;
 import org.tron.core.services.event.BlockEventGet;
 import org.tron.core.services.event.bo.BlockEvent;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.TransactionRetStore;
 import org.tron.protos.Protocol;
 
 @Slf4j
@@ -187,7 +193,7 @@ public class BlockEventGetTest extends BlockGenerate {
   }
 
   @Test
-  public void getTransactionTriggers() {
+  public void getTransactionTriggers() throws Exception {
     BlockEventGet blockEventGet = new BlockEventGet();
     BlockCapsule bc = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
         100, Sha256Hash.ZERO_HASH.getByteString());
@@ -209,5 +215,66 @@ public class BlockEventGetTest extends BlockGenerate {
     list = blockEventGet.getTransactionTriggers(bc, 1);
     Assert.assertEquals(1, list.size());
     Assert.assertEquals(100, list.get(0).getTransactionLogTrigger().getTimeStamp());
+
+    Protocol.TransactionInfo.Builder infoBuild = Protocol.TransactionInfo.newBuilder();
+
+    Protocol.ResourceReceipt.Builder resourceBuild = Protocol.ResourceReceipt.newBuilder();
+    resourceBuild.setEnergyFee(1);
+    resourceBuild.setEnergyUsageTotal(2);
+    resourceBuild.setEnergyUsage(3);
+    resourceBuild.setOriginEnergyUsage(4);
+    resourceBuild.setNetFee(5);
+    resourceBuild.setNetUsage(6);
+
+    String address = "A0B4750E2CD76E19DCA331BF5D089B71C3C2798548";
+    infoBuild
+        .setContractAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
+        .addContractResult(ByteString.copyFrom(ByteArray.fromHexString("112233")))
+        .setReceipt(resourceBuild.build());
+
+    Manager manager = mock(Manager.class);
+    ReflectUtils.setFieldValue(blockEventGet, "manager", manager);
+
+    ChainBaseManager chainBaseManager = mock(ChainBaseManager.class);
+    Mockito.when(manager.getChainBaseManager()).thenReturn(chainBaseManager);
+
+    TransactionRetStore transactionRetStore = mock(TransactionRetStore.class);
+    Mockito.when(chainBaseManager.getTransactionRetStore()).thenReturn(transactionRetStore);
+
+    Protocol.TransactionRet transactionRet = Protocol.TransactionRet.newBuilder()
+        .addTransactioninfo(infoBuild.build()).build();
+
+    TransactionRetCapsule result = new TransactionRetCapsule(transactionRet.toByteArray());
+
+    Mockito.when(transactionRetStore.getTransactionInfoByBlockNum(ByteArray.fromLong(0)))
+        .thenReturn(result);
+
+    Protocol.Block block = Protocol.Block.newBuilder()
+        .addTransactions(transaction).build();
+
+    BlockCapsule blockCapsule = new BlockCapsule(block);
+    blockCapsule.getTransactions().forEach(t -> t.setBlockNum(blockCapsule.getNum()));
+
+    list = blockEventGet.getTransactionTriggers(blockCapsule, 1);
+
+    Assert.assertEquals(1, list.size());
+    Assert.assertEquals(1,
+        list.get(0).getTransactionLogTrigger().getLatestSolidifiedBlockNumber());
+    Assert.assertEquals(0,
+        list.get(0).getTransactionLogTrigger().getBlockNumber());
+    Assert.assertEquals(2,
+        list.get(0).getTransactionLogTrigger().getEnergyUsageTotal());
+
+    Mockito.when(transactionRetStore.getTransactionInfoByBlockNum(ByteArray.fromLong(0)))
+        .thenReturn(null);
+    list = blockEventGet.getTransactionTriggers(blockCapsule, 1);
+    Assert.assertEquals(1, list.size());
+    Assert.assertEquals(1,
+        list.get(0).getTransactionLogTrigger().getLatestSolidifiedBlockNumber());
+    Assert.assertEquals(0,
+        list.get(0).getTransactionLogTrigger().getBlockNumber());
+    Assert.assertEquals(0,
+        list.get(0).getTransactionLogTrigger().getEnergyUsageTotal());
   }
+
 }
