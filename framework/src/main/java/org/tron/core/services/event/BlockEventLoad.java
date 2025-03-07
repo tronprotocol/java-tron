@@ -42,11 +42,16 @@ public class BlockEventLoad {
   }
 
   public void close() {
-    executor.shutdown();
-    logger.info("Event load service close.");
+    try {
+      load();
+      executor.shutdown();
+      logger.info("Event load service close.");
+    } catch (Exception e) {
+      logger.warn("Stop event load service fail. {}", e.getMessage());
+    }
   }
 
-  public void load() throws Exception {
+  public synchronized void load() throws Exception {
     long cacheHeadNum = BlockEventCache.getHead().getBlockId().getNum();
     long tmpNum =  manager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     if (cacheHeadNum >= tmpNum) {
