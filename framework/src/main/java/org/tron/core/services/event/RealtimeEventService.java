@@ -45,9 +45,13 @@ public class RealtimeEventService {
   }
 
   public void close() {
-    work();
-    executor.shutdown();
-    logger.info("Realtime event service close.");
+    try {
+      work();
+      executor.shutdown();
+      logger.info("Realtime event service close.");
+    } catch (Exception e) {
+      logger.warn("Close realtime event service fail. {}", e.getMessage());
+    }
   }
 
   public void add(Event event) {

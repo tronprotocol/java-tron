@@ -37,9 +37,13 @@ public class SolidEventService {
   }
 
   public void close() {
-    work();
-    executor.shutdown();
-    logger.info("Solid event service close.");
+    try {
+      work();
+      executor.shutdown();
+      logger.info("Solid event service close.");
+    } catch (Exception e) {
+      logger.warn("Close solid event service fail. {}", e.getMessage());
+    }
   }
 
   public synchronized void work() {
