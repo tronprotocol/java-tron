@@ -156,6 +156,10 @@ def binaryRelease(taskName, jarName, mainClass) {
             include "/**"
         }
 
+        // explicit_dependency
+        dependsOn (project(':actuator').jar, project(':consensus').jar, project(':chainbase').jar,
+                project(':crypto').jar, project(':common').jar, project(':protocol').jar)
+
         from {
             configurations.runtimeClasspath.collect {
                 it.isDirectory() ? it : zipTree(it)
