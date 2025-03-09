@@ -4,6 +4,7 @@ import static org.mockito.Mockito.mock;
 
 import com.google.protobuf.ByteString;
 import java.lang.reflect.Field;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -20,6 +21,12 @@ import org.tron.protos.Protocol;
 
 public class DposServiceTest {
   DposService service = new DposService();
+
+
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+  }
 
   @Test
   public void testValidBlockTime() throws Exception {
@@ -53,8 +60,7 @@ public class DposServiceTest {
 
   @Test
   public void testValidSlot() throws Exception {
-    Args.setParam(new String[] {"-w"}, Constant.TEST_CONF);
-    CommonParameter parameter = Args.getInstance();
+    Args.setParam(new String[] {}, Constant.TEST_CONF);
     long headTime = 1724036757000L;
     ByteString witness = ByteString.copyFrom(NetUtil.getNodeId());
     ByteString witness2 = ByteString.copyFrom(NetUtil.getNodeId());

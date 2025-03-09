@@ -15,9 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
@@ -43,8 +41,6 @@ public class SnapshotManagerTest {
   private Application appT;
   private TestRevokingTronStore tronDatabase;
 
-  @Rule
-  public ExpectedException thrown = ExpectedException.none();
 
   @Before
   public void init() {
@@ -122,19 +118,19 @@ public class SnapshotManagerTest {
 
   @Test
   public void testCheckError() {
-    thrown.expect(TronError.class);
     SnapshotManager manager = spy(new SnapshotManager(""));
     when(manager.getCheckpointList()).thenReturn(Arrays.asList("check1", "check2"));
-    manager.check();
+    TronError thrown = Assert.assertThrows(TronError.class, manager::check);
+    Assert.assertEquals(TronError.ErrCode.CHECKPOINT_VERSION, thrown.getErrCode());
   }
 
   @Test
   public void testFlushError() {
-    thrown.expect(TronError.class);
     SnapshotManager manager = spy(new SnapshotManager(""));
     manager.setUnChecked(false);
     when(manager.getCheckpointList()).thenReturn(Arrays.asList("check1", "check2"));
     when(manager.shouldBeRefreshed()).thenReturn(true);
-    manager.flush();
+    TronError thrown = Assert.assertThrows(TronError.class, manager::flush);
+    Assert.assertEquals(TronError.ErrCode.DB_FLUSH, thrown.getErrCode());
   }
 }

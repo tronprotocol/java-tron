@@ -57,7 +57,7 @@ public class ArgsTest {
 
   @Test
   public void get() {
-    Args.setParam(new String[] {"-w", "-c", Constant.TEST_CONF}, Constant.TESTNET_CONF);
+    Args.setParam(new String[] {"-c", Constant.TEST_CONF}, Constant.TESTNET_CONF);
 
     CommonParameter parameter = Args.getInstance();
 
@@ -132,7 +132,7 @@ public class ArgsTest {
   @Test
   public void testIpFromLibP2p()
       throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-    Args.setParam(new String[] {"-w"}, Constant.TEST_CONF);
+    Args.setParam(new String[] {}, Constant.TEST_CONF);
     CommonParameter parameter = Args.getInstance();
 
     String configuredExternalIp = parameter.getNodeExternalIp();
@@ -153,7 +153,7 @@ public class ArgsTest {
   @Test
   public void testOldRewardOpt() {
     thrown.expect(IllegalArgumentException.class);
-    Args.setParam(new String[] {"-w", "-c", "args-test.conf"}, Constant.TESTNET_CONF);
+    Args.setParam(new String[] {"-c", "args-test.conf"}, Constant.TESTNET_CONF);
   }
 
   @Test

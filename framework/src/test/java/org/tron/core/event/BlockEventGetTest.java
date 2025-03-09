@@ -78,7 +78,7 @@ public class BlockEventGetTest extends BlockGenerate {
   public void before() throws IOException {
     initDbPath();
     logger.info("Full node running.");
-    Args.setParam(new String[] {"-d", dbPath, "-w"}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-d", dbPath}, Constant.TEST_CONF);
     Args.getInstance().setNodeListenPort(10000 + port.incrementAndGet());
 
     context = new TronApplicationContext(DefaultConfig.class);

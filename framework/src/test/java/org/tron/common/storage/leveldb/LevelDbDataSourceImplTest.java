@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -41,9 +42,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -73,9 +72,6 @@ public class LevelDbDataSourceImplTest {
   private byte[] key4 = "00000004aa".getBytes();
   private byte[] key5 = "00000005aa".getBytes();
   private byte[] key6 = "00000006aa".getBytes();
-
-  @Rule
-  public final ExpectedException exception = ExpectedException.none();
 
   /**
    * Release resources.
@@ -351,12 +347,11 @@ public class LevelDbDataSourceImplTest {
 
   @Test
   public void initDbTest() {
-    exception.expect(TronError.class);
     makeExceptionDb("test_initDb");
     LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
         Args.getInstance().getOutputDirectory(), "test_initDb");
-    dataSource.initDB();
-    dataSource.closeDB();
+    TronError thrown = assertThrows(TronError.class, dataSource::initDB);
+    assertEquals(TronError.ErrCode.LEVELDB_INIT, thrown.getErrCode());
   }
 
   private void makeExceptionDb(String dbName) {

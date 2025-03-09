@@ -450,7 +450,8 @@ public class Args extends CommonParameter {
 
     if (PARAMETER.isWitness()
         && CollectionUtils.isEmpty(localWitnesses.getPrivateKeys())) {
-      logger.warn("This is a witness node, but localWitnesses is null");
+      throw new TronError("This is a witness node, but localWitnesses is null",
+          TronError.ErrCode.WITNESS_INIT);
     }
 
     if (config.hasPath(Constant.VM_SUPPORT_CONSTANT)) {
@@ -1141,7 +1142,7 @@ public class Args extends CommonParameter {
         PARAMETER.shutdownBlockTime = new CronExpression(config.getString(
             Constant.NODE_SHUTDOWN_BLOCK_TIME));
       } catch (ParseException e) {
-        logger.error(e.getMessage(), e);
+        throw new TronError(e, TronError.ErrCode.AUTO_STOP_PARAMS);
       }
     }
 

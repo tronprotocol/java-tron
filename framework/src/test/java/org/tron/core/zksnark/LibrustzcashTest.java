@@ -80,7 +80,6 @@ public class LibrustzcashTest extends BaseTest {
             "--output-directory", dbPath(),
             "--storage-db-directory", dbDirectory,
             "--storage-index-directory", indexDirectory,
-            "-w",
             "--debug"
         },
         "config-test-mainnet.conf"
