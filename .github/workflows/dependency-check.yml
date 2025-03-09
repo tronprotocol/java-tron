@@ -1,0 +1,46 @@
+name: "Dependency Check"
+
+on:
+  push:
+    branches: [ 'develop', 'master', 'release_**' ]
+  pull_request:
+    branches: [ 'develop' ]
+  schedule:
+    - cron: '0 6 * * *'
+
+jobs:
+  dependency-check:
+    name: Dependency Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Cache ODC data
+        uses: actions/cache@v3
+        with:
+          path: ~/.dependency-check/data
+          key: ${{ runner.os }}-odc-data-${{ hashFiles('**/build.gradle') }}
+          restore-keys: |
+            ${{ runner.os }}-odc-data-
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Dependency Check
+        uses: dependency-check/Dependency-Check_Action@1.1.0
+        with:
+          project: 'java-tron'
+          scan: '.'
+          format: 'HTML'
+          out: 'reports'
+          fail_on_severity: 'critical'
+          suppressionFile: '.github/dependency-check-suppressions.xml'
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: ${{github.workspace}}/reports
