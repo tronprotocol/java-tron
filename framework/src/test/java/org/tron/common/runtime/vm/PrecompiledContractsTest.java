@@ -1172,7 +1172,7 @@ public class PrecompiledContractsTest extends BaseTest {
 
   @Test
   public void ckzgPointEvaluationTest() {
-    VMConfig.initAllowTvmCancun(1);
+    VMConfig.initAllowTvmBlob(1);
 
     PrecompiledContract contract =
         createPrecompiledContract(kzgPointEvaluationAddr, OWNER_ADDRESS);
@@ -1217,6 +1217,6 @@ public class PrecompiledContractsTest extends BaseTest {
           "73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001");
     Assert.assertTrue(res.getLeft());
     Assert.assertArrayEquals(expected, res.getRight());
-    VMConfig.initAllowTvmCancun(0);
+    VMConfig.initAllowTvmBlob(0);
   }
 }

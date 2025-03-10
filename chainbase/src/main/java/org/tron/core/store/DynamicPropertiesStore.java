@@ -230,6 +230,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] ALLOW_TVM_CANCUN = "ALLOW_TVM_CANCUN".getBytes();
 
+  private static final byte[] ALLOW_TVM_BLOB = "ALLOW_TVM_BLOB".getBytes();
+
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -2931,6 +2933,17 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElse(CommonParameter.getInstance().getAllowTvmCancun());
+  }
+
+  public void saveAllowTvmBlob(long allowTvmBlob) {
+    this.put(ALLOW_TVM_BLOB, new BytesCapsule(ByteArray.fromLong(allowTvmBlob)));
+  }
+
+  public long getAllowTvmBlob() {
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_BLOB))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(CommonParameter.getInstance().getAllowTvmBlob());
   }
 
   private static class DynamicResourceProperties {

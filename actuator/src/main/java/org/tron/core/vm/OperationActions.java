@@ -678,6 +678,7 @@ public class OperationActions {
   }
 
   public static void blobHashAction(Program program) {
+    program.stackPop();
     program.stackPush(DataWord.ZERO());
     program.step();
   }

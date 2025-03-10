@@ -1011,7 +1011,7 @@ public class OperationsTest extends BaseTest {
 
   @Test
   public void testBlobHash() throws ContractValidateException {
-    VMConfig.initAllowTvmCancun(1);
+    VMConfig.initAllowTvmBlob(1);
 
     invoke = new ProgramInvokeMockImpl();
     Protocol.Transaction trx = Protocol.Transaction.getDefaultInstance();
@@ -1025,12 +1025,12 @@ public class OperationsTest extends BaseTest {
     Assert.assertEquals(6, program.getResult().getEnergyUsed());
     Assert.assertEquals(DataWord.ZERO(), program.getStack().pop());
 
-    VMConfig.initAllowTvmCancun(0);
+    VMConfig.initAllowTvmBlob(0);
   }
 
   @Test
   public void testBlobBaseFee() throws ContractValidateException {
-    VMConfig.initAllowTvmCancun(1);
+    VMConfig.initAllowTvmBlob(1);
 
     invoke = new ProgramInvokeMockImpl();
     Protocol.Transaction trx = Protocol.Transaction.getDefaultInstance();
@@ -1044,7 +1044,7 @@ public class OperationsTest extends BaseTest {
     Assert.assertEquals(5, program.getResult().getEnergyUsed());
     Assert.assertEquals(DataWord.ZERO(), program.getStack().pop());
 
-    VMConfig.initAllowTvmCancun(0);
+    VMConfig.initAllowTvmBlob(0);
   }
 
   private void testOperations(Program program) {

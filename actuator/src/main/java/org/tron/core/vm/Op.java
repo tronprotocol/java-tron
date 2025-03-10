@@ -121,7 +121,7 @@ public class Op {
   // (0x48) Get block's basefee
   public static final int BASEFEE = 0x48;
   // (0x49) Get blob hash
-  public static final int BLOBAHASH = 0x49;
+  public static final int BLOBHASH = 0x49;
   // (0x4a) Get block's blob basefee
   public static final int BLOBBASEFEE = 0x4a;
 
