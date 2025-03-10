@@ -1,6 +1,8 @@
 package org.tron.core.vm;
 
 import static java.util.Arrays.copyOfRange;
+import static org.tron.common.crypto.ckzg4844.CKZG4844JNI.BLS_MODULUS;
+import static org.tron.common.crypto.ckzg4844.CKZG4844JNI.FIELD_ELEMENTS_PER_BLOB;
 import static org.tron.common.math.Maths.max;
 import static org.tron.common.math.Maths.min;
 import static org.tron.common.runtime.vm.DataWord.WORD_SIZE;
@@ -40,7 +42,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
-import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.crypto.Blake2bfMessageDigest;
 import org.tron.common.crypto.Hash;
 import org.tron.common.crypto.SignUtils;
@@ -2204,9 +2205,9 @@ public class PrecompiledContracts {
 
     private static final int BLOB_VERIFY_INPUT_LENGTH = 192;
     private static final byte BLOB_COMMITMENT_VERSION_KZG = 0x01;
-    private static final byte[] BLOB_PRECOMPILED_RETURN_VALUE = Hex.decode(
-        "0000000000000000000000000000000000000000000000000000000000001000" +
-            "73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001");
+    private static final byte[] BLOB_PRECOMPILED_RETURN_VALUE =
+        ByteUtil.merge(ByteUtil.longTo32Bytes(FIELD_ELEMENTS_PER_BLOB),
+            ByteUtil.bigIntegerToBytes(BLS_MODULUS, 32));
 
     @Override
     public long getEnergyForData(byte[] data) {
