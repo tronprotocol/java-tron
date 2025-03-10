@@ -32,7 +32,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import ethereum.ckzg4844.CKZG4844JNI;
+import org.tron.common.crypto.ckzg4844.CKZG4844JNI;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;

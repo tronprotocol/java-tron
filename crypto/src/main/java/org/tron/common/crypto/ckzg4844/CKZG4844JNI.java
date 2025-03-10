@@ -1,4 +1,4 @@
-package ethereum.ckzg4844;
+package org.tron.common.crypto.ckzg4844;
 
 import java.io.IOException;
 import java.io.InputStream;

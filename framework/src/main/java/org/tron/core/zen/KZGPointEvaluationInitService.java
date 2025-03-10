@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import javax.annotation.PostConstruct;
 
-import ethereum.ckzg4844.CKZG4844JNI;
+import org.tron.common.crypto.ckzg4844.CKZG4844JNI;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Component;
