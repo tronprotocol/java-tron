@@ -677,6 +677,16 @@ public class OperationActions {
     program.step();
   }
 
+  public static void blobHashAction(Program program) {
+    program.stackPush(DataWord.ZERO());
+    program.step();
+  }
+
+  public static void blobBaseFeeAction(Program program) {
+    program.stackPush(DataWord.ZERO());
+    program.step();
+  }
+
   public static void push0Action(Program program) {
     program.stackPush(DataWord.ZERO());
     program.step();

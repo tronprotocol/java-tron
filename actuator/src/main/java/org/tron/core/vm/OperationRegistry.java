@@ -681,5 +681,17 @@ public class OperationRegistry {
         EnergyCost::getMCopyCost,
         OperationActions::mCopyAction,
         proposal));
+
+    table.set(new Operation(
+        Op.BLOBAHASH, 1, 1,
+        EnergyCost::getVeryLowTierCost,
+        OperationActions::blobHashAction,
+        proposal));
+
+    table.set(new Operation(
+        Op.BLOBBASEFEE, 0, 1,
+        EnergyCost::getBaseTierCost,
+        OperationActions::blobBaseFeeAction,
+        proposal));
   }
 }
