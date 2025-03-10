@@ -1171,7 +1171,7 @@ public class PrecompiledContractsTest extends BaseTest {
   }
 
   @Test
-  public void ckzgPointEvaluationTest() {
+  public void kzgPointEvaluationTest() {
     VMConfig.initAllowTvmBlob(1);
 
     PrecompiledContract contract =
