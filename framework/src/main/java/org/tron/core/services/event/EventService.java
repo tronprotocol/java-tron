@@ -19,6 +19,9 @@ public class EventService {
   private HistoryEventService historyEventService;
 
   @Autowired
+  private SolidEventService solidEventService;
+
+  @Autowired
   private Manager manager;
 
   public void init()  {
@@ -54,8 +57,9 @@ public class EventService {
   }
 
   public void close() {
-    realtimeEventService.close();
-    blockEventLoad.close();
     historyEventService.close();
+    blockEventLoad.close();
+    realtimeEventService.close();
+    solidEventService.close();
   }
 }

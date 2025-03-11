@@ -45,8 +45,13 @@ public class RealtimeEventService {
   }
 
   public void close() {
-    executor.shutdown();
-    logger.info("Realtime event service close.");
+    try {
+      work();
+      executor.shutdown();
+      logger.info("Realtime event service close.");
+    } catch (Exception e) {
+      logger.warn("Close realtime event service fail. {}", e.getMessage());
+    }
   }
 
   public void add(Event event) {
@@ -57,7 +62,7 @@ public class RealtimeEventService {
     queue.offer(event);
   }
 
-  public void work() {
+  public synchronized void work() {
     while (queue.size() > 0) {
       Event event = queue.poll();
       flush(event.getBlockEvent(), event.isRemove());

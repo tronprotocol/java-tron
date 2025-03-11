@@ -37,11 +37,16 @@ public class SolidEventService {
   }
 
   public void close() {
-    executor.shutdown();
-    logger.info("Solid event service close.");
+    try {
+      work();
+      executor.shutdown();
+      logger.info("Solid event service close.");
+    } catch (Exception e) {
+      logger.warn("Close solid event service fail. {}", e.getMessage());
+    }
   }
 
-  public void work() {
+  public synchronized void work() {
     BlockCapsule.BlockId solidId = BlockEventCache.getSolidId();
     if (solidId.getNum() <= BlockEventCache.getSolidNum()) {
       return;
