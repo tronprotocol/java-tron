@@ -3,16 +3,18 @@ package org.tron.core.zen;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.PostConstruct;
-
-import org.tron.common.crypto.ckzg4844.CKZG4844JNI;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Component;
+import org.tron.common.crypto.ckzg4844.CKZG4844JNI;
 
 @Slf4j
 @Component
 public class KZGPointEvaluationInitService {
+
+  private static final AtomicBoolean loaded = new AtomicBoolean(false);
 
   @PostConstruct
   private void init() {
@@ -20,19 +22,23 @@ public class KZGPointEvaluationInitService {
   }
 
   public static void freeSetup() {
-    CKZG4844JNI.freeTrustedSetup();
+    if (loaded.compareAndSet(true, false)) {
+      CKZG4844JNI.freeTrustedSetup();
+    }
   }
 
   public static void initCKZG4844() {
-    logger.info("init ckzg 4844 begin");
+    if (loaded.compareAndSet(false, true)) {
+      logger.info("init ckzg 4844 begin");
 
-    CKZG4844JNI.loadNativeLibrary();
+      CKZG4844JNI.loadNativeLibrary();
 
-    String setupFile = getSetupFile("trusted_setup.txt");
+      String setupFile = getSetupFile("trusted_setup.txt");
 
-    CKZG4844JNI.loadTrustedSetup(setupFile, 0);
+      CKZG4844JNI.loadTrustedSetup(setupFile, 0);
 
-    logger.info("init ckzg 4844 done");
+      logger.info("init ckzg 4844 done");
+    }
   }
 
   private static String getSetupFile(String fileName) {
