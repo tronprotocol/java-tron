@@ -44,6 +44,7 @@ public class HistoryEventServiceTest {
     ReflectUtils.setFieldValue(historyEventService, "realtimeEventService", realtimeEventService);
     ReflectUtils.setFieldValue(historyEventService, "blockEventLoad", blockEventLoad);
     historyEventService.init();
+    historyEventService.close();
     solidEventService.close();
     realtimeEventService.close();
     blockEventLoad.close();
@@ -71,7 +72,6 @@ public class HistoryEventServiceTest {
     Mockito.when(blockEventGet.getBlockEvent(1)).thenReturn(be2);
 
     Mockito.when(instance.getStartSyncBlockNum()).thenReturn(1L);
-    ReflectUtils.setFieldValue(historyEventService, "isRunning", true);
     Mockito.when(dynamicPropertiesStore.getLatestSolidifiedBlockNum()).thenReturn(1L);
 
     Mockito.when(chainBaseManager.getBlockIdByNum(1L))
@@ -81,5 +81,7 @@ public class HistoryEventServiceTest {
     method1.setAccessible(true);
     method1.invoke(historyEventService);
 
+    historyEventService.init();
+    historyEventService.close();
   }
 }

@@ -4,6 +4,7 @@ import static org.mockito.Mockito.mock;
 
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.Manager;
@@ -37,6 +38,11 @@ public class EventServiceTest {
     Mockito.when(manager.isEventPluginLoaded()).thenReturn(true);
 
     eventService.init();
+    eventService.close();
+
+    EventPluginLoader instance = mock(EventPluginLoader.class);
+    Mockito.when(instance.getVersion()).thenReturn(1);
+    ReflectUtils.setFieldValue(eventService, "instance", instance);
     eventService.close();
   }
 }
