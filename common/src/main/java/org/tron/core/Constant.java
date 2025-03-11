@@ -401,4 +401,6 @@ public class Constant {
       = "committee.consensusLogicOptimization";
 
   public static final String COMMITTEE_ALLOW_TVM_CANCUN = "committee.allowTvmCancun";
+
+  public static final String COMMITTEE_ALLOW_TVM_BLOB = "committee.allowTvmBlob";
 }

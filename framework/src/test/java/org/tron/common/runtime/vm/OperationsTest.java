@@ -1009,6 +1009,44 @@ public class OperationsTest extends BaseTest {
     VMConfig.initAllowTvmCancun(0);
   }
 
+  @Test
+  public void testBlobHash() throws ContractValidateException {
+    VMConfig.initAllowTvmBlob(1);
+
+    invoke = new ProgramInvokeMockImpl();
+    Protocol.Transaction trx = Protocol.Transaction.getDefaultInstance();
+    InternalTransaction interTrx =
+        new InternalTransaction(trx, InternalTransaction.TrxType.TRX_UNKNOWN_TYPE);
+
+    // BLOBAHASH = 0x49
+    byte[] op = new byte[] {0x60, 0x20, 0x49};
+    program = new Program(op, op, invoke, interTrx);
+    testOperations(program);
+    Assert.assertEquals(6, program.getResult().getEnergyUsed());
+    Assert.assertEquals(DataWord.ZERO(), program.getStack().pop());
+
+    VMConfig.initAllowTvmBlob(0);
+  }
+
+  @Test
+  public void testBlobBaseFee() throws ContractValidateException {
+    VMConfig.initAllowTvmBlob(1);
+
+    invoke = new ProgramInvokeMockImpl();
+    Protocol.Transaction trx = Protocol.Transaction.getDefaultInstance();
+    InternalTransaction interTrx =
+        new InternalTransaction(trx, InternalTransaction.TrxType.TRX_UNKNOWN_TYPE);
+
+    // BLOBBASEFEE = 0x4a
+    byte[] op = new byte[] {0x60, 0x20, 0x4a};
+    program = new Program(op, op, invoke, interTrx);
+    testOperations(program);
+    Assert.assertEquals(5, program.getResult().getEnergyUsed());
+    Assert.assertEquals(DataWord.ZERO(), program.getStack().pop());
+
+    VMConfig.initAllowTvmBlob(0);
+  }
+
   private void testOperations(Program program) {
     try {
       while (!program.isStopped()) {

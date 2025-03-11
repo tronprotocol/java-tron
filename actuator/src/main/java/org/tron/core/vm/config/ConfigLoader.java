@@ -43,6 +43,7 @@ public class ConfigLoader {
         VMConfig.initAllowStrictMath(ds.getAllowStrictMath());
         VMConfig.initAllowTvmCancun(ds.getAllowTvmCancun());
         VMConfig.initDisableJavaLangMath(ds.getConsensusLogicOptimization());
+        VMConfig.initAllowTvmBlob(ds.getAllowTvmBlob());
       }
     }
   }
