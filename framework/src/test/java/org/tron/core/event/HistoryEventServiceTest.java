@@ -80,6 +80,8 @@ public class HistoryEventServiceTest {
     Method method1 = historyEventService.getClass().getDeclaredMethod("syncEvent");
     method1.setAccessible(true);
     method1.invoke(historyEventService);
+
+    historyEventService.init();
     historyEventService.close();
   }
 }
