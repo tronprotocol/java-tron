@@ -1,6 +1,7 @@
 package org.tron.core.services.jsonrpc.filters;
 
 import static org.tron.common.math.Maths.min;
+import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.INVALID_BLOCK_RANGE;
 
 import com.google.protobuf.ByteString;
 import lombok.Getter;
@@ -23,8 +24,8 @@ public class LogFilterWrapper {
   @Getter
   private final long toBlock;
 
-  public LogFilterWrapper(FilterRequest fr, long currentMaxBlockNum, Wallet wallet)
-      throws JsonRpcInvalidParamsException {
+  public LogFilterWrapper(FilterRequest fr, long currentMaxBlockNum, Wallet wallet,
+      boolean supportFinalized) throws JsonRpcInvalidParamsException {
 
     // 1.convert FilterRequest to LogFilter
     this.logFilter = new LogFilter(fr);
@@ -53,7 +54,7 @@ public class LogFilterWrapper {
       // then if toBlock < maxBlockNum, set fromBlock = toBlock
       // then if toBlock >= maxBlockNum, set fromBlock = maxBlockNum
       if (StringUtils.isEmpty(fr.getFromBlock()) && StringUtils.isNotEmpty(fr.getToBlock())) {
-        toBlockSrc = JsonRpcApiUtil.getByJsonBlockId(fr.getToBlock(), wallet);
+        toBlockSrc = JsonRpcApiUtil.getByJsonBlockId(fr.getToBlock(), wallet, supportFinalized);
         if (toBlockSrc == -1) {
           toBlockSrc = Long.MAX_VALUE;
         }
@@ -61,7 +62,7 @@ public class LogFilterWrapper {
 
       } else if (StringUtils.isNotEmpty(fr.getFromBlock())
           && StringUtils.isEmpty(fr.getToBlock())) {
-        fromBlockSrc = JsonRpcApiUtil.getByJsonBlockId(fr.getFromBlock(), wallet);
+        fromBlockSrc = JsonRpcApiUtil.getByJsonBlockId(fr.getFromBlock(), wallet, supportFinalized);
         if (fromBlockSrc == -1) {
           fromBlockSrc = currentMaxBlockNum;
         }
@@ -72,8 +73,8 @@ public class LogFilterWrapper {
         toBlockSrc = Long.MAX_VALUE;
 
       } else {
-        fromBlockSrc = JsonRpcApiUtil.getByJsonBlockId(fr.getFromBlock(), wallet);
-        toBlockSrc = JsonRpcApiUtil.getByJsonBlockId(fr.getToBlock(), wallet);
+        fromBlockSrc = JsonRpcApiUtil.getByJsonBlockId(fr.getFromBlock(), wallet, supportFinalized);
+        toBlockSrc = JsonRpcApiUtil.getByJsonBlockId(fr.getToBlock(), wallet, supportFinalized);
         if (fromBlockSrc == -1 && toBlockSrc == -1) {
           fromBlockSrc = currentMaxBlockNum;
           toBlockSrc = Long.MAX_VALUE;
@@ -83,7 +84,7 @@ public class LogFilterWrapper {
           toBlockSrc = Long.MAX_VALUE;
         }
         if (fromBlockSrc > toBlockSrc) {
-          throw new JsonRpcInvalidParamsException("please verify: fromBlock <= toBlock");
+          throw new JsonRpcInvalidParamsException(INVALID_BLOCK_RANGE);
         }
       }
     }

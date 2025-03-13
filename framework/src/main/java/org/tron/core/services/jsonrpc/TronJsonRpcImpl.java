@@ -138,6 +138,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   public static final String LATEST_STR = "latest";
   public static final String FINALIZED_STR = "finalized";
   public static final String TAG_PENDING_SUPPORT_ERROR = "TAG pending not supported";
+  public static final String INVALID_BLOCK_RANGE = "invalid block range params";
 
   private static final String JSON_ERROR = "invalid json request";
   private static final String BLOCK_NUM_ERROR = "invalid block number";
@@ -1320,7 +1321,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
 
     long currentMaxBlockNum = wallet.getNowBlock().getBlockHeader().getRawData().getNumber();
     //convert FilterRequest to LogFilterWrapper
-    LogFilterWrapper logFilterWrapper = new LogFilterWrapper(fr, currentMaxBlockNum, wallet);
+    LogFilterWrapper logFilterWrapper = new LogFilterWrapper(fr, currentMaxBlockNum, wallet, true);
 
     return getLogsByLogFilterWrapper(logFilterWrapper, currentMaxBlockNum);
   }

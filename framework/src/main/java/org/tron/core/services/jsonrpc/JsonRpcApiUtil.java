@@ -2,6 +2,7 @@ package org.tron.core.services.jsonrpc;
 
 import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.EARLIEST_STR;
 import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.FINALIZED_STR;
+import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.INVALID_BLOCK_RANGE;
 import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.LATEST_STR;
 import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.PENDING_STR;
 import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.TAG_PENDING_SUPPORT_ERROR;
@@ -515,7 +516,7 @@ public class JsonRpcApiUtil {
     return -1;
   }
 
-  public static long getByJsonBlockId(String blockNumOrTag, Wallet wallet)
+  public static long getByJsonBlockId(String blockNumOrTag, Wallet wallet, boolean supportFinalized)
       throws JsonRpcInvalidParamsException {
     if (PENDING_STR.equalsIgnoreCase(blockNumOrTag)) {
       throw new JsonRpcInvalidParamsException(TAG_PENDING_SUPPORT_ERROR);
@@ -525,7 +526,11 @@ public class JsonRpcApiUtil {
     } else if (EARLIEST_STR.equalsIgnoreCase(blockNumOrTag)) {
       return 0;
     } else if (FINALIZED_STR.equalsIgnoreCase(blockNumOrTag)) {
-      return wallet.getSolidBlockNum();
+      if (supportFinalized) {
+        return wallet.getSolidBlockNum();
+      } else {
+        throw new JsonRpcInvalidParamsException(INVALID_BLOCK_RANGE);
+      }
     } else {
       return ByteArray.jsonHexToLong(blockNumOrTag);
     }

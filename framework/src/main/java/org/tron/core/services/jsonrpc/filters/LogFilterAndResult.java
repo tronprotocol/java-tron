@@ -16,7 +16,7 @@ public class LogFilterAndResult extends FilterResult<LogFilterElement> {
 
   public LogFilterAndResult(FilterRequest fr, long currentMaxBlockNum, Wallet wallet)
       throws JsonRpcInvalidParamsException {
-    this.logFilterWrapper = new LogFilterWrapper(fr, currentMaxBlockNum, wallet);
+    this.logFilterWrapper = new LogFilterWrapper(fr, currentMaxBlockNum, wallet, false);
     result = new LinkedBlockingQueue<>();
     this.updateExpireTime();
   }
