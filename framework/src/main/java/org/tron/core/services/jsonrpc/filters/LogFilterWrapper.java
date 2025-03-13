@@ -1,5 +1,7 @@
 package org.tron.core.services.jsonrpc.filters;
 
+import static org.tron.common.math.Maths.min;
+
 import com.google.protobuf.ByteString;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
@@ -51,15 +53,15 @@ public class LogFilterWrapper {
       // then if toBlock < maxBlockNum, set fromBlock = toBlock
       // then if toBlock >= maxBlockNum, set fromBlock = maxBlockNum
       if (StringUtils.isEmpty(fr.getFromBlock()) && StringUtils.isNotEmpty(fr.getToBlock())) {
-        toBlockSrc = JsonRpcApiUtil.getByJsonBlockId(fr.getToBlock());
+        toBlockSrc = JsonRpcApiUtil.getByJsonBlockId(fr.getToBlock(), wallet);
         if (toBlockSrc == -1) {
           toBlockSrc = Long.MAX_VALUE;
         }
-        fromBlockSrc = Math.min(toBlockSrc, currentMaxBlockNum);
+        fromBlockSrc = min(toBlockSrc, currentMaxBlockNum, true);
 
       } else if (StringUtils.isNotEmpty(fr.getFromBlock())
           && StringUtils.isEmpty(fr.getToBlock())) {
-        fromBlockSrc = JsonRpcApiUtil.getByJsonBlockId(fr.getFromBlock());
+        fromBlockSrc = JsonRpcApiUtil.getByJsonBlockId(fr.getFromBlock(), wallet);
         if (fromBlockSrc == -1) {
           fromBlockSrc = currentMaxBlockNum;
         }
@@ -70,8 +72,8 @@ public class LogFilterWrapper {
         toBlockSrc = Long.MAX_VALUE;
 
       } else {
-        fromBlockSrc = JsonRpcApiUtil.getByJsonBlockId(fr.getFromBlock());
-        toBlockSrc = JsonRpcApiUtil.getByJsonBlockId(fr.getToBlock());
+        fromBlockSrc = JsonRpcApiUtil.getByJsonBlockId(fr.getFromBlock(), wallet);
+        toBlockSrc = JsonRpcApiUtil.getByJsonBlockId(fr.getToBlock(), wallet);
         if (fromBlockSrc == -1 && toBlockSrc == -1) {
           fromBlockSrc = currentMaxBlockNum;
           toBlockSrc = Long.MAX_VALUE;

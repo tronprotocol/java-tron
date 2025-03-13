@@ -1,5 +1,6 @@
 package org.tron.core.services;
 
+import static org.tron.core.utils.ProposalUtil.ProposalType.CONSENSUS_LOGIC_OPTIMIZATION;
 import static org.tron.core.utils.ProposalUtil.ProposalType.ENERGY_FEE;
 import static org.tron.core.utils.ProposalUtil.ProposalType.TRANSACTION_FEE;
 import static org.tron.core.utils.ProposalUtil.ProposalType.WITNESS_127_PAY_PER_BLOCK;
@@ -104,6 +105,30 @@ public class ProposalServiceTest extends BaseTest {
     String expResult = preHistory + "," + proposalCapsule.getExpirationTime() + ":" + newPrice;
     String currentHistory = dbManager.getDynamicPropertiesStore().getBandwidthPriceHistory();
     Assert.assertEquals(expResult, currentHistory);
+  }
+
+  @Test
+  public void testUpdateConsensusLogicOptimization() {
+    long v = dbManager.getDynamicPropertiesStore().getConsensusLogicOptimization();
+    Assert.assertEquals(v, 0);
+    Assert.assertTrue(!dbManager.getDynamicPropertiesStore().allowConsensusLogicOptimization());
+    Assert.assertFalse(dbManager.getDynamicPropertiesStore().allowWitnessSortOptimization());
+    Assert.assertFalse(dbManager.getDynamicPropertiesStore().disableJavaLangMath());
+
+    long value = 1;
+    Proposal proposal =
+        Proposal.newBuilder().putParameters(CONSENSUS_LOGIC_OPTIMIZATION.getCode(), value).build();
+    ProposalCapsule proposalCapsule = new ProposalCapsule(proposal);
+    proposalCapsule.setExpirationTime(1627279200000L);
+    boolean result = ProposalService.process(dbManager, proposalCapsule);
+    Assert.assertTrue(result);
+
+    v = dbManager.getDynamicPropertiesStore().getConsensusLogicOptimization();
+    Assert.assertEquals(v, value);
+
+    Assert.assertTrue(dbManager.getDynamicPropertiesStore().allowConsensusLogicOptimization());
+    Assert.assertTrue(dbManager.getDynamicPropertiesStore().allowWitnessSortOptimization());
+    Assert.assertTrue(dbManager.getDynamicPropertiesStore().disableJavaLangMath());
   }
 
 }

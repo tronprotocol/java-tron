@@ -2,9 +2,7 @@ package org.tron.core.services.interfaceOnSolidity;
 
 import com.google.protobuf.ByteString;
 import io.grpc.netty.NettyServerBuilder;
-import io.grpc.protobuf.services.ProtoReflectionService;
 import io.grpc.stub.StreamObserver;
-import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.api.DatabaseGrpc.DatabaseImplBase;
@@ -35,16 +33,11 @@ import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
 import org.tron.common.application.RpcService;
-import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
-import org.tron.core.services.filter.LiteFnQueryGrpcInterceptor;
-import org.tron.core.services.ratelimiter.PrometheusInterceptor;
-import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
-import org.tron.core.services.ratelimiter.RpcApiAccessInterceptor;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
@@ -73,77 +66,16 @@ public class RpcApiServiceOnSolidity extends RpcService {
   @Autowired
   private RpcApiService rpcApiService;
 
-  @Autowired
-  private RateLimiterInterceptor rateLimiterInterceptor;
-
-  @Autowired
-  private LiteFnQueryGrpcInterceptor liteFnQueryGrpcInterceptor;
-
-  @Autowired
-  private RpcApiAccessInterceptor apiAccessInterceptor;
-
-  @Autowired
-  private PrometheusInterceptor prometheusInterceptor;
-
-  private final String executorName = "rpc-solidity-executor";
-
-  @Override
-  public void init() {
-  }
-
-  @Override
-  public void init(CommonParameter args) {
+  public RpcApiServiceOnSolidity() {
     port = Args.getInstance().getRpcOnSolidityPort();
+    enable = isFullNode() && Args.getInstance().isRpcSolidityEnable();
+    executorName = "rpc-solidity-executor";
   }
 
   @Override
-  public void start() {
-    try {
-      NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port)
-          .addService(new DatabaseApi());
-
-      CommonParameter parameter = Args.getInstance();
-
-      if (parameter.getRpcThreadNum() > 0) {
-        serverBuilder = serverBuilder
-            .executor(ExecutorServiceManager.newFixedThreadPool(
-                executorName, parameter.getRpcThreadNum()));
-      }
-
-      serverBuilder = serverBuilder.addService(new WalletSolidityApi());
-
-      // Set configs from config.conf or default value
-      serverBuilder.maxConcurrentCallsPerConnection(parameter.getMaxConcurrentCallsPerConnection())
-          .flowControlWindow(parameter.getFlowControlWindow())
-          .maxConnectionIdle(parameter.getMaxConnectionIdleInMillis(), TimeUnit.MILLISECONDS)
-          .maxConnectionAge(parameter.getMaxConnectionAgeInMillis(), TimeUnit.MILLISECONDS)
-          .maxInboundMessageSize(parameter.getMaxMessageSize())
-          .maxHeaderListSize(parameter.getMaxHeaderListSize());
-
-      // add a ratelimiter interceptor
-      serverBuilder.intercept(rateLimiterInterceptor);
-
-      // add api access interceptor
-      serverBuilder.intercept(apiAccessInterceptor);
-
-      // add lite fullnode query interceptor
-      serverBuilder.intercept(liteFnQueryGrpcInterceptor);
-
-      // add prometheus interceptor
-      if (parameter.isMetricsPrometheusEnable()) {
-        serverBuilder.intercept(prometheusInterceptor);
-      }
-
-      if (parameter.isRpcReflectionServiceEnable()) {
-        serverBuilder.addService(ProtoReflectionService.newInstance());
-      }
-
-      apiServer = serverBuilder.build();
-      rateLimiterInterceptor.init(apiServer);
-      super.start();
-    } catch (Exception e) {
-      logger.debug(e.getMessage(), e);
-    }
+  protected void addService(NettyServerBuilder serverBuilder) {
+    serverBuilder.addService(new DatabaseApi());
+    serverBuilder.addService(new WalletSolidityApi());
   }
 
   private TransactionExtention transaction2Extention(Transaction transaction) {

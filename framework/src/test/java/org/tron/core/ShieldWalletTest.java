@@ -19,6 +19,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
 import org.tron.core.services.http.JsonFormat;
 import org.tron.core.services.http.JsonFormat.ParseException;
 
@@ -334,6 +335,82 @@ public class ShieldWalletTest extends BaseTest {
       Assert.assertNotNull(shieldedTRC20Parameters);
     } catch (Exception e) {
       Assert.fail();
+    }
+  }
+
+  @Test
+  public void testCreateShieldedContractParameters2() throws ContractExeException {
+    librustzcashInitZksnarkParams();
+    Args.getInstance().setFullNodeAllowShieldedTransactionArgs(true);
+    Wallet wallet1 = spy(new Wallet());
+
+    doReturn(BigInteger.valueOf(1).toByteArray())
+        .when(wallet1).getShieldedContractScalingFactor(
+            ByteArray.fromHexString("4144007979359ECAC395BBD3CEF8060D3DF2DC3F01"));
+    String parameter = new String(ByteArray.fromHexString(
+        "7b0a202020202261736b223a2263323531336539653330383439343933326264383265306365353336"
+            + "363264313734323164393062373261383437316130613132623835353261333336653032222c0a202"
+            + "02020226e736b223a2234633662663364643461303634336432306236323866376534353938306335"
+            + "653138376630376135316436663365383661616631616239313663303765623064222c0a202020202"
+            + "26f766b223a2231376135386439613530353864613665343263613132636432383964306136616131"
+            + "363962393236633138653139626361353138623864366638363734653433222c0a202020202266726"
+            + "f6d5f616d6f756e74223a22313030222c0a2020202022736869656c6465645f726563656976657322"
+            + "3a5b0a20202020202020207b0a202020202020202020202020226e6f7465223a7b0a2020202020202"
+            + "02020202020202020202276616c7565223a3130302c0a202020202020202020202020202020202270"
+            + "61796d656e745f61646472657373223a22222c0a202020202020202020202020202020202272636d2"
+            + "23a223136623666356534303434346162376565616231316165363631336332376633353131373937"
+            + "3165666138376237313536306235383133383239633933393064220a2020202020202020202020207"
+            + "d0a20202020202020207d0a202020205d2c0a2020202022736869656c6465645f54524332305f636f"
+            + "6e74726163745f61646472657373223a2234313434303037393739333539454341433339354242443"
+            + "3434546383036304433444632444333463031220a7d"));
+
+    PrivateShieldedTRC20Parameters.Builder builder = PrivateShieldedTRC20Parameters.newBuilder();
+    try {
+      JsonFormat.merge(parameter, builder, false);
+    } catch (ParseException e) {
+      Assert.fail();
+    }
+
+    try {
+      wallet1.createShieldedContractParameters(builder.build());
+      Assert.fail();
+    } catch (Exception e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("Payment Address in ReceiveNote should not be empty",
+          e.getMessage());
+    }
+
+    String parameter2 = new String(ByteArray.fromHexString(
+        "7b0a202020202261736b223a2263323531336539653330383439343933326264383265306365353336"
+            + "363264313734323164393062373261383437316130613132623835353261333336653032222c0a202"
+            + "02020226e736b223a2234633662663364643461303634336432306236323866376534353938306335"
+            + "653138376630376135316436663365383661616631616239313663303765623064222c0a202020202"
+            + "26f766b223a2231376135386439613530353864613665343263613132636432383964306136616131"
+            + "363962393236633138653139626361353138623864366638363734653433222c0a202020202266726"
+            + "f6d5f616d6f756e74223a22313030222c0a2020202022736869656c6465645f7370656e6473223a5b"
+            + "0a20202020202020207b0a202020202020202020202020226e6f7465223a7b0a20202020202020202"
+            + "0202020202020202276616c7565223a3130302c0a2020202020202020202020202020202022706179"
+            + "6d656e745f61646472657373223a22222c0a202020202020202020202020202020202272636d223a2"
+            + "231366236663565343034343461623765656162313161653636313363323766333531313739373165"
+            + "666138376237313536306235383133383239633933393064220a2020202020202020202020207d0a2"
+            + "0202020202020207d0a202020205d2c0a2020202022736869656c6465645f54524332305f636f6e74"
+            + "726163745f61646472657373223a22343134343030373937393335394543414333393542424433434"
+            + "546383036304433444632444333463031220a7d"));
+
+    builder = PrivateShieldedTRC20Parameters.newBuilder();
+    try {
+      JsonFormat.merge(parameter2, builder, false);
+    } catch (ParseException e) {
+      Assert.fail();
+    }
+
+    try {
+      wallet1.createShieldedContractParameters(builder.build());
+      Assert.fail();
+    } catch (Exception e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("Payment Address in SpendNote should not be empty",
+          e.getMessage());
     }
   }
 

@@ -975,7 +975,7 @@ Contract and contract-related messages.
 
   - message `VoteAssetContract`
 
-    `owner_address`: assress of contract owner.
+    `owner_address`: address of contract owner.
 
     `vote_address`: voted address of asset.
 
@@ -1059,7 +1059,7 @@ Contract and contract-related messages.
 
       `total_supply`: maximum of asset.
 
-      `frozen_supply`: frozen supplt of asset.
+      `frozen_supply`: frozen supply of asset.
 
       `trx_num`: trx num defines token price.
 
@@ -1079,11 +1079,11 @@ Contract and contract-related messages.
 
       `free_asset_net_limit`: free bandwidth limit each account owns when transfers asset.
 
-      `public_free_asset_net_limit`: free bandwidth limit for all acoounts.
+      `public_free_asset_net_limit`: free bandwidth limit for all accounts.
 
       `public_free_asset_net_usage`: free bandwidth usage of all accounts.
 
-      `public_latest_free_net_time`: the latest bandwidth consumption time fo token transfer.
+      `public_latest_free_net_time`: the latest bandwidth consumption time for token transfer.
 
       ```java
       message AssetIssueContract {
@@ -1131,7 +1131,7 @@ Contract and contract-related messages.
 
       `owner_address`: owner address.
 
-      `to_address`: reveiver address.
+      `to_address`: receiver address.
 
       `asset_name`: target asset name.
 
@@ -1461,7 +1461,7 @@ Contract and contract-related messages.
     
        `owner_address`: address of owner.
     
-       `owner`: autuority to execute all contracts.
+       `owner`: authority to execute all contracts.
     
        `witness`: used by SR for generating blocks.
     
@@ -1514,7 +1514,7 @@ Contract and contract-related messages.
     
        `binding_signature`: signature to verify transaction.
     
-       `transparent_to_address`: transparent address of reveiver.
+       `transparent_to_address`: transparent address of receiver.
     
        `to_amount`: amount to transparent to_address
     
@@ -1536,7 +1536,7 @@ Contract and contract-related messages.
   
 ### <span id="smartc">Smart Contract</span>
   
-message `SmartContract` has mutiple attributes and nested message `ABI`
+message `SmartContract` has multiple attributes and nested message `ABI`
   
 - message `SmartContract`
   
@@ -1559,7 +1559,7 @@ message `SmartContract` has mutiple attributes and nested message `ABI`
   
       - message `Param`
   
-        `indexed`: `true` if the field is part of the log’s topics, `false` if it one of the log’s data segment.
+        `indexed`: `true` if the field is part of the log’s topics, `false` if it is one of the log’s data segment.
   
         `name`: name of the parameter.
   
@@ -1757,7 +1757,7 @@ message `SmartContract` has mutiple attributes and nested message `ABI`
 
     `tree`: incremental merkle tree.
 
-    `filled`: this is a array, it contains the root of the subtree which can be combined with the param tree to be a new merkle tree.
+    `filled`: this is an array, it contains the root of the subtree which can be combined with the param tree to be a new merkle tree.
 
     `cursor`: the node that can be combined to a subtree, when they are combined to a subtree, compute its root and put it into the filled.
 
@@ -1782,7 +1782,7 @@ message `SmartContract` has mutiple attributes and nested message `ABI`
 
     `vouchers`: this is an array, each items represents the merklevoucher of the outputpoint.
 
-    `paths`: his is an array each items represents the path of the outputpoint.
+    `paths`: this is an array each items represents the path of the outputpoint.
 
    ```java
   message IncrementalMerkleVoucherInfo {
@@ -2124,13 +2124,13 @@ message `SmartContract` has mutiple attributes and nested message `ABI`
 
 - #### Node Information
 
-  Node information is separaed into several parts and implemented by nested messages.
+  Node information is separated into several parts and implemented by nested messages.
 
   
 
   - message `NodeInfo`
 
-    `beginSyncNum`: beginning block height for synchornize.
+    `beginSyncNum`: beginning block height for synchronize.
 
     `block`: head block id.
 
@@ -2154,13 +2154,13 @@ message `SmartContract` has mutiple attributes and nested message `ABI`
 
     - message `PeerInfo`:
 
-      `lastSyncBlock`: last block id for synchornize.
+      `lastSyncBlock`: last block id for synchronize.
 
       `remainNum`: number of remaining blocks.
 
       `lastBlockUpdateTime`: latest block update time .
 
-      `syncFlag`: is synchroniing or not.
+      `syncFlag`: is synchronizing or not.
 
       `headBlockTimeWeBothHave`: timestamp of common head block.
 
@@ -2172,7 +2172,7 @@ message `SmartContract` has mutiple attributes and nested message `ABI`
 
       `port`: listening port.
 
-      `nodeId`: ramdomly generated node ID
+      `nodeId`: randomly generated node ID
 
       `connectTime`: connection time period from established.
 

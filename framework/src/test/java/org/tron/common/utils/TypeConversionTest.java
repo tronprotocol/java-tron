@@ -17,9 +17,13 @@ package org.tron.common.utils;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 import static org.tron.common.utils.TypeConversion.bytesToHexString;
 import static org.tron.common.utils.TypeConversion.bytesToLong;
 import static org.tron.common.utils.TypeConversion.hexStringToBytes;
+import static org.tron.common.utils.TypeConversion.increment;
 import static org.tron.common.utils.TypeConversion.longToBytes;
 
 import lombok.extern.slf4j.Slf4j;
@@ -58,6 +62,14 @@ public class TypeConversionTest {
     //logger.info("hex string 7f to bytes is: {}", result);
     byte[] expected = new byte[]{127};
     assertArrayEquals(expected, result);
+    assertNull(hexStringToBytes("test"));
+  }
 
+  @Test
+  public void testIncrementNormalCase() {
+    byte[] bytes = {1, 2, 3};
+    boolean result = increment(bytes);
+    assertTrue(result);
+    assertArrayEquals(new byte[]{1, 2, 4}, bytes);
   }
 }
