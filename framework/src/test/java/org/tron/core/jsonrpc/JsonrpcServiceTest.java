@@ -605,7 +605,7 @@ public class JsonrpcServiceTest extends BaseTest {
       LogFilterWrapper logFilterWrapper =
           new LogFilterWrapper(new FilterRequest("0x78", "0x14", null, null, null), 100, null);
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.assertEquals("invalid block range params", e.getMessage());
+      Assert.assertEquals("please verify: fromBlock <= toBlock", e.getMessage());
     }
 
     //fromBlock or toBlock is not hex num
