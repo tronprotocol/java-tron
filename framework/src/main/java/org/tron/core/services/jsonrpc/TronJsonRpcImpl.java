@@ -1115,14 +1115,6 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     }
   }
 
-  public void disableFinalizedBlock(FilterRequest fr) throws JsonRpcInvalidParamsException {
-    // not supports finalized as block parameter
-    if (FINALIZED_STR.equalsIgnoreCase(fr.getFromBlock())
-        || FINALIZED_STR.equalsIgnoreCase(fr.getToBlock())) {
-      throw new JsonRpcInvalidParamsException(INVALID_BLOCK_RANGE);
-    }
-  }
-
   @Override
   public TransactionJson buildTransaction(BuildArguments args)
       throws JsonRpcInvalidParamsException, JsonRpcInvalidRequestException,
@@ -1244,7 +1236,10 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     disableInPBFT("eth_newFilter");
 
     // not supports finalized as block parameter
-    disableFinalizedBlock(fr);
+    if (FINALIZED_STR.equalsIgnoreCase(fr.getFromBlock())
+        || FINALIZED_STR.equalsIgnoreCase(fr.getToBlock())) {
+      throw new JsonRpcInvalidParamsException(INVALID_BLOCK_RANGE);
+    }
 
     Map<String, LogFilterAndResult> eventFilter2Result;
     if (getSource() == RequestSource.FULLNODE) {

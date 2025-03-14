@@ -646,47 +646,6 @@ public class JsonrpcServiceTest extends BaseTest {
   }
 
   @Test
-  public void testDisableFinalizedBlock() {
-
-    try {
-      tronJsonRpc.disableFinalizedBlock(new FilterRequest(null, null, null, null, null));
-    } catch (Exception e) {
-      Assert.fail();
-    }
-
-    try {
-      tronJsonRpc.disableFinalizedBlock(new FilterRequest("finalized", null, null, null, null));
-    } catch (Exception e) {
-      Assert.assertEquals("invalid block range params", e.getMessage());
-    }
-
-    try {
-      tronJsonRpc.disableFinalizedBlock(new FilterRequest(null, "finalized", null, null, null));
-    } catch (Exception e) {
-      Assert.assertEquals("invalid block range params", e.getMessage());
-    }
-
-    try {
-      tronJsonRpc.disableFinalizedBlock(new FilterRequest("finalized", "latest", null, null, null));
-    } catch (Exception e) {
-      Assert.assertEquals("invalid block range params", e.getMessage());
-    }
-
-    try {
-      tronJsonRpc.disableFinalizedBlock(new FilterRequest("0x1", "finalized", null, null, null));
-    } catch (Exception e) {
-      Assert.assertEquals("invalid block range params", e.getMessage());
-    }
-
-    try {
-      tronJsonRpc.disableFinalizedBlock(
-          new FilterRequest("finalized", "finalized", null, null, null));
-    } catch (Exception e) {
-      Assert.assertEquals("invalid block range params", e.getMessage());
-    }
-  }
-
-  @Test
   public void testNewFilterFinalizedBlock() {
 
     try {
