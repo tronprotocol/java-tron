@@ -2269,7 +2269,7 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
     }
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = ZksnarkException.class)
   public void isShieldedTRC20ContractNoteSpent() throws Exception {
     int statNum = 9200;
     int endNum = 9240;

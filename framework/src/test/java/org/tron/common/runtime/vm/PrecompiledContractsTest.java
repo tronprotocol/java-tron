@@ -95,6 +95,9 @@ public class PrecompiledContractsTest extends BaseTest {
   private static final DataWord totalAcquiredResourceAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000001000015");
 
+  private static final DataWord kzgPointEvaluationAddr = new DataWord(
+      "000000000000000000000000000000000000000000000000000000000002000a");
+
   private static final String ACCOUNT_NAME = "account";
   private static final String OWNER_ADDRESS;
   private static final String WITNESS_NAME = "witness";
@@ -1165,4 +1168,54 @@ public class PrecompiledContractsTest extends BaseTest {
     return res;
   }
 
+  @Test
+  public void kzgPointEvaluationTest() {
+    VMConfig.initAllowTvmBlob(1);
+
+    PrecompiledContract contract =
+        createPrecompiledContract(kzgPointEvaluationAddr, OWNER_ADDRESS);
+    Repository tempRepository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    contract.setRepository(tempRepository);
+
+    byte[] versionedHash =
+        Hex.decode("015a4cab4911426699ed34483de6640cf55a568afc5c5edffdcbd8bcd4452f68");
+    byte[] z = Hex.decode("0000000000000000000000000000000000000000000000000000000000000065");
+    byte[] y = Hex.decode("60f557194475973322b33dc989896381844508234bfa6fbeefe5fa165ae15a0a");
+    byte[] commitment = Hex.decode("a70477b56251e8770969c83eaed665d3ab99b96b72270a4"
+        + "1009f2752b5c06a06bd089ad48952c12b1dbf83dccd9d373f");
+    byte[] proof = Hex.decode("879f9a41956deae578bc65e7133f164394b8677bc2e7b1356be61"
+        + "d47720ed2a3326bfddebc67cd37ee9e7537d7814afe");
+
+    byte[] data = new byte[192];
+    System.arraycopy(versionedHash, 0, data, 0, 32);
+    System.arraycopy(z, 0, data, 32, 32);
+    System.arraycopy(y, 0, data, 64, 32);
+    System.arraycopy(commitment, 0, data, 96, 48);
+    System.arraycopy(proof, 0, data, 144, 48);
+
+    Pair<Boolean, byte[]> res = contract.execute(null);
+    Assert.assertFalse(res.getLeft());
+    Assert.assertArrayEquals(DataWord.ZERO().getData(), res.getRight());
+
+    byte[] data1 = Arrays.copyOf(data, data.length);
+    data1[0] = 0x02;
+    res = contract.execute(data1);
+    Assert.assertFalse(res.getLeft());
+    Assert.assertArrayEquals(DataWord.ZERO().getData(), res.getRight());
+
+    byte[] data2 = Arrays.copyOf(data, data.length);
+    byte[] z2 = Hex.decode("0000000000000000000000000000000000000000000000000000000000000066");
+    System.arraycopy(z2, 0, data2, 32, 32);
+    res = contract.execute(data2);
+    Assert.assertFalse(res.getLeft());
+    Assert.assertArrayEquals(DataWord.ZERO().getData(), res.getRight());
+
+    res = contract.execute(data);
+    byte[] expected = Hex.decode(
+      "0000000000000000000000000000000000000000000000000000000000001000"
+          + "73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001");
+    Assert.assertTrue(res.getLeft());
+    Assert.assertArrayEquals(expected, res.getRight());
+    VMConfig.initAllowTvmBlob(0);
+  }
 }

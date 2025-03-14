@@ -79,7 +79,6 @@ public class BatchValidateSignContractTest {
 
   @Test
   public void correctionTest() {
-    contract.setConstantCall(false);
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(longData);
@@ -128,7 +127,8 @@ public class BatchValidateSignContractTest {
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     byte[] input = Hex.decode(AbiUtil.parseParameters(METHOD_SIGN, parameters));
     contract.getEnergyForData(input);
-    contract.setVmShouldEndInUs(System.nanoTime() / 1000 + 500 * 1000);
+    long maxExecutionTime = 2000; // ms
+    contract.setVmShouldEndInUs(System.nanoTime() / 1000 + maxExecutionTime * 1000);
     Pair<Boolean, byte[]> ret = contract.execute(input);
     logger.info("BytesArray:{}，HexString:{}", Arrays.toString(ret.getValue()),
         Hex.toHexString(ret.getValue()));

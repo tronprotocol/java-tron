@@ -96,65 +96,6 @@ public class WalletClient {
     this.ecKey = ecKey;
   }
 
-  /**
-   * constructor.
-   */
-
-  public static boolean init(int itype) {
-    Config config = Configuration.getByPath("testng.conf");
-    dbPath = config.getString("CityDb.DbPath");
-    txtPath = System.getProperty("user.dir") + '/' + config.getString("CityDb.TxtPath");
-
-    String fullNodepathname = "";
-
-    if (1000 == itype) {
-      fullNodepathname = "checkfullnode.ip.list";
-    } else {
-      fullNodepathname = "fullnode.ip.list";
-    }
-    String fullNode = "";
-    String solidityNode = "";
-    if (config.hasPath("soliditynode.ip.list")) {
-      solidityNode = config.getStringList("soliditynode.ip.list").get(0);
-    }
-    if (config.hasPath(fullNodepathname)) {
-      fullNode = config.getStringList(fullNodepathname).get(itype);
-    }
-    if (config.hasPath("net.type") && "mainnet".equalsIgnoreCase(config.getString("net.type"))) {
-      WalletClient.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    } else {
-      WalletClient.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_TESTNET);
-    }
-    rpcCli = new GrpcClient(fullNode, solidityNode);
-    return true;
-  }
-
-  /**
-   * constructor.
-   */
-
-  public static GrpcClient init() {
-    //Config config = org.tron.core.config.Configuration.getByPath("config.conf");
-    Config config = Configuration.getByPath("testng.conf");
-    dbPath = config.getString("CityDb.DbPath");
-    txtPath = System.getProperty("user.dir") + "/" + config.getString("CityDb.TxtPath");
-
-    String fullNode = "";
-    String solidityNode = "";
-    if (config.hasPath("soliditynode.ip.list")) {
-      solidityNode = config.getStringList("soliditynode.ip.list").get(0);
-    }
-    if (config.hasPath("fullnode.ip.list")) {
-      fullNode = config.getStringList("fullnode.ip.list").get(0);
-    }
-    if (config.hasPath("net.type") && "mainnet".equalsIgnoreCase(config.getString("net.type"))) {
-      WalletClient.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    } else {
-      WalletClient.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_TESTNET);
-    }
-    return new GrpcClient(fullNode, solidityNode);
-  }
-
   public static byte getAddressPreFixByte() {
     return addressPreFixByte;
   }
