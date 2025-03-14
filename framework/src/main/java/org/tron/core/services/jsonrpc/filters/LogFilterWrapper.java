@@ -1,6 +1,7 @@
 package org.tron.core.services.jsonrpc.filters;
 
 import static org.tron.common.math.Maths.min;
+import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.INVALID_BLOCK_RANGE;
 
 import com.google.protobuf.ByteString;
 import lombok.Getter;
@@ -83,7 +84,7 @@ public class LogFilterWrapper {
           toBlockSrc = Long.MAX_VALUE;
         }
         if (fromBlockSrc > toBlockSrc) {
-          throw new JsonRpcInvalidParamsException("please verify: fromBlock <= toBlock");
+          throw new JsonRpcInvalidParamsException(INVALID_BLOCK_RANGE);
         }
       }
     }
