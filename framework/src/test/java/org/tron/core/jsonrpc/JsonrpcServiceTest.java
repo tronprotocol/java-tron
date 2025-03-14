@@ -605,7 +605,7 @@ public class JsonrpcServiceTest extends BaseTest {
       LogFilterWrapper logFilterWrapper =
           new LogFilterWrapper(new FilterRequest("0x78", "0x14", null, null, null), 100, null);
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.assertEquals("please verify: fromBlock <= toBlock", e.getMessage());
+      Assert.assertEquals("invalid block range params", e.getMessage());
     }
 
     //fromBlock or toBlock is not hex num
@@ -642,6 +642,46 @@ public class JsonrpcServiceTest extends BaseTest {
       new LogFilterWrapper(new FilterRequest("test", null, null, null, null), 100, null);
     } catch (JsonRpcInvalidParamsException e) {
       Assert.assertEquals("Incorrect hex syntax", e.getMessage());
+    }
+  }
+
+  @Test
+  public void testNewFilterFinalizedBlock() {
+
+    try {
+      tronJsonRpc.newFilter(new FilterRequest(null, null, null, null, null));
+    } catch (Exception e) {
+      Assert.fail();
+    }
+
+    try {
+      tronJsonRpc.newFilter(new FilterRequest("finalized", null, null, null, null));
+    } catch (Exception e) {
+      Assert.assertEquals("invalid block range params", e.getMessage());
+    }
+
+    try {
+      tronJsonRpc.newFilter(new FilterRequest(null, "finalized", null, null, null));
+    } catch (Exception e) {
+      Assert.assertEquals("invalid block range params", e.getMessage());
+    }
+
+    try {
+      tronJsonRpc.newFilter(new FilterRequest("finalized", "latest", null, null, null));
+    } catch (Exception e) {
+      Assert.assertEquals("invalid block range params", e.getMessage());
+    }
+
+    try {
+      tronJsonRpc.newFilter(new FilterRequest("0x1", "finalized", null, null, null));
+    } catch (Exception e) {
+      Assert.assertEquals("invalid block range params", e.getMessage());
+    }
+
+    try {
+      tronJsonRpc.newFilter(new FilterRequest("finalized", "finalized", null, null, null));
+    } catch (Exception e) {
+      Assert.assertEquals("invalid block range params", e.getMessage());
     }
   }
 }
