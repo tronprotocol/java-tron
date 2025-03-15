@@ -58,6 +58,6 @@ public class Value<T> {
 
   @Override
   public int hashCode() {
-    return new Integer(type.hashCode() + Objects.hashCode(value)).hashCode();
+    return Integer.valueOf(type.hashCode() + Objects.hashCode(value)).hashCode();
   }
 }

@@ -164,7 +164,7 @@ class Fp2 implements Field<Fp2> {
 
   @Override
   public int hashCode() {
-    return new Integer(a.hashCode() + b.hashCode()).hashCode();
+    return Integer.valueOf(a.hashCode() + b.hashCode()).hashCode();
   }
 
   Fp2 frobeniusMap(int power) {
