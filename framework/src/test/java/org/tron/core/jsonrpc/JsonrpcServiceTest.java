@@ -426,7 +426,8 @@ public class JsonrpcServiceTest extends BaseTest {
     try {
       getByJsonBlockId("0xxabc", wallet);
     } catch (Exception e) {
-      Assert.assertEquals("For input string: \"xabc\"", e.getMessage());
+      // https://bugs.openjdk.org/browse/JDK-8176425, from JDK 12, the exception message is changed
+      Assert.assertTrue(e.getMessage().startsWith("For input string: \"xabc\""));
     }
   }
 
