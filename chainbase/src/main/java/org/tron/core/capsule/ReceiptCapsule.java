@@ -1,5 +1,8 @@
 package org.tron.core.capsule;
 
+import static org.tron.common.math.Maths.min;
+import static org.tron.common.math.Maths.multiplyExact;
+
 import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
@@ -215,12 +218,13 @@ public class ReceiptCapsule {
           receipt.getEnergyUsageTotal(), receipt.getResult(), energyProcessor, now);
       return;
     }
+    boolean useStrict2 = dynamicPropertiesStore.disableJavaLangMath();
 
     if ((!Objects.isNull(origin)) && caller.getAddress().equals(origin.getAddress())) {
       payEnergyBill(dynamicPropertiesStore, accountStore, forkController, caller,
           receipt.getEnergyUsageTotal(), receipt.getResult(), energyProcessor, now);
     } else {
-      long originUsage = Math.multiplyExact(receipt.getEnergyUsageTotal(), percent) / 100;
+      long originUsage = multiplyExact(receipt.getEnergyUsageTotal(), percent, useStrict2) / 100;
       originUsage = getOriginUsage(dynamicPropertiesStore, origin, originEnergyLimit,
           energyProcessor,
           originUsage);
@@ -236,17 +240,18 @@ public class ReceiptCapsule {
   private long getOriginUsage(DynamicPropertiesStore dynamicPropertiesStore, AccountCapsule origin,
       long originEnergyLimit,
       EnergyProcessor energyProcessor, long originUsage) {
-
+    boolean useStrict2 = dynamicPropertiesStore.disableJavaLangMath();
     if (dynamicPropertiesStore.getAllowTvmFreeze() == 1
         || dynamicPropertiesStore.supportUnfreezeDelay()) {
-      return Math.min(originUsage, Math.min(originEnergyLeft, originEnergyLimit));
+      return min(originUsage, min(originEnergyLeft, originEnergyLimit, useStrict2), useStrict2);
     }
 
     if (checkForEnergyLimit(dynamicPropertiesStore)) {
-      return Math.min(originUsage,
-          Math.min(energyProcessor.getAccountLeftEnergyFromFreeze(origin), originEnergyLimit));
+      return min(originUsage,
+          min(energyProcessor.getAccountLeftEnergyFromFreeze(origin), originEnergyLimit,
+              useStrict2), useStrict2);
     }
-    return Math.min(originUsage, energyProcessor.getAccountLeftEnergyFromFreeze(origin));
+    return min(originUsage, energyProcessor.getAccountLeftEnergyFromFreeze(origin), useStrict2);
   }
 
   private void payEnergyBill(
@@ -301,7 +306,7 @@ public class ReceiptCapsule {
       } else {
         //send to blackHole
         Commons.adjustBalance(accountStore, accountStore.getBlackhole(),
-            energyFee);
+            energyFee, dynamicPropertiesStore.disableJavaLangMath());
       }
 
     }

@@ -19,6 +19,7 @@ package org.tron.core.zen.address;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.Bech32;
 import org.tron.common.utils.Bech32.Bech32Data;
 
@@ -29,6 +30,9 @@ public class KeyIo {
   private static String SAPLING_PAYMENT_ADDRESS = "ztron";
 
   public static PaymentAddress decodePaymentAddress(String str) {
+    if (StringUtils.isEmpty(str)) {
+      return null;
+    }
     byte[] data;
     Bech32Data bech = Bech32.decode(str);
     if (bech.hrp.equals(SAPLING_PAYMENT_ADDRESS)

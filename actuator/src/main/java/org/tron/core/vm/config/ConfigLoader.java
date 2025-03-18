@@ -41,6 +41,9 @@ public class ConfigLoader {
         VMConfig.initAllowTvmShangHai(ds.getAllowTvmShangHai());
         VMConfig.initAllowEnergyAdjustment(ds.getAllowEnergyAdjustment());
         VMConfig.initAllowStrictMath(ds.getAllowStrictMath());
+        VMConfig.initAllowTvmCancun(ds.getAllowTvmCancun());
+        VMConfig.initDisableJavaLangMath(ds.getConsensusLogicOptimization());
+        VMConfig.initAllowTvmBlob(ds.getAllowTvmBlob());
       }
     }
   }
