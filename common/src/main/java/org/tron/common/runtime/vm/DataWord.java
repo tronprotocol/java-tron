@@ -17,8 +17,8 @@
  */
 package org.tron.common.runtime.vm;
 
-import static org.tron.common.math.Maths.min;
-import static org.tron.common.math.Maths.signum;
+import static org.tron.common.math.StrictMathWrapper.min;
+import static org.tron.common.math.StrictMathWrapper.signum;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -31,7 +31,6 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.FastByteComparisons;
 import org.tron.core.db.ByteArrayWrapper;
-import org.tron.core.vm.config.VMConfig;
 
 /**
  * DataWord is the 32-byte array representation of a 256-bit number Calculations can be done on this
@@ -169,7 +168,7 @@ public class DataWord implements Comparable<DataWord> {
     byte[] ret = ByteUtil.EMPTY_BYTE_ARRAY;
     if (data != null) {
       ret = new byte[WORD_SIZE];
-      int dataSize = min(data.length, WORD_SIZE, VMConfig.disableJavaLangMath());
+      int dataSize = min(data.length, WORD_SIZE);
       System.arraycopy(data, 0, ret, 0, dataSize);
     }
     return ret;
@@ -488,7 +487,7 @@ public class DataWord implements Comparable<DataWord> {
         data, 0, data.length,
         o.getData(), 0, o.getData().length);
     // Convert result into -1, 0 or 1 as is the convention
-    return (int) signum(result, VMConfig.disableJavaLangMath());
+    return (int) signum(result);
   }
 
   public void signExtend(byte k) {

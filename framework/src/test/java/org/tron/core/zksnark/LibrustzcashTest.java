@@ -29,6 +29,7 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.context.GlobalContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
@@ -85,6 +86,7 @@ public class LibrustzcashTest extends BaseTest {
         "config-test-mainnet.conf"
     );
     Args.setFullNodeAllowShieldedTransaction(true);
+    GlobalContext.setHeader(1);
   }
 
   private static int randomInt(int minInt, int maxInt) {

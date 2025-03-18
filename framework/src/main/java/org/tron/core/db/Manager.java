@@ -52,6 +52,7 @@ import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.bloom.Bloom;
+import org.tron.common.context.GlobalContext;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.exit.ExitManager;
 import org.tron.common.logsfilter.EventPluginLoader;
@@ -1033,8 +1034,20 @@ public class Manager {
       NonCommonBlockException, BadNumberBlockException, BadBlockException, ZksnarkException,
       EventBloomException {
     block.generatedByMyself = true;
-    long start = System.currentTimeMillis();
-    pushBlock(block);
+    final long start = System.currentTimeMillis();
+    Sha256Hash stateRoot = block.getStateRoot();
+    if (!CommonParameter.getInstance().isCheckRootHashDisable()
+        && !Objects.equals(Sha256Hash.ZERO_HASH, stateRoot)) {
+      GlobalContext.putBlockHash(block.getNum(), stateRoot);
+    }
+    // clear stateRoot for block
+    block.clearStateRoot();
+    try {
+      GlobalContext.setHeader(block.getNum());
+      pushBlock(block);
+    } finally {
+      GlobalContext.removeHeader();
+    }
     logger.info("Push block cost: {} ms, blockNum: {}, blockHash: {}, trx count: {}.",
         System.currentTimeMillis() - start,
         block.getNum(),

@@ -330,6 +330,7 @@ public class RpcApiService extends RpcService {
       Block block = null;
       try {
         block = chainBaseManager.getHead().getInstance();
+        block = addStateRoot(block);
       } catch (StoreException e) {
         logger.error(e.getMessage());
       }
@@ -342,6 +343,7 @@ public class RpcApiService extends RpcService {
       Block block = null;
       try {
         block = chainBaseManager.getBlockByNum(request.getNum()).getInstance();
+        block = addStateRoot(block);
       } catch (StoreException e) {
         logger.error(e.getMessage());
       }
@@ -358,6 +360,16 @@ public class RpcApiService extends RpcService {
       DynamicProperties dynamicProperties = builder.build();
       responseObserver.onNext(dynamicProperties);
       responseObserver.onCompleted();
+    }
+
+    private Block addStateRoot(Block block) {
+      byte[] stateRoot = chainBaseManager.getStateRootStore().get(
+          block.getBlockHeader().getRawData().getNumber());
+      if (stateRoot != null) {
+        block = block.toBuilder().setBlockHeader(block.getBlockHeader().toBuilder()
+            .setStateRoot(ByteString.copyFrom(stateRoot))).build();
+      }
+      return block;
     }
   }
 

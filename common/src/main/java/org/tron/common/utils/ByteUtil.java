@@ -18,7 +18,7 @@
 
 package org.tron.common.utils;
 
-import static org.tron.common.math.Maths.min;
+import static org.tron.common.math.StrictMathWrapper.min;
 
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.UnsignedBytes;
@@ -72,7 +72,7 @@ public class ByteUtil {
     byte[] bytes = new byte[numBytes];
     byte[] biBytes = b.toByteArray();
     int start = (biBytes.length == numBytes + 1) ? 1 : 0;
-    int length = min(biBytes.length, numBytes, true);
+    int length = min(biBytes.length, numBytes);
     System.arraycopy(biBytes, start, bytes, numBytes - length, length);
     return bytes;
   }
@@ -348,7 +348,7 @@ public class ByteUtil {
     }
 
     byte[] bytes = new byte[len];
-    System.arraycopy(input, offset, bytes, 0, min(input.length - offset, len, true));
+    System.arraycopy(input, offset, bytes, 0, min(input.length - offset, len));
     return bytes;
   }
 

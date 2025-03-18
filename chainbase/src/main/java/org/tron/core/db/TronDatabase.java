@@ -70,6 +70,10 @@ public abstract class TronDatabase<T> extends OptionsPicker implements ITronChai
   }
 
   public void updateByBatch(Map<byte[], byte[]> rows) {
+    this.updateByBatch(rows, writeOptions);
+  }
+
+  public void updateByBatch(Map<byte[], byte[]> rows, WriteOptionsWrapper writeOptions) {
     this.dbSource.updateByBatch(rows, writeOptions);
   }
 
