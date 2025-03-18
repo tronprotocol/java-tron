@@ -10,6 +10,8 @@ public class VMConstant {
   public static final int ONE_THOUSAND = 1000;
   public static final long SUN_PER_ENERGY = 100;
 
+  public static final String WITHDRAW_EXPIRE_BALANCE = "WithdrawExpireBalance";
+
   private VMConstant() {
   }
 }

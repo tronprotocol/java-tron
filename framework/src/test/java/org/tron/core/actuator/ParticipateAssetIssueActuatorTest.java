@@ -1230,7 +1230,7 @@ public class ParticipateAssetIssueActuatorTest extends BaseTest {
     AccountCapsule toAccount =
         chainBaseManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
     toAccount.reduceAssetAmount(ByteString.copyFromUtf8(ASSET_NAME).toByteArray(),
-        TOTAL_SUPPLY - 10000);
+        TOTAL_SUPPLY - 10000, true);
     chainBaseManager.getAccountStore().put(toAccount.getAddress().toByteArray(), toAccount);
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
     actuator.setChainBaseManager(chainBaseManager).setAny(getContract(1));

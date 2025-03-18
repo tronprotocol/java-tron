@@ -1,12 +1,15 @@
 package org.tron.core.vm.program;
 
-import static java.lang.StrictMath.min;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.ArrayUtils.EMPTY_BYTE_ARRAY;
 import static org.apache.commons.lang3.ArrayUtils.getLength;
 import static org.apache.commons.lang3.ArrayUtils.isEmpty;
 import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
 import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
+import static org.tron.common.math.Maths.addExact;
+import static org.tron.common.math.Maths.max;
+import static org.tron.common.math.Maths.min;
+import static org.tron.common.math.Maths.multiplyExact;
 import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
@@ -159,11 +162,13 @@ public class Program {
     this.nonce = internalTransaction.getNonce();
   }
 
+  @SuppressWarnings("unused")
   static String formatBinData(byte[] binData, int startPC) {
     StringBuilder ret = new StringBuilder();
     for (int i = 0; i < binData.length; i += 16) {
       ret.append(Utils.align("" + Integer.toHexString(startPC + (i)) + ":", ' ', 8, false));
-      ret.append(Hex.toHexString(binData, i, min(16, binData.length - i))).append('\n');
+      ret.append(Hex.toHexString(binData, i, min(16, binData.length - i,
+          VMConfig.disableJavaLangMath()))).append('\n');
     }
     return ret.toString();
   }
@@ -429,6 +434,10 @@ public class Program {
     return memory.read(offset, size);
   }
 
+  public void memoryCopy(int dst, int src, int size) {
+    memory.copy(dst, src, size);
+  }
+
   /**
    * . Allocates extra memory in the program for a specified size, calculated from a given offset
    *
@@ -629,7 +638,7 @@ public class Program {
       long balance = ownerCapsule.getBalance();
       long allowance = ownerCapsule.getAllowance();
       ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
-          .setBalance(Math.addExact(balance, allowance))
+          .setBalance(addExact(balance, allowance, VMConfig.disableJavaLangMath()))
           .setAllowance(0)
           .setLatestWithdrawTime(getTimestamp().longValue() * 1000)
           .build());
@@ -1227,7 +1236,8 @@ public class Program {
 
   public DataWord getBlockHash(int index) {
     if (index < this.getNumber().longValue()
-        && index >= Math.max(256, this.getNumber().longValue()) - 256) {
+        && index >= max(256, this.getNumber().longValue(),
+        VMConfig.disableJavaLangMath()) - 256) {
 
       BlockCapsule blockCapsule = contractState.getBlockByNum(index);
 
@@ -1996,13 +2006,22 @@ public class Program {
 
       CancelAllUnfreezeV2Processor processor = new CancelAllUnfreezeV2Processor();
       processor.validate(param, repository);
-      long withdrawExpireBalance = processor.execute(param, repository);
+      Map<String, Long> result = processor.execute(param, repository);
       repository.commit();
-      if (withdrawExpireBalance > 0) {
+
+      if (result.get(VMConstant.WITHDRAW_EXPIRE_BALANCE) > 0) {
         increaseNonce();
-        addInternalTx(null, owner, owner, withdrawExpireBalance, null,
+        addInternalTx(null, owner, owner, result.get(VMConstant.WITHDRAW_EXPIRE_BALANCE), null,
             "withdrawExpireUnfreezeWhileCanceling", nonce, null);
       }
+
+      if (internalTx != null && CommonParameter.getInstance().saveCancelAllUnfreezeV2Details) {
+        internalTx.setExtra(String.format("{\"%s\":%d,\"%s\":%d,\"%s\":%d}",
+            BANDWIDTH.name(), result.getOrDefault(BANDWIDTH.name(), 0L),
+            ENERGY.name(), result.getOrDefault(ENERGY.name(), 0L),
+            TRON_POWER.name(), result.getOrDefault(TRON_POWER.name(), 0L)));
+      }
+
       return true;
     } catch (ContractValidateException e) {
       logger.warn("TVM CancelAllUnfreezeV2: validate failure. Reason: {}", e.getMessage());
@@ -2151,11 +2170,13 @@ public class Program {
     try {
       VoteWitnessParam param = new VoteWitnessParam();
       param.setVoterAddress(owner);
-
-      byte[] witnessArrayData = memoryChunk(Math.addExact(witnessArrayOffset, DataWord.WORD_SIZE),
-          Math.multiplyExact(witnessArrayLength, DataWord.WORD_SIZE));
-      byte[] amountArrayData = memoryChunk(Math.addExact(amountArrayOffset, DataWord.WORD_SIZE),
-          Math.multiplyExact(amountArrayLength, DataWord.WORD_SIZE));
+      boolean allowStrictMath2 = VMConfig.disableJavaLangMath();
+      byte[] witnessArrayData = memoryChunk(
+          addExact(witnessArrayOffset, DataWord.WORD_SIZE, allowStrictMath2),
+          multiplyExact(witnessArrayLength, DataWord.WORD_SIZE, allowStrictMath2));
+      byte[] amountArrayData = memoryChunk(
+          addExact(amountArrayOffset, DataWord.WORD_SIZE, allowStrictMath2),
+          multiplyExact(amountArrayLength, DataWord.WORD_SIZE, allowStrictMath2));
 
       for (int i = 0; i < witnessArrayLength; i++) {
         DataWord witness = new DataWord(Arrays.copyOfRange(witnessArrayData,
@@ -2231,7 +2252,8 @@ public class Program {
           VMConfig.getDynamicEnergyThreshold(),
           VMConfig.getDynamicEnergyIncreaseFactor(),
           VMConfig.getDynamicEnergyMaxFactor(),
-          VMConfig.allowStrictMath())) {
+          VMConfig.allowStrictMath(),
+          VMConfig.disableJavaLangMath())) {
         contractState.updateContractState(getContextAddress(), contractStateCapsule
         );
       }

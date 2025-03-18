@@ -136,10 +136,14 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   public static final String EARLIEST_STR = "earliest";
   public static final String PENDING_STR = "pending";
   public static final String LATEST_STR = "latest";
+  public static final String FINALIZED_STR = "finalized";
+  public static final String TAG_PENDING_SUPPORT_ERROR = "TAG pending not supported";
+  public static final String INVALID_BLOCK_RANGE = "invalid block range params";
 
   private static final String JSON_ERROR = "invalid json request";
   private static final String BLOCK_NUM_ERROR = "invalid block number";
-  private static final String TAG_NOT_SUPPORT_ERROR = "TAG [earliest | pending] not supported";
+  private static final String TAG_NOT_SUPPORT_ERROR =
+      "TAG [earliest | pending | finalized] not supported";
   private static final String QUANTITY_NOT_SUPPORT_ERROR =
       "QUANTITY not supported, just support TAG as latest";
   private static final String NO_BLOCK_HEADER = "header not found";
@@ -351,7 +355,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   public String getTrxBalance(String address, String blockNumOrTag)
       throws JsonRpcInvalidParamsException {
     if (EARLIEST_STR.equalsIgnoreCase(blockNumOrTag)
-        || PENDING_STR.equalsIgnoreCase(blockNumOrTag)) {
+        || PENDING_STR.equalsIgnoreCase(blockNumOrTag)
+        || FINALIZED_STR.equalsIgnoreCase(blockNumOrTag)) {
       throw new JsonRpcInvalidParamsException(TAG_NOT_SUPPORT_ERROR);
     } else if (LATEST_STR.equalsIgnoreCase(blockNumOrTag)) {
       byte[] addressData = addressCompatibleToByteArray(address);
@@ -488,7 +493,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   public String getStorageAt(String address, String storageIdx, String blockNumOrTag)
       throws JsonRpcInvalidParamsException {
     if (EARLIEST_STR.equalsIgnoreCase(blockNumOrTag)
-        || PENDING_STR.equalsIgnoreCase(blockNumOrTag)) {
+        || PENDING_STR.equalsIgnoreCase(blockNumOrTag)
+        || FINALIZED_STR.equalsIgnoreCase(blockNumOrTag)) {
       throw new JsonRpcInvalidParamsException(TAG_NOT_SUPPORT_ERROR);
     } else if (LATEST_STR.equalsIgnoreCase(blockNumOrTag)) {
       byte[] addressByte = addressCompatibleToByteArray(address);
@@ -523,7 +529,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   public String getABIOfSmartContract(String contractAddress, String blockNumOrTag)
       throws JsonRpcInvalidParamsException {
     if (EARLIEST_STR.equalsIgnoreCase(blockNumOrTag)
-        || PENDING_STR.equalsIgnoreCase(blockNumOrTag)) {
+        || PENDING_STR.equalsIgnoreCase(blockNumOrTag)
+        || FINALIZED_STR.equalsIgnoreCase(blockNumOrTag)) {
       throw new JsonRpcInvalidParamsException(TAG_NOT_SUPPORT_ERROR);
     } else if (LATEST_STR.equalsIgnoreCase(blockNumOrTag)) {
       byte[] addressData = addressCompatibleToByteArray(contractAddress);
@@ -823,7 +830,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     }
 
     if (EARLIEST_STR.equalsIgnoreCase(blockNumOrTag)
-        || PENDING_STR.equalsIgnoreCase(blockNumOrTag)) {
+        || PENDING_STR.equalsIgnoreCase(blockNumOrTag)
+        || FINALIZED_STR.equalsIgnoreCase(blockNumOrTag)) {
       throw new JsonRpcInvalidParamsException(TAG_NOT_SUPPORT_ERROR);
     } else if (LATEST_STR.equalsIgnoreCase(blockNumOrTag)) {
       byte[] addressData = addressCompatibleToByteArray(transactionCall.getFrom());
@@ -1226,6 +1234,12 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   public String newFilter(FilterRequest fr) throws JsonRpcInvalidParamsException,
       JsonRpcMethodNotFoundException {
     disableInPBFT("eth_newFilter");
+
+    // not supports finalized as block parameter
+    if (FINALIZED_STR.equalsIgnoreCase(fr.getFromBlock())
+        || FINALIZED_STR.equalsIgnoreCase(fr.getToBlock())) {
+      throw new JsonRpcInvalidParamsException(INVALID_BLOCK_RANGE);
+    }
 
     Map<String, LogFilterAndResult> eventFilter2Result;
     if (getSource() == RequestSource.FULLNODE) {

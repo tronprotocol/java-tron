@@ -878,4 +878,17 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           getExpiration(), nextSlotTime));
     }
   }
+
+  public boolean retCountIsGreatThanContractCount() {
+    int contractCount = getContractCount();
+    return getRetCount() > contractCount && contractCount > 0;
+  }
+
+  public int getRetCount() {
+    return this.getInstance().getRetCount();
+  }
+
+  public int getContractCount() {
+    return this.getInstance().getRawData().getContractCount();
+  }
 }

@@ -1,6 +1,10 @@
 package org.tron.core.vm;
 
 import static java.util.Arrays.copyOfRange;
+import static org.tron.common.crypto.ckzg4844.CKZG4844JNI.BLS_MODULUS;
+import static org.tron.common.crypto.ckzg4844.CKZG4844JNI.FIELD_ELEMENTS_PER_BLOB;
+import static org.tron.common.math.Maths.max;
+import static org.tron.common.math.Maths.min;
 import static org.tron.common.runtime.vm.DataWord.WORD_SIZE;
 import static org.tron.common.utils.BIUtil.addSafely;
 import static org.tron.common.utils.BIUtil.isLessThan;
@@ -30,6 +34,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import org.tron.common.crypto.ckzg4844.CKZG4844JNI;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -102,6 +107,7 @@ public class PrecompiledContracts {
 
   private static final EthRipemd160 ethRipemd160 = new EthRipemd160();
   private static final Blake2F blake2F = new Blake2F();
+  private static final KZGPointEvaluation kzgPointEvaluation = new KZGPointEvaluation();
 
   // FreezeV2 PrecompileContracts
   private static final GetChainParameter getChainParameter = new GetChainParameter();
@@ -196,6 +202,9 @@ public class PrecompiledContracts {
   private static final DataWord blake2FAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000020009");
 
+  private static final DataWord kzgPointEvaluationAddr = new DataWord(
+      "000000000000000000000000000000000000000000000000000000000002000a");
+
   public static PrecompiledContract getOptimizedContractForConstant(PrecompiledContract contract) {
     try {
       Constructor<?> constructor = contract.getClass().getDeclaredConstructor();
@@ -276,6 +285,9 @@ public class PrecompiledContracts {
     }
     if (VMConfig.allowTvmCompatibleEvm() && address.equals(blake2FAddr)) {
       return blake2F;
+    }
+    if (VMConfig.allowTvmBlob() && address.equals(kzgPointEvaluationAddr)) {
+      return kzgPointEvaluation;
     }
 
     if (VMConfig.allowTvmFreezeV2()) {
@@ -624,14 +636,17 @@ public class PrecompiledContracts {
       int expLen = parseLen(data, 1);
       int modLen = parseLen(data, 2);
 
-      byte[] expHighBytes = parseBytes(data, addSafely(ARGS_OFFSET, baseLen), Math.min(expLen, 32));
+      boolean allowStrictMath2 = VMConfig.disableJavaLangMath();
 
-      long multComplexity = getMultComplexity(Math.max(baseLen, modLen));
+      byte[] expHighBytes = parseBytes(data, addSafely(ARGS_OFFSET, baseLen), min(expLen, 32,
+          allowStrictMath2));
+
+      long multComplexity = getMultComplexity(max(baseLen, modLen, allowStrictMath2));
       long adjExpLen = getAdjustedExponentLength(expHighBytes, expLen);
 
       // use big numbers to stay safe in case of overflow
       BigInteger energy = BigInteger.valueOf(multComplexity)
-          .multiply(BigInteger.valueOf(Math.max(adjExpLen, 1)))
+          .multiply(BigInteger.valueOf(max(adjExpLen, 1, allowStrictMath2)))
           .divide(GQUAD_DIVISOR);
 
       return isLessThan(energy, BigInteger.valueOf(Long.MAX_VALUE)) ? energy.longValueExact()
@@ -2183,6 +2198,51 @@ public class PrecompiledContracts {
       }
 
       return Pair.of(true, longTo32Bytes(acquiredResource));
+    }
+  }
+
+  public static class KZGPointEvaluation extends PrecompiledContract {
+
+    private static final int BLOB_VERIFY_INPUT_LENGTH = 192;
+    private static final byte BLOB_COMMITMENT_VERSION_KZG = 0x01;
+    private static final byte[] BLOB_PRECOMPILED_RETURN_VALUE =
+        ByteUtil.merge(ByteUtil.longTo32Bytes(FIELD_ELEMENTS_PER_BLOB),
+            ByteUtil.bigIntegerToBytes(BLS_MODULUS, 32));
+
+    @Override
+    public long getEnergyForData(byte[] data) {
+      return 50000;
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+      if (data == null || data.length != BLOB_VERIFY_INPUT_LENGTH) {
+        return Pair.of(false, DataWord.ZERO().getData());
+      }
+
+      byte[] versionedHash = parseBytes(data, 0, 32);
+      byte[] z = parseBytes(data, 32, 32);
+      byte[] y = parseBytes(data, 64, 32);
+      byte[] commitment = parseBytes(data, 96, 48);
+      byte[] proof = parseBytes(data, 144, 48);
+
+      byte[] hash = Sha256Hash.hash(
+          CommonParameter.getInstance().isECKeyCryptoEngine(), commitment);
+      hash[0] = BLOB_COMMITMENT_VERSION_KZG;
+      if (!Arrays.equals(versionedHash, hash)) {
+        return Pair.of(false, DataWord.ZERO().getData());
+      }
+
+      try {
+        if (CKZG4844JNI.verifyKzgProof(commitment, z, y, proof)) {
+          return Pair.of(true, BLOB_PRECOMPILED_RETURN_VALUE);
+        } else {
+          return Pair.of(false, DataWord.ZERO().getData());
+        }
+      } catch (RuntimeException exception) {
+        logger.warn("KZG point evaluation precompile contract failed", exception);
+        return Pair.of(false, DataWord.ZERO().getData());
+      }
     }
   }
 

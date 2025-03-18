@@ -1,5 +1,8 @@
 package org.tron.core.db;
 
+import static org.tron.common.math.Maths.floorDiv;
+import static org.tron.common.math.Maths.max;
+import static org.tron.common.math.Maths.min;
 import static org.tron.common.utils.Commons.adjustBalance;
 import static org.tron.core.Constant.TRANSACTION_MAX_BYTE_SIZE;
 import static org.tron.core.exception.BadBlockException.TypeEnum.CALC_MERKLE_ROOT_FAILED;
@@ -50,6 +53,7 @@ import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.bloom.Bloom;
 import org.tron.common.es.ExecutorServiceManager;
+import org.tron.common.exit.ExitManager;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.capsule.BlockFilterCapsule;
@@ -123,6 +127,7 @@ import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TooBigTransactionResultException;
 import org.tron.core.exception.TransactionExpirationException;
+import org.tron.core.exception.TronError;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
@@ -132,6 +137,7 @@ import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.service.MortgageService;
 import org.tron.core.service.RewardViCalService;
+import org.tron.core.services.event.exception.EventException;
 import org.tron.core.store.AccountAssetStore;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
@@ -237,6 +243,7 @@ public class Manager {
       Collections.synchronizedList(Lists.newArrayList());
   // the capacity is equal to Integer.MAX_VALUE default
   private BlockingQueue<TransactionCapsule> rePushTransactions;
+  @Getter
   private BlockingQueue<TriggerCapsule> triggerCapsuleQueue;
   // log filter
   private boolean isRunFilterProcessThread = true;
@@ -288,6 +295,9 @@ public class Manager {
               Metrics.counterInc(MetricKeys.Counter.TXS, 1,
                   MetricLabels.Counter.TXS_FAIL, MetricLabels.Counter.TXS_FAIL_ERROR);
             }
+            ExitManager.findTronError(ex).ifPresent(e -> {
+              throw e;
+            });
           } finally {
             if (tx != null && getRePushTransactions().remove(tx)) {
               Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, -1,
@@ -498,13 +508,13 @@ public class Manager {
       logger.error(
           "Please delete database directory({}) and restart",
           Args.getInstance().getOutputDirectory());
-      System.exit(1);
+      throw new TronError(e, TronError.ErrCode.KHAOS_DB_INIT);
     } catch (BadItemException e) {
       logger.error("DB data broken {}.", e.getMessage());
       logger.error(
           "Please delete database directory({}) and restart.",
           Args.getInstance().getOutputDirectory());
-      System.exit(1);
+      throw new TronError(e, TronError.ErrCode.KHAOS_DB_INIT);
     }
     getChainBaseManager().getForkController().init(this.chainBaseManager);
 
@@ -545,18 +555,18 @@ public class Manager {
     validateSignService = ExecutorServiceManager
         .newFixedThreadPool(validateSignName, Args.getInstance().getValidateSignThreadNum());
     rePushEs = ExecutorServiceManager.newSingleThreadExecutor(rePushEsName, true);
-    rePushEs.submit(rePushLoop);
+    ExecutorServiceManager.submit(rePushEs, rePushLoop);
     // add contract event listener for subscribing
     if (Args.getInstance().isEventSubscribe()) {
       startEventSubscribing();
       triggerEs = ExecutorServiceManager.newSingleThreadExecutor(triggerEsName, true);
-      triggerEs.submit(triggerCapsuleProcessLoop);
+      ExecutorServiceManager.submit(triggerEs, triggerCapsuleProcessLoop);
     }
 
     // start json rpc filter process
     if (CommonParameter.getInstance().isJsonRpcFilterEnabled()) {
       filterEs = ExecutorServiceManager.newSingleThreadExecutor(filterEsName);
-      filterEs.submit(filterProcessLoop);
+      ExecutorServiceManager.submit(filterEs, filterProcessLoop);
     }
 
     //initStoreFactory
@@ -569,7 +579,7 @@ public class Manager {
       initAutoStop();
     } catch (IllegalArgumentException e) {
       logger.error("Auto-stop params error: {}", e.getMessage());
-      System.exit(1);
+      throw new TronError(e, TronError.ErrCode.AUTO_STOP_PARAMS);
     }
 
     maxFlushCount = CommonParameter.getInstance().getStorage().getMaxFlushCount();
@@ -586,10 +596,9 @@ public class Manager {
       Args.getInstance().setChainId(genesisBlock.getBlockId().toString());
     } else {
       if (chainBaseManager.hasBlocks()) {
-        logger.error(
-            "Genesis block modify, please delete database directory({}) and restart.",
-            Args.getInstance().getOutputDirectory());
-        System.exit(1);
+        String msg = String.format("Genesis block modify, please delete database directory(%s) and "
+                + "restart.", Args.getInstance().getOutputDirectory());
+        throw new TronError(msg, TronError.ErrCode.GENESIS_BLOCK_INIT);
       } else {
         logger.info("Create genesis block.");
         Args.getInstance().setChainId(genesisBlock.getBlockId().toString());
@@ -794,7 +803,9 @@ public class Manager {
 
   void validateCommon(TransactionCapsule transactionCapsule)
       throws TransactionExpirationException, TooBigTransactionException {
-    if (!transactionCapsule.isInBlock()) {
+    boolean optimizeTxs = !transactionCapsule.isInBlock() || chainBaseManager
+        .getDynamicPropertiesStore().allowConsensusLogicOptimization();
+    if (optimizeTxs) {
       transactionCapsule.removeRedundantRet();
       long generalBytesSize =
           transactionCapsule.getInstance().toBuilder().clearRet().build().getSerializedSize()
@@ -813,6 +824,10 @@ public class Manager {
     }
     long transactionExpiration = transactionCapsule.getExpiration();
     long headBlockTime = chainBaseManager.getHeadBlockTimeStamp();
+    if (transactionCapsule.isInBlock()
+        && chainBaseManager.getDynamicPropertiesStore().allowConsensusLogicOptimization()) {
+      transactionCapsule.checkExpiration(chainBaseManager.getNextBlockSlotTime());
+    }
     if (transactionExpiration <= headBlockTime
         || transactionExpiration > headBlockTime + Constant.MAXIMUM_TIME_UNTIL_EXPIRATION) {
       throw new TransactionExpirationException(
@@ -916,19 +931,20 @@ public class Manager {
       throws AccountResourceInsufficientException {
     if (trx.getInstance().getSignatureCount() > 1) {
       long fee = getDynamicPropertiesStore().getMultiSignFee();
-
+      boolean disableMath = getDynamicPropertiesStore().disableJavaLangMath();
       List<Contract> contracts = trx.getInstance().getRawData().getContractList();
       for (Contract contract : contracts) {
         byte[] address = TransactionCapsule.getOwner(contract);
         AccountCapsule accountCapsule = getAccountStore().get(address);
         try {
           if (accountCapsule != null) {
-            adjustBalance(getAccountStore(), accountCapsule, -fee);
+            adjustBalance(getAccountStore(), accountCapsule, -fee, disableMath);
 
             if (getDynamicPropertiesStore().supportBlackHoleOptimization()) {
               getDynamicPropertiesStore().burnTrx(fee);
             } else {
-              adjustBalance(getAccountStore(), this.getAccountStore().getBlackhole(), +fee);
+              adjustBalance(getAccountStore(), this.getAccountStore().getBlackhole(), +fee,
+                  disableMath);
             }
           }
         } catch (BalanceInsufficientException e) {
@@ -953,19 +969,20 @@ public class Manager {
     if (fee == 0) {
       return;
     }
-
+    boolean disableMath = getDynamicPropertiesStore().disableJavaLangMath();
     List<Contract> contracts = trx.getInstance().getRawData().getContractList();
     for (Contract contract : contracts) {
       byte[] address = TransactionCapsule.getOwner(contract);
       AccountCapsule accountCapsule = getAccountStore().get(address);
       try {
         if (accountCapsule != null) {
-          adjustBalance(getAccountStore(), accountCapsule, -fee);
+          adjustBalance(getAccountStore(), accountCapsule, -fee, disableMath);
 
           if (getDynamicPropertiesStore().supportBlackHoleOptimization()) {
             getDynamicPropertiesStore().burnTrx(fee);
           } else {
-            adjustBalance(getAccountStore(), this.getAccountStore().getBlackhole(), +fee);
+            adjustBalance(getAccountStore(), this.getAccountStore().getBlackhole(), +fee,
+                disableMath);
           }
         }
       } catch (BalanceInsufficientException e) {
@@ -1100,7 +1117,9 @@ public class Manager {
       while (!getDynamicPropertiesStore()
           .getLatestBlockHeaderHash()
           .equals(binaryTree.getValue().peekLast().getParentHash())) {
-        reOrgContractTrigger();
+        if (EventPluginLoader.getInstance().getVersion() == 0) {
+          reOrgContractTrigger();
+        }
         reOrgLogsFilter();
         eraseBlock();
       }
@@ -1362,15 +1381,30 @@ public class Manager {
   }
 
   void blockTrigger(final BlockCapsule block, long oldSolid, long newSolid) {
+    // post block and logs for jsonrpc
     try {
+      if (CommonParameter.getInstance().isJsonRpcHttpFullNodeEnable()) {
+        postBlockFilter(block, false);
+        postLogsFilter(block, false, false);
+      }
+
+      if (CommonParameter.getInstance().isJsonRpcHttpSolidityNodeEnable()) {
+        postSolidityFilter(oldSolid, newSolid);
+      }
+
+      if (EventPluginLoader.getInstance().getVersion() != 0) {
+        lastUsedSolidityNum = newSolid;
+        return;
+      }
+
       // if event subscribe is enabled, post block trigger to queue
       postBlockTrigger(block);
       // if event subscribe is enabled, post solidity trigger to queue
-      postSolidityTrigger(oldSolid, newSolid);
+      postSolidityTrigger(newSolid);
     } catch (Exception e) {
       logger.error("Block trigger failed. head: {}, oldSolid: {}, newSolid: {}",
           block.getNum(), oldSolid, newSolid, e);
-      System.exit(1);
+      throw new TronError(e, TronError.ErrCode.EVENT_SUBSCRIBE_ERROR);
     }
   }
 
@@ -1506,7 +1540,8 @@ public class Manager {
 
     // if event subscribe is enabled, post contract triggers to queue
     // only trigger when process block
-    if (Objects.nonNull(blockCap) && !blockCap.isMerkleRootEmpty()) {
+    if (Objects.nonNull(blockCap) && !blockCap.isMerkleRootEmpty()
+        && EventPluginLoader.getInstance().getVersion() == 0) {
       String blockHash = blockCap.getBlockId().toString();
       postContractTrigger(trace, false, blockHash);
     }
@@ -1768,6 +1803,12 @@ public class Manager {
       List<TransactionInfo> results = new ArrayList<>();
       long num = block.getNum();
       for (TransactionCapsule transactionCapsule : block.getTransactions()) {
+        if (chainBaseManager.getDynamicPropertiesStore().allowConsensusLogicOptimization()
+            && transactionCapsule.retCountIsGreatThanContractCount()) {
+          throw new BadBlockException(String.format("The result count %d of this transaction %s is "
+                  + "greater than its contract count %d", transactionCapsule.getRetCount(),
+              transactionCapsule.getTransactionId(), transactionCapsule.getContractCount()));
+        }
         transactionCapsule.setBlockNum(num);
         if (block.generatedByMyself) {
           transactionCapsule.setVerified(true);
@@ -1834,9 +1875,10 @@ public class Manager {
       mortgageService.payStandbyWitness();
 
       if (chainBaseManager.getDynamicPropertiesStore().supportTransactionFeePool()) {
-        long transactionFeeReward = Math
-            .floorDiv(chainBaseManager.getDynamicPropertiesStore().getTransactionFeePool(),
-                Constant.TRANSACTION_FEE_POOL_PERIOD);
+        long transactionFeeReward = floorDiv(
+            chainBaseManager.getDynamicPropertiesStore().getTransactionFeePool(),
+                Constant.TRANSACTION_FEE_POOL_PERIOD,
+            chainBaseManager.getDynamicPropertiesStore().disableJavaLangMath());
         mortgageService.payTransactionFeeReward(witnessCapsule.getAddress().toByteArray(),
             transactionFeeReward);
         chainBaseManager.getDynamicPropertiesStore().saveTransactionFeePool(
@@ -1850,9 +1892,10 @@ public class Manager {
           + chainBaseManager.getDynamicPropertiesStore().getWitnessPayPerBlock());
 
       if (chainBaseManager.getDynamicPropertiesStore().supportTransactionFeePool()) {
-        long transactionFeeReward = Math
-            .floorDiv(chainBaseManager.getDynamicPropertiesStore().getTransactionFeePool(),
-                Constant.TRANSACTION_FEE_POOL_PERIOD);
+        long transactionFeeReward = floorDiv(
+            chainBaseManager.getDynamicPropertiesStore().getTransactionFeePool(),
+                Constant.TRANSACTION_FEE_POOL_PERIOD,
+            chainBaseManager.getDynamicPropertiesStore().disableJavaLangMath());
         account.setAllowance(account.getAllowance() + transactionFeeReward);
         chainBaseManager.getDynamicPropertiesStore().saveTransactionFeePool(
             chainBaseManager.getDynamicPropertiesStore().getTransactionFeePool()
@@ -2056,7 +2099,7 @@ public class Manager {
           .start(Args.getInstance().getEventPluginConfig());
 
       if (!eventPluginLoaded) {
-        logger.error("Failed to load eventPlugin.");
+        throw new EventException("Failed to load eventPlugin.");
       }
 
       FilterQuery eventFilter = Args.getInstance().getEventFilter();
@@ -2065,14 +2108,12 @@ public class Manager {
       }
 
     } catch (Exception e) {
-      logger.error("{}", e);
+      throw new TronError(e, TronError.ErrCode.EVENT_SUBSCRIBE_INIT);
     }
   }
 
   private void postSolidityFilter(final long oldSolidNum, final long latestSolidifiedBlockNumber) {
     if (oldSolidNum >= latestSolidifiedBlockNumber) {
-      logger.warn("Post solidity filter failed, oldSolidity: {} >= latestSolidity: {}.",
-          oldSolidNum, latestSolidifiedBlockNumber);
       return;
     }
 
@@ -2083,7 +2124,7 @@ public class Manager {
     }
   }
 
-  private void postSolidityTrigger(final long oldSolidNum, final long latestSolidifiedBlockNumber) {
+  private void postSolidityTrigger(final long latestSolidifiedBlockNumber) {
     if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
       for (Long i : Args.getSolidityContractLogTriggerMap().keySet()) {
         postSolidityLogContractTrigger(i, latestSolidifiedBlockNumber);
@@ -2108,10 +2149,6 @@ public class Manager {
               blockCapsule.getNum());
         }
       }
-    }
-
-    if (CommonParameter.getInstance().isJsonRpcHttpSolidityNodeEnable()) {
-      postSolidityFilter(oldSolidNum, latestSolidifiedBlockNumber);
     }
     lastUsedSolidityNum = latestSolidifiedBlockNumber;
   }
@@ -2224,12 +2261,6 @@ public class Manager {
   }
 
   void postBlockTrigger(final BlockCapsule blockCapsule) {
-    // post block and logs for jsonrpc
-    if (CommonParameter.getInstance().isJsonRpcHttpFullNodeEnable()) {
-      postBlockFilter(blockCapsule, false);
-      postLogsFilter(blockCapsule, false, false);
-    }
-
     // process block trigger
     long solidityBlkNum = getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
     if (eventPluginLoaded && EventPluginLoader.getInstance().isBlockLogTriggerEnable()) {
@@ -2433,8 +2464,10 @@ public class Manager {
         }
         transactionCount += trx.getTransactionIds().size();
         long blockNum = trx.getNum();
-        maxBlock = Math.max(maxBlock, blockNum);
-        minBlock = Math.min(minBlock, blockNum);
+        maxBlock = max(maxBlock, blockNum,
+            chainBaseManager.getDynamicPropertiesStore().disableJavaLangMath());
+        minBlock = min(minBlock, blockNum,
+            chainBaseManager.getDynamicPropertiesStore().disableJavaLangMath());
         item.setBlockNum(blockNum);
         trx.getTransactionIds().forEach(
             tid -> chainBaseManager.getTransactionStore().put(Hex.decode(tid), item));

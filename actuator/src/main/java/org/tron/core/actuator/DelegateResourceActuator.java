@@ -15,7 +15,6 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
@@ -162,7 +161,8 @@ public class DelegateResourceActuator extends AbstractActuator {
         }
         long netUsage = (long) (accountNetUsage * TRX_PRECISION * ((double)
             (dynamicStore.getTotalNetWeight()) / dynamicStore.getTotalNetLimit()));
-        long v2NetUsage = getV2NetUsage(ownerCapsule, netUsage);
+        long v2NetUsage = getV2NetUsage(ownerCapsule, netUsage,
+            dynamicStore.disableJavaLangMath());
         if (ownerCapsule.getFrozenV2BalanceForBandwidth() - v2NetUsage < delegateBalance) {
           throw new ContractValidateException(
               "delegateBalance must be less than or equal to available FreezeBandwidthV2 balance");
@@ -175,7 +175,8 @@ public class DelegateResourceActuator extends AbstractActuator {
 
         long energyUsage = (long) (ownerCapsule.getEnergyUsage() * TRX_PRECISION * ((double)
             (dynamicStore.getTotalEnergyWeight()) / dynamicStore.getTotalEnergyCurrentLimit()));
-        long v2EnergyUsage = getV2EnergyUsage(ownerCapsule, energyUsage);
+        long v2EnergyUsage = getV2EnergyUsage(ownerCapsule, energyUsage,
+            dynamicStore.disableJavaLangMath());
         if (ownerCapsule.getFrozenV2BalanceForEnergy() - v2EnergyUsage < delegateBalance) {
           throw new ContractValidateException(
                   "delegateBalance must be less than or equal to available FreezeEnergyV2 balance");

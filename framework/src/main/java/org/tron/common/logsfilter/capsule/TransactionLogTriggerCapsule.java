@@ -6,7 +6,9 @@ import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
@@ -49,9 +51,21 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
     this(trxCapsule, blockCapsule, 0, 0, 0, null, 0);
   }
 
+  public TransactionLogTriggerCapsule(TransactionCapsule trxCapsule,
+      BlockCapsule blockCapsule, TransactionInfo transactionInfo) {
+    this(trxCapsule, blockCapsule, 0, 0, 0, transactionInfo, 0, true);
+  }
+
   public TransactionLogTriggerCapsule(TransactionCapsule trxCapsule, BlockCapsule blockCapsule,
       int txIndex, long preCumulativeEnergyUsed, long preCumulativeLogCount,
       TransactionInfo transactionInfo, long energyUnitPrice) {
+    this(trxCapsule, blockCapsule, txIndex, preCumulativeEnergyUsed, preCumulativeLogCount,
+        transactionInfo, energyUnitPrice, false);
+  }
+
+  public TransactionLogTriggerCapsule(TransactionCapsule trxCapsule, BlockCapsule blockCapsule,
+      int txIndex, long preCumulativeEnergyUsed, long preCumulativeLogCount,
+      TransactionInfo transactionInfo, long energyUnitPrice, boolean flag) {
     transactionLogTrigger = new TransactionLogTrigger();
 
     String blockHash = "";
@@ -281,6 +295,7 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
 
       if (Objects.nonNull(contractAddress) && contractAddress.size() > 0) {
         if (Objects.nonNull(transactionInfo)
+            && EventPluginLoader.getInstance().isTransactionLogTriggerEthCompatible()
             && contractType != null && contractType != CreateSmartContract) {
           transactionLogTrigger.setContractAddress(null);
         } else {
@@ -294,8 +309,38 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
           getInternalTransactionList(programResult.getInternalTransactions()));
     }
 
+    if (Objects.isNull(trxTrace) && Objects.nonNull(transactionInfo) && flag) {
+      Protocol.ResourceReceipt receipt = transactionInfo.getReceipt();
+      energyUsageTotal = receipt.getEnergyUsageTotal();
+      transactionLogTrigger.setEnergyFee(receipt.getEnergyFee());
+      transactionLogTrigger.setOriginEnergyUsage(receipt.getOriginEnergyUsage());
+      transactionLogTrigger.setEnergyUsageTotal(energyUsageTotal);
+      transactionLogTrigger.setNetUsage(receipt.getNetUsage());
+      transactionLogTrigger.setNetFee(receipt.getNetFee());
+      transactionLogTrigger.setEnergyUsage(receipt.getEnergyUsage());
+
+      if (transactionInfo.getContractResultCount() > 0) {
+        ByteString contractResult = transactionInfo.getContractResult(0);
+        if (Objects.nonNull(contractResult) && contractResult.size() > 0) {
+          transactionLogTrigger.setContractResult(Hex.toHexString(contractResult.toByteArray()));
+        }
+      }
+
+      ByteString contractAddress = transactionInfo.getContractAddress();
+      if (Objects.nonNull(contractAddress) && contractAddress.size() > 0) {
+        if (EventPluginLoader.getInstance().isTransactionLogTriggerEthCompatible()
+            && contractType != null && contractType != CreateSmartContract) {
+          transactionLogTrigger.setContractAddress(null);
+        } else {
+          transactionLogTrigger
+              .setContractAddress(StringUtil.encode58Check((contractAddress.toByteArray())));
+        }
+      }
+    }
+
     // process transactionInfo list, only enabled when ethCompatible is true
-    if (Objects.nonNull(transactionInfo)) {
+    if (Objects.nonNull(transactionInfo)
+        && EventPluginLoader.getInstance().isTransactionLogTriggerEthCompatible()) {
       transactionLogTrigger.setTransactionIndex(txIndex);
       transactionLogTrigger.setCumulativeEnergyUsed(preCumulativeEnergyUsed + energyUsageTotal);
       transactionLogTrigger.setPreCumulativeLogCount(preCumulativeLogCount);

@@ -12,6 +12,7 @@ public class OperationRegistry {
     TRON_V1_1,
     TRON_V1_2,
     TRON_V1_3,
+    TRON_V1_4,
     // add more
     // TRON_V2,
     // ETH
@@ -24,6 +25,7 @@ public class OperationRegistry {
     tableMap.put(Version.TRON_V1_1, newTronV11OperationSet());
     tableMap.put(Version.TRON_V1_2, newTronV12OperationSet());
     tableMap.put(Version.TRON_V1_3, newTronV13OperationSet());
+    tableMap.put(Version.TRON_V1_4, newTronV14OperationSet());
   }
 
   public static JumpTable newTronV10OperationSet() {
@@ -55,12 +57,18 @@ public class OperationRegistry {
     return table;
   }
 
+  public static JumpTable newTronV14OperationSet() {
+    JumpTable table = newTronV13OperationSet();
+    appendCancunOperations(table);
+    return table;
+  }
+
   // Just for warming up class to avoid out_of_time
   public static void init() {}
 
   public static JumpTable getTable() {
     // always get the table which has the newest version
-    JumpTable table = tableMap.get(Version.TRON_V1_3);
+    JumpTable table = tableMap.get(Version.TRON_V1_4);
 
     // next make the corresponding changes, exclude activating opcode
     if (VMConfig.allowHigherLimitForMaxCpuTimeOfOneTx()) {
@@ -651,5 +659,40 @@ public class OperationRegistry {
         Op.SUICIDE, 1, 0,
         EnergyCost::getSuicideCost2,
         OperationActions::suicideAction));
+  }
+
+  public static void appendCancunOperations(JumpTable table) {
+    BooleanSupplier proposal = VMConfig::allowTvmCancun;
+    BooleanSupplier tvmBlobProposal = VMConfig::allowTvmBlob;
+
+    table.set(new Operation(
+        Op.TLOAD, 1, 1,
+        EnergyCost::getTLoadCost,
+        OperationActions::tLoadAction,
+        proposal));
+
+    table.set(new Operation(
+        Op.TSTORE, 2, 0,
+        EnergyCost::getTStoreCost,
+        OperationActions::tStoreAction,
+        proposal));
+
+    table.set(new Operation(
+        Op.MCOPY, 3, 0,
+        EnergyCost::getMCopyCost,
+        OperationActions::mCopyAction,
+        proposal));
+
+    table.set(new Operation(
+        Op.BLOBHASH, 1, 1,
+        EnergyCost::getVeryLowTierCost,
+        OperationActions::blobHashAction,
+        tvmBlobProposal));
+
+    table.set(new Operation(
+        Op.BLOBBASEFEE, 0, 1,
+        EnergyCost::getBaseTierCost,
+        OperationActions::blobBaseFeeAction,
+        tvmBlobProposal));
   }
 }
