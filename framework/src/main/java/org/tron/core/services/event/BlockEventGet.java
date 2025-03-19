@@ -65,7 +65,9 @@ public class BlockEventGet {
     }
 
     if (instance.isTransactionLogTriggerEnable()) {
-      blockEvent.setTransactionLogTriggerCapsules(getTransactionLogTrigger(block, solidNum));
+      List<TransactionLogTriggerCapsule> list = getTransactionLogTrigger(block, solidNum);
+      list.forEach(t -> t.getTransactionLogTrigger().setInternalTransactionList(null));
+      blockEvent.setTransactionLogTriggerCapsules(list);
     }
 
     if (instance.isContractLogTriggerEnable()
