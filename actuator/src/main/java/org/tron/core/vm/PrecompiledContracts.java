@@ -2239,8 +2239,8 @@ public class PrecompiledContracts {
         } else {
           return Pair.of(false, DataWord.ZERO().getData());
         }
-      } catch (RuntimeException exception) {
-        logger.warn("KZG point evaluation precompile contract failed", exception);
+      } catch (RuntimeException e) {
+        logger.warn("KZG point evaluation precompile contract failed {}", e.getMessage());
         return Pair.of(false, DataWord.ZERO().getData());
       }
     }
