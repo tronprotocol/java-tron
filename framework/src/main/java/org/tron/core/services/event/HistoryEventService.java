@@ -55,12 +55,17 @@ public class HistoryEventService {
       long tmp = instance.getStartSyncBlockNum();
       long endNum = manager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
       while (tmp <= endNum) {
+        if (instance.isUseNativeQueue()) {
+          Thread.sleep(20);
+        } else if (instance.isBusy()) {
+          Thread.sleep(100);
+          continue;
+        }
         BlockEvent blockEvent = blockEventGet.getBlockEvent(tmp);
         realtimeEventService.flush(blockEvent, false);
         solidEventService.flush(blockEvent);
         tmp++;
         endNum = manager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
-        Thread.sleep(30);
       }
       initEventService(manager.getChainBaseManager().getBlockIdByNum(endNum));
     } catch (InterruptedException e1) {
