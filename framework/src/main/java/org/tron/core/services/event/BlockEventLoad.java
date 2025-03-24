@@ -69,7 +69,9 @@ public class BlockEventLoad {
       if (cacheHeadNum >= tmpNum) {
         return;
       }
-      tmpNum = Math.min(tmpNum, cacheHeadNum + MAX_LOAD_NUM);
+      if (tmpNum > cacheHeadNum + MAX_LOAD_NUM) {
+        tmpNum = cacheHeadNum + MAX_LOAD_NUM;
+      }
       List<BlockEvent> l1 = new ArrayList<>();
       List<BlockEvent> l2 = new ArrayList<>();
       BlockEvent tmp = BlockEventCache.getHead();
