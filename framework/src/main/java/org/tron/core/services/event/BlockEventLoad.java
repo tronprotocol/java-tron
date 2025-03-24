@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.tron.common.es.ExecutorServiceManager;
+import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.core.db.Manager;
 import org.tron.core.services.event.bo.BlockEvent;
 import org.tron.core.services.event.bo.Event;
@@ -26,13 +27,19 @@ public class BlockEventLoad {
   @Autowired
   private BlockEventGet blockEventGet;
 
+  private EventPluginLoader instance = EventPluginLoader.getInstance();
+
   private final ScheduledExecutorService executor = ExecutorServiceManager
       .newSingleThreadScheduledExecutor("event-load");
+
+  private long MAX_LOAD_NUM = 100;
 
   public void init() {
     executor.scheduleWithFixedDelay(() -> {
       try {
-        load();
+        if (!instance.isBusy()) {
+          load();
+        }
       } catch (Exception e) {
         close();
         logger.error("Event load service fail.", e);
@@ -61,6 +68,9 @@ public class BlockEventLoad {
       tmpNum =  manager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
       if (cacheHeadNum >= tmpNum) {
         return;
+      }
+      if (tmpNum > cacheHeadNum + MAX_LOAD_NUM) {
+        tmpNum = cacheHeadNum + MAX_LOAD_NUM;
       }
       List<BlockEvent> l1 = new ArrayList<>();
       List<BlockEvent> l2 = new ArrayList<>();
