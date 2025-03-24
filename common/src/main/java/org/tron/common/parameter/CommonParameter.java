@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
-import org.quartz.CronExpression;
+import org.tron.common.cron.CronExpression;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.config.DbBackupConfig;
 import org.tron.common.logsfilter.EventPluginConfig;
