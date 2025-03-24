@@ -5,7 +5,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
-import org.quartz.CronExpression;
+import org.junit.Test;
+import org.tron.common.cron.CronExpression;
 import org.tron.common.parameter.CommonParameter;
 
 @Slf4j
@@ -23,6 +24,21 @@ public class BlockTimeStopTest extends ConditionallyStopTest {
     } catch (ParseException e) {
       logger.error("{}", e.getMessage());
     }
+  }
+
+  @Test
+  public void isValidExpression() {
+    Assert.assertTrue(CronExpression.isValidExpression(cronExpression.getCronExpression()));
+    ParseException err = Assert.assertThrows(ParseException.class, () ->
+        CronExpression.validateExpression("invalid expression"));
+    Assert.assertEquals("Illegal characters for this position: 'INV'", err.getMessage());
+  }
+
+  @Test
+  public void  getNextTime() {
+    Date date = cronExpression.getNextValidTimeAfter(new Date());
+    Date invalidDate = cronExpression.getNextInvalidTimeAfter(new Date());
+    Assert.assertNotEquals(date, invalidDate);
   }
 
 
