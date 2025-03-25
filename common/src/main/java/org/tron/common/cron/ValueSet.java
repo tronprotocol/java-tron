@@ -1,7 +1,7 @@
 package org.tron.common.cron;
 
 class ValueSet {
-  public int value;
+  protected int value;
 
-  public int pos;
+  protected int pos;
 }
