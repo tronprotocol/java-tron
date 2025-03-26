@@ -129,7 +129,7 @@ public class Args extends CommonParameter {
     PARAMETER.activeNodes = new ArrayList<>();
     PARAMETER.passiveNodes = new ArrayList<>();
     PARAMETER.fastForwardNodes = new ArrayList<>();
-    PARAMETER.maxFastForwardNum = 3;
+    PARAMETER.maxFastForwardNum = 4;
     PARAMETER.nodeChannelReadTimeout = 0;
     PARAMETER.maxConnections = 30;
     PARAMETER.minConnections = 8;
