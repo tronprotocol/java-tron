@@ -122,7 +122,7 @@ public abstract class AbstractActuator implements Actuator {
     Commons.adjustBalance(accountStore, account, amount, this.disableJavaLangMath());
   }
 
-  private boolean disableJavaLangMath() {
+  boolean disableJavaLangMath() {
     return chainBaseManager.getDynamicPropertiesStore().disableJavaLangMath();
   }
 }

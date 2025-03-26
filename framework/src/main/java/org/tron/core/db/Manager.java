@@ -931,20 +931,20 @@ public class Manager {
       throws AccountResourceInsufficientException {
     if (trx.getInstance().getSignatureCount() > 1) {
       long fee = getDynamicPropertiesStore().getMultiSignFee();
-      boolean disableMath = getDynamicPropertiesStore().disableJavaLangMath();
+      boolean disableJavaLangMath = getDynamicPropertiesStore().disableJavaLangMath();
       List<Contract> contracts = trx.getInstance().getRawData().getContractList();
       for (Contract contract : contracts) {
         byte[] address = TransactionCapsule.getOwner(contract);
         AccountCapsule accountCapsule = getAccountStore().get(address);
         try {
           if (accountCapsule != null) {
-            adjustBalance(getAccountStore(), accountCapsule, -fee, disableMath);
+            adjustBalance(getAccountStore(), accountCapsule, -fee, disableJavaLangMath);
 
             if (getDynamicPropertiesStore().supportBlackHoleOptimization()) {
               getDynamicPropertiesStore().burnTrx(fee);
             } else {
               adjustBalance(getAccountStore(), this.getAccountStore().getBlackhole(), +fee,
-                  disableMath);
+                  disableJavaLangMath);
             }
           }
         } catch (BalanceInsufficientException e) {
@@ -969,20 +969,20 @@ public class Manager {
     if (fee == 0) {
       return;
     }
-    boolean disableMath = getDynamicPropertiesStore().disableJavaLangMath();
+    boolean disableJavaLangMath = getDynamicPropertiesStore().disableJavaLangMath();
     List<Contract> contracts = trx.getInstance().getRawData().getContractList();
     for (Contract contract : contracts) {
       byte[] address = TransactionCapsule.getOwner(contract);
       AccountCapsule accountCapsule = getAccountStore().get(address);
       try {
         if (accountCapsule != null) {
-          adjustBalance(getAccountStore(), accountCapsule, -fee, disableMath);
+          adjustBalance(getAccountStore(), accountCapsule, -fee, disableJavaLangMath);
 
           if (getDynamicPropertiesStore().supportBlackHoleOptimization()) {
             getDynamicPropertiesStore().burnTrx(fee);
           } else {
             adjustBalance(getAccountStore(), this.getAccountStore().getBlackhole(), +fee,
-                disableMath);
+                disableJavaLangMath);
           }
         }
       } catch (BalanceInsufficientException e) {

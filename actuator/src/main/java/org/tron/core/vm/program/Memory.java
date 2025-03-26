@@ -105,17 +105,17 @@ public class Memory implements ProgramListenerAware {
     if (size <= 0) {
       return;
     }
-    boolean allowStrictMath2 = VMConfig.disableJavaLangMath();
-    final int newSize = addExact(address, size, allowStrictMath2);
+    final int newSize = addExact(address, size, VMConfig.disableJavaLangMath());
     int toAllocate = newSize - internalSize();
     if (toAllocate > 0) {
-      addChunks((int) ceil((double) toAllocate / CHUNK_SIZE, allowStrictMath2));
+      addChunks((int) ceil((double) toAllocate / CHUNK_SIZE, VMConfig.disableJavaLangMath()));
     }
 
     toAllocate = newSize - softSize;
     if (toAllocate > 0) {
-      toAllocate = (int) ceil((double) toAllocate / WORD_SIZE, allowStrictMath2) * WORD_SIZE;
-      softSize = addExact(softSize, toAllocate, allowStrictMath2);
+      toAllocate = (int) ceil((double) toAllocate / WORD_SIZE,
+          VMConfig.disableJavaLangMath()) * WORD_SIZE;
+      softSize = addExact(softSize, toAllocate, VMConfig.disableJavaLangMath());
 
       if (programListener != null) {
         programListener.onMemoryExtend(toAllocate);

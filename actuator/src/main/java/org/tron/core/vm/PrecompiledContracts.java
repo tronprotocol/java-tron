@@ -636,17 +636,16 @@ public class PrecompiledContracts {
       int expLen = parseLen(data, 1);
       int modLen = parseLen(data, 2);
 
-      boolean allowStrictMath2 = VMConfig.disableJavaLangMath();
 
       byte[] expHighBytes = parseBytes(data, addSafely(ARGS_OFFSET, baseLen), min(expLen, 32,
-          allowStrictMath2));
+          VMConfig.disableJavaLangMath()));
 
-      long multComplexity = getMultComplexity(max(baseLen, modLen, allowStrictMath2));
+      long multComplexity = getMultComplexity(max(baseLen, modLen, VMConfig.disableJavaLangMath()));
       long adjExpLen = getAdjustedExponentLength(expHighBytes, expLen);
 
       // use big numbers to stay safe in case of overflow
       BigInteger energy = BigInteger.valueOf(multComplexity)
-          .multiply(BigInteger.valueOf(max(adjExpLen, 1, allowStrictMath2)))
+          .multiply(BigInteger.valueOf(max(adjExpLen, 1, VMConfig.disableJavaLangMath())))
           .divide(GQUAD_DIVISOR);
 
       return isLessThan(energy, BigInteger.valueOf(Long.MAX_VALUE)) ? energy.longValueExact()
