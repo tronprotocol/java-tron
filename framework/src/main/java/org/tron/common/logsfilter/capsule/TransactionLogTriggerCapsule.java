@@ -65,7 +65,7 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
 
   public TransactionLogTriggerCapsule(TransactionCapsule trxCapsule, BlockCapsule blockCapsule,
       int txIndex, long preCumulativeEnergyUsed, long preCumulativeLogCount,
-      TransactionInfo transactionInfo, long energyUnitPrice, boolean flag) {
+      TransactionInfo transactionInfo, long energyUnitPrice, boolean isNewEventService) {
     transactionLogTrigger = new TransactionLogTrigger();
 
     String blockHash = "";
@@ -309,7 +309,7 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
           getInternalTransactionList(programResult.getInternalTransactions()));
     }
 
-    if (Objects.isNull(trxTrace) && Objects.nonNull(transactionInfo) && flag) {
+    if (Objects.isNull(trxTrace) && Objects.nonNull(transactionInfo) && isNewEventService) {
       Protocol.ResourceReceipt receipt = transactionInfo.getReceipt();
       energyUsageTotal = receipt.getEnergyUsageTotal();
       transactionLogTrigger.setEnergyFee(receipt.getEnergyFee());
