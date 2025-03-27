@@ -72,25 +72,25 @@ public class BlockEventLoad {
       if (tmpNum > cacheHeadNum + MAX_LOAD_NUM) {
         tmpNum = cacheHeadNum + MAX_LOAD_NUM;
       }
-      List<BlockEvent> l1 = new ArrayList<>();
-      List<BlockEvent> l2 = new ArrayList<>();
+      List<BlockEvent> blockEvents = new ArrayList<>();
+      List<BlockEvent> rollbackBlockEvents = new ArrayList<>();
       BlockEvent tmp = BlockEventCache.getHead();
 
       BlockEvent blockEvent = blockEventGet.getBlockEvent(tmpNum);
-      l1.add(blockEvent);
+      blockEvents.add(blockEvent);
       while (!blockEvent.getParentId().equals(tmp.getBlockId())) {
         tmpNum--;
         if (tmpNum == tmp.getBlockId().getNum()) {
-          l2.add(tmp);
+          rollbackBlockEvents.add(tmp);
           tmp = BlockEventCache.getBlockEvent(tmp.getParentId());
         }
         blockEvent = blockEventGet.getBlockEvent(tmpNum);
-        l1.add(blockEvent);
+        blockEvents.add(blockEvent);
       }
 
-      l2.forEach(e -> realtimeEventService.add(new Event(e, true)));
+      rollbackBlockEvents.forEach(e -> realtimeEventService.add(new Event(e, true)));
 
-      List<BlockEvent> l = Lists.reverse(l1);
+      List<BlockEvent> l = Lists.reverse(blockEvents);
       for (BlockEvent e: l) {
         BlockEventCache.add(e);
         realtimeEventService.add(new Event(e, false));

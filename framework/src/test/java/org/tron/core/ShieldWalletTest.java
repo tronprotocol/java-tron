@@ -376,7 +376,7 @@ public class ShieldWalletTest extends BaseTest {
       Assert.fail();
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Payment Address in ReceiveNote should not be empty",
+      Assert.assertEquals("PaymentAddress in ReceiveNote should not be empty",
           e.getMessage());
     }
 
@@ -409,7 +409,7 @@ public class ShieldWalletTest extends BaseTest {
       Assert.fail();
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Payment Address in SpendNote should not be empty",
+      Assert.assertEquals("PaymentAddress in SpendNote should not be empty",
           e.getMessage());
     }
   }
