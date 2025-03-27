@@ -733,7 +733,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   public boolean addAssetAmountV2(byte[] key, long amount,
       DynamicPropertiesStore dynamicPropertiesStore, AssetIssueStore assetIssueStore) {
     importAsset(key);
-    boolean useStrict2 = dynamicPropertiesStore.disableJavaLangMath();
+    boolean disableJavaLangMath = dynamicPropertiesStore.disableJavaLangMath();
     //key is token name
     if (dynamicPropertiesStore.getAllowSameTokenName() == 0) {
       Map<String, Long> assetMap = this.account.getAssetMap();
@@ -745,8 +745,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         currentAmount = 0L;
       }
       this.account = this.account.toBuilder()
-          .putAsset(nameKey, addExact(currentAmount, amount, useStrict2))
-          .putAssetV2(tokenID, addExact(currentAmount, amount, useStrict2))
+          .putAsset(nameKey, addExact(currentAmount, amount, disableJavaLangMath))
+          .putAssetV2(tokenID, addExact(currentAmount, amount, disableJavaLangMath))
           .build();
     }
     //key is token id
@@ -758,19 +758,19 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         currentAmount = 0L;
       }
       this.account = this.account.toBuilder()
-          .putAssetV2(tokenIDStr, addExact(currentAmount, amount, useStrict2))
+          .putAssetV2(tokenIDStr, addExact(currentAmount, amount, disableJavaLangMath))
           .build();
     }
     return true;
   }
 
-  public boolean reduceAssetAmount(byte[] key, long amount, boolean useStrict2) {
+  public boolean reduceAssetAmount(byte[] key, long amount, boolean disableJavaLangMath) {
     Map<String, Long> assetMap = this.account.getAssetMap();
     String nameKey = ByteArray.toStr(key);
     Long currentAmount = assetMap.get(nameKey);
     if (amount > 0 && null != currentAmount && amount <= currentAmount) {
       this.account = this.account.toBuilder()
-              .putAsset(nameKey, subtractExact(currentAmount, amount, useStrict2)).build();
+              .putAsset(nameKey, subtractExact(currentAmount, amount, disableJavaLangMath)).build();
       return true;
     }
 
@@ -781,7 +781,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
                                      DynamicPropertiesStore dynamicPropertiesStore, AssetIssueStore assetIssueStore) {
     importAsset(key);
     //key is token name
-    boolean useStrict2 = dynamicPropertiesStore.disableJavaLangMath();
+    boolean disableJavaLangMath = dynamicPropertiesStore.disableJavaLangMath();
     if (dynamicPropertiesStore.getAllowSameTokenName() == 0) {
       Map<String, Long> assetMap = this.account.getAssetMap();
       AssetIssueCapsule assetIssueCapsule = assetIssueStore.get(key);
@@ -790,8 +790,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       Long currentAmount = assetMap.get(nameKey);
       if (amount > 0 && null != currentAmount && amount <= currentAmount) {
         this.account = this.account.toBuilder()
-                .putAsset(nameKey, subtractExact(currentAmount, amount, useStrict2))
-                .putAssetV2(tokenID, subtractExact(currentAmount, amount, useStrict2))
+                .putAsset(nameKey, subtractExact(currentAmount, amount, disableJavaLangMath))
+                .putAssetV2(tokenID, subtractExact(currentAmount, amount, disableJavaLangMath))
                 .build();
         return true;
       }
@@ -803,7 +803,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       Long currentAmount = assetMapV2.get(tokenID);
       if (amount > 0 && null != currentAmount && amount <= currentAmount) {
         this.account = this.account.toBuilder()
-                .putAssetV2(tokenID, subtractExact(currentAmount, amount, useStrict2))
+                .putAssetV2(tokenID, subtractExact(currentAmount, amount, disableJavaLangMath))
                 .build();
         return true;
       }

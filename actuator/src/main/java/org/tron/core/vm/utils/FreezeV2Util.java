@@ -144,7 +144,6 @@ public class FreezeV2Util {
       return 0L;
     }
 
-    boolean allowStrictMath2 = VMConfig.disableJavaLangMath();
     AccountCapsule accountCapsule = repository.getAccount(address);
     if (accountCapsule == null) {
       return 0L;
@@ -166,8 +165,8 @@ public class FreezeV2Util {
         return frozenV2Resource;
       }
 
-      long v2NetUsage = getV2NetUsage(accountCapsule, usage, allowStrictMath2);
-      return max(0L, frozenV2Resource - v2NetUsage, allowStrictMath2);
+      long v2NetUsage = getV2NetUsage(accountCapsule, usage, VMConfig.disableJavaLangMath());
+      return max(0L, frozenV2Resource - v2NetUsage, VMConfig.disableJavaLangMath());
     }
 
     if (type == 1) {
@@ -186,8 +185,8 @@ public class FreezeV2Util {
         return frozenV2Resource;
       }
 
-      long v2EnergyUsage = getV2EnergyUsage(accountCapsule, usage, allowStrictMath2);
-      return max(0L, frozenV2Resource - v2EnergyUsage, allowStrictMath2);
+      long v2EnergyUsage = getV2EnergyUsage(accountCapsule, usage, VMConfig.disableJavaLangMath());
+      return max(0L, frozenV2Resource - v2EnergyUsage, VMConfig.disableJavaLangMath());
     }
 
     return 0L;
@@ -244,21 +243,21 @@ public class FreezeV2Util {
   }
 
   public static long getV2NetUsage(AccountCapsule ownerCapsule, long netUsage, boolean
-      allowStrictMath2) {
+      disableJavaLangMath) {
     long v2NetUsage= netUsage
         - ownerCapsule.getFrozenBalance()
         - ownerCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
         - ownerCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth();
-    return max(0, v2NetUsage, allowStrictMath2);
+    return max(0, v2NetUsage, disableJavaLangMath);
   }
 
   public static long getV2EnergyUsage(AccountCapsule ownerCapsule, long energyUsage, boolean
-      allowStrictMath2) {
+      disableJavaLangMath) {
     long v2EnergyUsage= energyUsage
           - ownerCapsule.getEnergyFrozenBalance()
           - ownerCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()
           - ownerCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy();
-    return max(0, v2EnergyUsage, allowStrictMath2);
+    return max(0, v2EnergyUsage, disableJavaLangMath);
   }
 
 }

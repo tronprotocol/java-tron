@@ -603,10 +603,10 @@ public class VMActuator implements Actuator2 {
     }
     // can change the calc way
     long leftEnergyFromFreeze = rootRepository.getAccountLeftEnergyFromFreeze(account);
-    boolean isStrict2 = VMConfig.disableJavaLangMath();
-    callValue = max(callValue, 0, isStrict2);
+    callValue = max(callValue, 0, VMConfig.disableJavaLangMath());
     long energyFromBalance = floorDiv(max(
-        account.getBalance() - callValue, 0, isStrict2), sunPerEnergy, isStrict2);
+        account.getBalance() - callValue, 0, VMConfig.disableJavaLangMath()), sunPerEnergy,
+        VMConfig.disableJavaLangMath());
 
     long energyFromFeeLimit;
     long totalBalanceForEnergyFreeze = account.getAllFrozenBalanceForEnergy();
