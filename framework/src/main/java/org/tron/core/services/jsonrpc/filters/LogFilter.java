@@ -35,6 +35,8 @@ public class LogFilter {
   @Setter
   private Bloom[][] filterBlooms;
 
+  private final int maxTopicDepth = 4;
+  private final int maxSubWidth = 20;
 
   public LogFilter() {
   }
@@ -58,6 +60,9 @@ public class LogFilter {
               String.format("invalid address at index %d: %s", i, s));
         }
       }
+      if (addr.size() > maxSubWidth) {
+        throw new JsonRpcInvalidParamsException("address size should be <= " + maxSubWidth);
+      }
       withContractAddress(addr.toArray(new byte[addr.size()][]));
 
     } else if (fr.getAddress() != null) {
@@ -66,8 +71,8 @@ public class LogFilter {
 
     if (fr.getTopics() != null) {
       //restrict depth of topics, because event has a signature and most 3 indexed parameters
-      if (fr.getTopics().length > 4) {
-        throw new JsonRpcInvalidParamsException("topics size should be <= 4");
+      if (fr.getTopics().length > maxTopicDepth) {
+        throw new JsonRpcInvalidParamsException("topics size should be <= " + maxTopicDepth);
       }
       for (Object topic : fr.getTopics()) {
         if (topic == null) {
@@ -87,6 +92,9 @@ public class LogFilter {
             } catch (JsonRpcInvalidParamsException e) {
               throw new JsonRpcInvalidParamsException("invalid topic(s): " + s);
             }
+          }
+          if (t.size() > maxSubWidth) {
+            throw new JsonRpcInvalidParamsException("topics' width should be <= " + maxSubWidth);
           }
           withTopic(t.toArray(new byte[t.size()][]));
         } else {

@@ -240,6 +240,21 @@ public class JsonRpcTest {
     } catch (JsonRpcInvalidParamsException e) {
       Assert.assertTrue(e.getMessage().contains("invalid address"));
     }
+
+    //address width should be <= 20
+
+    //topic's width should be <= 20
+    List<String> subTopics = new ArrayList<>();
+    for (int i = 0; i < 100; i++) {
+      subTopics.add("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef");
+    }
+    Object[] topics = new Object[1];
+    topics[0] = subTopics;
+    try {
+      new LogFilter(new FilterRequest(null, null, null, topics, null));
+    } catch (JsonRpcInvalidParamsException e) {
+      Assert.assertEquals("topics' width should be <= 20", e.getMessage());
+    }
   }
 
   private int[] getBloomIndex(String s) {
