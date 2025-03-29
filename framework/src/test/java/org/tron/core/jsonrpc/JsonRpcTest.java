@@ -241,9 +241,18 @@ public class JsonRpcTest {
       Assert.assertTrue(e.getMessage().contains("invalid address"));
     }
 
-    //address width should be <= 20
+    //address size should be <= 20
+    List<String> addresses = new ArrayList<>();
+    for (int i = 0; i < 100; i++) {
+      addresses.add("0x1D3005237D6516EA794456BBEE9978B5B7AE491F");
+    }
+    try {
+      new LogFilter(new FilterRequest(null, null, addresses, null, null));
+    } catch (JsonRpcInvalidParamsException e) {
+      Assert.assertEquals("address size should be <= 20", e.getMessage());
+    }
 
-    //topic's width should be <= 20
+    //topic size of one row should be <= 20
     List<String> subTopics = new ArrayList<>();
     for (int i = 0; i < 100; i++) {
       subTopics.add("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef");
@@ -253,7 +262,7 @@ public class JsonRpcTest {
     try {
       new LogFilter(new FilterRequest(null, null, null, topics, null));
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.assertEquals("topics' width should be <= 20", e.getMessage());
+      Assert.assertEquals("topic size of one row should be <= 20", e.getMessage());
     }
   }
 

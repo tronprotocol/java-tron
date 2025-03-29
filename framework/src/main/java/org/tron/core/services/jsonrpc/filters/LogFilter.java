@@ -94,7 +94,8 @@ public class LogFilter {
             }
           }
           if (t.size() > maxSubWidth) {
-            throw new JsonRpcInvalidParamsException("topics' width should be <= " + maxSubWidth);
+            throw new JsonRpcInvalidParamsException(
+                "topic size of one row should be <= " + maxSubWidth);
           }
           withTopic(t.toArray(new byte[t.size()][]));
         } else {
