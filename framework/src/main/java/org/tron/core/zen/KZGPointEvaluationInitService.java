@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ckzg4844.CKZG4844JNI;
+import org.tron.core.exception.TronError;
 
 @Slf4j
 @Component
@@ -31,11 +32,15 @@ public class KZGPointEvaluationInitService {
     if (loaded.compareAndSet(false, true)) {
       logger.info("init ckzg 4844 begin");
 
-      CKZG4844JNI.loadNativeLibrary();
+      try {
+        CKZG4844JNI.loadNativeLibrary();
 
-      String setupFile = getSetupFile("trusted_setup.txt");
+        String setupFile = getSetupFile("trusted_setup.txt");
 
-      CKZG4844JNI.loadTrustedSetup(setupFile, 0);
+        CKZG4844JNI.loadTrustedSetup(setupFile, 0);
+      } catch (Exception e) {
+        throw new TronError(e, TronError.ErrCode.CKZG_INIT);
+      }
 
       logger.info("init ckzg 4844 done");
     }
