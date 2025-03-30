@@ -373,6 +373,13 @@ public class Args extends CommonParameter {
       exit(0);
     }
 
+    if (PARAMETER.isHelp()) {
+      JCommander jCommander = JCommander.newBuilder().addObject(Args.PARAMETER).build();
+      jCommander.parse(args);
+      Args.printHelp(jCommander);
+      exit(0);
+    }
+
     Config config = Configuration.getByFileName(PARAMETER.shellConfFileName, confFileName);
     setParam(config);
   }
