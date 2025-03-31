@@ -44,6 +44,7 @@ public class TronError extends Error {
     PROMETHEUS_INIT(1),
     TRON_NET_SERVICE_INIT(1),
     ZCASH_INIT(1),
+    CKZG_INIT(1),
     LOG_LOAD(1),
     WITNESS_INIT(1),
     RATE_LIMITER_INIT(1),

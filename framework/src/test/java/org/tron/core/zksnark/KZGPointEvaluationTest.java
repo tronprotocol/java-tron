@@ -1,14 +1,20 @@
 package org.tron.core.zksnark;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
+import static org.mockito.Mockito.mockStatic;
+
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.MockedStatic;
 import org.tron.common.crypto.ckzg4844.CKZG4844JNI;
 import org.tron.common.crypto.ckzg4844.CKZGException;
 import org.tron.common.crypto.ckzg4844.CellsAndProofs;
 import org.tron.common.crypto.ckzg4844.ProofAndY;
+import org.tron.core.exception.TronError;
 import org.tron.core.zen.KZGPointEvaluationInitService;
 
 @Slf4j
@@ -79,5 +85,12 @@ public class KZGPointEvaluationTest {
     }
 
     KZGPointEvaluationInitService.freeSetup();
+
+    try (MockedStatic<CKZG4844JNI> mock = mockStatic(CKZG4844JNI.class)) {
+      mock.when(CKZG4844JNI::loadNativeLibrary).thenThrow(new RuntimeException());
+      TronError thrown = assertThrows(TronError.class,
+          KZGPointEvaluationInitService::initCKZG4844);
+      assertEquals(TronError.ErrCode.CKZG_INIT, thrown.getErrCode());
+    }
   }
 }
