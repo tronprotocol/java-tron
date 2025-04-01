@@ -694,6 +694,20 @@ public class JsonrpcServiceTest extends BaseTest {
       Assert.fail();
     }
 
+    Args.getInstance().setJsonRpcMaxBlockRange(-2);
+    try {
+      new LogFilterWrapper(new FilterRequest("0x0", "0x1f40", null,
+          null, null), 10_000, null, true);
+    } catch (JsonRpcInvalidParamsException e) {
+      Assert.fail();
+    }
+    try {
+      new LogFilterWrapper(new FilterRequest("0x0", "0x1f40", null,
+          null, null), 10_000, null, false);
+    } catch (JsonRpcInvalidParamsException e) {
+      Assert.fail();
+    }
+
     // reset
     Args.getInstance().setJsonRpcMaxBlockRange(oldMaxBlockRange);
   }

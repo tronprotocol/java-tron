@@ -70,7 +70,7 @@ public class LogFilter {
     if (fr.getTopics() != null) {
       //restrict depth of topics, because event has a signature and most 3 indexed parameters
       if (fr.getTopics().length > maxTopics) {
-        throw new JsonRpcInvalidParamsException("topics size should be <= 4");
+        throw new JsonRpcInvalidParamsException("topics size should be <= " + maxTopics);
       }
       for (Object topic : fr.getTopics()) {
         if (topic == null) {
