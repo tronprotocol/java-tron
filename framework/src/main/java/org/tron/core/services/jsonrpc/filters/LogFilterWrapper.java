@@ -7,6 +7,7 @@ import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
+import org.tron.core.config.args.Args;
 import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.core.services.jsonrpc.JsonRpcApiUtil;
 import org.tron.core.services.jsonrpc.TronJsonRpc.FilterRequest;
@@ -23,8 +24,8 @@ public class LogFilterWrapper {
   @Getter
   private final long toBlock;
 
-  public LogFilterWrapper(FilterRequest fr, long currentMaxBlockNum, Wallet wallet)
-      throws JsonRpcInvalidParamsException {
+  public LogFilterWrapper(FilterRequest fr, long currentMaxBlockNum, Wallet wallet,
+      boolean checkBlockRange) throws JsonRpcInvalidParamsException {
 
     // 1.convert FilterRequest to LogFilter
     this.logFilter = new LogFilter(fr);
@@ -85,6 +86,12 @@ public class LogFilterWrapper {
         if (fromBlockSrc > toBlockSrc) {
           throw new JsonRpcInvalidParamsException("please verify: fromBlock <= toBlock");
         }
+      }
+
+      // till now, it needs to check block range for eth_getLogs
+      int maxBlockRange = Args.getInstance().getJsonRpcMaxBlockRange();
+      if (checkBlockRange && maxBlockRange > 0 && (toBlockSrc - fromBlockSrc) > maxBlockRange) {
+        throw new JsonRpcInvalidParamsException("exceed max block range: " + maxBlockRange);
       }
     }
 

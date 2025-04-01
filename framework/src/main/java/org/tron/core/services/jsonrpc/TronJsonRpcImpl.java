@@ -1327,7 +1327,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
 
     long currentMaxBlockNum = wallet.getNowBlock().getBlockHeader().getRawData().getNumber();
     //convert FilterRequest to LogFilterWrapper
-    LogFilterWrapper logFilterWrapper = new LogFilterWrapper(fr, currentMaxBlockNum, wallet);
+    LogFilterWrapper logFilterWrapper = new LogFilterWrapper(fr, currentMaxBlockNum, wallet, true);
 
     return getLogsByLogFilterWrapper(logFilterWrapper, currentMaxBlockNum);
   }

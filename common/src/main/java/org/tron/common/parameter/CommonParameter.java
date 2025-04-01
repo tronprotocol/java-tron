@@ -8,9 +8,9 @@ import java.util.List;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
-import org.tron.common.cron.CronExpression;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.config.DbBackupConfig;
+import org.tron.common.cron.CronExpression;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.setting.RocksDbSettings;
@@ -495,6 +495,13 @@ public class CommonParameter {
   @Getter
   @Setter
   public boolean jsonRpcHttpPBFTNodeEnable = false;
+  @Getter
+  @Setter
+  public int jsonRpcMaxBlockRange = 5000;
+  @Getter
+  @Setter
+  public int jsonRpcMaxSubTopics = 1000;
+
   @Getter
   @Setter
   public int maxTransactionPendingSize;

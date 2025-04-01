@@ -7,6 +7,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.protobuf.ByteString;
 import io.prometheus.client.CollectorRegistry;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -545,7 +548,7 @@ public class JsonrpcServiceTest extends BaseTest {
     // fromBlock and toBlock are both empty
     try {
       LogFilterWrapper logFilterWrapper =
-          new LogFilterWrapper(new FilterRequest(null, null, null, null, null), 100, null);
+          new LogFilterWrapper(new FilterRequest(null, null, null, null, null), 100, null, false);
       Assert.assertEquals(100, logFilterWrapper.getFromBlock());
       Assert.assertEquals(Long.MAX_VALUE, logFilterWrapper.getToBlock());
     } catch (JsonRpcInvalidParamsException e) {
@@ -555,7 +558,7 @@ public class JsonrpcServiceTest extends BaseTest {
     // fromBlock is not empty and smaller than currentMaxBlockNum, toBlock is empty
     try {
       LogFilterWrapper logFilterWrapper =
-          new LogFilterWrapper(new FilterRequest("0x14", null, null, null, null), 100, null);
+          new LogFilterWrapper(new FilterRequest("0x14", null, null, null, null), 100, null, false);
       Assert.assertEquals(20, logFilterWrapper.getFromBlock());
       Assert.assertEquals(Long.MAX_VALUE, logFilterWrapper.getToBlock());
     } catch (JsonRpcInvalidParamsException e) {
@@ -565,7 +568,7 @@ public class JsonrpcServiceTest extends BaseTest {
     // fromBlock is not empty and bigger than currentMaxBlockNum, toBlock is empty
     try {
       LogFilterWrapper logFilterWrapper =
-          new LogFilterWrapper(new FilterRequest("0x78", null, null, null, null), 100, null);
+          new LogFilterWrapper(new FilterRequest("0x78", null, null, null, null), 100, null, false);
       Assert.assertEquals(120, logFilterWrapper.getFromBlock());
       Assert.assertEquals(Long.MAX_VALUE, logFilterWrapper.getToBlock());
     } catch (JsonRpcInvalidParamsException e) {
@@ -575,7 +578,7 @@ public class JsonrpcServiceTest extends BaseTest {
     // fromBlock is empty, toBlock is not empty and smaller than currentMaxBlockNum
     try {
       LogFilterWrapper logFilterWrapper =
-          new LogFilterWrapper(new FilterRequest(null, "0x14", null, null, null), 100, null);
+          new LogFilterWrapper(new FilterRequest(null, "0x14", null, null, null), 100, null, false);
       Assert.assertEquals(20, logFilterWrapper.getFromBlock());
       Assert.assertEquals(20, logFilterWrapper.getToBlock());
     } catch (JsonRpcInvalidParamsException e) {
@@ -585,7 +588,7 @@ public class JsonrpcServiceTest extends BaseTest {
     // fromBlock is empty, toBlock is not empty and bigger than currentMaxBlockNum
     try {
       LogFilterWrapper logFilterWrapper =
-          new LogFilterWrapper(new FilterRequest(null, "0x78", null, null, null), 100, null);
+          new LogFilterWrapper(new FilterRequest(null, "0x78", null, null, null), 100, null, false);
       Assert.assertEquals(100, logFilterWrapper.getFromBlock());
       Assert.assertEquals(120, logFilterWrapper.getToBlock());
     } catch (JsonRpcInvalidParamsException e) {
@@ -594,54 +597,195 @@ public class JsonrpcServiceTest extends BaseTest {
 
     // fromBlock is not empty, toBlock is not empty
     try {
-      LogFilterWrapper logFilterWrapper =
-          new LogFilterWrapper(new FilterRequest("0x14", "0x78", null, null, null), 100, null);
+      LogFilterWrapper logFilterWrapper = new LogFilterWrapper(new FilterRequest("0x14", "0x78",
+          null, null, null), 100, null, false);
       Assert.assertEquals(20, logFilterWrapper.getFromBlock());
       Assert.assertEquals(120, logFilterWrapper.getToBlock());
     } catch (JsonRpcInvalidParamsException e) {
       Assert.fail();
     }
     try {
-      LogFilterWrapper logFilterWrapper =
-          new LogFilterWrapper(new FilterRequest("0x78", "0x14", null, null, null), 100, null);
+      new LogFilterWrapper(new FilterRequest("0x78", "0x14",
+          null, null, null), 100, null, false);
     } catch (JsonRpcInvalidParamsException e) {
       Assert.assertEquals("please verify: fromBlock <= toBlock", e.getMessage());
     }
 
     //fromBlock or toBlock is not hex num
     try {
-      LogFilterWrapper logFilterWrapper =
-          new LogFilterWrapper(new FilterRequest("earliest", null, null, null, null), 100, null);
+      LogFilterWrapper logFilterWrapper = new LogFilterWrapper(new FilterRequest("earliest", null,
+          null, null, null), 100, null, false);
       Assert.assertEquals(0, logFilterWrapper.getFromBlock());
       Assert.assertEquals(Long.MAX_VALUE, logFilterWrapper.getToBlock());
     } catch (JsonRpcInvalidParamsException e) {
       Assert.fail();
     }
     try {
-      LogFilterWrapper logFilterWrapper =
-          new LogFilterWrapper(new FilterRequest("latest", null, null, null, null), 100, null);
+      LogFilterWrapper logFilterWrapper = new LogFilterWrapper(new FilterRequest("latest", null,
+          null, null, null), 100, null, false);
       Assert.assertEquals(100, logFilterWrapper.getFromBlock());
       Assert.assertEquals(Long.MAX_VALUE, logFilterWrapper.getToBlock());
     } catch (JsonRpcInvalidParamsException e) {
       Assert.fail();
     }
     try {
-      new LogFilterWrapper(new FilterRequest("pending", null, null, null, null), 100, null);
+      new LogFilterWrapper(new FilterRequest("pending", null, null, null, null),
+          100, null, false);
     } catch (JsonRpcInvalidParamsException e) {
       Assert.assertEquals("TAG pending not supported", e.getMessage());
     }
     try {
-      LogFilterWrapper logFilterWrapper =
-          new LogFilterWrapper(new FilterRequest("finalized", null, null, null, null), 100, wallet);
+      LogFilterWrapper logFilterWrapper = new LogFilterWrapper(new FilterRequest("finalized", null,
+          null, null, null), 100, wallet, false);
       Assert.assertEquals(LATEST_SOLIDIFIED_BLOCK_NUM, logFilterWrapper.getFromBlock());
       Assert.assertEquals(Long.MAX_VALUE, logFilterWrapper.getToBlock());
     } catch (JsonRpcInvalidParamsException e) {
       Assert.fail();
     }
     try {
-      new LogFilterWrapper(new FilterRequest("test", null, null, null, null), 100, null);
+      new LogFilterWrapper(new FilterRequest("test", null, null, null, null),
+          100, null, false);
     } catch (JsonRpcInvalidParamsException e) {
       Assert.assertEquals("Incorrect hex syntax", e.getMessage());
+    }
+
+    try {
+      new LogFilterWrapper(new FilterRequest("0x0", "0x1f40", null,
+          null, null), 10_000, null, false);
+    } catch (JsonRpcInvalidParamsException e) {
+      Assert.fail();
+    }
+
+    try {
+      new LogFilterWrapper(new FilterRequest("0x0", "0x1f40", null,
+          null, null), 10_000, null, true);
+    } catch (JsonRpcInvalidParamsException e) {
+      Assert.assertEquals(
+          "exceed max block range: " + Args.getInstance().jsonRpcMaxBlockRange,
+          e.getMessage());
+    }
+
+    int oldMaxBlockRange = Args.getInstance().getJsonRpcMaxBlockRange();
+    Args.getInstance().setJsonRpcMaxBlockRange(10_000);
+    try {
+      new LogFilterWrapper(new FilterRequest("0x0", "0x1f40", null,
+          null, null), 10_000, null, true);
+    } catch (JsonRpcInvalidParamsException e) {
+      Assert.fail();
+    }
+    try {
+      new LogFilterWrapper(new FilterRequest("0x0", "0x1f40", null,
+          null, null), 10_000, null, false);
+    } catch (JsonRpcInvalidParamsException e) {
+      Assert.fail();
+    }
+
+    Args.getInstance().setJsonRpcMaxBlockRange(0);
+    try {
+      new LogFilterWrapper(new FilterRequest("0x0", "0x1f40", null,
+          null, null), 10_000, null, true);
+    } catch (JsonRpcInvalidParamsException e) {
+      Assert.fail();
+    }
+    try {
+      new LogFilterWrapper(new FilterRequest("0x0", "0x1f40", null,
+          null, null), 10_000, null, false);
+    } catch (JsonRpcInvalidParamsException e) {
+      Assert.fail();
+    }
+
+    // reset
+    Args.getInstance().setJsonRpcMaxBlockRange(oldMaxBlockRange);
+  }
+
+  @Test
+  public void testMaxSubTopics() {
+    List<Object> topics = new ArrayList<>();
+    topics.add(new ArrayList<>(Collections.singletonList(
+        "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef")));
+    topics.add(new ArrayList<>(Collections.EMPTY_LIST));
+    List<String> subTopics = new ArrayList<>();
+    for (int i = 0; i < Args.getInstance().getJsonRpcMaxSubTopics() + 1; i++) {
+      subTopics.add("0x0000000000000000000000414de17123a3c706ab197957e131350b2537dd4883");
+    }
+    topics.add(subTopics);
+
+    try {
+      new LogFilterWrapper(new FilterRequest("0xbb8", "0x1f40",
+          null, topics.toArray(), null), 10_000, null, false);
+    } catch (JsonRpcInvalidParamsException e) {
+      Assert.assertEquals(
+          "exceed max topics: " + Args.getInstance().getJsonRpcMaxSubTopics(),
+          e.getMessage());
+    }
+
+    try {
+      tronJsonRpc.getLogs(new FilterRequest("0xbb8", "0x1f40",
+          null, topics.toArray(), null));
+    } catch (JsonRpcInvalidParamsException e) {
+      Assert.assertEquals(
+          "exceed max topics: " + Args.getInstance().getJsonRpcMaxSubTopics(),
+          e.getMessage());
+    } catch (Exception e) {
+      Assert.fail();
+    }
+
+    try {
+      tronJsonRpc.newFilter(new FilterRequest("0xbb8", "0x1f40",
+          null, topics.toArray(), null));
+    } catch (JsonRpcInvalidParamsException e) {
+      Assert.assertEquals(
+          "exceed max topics: " + Args.getInstance().getJsonRpcMaxSubTopics(),
+          e.getMessage());
+    } catch (Exception e) {
+      Assert.fail();
+    }
+
+    int oldMaxSubTopics = Args.getInstance().getJsonRpcMaxSubTopics();
+    Args.getInstance().setJsonRpcMaxSubTopics(2_000);
+    try {
+      new LogFilterWrapper(new FilterRequest("0xbb8", "0x1f40",
+          null, topics.toArray(), null), 10_000, null, false);
+    } catch (JsonRpcInvalidParamsException e) {
+      Assert.fail();
+    }
+
+    Args.getInstance().setJsonRpcMaxSubTopics(0);
+    try {
+      new LogFilterWrapper(new FilterRequest("0xbb8", "0x1f40",
+          null, topics.toArray(), null), 10_000, null, false);
+    } catch (JsonRpcInvalidParamsException e) {
+      Assert.fail();
+    }
+
+    Args.getInstance().setJsonRpcMaxSubTopics(oldMaxSubTopics);
+  }
+
+  @Test
+  public void testMethodBlockRange() {
+    try {
+      tronJsonRpc.getLogs(new FilterRequest("0x0", "0x1f40", null,
+          null, null));
+    } catch (JsonRpcInvalidParamsException e) {
+      Assert.assertEquals(
+          "exceed max block range: " + Args.getInstance().jsonRpcMaxBlockRange,
+          e.getMessage());
+    } catch (Exception e) {
+      Assert.fail();
+    }
+
+    try {
+      tronJsonRpc.newFilter(new FilterRequest("0x0", "0x1f40", null,
+          null, null));
+    } catch (Exception e) {
+      Assert.fail();
+    }
+
+    try {
+      tronJsonRpc.getLogs(new FilterRequest("0x0", "0x1", null,
+          null, null));
+    } catch (Exception e) {
+      Assert.fail();
     }
   }
 

@@ -145,6 +145,8 @@ public class Constant {
   public static final String NODE_JSONRPC_HTTP_SOLIDITY_PORT = "node.jsonrpc.httpSolidityPort";
   public static final String NODE_JSONRPC_HTTP_PBFT_ENABLE = "node.jsonrpc.httpPBFTEnable";
   public static final String NODE_JSONRPC_HTTP_PBFT_PORT = "node.jsonrpc.httpPBFTPort";
+  public static final String NODE_JSONRPC_MAX_BLOCK_RANGE = "node.jsonrpc.maxBlockRange";
+  public static final String NODE_JSONRPC_MAX_SUB_TOPICS = "node.jsonrpc.maxSubTopics";
 
   public static final String NODE_DISABLED_API_LIST = "node.disabledApi";
 
