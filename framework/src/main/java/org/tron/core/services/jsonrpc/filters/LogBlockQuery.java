@@ -39,23 +39,21 @@ public class LogBlockQuery {
     this.currentMaxBlockNum = currentMaxBlockNum;
 
     if (logFilterWrapper.getFromBlock() == Long.MAX_VALUE) {
-      minSection = (int) (currentMaxBlockNum / Bloom.BLOOM_BIT_SIZE);
       minBlock = currentMaxBlockNum;
     } else {
-      minSection = (int) (logFilterWrapper.getFromBlock() / Bloom.BLOOM_BIT_SIZE);
       minBlock = logFilterWrapper.getFromBlock();
     }
+    minSection = (int) (minBlock / Bloom.BLOOM_BIT_SIZE);
 
     if (logFilterWrapper.getToBlock() == Long.MAX_VALUE) {
-      maxSection = (int) (currentMaxBlockNum / Bloom.BLOOM_BIT_SIZE);
       maxBlock = currentMaxBlockNum;
     } else {
-      maxSection = (int) (logFilterWrapper.getToBlock() / Bloom.BLOOM_BIT_SIZE);
       maxBlock = logFilterWrapper.getToBlock();
       if (maxBlock > currentMaxBlockNum) {
         maxBlock = currentMaxBlockNum;
       }
     }
+    maxSection = (int) (maxBlock / Bloom.BLOOM_BIT_SIZE);
   }
 
   public List<Long> getPossibleBlock() throws ExecutionException, InterruptedException,
@@ -71,7 +69,7 @@ public class LogBlockQuery {
     BitSet blockNumBitSet = new BitSet(capacity);
     blockNumBitSet.set(0, capacity);
 
-    //works serial
+    // works serial
     for (int[][] conditionsIndex : allConditionsIndex) {
       BitSet bitSet = subMatch(conditionsIndex);
       blockNumBitSet.and(bitSet);

@@ -284,7 +284,8 @@ public class JsonRpcTest {
               topics,
               null),
               100,
-              null);
+              null,
+              false);
 
       LogBlockQuery logBlockQuery = new LogBlockQuery(logFilterWrapper, null, 100, null);
       int[][][] conditions = logBlockQuery.getConditions();
@@ -331,7 +332,8 @@ public class JsonRpcTest {
               topics,
               null),
               100,
-              null);
+              null,
+              false);
 
       LogBlockQuery logBlockQuery = new LogBlockQuery(logFilterWrapper, null, 100, null);
       int[][][] conditions = logBlockQuery.getConditions();
