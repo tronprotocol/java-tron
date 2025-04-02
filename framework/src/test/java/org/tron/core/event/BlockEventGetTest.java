@@ -150,6 +150,11 @@ public class BlockEventGetTest extends BlockGenerate {
     });
     manager.pushBlock(blockCapsule);
 
+    // Set energy price history to test boundary cases
+    manager.getDynamicPropertiesStore().saveEnergyPriceHistory(
+        manager.getDynamicPropertiesStore().getEnergyPriceHistory()
+            + "," + time + ":210");
+
     EventPluginConfig config = new EventPluginConfig();
     config.setSendQueueLength(1000);
     config.setBindPort(5555);
@@ -187,6 +192,12 @@ public class BlockEventGetTest extends BlockGenerate {
     try {
       BlockEvent blockEvent = blockEventGet.getBlockEvent(1);
       Assert.assertNotNull(blockEvent);
+      Assert.assertEquals(1, blockEvent.getTransactionLogTriggerCapsules().size());
+
+      // Here energy unit price should be 100 not 210,
+      // cause block time is equal to 210`s effective time
+      Assert.assertEquals(100, blockEvent.getTransactionLogTriggerCapsules()
+          .get(0).getTransactionLogTrigger().getEnergyUnitPrice());
     } catch (Exception e) {
       Assert.fail();
     }

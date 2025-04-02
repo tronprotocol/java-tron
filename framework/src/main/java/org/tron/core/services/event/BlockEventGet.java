@@ -39,6 +39,7 @@ import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.services.event.bo.BlockEvent;
 import org.tron.core.services.event.bo.SmartContractTrigger;
+import org.tron.core.services.jsonrpc.JsonRpcApiUtil;
 import org.tron.core.store.StoreFactory;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.SmartContractOuterClass;
@@ -373,19 +374,7 @@ public class BlockEventGet {
 
   public long getEnergyPrice(long blockTime) {
     String energyPriceHistory = manager.getDynamicPropertiesStore().getEnergyPriceHistory();
-
-    String[] energyPrices = energyPriceHistory.split(",");
-    String[] lastPrice = energyPrices[energyPrices.length - 1].split(":");
-    long energyPrice = Long.parseLong(lastPrice[1]);
-
-    for (int i = 1; i < energyPrices.length; i++) {
-      long effectiveTime = Long.parseLong(energyPrices[i].split(":")[0]);
-      if (blockTime < effectiveTime) {
-        energyPrice = Long.parseLong(energyPrices[i - 1].split(":")[1]);
-        break;
-      }
-    }
-    return energyPrice;
+    return JsonRpcApiUtil.parseEnergyFee(blockTime, energyPriceHistory);
   }
 
   public List<TransactionLogTriggerCapsule> getTransactionTriggers(BlockCapsule block,
