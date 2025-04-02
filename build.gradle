@@ -3,6 +3,9 @@ allprojects {
     apply plugin: "java-library"
 }
 
+logger.warn("WARN: the Nile branch of the Java-tron GitHub repository is deprecated.\n" +
+            "The new GitHub repository is https://github.com/tron-nile-testnet/nile-testnet")
+
 subprojects {
     apply plugin: "jacoco"
     apply plugin: "maven-publish"
