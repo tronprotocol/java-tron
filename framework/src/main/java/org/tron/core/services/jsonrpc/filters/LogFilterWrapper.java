@@ -1,6 +1,6 @@
 package org.tron.core.services.jsonrpc.filters;
 
-import static org.tron.common.math.Maths.min;
+import static org.tron.common.math.StrictMathWrapper.min;
 
 import com.google.protobuf.ByteString;
 import lombok.Getter;
@@ -58,7 +58,7 @@ public class LogFilterWrapper {
         if (toBlockSrc == -1) {
           toBlockSrc = Long.MAX_VALUE;
         }
-        fromBlockSrc = min(toBlockSrc, currentMaxBlockNum, true);
+        fromBlockSrc = min(toBlockSrc, currentMaxBlockNum);
 
       } else if (StringUtils.isNotEmpty(fr.getFromBlock())
           && StringUtils.isEmpty(fr.getToBlock())) {
@@ -90,7 +90,8 @@ public class LogFilterWrapper {
 
       // till now, it needs to check block range for eth_getLogs
       int maxBlockRange = Args.getInstance().getJsonRpcMaxBlockRange();
-      if (checkBlockRange && maxBlockRange > 0 && (toBlockSrc - fromBlockSrc) > maxBlockRange) {
+      if (checkBlockRange && maxBlockRange > 0
+          && min(toBlockSrc, currentMaxBlockNum) - fromBlockSrc > maxBlockRange) {
         throw new JsonRpcInvalidParamsException("exceed max block range: " + maxBlockRange);
       }
     }

@@ -256,6 +256,25 @@ public class ArgsTest {
     Assert.assertTrue(Args.getInstance().isJsonRpcHttpPBFTNodeEnable());
     Assert.assertEquals(30, Args.getInstance().getJsonRpcMaxBlockRange());
     Assert.assertEquals(40, Args.getInstance().getJsonRpcMaxSubTopics());
+
+    // test set invalid value
+    storage.put("node.jsonrpc.maxBlockRange", "0");
+    storage.put("node.jsonrpc.maxSubTopics", "0");
+    config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
+    // check value
+    Args.setParam(config);
+    Assert.assertEquals(0, Args.getInstance().getJsonRpcMaxBlockRange());
+    Assert.assertEquals(0, Args.getInstance().getJsonRpcMaxSubTopics());
+
+    // test set invalid value
+    storage.put("node.jsonrpc.maxBlockRange", "-2");
+    storage.put("node.jsonrpc.maxSubTopics", "-4");
+    config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
+    // check value
+    Args.setParam(config);
+    Assert.assertEquals(-2, Args.getInstance().getJsonRpcMaxBlockRange());
+    Assert.assertEquals(-4, Args.getInstance().getJsonRpcMaxSubTopics());
+
     Args.clearParam();
   }
 }
