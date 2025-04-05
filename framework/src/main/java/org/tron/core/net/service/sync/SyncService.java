@@ -134,7 +134,7 @@ public class SyncService {
       blockJustReceived.put(blockMessage, peer);
     }
     handleFlag = true;
-    if (peer.isIdle()) {
+    if (peer.isSyncIdle()) {
       if (peer.getRemainNum() > 0
           && peer.getSyncBlockToFetch().size() <= syncFetchBatchNum) {
         syncNext(peer);
@@ -226,7 +226,7 @@ public class SyncService {
   private void startFetchSyncBlock() {
     HashMap<PeerConnection, List<BlockId>> send = new HashMap<>();
     tronNetDelegate.getActivePeer().stream()
-        .filter(peer -> peer.isNeedSyncFromPeer() && peer.isIdle())
+        .filter(peer -> peer.isNeedSyncFromPeer() && peer.isSyncIdle())
         .filter(peer -> peer.isFetchAble())
         .forEach(peer -> {
           if (!send.containsKey(peer)) {
@@ -321,8 +321,9 @@ public class SyncService {
     }
 
     for (PeerConnection peer : tronNetDelegate.getActivePeer()) {
-      if (blockId.equals(peer.getSyncBlockToFetch().peek())) {
-        peer.getSyncBlockToFetch().pop();
+      BlockId bid = peer.getSyncBlockToFetch().peek();
+      if (blockId.equals(bid)) {
+        peer.getSyncBlockToFetch().remove(bid);
         if (flag) {
           peer.setBlockBothHave(blockId);
           if (peer.getSyncBlockToFetch().isEmpty() && peer.isFetchAble()) {

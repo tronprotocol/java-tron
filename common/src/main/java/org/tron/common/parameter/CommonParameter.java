@@ -68,12 +68,12 @@ public class CommonParameter {
   @Getter
   @Setter
   @Parameter(names = {"--min-time-ratio"}, description = "Maximum CPU tolerance when executing "
-      + "non-timeout transactions while synchronizing blocks. (default: 5.0)")
+      + "timeout transactions while synchronizing blocks. (default: 0.0)")
   public double minTimeRatio = 0.0;
   @Getter
   @Setter
   @Parameter(names = {"--max-time-ratio"}, description = "Maximum CPU tolerance when executing "
-      + "timeout transactions while synchronizing blocks. (default: 0.0)")
+      + "non-timeout transactions while synchronizing blocks. (default: 5.0)")
   public double maxTimeRatio = calcMaxTimeRatio();
   @Getter
   @Setter
@@ -331,6 +331,9 @@ public class CommonParameter {
   @Getter
   @Setter
   public boolean isOpenFullTcpDisconnect;
+  @Getter
+  @Setter
+  public int inactiveThreshold;
   @Getter
   @Setter
   public boolean nodeDetectEnable;
@@ -665,6 +668,22 @@ public class CommonParameter {
   @Getter
   @Setter
   public long allowOldRewardOpt;
+
+  @Getter
+  @Setter
+  public long allowEnergyAdjustment;
+
+  @Getter
+  @Setter
+  public long maxCreateAccountTxSize = 1000L;
+
+  @Getter
+  @Setter
+  public long allowStrictMath;
+
+  @Getter
+  @Setter
+  public long  consensusLogicOptimization;
 
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));

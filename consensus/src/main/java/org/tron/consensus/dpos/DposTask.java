@@ -91,6 +91,11 @@ public class DposTask {
     try {
       synchronized (dposService.getBlockHandle().getLock()) {
 
+        state = stateManager.getState();
+        if (!State.OK.equals(state)) {
+          return state;
+        }
+
         long slot = dposSlot.getSlot(System.currentTimeMillis() + 50);
         if (slot == 0) {
           return State.NOT_TIME_YET;

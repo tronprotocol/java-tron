@@ -101,6 +101,7 @@ public class ArgsTest {
     Assert.assertEquals(43, parameter.getNodeP2pVersion());
     Assert.assertEquals(54, parameter.getMaxUnsolidifiedBlocks());
     Assert.assertEquals(false, parameter.isUnsolidifiedBlockCheck());
+    Assert.assertEquals(1000, parameter.getMaxCreateAccountTxSize());
     //Assert.assertEquals(30, args.getSyncNodeCount());
 
     // gRPC network configs checking
@@ -114,6 +115,7 @@ public class ArgsTest {
     Assert.assertEquals(GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE, parameter.getMaxMessageSize());
     Assert.assertEquals(GrpcUtil.DEFAULT_MAX_HEADER_LIST_SIZE, parameter.getMaxHeaderListSize());
     Assert.assertEquals(1L, parameter.getAllowCreationOfContracts());
+    Assert.assertEquals(0, parameter.getConsensusLogicOptimization());
 
     Assert.assertEquals(privateKey,
         Args.getLocalWitnesses().getPrivateKey());

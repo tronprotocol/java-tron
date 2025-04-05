@@ -5,6 +5,7 @@ import static org.tron.core.Constant.DYNAMIC_ENERGY_FACTOR_DECIMAL;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.math.Maths;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.contract.SmartContractOuterClass;
 import org.tron.protos.contract.SmartContractOuterClass.ContractState;
@@ -77,12 +78,13 @@ public class ContractStateCapsule implements ProtoCapsule<ContractState> {
         dps.getCurrentCycleNumber(),
         dps.getDynamicEnergyThreshold(),
         dps.getDynamicEnergyIncreaseFactor(),
-        dps.getDynamicEnergyMaxFactor()
+        dps.getDynamicEnergyMaxFactor(),
+        dps.allowStrictMath()
     );
   }
 
   public boolean catchUpToCycle(
-      long newCycle, long threshold, long increaseFactor, long maxFactor
+      long newCycle, long threshold, long increaseFactor, long maxFactor, boolean useStrictMath
   ) {
     long lastCycle = getUpdateCycle();
 
@@ -119,9 +121,9 @@ public class ContractStateCapsule implements ProtoCapsule<ContractState> {
     }
 
     // Calc the decrease percent (decrease factor [75% ~ 100%])
-    double decreasePercent = Math.pow(
+    double decreasePercent = Maths.pow(
         1 - (double) increaseFactor / DYNAMIC_ENERGY_DECREASE_DIVISION / precisionFactor,
-        cycleCount
+        cycleCount, useStrictMath
     );
 
     // Decrease to this cycle

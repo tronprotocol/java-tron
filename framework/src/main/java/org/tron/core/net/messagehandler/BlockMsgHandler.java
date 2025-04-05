@@ -61,6 +61,18 @@ public class BlockMsgHandler implements TronMsgHandler {
     BlockMessage blockMessage = (BlockMessage) msg;
     BlockId blockId = blockMessage.getBlockId();
 
+    BlockCapsule blockCapsule = blockMessage.getBlockCapsule();
+    if (blockCapsule.getInstance().getSerializedSize() > maxBlockSize) {
+      logger.error("Receive bad block {} from peer {}, block size over limit",
+          blockMessage.getBlockId(), peer.getInetSocketAddress());
+      throw new P2pException(TypeEnum.BAD_MESSAGE, "block size over limit");
+    }
+    long gap = blockCapsule.getTimeStamp() - System.currentTimeMillis();
+    if (gap >= BLOCK_PRODUCED_INTERVAL) {
+      logger.error("Receive bad block {} from peer {}, block time error",
+          blockMessage.getBlockId(), peer.getInetSocketAddress());
+      throw new P2pException(TypeEnum.BAD_MESSAGE, "block time error");
+    }
     if (!fastForward && !peer.isRelayPeer()) {
       check(peer, blockMessage);
     }
@@ -109,18 +121,6 @@ public class BlockMsgHandler implements TronMsgHandler {
               msg.getBlockId(), peer.getInetSocketAddress());
       throw new P2pException(TypeEnum.BAD_MESSAGE, "no request");
     }
-    BlockCapsule blockCapsule = msg.getBlockCapsule();
-    if (blockCapsule.getInstance().getSerializedSize() > maxBlockSize) {
-      logger.error("Receive bad block {} from peer {}, block size over limit",
-              msg.getBlockId(), peer.getInetSocketAddress());
-      throw new P2pException(TypeEnum.BAD_MESSAGE, "block size over limit");
-    }
-    long gap = blockCapsule.getTimeStamp() - System.currentTimeMillis();
-    if (gap >= BLOCK_PRODUCED_INTERVAL) {
-      logger.error("Receive bad block {} from peer {}, block time error",
-              msg.getBlockId(), peer.getInetSocketAddress());
-      throw new P2pException(TypeEnum.BAD_MESSAGE, "block time error");
-    }
   }
 
   private void processBlock(PeerConnection peer, BlockCapsule block) throws P2pException {
@@ -150,11 +150,11 @@ public class BlockMsgHandler implements TronMsgHandler {
 
     try {
       tronNetDelegate.processBlock(block, false);
-
       witnessProductBlockService.validWitnessProductTwoBlock(block);
 
+      Item item = new Item(blockId, InventoryType.BLOCK);
       tronNetDelegate.getActivePeer().forEach(p -> {
-        if (p.getAdvInvReceive().getIfPresent(blockId) != null) {
+        if (p.getAdvInvReceive().getIfPresent(item) != null) {
           p.setBlockBothHave(blockId);
         }
       });
