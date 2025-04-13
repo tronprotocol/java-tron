@@ -152,7 +152,6 @@ public class SolidityNode {
       } catch (Exception e) {
         logger.error("Failed to process block {}.", new BlockCapsule(block), e);
         sleep(exceptionSleepTime);
-        block = getBlockByNum(blockNum);
       }
     }
   }
