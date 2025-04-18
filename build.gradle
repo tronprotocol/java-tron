@@ -30,10 +30,10 @@ subprojects {
     }
 
     repositories {
-        mavenLocal()
         mavenCentral()
-        maven { url 'https://repo.spring.io/plugins-release' }
         maven { url 'https://jitpack.io' }
+        maven { url 'https://dl.bintray.com/ethereum/maven/' }
+        mavenLocal()
     }
 
     dependencies {

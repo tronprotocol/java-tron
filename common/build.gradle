@@ -17,9 +17,9 @@ static def isWindows() {
 
 if (isWindows()) {
     ext {
-        leveldbGroup = "org.ethereum"
+        leveldbGroup = "org.fusesource.leveldbjni"
         leveldbName = "leveldbjni-all"
-        leveldbVersion = "1.18.3"
+        leveldbVersion = "1.8"
     }
 } else {
     ext {
