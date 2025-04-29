@@ -20,7 +20,7 @@ public class TxCacheDBTest extends BaseTest {
     String dbDirectory = "db_TransactionCache_test";
     String indexDirectory = "index_TransactionCache_test";
     Args.setParam(new String[]{"--output-directory", dbPath(), "--storage-db-directory",
-        dbDirectory, "--storage-index-directory", indexDirectory, "-w"}, Constant.TEST_CONF);
+        dbDirectory, "--storage-index-directory", indexDirectory}, Constant.TEST_CONF);
   }
 
   @Test

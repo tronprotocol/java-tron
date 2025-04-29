@@ -43,7 +43,7 @@
 ## Table of Contents
 
 - [What’s TRON?](#whats-tron)
-- [Building the Source Code](#building-the-source)
+- [Building the Source Code](#building-the-source-code)
 - [Running java-tron](#running-java-tron)
 - [Community](#community)
 - [Contribution](#contribution)
@@ -51,7 +51,7 @@
 - [Integrity Check](#integrity-check)
 - [License](#license)
 
-## What's TRON?
+# What's TRON?
 
 TRON is a project dedicated to building the infrastructure for a truly decentralized Internet.
 
@@ -61,7 +61,7 @@ TRON is a project dedicated to building the infrastructure for a truly decentral
 
 TRON enables large-scale development and engagement. With over 2000 transactions per second (TPS), high concurrency, low latency, and massive data transmission. It is ideal for building decentralized entertainment applications. Free features and incentive systems allow developers to create premium app experiences for users.
 
-# Building the source
+# Building the Source Code
 
 Building java-tron requires `git` package and 64-bit version of `Oracle JDK 1.8` to be installed, other JDK versions are not supported yet. Make sure you operate on `Linux` and `MacOS` operating systems.
 
@@ -91,18 +91,18 @@ Minimum:
 
 - CPU with 8 cores
 - 16GB RAM
-- 2TB free storage space to sync the Mainnet
+- 3TB free storage space to sync the Mainnet
 
 Recommended:
 
 - CPU with 16+ cores(32+ cores for a super representative)
 - 32GB+ RAM(64GB+ for a super representative)
-- High Performance SSD with at least 2.5TB free space
+- High Performance SSD with at least 4TB free space
 - 100+ MB/s download Internet service
 
 ## Running a full node for mainnet
 
-Full node has full historical data, it is the entry point into the TRON network , it can be used by other processes as a gateway into the TRON network via HTTP and GRPC endpoints. You can interact with the TRON network through full node：transfer assets, deploy contracts, interact with contracts and so on. `-c` parameter specifies a configuration file to run a full node:
+Full node has full historical data, it is the entry point into the TRON network, it can be used by other processes as a gateway into the TRON network via HTTP and GRPC endpoints. You can interact with the TRON network through full node：transfer assets, deploy contracts, interact with contracts and so on. `-c` parameter specifies a configuration file to run a full node:
 
 ```bash
 $ nohup java -Xms9G -Xmx9G -XX:ReservedCodeCacheSize=256m \

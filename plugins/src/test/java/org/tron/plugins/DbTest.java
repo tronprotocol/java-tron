@@ -86,4 +86,14 @@ public class DbTest {
       }
     }
   }
+
+  /**
+   * Generate a not-exist temporary directory path.
+   * @return temporary path
+   */
+  public String genarateTmpDir() {
+    File dir = Paths.get(tmpDir, UUID.randomUUID().toString()).toFile();
+    dir.deleteOnExit();
+    return dir.getPath();
+  }
 }

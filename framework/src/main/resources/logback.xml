@@ -4,6 +4,8 @@
 
   <!-- Be sure to flush latest logs on exit -->
   <shutdownHook class="org.tron.core.config.TronLogShutdownHook"/>
+  <conversionRule conversionWord="m"
+    converterClass="org.tron.common.log.layout.DesensitizedConverter"/>
 
   <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>

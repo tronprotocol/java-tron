@@ -85,9 +85,11 @@ public class SyncServiceTest {
 
       peer.setChannel(c1);
 
+      ReflectUtils.setFieldValue(peer, "tronState", TronState.SYNCING);
+
       service.startSync(peer);
 
-      ReflectUtils.setFieldValue(peer, "tronState", TronState.SYNCING);
+      ReflectUtils.setFieldValue(peer, "tronState", TronState.INIT);
 
       service.startSync(peer);
     } catch (Exception e) {
