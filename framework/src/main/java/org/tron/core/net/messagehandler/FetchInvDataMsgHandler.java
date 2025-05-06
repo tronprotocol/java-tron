@@ -55,6 +55,13 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
 
     FetchInvDataMessage fetchInvDataMsg = (FetchInvDataMessage) msg;
 
+    if (peer.isNeedSyncFromUs() && !peer.getP2pRateLimiter().tryAcquire(msg.getType().asByte())) {
+      // Discard messages that exceed the rate limit
+      logger.warn("{} message from peer {} exceeds the rate limit",
+          msg.getType(), peer.getInetSocketAddress());
+      return;
+    }
+
     check(peer, fetchInvDataMsg);
 
     InventoryType type = fetchInvDataMsg.getInventoryType();
@@ -155,6 +162,10 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
       if (!isAdv) {
         if (!peer.isNeedSyncFromUs()) {
           throw new P2pException(TypeEnum.BAD_MESSAGE, "no need sync");
+        }
+        if (fetchInvDataMsg.getHashList().size() > 100) {
+          throw new P2pException(TypeEnum.BAD_MESSAGE, "fetch too more blocks, size:"
+              + fetchInvDataMsg.getHashList().size());
         }
         for (Sha256Hash hash : fetchInvDataMsg.getHashList()) {
           long blockNum = new BlockId(hash).getNum();

@@ -31,6 +31,13 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
 
     SyncBlockChainMessage syncBlockChainMessage = (SyncBlockChainMessage) msg;
 
+    if (!peer.getP2pRateLimiter().tryAcquire(msg.getType().asByte())) {
+      // Discard messages that exceed the rate limit
+      logger.warn("{} message from peer {} exceeds the rate limit",
+          msg.getType(), peer.getInetSocketAddress());
+      return;
+    }
+
     if (!check(peer, syncBlockChainMessage)) {
       peer.disconnect(Protocol.ReasonCode.BAD_PROTOCOL);
       return;
