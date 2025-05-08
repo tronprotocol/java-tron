@@ -1,5 +1,8 @@
 package org.tron.core.vm.utils;
 
+import static org.tron.common.math.Maths.max;
+import static org.tron.common.math.Maths.min;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -132,7 +135,8 @@ public class FreezeV2Util {
 
     long now = repository.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
     int unfreezingV2Count = accountCapsule.getUnfreezingV2Count(now);
-    return Long.max(UnfreezeBalanceV2Actuator.getUNFREEZE_MAX_TIMES() - unfreezingV2Count, 0L);
+    return max(UnfreezeBalanceV2Actuator.getUNFREEZE_MAX_TIMES() - unfreezingV2Count, 0L,
+        VMConfig.disableJavaLangMath());
   }
 
   public static long queryDelegatableResource(byte[] address, long type, Repository repository) {
@@ -161,8 +165,8 @@ public class FreezeV2Util {
         return frozenV2Resource;
       }
 
-      long v2NetUsage = getV2NetUsage(accountCapsule, usage);
-      return Math.max(0L, frozenV2Resource - v2NetUsage);
+      long v2NetUsage = getV2NetUsage(accountCapsule, usage, VMConfig.disableJavaLangMath());
+      return max(0L, frozenV2Resource - v2NetUsage, VMConfig.disableJavaLangMath());
     }
 
     if (type == 1) {
@@ -181,8 +185,8 @@ public class FreezeV2Util {
         return frozenV2Resource;
       }
 
-      long v2EnergyUsage = getV2EnergyUsage(accountCapsule, usage);
-      return Math.max(0L, frozenV2Resource - v2EnergyUsage);
+      long v2EnergyUsage = getV2EnergyUsage(accountCapsule, usage, VMConfig.disableJavaLangMath());
+      return max(0L, frozenV2Resource - v2EnergyUsage, VMConfig.disableJavaLangMath());
     }
 
     return 0L;
@@ -218,7 +222,7 @@ public class FreezeV2Util {
       return Triple.of(0L, 0L, 0L);
     }
 
-    amount = Math.min(amount, resourceLimit);
+    amount = min(amount, resourceLimit, VMConfig.disableJavaLangMath());
     if (resourceLimit <= usagePair.getLeft()) {
       return Triple.of(0L, amount, usagePair.getRight());
     }
@@ -238,20 +242,22 @@ public class FreezeV2Util {
         .collect(Collectors.toList());
   }
 
-  public static long getV2NetUsage(AccountCapsule ownerCapsule, long netUsage) {
+  public static long getV2NetUsage(AccountCapsule ownerCapsule, long netUsage, boolean
+      disableJavaLangMath) {
     long v2NetUsage= netUsage
         - ownerCapsule.getFrozenBalance()
         - ownerCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
         - ownerCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth();
-    return Math.max(0, v2NetUsage);
+    return max(0, v2NetUsage, disableJavaLangMath);
   }
 
-  public static long getV2EnergyUsage(AccountCapsule ownerCapsule, long energyUsage) {
+  public static long getV2EnergyUsage(AccountCapsule ownerCapsule, long energyUsage, boolean
+      disableJavaLangMath) {
     long v2EnergyUsage= energyUsage
           - ownerCapsule.getEnergyFrozenBalance()
           - ownerCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()
           - ownerCapsule.getAcquiredDelegatedFrozenV2BalanceForEnergy();
-    return Math.max(0, v2EnergyUsage);
+    return max(0, v2EnergyUsage, disableJavaLangMath);
   }
 
 }

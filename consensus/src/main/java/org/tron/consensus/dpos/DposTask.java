@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 import org.tron.common.es.ExecutorServiceManager;
+import org.tron.common.exit.ExitManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
@@ -68,10 +69,13 @@ public class DposTask {
           Thread.currentThread().interrupt();
         } catch (Throwable throwable) {
           logger.error("Produce block error.", throwable);
+          ExitManager.findTronError(throwable).ifPresent(e -> {
+            throw e;
+          });
         }
       }
     };
-    produceExecutor.submit(runnable);
+    ExecutorServiceManager.submit(produceExecutor, runnable);
     logger.info("DPoS task started.");
   }
 

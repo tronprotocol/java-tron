@@ -380,6 +380,15 @@ public class ChainBaseManager {
     AssetUtil.setDynamicPropertiesStore(manager.getDynamicPropertiesStore());
   }
 
+  public long getNextBlockSlotTime() {
+    long slotCount = 1;
+    if (dynamicPropertiesStore.getStateFlag() == 1) {
+      slotCount += dynamicPropertiesStore.getMaintenanceSkipSlots();
+    }
+    return dynamicPropertiesStore.getLatestBlockHeaderTimestamp()
+        + slotCount * BLOCK_PRODUCED_INTERVAL;
+  }
+
   @PostConstruct
   private void init() {
     this.lowestBlockNum = this.blockIndexStore.getLimitNumber(1, 1).stream()
