@@ -39,23 +39,21 @@ public class LogBlockQuery {
     this.currentMaxBlockNum = currentMaxBlockNum;
 
     if (logFilterWrapper.getFromBlock() == Long.MAX_VALUE) {
-      minSection = (int) (currentMaxBlockNum / Bloom.BLOOM_BIT_SIZE);
       minBlock = currentMaxBlockNum;
     } else {
-      minSection = (int) (logFilterWrapper.getFromBlock() / Bloom.BLOOM_BIT_SIZE);
       minBlock = logFilterWrapper.getFromBlock();
     }
+    minSection = (int) (minBlock / Bloom.BLOOM_BIT_SIZE);
 
     if (logFilterWrapper.getToBlock() == Long.MAX_VALUE) {
-      maxSection = (int) (currentMaxBlockNum / Bloom.BLOOM_BIT_SIZE);
       maxBlock = currentMaxBlockNum;
     } else {
-      maxSection = (int) (logFilterWrapper.getToBlock() / Bloom.BLOOM_BIT_SIZE);
       maxBlock = logFilterWrapper.getToBlock();
       if (maxBlock > currentMaxBlockNum) {
         maxBlock = currentMaxBlockNum;
       }
     }
+    maxSection = (int) (maxBlock / Bloom.BLOOM_BIT_SIZE);
   }
 
   public List<Long> getPossibleBlock() throws ExecutionException, InterruptedException,
@@ -71,7 +69,7 @@ public class LogBlockQuery {
     BitSet blockNumBitSet = new BitSet(capacity);
     blockNumBitSet.set(0, capacity);
 
-    //works serial
+    // works serial
     for (int[][] conditionsIndex : allConditionsIndex) {
       BitSet bitSet = subMatch(conditionsIndex);
       blockNumBitSet.and(bitSet);
@@ -191,17 +189,17 @@ public class LogBlockQuery {
         Bloom bloom = Bloom.create(hash);
         BitSet bs = BitSet.valueOf(bloom.getData());
 
-        int[] bitIndex = new int[3]; //must same as the number of hash function in Bloom
-        int nonZeroCount = 0;
+        //number of nonZero positions may be equal or less than number(3) of hash function in Bloom
+        List<Integer> bitIndexList = new ArrayList<>();
         for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i + 1)) {
           // operate on index i here
           if (i == Integer.MAX_VALUE) {
             break; // or (i+1) would overflow
           }
-          bitIndex[nonZeroCount++] = i;
+          bitIndexList.add(i);
         }
 
-        bitIndexes[j] = bitIndex;
+        bitIndexes[j] = bitIndexList.stream().mapToInt(Integer::intValue).toArray();
       }
       allConditionsIndex[k] = bitIndexes;
     }

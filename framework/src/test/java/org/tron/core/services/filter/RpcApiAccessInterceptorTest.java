@@ -56,9 +56,13 @@ public class RpcApiAccessInterceptorTest {
   @BeforeClass
   public static void init() throws IOException {
     Args.setParam(new String[] {"-d", temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
+    Args.getInstance().setRpcEnable(true);
     Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setRpcSolidityEnable(true);
     Args.getInstance().setRpcOnSolidityPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setRpcPBFTEnable(true);
     Args.getInstance().setRpcOnPBFTPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setP2pDisable(true);
     String fullNode = String.format("%s:%d", Args.getInstance().getNodeLanIp(),
         Args.getInstance().getRpcPort());
     String solidityNode = String.format("%s:%d", Args.getInstance().getNodeLanIp(),
@@ -82,15 +86,7 @@ public class RpcApiAccessInterceptorTest {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
     blockingStubPBFT = WalletSolidityGrpc.newBlockingStub(channelPBFT);
 
-    RpcApiService rpcApiService = context.getBean(RpcApiService.class);
-    RpcApiServiceOnSolidity rpcApiServiceOnSolidity =
-        context.getBean(RpcApiServiceOnSolidity.class);
-    RpcApiServiceOnPBFT rpcApiServiceOnPBFT = context.getBean(RpcApiServiceOnPBFT.class);
-
     Application appTest = ApplicationFactory.create(context);
-    appTest.addService(rpcApiService);
-    appTest.addService(rpcApiServiceOnSolidity);
-    appTest.addService(rpcApiServiceOnPBFT);
     appTest.startup();
   }
 

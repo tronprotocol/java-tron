@@ -37,7 +37,6 @@ public class DefaultConfig {
   public CommonConfig commonConfig;
 
   public DefaultConfig() {
-    Thread.setDefaultUncaughtExceptionHandler((t, e) -> logger.error("Uncaught exception", e));
   }
 
   @Bean(destroyMethod = "")

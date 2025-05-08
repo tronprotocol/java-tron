@@ -16,6 +16,7 @@
 package org.tron.core.utils;
 
 import static org.tron.common.crypto.Hash.sha3omit12;
+import static org.tron.common.math.Maths.max;
 import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_COST_BASE_SIZE;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
@@ -39,7 +40,6 @@ import org.tron.api.GrpcAPI.TransactionSignWeight.Result;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
-import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.PermissionException;
@@ -52,7 +52,6 @@ import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
-import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.BalanceContract.DelegateResourceContract;
 
 @Slf4j(topic = "capsule")
@@ -270,7 +269,7 @@ public class TransactionUtil {
     DelegateResourceContract.Builder builder2 = DelegateResourceContract.newBuilder()
         .setBalance(TRX_PRECISION);
     long builder2Size = builder2.build().getSerializedSize();
-    long addSize = Math.max(builderSize - builder2Size, 0L);
+    long addSize = max(builderSize - builder2Size, 0L, dps.disableJavaLangMath());
 
     return DELEGATE_COST_BASE_SIZE + addSize;
   }

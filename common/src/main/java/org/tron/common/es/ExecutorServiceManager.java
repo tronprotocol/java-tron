@@ -4,10 +4,13 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.exit.ExitManager;
 
 @Slf4j(topic = "common-executor")
 public class ExecutorServiceManager {
@@ -79,5 +82,31 @@ public class ExecutorServiceManager {
       Thread.currentThread().interrupt();
     }
     logger.info("Pool {} shutdown done", name);
+  }
+
+  public static Future<?> submit(ExecutorService es, Runnable task) {
+    return es.submit(() -> {
+      try {
+        task.run();
+      } catch (Throwable e) {
+        ExitManager.findTronError(e).ifPresent(ExitManager::logAndExit);
+        throw e;
+      }
+    });
+  }
+
+  public static ScheduledFuture<?> scheduleWithFixedDelay(ScheduledExecutorService es,
+                                                   Runnable command,
+                                                   long initialDelay,
+                                                   long delay,
+                                                   TimeUnit unit) {
+    return es.scheduleWithFixedDelay(() -> {
+      try {
+        command.run();
+      } catch (Throwable e) {
+        ExitManager.findTronError(e).ifPresent(ExitManager::logAndExit);
+        throw e;
+      }
+    }, initialDelay, delay, unit);
   }
 }

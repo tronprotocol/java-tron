@@ -1,9 +1,7 @@
 package org.tron.core.services.interfaceOnPBFT;
 
 import io.grpc.netty.NettyServerBuilder;
-import io.grpc.protobuf.services.ProtoReflectionService;
 import io.grpc.stub.StreamObserver;
-import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.api.DatabaseGrpc.DatabaseImplBase;
@@ -36,14 +34,8 @@ import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
 import org.tron.common.application.RpcService;
-import org.tron.common.es.ExecutorServiceManager;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
-import org.tron.core.services.filter.LiteFnQueryGrpcInterceptor;
-import org.tron.core.services.ratelimiter.PrometheusInterceptor;
-import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
-import org.tron.core.services.ratelimiter.RpcApiAccessInterceptor;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
@@ -71,78 +63,16 @@ public class RpcApiServiceOnPBFT extends RpcService {
   @Autowired
   private RpcApiService rpcApiService;
 
-  @Autowired
-  private RateLimiterInterceptor rateLimiterInterceptor;
-
-  @Autowired
-  private LiteFnQueryGrpcInterceptor liteFnQueryGrpcInterceptor;
-
-  @Autowired
-  private RpcApiAccessInterceptor apiAccessInterceptor;
-
-  @Autowired
-  private PrometheusInterceptor prometheusInterceptor;
-
-  private final String executorName = "rpc-pbft-executor";
-
-  @Override
-  public void init() {
-  }
-
-  @Override
-  public void init(CommonParameter parameter) {
+  public RpcApiServiceOnPBFT() {
     port = Args.getInstance().getRpcOnPBFTPort();
+    enable = isFullNode() && Args.getInstance().isRpcPBFTEnable();
+    executorName = "rpc-pbft-executor";
   }
 
   @Override
-  public void start() {
-    try {
-      NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port)
-          .addService(new DatabaseApi());
-
-      CommonParameter args = CommonParameter.getInstance();
-
-      if (args.getRpcThreadNum() > 0) {
-        serverBuilder = serverBuilder
-            .executor(ExecutorServiceManager.newFixedThreadPool(
-                executorName, args.getRpcThreadNum()));
-      }
-
-      serverBuilder = serverBuilder.addService(new WalletPBFTApi());
-
-      // Set configs from config.conf or default value
-      serverBuilder
-          .maxConcurrentCallsPerConnection(args.getMaxConcurrentCallsPerConnection())
-          .flowControlWindow(args.getFlowControlWindow())
-          .maxConnectionIdle(args.getMaxConnectionIdleInMillis(), TimeUnit.MILLISECONDS)
-          .maxConnectionAge(args.getMaxConnectionAgeInMillis(), TimeUnit.MILLISECONDS)
-          .maxInboundMessageSize(args.getMaxMessageSize())
-          .maxHeaderListSize(args.getMaxHeaderListSize());
-
-      // add a ratelimiter interceptor
-      serverBuilder.intercept(rateLimiterInterceptor);
-
-      // add api access interceptor
-      serverBuilder.intercept(apiAccessInterceptor);
-
-      // add lite fullnode query interceptor
-      serverBuilder.intercept(liteFnQueryGrpcInterceptor);
-
-      // add prometheus interceptor
-      if (args.isMetricsPrometheusEnable()) {
-        serverBuilder.intercept(prometheusInterceptor);
-      }
-
-      if (args.isRpcReflectionServiceEnable()) {
-        serverBuilder.addService(ProtoReflectionService.newInstance());
-      }
-
-      apiServer = serverBuilder.build();
-      rateLimiterInterceptor.init(apiServer);
-      super.start();
-    } catch (Exception e) {
-      logger.debug(e.getMessage(), e);
-    }
+  protected void addService(NettyServerBuilder serverBuilder) {
+    serverBuilder.addService(new DatabaseApi());
+    serverBuilder.addService(new WalletPBFTApi());
   }
 
   /**

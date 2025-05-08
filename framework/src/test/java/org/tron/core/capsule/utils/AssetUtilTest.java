@@ -24,7 +24,7 @@ public class AssetUtilTest extends BaseTest {
 
 
   static {
-    Args.setParam(new String[] {"-d", dbPath(), "-w"}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-d", dbPath()}, Constant.TEST_CONF);
   }
 
   public static byte[] randomBytes(int length) {

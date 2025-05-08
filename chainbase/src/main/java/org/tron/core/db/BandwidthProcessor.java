@@ -99,6 +99,8 @@ public class BandwidthProcessor extends ResourceProcessor {
       TooBigTransactionResultException, TooBigTransactionException {
     List<Contract> contracts = trx.getInstance().getRawData().getContractList();
     long resultSizeWithMaxContractRet = trx.getResultSizeWithMaxContractRet();
+    boolean optimizeTxs = !trx.isInBlock() || chainBaseManager
+        .getDynamicPropertiesStore().allowConsensusLogicOptimization();
     if (!trx.isInBlock() && resultSizeWithMaxContractRet >
         Constant.MAX_RESULT_SIZE_IN_TX * contracts.size()) {
       throw new TooBigTransactionResultException(String.format(
@@ -135,7 +137,7 @@ public class BandwidthProcessor extends ResourceProcessor {
       }
       long now = chainBaseManager.getHeadSlot();
       if (contractCreateNewAccount(contract)) {
-        if (!trx.isInBlock()) {
+        if (optimizeTxs) {
           long maxCreateAccountTxSize = dynamicPropertiesStore.getMaxCreateAccountTxSize();
           int signatureCount = trx.getInstance().getSignatureCount();
           long createAccountBytesSize = trx.getInstance().toBuilder().clearRet()

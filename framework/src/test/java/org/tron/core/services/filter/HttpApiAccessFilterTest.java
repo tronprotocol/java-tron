@@ -14,10 +14,10 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.utils.PublicMethod;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.http.FullNodeHttpApiService;
@@ -39,21 +39,18 @@ public class HttpApiAccessFilterTest extends BaseTest {
   static {
     Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
     Args.getInstance().setFullNodeAllowShieldedTransactionArgs(false);
-  }
-
-  /**
-   * init dependencies.
-   */
-  @Before
-  public void init() {
-    appT.addService(httpApiService);
-    appT.addService(httpApiOnSolidityService);
-    appT.addService(httpApiOnPBFTService);
-    appT.startup();
+    Args.getInstance().setFullNodeHttpEnable(true);
+    Args.getInstance().setFullNodeHttpPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setPBFTHttpEnable(true);
+    Args.getInstance().setPBFTHttpPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setSolidityNodeHttpEnable(true);
+    Args.getInstance().setSolidityHttpPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setP2pDisable(true);
   }
 
   @Test
   public void testHttpFilter() {
+    appT.startup();
     List<String> disabledApiList = new ArrayList<>();
     disabledApiList.add("getaccount");
     disabledApiList.add("getnowblock");

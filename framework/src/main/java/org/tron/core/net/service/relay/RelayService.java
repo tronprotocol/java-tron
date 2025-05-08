@@ -18,6 +18,7 @@ import org.tron.common.backup.BackupManager.BackupStatusEnum;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.es.ExecutorServiceManager;
+import org.tron.common.log.layout.DesensitizedConverter;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
@@ -40,7 +41,7 @@ import org.tron.protos.Protocol.ReasonCode;
 @Component
 public class RelayService {
 
-  private static final int MAX_PEER_COUNT_PER_ADDRESS = 2;
+  private static final int MAX_PEER_COUNT_PER_ADDRESS = 5;
 
   @Autowired
   private ChainBaseManager chainBaseManager;
@@ -141,10 +142,11 @@ public class RelayService {
       return false;
     }
 
-    if (getPeerCountByAddress(msg.getAddress()) >= MAX_PEER_COUNT_PER_ADDRESS) {
-      logger.warn("HelloMessage from {}, the number of peers of {} exceeds 2.",
+    if (getPeerCountByAddress(msg.getAddress()) > MAX_PEER_COUNT_PER_ADDRESS) {
+      logger.warn("HelloMessage from {}, the number of peers of {} exceeds {}.",
           channel.getInetAddress(),
-          ByteArray.toHexString(msg.getAddress().toByteArray()));
+          ByteArray.toHexString(msg.getAddress().toByteArray()),
+          MAX_PEER_COUNT_PER_ADDRESS);
       return false;
     }
 
@@ -165,6 +167,8 @@ public class RelayService {
       }
       if (flag) {
         TronNetService.getP2pConfig().getTrustNodes().add(channel.getInetAddress());
+        DesensitizedConverter.addSensitive(channel.getInetAddress().toString().substring(1),
+            ByteArray.toHexString(msg.getAddress().toByteArray()));
       }
       return flag;
     } catch (Exception e) {

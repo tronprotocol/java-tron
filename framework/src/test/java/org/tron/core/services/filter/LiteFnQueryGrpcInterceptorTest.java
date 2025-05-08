@@ -55,9 +55,13 @@ public class LiteFnQueryGrpcInterceptorTest {
   @BeforeClass
   public static void init() throws IOException {
     Args.setParam(new String[]{"-d", temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
+    Args.getInstance().setRpcEnable(true);
     Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setRpcSolidityEnable(true);
     Args.getInstance().setRpcOnSolidityPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setRpcPBFTEnable(true);
     Args.getInstance().setRpcOnPBFTPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setP2pDisable(true);
     String fullnode = String.format("%s:%d", Args.getInstance().getNodeLanIp(),
             Args.getInstance().getRpcPort());
     String solidityNode = String.format("%s:%d", Args.getInstance().getNodeLanIp(),
@@ -78,14 +82,8 @@ public class LiteFnQueryGrpcInterceptorTest {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
     blockingStubpBFT = WalletSolidityGrpc.newBlockingStub(channelpBFT);
-    RpcApiService rpcApiService = context.getBean(RpcApiService.class);
-    RpcApiServiceOnSolidity rpcOnSolidity = context.getBean(RpcApiServiceOnSolidity.class);
-    RpcApiServiceOnPBFT rpcApiServiceOnPBFT = context.getBean(RpcApiServiceOnPBFT.class);
     chainBaseManager = context.getBean(ChainBaseManager.class);
     Application appTest = ApplicationFactory.create(context);
-    appTest.addService(rpcApiService);
-    appTest.addService(rpcOnSolidity);
-    appTest.addService(rpcApiServiceOnPBFT);
     appTest.startup();
   }
 

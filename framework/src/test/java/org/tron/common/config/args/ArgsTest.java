@@ -36,7 +36,7 @@ public class ArgsTest {
     Args.logConfig();
     Assert.assertEquals(Args.getInstance().getMaxTransactionPendingSize(), 2000);
     Assert.assertEquals(Args.getInstance().getPendingTransactionTimeout(), 60_000);
-    Assert.assertEquals(Args.getInstance().getMaxFastForwardNum(), 3);
+    Assert.assertEquals(Args.getInstance().getMaxFastForwardNum(), 4);
     Assert.assertEquals(Args.getInstance().getBlockCacheTimeout(), 60);
     Assert.assertEquals(Args.getInstance().isNodeDetectEnable(), false);
     Assert.assertFalse(Args.getInstance().isNodeEffectiveCheckEnable());

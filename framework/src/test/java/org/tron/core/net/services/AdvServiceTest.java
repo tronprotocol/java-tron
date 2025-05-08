@@ -74,10 +74,17 @@ public class AdvServiceTest {
 
     Item itemBlock = new Item(Sha256Hash.ZERO_HASH, InventoryType.BLOCK);
     flag = service.addInv(itemBlock);
+    Assert.assertFalse(flag);
+
+    BlockCapsule.BlockId blockId = new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 1000L);
+    itemBlock = new Item(blockId, InventoryType.BLOCK);
+    flag = service.addInv(itemBlock);
     Assert.assertTrue(flag);
     flag = service.addInv(itemBlock);
     Assert.assertFalse(flag);
 
+    blockId = new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 10000L);
+    itemBlock = new Item(blockId, InventoryType.BLOCK);
     service.addInvToCache(itemBlock);
     flag = service.addInv(itemBlock);
     Assert.assertFalse(flag);

@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -23,9 +24,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.ExpectedSystemExit;
 import org.junit.rules.TemporaryFolder;
 import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
@@ -34,6 +33,7 @@ import org.tron.common.utils.PropUtil;
 import org.tron.common.utils.PublicMethod;
 import org.tron.core.config.args.Args;
 import org.tron.core.db2.common.WrappedByteArray;
+import org.tron.core.exception.TronError;
 
 @Slf4j
 public class RocksDbDataSourceImplTest {
@@ -54,9 +54,6 @@ public class RocksDbDataSourceImplTest {
   private byte[] key4 = "00000004aa".getBytes();
   private byte[] key5 = "00000005aa".getBytes();
   private byte[] key6 = "00000006aa".getBytes();
-
-  @Rule
-  public final ExpectedSystemExit exit = ExpectedSystemExit.none();
 
   /**
    * Release resources.
@@ -392,12 +389,11 @@ public class RocksDbDataSourceImplTest {
 
   @Test
   public void initDbTest() {
-    exit.expectSystemExitWithStatus(1);
     makeExceptionDb("test_initDb");
     RocksDbDataSourceImpl dataSource = new RocksDbDataSourceImpl(
         Args.getInstance().getOutputDirectory(), "test_initDb");
-    dataSource.initDB();
-    dataSource.closeDB();
+    TronError thrown = assertThrows(TronError.class, dataSource::initDB);
+    assertEquals(TronError.ErrCode.ROCKSDB_INIT, thrown.getErrCode());
   }
 
   private void makeExceptionDb(String dbName) {

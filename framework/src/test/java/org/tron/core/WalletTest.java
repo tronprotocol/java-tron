@@ -142,7 +142,7 @@ public class WalletTest extends BaseTest {
   private static boolean init;
 
   static {
-    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-d", dbPath()}, Constant.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     RECEIVER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
   }
@@ -155,7 +155,8 @@ public class WalletTest extends BaseTest {
     }
     initTransaction();
     initBlock();
-    chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(5);
+    chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(BLOCK_NUM_FIVE);
+    chainBaseManager.getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(BLOCK_NUM_TWO);
     chainBaseManager.getDelegatedResourceStore().reset();
     init = true;
   }
@@ -169,6 +170,7 @@ public class WalletTest extends BaseTest {
         TRANSACTION_TIMESTAMP_ONE, BLOCK_NUM_ONE);
     addTransactionToStore(transaction1);
 
+    // solidified
     transaction2 = getBuildTransaction(
         getBuildTransferContract(ACCOUNT_ADDRESS_TWO, ACCOUNT_ADDRESS_THREE),
         TRANSACTION_TIMESTAMP_TWO, BLOCK_NUM_TWO);
@@ -287,6 +289,7 @@ public class WalletTest extends BaseTest {
 
   private void addBlockToStore(Block block) {
     BlockCapsule blockCapsule = new BlockCapsule(block);
+    chainBaseManager.getBlockIndexStore().put(blockCapsule.getBlockId());
     chainBaseManager.getBlockStore().put(blockCapsule.getBlockId().getBytes(), blockCapsule);
   }
 
@@ -1245,19 +1248,19 @@ public class WalletTest extends BaseTest {
    *    delegate_balance = 1000_000L; => 277
    *    delegate_balance = 1000_000_000L; => 279
    *    delegate_balance = 1000_000_000_000L => 280
-   *
+   * <p>
    *  We initialize account information as follows
    *    account balance = 1000_000_000_000L
    *    account frozen_balance = 1000_000_000L
-   *
+   * <p>
    *  then estimateConsumeBandWidthSize cost 279
-   *
+   * <p>
    *  so we have following result:
    *  TransactionUtil.estimateConsumeBandWidthSize(
    *    dynamicStore,ownerCapsule.getBalance())   ===> false
    *  TransactionUtil.estimateConsumeBandWidthSize(
    *    dynamicStore,ownerCapsule.getFrozenV2BalanceForBandwidth()) ===> true
-   *
+   * <p>
    *  This test case is used to verify the above conclusions
    */
   @Test
@@ -1282,5 +1285,13 @@ public class WalletTest extends BaseTest {
     chainBaseManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(DELEGATE_PERIOD / 3000);
   }
 
+  @Test
+  public void testGetSolidBlock() {
+    long blkNum = wallet.getSolidBlockNum();
+    Assert.assertEquals(BLOCK_NUM_TWO, blkNum);
+
+    Block block = wallet.getSolidBlock();
+    assertEquals(block2, block);
+  }
 }
 

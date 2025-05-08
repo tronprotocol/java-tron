@@ -18,6 +18,8 @@ package org.tron.common.utils.client.utils;
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
 
+import static org.tron.common.math.Maths.signum;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import java.math.BigInteger;
@@ -466,7 +468,7 @@ public class DataWord implements Comparable<DataWord> {
         data, 0, data.length,
         o.getData(), 0, o.getData().length);
     // Convert result into -1, 0 or 1 as is the convention
-    return (int) Math.signum(result);
+    return (int) signum(result, true);
   }
 
   /**

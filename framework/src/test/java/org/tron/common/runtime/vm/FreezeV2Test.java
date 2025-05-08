@@ -1,5 +1,6 @@
 package org.tron.common.runtime.vm;
 
+import static org.tron.common.math.Maths.min;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.core.config.Parameter.ChainConstant.WINDOW_SIZE_MS;
@@ -22,6 +23,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.TVMTestResult;
@@ -274,6 +276,7 @@ public class FreezeV2Test {
   private TVMTestResult triggerCancelAllUnfreezeV2(
       byte[] callerAddr, byte[] contractAddr, contractResult expectedResult, Consumer<byte[]> check)
       throws Exception {
+    CommonParameter.getInstance().saveCancelAllUnfreezeV2Details = true;
     return triggerContract(
         callerAddr, contractAddr, fee, expectedResult, check, "cancelAllUnfreezeBalanceV2()");
   }
@@ -856,7 +859,8 @@ public class FreezeV2Test {
         transferUsage = (long) (oldReceiver.getEnergyUsage()
             * ((double) (amount) / oldReceiver.getAllFrozenBalanceForEnergy()));
       }
-      transferUsage = Math.min(unDelegateMaxUsage, transferUsage);
+      transferUsage = min(unDelegateMaxUsage, transferUsage,
+          manager.getDynamicPropertiesStore().disableJavaLangMath());
     }
 
     DelegatedResourceStore delegatedResourceStore = manager.getDelegatedResourceStore();

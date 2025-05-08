@@ -15,6 +15,10 @@
 
 package org.tron.core.capsule.utils;
 
+import static org.tron.common.math.Maths.addExact;
+import static org.tron.common.math.Maths.floorDiv;
+import static org.tron.common.math.Maths.multiplyExact;
+
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -230,8 +234,8 @@ public class MarketUtils {
   public static int comparePrice(long price1SellQuantity, long price1BuyQuantity,
       long price2SellQuantity, long price2BuyQuantity) {
     try {
-      return Long.compare(Math.multiplyExact(price1BuyQuantity, price2SellQuantity),
-          Math.multiplyExact(price2BuyQuantity, price1SellQuantity));
+      return Long.compare(multiplyExact(price1BuyQuantity, price2SellQuantity, true),
+          multiplyExact(price2BuyQuantity, price1SellQuantity, true));
 
     } catch (ArithmeticException ex) {
       // do nothing here, because we will use BigInteger to compute again
@@ -244,25 +248,6 @@ public class MarketUtils {
 
     return price1BuyQuantityBI.multiply(price2SellQuantityBI)
         .compareTo(price2BuyQuantityBI.multiply(price1SellQuantityBI));
-  }
-
-  /**
-   * ex.
-   * for sellToken is A, buyToken is TRX.
-   * price_A_maker * sellQuantity_maker = Price_TRX * buyQuantity_maker
-   * ==> price_A_maker = Price_TRX * buyQuantity_maker/sellQuantity_maker
-   *
-   * price_A_maker_1 < price_A_maker_2
-   * ==> buyQuantity_maker_1/sellQuantity_maker_1 < buyQuantity_maker_2/sellQuantity_maker_2
-   * ==> buyQuantity_maker_1*sellQuantity_maker_2 < buyQuantity_maker_2 * sellQuantity_maker_1
-   */
-  public static int comparePrice(MarketPrice price1, MarketPrice price2) {
-    return comparePrice(price1.getSellTokenQuantity(), price1.getBuyTokenQuantity(),
-        price2.getSellTokenQuantity(), price2.getBuyTokenQuantity());
-  }
-
-  public static boolean isLowerPrice(MarketPrice price1, MarketPrice price2) {
-    return comparePrice(price1, price2) == -1;
   }
 
   /**
@@ -297,10 +282,10 @@ public class MarketUtils {
     }
   }
 
-  public static long multiplyAndDivide(long a, long b, long c) {
+  public static long multiplyAndDivide(long a, long b, long c, boolean disableMath) {
     try {
-      long tmp = Math.multiplyExact(a, b);
-      return Math.floorDiv(tmp, c);
+      long tmp = multiplyExact(a, b, disableMath);
+      return floorDiv(tmp, c, disableMath);
     } catch (ArithmeticException ex) {
       // do nothing here, because we will use BigInteger to compute again
     }
@@ -320,8 +305,9 @@ public class MarketUtils {
     byte[] sellTokenId = orderCapsule.getSellTokenId();
     long sellTokenQuantityRemain = orderCapsule.getSellTokenQuantityRemain();
     if (Arrays.equals(sellTokenId, "_".getBytes())) {
-      accountCapsule.setBalance(Math.addExact(
-          accountCapsule.getBalance(), sellTokenQuantityRemain));
+      accountCapsule.setBalance(addExact(
+          accountCapsule.getBalance(), sellTokenQuantityRemain,
+          dynamicStore.disableJavaLangMath()));
     } else {
       accountCapsule
           .addAssetAmountV2(sellTokenId, sellTokenQuantityRemain, dynamicStore, assetIssueStore);

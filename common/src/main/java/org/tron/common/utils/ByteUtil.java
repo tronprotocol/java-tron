@@ -18,6 +18,8 @@
 
 package org.tron.common.utils;
 
+import static org.tron.common.math.Maths.min;
+
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.UnsignedBytes;
 import java.io.ByteArrayOutputStream;
@@ -70,7 +72,7 @@ public class ByteUtil {
     byte[] bytes = new byte[numBytes];
     byte[] biBytes = b.toByteArray();
     int start = (biBytes.length == numBytes + 1) ? 1 : 0;
-    int length = Math.min(biBytes.length, numBytes);
+    int length = min(biBytes.length, numBytes, true);
     System.arraycopy(biBytes, start, bytes, numBytes - length, length);
     return bytes;
   }
@@ -346,7 +348,7 @@ public class ByteUtil {
     }
 
     byte[] bytes = new byte[len];
-    System.arraycopy(input, offset, bytes, 0, Math.min(input.length - offset, len));
+    System.arraycopy(input, offset, bytes, 0, min(input.length - offset, len, true));
     return bytes;
   }
 
@@ -477,40 +479,41 @@ public class ByteUtil {
 
   public static byte[] compress(byte[] data) throws EventBloomException {
     Deflater deflater = new Deflater();
-    deflater.setInput(data);
 
-    ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
+    try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length)) {
+      deflater.setInput(data);
+      deflater.finish();
+      byte[] buffer = new byte[1024];
 
-    deflater.finish();
-    byte[] buffer = new byte[1024];
-    while (!deflater.finished()) {
-      int count = deflater.deflate(buffer); // returns the generated code... index
-      outputStream.write(buffer, 0, count);
-    }
-    try {
-      outputStream.close();
+      while (!deflater.finished()) {
+        int count = deflater.deflate(buffer);  // returns the generated code... index
+        outputStream.write(buffer, 0, count);
+      }
+
+      return outputStream.toByteArray();
     } catch (IOException e) {
       throw new EventBloomException("compress data failed");
+    } finally {
+      deflater.end();
     }
-    byte[] output = outputStream.toByteArray();
-
-    return output;
   }
 
   public static byte[] decompress(byte[] data) throws IOException, DataFormatException {
     Inflater inflater = new Inflater();
-    inflater.setInput(data);
 
-    ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
-    byte[] buffer = new byte[1024];
-    while (!inflater.finished()) {
-      int count = inflater.inflate(buffer);
-      outputStream.write(buffer, 0, count);
+    try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length)) {
+      inflater.setInput(data);
+      byte[] buffer = new byte[1024];
+
+      while (!inflater.finished()) {
+        int count = inflater.inflate(buffer);
+        outputStream.write(buffer, 0, count);
+      }
+
+      return outputStream.toByteArray();
+    } finally {
+      inflater.end();
     }
-    outputStream.close();
-    byte[] output = outputStream.toByteArray();
-
-    return output;
   }
 
 }

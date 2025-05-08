@@ -15,8 +15,8 @@
 
 package org.tron.core.capsule;
 
-import static java.lang.Math.max;
-import static java.lang.Math.min;
+import static org.tron.common.math.Maths.max;
+import static org.tron.common.math.Maths.min;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -109,9 +109,9 @@ public class ContractCapsule implements ProtoCapsule<SmartContract> {
     return this.smartContract.getOriginAddress().toByteArray();
   }
 
-  public long getConsumeUserResourcePercent() {
+  public long getConsumeUserResourcePercent(boolean disableMath) {
     long percent = this.smartContract.getConsumeUserResourcePercent();
-    return max(0, min(percent, Constant.ONE_HUNDRED));
+    return max(0, min(percent, Constant.ONE_HUNDRED, disableMath), disableMath);
   }
 
   public long getOriginEnergyLimit() {

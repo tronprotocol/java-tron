@@ -1,5 +1,6 @@
 package org.tron.core.vm.nativecontract;
 
+import static org.tron.common.math.Maths.min;
 import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
 import static org.tron.core.actuator.ActuatorConstant.STORE_NOT_EXIST;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
@@ -21,6 +22,7 @@ import org.tron.core.db.EnergyProcessor;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.nativecontract.param.UnDelegateResourceParam;
 import org.tron.core.vm.repository.Repository;
 
@@ -115,7 +117,7 @@ public class UnDelegateResourceProcessor {
                 * dynamicStore.getTotalNetLimit() / repo.getTotalNetWeight());
             transferUsage = (long) (receiverCapsule.getNetUsage()
                 * ((double) (unDelegateBalance) / receiverCapsule.getAllFrozenBalanceForBandwidth()));
-            transferUsage = Math.min(unDelegateMaxUsage, transferUsage);
+            transferUsage = min(unDelegateMaxUsage, transferUsage, VMConfig.disableJavaLangMath());
 
             receiverCapsule.addAcquiredDelegatedFrozenV2BalanceForBandwidth(-unDelegateBalance);
           }
@@ -139,7 +141,7 @@ public class UnDelegateResourceProcessor {
                 * dynamicStore.getTotalEnergyCurrentLimit() / repo.getTotalEnergyWeight());
             transferUsage = (long) (receiverCapsule.getEnergyUsage()
                 * ((double) (unDelegateBalance) / receiverCapsule.getAllFrozenBalanceForEnergy()));
-            transferUsage = Math.min(unDelegateMaxUsage, transferUsage);
+            transferUsage = min(unDelegateMaxUsage, transferUsage, VMConfig.disableJavaLangMath());
 
             receiverCapsule.addAcquiredDelegatedFrozenV2BalanceForEnergy(-unDelegateBalance);
           }

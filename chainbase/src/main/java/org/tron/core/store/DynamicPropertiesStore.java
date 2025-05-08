@@ -1,5 +1,6 @@
 package org.tron.core.store;
 
+import static org.tron.common.math.Maths.max;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_PERIOD;
 
@@ -226,6 +227,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] CONSENSUS_LOGIC_OPTIMIZATION
       = "CONSENSUS_LOGIC_OPTIMIZATION".getBytes();
+
+  private static final byte[] ALLOW_TVM_CANCUN = "ALLOW_TVM_CANCUN".getBytes();
+
+  private static final byte[] ALLOW_TVM_BLOB = "ALLOW_TVM_BLOB".getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -2243,7 +2248,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     long totalNetWeight = getTotalNetWeight();
     totalNetWeight += amount;
     if (allowNewReward()) {
-      totalNetWeight = Math.max(0, totalNetWeight);
+      totalNetWeight = max(0, totalNetWeight, disableJavaLangMath());
     }
     saveTotalNetWeight(totalNetWeight);
   }
@@ -2256,7 +2261,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     long totalEnergyWeight = getTotalEnergyWeight();
     totalEnergyWeight += amount;
     if (allowNewReward()) {
-      totalEnergyWeight = Math.max(0, totalEnergyWeight);
+      totalEnergyWeight = max(0, totalEnergyWeight, disableJavaLangMath());
     }
     saveTotalEnergyWeight(totalEnergyWeight);
   }
@@ -2269,7 +2274,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     long totalWeight = getTotalTronPowerWeight();
     totalWeight += amount;
     if (allowNewReward()) {
-      totalWeight = Math.max(0, totalWeight);
+      totalWeight = max(0, totalWeight, disableJavaLangMath());
     }
     saveTotalTronPowerWeight(totalWeight);
   }
@@ -2894,6 +2899,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return getAllowStrictMath() == 1L;
   }
 
+  public boolean disableJavaLangMath() {
+    return this.allowConsensusLogicOptimization();
+  }
+
   public void saveConsensusLogicOptimization(long value) {
     this.put(CONSENSUS_LOGIC_OPTIMIZATION,
       new BytesCapsule(ByteArray.fromLong(value)));
@@ -2908,6 +2917,33 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public boolean allowConsensusLogicOptimization() {
     return getConsensusLogicOptimization() == 1L;
+  }
+
+  public boolean allowWitnessSortOptimization() {
+    return this.allowConsensusLogicOptimization();
+  }
+
+  public void saveAllowTvmCancun(long allowTvmCancun) {
+    this.put(ALLOW_TVM_CANCUN,
+        new BytesCapsule(ByteArray.fromLong(allowTvmCancun)));
+  }
+
+  public long getAllowTvmCancun() {
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_CANCUN))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(CommonParameter.getInstance().getAllowTvmCancun());
+  }
+
+  public void saveAllowTvmBlob(long allowTvmBlob) {
+    this.put(ALLOW_TVM_BLOB, new BytesCapsule(ByteArray.fromLong(allowTvmBlob)));
+  }
+
+  public long getAllowTvmBlob() {
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_BLOB))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(CommonParameter.getInstance().getAllowTvmBlob());
   }
 
   private static class DynamicResourceProperties {

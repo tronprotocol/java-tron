@@ -1,5 +1,7 @@
 package org.tron.common.utils.client.utils;
 
+import static org.tron.common.math.Maths.abs;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -238,6 +240,16 @@ public class AbiUtil {
     return pack(coders, items);
   }
 
+  public static String generateOccupationConstantPrivateKey() {
+    StringBuilder privateKey = new StringBuilder();
+    String baseKey = "1234567890";
+    for (int i = 0; i < 6; i++) {
+      privateKey.append(baseKey);
+    }
+    privateKey.append("1234");
+    return privateKey.toString();
+  }
+
   public static void main(String[] args) {
     String method = "test(string,int2,string)";
     String params = "asdf,3123,adf";
@@ -340,7 +352,7 @@ public class AbiUtil {
     @Override
     byte[] encode(String value) {
       long n = Long.valueOf(value);
-      DataWord word = new DataWord(Math.abs(n));
+      DataWord word = new DataWord(abs(n, true));
       if (n < 0) {
         word.negate();
       }

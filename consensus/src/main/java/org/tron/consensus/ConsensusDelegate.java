@@ -135,4 +135,8 @@ public class ConsensusDelegate {
   public boolean allowChangeDelegation() {
     return dynamicPropertiesStore.allowChangeDelegation();
   }
+
+  public void sortWitness(List<ByteString> list) {
+    witnessStore.sortWitness(list, dynamicPropertiesStore.allowWitnessSortOptimization());
+  }
 }
