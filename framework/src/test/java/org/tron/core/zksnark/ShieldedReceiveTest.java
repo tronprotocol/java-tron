@@ -1,5 +1,8 @@
 package org.tron.core.zksnark;
 
+import static org.tron.common.utils.PublicMethod.getHexAddressByPrivateKey;
+import static org.tron.common.utils.PublicMethod.getRandomPrivateKey;
+
 import com.google.common.primitives.Bytes;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -125,8 +128,8 @@ public class ShieldedReceiveTest extends BaseTest {
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath()}, "config-localtest.conf");
-    ADDRESS_ONE_PRIVATE_KEY = PublicMethod.getRandomPrivateKey();
-    FROM_ADDRESS = PublicMethod.getHexAddressByPrivateKey(ADDRESS_ONE_PRIVATE_KEY);;
+    ADDRESS_ONE_PRIVATE_KEY = getRandomPrivateKey();
+    FROM_ADDRESS = getHexAddressByPrivateKey(ADDRESS_ONE_PRIVATE_KEY);;
   }
 
   /**
@@ -2395,10 +2398,10 @@ public class ShieldedReceiveTest extends BaseTest {
    */
   @Test
   public void pushSameSkAndScanAndSpend() throws Exception {
-
-    byte[] privateKey = ByteArray
-        .fromHexString("f4df789d3210ac881cb900464dd30409453044d2777060a0c391cbdf4c6a4f57");
+    List<String> localPrivateKeys = Args.getLocalWitnesses().getPrivateKeys();
+    byte[] privateKey = ByteArray.fromHexString(localPrivateKeys.get(0));
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
+    assert ecKey != null;
     byte[] witnessAddress = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(witnessAddress));
     chainBaseManager.addWitness(ByteString.copyFrom(witnessAddress));
