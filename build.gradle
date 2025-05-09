@@ -69,7 +69,11 @@ subprojects {
     tasks.withType(AbstractArchiveTask) {
         preserveFileTimestamps = false
         reproducibleFileOrder = true
-        duplicatesStrategy = DuplicatesStrategy.INCLUDE // allow duplicates
+    }
+    tasks.withType(AbstractCopyTask).tap {
+        configureEach {
+            duplicatesStrategy = DuplicatesStrategy.INCLUDE // allow duplicates for jitpack package
+        }
     }
 }
 
