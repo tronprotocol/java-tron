@@ -21,6 +21,7 @@ public class BlockLogTriggerCapsule extends TriggerCapsule {
     block.getTransactions().forEach(trx ->
         blockLogTrigger.getTransactionList().add(trx.getTransactionId().toString())
     );
+    blockLogTrigger.setParentHash(block.getParentHash().toString());
   }
 
   public void setLatestSolidifiedBlockNumber(long latestSolidifiedBlockNumber) {
