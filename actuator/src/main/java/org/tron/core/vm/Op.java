@@ -120,6 +120,10 @@ public class Op {
   public static final int SELFBALANCE = 0x47;
   // (0x48) Get block's basefee
   public static final int BASEFEE = 0x48;
+  // (0x49) Get blob hash
+  public static final int BLOBHASH = 0x49;
+  // (0x4a) Get block's blob basefee
+  public static final int BLOBBASEFEE = 0x4a;
 
   /*  Memory, Storage and Flow Operations */
   // (0x50) Remove item from stack
@@ -145,6 +149,12 @@ public class Op {
   // (0x5a) Get the amount of available gas
   public static final int GAS = 0x5a;
   public static final int JUMPDEST = 0x5b;
+  // (0x5c) Load word from transient storage
+  public static final int TLOAD = 0x5c;
+  // (0x5d) Save word to transient storage
+  public static final int TSTORE = 0x5d;
+  // (0x5e) Copy word from memory
+  public static final int MCOPY = 0x5e;
 
   /*  Push Operations */
   // Place item on stack

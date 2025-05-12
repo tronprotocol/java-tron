@@ -124,21 +124,29 @@ public class Constant {
   public static final String NODE_DNS_AWS_REGION = "node.dns.awsRegion";
   public static final String NODE_DNS_AWS_HOST_ZONE_ID = "node.dns.awsHostZoneId";
 
+  // config for rpc
   public static final String NODE_RPC_PORT = "node.rpc.port";
   public static final String NODE_RPC_SOLIDITY_PORT = "node.rpc.solidityPort";
   public static final String NODE_RPC_PBFT_PORT = "node.rpc.PBFTPort";
+  public static final String NODE_RPC_ENABLE = "node.rpc.enable";
+  public static final String NODE_RPC_SOLIDITY_ENABLE = "node.rpc.solidityEnable";
+  public static final String NODE_RPC_PBFT_ENABLE = "node.rpc.PBFTEnable";
+  // config for http
   public static final String NODE_HTTP_FULLNODE_PORT = "node.http.fullNodePort";
   public static final String NODE_HTTP_SOLIDITY_PORT = "node.http.solidityPort";
   public static final String NODE_HTTP_FULLNODE_ENABLE = "node.http.fullNodeEnable";
   public static final String NODE_HTTP_SOLIDITY_ENABLE = "node.http.solidityEnable";
+  public static final String NODE_HTTP_PBFT_ENABLE = "node.http.PBFTEnable";
   public static final String NODE_HTTP_PBFT_PORT = "node.http.PBFTPort";
-
+  // config for jsonrpc
   public static final String NODE_JSONRPC_HTTP_FULLNODE_ENABLE = "node.jsonrpc.httpFullNodeEnable";
   public static final String NODE_JSONRPC_HTTP_FULLNODE_PORT = "node.jsonrpc.httpFullNodePort";
   public static final String NODE_JSONRPC_HTTP_SOLIDITY_ENABLE = "node.jsonrpc.httpSolidityEnable";
   public static final String NODE_JSONRPC_HTTP_SOLIDITY_PORT = "node.jsonrpc.httpSolidityPort";
   public static final String NODE_JSONRPC_HTTP_PBFT_ENABLE = "node.jsonrpc.httpPBFTEnable";
   public static final String NODE_JSONRPC_HTTP_PBFT_PORT = "node.jsonrpc.httpPBFTPort";
+  public static final String NODE_JSONRPC_MAX_BLOCK_RANGE = "node.jsonrpc.maxBlockRange";
+  public static final String NODE_JSONRPC_MAX_SUB_TOPICS = "node.jsonrpc.maxSubTopics";
 
   public static final String NODE_DISABLED_API_LIST = "node.disabledApi";
 
@@ -223,6 +231,7 @@ public class Constant {
   public static final String VM_SAVE_INTERNAL_TX = "vm.saveInternalTx";
 
   public static final String VM_SAVE_FEATURED_INTERNAL_TX = "vm.saveFeaturedInternalTx";
+  public static final String VM_SAVE_CANCEL_ALL_UNFREEZE_V2_DETAILS = "vm.saveCancelAllUnfreezeV2Details";
 
   // public static final String COMMITTEE_ALLOW_SHIELDED_TRANSACTION = "committee.allowShieldedTransaction";
 
@@ -280,6 +289,8 @@ public class Constant {
 
   public static final String NATIVE_QUEUE_SEND_LENGTH = "event.subscribe.native.sendqueuelength";
 
+  public static final String EVENT_SUBSCRIBE_VERSION = "event.subscribe.version";
+  public static final String EVENT_SUBSCRIBE_START_SYNC_BLOCK_NUM = "event.subscribe.startSyncBlockNum";
   public static final String EVENT_SUBSCRIBE_PATH = "event.subscribe.path";
   public static final String EVENT_SUBSCRIBE_SERVER = "event.subscribe.server";
   public static final String EVENT_SUBSCRIBE_DB_CONFIG = "event.subscribe.dbconfig";
@@ -390,4 +401,8 @@ public class Constant {
 
   public static final String COMMITTEE_CONSENSUS_LOGIC_OPTIMIZATION
       = "committee.consensusLogicOptimization";
+
+  public static final String COMMITTEE_ALLOW_TVM_CANCUN = "committee.allowTvmCancun";
+
+  public static final String COMMITTEE_ALLOW_TVM_BLOB = "committee.allowTvmBlob";
 }
