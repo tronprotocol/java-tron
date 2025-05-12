@@ -20,7 +20,7 @@
   </a>
 
   <a href="https://codecov.io/gh/tronprotocol/java-tron">
-    <img src="https://codecov.io/gh/tronprotocol/java-tron/branch/develop/graph/badge.svg" />
+    <img src="https://codecov.io/gh/tronprotocol/java-tron/test ci branch/develop/graph/badge.svg" />
   </a>
 
   <a href="https://github.com/tronprotocol/java-tron/issues">
