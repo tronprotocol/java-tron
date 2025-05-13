@@ -355,15 +355,49 @@ startService() {
     exit
   fi
 
-  nohup $JAVACMD -Xms$JVM_MS -Xmx$JVM_MX -XX:+UseConcMarkSweepGC -XX:+PrintGCDetails -Xloggc:./gc.log \
-    -XX:+PrintGCDateStamps -XX:+CMSParallelRemarkEnabled -XX:ReservedCodeCacheSize=256m -XX:+UseCodeCacheFlushing \
-    -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m \
-    -XX:MaxDirectMemorySize=$MAX_DIRECT_MEMORY -XX:+HeapDumpOnOutOfMemoryError \
-    -XX:NewRatio=2 -jar \
-    $JAR_NAME $FULL_START_OPT >>start.log 2>&1 &
+  runService
   checkPid
   echo "info: start java-tron with pid $pid on $HOSTNAME"
   echo "info: if you need to stop the service, execute: sh start.sh --stop"
+}
+
+runService() {
+  arch=$(uname -m)
+  java_version=$($JAVACMD -version 2>&1 |awk 'NR==1{ gsub(/"/,""); print $3 }')
+
+  if [[ "$arch" == "x86_64" || "$arch" == "amd64" ]]; then
+    echo "Architecture: x86_64/amd64"
+    if [[ $java_version =~ '1.8' ]]; then
+      echo 'Using required JDK8 for x86_64/amd64 architecture'
+      nohup $JAVACMD -Xms$JVM_MS -Xmx$JVM_MX -XX:+UseConcMarkSweepGC -XX:+PrintGCDetails -Xloggc:./gc.log \
+          -XX:+PrintGCDateStamps -XX:+CMSParallelRemarkEnabled -XX:ReservedCodeCacheSize=256m -XX:+UseCodeCacheFlushing \
+          -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m \
+          -XX:MaxDirectMemorySize=$MAX_DIRECT_MEMORY -XX:+HeapDumpOnOutOfMemoryError \
+          -XX:NewRatio=2 -jar \
+          $JAR_NAME $FULL_START_OPT >>start.log 2>&1 &
+    else
+      echo "Error: x86_64/amd64 architecture requires JDK8. Current version: $java_version"
+      exit 1
+    fi
+  elif [[ "$arch" == "aarch64" || "$arch" == "arm64" ]]; then
+    echo "Architecture: ARM64"
+    if [[ $java_version =~ '17' ]]; then
+      echo 'Using required JDK17 for ARM architecture'
+      nohup $JAVACMD -Xms$JVM_MS -Xmx$JVM_MX \
+            -XX:+UseZGC \
+            -Xlog:gc*:file=gc.log:time,uptime,level,tags:filecount=50,filesize=100M \
+            -XX:ReservedCodeCacheSize=256m -XX:+UseCodeCacheFlushing \
+            -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m \
+            -XX:MaxDirectMemorySize=$MAX_DIRECT_MEMORY -XX:+HeapDumpOnOutOfMemoryError \
+            -jar $JAR_NAME $FULL_START_OPT >>start.log 2>&1 &
+    else
+      echo "Error: ARM architecture requires JDK17. Current version: $java_version"
+      exit 1
+    fi
+  else
+    echo "Error: Unsupported architecture: $arch"
+    exit 1
+  fi
 }
 
 rebuildManifest() {

@@ -1,0 +1,8 @@
+-XX:+UseZGC
+-Xlog:gc*:file=gc.log:time,uptime,level,tags:filecount=50,filesize=100M
+-XX:ReservedCodeCacheSize=256m
+-XX:+UseCodeCacheFlushing
+-XX:MetaspaceSize=256m
+-XX:MaxMetaspaceSize=512m
+-XX:MaxDirectMemorySize=1g
+-XX:+HeapDumpOnOutOfMemoryError

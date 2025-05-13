@@ -9,9 +9,9 @@ import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.WriteOptions;
-import org.rocksdb.DirectComparator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.storage.OptionsPicker;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.storage.metric.DbStatService;
@@ -24,7 +24,7 @@ import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 
 @Slf4j(topic = "DB")
-public abstract class TronDatabase<T> implements ITronChainBase<T> {
+public abstract class TronDatabase<T> extends OptionsPicker implements ITronChainBase<T> {
 
   protected DbSourceInter<byte[]> dbSource;
   @Getter
@@ -51,8 +51,7 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
       String parentName = Paths.get(StorageUtils.getOutputDirectoryByDbName(dbName),
           CommonParameter.getInstance().getStorage().getDbDirectory()).toString();
       dbSource =
-          new RocksDbDataSourceImpl(parentName, dbName, CommonParameter.getInstance()
-              .getRocksDBCustomSettings(), getDirectComparator());
+          new RocksDbDataSourceImpl(parentName, dbName, getOptionsByDbNameForRocksDB(dbName));
     }
 
     dbSource.initDB();
@@ -64,14 +63,6 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
   }
 
   protected TronDatabase() {
-  }
-
-  protected org.iq80.leveldb.Options getOptionsByDbNameForLevelDB(String dbName) {
-    return StorageUtils.getOptionsByDbName(dbName);
-  }
-
-  protected DirectComparator getDirectComparator() {
-    return null;
   }
 
   public DbSourceInter<byte[]> getDbSource() {

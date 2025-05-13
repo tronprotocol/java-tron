@@ -1,13 +1,12 @@
-package org.tron.plugins.comparator;
+package org.tron.common.utils;
 
 import org.rocksdb.ComparatorOptions;
 import org.rocksdb.DirectSlice;
 import org.rocksdb.util.DirectBytewiseComparator;
-import org.tron.plugins.utils.MarketUtils;
 
-public  class MarketOrderPriceComparatorForRockDB extends DirectBytewiseComparator {
+public class MarketOrderPriceComparatorForRocksDB extends DirectBytewiseComparator {
 
-  public MarketOrderPriceComparatorForRockDB(final ComparatorOptions copt) {
+  public MarketOrderPriceComparatorForRocksDB(final ComparatorOptions copt) {
     super(copt);
   }
 
@@ -18,7 +17,7 @@ public  class MarketOrderPriceComparatorForRockDB extends DirectBytewiseComparat
 
   @Override
   public int compare(final DirectSlice a, final DirectSlice b) {
-    return MarketUtils.comparePriceKey(convertDataToBytes(a), convertDataToBytes(b));
+    return MarketComparator.comparePriceKey(convertDataToBytes(a), convertDataToBytes(b));
   }
 
   /**
