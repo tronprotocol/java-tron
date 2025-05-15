@@ -13,6 +13,7 @@ import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.Parameter;
+import org.tron.core.net.P2pRateLimiter;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.adv.BlockMessage;
 import org.tron.core.net.message.adv.FetchInvDataMessage;
@@ -20,6 +21,8 @@ import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.service.adv.AdvService;
 import org.tron.protos.Protocol;
+
+import static org.tron.core.net.message.MessageTypes.FETCH_INV_DATA;
 
 public class FetchInvDataMsgHandlerTest {
 
@@ -91,6 +94,37 @@ public class FetchInvDataMsgHandlerTest {
       fetchInvDataMsgHandler.processMessage(peer, msg);
     } catch (Exception e) {
       Assert.assertEquals(e.getMessage(), "minBlockNum: 16000, blockNum: 10000");
+    }
+  }
+
+  @Test
+  public void testRateLimiter() {
+    BlockCapsule.BlockId blockId = new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 10000L);
+    List<Sha256Hash> blockIds = new LinkedList<>();
+    for (int i = 0; i <= 100; i++) {
+      blockIds.add(blockId);
+    }
+    FetchInvDataMessage msg =
+        new FetchInvDataMessage(blockIds, Protocol.Inventory.InventoryType.BLOCK);
+    PeerConnection peer = Mockito.mock(PeerConnection.class);
+    Mockito.when(peer.isNeedSyncFromUs()).thenReturn(true);
+    Cache<Item, Long> advInvSpread = CacheBuilder.newBuilder().maximumSize(100)
+        .expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
+    Mockito.when(peer.getAdvInvSpread()).thenReturn(advInvSpread);
+    P2pRateLimiter p2pRateLimiter = new P2pRateLimiter();
+    p2pRateLimiter.register(FETCH_INV_DATA.asByte(), 1);
+    Mockito.when(peer.getP2pRateLimiter()).thenReturn(p2pRateLimiter);
+    FetchInvDataMsgHandler fetchInvDataMsgHandler = new FetchInvDataMsgHandler();
+
+    try {
+      fetchInvDataMsgHandler.processMessage(peer, msg);
+    } catch (Exception e) {
+      Assert.assertEquals("fetch too more blocks, size:101", e.getMessage());
+    }
+    try {
+      fetchInvDataMsgHandler.processMessage(peer, msg);
+    } catch (Exception e) {
+      Assert.assertTrue(e.getMessage().endsWith("rate limit"));
     }
   }
 }

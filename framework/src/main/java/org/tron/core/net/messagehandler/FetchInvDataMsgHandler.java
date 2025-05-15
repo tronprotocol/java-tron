@@ -41,6 +41,7 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
       .maximumSize(1000).expireAfterWrite(1, TimeUnit.HOURS).build();
 
   private static final int MAX_SIZE = 1_000_000;
+  private static final int MAX_FETCH_SIZE = 100;
   @Autowired
   private TronNetDelegate tronNetDelegate;
   @Autowired
@@ -163,7 +164,7 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
         if (!peer.isNeedSyncFromUs()) {
           throw new P2pException(TypeEnum.BAD_MESSAGE, "no need sync");
         }
-        if (fetchInvDataMsg.getHashList().size() > 100) {
+        if (fetchInvDataMsg.getHashList().size() > MAX_FETCH_SIZE) {
           throw new P2pException(TypeEnum.BAD_MESSAGE, "fetch too more blocks, size:"
               + fetchInvDataMsg.getHashList().size());
         }
