@@ -15,6 +15,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessageV3;
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -778,6 +779,27 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     }
 
     return new TransactionReceipt(block, transactionInfo, wallet);
+  }
+
+  @Override
+  public List<TransactionReceipt> getBlockReceipts(String blockNumOrTag)
+      throws JsonRpcInvalidParamsException, JsonRpcInternalException {
+    BlockResult blockResult = ethGetBlockByNumber(blockNumOrTag, true);
+    List<TransactionReceipt> transactionReceiptList = new ArrayList<>();
+
+    for (Object o: blockResult.getTransactions()){
+      if (o instanceof  TransactionResult) {
+        String txHash = ((TransactionResult) o).getHash();
+
+        TransactionReceipt transactionReceipt = getTransactionReceipt(txHash);
+        if (transactionReceipt == null) {
+          throw new JsonRpcInternalException("transactionReceipt is null, txHash is " + txHash);
+        }
+        transactionReceiptList.add(transactionReceipt);
+      }
+    }
+
+    return transactionReceiptList;
   }
 
   @Override

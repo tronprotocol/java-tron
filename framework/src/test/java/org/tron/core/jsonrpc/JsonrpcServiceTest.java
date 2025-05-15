@@ -1,6 +1,7 @@
 package org.tron.core.jsonrpc;
 
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getByJsonBlockId;
+import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.TAG_PENDING_SUPPORT_ERROR;
 
 import com.alibaba.fastjson.JSON;
 import com.google.gson.JsonArray;
@@ -33,8 +34,11 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.TransactionInfoCapsule;
+import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.JsonRpcInternalException;
 import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.core.services.NodeInfoService;
 import org.tron.core.services.interfaceJsonRpcOnPBFT.JsonRpcServiceOnPBFT;
@@ -44,6 +48,7 @@ import org.tron.core.services.jsonrpc.TronJsonRpc.FilterRequest;
 import org.tron.core.services.jsonrpc.TronJsonRpcImpl;
 import org.tron.core.services.jsonrpc.filters.LogFilterWrapper;
 import org.tron.core.services.jsonrpc.types.BlockResult;
+import org.tron.core.services.jsonrpc.types.TransactionReceipt;
 import org.tron.core.services.jsonrpc.types.TransactionResult;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -154,6 +159,43 @@ public class JsonrpcServiceTest extends BaseTest {
         .put(transactionCapsule2.getTransactionId().getBytes(), transactionCapsule2);
     dbManager.getTransactionStore()
         .put(transactionCapsule3.getTransactionId().getBytes(), transactionCapsule3);
+
+    dbManager.getTransactionStore()
+        .put(transactionCapsule3.getTransactionId().getBytes(), transactionCapsule3);
+
+    blockCapsule0.getTransactions().forEach(tx -> {
+      TransactionCapsule transactionCapsule = new TransactionCapsule(tx.getInstance());
+      transactionCapsule.setBlockNum(blockCapsule0.getNum());
+      dbManager.getTransactionStore()
+          .put(transactionCapsule.getTransactionId().getBytes(), transactionCapsule);
+    });
+
+    TransactionRetCapsule transactionRetCapsule0 = new TransactionRetCapsule();
+    blockCapsule0.getTransactions().forEach(tx -> {
+      TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
+      transactionInfoCapsule.setId(tx.getTransactionId().getBytes());
+      transactionInfoCapsule.setBlockNumber(blockCapsule0.getNum());
+      transactionRetCapsule0.addTransactionInfo(transactionInfoCapsule.getInstance());
+    });
+    dbManager.getTransactionRetStore().put(ByteArray.fromLong(blockCapsule0.getNum()), transactionRetCapsule0);
+
+    TransactionRetCapsule transactionRetCapsule1 = new TransactionRetCapsule();
+    blockCapsule1.getTransactions().forEach(tx -> {
+      TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
+      transactionInfoCapsule.setId(tx.getTransactionId().getBytes());
+      transactionInfoCapsule.setBlockNumber(blockCapsule1.getNum());
+      transactionRetCapsule1.addTransactionInfo(transactionInfoCapsule.getInstance());
+    });
+    dbManager.getTransactionRetStore().put(ByteArray.fromLong(blockCapsule1.getNum()), transactionRetCapsule1);
+
+    TransactionRetCapsule transactionRetCapsule2 = new TransactionRetCapsule();
+    blockCapsule2.getTransactions().forEach(tx -> {
+      TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
+      transactionInfoCapsule.setId(tx.getTransactionId().getBytes());
+      transactionInfoCapsule.setBlockNumber(blockCapsule2.getNum());
+      transactionRetCapsule2.addTransactionInfo(transactionInfoCapsule.getInstance());
+    });
+    dbManager.getTransactionRetStore().put(ByteArray.fromLong(blockCapsule2.getNum()), transactionRetCapsule2);
 
     tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet, dbManager);
   }
@@ -967,5 +1009,54 @@ public class JsonrpcServiceTest extends BaseTest {
     } catch (Exception e) {
       Assert.assertEquals("invalid block range params", e.getMessage());
     }
+  }
+
+  @Test
+  public void testGetBlockReceipts() {
+
+    try {
+      List<TransactionReceipt> transactionReceiptList = tronJsonRpc.getBlockReceipts("0x2710");
+      Assert.assertFalse(transactionReceiptList.isEmpty());
+    } catch (JsonRpcInvalidParamsException | JsonRpcInternalException e) {
+      throw new RuntimeException(e);
+    }
+
+    try {
+      List<TransactionReceipt> transactionReceiptList = tronJsonRpc.getBlockReceipts("earliest");
+      System.out.println(transactionReceiptList);
+      Assert.assertFalse(transactionReceiptList.isEmpty());
+    } catch (JsonRpcInvalidParamsException | JsonRpcInternalException e) {
+      throw new RuntimeException(e);
+    }
+
+    try {
+      List<TransactionReceipt> transactionReceiptList = tronJsonRpc.getBlockReceipts("latest");
+      System.out.println(transactionReceiptList);
+      Assert.assertFalse(transactionReceiptList.isEmpty());
+    } catch (JsonRpcInvalidParamsException | JsonRpcInternalException e) {
+      throw new RuntimeException(e);
+    }
+
+    try {
+      List<TransactionReceipt> transactionReceiptList = tronJsonRpc.getBlockReceipts("finalized");
+      Assert.assertFalse(transactionReceiptList.isEmpty());
+    } catch (JsonRpcInvalidParamsException | JsonRpcInternalException e) {
+      throw new RuntimeException(e);
+    }
+
+    try {
+      tronJsonRpc.getBlockReceipts("pending");
+      Assert.fail();
+    } catch (Exception e) {
+      Assert.assertEquals(TAG_PENDING_SUPPORT_ERROR, e.getMessage());
+    }
+
+    try {
+      tronJsonRpc.getBlockReceipts("test");
+      Assert.fail();
+    } catch (Exception e) {
+      Assert.assertEquals("invalid block number", e.getMessage());
+    }
+
   }
 }
