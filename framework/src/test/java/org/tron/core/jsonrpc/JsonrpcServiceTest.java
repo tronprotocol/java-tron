@@ -1023,7 +1023,6 @@ public class JsonrpcServiceTest extends BaseTest {
 
     try {
       List<TransactionReceipt> transactionReceiptList = tronJsonRpc.getBlockReceipts("earliest");
-      System.out.println(transactionReceiptList);
       Assert.assertFalse(transactionReceiptList.isEmpty());
     } catch (JsonRpcInvalidParamsException | JsonRpcInternalException e) {
       throw new RuntimeException(e);
@@ -1031,7 +1030,6 @@ public class JsonrpcServiceTest extends BaseTest {
 
     try {
       List<TransactionReceipt> transactionReceiptList = tronJsonRpc.getBlockReceipts("latest");
-      System.out.println(transactionReceiptList);
       Assert.assertFalse(transactionReceiptList.isEmpty());
     } catch (JsonRpcInvalidParamsException | JsonRpcInternalException e) {
       throw new RuntimeException(e);
@@ -1056,6 +1054,13 @@ public class JsonrpcServiceTest extends BaseTest {
       Assert.fail();
     } catch (Exception e) {
       Assert.assertEquals("invalid block number", e.getMessage());
+    }
+
+    try {
+      List<TransactionReceipt> transactionReceiptList = tronJsonRpc.getBlockReceipts("0x2");
+      Assert.assertNull(transactionReceiptList);
+    } catch (JsonRpcInvalidParamsException | JsonRpcInternalException e) {
+      throw new RuntimeException(e);
     }
 
   }

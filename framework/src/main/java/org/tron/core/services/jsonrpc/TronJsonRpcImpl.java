@@ -784,19 +784,23 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   @Override
   public List<TransactionReceipt> getBlockReceipts(String blockNumOrTag)
       throws JsonRpcInvalidParamsException, JsonRpcInternalException {
-    BlockResult blockResult = ethGetBlockByNumber(blockNumOrTag, true);
+    Block block = wallet.getByJsonBlockId(blockNumOrTag);
+    if (block == null) {
+      return null;
+    }
     List<TransactionReceipt> transactionReceiptList = new ArrayList<>();
 
-    for (Object o: blockResult.getTransactions()){
-      if (o instanceof  TransactionResult) {
-        String txHash = ((TransactionResult) o).getHash();
+    for (Transaction transaction: block.getTransactionsList()){
+      TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
+      byte[] txId = transactionCapsule.getTransactionId().getBytes();
+      String txHash = ByteArray.toJsonHex(txId);
 
         TransactionReceipt transactionReceipt = getTransactionReceipt(txHash);
         if (transactionReceipt == null) {
           throw new JsonRpcInternalException("transactionReceipt is null, txHash is " + txHash);
         }
         transactionReceiptList.add(transactionReceipt);
-      }
+
     }
 
     return transactionReceiptList;
