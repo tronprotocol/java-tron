@@ -483,8 +483,13 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
         errMsg += ": " + msg;
       }
 
-      throw new JsonRpcInternalException(errMsg,
-          new ContractExeException("0x" + Hex.toHexString(resData)));
+      if (resData.length > 0) {
+        throw new JsonRpcInternalException(errMsg,
+            new ContractExeException("0x" + Hex.toHexString(resData)));
+      } else {
+        throw new JsonRpcInternalException(errMsg);
+      }
+
     }
 
     return result;
