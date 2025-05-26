@@ -795,11 +795,11 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       byte[] txId = transactionCapsule.getTransactionId().getBytes();
       String txHash = ByteArray.toJsonHex(txId);
 
-        TransactionReceipt transactionReceipt = getTransactionReceipt(txHash);
-        if (transactionReceipt == null) {
-          throw new JsonRpcInternalException("transactionReceipt is null, txHash is " + txHash);
-        }
-        transactionReceiptList.add(transactionReceipt);
+      TransactionReceipt transactionReceipt = getTransactionReceipt(txHash);
+      if (transactionReceipt == null) {
+        throw new JsonRpcInternalException("transactionReceipt is null, txHash is " + txHash);
+      }
+      transactionReceiptList.add(transactionReceipt);
 
     }
 
