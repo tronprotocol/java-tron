@@ -11,6 +11,7 @@ import com.googlecode.jsonrpc4j.JsonRpcErrors;
 import com.googlecode.jsonrpc4j.ReflectionUtil;
 import java.lang.reflect.Method;
 import java.util.List;
+import org.tron.core.exception.TronException;
 
 /**
  * {@link ErrorResolver} that uses annotations.
@@ -30,14 +31,14 @@ public enum TronErrorResolver implements ErrorResolver {
     }
 
     String message = hasErrorMessage(resolver) ? resolver.message() : thrownException.getMessage();
-    String causeMessage
-        = thrownException.getCause() != null && thrownException.getCause().getMessage() != null
-        ? thrownException.getCause().getMessage()
-        : "{}";
-    Object data =
-        hasErrorData(resolver)
-            ? resolver.data()
-            : causeMessage;
+    Object data = hasErrorData(resolver)
+        ? resolver.data()
+        : new ErrorData(resolver.exception().getName(), message);
+
+    if (thrownException instanceof TronException
+        && ((TronException)thrownException).getData() != null) {
+      data = ((TronException)thrownException).getData();
+    }
     return new JsonError(resolver.code(), message, data);
   }
 

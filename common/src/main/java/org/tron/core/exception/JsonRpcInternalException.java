@@ -13,4 +13,8 @@ public class JsonRpcInternalException extends TronException {
   public JsonRpcInternalException(String message, Throwable cause) {
     super(message, cause);
   }
+
+  public JsonRpcInternalException(String message, Object data) {
+    super(message, data);
+  }
 }
