@@ -28,8 +28,9 @@ public class GetBrokerageServlet extends RateLimiterServlet {
       response.getWriter().println("{\"brokerage\": " + value + "}");
     } catch (DecoderException | IllegalArgumentException e) {
       try {
+        logger.debug("DecoderException or IllegalArgumentException: {}", e.getMessage());
         response.getWriter()
-            .println("{\"Error\": " + "\"INVALID address, " + e.getMessage() + "\"}");
+            .println("{\"Error\": " + "\"INVALID address\"}");
       } catch (IOException ioe) {
         logger.debug("IOException: {}", ioe.getMessage());
       }
