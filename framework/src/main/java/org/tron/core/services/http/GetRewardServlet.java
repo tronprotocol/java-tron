@@ -27,15 +27,17 @@ public class GetRewardServlet extends RateLimiterServlet {
       response.getWriter().println("{\"reward\": " + value + "}");
     } catch (DecoderException | IllegalArgumentException e) {
       try {
+        logger.warn("DecoderException or IllegalArgumentException occurred: {}", e.getMessage());
         response.getWriter()
-            .println("{\"Error\": " + "\"INVALID address, " + e.getMessage() + "\"}");
+            .println("{\"Error\": \"INVALID address\"}");
       } catch (IOException ioe) {
         logger.debug("IOException: {}", ioe.getMessage());
       }
     } catch (Exception e) {
       logger.error("", e);
       try {
-        response.getWriter().println(Util.printErrorMsg(e));
+        response.getWriter().println("{\"Error\": \"An unexpected error occurred\"}");
+        logger.error("Unexpected exception occurred: {}", e.getMessage(), e);
       } catch (IOException ioe) {
         logger.debug("IOException: {}", ioe.getMessage());
       }
