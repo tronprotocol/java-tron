@@ -151,7 +151,7 @@ public class RLP {
 
   static short decodeShort(byte[] data, int index) {
 
-    short value = 0;
+    int value = 0;
 
     if (data[index] == 0x00) {
       throw new RuntimeException(NOT_NUM);
@@ -174,7 +174,7 @@ public class RLP {
       // to decode properly into a short.
       throw new RuntimeException(WRONG_DECODE_ATTEMPT);
     }
-    return value;
+    return (short) value;
   }
 
   public static long decodeLong(byte[] data, int index) {
