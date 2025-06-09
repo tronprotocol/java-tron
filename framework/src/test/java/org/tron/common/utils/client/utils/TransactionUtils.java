@@ -125,7 +125,7 @@ public class TransactionUtils {
     byte[] s = sign.substring(32, 64).toByteArray();
     byte v = sign.byteAt(64);
     if (v < 27) {
-      v += 27; //revId -> v
+      v = (byte) (v + 27); //revId -> v
     }
     ECDSASignature signature = ECDSASignature.fromComponents(r, s, v);
     return signature.toBase64();
