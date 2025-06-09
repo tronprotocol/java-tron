@@ -364,7 +364,7 @@ public class PrecompiledContracts {
       s = Arrays.copyOfRange(sign, 32, 64);
       v = sign[64];
       if (v < 27) {
-        v += 27;
+        v = (byte) (v + 27);
       }
 
       SignatureInterface signature = SignUtils.fromComponents(r, s, v,
