@@ -129,8 +129,8 @@ public class LogBlockQuery {
    * and BitSet operations by handling duplicate bit indexes and skipping invalid groups.
    *
    * @param bitIndexes A 2D array where:
-   *                   - First dimension represents different groups(OR)
-   *                   - Second dimension contains bit indexes within each group(AND)
+   *                   - First dimension represents different topic/address (OR)
+   *                   - Second dimension contains bit indexes within each topic/address (AND)
    *                   Example: [[1,2,3], [4,5,6]] means (1 AND 2 AND 3) OR (4 AND 5 AND 6)
    * @param section The section number in the bloom filter store to query
    * @return A BitSet representing the matching blocks in this section
@@ -164,31 +164,17 @@ public class LogBlockQuery {
       }
     }
 
-    // 4. Find groups to skip (those with missing bitIndexes)
-    Set<Integer> skipGroups = new HashSet<>();
-    for (int i = 0; i < bitIndexes.length; i++) {
-      for (int bitIndex : bitIndexes[i]) {
-        if (!resultCache.containsKey(bitIndex)) {
-          skipGroups.add(i);
-          break;
-        }
-      }
-    }
 
-    // 5. Process valid groups with reused BitSet objects
+    // 4. Process valid groups with reused BitSet objects
     BitSet finalResult = new BitSet(SectionBloomStore.BLOCK_PER_SECTION);
     BitSet tempBitSet = new BitSet(SectionBloomStore.BLOCK_PER_SECTION);
 
-    for (int i = 0; i < bitIndexes.length; i++) {
-      if (skipGroups.contains(i)) {
-        continue;
-      }
+    for (int[] index : bitIndexes) {
 
       tempBitSet.clear();
       tempBitSet.set(0, SectionBloomStore.BLOCK_PER_SECTION);
 
-      // Process multiple bitIndexes
-      for (int bitIndex : bitIndexes[i]) {
+      for (int bitIndex : index) {
         BitSet cached = resultCache.get(bitIndex);
         tempBitSet.and(cached);
         if (tempBitSet.isEmpty()) {
