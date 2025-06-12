@@ -176,6 +176,10 @@ public class LogBlockQuery {
 
       for (int bitIndex : index) {
         BitSet cached = resultCache.get(bitIndex);
+        if (cached == null) {
+          tempBitSet.clear();
+          break;
+        }
         tempBitSet.and(cached);
         if (tempBitSet.isEmpty()) {
           break;
