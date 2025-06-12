@@ -1,13 +1,10 @@
 package org.tron.core.services.jsonrpc;
 
-import static com.googlecode.jsonrpc4j.ErrorResolver.JsonError.ERROR_NOT_HANDLED;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.googlecode.jsonrpc4j.ErrorData;
 import com.googlecode.jsonrpc4j.ErrorResolver;
 import com.googlecode.jsonrpc4j.JsonRpcError;
 import com.googlecode.jsonrpc4j.JsonRpcErrors;
-
 import com.googlecode.jsonrpc4j.ReflectionUtil;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -16,7 +13,7 @@ import org.tron.core.exception.TronException;
 /**
  * {@link ErrorResolver} that uses annotations.
  */
-public enum TronErrorResolver implements ErrorResolver {
+public enum JsonRpcErrorResolver implements ErrorResolver {
   INSTANCE;
 
   /**

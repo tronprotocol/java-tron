@@ -43,7 +43,7 @@ public class JsonRpcServlet extends RateLimiterServlet {
         true);
 
     rpcServer = new JsonRpcServer(compositeService);
-    rpcServer.setErrorResolver(TronErrorResolver.INSTANCE);
+    rpcServer.setErrorResolver(JsonRpcErrorResolver.INSTANCE);
 
     HttpStatusCodeProvider httpStatusCodeProvider = new HttpStatusCodeProvider() {
       @Override
