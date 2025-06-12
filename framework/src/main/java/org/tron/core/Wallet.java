@@ -40,25 +40,16 @@ import static org.tron.core.vm.utils.FreezeV2Util.getV2EnergyUsage;
 import static org.tron.core.vm.utils.FreezeV2Util.getV2NetUsage;
 import static org.tron.protos.contract.Common.ResourceCode;
 
-import com.google.common.collect.ContiguousSet;
-import com.google.common.collect.DiscreteDomain;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Range;
+import com.google.common.collect.*;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.ProtocolStringList;
 import java.math.BigInteger;
 import java.security.SignatureException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.stream.Collectors;
+
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -137,31 +128,8 @@ import org.tron.core.actuator.ActuatorConstant;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.actuator.UnfreezeBalanceV2Actuator;
 import org.tron.core.actuator.VMActuator;
-import org.tron.core.capsule.AbiCapsule;
-import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.AssetIssueCapsule;
-import org.tron.core.capsule.BlockBalanceTraceCapsule;
-import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.*;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.capsule.CodeCapsule;
-import org.tron.core.capsule.ContractCapsule;
-import org.tron.core.capsule.ContractStateCapsule;
-import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
-import org.tron.core.capsule.DelegatedResourceCapsule;
-import org.tron.core.capsule.ExchangeCapsule;
-import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
-import org.tron.core.capsule.IncrementalMerkleVoucherCapsule;
-import org.tron.core.capsule.MarketAccountOrderCapsule;
-import org.tron.core.capsule.MarketOrderCapsule;
-import org.tron.core.capsule.MarketOrderIdListCapsule;
-import org.tron.core.capsule.PedersenHashCapsule;
-import org.tron.core.capsule.ProposalCapsule;
-import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.TransactionInfoCapsule;
-import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.capsule.TransactionRetCapsule;
-import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BandwidthProcessor;
@@ -191,16 +159,7 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.adv.TransactionMessage;
-import org.tron.core.store.AccountIdIndexStore;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.AccountTraceStore;
-import org.tron.core.store.BalanceTraceStore;
-import org.tron.core.store.ContractStore;
-import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.MarketOrderStore;
-import org.tron.core.store.MarketPairPriceToOrderStore;
-import org.tron.core.store.MarketPairToPriceStore;
-import org.tron.core.store.StoreFactory;
+import org.tron.core.store.*;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.vm.program.Program;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder;
@@ -260,6 +219,7 @@ public class Wallet {
   private static final String SHIELDED_TRANSACTION_SCAN_RANGE =
       "request requires start_block_index >= 0 && end_block_index > "
           + "start_block_index && end_block_index - start_block_index <= 1000";
+  private static final String PAGED_WITNESS_LIMIT_RANGE = "request requires witness limit <= 1000";
   private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_MAINNET;//default testnet
   private static final byte[] SHIELDED_TRC20_LOG_TOPICS_MINT = Hash.sha3(ByteArray.fromString(
       "MintNewLeaf(uint256,bytes32,bytes32,bytes32,bytes32[21])"));
@@ -762,6 +722,71 @@ public class Wallet {
     witnessCapsuleList
         .forEach(witnessCapsule -> builder.addWitnesses(witnessCapsule.getInstance()));
     return builder.build();
+  }
+
+  public WitnessList getPaginatedNowWitnessList(long offset, long limit) throws IllegalArgumentException {
+    if (limit <= 0 || offset < 0) {
+      return null;
+    }
+    if (limit > 1000) {
+      throw new IllegalArgumentException(PAGED_WITNESS_LIMIT_RANGE);
+    }
+
+    VotesStore votesStore = chainBaseManager.getVotesStore();
+    Map<ByteString, Long> countWitness = countVote(votesStore);
+    List<WitnessCapsule> witnessCapsuleList = chainBaseManager.getWitnessStore().getAllWitnesses();
+
+    witnessCapsuleList.forEach((witnessCapsule) -> {
+      // Iterate through the witness list and add the vote count, it may be negative.
+      long voteCount = countWitness.get(witnessCapsule.getAddress());
+      witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
+    });
+
+    // Apply sorting, pagination
+    List<WitnessCapsule> sortedWitnessList = witnessCapsuleList.stream()
+            .sorted(Comparator.comparingLong(WitnessCapsule::getVoteCount).reversed())
+            .skip(offset)
+            .limit(limit)
+            .collect(Collectors.toList());
+
+    // Add sorted witnesses to builder
+    WitnessList.Builder builder = WitnessList.newBuilder();
+    sortedWitnessList.forEach(witnessCapsule ->
+            builder.addWitnesses(witnessCapsule.getInstance()));
+
+    return builder.build();
+  }
+
+  private Map<ByteString, Long> countVote(VotesStore votesStore) {
+    final Map<ByteString, Long> countWitness = Maps.newHashMap();
+    Iterator<Entry<byte[], VotesCapsule>> dbIterator = votesStore.iterator();
+    long sizeCount = 0;
+    while (dbIterator.hasNext()) {
+      Entry<byte[], VotesCapsule> next = dbIterator.next();
+      VotesCapsule votes = next.getValue();
+      votes.getOldVotes().forEach(vote -> {
+        ByteString voteAddress = vote.getVoteAddress();
+        long voteCount = vote.getVoteCount();
+        if (countWitness.containsKey(voteAddress)) {
+          countWitness.put(voteAddress, countWitness.get(voteAddress) - voteCount);
+        } else {
+          countWitness.put(voteAddress, -voteCount);
+        }
+      });
+      votes.getNewVotes().forEach(vote -> {
+        ByteString voteAddress = vote.getVoteAddress();
+        long voteCount = vote.getVoteCount();
+        if (countWitness.containsKey(voteAddress)) {
+          countWitness.put(voteAddress, countWitness.get(voteAddress) + voteCount);
+        } else {
+          countWitness.put(voteAddress, voteCount);
+        }
+      });
+      sizeCount++;
+      votesStore.delete(next.getKey());
+    }
+    logger.info("There is {} new votes in this epoch", sizeCount);
+    return countWitness;
   }
 
   public ProposalList getProposalList() {
