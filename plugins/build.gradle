@@ -28,7 +28,7 @@ dependencies {
     implementation group: 'info.picocli', name: 'picocli', version: '4.6.3'
     implementation group: 'com.typesafe', name: 'config', version: '1.3.2'
     implementation group: 'me.tongfei', name: 'progressbar', version: '0.9.3'
-    implementation group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.69'
+    implementation group: 'org.bouncycastle', name: 'bcprov-jdk18on', version: '1.79'
     implementation group: 'org.rocksdb', name: 'rocksdbjni', version: '5.15.10'
     implementation 'io.github.tronprotocol:leveldbjni-all:1.18.2'
     implementation 'io.github.tronprotocol:leveldb:1.18.2'
