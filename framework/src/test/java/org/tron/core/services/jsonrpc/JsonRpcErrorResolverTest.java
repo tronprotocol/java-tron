@@ -1,6 +1,7 @@
 package org.tron.core.services.jsonrpc;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.googlecode.jsonrpc4j.ErrorData;
 import com.googlecode.jsonrpc4j.ErrorResolver.JsonError;
 import com.googlecode.jsonrpc4j.JsonRpcError;
 import com.googlecode.jsonrpc4j.JsonRpcErrors;
@@ -9,15 +10,20 @@ import java.util.ArrayList;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
+import org.tron.core.exception.JsonRpcInternalException;
+import org.tron.core.exception.JsonRpcInvalidParamsException;
+import org.tron.core.exception.JsonRpcInvalidRequestException;
 import org.tron.core.exception.TronException;
 
 public class JsonRpcErrorResolverTest {
 
   private final JsonRpcErrorResolver resolver = JsonRpcErrorResolver.INSTANCE;
-  private final int errorCode = -32000;
 
   @JsonRpcErrors({
-            @JsonRpcError(exception = TronException.class, code = errorCode, data = "{}")
+      @JsonRpcError(exception = JsonRpcInvalidRequestException.class, code = -32600, data = "{}"),
+      @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = JsonRpcInternalException.class, code = -32000, data = "{}"),
+      @JsonRpcError(exception = TronException.class, code = -1)
     })
   public void dummyMethod() {
   }
@@ -25,19 +31,45 @@ public class JsonRpcErrorResolverTest {
   @Test
   public void testResolveErrorWithTronException() throws Exception {
 
-    String message = "JsonRPC ErrorMessage";
-    String data = "JsonRPC ErrorData";
+    String message = "JsonRpcInvalidRequestException";
 
-    TronException exception = new TronException(message, data);
+    TronException exception = new JsonRpcInvalidRequestException(message);
     Method method = this.getClass().getMethod("dummyMethod");
     List<JsonNode> arguments = new ArrayList<>();
 
     JsonError error = resolver.resolveError(exception, method, arguments);
+    Assert.assertNotNull(error);
+    Assert.assertEquals(-32600, error.code);
+    Assert.assertEquals(message, error.message);
+    Assert.assertEquals("{}", error.data);
+
+    message = "JsonRpcInternalException";
+    String data = "JsonRpcInternalException data";
+    exception = new JsonRpcInternalException(message, data);
+    error = resolver.resolveError(exception, method, arguments);
 
     Assert.assertNotNull(error);
-    Assert.assertEquals(errorCode, error.code);
+    Assert.assertEquals(-32000, error.code);
     Assert.assertEquals(message, error.message);
     Assert.assertEquals(data, error.data);
+
+    exception = new JsonRpcInternalException(message, null);
+    error = resolver.resolveError(exception, method, arguments);
+
+    Assert.assertNotNull(error);
+    Assert.assertEquals(-32000, error.code);
+    Assert.assertEquals(message, error.message);
+    Assert.assertEquals("{}", error.data);
+
+    message = "TronException";
+    exception = new TronException(message, null);
+    error = resolver.resolveError(exception, method, arguments);
+
+    Assert.assertNotNull(error);
+    Assert.assertEquals(-1, error.code);
+    Assert.assertEquals(message, error.message);
+    Assert.assertTrue(error.data instanceof ErrorData);
+
   }
 
 } 

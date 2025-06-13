@@ -28,6 +28,8 @@ public enum JsonRpcErrorResolver implements ErrorResolver {
     }
 
     String message = hasErrorMessage(resolver) ? resolver.message() : thrownException.getMessage();
+
+    // data priority: exception > annotation > default ErrorData
     Object data = hasErrorData(resolver)
         ? resolver.data()
         : new ErrorData(resolver.exception().getName(), message);
