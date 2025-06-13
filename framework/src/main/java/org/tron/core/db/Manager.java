@@ -868,8 +868,8 @@ public class Manager {
       TooBigTransactionException, TransactionExpirationException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
 
-    if (isShieldedTransaction(trx.getInstance()) && !Args.getInstance()
-        .isFullNodeAllowShieldedTransactionArgs()) {
+    if (isShieldedTransaction(trx.getInstance()) && !chainBaseManager.getDynamicPropertiesStore()
+        .supportShieldedTransaction()) {
       return true;
     }
 

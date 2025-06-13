@@ -309,13 +309,10 @@ public class ShieldedReceiveTest extends BaseTest {
     transactionCap = TransactionUtils.addTransactionSign(transactionCap.getInstance(),
             ADDRESS_ONE_PRIVATE_KEY, chainBaseManager.getAccountStore());
     try {
-      dbManager.pushTransaction(transactionCap);
-      Assert.assertFalse(true);
+      boolean res = dbManager.pushTransaction(transactionCap);
+      Assert.assertTrue(res);
     } catch (Exception e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals(
-          "Not support Shielded Transaction, need to be opened by the committee",
-          e.getMessage());
+      Assert.assertFalse(true);
     }
   }
 

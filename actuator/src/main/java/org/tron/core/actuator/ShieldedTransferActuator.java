@@ -170,7 +170,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
       }
       nullifierStore.put(new BytesCapsule(spend.getNullifier().toByteArray()));
     }
-    if (CommonParameter.getInstance().isFullNodeAllowShieldedTransactionArgs()) {
+    if (chainBaseManager.getDynamicPropertiesStore().supportShieldedTransaction()) {
       IncrementalMerkleTreeContainer currentMerkle = merkleContainer.getCurrentMerkle();
       try {
         currentMerkle.wfcheck();
@@ -236,8 +236,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
           throw new ContractValidateException("duplicate sapling nullifiers in this transaction");
         }
         nfSet.add(spendDescription.getNullifier());
-        if (CommonParameter.getInstance().isFullNodeAllowShieldedTransactionArgs()
-            && !merkleContainer.merkleRootExist(spendDescription.getAnchor().toByteArray())) {
+        if (!merkleContainer.merkleRootExist(spendDescription.getAnchor().toByteArray())) {
           throw new ContractValidateException("Rt is invalid.");
         }
         if (nullifierStore.has(spendDescription.getNullifier().toByteArray())) {

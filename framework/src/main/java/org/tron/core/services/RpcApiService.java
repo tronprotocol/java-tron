@@ -292,15 +292,17 @@ public class RpcApiService extends RpcService {
   }
 
   private void checkSupportShieldedTransaction() throws ZksnarkException {
-    String msg = "Not support Shielded Transaction, need to be opened by the committee";
-    if (!dbManager.getDynamicPropertiesStore().supportShieldedTransaction()) {
+    String msg = "Not support Shielded Transaction API, need to configure "
+        + "node.fullNodeAllowShieldedTransaction = true";
+    if (!Args.getInstance().isFullNodeAllowShieldedTransactionArgs()) {
       throw new ZksnarkException(msg);
     }
   }
 
   private void checkSupportShieldedTRC20Transaction() throws ZksnarkException {
-    String msg = "Not support Shielded TRC20 Transaction, need to be opened by the committee";
-    if (!dbManager.getDynamicPropertiesStore().supportShieldedTRC20Transaction()) {
+    String msg = "Not support Shielded Transaction API, need to configure "
+        + "node.fullNodeAllowShieldedTransaction = true";
+    if (!Args.getInstance().isFullNodeAllowShieldedTransactionArgs()) {
       throw new ZksnarkException(msg);
     }
   }
