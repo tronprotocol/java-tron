@@ -66,11 +66,11 @@ public class RelayService {
 
   private List<InetSocketAddress> fastForwardNodes = parameter.getFastForwardNodes();
 
-  private ByteString witnessAddress = ByteString
-      .copyFrom(Args.getLocalWitnesses().getWitnessAccountAddress(CommonParameter.getInstance()
-          .isECKeyCryptoEngine()));
-
   private int keySize = Args.getLocalWitnesses().getPrivateKeys().size();
+
+  private ByteString witnessAddress = keySize > 0 ? ByteString
+      .copyFrom(Args.getLocalWitnesses().getWitnessAccountAddress(CommonParameter.getInstance()
+          .isECKeyCryptoEngine())) : null;
 
   private int maxFastForwardNum = Args.getInstance().getMaxFastForwardNum();
 

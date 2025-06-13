@@ -247,7 +247,7 @@ public class SM2 implements Serializable, SignInterface {
    * @return -
    */
   public static SM2 fromPrivate(byte[] privKeyBytes) {
-    if (Objects.isNull(privKeyBytes)) {
+    if (Objects.isNull(privKeyBytes) || privKeyBytes.length == 0) {
       return null;
     }
     return fromPrivate(new BigInteger(1, privKeyBytes));
