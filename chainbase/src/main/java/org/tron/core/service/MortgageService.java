@@ -169,7 +169,7 @@ public class MortgageService {
   }
 
   private long computeReward(long cycle, List<Pair<byte[], Long>> votes) {
-    long reward = 0;
+    double reward = 0;
     for (Pair<byte[], Long> vote : votes) {
       byte[] srAddress = vote.getKey();
       long totalReward = delegationStore.getReward(cycle, srAddress);
@@ -184,7 +184,7 @@ public class MortgageService {
       double voteRate = (double) userVote / totalVote;
       reward += voteRate * totalReward;
     }
-    return reward;
+    return (long) reward;
   }
 
   /**

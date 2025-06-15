@@ -39,7 +39,8 @@ public class GetTransactionInfoByIdSolidityServlet extends RateLimiterServlet {
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {
-        response.getWriter().println(e.getMessage());
+        response.getWriter().println("An error occurred while processing your request.");
+        logger.debug("Exception: {}", e.getMessage(), e);
       } catch (IOException ioe) {
         logger.debug("IOException: {}", ioe.getMessage());
       }
@@ -62,7 +63,8 @@ public class GetTransactionInfoByIdSolidityServlet extends RateLimiterServlet {
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {
-        response.getWriter().println(e.getMessage());
+        response.getWriter().println("An error occurred while processing your request.");
+        logger.debug("Exception: {}", e.getMessage(), e);
       } catch (IOException ioe) {
         logger.debug("IOException: {}", ioe.getMessage());
       }

@@ -70,7 +70,7 @@ public class TransactionResult {
     byte[] sByte = Arrays.copyOfRange(signData, 32, 64);
     byte vByte = signData[64];
     if (vByte < 27) {
-      vByte += 27;
+      vByte = (byte) (vByte + 27);
     }
     v = ByteArray.toJsonHex(vByte);
     r = ByteArray.toJsonHex(rByte);
