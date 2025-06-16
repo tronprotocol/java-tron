@@ -243,9 +243,8 @@ public class DbExpand implements Callable<Integer> {
       return result;
     }
     if ("storage-row".equalsIgnoreCase(targetDb)) {
-      byte[] result = new byte[32];
+      byte[] result = new byte[31];
       random.nextBytes(result);
-      result[0] = ADD_PRE_FIX_BYTE_MAINNET;
       return result;
     }
     throw new IllegalArgumentException("Unsupported db type: " + targetDb);
