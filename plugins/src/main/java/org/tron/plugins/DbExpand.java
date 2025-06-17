@@ -243,7 +243,7 @@ public class DbExpand implements Callable<Integer> {
       return result;
     }
     if ("storage-row".equalsIgnoreCase(targetDb)) {
-      byte[] result = new byte[31];
+      byte[] result = new byte[32];
       random.nextBytes(result);
       return result;
     }
