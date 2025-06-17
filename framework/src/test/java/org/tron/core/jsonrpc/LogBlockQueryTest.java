@@ -1,9 +1,7 @@
 package org.tron.core.jsonrpc;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.annotation.Resource;
@@ -11,21 +9,12 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.bloom.Bloom;
-import org.tron.common.crypto.Hash;
-import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.runtime.vm.LogInfo;
-import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
-import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.config.args.Args;
-import org.tron.core.exception.EventBloomException;
 import org.tron.core.services.jsonrpc.TronJsonRpc.FilterRequest;
 import org.tron.core.services.jsonrpc.filters.LogBlockQuery;
 import org.tron.core.services.jsonrpc.filters.LogFilterWrapper;
 import org.tron.core.store.SectionBloomStore;
-import org.tron.protos.Protocol.TransactionInfo;
-import org.tron.protos.Protocol.TransactionInfo.Log;
 
 public class LogBlockQueryTest extends BaseTest {
 
@@ -61,7 +50,7 @@ public class LogBlockQueryTest extends BaseTest {
   }
 
   @Test
-  public void testPartialMatchNormalCase() throws Exception {
+  public void testPartialMatch() throws Exception {
     // Create a basic LogFilterWrapper
     LogFilterWrapper logFilterWrapper = new LogFilterWrapper(
         new FilterRequest("0x0", "0x1", null, null, null),
