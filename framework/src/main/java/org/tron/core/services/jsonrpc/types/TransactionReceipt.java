@@ -23,6 +23,10 @@ import org.tron.protos.Protocol.TransactionInfo;
 @JsonPropertyOrder(alphabetic = true)
 public class TransactionReceipt {
 
+  public TransactionReceipt() {
+
+  }
+
   @JsonPropertyOrder(alphabetic = true)
   public static class TransactionLog {
 

@@ -132,6 +132,7 @@ public class JsonrpcServiceTest extends BaseTest {
                 (Wallet.getAddressPreFixString() + "ED738B3A0FE390EAA71B768B6D02CDBD18FB207B"))))
         .build();
 
+
     transactionCapsule1 = new TransactionCapsule(transferContract1, ContractType.TransferContract);
     transactionCapsule1.setBlockNum(blockCapsule1.getNum());
     TransactionCapsule transactionCapsule2 = new TransactionCapsule(transferContract2,
@@ -177,16 +178,31 @@ public class JsonrpcServiceTest extends BaseTest {
       transactionInfoCapsule.setBlockNumber(blockCapsule0.getNum());
       transactionRetCapsule0.addTransactionInfo(transactionInfoCapsule.getInstance());
     });
-    dbManager.getTransactionRetStore().put(ByteArray.fromLong(blockCapsule0.getNum()), transactionRetCapsule0);
+    dbManager.getTransactionRetStore().put(
+        ByteArray.fromLong(blockCapsule0.getNum()), transactionRetCapsule0);
+
+    List<Protocol.TransactionInfo.Log> logs = new ArrayList<>();
+    logs.add(Protocol.TransactionInfo.Log.newBuilder()
+        .setAddress(ByteString.copyFrom("address1".getBytes()))
+        .setData(ByteString.copyFrom("data1".getBytes()))
+        .addTopics(ByteString.copyFrom("topic1".getBytes()))
+        .build());
+    logs.add(Protocol.TransactionInfo.Log.newBuilder()
+        .setAddress(ByteString.copyFrom("address2".getBytes()))
+        .setData(ByteString.copyFrom("data2".getBytes()))
+        .addTopics(ByteString.copyFrom("topic2".getBytes()))
+        .build());
 
     TransactionRetCapsule transactionRetCapsule1 = new TransactionRetCapsule();
     blockCapsule1.getTransactions().forEach(tx -> {
       TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
       transactionInfoCapsule.setId(tx.getTransactionId().getBytes());
       transactionInfoCapsule.setBlockNumber(blockCapsule1.getNum());
+      transactionInfoCapsule.addAllLog(logs);
       transactionRetCapsule1.addTransactionInfo(transactionInfoCapsule.getInstance());
     });
-    dbManager.getTransactionRetStore().put(ByteArray.fromLong(blockCapsule1.getNum()), transactionRetCapsule1);
+    dbManager.getTransactionRetStore()
+        .put(ByteArray.fromLong(blockCapsule1.getNum()), transactionRetCapsule1);
 
     TransactionRetCapsule transactionRetCapsule2 = new TransactionRetCapsule();
     blockCapsule2.getTransactions().forEach(tx -> {
@@ -195,7 +211,8 @@ public class JsonrpcServiceTest extends BaseTest {
       transactionInfoCapsule.setBlockNumber(blockCapsule2.getNum());
       transactionRetCapsule2.addTransactionInfo(transactionInfoCapsule.getInstance());
     });
-    dbManager.getTransactionRetStore().put(ByteArray.fromLong(blockCapsule2.getNum()), transactionRetCapsule2);
+    dbManager.getTransactionRetStore()
+        .put(ByteArray.fromLong(blockCapsule2.getNum()), transactionRetCapsule2);
 
     tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet, dbManager);
   }
@@ -1017,6 +1034,13 @@ public class JsonrpcServiceTest extends BaseTest {
     try {
       List<TransactionReceipt> transactionReceiptList = tronJsonRpc.getBlockReceipts("0x2710");
       Assert.assertFalse(transactionReceiptList.isEmpty());
+      for (TransactionReceipt transactionReceipt: transactionReceiptList) {
+        TransactionReceipt transactionReceipt1
+            = tronJsonRpc.getTransactionReceipt(transactionReceipt.getTransactionHash());
+
+        Assert.assertEquals(
+            JSON.toJSONString(transactionReceipt), JSON.toJSONString(transactionReceipt1));
+      }
     } catch (JsonRpcInvalidParamsException | JsonRpcInternalException e) {
       throw new RuntimeException(e);
     }
