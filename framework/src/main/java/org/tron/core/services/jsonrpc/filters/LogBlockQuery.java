@@ -142,7 +142,7 @@ public class LogBlockQuery {
     // 1. Collect all unique bitIndexes
     Set<Integer> uniqueBitIndexes = new HashSet<>();
     for (int[] index : bitIndexes) {
-      for (int bitIndex : index) {
+      for (int bitIndex : index) { //normally 3, but could be less due to hash collisions
         uniqueBitIndexes.add(bitIndex);
       }
     }
@@ -171,21 +171,25 @@ public class LogBlockQuery {
 
     for (int[] index : bitIndexes) {
 
+      // init tempBitSet with all 1
       tempBitSet.clear();
       tempBitSet.set(0, SectionBloomStore.BLOCK_PER_SECTION);
 
+      // and condition in second dimension
       for (int bitIndex : index) {
         BitSet cached = resultCache.get(bitIndex);
-        if (cached == null) {
+        if (cached == null) { //match nothing
           tempBitSet.clear();
           break;
         }
+        // "and" condition in second dimension
         tempBitSet.and(cached);
         if (tempBitSet.isEmpty()) {
           break;
         }
       }
 
+      // "or" condition in first dimension
       if (!tempBitSet.isEmpty()) {
         finalResult.or(tempBitSet);
       }
