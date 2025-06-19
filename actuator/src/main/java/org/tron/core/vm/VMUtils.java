@@ -2,6 +2,7 @@ package org.tron.core.vm;
 
 import static java.lang.String.format;
 import static org.apache.commons.codec.binary.Base64.encodeBase64String;
+import static org.tron.common.math.Maths.addExact;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -169,7 +170,7 @@ public final class VMUtils {
             "Validate InternalTransfer error, balance is not sufficient.");
       }
 
-      Math.addExact(toAccount.getBalance(), amount);
+      addExact(toAccount.getBalance(), amount, VMConfig.disableJavaLangMath());
     } catch (ArithmeticException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
@@ -230,7 +231,8 @@ public final class VMUtils {
               ByteArray.toStr(tokenIdWithoutLeadingZero));
       if (assetBalance != null) {
         try {
-          assetBalance = Math.addExact(assetBalance, amount); //check if overflow
+          addExact(assetBalance, amount,
+              VMConfig.disableJavaLangMath()); //check if overflow
         } catch (Exception e) {
           logger.debug(e.getMessage(), e);
           throw new ContractValidateException(e.getMessage());

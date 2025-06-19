@@ -95,7 +95,8 @@ public class DBUtils {
     options.setTargetFileSizeBase(64 * 1024 * 1024);
     options.setTargetFileSizeMultiplier(1);
     options.setMaxBytesForLevelBase(512 * 1024 * 1024);
-    options.setMaxBackgroundCompactions(Math.max(1, Runtime.getRuntime().availableProcessors()));
+    options.setMaxBackgroundCompactions(StrictMath.max(
+        1, Runtime.getRuntime().availableProcessors()));
     options.setLevel0FileNumCompactionTrigger(4);
     options.setLevelCompactionDynamicLevelBytes(true);
     final BlockBasedTableConfig tableCfg;

@@ -53,6 +53,12 @@ public class VMConfig {
 
   private static boolean ALLOW_STRICT_MATH = false;
 
+  private static boolean ALLOW_TVM_CANCUN = false;
+
+  private static Boolean DISABLE_JAVA_LANG_MATH = false;
+
+  private static boolean ALLOW_TVM_BLOB = false;
+
   private VMConfig() {
   }
 
@@ -148,6 +154,18 @@ public class VMConfig {
     ALLOW_STRICT_MATH = allow == 1;
   }
 
+  public static void initAllowTvmCancun(long allow) {
+    ALLOW_TVM_CANCUN = allow == 1;
+  }
+
+  public static void initDisableJavaLangMath(long allow) {
+    DISABLE_JAVA_LANG_MATH = allow == 1;
+  }
+
+  public static void initAllowTvmBlob(long allow) {
+    ALLOW_TVM_BLOB = allow == 1;
+  }
+
   public static boolean getEnergyLimitHardFork() {
     return CommonParameter.ENERGY_LIMIT_HARD_FORK;
   }
@@ -230,5 +248,17 @@ public class VMConfig {
 
   public static boolean allowStrictMath() {
     return ALLOW_STRICT_MATH;
+  }
+
+  public static boolean allowTvmCancun() {
+    return ALLOW_TVM_CANCUN;
+  }
+
+  public static boolean disableJavaLangMath() {
+    return DISABLE_JAVA_LANG_MATH;
+  }
+
+  public static boolean allowTvmBlob() {
+    return ALLOW_TVM_BLOB;
   }
 }

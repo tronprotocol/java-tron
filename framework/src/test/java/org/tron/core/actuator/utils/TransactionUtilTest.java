@@ -3,6 +3,7 @@ package org.tron.core.actuator.utils;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.tron.common.math.Maths.max;
 import static org.tron.core.capsule.utils.TransactionUtil.isNumber;
 import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_COST_BASE_SIZE;
 import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_PERIOD;
@@ -114,7 +115,7 @@ public class TransactionUtilTest extends BaseTest {
     TransactionCapsule fakeTransactionCapsule2 = new TransactionCapsule(builder2.build(),
         ContractType.DelegateResourceContract);
     long size2 = consumeBandWidthSize(fakeTransactionCapsule2, chainBaseManager);
-    long addSize = Math.max(size1 - size2, 0L);
+    long addSize = max(size1 - size2, 0L, true);
 
     return DELEGATE_COST_BASE_SIZE + addSize;
   }
@@ -135,7 +136,7 @@ public class TransactionUtilTest extends BaseTest {
     TransactionCapsule fakeTransactionCapsule2 = new TransactionCapsule(builder2.build(),
         ContractType.DelegateResourceContract);
     long size2 = consumeBandWidthSize(fakeTransactionCapsule2, chainBaseManager);
-    long addSize = Math.max(size1 - size2, 0L);
+    long addSize = max(size1 - size2, 0L, true);
 
     return DELEGATE_COST_BASE_SIZE + addSize;
   }
@@ -373,8 +374,8 @@ public class TransactionUtilTest extends BaseTest {
         DelegateResourceContract.newBuilder()
             .setBalance(TRX_PRECISION);
 
-    long expected = DELEGATE_COST_BASE_SIZE + Math.max(
-        builder.build().getSerializedSize() - builder2.build().getSerializedSize(), 0L);
+    long expected = DELEGATE_COST_BASE_SIZE + max(
+        builder.build().getSerializedSize() - builder2.build().getSerializedSize(), 0L, true);
     long actual = TransactionUtil.estimateConsumeBandWidthSize(dps, balance);
     Assert.assertEquals(expected, actual);
   }
@@ -391,8 +392,8 @@ public class TransactionUtilTest extends BaseTest {
         DelegateResourceContract.newBuilder()
             .setBalance(TRX_PRECISION);
 
-    long expected = DELEGATE_COST_BASE_SIZE + Math.max(
-        builder.build().getSerializedSize() - builder2.build().getSerializedSize(), 0L);
+    long expected = DELEGATE_COST_BASE_SIZE + max(
+        builder.build().getSerializedSize() - builder2.build().getSerializedSize(), 0L, true);
     long actual = TransactionUtil.estimateConsumeBandWidthSize(dps, balance);
     Assert.assertEquals(expected, actual);
   }
@@ -409,8 +410,8 @@ public class TransactionUtilTest extends BaseTest {
         DelegateResourceContract.newBuilder()
             .setBalance(TRX_PRECISION);
 
-    long expected = DELEGATE_COST_BASE_SIZE + Math.max(
-        builder.build().getSerializedSize() - builder2.build().getSerializedSize(), 0L);
+    long expected = DELEGATE_COST_BASE_SIZE + max(
+        builder.build().getSerializedSize() - builder2.build().getSerializedSize(), 0L, true);
     long actual = TransactionUtil.estimateConsumeBandWidthSize(dps, balance);
     Assert.assertEquals(expected, actual);
   }
@@ -427,8 +428,8 @@ public class TransactionUtilTest extends BaseTest {
         DelegateResourceContract.newBuilder()
             .setBalance(TRX_PRECISION);
 
-    long expected = DELEGATE_COST_BASE_SIZE + Math.max(
-        builder.build().getSerializedSize() - builder2.build().getSerializedSize(), 0L);
+    long expected = DELEGATE_COST_BASE_SIZE + max(
+        builder.build().getSerializedSize() - builder2.build().getSerializedSize(), 0L, true);
     long actual = TransactionUtil.estimateConsumeBandWidthSize(dps, balance);
     Assert.assertEquals(expected, actual);
   }

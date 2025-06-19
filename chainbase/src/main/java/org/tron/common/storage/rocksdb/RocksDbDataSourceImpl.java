@@ -45,6 +45,7 @@ import org.tron.core.db.common.DbSourceInter;
 import org.tron.core.db.common.iterator.RockStoreIterator;
 import org.tron.core.db2.common.Instance;
 import org.tron.core.db2.common.WrappedByteArray;
+import org.tron.core.exception.TronError;
 
 
 @Slf4j(topic = "DB")
@@ -272,7 +273,7 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
             } else {
               logger.error("Open Database {} failed", dataBaseName, e);
             }
-            System.exit(1);
+            throw new TronError(e, TronError.ErrCode.ROCKSDB_INIT);
           }
 
           alive = true;

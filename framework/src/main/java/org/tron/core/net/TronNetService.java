@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.TronError;
 import org.tron.core.net.message.adv.TransactionMessage;
 import org.tron.core.net.messagehandler.TransactionsMsgHandler;
 import org.tron.core.net.peer.PeerConnection;
@@ -102,7 +103,7 @@ public class TronNetService {
       effectiveCheckService.init();
       logger.info("Net service start successfully");
     } catch (Exception e) {
-      logger.error("Net service start failed", e);
+      throw new TronError(e, TronError.ErrCode.TRON_NET_SERVICE_INIT);
     }
   }
 

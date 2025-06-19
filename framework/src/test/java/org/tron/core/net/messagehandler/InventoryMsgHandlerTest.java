@@ -21,7 +21,7 @@ public class InventoryMsgHandlerTest {
   @Test
   public void testProcessMessage() throws Exception {
     InventoryMsgHandler handler = new InventoryMsgHandler();
-    Args.setParam(new String[] {"-w"}, Constant.TEST_CONF);
+    Args.setParam(new String[] {}, Constant.TEST_CONF);
     Args.logConfig();
 
     InventoryMessage msg = new InventoryMessage(new ArrayList<>(), InventoryType.TRX);

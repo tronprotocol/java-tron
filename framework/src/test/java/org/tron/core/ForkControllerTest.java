@@ -31,7 +31,7 @@ public class ForkControllerTest {
   @Before
   public void init() throws IOException {
     Args.setParam(new String[]{"-d",
-        temporaryFolder.newFolder().toString(), "-w"}, Constant.TEST_CONF);
+        temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     dynamicPropertiesStore = context.getBean(DynamicPropertiesStore.class);
     chainBaseManager = context.getBean(ChainBaseManager.class);
