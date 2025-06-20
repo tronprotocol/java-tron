@@ -397,6 +397,12 @@ public class RpcApiService extends RpcService {
     }
 
     @Override
+    public void getPaginatedNowWitnessList(PaginatedMessage request, StreamObserver<WitnessList> responseObserver) {
+      responseObserver.onNext(wallet.getPaginatedNowWitnessList(request.getOffset(), request.getLimit()));
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void getAssetIssueList(EmptyMessage request,
         StreamObserver<AssetIssueList> responseObserver) {
       responseObserver.onNext(wallet.getAssetIssueList());
@@ -1869,6 +1875,12 @@ public class RpcApiService extends RpcService {
     public void listWitnesses(EmptyMessage request,
         StreamObserver<WitnessList> responseObserver) {
       responseObserver.onNext(wallet.getWitnessList());
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getPaginatedNowWitnessList(PaginatedMessage request, StreamObserver<WitnessList> responseObserver) {
+      responseObserver.onNext(wallet.getPaginatedNowWitnessList(request.getOffset(), request.getLimit()));
       responseObserver.onCompleted();
     }
 
