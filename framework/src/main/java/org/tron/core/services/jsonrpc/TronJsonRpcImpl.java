@@ -80,6 +80,7 @@ import org.tron.core.services.jsonrpc.types.BlockResult;
 import org.tron.core.services.jsonrpc.types.BuildArguments;
 import org.tron.core.services.jsonrpc.types.CallArguments;
 import org.tron.core.services.jsonrpc.types.TransactionReceipt;
+import org.tron.core.services.jsonrpc.types.TransactionReceiptFactory;
 import org.tron.core.services.jsonrpc.types.TransactionResult;
 import org.tron.core.store.StorageRowStore;
 import org.tron.core.vm.program.Storage;
@@ -87,7 +88,6 @@ import org.tron.program.Version;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
-import org.tron.protos.Protocol.ResourceReceipt;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -769,6 +769,13 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     return getTransactionByBlockAndIndex(block, index);
   }
 
+  /**
+   * Get a transaction receipt by transaction hash
+   *
+   * @param txId the transaction hash in hex format (with or without 0x prefix)
+   * @return TransactionReceipt object for the specified transaction, or null if not found
+   * @throws JsonRpcInvalidParamsException if the transaction hash format is invalid
+   */
   @Override
   public TransactionReceipt getTransactionReceipt(String txId)
       throws JsonRpcInvalidParamsException {
@@ -783,9 +790,23 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       return null;
     }
 
-    return new TransactionReceipt(block, transactionInfo, wallet);
+    BlockCapsule blockCapsule = new BlockCapsule(block);
+    long blockNum = blockCapsule.getNum();
+    TransactionInfoList infoList = wallet.getTransactionInfoByBlockNum(blockNum);
+    long energyFee = wallet.getEnergyFee(blockCapsule.getTimeStamp());
+    
+    return TransactionReceiptFactory.createFromBlockAndTxInfo(
+        blockCapsule, transactionInfo, infoList, energyFee);
   }
 
+  /**
+   * Get all transaction receipts for a specific block
+   * @param blockNumOrTag the block number or tag (latest, earliest, pending)
+   * @return List of TransactionReceipt objects for all transactions in the block,
+   * null if block not found
+   * @throws JsonRpcInvalidParamsException if the parameter format is invalid
+   * @throws JsonRpcInternalException if there's an internal error
+   */
   @Override
   public List<TransactionReceipt> getBlockReceipts(String blockNumOrTag)
       throws JsonRpcInvalidParamsException, JsonRpcInternalException {
@@ -793,7 +814,13 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     if (block == null) {
       return null;
     }
-    return getTransactionReceipts(block, wallet);
+
+    BlockCapsule blockCapsule = new BlockCapsule(block);
+    long blockNum = blockCapsule.getNum();
+    TransactionInfoList infoList = wallet.getTransactionInfoByBlockNum(blockNum);
+    long energyFee = wallet.getEnergyFee(blockCapsule.getTimeStamp());
+
+    return TransactionReceiptFactory.createFromBlock(blockCapsule, infoList, energyFee);
   }
 
   @Override
@@ -1406,113 +1433,6 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     }
 
     return result;
-  }
-
-  /**
-   * Creates a list of TransactionReceipt objects for all transactions in a block.
-   * 
-   * @param block The block containing transactions
-   * @param wallet Wallet instance for accessing transaction information
-   * @return List of TransactionReceipt objects, or null if block info is not available
-   */
-  private List<TransactionReceipt> getTransactionReceipts(Block block, Wallet wallet)
-      throws JsonRpcInternalException {
-    List<TransactionReceipt> blockReceipts = new ArrayList<>();
-
-    BlockCapsule blockCapsule = new BlockCapsule(block);
-    long blockNum = blockCapsule.getNum();
-
-    // Get TransactionInfo for all transactions in the block
-    TransactionInfoList infoList = wallet.getTransactionInfoByBlockNum(blockNum);
-
-    if (infoList == null) {
-      return null;
-    }
-
-    // Calculate cumulativeGas and cumulativeLogCount
-    long cumulativeGas = 0;
-    long cumulativeLogCount = 0;
-
-    // Iterate through TransactionInfoList
-    for (int index = 0; index < infoList.getTransactionInfoCount(); index++) {
-      TransactionInfo txInfo = infoList.getTransactionInfo(index);
-
-      // Get corresponding transaction from block
-      Protocol.Transaction transaction = block.getTransactions(index);
-      if (transaction == null) {
-        throw new JsonRpcInternalException(
-            String.format("Transaction not found at index %d in block %s", 
-                index, ByteArray.toHexString(blockCapsule.getBlockId().getBytes())));
-      }
-
-      // Verify TransactionInfo and Transaction are the same transaction
-      TransactionCapsule txCapsule = new TransactionCapsule(transaction);
-      String txInfoId = ByteArray.toHexString(txInfo.getId().toByteArray());
-      String txId = ByteArray.toHexString(txCapsule.getTransactionId().getBytes());
-      if (!txInfoId.equals(txId)) {
-        logger.error("Transaction ID mismatch at index {}: txInfo={}, tx={}",
-            index, txInfoId, txId);
-        throw new JsonRpcInternalException(
-            String.format("Transaction ID mismatch at index %d: txInfo=%s, tx=%s", 
-                index, txInfoId, txId));
-      }
-
-      // Update cumulativeGas and cumulativeLogCount
-      ResourceReceipt resourceReceipt = txInfo.getReceipt();
-      long energyUsage = resourceReceipt.getEnergyUsageTotal();
-      cumulativeGas += energyUsage;
-
-      // Create TransactionReceipt
-      TransactionReceipt receipt = new TransactionReceipt();
-      receipt.setBlockHash(ByteArray.toJsonHex(blockCapsule.getBlockId().getBytes()));
-      receipt.setBlockNumber(ByteArray.toJsonHex(blockCapsule.getNum()));
-      receipt.setTransactionHash(ByteArray.toJsonHex(txInfo.getId().toByteArray()));
-      receipt.setTransactionIndex(ByteArray.toJsonHex(index));
-      receipt.setFrom(ByteArray.toJsonHexAddress(
-          TransactionCapsule.getOwner(transaction.getRawData().getContract(0))));
-      receipt.setTo(ByteArray.toJsonHexAddress(getToAddress(transaction)));
-      receipt.setCumulativeGasUsed(ByteArray.toJsonHex(cumulativeGas));
-      receipt.setGasUsed(ByteArray.toJsonHex(energyUsage));
-      receipt.status = resourceReceipt.getResultValue() <= 1 ? "0x1" : "0x0";
-      receipt.setEffectiveGasPrice(
-          ByteArray.toJsonHex(wallet.getEnergyFee(blockCapsule.getTimeStamp())));
-
-      // Set contract address for contract creation transactions
-      if (transaction.getRawData().getContract(0).getType() == ContractType.CreateSmartContract) {
-        receipt.setContractAddress(
-            ByteArray.toJsonHexAddress(txInfo.getContractAddress().toByteArray()));
-      }
-
-      // Process transaction logs
-      List<TransactionReceipt.TransactionLog> logList = new ArrayList<>();
-      for (int logIndex = 0; logIndex < txInfo.getLogCount(); logIndex++) {
-        TransactionInfo.Log log = txInfo.getLogList().get(logIndex);
-        TransactionReceipt.TransactionLog transactionLog = new TransactionReceipt.TransactionLog();
-        transactionLog.setLogIndex(ByteArray.toJsonHex(logIndex + cumulativeLogCount));
-        transactionLog.setTransactionHash(receipt.getTransactionHash());
-        transactionLog.setTransactionIndex(receipt.getTransactionIndex());
-        transactionLog.setBlockHash(receipt.getBlockHash());
-        transactionLog.setBlockNumber(receipt.getBlockNumber());
-        byte[] addressByte = convertToTronAddress(log.getAddress().toByteArray());
-        transactionLog.setAddress(ByteArray.toJsonHexAddress(addressByte));
-        transactionLog.setData(ByteArray.toJsonHex(log.getData().toByteArray()));
-
-        String[] topics = new String[log.getTopicsCount()];
-        for (int i = 0; i < log.getTopicsCount(); i++) {
-          topics[i] = ByteArray.toJsonHex(log.getTopics(i).toByteArray());
-        }
-        transactionLog.setTopics(topics);
-        logList.add(transactionLog);
-      }
-      receipt.setLogs(logList.toArray(new TransactionReceipt.TransactionLog[logList.size()]));
-      receipt.setLogsBloom(ByteArray.toJsonHex(new byte[256])); // No value
-      receipt.root = null;
-      receipt.setType("0x0");
-
-      cumulativeLogCount += txInfo.getLogCount();
-      blockReceipts.add(receipt);
-    }
-    return blockReceipts;
   }
 
   @Override
