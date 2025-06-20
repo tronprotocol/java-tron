@@ -106,37 +106,4 @@ public class TransactionReceipt {
   public TransactionReceipt() {
   }
 
-  /**
-   * @deprecated Use TransactionReceiptFactory.createFromBlockAndTxInfo() instead
-   */
-  @Deprecated
-  public TransactionReceipt(Protocol.Block block, TransactionInfo txInfo, Wallet wallet) {
-    BlockCapsule blockCapsule = new BlockCapsule(block);
-    TransactionInfoList transactionInfoList
-        = wallet.getTransactionInfoByBlockNum(blockCapsule.getNum());
-    long energyFee = wallet.getEnergyFee(blockCapsule.getTimeStamp());
-
-    TransactionReceipt receipt = TransactionReceiptFactory.createFromBlockAndTxInfo(
-        blockCapsule, txInfo, transactionInfoList, energyFee);
-
-    if (receipt == null) {
-      return;
-    }
-    // Copy all fields from the created receipt to this instance
-    this.blockHash = receipt.getBlockHash();
-    this.blockNumber = receipt.getBlockNumber();
-    this.transactionIndex = receipt.getTransactionIndex();
-    this.transactionHash = receipt.getTransactionHash();
-    this.from = receipt.getFrom();
-    this.to = receipt.getTo();
-    this.cumulativeGasUsed = receipt.getCumulativeGasUsed();
-    this.effectiveGasPrice = receipt.getEffectiveGasPrice();
-    this.gasUsed = receipt.getGasUsed();
-    this.contractAddress = receipt.getContractAddress();
-    this.logs = receipt.getLogs();
-    this.logsBloom = receipt.getLogsBloom();
-    this.root = receipt.root;
-    this.status = receipt.status;
-    this.type = receipt.getType();
-  }
 }

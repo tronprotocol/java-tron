@@ -87,7 +87,7 @@ public class TransactionReceiptFactory {
       cumulativeGas += energyUsage;
 
       TransactionContext context = new TransactionContext(
-          index, cumulativeGas, energyUsage, cumulativeLogCount);
+          index, cumulativeGas, cumulativeLogCount);
       
       TransactionReceipt receipt = createReceipt(blockCapsule, info, context, energyFee);
       receipts.add(receipt);
@@ -118,7 +118,7 @@ public class TransactionReceiptFactory {
       cumulativeGas += energyUsage;
 
       if (ByteArray.toHexString(info.getId().toByteArray()).equals(txId)) {
-        return new TransactionContext(index, cumulativeGas, energyUsage, cumulativeLogCount);
+        return new TransactionContext(index, cumulativeGas, cumulativeLogCount);
       } else {
         cumulativeLogCount += info.getLogCount();
       }
@@ -171,7 +171,7 @@ public class TransactionReceiptFactory {
     receipt.setTransactionHash(ByteArray.toJsonHex(txInfo.getId().toByteArray()));
     receipt.setTransactionIndex(ByteArray.toJsonHex(context.index));
     receipt.setCumulativeGasUsed(ByteArray.toJsonHex(context.cumulativeGas));
-    receipt.setGasUsed(ByteArray.toJsonHex(context.energyUsage));
+    receipt.setGasUsed(ByteArray.toJsonHex(txInfo.getReceipt().getEnergyUsageTotal()));
     receipt.status = txInfo.getReceipt().getResultValue() <= 1 ? "0x1" : "0x0";
     receipt.setEffectiveGasPrice(ByteArray.toJsonHex(energyFee));
   }
@@ -283,20 +283,17 @@ public class TransactionReceiptFactory {
   private static class TransactionContext {
     final int index;
     final long cumulativeGas;
-    final long energyUsage;
     final long cumulativeLogCount;
 
     /**
      * Creates a transaction context with the given parameters
      * @param index the transaction index within the block
      * @param cumulativeGas the cumulative gas used up to this transaction
-     * @param energyUsage the energy usage for this specific transaction
      * @param cumulativeLogCount the cumulative log count up to this transaction
      */
-    TransactionContext(int index, long cumulativeGas, long energyUsage, long cumulativeLogCount) {
+    TransactionContext(int index, long cumulativeGas, long cumulativeLogCount) {
       this.index = index;
       this.cumulativeGas = cumulativeGas;
-      this.energyUsage = energyUsage;
       this.cumulativeLogCount = cumulativeLogCount;
     }
   }
