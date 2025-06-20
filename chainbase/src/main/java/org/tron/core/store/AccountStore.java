@@ -12,6 +12,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.db.accountstate.AccountStateCallBackUtils;
+import org.tron.core.exception.TronError;
 import org.tron.protos.contract.BalanceContract.TransactionBalanceTrace;
 import org.tron.protos.contract.BalanceContract.TransactionBalanceTrace.Operation;
 
@@ -49,6 +50,9 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
       String accountName = obj.get("accountName").unwrapped().toString();
       byte[] address = Commons.decodeFromBase58Check(obj.get("address").unwrapped().toString());
       assertsAddress.put(accountName, address);
+    }
+    if (assertsAddress.get("Blackhole") == null) {
+      throw new TronError("Account[Blackhole] is not configured.", TronError.ErrCode.GENESIS_BLOCK_INIT);
     }
   }
 
