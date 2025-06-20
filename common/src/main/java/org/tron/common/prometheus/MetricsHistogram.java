@@ -48,7 +48,11 @@ public class MetricsHistogram {
     init(MetricKeys.Histogram.BLOCK_FETCH_LATENCY, "fetch block latency.");
     init(MetricKeys.Histogram.BLOCK_RECEIVE_DELAY,
         "receive block delay time, receiveTime - blockTime.");
-    init(MetricKeys.Histogram.DB_OPERATE_LATENCY, "db operate latency .", "type", "db", "op");
+    double[] dbBuckets = new double[]{0.000001,0.000002,0.000003,0.000004,0.000005,0.000006,
+        0.000007,0.000008,0.000009,0.00001,0.00002,0.00003,0.00004,0.00005,0.00006,0.00007,
+        0.00008,0.00009,0.0001,0.0005,0.001,0.01};
+    init(MetricKeys.Histogram.DB_OPERATE_LATENCY, "db operate latency .", dbBuckets,
+        "type", "db", "op");
   }
 
   private MetricsHistogram() {
@@ -58,6 +62,15 @@ public class MetricsHistogram {
   private static void init(String name, String help, String... labels) {
     container.put(name, Histogram.build()
         .name(name)
+        .help(help)
+        .labelNames(labels)
+        .register());
+  }
+
+  private static void init(String name, String help,double[] buckets, String... labels) {
+    container.put(name, Histogram.build()
+        .name(name)
+        .buckets(buckets)
         .help(help)
         .labelNames(labels)
         .register());

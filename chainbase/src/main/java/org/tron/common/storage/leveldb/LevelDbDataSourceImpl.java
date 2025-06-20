@@ -226,7 +226,8 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   @Override
   public void putData(byte[] key, byte[] value) {
     resetDbLock.readLock().lock();
-    try {
+    try (Histogram.Timer timer = Metrics.histogramStartTimer(
+        MetricKeys.Histogram.DB_OPERATE_LATENCY, LEVELDB, dataBaseName, "put")){
       database.put(key, value, writeOptions);
     } finally {
       resetDbLock.readLock().unlock();
@@ -236,7 +237,8 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   @Override
   public void deleteData(byte[] key) {
     resetDbLock.readLock().lock();
-    try {
+    try (Histogram.Timer timer = Metrics.histogramStartTimer(
+        MetricKeys.Histogram.DB_OPERATE_LATENCY, LEVELDB, dataBaseName, "delete")){
       database.delete(key, writeOptions);
     } finally {
       resetDbLock.readLock().unlock();
