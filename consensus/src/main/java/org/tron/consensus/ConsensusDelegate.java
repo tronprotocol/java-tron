@@ -109,7 +109,7 @@ public class ConsensusDelegate {
   }
 
   public List<WitnessCapsule> getWitnessStandby() {
-    return witnessStore.getWitnessStandby();
+    return witnessStore.getWitnessStandby(dynamicPropertiesStore.allowWitnessSortOptimization());
   }
 
   public void saveStateFlag(int flag) {
@@ -138,5 +138,9 @@ public class ConsensusDelegate {
 
   public boolean allowChangeDelegation() {
     return dynamicPropertiesStore.allowChangeDelegation();
+  }
+
+  public void sortWitness(List<ByteString> list) {
+    witnessStore.sortWitness(list, dynamicPropertiesStore.allowWitnessSortOptimization());
   }
 }

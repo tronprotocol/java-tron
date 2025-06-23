@@ -30,6 +30,7 @@ import org.tron.common.utils.Pair;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.db.common.iterator.DBIterator;
 import org.tron.core.db2.common.DB;
+import org.tron.core.exception.TronError;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.RewardViStore;
@@ -81,7 +82,7 @@ public class RewardViCalService {
       // checkpoint is flushed to db, we can start rewardViCalService immediately
       lastBlockNumber = Long.MAX_VALUE;
     }
-    es.scheduleWithFixedDelay(this::maybeRun, 0, 3, TimeUnit.SECONDS);
+    ExecutorServiceManager.scheduleWithFixedDelay(es, this::maybeRun, 0, 3, TimeUnit.SECONDS);
   }
 
   private boolean enableNewRewardAlgorithm() {
@@ -121,7 +122,7 @@ public class RewardViCalService {
       }
     } catch (Exception e) {
       logger.error(" Find fatal error, program will be exited soon.", e);
-      System.exit(1);
+      throw new TronError(e, TronError.ErrCode.REWARD_VI_CALCULATOR);
     }
   }
 

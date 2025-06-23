@@ -1,7 +1,6 @@
 package org.tron.core.services.http;
 
 import com.google.gson.JsonObject;
-import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.bouncycastle.util.encoders.Hex;
@@ -9,10 +8,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.client.Configuration;
+import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.client.utils.HttpMethed;
 import org.tron.core.Constant;
 import org.tron.core.capsule.ContractCapsule;
@@ -25,31 +23,25 @@ import org.tron.protos.contract.SmartContractOuterClass;
 
 @Slf4j
 public class TriggerSmartContractServletTest extends BaseTest {
-  private static final String httpNode = Configuration.getByPath("testng.conf")
-      .getStringList("httpnode.ip.list")
-      .get(0);
+  private static String httpNode;
   private static final byte[] ownerAddr = Hex.decode("410000000000000000000000000000000000000000");
   private static final byte[] contractAddr = Hex.decode(
       "41000000000000000000000000000000000000dEaD");
 
-  @Resource
-  private FullNodeHttpApiService httpApiService;
-
   @BeforeClass
   public static void init() throws Exception {
     Args.setParam(
-        new String[]{"--output-directory", dbPath(), "--debug", "--witness"}, Constant.TEST_CONF);
+        new String[]{"--output-directory", dbPath(), "--debug"}, Constant.TEST_CONF);
     Args.getInstance().needSyncCheck = false;
-
-    // build app context
-    DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
-    beanFactory.setAllowCircularReferences(false);
+    Args.getInstance().setFullNodeHttpEnable(true);
+    Args.getInstance().setFullNodeHttpPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setP2pDisable(true);
+    httpNode = String.format("%s:%d", "127.0.0.1",
+        Args.getInstance().getFullNodeHttpPort());
   }
 
   @Before
   public void before() {
-    appT.addService(httpApiService);
-
     // start services
     appT.startup();
 

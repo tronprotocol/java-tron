@@ -93,6 +93,7 @@ public class BatchSendTest extends BaseTest {
     ECKey ecKey3 = new ECKey(Utils.getRandom());
 
     List<Object> params = new ArrayList<>();
+    logger.info("show db key: {}", StringUtil.createDbKey(ByteString.copyFrom("test".getBytes())));
     params.add(StringUtil.encode58Check(ecKey1.getAddress()));
     params.add(StringUtil.encode58Check(ecKey2.getAddress()));
     params.add(StringUtil.encode58Check(ecKey3.getAddress()));

@@ -2,17 +2,16 @@ description = "chainbase – a decentralized database for blockchain."
 
 // Dependency versions
 // ---------------------------------------
-def jacocoVersion = "0.8.0"
 def jansiVersion = "1.16"
 // --------------------------------------
 
 dependencies {
-    compile project(":protocol")
-    compile project(":common")
-    compile project(":crypto")
-    compile "org.fusesource.jansi:jansi:$jansiVersion"
-    compile 'io.github.tronprotocol:zksnark-java-sdk:1.0.0'
-    compile 'org.reflections:reflections:0.9.11'
+    api project(":protocol")
+    api project(":common")
+    api project(":crypto")
+    api "org.fusesource.jansi:jansi:$jansiVersion"
+    api 'io.github.tronprotocol:zksnark-java-sdk:1.0.0'
+    api 'org.reflections:reflections:0.9.11'
 }
 
 
@@ -41,11 +40,8 @@ test {
     }
 }
 
-jacoco {
-    toolVersion = jacocoVersion // See http://www.eclemma.org/jacoco/.
-}
-
 jacocoTestReport {
+    dependsOn(processResources)  // explicit_dependency
     reports {
         xml.enabled = true
         html.enabled = true

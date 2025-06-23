@@ -1,0 +1,56 @@
+#!/bin/bash
+cd /data/analysis/
+# 检查是否提供了 IP 地址作为参数
+if [ -z "$1" ]; then
+    echo "Usage: $0 <ip_address>"
+    exit 1
+fi
+
+# IP 地址变量
+ip_address="$1"
+
+# 获取前一天的日期
+yesterday=$(date -d "yesterday" +%Y-%m-%d)
+
+# 日志文件的基础路径
+log_base_path="/data/logg/${ip_address}/logs"
+
+# CSV文件的基础路径
+csv_base_path="/data/analysis"
+
+# 循环处理每个后缀（0, 1, 2）
+for suffix in 0 1 2; do
+    # 构造日志文件名
+    log_file="${log_base_path}/tron-${yesterday}.${suffix}.log.gz"
+    # 构造CSV文件名
+    csv_file="${ip_address}-${suffix}.csv"
+    
+    # 检查日志文件是否存在
+    if [ -f "$log_file" ]; then
+        echo "Processing log file: $log_file"
+        # 执行解析脚本并将输出追加到CSV文件
+        sh parse_logs.sh "$log_file" >> "$csv_base_path/$csv_file" 2>&1
+    else
+        echo "Log file $log_file does not exist. Skipping..."
+    fi
+done
+
+# 合并CSV文件
+merged_csv="${ip_address}.csv"
+echo "Merging CSV files into $merged_csv"
+
+# 合并存在的CSV文件
+for suffix in 0 1 2; do
+    csv_file="${ip_address}-${suffix}.csv"
+    if [ -f "$csv_file" ]; then
+        cat "$csv_file" >> "$merged_csv"
+    fi
+done
+
+# 删除单独的CSV文件（可选）
+for suffix in 0 1 2; do
+    csv_file="${ip_address}-${suffix}.csv"
+    if [ -f "$csv_file" ]; then
+        rm -f "$csv_file"
+    fi
+done

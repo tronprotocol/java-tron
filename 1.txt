@@ -1,0 +1,63 @@
+java -jar lxc.jar db qd backup-output-directory/database/account  --keys 4100002df2e1aad903561ddc2abaa6382222b2c923
+
+
+#!/bin/bash
+
+# 检查是否提供了文件名作为参数
+if [ -z "$1" ]; then
+  echo "请提供日志文件路径作为参数。"
+  exit 1
+fi
+
+# 获取日志文件路径
+log_file="$1"
+
+# 检查文件是否存在
+if [ ! -f "$log_file" ]; then
+  echo "文件 $log_file 不存在。"
+  exit 1
+fi
+
+# 提取所有耗时数字，并保存到一个数组中
+times=()
+while IFS= read -r line; do
+  # 从每行中提取数字部分 (即耗时的数字)
+  if [[ "$line" =~ 耗时:\ ([0-9]+)\ μs ]]; then
+    times+=("${BASH_REMATCH[1]}")
+  fi
+done < "$log_file"
+
+# 检查是否有有效的数据
+if [ ${#times[@]} -eq 0 ]; then
+  echo "没有找到有效的耗时数据。"
+  exit 1
+fi
+
+# 计算最大值、最小值和平均值
+max=0
+min=999999999
+sum=0
+count=0
+
+for time in "${times[@]}"; do
+  ((sum += time))
+  ((count++))
+
+  # 更新最大值
+  if ((time > max)); then
+    max=$time
+  fi
+
+  # 更新最小值
+  if ((time < min)); then
+    min=$time
+  fi
+done
+
+# 计算平均值
+average=$(echo "scale=2; $sum / $count" | bc)
+
+# 输出结果
+echo "最大值: $max μs"
+echo "最小值: $min μs"
+echo "平均值: $average μs"

@@ -1,0 +1,533 @@
+filebeat.inputs:
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/13.210.151.5/logs/tron.log
+    fields:
+      filetype: tron-13.210.151.5
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/13.210.151.5/gc.log
+    fields:
+      filetype: gc-13.210.151.5
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/18.231.88.120/logs/tron.log
+    fields:
+      filetype: tron-18.231.88.120
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/18.231.88.120/gc.log
+    fields:
+      filetype: gc-18.231.88.120
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/3.10.70.76/logs/tron.log
+    fields:
+      filetype: tron-3.10.70.76
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/3.10.70.76/gc.log
+    fields:
+      filetype: gc-3.10.70.76
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/35.180.81.133/logs/tron.log
+    fields:
+      filetype: tron-35.180.81.133
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/35.180.81.133/gc.log
+    fields:
+      filetype: gc-35.180.81.133
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/47.245.7.0/logs/tron.log
+    fields:
+      filetype: tron-47.245.7.0
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/47.245.7.0/gc.log
+    fields:
+      filetype: gc-47.245.7.0
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/47.252.87.119/logs/tron.log
+    fields:
+      filetype: tron-47.252.87.119
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/47.252.87.119/gc.log
+    fields:
+      filetype: gc-47.252.87.119
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/47.254.150.38/logs/tron.log
+    fields:
+      filetype: tron-47.254.150.38
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/47.254.150.38/gc.log
+    fields:
+      filetype: gc-47.254.150.38
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/47.74.55.176/logs/tron.log
+    fields:
+      filetype: tron-47.74.55.176
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/47.74.55.176/gc.log
+    fields:
+      filetype: gc-47.74.55.176
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/47.74.68.95/logs/tron.log
+    fields:
+      filetype: tron-47.74.68.95
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/47.74.68.95/gc.log
+    fields:
+      filetype: gc-47.74.68.95
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/47.89.185.148/logs/tron.log
+    fields:
+      filetype: tron-47.89.185.148
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/47.89.185.148/gc.log
+    fields:
+      filetype: gc-47.89.185.148
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/47.89.241.233/logs/tron.log
+    fields:
+      filetype: tron-47.89.241.233
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/47.89.241.233/gc.log
+    fields:
+      filetype: gc-47.89.241.233
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/47.90.201.181/logs/tron.log
+    fields:
+      filetype: tron-47.90.201.181
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/47.90.201.181/gc.log
+    fields:
+      filetype: gc-47.90.201.181
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/52.47.129.140/logs/tron.log
+    fields:
+      filetype: tron-52.47.129.140
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/52.47.129.140/gc.log
+    fields:
+      filetype: gc-52.47.129.140
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/52.60.187.83/logs/tron.log
+    fields:
+      filetype: tron-52.60.187.83
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/52.60.187.83/gc.log
+    fields:
+      filetype: gc-52.60.187.83
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/8.208.16.241/logs/tron.log
+    fields:
+      filetype: tron-8.208.16.241
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/8.208.16.241/gc.log
+    fields:
+      filetype: gc-8.208.16.241
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/8.209.76.216/logs/tron.log
+    fields:
+      filetype: tron-8.209.76.216
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/8.209.76.216/gc.log
+    fields:
+      filetype: gc-8.209.76.216
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/15.188.6.125/logs/tron.log
+    fields:
+      filetype: tron-15.188.6.125
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/15.188.6.125/gc.log
+    fields:
+      filetype: gc-15.188.6.125
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/100.26.245.209/logs/tron.log
+    fields:
+      filetype: tron-100.26.245.209
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/100.26.245.209/gc.log
+    fields:
+      filetype: gc-100.26.245.209
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/34.247.231.60/logs/tron.log
+    fields:
+      filetype: tron-34.247.231.60
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/34.247.231.60/gc.log
+    fields:
+      filetype: gc-34.247.231.60
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/47.244.43.208/logs/tron.log
+    fields:
+      filetype: tron-47.244.43.208
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/47.244.43.208/gc.log
+    fields:
+      filetype: gc-47.244.43.208
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/108.128.110.16/logs/tron.log
+    fields:
+      filetype: tron-108.128.110.16
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/18.231.27.82/logs/tron.log
+    fields:
+      filetype: tron-18.231.27.82
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/3.104.195.192/logs/tron.log
+    fields:
+      filetype: tron-3.104.195.192
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/3.225.171.164/logs/tron.log
+    fields:
+      filetype: tron-3.225.171.164
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/34.237.210.82/logs/tron.log
+    fields:
+      filetype: tron-34.237.210.82
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/35.181.191.120/logs/tron.log
+    fields:
+      filetype: tron-35.181.191.120
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/35.181.203.7/logs/tron.log
+    fields:
+      filetype: tron-35.181.203.7
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/3.9.200.137/logs/tron.log
+    fields:
+      filetype: tron-3.9.200.137
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/54.153.59.116/logs/tron.log
+    fields:
+      filetype: tron-54.153.59.116
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/54.167.11.177/logs/tron.log
+    fields:
+      filetype: tron-54.167.11.177
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/54.94.242.255/logs/tron.log
+    fields:
+      filetype: tron-54.94.242.255
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/172.10.10.124/logs/tron.log
+    fields:
+      filetype: tron-172.10.10.124
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/172.10.1.224/logs/tron.log
+    fields:
+      filetype: tron-172.10.1.224
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/172.10.1.35/logs/tron.log
+    fields:
+      filetype: tron-172.10.1.35
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/172.10.6.187/logs/tron.log
+    fields:
+      filetype: tron-172.10.6.187
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/172.10.8.126/logs/tron.log
+    fields:
+      filetype: tron-172.10.8.126
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/172.10.8.57/logs/tron.log
+    fields:
+      filetype: tron-172.10.8.57
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/172.10.10.103/logs/tron.log
+    fields:
+      filetype: tron-172.10.10.103
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/172.10.1.113/logs/tron.log
+    fields:
+      filetype: tron-172.10.1.113
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/172.10.1.252/logs/tron.log
+    fields:
+      filetype: tron-172.10.1.252
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/172.10.3.10/logs/tron.log
+    fields:
+      filetype: tron-172.10.3.10
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/172.10.7.141/logs/tron.log
+    fields:
+      filetype: tron-172.10.7.141
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/172.10.8.209/logs/tron.log
+    fields:
+      filetype: tron-172.10.8.209
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/172.10.9.93/logs/tron.log
+    fields:
+      filetype: tron-172.10.9.93
+    multiline.pattern: '^[0-9]{2}:[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/172.10.1.35/gc.log
+    fields:
+      filetype: gc-172.10.1.35
+  - type: log
+    enabled: true
+    paths:
+      - /data/logg/172.10.8.57/gc.log
+    fields:
+      filetype: gc-172.10.8.57
+
+output.logstash:
+  enabled: true
+  hosts: ["localhost:5044"]

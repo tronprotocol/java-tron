@@ -1,0 +1,405 @@
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+scrape_configs:
+  - job_name: java-tron
+    #metrics_path: /metrics
+    scrape_interval: 1s
+    scrape_timeout: 800ms
+    static_configs:
+      - targets:
+          - '15.236.149.86:9527'
+        labels:
+          group: tron-mainnet
+          instance: solidity86
+      - targets:
+          - '18.221.34.0:9527'
+        labels:
+          group: tron-mainnet
+          instance: solidity002
+      - targets:
+          - '44.217.252.41:9527'
+        labels:
+          group: tron-mainnet
+          instance: java-tron-stress009
+      - targets:
+          - '3.225.171.164:9527'
+        labels:
+          group: tron-online
+          instance: online164
+      - targets:
+          - '18.205.139.72:9527'
+        labels:
+          group: tron-archive
+          instance: java-tron-archive-0
+      - targets:
+          - '3.228.38.106:9527'
+        labels:
+          group: tron-archive
+          instance: java-tron-archive-1
+      - targets:
+          - '44.206.207.138:9527'
+        labels:
+          group: tron-archive
+          instance: java-tron-archive-2
+      - targets:
+          - '3.214.31.102:9527'
+        labels:
+          group: tron-archive
+          instance: java-tron-archive-header
+  - job_name: tron-alert
+    metrics_path: /metrics
+    scrape_interval: 2s
+    scrape_timeout: 1s
+    static_configs:
+      - targets:
+          - '10.10.10.235:9988'
+        labels:
+          group: tron-mainnet
+          instance: alert-notice
+      - targets:
+          - '10.10.10.216:9988'
+        labels:
+          group: tron-mainnet
+          instance: alert-notice2
+  - job_name: nile-report
+    metrics_path: /metrics
+    scrape_interval: 2s
+    scrape_timeout: 1s
+    static_configs:
+      - targets:
+          - '34.204.65.160:9527'
+        labels:
+          group: tron-nilenet
+          instance: nile-node
+      - targets:
+          - '34.204.65.160:9988'
+        labels:
+          group: tron-nilenet
+          instance: nile-alert
+  - job_name: tron-alert-practice
+    metrics_path: /metrics
+    scrape_interval: 2s
+    scrape_timeout: 1s
+    static_configs:
+      - targets:
+          - '18.143.37.98:9988'
+        labels:
+          group: tron-practice
+          instance: practice-alert
+  - job_name: tron-external-alert
+    metrics_path: /metrics
+    scrape_interval: 2s
+    scrape_timeout: 1s
+    static_configs:
+      - targets:
+          - '18.163.94.42:9527'
+        labels:
+          group: tron-external
+          instance: external-node-94.42
+      - targets:
+          - '54.151.226.240:9527'
+        labels:
+          group: tron-external
+          instance: external-node-226.240
+      - targets:
+          - '18.141.79.38:9527'
+        labels:
+          group: tron-external
+          instance: external-node-79.38
+      - targets:
+          - '18.139.248.26:9527'
+        labels:
+          group: tron-external
+          instance: external-node-248.26
+      - targets:
+          - '3.225.171.164:9527'
+        labels:
+          group: tron-external
+          instance: external-node-171.164
+      - targets:
+          - '18.142.82.44:9527'
+        labels:
+          group: tron-external
+          instance: external-node-82.44
+      - targets:
+          - '18.167.130.243:9527'
+        labels:
+          group: tron-external
+          instance: external-node-130.243
+      - targets:
+          - '43.198.47.50:9527'
+        labels:
+          group: tron-external
+          instance: external-node-47.50
+      - targets:
+          - '16.162.189.249:9527'
+        labels:
+          group: tron-external
+          instance: external-node-189.249
+      - targets:
+          - '43.198.147.230:9527'
+        labels:
+          group: tron-external
+          instance: external-node-147.230
+      - targets:
+          - '16.162.38.213:9527'
+        labels:
+          group: tron-external
+          instance: external-node-38.213
+      - targets:
+          - '18.206.50.220:9527'
+        labels:
+          group: tron-external
+          instance: external-node-50.220
+      - targets:
+          - '44.205.88.94:9527'
+        labels:
+          group: tron-external
+          instance: external-node-88.94
+      - targets:
+          - '18.209.42.127:9527'
+        labels:
+          group: tron-external
+          instance: external-node-42.127
+      - targets:
+          - '3.218.137.187:9527'
+        labels:
+          group: tron-external
+          instance: external-node-137.187
+      - targets:
+          - '34.237.210.82:9527'
+        labels:
+          group: tron-external
+          instance: external-node-210.82
+      - targets:
+          - '52.53.189.99:9527'
+        labels:
+          group: tron-external
+          instance: external-node-189.99
+      - targets:
+          - '52.15.93.92:9527'
+        labels:
+          group: tron-external
+          instance: external-node-93.92
+      - targets:
+          - '34.220.77.106:9527'
+        labels:
+          group: tron-external
+          instance: external-node-77.106
+      - targets:
+          - '15.207.144.3:9527'
+        labels:
+          group: tron-external
+          instance: external-node-144.3
+      - targets:
+          - '13.124.62.58:9527'
+        labels:
+          group: tron-external
+          instance: external-node-62.58
+      - targets:
+          - '18.196.99.16:9527'
+        labels:
+          group: tron-external
+          instance: external-node-99.16
+      - targets:
+          - '34.253.187.192:9527'
+        labels:
+          group: tron-external
+          instance: external-node-187.192
+      - targets:
+          - '18.133.82.227:9527'
+        labels:
+          group: tron-external
+          instance: external-node-82.227
+      - targets:
+          - '35.180.51.163:9527'
+        labels:
+          group: tron-external
+          instance: external-node-51.163
+      - targets:
+          - '54.252.224.209:9527'
+        labels:
+          group: tron-external
+          instance: external-node-224.209
+      - targets:
+          - '18.231.27.82:9527'
+        labels:
+          group: tron-external
+          instance: external-node-27.82
+      - targets:
+          - '15.222.19.181:9527'
+        labels:
+          group: tron-external
+          instance: external-node-19.181
+      - targets:
+          - '54.167.11.177:9527'
+        labels:
+          group: tron-external
+          instance: external-node-11.177
+      - targets:
+          - '35.174.93.198:9527'
+        labels:
+          group: tron-external
+          instance: external-node-93.198
+      - targets:
+          - '54.82.161.39:9527'
+        labels:
+          group: tron-external
+          instance: external-node-161.39
+      - targets:
+          - '18.210.241.149:9527'
+        labels:
+          group: tron-external
+          instance: external-node-241.149
+      - targets:
+          - '54.177.115.127:9527'
+        labels:
+          group: tron-external
+          instance: external-node-115.127
+      - targets:
+          - '54.153.59.116:9527'
+        labels:
+          group: tron-external
+          instance: external-node-59.116
+      - targets:
+          - '54.153.94.160:9527'
+        labels:
+          group: tron-external
+          instance: external-node-94.160
+      - targets:
+          - '54.254.131.82:9527'
+        labels:
+          group: tron-external
+          instance: external-node-131.82
+      - targets:
+          - '54.179.207.68:9527'
+        labels:
+          group: tron-external
+          instance: external-node-207.68
+      - targets:
+          - '3.0.214.7:9527'
+        labels:
+          group: tron-external
+          instance: external-node-214.7
+      - targets:
+          - '13.228.119.63:9527'
+        labels:
+          group: tron-external
+          instance: external-node-119.63
+      - targets:
+          - '18.139.193.235:9527'
+        labels:
+          group: tron-external
+          instance: external-node-193.235
+      - targets:
+          - '18.163.230.203:9527'
+        labels:
+          group: tron-external
+          instance: external-node-230.203
+      - targets:
+          - '18.167.171.167:9527'
+        labels:
+          group: tron-external
+          instance: external-node-171.167
+      - targets:
+          - '43.198.142.160:9527'
+        labels:
+          group: tron-external
+          instance: external-node-142.160
+      - targets:
+          - '35.74.7.196:9527'
+        labels:
+          group: tron-external
+          instance: external-node-7.196
+      - targets:
+          - '52.196.244.176:9527'
+        labels:
+          group: tron-external
+          instance: external-node-244.176
+      - targets:
+          - '54.248.129.19:9527'
+        labels:
+          group: tron-external
+          instance: external-node-129.19
+      - targets:
+          - '3.223.160.185:9527'
+        labels:
+          group: tron-dev
+          instance: dev-node-160.185
+      - targets:
+          - '54.167.11.177:9527'
+        labels:
+          group: tron-solidity
+          instance: solidity-node-11.177
+      - targets:
+          - '15.236.149.86:9527'
+        labels:
+          group: tron-solidity
+          instance: solidity-node-149.86
+      - targets:
+          - '35.178.11.0:9527'
+        labels:
+          group: tron-solidity
+          instance: solidity-node-11.0
+      - targets:
+          - '13.59.117.30:9527'
+        labels:
+          group: tron-external
+          instance: external-node-117.30
+      - targets:
+          - '44.197.106.221:9527'
+        labels:
+          group: tron-external
+          instance: external-node-106.221
+      - targets:
+          - '18.163.17.58:9527'
+        labels:
+          group: tron-external
+          instance: external-node-17.58
+      - targets:
+          - '18.139.79.46:9527'
+        labels:
+          group: tron-external
+          instance: external-node-79.46
+      - targets:
+          - '3.216.116.227:9527'
+        labels:
+          group: tron-external
+          instance: external-node-116.227
+      - targets:
+          - '34.199.67.116:9527'
+        labels:
+          group: tron-external
+          instance: external-node-67.116
+      - targets:
+          - '52.54.23.1:9527'
+        labels:
+          group: tron-external
+          instance: external-node-23.1
+      - targets:
+          - '3.218.136.234:9527'
+        labels:
+          group: tron-external
+          instance: external-node-136.234
+      - targets:
+          - '18.198.229.137:9527'
+        labels:
+          group: tron-external
+          instance: external-node-229.137
+      - targets:
+          - '18.169.111.240:9527'
+        labels:
+          group: tron-external
+          instance: external-node-111.240
+  - job_name: java-tron1
+    proxy_url: http://localhost:8080/
+    metrics_path: /metrics
+    scrape_interval: 1s
+    scrape_timeout: 800ms
+    static_configs:
+      - targets:
+          - 'ip-172-10-1-144.ec2.internal:9527'
+        labels:
+          group: tron-mainnet
+          instance: solidity001

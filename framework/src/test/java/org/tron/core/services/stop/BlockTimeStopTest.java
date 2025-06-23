@@ -5,7 +5,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
-import org.quartz.CronExpression;
+import org.tron.common.cron.CronExpression;
 import org.tron.common.parameter.CommonParameter;
 
 @Slf4j

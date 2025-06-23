@@ -1,0 +1,488 @@
+{
+  "status": "success",
+  "data": {
+    "resultType": "vector",
+    "result": [
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "AccountCreateContract",
+          "type": "block"
+        },
+        "value": [
+          1742385066,
+          "173078"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "AccountPermissionUpdateContract",
+          "type": "block"
+        },
+        "value": [
+          1742385066,
+          "2580"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "AccountUpdateContract",
+          "type": "block"
+        },
+        "value": [
+          1742385066,
+          "21"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "AssetIssueContract",
+          "type": "block"
+        },
+        "value": [
+          1742385066,
+          "2"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "CancelAllUnfreezeV2Contract",
+          "type": "block"
+        },
+        "value": [
+          1742385066,
+          "3834"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "CreateSmartContract",
+          "type": "block"
+        },
+        "value": [
+          1742385066,
+          "849"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "DelegateResourceContract",
+          "type": "block"
+        },
+        "value": [
+          1742385066,
+          "18367610"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "FreezeBalanceV2Contract",
+          "type": "block"
+        },
+        "value": [
+          1742385066,
+          "47482"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "TransferAssetContract",
+          "type": "block"
+        },
+        "value": [
+          1742385066,
+          "3709338"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "TransferContract",
+          "type": "block"
+        },
+        "value": [
+          1742385066,
+          "64093385"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "TriggerSmartContract",
+          "type": "block"
+        },
+        "value": [
+          1742385066,
+          "37101011"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "UnDelegateResourceContract",
+          "type": "block"
+        },
+        "value": [
+          1742385066,
+          "18170768"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "UnfreezeBalanceContract",
+          "type": "block"
+        },
+        "value": [
+          1742385066,
+          "1704"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "UnfreezeBalanceV2Contract",
+          "type": "block"
+        },
+        "value": [
+          1742385066,
+          "16592"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "UpdateBrokerageContract",
+          "type": "block"
+        },
+        "value": [
+          1742385066,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "UpdateEnergyLimitContract",
+          "type": "block"
+        },
+        "value": [
+          1742385066,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "UpdateSettingContract",
+          "type": "block"
+        },
+        "value": [
+          1742385066,
+          "85"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "VoteWitnessContract",
+          "type": "block"
+        },
+        "value": [
+          1742385066,
+          "39926"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "WithdrawBalanceContract",
+          "type": "block"
+        },
+        "value": [
+          1742385066,
+          "68149"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "WithdrawExpireUnfreezeContract",
+          "type": "block"
+        },
+        "value": [
+          1742385066,
+          "9405"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "WitnessCreateContract",
+          "type": "block"
+        },
+        "value": [
+          1742385066,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "AccountCreateContract",
+          "type": "trx"
+        },
+        "value": [
+          1742385066,
+          "189725"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "AccountPermissionUpdateContract",
+          "type": "trx"
+        },
+        "value": [
+          1742385066,
+          "2839"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "AccountUpdateContract",
+          "type": "trx"
+        },
+        "value": [
+          1742385066,
+          "24"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "AssetIssueContract",
+          "type": "trx"
+        },
+        "value": [
+          1742385066,
+          "2"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "CancelAllUnfreezeV2Contract",
+          "type": "trx"
+        },
+        "value": [
+          1742385066,
+          "4135"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "CreateSmartContract",
+          "type": "trx"
+        },
+        "value": [
+          1742385066,
+          "938"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "DelegateResourceContract",
+          "type": "trx"
+        },
+        "value": [
+          1742385066,
+          "20369053"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "FreezeBalanceV2Contract",
+          "type": "trx"
+        },
+        "value": [
+          1742385066,
+          "54205"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "TransferAssetContract",
+          "type": "trx"
+        },
+        "value": [
+          1742385066,
+          "3976987"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "TransferContract",
+          "type": "trx"
+        },
+        "value": [
+          1742385066,
+          "70698781"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "TriggerSmartContract",
+          "type": "trx"
+        },
+        "value": [
+          1742385066,
+          "41331407"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "UnDelegateResourceContract",
+          "type": "trx"
+        },
+        "value": [
+          1742385066,
+          "20357711"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "UnfreezeBalanceContract",
+          "type": "trx"
+        },
+        "value": [
+          1742385066,
+          "1959"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "UnfreezeBalanceV2Contract",
+          "type": "trx"
+        },
+        "value": [
+          1742385066,
+          "18802"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "UpdateBrokerageContract",
+          "type": "trx"
+        },
+        "value": [
+          1742385066,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "UpdateEnergyLimitContract",
+          "type": "trx"
+        },
+        "value": [
+          1742385066,
+          "2"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "UpdateSettingContract",
+          "type": "trx"
+        },
+        "value": [
+          1742385066,
+          "99"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "VoteWitnessContract",
+          "type": "trx"
+        },
+        "value": [
+          1742385066,
+          "45355"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "WithdrawBalanceContract",
+          "type": "trx"
+        },
+        "value": [
+          1742385066,
+          "78235"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "WithdrawExpireUnfreezeContract",
+          "type": "trx"
+        },
+        "value": [
+          1742385066,
+          "10870"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "WitnessCreateContract",
+          "type": "trx"
+        },
+        "value": [
+          1742385066,
+          "2"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "tron:process_transaction_latency_seconds_count",
+          "contract": "AccountPermissionUpdateContract",
+          "group": "tron-mainnet",
+          "instance": "solidity001",
+          "job": "java-tron",
+          "type": "trx"
+        },
+        "value": [
+          1742393418.51,
+          "2866"
+        ]
+      }
+    ]
+  },
+  "stats": {
+    "seriesFetched": "42",
+    "executionTimeMsec": 1
+  }
+}

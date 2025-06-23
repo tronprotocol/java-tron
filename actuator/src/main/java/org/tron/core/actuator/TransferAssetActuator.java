@@ -83,11 +83,11 @@ public class TransferAssetActuator extends AbstractActuator {
           .addAssetAmountV2(assetName.toByteArray(), amount, dynamicStore, assetIssueStore);
       accountStore.put(toAddress, toAccountCapsule);
 
-      Commons.adjustBalance(accountStore, ownerAccountCapsule, -fee);
+      adjustBalance(accountStore, ownerAccountCapsule, -fee);
       if (dynamicStore.supportBlackHoleOptimization()) {
         dynamicStore.burnTrx(fee);
       } else {
-        Commons.adjustBalance(accountStore, accountStore.getBlackhole(), fee);
+        adjustBalance(accountStore, accountStore.getBlackhole(), fee);
       }
       ret.setStatus(fee, code.SUCESS);
     } catch (BalanceInsufficientException e) {
@@ -177,7 +177,7 @@ public class TransferAssetActuator extends AbstractActuator {
       assetBalance = toAccount.getAsset(dynamicStore, ByteArray.toStr(assetName));
       if (assetBalance != null) {
         try {
-          assetBalance = Math.addExact(assetBalance, amount); //check if overflow
+          assetBalance = addExact(assetBalance, amount); //check if overflow
         } catch (Exception e) {
           logger.debug(e.getMessage(), e);
           throw new ContractValidateException(e.getMessage());
