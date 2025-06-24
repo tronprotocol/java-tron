@@ -172,7 +172,6 @@ public class LogBlockQuery {
     for (int[] index : bitIndexes) {
 
       // init tempBitSet with all 1
-      tempBitSet.clear();
       tempBitSet.set(0, SectionBloomStore.BLOCK_PER_SECTION);
 
       // and condition in second dimension
