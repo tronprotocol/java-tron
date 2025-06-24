@@ -11,7 +11,7 @@ repositories {
 }
 
 dependencies {
-    compile project(":common")
+    api project(":common")
 }
 
 jacocoTestReport {

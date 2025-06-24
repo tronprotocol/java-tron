@@ -36,7 +36,7 @@ public class AccountCapsuleTest extends BaseTest {
   static AccountCapsule accountCapsule;
 
   static {
-    Args.setParam(new String[]{"-d",  dbPath(), "-w"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d",  dbPath()}, Constant.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "a06a17a49648a8ad32055c06f60fa14ae46df91234";
   }
 
@@ -90,7 +90,7 @@ public class AccountCapsuleTest extends BaseTest {
     String nameAdd = "TokenX";
     long amountAdd = 222L;
     boolean addBoolean = accountCapsuleTest
-        .addAssetAmount(nameAdd.getBytes(), amountAdd);
+        .addAssetAmount(nameAdd.getBytes(), amountAdd, true);
 
     Assert.assertTrue(addBoolean);
 
@@ -102,7 +102,7 @@ public class AccountCapsuleTest extends BaseTest {
     long amountReduce = 22L;
 
     boolean reduceBoolean = accountCapsuleTest
-        .reduceAssetAmount(ByteArray.fromString("TokenX"), amountReduce);
+        .reduceAssetAmount(ByteArray.fromString("TokenX"), amountReduce, false);
     Assert.assertTrue(reduceBoolean);
 
     Map<String, Long> assetMapAfter = accountCapsuleTest.getAssetMapForTest();

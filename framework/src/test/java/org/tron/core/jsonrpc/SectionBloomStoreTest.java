@@ -132,7 +132,7 @@ public class SectionBloomStoreTest extends BaseTest {
     try {
       LogFilterWrapper logFilterWrapper = new LogFilterWrapper(
           new FilterRequest("earliest", "latest", ByteArray.toJsonHex(address1), null, null),
-          currentMaxBlockNum, null);
+          currentMaxBlockNum, null, false);
       LogBlockQuery logBlockQuery =
           new LogBlockQuery(logFilterWrapper, sectionBloomStore, currentMaxBlockNum,
               sectionExecutor);
@@ -149,7 +149,7 @@ public class SectionBloomStoreTest extends BaseTest {
     try {
       LogFilterWrapper logFilterWrapper = new LogFilterWrapper(
           new FilterRequest("earliest", "latest", addressList, null, null),
-          currentMaxBlockNum, null);
+          currentMaxBlockNum, null, false);
       LogBlockQuery logBlockQuery =
           new LogBlockQuery(logFilterWrapper, sectionBloomStore, currentMaxBlockNum,
               sectionExecutor);
@@ -165,7 +165,7 @@ public class SectionBloomStoreTest extends BaseTest {
       LogFilterWrapper logFilterWrapper = new LogFilterWrapper(
           new FilterRequest("earliest", "latest", null,
               new String[] {ByteArray.toHexString(topic1)}, null),
-          currentMaxBlockNum, null);
+          currentMaxBlockNum, null, false);
       LogBlockQuery logBlockQuery =
           new LogBlockQuery(logFilterWrapper, sectionBloomStore, currentMaxBlockNum,
               sectionExecutor);
@@ -181,7 +181,7 @@ public class SectionBloomStoreTest extends BaseTest {
       LogFilterWrapper logFilterWrapper = new LogFilterWrapper(
           new FilterRequest("earliest", "latest", null,
               new String[] {ByteArray.toHexString(topic2)}, null),
-          currentMaxBlockNum, null);
+          currentMaxBlockNum, null, false);
       LogBlockQuery logBlockQuery =
           new LogBlockQuery(logFilterWrapper, sectionBloomStore, currentMaxBlockNum,
               sectionExecutor);
@@ -199,7 +199,7 @@ public class SectionBloomStoreTest extends BaseTest {
       LogFilterWrapper logFilterWrapper = new LogFilterWrapper(
           new FilterRequest("earliest", "latest", null,
               new Object[] {topicList}, null),
-          currentMaxBlockNum, null);
+          currentMaxBlockNum, null, false);
       LogBlockQuery logBlockQuery =
           new LogBlockQuery(logFilterWrapper, sectionBloomStore, currentMaxBlockNum,
               sectionExecutor);
@@ -226,7 +226,7 @@ public class SectionBloomStoreTest extends BaseTest {
       LogFilterWrapper logFilterWrapper = new LogFilterWrapper(
           new FilterRequest("earliest", "latest", null,
               new Object[] {ByteArray.toJsonHex(topic1), ByteArray.toJsonHex(topic2)}, null),
-          currentMaxBlockNum, null);
+          currentMaxBlockNum, null, false);
       LogBlockQuery logBlockQuery =
           new LogBlockQuery(logFilterWrapper, sectionBloomStore, currentMaxBlockNum,
               sectionExecutor);
