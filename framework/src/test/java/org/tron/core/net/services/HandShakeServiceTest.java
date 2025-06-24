@@ -25,6 +25,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
+import org.tron.core.ChainBaseManager.NodeType;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
@@ -256,6 +257,15 @@ public class HandShakeServiceTest {
         .setNumber(sid.getNum())
         .build();
     builder.setSolidBlockId(sBlockId);
+    ChainBaseManager.getChainBaseManager().setNodeType(NodeType.FULL);
+    try {
+      HelloMessage helloMessage = new HelloMessage(builder.build().toByteArray());
+      method.invoke(p2pEventHandler, peer, helloMessage.getSendBytes());
+    } catch (Exception e) {
+      Assert.fail();
+    }
+
+    ChainBaseManager.getChainBaseManager().setNodeType(NodeType.LITE);
     try {
       HelloMessage helloMessage = new HelloMessage(builder.build().toByteArray());
       method.invoke(p2pEventHandler, peer, helloMessage.getSendBytes());
