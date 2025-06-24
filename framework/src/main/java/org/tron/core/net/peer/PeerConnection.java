@@ -85,7 +85,7 @@ public class PeerConnection {
 
   @Getter
   @Setter
-  private TronState tronState = TronState.INIT;
+  private volatile TronState tronState = TronState.INIT;
 
   @Autowired
   private TronNetDelegate tronNetDelegate;
@@ -123,15 +123,15 @@ public class PeerConnection {
   private Map<Item, Long> advInvRequest = new ConcurrentHashMap<>();
 
   @Setter
-  private BlockId fastForwardBlock;
+  private volatile BlockId fastForwardBlock;
 
   @Getter
-  private BlockId blockBothHave = new BlockId();
+  private volatile BlockId blockBothHave = new BlockId();
   @Getter
   private volatile long blockBothHaveUpdateTime = System.currentTimeMillis();
   @Setter
   @Getter
-  private BlockId lastSyncBlockId;
+  private volatile BlockId lastSyncBlockId;
   @Setter
   @Getter
   private volatile long remainNum;
@@ -146,7 +146,7 @@ public class PeerConnection {
   private Map<BlockId, Long> syncBlockRequested = new ConcurrentHashMap<>();
   @Setter
   @Getter
-  private Pair<Deque<BlockId>, Long> syncChainRequested = null;
+  private volatile Pair<Deque<BlockId>, Long> syncChainRequested = null;
   @Setter
   @Getter
   private Set<BlockId> syncBlockInProcess = new HashSet<>();
