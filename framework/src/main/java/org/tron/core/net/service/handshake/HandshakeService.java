@@ -97,14 +97,19 @@ public class HandshakeService {
     }
 
     if (chainBaseManager.getSolidBlockId().getNum() >= msg.getSolidBlockId().getNum()
-            && !chainBaseManager.containBlockInMainChain(msg.getSolidBlockId())) {
-      logger.info("Peer {} different solid block, peer->{}, me->{}",
-              peer.getInetSocketAddress(),
-              msg.getSolidBlockId().getString(),
-              chainBaseManager.getSolidBlockId().getString());
+        && !chainBaseManager.containBlockInMainChain(msg.getSolidBlockId())) {
       if (chainBaseManager.getNodeType() == NodeType.FULL) {
+        logger.info("Peer {} solid block is below than we and fork with me, peer->{}, me->{}",
+            peer.getInetSocketAddress(),
+            msg.getSolidBlockId().getString(),
+            chainBaseManager.getSolidBlockId().getString());
         peer.disconnect(ReasonCode.FORKED);
       } else {
+        logger.info("Peer {} solid block is below than we and light node doesn't contain the block,"
+                + " it's unuseful, peer->{}, me->{}",
+            peer.getInetSocketAddress(),
+            msg.getSolidBlockId().getString(),
+            chainBaseManager.getSolidBlockId().getString());
         peer.disconnect(ReasonCode.LIGHT_NODE_SYNC_FAIL);
       }
       return;
