@@ -295,6 +295,7 @@ public class Wallet {
   public static final String CONTRACT_VALIDATE_EXCEPTION = "ContractValidateException: {}";
   public static final String CONTRACT_VALIDATE_ERROR = "Contract validate error : ";
 
+  private static int GET_WITNESS_LIST_MAX_LIMIT = 1000;
   /**
    * Creates a new Wallet with a random ECKey.
    */
@@ -774,16 +775,19 @@ public class Wallet {
       return null;
     }
     // To control the maximum response size less than 40KB.
-    if (limit > 1000) {
-      limit = 1000;
+    if (limit > GET_WITNESS_LIST_MAX_LIMIT) {
+      limit = GET_WITNESS_LIST_MAX_LIMIT;
+    }
+
+    // Get all witnesses from the store, it contains the final vote count at the end of the last epoch.
+    List<WitnessCapsule> witnessCapsuleList = chainBaseManager.getWitnessStore().getAllWitnesses();
+    if (offset >= witnessCapsuleList.size()) {
+      return null;
     }
 
     VotesStore votesStore = chainBaseManager.getVotesStore();
     // Count the vote changes for each witness in the current epoch, it is maybe negative.
     Map<ByteString, Long> countWitness = countVote(votesStore);
-
-    // Get all witnesses from the store, it contains the final vote count at the end of the last epoch.
-    List<WitnessCapsule> witnessCapsuleList = chainBaseManager.getWitnessStore().getAllWitnesses();
 
     // Iterate through the witness list and apply the vote changes, it will be the realtime vote count.
     witnessCapsuleList.forEach((witnessCapsule) -> {
@@ -824,7 +828,6 @@ public class Wallet {
     // VotesStore is a key-value store, where the key is the address of the voter
     Iterator<Entry<byte[], VotesCapsule>> dbIterator = votesStore.iterator();
 
-    long sizeCount = 0;
     while (dbIterator.hasNext()) {
       Entry<byte[], VotesCapsule> next = dbIterator.next();
       VotesCapsule votes = next.getValue();
@@ -848,9 +851,7 @@ public class Wallet {
           countWitness.put(voteAddress, voteCount);
         }
       });
-      sizeCount++;
     }
-    logger.info("There is {} votes in this request", sizeCount);
     return countWitness;
   }
 
