@@ -42,7 +42,7 @@ public class GetPaginatedNowWitnessListServlet extends RateLimiterServlet {
   }
 
   private void fillResponse(long offset, long limit, boolean visible, HttpServletResponse response)
-          throws IOException {
+      throws IOException {
     GrpcAPI.WitnessList reply = wallet.getPaginatedNowWitnessList(offset, limit);
     if (reply != null) {
       response.getWriter().println(JsonFormat.printToString(reply, visible));

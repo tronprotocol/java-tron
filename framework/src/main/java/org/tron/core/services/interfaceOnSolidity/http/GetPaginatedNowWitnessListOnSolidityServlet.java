@@ -12,14 +12,14 @@ import javax.servlet.http.HttpServletResponse;
 @Component
 @Slf4j(topic = "API")
 public class GetPaginatedNowWitnessListOnSolidityServlet extends GetPaginatedNowWitnessListServlet {
-    @Autowired
-    private WalletOnSolidity walletOnSolidity;
+  @Autowired
+  private WalletOnSolidity walletOnSolidity;
 
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) {
-        walletOnSolidity.futureGet(() -> super.doGet(request, response));
-    }
+  protected void doGet(HttpServletRequest request, HttpServletResponse response) {
+    walletOnSolidity.futureGet(() -> super.doGet(request, response));
+  }
 
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) {
-        walletOnSolidity.futureGet(() -> super.doPost(request, response));
-    }
+  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
+    walletOnSolidity.futureGet(() -> super.doPost(request, response));
+  }
 }

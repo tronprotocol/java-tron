@@ -347,7 +347,8 @@ public class FullNodeHttpApiService extends HttpService {
     // Get the list of witnesses info with contains vote counts for last epoch/maintenance
     context.addServlet(new ServletHolder(listWitnessesServlet), "/wallet/listwitnesses");
     // Get the paged list of witnesses info with realtime vote counts
-    context.addServlet(new ServletHolder(getPaginatedNowWitnessListServlet), "/wallet/getpaginatednowwitnesslist");
+    context.addServlet(new ServletHolder(getPaginatedNowWitnessListServlet),
+        "/wallet/getpaginatednowwitnesslist");
     context.addServlet(new ServletHolder(getAssetIssueListServlet), "/wallet/getassetissuelist");
     context.addServlet(
         new ServletHolder(getPaginatedAssetIssueListServlet),

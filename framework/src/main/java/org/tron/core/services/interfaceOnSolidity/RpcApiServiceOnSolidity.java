@@ -163,9 +163,10 @@ public class RpcApiServiceOnSolidity extends RpcService {
     }
 
     public void getPaginatedNowWitnessList(PaginatedMessage request,
-                                           StreamObserver<WitnessList> responseObserver) {
+        StreamObserver<WitnessList> responseObserver) {
       walletOnSolidity.futureGet(
-              () -> rpcApiService.getWalletSolidityApi().getPaginatedNowWitnessList(request, responseObserver));
+          () -> rpcApiService.getWalletSolidityApi()
+              .getPaginatedNowWitnessList(request, responseObserver));
     }
 
     @Override

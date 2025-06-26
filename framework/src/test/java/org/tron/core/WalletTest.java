@@ -860,16 +860,16 @@ public class WalletTest extends BaseTest {
   public void testGetPaginatedNowWitnessList_CornerCase() {
     GrpcAPI.WitnessList witnessList = wallet.getPaginatedNowWitnessList(-100, 0);
     Assert.assertTrue("Should return an empty witness list when offset is negative",
-            witnessList == null);
+        witnessList == null);
 
     witnessList = wallet.getPaginatedNowWitnessList(100, 0);
     Assert.assertTrue("Should return an empty witness list when limit is 0",
-            witnessList == null);
+        witnessList == null);
 
     String fakeWitnessAddressPrefix = "fake_witness";
     int fakeNumberOfWitnesses = 1000 + 10;
     // Mock additional witnesses with vote counts greater than 1000
-    for(int i = 0; i < fakeNumberOfWitnesses; i++) {
+    for (int i = 0; i < fakeNumberOfWitnesses; i++) {
       saveWitnessWith(fakeWitnessAddressPrefix + i, 200);
     }
 
@@ -879,8 +879,9 @@ public class WalletTest extends BaseTest {
         witnessList.getWitnessesCount() == 1000);
 
     // clean up, delete the fake witnesses
-    for(int i = 0; i < fakeNumberOfWitnesses; i++) {
-      chainBaseManager.getWitnessStore().delete(ByteString.copyFromUtf8(fakeWitnessAddressPrefix + i).toByteArray());
+    for (int i = 0; i < fakeNumberOfWitnesses; i++) {
+      chainBaseManager.getWitnessStore()
+          .delete(ByteString.copyFromUtf8(fakeWitnessAddressPrefix + i).toByteArray());
     }
   }
 
@@ -899,12 +900,13 @@ public class WalletTest extends BaseTest {
     String fakeWitnessAddressPrefix = "fake_witness_address_for_paged_now_witness_list";
     int fakeNumberOfWitnesses = 10;
     // Mock additional witnesses with vote counts greater than the maximum
-    for(int i = 0; i < fakeNumberOfWitnesses; i++) {
+    for (int i = 0; i < fakeNumberOfWitnesses; i++) {
       saveWitnessWith(fakeWitnessAddressPrefix + i, maxVoteCount + 1000000L);
     }
 
     // Create a VotesCapsule to simulate the votes for the fake witnesses
-    VotesCapsule votesCapsule = new VotesCapsule(ByteString.copyFromUtf8(ACCOUNT_ADDRESS_ONE), new ArrayList<Protocol.Vote>());
+    VotesCapsule votesCapsule = new VotesCapsule(ByteString.copyFromUtf8(ACCOUNT_ADDRESS_ONE),
+        new ArrayList<Protocol.Vote>());
     votesCapsule.addOldVotes(ByteString.copyFromUtf8(fakeWitnessAddressPrefix + 0), 100L);
     votesCapsule.addOldVotes(ByteString.copyFromUtf8(fakeWitnessAddressPrefix + 1), 50L);
     votesCapsule.addNewVotes(ByteString.copyFromUtf8(fakeWitnessAddressPrefix + 2), 200L);
@@ -917,14 +919,18 @@ public class WalletTest extends BaseTest {
     Assert.assertTrue("Witness list should contain 10 witnesses",
         witnessList2.getWitnessesCount() == 10);
     // Check the first witness should have the maximum vote count
-    Assert.assertEquals("The first witness should have the maximum vote count",fakeWitnessAddressPrefix + 3, witnessList2.getWitnesses(0).getAddress().toStringUtf8());
-    Assert.assertEquals( maxVoteCount + 1000300L, witnessList2.getWitnesses(0).getVoteCount());
+    Assert.assertEquals("The first witness should have the maximum vote count",
+        fakeWitnessAddressPrefix + 3, witnessList2.getWitnesses(0).getAddress().toStringUtf8());
+    Assert.assertEquals(maxVoteCount + 1000300L, witnessList2.getWitnesses(0).getVoteCount());
     // Check the second witness should have the second maximum vote count
-    Assert.assertEquals("The second witness", fakeWitnessAddressPrefix + 2, witnessList2.getWitnesses(1).getAddress().toStringUtf8());
-    Assert.assertEquals( maxVoteCount + 1000200L, witnessList2.getWitnesses(1).getVoteCount());
+    Assert.assertEquals("The second witness", fakeWitnessAddressPrefix + 2,
+        witnessList2.getWitnesses(1).getAddress().toStringUtf8());
+    Assert.assertEquals(maxVoteCount + 1000200L, witnessList2.getWitnesses(1).getVoteCount());
     // Check the last witness should have the least vote count
-    Assert.assertEquals("The tenth witness", fakeWitnessAddressPrefix + 0, witnessList2.getWitnesses(9).getAddress().toStringUtf8());
-    Assert.assertEquals( maxVoteCount + 1000000L - 100L, witnessList2.getWitnesses(9).getVoteCount());
+    Assert.assertEquals("The tenth witness", fakeWitnessAddressPrefix + 0,
+        witnessList2.getWitnesses(9).getAddress().toStringUtf8());
+    Assert.assertEquals(maxVoteCount + 1000000L - 100L,
+        witnessList2.getWitnesses(9).getVoteCount());
 
 
     logger.info("after paged");
@@ -932,23 +938,26 @@ public class WalletTest extends BaseTest {
     // Check the witness list should remain unchanged after paged request
     for (Protocol.Witness witness : witnessList3.getWitnessesList()) {
       if (witness.getVoteCount() > maxVoteCount) {
-        Assert.assertTrue("Check the witness list should remain unchanged after paged request", witness.getVoteCount() == maxVoteCount + 1000000L);
+        Assert.assertTrue("Check the witness list should remain unchanged after paged request",
+            witness.getVoteCount() == maxVoteCount + 1000000L);
       }
     }
 
     // clean up, delete the fake witnesses
-    for(int i = 0; i < fakeNumberOfWitnesses; i++) {
-      chainBaseManager.getWitnessStore().delete(ByteString.copyFromUtf8(fakeWitnessAddressPrefix + i).toByteArray());
+    for (int i = 0; i < fakeNumberOfWitnesses; i++) {
+      chainBaseManager.getWitnessStore()
+          .delete(ByteString.copyFromUtf8(fakeWitnessAddressPrefix + i).toByteArray());
     }
     chainBaseManager.getVotesStore().delete(votesCapsule.createDbKey());
-    Assert.assertTrue("Clean up the mocked witness data",wallet.getWitnessList().getWitnessesCount() == witnessList.getWitnessesCount());
+    Assert.assertTrue("Clean up the mocked witness data",
+        wallet.getWitnessList().getWitnessesCount() == witnessList.getWitnessesCount());
 
   }
 
   public void saveWitnessWith(String witnessAddress, long voteCount) {
     WitnessCapsule witness = new WitnessCapsule(
         Protocol.Witness.newBuilder()
-                .setAddress(ByteString.copyFromUtf8(witnessAddress)) // Convert String to ByteString
+            .setAddress(ByteString.copyFromUtf8(witnessAddress)) // Convert String to ByteString
             .setVoteCount(voteCount).build());
     chainBaseManager.getWitnessStore().put(witness.getAddress().toByteArray(), witness);
   }

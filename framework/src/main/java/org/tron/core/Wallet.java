@@ -30,6 +30,7 @@ import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.MARKET_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
+import static org.tron.core.config.Parameter.DatabaseConstants.WITNESS_LIST_LIMIT_MAX;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseEnergyFee;
 import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.EARLIEST_STR;
 import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.FINALIZED_STR;
@@ -295,7 +296,6 @@ public class Wallet {
   public static final String CONTRACT_VALIDATE_EXCEPTION = "ContractValidateException: {}";
   public static final String CONTRACT_VALIDATE_ERROR = "Contract validate error : ";
 
-  private static int GET_WITNESS_LIST_MAX_LIMIT = 1000;
   /**
    * Creates a new Wallet with a random ECKey.
    */
@@ -775,8 +775,8 @@ public class Wallet {
       return null;
     }
     // To control the maximum response size less than 40KB.
-    if (limit > GET_WITNESS_LIST_MAX_LIMIT) {
-      limit = GET_WITNESS_LIST_MAX_LIMIT;
+    if (limit > WITNESS_LIST_LIMIT_MAX) {
+      limit = WITNESS_LIST_LIMIT_MAX;
     }
 
     // Get all witnesses from the store, it contains the final vote count at the end of the last epoch.
@@ -799,15 +799,15 @@ public class Wallet {
 
     // Return the witness with the highest vote counts at first and skip the offset with limit
     List<WitnessCapsule> sortedWitnessList = witnessCapsuleList.stream()
-            .sorted(Comparator.comparingLong(WitnessCapsule::getVoteCount).reversed())
-            .skip(offset)
-            .limit(limit)
-            .collect(Collectors.toList());
+        .sorted(Comparator.comparingLong(WitnessCapsule::getVoteCount).reversed())
+        .skip(offset)
+        .limit(limit)
+        .collect(Collectors.toList());
 
     // Pack the sorted WitnessCapsule list into a WitnessList object
     WitnessList.Builder builder = WitnessList.newBuilder();
     sortedWitnessList.forEach(witnessCapsule ->
-            builder.addWitnesses(witnessCapsule.getInstance()));
+        builder.addWitnesses(witnessCapsule.getInstance()));
 
     return builder.build();
   }
@@ -836,20 +836,14 @@ public class Wallet {
       votes.getOldVotes().forEach(vote -> {
         ByteString voteAddress = vote.getVoteAddress();
         long voteCount = vote.getVoteCount();
-        if (countWitness.containsKey(voteAddress)) {
-          countWitness.put(voteAddress, countWitness.get(voteAddress) - voteCount);
-        } else {
-          countWitness.put(voteAddress, -voteCount);
-        }
+        countWitness.put(voteAddress,
+            countWitness.containsKey(voteAddress) ? countWitness.get(voteAddress) : 0 - voteCount);
       });
       votes.getNewVotes().forEach(vote -> {
         ByteString voteAddress = vote.getVoteAddress();
         long voteCount = vote.getVoteCount();
-        if (countWitness.containsKey(voteAddress)) {
-          countWitness.put(voteAddress, countWitness.get(voteAddress) + voteCount);
-        } else {
-          countWitness.put(voteAddress, voteCount);
-        }
+        countWitness.put(voteAddress,
+            countWitness.containsKey(voteAddress) ? countWitness.get(voteAddress) : 0 + voteCount);
       });
     }
     return countWitness;
