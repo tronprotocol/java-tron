@@ -15,6 +15,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessageV3;
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -77,13 +78,14 @@ import org.tron.core.services.jsonrpc.types.BlockResult;
 import org.tron.core.services.jsonrpc.types.BuildArguments;
 import org.tron.core.services.jsonrpc.types.CallArguments;
 import org.tron.core.services.jsonrpc.types.TransactionReceipt;
-import org.tron.core.services.jsonrpc.types.TransactionReceiptFactory;
+import org.tron.core.services.jsonrpc.types.TransactionReceipt.TransactionContext;
 import org.tron.core.services.jsonrpc.types.TransactionResult;
 import org.tron.core.store.StorageRowStore;
 import org.tron.core.vm.program.Storage;
 import org.tron.program.Version;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.ResourceReceipt;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -95,6 +97,7 @@ import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContractDataWrapper;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
+
 
 @Slf4j(topic = "API")
 @Component
@@ -788,11 +791,46 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
 
     BlockCapsule blockCapsule = new BlockCapsule(block);
     long blockNum = blockCapsule.getNum();
-    TransactionInfoList infoList = wallet.getTransactionInfoByBlockNum(blockNum);
+    TransactionInfoList transactionInfoList = wallet.getTransactionInfoByBlockNum(blockNum);
     long energyFee = wallet.getEnergyFee(blockCapsule.getTimeStamp());
     
-    return TransactionReceiptFactory.createFromBlockAndTxInfo(
-        blockCapsule, transactionInfo, infoList, energyFee);
+    // Find transaction context
+    TransactionReceipt.TransactionContext context
+        = findTransactionContext(transactionInfoList,
+          transactionInfo.getId());
+
+    if (context == null) {
+      return null; // Transaction not found in block
+    }
+    
+    return new TransactionReceipt(blockCapsule, transactionInfo, context, energyFee);
+  }
+
+  /**
+   * Finds transaction context for a specific transaction ID within the block
+   * Calculates cumulative gas and log count up to the target transaction
+   * @param infoList the transactionInfo list for the block
+   * @param txId the transaction ID
+   * @return TransactionContext containing index and cumulative values, or null if not found
+   */
+  private TransactionContext findTransactionContext(TransactionInfoList infoList,
+      ByteString txId) {
+
+    long cumulativeGas = 0;
+    long cumulativeLogCount = 0;
+
+    for (int index = 0; index < infoList.getTransactionInfoCount(); index++) {
+      TransactionInfo info = infoList.getTransactionInfo(index);
+      ResourceReceipt resourceReceipt = info.getReceipt();
+
+      if (info.getId().equals(txId)) {
+        return new TransactionContext(index, cumulativeGas, cumulativeLogCount);
+      } else {
+        cumulativeGas += resourceReceipt.getEnergyUsageTotal();
+        cumulativeLogCount += info.getLogCount();
+      }
+    }
+    return null;
   }
 
   /**
@@ -813,10 +851,52 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
 
     BlockCapsule blockCapsule = new BlockCapsule(block);
     long blockNum = blockCapsule.getNum();
-    TransactionInfoList infoList = wallet.getTransactionInfoByBlockNum(blockNum);
+    TransactionInfoList transactionInfoList = wallet.getTransactionInfoByBlockNum(blockNum);
     long energyFee = wallet.getEnergyFee(blockCapsule.getTimeStamp());
 
-    return TransactionReceiptFactory.createFromBlock(blockCapsule, infoList, energyFee);
+    // Validate transaction list size consistency
+    int transactionSizeInBlock = blockCapsule.getTransactions().size();
+    if (transactionSizeInBlock != transactionInfoList.getTransactionInfoCount()) {
+      throw new JsonRpcInternalException(
+          String.format("TransactionList size mismatch: "
+                  + "block has %d transactions, but transactionInfoList has %d",
+              transactionSizeInBlock, transactionInfoList.getTransactionInfoCount()));
+    }
+
+    return getTransactionReceiptsFromBlock(blockCapsule, transactionInfoList, energyFee);
+  }
+
+  /**
+   * Get all TransactionReceipts from a block
+   * This method processes all transactions in the block
+   * and creates receipts with cumulative gas calculations
+   * @param blockCapsule the block containing transactions
+   * @param transactionInfoList the transaction info list for the block
+   * @param energyFee the energy fee for the block timestamp
+   * @return List of TransactionReceipt objects for all transactions in the block
+   */
+  private List<TransactionReceipt> getTransactionReceiptsFromBlock(BlockCapsule blockCapsule,
+      TransactionInfoList transactionInfoList, long energyFee) {
+
+    List<TransactionReceipt> receipts = new ArrayList<>();
+    long cumulativeGas = 0;
+    long cumulativeLogCount = 0;
+
+    for (int index = 0; index < transactionInfoList.getTransactionInfoCount(); index++) {
+      TransactionInfo info = transactionInfoList.getTransactionInfo(index);
+      ResourceReceipt resourceReceipt = info.getReceipt();
+
+      TransactionReceipt.TransactionContext context = new TransactionContext(
+          index, cumulativeGas, cumulativeLogCount);
+
+      // Use the constructor with pre-calculated context
+      TransactionReceipt receipt = new TransactionReceipt(blockCapsule, info, context, energyFee);
+      receipts.add(receipt);
+
+      cumulativeGas += resourceReceipt.getEnergyUsageTotal();;
+      cumulativeLogCount += info.getLogCount();
+    }
+    return receipts;
   }
 
   @Override
