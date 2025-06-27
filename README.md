@@ -173,7 +173,7 @@ This will mount the `output-directory` and `logs` directories on the host, the d
 
 [Tron Developers & SRs](https://discord.gg/hqKvyAM) is Tron's official Discord channel. Feel free to join this channel if you have any questions.
 
-[Tron Official Developer Group](https://t.me/TronOfficialDevelopersGroupEn) is the Telegram channel for java-tron community developers. If you want to contribute to java-tron, please join this channel.
+[Core Devs Community](https://t.me/troncoredevscommunity) and [Tron Official Developer Group](https://t.me/TronOfficialDevelopersGroupEn) are the official Telegram groups for the java-tron developer community. If you're interested in contributing to java-tron, we encourage you to join these groups and connect with other developers.
 
 [tronprotocol/allcoredev](https://gitter.im/tronprotocol/allcoredev) is the official Gitter channel for developers.
 
