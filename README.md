@@ -173,7 +173,7 @@ This will mount the `output-directory` and `logs` directories on the host, the d
 
 [Tron Developers & SRs](https://discord.gg/hqKvyAM) is Tron's official Discord channel. Feel free to join this channel if you have any questions.
 
-[Core Devs Community](https://t.me/troncoredevscommunity) is the Telegram channel for java-tron community developers. If you want to contribute to java-tron, please join this channel.
+[Tron Official Developer Group](https://t.me/TronOfficialDevelopersGroupEn) is the Telegram channel for java-tron community developers. If you want to contribute to java-tron, please join this channel.
 
 [tronprotocol/allcoredev](https://gitter.im/tronprotocol/allcoredev) is the official Gitter channel for developers.
 
@@ -184,7 +184,7 @@ Thank you for considering to help out with the source code! If you'd like to con
 # Resources
 
 - [Medium](https://medium.com/@coredevs) java-tron's official technical articles are published there.
-- [Documentation](https://tronprotocol.github.io/documentation-en/introduction/) java-tron's official technical documentation website.
+- [Documentation](https://tronprotocol.github.io/documentation-en/) and [TRON Developer Hub](https://developers.tron.network/) serve as java-tron’s primary documentation websites.
 - [Test network](http://nileex.io/) A stable test network of TRON contributed by TRON community.
 - [Tronscan](https://tronscan.org/#/) TRON network blockchain browser.
 - [Wallet-cli](https://github.com/tronprotocol/wallet-cli) TRON network wallet using command line.
