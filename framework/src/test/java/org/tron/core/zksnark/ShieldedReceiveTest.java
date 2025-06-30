@@ -310,7 +310,7 @@ public class ShieldedReceiveTest extends BaseTest {
             ADDRESS_ONE_PRIVATE_KEY, chainBaseManager.getAccountStore());
     try {
       boolean res = dbManager.pushTransaction(transactionCap);
-      Assert.assertTrue(res);
+      Assert.assertFalse(res);
     } catch (Exception e) {
       Assert.assertFalse(true);
     }

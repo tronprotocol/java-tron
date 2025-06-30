@@ -870,7 +870,7 @@ public class Manager {
 
     if (isShieldedTransaction(trx.getInstance()) && !chainBaseManager.getDynamicPropertiesStore()
         .supportShieldedTransaction()) {
-      return true;
+      return false;
     }
 
     pushTransactionQueue.add(trx);
