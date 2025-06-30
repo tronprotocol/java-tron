@@ -420,10 +420,12 @@ public class Args extends CommonParameter {
     } else if (config.hasPath(Constant.LOCAL_WITNESS)) {
       localWitnesses = new LocalWitnesses();
       List<String> localwitness = config.getStringList(Constant.LOCAL_WITNESS);
-      localWitnesses.setPrivateKeys(localwitness);
-      witnessAddressCheck(config);
-      localWitnesses.initWitnessAccountAddress(PARAMETER.isECKeyCryptoEngine());
-      logger.debug("Got privateKey from config.conf");
+      if (localwitness.size() > 0) {
+        localWitnesses.setPrivateKeys(localwitness);
+        witnessAddressCheck(config);
+        localWitnesses.initWitnessAccountAddress(PARAMETER.isECKeyCryptoEngine());
+        logger.debug("Got privateKey from config.conf");
+      }
     } else if (config.hasPath(Constant.LOCAL_WITNESS_KEYSTORE)) {
       localWitnesses = new LocalWitnesses();
       List<String> privateKeys = new ArrayList<String>();

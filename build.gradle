@@ -47,7 +47,7 @@ subprojects {
         implementation group: 'org.apache.commons', name: 'commons-math', version: '2.2'
         implementation "org.apache.commons:commons-collections4:4.1"
         implementation group: 'joda-time', name: 'joda-time', version: '2.3'
-        implementation group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.69'
+        implementation group: 'org.bouncycastle', name: 'bcprov-jdk18on', version: '1.79'
 
         compileOnly 'org.projectlombok:lombok:1.18.12'
         annotationProcessor 'org.projectlombok:lombok:1.18.12'

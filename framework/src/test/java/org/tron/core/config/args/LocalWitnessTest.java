@@ -15,6 +15,8 @@
 
 package org.tron.core.config.args;
 
+import static org.junit.Assert.fail;
+
 import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Before;
@@ -42,16 +44,16 @@ public class LocalWitnessTest {
     Assert.assertNotNull(localWitness.getPublicKey());
   }
 
-  @Test
+  @Test(expected = IllegalArgumentException.class)
   public void whenSetEmptyPrivateKey() {
     localWitness.setPrivateKeys(Lists.newArrayList(""));
-    Assert.assertNotNull(localWitness.getPrivateKey());
-    Assert.assertNotNull(localWitness.getPublicKey());
+    fail("private key must be 64-bits hex string");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void whenSetBadFormatPrivateKey() {
     localWitness.setPrivateKeys(Lists.newArrayList("a111"));
+    fail("private key must be 64-bits hex string");
   }
 
   @Test
@@ -85,6 +87,6 @@ public class LocalWitnessTest {
     Assert.assertNull(localWitnesses2.getPublicKey());
     localWitnesses2.initWitnessAccountAddress(true);
     LocalWitnesses localWitnesses3 = new LocalWitnesses();
-    Assert.assertNotNull(localWitnesses3.getWitnessAccountAddress(true));
+    Assert.assertNull(localWitnesses3.getWitnessAccountAddress(true));
   }
 }
