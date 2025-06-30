@@ -2,7 +2,11 @@ package org.tron.core.services.jsonrpc.filters;
 
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -121,44 +125,76 @@ public class LogBlockQuery {
   }
 
   /**
-   * every section has a compound query of sectionBloomStore, works parallel
-   * "and" condition in second dimension of query, "or" condition in first dimension
-   * return a BitSet whose capacity is blockPerSection
+   * Match blocks using optimized bloom filter operations. This method reduces database queries
+   * and BitSet operations by handling duplicate bit indexes and skipping invalid groups.
+   *
+   * @param bitIndexes A 2D array where:
+   *                   - First dimension represents different topic/address (OR)
+   *                   - Second dimension contains bit indexes within each topic/address (AND)
+   *                   Example: [[1,2,3], [4,5,6]] means (1 AND 2 AND 3) OR (4 AND 5 AND 6)
+   * @param section The section number in the bloom filter store to query
+   * @return A BitSet representing the matching blocks in this section
+   * @throws ExecutionException If there's an error in concurrent execution
+   * @throws InterruptedException If the concurrent execution is interrupted
    */
   private BitSet partialMatch(final int[][] bitIndexes, int section)
       throws ExecutionException, InterruptedException {
-    List<List<Future<BitSet>>> bitSetList = new ArrayList<>();
-
+    // 1. Collect all unique bitIndexes
+    Set<Integer> uniqueBitIndexes = new HashSet<>();
     for (int[] index : bitIndexes) {
-      List<Future<BitSet>> futureList = new ArrayList<>();
-      for (final int bitIndex : index) { //must be 3
-        Future<BitSet> bitSetFuture =
-            sectionExecutor.submit(() -> sectionBloomStore.get(section, bitIndex));
-        futureList.add(bitSetFuture);
+      for (int bitIndex : index) { //normally 3, but could be less due to hash collisions
+        uniqueBitIndexes.add(bitIndex);
       }
-      bitSetList.add(futureList);
     }
 
-    BitSet bitSet = new BitSet(SectionBloomStore.BLOCK_PER_SECTION);
+    // 2. Submit concurrent requests for all unique bitIndexes
+    Map<Integer, Future<BitSet>> bitIndexResults = new HashMap<>();
+    for (int bitIndex : uniqueBitIndexes) {
+      Future<BitSet> future
+          = sectionExecutor.submit(() -> sectionBloomStore.get(section, bitIndex));
+      bitIndexResults.put(bitIndex, future);
+    }
 
-    for (List<Future<BitSet>> futureList : bitSetList) {
-      // initial a BitSet with all 1
-      BitSet subBitSet = new BitSet(SectionBloomStore.BLOCK_PER_SECTION);
-      subBitSet.set(0, SectionBloomStore.BLOCK_PER_SECTION);
+    // 3. Wait for all results and cache them
+    Map<Integer, BitSet> resultCache = new HashMap<>();
+    for (Map.Entry<Integer, Future<BitSet>> entry : bitIndexResults.entrySet()) {
+      BitSet result = entry.getValue().get();
+      if (result != null) {
+        resultCache.put(entry.getKey(), result);
+      }
+    }
+
+
+    // 4. Process valid groups with reused BitSet objects
+    BitSet finalResult = new BitSet(SectionBloomStore.BLOCK_PER_SECTION);
+    BitSet tempBitSet = new BitSet(SectionBloomStore.BLOCK_PER_SECTION);
+
+    for (int[] index : bitIndexes) {
+
+      // init tempBitSet with all 1
+      tempBitSet.set(0, SectionBloomStore.BLOCK_PER_SECTION);
+
       // and condition in second dimension
-      for (Future<BitSet> future : futureList) {
-        BitSet one = future.get();
-        if (one == null) { //match nothing
-          subBitSet.clear();
+      for (int bitIndex : index) {
+        BitSet cached = resultCache.get(bitIndex);
+        if (cached == null) { //match nothing
+          tempBitSet.clear();
           break;
         }
         // "and" condition in second dimension
-        subBitSet.and(one);
+        tempBitSet.and(cached);
+        if (tempBitSet.isEmpty()) {
+          break;
+        }
       }
+
       // "or" condition in first dimension
-      bitSet.or(subBitSet);
+      if (!tempBitSet.isEmpty()) {
+        finalResult.or(tempBitSet);
+      }
     }
-    return bitSet;
+
+    return finalResult;
   }
 
   /**
