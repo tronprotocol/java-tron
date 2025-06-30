@@ -207,6 +207,7 @@ import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.store.VotesStore;
+import org.tron.core.store.WitnessStore;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.vm.program.Program;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder;
@@ -797,9 +798,12 @@ public class Wallet {
       witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
     });
 
+    // Use the same logic as in the Maintenance period
+    WitnessStore.sortWitnesses(witnessCapsuleList,
+        chainBaseManager.getDynamicPropertiesStore().allowWitnessSortOptimization());
+
     // Return the witness with the highest vote counts at first and skip the offset with limit
     List<WitnessCapsule> sortedWitnessList = witnessCapsuleList.stream()
-        .sorted(Comparator.comparingLong(WitnessCapsule::getVoteCount).reversed())
         .skip(offset)
         .limit(limit)
         .collect(Collectors.toList());
@@ -837,13 +841,13 @@ public class Wallet {
         ByteString voteAddress = vote.getVoteAddress();
         long voteCount = vote.getVoteCount();
         countWitness.put(voteAddress,
-            countWitness.containsKey(voteAddress) ? countWitness.get(voteAddress) : 0 - voteCount);
+            countWitness.getOrDefault(voteAddress, 0L) - voteCount);
       });
       votes.getNewVotes().forEach(vote -> {
         ByteString voteAddress = vote.getVoteAddress();
         long voteCount = vote.getVoteCount();
         countWitness.put(voteAddress,
-            countWitness.containsKey(voteAddress) ? countWitness.get(voteAddress) : 0 + voteCount);
+            countWitness.getOrDefault(voteAddress, 0L) + voteCount);
       });
     }
     return countWitness;
