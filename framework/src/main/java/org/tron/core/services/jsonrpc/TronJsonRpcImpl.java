@@ -835,7 +835,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
 
   /**
    * Get all transaction receipts for a specific block
-   * @param blockNumOrTag the block number or tag (latest, earliest, pending)
+   * @param blockNumOrTag the block number or tag (latest, earliest, pending, finalized)
    * @return List of TransactionReceipt objects for all transactions in the block,
    * null if block not found
    * @throws JsonRpcInvalidParamsException if the parameter format is invalid
@@ -852,6 +852,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     BlockCapsule blockCapsule = new BlockCapsule(block);
     long blockNum = blockCapsule.getNum();
     TransactionInfoList transactionInfoList = wallet.getTransactionInfoByBlockNum(blockNum);
+
+    //energy price at the block timestamp
     long energyFee = wallet.getEnergyFee(blockCapsule.getTimeStamp());
 
     // Validate transaction list size consistency
@@ -872,7 +874,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
    * and creates receipts with cumulative gas calculations
    * @param blockCapsule the block containing transactions
    * @param transactionInfoList the transaction info list for the block
-   * @param energyFee the energy fee for the block timestamp
+   * @param energyFee the energy price at the block timestamp
    * @return List of TransactionReceipt objects for all transactions in the block
    */
   private List<TransactionReceipt> getTransactionReceiptsFromBlock(BlockCapsule blockCapsule,

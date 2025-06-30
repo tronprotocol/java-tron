@@ -151,7 +151,7 @@ public interface TronJsonRpc {
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
       @JsonRpcError(exception = JsonRpcInternalException.class, code = -32000, data = "{}")
   })
-  List<TransactionReceipt> getBlockReceipts(String bnOrId)
+  List<TransactionReceipt> getBlockReceipts(String blockNumOrTag)
       throws JsonRpcInvalidParamsException, JsonRpcInternalException;
 
   @JsonRpcMethod("eth_call")

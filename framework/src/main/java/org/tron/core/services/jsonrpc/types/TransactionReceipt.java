@@ -67,7 +67,7 @@ public class TransactionReceipt {
    * @param blockCapsule the block containing the transaction
    * @param txInfo the transaction info containing execution details
    * @param context the pre-calculated transaction context
-   * @param energyFee the energy fee at the block timestamp
+   * @param energyFee the energy price at the block timestamp
    */
   public TransactionReceipt(
       BlockCapsule blockCapsule,
