@@ -233,6 +233,14 @@ public class RpcApiServicesTest {
   }
 
   @Test
+  public void testGetPaginatedNowWitnessList() {
+    PaginatedMessage paginatedMessage = PaginatedMessage.newBuilder()
+        .setOffset(0).setLimit(5).build();
+    assertNotNull(blockingStubFull.getPaginatedNowWitnessList(paginatedMessage));
+    assertNotNull(blockingStubSolidity.getPaginatedNowWitnessList(paginatedMessage));
+  }
+
+  @Test
   public void testGetAssetIssueList() {
     EmptyMessage message = EmptyMessage.newBuilder().build();
     assertNotNull(blockingStubFull.getAssetIssueList(message));
