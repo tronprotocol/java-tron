@@ -170,28 +170,27 @@ public class ShieldedTransferActuator extends AbstractActuator {
       }
       nullifierStore.put(new BytesCapsule(spend.getNullifier().toByteArray()));
     }
-    if (chainBaseManager.getDynamicPropertiesStore().supportShieldedTransaction()) {
-      IncrementalMerkleTreeContainer currentMerkle = merkleContainer.getCurrentMerkle();
+
+    IncrementalMerkleTreeContainer currentMerkle = merkleContainer.getCurrentMerkle();
+    try {
+      currentMerkle.wfcheck();
+    } catch (ZksnarkException e) {
+      ret.setStatus(fee, code.FAILED);
+      ret.setShieldedTransactionFee(fee);
+      throw new ContractExeException(e.getMessage());
+    }
+    //handle receives
+    for (ReceiveDescription receive : receives) {
       try {
-        currentMerkle.wfcheck();
+        merkleContainer
+            .saveCmIntoMerkleTree(currentMerkle, receive.getNoteCommitment().toByteArray());
       } catch (ZksnarkException e) {
-        ret.setStatus(fee, code.FAILED);
+        ret.setStatus(0, code.FAILED);
         ret.setShieldedTransactionFee(fee);
         throw new ContractExeException(e.getMessage());
       }
-      //handle receives
-      for (ReceiveDescription receive : receives) {
-        try {
-          merkleContainer
-              .saveCmIntoMerkleTree(currentMerkle, receive.getNoteCommitment().toByteArray());
-        } catch (ZksnarkException e) {
-          ret.setStatus(0, code.FAILED);
-          ret.setShieldedTransactionFee(fee);
-          throw new ContractExeException(e.getMessage());
-        }
-      }
-      merkleContainer.setCurrentMerkle(currentMerkle);
     }
+    merkleContainer.setCurrentMerkle(currentMerkle);
   }
 
   @Override
