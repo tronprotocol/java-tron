@@ -775,7 +775,6 @@ public class Wallet {
     if (limit <= 0 || offset < 0) {
       return null;
     }
-    // To control the maximum response size less than 40KB.
     if (limit > WITNESS_LIST_LIMIT_MAX) {
       limit = WITNESS_LIST_LIMIT_MAX;
     }
@@ -790,25 +789,21 @@ public class Wallet {
     // Count the vote changes for each witness in the current epoch, it is maybe negative.
     Map<ByteString, Long> countWitness = countVote(votesStore);
 
-    // Iterate through the witness list and apply the vote changes, it will be the realtime vote count.
+    // Iterate through the witness list to apply vote changes and calculate the real-time vote count
     witnessCapsuleList.forEach((witnessCapsule) -> {
       long voteCount = countWitness.getOrDefault(witnessCapsule.getAddress(), 0L);
-      // since the above chainBaseManager.getWitnessStore().getAllWitnesses()
-      // each time return a copy of the witness list, thus this update will not affect the original database list.
       witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
     });
 
-    // Use the same logic as in the Maintenance period
+    // Use the same sorting logic as in the Maintenance period
     WitnessStore.sortWitnesses(witnessCapsuleList,
         chainBaseManager.getDynamicPropertiesStore().allowWitnessSortOptimization());
 
-    // Return the witness with the highest vote counts at first and skip the offset with limit
     List<WitnessCapsule> sortedWitnessList = witnessCapsuleList.stream()
         .skip(offset)
         .limit(limit)
         .collect(Collectors.toList());
 
-    // Pack the sorted WitnessCapsule list into a WitnessList object
     WitnessList.Builder builder = WitnessList.newBuilder();
     sortedWitnessList.forEach(witnessCapsule ->
         builder.addWitnesses(witnessCapsule.getInstance()));
@@ -816,15 +811,24 @@ public class Wallet {
     return builder.build();
   }
 
-  /*
-   countVote(VotesStore votesStore): Counts the vote count changes for witnesses in the current epoch,
-   If the voters change their votes in the current epoch,
-   the vote count for last epoch witness will be negative, while the new vote count will be positive.
-   For example:
-   Account A votes for witness W1 in the last epoch with 100 votes,
-   in the current epoch, A change the votes for W2 with 60 votes W3 with 80 votes,
-   then the vote count for W1 will be -100, while the vote count for W2 will be 60, W3 will be 80.
-  */
+  /**
+   * Counts vote changes for witnesses in the current epoch.
+   *
+   * Vote count changes are tracked as follows:
+   * - Negative values for votes removed from previous witness in the last epoch
+   * - Positive values for votes added to new witness in the current epoch
+   *
+   * Example:
+   * an Account X had 100 votes for witness W1 in the previous epoch.
+   * In the current epoch, X changes votes to:
+   * - W2: 60 votes
+   * - W3: 80 votes
+   *
+   * Resulting vote changes:
+   * - W1: -100 (votes removed)
+   * - W2: +60 (new votes)
+   * - W3: +80 (new votes)
+   */
   private Map<ByteString, Long> countVote(VotesStore votesStore) {
     // Initialize a result map to store vote changes for each witness
     Map<ByteString, Long> countWitness = Maps.newHashMap();
@@ -836,7 +840,11 @@ public class Wallet {
       Entry<byte[], VotesCapsule> next = dbIterator.next();
       VotesCapsule votes = next.getValue();
 
-      // For each voter, we iterate the old votes and new votes to calculate the vote count changes
+      /**
+       * VotesCapsule contains two lists:
+       * - Old votes: Last votes from the previous epoch, updated in maintenance period
+       * - New votes: Latest votes in current epoch, updated after each vote transaction
+       */
       votes.getOldVotes().forEach(vote -> {
         ByteString voteAddress = vote.getVoteAddress();
         long voteCount = vote.getVoteCount();
