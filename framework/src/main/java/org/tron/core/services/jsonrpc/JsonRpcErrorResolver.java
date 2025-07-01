@@ -8,7 +8,7 @@ import com.googlecode.jsonrpc4j.JsonRpcErrors;
 import com.googlecode.jsonrpc4j.ReflectionUtil;
 import java.lang.reflect.Method;
 import java.util.List;
-import org.tron.core.exception.TronException;
+import org.tron.core.exception.jsonrpc.JsonRpcException;
 
 /**
  * {@link ErrorResolver} that uses annotations.
@@ -34,9 +34,10 @@ public enum JsonRpcErrorResolver implements ErrorResolver {
         ? resolver.data()
         : new ErrorData(resolver.exception().getName(), message);
 
-    if (thrownException instanceof TronException
-        && ((TronException)thrownException).getData() != null) {
-      data = ((TronException)thrownException).getData();
+    // Use data from JsonRpcException if present
+    if (thrownException instanceof JsonRpcException
+        && ((JsonRpcException)thrownException).getData() != null) {
+      data = ((JsonRpcException)thrownException).getData();
     }
     return new JsonError(resolver.code(), message, data);
   }

@@ -1,6 +1,6 @@
-package org.tron.core.exception;
+package org.tron.core.exception.jsonrpc;
 
-public class JsonRpcInternalException extends TronException {
+public class JsonRpcInternalException extends JsonRpcException {
 
   public JsonRpcInternalException() {
     super();

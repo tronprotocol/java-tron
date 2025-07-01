@@ -10,10 +10,11 @@ import java.util.ArrayList;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
-import org.tron.core.exception.JsonRpcInternalException;
-import org.tron.core.exception.JsonRpcInvalidParamsException;
-import org.tron.core.exception.JsonRpcInvalidRequestException;
 import org.tron.core.exception.TronException;
+import org.tron.core.exception.jsonrpc.JsonRpcException;
+import org.tron.core.exception.jsonrpc.JsonRpcInternalException;
+import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
+import org.tron.core.exception.jsonrpc.JsonRpcInvalidRequestException;
 
 public class JsonRpcErrorResolverTest {
 
@@ -23,7 +24,7 @@ public class JsonRpcErrorResolverTest {
       @JsonRpcError(exception = JsonRpcInvalidRequestException.class, code = -32600, data = "{}"),
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
       @JsonRpcError(exception = JsonRpcInternalException.class, code = -32000, data = "{}"),
-      @JsonRpcError(exception = TronException.class, code = -1)
+      @JsonRpcError(exception = JsonRpcException.class, code = -1)
     })
   public void dummyMethod() {
   }
@@ -33,7 +34,7 @@ public class JsonRpcErrorResolverTest {
 
     String message = "JsonRpcInvalidRequestException";
 
-    TronException exception = new JsonRpcInvalidRequestException(message);
+    JsonRpcException exception = new JsonRpcInvalidRequestException(message);
     Method method = this.getClass().getMethod("dummyMethod");
     List<JsonNode> arguments = new ArrayList<>();
 
@@ -61,8 +62,8 @@ public class JsonRpcErrorResolverTest {
     Assert.assertEquals(message, error.message);
     Assert.assertEquals("{}", error.data);
 
-    message = "TronException";
-    exception = new TronException(message, null);
+    message = "JsonRpcException";
+    exception = new JsonRpcException(message, null);
     error = resolver.resolveError(exception, method, arguments);
 
     Assert.assertNotNull(error);
