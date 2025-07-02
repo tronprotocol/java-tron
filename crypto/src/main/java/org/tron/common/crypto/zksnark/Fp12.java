@@ -356,7 +356,7 @@ class Fp12 implements Field<Fp12> {
 
   @Override
   public int hashCode() {
-    return Integer.valueOf(a.hashCode() + b.hashCode()).hashCode();
+    return a.hashCode() + b.hashCode();
   }
 
   @Override

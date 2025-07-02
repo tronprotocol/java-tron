@@ -73,7 +73,7 @@ public class Type implements Cloneable {
 
   @Override
   public int hashCode() {
-    return Integer.valueOf(type).hashCode();
+    return type;
   }
 
   @Override
