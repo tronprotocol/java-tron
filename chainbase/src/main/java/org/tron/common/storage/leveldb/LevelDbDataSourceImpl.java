@@ -17,6 +17,7 @@ package org.tron.common.storage.leveldb;
 
 import static org.fusesource.leveldbjni.JniDBFactory.factory;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Bytes;
 import java.io.File;
@@ -251,6 +252,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   }
 
   @Deprecated
+  @VisibleForTesting
   @Override
   public Set<byte[]> allKeys() {
     resetDbLock.readLock().lock();
@@ -268,6 +270,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   }
 
   @Deprecated
+  @VisibleForTesting
   @Override
   public Set<byte[]> allValues() {
     resetDbLock.readLock().lock();
@@ -388,6 +391,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   }
 
   @Deprecated
+  @VisibleForTesting
   @Override
   public long getTotal() throws RuntimeException {
     resetDbLock.readLock().lock();
