@@ -1,6 +1,7 @@
 package org.tron.common.runtime.vm;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 
 import java.util.List;
 import java.util.Random;
@@ -13,6 +14,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.springframework.util.StringUtils;
 import org.tron.common.BaseTest;
 import org.tron.common.parameter.CommonParameter;
@@ -32,6 +34,7 @@ import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.invoke.ProgramInvokeMockImpl;
+import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
 
 @Slf4j
@@ -909,6 +912,48 @@ public class OperationsTest extends BaseTest {
 
     DecodeUtil.addressPreFixByte = prePrefixByte;
     VMConfig.initAllowEnergyAdjustment(0);
+  }
+
+  @Test
+  public void testSuicideAction2() throws ContractValidateException {
+    byte[] contractAddr = Hex.decode("41471fd3ad3e9eeadeec4608b92d16ce6b500704cc");
+    invoke = new ProgramInvokeMockImpl(StoreFactory.getInstance(), new byte[0], contractAddr);
+    Assert.assertTrue(invoke.getDeposit().isNewContract(contractAddr));
+
+    program = new Program(null, null, invoke,
+        new InternalTransaction(
+            Protocol.Transaction.getDefaultInstance(),
+            InternalTransaction.TrxType.TRX_UNKNOWN_TYPE));
+
+    VMConfig.initAllowEnergyAdjustment(1);
+    VMConfig.initAllowTvmSelfdestructRestriction(1);
+    byte prePrefixByte = DecodeUtil.addressPreFixByte;
+    DecodeUtil.addressPreFixByte = Constant.ADD_PRE_FIX_BYTE_MAINNET;
+
+    program.suicide2(new DataWord(
+        dbManager.getAccountStore().getBlackhole().getAddress().toByteArray()));
+
+    Assert.assertEquals(1, program.getResult().getDeleteAccounts().size());
+
+
+    invoke = new ProgramInvokeMockImpl(StoreFactory.getInstance(), new byte[0], contractAddr);
+    program = new Program(null, null, invoke,
+        new InternalTransaction(
+            Protocol.Transaction.getDefaultInstance(),
+            InternalTransaction.TrxType.TRX_UNKNOWN_TYPE));
+    Program spyProgram = Mockito.spy(program);
+    Repository realContractState = program.getContractState();
+    Repository spyContractState = Mockito.spy(realContractState);
+    Mockito.when(spyContractState.isNewContract(any(byte[].class))).thenReturn(false);
+    Mockito.when(spyProgram.getContractState()).thenReturn(spyContractState);
+    spyProgram.suicide2(new DataWord(
+        dbManager.getAccountStore().getBlackhole().getAddress().toByteArray()));
+
+    Assert.assertEquals(0, spyProgram.getResult().getDeleteAccounts().size());
+
+    DecodeUtil.addressPreFixByte = prePrefixByte;
+    VMConfig.initAllowEnergyAdjustment(0);
+    VMConfig.initAllowTvmSelfdestructRestriction(0);
   }
 
   @Test

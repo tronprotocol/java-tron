@@ -405,4 +405,7 @@ public class Constant {
   public static final String COMMITTEE_ALLOW_TVM_CANCUN = "committee.allowTvmCancun";
 
   public static final String COMMITTEE_ALLOW_TVM_BLOB = "committee.allowTvmBlob";
+
+  public static final String COMMITTEE_ALLOW_TVM_SELFDESTRUCT_RESTRICTION =
+      "committee.allowTvmSelfdestructRestriction";
 }

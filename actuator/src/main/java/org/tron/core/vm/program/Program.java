@@ -515,6 +515,73 @@ public class Program {
     getResult().addDeleteAccount(this.getContractAddress());
   }
 
+  public void suicide2(DataWord obtainerAddress) {
+
+    byte[] owner = getContextAddress();
+    boolean isNewContract = getContractState().isNewContract(owner);
+    if (isNewContract) {
+      suicide(obtainerAddress);
+      return;
+    }
+
+    byte[] obtainer = obtainerAddress.toTronAddress();
+
+    long balance = getContractState().getBalance(owner);
+
+    if (logger.isDebugEnabled()) {
+      logger.debug("Transfer to: [{}] heritage: [{}]",
+          Hex.toHexString(obtainer),
+          balance);
+    }
+
+    increaseNonce();
+
+    InternalTransaction internalTx = addInternalTx(null, owner, obtainer, balance, null,
+        "suicide", nonce, getContractState().getAccount(owner).getAssetMapV2());
+
+    if (FastByteComparisons.isEqual(owner, obtainer)) {
+      return;
+    }
+
+    if (VMConfig.allowTvmVote()) {
+      withdrawRewardAndCancelVote(owner, getContractState());
+    }
+
+    balance = getContractState().getBalance(owner);
+    if (internalTx != null) {
+      internalTx.setValue(balance);
+    }
+
+    // transfer balance and trc10
+    createAccountIfNotExist(getContractState(), obtainer);
+    try {
+      MUtil.transfer(getContractState(), owner, obtainer, balance);
+      if (VMConfig.allowTvmTransferTrc10()) {
+        MUtil.transferAllToken(getContractState(), owner, obtainer);
+      }
+    } catch (ContractValidateException e) {
+      if (VMConfig.allowTvmConstantinople()) {
+        throw new TransferException(
+            "transfer all token or transfer all trx failed in suicide: %s", e.getMessage());
+      }
+      throw new BytecodeExecutionException("transfer failure");
+    }
+
+    // transfer freeze
+    if (VMConfig.allowTvmFreeze()) {
+      transferDelegatedResourceToInheritor(owner, obtainer, getContractState());
+    }
+
+    // transfer freezeV2
+    if (VMConfig.allowTvmFreezeV2()) {
+      long expireUnfrozenBalance =
+          transferFrozenV2BalanceToInheritor(owner, obtainer, getContractState());
+      if (expireUnfrozenBalance > 0 && internalTx != null) {
+        internalTx.setValue(internalTx.getValue() + expireUnfrozenBalance);
+      }
+    }
+  }
+
   public Repository getContractState() {
     return this.contractState;
   }
