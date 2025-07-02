@@ -26,7 +26,7 @@ public class GetProposalByIdServlet extends RateLimiterServlet {
     try {
       boolean visible = Util.getVisible(request);
       String input = request.getParameter("id");
-      long id = new Long(input);
+      long id = Long.parseLong(input);
       fillResponse(ByteString.copyFrom(ByteArray.fromLong(id)), visible, response);
     } catch (Exception e) {
       Util.processError(e, response);

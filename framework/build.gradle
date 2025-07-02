@@ -43,7 +43,6 @@ dependencies {
     implementation group: 'com.google.inject', name: 'guice', version: '4.1.0'
     implementation group: 'io.dropwizard.metrics', name: 'metrics-core', version: '3.1.2'
     implementation group: 'com.github.davidb', name: 'metrics-influxdb', version: '0.8.2'
-    implementation group: 'com.carrotsearch', name: 'java-sizeof', version: '0.0.5'
     // http
     implementation 'org.eclipse.jetty:jetty-server:9.4.53.v20231009'
     implementation 'org.eclipse.jetty:jetty-servlet:9.4.53.v20231009'
@@ -158,7 +157,7 @@ def binaryRelease(taskName, jarName, mainClass) {
 
         // explicit_dependency
         dependsOn (project(':actuator').jar, project(':consensus').jar, project(':chainbase').jar,
-                project(':crypto').jar, project(':common').jar, project(':protocol').jar)
+                project(':crypto').jar, project(':common').jar, project(':protocol').jar, project(':platform').jar)
 
         from {
             configurations.runtimeClasspath.collect {
@@ -204,9 +203,17 @@ def createScript(project, mainClass, name) {
         }
     }
 }
-
-applicationDistribution.from("../gradle/java-tron.vmoptions") {
-    into "bin"
+if (JavaVersion.current().is(JavaVersion.VERSION_17)) {
+    applicationDistribution.from("${project.rootDir}/gradle/jdk17/java-tron.vmoptions") {
+        into "bin"
+    }
+} else if (JavaVersion.current().isJava8()){
+    applicationDistribution.from("${project.rootDir}/gradle/java-tron.vmoptions") {
+        into "bin"
+    }
+} else {
+    throw new GradleException("Java 8 or Java17 is supported to build Java-Tron.\n" +
+            "  Detected version ${JavaVersion.current()}")
 }
 //distZip {
 //    doLast {

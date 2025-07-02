@@ -16,6 +16,7 @@ import io.netty.handler.timeout.WriteTimeoutHandler;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -123,10 +124,12 @@ public class BaseNet {
 
   @AfterClass
   public static void destroy() {
-    Collection<PeerConnection> peerConnections = ReflectUtils
-        .invokeMethod(tronNetDelegate, "getActivePeer");
-    for (PeerConnection peer : peerConnections) {
-      peer.getChannel().close();
+    if (Objects.nonNull(tronNetDelegate)) {
+      Collection<PeerConnection> peerConnections = ReflectUtils
+          .invokeMethod(tronNetDelegate, "getActivePeer");
+      for (PeerConnection peer : peerConnections) {
+        peer.getChannel().close();
+      }
     }
     Args.clearParam();
     context.destroy();

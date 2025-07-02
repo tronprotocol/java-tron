@@ -17,11 +17,10 @@
  */
 package org.tron.core.db.common;
 
-import org.tron.core.db2.common.WrappedByteArray;
-
+import com.google.common.annotations.VisibleForTesting;
 import java.util.Map;
 import java.util.Set;
-
+import org.tron.core.db2.common.WrappedByteArray;
 
 public interface DbSourceInter<V> extends BatchSourceInter<byte[], V>,
     Iterable<Map.Entry<byte[], V>> {
@@ -38,10 +37,16 @@ public interface DbSourceInter<V> extends BatchSourceInter<byte[], V>,
 
   void resetDb();
 
+  @VisibleForTesting
+  @Deprecated
   Set<byte[]> allKeys() throws RuntimeException;
 
+  @VisibleForTesting
+  @Deprecated
   Set<byte[]> allValues() throws RuntimeException;
 
+  @VisibleForTesting
+  @Deprecated
   long getTotal() throws RuntimeException;
 
   void stat();

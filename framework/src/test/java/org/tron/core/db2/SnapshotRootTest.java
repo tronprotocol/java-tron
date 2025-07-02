@@ -1,10 +1,13 @@
 package org.tron.core.db2;
 
 import com.google.common.collect.Sets;
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
@@ -13,7 +16,9 @@ import lombok.NoArgsConstructor;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.springframework.util.CollectionUtils;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
@@ -45,11 +50,13 @@ public class SnapshotRootTest {
           "exchange","market_order","account-trace","contract-state","trans"));
   private Set<String> allDBNames;
   private Set<String> allRevokingDBNames;
+  @Rule
+  public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
 
   @Before
-  public void init() {
-    Args.setParam(new String[]{"-d", "output_revokingStore_test"}, Constant.TEST_CONF);
+  public void init() throws IOException {
+    Args.setParam(new String[]{"-d", temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     appT = ApplicationFactory.create(context);
   }
@@ -58,7 +65,6 @@ public class SnapshotRootTest {
   public void removeDb() {
     Args.clearParam();
     context.destroy();
-    FileUtil.deleteDir(new File("output_revokingStore_test"));
   }
 
   @Test
@@ -133,7 +139,9 @@ public class SnapshotRootTest {
       throws ItemNotFoundException {
     revokingDatabase = context.getBean(SnapshotManager.class);
     allRevokingDBNames = parseRevokingDBNames(context);
-    allDBNames = Arrays.stream(new File("output_revokingStore_test/database").list())
+    Path path = Paths.get(Args.getInstance().getOutputDirectory(),
+        Args.getInstance().getStorage().getDbDirectory());
+    allDBNames = Arrays.stream(Objects.requireNonNull(path.toFile().list()))
             .collect(Collectors.toSet());
     if (CollectionUtils.isEmpty(allDBNames)) {
       throw new ItemNotFoundException("No DBs found");
@@ -152,10 +160,13 @@ public class SnapshotRootTest {
     revokingDatabase = context.getBean(SnapshotManager.class);
     allRevokingDBNames = parseRevokingDBNames(context);
     allRevokingDBNames.add("secondCheckTestDB");
-    FileUtil.createDirIfNotExists("output_revokingStore_test/database/secondCheckTestDB");
-    allDBNames = Arrays.stream(new File("output_revokingStore_test/database").list())
+    Path path = Paths.get(Args.getInstance().getOutputDirectory(),
+        Args.getInstance().getStorage().getDbDirectory());
+    Path secondCheckTestDB = Paths.get(path.toString(), "secondCheckTestDB");
+    FileUtil.createDirIfNotExists(secondCheckTestDB.toString());
+    allDBNames = Arrays.stream(Objects.requireNonNull(path.toFile().list()))
             .collect(Collectors.toSet());
-    FileUtil.deleteDir(new File("output_revokingStore_test/database/secondCheckTestDB"));
+    FileUtil.deleteDir(secondCheckTestDB.toFile());
     if (CollectionUtils.isEmpty(allDBNames)) {
       throw new ItemNotFoundException("No DBs found");
     }
