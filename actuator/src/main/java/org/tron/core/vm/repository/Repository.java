@@ -55,6 +55,10 @@ public interface Repository {
 
   void updateContractState(byte[] address, ContractStateCapsule contractStateCapsule);
 
+  void putNewContract(byte[] address);
+
+  boolean isNewContract(byte[] address);
+
   void updateAccount(byte[] address, AccountCapsule accountCapsule);
 
   void updateDynamicProperty(byte[] word, BytesCapsule bytesCapsule);

@@ -79,6 +79,10 @@ public class OperationRegistry {
       adjustForFairEnergy(table);
     }
 
+    if (VMConfig.allowTvmSelfdestructRestriction()) {
+      adjustSelfdestruct(table);
+    }
+
     return table;
   }
 
@@ -694,5 +698,12 @@ public class OperationRegistry {
         EnergyCost::getBaseTierCost,
         OperationActions::blobBaseFeeAction,
         tvmBlobProposal));
+  }
+
+  public static void adjustSelfdestruct(JumpTable table) {
+    table.set(new Operation(
+        Op.SUICIDE, 1, 0,
+        EnergyCost::getSuicideCost3,
+        OperationActions::suicideAction2));
   }
 }

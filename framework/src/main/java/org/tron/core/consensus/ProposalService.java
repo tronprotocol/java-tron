@@ -384,6 +384,10 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveAllowTvmBlob(entry.getValue());
           break;
         }
+        case ALLOW_TVM_SELFDESTRUCT_RESTRICTION: {
+          manager.getDynamicPropertiesStore().saveAllowTvmSelfdestructRestriction(entry.getValue());
+          break;
+        }
         default:
           find = false;
           break;

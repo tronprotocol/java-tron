@@ -1387,6 +1387,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmBlob())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowTvmSelfdestructRestriction")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmSelfdestructRestriction())
+        .build());
+
     return builder.build();
   }
 
