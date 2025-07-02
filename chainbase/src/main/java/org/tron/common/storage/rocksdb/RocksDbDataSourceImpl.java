@@ -128,6 +128,7 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   }
 
   @Deprecated
+  @VisibleForTesting
   @Override
   public Set<byte[]> allKeys() throws RuntimeException {
     resetDbLock.readLock().lock();
@@ -143,6 +144,7 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   }
 
   @Deprecated
+  @VisibleForTesting
   @Override
   public Set<byte[]> allValues() throws RuntimeException {
     resetDbLock.readLock().lock();
@@ -158,6 +160,7 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   }
 
   @Deprecated
+  @VisibleForTesting
   @Override
   public long getTotal() throws RuntimeException {
     resetDbLock.readLock().lock();
