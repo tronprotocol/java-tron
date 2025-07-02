@@ -473,12 +473,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       }
       result = ByteArray.toJsonHex(listBytes);
     } else {
-      logger.error("trigger contract failed.");
-      logger.error(retBuilder.build().toString());
       String errMsg = retBuilder.getMessage().toStringUtf8();
       byte[] resData = trxExtBuilder.getConstantResult(0).toByteArray();
-      logger.info("res byteString" + trxExtBuilder.build().toString());
-      logger.error(Hex.toHexString(resData));
       if (resData.length > 4 && Hex.toHexString(resData).startsWith(ERROR_SELECTOR)) {
         String msg = ContractEventParser
             .parseDataBytes(org.bouncycastle.util.Arrays.copyOfRange(resData, 4, resData.length),
