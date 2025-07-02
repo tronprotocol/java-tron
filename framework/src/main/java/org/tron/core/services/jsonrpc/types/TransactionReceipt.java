@@ -79,6 +79,7 @@ public class TransactionReceipt {
     this.blockNumber = ByteArray.toJsonHex(blockCapsule.getNum());
     this.transactionHash = ByteArray.toJsonHex(txInfo.getId().toByteArray());
     this.transactionIndex = ByteArray.toJsonHex(context.index);
+    // Compute cumulativeGasTillTxn
     this.cumulativeGasUsed =
         ByteArray.toJsonHex(context.cumulativeGas + txInfo.getReceipt().getEnergyUsageTotal());
     this.gasUsed = ByteArray.toJsonHex(txInfo.getReceipt().getEnergyUsageTotal());
