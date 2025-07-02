@@ -232,6 +232,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] ALLOW_TVM_BLOB = "ALLOW_TVM_BLOB".getBytes();
 
+  private static final byte[] ALLOW_TVM_SELFDESTRUCT_RESTRICTION =
+      "ALLOW_TVM_SELFDESTRUCT_RESTRICTION".getBytes();
+
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -2944,6 +2947,21 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElse(CommonParameter.getInstance().getAllowTvmBlob());
+  }
+
+  public long getAllowTvmSelfdestructRestriction() {
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_SELFDESTRUCT_RESTRICTION))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(CommonParameter.getInstance().getAllowTvmSelfdestructRestriction());
+  }
+
+  public void saveAllowTvmSelfdestructRestriction(long value) {
+    this.put(ALLOW_TVM_SELFDESTRUCT_RESTRICTION, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public boolean allowTvmSelfdestructRestriction() {
+    return getAllowTvmSelfdestructRestriction() == 1L;
   }
 
   private static class DynamicResourceProperties {

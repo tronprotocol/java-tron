@@ -247,6 +247,7 @@ public class Args extends CommonParameter {
     PARAMETER.consensusLogicOptimization = 0;
     PARAMETER.allowTvmCancun = 0;
     PARAMETER.allowTvmBlob = 0;
+    PARAMETER.allowTvmSelfdestructRestriction = 0;
   }
 
   /**
@@ -1296,6 +1297,10 @@ public class Args extends CommonParameter {
     PARAMETER.allowTvmBlob =
         config.hasPath(Constant.COMMITTEE_ALLOW_TVM_BLOB) ? config
             .getInt(Constant.COMMITTEE_ALLOW_TVM_BLOB) : 0;
+
+    PARAMETER.allowTvmSelfdestructRestriction =
+        config.hasPath(Constant.COMMITTEE_ALLOW_TVM_SELFDESTRUCT_RESTRICTION) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_TVM_SELFDESTRUCT_RESTRICTION) : 0;
 
     logConfig();
   }
