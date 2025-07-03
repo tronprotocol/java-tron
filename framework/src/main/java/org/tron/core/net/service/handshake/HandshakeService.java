@@ -98,14 +98,14 @@ public class HandshakeService {
 
     if (chainBaseManager.getSolidBlockId().getNum() >= msg.getSolidBlockId().getNum()
         && !chainBaseManager.containBlockInMainChain(msg.getSolidBlockId())) {
-      if (chainBaseManager.getNodeType() == NodeType.FULL) {
-        logger.info("Peer {} solid block is below than we and fork with me, peer->{}, me->{}",
+      if (chainBaseManager.getLowestBlockNum() <= msg.getSolidBlockId().getNum()) {
+        logger.info("Peer {} different solid block, fork with me, peer->{}, me->{}",
             peer.getInetSocketAddress(),
             msg.getSolidBlockId().getString(),
             chainBaseManager.getSolidBlockId().getString());
         peer.disconnect(ReasonCode.FORKED);
       } else {
-        logger.info("Peer {} solid block is below than we and light node doesn't contain the block,"
+        logger.info("Peer {} solid block is below than me and light node doesn't contain the block,"
                 + " it's unuseful, peer->{}, me->{}",
             peer.getInetSocketAddress(),
             msg.getSolidBlockId().getString(),
