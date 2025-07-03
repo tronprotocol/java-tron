@@ -124,7 +124,11 @@ public class SyncService {
       peer.setSyncChainRequested(new Pair<>(chainSummary, System.currentTimeMillis()));
       peer.sendMessage(new SyncBlockChainMessage(chainSummary));
     } catch (Exception e) {
-      logger.error("Peer {} sync failed, reason: {}", peer.getInetAddress(), e);
+      if (e instanceof P2pException) {
+        logger.warn("Peer {} sync failed, reason: {}", peer.getInetAddress(), e.getMessage());
+      } else {
+        logger.error("Peer {} sync failed.", peer.getInetAddress(), e);
+      }
       peer.disconnect(ReasonCode.SYNC_FAIL);
     }
   }
