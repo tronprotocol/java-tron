@@ -30,7 +30,7 @@ import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.MARKET_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
-import static org.tron.core.config.Parameter.DatabaseConstants.WITNESS_LIST_LIMIT_MAX;
+import static org.tron.core.config.Parameter.DatabaseConstants.WITNESS_COUNT_LIMIT_MAX;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseEnergyFee;
 import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.EARLIEST_STR;
 import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.FINALIZED_STR;
@@ -62,7 +62,6 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.Comparator;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -775,8 +774,8 @@ public class Wallet {
     if (limit <= 0 || offset < 0) {
       return null;
     }
-    if (limit > WITNESS_LIST_LIMIT_MAX) {
-      limit = WITNESS_LIST_LIMIT_MAX;
+    if (limit > WITNESS_COUNT_LIMIT_MAX) {
+      limit = WITNESS_COUNT_LIMIT_MAX;
     }
 
     // Get all witnesses from the store, it contains the final vote count at the end of the last epoch.
