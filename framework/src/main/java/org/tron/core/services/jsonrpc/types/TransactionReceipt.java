@@ -51,15 +51,15 @@ public class TransactionReceipt {
   private String gasUsed;
   private String contractAddress;
   private TransactionLog[] logs;
-  private String logsBloom;
+  private String logsBloom = ByteArray.toJsonHex(new byte[256]); // default no value;
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
-  private String root; // 32 bytes of post-transaction stateroot (pre Byzantium)
+  private String root = null; // 32 bytes of post-transaction stateroot (pre Byzantium)
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
   private String status; //  either 1 (success) or 0 (failure) (post Byzantium)
 
-  private String type = "0x0";
+  private String type = "0x0"; // legacy transaction, set 0 in java-tron
 
   /**
    * Constructor for creating a TransactionReceipt
@@ -79,7 +79,7 @@ public class TransactionReceipt {
     this.blockNumber = ByteArray.toJsonHex(blockCapsule.getNum());
     this.transactionHash = ByteArray.toJsonHex(txInfo.getId().toByteArray());
     this.transactionIndex = ByteArray.toJsonHex(context.index);
-    // Compute cumulativeGasTillTxn
+    // Compute cumulative gas until this transaction
     this.cumulativeGasUsed =
         ByteArray.toJsonHex(context.cumulativeGas + txInfo.getReceipt().getEnergyUsageTotal());
     this.gasUsed = ByteArray.toJsonHex(txInfo.getReceipt().getEnergyUsageTotal());
@@ -131,10 +131,6 @@ public class TransactionReceipt {
     }
     this.logs = logList.toArray(new TransactionLog[0]);
 
-    // Set default fields
-    this.logsBloom = ByteArray.toJsonHex(new byte[256]); // no value
-    this.root = null;
-    this.type = "0x0";
   }
 
   /**
