@@ -470,14 +470,19 @@ public class Program {
     InternalTransaction internalTx = addInternalTx(null, owner, obtainer, balance, null,
         "suicide", nonce, getContractState().getAccount(owner).getAssetMapV2());
 
+    boolean canDeleteAccount =
+        !VMConfig.allowTvmSelfdestructRestriction() || getContractState().isNewContract(owner);
+
     int ADDRESS_SIZE = VMUtils.getAddressSize();
     if (FastByteComparisons.compareTo(owner, 0, ADDRESS_SIZE, obtainer, 0, ADDRESS_SIZE) == 0) {
-      // if owner == obtainer just zeroing account according to Yellow Paper
-      getContractState().addBalance(owner, -balance);
-      byte[] blackHoleAddress = getContractState().getBlackHoleAddress();
-      if (VMConfig.allowTvmTransferTrc10()) {
-        getContractState().addBalance(blackHoleAddress, balance);
-        MUtil.transferAllToken(getContractState(), owner, blackHoleAddress);
+      if (canDeleteAccount) {
+        // if owner == obtainer just zeroing account according to Yellow Paper
+        getContractState().addBalance(owner, -balance);
+        byte[] blackHoleAddress = getContractState().getBlackHoleAddress();
+        if (VMConfig.allowTvmTransferTrc10()) {
+          getContractState().addBalance(blackHoleAddress, balance);
+          MUtil.transferAllToken(getContractState(), owner, blackHoleAddress);
+        }
       }
     } else {
       createAccountIfNotExist(getContractState(), obtainer);
@@ -497,22 +502,27 @@ public class Program {
     if (VMConfig.allowTvmFreeze()) {
       byte[] blackHoleAddress = getContractState().getBlackHoleAddress();
       if (FastByteComparisons.isEqual(owner, obtainer)) {
-        transferDelegatedResourceToInheritor(owner, blackHoleAddress, getContractState());
+        if (canDeleteAccount) {
+          transferDelegatedResourceToInheritor(owner, blackHoleAddress, getContractState());
+        }
       } else {
         transferDelegatedResourceToInheritor(owner, obtainer, getContractState());
       }
     }
     if (VMConfig.allowTvmFreezeV2()) {
-      byte[] Inheritor =
-          FastByteComparisons.isEqual(owner, obtainer)
-              ? getContractState().getBlackHoleAddress()
-              : obtainer;
-      long expireUnfrozenBalance = transferFrozenV2BalanceToInheritor(owner, Inheritor, getContractState());
-      if (expireUnfrozenBalance > 0 && internalTx != null) {
-        internalTx.setValue(internalTx.getValue() + expireUnfrozenBalance);
+      boolean isEqual = FastByteComparisons.isEqual(owner, obtainer);
+      if (!isEqual || canDeleteAccount) {
+        byte[] inheritor = isEqual ? getContractState().getBlackHoleAddress() : obtainer;
+        long expireUnfrozenBalance =
+            transferFrozenV2BalanceToInheritor(owner, inheritor, getContractState());
+        if (expireUnfrozenBalance > 0 && internalTx != null) {
+          internalTx.setValue(internalTx.getValue() + expireUnfrozenBalance);
+        }
       }
     }
-    getResult().addDeleteAccount(this.getContractAddress());
+    if (canDeleteAccount) {
+      getResult().addDeleteAccount(this.getContractAddress());
+    }
   }
 
   public Repository getContractState() {
