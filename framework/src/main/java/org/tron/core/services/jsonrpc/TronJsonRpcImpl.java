@@ -648,7 +648,12 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
         errMsg += ": " + msg;
       }
 
-      throw new JsonRpcInternalException(errMsg);
+      if (data.length > 0) {
+        throw new JsonRpcInternalException(errMsg, ByteArray.toJsonHex(data));
+      } else {
+        throw new JsonRpcInternalException(errMsg);
+      }
+
     } else {
 
       if (supportEstimateEnergy) {
