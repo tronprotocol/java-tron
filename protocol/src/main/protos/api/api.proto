@@ -499,6 +499,8 @@ service Wallet {
     };
   };
 
+  rpc GetPaginatedNowWitnessList (PaginatedMessage) returns (WitnessList) {
+  };
 
   rpc GetDelegatedResource (DelegatedResourceMessage) returns (DelegatedResourceList) {
   };
@@ -808,6 +810,10 @@ service WalletSolidity {
       }
     };
   };
+
+  rpc GetPaginatedNowWitnessList (PaginatedMessage) returns (WitnessList) {
+  };
+
   rpc GetAssetIssueList (EmptyMessage) returns (AssetIssueList) {
     option (google.api.http) = {
       post: "/walletsolidity/getassetissuelist"

@@ -59,7 +59,7 @@ import org.tron.core.services.interfaceOnSolidity.http.ScanNoteByOvkOnSoliditySe
 import org.tron.core.services.interfaceOnSolidity.http.ScanShieldedTRC20NotesByIvkOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.ScanShieldedTRC20NotesByOvkOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.TriggerConstantContractOnSolidityServlet;
-
+import org.tron.core.services.interfaceOnSolidity.http.GetPaginatedNowWitnessListOnSolidityServlet;
 
 @Slf4j(topic = "API")
 public class HttpApiOnSolidityService extends HttpService {
@@ -73,6 +73,8 @@ public class HttpApiOnSolidityService extends HttpService {
   private GetTransactionInfoByIdOnSolidityServlet getTransactionInfoByIdOnSolidityServlet;
   @Autowired
   private ListWitnessesOnSolidityServlet listWitnessesOnSolidityServlet;
+  @Autowired
+  private GetPaginatedNowWitnessListOnSolidityServlet getPaginatedNowWitnessListOnSolidityServlet;
   @Autowired
   private GetAssetIssueListOnSolidityServlet getAssetIssueListOnSolidityServlet;
   @Autowired
@@ -189,6 +191,8 @@ public class HttpApiOnSolidityService extends HttpService {
     context.addServlet(new ServletHolder(accountOnSolidityServlet), "/walletsolidity/getaccount");
     context.addServlet(new ServletHolder(listWitnessesOnSolidityServlet),
         "/walletsolidity/listwitnesses");
+    context.addServlet(new ServletHolder(getPaginatedNowWitnessListOnSolidityServlet),
+            "/walletsolidity/getpaginatednowwitnesslist");
     context.addServlet(new ServletHolder(getAssetIssueListOnSolidityServlet),
         "/walletsolidity/getassetissuelist");
     context.addServlet(new ServletHolder(getPaginatedAssetIssueListOnSolidityServlet),
