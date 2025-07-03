@@ -159,9 +159,8 @@ public class SyncService {
   }
 
   private LinkedList<BlockId> getBlockChainSummary(PeerConnection peer) throws P2pException {
-
-    BlockId beginBlockId = peer.getBlockBothHave();
     List<BlockId> blockIds = new ArrayList<>(peer.getSyncBlockToFetch());
+    BlockId beginBlockId = peer.getBlockBothHave();
     List<BlockId> forkList = new LinkedList<>();
     LinkedList<BlockId> summary = new LinkedList<>();
     long syncBeginNumber = tronNetDelegate.getSyncBeginNumber();
@@ -323,9 +322,9 @@ public class SyncService {
     for (PeerConnection peer : tronNetDelegate.getActivePeer()) {
       BlockId bid = peer.getSyncBlockToFetch().peek();
       if (blockId.equals(bid)) {
+        peer.setBlockBothHave(blockId);
         peer.getSyncBlockToFetch().remove(bid);
         if (flag) {
-          peer.setBlockBothHave(blockId);
           if (peer.getSyncBlockToFetch().isEmpty() && peer.isFetchAble()) {
             syncNext(peer);
           }
