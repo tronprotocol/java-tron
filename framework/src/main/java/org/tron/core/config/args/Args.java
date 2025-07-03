@@ -186,7 +186,7 @@ public class Args extends CommonParameter {
     PARAMETER.maxHttpConnectNumber = 50;
     PARAMETER.allowMultiSign = 0;
     PARAMETER.trxExpirationTimeInMilliseconds = 0;
-    PARAMETER.fullNodeAllowShieldedTransactionArgs = true;
+    PARAMETER.allowShieldedTransactionApi = true;
     PARAMETER.zenTokenId = "000000";
     PARAMETER.allowProtoFilterNum = 0;
     PARAMETER.allowAccountStateRoot = 0;
@@ -991,9 +991,9 @@ public class Args extends CommonParameter {
     PARAMETER.eventFilter =
         config.hasPath(Constant.EVENT_SUBSCRIBE_FILTER) ? getEventFilter(config) : null;
 
-    PARAMETER.fullNodeAllowShieldedTransactionArgs =
-        !config.hasPath(Constant.NODE_FULLNODE_ALLOW_SHIELDED_TRANSACTION)
-            || config.getBoolean(Constant.NODE_FULLNODE_ALLOW_SHIELDED_TRANSACTION);
+    PARAMETER.allowShieldedTransactionApi =
+        !config.hasPath(Constant.ALLOW_SHIELDED_TRANSACTION_API)
+            || config.getBoolean(Constant.ALLOW_SHIELDED_TRANSACTION_API);
 
     PARAMETER.zenTokenId = config.hasPath(Constant.NODE_ZEN_TOKENID)
         ? config.getString(Constant.NODE_ZEN_TOKENID) : "000000";
@@ -1029,10 +1029,6 @@ public class Args extends CommonParameter {
     PARAMETER.shieldedTransInPendingMaxCounts =
         config.hasPath(Constant.NODE_SHIELDED_TRANS_IN_PENDING_MAX_COUNTS) ? config
             .getInt(Constant.NODE_SHIELDED_TRANS_IN_PENDING_MAX_COUNTS) : 10;
-
-    if (PARAMETER.isWitness()) {
-      PARAMETER.fullNodeAllowShieldedTransactionArgs = true;
-    }
 
     PARAMETER.rateLimiterGlobalQps =
         config.hasPath(Constant.RATE_LIMITER_GLOBAL_QPS) ? config
@@ -1767,10 +1763,6 @@ public class Args extends CommonParameter {
     logger.info("ShutDown blockCount : {}", parameter.getShutdownBlockCount());
     logger.info("***************************************************************");
     logger.info("\n");
-  }
-
-  public static void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {
-    PARAMETER.fullNodeAllowShieldedTransactionArgs = fullNodeAllowShieldedTransaction;
   }
 
   private static void witnessAddressCheck(Config config) {

@@ -298,7 +298,7 @@ public class ShieldWalletTest extends BaseTest {
   @Test
   public void testCreateShieldedContractParameters() throws ContractExeException {
     librustzcashInitZksnarkParams();
-    Args.getInstance().setFullNodeAllowShieldedTransactionArgs(true);
+    Args.getInstance().setAllowShieldedTransactionApi(true);
     Wallet wallet1 = spy(new Wallet());
 
     doReturn(BigInteger.valueOf(1).toByteArray())
@@ -341,7 +341,7 @@ public class ShieldWalletTest extends BaseTest {
   @Test
   public void testCreateShieldedContractParameters2() throws ContractExeException {
     librustzcashInitZksnarkParams();
-    Args.getInstance().setFullNodeAllowShieldedTransactionArgs(true);
+    Args.getInstance().setAllowShieldedTransactionApi(true);
     Wallet wallet1 = spy(new Wallet());
 
     doReturn(BigInteger.valueOf(1).toByteArray())
@@ -417,7 +417,7 @@ public class ShieldWalletTest extends BaseTest {
   @Test
   public void testCreateShieldedContractParametersWithoutAsk() throws ContractExeException {
     librustzcashInitZksnarkParams();
-    Args.getInstance().setFullNodeAllowShieldedTransactionArgs(true);
+    Args.getInstance().setAllowShieldedTransactionApi(true);
 
     Wallet wallet1 = spy(new Wallet());
     doReturn(BigInteger.valueOf(1).toByteArray())

@@ -85,7 +85,7 @@ public class ShieldedTransferActuatorTest extends BaseTest {
    */
   @BeforeClass
   public static void init() throws ZksnarkException {
-    Args.setFullNodeAllowShieldedTransaction(true);
+    Args.getInstance().setAllowShieldedTransactionApi(true);
     librustzcashInitZksnarkParams();
   }
 
@@ -950,7 +950,7 @@ public class ShieldedTransferActuatorTest extends BaseTest {
    */
   @Test
   public void publicToShieldAddressAndShieldToPublicAddressWithZoreValueSuccess() {
-    Args.setFullNodeAllowShieldedTransaction(true);
+    Args.getInstance().setAllowShieldedTransactionApi(true);
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
 
