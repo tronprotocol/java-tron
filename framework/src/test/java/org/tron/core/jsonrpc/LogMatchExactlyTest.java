@@ -9,7 +9,7 @@ import org.junit.Test;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.exception.JsonRpcInvalidParamsException;
+import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
 import org.tron.core.services.jsonrpc.TronJsonRpc.FilterRequest;
 import org.tron.core.services.jsonrpc.TronJsonRpc.LogFilterElement;
 import org.tron.core.services.jsonrpc.filters.LogFilter;

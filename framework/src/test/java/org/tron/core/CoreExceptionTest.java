@@ -29,11 +29,6 @@ import org.tron.core.exception.EventBloomException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.HighFreqException;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.exception.JsonRpcInternalException;
-import org.tron.core.exception.JsonRpcInvalidParamsException;
-import org.tron.core.exception.JsonRpcInvalidRequestException;
-import org.tron.core.exception.JsonRpcMethodNotFoundException;
-import org.tron.core.exception.JsonRpcTooManyResultException;
 import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.core.exception.P2pException;
@@ -56,6 +51,11 @@ import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZkProofValidateException;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.exception.jsonrpc.JsonRpcInternalException;
+import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
+import org.tron.core.exception.jsonrpc.JsonRpcInvalidRequestException;
+import org.tron.core.exception.jsonrpc.JsonRpcMethodNotFoundException;
+import org.tron.core.exception.jsonrpc.JsonRpcTooManyResultException;
 
 public class CoreExceptionTest {
 

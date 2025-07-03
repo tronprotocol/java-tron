@@ -57,12 +57,12 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.exception.JsonRpcInternalException;
-import org.tron.core.exception.JsonRpcInvalidParamsException;
-import org.tron.core.exception.JsonRpcInvalidRequestException;
-import org.tron.core.exception.JsonRpcMethodNotFoundException;
-import org.tron.core.exception.JsonRpcTooManyResultException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.exception.jsonrpc.JsonRpcInternalException;
+import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
+import org.tron.core.exception.jsonrpc.JsonRpcInvalidRequestException;
+import org.tron.core.exception.jsonrpc.JsonRpcMethodNotFoundException;
+import org.tron.core.exception.jsonrpc.JsonRpcTooManyResultException;
 import org.tron.core.services.NodeInfoService;
 import org.tron.core.services.http.JsonFormat;
 import org.tron.core.services.http.Util;
@@ -473,7 +473,6 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       }
       result = ByteArray.toJsonHex(listBytes);
     } else {
-      logger.error("trigger contract failed.");
       String errMsg = retBuilder.getMessage().toStringUtf8();
       byte[] resData = trxExtBuilder.getConstantResult(0).toByteArray();
       if (resData.length > 4 && Hex.toHexString(resData).startsWith(ERROR_SELECTOR)) {
@@ -483,7 +482,12 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
         errMsg += ": " + msg;
       }
 
-      throw new JsonRpcInternalException(errMsg);
+      if (resData.length > 0) {
+        throw new JsonRpcInternalException(errMsg, ByteArray.toJsonHex(resData));
+      } else {
+        throw new JsonRpcInternalException(errMsg);
+      }
+
     }
 
     return result;
@@ -644,7 +648,12 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
         errMsg += ": " + msg;
       }
 
-      throw new JsonRpcInternalException(errMsg);
+      if (data.length > 0) {
+        throw new JsonRpcInternalException(errMsg, ByteArray.toJsonHex(data));
+      } else {
+        throw new JsonRpcInternalException(errMsg);
+      }
+
     } else {
 
       if (supportEstimateEnergy) {

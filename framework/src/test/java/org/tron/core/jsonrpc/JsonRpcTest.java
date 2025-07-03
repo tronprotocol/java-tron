@@ -18,7 +18,7 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
-import org.tron.core.exception.JsonRpcInvalidParamsException;
+import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
 import org.tron.core.services.jsonrpc.JsonRpcApiUtil;
 import org.tron.core.services.jsonrpc.TronJsonRpc.FilterRequest;
 import org.tron.core.services.jsonrpc.filters.LogBlockQuery;
