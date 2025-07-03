@@ -84,7 +84,7 @@ public class LibrustzcashTest extends BaseTest {
         },
         "config-test-mainnet.conf"
     );
-    Args.setFullNodeAllowShieldedTransaction(true);
+    Args.getInstance().setAllowShieldedTransactionApi(true);
   }
 
   private static int randomInt(int minInt, int maxInt) {

@@ -24,11 +24,6 @@ public class ZksnarkInitService {
   public static void librustzcashInitZksnarkParams() {
     logger.info("init zk param begin");
 
-    if (!JLibrustzcash.isOpenZen()) {
-      logger.info("zen switch is off, zen will not start.");
-      return;
-    }
-
     String spendPath = getParamsFile("sapling-spend.params");
     String spendHash = "25fd9a0d1c1be0526c14662947ae95b758fe9f3d7fb7f55e9b4437830dcc6215a7ce3ea465"
         + "914b157715b7a4d681389ea4aa84438190e185d5e4c93574d3a19a";
