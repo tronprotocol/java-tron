@@ -98,6 +98,10 @@ subprojects {
         reproducibleFileOrder = true
         duplicatesStrategy = DuplicatesStrategy.INCLUDE // allow duplicates
     }
+    tasks.withType(Test).configureEach {
+        // https://docs.gradle.org/current/dsl/org.gradle.api.tasks.testing.Test.html#org.gradle.api.tasks.testing.Test:environment
+        environment 'CI', 'true'
+    }
 }
 
 task copyToParent(type: Copy) {
