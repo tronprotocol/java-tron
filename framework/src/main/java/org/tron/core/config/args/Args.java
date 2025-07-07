@@ -1297,6 +1297,10 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.COMMITTEE_ALLOW_TVM_BLOB) ? config
             .getInt(Constant.COMMITTEE_ALLOW_TVM_BLOB) : 0;
 
+    PARAMETER.proposalVotingWindow =
+        config.hasPath(Constant.COMMITTEE_PROPOSAL_VOTING_WINDOW) ? config
+            .getInt(Constant.COMMITTEE_PROPOSAL_VOTING_WINDOW) : 86400L;
+
     logConfig();
   }
 

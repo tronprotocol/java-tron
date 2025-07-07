@@ -1,7 +1,9 @@
 package org.tron.core.services;
 
+import static org.tron.core.Constant.MAX_PROPOSAL_VOTING_WINDOW;
 import static org.tron.core.utils.ProposalUtil.ProposalType.CONSENSUS_LOGIC_OPTIMIZATION;
 import static org.tron.core.utils.ProposalUtil.ProposalType.ENERGY_FEE;
+import static org.tron.core.utils.ProposalUtil.ProposalType.PROPOSAL_VOTING_WINDOW;
 import static org.tron.core.utils.ProposalUtil.ProposalType.TRANSACTION_FEE;
 import static org.tron.core.utils.ProposalUtil.ProposalType.WITNESS_127_PAY_PER_BLOCK;
 
@@ -13,6 +15,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.core.Constant;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.config.args.Args;
@@ -129,6 +132,23 @@ public class ProposalServiceTest extends BaseTest {
     Assert.assertTrue(dbManager.getDynamicPropertiesStore().allowConsensusLogicOptimization());
     Assert.assertTrue(dbManager.getDynamicPropertiesStore().allowWitnessSortOptimization());
     Assert.assertTrue(dbManager.getDynamicPropertiesStore().disableJavaLangMath());
+  }
+
+  @Test
+  public void testProposalVotingWindow() {
+    long defaultWindow = dbManager.getDynamicPropertiesStore().getProposalVotingWindow();
+    long proposalExpireTime = CommonParameter.getInstance().getProposalExpireTime();
+    Assert.assertEquals(proposalExpireTime, defaultWindow * 3000);
+
+    Proposal proposal = Proposal.newBuilder().putParameters(PROPOSAL_VOTING_WINDOW.getCode(),
+        MAX_PROPOSAL_VOTING_WINDOW).build();
+    ProposalCapsule proposalCapsule = new ProposalCapsule(proposal);
+    proposalCapsule.setExpirationTime(1627279200000L);
+    boolean result = ProposalService.process(dbManager, proposalCapsule);
+    Assert.assertTrue(result);
+
+    long window = dbManager.getDynamicPropertiesStore().getProposalVotingWindow();
+    Assert.assertEquals(MAX_PROPOSAL_VOTING_WINDOW, window);
   }
 
 }

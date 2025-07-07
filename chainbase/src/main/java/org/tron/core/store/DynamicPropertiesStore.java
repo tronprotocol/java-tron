@@ -231,6 +231,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_TVM_CANCUN = "ALLOW_TVM_CANCUN".getBytes();
 
   private static final byte[] ALLOW_TVM_BLOB = "ALLOW_TVM_BLOB".getBytes();
+  private static final byte[] PROPOSAL_VOTING_WINDOW = "PROPOSAL_VOTING_WINDOW".getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -2944,6 +2945,17 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElse(CommonParameter.getInstance().getAllowTvmBlob());
+  }
+
+  public void saveProposalVotingWindow(long proposalVotingWindow) {
+    this.put(PROPOSAL_VOTING_WINDOW, new BytesCapsule(ByteArray.fromLong(proposalVotingWindow)));
+  }
+
+  public long getProposalVotingWindow() {
+    return Optional.ofNullable(getUnchecked(PROPOSAL_VOTING_WINDOW))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(CommonParameter.getInstance().getProposalVotingWindow());
   }
 
   private static class DynamicResourceProperties {
