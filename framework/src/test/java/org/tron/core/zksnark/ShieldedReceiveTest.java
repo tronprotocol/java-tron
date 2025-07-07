@@ -312,7 +312,7 @@ public class ShieldedReceiveTest extends BaseTest {
       boolean res = dbManager.pushTransaction(transactionCap);
       Assert.assertFalse(res);
     } catch (Exception e) {
-      Assert.assertFalse(true);
+      Assert.fail(e.getMessage());
     }
   }
 
