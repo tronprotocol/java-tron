@@ -56,11 +56,6 @@ public class DbBackfillBloom implements Callable<Integer> {
           order = 5)
   private int maxConcurrency;
 
-  @CommandLine.Option(names = { "--force-flush", "-f" }, defaultValue = "true",
-          description = "Force database flush after each batch. Default: ${DEFAULT-VALUE}",
-          order = 6)
-  private boolean forceFlush;
-
   @CommandLine.Option(names = { "--help", "-h" }, help = true,
           description = "Display help message", order = 7)
   private boolean help;

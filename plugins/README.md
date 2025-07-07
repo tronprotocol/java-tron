@@ -156,7 +156,6 @@ DB backfill bloom provides the ability to backfill SectionBloom data for histori
 - `-s | --start-block`: Specify the start block number for backfill (required).
 - `-e | --end-block`: Specify the end block number for backfill (optional, default: latest block).
 - `-c | --max-concurrency`: Specify the maximum concurrency for processing, default: 8.
-- `-f | --force-flush`: Force database flush after each batch, default: true.
 - `-h | --help`: Provide the help info.
 
 ### Examples:
@@ -168,5 +167,4 @@ DB backfill bloom provides the ability to backfill SectionBloom data for histori
    java -jar Toolkit.jar db backfill-bloom -s 1000000 -e 2000000 #1. backfill blocks 1000000 to 2000000
    java -jar Toolkit.jar db backfill-bloom -s 1000000 -d /path/to/database #2. specify custom database directory
    java -jar Toolkit.jar db backfill-bloom -s 1000000 -c 8 #3. use higher concurrency (8 threads)
-   java -jar Toolkit.jar db backfill-bloom -s 1000000 --force-flush=false #4. disable force flush for better performance
 ```
