@@ -15,6 +15,7 @@ import org.junit.Test;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.MarketOrderPriceComparatorForLevelDB;
+import org.tron.core.Constant;
 import org.tron.core.capsule.MarketOrderIdListCapsule;
 import org.tron.core.capsule.utils.MarketUtils;
 
@@ -24,20 +25,19 @@ public class DBConvertTest {
   private static final String INPUT_DIRECTORY = "output-directory/convert-database/";
   private static final String OUTPUT_DIRECTORY = "output-directory/convert-database-dest/";
   private static final String ACCOUNT = "account";
-  private static final String MARKET = "market_pair_price_to_order";
 
 
   @BeforeClass
   public static void init() throws IOException {
     if (new File(INPUT_DIRECTORY).mkdirs()) {
       initDB(new File(INPUT_DIRECTORY,ACCOUNT));
-      initDB(new File(INPUT_DIRECTORY,MARKET));
+      initDB(new File(INPUT_DIRECTORY, Constant.MARKET_PAIR_PRICE_TO_ORDER));
     }
   }
 
   private static void initDB(File file) throws IOException {
     Options dbOptions = DBConvert.newDefaultLevelDbOptions();
-    if (file.getName().contains("market_pair_price_to_order")) {
+    if (file.getName().contains(Constant.MARKET_PAIR_PRICE_TO_ORDER)) {
       dbOptions.comparator(new MarketOrderPriceComparatorForLevelDB());
       try (DB db = factory.open(file,dbOptions)) {
 

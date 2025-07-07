@@ -10,6 +10,7 @@ import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
 import org.rocksdb.Statistics;
 import org.tron.common.utils.MarketOrderPriceComparatorForRocksDB;
+import org.tron.core.Constant;
 
 @Slf4j
 public class RocksDbSettings {
@@ -179,7 +180,7 @@ public class RocksDbSettings {
     tableCfg.setCacheIndexAndFilterBlocks(true);
     tableCfg.setPinL0FilterAndIndexBlocksInCache(true);
     tableCfg.setFilter(new BloomFilter(10, false));
-    if ("market_pair_price_to_order".equals(dbName)) {
+    if (Constant.MARKET_PAIR_PRICE_TO_ORDER.equals(dbName)) {
       ComparatorOptions comparatorOptions = new ComparatorOptions();
       options.setComparator(new MarketOrderPriceComparatorForRocksDB(comparatorOptions));
     }
