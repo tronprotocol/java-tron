@@ -105,11 +105,7 @@ public class HandshakeService {
             chainBaseManager.getSolidBlockId().getString());
         peer.disconnect(ReasonCode.FORKED);
       } else {
-        logger.info("Peer {} solid block is below than me and light node doesn't contain the block,"
-                + " it's unuseful, peer->{}, me->{}",
-            peer.getInetSocketAddress(),
-            msg.getSolidBlockId().getString(),
-            chainBaseManager.getSolidBlockId().getString());
+        logger.info("Peer {} solid block is below than my lowest", peer.getInetSocketAddress());
         peer.disconnect(ReasonCode.LIGHT_NODE_SYNC_FAIL);
       }
       return;
