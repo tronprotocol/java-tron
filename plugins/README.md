@@ -148,7 +148,7 @@ NOTE: large db may GC overhead limit exceeded.
 
 ## DB Backfill-Bloom
 
-DB backfill bloom provides the ability to backfill SectionBloom data for historical blocks to enable eth_getLogs address/topics filtering. This is useful when `isJsonRpcFilterEnabled` was disabled during block processing and later enabled, causing historical blocks to lack SectionBloom data.
+DB backfill bloom provides the ability to backfill SectionBloom data for historical blocks to enable `eth_getLogs` address/topics filtering. This is useful when `isJsonRpcFilterEnabled` was disabled during block processing and later enabled, causing historical blocks to lack SectionBloom data.
 
 ### Available parameters:
 
