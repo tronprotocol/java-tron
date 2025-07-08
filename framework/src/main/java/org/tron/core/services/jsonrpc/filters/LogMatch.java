@@ -10,7 +10,7 @@ import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.exception.JsonRpcTooManyResultException;
+import org.tron.core.exception.jsonrpc.JsonRpcTooManyResultException;
 import org.tron.core.services.jsonrpc.TronJsonRpc.LogFilterElement;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.Protocol.TransactionInfo.Log;
