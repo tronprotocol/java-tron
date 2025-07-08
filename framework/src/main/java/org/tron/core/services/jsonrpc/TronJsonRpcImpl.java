@@ -895,7 +895,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       TransactionReceipt receipt = new TransactionReceipt(blockCapsule, info, context, energyFee);
       receipts.add(receipt);
 
-      cumulativeGas += resourceReceipt.getEnergyUsageTotal();;
+      cumulativeGas += resourceReceipt.getEnergyUsageTotal();
       cumulativeLogCount += info.getLogCount();
     }
     return receipts;
