@@ -173,7 +173,7 @@ public class PeerConnection {
     this.nodeStatistics = TronStatsManager.getNodeStatistics(channel.getInetAddress());
     lastInteractiveTime = System.currentTimeMillis();
     p2pRateLimiter.register(SYNC_BLOCK_CHAIN.asByte(), 2);
-    p2pRateLimiter.register(FETCH_INV_DATA.asByte(), 1);
+    p2pRateLimiter.register(FETCH_INV_DATA.asByte(), 2);
     p2pRateLimiter.register(P2P_DISCONNECT.asByte(), 1);
   }
 

@@ -1,5 +1,7 @@
 package org.tron.core.net.messagehandler;
 
+import static org.tron.core.net.message.MessageTypes.FETCH_INV_DATA;
+
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.lang.reflect.Field;
@@ -21,8 +23,6 @@ import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.service.adv.AdvService;
 import org.tron.protos.Protocol;
-
-import static org.tron.core.net.message.MessageTypes.FETCH_INV_DATA;
 
 public class FetchInvDataMsgHandlerTest {
 
