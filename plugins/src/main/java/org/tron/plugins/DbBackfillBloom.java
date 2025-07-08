@@ -110,7 +110,7 @@ public class DbBackfillBloom implements Callable<Integer> {
       // Determine end block if not specified
       if (endBlock == null) {
         endBlock = getLatestBlockNumber();
-        if (endBlock == null) {
+        if (endBlock == null || endBlock == 0) {
           spec.commandLine().getErr().println("Failed to determine latest block number");
           return 1;
         }
@@ -185,9 +185,9 @@ public class DbBackfillBloom implements Callable<Integer> {
 
   private Long getLatestBlockNumber() {
     try {
-      DBInterface blockIndexDb = DbTool.getDB(databaseDirectory, "block_index");
+      DBInterface propertiesDb = DbTool.getDB(databaseDirectory, "properties");
       byte[] latestBlockKey = "latest_block_header_number".getBytes();
-      byte[] latestBlockBytes = blockIndexDb.get(latestBlockKey);
+      byte[] latestBlockBytes = propertiesDb.get(latestBlockKey);
 
       if (latestBlockBytes != null) {
         return ByteArray.toLong(latestBlockBytes);
@@ -211,7 +211,7 @@ public class DbBackfillBloom implements Callable<Integer> {
       List<SectionRange> sectionRanges = calculateSectionRanges(startBlock, endBlock);
 
       spec.commandLine().getOut().printf("Processing %d sections with %d threads\n",
-              sectionRanges.size(), maxConcurrency);
+              sectionRanges.size(), Math.min(maxConcurrency, sectionRanges.size()));
       // Submit all section tasks to the thread pool
       for (SectionRange range : sectionRanges) {
         final long finalSectionStart = range.start;
