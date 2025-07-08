@@ -273,20 +273,18 @@ public class DbBackfillBloom implements Callable<Integer> {
 
     long currentBlock = startBlock;
     while (currentBlock <= endBlock) {
-      // 计算当前区块所属的 section
+      // Calculate the section to which the current block belongs
       long sectionId = currentBlock / BLOCKS_PER_SECTION;
 
-      // 计算这个 section 的边界
+      // Calculate the boundaries of this section
       long sectionStart = sectionId * BLOCKS_PER_SECTION;
       long sectionEnd = sectionStart + BLOCKS_PER_SECTION - 1;
 
-      // 调整为实际需要处理的范围
+      // Adjust to the actual range that needs to be processed
       long rangeStart = Math.max(currentBlock, sectionStart);
       long rangeEnd = Math.min(endBlock, sectionEnd);
 
       ranges.add(new SectionRange(rangeStart, rangeEnd, sectionId));
-
-      // 移动到下一个 section
       currentBlock = sectionEnd + 1;
     }
 
