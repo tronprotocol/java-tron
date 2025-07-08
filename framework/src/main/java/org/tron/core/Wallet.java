@@ -1806,12 +1806,8 @@ public class Wallet {
     return null;
   }
 
-  private boolean getAllowShieldedTransactionApi() {
-    return Args.getInstance().isAllowShieldedTransactionApi();
-  }
-
   private void checkAllowShieldedTransactionApi() throws ZksnarkException {
-    if (!getAllowShieldedTransactionApi()) {
+    if (!Args.getInstance().isAllowShieldedTransactionApi()) {
       throw new ZksnarkException(SHIELDED_ID_NOT_ALLOWED);
     }
   }
@@ -1830,10 +1826,7 @@ public class Wallet {
   }
 
   private long getBlockNumber(OutputPoint outPoint)
-      throws BadItemException, ZksnarkException {
-    if (!getAllowShieldedTransactionApi()) {
-      throw new ZksnarkException(SHIELDED_ID_NOT_ALLOWED);
-    }
+      throws BadItemException {
     ByteString txId = outPoint.getHash();
 
     long blockNum = chainBaseManager.getTransactionStore().getBlockNumber(txId.toByteArray());
@@ -1848,9 +1841,6 @@ public class Wallet {
   private IncrementalMerkleVoucherContainer createWitness(OutputPoint outPoint, Long blockNumber)
       throws ItemNotFoundException, BadItemException,
       InvalidProtocolBufferException, ZksnarkException {
-    if (!getAllowShieldedTransactionApi()) {
-      throw new ZksnarkException(SHIELDED_ID_NOT_ALLOWED);
-    }
     ByteString txId = outPoint.getHash();
 
     //Get the tree in blockNum-1 position
@@ -1946,9 +1936,6 @@ public class Wallet {
   private void updateWitnesses(List<IncrementalMerkleVoucherContainer> witnessList, long large,
       int synBlockNum) throws ItemNotFoundException, BadItemException,
       InvalidProtocolBufferException, ZksnarkException {
-    if (!getAllowShieldedTransactionApi()) {
-      throw new ZksnarkException(SHIELDED_ID_NOT_ALLOWED);
-    }
     long start = large;
     long end = large + synBlockNum - 1;
 
@@ -2022,10 +2009,7 @@ public class Wallet {
     }
   }
 
-  private void validateInput(OutputPointInfo request) throws BadItemException, ZksnarkException {
-    if (!getAllowShieldedTransactionApi()) {
-      throw new ZksnarkException(SHIELDED_ID_NOT_ALLOWED);
-    }
+  private void validateInput(OutputPointInfo request) throws BadItemException {
     if (request.getBlockNum() < 0 || request.getBlockNum() > 1000) {
       throw new BadItemException("request.BlockNum must be specified with range in [0, 1000]");
     }
@@ -2097,9 +2081,7 @@ public class Wallet {
   }
 
   public IncrementalMerkleTree getMerkleTreeOfBlock(long blockNum) throws ZksnarkException {
-    if (!getAllowShieldedTransactionApi()) {
-      throw new ZksnarkException(SHIELDED_ID_NOT_ALLOWED);
-    }
+    checkAllowShieldedTransactionApi();
     if (blockNum < 0) {
       return null;
     }

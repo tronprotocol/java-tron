@@ -3,6 +3,7 @@ package org.tron.core.zen;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -16,12 +17,19 @@ import org.tron.core.exception.ZksnarkException;
 @Component
 public class ZksnarkInitService {
 
+  private static final AtomicBoolean initialized = new AtomicBoolean(false);
+
   @PostConstruct
   private void init() {
     librustzcashInitZksnarkParams();
   }
 
   public static void librustzcashInitZksnarkParams() {
+    if (initialized.get()) {
+      logger.info("zk param already initialized");
+      return;
+    }
+
     logger.info("init zk param begin");
 
     String spendPath = getParamsFile("sapling-spend.params");
@@ -35,6 +43,7 @@ public class ZksnarkInitService {
     try {
       JLibrustzcash.librustzcashInitZksnarkParams(
           new LibrustzcashParam.InitZksnarkParams(spendPath, spendHash, outputPath, outputHash));
+      initialized.set(true);
     } catch (ZksnarkException e) {
       throw new TronError(e, TronError.ErrCode.ZCASH_INIT);
     }
