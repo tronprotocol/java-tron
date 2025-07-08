@@ -38,7 +38,6 @@ import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.net.P2pRateLimiter;
 import org.tron.core.net.TronNetDelegate;
-import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.adv.InventoryMessage;
 import org.tron.core.net.message.adv.TransactionsMessage;
 import org.tron.core.net.message.base.DisconnectMessage;
