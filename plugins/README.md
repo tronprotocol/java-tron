@@ -152,7 +152,7 @@ DB backfill bloom provides the ability to backfill SectionBloom data for histori
 
 ### Available parameters:
 
-- `-d | --database-directory`: Specify the database directory path, default: output-directory/database.
+- `-d | --database-directory`: Specify the database directory path, it is used to open the database to get the transaction log and write the SectionBloom data back, default: output-directory/database.
 - `-s | --start-block`: Specify the start block number for backfill (required).
 - `-e | --end-block`: Specify the end block number for backfill (optional, default: latest block).
 - `-c | --max-concurrency`: Specify the maximum concurrency for processing, default: 8.
@@ -168,3 +168,10 @@ DB backfill bloom provides the ability to backfill SectionBloom data for histori
    java -jar Toolkit.jar db backfill-bloom -s 1000000 -d /path/to/database #2. specify custom database directory
    java -jar Toolkit.jar db backfill-bloom -s 1000000 -c 8 #3. use higher concurrency (8 threads)
 ```
+
+### Backfill speed
+
+The time required to process different block ranges varies. It is recommended to increase `--max-concurrency` appropriately to speed up the backfill process.
+
+- 0-10000000: It's done almost instantly because there are no logs inside.
+- 10000000-70000000: Takes about 3-4 hours/10,000,000 blocks with `--max-concurrency` set to 32.
