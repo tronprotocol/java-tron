@@ -246,7 +246,7 @@ public class DbBackfillBloom implements Callable<Integer> {
       spec.commandLine().getOut().printf("Error in progress tracking %s\n", e);
       return 1;
     } finally {
-      // 关闭线程池
+      // Close thread pool
       executor.shutdown();
       try {
         if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
