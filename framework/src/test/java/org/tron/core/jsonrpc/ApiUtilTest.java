@@ -4,10 +4,13 @@ import static org.tron.common.utils.Commons.decodeFromBase58Check;
 import static org.tron.keystore.Wallet.generateRandomBytes;
 
 import com.google.protobuf.ByteString;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.config.args.Args;
 import org.tron.core.services.jsonrpc.JsonRpcApiUtil;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
@@ -15,6 +18,17 @@ import org.tron.protos.Protocol.BlockHeader.raw;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 public class ApiUtilTest {
+
+
+  @BeforeClass
+  public static void init() {
+    Args.setParam(new String[]{}, "config-localtest.conf");
+  }
+
+  @AfterClass
+  public static void clear() {
+    Args.clearParam();
+  }
 
   @Test
   public void testGetBlockID() {

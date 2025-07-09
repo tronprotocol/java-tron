@@ -35,6 +35,7 @@ import org.iq80.leveldb.WriteOptions;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.Metrics;
+import org.tron.common.storage.OptionsPicker;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
@@ -48,7 +49,7 @@ import org.tron.core.db.common.iterator.DBIterator;
 import org.tron.core.store.DynamicPropertiesStore;
 
 @Slf4j(topic = "DB")
-public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
+public class TxCacheDB extends OptionsPicker implements DB<byte[], byte[]>, Flusher {
 
   // > 65_536(= 2^16) blocks, that is the number of the reference block
   private static final long MAX_BLOCK_SIZE = 65536;
@@ -106,7 +107,7 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
     if ("LEVELDB".equals(dbEngine.toUpperCase())) {
       this.persistentStore = new LevelDB(
           new LevelDbDataSourceImpl(StorageUtils.getOutputDirectoryByDbName(name),
-              name, StorageUtils.getOptionsByDbName(name),
+              name, getOptionsByDbNameForLevelDB(name),
               new WriteOptions().sync(CommonParameter.getInstance()
                   .getStorage().isDbSync())));
     } else if ("ROCKSDB".equals(dbEngine.toUpperCase())) {
@@ -115,9 +116,7 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
               .getInstance().getStorage().getDbDirectory()).toString();
 
       this.persistentStore = new RocksDB(
-          new RocksDbDataSourceImpl(parentPath,
-              name, CommonParameter.getInstance()
-              .getRocksDBCustomSettings()));
+          new RocksDbDataSourceImpl(parentPath, name, getOptionsByDbNameForRocksDB(name)));
     } else {
       throw new RuntimeException(String.format("db type: %s is not supported", dbEngine));
     }
