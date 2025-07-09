@@ -835,7 +835,7 @@ public class WalletMockTest {
     CommonParameter commonParameterMock = mock(Args.class);
     try (MockedStatic<CommonParameter> mockedStatic = mockStatic(CommonParameter.class)) {
       when(CommonParameter.getInstance()).thenReturn(commonParameterMock);
-      when(commonParameterMock.isFullNodeAllowShieldedTransactionArgs()).thenReturn(true);
+      when(commonParameterMock.isAllowShieldedTransactionApi()).thenReturn(true);
 
       assertThrows(ZksnarkException.class, () -> {
         wallet.getTriggerInputForShieldedTRC20Contract(triggerParam.build());
@@ -866,7 +866,7 @@ public class WalletMockTest {
     CommonParameter commonParameterMock = mock(Args.class);
     try (MockedStatic<CommonParameter> mockedStatic = mockStatic(CommonParameter.class)) {
       when(CommonParameter.getInstance()).thenReturn(commonParameterMock);
-      when(commonParameterMock.isFullNodeAllowShieldedTransactionArgs()).thenReturn(true);
+      when(commonParameterMock.isAllowShieldedTransactionApi()).thenReturn(true);
 
       GrpcAPI.BytesMessage reponse =
           wallet.getTriggerInputForShieldedTRC20Contract(triggerParam.build());

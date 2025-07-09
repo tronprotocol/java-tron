@@ -248,8 +248,8 @@ public class Constant {
 
   public static final String EVENT_SUBSCRIBE_FILTER = "event.subscribe.filter";
 
-  public static final String NODE_FULLNODE_ALLOW_SHIELDED_TRANSACTION = "node"
-      + ".fullNodeAllowShieldedTransaction";
+  public static final String ALLOW_SHIELDED_TRANSACTION_API = "node"
+      + ".allowShieldedTransactionApi";
 
   public static final String NODE_ZEN_TOKENID = "node.zenTokenId";
 

@@ -84,7 +84,8 @@ public class LibrustzcashTest extends BaseTest {
         },
         "config-test-mainnet.conf"
     );
-    Args.setFullNodeAllowShieldedTransaction(true);
+    Args.getInstance().setAllowShieldedTransactionApi(true);
+    ZksnarkInitService.librustzcashInitZksnarkParams();
   }
 
   private static int randomInt(int minInt, int maxInt) {
@@ -113,10 +114,6 @@ public class LibrustzcashTest extends BaseTest {
         .cryptoAeadChacha20poly1305IetfDecrypt(new Chacha20poly1305IetfDecryptParams(
             new byte[1024], null, null, new byte[1024], 1024,
             null, 0, cipher_nonce, K)));
-  }
-
-  public static void librustzcashInitZksnarkParams() {
-    ZksnarkInitService.librustzcashInitZksnarkParams();
   }
 
   @Test
@@ -275,7 +272,6 @@ public class LibrustzcashTest extends BaseTest {
   @Ignore
   @Test
   public void calBenchmarkSpendConcurrent() throws Exception {
-    librustzcashInitZksnarkParams();
     System.out.println("--- load ok ---");
 
     int count = 2;
@@ -307,7 +303,6 @@ public class LibrustzcashTest extends BaseTest {
 
   @Test
   public void calBenchmarkSpend() throws ZksnarkException {
-    librustzcashInitZksnarkParams();
     System.out.println("--- load ok ---");
 
     int count = 2;
@@ -374,7 +369,6 @@ public class LibrustzcashTest extends BaseTest {
 
   @Test
   public void calBenchmarkCreateSaplingSpend() throws BadItemException, ZksnarkException {
-    librustzcashInitZksnarkParams();
     System.out.println("--- load ok ---");
 
     int count = 2;
@@ -451,7 +445,6 @@ public class LibrustzcashTest extends BaseTest {
 
   @Test
   public void calBenchmarkCreateSaplingOutPut() throws BadItemException, ZksnarkException {
-    librustzcashInitZksnarkParams();
     System.out.println("--- load ok ---");
 
     int count = 2;
@@ -479,7 +472,6 @@ public class LibrustzcashTest extends BaseTest {
 
   @Test
   public void checkVerifyOutErr() throws ZksnarkException {
-    librustzcashInitZksnarkParams();
     System.out.println("--- load ok ---");
 
     // expect fail
