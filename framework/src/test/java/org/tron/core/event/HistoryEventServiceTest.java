@@ -26,6 +26,9 @@ public class HistoryEventServiceTest {
   @Test
   public void test() throws Exception {
     EventPluginLoader instance = mock(EventPluginLoader.class);
+    Mockito.when(instance.isUseNativeQueue()).thenReturn(true);
+    Mockito.when(instance.isUseNativeQueue()).thenReturn(false);
+
     ReflectUtils.setFieldValue(historyEventService, "instance", instance);
 
     DynamicPropertiesStore dynamicPropertiesStore = mock(DynamicPropertiesStore.class);
@@ -39,11 +42,13 @@ public class HistoryEventServiceTest {
     SolidEventService solidEventService = new SolidEventService();
     RealtimeEventService realtimeEventService = new RealtimeEventService();
     BlockEventLoad blockEventLoad = new BlockEventLoad();
+    ReflectUtils.setFieldValue(blockEventLoad, "instance", instance);
 
     ReflectUtils.setFieldValue(historyEventService, "solidEventService", solidEventService);
     ReflectUtils.setFieldValue(historyEventService, "realtimeEventService", realtimeEventService);
     ReflectUtils.setFieldValue(historyEventService, "blockEventLoad", blockEventLoad);
     historyEventService.init();
+    historyEventService.close();
     solidEventService.close();
     realtimeEventService.close();
     blockEventLoad.close();
@@ -71,15 +76,21 @@ public class HistoryEventServiceTest {
     Mockito.when(blockEventGet.getBlockEvent(1)).thenReturn(be2);
 
     Mockito.when(instance.getStartSyncBlockNum()).thenReturn(1L);
-    ReflectUtils.setFieldValue(historyEventService, "isRunning", true);
     Mockito.when(dynamicPropertiesStore.getLatestSolidifiedBlockNum()).thenReturn(1L);
 
     Mockito.when(chainBaseManager.getBlockIdByNum(1L))
         .thenReturn(new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 1));
 
+    Mockito.when(instance.isUseNativeQueue()).thenReturn(true);
+
     Method method1 = historyEventService.getClass().getDeclaredMethod("syncEvent");
     method1.setAccessible(true);
     method1.invoke(historyEventService);
 
+    Mockito.when(instance.isUseNativeQueue()).thenReturn(false);
+    Mockito.when(instance.isBusy()).thenReturn(true);
+    historyEventService.init();
+    Thread.sleep(1000);
+    historyEventService.close();
   }
 }

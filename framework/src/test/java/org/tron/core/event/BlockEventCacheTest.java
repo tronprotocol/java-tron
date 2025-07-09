@@ -17,6 +17,7 @@ public class BlockEventCacheTest {
     BlockCapsule.BlockId b1 = new BlockCapsule.BlockId(getBlockId(), 1);
     be1.setBlockId(b1);
     be1.setParentId(b1);
+    be1.setSolidId(b1);
     try {
       BlockEventCache.add(be1);
       Assert.fail();

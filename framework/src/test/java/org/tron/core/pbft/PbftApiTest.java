@@ -37,7 +37,7 @@ public class PbftApiTest extends BaseTest {
 
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{"-d", dbPath(), "-w"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
     CommonParameter.getInstance().setPBFTHttpEnable(true);
     CommonParameter.getInstance().setPBFTHttpPort(PublicMethod.chooseRandomPort());
   }

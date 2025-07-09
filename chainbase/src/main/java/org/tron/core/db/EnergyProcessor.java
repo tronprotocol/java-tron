@@ -79,10 +79,9 @@ public class EnergyProcessor extends ResourceProcessor {
           / AdaptiveResourceLimitConstants.EXPAND_RATE_DENOMINATOR;
       // logger.info(totalEnergyAverageUsage + "<" + targetTotalEnergyLimit + "\n" + result);
     }
-    boolean useStrict2 = dynamicPropertiesStore.disableJavaLangMath();
-    result = min(max(result, totalEnergyLimit, useStrict2),
+    result = min(max(result, totalEnergyLimit, this.disableJavaLangMath()),
         totalEnergyLimit * dynamicPropertiesStore.getAdaptiveResourceLimitMultiplier(),
-        useStrict2);
+        this.disableJavaLangMath());
 
     dynamicPropertiesStore.saveTotalEnergyCurrentLimit(result);
     logger.debug("Adjust totalEnergyCurrentLimit, old: {}, new: {}.",
@@ -178,7 +177,7 @@ public class EnergyProcessor extends ResourceProcessor {
 
     long newEnergyUsage = recovery(accountCapsule, ENERGY, energyUsage, latestConsumeTime, now);
 
-    return max(energyLimit - newEnergyUsage, 0, dynamicPropertiesStore.disableJavaLangMath()); // us
+    return max(energyLimit - newEnergyUsage, 0, this.disableJavaLangMath()); // us
   }
 
   private long getHeadSlot() {

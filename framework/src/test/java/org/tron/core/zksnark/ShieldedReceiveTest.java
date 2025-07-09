@@ -320,7 +320,7 @@ public class ShieldedReceiveTest extends BaseTest {
   }
 
   /*
-   * generate spendproof, dataToBeSigned, outputproof example dynamicly according to the params file
+   * generate spendproof, dataToBeSigned, outputproof example dynamically according to the params file
    */
   public String[] generateSpendAndOutputParams() throws ZksnarkException, BadItemException {
     librustzcashInitZksnarkParams();

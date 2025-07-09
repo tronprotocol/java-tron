@@ -31,10 +31,11 @@ public class TriggerSmartContractServletTest extends BaseTest {
   @BeforeClass
   public static void init() throws Exception {
     Args.setParam(
-        new String[]{"--output-directory", dbPath(), "--debug", "--witness"}, Constant.TEST_CONF);
+        new String[]{"--output-directory", dbPath(), "--debug"}, Constant.TEST_CONF);
     Args.getInstance().needSyncCheck = false;
     Args.getInstance().setFullNodeHttpEnable(true);
     Args.getInstance().setFullNodeHttpPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setP2pDisable(true);
     httpNode = String.format("%s:%d", "127.0.0.1",
         Args.getInstance().getFullNodeHttpPort());
   }

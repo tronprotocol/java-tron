@@ -19,34 +19,39 @@ public class EventService {
   private HistoryEventService historyEventService;
 
   @Autowired
+  private SolidEventService solidEventService;
+
+  @Autowired
   private Manager manager;
+
+  private EventPluginLoader instance = EventPluginLoader.getInstance();
 
   public void init()  {
     logger.info("Start to load eventPlugin. {}, {}, {} "
         + "block: {}, {} trx: {}, {}, {} event: {}, {} log: {}, {}, {}, {} solid: {}",
         manager.isEventPluginLoaded(),
 
-        EventPluginLoader.getInstance().getVersion(),
-        EventPluginLoader.getInstance().getStartSyncBlockNum(),
+        instance.getVersion(),
+        instance.getStartSyncBlockNum(),
 
-        EventPluginLoader.getInstance().isBlockLogTriggerEnable(),
-        EventPluginLoader.getInstance().isBlockLogTriggerSolidified(),
+        instance.isBlockLogTriggerEnable(),
+        instance.isBlockLogTriggerSolidified(),
 
-        EventPluginLoader.getInstance().isTransactionLogTriggerEnable(),
-        EventPluginLoader.getInstance().isTransactionLogTriggerSolidified(),
-        EventPluginLoader.getInstance().isTransactionLogTriggerEthCompatible(),
+        instance.isTransactionLogTriggerEnable(),
+        instance.isTransactionLogTriggerSolidified(),
+        instance.isTransactionLogTriggerEthCompatible(),
 
-        EventPluginLoader.getInstance().isContractEventTriggerEnable(),
-        EventPluginLoader.getInstance().isSolidityEventTriggerEnable(),
+        instance.isContractEventTriggerEnable(),
+        instance.isSolidityEventTriggerEnable(),
 
-        EventPluginLoader.getInstance().isContractLogTriggerEnable(),
-        EventPluginLoader.getInstance().isContractLogTriggerRedundancy(),
-        EventPluginLoader.getInstance().isSolidityLogTriggerEnable(),
-        EventPluginLoader.getInstance().isSolidityLogTriggerRedundancy(),
+        instance.isContractLogTriggerEnable(),
+        instance.isContractLogTriggerRedundancy(),
+        instance.isSolidityLogTriggerEnable(),
+        instance.isSolidityLogTriggerRedundancy(),
 
-        EventPluginLoader.getInstance().isSolidityTriggerEnable());
+        instance.isSolidityTriggerEnable());
 
-    if (!manager.isEventPluginLoaded() || EventPluginLoader.getInstance().getVersion() != 1) {
+    if (!manager.isEventPluginLoaded() || instance.getVersion() != 1) {
       return;
     }
 
@@ -54,8 +59,12 @@ public class EventService {
   }
 
   public void close() {
-    realtimeEventService.close();
-    blockEventLoad.close();
+    if (!manager.isEventPluginLoaded() || instance.getVersion() != 1) {
+      return;
+    }
     historyEventService.close();
+    blockEventLoad.close();
+    realtimeEventService.close();
+    solidEventService.close();
   }
 }

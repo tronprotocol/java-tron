@@ -57,7 +57,7 @@ public class ArgsTest {
 
   @Test
   public void get() {
-    Args.setParam(new String[] {"-w", "-c", Constant.TEST_CONF}, Constant.TESTNET_CONF);
+    Args.setParam(new String[] {"-c", Constant.TEST_CONF}, Constant.TESTNET_CONF);
 
     CommonParameter parameter = Args.getInstance();
 
@@ -132,7 +132,7 @@ public class ArgsTest {
   @Test
   public void testIpFromLibP2p()
       throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-    Args.setParam(new String[] {"-w"}, Constant.TEST_CONF);
+    Args.setParam(new String[] {}, Constant.TEST_CONF);
     CommonParameter parameter = Args.getInstance();
 
     String configuredExternalIp = parameter.getNodeExternalIp();
@@ -153,7 +153,7 @@ public class ArgsTest {
   @Test
   public void testOldRewardOpt() {
     thrown.expect(IllegalArgumentException.class);
-    Args.setParam(new String[] {"-w", "-c", "args-test.conf"}, Constant.TESTNET_CONF);
+    Args.setParam(new String[] {"-c", "args-test.conf"}, Constant.TESTNET_CONF);
   }
 
   @Test
@@ -173,6 +173,8 @@ public class ArgsTest {
     Assert.assertFalse(Args.getInstance().isJsonRpcHttpFullNodeEnable());
     Assert.assertFalse(Args.getInstance().isJsonRpcHttpSolidityNodeEnable());
     Assert.assertFalse(Args.getInstance().isJsonRpcHttpPBFTNodeEnable());
+    Assert.assertEquals(5000, Args.getInstance().getJsonRpcMaxBlockRange());
+    Assert.assertEquals(1000, Args.getInstance().getJsonRpcMaxSubTopics());
     Args.clearParam();
     // test set all true value
     storage.put("node.rpc.enable", "true");
@@ -184,6 +186,8 @@ public class ArgsTest {
     storage.put("node.jsonrpc.httpFullNodeEnable", "true");
     storage.put("node.jsonrpc.httpSolidityEnable", "true");
     storage.put("node.jsonrpc.httpPBFTEnable", "true");
+    storage.put("node.jsonrpc.maxBlockRange", "10");
+    storage.put("node.jsonrpc.maxSubTopics", "20");
     config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
     // test value
     Args.setParam(config);
@@ -196,6 +200,8 @@ public class ArgsTest {
     Assert.assertTrue(Args.getInstance().isJsonRpcHttpFullNodeEnable());
     Assert.assertTrue(Args.getInstance().isJsonRpcHttpSolidityNodeEnable());
     Assert.assertTrue(Args.getInstance().isJsonRpcHttpPBFTNodeEnable());
+    Assert.assertEquals(10, Args.getInstance().getJsonRpcMaxBlockRange());
+    Assert.assertEquals(20, Args.getInstance().getJsonRpcMaxSubTopics());
     Args.clearParam();
     // test set all false value
     storage.put("node.rpc.enable", "false");
@@ -207,6 +213,8 @@ public class ArgsTest {
     storage.put("node.jsonrpc.httpFullNodeEnable", "false");
     storage.put("node.jsonrpc.httpSolidityEnable", "false");
     storage.put("node.jsonrpc.httpPBFTEnable", "false");
+    storage.put("node.jsonrpc.maxBlockRange", "5000");
+    storage.put("node.jsonrpc.maxSubTopics", "1000");
     config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
     // test value
     Args.setParam(config);
@@ -219,6 +227,8 @@ public class ArgsTest {
     Assert.assertFalse(Args.getInstance().isJsonRpcHttpFullNodeEnable());
     Assert.assertFalse(Args.getInstance().isJsonRpcHttpSolidityNodeEnable());
     Assert.assertFalse(Args.getInstance().isJsonRpcHttpPBFTNodeEnable());
+    Assert.assertEquals(5000, Args.getInstance().getJsonRpcMaxBlockRange());
+    Assert.assertEquals(1000, Args.getInstance().getJsonRpcMaxSubTopics());
     Args.clearParam();
     // test set random value
     storage.put("node.rpc.enable", "false");
@@ -230,6 +240,8 @@ public class ArgsTest {
     storage.put("node.jsonrpc.httpFullNodeEnable", "true");
     storage.put("node.jsonrpc.httpSolidityEnable", "false");
     storage.put("node.jsonrpc.httpPBFTEnable", "true");
+    storage.put("node.jsonrpc.maxBlockRange", "30");
+    storage.put("node.jsonrpc.maxSubTopics", "40");
     config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
     // test value
     Args.setParam(config);
@@ -242,6 +254,27 @@ public class ArgsTest {
     Assert.assertTrue(Args.getInstance().isJsonRpcHttpFullNodeEnable());
     Assert.assertFalse(Args.getInstance().isJsonRpcHttpSolidityNodeEnable());
     Assert.assertTrue(Args.getInstance().isJsonRpcHttpPBFTNodeEnable());
+    Assert.assertEquals(30, Args.getInstance().getJsonRpcMaxBlockRange());
+    Assert.assertEquals(40, Args.getInstance().getJsonRpcMaxSubTopics());
+
+    // test set invalid value
+    storage.put("node.jsonrpc.maxBlockRange", "0");
+    storage.put("node.jsonrpc.maxSubTopics", "0");
+    config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
+    // check value
+    Args.setParam(config);
+    Assert.assertEquals(0, Args.getInstance().getJsonRpcMaxBlockRange());
+    Assert.assertEquals(0, Args.getInstance().getJsonRpcMaxSubTopics());
+
+    // test set invalid value
+    storage.put("node.jsonrpc.maxBlockRange", "-2");
+    storage.put("node.jsonrpc.maxSubTopics", "-4");
+    config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
+    // check value
+    Args.setParam(config);
+    Assert.assertEquals(-2, Args.getInstance().getJsonRpcMaxBlockRange());
+    Assert.assertEquals(-4, Args.getInstance().getJsonRpcMaxSubTopics());
+
     Args.clearParam();
   }
 }

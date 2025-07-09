@@ -218,13 +218,14 @@ public class ReceiptCapsule {
           receipt.getEnergyUsageTotal(), receipt.getResult(), energyProcessor, now);
       return;
     }
-    boolean useStrict2 = dynamicPropertiesStore.disableJavaLangMath();
+    boolean disableJavaLangMath = dynamicPropertiesStore.disableJavaLangMath();
 
     if ((!Objects.isNull(origin)) && caller.getAddress().equals(origin.getAddress())) {
       payEnergyBill(dynamicPropertiesStore, accountStore, forkController, caller,
           receipt.getEnergyUsageTotal(), receipt.getResult(), energyProcessor, now);
     } else {
-      long originUsage = multiplyExact(receipt.getEnergyUsageTotal(), percent, useStrict2) / 100;
+      long originUsage = multiplyExact(receipt.getEnergyUsageTotal(), percent, disableJavaLangMath)
+          / 100;
       originUsage = getOriginUsage(dynamicPropertiesStore, origin, originEnergyLimit,
           energyProcessor,
           originUsage);
@@ -240,18 +241,20 @@ public class ReceiptCapsule {
   private long getOriginUsage(DynamicPropertiesStore dynamicPropertiesStore, AccountCapsule origin,
       long originEnergyLimit,
       EnergyProcessor energyProcessor, long originUsage) {
-    boolean useStrict2 = dynamicPropertiesStore.disableJavaLangMath();
+    boolean disableJavaLangMath = dynamicPropertiesStore.disableJavaLangMath();
     if (dynamicPropertiesStore.getAllowTvmFreeze() == 1
         || dynamicPropertiesStore.supportUnfreezeDelay()) {
-      return min(originUsage, min(originEnergyLeft, originEnergyLimit, useStrict2), useStrict2);
+      return min(originUsage, min(originEnergyLeft, originEnergyLimit, disableJavaLangMath),
+          disableJavaLangMath);
     }
 
     if (checkForEnergyLimit(dynamicPropertiesStore)) {
       return min(originUsage,
           min(energyProcessor.getAccountLeftEnergyFromFreeze(origin), originEnergyLimit,
-              useStrict2), useStrict2);
+              disableJavaLangMath), disableJavaLangMath);
     }
-    return min(originUsage, energyProcessor.getAccountLeftEnergyFromFreeze(origin), useStrict2);
+    return min(originUsage, energyProcessor.getAccountLeftEnergyFromFreeze(origin),
+        disableJavaLangMath);
   }
 
   private void payEnergyBill(

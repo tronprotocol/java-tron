@@ -45,6 +45,7 @@ public class HttpApiAccessFilterTest extends BaseTest {
     Args.getInstance().setPBFTHttpPort(PublicMethod.chooseRandomPort());
     Args.getInstance().setSolidityNodeHttpEnable(true);
     Args.getInstance().setSolidityHttpPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setP2pDisable(true);
   }
 
   @Test

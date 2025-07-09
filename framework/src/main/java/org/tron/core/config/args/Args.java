@@ -42,13 +42,13 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.quartz.CronExpression;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.args.Account;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.args.Witness;
 import org.tron.common.config.DbBackupConfig;
+import org.tron.common.cron.CronExpression;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
@@ -129,7 +129,7 @@ public class Args extends CommonParameter {
     PARAMETER.activeNodes = new ArrayList<>();
     PARAMETER.passiveNodes = new ArrayList<>();
     PARAMETER.fastForwardNodes = new ArrayList<>();
-    PARAMETER.maxFastForwardNum = 3;
+    PARAMETER.maxFastForwardNum = 4;
     PARAMETER.nodeChannelReadTimeout = 0;
     PARAMETER.maxConnections = 30;
     PARAMETER.minConnections = 8;
@@ -202,6 +202,8 @@ public class Args extends CommonParameter {
     PARAMETER.jsonRpcHttpFullNodeEnable = false;
     PARAMETER.jsonRpcHttpSolidityNodeEnable = false;
     PARAMETER.jsonRpcHttpPBFTNodeEnable = false;
+    PARAMETER.jsonRpcMaxBlockRange = 5000;
+    PARAMETER.jsonRpcMaxSubTopics = 1000;
     PARAMETER.nodeMetricsEnable = false;
     PARAMETER.metricsStorageEnable = false;
     PARAMETER.metricsPrometheusEnable = false;
@@ -244,6 +246,7 @@ public class Args extends CommonParameter {
     PARAMETER.allowStrictMath = 0;
     PARAMETER.consensusLogicOptimization = 0;
     PARAMETER.allowTvmCancun = 0;
+    PARAMETER.allowTvmBlob = 0;
   }
 
   /**
@@ -372,6 +375,13 @@ public class Args extends CommonParameter {
       exit(0);
     }
 
+    if (PARAMETER.isHelp()) {
+      JCommander jCommander = JCommander.newBuilder().addObject(Args.PARAMETER).build();
+      jCommander.parse(args);
+      Args.printHelp(jCommander);
+      exit(0);
+    }
+
     Config config = Configuration.getByFileName(PARAMETER.shellConfFileName, confFileName);
     setParam(config);
   }
@@ -450,7 +460,8 @@ public class Args extends CommonParameter {
 
     if (PARAMETER.isWitness()
         && CollectionUtils.isEmpty(localWitnesses.getPrivateKeys())) {
-      logger.warn("This is a witness node, but localWitnesses is null");
+      throw new TronError("This is a witness node, but localWitnesses is null",
+          TronError.ErrCode.WITNESS_INIT);
     }
 
     if (config.hasPath(Constant.VM_SUPPORT_CONSTANT)) {
@@ -503,6 +514,16 @@ public class Args extends CommonParameter {
     if (config.hasPath(Constant.NODE_JSONRPC_HTTP_PBFT_ENABLE)) {
       PARAMETER.jsonRpcHttpPBFTNodeEnable =
           config.getBoolean(Constant.NODE_JSONRPC_HTTP_PBFT_ENABLE);
+    }
+
+    if (config.hasPath(Constant.NODE_JSONRPC_MAX_BLOCK_RANGE)) {
+      PARAMETER.jsonRpcMaxBlockRange =
+          config.getInt(Constant.NODE_JSONRPC_MAX_BLOCK_RANGE);
+    }
+
+    if (config.hasPath(Constant.NODE_JSONRPC_MAX_SUB_TOPICS)) {
+      PARAMETER.jsonRpcMaxSubTopics =
+          config.getInt(Constant.NODE_JSONRPC_MAX_SUB_TOPICS);
     }
 
     if (config.hasPath(Constant.VM_MIN_TIME_RATIO)) {
@@ -915,15 +936,16 @@ public class Args extends CommonParameter {
     PARAMETER.vmTrace =
         config.hasPath(Constant.VM_TRACE) && config.getBoolean(Constant.VM_TRACE);
 
-    if (config.hasPath(Constant.VM_SAVE_INTERNAL_TX)) {
-      PARAMETER.saveInternalTx = config.getBoolean(Constant.VM_SAVE_INTERNAL_TX);
-    }
+    PARAMETER.saveInternalTx =
+        config.hasPath(Constant.VM_SAVE_INTERNAL_TX)
+            && config.getBoolean(Constant.VM_SAVE_INTERNAL_TX);
 
-    if (config.hasPath(Constant.VM_SAVE_FEATURED_INTERNAL_TX)) {
-      PARAMETER.saveFeaturedInternalTx = config.getBoolean(Constant.VM_SAVE_FEATURED_INTERNAL_TX);
-    }
+    PARAMETER.saveFeaturedInternalTx =
+        config.hasPath(Constant.VM_SAVE_FEATURED_INTERNAL_TX)
+            && config.getBoolean(Constant.VM_SAVE_FEATURED_INTERNAL_TX);
 
-    if (config.hasPath(Constant.VM_SAVE_CANCEL_ALL_UNFREEZE_V2_DETAILS)) {
+    if (!PARAMETER.saveCancelAllUnfreezeV2Details
+        && config.hasPath(Constant.VM_SAVE_CANCEL_ALL_UNFREEZE_V2_DETAILS)) {
       PARAMETER.saveCancelAllUnfreezeV2Details =
           config.getBoolean(Constant.VM_SAVE_CANCEL_ALL_UNFREEZE_V2_DETAILS);
     }
@@ -1138,7 +1160,7 @@ public class Args extends CommonParameter {
         PARAMETER.shutdownBlockTime = new CronExpression(config.getString(
             Constant.NODE_SHUTDOWN_BLOCK_TIME));
       } catch (ParseException e) {
-        logger.error(e.getMessage(), e);
+        throw new TronError(e, TronError.ErrCode.AUTO_STOP_PARAMS);
       }
     }
 
@@ -1270,6 +1292,10 @@ public class Args extends CommonParameter {
     PARAMETER.allowTvmCancun =
         config.hasPath(Constant.COMMITTEE_ALLOW_TVM_CANCUN) ? config
             .getInt(Constant.COMMITTEE_ALLOW_TVM_CANCUN) : 0;
+
+    PARAMETER.allowTvmBlob =
+        config.hasPath(Constant.COMMITTEE_ALLOW_TVM_BLOB) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_TVM_BLOB) : 0;
 
     logConfig();
   }

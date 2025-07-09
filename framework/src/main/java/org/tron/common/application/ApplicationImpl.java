@@ -52,11 +52,11 @@ public class ApplicationImpl implements Application {
   @Override
   public void shutdown() {
     this.shutdownServices();
-    eventService.close();
     if (!Args.getInstance().isSolidityNode() && (!Args.getInstance().p2pDisable)) {
       tronNetService.close();
     }
     consensusService.stop();
+    eventService.close();
     dbManager.close();
     shutdown.countDown();
   }

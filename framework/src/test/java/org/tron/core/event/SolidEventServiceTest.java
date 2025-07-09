@@ -32,6 +32,15 @@ public class SolidEventServiceTest {
 
   @Test
   public void test() throws Exception {
+    BlockEvent be0 = new BlockEvent();
+    BlockCapsule.BlockId b0 = new BlockCapsule.BlockId(BlockEventCacheTest.getBlockId(), 1);
+    be0.setBlockId(b0);
+    be0.setParentId(b0);
+    be0.setSolidId(new BlockCapsule.BlockId(BlockEventCacheTest.getBlockId(), 100));
+    BlockEventCache.init(b0);
+    BlockEventCache.add(be0);
+    solidEventService.work();
+
     BlockEvent be1 = new BlockEvent();
     BlockCapsule.BlockId b1 = new BlockCapsule.BlockId(BlockEventCacheTest.getBlockId(), 1);
     be1.setBlockId(b1);

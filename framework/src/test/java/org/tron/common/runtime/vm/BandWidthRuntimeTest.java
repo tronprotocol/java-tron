@@ -69,7 +69,6 @@ public class BandWidthRuntimeTest extends BaseTest {
             "--output-directory", dbPath(),
             "--storage-db-directory", dbDirectory,
             "--storage-index-directory", indexDirectory,
-            "-w"
         },
         "config-test-mainnet.conf"
     );

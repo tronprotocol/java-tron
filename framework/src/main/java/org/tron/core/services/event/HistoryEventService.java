@@ -29,7 +29,7 @@ public class HistoryEventService {
   @Autowired
   private Manager manager;
 
-  private volatile boolean isRunning;
+  private volatile Thread thread;
 
   public void init() {
     if (instance.getStartSyncBlockNum() <= 0) {
@@ -37,28 +37,35 @@ public class HistoryEventService {
       return;
     }
 
-    isRunning = true;
-
-    new Thread(() -> syncEvent()).start();
+    thread = new Thread(() -> syncEvent(), "history-event");
+    thread.start();
 
     logger.info("History event service start.");
   }
 
   public void close() {
-    isRunning = false;
+    if (thread != null) {
+      thread.interrupt();
+    }
+    logger.info("History event service close.");
   }
 
   private void syncEvent() {
     try {
       long tmp = instance.getStartSyncBlockNum();
       long endNum = manager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
-      while (tmp <= endNum && isRunning) {
+      while (tmp <= endNum) {
+        if (instance.isUseNativeQueue()) {
+          Thread.sleep(20);
+        } else if (instance.isBusy()) {
+          Thread.sleep(100);
+          continue;
+        }
         BlockEvent blockEvent = blockEventGet.getBlockEvent(tmp);
         realtimeEventService.flush(blockEvent, false);
         solidEventService.flush(blockEvent);
         tmp++;
         endNum = manager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
-        Thread.sleep(30);
       }
       initEventService(manager.getChainBaseManager().getBlockIdByNum(endNum));
     } catch (InterruptedException e1) {

@@ -2170,13 +2170,12 @@ public class Program {
     try {
       VoteWitnessParam param = new VoteWitnessParam();
       param.setVoterAddress(owner);
-      boolean allowStrictMath2 = VMConfig.disableJavaLangMath();
       byte[] witnessArrayData = memoryChunk(
-          addExact(witnessArrayOffset, DataWord.WORD_SIZE, allowStrictMath2),
-          multiplyExact(witnessArrayLength, DataWord.WORD_SIZE, allowStrictMath2));
+          addExact(witnessArrayOffset, DataWord.WORD_SIZE,  VMConfig.disableJavaLangMath()),
+          multiplyExact(witnessArrayLength, DataWord.WORD_SIZE,  VMConfig.disableJavaLangMath()));
       byte[] amountArrayData = memoryChunk(
-          addExact(amountArrayOffset, DataWord.WORD_SIZE, allowStrictMath2),
-          multiplyExact(amountArrayLength, DataWord.WORD_SIZE, allowStrictMath2));
+          addExact(amountArrayOffset, DataWord.WORD_SIZE,  VMConfig.disableJavaLangMath()),
+          multiplyExact(amountArrayLength, DataWord.WORD_SIZE,  VMConfig.disableJavaLangMath()));
 
       for (int i = 0; i < witnessArrayLength; i++) {
         DataWord witness = new DataWord(Arrays.copyOfRange(witnessArrayData,

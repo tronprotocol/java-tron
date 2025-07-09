@@ -32,7 +32,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
@@ -115,8 +114,6 @@ public class ManagerTest extends BlockGenerate {
   private static BlockCapsule blockCapsule2;
   @Rule
   public TemporaryFolder temporaryFolder = new TemporaryFolder();
-  @Rule
-  public final ExpectedException exception = ExpectedException.none();
   private static AtomicInteger port = new AtomicInteger(0);
   private static String accountAddress =
       Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
@@ -126,7 +123,7 @@ public class ManagerTest extends BlockGenerate {
   @Before
   public void init() throws IOException {
     Args.setParam(new String[]{"-d",
-        temporaryFolder.newFolder().toString(), "-w"}, Constant.TEST_CONF);
+        temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
     Args.getInstance().setNodeListenPort(10000 + port.incrementAndGet());
     context = new TronApplicationContext(DefaultConfig.class);
 
@@ -726,7 +723,7 @@ public class ManagerTest extends BlockGenerate {
       BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
       ZksnarkException, EventBloomException {
-    Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{}, Constant.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     //  System.out.print("block store size:" + size + "\n");
     String key = PublicMethod.getRandomPrivateKey();
@@ -873,7 +870,7 @@ public class ManagerTest extends BlockGenerate {
       TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
       ZksnarkException, EventBloomException {
-    Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{}, Constant.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
     String key = PublicMethod.getRandomPrivateKey();
@@ -985,7 +982,7 @@ public class ManagerTest extends BlockGenerate {
       BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
       ZksnarkException, EventBloomException {
-    Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{}, Constant.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
     String key = PublicMethod.getRandomPrivateKey();;
@@ -1238,10 +1235,11 @@ public class ManagerTest extends BlockGenerate {
 
   @Test
   public void blockTrigger() {
-    exception.expect(TronError.class);
     Manager manager = spy(new Manager());
     doThrow(new RuntimeException("postBlockTrigger mock")).when(manager).postBlockTrigger(any());
-    manager.blockTrigger(new BlockCapsule(Block.newBuilder().build()), 1, 1);
+    TronError thrown = Assert.assertThrows(TronError.class, () ->
+        manager.blockTrigger(new BlockCapsule(Block.newBuilder().build()), 1, 1));
+    Assert.assertEquals(TronError.ErrCode.EVENT_SUBSCRIBE_ERROR, thrown.getErrCode());
   }
 
   public void adjustBalance(AccountStore accountStore, byte[] accountAddress, long amount)

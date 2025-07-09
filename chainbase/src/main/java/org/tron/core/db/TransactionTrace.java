@@ -244,11 +244,11 @@ public class TransactionTrace {
 
         callerAccount = callContract.getOwnerAddress().toByteArray();
         originAccount = contractCapsule.getOriginAddress();
-        boolean disableMath = dynamicPropertiesStore.disableJavaLangMath();
+        boolean disableJavaLangMath = dynamicPropertiesStore.disableJavaLangMath();
         percent = max(Constant.ONE_HUNDRED - contractCapsule.getConsumeUserResourcePercent(
-            disableMath), 0, disableMath);
+            disableJavaLangMath), 0, disableJavaLangMath);
         percent = min(percent, Constant.ONE_HUNDRED,
-            disableMath);
+            disableJavaLangMath);
         originEnergyLimit = contractCapsule.getOriginEnergyLimit();
         break;
       default:

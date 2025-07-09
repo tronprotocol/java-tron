@@ -824,6 +824,21 @@ public class ProposalUtil {
         }
         break;
       }
+      case ALLOW_TVM_BLOB: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_8_0)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_TVM_BLOB]");
+        }
+        if (dynamicPropertiesStore.getAllowTvmBlob() == 1) {
+          throw new ContractValidateException(
+              "[ALLOW_TVM_BLOB] has been valid, no need to propose again");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_TVM_BLOB] is only allowed to be 1");
+        }
+        break;
+      }
       default:
         break;
     }
@@ -905,7 +920,8 @@ public class ProposalUtil {
     MAX_CREATE_ACCOUNT_TX_SIZE(82), // [500, 10000]
     ALLOW_TVM_CANCUN(83), // 0, 1
     ALLOW_STRICT_MATH(87), // 0, 1
-    CONSENSUS_LOGIC_OPTIMIZATION(88); // 0, 1
+    CONSENSUS_LOGIC_OPTIMIZATION(88), // 0, 1
+    ALLOW_TVM_BLOB(89); // 0, 1
 
     private long code;
 

@@ -120,6 +120,10 @@ public class Op {
   public static final int SELFBALANCE = 0x47;
   // (0x48) Get block's basefee
   public static final int BASEFEE = 0x48;
+  // (0x49) Get blob hash
+  public static final int BLOBHASH = 0x49;
+  // (0x4a) Get block's blob basefee
+  public static final int BLOBBASEFEE = 0x4a;
 
   /*  Memory, Storage and Flow Operations */
   // (0x50) Remove item from stack

@@ -36,7 +36,7 @@ public class AccountCapsuleTest extends BaseTest {
   static AccountCapsule accountCapsule;
 
   static {
-    Args.setParam(new String[]{"-d",  dbPath(), "-w"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d",  dbPath()}, Constant.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "a06a17a49648a8ad32055c06f60fa14ae46df91234";
   }
 

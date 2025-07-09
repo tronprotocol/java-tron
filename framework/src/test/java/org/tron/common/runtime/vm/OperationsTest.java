@@ -953,6 +953,15 @@ public class OperationsTest extends BaseTest {
 
     // TSTORE = 0x5d;
     op = new byte[] {0x60, 0x01, 0x60, 0x01, 0x5d};
+
+    invoke.setStaticCall(true);
+    program = new Program(op, op, invoke, interTrx);
+    testOperations(program);
+    Assert.assertEquals(20000, program.getResult().getEnergyUsed());
+    Assert.assertTrue(program.getResult().getException()
+        instanceof Program.StaticCallModificationException);
+
+    invoke.setStaticCall(false);
     program = new Program(op, op, invoke, interTrx);
     testOperations(program);
     Assert.assertEquals(106, program.getResult().getEnergyUsed());
@@ -998,6 +1007,44 @@ public class OperationsTest extends BaseTest {
     Assert.assertEquals(new DataWord(0x01), program.getStack().pop());
 
     VMConfig.initAllowTvmCancun(0);
+  }
+
+  @Test
+  public void testBlobHash() throws ContractValidateException {
+    VMConfig.initAllowTvmBlob(1);
+
+    invoke = new ProgramInvokeMockImpl();
+    Protocol.Transaction trx = Protocol.Transaction.getDefaultInstance();
+    InternalTransaction interTrx =
+        new InternalTransaction(trx, InternalTransaction.TrxType.TRX_UNKNOWN_TYPE);
+
+    // BLOBAHASH = 0x49
+    byte[] op = new byte[] {0x60, 0x20, 0x49};
+    program = new Program(op, op, invoke, interTrx);
+    testOperations(program);
+    Assert.assertEquals(6, program.getResult().getEnergyUsed());
+    Assert.assertEquals(DataWord.ZERO(), program.getStack().pop());
+
+    VMConfig.initAllowTvmBlob(0);
+  }
+
+  @Test
+  public void testBlobBaseFee() throws ContractValidateException {
+    VMConfig.initAllowTvmBlob(1);
+
+    invoke = new ProgramInvokeMockImpl();
+    Protocol.Transaction trx = Protocol.Transaction.getDefaultInstance();
+    InternalTransaction interTrx =
+        new InternalTransaction(trx, InternalTransaction.TrxType.TRX_UNKNOWN_TYPE);
+
+    // BLOBBASEFEE = 0x4a
+    byte[] op = new byte[] {0x60, 0x20, 0x4a};
+    program = new Program(op, op, invoke, interTrx);
+    testOperations(program);
+    Assert.assertEquals(5, program.getResult().getEnergyUsed());
+    Assert.assertEquals(DataWord.ZERO(), program.getStack().pop());
+
+    VMConfig.initAllowTvmBlob(0);
   }
 
   private void testOperations(Program program) {

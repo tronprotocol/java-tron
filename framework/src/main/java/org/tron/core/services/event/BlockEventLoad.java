@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.tron.common.es.ExecutorServiceManager;
+import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.core.db.Manager;
 import org.tron.core.services.event.bo.BlockEvent;
 import org.tron.core.services.event.bo.Event;
@@ -26,13 +27,19 @@ public class BlockEventLoad {
   @Autowired
   private BlockEventGet blockEventGet;
 
+  private EventPluginLoader instance = EventPluginLoader.getInstance();
+
   private final ScheduledExecutorService executor = ExecutorServiceManager
       .newSingleThreadScheduledExecutor("event-load");
+
+  private long MAX_LOAD_NUM = 100;
 
   public void init() {
     executor.scheduleWithFixedDelay(() -> {
       try {
-        load();
+        if (!instance.isBusy()) {
+          load();
+        }
       } catch (Exception e) {
         close();
         logger.error("Event load service fail.", e);
@@ -42,11 +49,16 @@ public class BlockEventLoad {
   }
 
   public void close() {
-    executor.shutdown();
-    logger.info("Event load service close.");
+    try {
+      load();
+      executor.shutdown();
+      logger.info("Event load service close.");
+    } catch (Exception e) {
+      logger.warn("Stop event load service fail. {}", e.getMessage());
+    }
   }
 
-  public void load() throws Exception {
+  public synchronized void load() throws Exception {
     long cacheHeadNum = BlockEventCache.getHead().getBlockId().getNum();
     long tmpNum =  manager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     if (cacheHeadNum >= tmpNum) {
@@ -57,25 +69,28 @@ public class BlockEventLoad {
       if (cacheHeadNum >= tmpNum) {
         return;
       }
-      List<BlockEvent> l1 = new ArrayList<>();
-      List<BlockEvent> l2 = new ArrayList<>();
+      if (tmpNum > cacheHeadNum + MAX_LOAD_NUM) {
+        tmpNum = cacheHeadNum + MAX_LOAD_NUM;
+      }
+      List<BlockEvent> blockEvents = new ArrayList<>();
+      List<BlockEvent> rollbackBlockEvents = new ArrayList<>();
       BlockEvent tmp = BlockEventCache.getHead();
 
       BlockEvent blockEvent = blockEventGet.getBlockEvent(tmpNum);
-      l1.add(blockEvent);
+      blockEvents.add(blockEvent);
       while (!blockEvent.getParentId().equals(tmp.getBlockId())) {
         tmpNum--;
         if (tmpNum == tmp.getBlockId().getNum()) {
-          l2.add(tmp);
+          rollbackBlockEvents.add(tmp);
           tmp = BlockEventCache.getBlockEvent(tmp.getParentId());
         }
         blockEvent = blockEventGet.getBlockEvent(tmpNum);
-        l1.add(blockEvent);
+        blockEvents.add(blockEvent);
       }
 
-      l2.forEach(e -> realtimeEventService.add(new Event(e, true)));
+      rollbackBlockEvents.forEach(e -> realtimeEventService.add(new Event(e, true)));
 
-      List<BlockEvent> l = Lists.reverse(l1);
+      List<BlockEvent> l = Lists.reverse(blockEvents);
       for (BlockEvent e: l) {
         BlockEventCache.add(e);
         realtimeEventService.add(new Event(e, false));
