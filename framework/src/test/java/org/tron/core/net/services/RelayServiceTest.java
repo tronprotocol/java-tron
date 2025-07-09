@@ -188,8 +188,8 @@ public class RelayServiceTest extends BaseTest {
 
       Object result = isActiveWitnessMethod.invoke(service);
       Assert.assertFalse(Boolean.TRUE.equals(result));
-    } catch (NoSuchMethodException | NoSuchFieldException |
-        IllegalAccessException | InvocationTargetException e) {
+    } catch (NoSuchMethodException | NoSuchFieldException
+        | IllegalAccessException | InvocationTargetException e) {
       Assert.fail("Reflection invocation failed: " + e.getMessage());
     }
   }
