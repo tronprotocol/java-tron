@@ -145,3 +145,33 @@ NOTE: large db may GC overhead limit exceeded.
 - `<src>`: Source path for database. Default: output-directory/database
 - `--db`: db name.
 - `-h | --help`: provide the help info
+
+## DB Backfill-Bloom
+
+DB backfill bloom provides the ability to backfill SectionBloom data for historical blocks to enable `eth_getLogs` address/topics filtering. This is useful when `isJsonRpcFilterEnabled` was disabled during block processing and later enabled, causing historical blocks to lack SectionBloom data.
+
+### Available parameters:
+
+- `-d | --database-directory`: Specify the database directory path, it is used to open the database to get the transaction log and write the SectionBloom data back, default: output-directory/database.
+- `-s | --start-block`: Specify the start block number for backfill (required).
+- `-e | --end-block`: Specify the end block number for backfill (optional, default: latest block).
+- `-c | --max-concurrency`: Specify the maximum concurrency for processing, default: 8.
+- `-h | --help`: Provide the help info.
+
+### Examples:
+
+```shell script
+# full command
+  java -jar Toolkit.jar db backfill-bloom [-h] -s=<startBlock> [-e=<endBlock>] [-d=<databaseDirectory>] [-c=<maxConcurrency>] [-f=<forceFlush>]
+# examples
+   java -jar Toolkit.jar db backfill-bloom -s 1000000 -e 2000000 #1. backfill blocks 1000000 to 2000000
+   java -jar Toolkit.jar db backfill-bloom -s 1000000 -d /path/to/database #2. specify custom database directory
+   java -jar Toolkit.jar db backfill-bloom -s 1000000 -c 8 #3. use higher concurrency (8 threads)
+```
+
+### Backfill speed
+
+The time required to process different block ranges varies. It is recommended to increase `--max-concurrency` appropriately to speed up the backfill process.
+
+- 0-10000000: It's done almost instantly because there are no logs inside.
+- 10000000-70000000: Takes about 3-4 hours/10,000,000 blocks with `--max-concurrency` set to 32.

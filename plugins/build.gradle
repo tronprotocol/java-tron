@@ -33,6 +33,7 @@ dependencies {
     implementation 'io.github.tronprotocol:leveldbjni-all:1.18.2'
     implementation 'io.github.tronprotocol:leveldb:1.18.2'
     implementation project(":protocol")
+    implementation project(":chainbase")
 }
 
 check.dependsOn 'lint'
