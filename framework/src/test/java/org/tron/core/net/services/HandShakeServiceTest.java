@@ -100,6 +100,7 @@ public class HandShakeServiceTest {
     Node node = new Node(NetUtil.getNodeId(), a1.getAddress().getHostAddress(), null, a1.getPort());
     HelloMessage helloMessage = new HelloMessage(node, System.currentTimeMillis(),
         ChainBaseManager.getChainBaseManager());
+    Assert.assertNotNull(helloMessage.toString());
 
     Assert.assertEquals(Version.getVersion(),
         new String(helloMessage.getHelloMessage().getCodeVersion().toByteArray()));
