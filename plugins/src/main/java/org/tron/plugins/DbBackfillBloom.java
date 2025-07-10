@@ -201,17 +201,17 @@ public class DbBackfillBloom implements Callable<Integer> {
 
   private int processBlocks() {
     long totalBlocks = endBlock - startBlock + 1;
+    // Calculate the section range to be processed
+    List<SectionRange> sectionRanges = calculateSectionRanges(startBlock, endBlock);
+
+    maxConcurrency = Math.min(maxConcurrency, sectionRanges.size());
     ExecutorService executor = Executors.newFixedThreadPool(maxConcurrency);
     List<CompletableFuture<Void>> futures = new ArrayList<>();
 
     try (ProgressBar pb = new ProgressBar("Scanning blocks for SectionBloom backfill",
             totalBlocks)) {
-
-      // Calculate the section range to be processed
-      List<SectionRange> sectionRanges = calculateSectionRanges(startBlock, endBlock);
-
       spec.commandLine().getOut().printf("Processing %d sections with %d threads\n",
-              sectionRanges.size(), Math.min(maxConcurrency, sectionRanges.size()));
+              sectionRanges.size(), maxConcurrency);
       // Submit all section tasks to the thread pool
       for (SectionRange range : sectionRanges) {
         final long finalSectionStart = range.start;
