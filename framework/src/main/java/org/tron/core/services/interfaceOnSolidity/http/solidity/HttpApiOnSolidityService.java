@@ -3,8 +3,6 @@ package org.tron.core.services.interfaceOnSolidity.http.solidity;
 import java.util.EnumSet;
 import javax.servlet.DispatcherType;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.jetty.server.ConnectionLimit;
-import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -46,6 +44,7 @@ import org.tron.core.services.interfaceOnSolidity.http.GetMerkleTreeVoucherInfoO
 import org.tron.core.services.interfaceOnSolidity.http.GetNodeInfoOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetNowBlockOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetPaginatedAssetIssueListOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetPaginatedNowWitnessListOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetRewardOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetTransactionCountByBlockNumOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetTransactionInfoByBlockNumOnSolidityServlet;
@@ -59,7 +58,6 @@ import org.tron.core.services.interfaceOnSolidity.http.ScanNoteByOvkOnSoliditySe
 import org.tron.core.services.interfaceOnSolidity.http.ScanShieldedTRC20NotesByIvkOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.ScanShieldedTRC20NotesByOvkOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.TriggerConstantContractOnSolidityServlet;
-import org.tron.core.services.interfaceOnSolidity.http.GetPaginatedNowWitnessListOnSolidityServlet;
 
 @Slf4j(topic = "API")
 public class HttpApiOnSolidityService extends HttpService {

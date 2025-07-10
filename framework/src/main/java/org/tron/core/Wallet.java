@@ -45,8 +45,8 @@ import com.google.common.collect.ContiguousSet;
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Range;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Range;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.ProtocolStringList;
@@ -164,9 +164,9 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
+import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.MarketUtils;
-import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.BlockIndexStore;
@@ -778,7 +778,7 @@ public class Wallet {
       limit = WITNESS_COUNT_LIMIT_MAX;
     }
 
-    // Get all witnesses from the store, it contains the final vote count at the end of the last epoch.
+    // It contains the final vote count at the end of the last epoch.
     List<WitnessCapsule> witnessCapsuleList = chainBaseManager.getWitnessStore().getAllWitnesses();
     if (offset >= witnessCapsuleList.size()) {
       return null;
