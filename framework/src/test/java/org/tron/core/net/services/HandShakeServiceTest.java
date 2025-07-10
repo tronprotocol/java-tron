@@ -21,7 +21,6 @@ import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
@@ -101,6 +100,7 @@ public class HandShakeServiceTest {
     Node node = new Node(NetUtil.getNodeId(), a1.getAddress().getHostAddress(), null, a1.getPort());
     HelloMessage helloMessage = new HelloMessage(node, System.currentTimeMillis(),
         ChainBaseManager.getChainBaseManager());
+    Assert.assertNotNull(helloMessage.toString());
 
     Assert.assertEquals(Version.getVersion(),
         new String(helloMessage.getHelloMessage().getCodeVersion().toByteArray()));
@@ -214,7 +214,7 @@ public class HandShakeServiceTest {
 
     Node node2 = new Node(NetUtil.getNodeId(), a1.getAddress().getHostAddress(), null, 10002);
 
-    //lowestBlockNum > headBlockNum
+    //peer's lowestBlockNum > my headBlockNum => peer is light, LIGHT_NODE_SYNC_FAIL
     Protocol.HelloMessage.Builder builder =
         getHelloMessageBuilder(node2, System.currentTimeMillis(),
             ChainBaseManager.getChainBaseManager());
@@ -226,7 +226,7 @@ public class HandShakeServiceTest {
       Assert.fail();
     }
 
-    //genesisBlock is not equal
+    //genesisBlock is not equal => INCOMPATIBLE_CHAIN
     builder = getHelloMessageBuilder(node2, System.currentTimeMillis(),
         ChainBaseManager.getChainBaseManager());
     BlockCapsule.BlockId gid = ChainBaseManager.getChainBaseManager().getGenesisBlockId();
@@ -242,9 +242,11 @@ public class HandShakeServiceTest {
       Assert.fail();
     }
 
-    //solidityBlock <= us, but not contained
+    // peer's solidityBlock <= my solidityBlock, but not contained
+    // and my lowestBlockNum <= peer's solidityBlock  => FORKED
     builder = getHelloMessageBuilder(node2, System.currentTimeMillis(),
         ChainBaseManager.getChainBaseManager());
+
     BlockCapsule.BlockId sid = ChainBaseManager.getChainBaseManager().getSolidBlockId();
 
     Random gen = new Random();
@@ -256,6 +258,16 @@ public class HandShakeServiceTest {
         .setNumber(sid.getNum())
         .build();
     builder.setSolidBlockId(sBlockId);
+    try {
+      HelloMessage helloMessage = new HelloMessage(builder.build().toByteArray());
+      method.invoke(p2pEventHandler, peer, helloMessage.getSendBytes());
+    } catch (Exception e) {
+      Assert.fail();
+    }
+
+    // peer's solidityBlock <= my solidityBlock, but not contained
+    // and my lowestBlockNum > peer's solidityBlock  => i am light, LIGHT_NODE_SYNC_FAIL
+    ChainBaseManager.getChainBaseManager().setLowestBlockNum(2);
     try {
       HelloMessage helloMessage = new HelloMessage(builder.build().toByteArray());
       method.invoke(p2pEventHandler, peer, helloMessage.getSendBytes());
