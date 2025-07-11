@@ -1,6 +1,9 @@
 allprojects {
     version = "1.0.0"
     apply plugin: "java-library"
+    ext {
+        springVersion = "5.3.39"
+    }
 }
 
 subprojects {
@@ -41,8 +44,7 @@ subprojects {
         implementation group: 'org.slf4j', name: 'jcl-over-slf4j', version: '1.7.25'
         implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.13'
         implementation "com.google.code.findbugs:jsr305:3.0.0"
-        implementation group: 'org.springframework', name: 'spring-context', version: '5.3.18'
-        implementation group: 'org.springframework', name: 'spring-tx', version: '5.3.18'
+        implementation group: 'org.springframework', name: 'spring-context', version: "${springVersion}"
         implementation "org.apache.commons:commons-lang3:3.4"
         implementation group: 'org.apache.commons', name: 'commons-math', version: '2.2'
         implementation "org.apache.commons:commons-collections4:4.1"
