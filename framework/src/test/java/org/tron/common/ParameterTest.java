@@ -316,5 +316,7 @@ public class ParameterTest {
     assertEquals(1, parameter.getAllowEnergyAdjustment());
     parameter.setMaxCreateAccountTxSize(1000);
     assertEquals(1000, parameter.getMaxCreateAccountTxSize());
+    parameter.setProposalVotingWindow(86400L);
+    assertEquals(86400L, parameter.getProposalVotingWindow());
   }
 }

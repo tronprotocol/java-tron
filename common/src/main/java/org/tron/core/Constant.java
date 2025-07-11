@@ -39,6 +39,8 @@ public class Constant {
   public static final long MAX_CONTRACT_RESULT_SIZE = 2L;
   public static final long PB_DEFAULT_ENERGY_LIMIT = 0L;
   public static final long CREATOR_DEFAULT_ENERGY_LIMIT = 1000 * 10_000L;
+  public static final long MIN_PROPOSAL_VOTING_WINDOW = 0L; // Number of blocks to 0 day
+  public static final long MAX_PROPOSAL_VOTING_WINDOW = 10512000L; // Number of blocks to 365 days
 
 
   // Numbers
@@ -405,4 +407,5 @@ public class Constant {
   public static final String COMMITTEE_ALLOW_TVM_CANCUN = "committee.allowTvmCancun";
 
   public static final String COMMITTEE_ALLOW_TVM_BLOB = "committee.allowTvmBlob";
+  public static final String COMMITTEE_PROPOSAL_VOTING_WINDOW = "committee.proposalVotingWindow";
 }
