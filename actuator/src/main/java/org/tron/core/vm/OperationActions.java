@@ -1072,4 +1072,19 @@ public class OperationActions {
     program.stop();
   }
 
+  public static void suicideAction2(Program program) {
+    if (program.isStaticCall()) {
+      throw new Program.StaticCallModificationException();
+    }
+
+    if (!program.canSuicide()) {
+      program.getResult().setRevert();
+    } else {
+      DataWord address = program.stackPop();
+      program.suicide2(address);
+    }
+
+    program.stop();
+  }
+
 }
