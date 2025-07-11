@@ -107,6 +107,7 @@ public class Parameter {
     public static final int PROPOSAL_COUNT_LIMIT_MAX = 1000;
     public static final int EXCHANGE_COUNT_LIMIT_MAX = 1000;
     public static final int MARKET_COUNT_LIMIT_MAX = 1000;
+    public static final int WITNESS_COUNT_LIMIT_MAX = 1000;
   }
 
   public class AdaptiveResourceLimitConstants {
