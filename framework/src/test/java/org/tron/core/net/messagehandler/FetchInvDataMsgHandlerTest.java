@@ -58,6 +58,9 @@ public class FetchInvDataMsgHandlerTest {
     Mockito.when(advService.getMessage(new Item(blockId, Protocol.Inventory.InventoryType.BLOCK)))
         .thenReturn(new BlockMessage(blockCapsule));
     ReflectUtils.setFieldValue(fetchInvDataMsgHandler, "advService", advService);
+    P2pRateLimiter p2pRateLimiter = new P2pRateLimiter();
+    p2pRateLimiter.register(FETCH_INV_DATA.asByte(), 2);
+    Mockito.when(peer.getP2pRateLimiter()).thenReturn(p2pRateLimiter);
 
     fetchInvDataMsgHandler.processMessage(peer,
         new FetchInvDataMessage(blockIds, Protocol.Inventory.InventoryType.BLOCK));
@@ -77,6 +80,9 @@ public class FetchInvDataMsgHandlerTest {
     Cache<Item, Long> advInvSpread = CacheBuilder.newBuilder().maximumSize(100)
         .expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
     Mockito.when(peer.getAdvInvSpread()).thenReturn(advInvSpread);
+    P2pRateLimiter p2pRateLimiter = new P2pRateLimiter();
+    p2pRateLimiter.register(FETCH_INV_DATA.asByte(), 2);
+    Mockito.when(peer.getP2pRateLimiter()).thenReturn(p2pRateLimiter);
 
     FetchInvDataMsgHandler fetchInvDataMsgHandler = new FetchInvDataMsgHandler();
 
@@ -113,6 +119,7 @@ public class FetchInvDataMsgHandlerTest {
     Mockito.when(peer.getAdvInvSpread()).thenReturn(advInvSpread);
     P2pRateLimiter p2pRateLimiter = new P2pRateLimiter();
     p2pRateLimiter.register(FETCH_INV_DATA.asByte(), 1);
+    p2pRateLimiter.acquire(FETCH_INV_DATA.asByte());
     Mockito.when(peer.getP2pRateLimiter()).thenReturn(p2pRateLimiter);
     FetchInvDataMsgHandler fetchInvDataMsgHandler = new FetchInvDataMsgHandler();
 

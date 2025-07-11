@@ -41,7 +41,6 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
       .maximumSize(1000).expireAfterWrite(1, TimeUnit.HOURS).build();
 
   private static final int MAX_SIZE = 1_000_000;
-  private static final int MAX_FETCH_SIZE = 100;
   @Autowired
   private TronNetDelegate tronNetDelegate;
   @Autowired
@@ -55,13 +54,6 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
   public void processMessage(PeerConnection peer, TronMessage msg) throws P2pException {
 
     FetchInvDataMessage fetchInvDataMsg = (FetchInvDataMessage) msg;
-
-    if (peer.isNeedSyncFromUs() && !peer.getP2pRateLimiter().tryAcquire(msg.getType().asByte())) {
-      // Discard messages that exceed the rate limit
-      logger.warn("{} message from peer {} exceeds the rate limit",
-          msg.getType(), peer.getInetSocketAddress());
-      return;
-    }
 
     check(peer, fetchInvDataMsg);
 
@@ -164,7 +156,11 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
         if (!peer.isNeedSyncFromUs()) {
           throw new P2pException(TypeEnum.BAD_MESSAGE, "no need sync");
         }
-        if (fetchInvDataMsg.getHashList().size() > MAX_FETCH_SIZE) {
+        if (!peer.getP2pRateLimiter().tryAcquire(fetchInvDataMsg.getType().asByte())) {
+          throw new P2pException(TypeEnum.BAD_MESSAGE, fetchInvDataMsg.getType()
+              + " message exceeds the rate limit");
+        }
+        if (fetchInvDataMsg.getHashList().size() > NetConstants.MAX_BLOCK_FETCH_PER_PEER) {
           throw new P2pException(TypeEnum.BAD_MESSAGE, "fetch too more blocks, size:"
               + fetchInvDataMsg.getHashList().size());
         }
