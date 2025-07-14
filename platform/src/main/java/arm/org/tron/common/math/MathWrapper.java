@@ -25,7 +25,8 @@ public class MathWrapper {
    * This static block is used to initialize the data map.
    */
   static {
-    addPowData("3ff0192278704be3", EXPONENT, "3ff000033518c576"); //  4137160
+    // init main-net pow data start
+    addPowData("3ff0192278704be3", EXPONENT, "3ff000033518c576"); //  4137160(block)
     addPowData("3ff000002fc6a33f", EXPONENT, "3ff0000000061d86"); //  4065476
     addPowData("3ff00314b1e73ecf", EXPONENT, "3ff0000064ea3ef8"); //  4071538
     addPowData("3ff0068cd52978ae", EXPONENT, "3ff00000d676966c"); //  4109544
@@ -73,6 +74,7 @@ public class MathWrapper {
     addPowData("3ff0002cc166be3c", EXPONENT, "3ff0000005ba841e"); //  8763101
     addPowData("3ff0000cc84e613f", EXPONENT, "3ff0000001a2da46"); //  9269124
     addPowData("3ff000057b83c83f", EXPONENT, "3ff0000000b3a640"); //  9631452
+    // init main-net pow data end
     // add pow data
   }
 
