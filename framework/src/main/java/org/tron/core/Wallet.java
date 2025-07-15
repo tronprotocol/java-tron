@@ -789,7 +789,7 @@ public class Wallet {
     Map<ByteString, Long> countWitness = countVote(votesStore);
 
     // Iterate through the witness list to apply vote changes and calculate the real-time vote count
-    witnessCapsuleList.forEach((witnessCapsule) -> {
+    witnessCapsuleList.forEach(witnessCapsule -> {
       long voteCount = countWitness.getOrDefault(witnessCapsule.getAddress(), 0L);
       witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
     });
