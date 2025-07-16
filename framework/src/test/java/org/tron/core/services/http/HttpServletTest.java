@@ -107,6 +107,7 @@ public class HttpServletTest {
   private ListNodesServlet listNodesServlet;
   private ListProposalsServlet listProposalsServlet;
   private ListWitnessesServlet listWitnessesServlet;
+  private GetPaginatedNowWitnessListServlet getPaginatedNowWitnessListServlet;
   private MarketCancelOrderServlet marketCancelOrderServlet;
   private MarketSellAssetServlet marketSellAssetServlet;
   private MetricsServlet metricsServlet;
@@ -244,6 +245,7 @@ public class HttpServletTest {
     listNodesServlet = new ListNodesServlet();
     listProposalsServlet = new ListProposalsServlet();
     listWitnessesServlet = new ListWitnessesServlet();
+    getPaginatedNowWitnessListServlet = new GetPaginatedNowWitnessListServlet();
     marketCancelOrderServlet = new MarketCancelOrderServlet();
     marketSellAssetServlet = new MarketSellAssetServlet();
     metricsServlet = new MetricsServlet();
@@ -367,6 +369,7 @@ public class HttpServletTest {
     listNodesServlet.doGet(request, response);
     listProposalsServlet.doGet(request, response);
     listWitnessesServlet.doGet(request, response);
+    getPaginatedNowWitnessListServlet.doGet(request, response);
     marketCancelOrderServlet.doGet(request, response);
     marketSellAssetServlet.doGet(request, response);
     metricsServlet.doGet(request, response);
@@ -499,6 +502,7 @@ public class HttpServletTest {
     listNodesServlet.doPost(request, response);
     listProposalsServlet.doPost(request, response);
     listWitnessesServlet.doPost(request, response);
+    getPaginatedNowWitnessListServlet.doPost(request, response);
     marketCancelOrderServlet.doPost(request, response);
     marketSellAssetServlet.doPost(request, response);
     participateAssetIssueServlet.doPost(request, response);

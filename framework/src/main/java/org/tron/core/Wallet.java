@@ -30,6 +30,7 @@ import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.MARKET_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
+import static org.tron.core.config.Parameter.DatabaseConstants.WITNESS_COUNT_LIMIT_MAX;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseEnergyFee;
 import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.EARLIEST_STR;
 import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.FINALIZED_STR;
@@ -44,6 +45,7 @@ import com.google.common.collect.ContiguousSet;
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Range;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -59,6 +61,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -161,6 +164,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
+import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.config.args.Args;
@@ -201,6 +205,8 @@ import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.StoreFactory;
+import org.tron.core.store.VotesStore;
+import org.tron.core.store.WitnessStore;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.vm.program.Program;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder;
@@ -762,6 +768,96 @@ public class Wallet {
     witnessCapsuleList
         .forEach(witnessCapsule -> builder.addWitnesses(witnessCapsule.getInstance()));
     return builder.build();
+  }
+
+  public WitnessList getPaginatedNowWitnessList(long offset, long limit) {
+    if (limit <= 0 || offset < 0) {
+      return null;
+    }
+    if (limit > WITNESS_COUNT_LIMIT_MAX) {
+      limit = WITNESS_COUNT_LIMIT_MAX;
+    }
+
+    // It contains the final vote count at the end of the last epoch.
+    List<WitnessCapsule> witnessCapsuleList = chainBaseManager.getWitnessStore().getAllWitnesses();
+    if (offset >= witnessCapsuleList.size()) {
+      return null;
+    }
+
+    VotesStore votesStore = chainBaseManager.getVotesStore();
+    // Count the vote changes for each witness in the current epoch, it is maybe negative.
+    Map<ByteString, Long> countWitness = countVote(votesStore);
+
+    // Iterate through the witness list to apply vote changes and calculate the real-time vote count
+    witnessCapsuleList.forEach(witnessCapsule -> {
+      long voteCount = countWitness.getOrDefault(witnessCapsule.getAddress(), 0L);
+      witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
+    });
+
+    // Use the same sorting logic as in the Maintenance period
+    WitnessStore.sortWitnesses(witnessCapsuleList,
+        chainBaseManager.getDynamicPropertiesStore().allowWitnessSortOptimization());
+
+    List<WitnessCapsule> sortedWitnessList = witnessCapsuleList.stream()
+        .skip(offset)
+        .limit(limit)
+        .collect(Collectors.toList());
+
+    WitnessList.Builder builder = WitnessList.newBuilder();
+    sortedWitnessList.forEach(witnessCapsule ->
+        builder.addWitnesses(witnessCapsule.getInstance()));
+
+    return builder.build();
+  }
+
+  /**
+   * Counts vote changes for witnesses in the current epoch.
+   *
+   * Vote count changes are tracked as follows:
+   * - Negative values for votes removed from previous witness in the last epoch
+   * - Positive values for votes added to new witness in the current epoch
+   *
+   * Example:
+   * an Account X had 100 votes for witness W1 in the previous epoch.
+   * In the current epoch, X changes votes to:
+   * - W2: 60 votes
+   * - W3: 80 votes
+   *
+   * Resulting vote changes:
+   * - W1: -100 (votes removed)
+   * - W2: +60 (new votes)
+   * - W3: +80 (new votes)
+   */
+  private Map<ByteString, Long> countVote(VotesStore votesStore) {
+    // Initialize a result map to store vote changes for each witness
+    Map<ByteString, Long> countWitness = Maps.newHashMap();
+
+    // VotesStore is a key-value store, where the key is the address of the voter
+    Iterator<Entry<byte[], VotesCapsule>> dbIterator = votesStore.iterator();
+
+    while (dbIterator.hasNext()) {
+      Entry<byte[], VotesCapsule> next = dbIterator.next();
+      VotesCapsule votes = next.getValue();
+
+      /**
+       * VotesCapsule contains two lists:
+       * - Old votes: Last votes from the previous epoch, updated in maintenance period
+       * - New votes: Latest votes in current epoch, updated after each vote transaction
+       */
+      votes.getOldVotes().forEach(vote -> {
+        ByteString voteAddress = vote.getVoteAddress();
+        long voteCount = vote.getVoteCount();
+        countWitness.put(voteAddress,
+            countWitness.getOrDefault(voteAddress, 0L) - voteCount);
+      });
+      votes.getNewVotes().forEach(vote -> {
+        ByteString voteAddress = vote.getVoteAddress();
+        long voteCount = vote.getVoteCount();
+        countWitness.put(voteAddress,
+            countWitness.getOrDefault(voteAddress, 0L) + voteCount);
+      });
+    }
+    return countWitness;
   }
 
   public ProposalList getProposalList() {
