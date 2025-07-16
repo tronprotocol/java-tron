@@ -9,179 +9,151 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
-import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Protocol;
-import org.tron.protos.Protocol.ResourceReceipt;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.TransactionInfo;
 
+@Getter
+@Setter
 @JsonPropertyOrder(alphabetic = true)
 public class TransactionReceipt {
-
   @JsonPropertyOrder(alphabetic = true)
+  @Getter
+  @Setter
   public static class TransactionLog {
 
-    @Getter
-    @Setter
     private String logIndex;
-    @Getter
-    @Setter
     private String blockHash;
-    @Getter
-    @Setter
     private String blockNumber;
-    @Getter
-    @Setter
     private String transactionIndex;
-    @Getter
-    @Setter
     private String transactionHash;
-    @Getter
-    @Setter
     private String address;
-    @Getter
-    @Setter
     private String data;
-    @Getter
-    @Setter
     private String[] topics;
-    @Getter
-    @Setter
     private boolean removed = false;
 
-    public TransactionLog() {
-    }
+    public TransactionLog() {}
   }
 
-  @Getter
-  @Setter
   private String blockHash;
-  @Getter
-  @Setter
   private String blockNumber;
-  @Getter
-  @Setter
   private String transactionIndex;
-  @Getter
-  @Setter
   private String transactionHash;
-  @Getter
-  @Setter
   private String from;
-  @Getter
-  @Setter
   private String to;
 
-  @Getter
-  @Setter
   private String cumulativeGasUsed;
-  @Getter
-  @Setter
   private String effectiveGasPrice;
-  @Getter
-  @Setter
   private String gasUsed;
-  @Getter
-  @Setter
   private String contractAddress;
-  @Getter
-  @Setter
   private TransactionLog[] logs;
-  @Getter
-  @Setter
-  private String logsBloom;
+  private String logsBloom = ByteArray.toJsonHex(new byte[256]); // default no value;
+
   @JsonInclude(JsonInclude.Include.NON_NULL)
-  public String root;  // 32 bytes of post-transaction stateroot (pre Byzantium)
+  private String root = null; // 32 bytes of post-transaction stateroot (pre Byzantium)
+
   @JsonInclude(JsonInclude.Include.NON_NULL)
-  public String status;  //  either 1 (success) or 0 (failure) (post Byzantium)
+  private String status; //  either 1 (success) or 0 (failure) (post Byzantium)
 
-  @Getter
-  @Setter
-  private String type = "0x0";
+  private String type = "0x0"; // legacy transaction, set 0 in java-tron
 
-  public TransactionReceipt(Protocol.Block block, TransactionInfo txInfo, Wallet wallet) {
-    BlockCapsule blockCapsule = new BlockCapsule(block);
-    String txid = ByteArray.toHexString(txInfo.getId().toByteArray());
-    long blockNum = blockCapsule.getNum();
+  /**
+   * Constructor for creating a TransactionReceipt
+   *
+   * @param blockCapsule the block containing the transaction
+   * @param txInfo the transaction info containing execution details
+   * @param context the pre-calculated transaction context
+   * @param energyFee the energy price at the block timestamp
+   */
+  public TransactionReceipt(
+      BlockCapsule blockCapsule,
+      TransactionInfo txInfo,
+      TransactionContext context,
+      long energyFee) {
+    // Set basic fields
+    this.blockHash = ByteArray.toJsonHex(blockCapsule.getBlockId().getBytes());
+    this.blockNumber = ByteArray.toJsonHex(blockCapsule.getNum());
+    this.transactionHash = ByteArray.toJsonHex(txInfo.getId().toByteArray());
+    this.transactionIndex = ByteArray.toJsonHex(context.index);
+    // Compute cumulative gas until this transaction
+    this.cumulativeGasUsed =
+        ByteArray.toJsonHex(context.cumulativeGas + txInfo.getReceipt().getEnergyUsageTotal());
+    this.gasUsed = ByteArray.toJsonHex(txInfo.getReceipt().getEnergyUsageTotal());
+    this.status = txInfo.getReceipt().getResultValue() <= 1 ? "0x1" : "0x0";
+    this.effectiveGasPrice = ByteArray.toJsonHex(energyFee);
 
-    Protocol.Transaction transaction = null;
-    long cumulativeGas = 0;
-    long cumulativeLogCount = 0;
+    // Set contract fields
+    this.from = null;
+    this.to = null;
+    this.contractAddress = null;
 
-    TransactionInfoList infoList = wallet.getTransactionInfoByBlockNum(blockNum);
-    for (int index = 0; index < infoList.getTransactionInfoCount(); index++) {
-      TransactionInfo info = infoList.getTransactionInfo(index);
-      ResourceReceipt resourceReceipt = info.getReceipt();
-
-      long energyUsage = resourceReceipt.getEnergyUsageTotal();
-      cumulativeGas += energyUsage;
-
-      if (ByteArray.toHexString(info.getId().toByteArray()).equals(txid)) {
-        transactionIndex = ByteArray.toJsonHex(index);
-        cumulativeGasUsed = ByteArray.toJsonHex(cumulativeGas);
-        gasUsed = ByteArray.toJsonHex(energyUsage);
-        status = resourceReceipt.getResultValue() <= 1 ? "0x1" : "0x0";
-
-        transaction = block.getTransactions(index);
-        break;
-      } else {
-        cumulativeLogCount += info.getLogCount();
-      }
-    }
-
-    blockHash = ByteArray.toJsonHex(blockCapsule.getBlockId().getBytes());
-    blockNumber = ByteArray.toJsonHex(blockCapsule.getNum());
-    transactionHash = ByteArray.toJsonHex(txInfo.getId().toByteArray());
-    effectiveGasPrice = ByteArray.toJsonHex(wallet.getEnergyFee(blockCapsule.getTimeStamp()));
-
-    from = null;
-    to = null;
-    contractAddress = null;
-
-    if (transaction != null && !transaction.getRawData().getContractList().isEmpty()) {
+    TransactionCapsule txCapsule = blockCapsule.getTransactions().get(context.index);
+    Protocol.Transaction transaction = txCapsule.getInstance();
+    if (!transaction.getRawData().getContractList().isEmpty()) {
       Contract contract = transaction.getRawData().getContract(0);
       byte[] fromByte = TransactionCapsule.getOwner(contract);
       byte[] toByte = getToAddress(transaction);
-      from = ByteArray.toJsonHexAddress(fromByte);
-      to = ByteArray.toJsonHexAddress(toByte);
+      this.from = ByteArray.toJsonHexAddress(fromByte);
+      this.to = ByteArray.toJsonHexAddress(toByte);
 
       if (contract.getType() == ContractType.CreateSmartContract) {
-        contractAddress = ByteArray.toJsonHexAddress(txInfo.getContractAddress().toByteArray());
+        this.contractAddress =
+            ByteArray.toJsonHexAddress(txInfo.getContractAddress().toByteArray());
       }
     }
 
-    // logs
+    // Set logs
     List<TransactionLog> logList = new ArrayList<>();
-    for (int index = 0; index < txInfo.getLogCount(); index++) {
-      TransactionInfo.Log log = txInfo.getLogList().get(index);
+    for (int logIndex = 0; logIndex < txInfo.getLogCount(); logIndex++) {
+      TransactionInfo.Log log = txInfo.getLogList().get(logIndex);
+      TransactionLog transactionLog = new TransactionLog();
+      transactionLog.setLogIndex(ByteArray.toJsonHex(logIndex + context.cumulativeLogCount));
+      transactionLog.setTransactionHash(this.transactionHash);
+      transactionLog.setTransactionIndex(this.transactionIndex);
+      transactionLog.setBlockHash(this.blockHash);
+      transactionLog.setBlockNumber(this.blockNumber);
 
-      TransactionReceipt.TransactionLog transactionLog = new TransactionReceipt.TransactionLog();
-      // index is the index in the block
-      transactionLog.logIndex = ByteArray.toJsonHex(index + cumulativeLogCount);
-      transactionLog.transactionHash = transactionHash;
-      transactionLog.transactionIndex = transactionIndex;
-      transactionLog.blockHash = blockHash;
-      transactionLog.blockNumber = blockNumber;
       byte[] addressByte = convertToTronAddress(log.getAddress().toByteArray());
-      transactionLog.address = ByteArray.toJsonHexAddress(addressByte);
-      transactionLog.data = ByteArray.toJsonHex(log.getData().toByteArray());
+      transactionLog.setAddress(ByteArray.toJsonHexAddress(addressByte));
+      transactionLog.setData(ByteArray.toJsonHex(log.getData().toByteArray()));
 
       String[] topics = new String[log.getTopicsCount()];
       for (int i = 0; i < log.getTopicsCount(); i++) {
         topics[i] = ByteArray.toJsonHex(log.getTopics(i).toByteArray());
       }
-      transactionLog.topics = topics;
+      transactionLog.setTopics(topics);
 
       logList.add(transactionLog);
     }
+    this.logs = logList.toArray(new TransactionLog[0]);
 
-    logs = logList.toArray(new TransactionReceipt.TransactionLog[logList.size()]);
-    logsBloom = ByteArray.toJsonHex(new byte[256]); // no value
-    root = null;
+  }
+
+  /**
+   * Context class to hold transaction creation parameters Contains index and cumulative values
+   * needed for receipt creation
+   */
+  @Getter
+  public static class TransactionContext {
+    private final int index;
+    private final long cumulativeGas;
+    private final long cumulativeLogCount;
+
+    /**
+     * Creates a transaction context with the given parameters
+     *
+     * @param index the transaction index within the block
+     * @param cumulativeGas the cumulative gas used up to this transaction
+     * @param cumulativeLogCount the cumulative log count up to this transaction
+     */
+    public TransactionContext(int index, long cumulativeGas, long cumulativeLogCount) {
+      this.index = index;
+      this.cumulativeGas = cumulativeGas;
+      this.cumulativeLogCount = cumulativeLogCount;
+    }
   }
 }
