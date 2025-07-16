@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.bloom.Bloom;
 import org.tron.common.crypto.Hash;
-import org.tron.core.exception.JsonRpcTooManyResultException;
+import org.tron.core.exception.jsonrpc.JsonRpcTooManyResultException;
 import org.tron.core.store.SectionBloomStore;
 
 /**
