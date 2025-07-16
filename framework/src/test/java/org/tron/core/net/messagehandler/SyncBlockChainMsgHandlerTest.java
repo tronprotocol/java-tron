@@ -55,6 +55,7 @@ public class SyncBlockChainMsgHandlerTest {
   @Test
   public void testProcessMessage() throws Exception {
     try {
+      peer.setRemainNum(1);
       handler.processMessage(peer, new SyncBlockChainMessage(new ArrayList<>()));
     } catch (P2pException e) {
       Assert.assertEquals("SyncBlockChain blockIds is empty", e.getMessage());
@@ -70,6 +71,10 @@ public class SyncBlockChainMsgHandlerTest {
     Assert.assertNotNull(message.getAnswerMessage());
     Assert.assertNotNull(message.toString());
     Assert.assertNotNull(((BlockInventoryMessage) message).getAnswerMessage());
+    Assert.assertFalse(f);
+    method.invoke(handler, peer, message);
+    method.invoke(handler, peer, message);
+    f = (boolean)method.invoke(handler, peer, message);
     Assert.assertFalse(f);
 
     Method method1 = handler.getClass().getDeclaredMethod(
