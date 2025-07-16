@@ -1857,12 +1857,10 @@ public class Manager {
 
     chainBaseManager.getBalanceTraceStore().resetCurrentBlockTrace();
 
-    if (CommonParameter.getInstance().isJsonRpcFilterEnabled()) {
-      Bloom blockBloom = chainBaseManager.getSectionBloomStore()
-          .initBlockSection(transactionRetCapsule);
-      chainBaseManager.getSectionBloomStore().write(block.getNum());
-      block.setBloom(blockBloom);
-    }
+    Bloom blockBloom = chainBaseManager.getSectionBloomStore()
+        .initBlockSection(transactionRetCapsule);
+    chainBaseManager.getSectionBloomStore().write(block.getNum());
+    block.setBloom(blockBloom);
   }
 
   private void payReward(BlockCapsule block) {
