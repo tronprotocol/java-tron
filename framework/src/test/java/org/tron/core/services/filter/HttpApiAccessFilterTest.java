@@ -38,7 +38,7 @@ public class HttpApiAccessFilterTest extends BaseTest {
 
   static {
     Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
-    Args.getInstance().setFullNodeAllowShieldedTransactionArgs(false);
+    Args.getInstance().setAllowShieldedTransactionApi(false);
     Args.getInstance().setFullNodeHttpEnable(true);
     Args.getInstance().setFullNodeHttpPort(PublicMethod.chooseRandomPort());
     Args.getInstance().setPBFTHttpEnable(true);

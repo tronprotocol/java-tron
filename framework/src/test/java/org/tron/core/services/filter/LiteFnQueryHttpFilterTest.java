@@ -31,7 +31,7 @@ public class LiteFnQueryHttpFilterTest extends BaseTest {
 
   static {
     Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
-    Args.getInstance().setFullNodeAllowShieldedTransactionArgs(false);
+    Args.getInstance().setAllowShieldedTransactionApi(false);
     Args.getInstance().setRpcEnable(false);
     Args.getInstance().setRpcSolidityEnable(false);
     Args.getInstance().setRpcPBFTEnable(false);
