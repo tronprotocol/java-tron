@@ -30,8 +30,8 @@ if (isWindows()) {
 }
 
 dependencies {
-    api group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.13.4.2' // https://github.com/FasterXML/jackson-databind/issues/3627
-    api "com.cedarsoftware:java-util:1.8.0"
+    api group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.18.3' // https://github.com/FasterXML/jackson-databind/issues/3627
+    api "com.cedarsoftware:java-util:3.2.0"
     api group: 'org.apache.httpcomponents', name: 'httpasyncclient', version: '4.1.1'
     api group: 'commons-codec', name: 'commons-codec', version: '1.11'
     api group: 'com.beust', name: 'jcommander', version: '1.78'
@@ -44,7 +44,7 @@ dependencies {
     api 'org.aspectj:aspectjrt:1.8.13'
     api 'org.aspectj:aspectjweaver:1.8.13'
     api 'org.aspectj:aspectjtools:1.8.13'
-    api group: 'io.github.tronprotocol', name: 'libp2p', version: '2.2.5',{
+    api group: 'io.github.tronprotocol', name: 'libp2p', version: '2.2.6',{
         exclude group: 'io.grpc', module: 'grpc-context'
         exclude group: 'io.grpc', module: 'grpc-core'
         exclude group: 'io.grpc', module: 'grpc-netty'
