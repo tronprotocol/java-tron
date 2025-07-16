@@ -15,17 +15,26 @@
 
 package org.tron.core.config.args;
 
+import static org.junit.Assert.fail;
+
 import com.google.common.collect.Lists;
+import java.io.IOException;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
+import org.tron.core.Constant;
 
 public class LocalWitnessTest {
 
   private final LocalWitnesses localWitness = new LocalWitnesses();
   private static final String PRIVATE_KEY = PublicMethod.getRandomPrivateKey();
+
+  @Rule
+  public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Before
   public void setLocalWitness() {
@@ -42,16 +51,16 @@ public class LocalWitnessTest {
     Assert.assertNotNull(localWitness.getPublicKey());
   }
 
-  @Test
+  @Test(expected = IllegalArgumentException.class)
   public void whenSetEmptyPrivateKey() {
     localWitness.setPrivateKeys(Lists.newArrayList(""));
-    Assert.assertNotNull(localWitness.getPrivateKey());
-    Assert.assertNotNull(localWitness.getPublicKey());
+    fail("private key must be 64-bits hex string");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void whenSetBadFormatPrivateKey() {
     localWitness.setPrivateKeys(Lists.newArrayList("a111"));
+    fail("private key must be 64-bits hex string");
   }
 
   @Test
@@ -85,6 +94,26 @@ public class LocalWitnessTest {
     Assert.assertNull(localWitnesses2.getPublicKey());
     localWitnesses2.initWitnessAccountAddress(true);
     LocalWitnesses localWitnesses3 = new LocalWitnesses();
-    Assert.assertNotNull(localWitnesses3.getWitnessAccountAddress(true));
+    Assert.assertNull(localWitnesses3.getWitnessAccountAddress(true));
+  }
+
+  @Test
+  public void testLocalWitnessConfig() throws IOException {
+    Args.setParam(
+        new String[]{"--output-directory", temporaryFolder.newFolder().toString(), "--debug"},
+        "config-localtest.conf");
+    LocalWitnesses witness = Args.getLocalWitnesses();
+    Assert.assertNotNull(witness.getPrivateKey());
+    Assert.assertNotNull(witness.getWitnessAccountAddress(true));
+  }
+
+  @Test
+  public void testNullLocalWitnessConfig() throws IOException {
+    Args.setParam(
+        new String[]{"--output-directory", temporaryFolder.newFolder().toString(), "--debug"},
+        Constant.TEST_CONF);
+    LocalWitnesses witness = Args.getLocalWitnesses();
+    Assert.assertNull(witness.getPrivateKey());
+    Assert.assertNull(witness.getWitnessAccountAddress(true));
   }
 }

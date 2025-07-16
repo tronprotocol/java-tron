@@ -46,7 +46,7 @@ public class LocalWitnesses {
   }
 
   public byte[] getWitnessAccountAddress(boolean isECKeyCryptoEngine) {
-    if (witnessAccountAddress == null) {
+    if (witnessAccountAddress == null && !CollectionUtils.isEmpty(privateKeys)) {
       byte[] privateKey = ByteArray.fromHexString(getPrivateKey());
       final SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey, isECKeyCryptoEngine);
       this.witnessAccountAddress = cryptoEngine.getAddress();
@@ -59,7 +59,7 @@ public class LocalWitnesses {
   }
 
   public void initWitnessAccountAddress(boolean isECKeyCryptoEngine) {
-    if (witnessAccountAddress == null) {
+    if (witnessAccountAddress == null && !CollectionUtils.isEmpty(privateKeys)) {
       byte[] privateKey = ByteArray.fromHexString(getPrivateKey());
       final SignInterface ecKey = SignUtils.fromPrivate(privateKey,
           isECKeyCryptoEngine);
@@ -85,8 +85,8 @@ public class LocalWitnesses {
       privateKey = privateKey.substring(2);
     }
 
-    if (StringUtils.isNotBlank(privateKey)
-        && privateKey.length() != ChainConstant.PRIVATE_KEY_LENGTH) {
+    if (StringUtils.isBlank(privateKey) || (StringUtils.isNotBlank(privateKey)
+        && privateKey.length() != ChainConstant.PRIVATE_KEY_LENGTH)) {
       throw new IllegalArgumentException(
           String.format("private key must be %d-bits hex string, actual: %d",
               ChainConstant.PRIVATE_KEY_LENGTH, privateKey.length()));

@@ -285,7 +285,7 @@ public class ECKey implements Serializable, SignInterface {
    * @return -
    */
   public static ECKey fromPrivate(byte[] privKeyBytes) {
-    if (Objects.isNull(privKeyBytes)) {
+    if (ByteUtil.isNullOrZeroArray(privKeyBytes)) {
       return null;
     }
     return fromPrivate(new BigInteger(1, privKeyBytes));
