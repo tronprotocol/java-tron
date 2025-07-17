@@ -21,7 +21,6 @@ import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
@@ -34,6 +33,7 @@ import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.handshake.HelloMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
+import org.tron.core.net.service.handshake.HandshakeService;
 import org.tron.p2p.P2pConfig;
 import org.tron.p2p.base.Parameter;
 import org.tron.p2p.connection.Channel;
@@ -126,13 +126,27 @@ public class HandShakeServiceTest {
     //block hash is empty
     try {
       BlockCapsule.BlockId hid = ChainBaseManager.getChainBaseManager().getHeadBlockId();
-      Protocol.HelloMessage.BlockId hBlockId = Protocol.HelloMessage.BlockId.newBuilder()
-          .setHash(ByteString.copyFrom(new byte[0]))
+      Protocol.HelloMessage.BlockId okBlockId = Protocol.HelloMessage.BlockId.newBuilder()
+          .setHash(ByteString.copyFrom(new byte[32]))
           .setNumber(hid.getNum())
           .build();
-      builder.setHeadBlockId(hBlockId);
+      Protocol.HelloMessage.BlockId invalidBlockId = Protocol.HelloMessage.BlockId.newBuilder()
+          .setHash(ByteString.copyFrom(new byte[31]))
+          .setNumber(hid.getNum())
+          .build();
+      builder.setHeadBlockId(invalidBlockId);
       HelloMessage helloMessage = new HelloMessage(builder.build().toByteArray());
-      Assert.assertTrue(!helloMessage.valid());
+      Assert.assertFalse(helloMessage.valid());
+
+      builder.setHeadBlockId(okBlockId);
+      builder.setGenesisBlockId(invalidBlockId);
+      HelloMessage helloMessage2 = new HelloMessage(builder.build().toByteArray());
+      Assert.assertFalse(helloMessage2.valid());
+
+      builder.setGenesisBlockId(okBlockId);
+      builder.setSolidBlockId(invalidBlockId);
+      HelloMessage helloMessage3 = new HelloMessage(builder.build().toByteArray());
+      Assert.assertFalse(helloMessage3.valid());
     } catch (Exception e) {
       Assert.fail();
     }
@@ -259,6 +273,36 @@ public class HandShakeServiceTest {
     try {
       HelloMessage helloMessage = new HelloMessage(builder.build().toByteArray());
       method.invoke(p2pEventHandler, peer, helloMessage.getSendBytes());
+    } catch (Exception e) {
+      Assert.fail();
+    }
+  }
+
+  @Test
+  public void testProcessHelloMessage() {
+    InetSocketAddress a1 = new InetSocketAddress("127.0.0.1", 10001);
+    Channel c1 = mock(Channel.class);
+    Mockito.when(c1.getInetSocketAddress()).thenReturn(a1);
+    Mockito.when(c1.getInetAddress()).thenReturn(a1.getAddress());
+    PeerManager.add(ctx, c1);
+    PeerConnection p = PeerManager.getPeers().get(0);
+
+    try {
+      Node node = new Node(NetUtil.getNodeId(), a1.getAddress().getHostAddress(),
+          null, a1.getPort());
+      Protocol.HelloMessage.Builder builder =
+          getHelloMessageBuilder(node, System.currentTimeMillis(),
+              ChainBaseManager.getChainBaseManager());
+      BlockCapsule.BlockId hid = ChainBaseManager.getChainBaseManager().getHeadBlockId();
+      Protocol.HelloMessage.BlockId invalidBlockId = Protocol.HelloMessage.BlockId.newBuilder()
+          .setHash(ByteString.copyFrom(new byte[31]))
+          .setNumber(hid.getNum())
+          .build();
+      builder.setHeadBlockId(invalidBlockId);
+
+      HelloMessage helloMessage = new HelloMessage(builder.build().toByteArray());
+      HandshakeService handshakeService = new HandshakeService();
+      handshakeService.processHelloMessage(p, helloMessage);
     } catch (Exception e) {
       Assert.fail();
     }
