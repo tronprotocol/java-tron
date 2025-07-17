@@ -205,7 +205,15 @@ public class CommonParameter {
   //If you are running a solidity node for java tron, this flag is set to true
   @Getter
   @Setter
+  @Parameter(names = {"--solidity"}, description = "running a solidity node for java tron")
   public boolean solidityNode = false;
+
+  //If you are running KeystoreFactory, this flag is set to true
+  @Getter
+  @Setter
+  @Parameter(names = {"--keystore"}, description = "running KeystoreFactory")
+  public boolean keystore = false;
+
   @Getter
   @Setter
   public int rpcPort;

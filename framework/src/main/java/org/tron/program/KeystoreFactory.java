@@ -1,6 +1,5 @@
 package org.tron.program;
 
-import com.beust.jcommander.JCommander;
 import java.io.File;
 import java.io.IOException;
 import java.util.Scanner;
@@ -11,8 +10,6 @@ import org.tron.common.crypto.SignUtils;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
-import org.tron.core.Constant;
-import org.tron.core.config.args.Args;
 import org.tron.core.exception.CipherException;
 import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
@@ -22,15 +19,8 @@ public class KeystoreFactory {
 
   private static final String FilePath = "Wallet";
 
-  public static void main(String[] args) {
-    Args.setParam(args, Constant.TESTNET_CONF);
+  public static void start() {
     KeystoreFactory cli = new KeystoreFactory();
-
-    JCommander.newBuilder()
-        .addObject(cli)
-        .build()
-        .parse(args);
-
     cli.run();
   }
 
