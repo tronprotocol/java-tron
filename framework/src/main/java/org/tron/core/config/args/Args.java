@@ -4,6 +4,7 @@ import static java.lang.System.exit;
 import static org.tron.common.math.Maths.max;
 import static org.tron.common.math.Maths.min;
 import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
+import static org.tron.core.Constant.DEFAULT_PROPOSAL_VOTING_WINDOW;
 import static org.tron.core.Constant.DYNAMIC_ENERGY_INCREASE_FACTOR_RANGE;
 import static org.tron.core.Constant.DYNAMIC_ENERGY_MAX_FACTOR_RANGE;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCE_TIMEOUT_PERCENT;
@@ -247,6 +248,7 @@ public class Args extends CommonParameter {
     PARAMETER.consensusLogicOptimization = 0;
     PARAMETER.allowTvmCancun = 0;
     PARAMETER.allowTvmBlob = 0;
+    PARAMETER.proposalVotingWindow = DEFAULT_PROPOSAL_VOTING_WINDOW;
   }
 
   /**
@@ -1296,6 +1298,10 @@ public class Args extends CommonParameter {
     PARAMETER.allowTvmBlob =
         config.hasPath(Constant.COMMITTEE_ALLOW_TVM_BLOB) ? config
             .getInt(Constant.COMMITTEE_ALLOW_TVM_BLOB) : 0;
+
+    PARAMETER.proposalVotingWindow =
+        config.hasPath(Constant.COMMITTEE_PROPOSAL_VOTING_WINDOW) ? config
+            .getInt(Constant.COMMITTEE_PROPOSAL_VOTING_WINDOW) : DEFAULT_PROPOSAL_VOTING_WINDOW;
 
     logConfig();
   }

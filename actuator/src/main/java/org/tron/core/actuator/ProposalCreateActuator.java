@@ -3,13 +3,13 @@ package org.tron.core.actuator;
 import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
 import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 import static org.tron.core.actuator.ActuatorConstant.WITNESS_EXCEPTION_STR;
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Map;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.ProposalCapsule;
@@ -53,7 +53,8 @@ public class ProposalCreateActuator extends AbstractActuator {
 
       long currentMaintenanceTime =
           chainBaseManager.getDynamicPropertiesStore().getNextMaintenanceTime();
-      long now3 = now + CommonParameter.getInstance().getProposalExpireTime();
+      long now3 = now + chainBaseManager.getDynamicPropertiesStore().getProposalVotingWindow()
+          * BLOCK_PRODUCED_INTERVAL;
       long round = (now3 - currentMaintenanceTime) / maintenanceTimeInterval;
       long expirationTime =
           currentMaintenanceTime + (round + 1) * maintenanceTimeInterval;

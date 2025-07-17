@@ -4,6 +4,8 @@ import static org.tron.core.Constant.CREATE_ACCOUNT_TRANSACTION_MAX_BYTE_SIZE;
 import static org.tron.core.Constant.CREATE_ACCOUNT_TRANSACTION_MIN_BYTE_SIZE;
 import static org.tron.core.Constant.DYNAMIC_ENERGY_INCREASE_FACTOR_RANGE;
 import static org.tron.core.Constant.DYNAMIC_ENERGY_MAX_FACTOR_RANGE;
+import static org.tron.core.Constant.MAX_PROPOSAL_VOTING_WINDOW;
+import static org.tron.core.Constant.MIN_PROPOSAL_VOTING_WINDOW;
 import static org.tron.core.config.Parameter.ChainConstant.ONE_YEAR_BLOCK_NUMBERS;
 
 import org.tron.common.utils.ForkController;
@@ -839,6 +841,20 @@ public class ProposalUtil {
         }
         break;
       }
+      case PROPOSAL_VOTING_WINDOW: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_8_1)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [PROPOSAL_VOTING_WINDOW]");
+        }
+        if (value <= MIN_PROPOSAL_VOTING_WINDOW
+            || value > MAX_PROPOSAL_VOTING_WINDOW) {
+          throw new ContractValidateException(
+              "This value[PROPOSAL_VOTING_WINDOW] is only allowed to be greater than "
+                  + MIN_PROPOSAL_VOTING_WINDOW + " and less than or equal to "
+                  + MAX_PROPOSAL_VOTING_WINDOW + "!");
+        }
+        break;
+      }
       default:
         break;
     }
@@ -921,7 +937,8 @@ public class ProposalUtil {
     ALLOW_TVM_CANCUN(83), // 0, 1
     ALLOW_STRICT_MATH(87), // 0, 1
     CONSENSUS_LOGIC_OPTIMIZATION(88), // 0, 1
-    ALLOW_TVM_BLOB(89); // 0, 1
+    ALLOW_TVM_BLOB(89), // 0, 1
+    PROPOSAL_VOTING_WINDOW(92); // (0, 10512000]
 
     private long code;
 
