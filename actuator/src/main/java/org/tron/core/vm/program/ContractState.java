@@ -122,6 +122,16 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public void putNewContract(byte[] address) {
+    repository.putNewContract(address);
+  }
+
+  @Override
+  public boolean isNewContract(byte[] address) {
+    return repository.isNewContract(address);
+  }
+
+  @Override
   public void updateAccount(byte[] address, AccountCapsule accountCapsule) {
     repository.updateAccount(address, accountCapsule);
   }

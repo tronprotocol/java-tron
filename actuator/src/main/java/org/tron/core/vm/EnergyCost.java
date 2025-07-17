@@ -55,6 +55,7 @@ public class EnergyCost {
   private static final long EXT_CODE_SIZE = 20;
   private static final long EXT_CODE_HASH = 400;
   private static final long SUICIDE = 0;
+  private static final long SUICIDE_V2 = 5000;
   private static final long STOP = 0;
   private static final long CREATE_DATA = 200;
   private static final long TLOAD = 100;
@@ -287,6 +288,14 @@ public class EnergyCost {
       return getSuicideCost(program) + NEW_ACCT_CALL;
     }
     return getSuicideCost(program);
+  }
+
+  public static long getSuicideCost3(Program program) {
+    DataWord inheritorAddress = program.getStack().peek();
+    if (isDeadAccount(program, inheritorAddress)) {
+      return SUICIDE_V2 + NEW_ACCT_CALL;
+    }
+    return SUICIDE_V2;
   }
 
   public static long getBalanceCost(Program ignored) {
