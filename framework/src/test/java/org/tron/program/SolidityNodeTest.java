@@ -22,8 +22,7 @@ public class SolidityNodeTest extends BaseTest {
   SolidityNodeHttpApiService solidityNodeHttpApiService;
 
   static {
-    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
-    Args.getInstance().setSolidityNode(true);
+    Args.setParam(new String[]{"-d", dbPath(), "--solidity"}, Constant.TEST_CONF);
   }
 
   @Test

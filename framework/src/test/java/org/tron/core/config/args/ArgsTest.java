@@ -57,7 +57,7 @@ public class ArgsTest {
 
   @Test
   public void get() {
-    Args.setParam(new String[] {"-c", Constant.TEST_CONF, "--solidity"}, Constant.TESTNET_CONF);
+    Args.setParam(new String[] {"-c", Constant.TEST_CONF, "--keystore"}, Constant.TESTNET_CONF);
 
     CommonParameter parameter = Args.getInstance();
 
@@ -128,7 +128,7 @@ public class ArgsTest {
         ByteArray.toHexString(Args.getLocalWitnesses()
             .getWitnessAccountAddress(CommonParameter.getInstance().isECKeyCryptoEngine())));
 
-    Assert.assertTrue(parameter.isSolidityNode());
+    Assert.assertTrue(parameter.isKeystore());
   }
 
   @Test

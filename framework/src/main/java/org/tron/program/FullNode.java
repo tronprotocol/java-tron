@@ -30,6 +30,10 @@ public class FullNode {
       SolidityNode.run();
       return;
     }
+    if (parameter.isKeystore()) {
+      KeystoreFactory.start();
+      return;
+    }
     logger.info("Full node running.");
     if (Args.getInstance().isDebug()) {
       logger.info("in debug mode, it won't check energy time");
