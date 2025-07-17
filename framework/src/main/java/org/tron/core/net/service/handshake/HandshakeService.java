@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.ChainBaseManager;
+import org.tron.core.ChainBaseManager.NodeType;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.handshake.HelloMessage;
@@ -96,12 +97,17 @@ public class HandshakeService {
     }
 
     if (chainBaseManager.getSolidBlockId().getNum() >= msg.getSolidBlockId().getNum()
-            && !chainBaseManager.containBlockInMainChain(msg.getSolidBlockId())) {
-      logger.info("Peer {} different solid block, peer->{}, me->{}",
-              peer.getInetSocketAddress(),
-              msg.getSolidBlockId().getString(),
-              chainBaseManager.getSolidBlockId().getString());
-      peer.disconnect(ReasonCode.FORKED);
+        && !chainBaseManager.containBlockInMainChain(msg.getSolidBlockId())) {
+      if (chainBaseManager.getLowestBlockNum() <= msg.getSolidBlockId().getNum()) {
+        logger.info("Peer {} different solid block, fork with me, peer->{}, me->{}",
+            peer.getInetSocketAddress(),
+            msg.getSolidBlockId().getString(),
+            chainBaseManager.getSolidBlockId().getString());
+        peer.disconnect(ReasonCode.FORKED);
+      } else {
+        logger.info("Peer {} solid block is below than my lowest", peer.getInetSocketAddress());
+        peer.disconnect(ReasonCode.LIGHT_NODE_SYNC_FAIL);
+      }
       return;
     }
 

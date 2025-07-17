@@ -58,7 +58,7 @@ public class GetRewardServletTest extends BaseTest {
   @Before
   public void init() {
     manager.getDynamicPropertiesStore().saveChangeDelegation(1);
-    byte[] sr = decodeFromBase58Check("27VZHn9PFZwNh7o2EporxmLkpe157iWZVkh");
+    byte[] sr = decodeFromBase58Check("27bi7CD8d94AgXY3XFS9A9vx78Si5MqrECz");
     delegationStore.setBrokerage(0, sr, 10);
     delegationStore.setWitnessVote(0, sr, 100000000);
   }
@@ -66,7 +66,7 @@ public class GetRewardServletTest extends BaseTest {
   @Test
   public void getRewardValueByJsonTest() {
     int expect = 138181;
-    String jsonParam = "{\"address\": \"27VZHn9PFZwNh7o2EporxmLkpe157iWZVkh\"}";
+    String jsonParam = "{\"address\": \"27bi7CD8d94AgXY3XFS9A9vx78Si5MqrECz\"}";
     MockHttpServletRequest request = createRequest("application/json");
     MockHttpServletResponse response = new MockHttpServletResponse();
     request.setContent(jsonParam.getBytes());
@@ -84,7 +84,7 @@ public class GetRewardServletTest extends BaseTest {
   @Test
   public void getRewardByJsonUTF8Test() {
     int expect = 138181;
-    String jsonParam = "{\"address\": \"27VZHn9PFZwNh7o2EporxmLkpe157iWZVkh\"}";
+    String jsonParam = "{\"address\": \"27bi7CD8d94AgXY3XFS9A9vx78Si5MqrECz\"}";
     MockHttpServletRequest request = createRequest("application/json; charset=utf-8");
     MockHttpServletResponse response = new MockHttpServletResponse();
     request.setContent(jsonParam.getBytes());
@@ -105,7 +105,7 @@ public class GetRewardServletTest extends BaseTest {
     MockHttpServletRequest request = createRequest("application/x-www-form-urlencoded");
     MockHttpServletResponse response = new MockHttpServletResponse();
     mortgageService.payStandbyWitness();
-    request.addParameter("address", "27VZHn9PFZwNh7o2EporxmLkpe157iWZVkh");
+    request.addParameter("address", "27bi7CD8d94AgXY3XFS9A9vx78Si5MqrECz");
     getRewardServlet.doPost(request, response);
     try {
       String contentAsString = response.getContentAsString();
