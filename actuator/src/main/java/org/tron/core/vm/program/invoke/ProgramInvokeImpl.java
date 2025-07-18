@@ -314,7 +314,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
 
   @Override
   public int hashCode() {
-    return new Integer(Boolean.valueOf(byTestingSuite).hashCode()
+    return Boolean.valueOf(byTestingSuite).hashCode()
         + Boolean.valueOf(byTransaction).hashCode()
         + address.hashCode()
         + balance.hashCode()
@@ -326,8 +326,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
         + origin.hashCode()
         + prevHash.hashCode()
         + deposit.hashCode()
-        + timestamp.hashCode()
-    ).hashCode();
+        + timestamp.hashCode();
   }
 
   @Override

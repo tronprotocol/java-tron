@@ -20,6 +20,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.tron.plugins.utils.DBUtils;
 
 @Slf4j
 public class ArchiveManifestTest {
@@ -31,7 +32,6 @@ public class ArchiveManifestTest {
   private static final String ROCKSDB = "ROCKSDB";
   private static final String ACCOUNT = "account";
   private static final String ACCOUNT_ROCKSDB = "account-rocksdb";
-  private static final String MARKET = "market_pair_price_to_order";
   private static final String ENGINE_FILE = "engine.properties";
 
 
@@ -42,7 +42,7 @@ public class ArchiveManifestTest {
     factory.open(file,ArchiveManifest.newDefaultLevelDbOptions()).close();
     writeProperty(file.toString() + File.separator + ENGINE_FILE,ENGINE,LEVELDB);
 
-    file = new File(OUTPUT_DIRECTORY,MARKET);
+    file = new File(OUTPUT_DIRECTORY, DBUtils.MARKET_PAIR_PRICE_TO_ORDER);
     factory.open(file,ArchiveManifest.newDefaultLevelDbOptions()).close();
     writeProperty(file.toString() + File.separator + ENGINE_FILE,ENGINE,LEVELDB);
 

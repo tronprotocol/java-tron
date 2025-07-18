@@ -35,6 +35,7 @@ import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.Options;
 import org.iq80.leveldb.impl.Filename;
+import org.tron.plugins.utils.DBUtils;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
@@ -183,7 +184,7 @@ public class ArchiveManifest implements Callable<Boolean> {
       return false;
     }
     logger.info("CurrentName {}/{},size {} kb.", dir, currentName, current.length() / 1024);
-    if ("market_pair_price_to_order".equalsIgnoreCase(this.name)) {
+    if (DBUtils.MARKET_PAIR_PRICE_TO_ORDER.equalsIgnoreCase(this.name)) {
       logger.info("Db {} ignored.", this.name);
       return false;
     }

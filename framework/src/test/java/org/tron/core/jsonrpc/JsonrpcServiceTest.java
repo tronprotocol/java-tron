@@ -434,7 +434,8 @@ public class JsonrpcServiceTest extends BaseTest {
       getByJsonBlockId("0xxabc", wallet);
       Assert.fail("Expected to be thrown");
     } catch (Exception e) {
-      Assert.assertEquals("For input string: \"xabc\"", e.getMessage());
+      // https://bugs.openjdk.org/browse/JDK-8176425, from JDK 12, the exception message is changed
+      Assert.assertTrue(e.getMessage().startsWith("For input string: \"xabc\""));
     }
   }
 
@@ -966,6 +967,17 @@ public class JsonrpcServiceTest extends BaseTest {
       Assert.fail("Expected to be thrown");
     } catch (Exception e) {
       Assert.assertEquals("invalid block range params", e.getMessage());
+    }
+  }
+
+  @Test
+  public void testWeb3ClientVersion() {
+    try {
+      String[] versions = tronJsonRpc.web3ClientVersion().split("/");
+      String javaVersion = versions[versions.length - 1];
+      Assert.assertTrue("Java1.8".equals(javaVersion) || "Java17".equals(javaVersion));
+    } catch (Exception e) {
+      Assert.fail();
     }
   }
 }

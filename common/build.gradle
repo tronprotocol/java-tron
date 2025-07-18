@@ -6,28 +6,6 @@ version '1.0.0'
 
 sourceCompatibility = 1.8
 
-// Dependency versions
-// ---------------------------------------
-def leveldbVersion = "1.8"
-// --------------------------------------
-
-static def isWindows() {
-    return org.gradle.internal.os.OperatingSystem.current().isWindows()
-}
-
-if (isWindows()) {
-    ext {
-        leveldbGroup = "org.ethereum"
-        leveldbName = "leveldbjni-all"
-        leveldbVersion = "1.18.3"
-    }
-} else {
-    ext {
-        leveldbGroup = "org.fusesource.leveldbjni"
-        leveldbName = "leveldbjni-all"
-        leveldbVersion = "1.8"
-    }
-}
 
 dependencies {
     api group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.13.4.2' // https://github.com/FasterXML/jackson-databind/issues/3627
@@ -36,14 +14,14 @@ dependencies {
     api group: 'commons-codec', name: 'commons-codec', version: '1.11'
     api group: 'com.beust', name: 'jcommander', version: '1.78'
     api group: 'com.typesafe', name: 'config', version: '1.3.2'
-    api group: leveldbGroup, name: leveldbName, version: leveldbVersion
-    api group: 'org.rocksdb', name: 'rocksdbjni', version: '5.15.10'
     api group: 'io.prometheus', name: 'simpleclient', version: '0.15.0'
     api group: 'io.prometheus', name: 'simpleclient_httpserver', version: '0.15.0'
     api group: 'io.prometheus', name: 'simpleclient_hotspot', version: '0.15.0'
-    api 'org.aspectj:aspectjrt:1.8.13'
-    api 'org.aspectj:aspectjweaver:1.8.13'
-    api 'org.aspectj:aspectjtools:1.8.13'
+    // https://openjdk.org/jeps/396, JEP 396: Strongly Encapsulate JDK Internals by Default
+    // https://eclipse.dev/aspectj/doc/latest/release/JavaVersionCompatibility.html
+    api 'org.aspectj:aspectjrt:1.9.8'
+    api 'org.aspectj:aspectjweaver:1.9.8'
+    api 'org.aspectj:aspectjtools:1.9.8'
     api group: 'io.github.tronprotocol', name: 'libp2p', version: '2.2.5',{
         exclude group: 'io.grpc', module: 'grpc-context'
         exclude group: 'io.grpc', module: 'grpc-core'
@@ -62,6 +40,7 @@ dependencies {
         exclude group: 'org.bouncycastle', module: 'bcutil-jdk18on'
     }
     api project(":protocol")
+    api project(":platform")
 }
 
 jacocoTestReport {

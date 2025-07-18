@@ -16,8 +16,8 @@ import org.rocksdb.ComparatorOptions;
 import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
-import org.tron.plugins.comparator.MarketOrderPriceComparatorForLevelDB;
-import org.tron.plugins.comparator.MarketOrderPriceComparatorForRockDB;
+import org.tron.common.utils.MarketOrderPriceComparatorForLevelDB;
+import org.tron.common.utils.MarketOrderPriceComparatorForRocksDB;
 import org.tron.protos.Protocol;
 
 public class DBUtils {
@@ -115,7 +115,7 @@ public class DBUtils {
   public static RocksDB newRocksDb(Path db) throws RocksDBException {
     try (Options options = newDefaultRocksDbOptions(false)) {
       if (MARKET_PAIR_PRICE_TO_ORDER.equalsIgnoreCase(db.getFileName().toString())) {
-        options.setComparator(new MarketOrderPriceComparatorForRockDB(new ComparatorOptions()));
+        options.setComparator(new MarketOrderPriceComparatorForRocksDB(new ComparatorOptions()));
       }
       return  RocksDB.open(options, db.toString());
     }
@@ -124,7 +124,7 @@ public class DBUtils {
   public static RocksDB newRocksDbForBulkLoad(Path db) throws RocksDBException {
     try (Options options = newDefaultRocksDbOptions(true)) {
       if (MARKET_PAIR_PRICE_TO_ORDER.equalsIgnoreCase(db.getFileName().toString())) {
-        options.setComparator(new MarketOrderPriceComparatorForRockDB(new ComparatorOptions()));
+        options.setComparator(new MarketOrderPriceComparatorForRocksDB(new ComparatorOptions()));
       }
       return  RocksDB.open(options, db.toString());
     }
@@ -134,7 +134,7 @@ public class DBUtils {
   public static RocksDB newRocksDbReadOnly(Path db) throws RocksDBException {
     try (Options options = newDefaultRocksDbOptions(false)) {
       if (MARKET_PAIR_PRICE_TO_ORDER.equalsIgnoreCase(db.getFileName().toString())) {
-        options.setComparator(new MarketOrderPriceComparatorForRockDB(new ComparatorOptions()));
+        options.setComparator(new MarketOrderPriceComparatorForRocksDB(new ComparatorOptions()));
       }
       return  RocksDB.openReadOnly(options, db.toString());
     }

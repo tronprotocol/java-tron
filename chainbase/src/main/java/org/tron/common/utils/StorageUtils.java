@@ -6,6 +6,7 @@ import java.io.File;
 import org.apache.commons.lang3.StringUtils;
 import org.iq80.leveldb.Options;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.core.Constant;
 
 
 public class StorageUtils {
@@ -52,9 +53,15 @@ public class StorageUtils {
   }
 
   public static Options getOptionsByDbName(String dbName) {
+    Options options;
     if (hasProperty(dbName)) {
-      return getProperty(dbName).getDbOptions();
+      options = getProperty(dbName).getDbOptions();
+    } else {
+      options = CommonParameter.getInstance().getStorage().newDefaultDbOptions(dbName);
     }
-    return CommonParameter.getInstance().getStorage().newDefaultDbOptions(dbName);
+    if (Constant.MARKET_PAIR_PRICE_TO_ORDER.equals(dbName)) {
+      options.comparator(new MarketOrderPriceComparatorForLevelDB());
+    }
+    return options;
   }
 }

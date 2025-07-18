@@ -12,6 +12,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.tron.plugins.utils.DBUtils;
 import org.tron.plugins.utils.FileUtils;
 import picocli.CommandLine;
 
@@ -25,7 +26,6 @@ public class DbMoveTest {
   private static final String LEVELDB = "LEVELDB";
   private static final String ACCOUNT = "account";
   private static final String TRANS = "trans";
-  private static final String MARKET = "market_pair_price_to_order";
   private static final String ENGINE_FILE = "engine.properties";
 
 
@@ -35,7 +35,7 @@ public class DbMoveTest {
     factory.open(file, ArchiveManifest.newDefaultLevelDbOptions()).close();
     FileUtils.writeProperty(file + File.separator + ENGINE_FILE, ENGINE, LEVELDB);
 
-    file = new File(OUTPUT_DIRECTORY_DATABASE, MARKET);
+    file = new File(OUTPUT_DIRECTORY_DATABASE, DBUtils.MARKET_PAIR_PRICE_TO_ORDER);
     factory.open(file, ArchiveManifest.newDefaultLevelDbOptions()).close();
     FileUtils.writeProperty(file + File.separator + ENGINE_FILE, ENGINE, LEVELDB);
 

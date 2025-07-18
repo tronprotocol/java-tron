@@ -34,8 +34,9 @@ import org.rocksdb.RocksIterator;
 import org.rocksdb.Status;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.MarketOrderPriceComparatorForLevelDB;
-import org.tron.common.utils.MarketOrderPriceComparatorForRockDB;
+import org.tron.common.utils.MarketOrderPriceComparatorForRocksDB;
 import org.tron.common.utils.PropUtil;
+import org.tron.core.Constant;
 
 @Slf4j
 public class DBConvert implements Callable<Boolean> {
@@ -175,7 +176,7 @@ public class DBConvert implements Callable<Boolean> {
     DB database;
     File file = db.toFile();
     org.iq80.leveldb.Options dbOptions = newDefaultLevelDbOptions();
-    if ("market_pair_price_to_order".equalsIgnoreCase(this.dbName)) {
+    if (Constant.MARKET_PAIR_PRICE_TO_ORDER.equalsIgnoreCase(this.dbName)) {
       dbOptions.comparator(new MarketOrderPriceComparatorForLevelDB());
     }
     database = factory.open(file, dbOptions);
@@ -194,8 +195,8 @@ public class DBConvert implements Callable<Boolean> {
     options.setMaxBackgroundCompactions(max(1, Runtime.getRuntime().availableProcessors(), true));
     options.setLevel0FileNumCompactionTrigger(4);
     options.setLevelCompactionDynamicLevelBytes(true);
-    if ("market_pair_price_to_order".equalsIgnoreCase(this.dbName)) {
-      options.setComparator(new MarketOrderPriceComparatorForRockDB(new ComparatorOptions()));
+    if (Constant.MARKET_PAIR_PRICE_TO_ORDER.equalsIgnoreCase(this.dbName)) {
+      options.setComparator(new MarketOrderPriceComparatorForRocksDB(new ComparatorOptions()));
     }
     final BlockBasedTableConfig tableCfg;
     options.setTableFormatConfig(tableCfg = new BlockBasedTableConfig());
