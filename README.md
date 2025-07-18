@@ -11,12 +11,8 @@
 </h4>
 
 <p align="center">
-  <a href="https://gitter.im/tronprotocol/allcoredev">
-    <img src="https://camo.githubusercontent.com/da2edb525cde1455a622c58c0effc3a90b9a181c/68747470733a2f2f6261646765732e6769747465722e696d2f4a6f696e253230436861742e737667">
-  </a>
-
-  <a href="https://travis-ci.org/tronprotocol/java-tron">
-    <img src="https://travis-ci.org/tronprotocol/java-tron.svg?branch=develop">
+  <a href="https://github.com/tronprotocol/java-tron/actions/workflows/codeql.yml">
+    <img src="https://github.com/tronprotocol/java-tron/actions/workflows/codeql.yml/badge.svg">
   </a>
 
   <a href="https://codecov.io/gh/tronprotocol/java-tron">
