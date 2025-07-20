@@ -17,6 +17,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.parameter.CommonParameter;
+import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.core.ChainBaseManager;
@@ -35,7 +37,9 @@ public class PbftApiTest extends BaseTest {
 
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{"-d", dbPath(), "-w"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
+    CommonParameter.getInstance().setPBFTHttpEnable(true);
+    CommonParameter.getInstance().setPBFTHttpPort(PublicMethod.chooseRandomPort());
   }
 
   @Test
@@ -58,11 +62,11 @@ public class PbftApiTest extends BaseTest {
 
     Assert.assertTrue(dynamicPropertiesStore.getLatestBlockHeaderNumber() >= 10);
     commonDataBase.saveLatestPbftBlockNum(6);
-    httpApiOnPBFTService.init(Args.getInstance());
     httpApiOnPBFTService.start();
     CloseableHttpResponse response;
     try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-      HttpGet httpGet = new HttpGet("http://127.0.0.1:8092/walletpbft/getnowblock");
+      HttpGet httpGet = new HttpGet("http://127.0.0.1:"
+          + CommonParameter.getInstance().getPBFTHttpPort() + "/walletpbft/getnowblock");
       response = httpClient.execute(httpGet);
       String responseString = EntityUtils.toString(response.getEntity());
       JSONObject jsonObject = JSON.parseObject(responseString);

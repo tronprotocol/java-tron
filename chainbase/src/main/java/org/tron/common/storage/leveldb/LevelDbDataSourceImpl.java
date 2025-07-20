@@ -59,6 +59,7 @@ import org.tron.core.db.common.DbSourceInter;
 import org.tron.core.db.common.iterator.StoreIterator;
 import org.tron.core.db2.common.Instance;
 import org.tron.core.db2.common.WrappedByteArray;
+import org.tron.core.exception.TronError;
 
 @Slf4j(topic = "DB")
 @NoArgsConstructor
@@ -157,7 +158,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
       } else {
         logger.error("Open Database {} failed", dataBaseName, e);
       }
-      System.exit(1);
+      throw new TronError(e, TronError.ErrCode.LEVELDB_INIT);
     }
   }
 

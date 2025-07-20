@@ -6,7 +6,6 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
@@ -48,13 +47,12 @@ public class CreateAccountActuator extends AbstractActuator {
       accountStore
           .put(accountCreateContract.getAccountAddress().toByteArray(), accountCapsule);
 
-      Commons
-          .adjustBalance(accountStore, accountCreateContract.getOwnerAddress().toByteArray(), -fee);
+      adjustBalance(accountStore, accountCreateContract.getOwnerAddress().toByteArray(), -fee);
       // Add to blackhole address
       if (dynamicStore.supportBlackHoleOptimization()) {
         dynamicStore.burnTrx(fee);
       } else {
-        Commons.adjustBalance(accountStore, accountStore.getBlackhole(), fee);
+        adjustBalance(accountStore, accountStore.getBlackhole(), fee);
       }
       ret.setStatus(fee, code.SUCESS);
     } catch (BalanceInsufficientException | InvalidProtocolBufferException e) {

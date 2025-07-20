@@ -4,21 +4,15 @@ import static org.mockito.Mockito.mock;
 
 import com.alibaba.fastjson.JSON;
 import com.google.protobuf.ByteString;
-import io.grpc.ManagedChannelBuilder;
 import java.net.InetSocketAddress;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.mockito.Mockito;
-import org.tron.api.GrpcAPI.EmptyMessage;
-import org.tron.api.WalletGrpc;
-import org.tron.api.WalletGrpc.WalletBlockingStub;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.entity.NodeInfo;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.common.utils.client.Configuration;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.net.P2pEventHandlerImpl;
-import org.tron.core.net.peer.PeerManager;
 import org.tron.p2p.connection.Channel;
 import org.tron.program.Version;
 
@@ -29,8 +23,6 @@ public class NodeInfoServiceTest {
   private NodeInfoService nodeInfoService;
   private WitnessProductBlockService witnessProductBlockService;
   private P2pEventHandlerImpl p2pEventHandler;
-  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
-      .get(0);
 
   public NodeInfoServiceTest(TronApplicationContext context) {
     nodeInfoService = context.getBean("nodeInfoService", NodeInfoService.class);
@@ -58,14 +50,6 @@ public class NodeInfoServiceTest {
     Assert.assertEquals(nodeInfo.getConfigNodeInfo().getCodeVersion(), Version.getVersion());
     Assert.assertEquals(nodeInfo.getCheatWitnessInfoMap().size(), 1);
     logger.info("{}", JSON.toJSONString(nodeInfo));
-  }
-
-  public void testGrpc() {
-    WalletBlockingStub walletStub = WalletGrpc
-        .newBlockingStub(ManagedChannelBuilder.forTarget(fullnode)
-            .usePlaintext()
-            .build());
-    logger.info("getNodeInfo: {}", walletStub.getNodeInfo(EmptyMessage.getDefaultInstance()));
   }
 
 }

@@ -17,7 +17,11 @@ package org.tron.core.config;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.tron.common.utils.PublicMethod.getRandomPrivateKey;
+import static org.tron.common.utils.client.utils.AbiUtil.generateOccupationConstantPrivateKey;
+import static org.tron.core.Constant.ADD_PRE_FIX_STRING_MAINNET;
 
 import com.typesafe.config.Config;
 import java.lang.reflect.Field;
@@ -46,13 +50,10 @@ public class ConfigurationTest {
 
   @Test
   public void testGetEcKey() {
-    ECKey key = ECKey.fromPrivate(
-        Hex.decode("1cd5a70741c6e583d2dd3c5f17231e608eb1e52437210d948c5085e141c2d830"));
-
-    //log.debug("address = {}", ByteArray.toHexString(key.getOwnerAddress()));
-
-    assertEquals(Wallet.getAddressPreFixString() + "125b6c87b3d67114b3873977888c34582f27bbb0",
-        ByteArray.toHexString(key.getAddress()));
+    ECKey key = ECKey.fromPrivate(Hex.decode(generateOccupationConstantPrivateKey()));
+    assertNotNull(key);
+    assertEquals("2e988a386a799f506693793c6a5af6b54dfaabfb",
+        ByteArray.toHexString(key.getAddress()).substring(2));
   }
 
   @Test(expected = IllegalArgumentException.class)

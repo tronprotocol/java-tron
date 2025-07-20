@@ -4,11 +4,13 @@ import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
 
 import com.google.protobuf.ByteString;
+import org.bouncycastle.util.encoders.Hex;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.logsfilter.capsule.TransactionLogTriggerCapsule;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.p2p.utils.ByteArray;
@@ -242,6 +244,46 @@ public class TransactionLogTriggerCapsuleTest {
     Assert.assertNotNull(triggerCapsule.getTransactionLogTrigger().getFromAddress());
   }
 
+  @Test
+  public void testConstructorWithCreateTransactionInfo() {
+    Protocol.TransactionInfo.Builder infoBuild = Protocol.TransactionInfo.newBuilder();
 
+    Protocol.ResourceReceipt.Builder resourceBuild = Protocol.ResourceReceipt.newBuilder();
+    resourceBuild.setEnergyFee(1);
+    resourceBuild.setEnergyUsageTotal(2);
+    resourceBuild.setEnergyUsage(3);
+    resourceBuild.setOriginEnergyUsage(4);
+    resourceBuild.setNetFee(5);
+    resourceBuild.setNetUsage(6);
+
+    infoBuild
+        .setContractAddress(ByteString.copyFrom(ByteArray.fromHexString(CONTRACT_ADDRESS)))
+        .addContractResult(ByteString.copyFrom(ByteArray.fromHexString("112233")))
+        .setReceipt(resourceBuild.build());
+
+    SmartContractOuterClass.CreateSmartContract.Builder builder2 =
+        SmartContractOuterClass.CreateSmartContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)));
+    TransactionCapsule tc = new TransactionCapsule(builder2.build(),
+        Protocol.Transaction.Contract.ContractType.CreateSmartContract);
+
+    BlockCapsule bc = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
+        System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString());
+
+
+    TransactionLogTriggerCapsule trigger =
+        new TransactionLogTriggerCapsule(tc, bc, infoBuild.build());
+
+    Assert.assertEquals(1, trigger.getTransactionLogTrigger().getEnergyFee());
+    Assert.assertEquals(2, trigger.getTransactionLogTrigger().getEnergyUsageTotal());
+    Assert.assertEquals(3, trigger.getTransactionLogTrigger().getEnergyUsage());
+    Assert.assertEquals(4, trigger.getTransactionLogTrigger().getOriginEnergyUsage());
+    Assert.assertEquals(5, trigger.getTransactionLogTrigger().getNetFee());
+    Assert.assertEquals(6, trigger.getTransactionLogTrigger().getNetUsage());
+
+    Assert.assertEquals(StringUtil.encode58Check(Hex.decode(CONTRACT_ADDRESS)),
+        trigger.getTransactionLogTrigger().getContractAddress());
+    Assert.assertEquals("112233", trigger.getTransactionLogTrigger().getContractResult());
+  }
 
 }

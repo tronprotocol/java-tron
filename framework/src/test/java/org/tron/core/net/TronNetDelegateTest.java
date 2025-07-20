@@ -17,7 +17,7 @@ public class TronNetDelegateTest {
 
   @Test
   public void test() throws Exception {
-    Args.setParam(new String[] {"-w"}, Constant.TEST_CONF);
+    Args.setParam(new String[] {}, Constant.TEST_CONF);
     CommonParameter parameter = Args.getInstance();
     Args.logConfig();
     parameter.setUnsolidifiedBlockCheck(true);

@@ -16,6 +16,7 @@ import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.MetricLabels;
 import org.tron.common.prometheus.Metrics;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.TronError;
 import org.tron.core.services.ratelimiter.GlobalRateLimiter;
 import org.tron.core.services.ratelimiter.RateLimiterContainer;
 import org.tron.core.services.ratelimiter.RuntimeData;
@@ -40,6 +41,7 @@ public abstract class RateLimiterServlet extends HttpServlet {
     RateLimiterInitialization.HttpRateLimiterItem item = Args.getInstance()
         .getRateLimiterInitialization().getHttpMap().get(getClass().getSimpleName());
     boolean success = false;
+    final String name = getClass().getSimpleName();
     if (item != null) {
       String cName = "";
       String params = "";
@@ -54,17 +56,15 @@ public abstract class RateLimiterServlet extends HttpServlet {
             || c == IPQPSRateLimiterAdapter.class) {
           constructor = c.getConstructor(String.class);
           obj = constructor.newInstance(params);
-          container.add(KEY_PREFIX_HTTP, getClass().getSimpleName(), (IRateLimiter) obj);
+          container.add(KEY_PREFIX_HTTP, name, (IRateLimiter) obj);
         } else {
           constructor = c.getConstructor();
           obj = constructor.newInstance(QpsStrategy.DEFAULT_QPS_PARAM);
-          container.add(KEY_PREFIX_HTTP, getClass().getSimpleName(), (IRateLimiter) obj);
+          container.add(KEY_PREFIX_HTTP, name, (IRateLimiter) obj);
         }
         success = true;
       } catch (Exception e) {
-        logger.warn("failure to add the rate limiter strategy. servlet = {}, "
-                + "strategy name = {}, params = \"{}\".",
-            getClass().getSimpleName(), cName, params);
+        this.throwTronError(cName, params, name, e);
       }
     }
     if (!success) {
@@ -72,12 +72,17 @@ public abstract class RateLimiterServlet extends HttpServlet {
       // then add a default Strategy.
       try {
         IRateLimiter rateLimiter = new DefaultBaseQqsAdapter(QpsStrategy.DEFAULT_QPS_PARAM);
-        container.add(KEY_PREFIX_HTTP, getClass().getSimpleName(), rateLimiter);
+        container.add(KEY_PREFIX_HTTP, name, rateLimiter);
       } catch (Exception e) {
-        logger.warn("failure to add the default rate limiter strategy. servlet = {}.",
-            getClass().getSimpleName());
+        this.throwTronError("DefaultBaseQqsAdapter", QpsStrategy.DEFAULT_QPS_PARAM, name, e);
       }
     }
+  }
+
+  private void throwTronError(String strategy, String params, String servlet,  Exception e) {
+    throw new TronError("failure to add the rate limiter strategy. servlet = " + servlet
+        + ", strategy name = " + strategy + ", params = \"" + params + "\".",
+            e, TronError.ErrCode.RATE_LIMITER_INIT);
   }
 
   @Override

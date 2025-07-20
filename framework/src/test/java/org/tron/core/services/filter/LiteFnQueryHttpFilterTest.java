@@ -7,7 +7,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Set;
-import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -19,28 +18,33 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.utils.PublicMethod;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
-import org.tron.core.services.http.FullNodeHttpApiService;
-import org.tron.core.services.interfaceOnPBFT.http.PBFT.HttpApiOnPBFTService;
-import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidityService;
 
 @Slf4j
 public class LiteFnQueryHttpFilterTest extends BaseTest {
 
   private final String ip = "127.0.0.1";
   private int fullHttpPort;
-  @Resource
-  private FullNodeHttpApiService httpApiService;
-  @Resource
-  private HttpApiOnSolidityService httpApiOnSolidityService;
-  @Resource
-  private HttpApiOnPBFTService httpApiOnPBFTService;
   private final CloseableHttpClient httpClient = HttpClients.createDefault();
 
   static {
     Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
     Args.getInstance().setFullNodeAllowShieldedTransactionArgs(false);
+    Args.getInstance().setRpcEnable(false);
+    Args.getInstance().setRpcSolidityEnable(false);
+    Args.getInstance().setRpcPBFTEnable(false);
+    Args.getInstance().setFullNodeHttpEnable(true);
+    Args.getInstance().setFullNodeHttpPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setPBFTHttpEnable(true);
+    Args.getInstance().setPBFTHttpPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setSolidityNodeHttpEnable(true);
+    Args.getInstance().setSolidityHttpPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setJsonRpcHttpFullNodeEnable(false);
+    Args.getInstance().setJsonRpcHttpSolidityNodeEnable(false);
+    Args.getInstance().setJsonRpcHttpPBFTNodeEnable(false);
+    Args.getInstance().setP2pDisable(true);
   }
 
   /**
@@ -48,9 +52,6 @@ public class LiteFnQueryHttpFilterTest extends BaseTest {
    */
   @Before
   public void init() {
-    appT.addService(httpApiService);
-    appT.addService(httpApiOnSolidityService);
-    appT.addService(httpApiOnPBFTService);
     appT.startup();
   }
 

@@ -4,6 +4,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
+import static org.tron.common.math.Maths.random;
+import static org.tron.common.math.Maths.round;
 import static org.tron.common.zksnark.JLibrustzcash.librustzcashCheckDiversifier;
 import static org.tron.common.zksnark.JLibrustzcash.librustzcashComputeCm;
 import static org.tron.common.zksnark.JLibrustzcash.librustzcashIvkToPkd;
@@ -78,7 +80,6 @@ public class LibrustzcashTest extends BaseTest {
             "--output-directory", dbPath(),
             "--storage-db-directory", dbDirectory,
             "--storage-index-directory", indexDirectory,
-            "-w",
             "--debug"
         },
         "config-test-mainnet.conf"
@@ -87,7 +88,7 @@ public class LibrustzcashTest extends BaseTest {
   }
 
   private static int randomInt(int minInt, int maxInt) {
-    return (int) Math.round(Math.random() * (maxInt - minInt) + minInt);
+    return (int) round(random(true) * (maxInt - minInt) + minInt, true);
   }
 
   public static void test(byte[] K, byte[] ovk, byte[] cv, byte[] cm, byte[] epk)

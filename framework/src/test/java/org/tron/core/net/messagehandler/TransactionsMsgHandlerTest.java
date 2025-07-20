@@ -102,6 +102,29 @@ public class TransactionsMsgHandlerTest extends BaseTest {
       transactionList1.add(trx1);
       transactionsMsgHandler.processMessage(peer, new TransactionsMessage(transactionList1));
       Assert.assertNull(advInvRequest.get(item1));
+
+      // test 0 contract
+      Protocol.Transaction trx2 = Protocol.Transaction.newBuilder().setRawData(
+          Protocol.Transaction.raw.newBuilder().setTimestamp(transactionTimestamp)
+              .setRefBlockNum(1).build())
+          .build();
+      List<Protocol.Transaction> transactionList2 = new ArrayList<>();
+      transactionList2.add(trx2);
+      try {
+        transactionsMsgHandler.processMessage(peer, new TransactionsMessage(transactionList2));
+      } catch (Exception ep) {
+        Assert.assertTrue(true);
+      }
+      Map<Item, Long> advInvRequest2 = new ConcurrentHashMap<>();
+      Item item2 = new Item(new TransactionMessage(trx2).getMessageId(),
+          Protocol.Inventory.InventoryType.TRX);
+      advInvRequest2.put(item2, 0L);
+      Mockito.when(peer.getAdvInvRequest()).thenReturn(advInvRequest2);
+      try {
+        transactionsMsgHandler.processMessage(peer, new TransactionsMessage(transactionList2));
+      } catch (Exception ep) {
+        Assert.assertTrue(true);
+      }
     } catch (Exception e) {
       Assert.fail();
     } finally {

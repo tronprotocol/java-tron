@@ -1,8 +1,8 @@
 package org.tron.core.service;
 
-import com.google.protobuf.ByteString;
+import static org.tron.common.math.Maths.min;
+
 import java.math.BigInteger;
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -51,7 +51,8 @@ public class MortgageService {
   }
 
   public void payStandbyWitness() {
-    List<WitnessCapsule> witnessStandbys = witnessStore.getWitnessStandby();
+    List<WitnessCapsule> witnessStandbys = witnessStore.getWitnessStandby(
+        dynamicPropertiesStore.allowWitnessSortOptimization());
     long voteSum = witnessStandbys.stream().mapToLong(WitnessCapsule::getVoteCount).sum();
     if (voteSum < 1) {
       return;
@@ -206,7 +207,8 @@ public class MortgageService {
         .map(vote -> new Pair<>(vote.getVoteAddress().toByteArray(), vote.getVoteCount()))
         .collect(Collectors.toList());
     if (beginCycle < newAlgorithmCycle) {
-      long oldEndCycle = Math.min(endCycle, newAlgorithmCycle);
+      long oldEndCycle = min(endCycle, newAlgorithmCycle,
+          dynamicPropertiesStore.disableJavaLangMath());
       reward = getOldReward(beginCycle, oldEndCycle, srAddresses);
       beginCycle = oldEndCycle;
     }
@@ -225,10 +227,6 @@ public class MortgageService {
       }
     }
     return reward;
-  }
-
-  public WitnessCapsule getWitnessByAddress(ByteString address) {
-    return witnessStore.get(address.toByteArray());
   }
 
   public void adjustAllowance(byte[] address, long amount) {
@@ -257,11 +255,6 @@ public class MortgageService {
     }
     account.setAllowance(allowance + amount);
     accountStore.put(account.createDbKey(), account);
-  }
-
-  private void sortWitness(List<ByteString> list) {
-    list.sort(Comparator.comparingLong((ByteString b) -> getWitnessByAddress(b).getVoteCount())
-        .reversed().thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
   }
 
   private long getOldReward(long begin, long end, List<Pair<byte[], Long>> votes) {

@@ -16,6 +16,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.tron.common.application.Application;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.utils.Commons;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.consensus.base.Param;
 import org.tron.core.ChainBaseManager;
@@ -23,6 +24,8 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.BalanceInsufficientException;
+import org.tron.core.store.AccountStore;
 import org.tron.protos.Protocol;
 
 @Slf4j
@@ -101,5 +104,11 @@ public abstract class BaseTest {
         .build();
 
     return block.toBuilder().setBlockHeader(blockHeader).build();
+  }
+
+  public void adjustBalance(AccountStore accountStore, byte[] accountAddress, long amount)
+      throws BalanceInsufficientException {
+    Commons.adjustBalance(accountStore, accountAddress, amount,
+        chainBaseManager.getDynamicPropertiesStore().disableJavaLangMath());
   }
 }

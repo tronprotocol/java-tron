@@ -55,7 +55,7 @@ public class PrometheusApiServiceTest extends BaseTest {
   private ChainBaseManager chainManager;
 
   static {
-    Args.setParam(new String[] {"-d", dbPath(), "-w"}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-d", dbPath()}, Constant.TEST_CONF);
     Args.getInstance().setNodeListenPort(10000 + port.incrementAndGet());
     initParameter(Args.getInstance());
     Metrics.init();

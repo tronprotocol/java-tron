@@ -59,7 +59,7 @@ public class ByteArray {
     if (b == null) {
       return 1;
     }
-    int minLen = Math.min(a.length, b.length);
+    int minLen = StrictMath.min(a.length, b.length);
     for (int i = 0; i < minLen; ++i) {
       int aVal = a[i] & 0xFF;
       int bVal = b[i] & 0xFF;
