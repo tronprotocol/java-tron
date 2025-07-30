@@ -44,4 +44,14 @@ public class StringUtil {
   public static ByteString hexString2ByteString(String hexString) {
     return ByteString.copyFrom(ByteArray.fromHexString(hexString));
   }
+
+  public static boolean isHexadecimal(String str) {
+    for (int i = 0; i < str.length(); i++) {
+      char c = str.charAt(i);
+      if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))) {
+        return false;
+      }
+    }
+    return true;
+  }
 }

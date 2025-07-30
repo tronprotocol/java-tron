@@ -85,11 +85,15 @@ public class LocalWitnesses {
       privateKey = privateKey.substring(2);
     }
 
-    if (StringUtils.isBlank(privateKey) || (StringUtils.isNotBlank(privateKey)
-        && privateKey.length() != ChainConstant.PRIVATE_KEY_LENGTH)) {
+    if (StringUtils.isBlank(privateKey)
+        || privateKey.length() != ChainConstant.PRIVATE_KEY_LENGTH) {
       throw new IllegalArgumentException(
-          String.format("private key must be %d-bits hex string, actual: %d",
-              ChainConstant.PRIVATE_KEY_LENGTH, privateKey.length()));
+          String.format("private key must be %d hex string, actual: %d",
+              ChainConstant.PRIVATE_KEY_LENGTH,
+              StringUtils.isBlank(privateKey) ? 0 : privateKey.length()));
+    }
+    if (!StringUtil.isHexadecimal(privateKey)) {
+      throw new IllegalArgumentException("private key must be hex string");
     }
   }
 

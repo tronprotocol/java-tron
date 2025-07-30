@@ -75,6 +75,84 @@ public class LocalWitnessTest {
   }
 
   @Test
+  public void testValidPrivateKey() {
+    LocalWitnesses localWitnesses = new LocalWitnesses();
+
+    try {
+      localWitnesses.addPrivateKeys(PRIVATE_KEY);
+      Assert.assertEquals(1, localWitnesses.getPrivateKeys().size());
+      Assert.assertEquals(PRIVATE_KEY, localWitnesses.getPrivateKeys().get(0));
+    } catch (Exception e) {
+      fail(e.getMessage());
+    }
+  }
+
+  @Test
+  public void testValidPrivateKeyWithPrefix() {
+    LocalWitnesses localWitnesses = new LocalWitnesses();
+
+    try {
+      localWitnesses.addPrivateKeys("0x" + PRIVATE_KEY);
+      Assert.assertEquals(1, localWitnesses.getPrivateKeys().size());
+      Assert.assertEquals("0x" + PRIVATE_KEY, localWitnesses.getPrivateKeys().get(0));
+    } catch (Exception e) {
+      fail(e.getMessage());
+    }
+  }
+
+  @Test
+  public void testInvalidPrivateKey() {
+    LocalWitnesses localWitnesses = new LocalWitnesses();
+
+    try {
+      localWitnesses.addPrivateKeys(null);
+      fail("should throw IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      Assert.assertTrue(e.getMessage().contains("private key must be"));
+    } catch (Exception e) {
+      fail("should IllegalArgumentException，actual exception: " + e.getClass().getSimpleName());
+    }
+
+    try {
+      localWitnesses.addPrivateKeys("");
+      fail("should throw IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      Assert.assertTrue(e.getMessage().contains("private key must be"));
+    } catch (Exception e) {
+      fail("should IllegalArgumentException，actual exception: " + e.getClass().getSimpleName());
+    }
+
+    try {
+      localWitnesses.addPrivateKeys("  ");
+      fail("should throw IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      Assert.assertTrue(e.getMessage().contains("private key must be"));
+    } catch (Exception e) {
+      fail("should IllegalArgumentException，actual exception: " + e.getClass().getSimpleName());
+    }
+
+    try {
+      String privateKey = "11111111111111111111111111111111111111111111111111111111111111  ";
+      localWitnesses.addPrivateKeys(privateKey);
+      fail("should throw IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      Assert.assertTrue(e.getMessage().contains("private key must be hex string"));
+    } catch (Exception e) {
+      fail("should IllegalArgumentException，actual exception: " + e.getClass().getSimpleName());
+    }
+
+    try {
+      String privateKey = "xy11111111111111111111111111111111111111111111111111111111111111";
+      localWitnesses.addPrivateKeys(privateKey);
+      fail("should throw IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      Assert.assertTrue(e.getMessage().contains("private key must be hex string"));
+    } catch (Exception e) {
+      fail("should IllegalArgumentException，actual exception: " + e.getClass().getSimpleName());
+    }
+  }
+
+  @Test
   public void getPrivateKey() {
     Assert.assertEquals(Lists
             .newArrayList(PRIVATE_KEY),
