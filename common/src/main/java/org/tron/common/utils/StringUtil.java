@@ -46,9 +46,16 @@ public class StringUtil {
   }
 
   public static boolean isHexadecimal(String str) {
+    if (str == null || str.length() == 0) {
+      return false;
+    }
+    if (str.length() % 2 != 0) {
+      return false;
+    }
+
     for (int i = 0; i < str.length(); i++) {
       char c = str.charAt(i);
-      if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))) {
+      if (Character.digit(c, 16) == -1) {
         return false;
       }
     }

@@ -26,6 +26,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
 
 public class LocalWitnessTest {
@@ -108,7 +109,7 @@ public class LocalWitnessTest {
       localWitnesses.addPrivateKeys(null);
       fail("should throw IllegalArgumentException");
     } catch (IllegalArgumentException e) {
-      Assert.assertTrue(e.getMessage().contains("private key must be"));
+      Assert.assertTrue(e.getMessage().contains("private key must be 64 hex string"));
     } catch (Exception e) {
       fail("should IllegalArgumentException，actual exception: " + e.getClass().getSimpleName());
     }
@@ -117,7 +118,7 @@ public class LocalWitnessTest {
       localWitnesses.addPrivateKeys("");
       fail("should throw IllegalArgumentException");
     } catch (IllegalArgumentException e) {
-      Assert.assertTrue(e.getMessage().contains("private key must be"));
+      Assert.assertTrue(e.getMessage().contains("private key must be 64 hex string"));
     } catch (Exception e) {
       fail("should IllegalArgumentException，actual exception: " + e.getClass().getSimpleName());
     }
@@ -126,7 +127,16 @@ public class LocalWitnessTest {
       localWitnesses.addPrivateKeys("  ");
       fail("should throw IllegalArgumentException");
     } catch (IllegalArgumentException e) {
-      Assert.assertTrue(e.getMessage().contains("private key must be"));
+      Assert.assertTrue(e.getMessage().contains("private key must be 64 hex string"));
+    } catch (Exception e) {
+      fail("should IllegalArgumentException，actual exception: " + e.getClass().getSimpleName());
+    }
+
+    try {
+      localWitnesses.addPrivateKeys("11111");
+      fail("should throw IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      Assert.assertTrue(e.getMessage().contains("private key must be 64 hex string"));
     } catch (Exception e) {
       fail("should IllegalArgumentException，actual exception: " + e.getClass().getSimpleName());
     }
@@ -150,6 +160,16 @@ public class LocalWitnessTest {
     } catch (Exception e) {
       fail("should IllegalArgumentException，actual exception: " + e.getClass().getSimpleName());
     }
+  }
+
+  @Test
+  public void testHexStringFormat() {
+    Assert.assertTrue(StringUtil.isHexadecimal("0123456789abcdefABCDEF"));
+    Assert.assertFalse(StringUtil.isHexadecimal(null));
+    Assert.assertFalse(StringUtil.isHexadecimal(""));
+    Assert.assertFalse(StringUtil.isHexadecimal("abc"));
+    Assert.assertFalse(StringUtil.isHexadecimal(" "));
+    Assert.assertFalse(StringUtil.isHexadecimal("123xyz"));
   }
 
   @Test
