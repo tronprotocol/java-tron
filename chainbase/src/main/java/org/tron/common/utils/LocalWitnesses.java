@@ -16,6 +16,7 @@
 package org.tron.common.utils;
 
 import com.google.common.collect.Lists;
+import java.util.Arrays;
 import java.util.List;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -45,21 +46,18 @@ public class LocalWitnesses {
     setPrivateKeys(privateKeys);
   }
 
-  public byte[] getWitnessAccountAddress(boolean isECKeyCryptoEngine) {
-    if (witnessAccountAddress == null && !CollectionUtils.isEmpty(privateKeys)) {
-      byte[] privateKey = ByteArray.fromHexString(getPrivateKey());
-      final SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey, isECKeyCryptoEngine);
-      this.witnessAccountAddress = cryptoEngine.getAddress();
+  public byte[] getWitnessAccountAddress() {
+    if (witnessAccountAddress == null) {
+      return null;
     }
-    return witnessAccountAddress;
+    return Arrays.copyOf(witnessAccountAddress, witnessAccountAddress.length);
   }
 
-  public void setWitnessAccountAddress(final byte[] localWitnessAccountAddress) {
-    this.witnessAccountAddress = localWitnessAccountAddress;
-  }
-
-  public void initWitnessAccountAddress(boolean isECKeyCryptoEngine) {
-    if (witnessAccountAddress == null && !CollectionUtils.isEmpty(privateKeys)) {
+  public void initWitnessAccountAddress(final byte[] witnessAddress,
+      boolean isECKeyCryptoEngine) {
+    if (witnessAddress != null) {
+      this.witnessAccountAddress = witnessAddress;
+    } else if (!CollectionUtils.isEmpty(privateKeys)) {
       byte[] privateKey = ByteArray.fromHexString(getPrivateKey());
       final SignInterface ecKey = SignUtils.fromPrivate(privateKey,
           isECKeyCryptoEngine);

@@ -405,33 +405,33 @@ public class Args extends CommonParameter {
 
     if (StringUtils.isNoneBlank(PARAMETER.privateKey)) {
       localWitnesses = (new LocalWitnesses(PARAMETER.privateKey));
+      byte[] witnessAddress = null;
       if (StringUtils.isNoneBlank(PARAMETER.witnessAddress)) {
-        byte[] bytes = Commons.decodeFromBase58Check(PARAMETER.witnessAddress);
-        if (bytes != null) {
-          localWitnesses.setWitnessAccountAddress(bytes);
+        witnessAddress = Commons.decodeFromBase58Check(PARAMETER.witnessAddress);
+        if (witnessAddress != null) {
           logger.debug("Got localWitnessAccountAddress from cmd");
         } else {
           PARAMETER.witnessAddress = "";
           logger.warn(IGNORE_WRONG_WITNESS_ADDRESS_FORMAT);
         }
       }
-      localWitnesses.initWitnessAccountAddress(PARAMETER.isECKeyCryptoEngine());
+      localWitnesses.initWitnessAccountAddress(witnessAddress, PARAMETER.isECKeyCryptoEngine());
       logger.debug("Got privateKey from cmd");
     } else if (config.hasPath(Constant.LOCAL_WITNESS)) {
       localWitnesses = new LocalWitnesses();
+      byte[] witnessAddress = getWitnessAddress(config);
       List<String> localwitness = config.getStringList(Constant.LOCAL_WITNESS);
-      if (localwitness.size() > 0) {
+      if (!localwitness.isEmpty()) {
         localWitnesses.setPrivateKeys(localwitness);
-        witnessAddressCheck(config);
-        localWitnesses.initWitnessAccountAddress(PARAMETER.isECKeyCryptoEngine());
         logger.debug("Got privateKey from config.conf");
       }
+      localWitnesses.initWitnessAccountAddress(witnessAddress, PARAMETER.isECKeyCryptoEngine());
     } else if (config.hasPath(Constant.LOCAL_WITNESS_KEYSTORE)) {
       localWitnesses = new LocalWitnesses();
       List<String> privateKeys = new ArrayList<String>();
       if (PARAMETER.isWitness()) {
         List<String> localwitness = config.getStringList(Constant.LOCAL_WITNESS_KEYSTORE);
-        if (localwitness.size() > 0) {
+        if (!localwitness.isEmpty()) {
           String fileName = System.getProperty("user.dir") + "/" + localwitness.get(0);
           String password;
           if (StringUtils.isEmpty(PARAMETER.password)) {
@@ -455,8 +455,8 @@ public class Args extends CommonParameter {
         }
       }
       localWitnesses.setPrivateKeys(privateKeys);
-      witnessAddressCheck(config);
-      localWitnesses.initWitnessAccountAddress(PARAMETER.isECKeyCryptoEngine());
+      byte[] witnessAddress = getWitnessAddress(config);
+      localWitnesses.initWitnessAccountAddress(witnessAddress, PARAMETER.isECKeyCryptoEngine());
       logger.debug("Got privateKey from keystore");
     }
 
@@ -1775,17 +1775,18 @@ public class Args extends CommonParameter {
     PARAMETER.fullNodeAllowShieldedTransactionArgs = fullNodeAllowShieldedTransaction;
   }
 
-  private static void witnessAddressCheck(Config config) {
+  private static byte[] getWitnessAddress(Config config) {
+    byte[] witnessAddress = null;
     if (config.hasPath(Constant.LOCAL_WITNESS_ACCOUNT_ADDRESS)) {
-      byte[] bytes = Commons
+      witnessAddress = Commons
           .decodeFromBase58Check(config.getString(Constant.LOCAL_WITNESS_ACCOUNT_ADDRESS));
-      if (bytes != null) {
-        localWitnesses.setWitnessAccountAddress(bytes);
+      if (witnessAddress != null) {
         logger.debug("Got localWitnessAccountAddress from config.conf");
       } else {
         logger.warn(IGNORE_WRONG_WITNESS_ADDRESS_FORMAT);
       }
     }
+    return witnessAddress;
   }
 
   /**

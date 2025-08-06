@@ -186,10 +186,14 @@ public class RelayServiceTest extends BaseTest {
       Method isActiveWitnessMethod = clazz.getDeclaredMethod("isActiveWitness");
       isActiveWitnessMethod.setAccessible(true);
 
-      Object result = isActiveWitnessMethod.invoke(service);
-      Assert.assertFalse(Boolean.TRUE.equals(result));
+      Boolean result = (Boolean) isActiveWitnessMethod.invoke(service);
+      Assert.assertNotEquals(Boolean.TRUE, result);
+
+      witnessAddressField.set(service, ByteString.copyFrom(new byte[21]));
+      result = (Boolean) isActiveWitnessMethod.invoke(service);
+      Assert.assertNotEquals(Boolean.TRUE, result);
     } catch (NoSuchMethodException | NoSuchFieldException
-        | IllegalAccessException | InvocationTargetException e) {
+             | IllegalAccessException | InvocationTargetException e) {
       Assert.fail("Reflection invocation failed: " + e.getMessage());
     }
   }
