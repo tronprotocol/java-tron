@@ -16,7 +16,6 @@
 package org.tron.common.utils;
 
 import com.google.common.collect.Lists;
-import java.util.Arrays;
 import java.util.List;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +32,7 @@ public class LocalWitnesses {
   @Getter
   private List<String> privateKeys = Lists.newArrayList();
 
+  @Getter
   private byte[] witnessAccountAddress;
 
   public LocalWitnesses() {
@@ -44,13 +44,6 @@ public class LocalWitnesses {
 
   public LocalWitnesses(List<String> privateKeys) {
     setPrivateKeys(privateKeys);
-  }
-
-  public byte[] getWitnessAccountAddress() {
-    if (witnessAccountAddress == null) {
-      return null;
-    }
-    return Arrays.copyOf(witnessAccountAddress, witnessAccountAddress.length);
   }
 
   public void initWitnessAccountAddress(final byte[] witnessAddress,
