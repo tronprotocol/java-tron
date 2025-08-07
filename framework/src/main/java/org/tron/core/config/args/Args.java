@@ -991,9 +991,18 @@ public class Args extends CommonParameter {
     PARAMETER.eventFilter =
         config.hasPath(Constant.EVENT_SUBSCRIBE_FILTER) ? getEventFilter(config) : null;
 
-    PARAMETER.allowShieldedTransactionApi =
-        !config.hasPath(Constant.ALLOW_SHIELDED_TRANSACTION_API)
-            || config.getBoolean(Constant.ALLOW_SHIELDED_TRANSACTION_API);
+    if (config.hasPath(Constant.ALLOW_SHIELDED_TRANSACTION_API)) {
+      PARAMETER.allowShieldedTransactionApi =
+          config.getBoolean(Constant.ALLOW_SHIELDED_TRANSACTION_API);
+    } else if (config.hasPath(Constant.NODE_FULLNODE_ALLOW_SHIELDED_TRANSACTION)) {
+      // for compatibility with previous configuration
+      PARAMETER.allowShieldedTransactionApi =
+          config.getBoolean(Constant.NODE_FULLNODE_ALLOW_SHIELDED_TRANSACTION);
+      logger.warn("Configuring [node.fullNodeAllowShieldedTransaction] will be deprecated. "
+          + "Please use [node.allowShieldedTransactionApi] instead.");
+    } else {
+      PARAMETER.allowShieldedTransactionApi = true;
+    }
 
     PARAMETER.zenTokenId = config.hasPath(Constant.NODE_ZEN_TOKENID)
         ? config.getString(Constant.NODE_ZEN_TOKENID) : "000000";

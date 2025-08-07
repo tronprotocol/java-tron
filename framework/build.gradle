@@ -134,6 +134,7 @@ test {
     }
     maxHeapSize = "1024m"
     doFirst {
+        // Restart the JVM after every 100 tests to avoid memory leaks and ensure test isolation
         forkEvery = 100
         jvmArgs "-XX:MetaspaceSize=128m","-XX:MaxMetaspaceSize=256m", "-XX:+UseG1GC"
     }
