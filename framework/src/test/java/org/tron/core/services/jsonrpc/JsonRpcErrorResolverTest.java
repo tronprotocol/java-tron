@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
-import org.tron.core.exception.TronException;
 import org.tron.core.exception.jsonrpc.JsonRpcException;
 import org.tron.core.exception.jsonrpc.JsonRpcInternalException;
 import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
