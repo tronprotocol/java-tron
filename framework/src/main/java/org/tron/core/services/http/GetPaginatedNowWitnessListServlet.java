@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI;
 import org.tron.core.Wallet;
+import org.tron.core.exception.MaintenanceClearingException;
 
 // Get the paged list of witnesses info with realtime vote counts
 @Component
@@ -40,7 +41,7 @@ public class GetPaginatedNowWitnessListServlet extends RateLimiterServlet {
   }
 
   private void fillResponse(long offset, long limit, boolean visible, HttpServletResponse response)
-      throws IOException {
+      throws IOException, MaintenanceClearingException {
     GrpcAPI.WitnessList reply = wallet.getPaginatedNowWitnessList(offset, limit);
     if (reply != null) {
       response.getWriter().println(JsonFormat.printToString(reply, visible));

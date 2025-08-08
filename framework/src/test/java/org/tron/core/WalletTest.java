@@ -74,6 +74,7 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.MaintenanceClearingException;
 import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.ProposalUtil.ProposalType;
@@ -858,30 +859,37 @@ public class WalletTest extends BaseTest {
 
   @Test
   public void testGetPaginatedNowWitnessList_CornerCase() {
-    GrpcAPI.WitnessList witnessList = wallet.getPaginatedNowWitnessList(-100, 0);
-    Assert.assertTrue("Should return an empty witness list when offset is negative",
-        witnessList == null);
+    try {
+      // To avoid throw MaintenanceClearingException
+      dbManager.getChainBaseManager().getDynamicPropertiesStore().saveStateFlag(0);
 
-    witnessList = wallet.getPaginatedNowWitnessList(100, 0);
-    Assert.assertTrue("Should return an empty witness list when limit is 0",
-        witnessList == null);
+      GrpcAPI.WitnessList witnessList = wallet.getPaginatedNowWitnessList(-100, 0);
+      Assert.assertTrue("Should return an empty witness list when offset is negative",
+          witnessList == null);
 
-    String fakeWitnessAddressPrefix = "fake_witness";
-    int fakeNumberOfWitnesses = 1000 + 10;
-    // Mock additional witnesses with vote counts greater than 1000
-    for (int i = 0; i < fakeNumberOfWitnesses; i++) {
-      saveWitnessWith(fakeWitnessAddressPrefix + i, 200);
-    }
+      witnessList = wallet.getPaginatedNowWitnessList(100, 0);
+      Assert.assertTrue("Should return an empty witness list when limit is 0",
+          witnessList == null);
 
-    witnessList = wallet.getPaginatedNowWitnessList(0, 1000000);
-    // Check the returned witness list should contain 1000 witnesses with descending vote count
-    Assert.assertTrue("Witness list should contain 1000 witnesses",
-        witnessList.getWitnessesCount() == 1000);
+      String fakeWitnessAddressPrefix = "fake_witness";
+      int fakeNumberOfWitnesses = 1000 + 10;
+      // Mock additional witnesses with vote counts greater than 1000
+      for (int i = 0; i < fakeNumberOfWitnesses; i++) {
+        saveWitnessWith(fakeWitnessAddressPrefix + i, 200);
+      }
 
-    // clean up, delete the fake witnesses
-    for (int i = 0; i < fakeNumberOfWitnesses; i++) {
-      chainBaseManager.getWitnessStore()
-          .delete(ByteString.copyFromUtf8(fakeWitnessAddressPrefix + i).toByteArray());
+      witnessList = wallet.getPaginatedNowWitnessList(0, 1000000);
+      // Check the returned witness list should contain 1000 witnesses with descending vote count
+      Assert.assertTrue("Witness list should contain 1000 witnesses",
+          witnessList.getWitnessesCount() == 1000);
+
+      // clean up, delete the fake witnesses
+      for (int i = 0; i < fakeNumberOfWitnesses; i++) {
+        chainBaseManager.getWitnessStore()
+            .delete(ByteString.copyFromUtf8(fakeWitnessAddressPrefix + i).toByteArray());
+      }
+    } catch (MaintenanceClearingException e) {
+       Assert.fail(e.getMessage());
     }
   }
 
@@ -914,7 +922,14 @@ public class WalletTest extends BaseTest {
     chainBaseManager.getVotesStore().put(votesCapsule.createDbKey(), votesCapsule);
 
     logger.info("now request paginated witness list with 0 offset and 10 limit:");
-    GrpcAPI.WitnessList witnessList2 = wallet.getPaginatedNowWitnessList(0, 10);
+    GrpcAPI.WitnessList witnessList2 = null;
+     try {
+      // To avoid throw MaintenanceClearingException
+      dbManager.getChainBaseManager().getDynamicPropertiesStore().saveStateFlag(0);
+      witnessList2 = wallet.getPaginatedNowWitnessList(0, 10);
+    } catch (MaintenanceClearingException e) {
+      Assert.fail(e.getMessage());
+    }
     // Check the returned witness list should contain 10 witnesses with descending vote count
     Assert.assertTrue("Witness list should contain 10 witnesses",
         witnessList2.getWitnessesCount() == 10);

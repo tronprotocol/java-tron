@@ -182,6 +182,7 @@ import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.JsonRpcInvalidParamsException;
+import org.tron.core.exception.MaintenanceClearingException;
 import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.SignatureFormatException;
@@ -770,14 +771,23 @@ public class Wallet {
     return builder.build();
   }
 
-  public WitnessList getPaginatedNowWitnessList(long offset, long limit) {
+  public WitnessList getPaginatedNowWitnessList(long offset, long limit) throws MaintenanceClearingException {
     if (limit <= 0 || offset < 0) {
       return null;
     }
     if (limit > WITNESS_COUNT_LIMIT_MAX) {
       limit = WITNESS_COUNT_LIMIT_MAX;
     }
-
+    
+    /*
+      In the maintenance period, the VoteStores will be cleared.
+      To avoid the race condition of VoteStores deleted but Witness vote counts not updated, return retry error.
+    */
+    if (chainBaseManager.getDynamicPropertiesStore().getStateFlag() == 1) {
+      long maintenanceLogicTime = chainBaseManager.getDynamicPropertiesStore().getMaintenanceSkipSlots() * BLOCK_PRODUCED_INTERVAL / 1000;
+      String message = "Maintenance clearing, please try again later after " + maintenanceLogicTime + " seconds.";
+      throw new MaintenanceClearingException(message);
+    }
     // It contains the final vote count at the end of the last epoch.
     List<WitnessCapsule> witnessCapsuleList = chainBaseManager.getWitnessStore().getAllWitnesses();
     if (offset >= witnessCapsuleList.size()) {
