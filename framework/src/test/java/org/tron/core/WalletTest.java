@@ -858,6 +858,20 @@ public class WalletTest extends BaseTest {
   }
 
   @Test
+  public void testGetPaginatedNowWitnessList_Error() {
+    try {
+      // To avoid throw MaintenanceClearingException
+      dbManager.getChainBaseManager().getDynamicPropertiesStore().saveStateFlag(1);
+      wallet.getPaginatedNowWitnessList(0, 10);
+      Assert.fail("Should throw error when in maintenance period");
+    } catch (Exception e) {
+      Assert.assertTrue("Should throw MaintenanceClearingException",
+          e instanceof MaintenanceClearingException);
+    }
+    dbManager.getChainBaseManager().getDynamicPropertiesStore().saveStateFlag(0);
+  }
+
+  @Test
   public void testGetPaginatedNowWitnessList_CornerCase() {
     try {
       // To avoid throw MaintenanceClearingException
