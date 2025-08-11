@@ -10,6 +10,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBComparator;
@@ -55,7 +57,8 @@ public class DbStat implements Callable<Integer> {
   boolean help;
 
   SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
-
+  //concurrentMap
+  private ConcurrentMap<Integer,Integer > valueSizeMap = new ConcurrentHashMap<>();
 
   @Override
   public Integer call() throws Exception {
@@ -97,6 +100,7 @@ public class DbStat implements Callable<Integer> {
           byte[] key = entry.getKey();
           keySize += key.length / 1024.0 / 1024;
           byte[] value = entry.getValue();
+          valueSizeMap.put(value.length,valueSizeMap.getOrDefault(value.length,0)+1);
           valueSize += value.length / 1024.0 / 1024;
           count++;
         }
@@ -104,6 +108,12 @@ public class DbStat implements Callable<Integer> {
         spec.commandLine().getOut().println(
             String.format("%s count: %s, key size: %s M, value size: %s M",
             dateFormat.format(new Date()), count, keySize, valueSize));
+        spec.commandLine().getOut().println("--------------value size distribution------------------ ");
+        //按数量从大到小输出，valueSizeMap
+        valueSizeMap.entrySet().stream().sorted(Map.Entry.comparingByValue()).forEach(entry -> {
+          spec.commandLine().getOut().println(entry.getKey() + " : " + entry.getValue());
+        });
+
       } catch (IOException e) {
         throw new RuntimeException(e);
       }

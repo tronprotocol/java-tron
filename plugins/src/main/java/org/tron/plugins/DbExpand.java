@@ -1,6 +1,8 @@
 package org.tron.plugins;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
@@ -62,7 +64,7 @@ public class DbExpand implements Callable<Integer> {
 
   final Random random = new Random();
   SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
-
+  long blockExpandBegin = 1_000_000_000L;
 
   @Override
   public Integer call() throws Exception {
@@ -247,9 +249,46 @@ public class DbExpand implements Callable<Integer> {
       random.nextBytes(result);
       return result;
     }
+    //block  trans transRet
+    if ("block".equalsIgnoreCase(targetDb)) {
+      byte[] result = new byte[32];
+      random.nextBytes(result);
+      writeLongToBytes(blockExpandBegin,result,true);
+      blockExpandBegin++;
+      return result;
+    }
+    if ("trans".equalsIgnoreCase(targetDb)) {
+      byte[] result = new byte[32];
+      random.nextBytes(result);
+      return result;
+    }
+    if ("tranRet".equalsIgnoreCase(targetDb)) {
+      byte[] result = new byte[8];
+      random.nextBytes(result);
+      writeLongToBytes(blockExpandBegin,result,true);
+      blockExpandBegin++;
+      return result;
+    }
+
     throw new IllegalArgumentException("Unsupported db type: " + targetDb);
   }
+  /**
+   * 将Long值写入字节数组的前8字节
+   * @param value 要写入的Long值
+   * @param target 目标字节数组（长度必须≥8）
+   * @param bigEndian 是否使用大端序（true=大端序，false=小端序）
+   */
+  public static void writeLongToBytes(long value, byte[] target, boolean bigEndian) {
+    if (target.length < 8) {
+      throw new IllegalArgumentException("目标数组长度必须≥8");
+    }
 
+    ByteBuffer buffer = ByteBuffer.allocate(8)
+        .order(bigEndian ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN)
+        .putLong(value);
+
+    System.arraycopy(buffer.array(), 0, target, 0, 8);
+  }
   private void insertToLevelDb(DB db, List<byte[]> keys, List<byte[]> values)
       throws IOException {
     try (WriteBatch batch = db.createWriteBatch()) {
