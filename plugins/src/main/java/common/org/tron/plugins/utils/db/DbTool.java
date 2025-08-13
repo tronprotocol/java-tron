@@ -18,8 +18,8 @@ public class DbTool {
 
   private static final String KEY_ENGINE = "ENGINE";
   private static final String ENGINE_FILE = "engine.properties";
-  private static final String FILE_SEPARATOR = File.separator;
   private static final String ROCKSDB = "ROCKSDB";
+  private static final String LEVELDB = "LEVELDB";
 
   private static final Map<String, DBInterface> dbMap = Maps.newConcurrentMap();
 
@@ -162,8 +162,7 @@ public class DbTool {
   }
 
   private static DbType getDbType(String sourceDir, String dbName) {
-    String engineFile = String.format("%s%s%s%s%s", sourceDir, FILE_SEPARATOR,
-            dbName, FILE_SEPARATOR, ENGINE_FILE);
+    String engineFile = Paths.get(sourceDir, dbName, ENGINE_FILE).toString();
     if (!new File(engineFile).exists()) {
       return DbType.LevelDB;
     }
@@ -175,13 +174,22 @@ public class DbTool {
     }
   }
 
-  private static LevelDBImpl openLevelDb(Path db, String name) throws IOException {
-    return new LevelDBImpl(DBUtils.newLevelDb(db), name);
+  public static LevelDBImpl openLevelDb(Path db, String name) throws IOException {
+    LevelDBImpl leveldb = new LevelDBImpl(DBUtils.newLevelDb(db), name);
+    tryInitEngineFile(db, LEVELDB);
+    return leveldb;
   }
 
-  private static RocksDBImpl openRocksDb(Path db, String name) throws RocksDBException {
-    return new RocksDBImpl(DBUtils.newRocksDb(db), name);
+  public static RocksDBImpl openRocksDb(Path db, String name) throws RocksDBException {
+    RocksDBImpl rocksdb = new RocksDBImpl(DBUtils.newRocksDb(db), name);
+    tryInitEngineFile(db, ROCKSDB);
+    return rocksdb;
   }
 
-
+  private static void tryInitEngineFile(Path db, String engine) {
+    String engineFile = Paths.get(db.toString(), ENGINE_FILE).toString();
+    if (FileUtils.createFileIfNotExists(engineFile)) {
+      FileUtils.writeProperty(engineFile, KEY_ENGINE, engine);
+    }
+  }
 }

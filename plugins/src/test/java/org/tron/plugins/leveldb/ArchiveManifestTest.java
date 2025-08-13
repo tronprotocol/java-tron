@@ -1,6 +1,4 @@
-package org.tron.plugins;
-
-import static org.iq80.leveldb.impl.Iq80DBFactory.factory;
+package org.tron.plugins.leveldb;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -12,77 +10,67 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
 import java.util.Properties;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.rocksdb.RocksDBException;
+import org.tron.plugins.ArchiveManifest;
 import org.tron.plugins.utils.DBUtils;
-import picocli.CommandLine;
+import org.tron.plugins.utils.db.DbTool;
 
 @Slf4j
-public class DbArchiveTest {
+public class ArchiveManifestTest {
 
-  private static final String OUTPUT_DIRECTORY = "output-directory/database/dbArchive";
+  @ClassRule
+  public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  private static final String ENGINE = "ENGINE";
-  private static final String LEVELDB = "LEVELDB";
-  private static final String ROCKSDB = "ROCKSDB";
+  private static String OUTPUT_DIRECTORY;
+
   private static final String ACCOUNT = "account";
   private static final String ACCOUNT_ROCKSDB = "account-rocksdb";
-  private static final String ENGINE_FILE = "engine.properties";
+
 
   @BeforeClass
-  public static void init() throws IOException {
-    File file = new File(OUTPUT_DIRECTORY,ACCOUNT);
-    factory.open(file,ArchiveManifest.newDefaultLevelDbOptions()).close();
-    writeProperty(file.toString() + File.separator + ENGINE_FILE,ENGINE,LEVELDB);
+  public static void init() throws IOException, RocksDBException {
+    OUTPUT_DIRECTORY = temporaryFolder.newFolder("database").toString();
+    File file = new File(OUTPUT_DIRECTORY, ACCOUNT);
+    DbTool.openLevelDb(file.toPath(),ACCOUNT).close();
 
     file = new File(OUTPUT_DIRECTORY, DBUtils.MARKET_PAIR_PRICE_TO_ORDER);
-    factory.open(file,ArchiveManifest.newDefaultLevelDbOptions()).close();
-    writeProperty(file.toString() + File.separator + ENGINE_FILE,ENGINE,LEVELDB);
+    DbTool.openLevelDb(file.toPath(), DBUtils.MARKET_PAIR_PRICE_TO_ORDER).close();
 
-    file = new File(OUTPUT_DIRECTORY,ACCOUNT_ROCKSDB);
-    factory.open(file,ArchiveManifest.newDefaultLevelDbOptions()).close();
-    writeProperty(file.toString() + File.separator + ENGINE_FILE,ENGINE,ROCKSDB);
+    file = new File(OUTPUT_DIRECTORY, ACCOUNT_ROCKSDB);
+    DbTool.openRocksDb(file.toPath(), ACCOUNT_ROCKSDB).close();
 
-  }
-
-  @AfterClass
-  public static void destroy() {
-    deleteDir(new File(OUTPUT_DIRECTORY));
   }
 
   @Test
   public void testRun() {
-    String[] args = new String[] {"db", "archive", "-d", OUTPUT_DIRECTORY };
-    CommandLine cli = new CommandLine(new Toolkit());
-    Assert.assertEquals(0, cli.execute(args));
+    String[] args = new String[] { "-d", OUTPUT_DIRECTORY };
+    Assert.assertEquals(0, ArchiveManifest.run(args));
   }
 
   @Test
   public void testHelp() {
-    String[] args = new String[] {"db", "archive", "-h"};
-    CommandLine cli = new CommandLine(new Toolkit());
-    Assert.assertEquals(0, cli.execute(args));
+    String[] args = new String[] {"-h"};
+    Assert.assertEquals(0, ArchiveManifest.run(args));
   }
 
   @Test
   public void testMaxManifest() {
-    String[] args = new String[] {"db", "archive", "-d", OUTPUT_DIRECTORY, "-m", "128"};
-    CommandLine cli = new CommandLine(new Toolkit());
-    Assert.assertEquals(0, cli.execute(args));
+    String[] args = new String[] {"-d", OUTPUT_DIRECTORY, "-m", "128"};
+    Assert.assertEquals(0, ArchiveManifest.run(args));
   }
 
   @Test
   public void testNotExist() {
-    String[] args = new String[] {"db", "archive", "-d",
-        OUTPUT_DIRECTORY + File.separator + UUID.randomUUID()};
-    CommandLine cli = new CommandLine(new Toolkit());
-    Assert.assertEquals(404, cli.execute(args));
+    String[] args = new String[] {"-d", OUTPUT_DIRECTORY + File.separator + UUID.randomUUID()};
+    Assert.assertEquals(404, ArchiveManifest.run(args));
   }
 
   @Test
@@ -90,9 +78,8 @@ public class DbArchiveTest {
     File file = new File(OUTPUT_DIRECTORY + File.separator + UUID.randomUUID());
     file.mkdirs();
     file.deleteOnExit();
-    String[] args = new String[] {"db", "archive", "-d", file.toString()};
-    CommandLine cli = new CommandLine(new Toolkit());
-    Assert.assertEquals(0, cli.execute(args));
+    String[] args = new String[] {"-d", file.toString()};
+    Assert.assertEquals(0, ArchiveManifest.run(args));
   }
 
   private static void writeProperty(String filename, String key, String value) throws IOException {

@@ -86,7 +86,7 @@ public class DbLiteTest {
     Args.clearParam();
   }
 
-  void testTools(String dbType, int checkpointVersion)
+  public void testTools(String dbType, int checkpointVersion)
       throws InterruptedException, IOException {
     logger.info("dbType {}, checkpointVersion {}", dbType, checkpointVersion);
     dbPath = String.format("%s_%s_%d", dbPath, dbType, System.currentTimeMillis());

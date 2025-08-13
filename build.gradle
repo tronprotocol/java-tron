@@ -6,26 +6,40 @@ allprojects {
         springVersion = "5.3.39"
     }
 }
+def arch = System.getProperty("os.arch").toLowerCase()
+def javaVersion = JavaVersion.current()
+def isArm64 = Architectures.AARCH64.isAlias(arch)
+def archSource = isArm64 ? "arm" : "x86"
 
-static def isX86() {
-    def arch = System.getProperty("os.arch").toLowerCase()
-    return Architectures.X86_64.isAlias(arch) || Architectures.X86.isAlias(arch)
+ext.archInfo = [
+        name    : arch,
+        java    : javaVersion,
+        isArm64 : isArm64,
+        sourceSets: [
+            main: [
+                java: [
+                    srcDirs: ["src/main/java/common", "src/main/java/${archSource}"]
+                ]
+            ],
+            test: [
+                java: [
+                    srcDirs: ["src/test/java"]
+                ]
+            ]
+        ],
+        requires: [
+                JavaVersion: isArm64 ? JavaVersion.VERSION_17 : JavaVersion.VERSION_1_8,
+                RocksdbVersion: isArm64 ? '7.7.3' : '5.15.10'
+        ],
+        VMOptions: isArm64 ? "${rootDir}/gradle/jdk17/java-tron.vmoptions" : "${rootDir}/gradle/java-tron.vmoptions"
+]
+
+if (!archInfo.java.is(archInfo.requires.JavaVersion)) {
+    throw new GradleException("Java ${archInfo.requires.JavaVersion} is required for ${archInfo.name}. Detected version ${archInfo.java}")
 }
 
-static def isArm64() {
-    def arch = System.getProperty("os.arch").toLowerCase()
-    return new Architectures.KnownArchitecture("arm64", "aarch64").isAlias(arch)
-}
+println "Building for architecture: ${archInfo.name}, Java version: ${archInfo.java}"
 
-if (isArm64() && !JavaVersion.current().is(JavaVersion.VERSION_17)) {
-    throw new GradleException("Java 17 is required to build Java-Tron for arm64.\n" +
-            "  Detected version ${JavaVersion.current()}")
-}
-
-if (isX86() && !JavaVersion.current().isJava8()) {
-    throw new GradleException("Java 8 is required to build Java-Tron for x86.\n" +
-            "  Detected version ${JavaVersion.current()}")
-}
 
 subprojects {
     apply plugin: "jacoco"

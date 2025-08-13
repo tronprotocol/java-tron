@@ -116,6 +116,17 @@ test {
         destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
         classDumpDir = file("$buildDir/jacoco/classpathdumps")
     }
+    if (rootProject.archInfo.isArm64) {
+        exclude { element ->
+            element.file.name.toLowerCase().contains('leveldb')
+        }
+        filter {
+            excludeTestsMatching '*.*leveldb*'
+            excludeTestsMatching '*.*Leveldb*'
+            excludeTestsMatching '*.*LevelDB*'
+            excludeTestsMatching '*.*LevelDb*'
+        }
+    }
     if (isWindows()) {
         exclude '**/ShieldedTransferActuatorTest.class'
         exclude '**/BackupDbUtilTest.class'
@@ -197,17 +208,8 @@ def createScript(project, mainClass, name) {
         }
     }
 }
-if (JavaVersion.current().is(JavaVersion.VERSION_17)) {
-    applicationDistribution.from("${project.rootDir}/gradle/jdk17/java-tron.vmoptions") {
-        into "bin"
-    }
-} else if (JavaVersion.current().isJava8()){
-    applicationDistribution.from("${project.rootDir}/gradle/java-tron.vmoptions") {
-        into "bin"
-    }
-} else {
-    throw new GradleException("Java 8 or Java 17 is supported to build Java-Tron.\n" +
-            "  Detected version ${JavaVersion.current()}")
+applicationDistribution.from(rootProject.archInfo.VMOptions) {
+    into "bin"
 }
 //distZip {
 //    doLast {

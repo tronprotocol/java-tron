@@ -20,6 +20,7 @@ import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 import org.rocksdb.Status;
+import org.tron.common.arch.Arch;
 import org.tron.plugins.utils.DBUtils;
 import org.tron.plugins.utils.FileUtils;
 import picocli.CommandLine;
@@ -55,6 +56,13 @@ public class DbConvert implements Callable<Integer> {
 
   @Override
   public Integer call() throws Exception {
+    if (Arch.isArm64()) {
+      String tips = String.format("This command is not supported on %s architecture.",
+          Arch.getOsArch());
+      spec.commandLine().getErr().println(spec.commandLine().getColorScheme().errorText(tips));
+      logger.error(tips);
+      return 0;
+    }
     if (help) {
       spec.commandLine().usage(System.out);
       return 0;

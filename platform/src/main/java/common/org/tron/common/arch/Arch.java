@@ -57,4 +57,10 @@ public final class Arch {
     String osArch = getOsArch();
     return osArch.contains("arm64") || osArch.contains("aarch64");
   }
+
+  public static void throwUnsupportedArm64Exception() {
+    if (isArm64()) {
+      throw new UnsupportedOperationException("unsupported on " + getOsArch() + " architecture");
+    }
+  }
 }
