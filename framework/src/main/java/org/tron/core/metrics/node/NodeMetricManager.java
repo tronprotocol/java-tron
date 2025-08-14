@@ -4,8 +4,7 @@ import com.google.protobuf.ByteString;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.backup.BackupManager;
-import org.tron.common.parameter.CommonParameter;
-import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
 import org.tron.program.Version;
@@ -38,7 +37,7 @@ public class NodeMetricManager {
     nodeInfo.setIp(Args.getInstance().getNodeExternalIp());
 
     byte[] witnessAccountAddress = Args.getLocalWitnesses().getWitnessAccountAddress();
-    ByteString witnessAddress = !ByteUtil.isNullOrZeroArray(witnessAccountAddress) ? ByteString
+    ByteString witnessAddress = !ByteArray.isEmpty(witnessAccountAddress) ? ByteString
         .copyFrom(witnessAccountAddress) : null;
     if (chainBaseManager.getWitnessScheduleStore().getActiveWitnesses().contains(witnessAddress)) {
       nodeInfo.setNodeType(1);

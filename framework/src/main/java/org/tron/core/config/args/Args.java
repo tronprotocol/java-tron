@@ -53,7 +53,6 @@ import org.tron.common.args.GenesisBlock;
 import org.tron.common.args.Witness;
 import org.tron.common.config.DbBackupConfig;
 import org.tron.common.cron.CronExpression;
-import org.tron.common.crypto.SignInterface;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.TriggerConfig;
@@ -62,7 +61,6 @@ import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.parameter.RateLimiterInitialization;
 import org.tron.common.setting.RocksDbSettings;
-import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.core.Constant;
@@ -70,11 +68,8 @@ import org.tron.core.Wallet;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
-import org.tron.core.exception.CipherException;
 import org.tron.core.exception.TronError;
 import org.tron.core.store.AccountStore;
-import org.tron.keystore.Credentials;
-import org.tron.keystore.WalletUtils;
 import org.tron.p2p.P2pConfig;
 import org.tron.p2p.dns.update.DnsType;
 import org.tron.p2p.dns.update.PublishConfig;
@@ -412,63 +407,7 @@ public class Args extends CommonParameter {
     PARAMETER.cryptoEngine = config.hasPath(Constant.CRYPTO_ENGINE) ? config
         .getString(Constant.CRYPTO_ENGINE) : Constant.ECKey_ENGINE;
 
-    if (StringUtils.isNoneBlank(PARAMETER.privateKey)) {
-      localWitnesses = (new LocalWitnesses(PARAMETER.privateKey));
-      byte[] witnessAddress = null;
-      if (StringUtils.isNoneBlank(PARAMETER.witnessAddress)) {
-        witnessAddress = Commons.decodeFromBase58Check(PARAMETER.witnessAddress);
-        if (witnessAddress != null) {
-          logger.debug("Got localWitnessAccountAddress from cmd");
-        } else {
-          PARAMETER.witnessAddress = "";
-          logger.warn(IGNORE_WRONG_WITNESS_ADDRESS_FORMAT);
-        }
-      }
-      localWitnesses.initWitnessAccountAddress(witnessAddress, PARAMETER.isECKeyCryptoEngine());
-      logger.debug("Got privateKey from cmd");
-    } else if (config.hasPath(Constant.LOCAL_WITNESS)) {
-      localWitnesses = new LocalWitnesses();
-      byte[] witnessAddress = getWitnessAddress(config);
-      List<String> localwitness = config.getStringList(Constant.LOCAL_WITNESS);
-      if (!localwitness.isEmpty()) {
-        localWitnesses.setPrivateKeys(localwitness);
-        logger.debug("Got privateKey from config.conf");
-      }
-      localWitnesses.initWitnessAccountAddress(witnessAddress, PARAMETER.isECKeyCryptoEngine());
-    } else if (config.hasPath(Constant.LOCAL_WITNESS_KEYSTORE)) {
-      localWitnesses = new LocalWitnesses();
-      List<String> privateKeys = new ArrayList<String>();
-      if (PARAMETER.isWitness()) {
-        List<String> localwitness = config.getStringList(Constant.LOCAL_WITNESS_KEYSTORE);
-        if (!localwitness.isEmpty()) {
-          String fileName = System.getProperty("user.dir") + "/" + localwitness.get(0);
-          String password;
-          if (StringUtils.isEmpty(PARAMETER.password)) {
-            System.out.println("Please input your password.");
-            password = WalletUtils.inputPassword();
-          } else {
-            password = PARAMETER.password;
-            PARAMETER.password = null;
-          }
-
-          try {
-            Credentials credentials = WalletUtils
-                .loadCredentials(password, new File(fileName));
-            SignInterface sign = credentials.getSignInterface();
-            String prikey = ByteArray.toHexString(sign.getPrivateKey());
-            privateKeys.add(prikey);
-          } catch (IOException | CipherException e) {
-            logger.error("Witness node start failed!");
-            throw new TronError(e, TronError.ErrCode.WITNESS_KEYSTORE_LOAD);
-          }
-        }
-      }
-      localWitnesses.setPrivateKeys(privateKeys);
-      byte[] witnessAddress = getWitnessAddress(config);
-      localWitnesses.initWitnessAccountAddress(witnessAddress, PARAMETER.isECKeyCryptoEngine());
-      logger.debug("Got privateKey from keystore");
-    }
-
+    localWitnesses = new WitnessInitializer(config).initLocalWitnesses();
     if (PARAMETER.isWitness()
         && CollectionUtils.isEmpty(localWitnesses.getPrivateKeys())) {
       throw new TronError("This is a witness node, but localWitnesses is null",
@@ -1817,20 +1756,6 @@ public class Args extends CommonParameter {
     logger.info("ShutDown blockCount : {}", parameter.getShutdownBlockCount());
     logger.info("***************************************************************");
     logger.info("\n");
-  }
-
-  private static byte[] getWitnessAddress(Config config) {
-    byte[] witnessAddress = null;
-    if (config.hasPath(Constant.LOCAL_WITNESS_ACCOUNT_ADDRESS)) {
-      witnessAddress = Commons
-          .decodeFromBase58Check(config.getString(Constant.LOCAL_WITNESS_ACCOUNT_ADDRESS));
-      if (witnessAddress != null) {
-        logger.debug("Got localWitnessAccountAddress from config.conf");
-      } else {
-        logger.warn(IGNORE_WRONG_WITNESS_ADDRESS_FORMAT);
-      }
-    }
-    return witnessAddress;
   }
 
   /**

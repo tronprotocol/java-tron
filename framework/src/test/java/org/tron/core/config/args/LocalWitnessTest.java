@@ -198,7 +198,7 @@ public class LocalWitnessTest {
   @Test
   public void testLocalWitnessConfig() throws IOException {
     Args.setParam(
-        new String[]{"--output-directory", temporaryFolder.newFolder().toString(), "--debug"},
+        new String[]{"--output-directory", temporaryFolder.newFolder().toString(), "-w", "--debug"},
         "config-localtest.conf");
     LocalWitnesses witness = Args.getLocalWitnesses();
     Assert.assertNotNull(witness.getPrivateKey());
