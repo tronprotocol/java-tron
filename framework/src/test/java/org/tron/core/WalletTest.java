@@ -32,7 +32,6 @@ import com.google.protobuf.ByteString;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import javax.annotation.Resource;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -74,7 +73,7 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.MaintenanceClearingException;
+import org.tron.core.exception.MaintenanceUnavailableException;
 import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.ProposalUtil.ProposalType;
@@ -866,7 +865,7 @@ public class WalletTest extends BaseTest {
       Assert.fail("Should throw error when in maintenance period");
     } catch (Exception e) {
       Assert.assertTrue("Should throw MaintenanceClearingException",
-          e instanceof MaintenanceClearingException);
+          e instanceof MaintenanceUnavailableException);
     }
     dbManager.getChainBaseManager().getDynamicPropertiesStore().saveStateFlag(0);
   }
@@ -902,7 +901,7 @@ public class WalletTest extends BaseTest {
         chainBaseManager.getWitnessStore()
             .delete(ByteString.copyFromUtf8(fakeWitnessAddressPrefix + i).toByteArray());
       }
-    } catch (MaintenanceClearingException e) {
+    } catch (MaintenanceUnavailableException e) {
        Assert.fail(e.getMessage());
     }
   }
@@ -941,7 +940,7 @@ public class WalletTest extends BaseTest {
       // To avoid throw MaintenanceClearingException
       dbManager.getChainBaseManager().getDynamicPropertiesStore().saveStateFlag(0);
       witnessList2 = wallet.getPaginatedNowWitnessList(0, 10);
-    } catch (MaintenanceClearingException e) {
+    } catch (MaintenanceUnavailableException e) {
       Assert.fail(e.getMessage());
     }
     // Check the returned witness list should contain 10 witnesses with descending vote count

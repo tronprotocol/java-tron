@@ -89,7 +89,7 @@ import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.exception.MaintenanceClearingException;
+import org.tron.core.exception.MaintenanceUnavailableException;
 import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.VMIllegalException;
@@ -403,7 +403,7 @@ public class RpcApiService extends RpcService {
       try {
         responseObserver.onNext(
             wallet.getPaginatedNowWitnessList(request.getOffset(), request.getLimit()));
-      } catch (MaintenanceClearingException e) {
+      } catch (MaintenanceUnavailableException e) {
         responseObserver.onError(getRunTimeException(e));
       }
       responseObserver.onCompleted();
@@ -1891,7 +1891,7 @@ public class RpcApiService extends RpcService {
       try {
         responseObserver.onNext(
             wallet.getPaginatedNowWitnessList(request.getOffset(), request.getLimit()));
-      } catch (MaintenanceClearingException e) {
+      } catch (MaintenanceUnavailableException e) {
         responseObserver.onError(getRunTimeException(e));
       }
       responseObserver.onCompleted();
