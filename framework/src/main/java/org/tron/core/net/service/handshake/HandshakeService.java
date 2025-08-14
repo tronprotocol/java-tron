@@ -57,7 +57,7 @@ public class HandshakeService {
           msg.getInstance().getAddress().toByteArray().length,
           msg.getInstance().getSignature().toByteArray().length,
           msg.getInstance().getCodeVersion().toByteArray().length);
-      peer.disconnect(ReasonCode.UNEXPECTED_IDENTITY);
+      peer.disconnect(ReasonCode.INCOMPATIBLE_PROTOCOL);
       return;
     }
 

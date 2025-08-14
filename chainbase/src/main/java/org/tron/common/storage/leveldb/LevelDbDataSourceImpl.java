@@ -17,7 +17,10 @@ package org.tron.common.storage.leveldb;
 
 import static org.fusesource.leveldbjni.JniDBFactory.factory;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
+import com.google.common.primitives.Bytes;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,18 +33,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-
-import com.google.common.primitives.Bytes;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBIterator;
 import org.iq80.leveldb.Logger;
@@ -54,6 +53,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.storage.metric.DbStat;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.PropUtil;
 import org.tron.common.utils.StorageUtils;
 import org.tron.core.db.common.DbSourceInter;
 import org.tron.core.db.common.iterator.StoreIterator;
@@ -75,6 +75,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
   private static final String LEVELDB = "LEVELDB";
   private static final org.slf4j.Logger innerLogger = LoggerFactory.getLogger(LEVELDB);
+  private static final String KEY_ENGINE = "ENGINE";
   private Logger leveldbLogger = new Logger() {
     @Override
     public void log(String message) {
@@ -110,6 +111,11 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
 
   @Override
   public void initDB() {
+    if (!checkOrInitEngine()) {
+      throw new RuntimeException(String.format(
+          "Cannot open RocksDB database '%s' with LevelDB engine."
+              + " Set db.engine=ROCKSDB or use LevelDB database. ", dataBaseName));
+    }
     resetDbLock.writeLock().lock();
     try {
       logger.debug("Init DB: {}.", dataBaseName);
@@ -133,6 +139,28 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     } finally {
       resetDbLock.writeLock().unlock();
     }
+  }
+
+  private boolean checkOrInitEngine() {
+    String dir = getDbPath().toString();
+    String enginePath = dir + File.separator + "engine.properties";
+
+    if (FileUtil.createDirIfNotExists(dir)) {
+      if (!FileUtil.createFileIfNotExists(enginePath)) {
+        return false;
+      }
+    } else {
+      return false;
+    }
+
+    // for the first init engine
+    String engine = PropUtil.readProperty(enginePath, KEY_ENGINE);
+    if (Strings.isNullOrEmpty(engine) && !PropUtil.writeProperty(enginePath, KEY_ENGINE, LEVELDB)) {
+      return false;
+    }
+    engine = PropUtil.readProperty(enginePath, KEY_ENGINE);
+
+    return LEVELDB.equals(engine);
   }
 
   private void openDatabase(Options dbOptions) throws IOException {
@@ -226,6 +254,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   }
 
   @Deprecated
+  @VisibleForTesting
   @Override
   public Set<byte[]> allKeys() {
     resetDbLock.readLock().lock();
@@ -243,6 +272,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   }
 
   @Deprecated
+  @VisibleForTesting
   @Override
   public Set<byte[]> allValues() {
     resetDbLock.readLock().lock();
@@ -362,6 +392,8 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     }
   }
 
+  @Deprecated
+  @VisibleForTesting
   @Override
   public long getTotal() throws RuntimeException {
     resetDbLock.readLock().lock();
@@ -375,13 +407,6 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
       throw new RuntimeException(e);
     } finally {
       resetDbLock.readLock().unlock();
-    }
-  }
-
-  private void updateByBatchInner(Map<byte[], byte[]> rows) throws Exception {
-    try (WriteBatch batch = database.createWriteBatch()) {
-      innerBatchUpdate(rows,batch);
-      database.write(batch, writeOptions);
     }
   }
 
@@ -404,30 +429,23 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
 
   @Override
   public void updateByBatch(Map<byte[], byte[]> rows, WriteOptionsWrapper options) {
-    resetDbLock.readLock().lock();
-    try {
-      updateByBatchInner(rows, options.level);
-    } catch (Exception e) {
-      try {
-        updateByBatchInner(rows, options.level);
-      } catch (Exception e1) {
-        throw new RuntimeException(e);
-      }
-    } finally {
-      resetDbLock.readLock().unlock();
-    }
+    this.updateByBatch(rows, options.level);
   }
 
   @Override
   public void updateByBatch(Map<byte[], byte[]> rows) {
+    this.updateByBatch(rows, writeOptions);
+  }
+
+  private void updateByBatch(Map<byte[], byte[]> rows, WriteOptions options) {
     resetDbLock.readLock().lock();
     try {
-      updateByBatchInner(rows);
+      updateByBatchInner(rows, options);
     } catch (Exception e) {
       try {
-        updateByBatchInner(rows);
+        updateByBatchInner(rows, options);
       } catch (Exception e1) {
-        throw new RuntimeException(e);
+        throw new RuntimeException(e1);
       }
     } finally {
       resetDbLock.readLock().unlock();

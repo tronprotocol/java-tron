@@ -38,15 +38,11 @@ dependencies {
     //local libraries
     implementation fileTree(dir: 'libs', include: '*.jar')
     // end local libraries
-    testImplementation group: 'org.hamcrest', name: 'hamcrest-junit', version: '1.0.0.1'
-
-    implementation group: 'com.google.inject', name: 'guice', version: '4.1.0'
     implementation group: 'io.dropwizard.metrics', name: 'metrics-core', version: '3.1.2'
     implementation group: 'com.github.davidb', name: 'metrics-influxdb', version: '0.8.2'
-    implementation group: 'com.carrotsearch', name: 'java-sizeof', version: '0.0.5'
     // http
-    implementation 'org.eclipse.jetty:jetty-server:9.4.53.v20231009'
-    implementation 'org.eclipse.jetty:jetty-servlet:9.4.53.v20231009'
+    implementation 'org.eclipse.jetty:jetty-server:9.4.57.v20241219'
+    implementation 'org.eclipse.jetty:jetty-servlet:9.4.57.v20241219'
     implementation 'com.alibaba:fastjson:1.2.83'
     // end http
 
@@ -56,14 +52,11 @@ dependencies {
     // https://mvnrepository.com/artifact/javax.portlet/portlet-api
     compileOnly group: 'javax.portlet', name: 'portlet-api', version: '3.0.1'
 
-    implementation "io.vavr:vavr:0.9.2"
     implementation (group: 'org.pf4j', name: 'pf4j', version: '3.10.0') {
         exclude group: "org.slf4j", module: "slf4j-api"
     }
 
-    testImplementation group: 'org.springframework', name: 'spring-test', version: '5.2.0.RELEASE'
-    testImplementation group: 'org.springframework', name: 'spring-web', version: '5.2.0.RELEASE'
-
+    testImplementation group: 'org.springframework', name: 'spring-test', version: "${springVersion}"
     implementation group: 'org.zeromq', name: 'jeromq', version: '0.5.3'
     api project(":chainbase")
     api project(":protocol")
@@ -123,6 +116,17 @@ test {
         destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
         classDumpDir = file("$buildDir/jacoco/classpathdumps")
     }
+    if (rootProject.archInfo.isArm64) {
+        exclude { element ->
+            element.file.name.toLowerCase().contains('leveldb')
+        }
+        filter {
+            excludeTestsMatching '*.*leveldb*'
+            excludeTestsMatching '*.*Leveldb*'
+            excludeTestsMatching '*.*LevelDB*'
+            excludeTestsMatching '*.*LevelDb*'
+        }
+    }
     if (isWindows()) {
         exclude '**/ShieldedTransferActuatorTest.class'
         exclude '**/BackupDbUtilTest.class'
@@ -134,6 +138,7 @@ test {
     }
     maxHeapSize = "1024m"
     doFirst {
+        // Restart the JVM after every 100 tests to avoid memory leaks and ensure test isolation
         forkEvery = 100
         jvmArgs "-XX:MetaspaceSize=128m","-XX:MaxMetaspaceSize=256m", "-XX:+UseG1GC"
     }
@@ -158,7 +163,7 @@ def binaryRelease(taskName, jarName, mainClass) {
 
         // explicit_dependency
         dependsOn (project(':actuator').jar, project(':consensus').jar, project(':chainbase').jar,
-                project(':crypto').jar, project(':common').jar, project(':protocol').jar)
+                project(':crypto').jar, project(':common').jar, project(':protocol').jar, project(':platform').jar)
 
         from {
             configurations.runtimeClasspath.collect {
@@ -204,8 +209,7 @@ def createScript(project, mainClass, name) {
         }
     }
 }
-
-applicationDistribution.from("../gradle/java-tron.vmoptions") {
+applicationDistribution.from(rootProject.archInfo.VMOptions) {
     into "bin"
 }
 //distZip {
@@ -219,35 +223,12 @@ startScripts.enabled = false
 run.enabled = false
 tasks.distTar.enabled = false
 
-createScript(project, 'org.tron.program.SolidityNode', 'SolidityNode')
 createScript(project, 'org.tron.program.FullNode', 'FullNode')
-createScript(project, 'org.tron.program.KeystoreFactory', 'KeystoreFactory')
-createScript(project, 'org.tron.program.DBConvert', 'DBConvert')
-
 def releaseBinary = hasProperty('binaryRelease') ? getProperty('binaryRelease') : 'true'
-def skipSolidity = hasProperty('skipSolidity') ? true : false
-def skipKeystore = hasProperty('skipKeystore') ? true : false
-def skipConvert = hasProperty('skipConvert') ? true : false
-def skipAll = hasProperty('skipAll') ? true : false
 if (releaseBinary == 'true') {
     artifacts {
         archives(binaryRelease('buildFullNodeJar', 'FullNode', 'org.tron.program.FullNode'))
     }
-    if (!skipAll) {
-        if (!skipSolidity) {
-            artifacts {
-                archives(binaryRelease('buildSolidityNodeJar', 'SolidityNode', 'org.tron.program.SolidityNode'))}
-        }
-        if (!skipKeystore) {
-            artifacts {
-                archives(binaryRelease('buildKeystoreFactoryJar', 'KeystoreFactory', 'org.tron.program.KeystoreFactory'))}
-        }
-        if (!skipConvert) {
-            artifacts {
-                archives(binaryRelease('buildDBConvertJar', 'DBConvert', 'org.tron.program.DBConvert'))}
-        }
-    }
-
 }
 
 task copyToParent(type: Copy) {

@@ -3,16 +3,11 @@ package org.tron.core.store;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.iq80.leveldb.Options;
-import org.rocksdb.ComparatorOptions;
-import org.rocksdb.DirectComparator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.MarketOrderPriceComparatorForLevelDB;
-import org.tron.common.utils.MarketOrderPriceComparatorForRockDB;
-import org.tron.common.utils.StorageUtils;
+import org.tron.core.Constant;
 import org.tron.core.capsule.MarketOrderIdListCapsule;
 import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.db.TronStoreWithRevoking;
@@ -22,22 +17,8 @@ import org.tron.core.exception.ItemNotFoundException;
 public class MarketPairPriceToOrderStore extends TronStoreWithRevoking<MarketOrderIdListCapsule> {
 
   @Autowired
-  protected MarketPairPriceToOrderStore(@Value("market_pair_price_to_order") String dbName) {
+  protected MarketPairPriceToOrderStore(@Value(Constant.MARKET_PAIR_PRICE_TO_ORDER) String dbName) {
     super(dbName);
-  }
-
-  @Override
-  protected Options getOptionsByDbNameForLevelDB(String dbName) {
-    Options options = StorageUtils.getOptionsByDbName(dbName);
-    options.comparator(new MarketOrderPriceComparatorForLevelDB());
-    return options;
-  }
-
-  //todo: to test later
-  @Override
-  protected DirectComparator getDirectComparator() {
-    ComparatorOptions comparatorOptions = new ComparatorOptions();
-    return new MarketOrderPriceComparatorForRockDB(comparatorOptions);
   }
 
   @Override

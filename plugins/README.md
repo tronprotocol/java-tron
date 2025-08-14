@@ -2,7 +2,7 @@
 
 This package contains a set of tools for TRON, the followings are the documentation for each tool.
 
-## DB Archive
+## DB Archive(Requires x86 + LevelDB)
 
 DB archive provides the ability to reformat the manifest according to the current `database`, parameters are compatible with the previous `ArchiveManifest`.
 
@@ -26,7 +26,7 @@ DB archive provides the ability to reformat the manifest according to the curren
 ```
 
 
-## DB Convert
+## DB Convert(Requires x86 + LevelDB)
 
 DB convert provides a helper which can convert LevelDB data to RocksDB data, parameters are compatible with previous `DBConvert`.
 
@@ -34,15 +34,13 @@ DB convert provides a helper which can convert LevelDB data to RocksDB data, par
 
 - `<src>`: Input path for leveldb, default: output-directory/database.
 - `<dest>`: Output path for rocksdb, default: output-directory-dst/database.
-- `--safe`: In safe mode, read data from leveldb then put into rocksdb, it's a very time-consuming procedure. If not, just change engine.properties from leveldb to rocksdb, rocksdb
-  is compatible with leveldb for the current version. This may not be the case in the future, default: false.
 - `-h | --help`: Provide the help info.
 
 ### Examples:
 
 ```shell script
 # full command
-  java -jar Toolkit.jar db convert [-h] [--safe] <src> <dest>
+  java -jar Toolkit.jar db convert [-h] <src> <dest>
 # examples
   java -jar Toolkit.jar db convert  output-directory/database /tmp/database
 ```
@@ -66,7 +64,7 @@ DB copy provides a helper which can copy LevelDB or RocksDB data quickly on the 
   java -jar Toolkit.jar db cp  output-directory/database /tmp/databse
 ```
 
-## DB Lite
+## DB Lite(LevelDB unavailable on ARM)
 
 DB lite provides lite database, parameters are compatible with previous `LiteFullNodeTool`.
 
@@ -134,7 +132,7 @@ Execute move command.
   java -jar Toolkit.jar db mv -c main_net_config.conf -d /data/tron/output-directory
 ```
 
-## DB Root
+## DB Root(LevelDB unavailable on ARM)
 
 DB root provides a helper which can compute merkle root for tiny db.
 
