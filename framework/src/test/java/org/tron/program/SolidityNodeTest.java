@@ -1,5 +1,8 @@
 package org.tron.program;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
+
 import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -8,6 +11,7 @@ import org.tron.common.BaseTest;
 import org.tron.common.client.DatabaseGrpcClient;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.TronError;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.http.solidity.SolidityNodeHttpApiService;
 import org.tron.protos.Protocol.Block;
@@ -22,14 +26,19 @@ public class SolidityNodeTest extends BaseTest {
   SolidityNodeHttpApiService solidityNodeHttpApiService;
 
   static {
-    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
-    Args.getInstance().setSolidityNode(true);
+    Args.setParam(new String[]{"-d", dbPath(), "--solidity"}, Constant.TEST_CONF);
   }
 
   @Test
   public void testSolidityArgs() {
     Assert.assertNotNull(Args.getInstance().getTrustNodeAddr());
     Assert.assertTrue(Args.getInstance().isSolidityNode());
+    String trustNodeAddr = Args.getInstance().getTrustNodeAddr();
+    Args.getInstance().setTrustNodeAddr(null);
+    TronError thrown = assertThrows(TronError.class,
+        SolidityNode::start);
+    assertEquals(TronError.ErrCode.SOLID_NODE_INIT, thrown.getErrCode());
+    Args.getInstance().setTrustNodeAddr(trustNodeAddr);
   }
 
   @Test

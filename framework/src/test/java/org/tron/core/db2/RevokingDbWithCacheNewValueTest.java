@@ -1,22 +1,22 @@
 package org.tron.core.db2;
 
-import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.SessionOptional;
 import org.tron.core.Constant;
 import org.tron.core.capsule.utils.MarketUtils;
@@ -34,12 +34,14 @@ public class RevokingDbWithCacheNewValueTest {
   private TronApplicationContext context;
   private Application appT;
   private TestRevokingTronStore tronDatabase;
+  @Rule
+  public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private String databasePath = "";
 
   @Before
-  public void init() {
-    databasePath = "output_revokingStore_test_" + RandomStringUtils.randomAlphanumeric(10);
+  public void init() throws IOException {
+    databasePath = temporaryFolder.newFolder().toString();
     Args.setParam(new String[]{"-d", databasePath},
         Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
@@ -51,7 +53,6 @@ public class RevokingDbWithCacheNewValueTest {
     Args.clearParam();
     context.destroy();
     tronDatabase.close();
-    FileUtil.deleteDir(new File(databasePath));
   }
 
   @Test

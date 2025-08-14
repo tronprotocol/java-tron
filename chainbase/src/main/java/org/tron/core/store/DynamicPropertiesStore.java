@@ -1,6 +1,8 @@
 package org.tron.core.store;
 
 import static org.tron.common.math.Maths.max;
+import static org.tron.core.Constant.MAX_PROPOSAL_EXPIRE_TIME;
+import static org.tron.core.Constant.MIN_PROPOSAL_EXPIRE_TIME;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_PERIOD;
 
@@ -231,6 +233,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_TVM_CANCUN = "ALLOW_TVM_CANCUN".getBytes();
 
   private static final byte[] ALLOW_TVM_BLOB = "ALLOW_TVM_BLOB".getBytes();
+  private static final byte[] PROPOSAL_EXPIRE_TIME = "PROPOSAL_EXPIRE_TIME".getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -2944,6 +2947,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElse(CommonParameter.getInstance().getAllowTvmBlob());
+  }
+
+  public void saveProposalExpireTime(long proposalExpireTime) {
+    this.put(PROPOSAL_EXPIRE_TIME, new BytesCapsule(ByteArray.fromLong(proposalExpireTime)));
+  }
+
+  public long getProposalExpireTime() {
+    return Optional.ofNullable(getUnchecked(PROPOSAL_EXPIRE_TIME))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .filter(time -> time > MIN_PROPOSAL_EXPIRE_TIME && time < MAX_PROPOSAL_EXPIRE_TIME)
+        .orElse(CommonParameter.getInstance().getProposalExpireTime());
   }
 
   private static class DynamicResourceProperties {

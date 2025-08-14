@@ -7,6 +7,7 @@ import static org.tron.core.zen.ZksnarkInitService.librustzcashInitZksnarkParams
 import java.math.BigInteger;
 import javax.annotation.Resource;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.api.GrpcAPI.PrivateParameters;
 import org.tron.api.GrpcAPI.PrivateParametersWithoutAsk;
@@ -29,13 +30,14 @@ public class ShieldWalletTest extends BaseTest {
   @Resource
   private Wallet wallet;
 
-  static {
-    Args.setParam(new String[] {"-d", dbPath()}, Constant.TEST_CONF);
+  @BeforeClass
+  public static void init() {
+    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
+    librustzcashInitZksnarkParams();
   }
 
   @Test
   public void testCreateShieldedTransaction1() {
-    librustzcashInitZksnarkParams();
     String transactionStr1 = new String(ByteArray.fromHexString(
         "0x7b0a20202020227472616e73706172656e745f66726f6d5f61646472657373223a202234433930413"
             + "73241433344414546324536383932343545463430303839443634314345414337373433323433414233"
@@ -68,7 +70,6 @@ public class ShieldWalletTest extends BaseTest {
 
   @Test
   public void testCreateShieldedTransaction2() {
-    librustzcashInitZksnarkParams();
     String transactionStr2 = new String(ByteArray.fromHexString(
         "7b0a202020202261736b223a20223938666430333136376632333437623534643737323338343137663"
             + "6373038643537323939643938376362613838353564653037626532346236316464653064222c0a2020"
@@ -176,7 +177,6 @@ public class ShieldWalletTest extends BaseTest {
 
   @Test
   public void testCreateShieldedTransactionWithoutSpendAuthSig() {
-    librustzcashInitZksnarkParams();
     String transactionStr3 = new String(ByteArray.fromHexString(
         "7b0a2020202022616b223a2022373161643638633466353035373464356164333735343863626538363"
             + "63031663732393662393161306362303535353733313462373830383437323730326465222c0a202020"
@@ -286,7 +286,6 @@ public class ShieldWalletTest extends BaseTest {
 
   @Test
   public void testGetNewShieldedAddress() {
-    librustzcashInitZksnarkParams();
     try {
       ShieldedAddressInfo shieldedAddressInfo = wallet.getNewShieldedAddress();
       Assert.assertNotNull(shieldedAddressInfo);
@@ -297,8 +296,7 @@ public class ShieldWalletTest extends BaseTest {
 
   @Test
   public void testCreateShieldedContractParameters() throws ContractExeException {
-    librustzcashInitZksnarkParams();
-    Args.getInstance().setFullNodeAllowShieldedTransactionArgs(true);
+    Args.getInstance().setAllowShieldedTransactionApi(true);
     Wallet wallet1 = spy(new Wallet());
 
     doReturn(BigInteger.valueOf(1).toByteArray())
@@ -340,8 +338,7 @@ public class ShieldWalletTest extends BaseTest {
 
   @Test
   public void testCreateShieldedContractParameters2() throws ContractExeException {
-    librustzcashInitZksnarkParams();
-    Args.getInstance().setFullNodeAllowShieldedTransactionArgs(true);
+    Args.getInstance().setAllowShieldedTransactionApi(true);
     Wallet wallet1 = spy(new Wallet());
 
     doReturn(BigInteger.valueOf(1).toByteArray())
@@ -416,8 +413,7 @@ public class ShieldWalletTest extends BaseTest {
 
   @Test
   public void testCreateShieldedContractParametersWithoutAsk() throws ContractExeException {
-    librustzcashInitZksnarkParams();
-    Args.getInstance().setFullNodeAllowShieldedTransactionArgs(true);
+    Args.getInstance().setAllowShieldedTransactionApi(true);
 
     Wallet wallet1 = spy(new Wallet());
     doReturn(BigInteger.valueOf(1).toByteArray())

@@ -1,52 +1,41 @@
 package org.tron.plugins;
 
-import static org.iq80.leveldb.impl.Iq80DBFactory.factory;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Paths;
-import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
-import org.tron.plugins.utils.FileUtils;
+import org.junit.rules.TemporaryFolder;
+import org.rocksdb.RocksDBException;
+import org.tron.plugins.utils.DBUtils;
+import org.tron.plugins.utils.db.DbTool;
 import picocli.CommandLine;
 
 @Slf4j
 public class DbMoveTest {
 
   private static final String OUTPUT_DIRECTORY = "output-directory-toolkit";
-  private static final String OUTPUT_DIRECTORY_DATABASE =
-      Paths.get(OUTPUT_DIRECTORY,"ori","database").toString();
-  private static final String ENGINE = "ENGINE";
-  private static final String LEVELDB = "LEVELDB";
+
+  @Rule
+  public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
   private static final String ACCOUNT = "account";
   private static final String TRANS = "trans";
-  private static final String MARKET = "market_pair_price_to_order";
-  private static final String ENGINE_FILE = "engine.properties";
 
 
-  @BeforeClass
-  public static void init() throws IOException {
-    File file = new File(OUTPUT_DIRECTORY_DATABASE, ACCOUNT);
-    factory.open(file, ArchiveManifest.newDefaultLevelDbOptions()).close();
-    FileUtils.writeProperty(file + File.separator + ENGINE_FILE, ENGINE, LEVELDB);
-
-    file = new File(OUTPUT_DIRECTORY_DATABASE, MARKET);
-    factory.open(file, ArchiveManifest.newDefaultLevelDbOptions()).close();
-    FileUtils.writeProperty(file + File.separator + ENGINE_FILE, ENGINE, LEVELDB);
-
-    file = new File(OUTPUT_DIRECTORY_DATABASE, TRANS);
-    factory.open(file, ArchiveManifest.newDefaultLevelDbOptions()).close();
-    FileUtils.writeProperty(file + File.separator + ENGINE_FILE, ENGINE, LEVELDB);
+  private void init(DbTool.DbType dbType, String path) throws IOException, RocksDBException {
+    DbTool.getDB(path, ACCOUNT, dbType).close();
+    DbTool.getDB(path, DBUtils.MARKET_PAIR_PRICE_TO_ORDER, dbType).close();
+    DbTool.getDB(path, TRANS, dbType).close();
 
   }
 
-  @AfterClass
-  public static void destroy() {
+  @After
+  public void destroy() {
     deleteDir(new File(OUTPUT_DIRECTORY));
   }
 
@@ -74,9 +63,11 @@ public class DbMoveTest {
   }
 
   @Test
-  public void testMv() {
+  public void testMvForLevelDB() throws RocksDBException, IOException {
+    File database = temporaryFolder.newFolder("database");
+    init(DbTool.DbType.LevelDB, Paths.get(database.getPath()).toString());
     String[] args = new String[] {"db", "mv", "-d",
-        Paths.get(OUTPUT_DIRECTORY,"ori").toString(), "-c",
+        database.getParent(), "-c",
         getConfig("config.conf")};
     CommandLine cli = new CommandLine(new Toolkit());
     Assert.assertEquals(0, cli.execute(args));
@@ -84,9 +75,22 @@ public class DbMoveTest {
   }
 
   @Test
-  public void testDuplicate() {
+  public void testMvForRocksDB() throws RocksDBException, IOException {
+    File database = temporaryFolder.newFolder("database");
+    init(DbTool.DbType.RocksDB, Paths.get(database.getPath()).toString());
     String[] args = new String[] {"db", "mv", "-d",
-        Paths.get(OUTPUT_DIRECTORY,"ori").toString(), "-c",
+        database.getParent(), "-c",
+        getConfig("config.conf")};
+    CommandLine cli = new CommandLine(new Toolkit());
+    Assert.assertEquals(0, cli.execute(args));
+    Assert.assertEquals(2, cli.execute(args));
+  }
+
+  @Test
+  public void testDuplicate() throws IOException {
+    File output = temporaryFolder.newFolder();
+    String[] args = new String[] {"db", "mv", "-d",
+        output.getPath(), "-c",
         getConfig("config-duplicate.conf")};
     CommandLine cli = new CommandLine(new Toolkit());
     Assert.assertEquals(2, cli.execute(args));
@@ -107,20 +111,19 @@ public class DbMoveTest {
   }
 
   @Test
-  public void testConfNotExist() {
+  public void testConfNotExist() throws IOException {
+    File output = temporaryFolder.newFolder();
     String[] args = new String[] {"db", "mv", "-d",
-        Paths.get(OUTPUT_DIRECTORY,"ori").toString(), "-c",
+        output.getPath(), "-c",
         "config.conf"};
     CommandLine cli = new CommandLine(new Toolkit());
     Assert.assertEquals(2, cli.execute(args));
   }
 
   @Test
-  public void testEmpty() {
-    File file = new File(OUTPUT_DIRECTORY_DATABASE + File.separator + UUID.randomUUID());
-    file.mkdirs();
-    file.deleteOnExit();
-    String[] args = new String[] {"db", "mv", "-d", file.toString(), "-c",
+  public void testEmpty() throws IOException {
+    File output = temporaryFolder.newFolder();
+    String[] args = new String[] {"db", "mv", "-d", output.getPath(), "-c",
         getConfig("config.conf")};
     CommandLine cli = new CommandLine(new Toolkit());
 

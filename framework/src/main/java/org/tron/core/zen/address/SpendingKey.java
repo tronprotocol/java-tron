@@ -89,7 +89,7 @@ public class SpendingKey {
           throw new BadItemException(
               "librustzcash_check_diversifier does not return valid diversifier");
         }
-        blob[33] += 1;
+        blob[33] += (byte) 1;
       } finally {
         JLibsodium.freeState(state);
       }

@@ -24,6 +24,10 @@ public class Constant {
   public static final int NODE_TYPE_FULL_NODE = 0;
   public static final int NODE_TYPE_LIGHT_NODE = 1;
 
+  // DB NAME
+  public static final String MARKET_PAIR_PRICE_TO_ORDER = "market_pair_price_to_order";
+  // DB NAME
+
   // config for transaction
   public static final long TRANSACTION_MAX_BYTE_SIZE = 500 * 1_024L;
   public static final int CREATE_ACCOUNT_TRANSACTION_MIN_BYTE_SIZE = 500;
@@ -39,6 +43,9 @@ public class Constant {
   public static final long MAX_CONTRACT_RESULT_SIZE = 2L;
   public static final long PB_DEFAULT_ENERGY_LIMIT = 0L;
   public static final long CREATOR_DEFAULT_ENERGY_LIMIT = 1000 * 10_000L;
+  public static final long MIN_PROPOSAL_EXPIRE_TIME = 0L; // 0 ms
+  public static final long MAX_PROPOSAL_EXPIRE_TIME = 31536003000L; // ms of 365 days + 3000 ms
+  public static final long DEFAULT_PROPOSAL_EXPIRE_TIME = 259200000L; // ms of 3 days
 
 
   // Numbers
@@ -251,6 +258,9 @@ public class Constant {
   public static final String NODE_FULLNODE_ALLOW_SHIELDED_TRANSACTION = "node"
       + ".fullNodeAllowShieldedTransaction";
 
+  public static final String ALLOW_SHIELDED_TRANSACTION_API = "node"
+      + ".allowShieldedTransactionApi";
+
   public static final String NODE_ZEN_TOKENID = "node.zenTokenId";
 
   public static final String COMMITTEE_ALLOW_PROTO_FILTER_NUM = "committee.allowProtoFilterNum";
@@ -318,6 +328,9 @@ public class Constant {
 
   public static final String RATE_LIMITER_HTTP = "rate.limiter.http";
   public static final String RATE_LIMITER_RPC = "rate.limiter.rpc";
+  public static final String RATE_LIMITER_P2P_SYNC_BLOCK_CHAIN = "rate.limiter.p2p.syncBlockChain";
+  public static final String RATE_LIMITER_P2P_FETCH_INV_DATA = "rate.limiter.p2p.fetchInvData";
+  public static final String RATE_LIMITER_P2P_DISCONNECT = "rate.limiter.p2p.disconnect";
 
   public static final String SEED_NODE_IP_LIST = "seed.node.ip.list";
   public static final String NODE_METRICS_ENABLE = "node.metricsEnable";
@@ -405,4 +418,5 @@ public class Constant {
   public static final String COMMITTEE_ALLOW_TVM_CANCUN = "committee.allowTvmCancun";
 
   public static final String COMMITTEE_ALLOW_TVM_BLOB = "committee.allowTvmBlob";
+  public static final String COMMITTEE_PROPOSAL_EXPIRE_TIME = "committee.proposalExpireTime";
 }
