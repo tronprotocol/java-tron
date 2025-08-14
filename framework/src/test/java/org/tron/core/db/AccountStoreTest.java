@@ -1,20 +1,29 @@
 package org.tron.core.db;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
 
 import com.google.protobuf.ByteString;
+import com.typesafe.config.Config;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Resource;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db2.ISession;
+import org.tron.core.exception.TronError;
+import org.tron.core.net.peer.PeerManager;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
@@ -59,6 +68,21 @@ public class AccountStoreTest extends BaseTest {
 
     accountStore.put(data, accountCapsule);
     init = true;
+  }
+
+  @Test
+  public void setAccountTest() throws Exception {
+    Field field = AccountStore.class.getDeclaredField("assertsAddress");
+    field.setAccessible(true);
+    field.set(AccountStore.class, new HashMap<>());
+    Config config = mock(Config.class);
+    Mockito.when(config.getObjectList("genesis.block.assets")).thenReturn(new ArrayList<>());
+    try {
+      AccountStore.setAccount(config);
+      Assert.fail();
+    } catch (Throwable e) {
+      Assert.assertTrue(e instanceof TronError);
+    }
   }
 
   @Test

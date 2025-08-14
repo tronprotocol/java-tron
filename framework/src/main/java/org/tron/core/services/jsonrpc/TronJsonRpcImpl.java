@@ -24,7 +24,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -230,15 +229,11 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
 
   @Override
   public String web3ClientVersion() {
-    Pattern shortVersion = Pattern.compile("(\\d\\.\\d).*");
-    Matcher matcher = shortVersion.matcher(System.getProperty("java.version"));
-    matcher.matches();
-
     return String.join("/", Arrays.asList(
         "TRON",
         "v" + Version.getVersion(),
         System.getProperty("os.name"),
-        "Java" + matcher.group(1)));
+        "Java" + System.getProperty("java.specification.version")));
   }
 
   @Override

@@ -20,6 +20,15 @@ configurations.getByName('checkstyleConfig') {
     transitive = false
 }
 
+sourceSets {
+    main {
+        java.srcDirs = rootProject.archInfo.sourceSets.main.java.srcDirs
+    }
+    test {
+        java.srcDirs = rootProject.archInfo.sourceSets.test.java.srcDirs
+    }
+}
+
 dependencies {
     //local libraries
     implementation fileTree(dir: 'libs', include: '*.jar')
@@ -29,9 +38,18 @@ dependencies {
     implementation group: 'com.typesafe', name: 'config', version: '1.3.2'
     implementation group: 'me.tongfei', name: 'progressbar', version: '0.9.3'
     implementation group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.69'
-    implementation group: 'org.rocksdb', name: 'rocksdbjni', version: '5.15.10'
-    implementation 'io.github.tronprotocol:leveldbjni-all:1.18.2'
-    implementation 'io.github.tronprotocol:leveldb:1.18.2'
+    if (rootProject.archInfo.isArm64) {
+        testRuntimeOnly group: 'org.fusesource.hawtjni', name: 'hawtjni-runtime', version: '1.18' // for test
+        implementation project(":platform")
+    } else {
+        implementation project(":platform"), {
+            exclude(group: 'org.fusesource.leveldbjni', module: 'leveldbjni-all')
+            exclude(group: 'io.github.tronprotocol', module: 'zksnark-java-sdk')
+            exclude(group: 'commons-io', module: 'commons-io')
+        }
+        implementation 'io.github.tronprotocol:leveldbjni-all:1.18.2'
+        implementation 'io.github.tronprotocol:leveldb:1.18.2'
+    }
     implementation project(":protocol")
 }
 
@@ -76,6 +94,17 @@ test {
         destinationFile = file("../framework/build/jacoco/jacocoTest1.exec")
         classDumpDir = file("$buildDir/jacoco/classpathdumps")
     }
+
+    if (rootProject.archInfo.isArm64) {
+        exclude 'org/tron/plugins/leveldb/**'
+        filter {
+            excludeTestsMatching '*.*leveldb*'
+            excludeTestsMatching '*.*Leveldb*'
+            excludeTestsMatching '*.*LevelDB*'
+            excludeTestsMatching '*.*LevelDb*'
+            excludeTestsMatching '*.*Archive*'
+        }
+    }
 }
 
 jacocoTestReport {
@@ -94,7 +123,7 @@ def binaryRelease(taskName, jarName, mainClass) {
         from(sourceSets.main.output) {
             include "/**"
         }
-        dependsOn project(':protocol').jar // explicit_dependency
+        dependsOn (project(':protocol').jar, project(':platform').jar) // explicit_dependency
         from {
             configurations.runtimeClasspath.collect { // https://docs.gradle.org/current/userguide/upgrading_version_6.html#changes_6.3
                 it.isDirectory() ? it : zipTree(it)
@@ -127,7 +156,7 @@ def createScript(project, mainClass, name) {
         }
     }
 }
-applicationDistribution.from("../gradle/java-tron.vmoptions") {
+applicationDistribution.from(rootProject.archInfo.VMOptions) {
     into "bin"
 }
 createScript(project, 'org.tron.plugins.ArchiveManifest', 'ArchiveManifest')
