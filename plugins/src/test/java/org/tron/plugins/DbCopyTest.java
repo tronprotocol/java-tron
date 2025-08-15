@@ -4,12 +4,23 @@ import java.io.IOException;
 import java.util.UUID;
 import org.junit.Assert;
 import org.junit.Test;
+import org.rocksdb.RocksDBException;
+import org.tron.plugins.utils.db.DbTool;
 import picocli.CommandLine;
 
 public class DbCopyTest extends DbTest {
 
   @Test
-  public void testRun() {
+  public void testRunForLevelDB() throws RocksDBException, IOException {
+    init(DbTool.DbType.LevelDB);
+    String[] args = new String[] { "db", "cp",  INPUT_DIRECTORY,
+        genarateTmpDir()};
+    Assert.assertEquals(0, cli.execute(args));
+  }
+
+  @Test
+  public void testRunForRocksDB() throws RocksDBException, IOException {
+    init(DbTool.DbType.RocksDB);
     String[] args = new String[] { "db", "cp",  INPUT_DIRECTORY,
         genarateTmpDir()};
     Assert.assertEquals(0, cli.execute(args));

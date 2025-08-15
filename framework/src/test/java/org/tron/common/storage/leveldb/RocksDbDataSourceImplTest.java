@@ -10,6 +10,8 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -24,13 +26,20 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
+import org.rocksdb.RocksDBException;
+import org.tron.common.error.TronDBException;
+import org.tron.common.parameter.CommonParameter;
+import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PropUtil;
 import org.tron.common.utils.PublicMethod;
+import org.tron.common.utils.StorageUtils;
 import org.tron.core.config.args.Args;
 import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.exception.TronError;
@@ -54,6 +63,9 @@ public class RocksDbDataSourceImplTest {
   private byte[] key4 = "00000004aa".getBytes();
   private byte[] key5 = "00000005aa".getBytes();
   private byte[] key6 = "00000006aa".getBytes();
+
+  @Rule
+  public final ExpectedException expectedException = ExpectedException.none();
 
   /**
    * Release resources.
@@ -84,8 +96,18 @@ public class RocksDbDataSourceImplTest {
 
     assertNotNull(dataSourceTest.getData(key));
     assertEquals(1, dataSourceTest.allKeys().size());
+    assertEquals(1, dataSourceTest.getTotal());
+    assertEquals(1, dataSourceTest.allValues().size());
     assertEquals("50000", ByteArray.toStr(dataSourceTest.getData(key1.getBytes())));
+    dataSourceTest.deleteData(key);
+    assertNull(dataSourceTest.getData(key));
+    assertEquals(0, dataSourceTest.getTotal());
+    dataSourceTest.iterator().forEachRemaining(entry -> Assert.fail("iterator should be empty"));
+    dataSourceTest.stat();
     dataSourceTest.closeDB();
+    dataSourceTest.stat(); // stat again
+    expectedException.expect(TronDBException.class);
+    dataSourceTest.deleteData(key);
   }
 
   @Test
@@ -124,6 +146,23 @@ public class RocksDbDataSourceImplTest {
     assertEquals("50000", ByteArray.toStr(dataSource.getData(key1.getBytes())));
     assertEquals("10000", ByteArray.toStr(dataSource.getData(key2.getBytes())));
     assertEquals(2, dataSource.allKeys().size());
+
+    rows.clear();
+    rows.put(key1.getBytes(), null);
+    rows.put(key2.getBytes(), null);
+    dataSource.updateByBatch(rows, WriteOptionsWrapper.getInstance());
+    assertEquals(0, dataSource.allKeys().size());
+
+    rows.clear();
+    rows.put(key1.getBytes(), value1.getBytes());
+    rows.put(key2.getBytes(), null);
+    dataSource.updateByBatch(rows);
+    assertEquals("50000", ByteArray.toStr(dataSource.getData(key1.getBytes())));
+    assertEquals(1, dataSource.allKeys().size());
+    rows.clear();
+    rows.put(null, null);
+    expectedException.expect(RuntimeException.class);
+    dataSource.updateByBatch(rows);
     dataSource.closeDB();
   }
 
@@ -276,8 +315,9 @@ public class RocksDbDataSourceImplTest {
     try {
       dataSource.initDB();
     } catch (Exception e) {
-      Assert.assertEquals(String.format("failed to check database: %s, engine do not match",
-              "test_engine"),
+      Assert.assertEquals(String.format(
+              "Cannot open LevelDB database '%s' with RocksDB engine."
+                  + " Set db.engine=LEVELDB or use RocksDB database. ", "test_engine"),
               e.getMessage());
     }
     Assert.assertNull(dataSource.getDatabase());
@@ -394,6 +434,103 @@ public class RocksDbDataSourceImplTest {
         Args.getInstance().getOutputDirectory(), "test_initDb");
     TronError thrown = assertThrows(TronError.class, dataSource::initDB);
     assertEquals(TronError.ErrCode.ROCKSDB_INIT, thrown.getErrCode());
+  }
+
+  @Test
+  public void testRocksDbOpenLevelDb() {
+    String name = "test_openLevelDb";
+    String output = Paths
+        .get(StorageUtils.getOutputDirectoryByDbName(name), CommonParameter
+            .getInstance().getStorage().getDbDirectory()).toString();
+    LevelDbDataSourceImpl levelDb = new LevelDbDataSourceImpl(
+        StorageUtils.getOutputDirectoryByDbName(name), name);
+    levelDb.initDB();
+    levelDb.putData(key1, value1);
+    levelDb.closeDB();
+    RocksDbDataSourceImpl rocksDb = new RocksDbDataSourceImpl(output, name);
+    expectedException.expectMessage(
+        String.format(
+            "Cannot open LevelDB database '%s' with RocksDB engine."
+                + " Set db.engine=LEVELDB or use RocksDB database. ", name));
+    rocksDb.initDB();
+  }
+
+  @Test
+  public void testRocksDbOpenLevelDb2() {
+    String name = "test_openLevelDb2";
+    String output = Paths
+        .get(StorageUtils.getOutputDirectoryByDbName(name), CommonParameter
+            .getInstance().getStorage().getDbDirectory()).toString();
+    LevelDbDataSourceImpl levelDb = new LevelDbDataSourceImpl(
+        StorageUtils.getOutputDirectoryByDbName(name), name);
+    levelDb.initDB();
+    levelDb.putData(key1, value1);
+    levelDb.closeDB();
+    // delete engine.properties file to simulate the case that db.engine is not set.
+    File engineFile = Paths
+        .get(output, name, "engine.properties").toFile();
+    if (engineFile.exists()) {
+      engineFile.delete();
+    }
+    Assert.assertFalse(engineFile.exists());
+    RocksDbDataSourceImpl rocksDb = new RocksDbDataSourceImpl(output, name);
+    expectedException.expectMessage(
+        String.format(
+            "Cannot open LevelDB database '%s' with RocksDB engine."
+                + " Set db.engine=LEVELDB or use RocksDB database. ", name));
+    rocksDb.initDB();
+  }
+
+  @Test
+  public void testNewInstance() {
+    dataSourceTest.closeDB();
+    RocksDbDataSourceImpl newInst = dataSourceTest.newInstance();
+    newInst.initDB();
+    assertFalse(newInst.flush());
+    newInst.closeDB();
+    RocksDbDataSourceImpl empty = new RocksDbDataSourceImpl();
+    empty.setDBName("empty");
+    assertEquals("empty", empty.getDBName());
+    String output = Paths
+        .get(StorageUtils.getOutputDirectoryByDbName("newInst2"), CommonParameter
+            .getInstance().getStorage().getDbDirectory()).toString();
+    RocksDbDataSourceImpl newInst2 = new RocksDbDataSourceImpl(output, "newInst2");
+    newInst2.initDB();
+    newInst2.closeDB();
+  }
+
+  @Test
+  public void backupAndDelete() throws RocksDBException {
+    RocksDbDataSourceImpl dataSource = new RocksDbDataSourceImpl(
+        Args.getInstance().getOutputDirectory(), "backupAndDelete");
+    dataSource.initDB();
+    putSomeKeyValue(dataSource);
+    Path dir = Paths.get(Args.getInstance().getOutputDirectory(), "backup");
+    String path = dir + File.separator;
+    FileUtil.createDirIfNotExists(path);
+    dataSource.backup(path);
+    File backDB = Paths.get(dir.toString(),dataSource.getDBName()).toFile();
+    Assert.assertTrue(backDB.exists());
+    dataSource.deleteDbBakPath(path);
+    Assert.assertFalse(backDB.exists());
+    dataSource.closeDB();
+  }
+
+  @Test
+  public void testGetTotal() {
+    RocksDbDataSourceImpl dataSource = new RocksDbDataSourceImpl(
+        Args.getInstance().getOutputDirectory(), "test_getTotal_key");
+    dataSource.initDB();
+    dataSource.resetDb();
+
+    Map<byte[], byte[]> dataMapset = Maps.newHashMap();
+    dataMapset.put(key1, value1);
+    dataMapset.put(key2, value2);
+    dataMapset.put(key3, value3);
+    dataMapset.forEach(dataSource::putData);
+    Assert.assertEquals(dataMapset.size(), dataSource.getTotal());
+    dataSource.resetDb();
+    dataSource.closeDB();
   }
 
   private void makeExceptionDb(String dbName) {

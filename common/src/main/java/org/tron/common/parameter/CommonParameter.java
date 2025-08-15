@@ -205,7 +205,15 @@ public class CommonParameter {
   //If you are running a solidity node for java tron, this flag is set to true
   @Getter
   @Setter
+  @Parameter(names = {"--solidity"}, description = "running a solidity node for java tron")
   public boolean solidityNode = false;
+
+  //If you are running KeystoreFactory, this flag is set to true
+  @Getter
+  @Setter
+  @Parameter(names = {"--keystore"}, description = "running KeystoreFactory")
+  public boolean keystore = false;
+
   @Getter
   @Setter
   public int rpcPort;
@@ -383,7 +391,7 @@ public class CommonParameter {
   // full node used this parameter to close shielded transaction
   @Getter
   @Setter
-  public boolean fullNodeAllowShieldedTransactionArgs;
+  public boolean allowShieldedTransactionApi;
   @Getter
   @Setter
   public long blockNumForEnergyLimit;
@@ -428,6 +436,15 @@ public class CommonParameter {
   public int rateLimiterGlobalIpQps;
   @Getter
   public int rateLimiterGlobalApiQps;
+  @Getter
+  @Setter
+  public double rateLimiterSyncBlockChain;
+  @Getter
+  @Setter
+  public double rateLimiterFetchInvData;
+  @Getter
+  @Setter
+  public double rateLimiterDisconnect;
   @Getter
   public DbBackupConfig dbBackupConfig;
   @Getter
