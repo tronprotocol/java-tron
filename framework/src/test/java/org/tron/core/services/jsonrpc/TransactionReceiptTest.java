@@ -11,7 +11,7 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.config.args.Args;
-import org.tron.core.exception.JsonRpcInternalException;
+import org.tron.core.exception.jsonrpc.JsonRpcInternalException;
 import org.tron.core.services.jsonrpc.types.TransactionReceipt;
 import org.tron.core.services.jsonrpc.types.TransactionReceipt.TransactionContext;
 import org.tron.core.store.TransactionRetStore;
