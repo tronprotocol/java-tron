@@ -41,6 +41,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.tron.common.crypto.Blake2bfMessageDigest;
 import org.tron.common.crypto.Hash;
+import org.tron.common.crypto.Rsv;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.crypto.SignatureInterface;
 import org.tron.common.crypto.zksnark.BN128;
@@ -352,22 +353,13 @@ public class PrecompiledContracts {
   }
 
   private static byte[] recoverAddrBySign(byte[] sign, byte[] hash) {
-    byte v;
-    byte[] r;
-    byte[] s;
     byte[] out = null;
     if (ArrayUtils.isEmpty(sign) || sign.length < 65) {
       return new byte[0];
     }
     try {
-      r = Arrays.copyOfRange(sign, 0, 32);
-      s = Arrays.copyOfRange(sign, 32, 64);
-      v = sign[64];
-      if (v < 27) {
-        v += 27;
-      }
-
-      SignatureInterface signature = SignUtils.fromComponents(r, s, v,
+      Rsv rsv = Rsv.fromSignature(sign);
+      SignatureInterface signature = SignUtils.fromComponents(rsv.getR(), rsv.getS(), rsv.getV(),
           CommonParameter.getInstance().isECKeyCryptoEngine());
       if (signature.validateComponents()) {
         out = SignUtils.signatureToAddress(hash, signature,

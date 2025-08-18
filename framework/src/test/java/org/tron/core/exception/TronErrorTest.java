@@ -59,7 +59,6 @@ public class TronErrorTest {
   @Test
   public void ZksnarkInitTest() {
     try (MockedStatic<JLibrustzcash> mock = mockStatic(JLibrustzcash.class)) {
-      mock.when(JLibrustzcash::isOpenZen).thenReturn(true);
       mock.when(() -> JLibrustzcash.librustzcashInitZksnarkParams(any()))
           .thenAnswer(invocation -> {
             throw new ZksnarkException("Zksnark init failed");
