@@ -21,12 +21,20 @@ public class FullNode {
    */
   public static void main(String[] args) {
     ExitManager.initExceptionHandler();
-    logger.info("Full node running.");
     Args.setParam(args, Constant.TESTNET_CONF);
     CommonParameter parameter = Args.getInstance();
 
     LogService.load(parameter.getLogbackPath());
 
+    if (parameter.isSolidityNode()) {
+      SolidityNode.start();
+      return;
+    }
+    if (parameter.isKeystore()) {
+      KeystoreFactory.start();
+      return;
+    }
+    logger.info("Full node running.");
     if (Args.getInstance().isDebug()) {
       logger.info("in debug mode, it won't check energy time");
     } else {

@@ -67,9 +67,10 @@ public class DbLiteTest {
     context.close();
   }
 
-  public void init() throws IOException {
+  public void init(String dbType) throws IOException {
     dbPath = folder.newFolder().toString();
-    Args.setParam(new String[]{"-d", dbPath, "-w", "--p2p-disable", "true"},
+    Args.setParam(new String[]{
+        "-d", dbPath, "-w", "--p2p-disable", "true", "--storage-db-engine", dbType},
         "config-localtest.conf");
     // allow account root
     Args.getInstance().setAllowAccountStateRoot(1);
@@ -85,11 +86,11 @@ public class DbLiteTest {
     Args.clearParam();
   }
 
-  void testTools(String dbType, int checkpointVersion)
+  public void testTools(String dbType, int checkpointVersion)
       throws InterruptedException, IOException {
     logger.info("dbType {}, checkpointVersion {}", dbType, checkpointVersion);
     dbPath = String.format("%s_%s_%d", dbPath, dbType, System.currentTimeMillis());
-    init();
+    init(dbType);
     final String[] argsForSnapshot =
         new String[]{"-o", "split", "-t", "snapshot", "--fn-data-path",
             dbPath + File.separator + databaseDir, "--dataset-path",
@@ -101,7 +102,6 @@ public class DbLiteTest {
     final String[] argsForMerge =
         new String[]{"-o", "merge", "--fn-data-path", dbPath + File.separator + databaseDir,
             "--dataset-path", dbPath + File.separator + "history"};
-    Args.getInstance().getStorage().setDbEngine(dbType);
     Args.getInstance().getStorage().setCheckpointVersion(checkpointVersion);
     DbLite.setRecentBlks(3);
     // start fullNode

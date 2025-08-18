@@ -4,8 +4,11 @@ import static java.lang.System.exit;
 import static org.tron.common.math.Maths.max;
 import static org.tron.common.math.Maths.min;
 import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
+import static org.tron.core.Constant.DEFAULT_PROPOSAL_EXPIRE_TIME;
 import static org.tron.core.Constant.DYNAMIC_ENERGY_INCREASE_FACTOR_RANGE;
 import static org.tron.core.Constant.DYNAMIC_ENERGY_MAX_FACTOR_RANGE;
+import static org.tron.core.Constant.MAX_PROPOSAL_EXPIRE_TIME;
+import static org.tron.core.Constant.MIN_PROPOSAL_EXPIRE_TIME;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCE_TIMEOUT_PERCENT;
 import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
 
@@ -44,6 +47,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.arch.Arch;
 import org.tron.common.args.Account;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.args.Witness;
@@ -169,6 +173,7 @@ public class Args extends CommonParameter {
     PARAMETER.tcpNettyWorkThreadNum = 0;
     PARAMETER.udpNettyWorkThreadNum = 0;
     PARAMETER.solidityNode = false;
+    PARAMETER.keystore = false;
     PARAMETER.trustNodeAddr = "";
     PARAMETER.walletExtensionApi = false;
     PARAMETER.estimateEnergy = false;
@@ -186,7 +191,7 @@ public class Args extends CommonParameter {
     PARAMETER.maxHttpConnectNumber = 50;
     PARAMETER.allowMultiSign = 0;
     PARAMETER.trxExpirationTimeInMilliseconds = 0;
-    PARAMETER.fullNodeAllowShieldedTransactionArgs = true;
+    PARAMETER.allowShieldedTransactionApi = true;
     PARAMETER.zenTokenId = "000000";
     PARAMETER.allowProtoFilterNum = 0;
     PARAMETER.allowAccountStateRoot = 0;
@@ -235,6 +240,9 @@ public class Args extends CommonParameter {
     PARAMETER.rateLimiterGlobalQps = 50000;
     PARAMETER.rateLimiterGlobalIpQps = 10000;
     PARAMETER.rateLimiterGlobalApiQps = 1000;
+    PARAMETER.rateLimiterSyncBlockChain = 3.0;
+    PARAMETER.rateLimiterFetchInvData = 3.0;
+    PARAMETER.rateLimiterDisconnect = 1.0;
     PARAMETER.p2pDisable = false;
     PARAMETER.dynamicConfigEnable = false;
     PARAMETER.dynamicConfigCheckInterval = 600;
@@ -343,7 +351,7 @@ public class Args extends CommonParameter {
 
   private static Map<String, String[]> getOptionGroup() {
     String[] tronOption = new String[] {"version", "help", "shellConfFileName", "logbackPath",
-        "eventSubscribe"};
+        "eventSubscribe", "solidityNode", "keystore"};
     String[] dbOption = new String[] {"outputDirectory"};
     String[] witnessOption = new String[] {"witness", "privateKey"};
     String[] vmOption = new String[] {"debug"};
@@ -370,6 +378,7 @@ public class Args extends CommonParameter {
    * set parameters.
    */
   public static void setParam(final String[] args, final String confFileName) {
+    Arch.throwUnsupportedJavaException();
     JCommander.newBuilder().addObject(PARAMETER).build().parse(args);
     if (PARAMETER.version) {
       printVersion();
@@ -816,9 +825,7 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.BLOCK_MAINTENANCE_TIME_INTERVAL) ? config
             .getInt(Constant.BLOCK_MAINTENANCE_TIME_INTERVAL) : 21600000L;
 
-    PARAMETER.proposalExpireTime =
-        config.hasPath(Constant.BLOCK_PROPOSAL_EXPIRE_TIME) ? config
-            .getInt(Constant.BLOCK_PROPOSAL_EXPIRE_TIME) : 259200000L;
+    PARAMETER.proposalExpireTime = getProposalExpirationTime(config);
 
     PARAMETER.checkFrozenTime =
         config.hasPath(Constant.BLOCK_CHECK_FROZEN_TIME) ? config
@@ -992,9 +999,18 @@ public class Args extends CommonParameter {
     PARAMETER.eventFilter =
         config.hasPath(Constant.EVENT_SUBSCRIBE_FILTER) ? getEventFilter(config) : null;
 
-    PARAMETER.fullNodeAllowShieldedTransactionArgs =
-        !config.hasPath(Constant.NODE_FULLNODE_ALLOW_SHIELDED_TRANSACTION)
-            || config.getBoolean(Constant.NODE_FULLNODE_ALLOW_SHIELDED_TRANSACTION);
+    if (config.hasPath(Constant.ALLOW_SHIELDED_TRANSACTION_API)) {
+      PARAMETER.allowShieldedTransactionApi =
+          config.getBoolean(Constant.ALLOW_SHIELDED_TRANSACTION_API);
+    } else if (config.hasPath(Constant.NODE_FULLNODE_ALLOW_SHIELDED_TRANSACTION)) {
+      // for compatibility with previous configuration
+      PARAMETER.allowShieldedTransactionApi =
+          config.getBoolean(Constant.NODE_FULLNODE_ALLOW_SHIELDED_TRANSACTION);
+      logger.warn("Configuring [node.fullNodeAllowShieldedTransaction] will be deprecated. "
+          + "Please use [node.allowShieldedTransactionApi] instead.");
+    } else {
+      PARAMETER.allowShieldedTransactionApi = true;
+    }
 
     PARAMETER.zenTokenId = config.hasPath(Constant.NODE_ZEN_TOKENID)
         ? config.getString(Constant.NODE_ZEN_TOKENID) : "000000";
@@ -1031,10 +1047,6 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.NODE_SHIELDED_TRANS_IN_PENDING_MAX_COUNTS) ? config
             .getInt(Constant.NODE_SHIELDED_TRANS_IN_PENDING_MAX_COUNTS) : 10;
 
-    if (PARAMETER.isWitness()) {
-      PARAMETER.fullNodeAllowShieldedTransactionArgs = true;
-    }
-
     PARAMETER.rateLimiterGlobalQps =
         config.hasPath(Constant.RATE_LIMITER_GLOBAL_QPS) ? config
             .getInt(Constant.RATE_LIMITER_GLOBAL_QPS) : 50000;
@@ -1048,6 +1060,18 @@ public class Args extends CommonParameter {
         .getInt(Constant.RATE_LIMITER_GLOBAL_API_QPS) : 1000;
 
     PARAMETER.rateLimiterInitialization = getRateLimiterFromConfig(config);
+
+    PARAMETER.rateLimiterSyncBlockChain =
+        config.hasPath(Constant.RATE_LIMITER_P2P_SYNC_BLOCK_CHAIN) ? config
+            .getDouble(Constant.RATE_LIMITER_P2P_SYNC_BLOCK_CHAIN) : 3.0;
+
+    PARAMETER.rateLimiterFetchInvData =
+        config.hasPath(Constant.RATE_LIMITER_P2P_FETCH_INV_DATA) ? config
+            .getDouble(Constant.RATE_LIMITER_P2P_FETCH_INV_DATA) : 3.0;
+
+    PARAMETER.rateLimiterDisconnect =
+        config.hasPath(Constant.RATE_LIMITER_P2P_DISCONNECT) ? config
+            .getDouble(Constant.RATE_LIMITER_P2P_DISCONNECT) : 1.0;
 
     PARAMETER.changedDelegation =
         config.hasPath(Constant.COMMITTEE_CHANGED_DELEGATION) ? config
@@ -1303,6 +1327,26 @@ public class Args extends CommonParameter {
             .getInt(Constant.COMMITTEE_ALLOW_TVM_SELFDESTRUCT_RESTRICTION) : 0;
 
     logConfig();
+  }
+
+  private static long getProposalExpirationTime(final Config config) {
+    if (config.hasPath(Constant.COMMITTEE_PROPOSAL_EXPIRE_TIME)) {
+      throw new IllegalArgumentException("It is not allowed to configure "
+          + "commit.proposalExpireTime in config.conf, please set the value in "
+          + "block.proposalExpireTime.");
+    }
+    if (config.hasPath(Constant.BLOCK_PROPOSAL_EXPIRE_TIME)) {
+      long proposalExpireTime = config.getLong(Constant.BLOCK_PROPOSAL_EXPIRE_TIME);
+      if (proposalExpireTime <= MIN_PROPOSAL_EXPIRE_TIME
+          || proposalExpireTime >= MAX_PROPOSAL_EXPIRE_TIME) {
+        throw new IllegalArgumentException("The value[block.proposalExpireTime] is only allowed to "
+            + "be greater than " + MIN_PROPOSAL_EXPIRE_TIME + " and less than "
+            + MAX_PROPOSAL_EXPIRE_TIME + "!");
+      }
+      return proposalExpireTime;
+    } else {
+      return DEFAULT_PROPOSAL_EXPIRE_TIME;
+    }
   }
 
   private static List<Witness> getWitnessesFromConfig(final com.typesafe.config.Config config) {
@@ -1689,11 +1733,13 @@ public class Args extends CommonParameter {
         .getLong(prefix + "targetFileSizeBase") : 64;
     int targetFileSizeMultiplier = config.hasPath(prefix + "targetFileSizeMultiplier") ? config
         .getInt(prefix + "targetFileSizeMultiplier") : 1;
+    int maxOpenFiles = config.hasPath(prefix + "maxOpenFiles")
+        ? config.getInt(prefix + "maxOpenFiles") : 5000;
 
     PARAMETER.rocksDBCustomSettings = RocksDbSettings
         .initCustomSettings(levelNumber, compactThreads, blocksize, maxBytesForLevelBase,
             maxBytesForLevelMultiplier, level0FileNumCompactionTrigger,
-            targetFileSizeBase, targetFileSizeMultiplier);
+            targetFileSizeBase, targetFileSizeMultiplier, maxOpenFiles);
     RocksDbSettings.loggingSettings();
   }
 
@@ -1730,6 +1776,8 @@ public class Args extends CommonParameter {
   public static void logConfig() {
     CommonParameter parameter = CommonParameter.getInstance();
     logger.info("\n");
+    logger.info("************************ System info ************************");
+    logger.info("{}", Arch.withAll());
     logger.info("************************ Net config ************************");
     logger.info("P2P version: {}", parameter.getNodeP2pVersion());
     logger.info("LAN IP: {}", parameter.getNodeLanIp());
@@ -1772,10 +1820,6 @@ public class Args extends CommonParameter {
     logger.info("ShutDown blockCount : {}", parameter.getShutdownBlockCount());
     logger.info("***************************************************************");
     logger.info("\n");
-  }
-
-  public static void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {
-    PARAMETER.fullNodeAllowShieldedTransactionArgs = fullNodeAllowShieldedTransaction;
   }
 
   private static void witnessAddressCheck(Config config) {

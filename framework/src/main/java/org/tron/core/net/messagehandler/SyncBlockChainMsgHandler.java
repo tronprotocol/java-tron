@@ -58,6 +58,14 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
   }
 
   private boolean check(PeerConnection peer, SyncBlockChainMessage msg) throws P2pException {
+    if (peer.getRemainNum() > 0
+        && !peer.getP2pRateLimiter().tryAcquire(msg.getType().asByte())) {
+      // Discard messages that exceed the rate limit
+      logger.warn("{} message from peer {} exceeds the rate limit",
+          msg.getType(), peer.getInetSocketAddress());
+      return false;
+    }
+
     List<BlockId> blockIds = msg.getBlockIds();
     if (CollectionUtils.isEmpty(blockIds)) {
       throw new P2pException(TypeEnum.BAD_MESSAGE, "SyncBlockChain blockIds is empty");

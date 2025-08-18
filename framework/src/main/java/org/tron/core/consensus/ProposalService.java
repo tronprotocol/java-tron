@@ -388,6 +388,10 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveAllowTvmSelfdestructRestriction(entry.getValue());
           break;
         }
+        case PROPOSAL_EXPIRE_TIME: {
+          manager.getDynamicPropertiesStore().saveProposalExpireTime(entry.getValue());
+          break;
+        }
         default:
           find = false;
           break;
