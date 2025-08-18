@@ -1,6 +1,6 @@
-package org.tron.core.exception;
+package org.tron.core.exception.jsonrpc;
 
-public class JsonRpcInvalidRequestException extends TronException {
+public class JsonRpcInvalidRequestException extends JsonRpcException {
 
   public JsonRpcInvalidRequestException() {
     super();
