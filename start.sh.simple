@@ -1,0 +1,195 @@
+#!/bin/bash
+#############################################################################
+#
+#                    GNU LESSER GENERAL PUBLIC LICENSE
+#                        Version 3, 29 June 2007
+#
+#  Copyright (C) [2007] [TRON Foundation], Inc. <https://fsf.org/>
+#  Everyone is permitted to copy and distribute verbatim copies
+#  of this license document, but changing it is not allowed.
+#
+#
+#   This version of the GNU Lesser General Public License incorporates
+# the terms and conditions of version 3 of the GNU General Public
+# License, supplemented by the additional permissions listed below.
+#
+# You can find java-tron at https://github.com/tronprotocol/java-tron/
+#
+##############################################################################
+# TRON Full Node Management Simple Script
+#
+# NOTE: This is a simple and concise script to start and stop the java-tron full node,
+# designed for developers to quickly get started and learn.
+# It may not be suitable for production environments.
+#
+# Usage:
+#   sh start.sh           # Start the java-tron FullNode
+#   sh start.sh -s        # Stop the java-tron FullNode
+#   sh start.sh [options] # Start with additional java-tron options,such as: -c config.conf -d /path_to_data, etc.
+#
+##############################################################################
+
+
+# adjust JVM start
+# Set the minimum and maximum heap size to 9G, adjust as needed
+VM_XMS="9G"
+# Set the maximum heap size to 9G, adjust as needed
+VM_XMX="9G"
+# Set the maximum direct memory size to 1G, adjust as needed
+VM_MAX_DIRECT_MEMORY_SIZE="1G"
+# adjust JVM end
+
+FULL_NODE_JAR="FullNode.jar"
+FULL_START_OPT=()
+PID=""
+MAX_STOP_TIME=60
+JAVACMD=""
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+log() {
+  local level="$1"; shift
+  local timestamp color=""
+  timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+  case "$level" in
+    INFO) color="$GREEN" ;;
+    WARN) color="$YELLOW" ;;
+    ERROR) color="$RED" ;;
+  esac
+  printf "%b[%s] [%s]:%b %s\n" "$color" "$timestamp" "$level" "$NC" "$*" | tee -a "${SCRIPT_DIR}/start.log"
+}
+
+info() { log INFO "$@"; }
+warn() { log WARN "$@"; }
+error() { log ERROR "$@"; }
+die() { error "$@"; exit 1; }
+
+ulimit -n 65535 || warn "Failed to set ulimit -n 65535"
+
+findJava() {
+  if [ -n "${JAVA_HOME:-}" ]; then
+    if [ -x "$JAVA_HOME/jre/sh/java" ]; then
+      JAVACMD="$JAVA_HOME/jre/sh/java"
+    else
+      JAVACMD="$JAVA_HOME/bin/java"
+    fi
+    [ -x "$JAVACMD" ] || die "JAVA_HOME is invalid: $JAVA_HOME"
+  else
+    JAVACMD="java"
+    which java >/dev/null 2>&1 || die "JAVA_HOME not set and no 'java' in PATH"
+  fi
+  "$JAVACMD" -version > /dev/null 2>&1 || die "Java command not working"
+}
+
+checkPid() {
+  # shellcheck disable=SC2009
+  PID=$(ps -ef |grep $FULL_NODE_JAR |grep -v grep |awk '{print $2}')
+}
+
+
+stopService() {
+  checkPid
+
+  if ! kill -0 "$PID" 2>/dev/null; then
+    info "java-tron is not running."
+    return 0
+  fi
+  info "Stopping java-tron service (PID: $PID)"
+
+  local count=1
+
+  while [ -n "$PID" ] && [ $count -le $MAX_STOP_TIME ]; do
+    kill -TERM "$PID" 2>/dev/null && info "Sent SIGTERM to java-tron (PID: $PID), attempt $count"
+    sleep 1
+    checkPid
+    count=$((count + 1))
+  done
+
+  if [ -n "$PID" ]; then
+    warn "Forcing kill java-tron (PID: $PID) after $MAX_STOP_TIME seconds"
+    kill -KILL "$PID" 2>/dev/null
+    sleep 1
+    checkPid
+  fi
+
+  if [ -n "$PID" ]; then
+    die "Failed to stop the service (PID: $PID)"
+  else
+    info "java-tron stopped"
+    wait_with_info 2 "Cleaning up..."
+  fi
+}
+
+startService() {
+  if [ -n "${FULL_START_OPT[*]}" ]; then
+    info "Starting java-tron service with options: ${FULL_START_OPT[*]}"
+  fi
+  if [ ! -f "$FULL_NODE_JAR" ]; then
+    die "$FULL_NODE_JAR not found in path $SCRIPT_DIR."
+  fi
+
+  nohup "$JAVACMD" \
+    -Xms"$VM_XMS" -Xmx"$VM_XMX" -XX:ReservedCodeCacheSize=256m \
+    -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m \
+    -XX:MaxDirectMemorySize="$VM_MAX_DIRECT_MEMORY_SIZE" \
+    -Xloggc:gc.log -XX:+PrintGCDetails \
+    -XX:+UseG1GC \
+    -XX:MaxGCPauseMillis=40 \
+    -XX:InitiatingHeapOccupancyPercent=45 \
+    -XX:+HeapDumpOnOutOfMemoryError \
+    -jar "$FULL_NODE_JAR" "${FULL_START_OPT[@]}" \
+    >> start.log 2>&1 &
+
+
+  info "Waiting for the service to start..."
+  wait_with_info 5 "Starting..."
+
+  checkPid
+
+  if [ -n "$PID" ]; then
+    info "Started java-tron with PID $PID on $HOSTNAME."
+  else
+    die "Failed to start java-tron, see start.log or logs/tron.log for details."
+  fi
+}
+
+wait_with_info() {
+  local seconds=$1
+  local message=$2
+  for i in $(seq "$seconds" -1 1); do
+    info "$message wait ($i) s"
+    sleep 1
+  done
+}
+
+
+start() {
+  checkPid
+  if [ -n "$PID" ]; then
+    info "java-tron is already running (PID: $PID), to stop the service: sh start.sh -s"
+    return
+  fi
+  findJava
+  startService
+}
+
+while [ -n "$1" ]; do
+  case "$1" in
+    -s)
+      stopService
+      exit 0
+      ;;
+    *)
+      FULL_START_OPT+=("$@")
+      break
+      ;;
+  esac
+done
+
+start
+
+exit 0

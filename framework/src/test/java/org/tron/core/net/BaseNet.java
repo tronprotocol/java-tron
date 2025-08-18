@@ -1,6 +1,8 @@
 package org.tron.core.net;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import lombok.extern.slf4j.Slf4j;
@@ -14,9 +16,11 @@ import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.PublicMethod;
+import org.tron.common.utils.ReflectUtils;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.net.peer.PeerConnection;
 
 @Slf4j
 public class BaseNet {
@@ -80,6 +84,13 @@ public class BaseNet {
 
   @AfterClass
   public static void destroy() {
+    if (Objects.nonNull(tronNetDelegate)) {
+      Collection<PeerConnection> peerConnections = ReflectUtils
+          .invokeMethod(tronNetDelegate, "getActivePeer");
+      for (PeerConnection peer : peerConnections) {
+        peer.getChannel().close();
+      }
+    }
     Args.clearParam();
     context.destroy();
   }
