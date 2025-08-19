@@ -26,12 +26,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.StoreFactory;
-import org.tron.core.vm.EnergyCost;
-import org.tron.core.vm.JumpTable;
-import org.tron.core.vm.Op;
-import org.tron.core.vm.Operation;
-import org.tron.core.vm.OperationRegistry;
-import org.tron.core.vm.VM;
+import org.tron.core.vm.*;
 import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
@@ -891,6 +886,12 @@ public class OperationsTest extends BaseTest {
     Assert.assertEquals(25000, EnergyCost.getSuicideCost2(program));
     invoke.getDeposit().createAccount(receiver2, Protocol.AccountType.Normal);
     Assert.assertEquals(0, EnergyCost.getSuicideCost2(program));
+
+    byte[] receiver3 = generateRandomAddress();
+    program.stackPush(new DataWord(receiver3));
+    Assert.assertEquals(30000, EnergyCost.getSuicideCost2(program));
+    invoke.getDeposit().createAccount(receiver3, Protocol.AccountType.Normal);
+    Assert.assertEquals(5000, EnergyCost.getSuicideCost2(program));
   }
 
   @Test
@@ -957,11 +958,14 @@ public class OperationsTest extends BaseTest {
 
     VMConfig.initAllowEnergyAdjustment(1);
     VMConfig.initAllowTvmSelfdestructRestriction(1);
+    VMConfig.initAllowTvmFreeze(1);
+    VMConfig.initAllowTvmFreezeV2(1);
+    VMConfig.initAllowTvmCompatibleEvm(1);
+    VMConfig.initAllowTvmVote(1);
     byte prePrefixByte = DecodeUtil.addressPreFixByte;
     DecodeUtil.addressPreFixByte = Constant.ADD_PRE_FIX_BYTE_MAINNET;
 
-    program.suicide2(new DataWord(
-        dbManager.getAccountStore().getBlackhole().getAddress().toByteArray()));
+    OperationActions.suicideAction2(program);
 
     Assert.assertEquals(1, program.getResult().getDeleteAccounts().size());
 
@@ -984,6 +988,10 @@ public class OperationsTest extends BaseTest {
     DecodeUtil.addressPreFixByte = prePrefixByte;
     VMConfig.initAllowEnergyAdjustment(0);
     VMConfig.initAllowTvmSelfdestructRestriction(0);
+    VMConfig.initAllowTvmFreeze(0);
+    VMConfig.initAllowTvmFreezeV2(0);
+    VMConfig.initAllowTvmCompatibleEvm(0);
+    VMConfig.initAllowTvmVote(0);
   }
 
   @Test
