@@ -26,11 +26,10 @@ public class WitnessInitializer {
 
   public WitnessInitializer(Config config) {
     this.config = config;
+    this.localWitnesses = new LocalWitnesses();
   }
 
   public LocalWitnesses initLocalWitnesses() {
-    localWitnesses = new LocalWitnesses();
-
     if (!Args.PARAMETER.isWitness()) {
       return localWitnesses;
     }
