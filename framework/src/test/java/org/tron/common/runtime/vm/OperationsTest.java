@@ -30,9 +30,9 @@ import org.tron.core.vm.EnergyCost;
 import org.tron.core.vm.JumpTable;
 import org.tron.core.vm.Op;
 import org.tron.core.vm.Operation;
+import org.tron.core.vm.OperationActions;
 import org.tron.core.vm.OperationRegistry;
 import org.tron.core.vm.VM;
-import org.tron.core.vm.OperationActions;
 import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
@@ -895,9 +895,9 @@ public class OperationsTest extends BaseTest {
 
     byte[] receiver3 = generateRandomAddress();
     program.stackPush(new DataWord(receiver3));
-    Assert.assertEquals(30000, EnergyCost.getSuicideCost2(program));
+    Assert.assertEquals(30000, EnergyCost.getSuicideCost3(program));
     invoke.getDeposit().createAccount(receiver3, Protocol.AccountType.Normal);
-    Assert.assertEquals(5000, EnergyCost.getSuicideCost2(program));
+    Assert.assertEquals(5000, EnergyCost.getSuicideCost3(program));
   }
 
   @Test
@@ -971,6 +971,8 @@ public class OperationsTest extends BaseTest {
     byte prePrefixByte = DecodeUtil.addressPreFixByte;
     DecodeUtil.addressPreFixByte = Constant.ADD_PRE_FIX_BYTE_MAINNET;
 
+    program.stackPush(new DataWord(
+            dbManager.getAccountStore().getBlackhole().getAddress().toByteArray()));
     OperationActions.suicideAction2(program);
 
     Assert.assertEquals(1, program.getResult().getDeleteAccounts().size());
