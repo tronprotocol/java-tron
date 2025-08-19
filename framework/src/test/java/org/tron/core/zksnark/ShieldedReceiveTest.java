@@ -128,7 +128,7 @@ public class ShieldedReceiveTest extends BaseTest {
   private static boolean init;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, "config-localtest.conf");
+    Args.setParam(new String[]{"--output-directory", dbPath(), "-w"}, "config-localtest.conf");
     ADDRESS_ONE_PRIVATE_KEY = getRandomPrivateKey();
     FROM_ADDRESS = getHexAddressByPrivateKey(ADDRESS_ONE_PRIVATE_KEY);
   }

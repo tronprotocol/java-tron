@@ -32,6 +32,7 @@ public class LocalWitnesses {
   @Getter
   private List<String> privateKeys = Lists.newArrayList();
 
+  @Getter
   private byte[] witnessAccountAddress;
 
   public LocalWitnesses() {
@@ -45,21 +46,11 @@ public class LocalWitnesses {
     setPrivateKeys(privateKeys);
   }
 
-  public byte[] getWitnessAccountAddress(boolean isECKeyCryptoEngine) {
-    if (witnessAccountAddress == null) {
-      byte[] privateKey = ByteArray.fromHexString(getPrivateKey());
-      final SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey, isECKeyCryptoEngine);
-      this.witnessAccountAddress = cryptoEngine.getAddress();
-    }
-    return witnessAccountAddress;
-  }
-
-  public void setWitnessAccountAddress(final byte[] localWitnessAccountAddress) {
-    this.witnessAccountAddress = localWitnessAccountAddress;
-  }
-
-  public void initWitnessAccountAddress(boolean isECKeyCryptoEngine) {
-    if (witnessAccountAddress == null) {
+  public void initWitnessAccountAddress(final byte[] witnessAddress,
+      boolean isECKeyCryptoEngine) {
+    if (witnessAddress != null) {
+      this.witnessAccountAddress = witnessAddress;
+    } else if (!CollectionUtils.isEmpty(privateKeys)) {
       byte[] privateKey = ByteArray.fromHexString(getPrivateKey());
       final SignInterface ecKey = SignUtils.fromPrivate(privateKey,
           isECKeyCryptoEngine);
@@ -85,11 +76,15 @@ public class LocalWitnesses {
       privateKey = privateKey.substring(2);
     }
 
-    if (StringUtils.isNotBlank(privateKey)
-        && privateKey.length() != ChainConstant.PRIVATE_KEY_LENGTH) {
+    if (StringUtils.isBlank(privateKey)
+        || privateKey.length() != ChainConstant.PRIVATE_KEY_LENGTH) {
       throw new IllegalArgumentException(
-          String.format("private key must be %d-bits hex string, actual: %d",
-              ChainConstant.PRIVATE_KEY_LENGTH, privateKey.length()));
+          String.format("private key must be %d hex string, actual: %d",
+              ChainConstant.PRIVATE_KEY_LENGTH,
+              StringUtils.isBlank(privateKey) ? 0 : privateKey.length()));
+    }
+    if (!StringUtil.isHexadecimal(privateKey)) {
+      throw new IllegalArgumentException("private key must be hex string");
     }
   }
 

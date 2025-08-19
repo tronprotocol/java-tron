@@ -19,7 +19,6 @@ import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 public class ApiUtilTest {
 
-
   @BeforeClass
   public static void init() {
     Args.setParam(new String[]{}, "config-localtest.conf");

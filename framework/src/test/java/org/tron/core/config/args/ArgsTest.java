@@ -65,10 +65,10 @@ public class ArgsTest {
 
     localWitnesses = new LocalWitnesses();
     localWitnesses.setPrivateKeys(Arrays.asList(privateKey));
-    localWitnesses.initWitnessAccountAddress(true);
+    localWitnesses.initWitnessAccountAddress(null, true);
     Args.setLocalWitnesses(localWitnesses);
     address = ByteArray.toHexString(Args.getLocalWitnesses()
-        .getWitnessAccountAddress(CommonParameter.getInstance().isECKeyCryptoEngine()));
+        .getWitnessAccountAddress());
     Assert.assertEquals(Constant.ADD_PRE_FIX_STRING_TESTNET, DecodeUtil.addressPreFixString);
     Assert.assertEquals(0, parameter.getBackupPriority());
 
@@ -126,7 +126,7 @@ public class ArgsTest {
 
     Assert.assertEquals(address,
         ByteArray.toHexString(Args.getLocalWitnesses()
-            .getWitnessAccountAddress(CommonParameter.getInstance().isECKeyCryptoEngine())));
+            .getWitnessAccountAddress()));
 
     Assert.assertTrue(parameter.isKeystore());
   }
