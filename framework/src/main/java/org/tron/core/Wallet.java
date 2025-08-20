@@ -181,7 +181,6 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.core.exception.MaintenanceUnavailableException;
 import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.core.exception.PermissionException;
