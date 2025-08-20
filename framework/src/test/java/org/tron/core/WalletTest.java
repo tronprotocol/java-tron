@@ -881,8 +881,7 @@ public class WalletTest extends BaseTest {
           witnessList == null);
 
       witnessList = wallet.getPaginatedNowWitnessList(100, 0);
-      Assert.assertTrue("Should return an empty witness list when limit is 0",
-          witnessList == null);
+      Assert.assertTrue("Should return an empty witness list when limit is 0", witnessList == null);
 
       String fakeWitnessAddressPrefix = "fake_witness";
       int fakeNumberOfWitnesses = 1000 + 10;
@@ -902,7 +901,7 @@ public class WalletTest extends BaseTest {
             .delete(ByteString.copyFromUtf8(fakeWitnessAddressPrefix + i).toByteArray());
       }
     } catch (MaintenanceUnavailableException e) {
-       Assert.fail(e.getMessage());
+      Assert.fail(e.getMessage());
     }
   }
 
@@ -936,7 +935,7 @@ public class WalletTest extends BaseTest {
 
     logger.info("now request paginated witness list with 0 offset and 10 limit:");
     GrpcAPI.WitnessList witnessList2 = null;
-     try {
+    try {
       // To avoid throw MaintenanceClearingException
       dbManager.getChainBaseManager().getDynamicPropertiesStore().saveStateFlag(0);
       witnessList2 = wallet.getPaginatedNowWitnessList(0, 10);

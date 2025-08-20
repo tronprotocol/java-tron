@@ -782,10 +782,12 @@ public class Wallet {
     
     /*
       In the maintenance period, the VoteStores will be cleared.
-      To avoid the race condition of VoteStores deleted but Witness vote counts not updated, return retry error.
+      To avoid the race condition of VoteStores deleted but Witness vote counts not updated,
+      return retry error.
     */
     if (chainBaseManager.getDynamicPropertiesStore().getStateFlag() == 1) {
-      String message = "Service temporarily unavailable during maintenance period. Please try again later.";
+      String message = "Service temporarily unavailable during maintenance period. " +
+          "Please try again later.";
       throw new MaintenanceUnavailableException(message);
     }
     // It contains the final vote count at the end of the last epoch.
