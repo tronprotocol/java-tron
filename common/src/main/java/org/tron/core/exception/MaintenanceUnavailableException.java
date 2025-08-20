@@ -1,7 +1,7 @@
 package org.tron.core.exception;
 
 /**
- * Maintenance clearing exception - thrown when system is in maintenance clearing state
+ * Maintenance unavailable exception - thrown when service is in maintenance state
  * Please try again later
  */
 public class MaintenanceUnavailableException extends TronException {
