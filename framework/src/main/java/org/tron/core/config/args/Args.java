@@ -378,6 +378,7 @@ public class Args extends CommonParameter {
    */
   public static void setParam(final String[] args, final String confFileName) {
     Arch.throwUnsupportedJavaException();
+    clearParam(); // reset all parameters to avoid the influence in test
     JCommander.newBuilder().addObject(PARAMETER).build().parse(args);
     if (PARAMETER.version) {
       printVersion();
