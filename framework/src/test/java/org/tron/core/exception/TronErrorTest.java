@@ -9,10 +9,12 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigObject;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -57,7 +59,16 @@ public class TronErrorTest {
   }
 
   @Test
-  public void ZksnarkInitTest() {
+  public void ZksnarkInitTest() throws IllegalAccessException, NoSuchFieldException {
+    Field initializedField = ZksnarkInitService.class.getDeclaredField("initialized");
+    initializedField.setAccessible(true);
+    Field modifiersField = Field.class.getDeclaredField("modifiers");
+    modifiersField.setAccessible(true);
+    modifiersField.setInt(initializedField,
+        initializedField.getModifiers() & ~java.lang.reflect.Modifier.FINAL);
+    AtomicBoolean atomicBoolean = (AtomicBoolean) initializedField.get(null);
+    atomicBoolean.set(false);
+
     try (MockedStatic<JLibrustzcash> mock = mockStatic(JLibrustzcash.class)) {
       mock.when(() -> JLibrustzcash.librustzcashInitZksnarkParams(any()))
           .thenAnswer(invocation -> {
