@@ -60,13 +60,10 @@ public class TronErrorTest {
 
   @Test
   public void ZksnarkInitTest() throws IllegalAccessException, NoSuchFieldException {
-    Field initializedField = ZksnarkInitService.class.getDeclaredField("initialized");
-    initializedField.setAccessible(true);
-    Field modifiersField = Field.class.getDeclaredField("modifiers");
-    modifiersField.setAccessible(true);
-    modifiersField.setInt(initializedField,
-        initializedField.getModifiers() & ~java.lang.reflect.Modifier.FINAL);
-    AtomicBoolean atomicBoolean = (AtomicBoolean) initializedField.get(null);
+    Field field = ZksnarkInitService.class.getDeclaredField("initialized");
+    field.setAccessible(true);
+    AtomicBoolean atomicBoolean = (AtomicBoolean) field.get(null);
+    boolean originalValue = atomicBoolean.get();
     atomicBoolean.set(false);
 
     try (MockedStatic<JLibrustzcash> mock = mockStatic(JLibrustzcash.class)) {
@@ -77,6 +74,8 @@ public class TronErrorTest {
       TronError thrown = assertThrows(TronError.class,
           ZksnarkInitService::librustzcashInitZksnarkParams);
       assertEquals(TronError.ErrCode.ZCASH_INIT, thrown.getErrCode());
+    } finally {
+      atomicBoolean.set(originalValue);
     }
   }
 
