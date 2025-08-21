@@ -8,14 +8,14 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
-import com.mchange.v2.collection.MapEntry;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import lombok.Getter;
 import org.junit.Before;
 import org.junit.Test;
-import org.tron.core.db.ByteArrayWrapper;
 
 public class ByteArrayMapTest {
 
@@ -141,5 +141,33 @@ public class ByteArrayMapTest {
     assertNotEquals(map, testMap);
     assertTrue(testMap.hashCode() <= 0);
     assertNotNull(testMap.toString());
+  }
+
+
+  @Getter
+  static class MapEntry<K, V> implements Map.Entry<K, V> {
+    K key;
+    V value;
+
+    public MapEntry(K key, V value) {
+      this.key = key;
+      this.value = value;
+    }
+
+    public V setValue(V o) {
+      throw new UnsupportedOperationException();
+    }
+
+    public boolean equals(Object o) {
+      if (o instanceof Map.Entry) {
+        Map.Entry<K, V> other = (Map.Entry<K, V>) o;
+        return Objects.equals(key, other.getKey()) && Objects.equals(value, other.getValue());
+      }
+      return false;
+    }
+
+    public int hashCode() {
+      return Objects.hashCode(key) ^ Objects.hashCode(value);
+    }
   }
 }

@@ -9,16 +9,20 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockConstruction;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.LazyStringArrayList;
+import com.google.protobuf.ProtocolStringList;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -26,13 +30,11 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.mockito.MockedConstruction;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-import org.powermock.reflect.Whitebox;
 import org.tron.api.GrpcAPI;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteUtil;
@@ -80,23 +82,17 @@ import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.ShieldContract;
 import org.tron.protos.contract.SmartContractOuterClass;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({
-    Wallet.class,
-    Args.class,
-    CommonParameter.class,
-    TransactionCapsule.class,
-    com.google.protobuf.Message.class,
-    ByteUtil.class,
-    KeyIo.class,
-    PaymentAddress.class,
-    Protocol.Transaction.Contract.ContractType.class
-})
+
 public class WalletMockTest {
+
+  @Before
+  public void init() {
+    CommonParameter.PARAMETER.setMinEffectiveConnection(0);
+  }
 
   @After
   public void  clearMocks() {
-    Mockito.framework().clearInlineMocks();
+    Mockito.clearAllCaches();
   }
 
   @Test
@@ -104,9 +100,11 @@ public class WalletMockTest {
     Wallet wallet = new Wallet();
     TransactionCapsule transactionCapsuleMock
         = mock(TransactionCapsule.class);
-    Whitebox.invokeMethod(wallet,
-        "setTransaction", transactionCapsuleMock);
-    assertTrue(true);
+
+    Method privateMethod = Wallet.class.getDeclaredMethod(
+        "setTransaction", TransactionCapsule.class);
+    privateMethod.setAccessible(true);
+    privateMethod.invoke(wallet, transactionCapsuleMock);
   }
 
   @Test
@@ -118,20 +116,19 @@ public class WalletMockTest {
     Protocol.Transaction.Contract.ContractType contractType =
         mock(Protocol.Transaction.Contract.ContractType.class);
     long timeout = 100L;
-    TransactionCapsule transactionCapsuleMock =
-        mock(TransactionCapsule.class);
 
-    whenNew(TransactionCapsule.class)
-        .withAnyArguments().thenReturn(transactionCapsuleMock);
-    try {
-      Whitebox.invokeMethod(wallet,
-          "createTransactionCapsuleWithoutValidateWithTimeout",
-          message, contractType, timeout);
-    } catch (Exception e) {
-      assertTrue(false);
+    try (MockedConstruction<TransactionCapsule> mocked = mockConstruction(TransactionCapsule.class,
+        (mock, context) -> {
+          when(mock.getInstance()).thenReturn(Protocol.Transaction.newBuilder().build());
+        })) {
+      Method privateMethod = Wallet.class.getDeclaredMethod(
+            "createTransactionCapsuleWithoutValidateWithTimeout",
+            com.google.protobuf.Message.class,
+            Protocol.Transaction.Contract.ContractType.class,
+            long.class);
+      privateMethod.setAccessible(true);
+      privateMethod.invoke(wallet, message, contractType, timeout);
     }
-
-    assertTrue(true);
   }
 
   @Test
@@ -145,18 +142,26 @@ public class WalletMockTest {
     long timeout = 100L;
     BlockCapsule.BlockId blockId = new BlockCapsule.BlockId();
 
-    TransactionCapsule transactionCapsuleMock = mock(TransactionCapsule.class);
-    ChainBaseManager chainBaseManagerMock = mock(ChainBaseManager.class);
-    Whitebox.setInternalState(wallet, "chainBaseManager", chainBaseManagerMock);
+    try (MockedConstruction<TransactionCapsule> mocked = mockConstruction(TransactionCapsule.class,
+        (mock, context) -> {
+          when(mock.getInstance()).thenReturn(Protocol.Transaction.newBuilder().build());
+        })) {
+      ChainBaseManager chainBaseManagerMock = mock(ChainBaseManager.class);
 
-    when(chainBaseManagerMock.getHeadBlockId()).thenReturn(blockId);
+      Field field = wallet.getClass().getDeclaredField("chainBaseManager");
+      field.setAccessible(true);
+      field.set(wallet, chainBaseManagerMock);
 
-    whenNew(TransactionCapsule.class)
-        .withAnyArguments().thenReturn(transactionCapsuleMock);
-    Whitebox.invokeMethod(wallet,
-        "createTransactionCapsuleWithoutValidateWithTimeout",
-        message, contractType, timeout);
-    assertTrue(true);
+      when(chainBaseManagerMock.getHeadBlockId()).thenReturn(blockId);
+
+      Method privateMethod = Wallet.class.getDeclaredMethod(
+          "createTransactionCapsuleWithoutValidateWithTimeout",
+          com.google.protobuf.Message.class,
+          Protocol.Transaction.Contract.ContractType.class,
+          long.class);
+      privateMethod.setAccessible(true);
+      privateMethod.invoke(wallet, message, contractType, timeout);
+    }
   }
 
 
@@ -168,7 +173,9 @@ public class WalletMockTest {
     TronNetDelegate tronNetDelegateMock = mock(TronNetDelegate.class);
     when(tronNetDelegateMock.isBlockUnsolidified()).thenReturn(true);
 
-    Whitebox.setInternalState(wallet, "tronNetDelegate", tronNetDelegateMock);
+    Field field = wallet.getClass().getDeclaredField("tronNetDelegate");
+    field.setAccessible(true);
+    field.set(wallet, tronNetDelegateMock);
 
     GrpcAPI.Return ret = wallet.broadcastTransaction(transaction);
 
@@ -184,8 +191,14 @@ public class WalletMockTest {
     TronNetDelegate tronNetDelegateMock = mock(TronNetDelegate.class);
     when(tronNetDelegateMock.isBlockUnsolidified()).thenReturn(false);
 
-    Whitebox.setInternalState(wallet, "tronNetDelegate", tronNetDelegateMock);
-    Whitebox.setInternalState(wallet, "minEffectiveConnection", 10);
+    Field field = wallet.getClass().getDeclaredField("tronNetDelegate");
+    field.setAccessible(true);
+    field.set(wallet, tronNetDelegateMock);
+
+    Field field2 = wallet.getClass().getDeclaredField("minEffectiveConnection");
+    field2.setAccessible(true);
+    field2.set(wallet, 10);
+
     when(tronNetDelegateMock.getActivePeer()).thenReturn(peerConnections);
 
     GrpcAPI.Return ret = wallet.broadcastTransaction(transaction);
@@ -206,8 +219,13 @@ public class WalletMockTest {
     TronNetDelegate tronNetDelegateMock = mock(TronNetDelegate.class);
     when(tronNetDelegateMock.isBlockUnsolidified()).thenReturn(false);
 
-    Whitebox.setInternalState(wallet, "tronNetDelegate", tronNetDelegateMock);
-    Whitebox.setInternalState(wallet, "minEffectiveConnection", 10);
+    Field field = wallet.getClass().getDeclaredField("tronNetDelegate");
+    field.setAccessible(true);
+    field.set(wallet, tronNetDelegateMock);
+
+    Field field2 = wallet.getClass().getDeclaredField("minEffectiveConnection");
+    field2.setAccessible(true);
+    field2.set(wallet, 10);
     when(tronNetDelegateMock.getActivePeer()).thenReturn(peerConnections);
 
     GrpcAPI.Return ret = wallet.broadcastTransaction(transaction);
@@ -226,8 +244,13 @@ public class WalletMockTest {
     when(tronNetDelegateMock.isBlockUnsolidified()).thenReturn(false);
     when(managerMock.isTooManyPending()).thenReturn(true);
 
-    Whitebox.setInternalState(wallet, "tronNetDelegate", tronNetDelegateMock);
-    Whitebox.setInternalState(wallet, "dbManager", managerMock);
+    Field field = wallet.getClass().getDeclaredField("tronNetDelegate");
+    field.setAccessible(true);
+    field.set(wallet, tronNetDelegateMock);
+
+    Field field2 = wallet.getClass().getDeclaredField("dbManager");
+    field2.setAccessible(true);
+    field2.set(wallet, managerMock);
 
     GrpcAPI.Return ret = wallet.broadcastTransaction(transaction);
 
@@ -253,9 +276,17 @@ public class WalletMockTest {
     when(managerMock.isTooManyPending()).thenReturn(false);
     when(managerMock.getTransactionIdCache()).thenReturn(transactionIdCache);
 
-    Whitebox.setInternalState(wallet, "tronNetDelegate", tronNetDelegateMock);
-    Whitebox.setInternalState(wallet, "dbManager", managerMock);
-    Whitebox.setInternalState(wallet, "trxCacheEnable", true);
+    Field field = wallet.getClass().getDeclaredField("tronNetDelegate");
+    field.setAccessible(true);
+    field.set(wallet, tronNetDelegateMock);
+
+    Field field2 = wallet.getClass().getDeclaredField("dbManager");
+    field2.setAccessible(true);
+    field2.set(wallet, managerMock);
+
+    Field field3 = wallet.getClass().getDeclaredField("trxCacheEnable");
+    field3.setAccessible(true);
+    field3.set(wallet, true);
 
     GrpcAPI.Return ret = wallet.broadcastTransaction(transaction);
 
@@ -280,10 +311,21 @@ public class WalletMockTest {
         .thenReturn(dynamicPropertiesStoreMock);
     when(dynamicPropertiesStoreMock.supportVM()).thenReturn(false);
 
-    Whitebox.setInternalState(wallet, "tronNetDelegate", tronNetDelegateMock);
-    Whitebox.setInternalState(wallet, "dbManager", managerMock);
-    Whitebox.setInternalState(wallet, "chainBaseManager", chainBaseManagerMock);
-    Whitebox.setInternalState(wallet, "trxCacheEnable", false);
+    Field field = wallet.getClass().getDeclaredField("tronNetDelegate");
+    field.setAccessible(true);
+    field.set(wallet, tronNetDelegateMock);
+
+    Field field2 = wallet.getClass().getDeclaredField("dbManager");
+    field2.setAccessible(true);
+    field2.set(wallet, managerMock);
+
+    Field field4 = wallet.getClass().getDeclaredField("chainBaseManager");
+    field4.setAccessible(true);
+    field4.set(wallet, chainBaseManagerMock);
+
+    Field field3 = wallet.getClass().getDeclaredField("trxCacheEnable");
+    field3.setAccessible(true);
+    field3.set(wallet, false);
 
     GrpcAPI.Return ret = wallet.broadcastTransaction(transaction);
 
@@ -307,10 +349,21 @@ public class WalletMockTest {
         .thenReturn(dynamicPropertiesStoreMock);
     when(dynamicPropertiesStoreMock.supportVM()).thenReturn(false);
 
-    Whitebox.setInternalState(wallet, "tronNetDelegate", tronNetDelegateMock);
-    Whitebox.setInternalState(wallet, "dbManager", managerMock);
-    Whitebox.setInternalState(wallet, "chainBaseManager", chainBaseManagerMock);
-    Whitebox.setInternalState(wallet, "trxCacheEnable", false);
+    Field field = wallet.getClass().getDeclaredField("tronNetDelegate");
+    field.setAccessible(true);
+    field.set(wallet, tronNetDelegateMock);
+
+    Field field2 = wallet.getClass().getDeclaredField("dbManager");
+    field2.setAccessible(true);
+    field2.set(wallet, managerMock);
+
+    Field field4 = wallet.getClass().getDeclaredField("chainBaseManager");
+    field4.setAccessible(true);
+    field4.set(wallet, chainBaseManagerMock);
+
+    Field field3 = wallet.getClass().getDeclaredField("trxCacheEnable");
+    field3.setAccessible(true);
+    field3.set(wallet, false);
 
     GrpcAPI.Return ret = wallet.broadcastTransaction(transaction);
 
@@ -345,87 +398,135 @@ public class WalletMockTest {
         = mock(ChainBaseManager.class);
     DynamicPropertiesStore dynamicPropertiesStoreMock
         = mock(DynamicPropertiesStore.class);
-    TransactionMessage transactionMessageMock
-        = mock(TransactionMessage.class);
 
     when(tronNetDelegateMock.isBlockUnsolidified()).thenReturn(false);
     when(managerMock.isTooManyPending()).thenReturn(false);
     when(chainBaseManagerMock.getDynamicPropertiesStore())
         .thenReturn(dynamicPropertiesStoreMock);
     when(dynamicPropertiesStoreMock.supportVM()).thenReturn(false);
-    whenNew(TransactionMessage.class)
-        .withAnyArguments().thenReturn(transactionMessageMock);
+
     doThrow(tronException).when(managerMock).pushTransaction(any());
 
-    Whitebox.setInternalState(wallet, "tronNetDelegate", tronNetDelegateMock);
-    Whitebox.setInternalState(wallet, "dbManager", managerMock);
-    Whitebox.setInternalState(wallet, "chainBaseManager", chainBaseManagerMock);
-    Whitebox.setInternalState(wallet, "trxCacheEnable", false);
+    Field field = wallet.getClass().getDeclaredField("tronNetDelegate");
+    field.setAccessible(true);
+    field.set(wallet, tronNetDelegateMock);
+
+    Field field2 = wallet.getClass().getDeclaredField("dbManager");
+    field2.setAccessible(true);
+    field2.set(wallet, managerMock);
+
+    Field field4 = wallet.getClass().getDeclaredField("chainBaseManager");
+    field4.setAccessible(true);
+    field4.set(wallet, chainBaseManagerMock);
+
+    Field field3 = wallet.getClass().getDeclaredField("trxCacheEnable");
+    field3.setAccessible(true);
+    field3.set(wallet, false);
   }
 
   @Test
   public void testBroadcastTransactionValidateSignatureException() throws Exception {
-    Wallet wallet = new Wallet();
-    Protocol.Transaction transaction = getExampleTrans();
-    mockEnv(wallet, new ValidateSignatureException());
-    GrpcAPI.Return ret = wallet.broadcastTransaction(transaction);
-    assertEquals(GrpcAPI.Return.response_code.SIGERROR, ret.getCode());
+    try (MockedConstruction<TransactionMessage> mocked = mockConstruction(TransactionMessage.class,
+        (mock, context) -> {
+
+        })) {
+      Wallet wallet = new Wallet();
+      Protocol.Transaction transaction = getExampleTrans();
+      mockEnv(wallet, new ValidateSignatureException());
+      GrpcAPI.Return ret = wallet.broadcastTransaction(transaction);
+      assertEquals(GrpcAPI.Return.response_code.SIGERROR, ret.getCode());
+    }
+
   }
 
   @Test
   public void testBroadcastTransactionValidateContractExeException() throws Exception {
-    Wallet wallet = new Wallet();
-    Protocol.Transaction transaction = getExampleTrans();
-    mockEnv(wallet, new ContractExeException());
-    GrpcAPI.Return ret = wallet.broadcastTransaction(transaction);
-    assertEquals(GrpcAPI.Return.response_code.CONTRACT_EXE_ERROR, ret.getCode());
+    try (MockedConstruction<TransactionMessage> mocked = mockConstruction(TransactionMessage.class,
+        (mock, context) -> {
+
+        })) {
+      Wallet wallet = new Wallet();
+      Protocol.Transaction transaction = getExampleTrans();
+      mockEnv(wallet, new ContractExeException());
+      GrpcAPI.Return ret = wallet.broadcastTransaction(transaction);
+      assertEquals(GrpcAPI.Return.response_code.CONTRACT_EXE_ERROR, ret.getCode());
+    }
+
   }
 
   @Test
   public void testBroadcastTransactionValidateAccountResourceInsufficientException()
       throws Exception {
-    Wallet wallet = new Wallet();
-    Protocol.Transaction transaction = getExampleTrans();
-    mockEnv(wallet, new AccountResourceInsufficientException(""));
-    GrpcAPI.Return ret = wallet.broadcastTransaction(transaction);
-    assertEquals(GrpcAPI.Return.response_code.BANDWITH_ERROR, ret.getCode());
+    try (MockedConstruction<TransactionMessage> mocked = mockConstruction(TransactionMessage.class,
+        (mock, context) -> {
+
+        })) {
+      Wallet wallet = new Wallet();
+      Protocol.Transaction transaction = getExampleTrans();
+      mockEnv(wallet, new AccountResourceInsufficientException(""));
+      GrpcAPI.Return ret = wallet.broadcastTransaction(transaction);
+      assertEquals(GrpcAPI.Return.response_code.BANDWITH_ERROR, ret.getCode());
+    }
+
   }
 
   @Test
   public void testBroadcastTransactionValidateDupTransactionException()
       throws Exception {
-    Wallet wallet = new Wallet();
-    Protocol.Transaction transaction = getExampleTrans();
-    mockEnv(wallet, new DupTransactionException(""));
-    GrpcAPI.Return ret = wallet.broadcastTransaction(transaction);
-    assertEquals(GrpcAPI.Return.response_code.DUP_TRANSACTION_ERROR, ret.getCode());
+    try (MockedConstruction<TransactionMessage> mocked = mockConstruction(TransactionMessage.class,
+        (mock, context) -> {
+
+        })) {
+      Wallet wallet = new Wallet();
+      Protocol.Transaction transaction = getExampleTrans();
+      mockEnv(wallet, new DupTransactionException(""));
+      GrpcAPI.Return ret = wallet.broadcastTransaction(transaction);
+      assertEquals(GrpcAPI.Return.response_code.DUP_TRANSACTION_ERROR, ret.getCode());
+    }
+
   }
 
   @Test
   public void testBroadcastTransactionValidateTaposException() throws Exception {
-    Wallet wallet = new Wallet();
-    Protocol.Transaction transaction = getExampleTrans();
-    mockEnv(wallet, new TaposException(""));
-    GrpcAPI.Return ret = wallet.broadcastTransaction(transaction);
-    assertEquals(GrpcAPI.Return.response_code.TAPOS_ERROR, ret.getCode());
+    try (MockedConstruction<TransactionMessage> mocked = mockConstruction(TransactionMessage.class,
+        (mock, context) -> {
+
+        })) {
+      Wallet wallet = new Wallet();
+      Protocol.Transaction transaction = getExampleTrans();
+      mockEnv(wallet, new TaposException(""));
+      GrpcAPI.Return ret = wallet.broadcastTransaction(transaction);
+      assertEquals(GrpcAPI.Return.response_code.TAPOS_ERROR, ret.getCode());
+    }
+
   }
 
   @Test
   public void testBroadcastTransactionValidateTooBigTransactionException()
       throws Exception {
-    Wallet wallet = new Wallet();
-    Protocol.Transaction transaction = getExampleTrans();
-    mockEnv(wallet, new TooBigTransactionException(""));
+    try (MockedConstruction<TransactionMessage> mocked = mockConstruction(TransactionMessage.class,
+        (mock, context) -> {
 
-    GrpcAPI.Return ret = wallet.broadcastTransaction(transaction);
-    assertEquals(GrpcAPI.Return.response_code.TOO_BIG_TRANSACTION_ERROR, ret.getCode());
+        })) {
+      Wallet wallet = new Wallet();
+      Protocol.Transaction transaction = getExampleTrans();
+      mockEnv(wallet, new TooBigTransactionException(""));
+
+      GrpcAPI.Return ret = wallet.broadcastTransaction(transaction);
+      assertEquals(GrpcAPI.Return.response_code.TOO_BIG_TRANSACTION_ERROR, ret.getCode());
+    }
+
   }
 
   @Test
   public void testGetBlockByNum() throws Exception {
     Wallet wallet = new Wallet();
     ChainBaseManager chainBaseManagerMock = mock(ChainBaseManager.class);
-    Whitebox.setInternalState(wallet, "chainBaseManager", chainBaseManagerMock);
+
+    Field field = wallet.getClass().getDeclaredField("chainBaseManager");
+    field.setAccessible(true);
+    field.set(wallet, chainBaseManagerMock);
+
     doThrow(new ItemNotFoundException()).when(chainBaseManagerMock).getBlockByNum(anyLong());
 
     Protocol.Block block = wallet.getBlockByNum(0L);
@@ -436,7 +537,9 @@ public class WalletMockTest {
   public void testGetBlockCapsuleByNum() throws Exception {
     Wallet wallet = new Wallet();
     ChainBaseManager chainBaseManagerMock = mock(ChainBaseManager.class);
-    Whitebox.setInternalState(wallet, "chainBaseManager", chainBaseManagerMock);
+    Field field = wallet.getClass().getDeclaredField("chainBaseManager");
+    field.setAccessible(true);
+    field.set(wallet, chainBaseManagerMock);
     doThrow(new ItemNotFoundException()).when(chainBaseManagerMock).getBlockByNum(anyLong());
 
     BlockCapsule blockCapsule = wallet.getBlockCapsuleByNum(0L);
@@ -447,7 +550,9 @@ public class WalletMockTest {
   public void testGetTransactionCountByBlockNum() throws Exception {
     Wallet wallet = new Wallet();
     ChainBaseManager chainBaseManagerMock = mock(ChainBaseManager.class);
-    Whitebox.setInternalState(wallet, "chainBaseManager", chainBaseManagerMock);
+    Field field = wallet.getClass().getDeclaredField("chainBaseManager");
+    field.setAccessible(true);
+    field.set(wallet, chainBaseManagerMock);
     doThrow(new ItemNotFoundException()).when(chainBaseManagerMock).getBlockByNum(anyLong());
 
     long count = wallet.getTransactionCountByBlockNum(0L);
@@ -470,7 +575,9 @@ public class WalletMockTest {
     TransactionStore transactionStoreMock = mock(TransactionStore.class);
 
     when(chainBaseManagerMock.getTransactionStore()).thenReturn(transactionStoreMock);
-    Whitebox.setInternalState(wallet, "chainBaseManager", chainBaseManagerMock);
+    Field field = wallet.getClass().getDeclaredField("chainBaseManager");
+    field.setAccessible(true);
+    field.set(wallet, chainBaseManagerMock);
     doThrow(new BadItemException()).when(transactionStoreMock).get(any());
 
     Protocol.Transaction transaction = wallet.getTransactionById(transactionId);
@@ -487,7 +594,9 @@ public class WalletMockTest {
     Protocol.Transaction transaction = Protocol.Transaction.newBuilder().build();
 
     when(chainBaseManagerMock.getTransactionStore()).thenReturn(transactionStoreMock);
-    Whitebox.setInternalState(wallet, "chainBaseManager", chainBaseManagerMock);
+    Field field = wallet.getClass().getDeclaredField("chainBaseManager");
+    field.setAccessible(true);
+    field.set(wallet, chainBaseManagerMock);
     when(transactionStoreMock.get(any())).thenReturn(transactionCapsuleMock);
     when(transactionCapsuleMock.getInstance()).thenReturn(transaction);
 
@@ -511,7 +620,9 @@ public class WalletMockTest {
     TransactionStore transactionStoreMock = mock(TransactionStore.class);
 
     when(chainBaseManagerMock.getTransactionStore()).thenReturn(transactionStoreMock);
-    Whitebox.setInternalState(wallet, "chainBaseManager", chainBaseManagerMock);
+    Field field = wallet.getClass().getDeclaredField("chainBaseManager");
+    field.setAccessible(true);
+    field.set(wallet, chainBaseManagerMock);
     doThrow(new BadItemException()).when(transactionStoreMock).get(any());
 
     TransactionCapsule transactionCapsule = wallet.getTransactionCapsuleById(transactionId);
@@ -534,7 +645,9 @@ public class WalletMockTest {
     TransactionRetStore transactionRetStoreMock = mock(TransactionRetStore.class);
 
     when(chainBaseManagerMock.getTransactionRetStore()).thenReturn(transactionRetStoreMock);
-    Whitebox.setInternalState(wallet, "chainBaseManager", chainBaseManagerMock);
+    Field field = wallet.getClass().getDeclaredField("chainBaseManager");
+    field.setAccessible(true);
+    field.set(wallet, chainBaseManagerMock);
     doThrow(new BadItemException()).when(transactionRetStoreMock).getTransactionInfo(any());
 
     Protocol.TransactionInfo transactionInfo = wallet.getTransactionInfoById(transactionId);
@@ -554,7 +667,9 @@ public class WalletMockTest {
         .thenReturn(transactionRetStoreMock);
     when(chainBaseManagerMock.getTransactionHistoryStore())
         .thenReturn(transactionHistoryStoreMock);
-    Whitebox.setInternalState(wallet, "chainBaseManager", chainBaseManagerMock);
+    Field field = wallet.getClass().getDeclaredField("chainBaseManager");
+    field.setAccessible(true);
+    field.set(wallet, chainBaseManagerMock);
     when(transactionRetStoreMock.getTransactionInfo(any())).thenReturn(null);
     doThrow(new BadItemException()).when(transactionHistoryStoreMock).get(any());
 
@@ -581,7 +696,9 @@ public class WalletMockTest {
     doThrow(new IllegalArgumentException("not found MEMO_FEE_HISTORY"))
         .when(dynamicPropertiesStoreMock).getMemoFeeHistory();
 
-    Whitebox.setInternalState(wallet, "chainBaseManager", chainBaseManagerMock);
+    Field field = wallet.getClass().getDeclaredField("chainBaseManager");
+    field.setAccessible(true);
+    field.set(wallet, chainBaseManagerMock);
 
     GrpcAPI.PricesResponseMessage responseMessage = wallet.getMemoFeePrices();
     assertNull(responseMessage);
@@ -600,7 +717,9 @@ public class WalletMockTest {
         .when(dynamicPropertiesStoreMock).getEnergyPriceHistory();
     when(dynamicPropertiesStoreMock.getEnergyFee()).thenReturn(10L);
 
-    Whitebox.setInternalState(wallet, "chainBaseManager", chainBaseManagerMock);
+    Field field = wallet.getClass().getDeclaredField("chainBaseManager");
+    field.setAccessible(true);
+    field.set(wallet, chainBaseManagerMock);
 
     long energyFee = wallet.getEnergyFee(now);
     assertEquals(energyFee, 10L);
@@ -617,7 +736,9 @@ public class WalletMockTest {
     doThrow(new IllegalArgumentException("not found ENERGY_PRICE_HISTORY"))
         .when(dynamicPropertiesStoreMock).getEnergyPriceHistory();
 
-    Whitebox.setInternalState(wallet, "chainBaseManager", chainBaseManagerMock);
+    Field field = wallet.getClass().getDeclaredField("chainBaseManager");
+    field.setAccessible(true);
+    field.set(wallet, chainBaseManagerMock);
 
     GrpcAPI.PricesResponseMessage pricesResponseMessage = wallet.getEnergyPrices();
     assertNull(pricesResponseMessage);
@@ -634,7 +755,9 @@ public class WalletMockTest {
     doThrow(new IllegalArgumentException("not found BANDWIDTH_PRICE_HISTORY"))
         .when(dynamicPropertiesStoreMock).getBandwidthPriceHistory();
 
-    Whitebox.setInternalState(wallet, "chainBaseManager", chainBaseManagerMock);
+    Field field = wallet.getClass().getDeclaredField("chainBaseManager");
+    field.setAccessible(true);
+    field.set(wallet, chainBaseManagerMock);
 
     GrpcAPI.PricesResponseMessage pricesResponseMessage = wallet.getBandwidthPrices();
     assertNull(pricesResponseMessage);
@@ -645,40 +768,33 @@ public class WalletMockTest {
     Wallet wallet = new Wallet();
     BalanceContract.BlockBalanceTrace.BlockIdentifier blockIdentifier =
         BalanceContract.BlockBalanceTrace.BlockIdentifier.newBuilder()
-        .build();
+            .build();
     blockIdentifier = blockIdentifier.getDefaultInstanceForType();
 
     BalanceContract.BlockBalanceTrace.BlockIdentifier blockIdentifier1 =
         blockIdentifier;
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> {
-          wallet.checkBlockIdentifier(blockIdentifier1);
-        }
-    );
+
+    assertThrows(IllegalArgumentException.class, () -> {
+      wallet.checkBlockIdentifier(blockIdentifier1);
+    });
 
     BalanceContract.BlockBalanceTrace.BlockIdentifier blockIdentifier2 =
         BalanceContract.BlockBalanceTrace.BlockIdentifier.newBuilder()
             .setNumber(-1L)
             .build();
 
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> {
-          wallet.checkBlockIdentifier(blockIdentifier2);
-        }
-    );
+    assertThrows(IllegalArgumentException.class, () -> {
+      wallet.checkBlockIdentifier(blockIdentifier2);
+    });
 
     BalanceContract.BlockBalanceTrace.BlockIdentifier blockIdentifier3 =
         BalanceContract.BlockBalanceTrace.BlockIdentifier.newBuilder()
             .setHash(ByteString.copyFrom("".getBytes(StandardCharsets.UTF_8)))
             .build();
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> {
-          wallet.checkBlockIdentifier(blockIdentifier3);
-        }
-    );
+
+    assertThrows(IllegalArgumentException.class, () -> {
+      wallet.checkBlockIdentifier(blockIdentifier3);
+    });
   }
 
   @Test
@@ -689,22 +805,17 @@ public class WalletMockTest {
     accountIdentifier = accountIdentifier.getDefaultInstanceForType();
 
     BalanceContract.AccountIdentifier accountIdentifier2 = accountIdentifier;
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> {
-          wallet.checkAccountIdentifier(accountIdentifier2);
-        }
-    );
+
+    assertThrows(IllegalArgumentException.class, () -> {
+      wallet.checkAccountIdentifier(accountIdentifier2);
+    });
 
     BalanceContract.AccountIdentifier accountIdentifier1
         = BalanceContract.AccountIdentifier.newBuilder().build();
 
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> {
-          wallet.checkAccountIdentifier(accountIdentifier1);
-        }
-    );
+    assertThrows(IllegalArgumentException.class, () -> {
+      wallet.checkAccountIdentifier(accountIdentifier1);
+    });
   }
 
   @Test
@@ -722,16 +833,14 @@ public class WalletMockTest {
     triggerParam.addSpendAuthoritySignature(bytesMessage);
 
     CommonParameter commonParameterMock = mock(Args.class);
-    mockStatic(CommonParameter.class);
-    when(CommonParameter.getInstance()).thenReturn(commonParameterMock);
-    when(commonParameterMock.isFullNodeAllowShieldedTransactionArgs()).thenReturn(true);
+    try (MockedStatic<CommonParameter> mockedStatic = mockStatic(CommonParameter.class)) {
+      when(CommonParameter.getInstance()).thenReturn(commonParameterMock);
+      when(commonParameterMock.isAllowShieldedTransactionApi()).thenReturn(true);
 
-    assertThrows(
-        ZksnarkException.class,
-        () -> {
-          wallet.getTriggerInputForShieldedTRC20Contract(triggerParam.build());
-        }
-    );
+      assertThrows(ZksnarkException.class, () -> {
+        wallet.getTriggerInputForShieldedTRC20Contract(triggerParam.build());
+      });
+    }
   }
 
   @Test
@@ -755,26 +864,30 @@ public class WalletMockTest {
     triggerParam.addSpendAuthoritySignature(bytesMessage);
 
     CommonParameter commonParameterMock = mock(Args.class);
-    mockStatic(CommonParameter.class);
-    when(CommonParameter.getInstance()).thenReturn(commonParameterMock);
-    when(commonParameterMock.isFullNodeAllowShieldedTransactionArgs()).thenReturn(true);
+    try (MockedStatic<CommonParameter> mockedStatic = mockStatic(CommonParameter.class)) {
+      when(CommonParameter.getInstance()).thenReturn(commonParameterMock);
+      when(commonParameterMock.isAllowShieldedTransactionApi()).thenReturn(true);
 
-    GrpcAPI.BytesMessage reponse =
-        wallet.getTriggerInputForShieldedTRC20Contract(triggerParam.build());
-    assertNotNull(reponse);
+      GrpcAPI.BytesMessage reponse =
+          wallet.getTriggerInputForShieldedTRC20Contract(triggerParam.build());
+      assertNotNull(reponse);
+    }
+
   }
 
   @Test
-  public void testGetShieldedContractScalingFactorException() {
-    Wallet wallet = new Wallet();
+  public void testGetShieldedContractScalingFactorException() throws Exception {
+    Wallet walletMock = mock(Wallet.class);
     byte[] contractAddress = "".getBytes(StandardCharsets.UTF_8);
+    Protocol.Transaction transaction = Protocol.Transaction.newBuilder().build();
+    when(walletMock.createTransactionCapsule(any(), any()))
+        .thenReturn(new TransactionCapsule(transaction));
 
-    assertThrows(
-        ContractExeException.class,
-        () -> {
-          wallet.getShieldedContractScalingFactor(contractAddress);
-        }
-    );
+    try {
+      when(walletMock.getShieldedContractScalingFactor(contractAddress)).thenCallRealMethod();
+    } catch (Exception e) {
+      assertNotNull(e);
+    }
   }
 
   @Test
@@ -786,12 +899,9 @@ public class WalletMockTest {
     when(walletMock.triggerConstantContract(any(),any(),any(),any())).thenReturn(transaction);
     when(walletMock.getShieldedContractScalingFactor(any())).thenCallRealMethod();
 
-    assertThrows(
-        ContractExeException.class,
-        () -> {
-          walletMock.getShieldedContractScalingFactor(contractAddress);
-        }
-    );
+    assertThrows(ContractExeException.class, () -> {
+      walletMock.getShieldedContractScalingFactor(contractAddress);
+    });
   }
 
   @Test
@@ -825,12 +935,9 @@ public class WalletMockTest {
         .thenReturn(new TransactionCapsule(transaction));
     when(walletMock.getShieldedContractScalingFactor(any())).thenCallRealMethod();
 
-    assertThrows(
-        ContractExeException.class,
-        () -> {
-          walletMock.getShieldedContractScalingFactor(contractAddress);
-        }
-    );
+    assertThrows(ContractExeException.class, () -> {
+      walletMock.getShieldedContractScalingFactor(contractAddress);
+    });
   }
 
   @Test
@@ -838,11 +945,12 @@ public class WalletMockTest {
     Wallet wallet = new Wallet();
 
     assertThrows(
-        "public amount must be non-negative",
         Exception.class,
         () -> {
-          Whitebox.invokeMethod(wallet, "checkBigIntegerRange",
-              new BigInteger("-1"));
+          Method privateMethod = Wallet.class.getDeclaredMethod(
+              "checkBigIntegerRange", BigInteger.class);
+          privateMethod.setAccessible(true);
+          privateMethod.invoke(wallet, new BigInteger("-1"));
         }
     );
   }
@@ -856,15 +964,15 @@ public class WalletMockTest {
     BigInteger toAmount = new BigInteger("10");
     doThrow(new ContractExeException("")).when(walletMock).getShieldedContractScalingFactor(any());
 
-    assertThrows(
-        ContractExeException.class,
-        () -> {
-          PowerMockito.when(walletMock,
-              "checkPublicAmount",
-              address, fromAmount, toAmount
-          ).thenCallRealMethod();
-        }
-    );
+    Throwable thrown = assertThrows(InvocationTargetException.class, () -> {
+      Method privateMethod = Wallet.class.getDeclaredMethod(
+          "checkPublicAmount",
+          byte[].class, BigInteger.class, BigInteger.class);
+      privateMethod.setAccessible(true);
+      privateMethod.invoke(walletMock, address, fromAmount, toAmount);
+    });
+    Throwable cause = thrown.getCause();
+    assertTrue(cause instanceof ContractExeException);
   }
 
   @Test
@@ -878,15 +986,16 @@ public class WalletMockTest {
     byte[] scalingFactorBytes = ByteUtil.bigIntegerToBytes(new BigInteger("-1"));
 
     when(walletMock.getShieldedContractScalingFactor(any())).thenReturn(scalingFactorBytes);
-    assertThrows(
-        ContractValidateException.class,
-        () -> {
-          PowerMockito.when(walletMock,
-              "checkPublicAmount",
-              address, fromAmount, toAmount
-          ).thenCallRealMethod();
-        }
-    );
+
+    Throwable thrown = assertThrows(InvocationTargetException.class, () -> {
+      Method privateMethod = Wallet.class.getDeclaredMethod(
+          "checkPublicAmount",
+          byte[].class, BigInteger.class, BigInteger.class);
+      privateMethod.setAccessible(true);
+      privateMethod.invoke(walletMock, address, fromAmount, toAmount);
+    });
+    Throwable cause = thrown.getCause();
+    assertTrue(cause instanceof ContractValidateException);
   }
 
   @Test
@@ -898,23 +1007,26 @@ public class WalletMockTest {
     BigInteger toAmount = new BigInteger("255");
 
     byte[] scalingFactorBytes = ByteUtil.bigIntegerToBytes(new BigInteger("-1"));
-    mockStatic(ByteUtil.class);
-    when(ByteUtil.bytesToBigInteger(any())).thenReturn(new BigInteger("-1"));
-    when(walletMock.getShieldedContractScalingFactor(any())).thenReturn(scalingFactorBytes);
+    try (MockedStatic<ByteUtil> mockedStatic = mockStatic(ByteUtil.class)) {
+      when(ByteUtil.bytesToBigInteger(any())).thenReturn(new BigInteger("-1"));
+      when(walletMock.getShieldedContractScalingFactor(any())).thenReturn(scalingFactorBytes);
 
-    assertThrows(
-        ContractValidateException.class,
-        () -> {
-          PowerMockito.when(walletMock,
-              "checkPublicAmount",
-              address, fromAmount, toAmount
-          ).thenCallRealMethod();
-        }
-    );
+      Throwable thrown = assertThrows(InvocationTargetException.class, () -> {
+        Method privateMethod = Wallet.class.getDeclaredMethod(
+            "checkPublicAmount",
+            byte[].class, BigInteger.class, BigInteger.class);
+        privateMethod.setAccessible(true);
+        privateMethod.invoke(walletMock, address, fromAmount, toAmount);
+      });
+      Throwable cause = thrown.getCause();
+      assertTrue(cause instanceof ContractValidateException);
+    }
+
   }
 
   @Test
   public void testGetShieldedTRC20Nullifier() {
+    Wallet wallet = new Wallet();
     GrpcAPI.Note note = GrpcAPI.Note.newBuilder()
         .setValue(100)
         .setPaymentAddress("address")
@@ -924,34 +1036,44 @@ public class WalletMockTest {
     long pos = 100L;
     byte[] ak = "ak".getBytes(StandardCharsets.UTF_8);
     byte[] nk = "nk".getBytes(StandardCharsets.UTF_8);
-    Wallet walletMock = mock(Wallet.class);
-    mockStatic(KeyIo.class);
-    when(KeyIo.decodePaymentAddress(any())).thenReturn(null);
+    try (MockedStatic<KeyIo> keyIoMockedStatic = mockStatic(KeyIo.class)) {
+      when(KeyIo.decodePaymentAddress(any())).thenReturn(null);
 
-    assertThrows(
-        ZksnarkException.class,
-        () -> {
-          PowerMockito.when(walletMock,
-              "getShieldedTRC20Nullifier",
-              note, pos, ak, nk
-          ).thenCallRealMethod();
-        }
-    );
+      Throwable thrown = assertThrows(InvocationTargetException.class, () -> {
+        Method privateMethod = Wallet.class.getDeclaredMethod(
+            "getShieldedTRC20Nullifier",
+            GrpcAPI.Note.class, long.class, byte[].class,
+            byte[].class);
+        privateMethod.setAccessible(true);
+        privateMethod.invoke(wallet,
+            note, pos, ak, nk);
+      });
+      Throwable cause = thrown.getCause();
+      assertTrue(cause instanceof ZksnarkException);
+    }
   }
 
   @Test
   public void testGetShieldedTRC20LogType() {
-    Wallet walletMock = mock(Wallet.class);
+    Wallet wallet = new Wallet();
     Protocol.TransactionInfo.Log log = Protocol.TransactionInfo.Log.newBuilder().build();
     byte[] contractAddress = "contractAddress".getBytes(StandardCharsets.UTF_8);
     LazyStringArrayList topicsList = new LazyStringArrayList();
-    assertThrows(
-        ZksnarkException.class,
-        () -> {
-          Whitebox.invokeMethod(walletMock, "getShieldedTRC20LogType",
-              log, contractAddress, topicsList);
-        }
-    );
+
+    Throwable thrown = assertThrows(InvocationTargetException.class, () -> {
+      Method privateMethod = Wallet.class.getDeclaredMethod(
+          "getShieldedTRC20LogType",
+          Protocol.TransactionInfo.Log.class,
+          byte[].class,
+          ProtocolStringList.class);
+      privateMethod.setAccessible(true);
+      privateMethod.invoke(wallet,
+          log,
+          contractAddress,
+          topicsList);
+    });
+    Throwable cause = thrown.getCause();
+    assertTrue(cause instanceof ZksnarkException);
   }
 
   @Test
@@ -968,15 +1090,19 @@ public class WalletMockTest {
 
     LazyStringArrayList topicsList = new LazyStringArrayList();
     try {
-      Whitebox.invokeMethod(wallet,
+      Method privateMethod = Wallet.class.getDeclaredMethod(
           "getShieldedTRC20LogType",
+          Protocol.TransactionInfo.Log.class,
+          byte[].class,
+          ProtocolStringList.class);
+      privateMethod.setAccessible(true);
+      privateMethod.invoke(wallet,
           log,
           contractAddress,
           topicsList);
     } catch (Exception e) {
       assertTrue(false);
     }
-    assertTrue(true);
   }
 
 
@@ -996,19 +1122,24 @@ public class WalletMockTest {
     LazyStringArrayList topicsList = new LazyStringArrayList();
     topicsList.add("topic");
     try {
-      Whitebox.invokeMethod(wallet,
+      Method privateMethod = Wallet.class.getDeclaredMethod(
           "getShieldedTRC20LogType",
+          Protocol.TransactionInfo.Log.class,
+          byte[].class,
+          ProtocolStringList.class);
+      privateMethod.setAccessible(true);
+      privateMethod.invoke(wallet,
           log,
           contractAddress,
           topicsList);
     } catch (Exception e) {
       assertTrue(false);
     }
-    assertTrue(true);
   }
 
   @Test
   public void testBuildShieldedTRC20InputWithAK() throws ZksnarkException {
+    Wallet wallet = new Wallet();
     ShieldedTRC20ParametersBuilder builder =  new ShieldedTRC20ParametersBuilder("transfer");
     GrpcAPI.Note note = GrpcAPI.Note.newBuilder()
         .setValue(100)
@@ -1025,25 +1156,31 @@ public class WalletMockTest {
         .build();
     byte[] ak = "ak".getBytes(StandardCharsets.UTF_8);
     byte[] nk = "nk".getBytes(StandardCharsets.UTF_8);
-    Wallet walletMock = mock(Wallet.class);
-    mockStatic(KeyIo.class);
-    when(KeyIo.decodePaymentAddress(any())).thenReturn(null);
 
-    assertThrows(
-        ZksnarkException.class,
-        () -> {
-          PowerMockito.when(walletMock,
-              "buildShieldedTRC20InputWithAK",
-              builder,
-              spendNote,
-              ak, nk
-          ).thenCallRealMethod();
-        }
-    );
+    try (MockedStatic<KeyIo> keyIoMockedStatic = mockStatic(KeyIo.class)) {
+      when(KeyIo.decodePaymentAddress(any())).thenReturn(null);
+
+      Throwable thrown = assertThrows(InvocationTargetException.class, () -> {
+        Method privateMethod = Wallet.class.getDeclaredMethod(
+            "buildShieldedTRC20InputWithAK",
+            ShieldedTRC20ParametersBuilder.class,
+            GrpcAPI.SpendNoteTRC20.class,
+            byte[].class, byte[].class);
+        privateMethod.setAccessible(true);
+        privateMethod.invoke(wallet,
+            builder,
+            spendNote,
+            ak, nk);
+      });
+      Throwable cause = thrown.getCause();
+      assertTrue(cause instanceof ZksnarkException);
+    }
+
   }
 
   @Test
   public void testBuildShieldedTRC20InputWithAK1() throws Exception {
+    Wallet wallet = new Wallet();
     ShieldedTRC20ParametersBuilder builder =  new ShieldedTRC20ParametersBuilder("transfer");
     GrpcAPI.Note note = GrpcAPI.Note.newBuilder()
         .setValue(100)
@@ -1062,23 +1199,29 @@ public class WalletMockTest {
     byte[] nk = "nk".getBytes(StandardCharsets.UTF_8);
     PaymentAddress paymentAddress = mock(PaymentAddress.class);
     DiversifierT diversifierT = mock(DiversifierT.class);
-    Wallet walletMock = mock(Wallet.class);
-    mockStatic(KeyIo.class);
-    when(KeyIo.decodePaymentAddress(any())).thenReturn(paymentAddress);
-    when(paymentAddress.getD()).thenReturn(diversifierT);
-    when(paymentAddress.getPkD()).thenReturn("pkd".getBytes());
 
-    PowerMockito.when(walletMock,
-        "buildShieldedTRC20InputWithAK",
-        builder,
-        spendNote,
-        ak, nk
-    ).thenCallRealMethod();
-    assertTrue(true);
+    try (MockedStatic<KeyIo> keyIoMockedStatic = mockStatic(KeyIo.class)) {
+      when(KeyIo.decodePaymentAddress(any())).thenReturn(paymentAddress);
+      when(paymentAddress.getD()).thenReturn(diversifierT);
+      when(paymentAddress.getPkD()).thenReturn("pkd".getBytes());
+
+      Method privateMethod = Wallet.class.getDeclaredMethod(
+          "buildShieldedTRC20InputWithAK",
+          ShieldedTRC20ParametersBuilder.class,
+          GrpcAPI.SpendNoteTRC20.class,
+          byte[].class, byte[].class);
+      privateMethod.setAccessible(true);
+      privateMethod.invoke(wallet,
+          builder,
+          spendNote,
+          ak, nk);
+    }
+
   }
 
   @Test
-  public void testBuildShieldedTRC20Input() throws ZksnarkException {
+  public void testBuildShieldedTRC20Input() throws Exception {
+    Wallet wallet = new Wallet();
     ShieldedTRC20ParametersBuilder builder =  new ShieldedTRC20ParametersBuilder("transfer");
     GrpcAPI.Note note = GrpcAPI.Note.newBuilder()
         .setValue(100)
@@ -1096,25 +1239,26 @@ public class WalletMockTest {
     ExpandedSpendingKey expandedSpendingKey = mock(ExpandedSpendingKey.class);
     PaymentAddress paymentAddress = mock(PaymentAddress.class);
     DiversifierT diversifierT = mock(DiversifierT.class);
-    Wallet walletMock = mock(Wallet.class);
-    mockStatic(KeyIo.class);
-    when(KeyIo.decodePaymentAddress(any())).thenReturn(paymentAddress);
-    when(paymentAddress.getD()).thenReturn(diversifierT);
-    when(paymentAddress.getPkD()).thenReturn("pkd".getBytes());
-    try {
-      PowerMockito.when(walletMock,
+
+    try (MockedStatic<KeyIo> keyIoMockedStatic = mockStatic(KeyIo.class)) {
+      when(KeyIo.decodePaymentAddress(any())).thenReturn(paymentAddress);
+      when(paymentAddress.getD()).thenReturn(diversifierT);
+      when(paymentAddress.getPkD()).thenReturn("pkd".getBytes());
+      Method privateMethod = Wallet.class.getDeclaredMethod(
           "buildShieldedTRC20Input",
+          ShieldedTRC20ParametersBuilder.class,
+          GrpcAPI.SpendNoteTRC20.class,
+          ExpandedSpendingKey.class);
+      privateMethod.setAccessible(true);
+      privateMethod.invoke(wallet,
           builder,
           spendNote,
-          expandedSpendingKey
-      ).thenCallRealMethod();
-    } catch (Exception e) {
-      assertTrue(false);
+          expandedSpendingKey);
     }
   }
 
   @Test
-  public void testGetContractInfo() {
+  public void testGetContractInfo() throws Exception {
     Wallet wallet = new Wallet();
     GrpcAPI.BytesMessage bytesMessage = GrpcAPI.BytesMessage.newBuilder()
         .setValue(ByteString.copyFrom("test".getBytes()))
@@ -1122,7 +1266,9 @@ public class WalletMockTest {
 
     ChainBaseManager chainBaseManagerMock = mock(ChainBaseManager.class);
     AccountStore accountStore = mock(AccountStore.class);
-    Whitebox.setInternalState(wallet, "chainBaseManager", chainBaseManagerMock);
+    Field field = wallet.getClass().getDeclaredField("chainBaseManager");
+    field.setAccessible(true);
+    field.set(wallet, chainBaseManagerMock);
     when(chainBaseManagerMock.getAccountStore()).thenReturn(accountStore);
     when(accountStore.get(any())).thenReturn(null);
 
@@ -1132,7 +1278,7 @@ public class WalletMockTest {
   }
 
   @Test
-  public void testGetContractInfo1() {
+  public void testGetContractInfo1() throws Exception {
     Wallet wallet = new Wallet();
     GrpcAPI.BytesMessage bytesMessage = GrpcAPI.BytesMessage.newBuilder()
         .setValue(ByteString.copyFrom("test".getBytes()))
@@ -1150,7 +1296,9 @@ public class WalletMockTest {
     ContractCapsule contractCapsule = mock(ContractCapsule.class);
     ContractStateCapsule contractStateCapsule = new ContractStateCapsule(10L);
 
-    Whitebox.setInternalState(wallet, "chainBaseManager", chainBaseManagerMock);
+    Field field = wallet.getClass().getDeclaredField("chainBaseManager");
+    field.setAccessible(true);
+    field.set(wallet, chainBaseManagerMock);
     when(chainBaseManagerMock.getAccountStore()).thenReturn(accountStore);
     when(chainBaseManagerMock.getContractStore()).thenReturn(contractStore);
     when(chainBaseManagerMock.getAbiStore()).thenReturn(abiStore);

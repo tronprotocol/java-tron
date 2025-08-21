@@ -107,6 +107,7 @@ public class DelegationServiceTest {
 
   public void test() {
     manager.getDynamicPropertiesStore().saveChangeDelegation(1);
+    manager.getDynamicPropertiesStore().saveConsensusLogicOptimization(1);
     byte[] sr27 = decodeFromBase58Check("TLTDZBcPoJ8tZ6TTEeEqEvwYFk2wgotSfD");
     manager.getDelegationStore().setBrokerage(0, sr27, 10);
     manager.getDelegationStore().setBrokerage(1, sr27, 20);

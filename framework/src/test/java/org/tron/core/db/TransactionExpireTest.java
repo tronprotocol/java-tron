@@ -46,6 +46,7 @@ public class TransactionExpireTest {
     Args.setParam(new String[] {"--output-directory",
         temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
     CommonParameter.PARAMETER.setMinEffectiveConnection(0);
+    CommonParameter.getInstance().setP2pDisable(true);
 
     context = new TronApplicationContext(DefaultConfig.class);
     wallet = context.getBean(Wallet.class);
@@ -56,7 +57,7 @@ public class TransactionExpireTest {
     String randomPrivateKey = PublicMethod.getRandomPrivateKey();
     LocalWitnesses localWitnesses = new LocalWitnesses();
     localWitnesses.setPrivateKeys(Arrays.asList(randomPrivateKey));
-    localWitnesses.initWitnessAccountAddress(true);
+    localWitnesses.initWitnessAccountAddress(null, true);
     Args.setLocalWitnesses(localWitnesses);
   }
 
@@ -84,7 +85,7 @@ public class TransactionExpireTest {
     TransferContract transferContract = TransferContract.newBuilder()
         .setAmount(1L)
         .setOwnerAddress(ByteString.copyFrom(Args.getLocalWitnesses()
-            .getWitnessAccountAddress(CommonParameter.getInstance().isECKeyCryptoEngine())))
+        .getWitnessAccountAddress()))
         .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(
             (Wallet.getAddressPreFixString() + "A389132D6639FBDA4FBC8B659264E6B7C90DB086"))))
         .build();
@@ -115,8 +116,7 @@ public class TransactionExpireTest {
         .saveLatestBlockHeaderTimestamp(blockCapsule.getTimeStamp());
     dbManager.updateRecentBlock(blockCapsule);
     initLocalWitness();
-    byte[] address = Args.getLocalWitnesses()
-        .getWitnessAccountAddress(CommonParameter.getInstance().isECKeyCryptoEngine());
+    byte[] address = Args.getLocalWitnesses().getWitnessAccountAddress();
     ByteString addressByte = ByteString.copyFrom(address);
     AccountCapsule accountCapsule =
         new AccountCapsule(Protocol.Account.newBuilder().setAddress(addressByte).build());
@@ -156,8 +156,7 @@ public class TransactionExpireTest {
     dbManager.updateRecentBlock(blockCapsule);
     initLocalWitness();
 
-    byte[] address = Args.getLocalWitnesses()
-        .getWitnessAccountAddress(CommonParameter.getInstance().isECKeyCryptoEngine());
+    byte[] address = Args.getLocalWitnesses().getWitnessAccountAddress();
     TransferContract transferContract = TransferContract.newBuilder()
         .setAmount(1L)
         .setOwnerAddress(ByteString.copyFrom(address))

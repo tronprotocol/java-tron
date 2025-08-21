@@ -1,5 +1,7 @@
 package org.tron.plugins;
 
+import static org.tron.common.utils.PublicMethod.getRandomPrivateKey;
+
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.io.File;
@@ -22,8 +24,6 @@ import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Utils;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.services.RpcApiService;
-import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import picocli.CommandLine;
 
 @Slf4j
@@ -47,8 +47,6 @@ public class DbLiteTest {
   public void startApp() {
     context = new TronApplicationContext(DefaultConfig.class);
     appTest = ApplicationFactory.create(context);
-    appTest.addService(context.getBean(RpcApiService.class));
-    appTest.addService(context.getBean(RpcApiServiceOnSolidity.class));
     appTest.startup();
 
     String fullNode = String.format("%s:%d", "127.0.0.1",
@@ -69,13 +67,15 @@ public class DbLiteTest {
     context.close();
   }
 
-  public void init() throws IOException {
+  public void init(String dbType) throws IOException {
     dbPath = folder.newFolder().toString();
-    Args.setParam(new String[]{"-d", dbPath, "-w", "--p2p-disable", "true"},
+    Args.setParam(new String[]{
+        "-d", dbPath, "-w", "--p2p-disable", "true", "--storage-db-engine", dbType},
         "config-localtest.conf");
     // allow account root
     Args.getInstance().setAllowAccountStateRoot(1);
     Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setRpcEnable(true);
     databaseDir = Args.getInstance().getStorage().getDbDirectory();
     // init dbBackupConfig to avoid NPE
     Args.getInstance().dbBackupConfig = DbBackupConfig.getInstance();
@@ -86,11 +86,11 @@ public class DbLiteTest {
     Args.clearParam();
   }
 
-  void testTools(String dbType, int checkpointVersion)
+  public void testTools(String dbType, int checkpointVersion)
       throws InterruptedException, IOException {
     logger.info("dbType {}, checkpointVersion {}", dbType, checkpointVersion);
     dbPath = String.format("%s_%s_%d", dbPath, dbType, System.currentTimeMillis());
-    init();
+    init(dbType);
     final String[] argsForSnapshot =
         new String[]{"-o", "split", "-t", "snapshot", "--fn-data-path",
             dbPath + File.separator + databaseDir, "--dataset-path",
@@ -102,7 +102,6 @@ public class DbLiteTest {
     final String[] argsForMerge =
         new String[]{"-o", "merge", "--fn-data-path", dbPath + File.separator + databaseDir,
             "--dataset-path", dbPath + File.separator + "history"};
-    Args.getInstance().getStorage().setDbEngine(dbType);
     Args.getInstance().getStorage().setCheckpointVersion(checkpointVersion);
     DbLite.setRecentBlks(3);
     // start fullNode
@@ -159,7 +158,7 @@ public class DbLiteTest {
       ECKey ecKey2 = new ECKey(Utils.getRandom());
       byte[] address = ecKey2.getAddress();
 
-      String sunPri = "cba92a516ea09f620a16ff7ee95ce0df1d56550a8babe9964981a7144c8a784a";
+      String sunPri = getRandomPrivateKey();
       byte[] sunAddress = PublicMethod.getFinalAddress(sunPri);
       PublicMethod.sendcoin(address, 1L,
               sunAddress, sunPri, blockingStubFull);

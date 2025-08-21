@@ -4,6 +4,8 @@ import static org.tron.core.Constant.CREATE_ACCOUNT_TRANSACTION_MAX_BYTE_SIZE;
 import static org.tron.core.Constant.CREATE_ACCOUNT_TRANSACTION_MIN_BYTE_SIZE;
 import static org.tron.core.Constant.DYNAMIC_ENERGY_INCREASE_FACTOR_RANGE;
 import static org.tron.core.Constant.DYNAMIC_ENERGY_MAX_FACTOR_RANGE;
+import static org.tron.core.Constant.MAX_PROPOSAL_EXPIRE_TIME;
+import static org.tron.core.Constant.MIN_PROPOSAL_EXPIRE_TIME;
 import static org.tron.core.config.Parameter.ChainConstant.ONE_YEAR_BLOCK_NUMBERS;
 
 import org.tron.common.utils.ForkController;
@@ -779,6 +781,80 @@ public class ProposalUtil {
         }
         break;
       }
+      case ALLOW_STRICT_MATH: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_7_7)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_STRICT_MATH]");
+        }
+        if (dynamicPropertiesStore.allowStrictMath()) {
+          throw new ContractValidateException(
+              "[ALLOW_STRICT_MATH] has been valid, no need to propose again");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_STRICT_MATH] is only allowed to be 1");
+        }
+        break;
+      }
+      case CONSENSUS_LOGIC_OPTIMIZATION: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_8_0)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [CONSENSUS_LOGIC_OPTIMIZATION]");
+        }
+        if (dynamicPropertiesStore.getConsensusLogicOptimization() == 1) {
+          throw new ContractValidateException(
+              "[CONSENSUS_LOGIC_OPTIMIZATION] has been valid, no need to propose again");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[CONSENSUS_LOGIC_OPTIMIZATION] is only allowed to be 1");
+        }
+        break;
+      }
+      case ALLOW_TVM_CANCUN: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_8_0)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_TVM_CANCUN]");
+        }
+        if (dynamicPropertiesStore.getAllowTvmCancun() == 1) {
+          throw new ContractValidateException(
+              "[ALLOW_TVM_CANCUN] has been valid, no need to propose again");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_TVM_CANCUN] is only allowed to be 1");
+        }
+        break;
+      }
+      case ALLOW_TVM_BLOB: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_8_0)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_TVM_BLOB]");
+        }
+        if (dynamicPropertiesStore.getAllowTvmBlob() == 1) {
+          throw new ContractValidateException(
+              "[ALLOW_TVM_BLOB] has been valid, no need to propose again");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_TVM_BLOB] is only allowed to be 1");
+        }
+        break;
+      }
+      case PROPOSAL_EXPIRE_TIME: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_8_1)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [PROPOSAL_EXPIRE_TIME]");
+        }
+        if (value <= MIN_PROPOSAL_EXPIRE_TIME
+            || value >= MAX_PROPOSAL_EXPIRE_TIME) {
+          throw new ContractValidateException(
+              "This value[PROPOSAL_EXPIRE_TIME] is only allowed to be greater than "
+                  + MIN_PROPOSAL_EXPIRE_TIME + " and less than "
+                  + MAX_PROPOSAL_EXPIRE_TIME + "!");
+        }
+        break;
+      }
       default:
         break;
     }
@@ -857,7 +933,12 @@ public class ProposalUtil {
     MAX_DELEGATE_LOCK_PERIOD(78), // (86400, 10512000]
     ALLOW_OLD_REWARD_OPT(79), // 0, 1
     ALLOW_ENERGY_ADJUSTMENT(81), // 0, 1
-    MAX_CREATE_ACCOUNT_TX_SIZE(82); // [500, 10000]
+    MAX_CREATE_ACCOUNT_TX_SIZE(82), // [500, 10000]
+    ALLOW_TVM_CANCUN(83), // 0, 1
+    ALLOW_STRICT_MATH(87), // 0, 1
+    CONSENSUS_LOGIC_OPTIMIZATION(88), // 0, 1
+    ALLOW_TVM_BLOB(89), // 0, 1
+    PROPOSAL_EXPIRE_TIME(92); // (0, 31536003000)
 
     private long code;
 

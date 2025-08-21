@@ -1,10 +1,12 @@
 package org.tron.common.logsfilter;
 
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.spy;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 import com.google.protobuf.ByteString;
+
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,11 +15,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-import org.powermock.reflect.Whitebox;
 import org.tron.common.logsfilter.capsule.TransactionLogTriggerCapsule;
 import org.tron.common.logsfilter.trigger.InternalTransactionPojo;
 import org.tron.common.runtime.InternalTransaction;
@@ -32,11 +29,9 @@ import org.tron.p2p.utils.ByteArray;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.BalanceContract;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({
-    TransactionLogTriggerCapsule.class,
-    TransactionTrace.class
-})
+
+
+
 public class TransactionLogTriggerCapsuleMockTest {
 
   private static final String OWNER_ADDRESS = "41548794500882809695a8a687866e76d4271a1abc";
@@ -57,7 +52,7 @@ public class TransactionLogTriggerCapsuleMockTest {
 
   @After
   public void  clearMocks() {
-    Mockito.framework().clearInlineMocks();
+
   }
 
 
@@ -121,8 +116,11 @@ public class TransactionLogTriggerCapsuleMockTest {
     TransactionLogTriggerCapsule triggerCapsule =
         new TransactionLogTriggerCapsule(transactionCapsule, blockCapsule);
 
-    List<InternalTransactionPojo> pojoList = Whitebox.invokeMethod(triggerCapsule,
-        "getInternalTransactionList", internalTransactionList);
+    Method privateMethod = TransactionLogTriggerCapsule.class.getDeclaredMethod(
+        "getInternalTransactionList", List.class);
+    privateMethod.setAccessible(true);
+    List<InternalTransactionPojo> pojoList = (List<InternalTransactionPojo>)
+        privateMethod.invoke(triggerCapsule, internalTransactionList);
 
     Assert.assertNotNull(pojoList);
   }

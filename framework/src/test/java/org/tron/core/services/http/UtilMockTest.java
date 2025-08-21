@@ -11,10 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 import org.tron.api.GrpcAPI;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
@@ -24,10 +21,6 @@ import org.tron.protos.Protocol;
 import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.SmartContractOuterClass;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({
-    Util.class,
-})
 public class UtilMockTest  {
   @After
   public void  clearMocks() {

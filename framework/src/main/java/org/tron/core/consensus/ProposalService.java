@@ -367,6 +367,27 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveMaxCreateAccountTxSize(entry.getValue());
           break;
         }
+        case ALLOW_STRICT_MATH: {
+          manager.getDynamicPropertiesStore().saveAllowStrictMath(entry.getValue());
+          break;
+        }
+        case CONSENSUS_LOGIC_OPTIMIZATION: {
+          manager.getDynamicPropertiesStore()
+            .saveConsensusLogicOptimization(entry.getValue());
+          break;
+        }
+        case ALLOW_TVM_CANCUN: {
+          manager.getDynamicPropertiesStore().saveAllowTvmCancun(entry.getValue());
+          break;
+        }
+        case ALLOW_TVM_BLOB: {
+          manager.getDynamicPropertiesStore().saveAllowTvmBlob(entry.getValue());
+          break;
+        }
+        case PROPOSAL_EXPIRE_TIME: {
+          manager.getDynamicPropertiesStore().saveProposalExpireTime(entry.getValue());
+          break;
+        }
         default:
           find = false;
           break;

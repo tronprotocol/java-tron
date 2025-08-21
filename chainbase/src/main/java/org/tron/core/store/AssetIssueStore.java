@@ -43,13 +43,6 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
       return null;
     }
 
-//    return Streams.stream(iterator())
-//        .map(Entry::getValue)
-//        .sorted(Comparator.comparing(a -> a.getName().toStringUtf8(), String::compareTo))
-//        .skip(offset)
-//        .limit(Math.min(limit, ASSET_ISSUE_COUNT_LIMIT_MAX))
-//        .collect(Collectors.toList());
-
     if (assetIssueList.size() <= offset) {
       return null;
     }

@@ -17,7 +17,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.ExpectedSystemExit;
 import org.junit.rules.TemporaryFolder;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.error.TronDBException;
@@ -30,6 +29,7 @@ import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.TronError;
 import org.tron.core.service.MortgageService;
 import org.tron.core.service.RewardViCalService;
 import org.tron.core.store.AccountStore;
@@ -113,9 +113,6 @@ public class ComputeRewardTest {
   private static RewardViStore rewardViStore;
   @Rule
   public final TemporaryFolder temporaryFolder = new TemporaryFolder();
-
-  @Rule
-  public final ExpectedSystemExit exit = ExpectedSystemExit.none();
 
   @After
   public void destroy() {
@@ -263,7 +260,6 @@ public class ComputeRewardTest {
 
   @Test
   public void query() {
-    exit.expectSystemExitWithStatus(1);
     Assert.assertEquals(3189, mortgageService.queryReward(OWNER_ADDRESS));
     // mock root is error
     rewardViStore.put("test".getBytes(), "test".getBytes());
@@ -287,8 +283,9 @@ public class ComputeRewardTest {
     propertiesStore.saveNewRewardAlgorithmEffectiveCycle();
     propertiesStore.saveCurrentCycleNumber(5);
     rewardViStore.close();
-    ReflectUtils.invokeMethod(rewardViCalService,"maybeRun");
-
+    TronError thrown = Assert.assertThrows(TronError.class, () ->
+        ReflectUtils.invokeMethod(rewardViCalService,"maybeRun"));
+    Assert.assertEquals(TronError.ErrCode.REWARD_VI_CALCULATOR, thrown.getErrCode());
   }
 
   static class Vote {

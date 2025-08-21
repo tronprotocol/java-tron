@@ -1,6 +1,8 @@
 package org.tron.core.vm;
 
 import static java.util.Arrays.copyOfRange;
+import static org.tron.common.math.Maths.max;
+import static org.tron.common.math.Maths.min;
 import static org.tron.common.runtime.vm.DataWord.WORD_SIZE;
 import static org.tron.common.utils.BIUtil.addSafely;
 import static org.tron.common.utils.BIUtil.isLessThan;
@@ -16,6 +18,8 @@ import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.protobuf.ByteString;
+
+import java.lang.reflect.Constructor;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -37,6 +41,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.tron.common.crypto.Blake2bfMessageDigest;
 import org.tron.common.crypto.Hash;
+import org.tron.common.crypto.Rsv;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.crypto.SignatureInterface;
 import org.tron.common.crypto.zksnark.BN128;
@@ -194,6 +199,14 @@ public class PrecompiledContracts {
   private static final DataWord blake2FAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000020009");
 
+  public static PrecompiledContract getOptimizedContractForConstant(PrecompiledContract contract) {
+    try {
+      Constructor<?> constructor = contract.getClass().getDeclaredConstructor();
+      return  (PrecompiledContracts.PrecompiledContract) constructor.newInstance();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
 
   public static PrecompiledContract getContractForAddress(DataWord address) {
 
@@ -340,22 +353,13 @@ public class PrecompiledContracts {
   }
 
   private static byte[] recoverAddrBySign(byte[] sign, byte[] hash) {
-    byte v;
-    byte[] r;
-    byte[] s;
     byte[] out = null;
     if (ArrayUtils.isEmpty(sign) || sign.length < 65) {
       return new byte[0];
     }
     try {
-      r = Arrays.copyOfRange(sign, 0, 32);
-      s = Arrays.copyOfRange(sign, 32, 64);
-      v = sign[64];
-      if (v < 27) {
-        v += 27;
-      }
-
-      SignatureInterface signature = SignUtils.fromComponents(r, s, v,
+      Rsv rsv = Rsv.fromSignature(sign);
+      SignatureInterface signature = SignUtils.fromComponents(rsv.getR(), rsv.getS(), rsv.getV(),
           CommonParameter.getInstance().isECKeyCryptoEngine());
       if (signature.validateComponents()) {
         out = SignUtils.signatureToAddress(hash, signature,
@@ -614,14 +618,16 @@ public class PrecompiledContracts {
       int expLen = parseLen(data, 1);
       int modLen = parseLen(data, 2);
 
-      byte[] expHighBytes = parseBytes(data, addSafely(ARGS_OFFSET, baseLen), Math.min(expLen, 32));
 
-      long multComplexity = getMultComplexity(Math.max(baseLen, modLen));
+      byte[] expHighBytes = parseBytes(data, addSafely(ARGS_OFFSET, baseLen), min(expLen, 32,
+          VMConfig.disableJavaLangMath()));
+
+      long multComplexity = getMultComplexity(max(baseLen, modLen, VMConfig.disableJavaLangMath()));
       long adjExpLen = getAdjustedExponentLength(expHighBytes, expLen);
 
       // use big numbers to stay safe in case of overflow
       BigInteger energy = BigInteger.valueOf(multComplexity)
-          .multiply(BigInteger.valueOf(Math.max(adjExpLen, 1)))
+          .multiply(BigInteger.valueOf(max(adjExpLen, 1, VMConfig.disableJavaLangMath())))
           .divide(GQUAD_DIVISOR);
 
       return isLessThan(energy, BigInteger.valueOf(Long.MAX_VALUE)) ? energy.longValueExact()

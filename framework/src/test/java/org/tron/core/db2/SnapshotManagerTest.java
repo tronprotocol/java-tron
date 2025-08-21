@@ -1,11 +1,13 @@
 package org.tron.core.db2;
 
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
+
 import com.google.common.collect.Maps;
-import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
-import java.io.File;
-import java.util.Iterator;
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -13,11 +15,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
@@ -29,6 +32,7 @@ import org.tron.core.db2.core.Chainbase;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.exception.TronError;
 
 @Slf4j
 public class SnapshotManagerTest {
@@ -37,10 +41,13 @@ public class SnapshotManagerTest {
   private TronApplicationContext context;
   private Application appT;
   private TestRevokingTronStore tronDatabase;
+  @Rule
+  public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
 
   @Before
-  public void init() {
-    Args.setParam(new String[]{"-d", "output_SnapshotManager_test"},
+  public void init() throws IOException {
+    Args.setParam(new String[]{"-d", temporaryFolder.newFolder().toString()},
         Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     appT = ApplicationFactory.create(context);
@@ -54,9 +61,6 @@ public class SnapshotManagerTest {
   public void removeDb() {
     Args.clearParam();
     context.destroy();
-    tronDatabase.close();
-    FileUtil.deleteDir(new File("output_SnapshotManager_test"));
-    revokingDatabase.getCheckTmpStore().close();
     tronDatabase.close();
   }
 
@@ -110,5 +114,23 @@ public class SnapshotManagerTest {
     Assert.assertEquals(null,
         tronDatabase.get(protoCapsule.getData()));
 
+  }
+
+  @Test
+  public void testCheckError() {
+    SnapshotManager manager = spy(new SnapshotManager(""));
+    when(manager.getCheckpointList()).thenReturn(Arrays.asList("check1", "check2"));
+    TronError thrown = Assert.assertThrows(TronError.class, manager::check);
+    Assert.assertEquals(TronError.ErrCode.CHECKPOINT_VERSION, thrown.getErrCode());
+  }
+
+  @Test
+  public void testFlushError() {
+    SnapshotManager manager = spy(new SnapshotManager(""));
+    manager.setUnChecked(false);
+    when(manager.getCheckpointList()).thenReturn(Arrays.asList("check1", "check2"));
+    when(manager.shouldBeRefreshed()).thenReturn(true);
+    TronError thrown = Assert.assertThrows(TronError.class, manager::flush);
+    Assert.assertEquals(TronError.ErrCode.DB_FLUSH, thrown.getErrCode());
   }
 }

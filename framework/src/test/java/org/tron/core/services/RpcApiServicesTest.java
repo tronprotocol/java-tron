@@ -60,8 +60,6 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.core.services.interfaceOnPBFT.RpcApiServiceOnPBFT;
-import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -135,14 +133,20 @@ public class RpcApiServicesTest {
     Args.setParam(new String[]{"-d", temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
     String OWNER_ADDRESS = Wallet.getAddressPreFixString()
         + "548794500882809695a8a687866e76d4271a1abc";
+    getInstance().setRpcEnable(true);
     getInstance().setRpcPort(PublicMethod.chooseRandomPort());
+    getInstance().setRpcSolidityEnable(true);
     getInstance().setRpcOnSolidityPort(PublicMethod.chooseRandomPort());
+    getInstance().setRpcPBFTEnable(true);
     getInstance().setRpcOnPBFTPort(PublicMethod.chooseRandomPort());
-    String fullNode = String.format("%s:%d", getInstance().getNodeLanIp(),
+    getInstance().setMetricsPrometheusPort(PublicMethod.chooseRandomPort());
+    getInstance().setMetricsPrometheusEnable(true);
+    getInstance().setP2pDisable(true);
+    String fullNode = String.format("%s:%d", Constant.LOCAL_HOST,
         getInstance().getRpcPort());
-    String solidityNode = String.format("%s:%d", getInstance().getNodeLanIp(),
+    String solidityNode = String.format("%s:%d", Constant.LOCAL_HOST,
         getInstance().getRpcOnSolidityPort());
-    String pBFTNode = String.format("%s:%d", getInstance().getNodeLanIp(),
+    String pBFTNode = String.format("%s:%d", Constant.LOCAL_HOST,
         getInstance().getRpcOnPBFTPort());
 
     ManagedChannel channelFull = ManagedChannelBuilder.forTarget(fullNode)
@@ -162,11 +166,6 @@ public class RpcApiServicesTest {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
     blockingStubPBFT = WalletSolidityGrpc.newBlockingStub(channelPBFT);
 
-    RpcApiService rpcApiService = context.getBean(RpcApiService.class);
-    RpcApiServiceOnSolidity rpcApiServiceOnSolidity =
-        context.getBean(RpcApiServiceOnSolidity.class);
-    RpcApiServiceOnPBFT rpcApiServiceOnPBFT = context.getBean(RpcApiServiceOnPBFT.class);
-
     Manager manager = context.getBean(Manager.class);
 
     ownerAddress = ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS));
@@ -176,9 +175,6 @@ public class RpcApiServicesTest {
     manager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     manager.getDynamicPropertiesStore().saveAllowShieldedTRC20Transaction(1);
     Application appTest = ApplicationFactory.create(context);
-    appTest.addService(rpcApiService);
-    appTest.addService(rpcApiServiceOnSolidity);
-    appTest.addService(rpcApiServiceOnPBFT);
     appTest.startup();
   }
 
@@ -233,6 +229,14 @@ public class RpcApiServicesTest {
     assertNotNull(blockingStubFull.listWitnesses(message));
     assertNotNull(blockingStubSolidity.listWitnesses(message));
     assertNotNull(blockingStubPBFT.listWitnesses(message));
+  }
+
+  @Test
+  public void testGetPaginatedNowWitnessList() {
+    PaginatedMessage paginatedMessage = PaginatedMessage.newBuilder()
+        .setOffset(0).setLimit(5).build();
+    assertNotNull(blockingStubFull.getPaginatedNowWitnessList(paginatedMessage));
+    assertNotNull(blockingStubSolidity.getPaginatedNowWitnessList(paginatedMessage));
   }
 
   @Test

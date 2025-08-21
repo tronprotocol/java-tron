@@ -15,12 +15,17 @@
 
 package org.tron.core.capsule.utils;
 
+import static org.tron.common.math.Maths.addExact;
+import static org.tron.common.math.Maths.floorDiv;
+import static org.tron.common.math.Maths.multiplyExact;
+
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
 import java.util.Arrays;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.MarketComparator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.MarketAccountOrderCapsule;
 import org.tron.core.capsule.MarketOrderCapsule;
@@ -224,48 +229,6 @@ public class MarketUtils {
   }
 
   /**
-   * Note: the params should be the same token pair, or you should change the order.
-   * All the quantity should be bigger than 0.
-   * */
-  public static int comparePrice(long price1SellQuantity, long price1BuyQuantity,
-      long price2SellQuantity, long price2BuyQuantity) {
-    try {
-      return Long.compare(Math.multiplyExact(price1BuyQuantity, price2SellQuantity),
-          Math.multiplyExact(price2BuyQuantity, price1SellQuantity));
-
-    } catch (ArithmeticException ex) {
-      // do nothing here, because we will use BigInteger to compute again
-    }
-
-    BigInteger price1BuyQuantityBI = BigInteger.valueOf(price1BuyQuantity);
-    BigInteger price1SellQuantityBI = BigInteger.valueOf(price1SellQuantity);
-    BigInteger price2BuyQuantityBI = BigInteger.valueOf(price2BuyQuantity);
-    BigInteger price2SellQuantityBI = BigInteger.valueOf(price2SellQuantity);
-
-    return price1BuyQuantityBI.multiply(price2SellQuantityBI)
-        .compareTo(price2BuyQuantityBI.multiply(price1SellQuantityBI));
-  }
-
-  /**
-   * ex.
-   * for sellToken is A, buyToken is TRX.
-   * price_A_maker * sellQuantity_maker = Price_TRX * buyQuantity_maker
-   * ==> price_A_maker = Price_TRX * buyQuantity_maker/sellQuantity_maker
-   *
-   * price_A_maker_1 < price_A_maker_2
-   * ==> buyQuantity_maker_1/sellQuantity_maker_1 < buyQuantity_maker_2/sellQuantity_maker_2
-   * ==> buyQuantity_maker_1*sellQuantity_maker_2 < buyQuantity_maker_2 * sellQuantity_maker_1
-   */
-  public static int comparePrice(MarketPrice price1, MarketPrice price2) {
-    return comparePrice(price1.getSellTokenQuantity(), price1.getBuyTokenQuantity(),
-        price2.getSellTokenQuantity(), price2.getBuyTokenQuantity());
-  }
-
-  public static boolean isLowerPrice(MarketPrice price1, MarketPrice price2) {
-    return comparePrice(price1, price2) == -1;
-  }
-
-  /**
    * if takerPrice >= makerPrice, return True
    * note: here are two different token pairs
    * firstly, we should change the token pair of taker to be the same with maker
@@ -280,7 +243,8 @@ public class MarketUtils {
     // ==> Price_TRX * sellQuantity_taker/buyQuantity_taker >= Price_TRX * buyQuantity_maker/sellQuantity_maker
     // ==> sellQuantity_taker * sellQuantity_maker > buyQuantity_taker * buyQuantity_maker
 
-    return comparePrice(takerPrice.getBuyTokenQuantity(), takerPrice.getSellTokenQuantity(),
+    return MarketComparator.comparePrice(takerPrice.getBuyTokenQuantity(),
+        takerPrice.getSellTokenQuantity(),
         makerPrice.getSellTokenQuantity(), makerPrice.getBuyTokenQuantity()) >= 0;
   }
 
@@ -297,10 +261,10 @@ public class MarketUtils {
     }
   }
 
-  public static long multiplyAndDivide(long a, long b, long c) {
+  public static long multiplyAndDivide(long a, long b, long c, boolean disableMath) {
     try {
-      long tmp = Math.multiplyExact(a, b);
-      return Math.floorDiv(tmp, c);
+      long tmp = multiplyExact(a, b, disableMath);
+      return floorDiv(tmp, c, disableMath);
     } catch (ArithmeticException ex) {
       // do nothing here, because we will use BigInteger to compute again
     }
@@ -320,8 +284,9 @@ public class MarketUtils {
     byte[] sellTokenId = orderCapsule.getSellTokenId();
     long sellTokenQuantityRemain = orderCapsule.getSellTokenQuantityRemain();
     if (Arrays.equals(sellTokenId, "_".getBytes())) {
-      accountCapsule.setBalance(Math.addExact(
-          accountCapsule.getBalance(), sellTokenQuantityRemain));
+      accountCapsule.setBalance(addExact(
+          accountCapsule.getBalance(), sellTokenQuantityRemain,
+          dynamicStore.disableJavaLangMath()));
     } else {
       accountCapsule
           .addAssetAmountV2(sellTokenId, sellTokenQuantityRemain, dynamicStore, assetIssueStore);
@@ -330,57 +295,7 @@ public class MarketUtils {
   }
 
   public static int comparePriceKey(byte[] o1, byte[] o2) {
-    //compare pair
-    byte[] pair1 = new byte[TOKEN_ID_LENGTH * 2];
-    byte[] pair2 = new byte[TOKEN_ID_LENGTH * 2];
-
-    System.arraycopy(o1, 0, pair1, 0, TOKEN_ID_LENGTH * 2);
-    System.arraycopy(o2, 0, pair2, 0, TOKEN_ID_LENGTH * 2);
-
-    int pairResult = org.bouncycastle.util.Arrays.compareUnsigned(pair1, pair2);
-    if (pairResult != 0) {
-      return pairResult;
-    }
-
-    //compare price
-    byte[] getSellTokenQuantity1 = new byte[8];
-    byte[] getBuyTokenQuantity1 = new byte[8];
-
-    byte[] getSellTokenQuantity2 = new byte[8];
-    byte[] getBuyTokenQuantity2 = new byte[8];
-
-    int longByteNum = 8;
-
-    System.arraycopy(o1, TOKEN_ID_LENGTH + TOKEN_ID_LENGTH,
-        getSellTokenQuantity1, 0, longByteNum);
-    System.arraycopy(o1, TOKEN_ID_LENGTH + TOKEN_ID_LENGTH + longByteNum,
-        getBuyTokenQuantity1, 0, longByteNum);
-
-    System.arraycopy(o2, TOKEN_ID_LENGTH + TOKEN_ID_LENGTH,
-        getSellTokenQuantity2, 0, longByteNum);
-    System.arraycopy(o2, TOKEN_ID_LENGTH + TOKEN_ID_LENGTH + longByteNum,
-        getBuyTokenQuantity2, 0, longByteNum);
-
-    long sellTokenQuantity1 = ByteArray.toLong(getSellTokenQuantity1);
-    long buyTokenQuantity1 = ByteArray.toLong(getBuyTokenQuantity1);
-    long sellTokenQuantity2 = ByteArray.toLong(getSellTokenQuantity2);
-    long buyTokenQuantity2 = ByteArray.toLong(getBuyTokenQuantity2);
-
-    if ((sellTokenQuantity1 == 0 || buyTokenQuantity1 == 0)
-        && (sellTokenQuantity2 == 0 || buyTokenQuantity2 == 0)) {
-      return 0;
-    }
-
-    if (sellTokenQuantity1 == 0 || buyTokenQuantity1 == 0) {
-      return -1;
-    }
-
-    if (sellTokenQuantity2 == 0 || buyTokenQuantity2 == 0) {
-      return 1;
-    }
-
-    return comparePrice(sellTokenQuantity1, buyTokenQuantity1,
-        sellTokenQuantity2, buyTokenQuantity2);
+    return MarketComparator.comparePriceKey(o1, o2);
 
   }
 

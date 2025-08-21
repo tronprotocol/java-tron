@@ -38,7 +38,7 @@ import org.tron.protos.Protocol.Transaction;
 public class FetchInvDataMsgHandler implements TronMsgHandler {
 
   private volatile Cache<Long, Boolean> epochCache = CacheBuilder.newBuilder().initialCapacity(100)
-      .maximumSize(1000).expireAfterWrite(1, TimeUnit.HOURS).build();
+          .maximumSize(1000).expireAfterWrite(1, TimeUnit.HOURS).build();
 
   private static final int MAX_SIZE = 1_000_000;
   @Autowired
@@ -66,6 +66,11 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
 
     for (Sha256Hash hash : fetchInvDataMsg.getHashList()) {
       Item item = new Item(hash, type);
+      /* Cache the Inventory sent to the peer.
+      Once a FetchInvData message is received from the peer, remove this Inventory from the cache.
+      If the same FetchInvData request is received from the peer again and it is
+      no longer in the cache, then reject the request.
+      * */
       if (isAdv) {
         peer.getAdvInvSpread().invalidate(item);
       }
@@ -90,7 +95,7 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
       } else {
         transactions.add(((TransactionMessage) message).getTransactionCapsule().getInstance());
         size += ((TransactionMessage) message).getTransactionCapsule().getInstance()
-            .getSerializedSize();
+                .getSerializedSize();
         if (size > MAX_SIZE) {
           peer.sendMessage(new TransactionsMessage(transactions));
           transactions = Lists.newArrayList();
@@ -110,16 +115,16 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
       }
       long epoch = 0;
       PbftSignCapsule pbftSignCapsule = tronNetDelegate
-          .getBlockPbftCommitData(blockCapsule.getNum());
+              .getBlockPbftCommitData(blockCapsule.getNum());
       long maintenanceTimeInterval = consensusDelegate.getDynamicPropertiesStore()
-          .getMaintenanceTimeInterval();
+              .getMaintenanceTimeInterval();
       if (pbftSignCapsule != null) {
         Raw raw = Raw.parseFrom(pbftSignCapsule.getPbftCommitResult().getData());
         epoch = raw.getEpoch();
         peer.sendMessage(new PbftCommitMessage(pbftSignCapsule));
       } else {
-        epoch =
-            (blockCapsule.getTimeStamp() / maintenanceTimeInterval + 1) * maintenanceTimeInterval;
+        epoch = (blockCapsule.getTimeStamp() / maintenanceTimeInterval + 1)
+                * maintenanceTimeInterval;
       }
       if (epochCache.getIfPresent(epoch) == null) {
         PbftSignCapsule srl = tronNetDelegate.getSRLPbftCommitData(epoch);
@@ -173,18 +178,18 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
       for (Sha256Hash hash : fetchInvDataMsg.getHashList()) {
         long blockNum = new BlockId(hash).getNum();
         long minBlockNum =
-            peer.getLastSyncBlockId().getNum() - 2 * NetConstants.SYNC_FETCH_BATCH_NUM;
+                peer.getLastSyncBlockId().getNum() - 2 * NetConstants.SYNC_FETCH_BATCH_NUM;
         if (blockNum < minBlockNum) {
           throw new P2pException(TypeEnum.BAD_MESSAGE,
-            "minBlockNum: " + minBlockNum + ", blockNum: " + blockNum);
+                  "minBlockNum: " + minBlockNum + ", blockNum: " + blockNum);
         }
         if (blockNum > peer.getLastSyncBlockId().getNum()) {
           throw new P2pException(TypeEnum.BAD_MESSAGE,
-            "maxBlockNum: " + peer.getLastSyncBlockId().getNum() + ", blockNum: " + blockNum);
+                  "maxBlockNum: " + peer.getLastSyncBlockId().getNum() + ", blockNum: " + blockNum);
         }
         if (peer.getSyncBlockIdCache().getIfPresent(hash) != null) {
           throw new P2pException(TypeEnum.BAD_MESSAGE,
-            new BlockId(hash).getString() + " is exist");
+                  new BlockId(hash).getString() + " is exist");
         }
         peer.getSyncBlockIdCache().put(hash, System.currentTimeMillis());
       }

@@ -61,17 +61,18 @@ public class ConsensusService {
         logger.info("Add witness: {}, size: {}",
             Hex.toHexString(privateKeyAddress), miners.size());
       }
-    } else {
+    } else if (privateKeys.size() == 1) {
       byte[] privateKey =
           fromHexString(Args.getLocalWitnesses().getPrivateKey());
       byte[] privateKeyAddress = SignUtils.fromPrivate(privateKey,
           Args.getInstance().isECKeyCryptoEngine()).getAddress();
-      byte[] witnessAddress = Args.getLocalWitnesses().getWitnessAccountAddress(
-          Args.getInstance().isECKeyCryptoEngine());
+      byte[] witnessAddress = Args.getLocalWitnesses().getWitnessAccountAddress();
       WitnessCapsule witnessCapsule = witnessStore.get(witnessAddress);
       if (null == witnessCapsule) {
         logger.warn("Witness {} is not in witnessStore.", Hex.toHexString(witnessAddress));
       }
+      // In multi-signature mode, the address derived from the private key may differ from
+      // witnessAddress.
       Miner miner = param.new Miner(privateKey, ByteString.copyFrom(privateKeyAddress),
           ByteString.copyFrom(witnessAddress));
       miners.add(miner);

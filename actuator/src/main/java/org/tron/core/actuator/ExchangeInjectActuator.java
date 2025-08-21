@@ -71,14 +71,14 @@ public class ExchangeInjectActuator extends AbstractActuator {
 
       if (Arrays.equals(tokenID, firstTokenID)) {
         anotherTokenID = secondTokenID;
-        anotherTokenQuant = Math
-            .floorDiv(Math.multiplyExact(secondTokenBalance, tokenQuant), firstTokenBalance);
+        anotherTokenQuant = floorDiv(multiplyExact(
+            secondTokenBalance, tokenQuant), firstTokenBalance);
         exchangeCapsule.setBalance(firstTokenBalance + tokenQuant,
             secondTokenBalance + anotherTokenQuant);
       } else {
         anotherTokenID = firstTokenID;
-        anotherTokenQuant = Math
-            .floorDiv(Math.multiplyExact(firstTokenBalance, tokenQuant), secondTokenBalance);
+        anotherTokenQuant = floorDiv(multiplyExact(
+            firstTokenBalance, tokenQuant), secondTokenBalance);
         exchangeCapsule.setBalance(firstTokenBalance + anotherTokenQuant,
             secondTokenBalance + tokenQuant);
       }

@@ -1,5 +1,8 @@
 package org.tron.core.zksnark;
 
+import static org.tron.common.math.Maths.random;
+import static org.tron.common.math.Maths.round;
+
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -19,7 +22,7 @@ public class SaplingNoteTest {
 
   @BeforeClass
   public static void init() {
-    Args.setFullNodeAllowShieldedTransaction(true);
+    Args.getInstance().setAllowShieldedTransactionApi(true);
     // Args.getInstance().setAllowShieldedTransaction(1);
     ZksnarkInitService.librustzcashInitZksnarkParams();
   }
@@ -30,7 +33,7 @@ public class SaplingNoteTest {
   }
 
   private static int randomInt(int minInt, int maxInt) {
-    return (int) Math.round(Math.random() * (maxInt - minInt) + minInt);
+    return (int) round(random(true) * (maxInt - minInt) + minInt, true);
   }
 
   @Test

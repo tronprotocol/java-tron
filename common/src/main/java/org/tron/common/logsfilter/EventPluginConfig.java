@@ -17,6 +17,14 @@ public class EventPluginConfig {
 
   @Getter
   @Setter
+  private int version;
+
+  @Getter
+  @Setter
+  private long startSyncBlockNum;
+
+  @Getter
+  @Setter
   private String pluginPath;
 
   @Getter

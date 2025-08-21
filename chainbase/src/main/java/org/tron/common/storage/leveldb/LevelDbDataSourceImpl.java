@@ -17,8 +17,9 @@ package org.tron.common.storage.leveldb;
 
 import static org.fusesource.leveldbjni.JniDBFactory.factory;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Sets;
-import java.io.File;
+import com.google.common.primitives.Bytes;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,18 +31,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-
-import com.google.common.primitives.Bytes;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBIterator;
 import org.iq80.leveldb.Logger;
@@ -59,6 +56,7 @@ import org.tron.core.db.common.DbSourceInter;
 import org.tron.core.db.common.iterator.StoreIterator;
 import org.tron.core.db2.common.Instance;
 import org.tron.core.db2.common.WrappedByteArray;
+import org.tron.core.exception.TronError;
 
 @Slf4j(topic = "DB")
 @NoArgsConstructor
@@ -72,7 +70,6 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   private Options options;
   private WriteOptions writeOptions;
   private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
-  private static final String LEVELDB = "LEVELDB";
   private static final org.slf4j.Logger innerLogger = LoggerFactory.getLogger(LEVELDB);
   private Logger leveldbLogger = new Logger() {
     @Override
@@ -143,6 +140,8 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
       Files.createDirectories(dbPath.getParent());
     }
     try {
+      DbSourceInter.checkOrInitEngine(getEngine(), dbPath.toString(),
+          TronError.ErrCode.LEVELDB_INIT);
       database = factory.open(dbPath.toFile(), dbOptions);
       if (!this.getDBName().startsWith("checkpoint")) {
         logger
@@ -157,7 +156,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
       } else {
         logger.error("Open Database {} failed", dataBaseName, e);
       }
-      System.exit(1);
+      throw new TronError(e, TronError.ErrCode.LEVELDB_INIT);
     }
   }
 
@@ -225,6 +224,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   }
 
   @Deprecated
+  @VisibleForTesting
   @Override
   public Set<byte[]> allKeys() {
     resetDbLock.readLock().lock();
@@ -242,6 +242,7 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   }
 
   @Deprecated
+  @VisibleForTesting
   @Override
   public Set<byte[]> allValues() {
     resetDbLock.readLock().lock();
@@ -361,6 +362,8 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     }
   }
 
+  @Deprecated
+  @VisibleForTesting
   @Override
   public long getTotal() throws RuntimeException {
     resetDbLock.readLock().lock();
@@ -374,13 +377,6 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
       throw new RuntimeException(e);
     } finally {
       resetDbLock.readLock().unlock();
-    }
-  }
-
-  private void updateByBatchInner(Map<byte[], byte[]> rows) throws Exception {
-    try (WriteBatch batch = database.createWriteBatch()) {
-      innerBatchUpdate(rows,batch);
-      database.write(batch, writeOptions);
     }
   }
 
@@ -403,30 +399,23 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
 
   @Override
   public void updateByBatch(Map<byte[], byte[]> rows, WriteOptionsWrapper options) {
-    resetDbLock.readLock().lock();
-    try {
-      updateByBatchInner(rows, options.level);
-    } catch (Exception e) {
-      try {
-        updateByBatchInner(rows, options.level);
-      } catch (Exception e1) {
-        throw new RuntimeException(e);
-      }
-    } finally {
-      resetDbLock.readLock().unlock();
-    }
+    this.updateByBatch(rows, options.level);
   }
 
   @Override
   public void updateByBatch(Map<byte[], byte[]> rows) {
+    this.updateByBatch(rows, writeOptions);
+  }
+
+  private void updateByBatch(Map<byte[], byte[]> rows, WriteOptions options) {
     resetDbLock.readLock().lock();
     try {
-      updateByBatchInner(rows);
+      updateByBatchInner(rows, options);
     } catch (Exception e) {
       try {
-        updateByBatchInner(rows);
+        updateByBatchInner(rows, options);
       } catch (Exception e1) {
-        throw new RuntimeException(e);
+        throw new RuntimeException(e1);
       }
     } finally {
       resetDbLock.readLock().unlock();

@@ -36,8 +36,6 @@ import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
-import org.tron.core.services.interfaceOnPBFT.RpcApiServiceOnPBFT;
-import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.protos.Protocol.Transaction;
 
 @Slf4j
@@ -56,14 +54,18 @@ public class RpcApiAccessInterceptorTest {
   @BeforeClass
   public static void init() throws IOException {
     Args.setParam(new String[] {"-d", temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
+    Args.getInstance().setRpcEnable(true);
     Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setRpcSolidityEnable(true);
     Args.getInstance().setRpcOnSolidityPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setRpcPBFTEnable(true);
     Args.getInstance().setRpcOnPBFTPort(PublicMethod.chooseRandomPort());
-    String fullNode = String.format("%s:%d", Args.getInstance().getNodeLanIp(),
+    Args.getInstance().setP2pDisable(true);
+    String fullNode = String.format("%s:%d", Constant.LOCAL_HOST,
         Args.getInstance().getRpcPort());
-    String solidityNode = String.format("%s:%d", Args.getInstance().getNodeLanIp(),
+    String solidityNode = String.format("%s:%d", Constant.LOCAL_HOST,
         Args.getInstance().getRpcOnSolidityPort());
-    String pBFTNode = String.format("%s:%d", Args.getInstance().getNodeLanIp(),
+    String pBFTNode = String.format("%s:%d", Constant.LOCAL_HOST,
         Args.getInstance().getRpcOnPBFTPort());
 
     ManagedChannel channelFull = ManagedChannelBuilder.forTarget(fullNode)
@@ -82,15 +84,7 @@ public class RpcApiAccessInterceptorTest {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
     blockingStubPBFT = WalletSolidityGrpc.newBlockingStub(channelPBFT);
 
-    RpcApiService rpcApiService = context.getBean(RpcApiService.class);
-    RpcApiServiceOnSolidity rpcApiServiceOnSolidity =
-        context.getBean(RpcApiServiceOnSolidity.class);
-    RpcApiServiceOnPBFT rpcApiServiceOnPBFT = context.getBean(RpcApiServiceOnPBFT.class);
-
     Application appTest = ApplicationFactory.create(context);
-    appTest.addService(rpcApiService);
-    appTest.addService(rpcApiServiceOnSolidity);
-    appTest.addService(rpcApiServiceOnPBFT);
     appTest.startup();
   }
 

@@ -96,9 +96,9 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
     //adjust and verify total shielded pool value
     try {
-      Commons.adjustTotalShieldedPoolValue(
-          Math.addExact(Math.subtractExact(shieldedTransferContract.getToAmount(),
-              shieldedTransferContract.getFromAmount()), fee), dynamicStore);
+      Commons.adjustTotalShieldedPoolValue(addExact(subtractExact(
+          shieldedTransferContract.getToAmount(),
+          shieldedTransferContract.getFromAmount()), fee), dynamicStore);
     } catch (ArithmeticException | BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(0, code.FAILED);
@@ -170,28 +170,27 @@ public class ShieldedTransferActuator extends AbstractActuator {
       }
       nullifierStore.put(new BytesCapsule(spend.getNullifier().toByteArray()));
     }
-    if (CommonParameter.getInstance().isFullNodeAllowShieldedTransactionArgs()) {
-      IncrementalMerkleTreeContainer currentMerkle = merkleContainer.getCurrentMerkle();
+
+    IncrementalMerkleTreeContainer currentMerkle = merkleContainer.getCurrentMerkle();
+    try {
+      currentMerkle.wfcheck();
+    } catch (ZksnarkException e) {
+      ret.setStatus(fee, code.FAILED);
+      ret.setShieldedTransactionFee(fee);
+      throw new ContractExeException(e.getMessage());
+    }
+    //handle receives
+    for (ReceiveDescription receive : receives) {
       try {
-        currentMerkle.wfcheck();
+        merkleContainer
+            .saveCmIntoMerkleTree(currentMerkle, receive.getNoteCommitment().toByteArray());
       } catch (ZksnarkException e) {
-        ret.setStatus(fee, code.FAILED);
+        ret.setStatus(0, code.FAILED);
         ret.setShieldedTransactionFee(fee);
         throw new ContractExeException(e.getMessage());
       }
-      //handle receives
-      for (ReceiveDescription receive : receives) {
-        try {
-          merkleContainer
-              .saveCmIntoMerkleTree(currentMerkle, receive.getNoteCommitment().toByteArray());
-        } catch (ZksnarkException e) {
-          ret.setStatus(0, code.FAILED);
-          ret.setShieldedTransactionFee(fee);
-          throw new ContractExeException(e.getMessage());
-        }
-      }
-      merkleContainer.setCurrentMerkle(currentMerkle);
     }
+    merkleContainer.setCurrentMerkle(currentMerkle);
   }
 
   @Override
@@ -236,8 +235,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
           throw new ContractValidateException("duplicate sapling nullifiers in this transaction");
         }
         nfSet.add(spendDescription.getNullifier());
-        if (CommonParameter.getInstance().isFullNodeAllowShieldedTransactionArgs()
-            && !merkleContainer.merkleRootExist(spendDescription.getAnchor().toByteArray())) {
+        if (!merkleContainer.merkleRootExist(spendDescription.getAnchor().toByteArray())) {
           throw new ContractValidateException("Rt is invalid.");
         }
         if (nullifierStore.has(spendDescription.getNullifier().toByteArray())) {
@@ -327,9 +325,11 @@ public class ShieldedTransferActuator extends AbstractActuator {
         long totalShieldedPoolValue = dynamicStore
             .getTotalShieldedPoolValue();
         try {
-          valueBalance = Math.addExact(Math.subtractExact(shieldedTransferContract.getToAmount(),
+          valueBalance = addExact(subtractExact(
+              shieldedTransferContract.getToAmount(),
               shieldedTransferContract.getFromAmount()), fee);
-          totalShieldedPoolValue = Math.subtractExact(totalShieldedPoolValue, valueBalance);
+          totalShieldedPoolValue = subtractExact(
+              totalShieldedPoolValue, valueBalance);
         } catch (ArithmeticException e) {
           logger.debug(e.getMessage(), e);
           throw new ZkProofValidateException(e.getMessage(), true);
@@ -452,7 +452,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
       AccountCapsule toAccount = accountStore.get(toAddress);
       if (toAccount != null) {
         try {
-          Math.addExact(getZenBalance(toAccount), toAmount);
+          addExact(getZenBalance(toAccount), toAmount);
         } catch (ArithmeticException e) {
           logger.debug(e.getMessage(), e);
           throw new ContractValidateException(e.getMessage());

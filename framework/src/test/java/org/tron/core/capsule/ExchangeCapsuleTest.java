@@ -52,8 +52,8 @@ public class ExchangeCapsuleTest extends BaseTest {
 
       long sellQuant = 1_000_000L;
       byte[] sellID = "abc".getBytes();
-
-      long result = exchangeCapsule.transaction(sellID, sellQuant);
+      boolean useStrictMath = chainBaseManager.getDynamicPropertiesStore().allowStrictMath();
+      long result = exchangeCapsule.transaction(sellID, sellQuant, useStrictMath);
       Assert.assertEquals(990_099L, result);
       sellBalance += sellQuant;
       Assert.assertEquals(sellBalance, exchangeCapsule.getFirstTokenBalance());
@@ -61,7 +61,7 @@ public class ExchangeCapsuleTest extends BaseTest {
       Assert.assertEquals(buyBalance, exchangeCapsule.getSecondTokenBalance());
 
       sellQuant = 9_000_000L;
-      long result2 = exchangeCapsule.transaction(sellID, sellQuant);
+      long result2 = exchangeCapsule.transaction(sellID, sellQuant, useStrictMath);
       Assert.assertEquals(9090909L, result + result2);
       sellBalance += sellQuant;
       Assert.assertEquals(sellBalance, exchangeCapsule.getFirstTokenBalance());
