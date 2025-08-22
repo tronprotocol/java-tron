@@ -12,6 +12,7 @@ import io.grpc.ManagedChannelBuilder;
 import java.io.IOException;
 import java.util.Objects;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.FixMethodOrder;
@@ -131,6 +132,8 @@ public class RpcApiServicesTest {
   @BeforeClass
   public static void init() throws IOException {
     Args.setParam(new String[]{"-d", temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
+    Assert.assertEquals(5, getInstance().getRpcMaxRstStream());
+    Assert.assertEquals(10, getInstance().getRpcSecondsPerWindow());
     String OWNER_ADDRESS = Wallet.getAddressPreFixString()
         + "548794500882809695a8a687866e76d4271a1abc";
     getInstance().setRpcEnable(true);

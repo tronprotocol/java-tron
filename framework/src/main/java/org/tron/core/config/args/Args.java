@@ -251,6 +251,8 @@ public class Args extends CommonParameter {
     PARAMETER.allowTvmCancun = 0;
     PARAMETER.allowTvmBlob = 0;
     PARAMETER.allowTvmSelfdestructRestriction = 0;
+    PARAMETER.rpcMaxRstStream = 0;
+    PARAMETER.rpcSecondsPerWindow = 0;
   }
 
   /**
@@ -723,6 +725,12 @@ public class Args extends CommonParameter {
     PARAMETER.flowControlWindow = config.hasPath(Constant.NODE_RPC_FLOW_CONTROL_WINDOW)
         ? config.getInt(Constant.NODE_RPC_FLOW_CONTROL_WINDOW)
         : NettyServerBuilder.DEFAULT_FLOW_CONTROL_WINDOW;
+    if (config.hasPath(Constant.NODE_RPC_MAX_RST_STREAM)) {
+      PARAMETER.rpcMaxRstStream = config.getInt(Constant.NODE_RPC_MAX_RST_STREAM);
+    }
+    if (config.hasPath(Constant.NODE_RPC_SECONDS_PER_WINDOW)) {
+      PARAMETER.rpcSecondsPerWindow = config.getInt(Constant.NODE_RPC_SECONDS_PER_WINDOW);
+    }
 
     PARAMETER.maxConnectionIdleInMillis =
         config.hasPath(Constant.NODE_RPC_MAX_CONNECTION_IDLE_IN_MILLIS)
