@@ -102,7 +102,7 @@ Requires 64-bit version of `JDK 17` to be installed, other JDK versions are not 
 
 
 ## Configuration flile
-Get the mainnet configuration file: [main_net_config.conf](https://github.com/tronprotocol/tron-deployment/blob/master/main_net_config.conf), other network configuration files can be found [here](https://github.com/tronprotocol/tron-deployment).
+Get the mainnet configuration file: [config.conf](framework/src/main/resources/config.conf), other network configuration files can be found [here](https://github.com/tronprotocol/tron-deployment).
 
 ## Hardware Requirements
 
