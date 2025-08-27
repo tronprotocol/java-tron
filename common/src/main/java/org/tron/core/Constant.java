@@ -163,6 +163,8 @@ public class Constant {
   public static final String NODE_RPC_MAX_CONCURRENT_CALLS_PER_CONNECTION = "node.rpc.maxConcurrentCallsPerConnection";
   public static final String NODE_RPC_FLOW_CONTROL_WINDOW = "node.rpc.flowControlWindow";
   public static final String NODE_RPC_MAX_CONNECTION_IDLE_IN_MILLIS = "node.rpc.maxConnectionIdleInMillis";
+  public static final String NODE_RPC_MAX_RST_STREAM = "node.rpc.maxRstStream";
+  public static final String NODE_RPC_SECONDS_PER_WINDOW = "node.rpc.secondsPerWindow";
   public static final String NODE_PRODUCED_TIMEOUT = "node.blockProducedTimeOut";
   public static final String NODE_MAX_HTTP_CONNECT_NUMBER = "node.maxHttpConnectNumber";
 

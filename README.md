@@ -85,6 +85,9 @@ then run the following command to build java-tron, the `FullNode.jar` file can b
 
 ```bash
 $ ./gradlew clean build -x test
+ # To fix DependencyVerificationException: Dependency verification failed for configuration ':xxx' x artifacts failed verification
+$ ./gradlew clean --refresh-dependencies --write-verification-metadata sha256
+
 ```
 
 # Running java-tron

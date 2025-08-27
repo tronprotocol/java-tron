@@ -88,6 +88,10 @@ public abstract class RpcService extends AbstractService {
         .maxConnectionAge(parameter.getMaxConnectionAgeInMillis(), TimeUnit.MILLISECONDS)
         .maxInboundMessageSize(parameter.getMaxMessageSize())
         .maxHeaderListSize(parameter.getMaxHeaderListSize());
+    if (parameter.getRpcMaxRstStream() > 0 && parameter.getRpcSecondsPerWindow() > 0) {
+      serverBuilder.maxRstFramesPerWindow(
+          parameter.getRpcMaxRstStream(), parameter.getRpcSecondsPerWindow());
+    }
 
     if (parameter.isRpcReflectionServiceEnable()) {
       serverBuilder.addService(ProtoReflectionService.newInstance());

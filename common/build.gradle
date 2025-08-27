@@ -22,7 +22,7 @@ dependencies {
     api 'org.aspectj:aspectjrt:1.9.8'
     api 'org.aspectj:aspectjweaver:1.9.8'
     api 'org.aspectj:aspectjtools:1.9.8'
-    api group: 'io.github.tronprotocol', name: 'libp2p', version: '2.2.6',{
+    api group: 'com.github.tronprotocol', name: 'libp2p', version: 'release-v2.2.7-SNAPSHOT',{
         exclude group: 'io.grpc', module: 'grpc-context'
         exclude group: 'io.grpc', module: 'grpc-core'
         exclude group: 'io.grpc', module: 'grpc-netty'

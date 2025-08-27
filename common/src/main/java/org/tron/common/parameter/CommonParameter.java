@@ -249,6 +249,15 @@ public class CommonParameter {
   @Getter
   @Setter
   public int flowControlWindow;
+  // the positive limit of RST_STREAM frames per connection per period for grpc,
+  // 0 or Integer.MAX_VALUE for unlimited, by default there is no limit.
+  @Getter
+  @Setter
+  public int rpcMaxRstStream;
+  // the positive number of seconds per period for grpc
+  @Getter
+  @Setter
+  public int rpcSecondsPerWindow;
   @Getter
   @Setter
   public long maxConnectionIdleInMillis;
