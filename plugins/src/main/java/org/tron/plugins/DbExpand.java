@@ -262,7 +262,7 @@ public class DbExpand implements Callable<Integer> {
       random.nextBytes(result);
       return result;
     }
-    if ("tranRet".equalsIgnoreCase(targetDb)) {
+    if ("transactionRetStore".equalsIgnoreCase(targetDb)) {
       byte[] result = new byte[8];
       random.nextBytes(result);
       writeLongToBytes(blockExpandBegin,result,true);
