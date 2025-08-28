@@ -849,7 +849,9 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   public List<TransactionReceipt> getBlockReceipts(String blockNumOrTag)
       throws JsonRpcInvalidParamsException, JsonRpcInternalException {
     Block block = wallet.getByJsonBlockId(blockNumOrTag);
-    if (block == null) {
+
+    // block receipts not available: block is genesis, not produced yet, or pruned in light node
+    if (block == null || block.getBlockHeader().getRawData().getNumber() == 0) {
       return null;
     }
 
