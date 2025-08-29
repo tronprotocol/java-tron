@@ -1073,6 +1073,20 @@ public class JsonrpcServiceTest extends BaseTest {
       throw new RuntimeException(e);
     }
 
+    try {
+      String blockHash = blockCapsule1.getBlockId().toString();
+      List<TransactionReceipt> transactionReceiptList
+          = tronJsonRpc.getBlockReceipts(blockHash);
+      List<TransactionReceipt> transactionReceiptList2
+          = tronJsonRpc.getBlockReceipts("0x" + blockHash);
+
+      Assert.assertFalse(transactionReceiptList.isEmpty());
+      Assert.assertEquals(JSON.toJSONString(transactionReceiptList),
+          JSON.toJSONString(transactionReceiptList2));
+    } catch (JsonRpcInvalidParamsException | JsonRpcInternalException e) {
+      throw new RuntimeException(e);
+    }
+
   }
 
   @Test
