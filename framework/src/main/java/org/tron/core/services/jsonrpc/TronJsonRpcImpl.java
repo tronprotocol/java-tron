@@ -858,7 +858,6 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       block = wallet.getByJsonBlockId(blockNumOrHashOrTag);
     }
 
-
     // block receipts not available: block is genesis, not produced yet, or pruned in light node
     if (block == null || block.getBlockHeader().getRawData().getNumber() == 0) {
       return null;
@@ -868,7 +867,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     long blockNum = blockCapsule.getNum();
     TransactionInfoList transactionInfoList = wallet.getTransactionInfoByBlockNum(blockNum);
 
-    //energy price at the block timestamp
+    // energy price at the block timestamp
     long energyFee = wallet.getEnergyFee(blockCapsule.getTimeStamp());
 
     // Validate transaction list size consistency
