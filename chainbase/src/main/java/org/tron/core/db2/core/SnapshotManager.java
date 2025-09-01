@@ -427,6 +427,9 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   private void deleteCheckpoint() {
+    if(checkTmpStore == null) {
+      return;
+    }
     try {
       Map<byte[], byte[]> hmap = new HashMap<>();
       for (Map.Entry<byte[], byte[]> e : checkTmpStore.getDbSource()) {
