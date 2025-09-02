@@ -23,7 +23,17 @@ public class HistoryEventServiceTest {
 
   HistoryEventService historyEventService = new HistoryEventService();
 
-  //@Test
+//  @Resource
+//  HistoryEventService historyEventService;
+//
+//  @BeforeClass
+//  public static void init() {
+//    Args.setParam(new String[] {"--output-directory", dbPath(), "--debug"},
+//        Constant.TESTNET_CONF);
+//  }
+
+  //ignore?
+  @Test
   public void test() throws Exception {
     EventPluginLoader instance = mock(EventPluginLoader.class);
     Mockito.when(instance.isUseNativeQueue()).thenReturn(true);
@@ -43,6 +53,7 @@ public class HistoryEventServiceTest {
     RealtimeEventService realtimeEventService = new RealtimeEventService();
     BlockEventLoad blockEventLoad = new BlockEventLoad();
     ReflectUtils.setFieldValue(blockEventLoad, "instance", instance);
+    ReflectUtils.setFieldValue(blockEventLoad, "manager", manager);
 
     ReflectUtils.setFieldValue(historyEventService, "solidEventService", solidEventService);
     ReflectUtils.setFieldValue(historyEventService, "realtimeEventService", realtimeEventService);

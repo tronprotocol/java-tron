@@ -23,7 +23,8 @@ import org.tron.core.store.DynamicPropertiesStore;
 public class BlockEventLoadTest {
   BlockEventLoad blockEventLoad = new BlockEventLoad();
 
-  //@Test
+  //ignore?
+  @Test
   public void test() throws Exception {
     Method method = blockEventLoad.getClass().getDeclaredMethod("load");
     method.setAccessible(true);
