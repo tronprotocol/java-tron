@@ -85,6 +85,9 @@ then run the following command to build java-tron, the `FullNode.jar` file can b
 
 ```bash
 $ ./gradlew clean build -x test
+ # To fix DependencyVerificationException: Dependency verification failed for configuration ':xxx' x artifacts failed verification
+$ ./gradlew clean --refresh-dependencies --write-verification-metadata sha256
+
 ```
 
 # Running java-tron
@@ -102,7 +105,7 @@ Requires 64-bit version of `JDK 17` to be installed, other JDK versions are not 
 
 
 ## Configuration flile
-Get the mainnet configuration file: [main_net_config.conf](https://github.com/tronprotocol/tron-deployment/blob/master/main_net_config.conf), other network configuration files can be found [here](https://github.com/tronprotocol/tron-deployment).
+Get the mainnet configuration file: [config.conf](framework/src/main/resources/config.conf), other network configuration files can be found [here](https://github.com/tronprotocol/tron-deployment).
 
 ## Hardware Requirements
 

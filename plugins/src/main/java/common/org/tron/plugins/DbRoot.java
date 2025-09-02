@@ -67,16 +67,24 @@ public class DbRoot implements Callable<Integer> {
           .errorText("Specify at least one exit database: --db dbName."));
       return 404;
     }
-    List<Ret> task = ProgressBar.wrap(dbs.stream(), "root task").parallel()
-        .map(this::calcMerkleRoot).collect(Collectors.toList());
-    task.forEach(this::printInfo);
-    int code = (int) task.stream().filter(r -> r.code == 1).count();
-    if (code > 0) {
+    try {
+      List<Ret> task = ProgressBar.wrap(dbs.stream(), "root task").parallel()
+          .map(this::calcMerkleRoot).collect(Collectors.toList());
+      task.forEach(this::printInfo);
+      int code = (int) task.stream().filter(r -> r.code == 1).count();
+      if (code > 0) {
+        spec.commandLine().getErr().println(spec.commandLine().getColorScheme()
+            .errorText("There are some errors, please check toolkit.log for detail."));
+      }
+      spec.commandLine().getOut().println("root task done.");
+      return code;
+    } catch (Exception e) {
+      logger.error("{}", e);
       spec.commandLine().getErr().println(spec.commandLine().getColorScheme()
-          .errorText("There are some errors, please check toolkit.log for detail."));
+          .errorText(e.getMessage()));
+      spec.commandLine().usage(System.out);
+      return 1;
     }
-    spec.commandLine().getOut().println("root task done.");
-    return code;
   }
 
   private Ret calcMerkleRoot(String name) {

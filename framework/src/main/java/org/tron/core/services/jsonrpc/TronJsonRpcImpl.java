@@ -839,17 +839,27 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
 
   /**
    * Get all transaction receipts for a specific block
-   * @param blockNumOrTag the block number or tag (latest, earliest, pending, finalized)
+   * @param blockNumOrHashOrTag blockNumber or blockHash or tag,
+   * tag includes: latest, earliest, pending, finalized
    * @return List of TransactionReceipt objects for all transactions in the block,
    * null if block not found
    * @throws JsonRpcInvalidParamsException if the parameter format is invalid
    * @throws JsonRpcInternalException if there's an internal error
    */
   @Override
-  public List<TransactionReceipt> getBlockReceipts(String blockNumOrTag)
+  public List<TransactionReceipt> getBlockReceipts(String blockNumOrHashOrTag)
       throws JsonRpcInvalidParamsException, JsonRpcInternalException {
-    Block block = wallet.getByJsonBlockId(blockNumOrTag);
-    if (block == null) {
+
+    Block block = null;
+
+    if (Pattern.matches(HASH_REGEX, blockNumOrHashOrTag)) {
+      block = getBlockByJsonHash(blockNumOrHashOrTag);
+    } else {
+      block = wallet.getByJsonBlockId(blockNumOrHashOrTag);
+    }
+
+    // block receipts not available: block is genesis, not produced yet, or pruned in light node
+    if (block == null || block.getBlockHeader().getRawData().getNumber() == 0) {
       return null;
     }
 
@@ -857,7 +867,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     long blockNum = blockCapsule.getNum();
     TransactionInfoList transactionInfoList = wallet.getTransactionInfoByBlockNum(blockNum);
 
-    //energy price at the block timestamp
+    // energy price at the block timestamp
     long energyFee = wallet.getEnergyFee(blockCapsule.getTimeStamp());
 
     // Validate transaction list size consistency

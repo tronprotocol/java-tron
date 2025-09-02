@@ -1496,6 +1496,11 @@ public class Wallet {
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowTvmSelfdestructRestriction")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmSelfdestructRestriction())
+        .build());                      
+    
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getProposalExpireTime")
         .setValue(dbManager.getDynamicPropertiesStore().getProposalExpireTime())
         .build());
