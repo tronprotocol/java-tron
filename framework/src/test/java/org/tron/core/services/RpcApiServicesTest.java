@@ -176,6 +176,15 @@ public class RpcApiServicesTest {
     manager.getDynamicPropertiesStore().saveAllowShieldedTRC20Transaction(1);
     Application appTest = ApplicationFactory.create(context);
     appTest.startup();
+  
+     // Add shutdown hook for unit test restart before whole class tests finished, check the forkEvery in build.gradlew
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+        try {
+            destroy();
+        } catch (Exception e) {
+            System.err.println("Shutdown hook cleanup failed: " + e.getMessage());
+        }
+    }));
   }
 
   @AfterClass

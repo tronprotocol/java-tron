@@ -42,6 +42,15 @@ public class TxCacheDBInitTest {
     Args.setParam(new String[]{"--output-directory", temporaryFolder.newFolder().toString(),
         "--p2p-disable", "true"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
+
+    // Add shutdown hook for unit test restart before whole class tests finished, check the forkEvery in build.gradlew
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+        try {
+            destroy();
+        } catch (Exception e) {
+            logger.error("Shutdown hook cleanup failed", e);
+        }
+    }));
   }
 
   @Test

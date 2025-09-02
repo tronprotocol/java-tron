@@ -64,6 +64,15 @@ public class HandShakeServiceTest {
     TronNetService tronNetService = context.getBean(TronNetService.class);
     Parameter.p2pConfig = new P2pConfig();
     ReflectUtils.setFieldValue(tronNetService, "p2pConfig", Parameter.p2pConfig);
+
+    // Add shutdown hook for unit test restart before whole class tests finished, check the forkEvery in build.gradlew
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+        try {
+            destroy();
+        } catch (Exception e) {
+            System.err.println("Shutdown hook cleanup failed: " + e.getMessage());
+        }
+    }));
   }
 
   @AfterClass

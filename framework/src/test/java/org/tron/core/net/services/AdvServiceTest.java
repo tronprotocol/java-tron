@@ -49,6 +49,14 @@ public class AdvServiceTest {
     service = context.getBean(AdvService.class);
     p2pEventHandler = context.getBean(P2pEventHandlerImpl.class);
     ctx = (ApplicationContext) ReflectUtils.getFieldObject(p2pEventHandler, "ctx");
+
+    // Add shutdown hook for unit test restart before whole class tests finished, check the forkEvery in build.gradlew
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+        try {
+            after();
+        } catch (Exception e) {
+            System.err.println("Shutdown hook cleanup failed: " + e.getMessage());        }
+    }));
   }
 
   @AfterClass

@@ -40,6 +40,15 @@ public class JettyServerTest {
     }
     int port = connector.getLocalPort();
     serverUri = new URI(String.format("http://%s:%d/", host, port));
+
+     // Add shutdown hook for unit test restart before whole class tests finished, check the forkEvery in build.gradlew
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+        try {
+            stopJetty();
+        } catch (Exception e) {
+            System.err.println("Shutdown hook cleanup failed: " + e.getMessage());
+        }
+    }));
   }
 
   @AfterClass

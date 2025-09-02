@@ -39,6 +39,18 @@ public class WalletApiTest {
     context = new TronApplicationContext(DefaultConfig.class);
     appT = ApplicationFactory.create(context);
     appT.startup();
+
+    // Add shutdown hook for unit test restart before whole class tests finished, check the forkEvery in build.gradlew
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+        try {
+            if (context != null) {
+                Args.clearParam();
+                context.destroy();
+            }
+        } catch (Exception e) {
+            System.err.println("Shutdown hook cleanup failed: " + e.getMessage());
+        }
+    }));
   }
 
   @Test
