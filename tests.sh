@@ -126,6 +126,18 @@ run_test() {
     
     log_info "第 $iteration 次运行 $test_name 测试..."
     
+    # 先执行clean
+    log_info "执行clean操作..."
+    local clean_output=$(./gradlew clean 2>&1)
+    local clean_exit_code=$?
+    
+    if [ $clean_exit_code -ne 0 ]; then
+        log_error "Clean操作失败"
+        echo "Clean错误输出:" >> "$LOG_FILE"
+        echo "$clean_output" >> "$LOG_FILE"
+        return 1
+    fi
+    
     local start_time=$(date +%s)
     local test_output
     
