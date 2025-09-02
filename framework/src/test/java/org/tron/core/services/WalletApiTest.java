@@ -45,12 +45,25 @@ public class WalletApiTest {
   public void listNodesTest() {
     String fullNode = String.format("%s:%d", "127.0.0.1",
         Args.getInstance().getRpcPort());
-    WalletGrpc.WalletBlockingStub walletStub = WalletGrpc
-        .newBlockingStub(ManagedChannelBuilder.forTarget(fullNode)
-            .usePlaintext()
-            .build());
-    Assert.assertTrue(walletStub.listNodes(EmptyMessage.getDefaultInstance())
-        .getNodesList().isEmpty());
+    io.grpc.ManagedChannel channel = ManagedChannelBuilder.forTarget(fullNode)
+        .usePlaintext()
+        .build();
+    try {
+      WalletGrpc.WalletBlockingStub walletStub = WalletGrpc.newBlockingStub(channel);
+      Assert.assertTrue(walletStub.listNodes(EmptyMessage.getDefaultInstance())
+          .getNodesList().isEmpty());
+    } finally {
+      // Properly shutdown the gRPC channel to prevent resource leaks
+      channel.shutdown();
+      try {
+        if (!channel.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS)) {
+          channel.shutdownNow();
+        }
+      } catch (InterruptedException e) {
+        channel.shutdownNow();
+        Thread.currentThread().interrupt();
+      }
+    }
   }
 
   @After

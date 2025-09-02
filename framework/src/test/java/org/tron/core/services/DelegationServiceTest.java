@@ -31,22 +31,35 @@ public class DelegationServiceTest {
   }
 
   public static void testGrpc() {
-    WalletBlockingStub walletStub = WalletGrpc
-        .newBlockingStub(ManagedChannelBuilder.forTarget(fullnode)
-            .usePlaintext()
-            .build());
-    BytesMessage.Builder builder = BytesMessage.newBuilder();
-    builder.setValue(ByteString.copyFromUtf8("TLTDZBcPoJ8tZ6TTEeEqEvwYFk2wgotSfD"));
-    System.out
-        .println("getBrokerageInfo: " + walletStub.getBrokerageInfo(builder.build()).getNum());
-    System.out.println("getRewardInfo: " + walletStub.getRewardInfo(builder.build()).getNum());
-    UpdateBrokerageContract.Builder updateBrokerageContract = UpdateBrokerageContract.newBuilder();
-    updateBrokerageContract.setOwnerAddress(
-        ByteString.copyFrom(decodeFromBase58Check("TN3zfjYUmMFK3ZsHSsrdJoNRtGkQmZLBLz")))
-        .setBrokerage(10);
-    TransactionExtention transactionExtention = walletStub
-        .updateBrokerage(updateBrokerageContract.build());
-    System.out.println("UpdateBrokerage: " + transactionExtention);
+    io.grpc.ManagedChannel channel = ManagedChannelBuilder.forTarget(fullnode)
+        .usePlaintext()
+        .build();
+    try {
+      WalletBlockingStub walletStub = WalletGrpc.newBlockingStub(channel);
+      BytesMessage.Builder builder = BytesMessage.newBuilder();
+      builder.setValue(ByteString.copyFromUtf8("TLTDZBcPoJ8tZ6TTEeEqEvwYFk2wgotSfD"));
+      System.out
+          .println("getBrokerageInfo: " + walletStub.getBrokerageInfo(builder.build()).getNum());
+      System.out.println("getRewardInfo: " + walletStub.getRewardInfo(builder.build()).getNum());
+      UpdateBrokerageContract.Builder updateBrokerageContract = UpdateBrokerageContract.newBuilder();
+      updateBrokerageContract.setOwnerAddress(
+          ByteString.copyFrom(decodeFromBase58Check("TN3zfjYUmMFK3ZsHSsrdJoNRtGkQmZLBLz")))
+          .setBrokerage(10);
+      TransactionExtention transactionExtention = walletStub
+          .updateBrokerage(updateBrokerageContract.build());
+      System.out.println("UpdateBrokerage: " + transactionExtention);
+    } finally {
+      // Properly shutdown the gRPC channel to prevent resource leaks
+      channel.shutdown();
+      try {
+        if (!channel.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS)) {
+          channel.shutdownNow();
+        }
+      } catch (InterruptedException e) {
+        channel.shutdownNow();
+        Thread.currentThread().interrupt();
+      }
+    }
   }
 
   private void testPay(int cycle) {
