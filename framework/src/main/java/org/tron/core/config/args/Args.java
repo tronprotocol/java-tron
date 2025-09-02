@@ -250,6 +250,9 @@ public class Args extends CommonParameter {
     PARAMETER.consensusLogicOptimization = 0;
     PARAMETER.allowTvmCancun = 0;
     PARAMETER.allowTvmBlob = 0;
+    PARAMETER.allowTvmSelfdestructRestriction = 0;
+    PARAMETER.rpcMaxRstStream = 0;
+    PARAMETER.rpcSecondsPerWindow = 0;
   }
 
   /**
@@ -372,7 +375,7 @@ public class Args extends CommonParameter {
    * set parameters.
    */
   public static void setParam(final String[] args, final String confFileName) {
-    Arch.throwUnsupportedJavaException();
+    Arch.throwIfUnsupportedJavaVersion();
     clearParam(); // reset all parameters to avoid the influence in test
     JCommander.newBuilder().addObject(PARAMETER).build().parse(args);
     if (PARAMETER.version) {
@@ -722,6 +725,12 @@ public class Args extends CommonParameter {
     PARAMETER.flowControlWindow = config.hasPath(Constant.NODE_RPC_FLOW_CONTROL_WINDOW)
         ? config.getInt(Constant.NODE_RPC_FLOW_CONTROL_WINDOW)
         : NettyServerBuilder.DEFAULT_FLOW_CONTROL_WINDOW;
+    if (config.hasPath(Constant.NODE_RPC_MAX_RST_STREAM)) {
+      PARAMETER.rpcMaxRstStream = config.getInt(Constant.NODE_RPC_MAX_RST_STREAM);
+    }
+    if (config.hasPath(Constant.NODE_RPC_SECONDS_PER_WINDOW)) {
+      PARAMETER.rpcSecondsPerWindow = config.getInt(Constant.NODE_RPC_SECONDS_PER_WINDOW);
+    }
 
     PARAMETER.maxConnectionIdleInMillis =
         config.hasPath(Constant.NODE_RPC_MAX_CONNECTION_IDLE_IN_MILLIS)
@@ -1262,6 +1271,10 @@ public class Args extends CommonParameter {
     PARAMETER.allowTvmBlob =
         config.hasPath(Constant.COMMITTEE_ALLOW_TVM_BLOB) ? config
             .getInt(Constant.COMMITTEE_ALLOW_TVM_BLOB) : 0;
+
+    PARAMETER.allowTvmSelfdestructRestriction =
+        config.hasPath(Constant.COMMITTEE_ALLOW_TVM_SELFDESTRUCT_RESTRICTION) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_TVM_SELFDESTRUCT_RESTRICTION) : 0;
 
     logConfig();
   }

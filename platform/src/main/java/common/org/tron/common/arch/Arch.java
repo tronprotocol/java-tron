@@ -69,7 +69,7 @@ public final class Arch {
     return javaSpecificationVersion().equals("1.8");
   }
 
-  public static void throwUnsupportedJavaException() {
+  public static void throwIfUnsupportedJavaVersion() {
     if (isX86() && !isJava8()) {
       logger.info(withAll());
       throw new UnsupportedOperationException(String.format(
@@ -78,9 +78,10 @@ public final class Arch {
     }
   }
 
-  public static void throwUnsupportedArm64Exception() {
+  public static void throwIfUnsupportedArm64Exception(String message) {
     if (isArm64()) {
-      throw new UnsupportedOperationException("unsupported on " + getOsArch() + " architecture");
+      throw new UnsupportedOperationException(
+          message + ": unsupported on " + getOsArch() + " architecture");
     }
   }
 }

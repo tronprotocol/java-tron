@@ -164,23 +164,6 @@ public class JsonrpcServiceTest extends BaseTest {
     dbManager.getTransactionStore()
         .put(transactionCapsule3.getTransactionId().getBytes(), transactionCapsule3);
 
-    blockCapsule0.getTransactions().forEach(tx -> {
-      TransactionCapsule transactionCapsule = new TransactionCapsule(tx.getInstance());
-      transactionCapsule.setBlockNum(blockCapsule0.getNum());
-      dbManager.getTransactionStore()
-          .put(transactionCapsule.getTransactionId().getBytes(), transactionCapsule);
-    });
-
-    TransactionRetCapsule transactionRetCapsule0 = new TransactionRetCapsule();
-    blockCapsule0.getTransactions().forEach(tx -> {
-      TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
-      transactionInfoCapsule.setId(tx.getTransactionId().getBytes());
-      transactionInfoCapsule.setBlockNumber(blockCapsule0.getNum());
-      transactionRetCapsule0.addTransactionInfo(transactionInfoCapsule.getInstance());
-    });
-    dbManager.getTransactionRetStore().put(
-        ByteArray.fromLong(blockCapsule0.getNum()), transactionRetCapsule0);
-
     List<Protocol.TransactionInfo.Log> logs = new ArrayList<>();
     logs.add(Protocol.TransactionInfo.Log.newBuilder()
         .setAddress(ByteString.copyFrom("address1".getBytes()))
@@ -340,6 +323,8 @@ public class JsonrpcServiceTest extends BaseTest {
     }
     Assert.assertEquals(ByteArray.toJsonHex(0L), blockResult.getNumber());
     Assert.assertEquals(ByteArray.toJsonHex(blockCapsule0.getNum()), blockResult.getNumber());
+    Assert.assertEquals(blockResult.getTransactions().length,
+        blockCapsule0.getTransactions().size());
 
     // latest
     try {
@@ -1048,7 +1033,7 @@ public class JsonrpcServiceTest extends BaseTest {
 
     try {
       List<TransactionReceipt> transactionReceiptList = tronJsonRpc.getBlockReceipts("earliest");
-      Assert.assertFalse(transactionReceiptList.isEmpty());
+      Assert.assertNull(transactionReceiptList);
     } catch (JsonRpcInvalidParamsException | JsonRpcInternalException e) {
       throw new RuntimeException(e);
     }
@@ -1084,6 +1069,20 @@ public class JsonrpcServiceTest extends BaseTest {
     try {
       List<TransactionReceipt> transactionReceiptList = tronJsonRpc.getBlockReceipts("0x2");
       Assert.assertNull(transactionReceiptList);
+    } catch (JsonRpcInvalidParamsException | JsonRpcInternalException e) {
+      throw new RuntimeException(e);
+    }
+
+    try {
+      String blockHash = blockCapsule1.getBlockId().toString();
+      List<TransactionReceipt> transactionReceiptList
+          = tronJsonRpc.getBlockReceipts(blockHash);
+      List<TransactionReceipt> transactionReceiptList2
+          = tronJsonRpc.getBlockReceipts("0x" + blockHash);
+
+      Assert.assertFalse(transactionReceiptList.isEmpty());
+      Assert.assertEquals(JSON.toJSONString(transactionReceiptList),
+          JSON.toJSONString(transactionReceiptList2));
     } catch (JsonRpcInvalidParamsException | JsonRpcInternalException e) {
       throw new RuntimeException(e);
     }

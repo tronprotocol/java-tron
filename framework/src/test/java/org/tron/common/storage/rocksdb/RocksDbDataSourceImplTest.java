@@ -1,4 +1,4 @@
-package org.tron.common.storage.leveldb;
+package org.tron.common.storage.rocksdb;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -34,7 +34,7 @@ import org.rocksdb.RocksDBException;
 import org.tron.common.error.TronDBException;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.WriteOptionsWrapper;
-import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
+import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PropUtil;
@@ -314,11 +314,8 @@ public class RocksDbDataSourceImplTest {
     dataSource = new RocksDbDataSourceImpl(dir, "test_engine");
     try {
       dataSource.initDB();
-    } catch (Exception e) {
-      Assert.assertEquals(String.format(
-              "Cannot open LevelDB database '%s' with RocksDB engine."
-                  + " Set db.engine=LEVELDB or use RocksDB database. ", "test_engine"),
-              e.getMessage());
+    } catch (TronError e) {
+      Assert.assertEquals("Cannot open LEVELDB database with ROCKSDB engine.", e.getMessage());
     }
     Assert.assertNull(dataSource.getDatabase());
     PropUtil.writeProperty(enginePath, "ENGINE", "ROCKSDB");
@@ -448,10 +445,7 @@ public class RocksDbDataSourceImplTest {
     levelDb.putData(key1, value1);
     levelDb.closeDB();
     RocksDbDataSourceImpl rocksDb = new RocksDbDataSourceImpl(output, name);
-    expectedException.expectMessage(
-        String.format(
-            "Cannot open LevelDB database '%s' with RocksDB engine."
-                + " Set db.engine=LEVELDB or use RocksDB database. ", name));
+    expectedException.expectMessage("Cannot open LEVELDB database with ROCKSDB engine.");
     rocksDb.initDB();
   }
 
@@ -474,10 +468,7 @@ public class RocksDbDataSourceImplTest {
     }
     Assert.assertFalse(engineFile.exists());
     RocksDbDataSourceImpl rocksDb = new RocksDbDataSourceImpl(output, name);
-    expectedException.expectMessage(
-        String.format(
-            "Cannot open LevelDB database '%s' with RocksDB engine."
-                + " Set db.engine=LEVELDB or use RocksDB database. ", name));
+    expectedException.expectMessage("Cannot open LEVELDB database with ROCKSDB engine.");
     rocksDb.initDB();
   }
 

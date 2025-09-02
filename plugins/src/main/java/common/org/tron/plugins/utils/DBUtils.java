@@ -66,7 +66,7 @@ public class DBUtils {
   public static final String ROCKSDB = "ROCKSDB";
 
   public static DB newLevelDb(Path db) throws IOException {
-    Arch.throwUnsupportedArm64Exception();
+    Arch.throwIfUnsupportedArm64Exception(LEVELDB);
     File file = db.toFile();
     org.iq80.leveldb.Options dbOptions = newDefaultLevelDbOptions();
     if (MARKET_PAIR_PRICE_TO_ORDER.equalsIgnoreCase(file.getName())) {

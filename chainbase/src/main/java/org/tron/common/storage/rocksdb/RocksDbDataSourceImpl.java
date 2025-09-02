@@ -1,7 +1,6 @@
 package org.tron.common.storage.rocksdb;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Bytes;
 import java.io.File;
@@ -39,7 +38,6 @@ import org.tron.common.setting.RocksDbSettings;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.storage.metric.DbStat;
 import org.tron.common.utils.FileUtil;
-import org.tron.common.utils.PropUtil;
 import org.tron.core.db.common.DbSourceInter;
 import org.tron.core.db.common.iterator.RockStoreIterator;
 import org.tron.core.db2.common.Instance;
@@ -58,8 +56,6 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   private volatile boolean alive;
   private String parentPath;
   private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
-  private static final String KEY_ENGINE = "ENGINE";
-  private static final String ROCKSDB = "ROCKSDB";
   private static final org.slf4j.Logger rocksDbLogger = LoggerFactory.getLogger(ROCKSDB);
 
   public RocksDbDataSourceImpl(String parentPath, String name, Options options) {
@@ -187,39 +183,7 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     this.dataBaseName = name;
   }
 
-  public boolean checkOrInitEngine() {
-    String dir = getDbPath().toString();
-    String enginePath = dir + File.separator + "engine.properties";
-    File currentFile = new File(dir, "CURRENT");
-    if (currentFile.exists() && !Paths.get(enginePath).toFile().exists()) {
-      // if the CURRENT file exists, but the engine.properties file does not exist, it is LevelDB
-      logger.error(" You are trying to open a LevelDB database with RocksDB engine.");
-      return false;
-    }
-    if (FileUtil.createDirIfNotExists(dir)) {
-      if (!FileUtil.createFileIfNotExists(enginePath)) {
-        return false;
-      }
-    } else {
-      return false;
-    }
-
-    // for the first init engine
-    String engine = PropUtil.readProperty(enginePath, KEY_ENGINE);
-    if (Strings.isNullOrEmpty(engine) && !PropUtil.writeProperty(enginePath, KEY_ENGINE, ROCKSDB)) {
-      return false;
-    }
-    engine = PropUtil.readProperty(enginePath, KEY_ENGINE);
-
-    return ROCKSDB.equals(engine);
-  }
-
   public void initDB() {
-    if (!checkOrInitEngine()) {
-      throw new RuntimeException(String.format(
-          "Cannot open LevelDB database '%s' with RocksDB engine."
-              + " Set db.engine=LEVELDB or use RocksDB database. ", dataBaseName));
-    }
     resetDbLock.writeLock().lock();
     try {
       if (isAlive()) {
@@ -244,6 +208,8 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
         }
 
         try {
+          DbSourceInter.checkOrInitEngine(getEngine(), dbPath.toString(),
+              TronError.ErrCode.ROCKSDB_INIT);
           database = RocksDB.open(options, dbPath.toString());
         } catch (RocksDBException e) {
           if (Objects.equals(e.getStatus().getCode(), Status.Code.Corruption)) {
