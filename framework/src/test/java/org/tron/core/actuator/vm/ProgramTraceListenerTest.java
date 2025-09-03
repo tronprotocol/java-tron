@@ -2,6 +2,7 @@ package org.tron.core.actuator.vm;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -15,12 +16,15 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.TransactionStoreTest;
+import org.tron.core.vm.trace.Op;
 import org.tron.core.vm.trace.OpActions;
 import org.tron.core.vm.trace.OpActions.Action;
+import org.tron.core.vm.trace.ProgramTrace;
 import org.tron.core.vm.trace.ProgramTraceListener;
 
 @Slf4j(topic = "VM")
 public class ProgramTraceListenerTest {
+
   @ClassRule
   public static TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -33,7 +37,7 @@ public class ProgramTraceListenerTest {
 
   @BeforeClass
   public static void init() throws IOException {
-    Args.setParam(new String[]{"--output-directory",
+    Args.setParam(new String[] {"--output-directory",
         temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
 
   }
@@ -130,7 +134,6 @@ public class ProgramTraceListenerTest {
       Assert.assertFalse(e instanceof IllegalAccessException);
     }
 
-
     traceListener.resetActions();
 
     try {
@@ -177,6 +180,27 @@ public class ProgramTraceListenerTest {
 
     validateProgramTraceListener();
     validateDisableTraceListener();
+  }
+
+  @Test
+  public void testGetSet() {
+    ProgramTrace programTrace = new ProgramTrace();
+    Op op = new Op();
+    List<Op> ops = new ArrayList<>();
+    ops.add(op);
+    programTrace.setOps(ops);
+    programTrace.setResult("result");
+    programTrace.setContractAddress("contractAddress");
+    programTrace.setError("error");
+    programTrace.result(new byte[] {});
+    programTrace.error(new Exception());
+    programTrace.getOps();
+    programTrace.getContractAddress();
+    programTrace.getError();
+    programTrace.getResult();
+    programTrace.toString();
+
+    Assert.assertTrue(true);
   }
 
 }
