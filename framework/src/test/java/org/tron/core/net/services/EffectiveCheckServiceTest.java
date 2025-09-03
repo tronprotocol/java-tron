@@ -1,48 +1,40 @@
 package org.tron.core.net.services;
 
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
-import org.junit.After;
+import javax.annotation.Resource;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.core.Constant;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.service.effective.EffectiveCheckService;
 import org.tron.p2p.P2pConfig;
 
-public class EffectiveCheckServiceTest {
+public class EffectiveCheckServiceTest extends BaseTest {
 
-  protected TronApplicationContext context;
+  @Resource
   private EffectiveCheckService service;
+  @Resource
+  private TronNetService tronNetService;
+
 
   @Rule
   public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  @Before
-  public void init() throws IOException {
-    Args.setParam(new String[] {"--output-directory",
-        temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-    service = context.getBean(EffectiveCheckService.class);
-  }
-
-  @After
-  public void destroy() {
-    Args.clearParam();
-    context.destroy();
+  @BeforeClass
+  public static void init() {
+    Args.setParam(new String[] {"--output-directory", dbPath(), "--debug"},
+        Constant.TEST_CONF);
   }
 
   @Test
   public void testNoIpv4() throws Exception {
-    TronNetService tronNetService = context.getBean(TronNetService.class);
     Method privateMethod = tronNetService.getClass()
         .getDeclaredMethod("updateConfig", P2pConfig.class);
     privateMethod.setAccessible(true);
@@ -54,7 +46,6 @@ public class EffectiveCheckServiceTest {
 
   @Test
   public void testFind() {
-    TronNetService tronNetService = context.getBean(TronNetService.class);
     P2pConfig p2pConfig = new P2pConfig();
     p2pConfig.setIp("127.0.0.1");
     p2pConfig.setPort(34567);
