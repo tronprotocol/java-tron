@@ -34,7 +34,6 @@ public class FilterQuery {
       try {
         number = Long.parseLong(blockNum);
       } catch (Exception e) {
-        logger.error("invalid filter: fromBlockNumber: {}", blockNum);
         throw e;
       }
     }
@@ -49,7 +48,6 @@ public class FilterQuery {
       try {
         number = Long.parseLong(blockNum);
       } catch (Exception e) {
-        logger.error("invalid filter: toBlockNumber: {}", blockNum);
         throw e;
       }
     }

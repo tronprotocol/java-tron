@@ -1621,7 +1621,7 @@ public class Args extends CommonParameter {
     try {
       fromBlockLong = FilterQuery.parseFromBlockNumber(fromBlock);
     } catch (Exception e) {
-      logger.error("{}", e);
+      logger.error("invalid filter: fromBlockNumber: {}", fromBlock, e);
       return null;
     }
     filter.setFromBlock(fromBlockLong);
@@ -1630,7 +1630,7 @@ public class Args extends CommonParameter {
     try {
       toBlockLong = FilterQuery.parseToBlockNumber(toBlock);
     } catch (Exception e) {
-      logger.error("{}", e);
+      logger.error("invalid filter: toBlockNumber: {}", toBlock, e);
       return null;
     }
     filter.setToBlock(toBlockLong);

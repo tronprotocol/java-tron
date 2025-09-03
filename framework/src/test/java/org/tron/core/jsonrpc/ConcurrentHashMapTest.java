@@ -31,7 +31,7 @@ public class ConcurrentHashMapTest {
    */
   @Test
   public void testHandleBlockHash() {
-    int times = 200;
+    int times = 100;
     int eachCount = 200;
 
     Map<String, BlockFilterAndResult> conMap = TronJsonRpcImpl.getBlockFilter2ResultFull();

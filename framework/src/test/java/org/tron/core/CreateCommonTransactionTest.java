@@ -22,10 +22,12 @@ public class CreateCommonTransactionTest {
    * for example create UpdateBrokerageContract
    */
   public static void testCreateUpdateBrokerageContract() {
-    io.grpc.ManagedChannel channel = ManagedChannelBuilder.forTarget(FULL_NODE).usePlaintext().build();
+    io.grpc.ManagedChannel channel = ManagedChannelBuilder.forTarget(FULL_NODE).usePlaintext()
+        .build();
     try {
       WalletBlockingStub walletStub = WalletGrpc.newBlockingStub(channel);
-      UpdateBrokerageContract.Builder updateBrokerageContract = UpdateBrokerageContract.newBuilder();
+      UpdateBrokerageContract.Builder updateBrokerageContract =
+          UpdateBrokerageContract.newBuilder();
       updateBrokerageContract.setOwnerAddress(
               ByteString.copyFrom(decodeFromBase58Check("TN3zfjYUmMFK3ZsHSsrdJoNRtGkQmZLBLz")))
           .setBrokerage(10);

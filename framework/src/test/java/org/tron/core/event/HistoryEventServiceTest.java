@@ -23,15 +23,6 @@ public class HistoryEventServiceTest {
 
   HistoryEventService historyEventService = new HistoryEventService();
 
-//  @Resource
-//  HistoryEventService historyEventService;
-//
-//  @BeforeClass
-//  public static void init() {
-//    Args.setParam(new String[] {"--output-directory", dbPath(), "--debug"},
-//        Constant.TESTNET_CONF);
-//  }
-
   //ignore?
   @Test
   public void test() throws Exception {
