@@ -35,25 +35,6 @@ public class DelegationServiceTest extends BaseTest {
         Constant.TESTNET_CONF);
   }
 
-  public static void testGrpc() {
-    WalletBlockingStub walletStub = WalletGrpc
-        .newBlockingStub(ManagedChannelBuilder.forTarget(fullnode)
-            .usePlaintext()
-            .build());
-    BytesMessage.Builder builder = BytesMessage.newBuilder();
-    builder.setValue(ByteString.copyFromUtf8("TLTDZBcPoJ8tZ6TTEeEqEvwYFk2wgotSfD"));
-    System.out
-        .println("getBrokerageInfo: " + walletStub.getBrokerageInfo(builder.build()).getNum());
-    System.out.println("getRewardInfo: " + walletStub.getRewardInfo(builder.build()).getNum());
-    UpdateBrokerageContract.Builder updateBrokerageContract = UpdateBrokerageContract.newBuilder();
-    updateBrokerageContract.setOwnerAddress(
-            ByteString.copyFrom(decodeFromBase58Check("TN3zfjYUmMFK3ZsHSsrdJoNRtGkQmZLBLz")))
-        .setBrokerage(10);
-    TransactionExtention transactionExtention = walletStub
-        .updateBrokerage(updateBrokerageContract.build());
-    System.out.println("UpdateBrokerage: " + transactionExtention);
-  }
-
   private void testPay(int cycle) {
     double rate = 0.2;
     if (cycle == 0) {
