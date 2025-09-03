@@ -23,7 +23,6 @@ public class HistoryEventServiceTest {
 
   HistoryEventService historyEventService = new HistoryEventService();
 
-  //ignore?
   @Test
   public void test() throws Exception {
     EventPluginLoader instance = mock(EventPluginLoader.class);
