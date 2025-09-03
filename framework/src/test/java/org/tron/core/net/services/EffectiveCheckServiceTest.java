@@ -5,9 +5,7 @@ import java.net.InetSocketAddress;
 import javax.annotation.Resource;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.core.Constant;
@@ -22,10 +20,6 @@ public class EffectiveCheckServiceTest extends BaseTest {
   private EffectiveCheckService service;
   @Resource
   private TronNetService tronNetService;
-
-
-  @Rule
-  public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @BeforeClass
   public static void init() {

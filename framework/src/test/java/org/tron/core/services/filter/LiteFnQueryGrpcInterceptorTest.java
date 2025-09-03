@@ -90,13 +90,13 @@ public class LiteFnQueryGrpcInterceptorTest {
   @AfterClass
   public static void destroy() throws InterruptedException {
     if (channelFull != null) {
-      channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+      channelFull.shutdown();
     }
     if (channelSolidity != null) {
-      channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+      channelSolidity.shutdown();
     }
     if (channelpBFT != null) {
-      channelpBFT.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+      channelpBFT.shutdown();
     }
     context.close();
     Args.clearParam();
