@@ -42,6 +42,9 @@ import org.tron.protos.Protocol.Transaction;
 public class RpcApiAccessInterceptorTest {
 
   private static TronApplicationContext context;
+  private static ManagedChannel channelFull = null;
+  private static ManagedChannel channelPBFT = null;
+  private static ManagedChannel channelSolidity = null;
   private static WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private static WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
   private static WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubPBFT = null;
@@ -68,13 +71,13 @@ public class RpcApiAccessInterceptorTest {
     String pBFTNode = String.format("%s:%d", Constant.LOCAL_HOST,
         Args.getInstance().getRpcOnPBFTPort());
 
-    ManagedChannel channelFull = ManagedChannelBuilder.forTarget(fullNode)
+    channelFull = ManagedChannelBuilder.forTarget(fullNode)
         .usePlaintext()
         .build();
-    ManagedChannel channelPBFT = ManagedChannelBuilder.forTarget(pBFTNode)
+    channelPBFT = ManagedChannelBuilder.forTarget(pBFTNode)
         .usePlaintext()
         .build();
-    ManagedChannel channelSolidity = ManagedChannelBuilder.forTarget(solidityNode)
+    channelSolidity = ManagedChannelBuilder.forTarget(solidityNode)
         .usePlaintext()
         .build();
 
@@ -93,6 +96,15 @@ public class RpcApiAccessInterceptorTest {
    */
   @AfterClass
   public static void destroy() {
+    if (channelFull != null) {
+      channelFull.shutdown();
+    }
+    if (channelPBFT != null) {
+      channelPBFT.shutdown();
+    }
+    if (channelSolidity != null) {
+      channelSolidity.shutdown();
+    }
     context.close();
     Args.clearParam();
   }

@@ -5,6 +5,7 @@ import java.util.BitSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.annotation.Resource;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,6 +48,13 @@ public class LogBlockQueryTest extends BaseTest {
     sectionBloomStore.put(1, 1, bitSet2);
     sectionBloomStore.put(1, 2, bitSet2);
     sectionBloomStore.put(1, 3, bitSet2);
+  }
+
+  @After
+  public void tearDown() {
+    if (sectionExecutor != null && !sectionExecutor.isShutdown()) {
+      sectionExecutor.shutdown();
+    }
   }
 
   @Test
