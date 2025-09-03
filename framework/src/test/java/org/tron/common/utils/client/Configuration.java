@@ -28,11 +28,11 @@ public class Configuration {
     if (config == null) {
       File configFile = new File(System.getProperty("user.dir") + '/' + configurationPath);
       if (configFile.exists()) {
-        try {
-          config = ConfigFactory
-              .parseReader(new InputStreamReader(new FileInputStream(configurationPath)));
+        try (FileInputStream fis = new FileInputStream(configurationPath);
+             InputStreamReader isr = new InputStreamReader(fis)) {
+          config = ConfigFactory.parseReader(isr);
           logger.info("use user defined config file in current dir");
-        } catch (FileNotFoundException e) {
+        } catch (Exception e) {
           logger.error("load user defined config file exception: " + e.getMessage());
         }
       } else {

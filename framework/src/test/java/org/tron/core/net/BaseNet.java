@@ -91,6 +91,9 @@ public class BaseNet {
         peer.getChannel().close();
       }
     }
+    if (executorService != null && !executorService.isShutdown()) {
+      executorService.shutdown();
+    }
     Args.clearParam();
     context.destroy();
   }

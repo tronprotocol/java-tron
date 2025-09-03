@@ -298,6 +298,7 @@ public class LibrustzcashTest extends BaseTest {
 
     countDownLatch.await();
 
+    generatePool.shutdown();
     logger.info("generate cost time:" + (System.currentTimeMillis() - startGenerate));
   }
 

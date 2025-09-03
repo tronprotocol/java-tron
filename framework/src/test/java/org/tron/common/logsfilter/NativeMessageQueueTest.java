@@ -55,18 +55,20 @@ public class NativeMessageQueueTest {
 
   public void startSubscribeThread() {
     Thread thread = new Thread(() -> {
-      ZContext context = new ZContext();
-      ZMQ.Socket subscriber = context.createSocket(SocketType.SUB);
+      try (ZContext context = new ZContext()) {
+        ZMQ.Socket subscriber = context.createSocket(SocketType.SUB);
 
-      Assert.assertEquals(true, subscriber.connect(String.format("tcp://localhost:%d", bindPort)));
-      Assert.assertEquals(true, subscriber.subscribe(topic));
+        Assert.assertEquals(true, subscriber.connect(String.format("tcp://localhost:%d", bindPort)));
+        Assert.assertEquals(true, subscriber.subscribe(topic));
 
-      while (!Thread.currentThread().isInterrupted()) {
-        byte[] message = subscriber.recv();
-        String triggerMsg = new String(message);
+        while (!Thread.currentThread().isInterrupted()) {
+          byte[] message = subscriber.recv();
+          String triggerMsg = new String(message);
 
-        Assert.assertEquals(true, triggerMsg.contains(dataToSend) || triggerMsg.contains(topic));
+          Assert.assertEquals(true, triggerMsg.contains(dataToSend) || triggerMsg.contains(topic));
 
+        }
+        // ZMQ.Socket will be automatically closed when ZContext is closed
       }
     });
     thread.start();

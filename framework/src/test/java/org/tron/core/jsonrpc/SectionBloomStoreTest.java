@@ -140,6 +140,8 @@ public class SectionBloomStoreTest extends BaseTest {
       Assert.assertTrue(possibleBlockList.contains(10000L));
     } catch (Exception e) {
       Assert.fail();
+    } finally {
+      sectionExecutor.shutdown();
     }
 
     //query multi address
