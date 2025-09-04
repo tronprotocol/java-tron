@@ -62,7 +62,7 @@ public class DbLiteTest {
    */
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
-      channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+      channelFull.shutdownNow();
     }
     context.close();
   }

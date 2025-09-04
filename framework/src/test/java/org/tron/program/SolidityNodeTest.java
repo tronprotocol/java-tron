@@ -9,6 +9,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.client.DatabaseGrpcClient;
+import org.tron.common.utils.PublicMethod;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.TronError;
@@ -27,6 +28,8 @@ public class SolidityNodeTest extends BaseTest {
 
   static {
     Args.setParam(new String[]{"-d", dbPath(), "--solidity"}, Constant.TEST_CONF);
+    Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setSolidityHttpPort(PublicMethod.chooseRandomPort());
   }
 
   @Test

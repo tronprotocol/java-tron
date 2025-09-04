@@ -189,13 +189,13 @@ public class RpcApiServicesTest {
   @AfterClass
   public static void destroy() {
     if (channelFull != null) {
-      channelFull.shutdown();
+      channelFull.shutdownNow();
     }
     if (channelPBFT != null) {
-      channelPBFT.shutdown();
+      channelPBFT.shutdownNow();
     }
     if (channelSolidity != null) {
-      channelSolidity.shutdown();
+      channelSolidity.shutdownNow();
     }
     context.close();
     appTest.shutdown();

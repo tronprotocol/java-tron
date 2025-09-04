@@ -7,6 +7,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
@@ -40,9 +41,10 @@ public class EffectiveCheckServiceTest extends BaseTest {
 
   @Test
   public void testFind() {
+    int port = PublicMethod.chooseRandomPort();
     P2pConfig p2pConfig = new P2pConfig();
     p2pConfig.setIp("127.0.0.1");
-    p2pConfig.setPort(34567);
+    p2pConfig.setPort(port);
     ReflectUtils.setFieldValue(tronNetService, "p2pConfig", p2pConfig);
     TronNetService.getP2pService().start(p2pConfig);
 
@@ -50,7 +52,7 @@ public class EffectiveCheckServiceTest extends BaseTest {
     Assert.assertNull(service.getCur());
 
     ReflectUtils.invokeMethod(service, "resetCount");
-    InetSocketAddress cur = new InetSocketAddress("192.168.0.1", 34567);
+    InetSocketAddress cur = new InetSocketAddress("192.168.0.1", port);
     service.setCur(cur);
     service.onDisconnect(cur);
   }
