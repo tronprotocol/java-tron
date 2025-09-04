@@ -25,11 +25,13 @@ public class SolidityNodeTest extends BaseTest {
   RpcApiService rpcApiService;
   @Resource
   SolidityNodeHttpApiService solidityNodeHttpApiService;
+  static int rpcPort = PublicMethod.chooseRandomPort();
+  static int solidityHttpPort = PublicMethod.chooseRandomPort();
 
   static {
-    Args.setParam(new String[]{"-d", dbPath(), "--solidity"}, Constant.TEST_CONF);
-    Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
-    Args.getInstance().setSolidityHttpPort(PublicMethod.chooseRandomPort());
+    Args.setParam(new String[] {"-d", dbPath(), "--solidity"}, Constant.TEST_CONF);
+    Args.getInstance().setRpcPort(rpcPort);
+    Args.getInstance().setSolidityHttpPort(solidityHttpPort);
   }
 
   @Test
@@ -48,7 +50,7 @@ public class SolidityNodeTest extends BaseTest {
   public void testSolidityGrpcCall() {
     rpcApiService.start();
     DatabaseGrpcClient databaseGrpcClient = null;
-    String address = Args.getInstance().getTrustNodeAddr();
+    String address = Args.getInstance().getTrustNodeAddr().split(":")[0] + ":" + rpcPort;
     try {
       databaseGrpcClient = new DatabaseGrpcClient(address);
     } catch (Exception e) {

@@ -198,7 +198,6 @@ public class RpcApiServicesTest {
       channelSolidity.shutdownNow();
     }
     context.close();
-    appTest.shutdown();
     Args.clearParam();
   }
 
