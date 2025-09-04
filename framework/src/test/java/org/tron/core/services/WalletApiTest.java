@@ -69,7 +69,6 @@ public class WalletApiTest {
   @AfterClass
   public static void destroy() {
     context.destroy();
-    appT.shutdown();
     Args.clearParam();
   }
 
