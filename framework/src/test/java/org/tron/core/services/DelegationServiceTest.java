@@ -4,28 +4,21 @@ import static org.tron.common.utils.Commons.decodeFromBase58Check;
 import static org.tron.common.utils.client.Parameter.CommonConstant.ADD_PRE_FIX_BYTE_MAINNET;
 
 import com.google.protobuf.ByteString;
-import io.grpc.ManagedChannelBuilder;
 import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.api.GrpcAPI.BytesMessage;
-import org.tron.api.GrpcAPI.TransactionExtention;
-import org.tron.api.WalletGrpc;
-import org.tron.api.WalletGrpc.WalletBlockingStub;
 import org.tron.common.BaseTest;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.service.MortgageService;
-import org.tron.protos.contract.StorageContract.UpdateBrokerageContract;
 
 @Slf4j
 public class DelegationServiceTest extends BaseTest {
 
-  private static String fullnode = "127.0.0.1:50051";
   @Resource
   protected MortgageService mortgageService;
 
@@ -82,7 +75,6 @@ public class DelegationServiceTest extends BaseTest {
     long reward2 = (long) ((double) dbManager.getDelegationStore().getReward(1, sr27) / 100000000
         * 10000000);
     long reward = reward1 + reward2;
-    System.out.println("testWithdraw:" + value + ", reward:" + reward);
     Assert.assertEquals(reward, value);
     mortgageService.withdrawReward(sr1);
     accountCapsule = dbManager.getAccountStore().get(sr1);

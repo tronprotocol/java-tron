@@ -21,7 +21,6 @@ public class DbTest {
   private static final String ACCOUNT = "account";
   private static final String MARKET = DBUtils.MARKET_PAIR_PRICE_TO_ORDER;
   public CommandLine cli = new CommandLine(new Toolkit());
-  String tmpDir = System.getProperty("java.io.tmpdir");
 
   @Rule
   public final TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -51,7 +50,7 @@ public class DbTest {
       }
       return;
     }
-    try (DBInterface db =  DbTool.getDB(sourceDir, dbName, dbType)) {
+    try (DBInterface db = DbTool.getDB(sourceDir, dbName, dbType)) {
       if (MARKET.equalsIgnoreCase(dbName)) {
         byte[] sellTokenID1 = ByteArray.fromString("100");
         byte[] buyTokenID1 = ByteArray.fromString("200");
@@ -74,7 +73,6 @@ public class DbTest {
             2003L
         );
 
-
         //Use out-of-order insertion，key in store should be 1,2,3
         db.put(pairPriceKey1, "1".getBytes(StandardCharsets.UTF_8));
         db.put(pairPriceKey2, "2".getBytes(StandardCharsets.UTF_8));
@@ -90,10 +88,12 @@ public class DbTest {
 
   /**
    * Generate a not-exist temporary directory path.
+   *
    * @return temporary path
    */
-  public String genarateTmpDir() {
-    File dir = Paths.get(tmpDir, UUID.randomUUID().toString()).toFile();
+  public String generateTmpDir() throws IOException {
+    File dir = Paths.get(temporaryFolder.newFolder().toString(), UUID.randomUUID().toString())
+        .toFile();
     dir.deleteOnExit();
     return dir.getPath();
   }

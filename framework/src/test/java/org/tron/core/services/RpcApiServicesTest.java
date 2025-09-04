@@ -111,6 +111,7 @@ import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class RpcApiServicesTest {
 
+  private static Application appTest;
   private static TronApplicationContext context;
   private static ManagedChannel channelFull = null;
   private static ManagedChannel channelPBFT = null;
@@ -181,7 +182,7 @@ public class RpcApiServicesTest {
     manager.getAccountStore().put(ownerCapsule.createDbKey(), ownerCapsule);
     manager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     manager.getDynamicPropertiesStore().saveAllowShieldedTRC20Transaction(1);
-    Application appTest = ApplicationFactory.create(context);
+    appTest = ApplicationFactory.create(context);
     appTest.startup();
   }
 
@@ -197,6 +198,7 @@ public class RpcApiServicesTest {
       channelSolidity.shutdown();
     }
     context.close();
+    appTest.shutdown();
     Args.clearParam();
   }
 

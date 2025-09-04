@@ -3,7 +3,7 @@ package org.tron.core.services;
 import io.grpc.ManagedChannelBuilder;
 import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -66,10 +66,11 @@ public class WalletApiTest {
     }
   }
 
-  @After
-  public void destroy() {
-    Args.clearParam();
+  @AfterClass
+  public static void destroy() {
     context.destroy();
+    appT.shutdown();
+    Args.clearParam();
   }
 
 }
