@@ -7,7 +7,6 @@ import io.grpc.ManagedChannelBuilder;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Rule;
@@ -20,6 +19,7 @@ import org.tron.common.config.DbBackupConfig;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PublicMethod;
+import org.tron.common.utils.TimeoutInterceptor;
 import org.tron.common.utils.Utils;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -52,9 +52,9 @@ public class DbLiteTest {
         Args.getInstance().getRpcPort());
     channelFull = ManagedChannelBuilder.forTarget(fullNode)
         .usePlaintext()
+        .intercept(new TimeoutInterceptor(5000))
         .build();
-    blockingStubFull = WalletGrpc.newBlockingStub(channelFull)
-        .withDeadlineAfter(5, TimeUnit.SECONDS);
+    blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
   /**

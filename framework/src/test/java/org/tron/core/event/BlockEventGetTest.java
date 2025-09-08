@@ -84,13 +84,12 @@ public class BlockEventGetTest extends BlockGenerate {
   @BeforeClass
   public static void init() {
     Args.setParam(new String[] {"--output-directory", dbPath()}, Constant.TEST_CONF);
+    context = new TronApplicationContext(DefaultConfig.class);
   }
 
   @Before
   public void before() throws IOException {
     Args.getInstance().setNodeListenPort(10000 + port.incrementAndGet());
-
-    context = new TronApplicationContext(DefaultConfig.class);
 
     dbManager = context.getBean(Manager.class);
     setManager(dbManager);
@@ -143,9 +142,9 @@ public class BlockEventGetTest extends BlockGenerate {
         + "57c973388f044038eff0e6474425b38037e75e66d6b3047647290605449c7764736f6c63430008140033";
     Protocol.Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         "TestTRC20", address, "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\""
-            + ":\"from\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"to\",\"type\":\"address\"}"
-            + ",{\"indexed\":false,\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Transfer\","
-            + "\"type\":\"event\"}]", code, 0, (long) 1e9, 100, null, 1);
+            + ":\"from\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"to\",\"type\""
+            + ":\"address\"},{\"indexed\":false,\"name\":\"value\",\"type\":\"uint256\"}],\"name\""
+            + ":\"Transfer\",\"type\":\"event\"}]", code, 0, (long) 1e9, 100, null, 1);
     trx = trx.toBuilder().addRet(
         Protocol.Transaction.Result.newBuilder()
             .setContractRetValue(Protocol.Transaction.Result.contractResult.SUCCESS_VALUE)

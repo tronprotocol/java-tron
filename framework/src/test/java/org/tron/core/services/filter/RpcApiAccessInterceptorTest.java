@@ -33,6 +33,7 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.PublicMethod;
+import org.tron.common.utils.TimeoutInterceptor;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -74,22 +75,22 @@ public class RpcApiAccessInterceptorTest {
 
     channelFull = ManagedChannelBuilder.forTarget(fullNode)
         .usePlaintext()
+        .intercept(new TimeoutInterceptor(5000))
         .build();
     channelPBFT = ManagedChannelBuilder.forTarget(pBFTNode)
         .usePlaintext()
+        .intercept(new TimeoutInterceptor(5000))
         .build();
     channelSolidity = ManagedChannelBuilder.forTarget(solidityNode)
         .usePlaintext()
+        .intercept(new TimeoutInterceptor(5000))
         .build();
 
     context = new TronApplicationContext(DefaultConfig.class);
 
-    blockingStubFull = WalletGrpc.newBlockingStub(channelFull)
-        .withDeadlineAfter(5, TimeUnit.SECONDS);
-    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity)
-        .withDeadlineAfter(5, TimeUnit.SECONDS);
-    blockingStubPBFT = WalletSolidityGrpc.newBlockingStub(channelPBFT)
-        .withDeadlineAfter(5, TimeUnit.SECONDS);
+    blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
+    blockingStubPBFT = WalletSolidityGrpc.newBlockingStub(channelPBFT);
 
     Application appTest = ApplicationFactory.create(context);
     appTest.startup();

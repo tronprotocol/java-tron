@@ -16,6 +16,7 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.PublicMethod;
+import org.tron.common.utils.TimeoutInterceptor;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -48,10 +49,10 @@ public class WalletApiTest {
         Args.getInstance().getRpcPort());
     io.grpc.ManagedChannel channel = ManagedChannelBuilder.forTarget(fullNode)
         .usePlaintext()
+        .intercept(new TimeoutInterceptor(5000))
         .build();
     try {
-      WalletGrpc.WalletBlockingStub walletStub = WalletGrpc.newBlockingStub(channel)
-          .withDeadlineAfter(5, TimeUnit.SECONDS);
+      WalletGrpc.WalletBlockingStub walletStub = WalletGrpc.newBlockingStub(channel);
       Assert.assertTrue(walletStub.listNodes(EmptyMessage.getDefaultInstance())
           .getNodesList().isEmpty());
     } finally {

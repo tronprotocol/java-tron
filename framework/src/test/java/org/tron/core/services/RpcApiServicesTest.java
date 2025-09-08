@@ -11,7 +11,6 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.io.IOException;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -54,6 +53,7 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.TimeoutInterceptor;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -160,26 +160,23 @@ public class RpcApiServicesTest {
 
     channelFull = ManagedChannelBuilder.forTarget(fullNode)
         .usePlaintext()
+        .intercept(new TimeoutInterceptor(5000))
         .build();
     channelPBFT = ManagedChannelBuilder.forTarget(pBFTNode)
         .usePlaintext()
+        .intercept(new TimeoutInterceptor(5000))
         .build();
     channelSolidity = ManagedChannelBuilder.forTarget(solidityNode)
         .usePlaintext()
+        .intercept(new TimeoutInterceptor(5000))
         .build();
     context = new TronApplicationContext(DefaultConfig.class);
-    databaseBlockingStubFull = DatabaseGrpc.newBlockingStub(channelFull)
-        .withDeadlineAfter(5, TimeUnit.SECONDS);
-    databaseBlockingStubSolidity = DatabaseGrpc.newBlockingStub(channelSolidity)
-        .withDeadlineAfter(5, TimeUnit.SECONDS);
-    databaseBlockingStubPBFT = DatabaseGrpc.newBlockingStub(channelPBFT)
-        .withDeadlineAfter(5, TimeUnit.SECONDS);
-    blockingStubFull = WalletGrpc.newBlockingStub(channelFull)
-        .withDeadlineAfter(5, TimeUnit.SECONDS);
-    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity)
-        .withDeadlineAfter(5, TimeUnit.SECONDS);
-    blockingStubPBFT = WalletSolidityGrpc.newBlockingStub(channelPBFT)
-        .withDeadlineAfter(5, TimeUnit.SECONDS);
+    databaseBlockingStubFull = DatabaseGrpc.newBlockingStub(channelFull);
+    databaseBlockingStubSolidity = DatabaseGrpc.newBlockingStub(channelSolidity);
+    databaseBlockingStubPBFT = DatabaseGrpc.newBlockingStub(channelPBFT);
+    blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
+    blockingStubPBFT = WalletSolidityGrpc.newBlockingStub(channelPBFT);
 
     Manager manager = context.getBean(Manager.class);
 
