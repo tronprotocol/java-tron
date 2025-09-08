@@ -10,7 +10,6 @@ import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
-import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 import org.tron.api.WalletGrpc;
@@ -54,7 +53,8 @@ public class DbLiteTest {
     channelFull = ManagedChannelBuilder.forTarget(fullNode)
         .usePlaintext()
         .build();
-    blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+    blockingStubFull = WalletGrpc.newBlockingStub(channelFull)
+        .withDeadlineAfter(5, TimeUnit.SECONDS);
   }
 
   /**
@@ -69,8 +69,8 @@ public class DbLiteTest {
 
   public void init(String dbType) throws IOException {
     dbPath = folder.newFolder().toString();
-    Args.setParam(new String[]{
-        "-d", dbPath, "-w", "--p2p-disable", "true", "--storage-db-engine", dbType},
+    Args.setParam(new String[] {
+            "-d", dbPath, "-w", "--p2p-disable", "true", "--storage-db-engine", dbType},
         "config-localtest.conf");
     // allow account root
     Args.getInstance().setAllowAccountStateRoot(1);
@@ -92,15 +92,15 @@ public class DbLiteTest {
     dbPath = String.format("%s_%s_%d", dbPath, dbType, System.currentTimeMillis());
     init(dbType);
     final String[] argsForSnapshot =
-        new String[]{"-o", "split", "-t", "snapshot", "--fn-data-path",
+        new String[] {"-o", "split", "-t", "snapshot", "--fn-data-path",
             dbPath + File.separator + databaseDir, "--dataset-path",
             dbPath};
     final String[] argsForHistory =
-        new String[]{"-o", "split", "-t", "history", "--fn-data-path",
+        new String[] {"-o", "split", "-t", "history", "--fn-data-path",
             dbPath + File.separator + databaseDir, "--dataset-path",
             dbPath};
     final String[] argsForMerge =
-        new String[]{"-o", "merge", "--fn-data-path", dbPath + File.separator + databaseDir,
+        new String[] {"-o", "merge", "--fn-data-path", dbPath + File.separator + databaseDir,
             "--dataset-path", dbPath + File.separator + "history"};
     Args.getInstance().getStorage().setCheckpointVersion(checkpointVersion);
     DbLite.setRecentBlks(3);
@@ -126,15 +126,15 @@ public class DbLiteTest {
     File database = new File(Paths.get(dbPath, databaseDir).toString());
     if (!database.renameTo(new File(Paths.get(dbPath, databaseDir + "_bak").toString()))) {
       throw new RuntimeException(
-              String.format("rename %s to %s failed", database.getPath(),
-                  Paths.get(dbPath, databaseDir)));
+          String.format("rename %s to %s failed", database.getPath(),
+              Paths.get(dbPath, databaseDir)));
     }
     // change snapshot to the new database
     File snapshot = new File(Paths.get(dbPath, "snapshot").toString());
     if (!snapshot.renameTo(new File(Paths.get(dbPath, databaseDir).toString()))) {
       throw new RuntimeException(
-              String.format("rename snapshot to %s failed",
-                  Paths.get(dbPath, databaseDir)));
+          String.format("rename snapshot to %s failed",
+              Paths.get(dbPath, databaseDir)));
     }
     // start and validate the snapshot
     startApp();
@@ -161,7 +161,7 @@ public class DbLiteTest {
       String sunPri = getRandomPrivateKey();
       byte[] sunAddress = PublicMethod.getFinalAddress(sunPri);
       PublicMethod.sendcoin(address, 1L,
-              sunAddress, sunPri, blockingStubFull);
+          sunAddress, sunPri, blockingStubFull);
       try {
         Thread.sleep(sleepOnce);
       } catch (InterruptedException e) {

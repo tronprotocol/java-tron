@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -83,9 +84,12 @@ public class RpcApiAccessInterceptorTest {
 
     context = new TronApplicationContext(DefaultConfig.class);
 
-    blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
-    blockingStubPBFT = WalletSolidityGrpc.newBlockingStub(channelPBFT);
+    blockingStubFull = WalletGrpc.newBlockingStub(channelFull)
+        .withDeadlineAfter(5, TimeUnit.SECONDS);
+    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity)
+        .withDeadlineAfter(5, TimeUnit.SECONDS);
+    blockingStubPBFT = WalletSolidityGrpc.newBlockingStub(channelPBFT)
+        .withDeadlineAfter(5, TimeUnit.SECONDS);
 
     Application appTest = ApplicationFactory.create(context);
     appTest.startup();

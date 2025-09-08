@@ -11,6 +11,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.io.IOException;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -167,12 +168,18 @@ public class RpcApiServicesTest {
         .usePlaintext()
         .build();
     context = new TronApplicationContext(DefaultConfig.class);
-    databaseBlockingStubFull = DatabaseGrpc.newBlockingStub(channelFull);
-    databaseBlockingStubSolidity = DatabaseGrpc.newBlockingStub(channelSolidity);
-    databaseBlockingStubPBFT = DatabaseGrpc.newBlockingStub(channelPBFT);
-    blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
-    blockingStubPBFT = WalletSolidityGrpc.newBlockingStub(channelPBFT);
+    databaseBlockingStubFull = DatabaseGrpc.newBlockingStub(channelFull)
+        .withDeadlineAfter(5, TimeUnit.SECONDS);
+    databaseBlockingStubSolidity = DatabaseGrpc.newBlockingStub(channelSolidity)
+        .withDeadlineAfter(5, TimeUnit.SECONDS);
+    databaseBlockingStubPBFT = DatabaseGrpc.newBlockingStub(channelPBFT)
+        .withDeadlineAfter(5, TimeUnit.SECONDS);
+    blockingStubFull = WalletGrpc.newBlockingStub(channelFull)
+        .withDeadlineAfter(5, TimeUnit.SECONDS);
+    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity)
+        .withDeadlineAfter(5, TimeUnit.SECONDS);
+    blockingStubPBFT = WalletSolidityGrpc.newBlockingStub(channelPBFT)
+        .withDeadlineAfter(5, TimeUnit.SECONDS);
 
     Manager manager = context.getBean(Manager.class);
 

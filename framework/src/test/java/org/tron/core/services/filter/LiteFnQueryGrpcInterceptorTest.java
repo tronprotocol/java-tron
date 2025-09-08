@@ -51,7 +51,7 @@ public class LiteFnQueryGrpcInterceptorTest {
    */
   @BeforeClass
   public static void init() throws IOException {
-    Args.setParam(new String[]{"-d", temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-d", temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
     Args.getInstance().setRpcEnable(true);
     Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
     Args.getInstance().setRpcSolidityEnable(true);
@@ -60,24 +60,27 @@ public class LiteFnQueryGrpcInterceptorTest {
     Args.getInstance().setRpcOnPBFTPort(PublicMethod.chooseRandomPort());
     Args.getInstance().setP2pDisable(true);
     String fullnode = String.format("%s:%d", Constant.LOCAL_HOST,
-            Args.getInstance().getRpcPort());
+        Args.getInstance().getRpcPort());
     String solidityNode = String.format("%s:%d", Constant.LOCAL_HOST,
-            Args.getInstance().getRpcOnSolidityPort());
+        Args.getInstance().getRpcOnSolidityPort());
     String pBFTNode = String.format("%s:%d", Constant.LOCAL_HOST,
         Args.getInstance().getRpcOnPBFTPort());
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
-            .usePlaintext()
-            .build();
+        .usePlaintext()
+        .build();
     channelSolidity = ManagedChannelBuilder.forTarget(solidityNode)
         .usePlaintext()
         .build();
     channelpBFT = ManagedChannelBuilder.forTarget(pBFTNode)
-            .usePlaintext()
-            .build();
+        .usePlaintext()
+        .build();
     context = new TronApplicationContext(DefaultConfig.class);
-    blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
-    blockingStubpBFT = WalletSolidityGrpc.newBlockingStub(channelpBFT);
+    blockingStubFull = WalletGrpc.newBlockingStub(channelFull)
+        .withDeadlineAfter(5, TimeUnit.SECONDS);
+    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity)
+        .withDeadlineAfter(5, TimeUnit.SECONDS);
+    blockingStubpBFT = WalletSolidityGrpc.newBlockingStub(channelpBFT)
+        .withDeadlineAfter(5, TimeUnit.SECONDS);
     chainBaseManager = context.getBean(ChainBaseManager.class);
     Application appTest = ApplicationFactory.create(context);
     appTest.startup();
