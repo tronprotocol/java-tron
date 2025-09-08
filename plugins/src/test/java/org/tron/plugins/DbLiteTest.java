@@ -70,7 +70,7 @@ public class DbLiteTest {
   public void init(String dbType) throws IOException {
     dbPath = folder.newFolder().toString();
     Args.setParam(new String[] {
-            "-d", dbPath, "-w", "--p2p-disable", "true", "--storage-db-engine", dbType},
+        "-d", dbPath, "-w", "--p2p-disable", "true", "--storage-db-engine", dbType},
         "config-localtest.conf");
     // allow account root
     Args.getInstance().setAllowAccountStateRoot(1);
