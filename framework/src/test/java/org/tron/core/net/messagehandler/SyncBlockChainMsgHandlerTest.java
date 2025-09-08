@@ -7,7 +7,7 @@ import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -28,7 +28,7 @@ import org.tron.p2p.connection.Channel;
 
 public class SyncBlockChainMsgHandlerTest {
 
-  private TronApplicationContext context;
+  private static TronApplicationContext context;
   private SyncBlockChainMsgHandler handler;
   private PeerConnection peer;
   @ClassRule
@@ -46,11 +46,11 @@ public class SyncBlockChainMsgHandlerTest {
   @BeforeClass
   public static void before() {
     Args.setParam(new String[] {"--output-directory", dbPath()}, Constant.TEST_CONF);
+    context = new TronApplicationContext(DefaultConfig.class);
   }
 
   @Before
   public void init() throws Exception {
-    context = new TronApplicationContext(DefaultConfig.class);
     handler = context.getBean(SyncBlockChainMsgHandler.class);
     peer = context.getBean(PeerConnection.class);
     Channel c1 = new Channel();
@@ -107,8 +107,8 @@ public class SyncBlockChainMsgHandlerTest {
     Assert.assertEquals(1, list.size());
   }
 
-  @After
-  public void destroy() {
+  @AfterClass
+  public static void destroy() {
     context.destroy();
     Args.clearParam();
   }
