@@ -33,6 +33,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.tron.api.GrpcAPI;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.runtime.RuntimeImpl;
@@ -52,7 +53,10 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.TransactionInfoCapsule;
+import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.Parameter;
@@ -1231,6 +1235,45 @@ public class ManagerTest extends BlockGenerate {
 
     assertThrows(TransactionExpirationException.class, () -> dbManager.validateCommon(trx));
 
+  }
+
+  @Test
+  public void testGetTransactionInfoByBlockNum() throws Exception {
+
+    Transaction transaction = Protocol.Transaction.newBuilder()
+            .addSignature(ByteString.copyFrom(new byte[1])).build();
+    TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
+
+    Protocol.BlockHeader.raw raw = Protocol.BlockHeader.raw.newBuilder().setNumber(1000L).build();
+    Protocol.BlockHeader header = Protocol.BlockHeader.newBuilder().setRawData(raw).build();
+    Block block = Block.newBuilder().setBlockHeader(header).addTransactions(transaction).build();
+
+    Protocol.TransactionInfo info = Protocol.TransactionInfo.newBuilder()
+            .setBlockNumber(1000L).build();
+
+    BlockCapsule blockCapsule = new BlockCapsule(block);
+    byte[] blockId = new BlockCapsule(block).getBlockId().getBytes();
+    dbManager.getBlockIndexStore().put(ByteArray.fromLong(1000L), new BytesCapsule(blockId));
+    dbManager.getBlockStore().put(blockId, blockCapsule);
+    dbManager.getTransactionHistoryStore().put(transactionCapsule.getTransactionId().getBytes(),
+            new TransactionInfoCapsule(info));
+
+    GrpcAPI.TransactionInfoList transactionInfoList = dbManager.getTransactionInfoByBlockNum(1000L);
+
+    Assert.assertEquals(1, transactionInfoList.getTransactionInfoCount());
+
+    Protocol.TransactionRet ret = Protocol.TransactionRet.newBuilder()
+            .addTransactioninfo(info)
+            .addTransactioninfo(info).build();
+
+    TransactionRetCapsule transactionRetCapsule = new TransactionRetCapsule(ret.toByteArray());
+
+    dbManager.getTransactionRetStore()
+            .put(ByteArray.fromLong(1000L), transactionRetCapsule);
+
+    transactionInfoList = dbManager.getTransactionInfoByBlockNum(1000L);
+
+    Assert.assertEquals(2, transactionInfoList.getTransactionInfoCount());
   }
 
   @Test

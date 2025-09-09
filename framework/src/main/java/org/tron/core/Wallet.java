@@ -2771,37 +2771,7 @@ public class Wallet {
   }
 
   public TransactionInfoList getTransactionInfoByBlockNum(long blockNum) {
-    TransactionInfoList.Builder transactionInfoList = TransactionInfoList.newBuilder();
-
-    try {
-      TransactionRetCapsule result = dbManager.getTransactionRetStore()
-          .getTransactionInfoByBlockNum(ByteArray.fromLong(blockNum));
-
-      if (!Objects.isNull(result) && !Objects.isNull(result.getInstance())) {
-        result.getInstance().getTransactioninfoList().forEach(
-            transactionInfo -> transactionInfoList.addTransactionInfo(transactionInfo)
-        );
-      } else {
-        Block block = chainBaseManager.getBlockByNum(blockNum).getInstance();
-
-        if (block != null) {
-          List<Transaction> listTransaction = block.getTransactionsList();
-          for (Transaction transaction : listTransaction) {
-            TransactionInfoCapsule transactionInfoCapsule = dbManager.getTransactionHistoryStore()
-                .get(Sha256Hash.hash(CommonParameter.getInstance()
-                    .isECKeyCryptoEngine(), transaction.getRawData().toByteArray()));
-
-            if (transactionInfoCapsule != null) {
-              transactionInfoList.addTransactionInfo(transactionInfoCapsule.getInstance());
-            }
-          }
-        }
-      }
-    } catch (BadItemException | ItemNotFoundException e) {
-      logger.warn(e.getMessage());
-    }
-
-    return transactionInfoList.build();
+    return dbManager.getTransactionInfoByBlockNum(blockNum);
   }
 
   public NodeList listNodes() {

@@ -163,6 +163,7 @@ import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.utils.TransactionRegister;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Transaction;
@@ -2486,6 +2487,40 @@ public class Manager {
 
   private boolean isBlockWaitingLock() {
     return blockWaitLock.get() > NO_BLOCK_WAITING_LOCK;
+  }
+
+  public TransactionInfoList getTransactionInfoByBlockNum(long blockNum) {
+    TransactionInfoList.Builder transactionInfoList = TransactionInfoList.newBuilder();
+
+    try {
+      TransactionRetCapsule result = getTransactionRetStore()
+              .getTransactionInfoByBlockNum(ByteArray.fromLong(blockNum));
+
+      if (!Objects.isNull(result) && !Objects.isNull(result.getInstance())) {
+        result.getInstance().getTransactioninfoList().forEach(
+            transactionInfo -> transactionInfoList.addTransactionInfo(transactionInfo)
+        );
+      } else {
+        Protocol.Block block = chainBaseManager.getBlockByNum(blockNum).getInstance();
+
+        if (block != null) {
+          List<Transaction> listTransaction = block.getTransactionsList();
+          for (Transaction transaction : listTransaction) {
+            TransactionInfoCapsule transactionInfoCapsule = getTransactionHistoryStore()
+                    .get(Sha256Hash.hash(CommonParameter.getInstance()
+                            .isECKeyCryptoEngine(), transaction.getRawData().toByteArray()));
+
+            if (transactionInfoCapsule != null) {
+              transactionInfoList.addTransactionInfo(transactionInfoCapsule.getInstance());
+            }
+          }
+        }
+      }
+    } catch (BadItemException | ItemNotFoundException e) {
+      logger.warn(e.getMessage());
+    }
+
+    return transactionInfoList.build();
   }
 
   public void close() {
