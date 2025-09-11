@@ -54,7 +54,10 @@ public class HistoryEventService {
     try {
       long tmp = instance.getStartSyncBlockNum();
       long endNum = manager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
-      while (tmp <= endNum) {
+      while (tmp < endNum) {
+        if (thread.isInterrupted()) {
+          throw new InterruptedException();
+        }
         if (instance.isUseNativeQueue()) {
           Thread.sleep(20);
         } else if (instance.isBusy()) {
@@ -67,7 +70,8 @@ public class HistoryEventService {
         tmp++;
         endNum = manager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
       }
-      initEventService(manager.getChainBaseManager().getBlockIdByNum(endNum));
+      long startNum = endNum == 0 ? 0 : endNum - 1;
+      initEventService(manager.getChainBaseManager().getBlockIdByNum(startNum));
     } catch (InterruptedException e1) {
       logger.warn("History event service interrupted.");
       Thread.currentThread().interrupt();
