@@ -44,6 +44,7 @@ import org.tron.core.services.http.GetMerkleTreeVoucherInfoServlet;
 import org.tron.core.services.http.GetNodeInfoServlet;
 import org.tron.core.services.http.GetNowBlockServlet;
 import org.tron.core.services.http.GetPaginatedAssetIssueListServlet;
+import org.tron.core.services.http.GetPaginatedNowWitnessListServlet;
 import org.tron.core.services.http.GetRewardServlet;
 import org.tron.core.services.http.GetTransactionCountByBlockNumServlet;
 import org.tron.core.services.http.GetTransactionInfoByBlockNumServlet;
@@ -91,6 +92,8 @@ public class SolidityNodeHttpApiService extends HttpService {
   private ListExchangesServlet listExchangesServlet;
   @Autowired
   private ListWitnessesServlet listWitnessesServlet;
+  @Autowired
+  private GetPaginatedNowWitnessListServlet getPaginatedNowWitnessListServlet;
   @Autowired
   private GetAssetIssueListServlet getAssetIssueListServlet;
   @Autowired
@@ -174,6 +177,8 @@ public class SolidityNodeHttpApiService extends HttpService {
     // same as FullNode
     context.addServlet(new ServletHolder(getAccountServlet), "/walletsolidity/getaccount");
     context.addServlet(new ServletHolder(listWitnessesServlet), "/walletsolidity/listwitnesses");
+    context.addServlet(new ServletHolder(getPaginatedNowWitnessListServlet),
+        "/walletsolidity/getpaginatednowwitnesslist");
     context.addServlet(new ServletHolder(getAssetIssueListServlet),
         "/walletsolidity/getassetissuelist");
     context.addServlet(new ServletHolder(getPaginatedAssetIssueListServlet),
