@@ -30,7 +30,7 @@ import picocli.CommandLine;
 @Slf4j(topic = "expand")
 public class DbExpand implements Callable<Integer> {
   private static final int BATCH = 10000;
-  private static final int MEMORY_POOL_SIZE = 2048*2048*4;
+  private static final int MEMORY_POOL_SIZE = 1024*1024*64;
   public static final byte ADD_PRE_FIX_BYTE_MAINNET = (byte) 0x41;
 
   @CommandLine.Spec
@@ -181,8 +181,9 @@ public class DbExpand implements Callable<Integer> {
   }
 
   public void merge(DB source, DB target) throws Exception {
-    List<byte[]> keys = new ArrayList<>(BATCH);
-    List<byte[]> values = new ArrayList<>(BATCH);
+    int dbBatch = getBatchSize();
+    List<byte[]> keys = new ArrayList<>(dbBatch);
+    List<byte[]> values = new ArrayList<>(dbBatch);
     JniDBFactory.pushMemoryPool(MEMORY_POOL_SIZE);
     int processedKeys=0;
     try (
@@ -194,7 +195,7 @@ public class DbExpand implements Callable<Integer> {
         byte[] value = entry.getValue();
         keys.add(key);
         values.add(value);
-        if (keys.size() >= BATCH) {
+        if (keys.size() >= dbBatch) {
           insertToLevelDb(target, keys, values);
         }
         processedKeys++;
@@ -245,9 +246,10 @@ public class DbExpand implements Callable<Integer> {
 
   private void generateColdData2(DB source, DB coldData, int expendRate) {
     JniDBFactory.pushMemoryPool(MEMORY_POOL_SIZE);
+    int dbBatch = getBatchSize();
     try {
-      List<byte[]> keys = new ArrayList<>(BATCH);
-      List<byte[]> values = new ArrayList<>(BATCH);
+      List<byte[]> keys = new ArrayList<>(dbBatch);
+      List<byte[]> values = new ArrayList<>(dbBatch);
       int insertCount = expendRate - 1;
       int processedKeys=0;
       try (DBIterator levelIterator = source.iterator(
@@ -259,7 +261,7 @@ public class DbExpand implements Callable<Integer> {
             byte[] key = generateKeys();
             keys.add(key);
             values.add(entry.getValue());
-            if (keys.size() >= BATCH) {
+            if (keys.size() >= dbBatch) {
               insertToLevelDb(coldData, keys, values);
             }
           }
@@ -277,6 +279,13 @@ public class DbExpand implements Callable<Integer> {
     } finally {
       JniDBFactory.popMemoryPool();
     }
+  }
+
+  private int getBatchSize() {
+    if ("trans".equalsIgnoreCase(targetDb)) {
+      return 1000000;
+    }
+    return BATCH;
   }
 
   private byte[] generateKeys() {
