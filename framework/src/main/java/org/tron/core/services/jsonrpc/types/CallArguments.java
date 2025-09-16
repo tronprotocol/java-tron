@@ -43,6 +43,9 @@ public class CallArguments {
   private String data;
   @Getter
   @Setter
+  private String input; //Add input parameter to align with Ethereum https://github.com/ethereum/go-ethereum/pull/28078
+  @Getter
+  @Setter
   private String nonce; // not used
 
   /**
@@ -57,8 +60,11 @@ public class CallArguments {
       throw new JsonRpcInvalidRequestException("invalid json request");
     } else if (paramStringIsNull(to)) {
       // data is null
-      if (paramStringIsNull(data)) {
-        throw new JsonRpcInvalidRequestException("invalid json request");
+      if (paramStringIsNull(input)) {
+        if(paramStringIsNull(data))
+        {
+          throw new JsonRpcInvalidRequestException("invalid json request"); //If both input and data are bnull throw an error, take input as priority
+        }
       }
 
       contractType = ContractType.CreateSmartContract;
@@ -85,5 +91,27 @@ public class CallArguments {
 
   public long parseValue() throws JsonRpcInvalidParamsException {
     return parseQuantityValue(value);
+  }
+
+    /**
+   * Get the transaction data, supporting both 'data' and 'input' parameters
+   * for Ethereum compatibility. 'input' takes precedence if both are provided.
+   * 
+   * @return the transaction data/input
+   */
+  public String getTransactionData() {
+    // Prioritize 'input' for Ethereum compatibility
+    if (StringUtils.isNotEmpty(input)) {
+      return input;
+    }
+    return data;
+  }
+
+  /**
+   * Set transaction data, updating the appropriate field based on which was used
+   */
+  public void setTransactionData(String transactionData) {
+    // For backward compatibility, default to setting 'data'
+    this.data = transactionData;
   }
 }

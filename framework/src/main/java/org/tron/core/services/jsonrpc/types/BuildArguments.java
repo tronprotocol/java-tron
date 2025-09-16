@@ -44,6 +44,9 @@ public class BuildArguments {
   private String data;
   @Getter
   @Setter
+  private String input;
+  @Getter
+  @Setter
   private String nonce = ""; //not used
 
   @Getter
@@ -82,7 +85,20 @@ public class BuildArguments {
     gas = args.getGas();
     gasPrice = args.getGasPrice();
     value = args.getValue();
-    data = args.getData();
+
+    // Use the new unified method to get transaction data for compatibility
+    data = args.getTransactionData();
+    input = args.getTransactionData();
+  }
+
+  /**
+   * Get the transaction data, supporting both 'data' and 'input' params
+   */
+  public String getTransactionData() {
+    if (StringUtils.isNotEmpty(input)) {
+      return input;
+    }
+    return data;
   }
 
   public ContractType getContractType(Wallet wallet) throws JsonRpcInvalidRequestException,
@@ -92,7 +108,7 @@ public class BuildArguments {
     // to is null
     if (paramStringIsNull(to)) {
       // data is null
-      if (paramStringIsNull(data)) {
+      if (paramStringIsNull(getTransactionData())) {
         throw new JsonRpcInvalidRequestException("invalid json request");
       }
 

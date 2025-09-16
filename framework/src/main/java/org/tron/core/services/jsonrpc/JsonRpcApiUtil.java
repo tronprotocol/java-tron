@@ -537,4 +537,22 @@ public class JsonRpcApiUtil {
     random.nextBytes(uid);
     return ByteArray.toHexString(uid);
   }
+
+   /**
+   * Check if transaction data parameter is null or empty
+   * Supports both 'data' and 'input' parameters
+   */
+  public static boolean paramTransactionDataIsNull(String data, String input) {
+    return paramStringIsNull(data) && paramStringIsNull(input);
+  }
+  
+  /**
+   * Get transaction data with priority: input > data
+   */
+  public static String getTransactionData(String data, String input) {
+    if (!paramStringIsNull(input)) {
+      return input;
+    }
+    return data;
+  }
 }
