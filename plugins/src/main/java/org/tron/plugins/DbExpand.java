@@ -29,7 +29,8 @@ import picocli.CommandLine;
     description = "expand db size .")
 @Slf4j(topic = "expand")
 public class DbExpand implements Callable<Integer> {
-  private static final int BATCH = 1024;
+  private static final int BATCH = 10000;
+  private static final int MEMORY_POOL_SIZE = 2048*2048*4;
   public static final byte ADD_PRE_FIX_BYTE_MAINNET = (byte) 0x41;
 
   @CommandLine.Spec
@@ -116,7 +117,7 @@ public class DbExpand implements Callable<Integer> {
       logger.info("Generate Cold Data start in path {}", targetPath);
       spec.commandLine().getOut().println(String.format("%s Generate Cold Data start in path %s",
           dateFormat.format(new Date()), targetPath));
-      generateColdData(source, target, expendRate);
+      generateColdData2(source, target, expendRate);
       logger.info("Generate Cold Data done in path {}", targetPath);
       spec.commandLine().getOut().println(String.format("%s Generate Cold Data done in path %s",
           dateFormat.format(new Date()), targetPath));
@@ -138,7 +139,7 @@ public class DbExpand implements Callable<Integer> {
       logger.info("Generate Cold Data start in path {}", coldPath);
       spec.commandLine().getOut().println(String.format("%s Generate Cold Data start in path %s",
           dateFormat.format(new Date()), coldPath));
-      generateColdData(source, coldData, expendRate);
+      generateColdData2(source, coldData, expendRate);
       logger.info("Generate Cold Data done in path {}", coldPath);
       spec.commandLine().getOut().println(String.format("%s Generate Cold Data done in path %s",
           dateFormat.format(new Date()), coldPath));
@@ -182,7 +183,8 @@ public class DbExpand implements Callable<Integer> {
   public void merge(DB source, DB target) throws Exception {
     List<byte[]> keys = new ArrayList<>(BATCH);
     List<byte[]> values = new ArrayList<>(BATCH);
-    JniDBFactory.pushMemoryPool(2048 * 2048);
+    JniDBFactory.pushMemoryPool(MEMORY_POOL_SIZE);
+    int processedKeys=0;
     try (
         DBIterator levelIterator = source.iterator(new ReadOptions().fillCache(false))) {
       levelIterator.seekToFirst();
@@ -195,6 +197,10 @@ public class DbExpand implements Callable<Integer> {
         if (keys.size() >= BATCH) {
           insertToLevelDb(target, keys, values);
         }
+        processedKeys++;
+        if (processedKeys % 1000000 == 0) {
+          logger.info("generateColdData2:已处理 {} 个key", processedKeys);
+        }
       }
       // clear
       if (!keys.isEmpty()) {
@@ -206,7 +212,7 @@ public class DbExpand implements Callable<Integer> {
   }
 
   private void generateColdData(DB source, DB coldData, int expendRate) {
-    JniDBFactory.pushMemoryPool(2048 * 2048);
+    JniDBFactory.pushMemoryPool(MEMORY_POOL_SIZE);
     try {
       IntStream.range(0, expendRate - 1).parallel().forEach(i -> {
         List<byte[]> keys = new ArrayList<>(BATCH);
@@ -216,7 +222,7 @@ public class DbExpand implements Callable<Integer> {
           levelIterator.seekToFirst();
           while (levelIterator.hasNext()) {
             Map.Entry<byte[], byte[]> entry = levelIterator.next();
-            byte[] key = generateAddress();
+            byte[] key = generateKeys();
             keys.add(key);
             values.add(entry.getValue());
             if (keys.size() >= BATCH) {
@@ -236,7 +242,44 @@ public class DbExpand implements Callable<Integer> {
     }
   }
 
-  private byte[] generateAddress() {
+
+  private void generateColdData2(DB source, DB coldData, int expendRate) {
+    JniDBFactory.pushMemoryPool(MEMORY_POOL_SIZE);
+    try {
+      List<byte[]> keys = new ArrayList<>(BATCH);
+      List<byte[]> values = new ArrayList<>(BATCH);
+      int insertCount = expendRate - 1;
+      int processedKeys=0;
+      try (DBIterator levelIterator = source.iterator(
+          new org.iq80.leveldb.ReadOptions().fillCache(false))) {
+        levelIterator.seekToFirst();
+        while (levelIterator.hasNext()) {
+          Map.Entry<byte[], byte[]> entry = levelIterator.next();
+          for (int i = 0; i < insertCount; i++) {
+            byte[] key = generateKeys();
+            keys.add(key);
+            values.add(entry.getValue());
+            if (keys.size() >= BATCH) {
+              insertToLevelDb(coldData, keys, values);
+            }
+          }
+          processedKeys++;
+          if (processedKeys % 1000000 == 0) {
+            logger.info("generateColdData2:已处理 {} 个key", processedKeys);
+          }
+        }
+        if (!keys.isEmpty()) {
+          insertToLevelDb(coldData, keys, values);
+        }
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    } finally {
+      JniDBFactory.popMemoryPool();
+    }
+  }
+
+  private byte[] generateKeys() {
     // generate the random number
     if ("account".equalsIgnoreCase(targetDb)) {
       byte[] result = new byte[21];

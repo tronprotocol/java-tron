@@ -51,7 +51,12 @@ public class DbStat implements Callable<Integer> {
   @CommandLine.Option(names = {"--print-meta"},
       defaultValue = "false",
       description = "print meta info")
+
   private boolean printMeta;
+  @CommandLine.Option(names = {"--print-value-distribute"},
+      defaultValue = "false",
+      description = "print value distribute")
+  private boolean printValueDistribute;
 
   @CommandLine.Option(names = {"-h", "--help"}, help = true, description = "display a help message")
   boolean help;
@@ -100,7 +105,9 @@ public class DbStat implements Callable<Integer> {
           byte[] key = entry.getKey();
           keySize += key.length / 1024.0 / 1024;
           byte[] value = entry.getValue();
-          valueSizeMap.put(value.length,valueSizeMap.getOrDefault(value.length,0)+1);
+          if (printValueDistribute) {
+            valueSizeMap.put(value.length, valueSizeMap.getOrDefault(value.length, 0) + 1);
+          }
           valueSize += value.length / 1024.0 / 1024;
           count++;
         }
@@ -108,11 +115,14 @@ public class DbStat implements Callable<Integer> {
         spec.commandLine().getOut().println(
             String.format("%s count: %s, key size: %s M, value size: %s M",
             dateFormat.format(new Date()), count, keySize, valueSize));
-        spec.commandLine().getOut().println("--------------value size distribution------------------ ");
-        //按数量从大到小输出，valueSizeMap
-        valueSizeMap.entrySet().stream().sorted(Map.Entry.comparingByValue()).forEach(entry -> {
-          spec.commandLine().getOut().println(entry.getKey() + " : " + entry.getValue());
-        });
+        if (printValueDistribute) {
+          spec.commandLine().getOut()
+              .println("--------------value size distribution------------------ ");
+          //按数量从大到小输出，valueSizeMap
+          valueSizeMap.entrySet().stream().sorted(Map.Entry.comparingByValue()).forEach(entry -> {
+            spec.commandLine().getOut().println(entry.getKey() + " : " + entry.getValue());
+          });
+        }
 
       } catch (IOException e) {
         throw new RuntimeException(e);
