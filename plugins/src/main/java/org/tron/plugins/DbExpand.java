@@ -200,7 +200,7 @@ public class DbExpand implements Callable<Integer> {
         }
         processedKeys++;
         if (processedKeys % 1000000 == 0) {
-          logger.info("generateColdData2:已处理 {} 个key", processedKeys);
+          logger.info("merge:have processed {} keys", processedKeys);
         }
       }
       // clear
@@ -267,7 +267,7 @@ public class DbExpand implements Callable<Integer> {
           }
           processedKeys++;
           if (processedKeys % 1000000 == 0) {
-            logger.info("generateColdData2:已处理 {} 个key", processedKeys);
+            logger.info("generateColdData2:have processed {} keys", processedKeys);
           }
         }
         if (!keys.isEmpty()) {
