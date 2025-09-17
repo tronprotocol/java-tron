@@ -103,14 +103,14 @@ public class DbExpand implements Callable<Integer> {
       return;
     }
 
-    logger.info("Expand db {} start", targetDb);
+    logger.info("Expand db {} start, type {}", targetDb,targetType);
     spec.commandLine().getOut().println(String.format("%s Expand db %s start",
         dateFormat.format(new Date()),  targetDb));
-    logger.info("DB size: {} M , expend rate: {}", getStats(source), expendRate);
+    logger.info("DB size: {} M , expend rate: {} ", getStats(source), expendRate);
     spec.commandLine().getOut().println(String.format("%s DB size: %s M , expend rate: %s",
         dateFormat.format(new Date()), getStats(source), expendRate));
 
-    if (targetType == 2) {
+    if (targetType == 2 || targetType == 3) {
       copy(database, targetDatabase, targetDb);
     }
     DB target = DBUtils.newLevelDb(Paths.get(targetDatabase.toString(), targetDb));
@@ -159,22 +159,15 @@ public class DbExpand implements Callable<Integer> {
       FileUtils.deleteDir(coldPath.toFile());
       source.close();
     } else if (targetType == 3) {
-      copy(database, targetDatabase, targetDb);
       // simple generate Cold Data on warm data
       Path coldPath = Paths.get(targetDatabase.toString(), targetDb );
-      DB coldData = DBUtils.newLevelDb(coldPath);
       logger.info("Generate Cold Data start in path {}", coldPath);
       spec.commandLine().getOut().println(String.format("%s Generate Cold Data start in path %s",
           dateFormat.format(new Date()), coldPath));
-      generateColdData2(source, coldData, expendRate);
+      generateColdData2(source, target, expendRate);
       logger.info("Generate Cold Data done in path {}", coldPath);
       spec.commandLine().getOut().println(String.format("%s Generate Cold Data done in path %s",
           dateFormat.format(new Date()), coldPath));
-      // merge Cold Data to Warn Data
-      logger.info("Merge Cold Data {} to Warm Data {} start", coldPath, targetPath);
-      spec.commandLine().getOut().println(String.format(
-          "%s Merge Cold Data %s to Warm Data %s start",
-          dateFormat.format(new Date()), coldPath, targetPath));
     }
 
     logger.info("Expand db {} done", targetDb);
