@@ -52,7 +52,7 @@ public class DbExpand implements Callable<Integer> {
 
   @CommandLine.Option(names = {"--target-type"},
       defaultValue = "0",
-      description = "0 reWrite 1 Cold Data + Warm Data 2. Warm Data + Cold Data")
+      description = "0 reWrite 1 Cold Data + Warm Data 2. Warm Data + Cold Data 3. simple generate Cold Data on warm data")
   private int targetType;
 
   @CommandLine.Option(names = {"--expend-rate"},
@@ -158,6 +158,23 @@ public class DbExpand implements Callable<Integer> {
       coldData.close();
       FileUtils.deleteDir(coldPath.toFile());
       source.close();
+    } else if (targetType == 3) {
+      copy(database, targetDatabase, targetDb);
+      // simple generate Cold Data on warm data
+      Path coldPath = Paths.get(targetDatabase.toString(), targetDb );
+      DB coldData = DBUtils.newLevelDb(coldPath);
+      logger.info("Generate Cold Data start in path {}", coldPath);
+      spec.commandLine().getOut().println(String.format("%s Generate Cold Data start in path %s",
+          dateFormat.format(new Date()), coldPath));
+      generateColdData2(source, coldData, expendRate);
+      logger.info("Generate Cold Data done in path {}", coldPath);
+      spec.commandLine().getOut().println(String.format("%s Generate Cold Data done in path %s",
+          dateFormat.format(new Date()), coldPath));
+      // merge Cold Data to Warn Data
+      logger.info("Merge Cold Data {} to Warm Data {} start", coldPath, targetPath);
+      spec.commandLine().getOut().println(String.format(
+          "%s Merge Cold Data %s to Warm Data %s start",
+          dateFormat.format(new Date()), coldPath, targetPath));
     }
 
     logger.info("Expand db {} done", targetDb);
