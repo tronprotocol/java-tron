@@ -785,10 +785,11 @@ public class Wallet {
       In the maintenance period, the VoteStores will be cleared.
       To avoid the race condition of VoteStores deleted but Witness vote counts not updated,
       return retry error.
-      Only apply to non-solidity request.
+      Only apply to requests that rely on the latest block,
+      which means the normal fullnode requests with HEAD cursor.
     */
-    boolean isSolidityRequest = Args.getInstance().isSolidityNode() || (getCursor() == Cursor.SOLIDITY);
-    if (!isSolidityRequest && chainBaseManager.getDynamicPropertiesStore().getStateFlag() == 1) {
+    if (!Args.getInstance().isSolidityNode() && (getCursor() == Cursor.HEAD) &&
+        chainBaseManager.getDynamicPropertiesStore().getStateFlag() == 1) {
       String message =
           "Service temporarily unavailable during maintenance period. Please try again later.";
       throw new MaintenanceUnavailableException(message);
