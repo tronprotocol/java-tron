@@ -66,6 +66,8 @@ public class DbExpand implements Callable<Integer> {
   final Random random = new Random();
   SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
   long blockExpandBegin = 1_000_000_000L;
+  long maxValue = (1L << 40) - 1; // 2^40 - 1
+  long current = 0L;
 
   @Override
   public Integer call() throws Exception {
@@ -243,7 +245,6 @@ public class DbExpand implements Callable<Integer> {
     }
   }
 
-
   private void generateColdData2(DB source, DB coldData, int expendRate) {
     JniDBFactory.pushMemoryPool(MEMORY_POOL_SIZE);
     int dbBatch = getBatchSize();
@@ -310,6 +311,9 @@ public class DbExpand implements Callable<Integer> {
       return result;
     }
     if ("trans".equalsIgnoreCase(targetDb)) {
+      if (current < maxValue) {
+        return generateTransKey(current);
+      }
       byte[] result = new byte[32];
       random.nextBytes(result);
       return result;
@@ -323,6 +327,29 @@ public class DbExpand implements Callable<Integer> {
     }
 
     throw new IllegalArgumentException("Unsupported db type: " + targetDb);
+  }
+
+  private byte[] generateTransKey(long current) {
+    byte[] array = new byte[32];
+
+    // 将current以大端序写入前5字节
+    long value = current;
+    array[0] = (byte) (value >> 32);
+    array[1] = (byte) (value >> 24);
+    array[2] = (byte) (value >> 16);
+    array[3] = (byte) (value >> 8);
+    array[4] = (byte) value;
+
+    // 填充剩余27字节的随机数据
+    byte[] randomBytes = new byte[27];
+    random.nextBytes(randomBytes);
+    System.arraycopy(randomBytes, 0, array, 5, 27);
+
+    // 此处可以处理生成的数组，例如写入文件或流，但本题不要求存储
+    // 由于数据量巨大，实际运行时避免输出或存储
+
+    this.current += 33;
+    return array;
   }
   /**
    * 将Long值写入字节数组的前8字节
