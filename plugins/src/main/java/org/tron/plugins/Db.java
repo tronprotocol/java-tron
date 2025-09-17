@@ -14,6 +14,7 @@ import picocli.CommandLine;
         DbCopy.class,
         DbRoot.class,
         DbExpand.class,
+        DbExpandTrans.class,
         DbQuery.class,
         DbStat.class,
         DbDump.class,

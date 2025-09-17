@@ -69,6 +69,10 @@ public class DBUtils {
     org.iq80.leveldb.Options dbOptions = newDefaultLevelDbOptions(file.getName());
     return factory.open(file, dbOptions);
   }
+  public static DB newLevelDb(Path db, org.iq80.leveldb.Options dbOptions) throws IOException {
+    File file = db.toFile();
+    return factory.open(file, dbOptions);
+  }
 
  public static org.iq80.leveldb.Options newDefaultLevelDbOptions(String dbName) {
     org.iq80.leveldb.Options dbOptions = new org.iq80.leveldb.Options();
