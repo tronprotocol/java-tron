@@ -48,6 +48,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.bloom.Bloom;
@@ -2158,25 +2159,7 @@ public class Manager {
     // need to set eth compatible data from transactionInfoList
     if (EventPluginLoader.getInstance().isTransactionLogTriggerEthCompatible()
           && newBlock.getNum() != 0) {
-      TransactionInfoList transactionInfoList = TransactionInfoList.newBuilder().build();
-      TransactionInfoList.Builder transactionInfoListBuilder = TransactionInfoList.newBuilder();
-
-      try {
-        TransactionRetCapsule result = chainBaseManager.getTransactionRetStore()
-            .getTransactionInfoByBlockNum(ByteArray.fromLong(newBlock.getNum()));
-
-        if (!Objects.isNull(result) && !Objects.isNull(result.getInstance())) {
-          result.getInstance().getTransactioninfoList().forEach(
-              transactionInfoListBuilder::addTransactionInfo
-          );
-
-          transactionInfoList = transactionInfoListBuilder.build();
-        }
-      } catch (BadItemException e) {
-        logger.error("PostBlockTrigger getTransactionInfoList blockNum = {}, error is {}.",
-            newBlock.getNum(), e.getMessage());
-      }
-
+      TransactionInfoList transactionInfoList = getTransactionInfoByBlockNum(newBlock.getNum());
       if (transactionCapsuleList.size() == transactionInfoList.getTransactionInfoCount()) {
         long cumulativeEnergyUsed = 0;
         long cumulativeLogCount = 0;
@@ -2234,21 +2217,8 @@ public class Manager {
       boolean removed) {
     if (!blockCapsule.getTransactions().isEmpty()) {
       long blockNumber = blockCapsule.getNum();
-      List<TransactionInfo> transactionInfoList = new ArrayList<>();
-
-      try {
-        TransactionRetCapsule result = chainBaseManager.getTransactionRetStore()
-            .getTransactionInfoByBlockNum(ByteArray.fromLong(blockNumber));
-
-        if (!Objects.isNull(result) && !Objects.isNull(result.getInstance())) {
-          transactionInfoList.addAll(result.getInstance().getTransactioninfoList());
-        }
-      } catch (BadItemException e) {
-        logger.error("ProcessLogsFilter getTransactionInfoList blockNum = {}, error is {}.",
-            blockNumber, e.getMessage());
-        return;
-      }
-
+      List<TransactionInfo> transactionInfoList
+              = getTransactionInfoByBlockNum(blockNumber).getTransactionInfoList();
       LogsFilterCapsule logsFilterCapsule = new LogsFilterCapsule(blockNumber,
           blockCapsule.getBlockId().toString(), blockCapsule.getBloom(), transactionInfoList,
           solidified, removed);

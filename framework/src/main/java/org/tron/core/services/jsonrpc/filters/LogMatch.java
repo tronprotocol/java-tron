@@ -83,16 +83,8 @@ public class LogMatch {
     List<LogFilterElement> logFilterElementList = new ArrayList<>();
 
     for (long blockNum : blockNumList) {
-      TransactionRetCapsule transactionRetCapsule =
-          manager.getTransactionRetStore()
-              .getTransactionInfoByBlockNum(ByteArray.fromLong(blockNum));
-      if (transactionRetCapsule == null) {
-        //if query condition (address and topics) is empty, we will traversal every block,
-        //include empty block
-        continue;
-      }
-      TransactionRet transactionRet = transactionRetCapsule.getInstance();
-      List<TransactionInfo> transactionInfoList = transactionRet.getTransactioninfoList();
+      List<TransactionInfo> transactionInfoList =
+              manager.getTransactionInfoByBlockNum(blockNum).getTransactionInfoList();
 
       String blockHash = manager.getChainBaseManager().getBlockIdByNum(blockNum).toString();
       List<LogFilterElement> matchedLog = matchBlock(logFilterWrapper.getLogFilter(), blockNum,

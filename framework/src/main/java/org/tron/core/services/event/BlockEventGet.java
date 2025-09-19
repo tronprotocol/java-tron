@@ -329,22 +329,10 @@ public class BlockEventGet {
     if (!EventPluginLoader.getInstance().isTransactionLogTriggerEthCompatible()) {
       return getTransactionTriggers(block, solidNum);
     }
+
+    GrpcAPI.TransactionInfoList transactionInfoList
+            = manager.getTransactionInfoByBlockNum(block.getNum());
     List<TransactionCapsule> transactionCapsuleList = block.getTransactions();
-    GrpcAPI.TransactionInfoList transactionInfoList = GrpcAPI
-        .TransactionInfoList.newBuilder().build();
-    GrpcAPI.TransactionInfoList.Builder transactionInfoListBuilder = GrpcAPI
-        .TransactionInfoList.newBuilder();
-    try {
-      TransactionRetCapsule result = manager.getChainBaseManager().getTransactionRetStore()
-          .getTransactionInfoByBlockNum(ByteArray.fromLong(block.getNum()));
-      if (!Objects.isNull(result) && !Objects.isNull(result.getInstance())) {
-        result.getInstance().getTransactioninfoList()
-            .forEach(transactionInfoListBuilder::addTransactionInfo);
-        transactionInfoList = transactionInfoListBuilder.build();
-      }
-    } catch (BadItemException e) {
-      logger.error("Get TransactionInfo failed, blockNum {}, {}.", block.getNum(), e.getMessage());
-    }
     if (transactionCapsuleList.size() != transactionInfoList.getTransactionInfoCount()) {
       logger.error("Get TransactionInfo size not eq, blockNum {}, {}, {}",
           block.getNum(), transactionCapsuleList.size(),
@@ -385,22 +373,8 @@ public class BlockEventGet {
       return list;
     }
 
-    GrpcAPI.TransactionInfoList transactionInfoList = GrpcAPI
-        .TransactionInfoList.newBuilder().build();
-    GrpcAPI.TransactionInfoList.Builder transactionInfoListBuilder = GrpcAPI
-        .TransactionInfoList.newBuilder();
-    try {
-      TransactionRetCapsule result = manager.getChainBaseManager().getTransactionRetStore()
-          .getTransactionInfoByBlockNum(ByteArray.fromLong(block.getNum()));
-      if (!Objects.isNull(result) && !Objects.isNull(result.getInstance())) {
-        result.getInstance().getTransactioninfoList()
-            .forEach(transactionInfoListBuilder::addTransactionInfo);
-        transactionInfoList = transactionInfoListBuilder.build();
-      }
-    } catch (Exception e) {
-      logger.warn("Get TransactionInfo failed, blockNum {}, {}.", block.getNum(), e.getMessage());
-    }
-
+    GrpcAPI.TransactionInfoList transactionInfoList
+            = manager.getTransactionInfoByBlockNum(block.getNum());
     if (block.getTransactions().size() != transactionInfoList.getTransactionInfoCount()) {
       for (TransactionCapsule t : block.getTransactions()) {
         TransactionLogTriggerCapsule triggerCapsule = new TransactionLogTriggerCapsule(t, block);

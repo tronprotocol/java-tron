@@ -1261,6 +1261,7 @@ public class ManagerTest extends BlockGenerate {
     GrpcAPI.TransactionInfoList transactionInfoList = dbManager.getTransactionInfoByBlockNum(1000L);
 
     Assert.assertEquals(1, transactionInfoList.getTransactionInfoCount());
+    Assert.assertEquals(1, transactionInfoList.getTransactionInfoList().size());
 
     Protocol.TransactionRet ret = Protocol.TransactionRet.newBuilder()
             .addTransactioninfo(info)
@@ -1274,6 +1275,7 @@ public class ManagerTest extends BlockGenerate {
     transactionInfoList = dbManager.getTransactionInfoByBlockNum(1000L);
 
     Assert.assertEquals(2, transactionInfoList.getTransactionInfoCount());
+    Assert.assertEquals(2, transactionInfoList.getTransactionInfoList().size());
   }
 
   @Test
