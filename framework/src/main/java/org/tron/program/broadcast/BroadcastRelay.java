@@ -20,7 +20,6 @@ import org.tron.protos.Protocol.Transaction;
 @Slf4j(topic = "broadcastRelay")
 public class BroadcastRelay {
 
-  private volatile boolean isFinishSend = false;
   private final ConcurrentLinkedQueue<Transaction> transactionIDs = new ConcurrentLinkedQueue<>();
 
   private final TronNetService tronNetService;
@@ -40,6 +39,24 @@ public class BroadcastRelay {
     this.dbManager = dbManager;
   }
 
+  // Transaction types that should be skipped during broadcast
+  private static final Transaction.Contract.ContractType[] SKIP_TRANSACTION_TYPES = {
+      Transaction.Contract.ContractType.VoteWitnessContract,
+      Transaction.Contract.ContractType.WitnessUpdateContract
+  };
+
+  public boolean needSkip(Transaction transaction) {
+    Transaction.Contract.ContractType trxType = transaction.getRawData().getContract(0).getType();
+
+    // Check if the transaction type is in the skip list
+    for (Transaction.Contract.ContractType skipType : SKIP_TRANSACTION_TYPES) {
+      if (trxType == skipType) {
+        logger.info("Skipping transaction type: {}", trxType);
+        return true;
+      }
+    }
+    return false;
+  }
 
   public void broadcastTransactions() {
     long trxCount = 0;
@@ -52,6 +69,11 @@ public class BroadcastRelay {
       long startTps = System.currentTimeMillis();
       long endTps;
       while ((transaction = Transaction.parseDelimitedFrom(fis)) != null) {
+        // Skip VoteWitnessContract and WitnessUpdateContract transactions
+        if (needSkip(transaction)) {
+          continue;
+        }
+
         trxCount++;
         if (cnt > TPS) {
           endTps = System.currentTimeMillis();
@@ -62,11 +84,14 @@ public class BroadcastRelay {
           startTps = System.currentTimeMillis();
         } else {
           try {
-            TransactionMessage message = new TransactionMessage(transaction);
             TransactionCapsule trx = new TransactionCapsule(transaction);
-            logger.info("dbManager push transaction start");
+            // Update transaction timestamp to current time to avoid expiration issues
+            trx.setTime(System.currentTimeMillis());
+
+            logger.info("dbManager push transaction start id: {}", trx.getTransactionId());
             dbManager.pushTransaction(trx);
             logger.info("dbManager process transaction success");
+            // TransactionMessage message = new TransactionMessage(transaction);
 //            int peerCnt = tronNetService.fastBroadcastTransaction(message);
 //            while (peerCnt <= 0) {
 //              logger.warn("broadcast relay task has no available peers to broadcast, please wait");
@@ -84,8 +109,6 @@ public class BroadcastRelay {
           cnt++;
         }
       }
-
-      isFinishSend = true;
 
     } catch (IOException e) {
       e.printStackTrace();
