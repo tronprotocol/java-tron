@@ -25,6 +25,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.core.config.Parameter.ChainConstant;
+import org.tron.core.exception.TronError;
 
 @Slf4j(topic = "app")
 public class LocalWitnesses {
@@ -78,13 +79,14 @@ public class LocalWitnesses {
 
     if (StringUtils.isBlank(privateKey)
         || privateKey.length() != ChainConstant.PRIVATE_KEY_LENGTH) {
-      throw new IllegalArgumentException(
-          String.format("private key must be %d hex string, actual: %d",
-              ChainConstant.PRIVATE_KEY_LENGTH,
-              StringUtils.isBlank(privateKey) ? 0 : privateKey.length()));
+      throw new TronError(String.format("private key must be %d hex string, actual: %d",
+          ChainConstant.PRIVATE_KEY_LENGTH,
+          StringUtils.isBlank(privateKey) ? 0 : privateKey.length()),
+          TronError.ErrCode.WITNESS_INIT);
     }
     if (!StringUtil.isHexadecimal(privateKey)) {
-      throw new IllegalArgumentException("private key must be hex string");
+      throw new TronError("private key must be hex string",
+          TronError.ErrCode.WITNESS_INIT);
     }
   }
 

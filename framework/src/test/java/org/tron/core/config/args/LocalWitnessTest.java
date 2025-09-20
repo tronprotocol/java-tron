@@ -15,6 +15,9 @@
 
 package org.tron.core.config.args;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.common.collect.Lists;
@@ -28,6 +31,8 @@ import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
+import org.tron.core.exception.TronError;
+import org.tron.core.exception.TronError.ErrCode;
 
 public class LocalWitnessTest {
 
@@ -42,7 +47,7 @@ public class LocalWitnessTest {
     localWitness
         .setPrivateKeys(
             Lists.newArrayList(
-                    PRIVATE_KEY));
+                PRIVATE_KEY));
   }
 
   @Test
@@ -52,13 +57,13 @@ public class LocalWitnessTest {
     Assert.assertNotNull(localWitness.getPublicKey());
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = TronError.class)
   public void whenSetEmptyPrivateKey() {
     localWitness.setPrivateKeys(Lists.newArrayList(""));
     fail("private key must be 64-bits hex string");
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = TronError.class)
   public void whenSetBadFormatPrivateKey() {
     localWitness.setPrivateKeys(Lists.newArrayList("a111"));
     fail("private key must be 64-bits hex string");
@@ -104,62 +109,24 @@ public class LocalWitnessTest {
   @Test
   public void testInvalidPrivateKey() {
     LocalWitnesses localWitnesses = new LocalWitnesses();
+    String expectedMessage = "private key must be 64 hex string";
+    assertTronError(localWitnesses, null, expectedMessage);
+    assertTronError(localWitnesses, "", expectedMessage);
+    assertTronError(localWitnesses, "  ", expectedMessage);
+    assertTronError(localWitnesses, "11111", expectedMessage);
+    String expectedMessage2 = "private key must be hex string";
+    final String privateKey = "11111111111111111111111111111111111111111111111111111111111111  ";
+    assertTronError(localWitnesses, privateKey, expectedMessage2);
+    final String privateKey2 = "xy11111111111111111111111111111111111111111111111111111111111111";
+    assertTronError(localWitnesses, privateKey2, expectedMessage2);
+  }
 
-    try {
-      localWitnesses.addPrivateKeys(null);
-      fail("should throw IllegalArgumentException");
-    } catch (IllegalArgumentException e) {
-      Assert.assertTrue(e.getMessage().contains("private key must be 64 hex string"));
-    } catch (Exception e) {
-      fail("should IllegalArgumentException，actual exception: " + e.getClass().getSimpleName());
-    }
-
-    try {
-      localWitnesses.addPrivateKeys("");
-      fail("should throw IllegalArgumentException");
-    } catch (IllegalArgumentException e) {
-      Assert.assertTrue(e.getMessage().contains("private key must be 64 hex string"));
-    } catch (Exception e) {
-      fail("should IllegalArgumentException，actual exception: " + e.getClass().getSimpleName());
-    }
-
-    try {
-      localWitnesses.addPrivateKeys("  ");
-      fail("should throw IllegalArgumentException");
-    } catch (IllegalArgumentException e) {
-      Assert.assertTrue(e.getMessage().contains("private key must be 64 hex string"));
-    } catch (Exception e) {
-      fail("should IllegalArgumentException，actual exception: " + e.getClass().getSimpleName());
-    }
-
-    try {
-      localWitnesses.addPrivateKeys("11111");
-      fail("should throw IllegalArgumentException");
-    } catch (IllegalArgumentException e) {
-      Assert.assertTrue(e.getMessage().contains("private key must be 64 hex string"));
-    } catch (Exception e) {
-      fail("should IllegalArgumentException，actual exception: " + e.getClass().getSimpleName());
-    }
-
-    try {
-      String privateKey = "11111111111111111111111111111111111111111111111111111111111111  ";
-      localWitnesses.addPrivateKeys(privateKey);
-      fail("should throw IllegalArgumentException");
-    } catch (IllegalArgumentException e) {
-      Assert.assertTrue(e.getMessage().contains("private key must be hex string"));
-    } catch (Exception e) {
-      fail("should IllegalArgumentException，actual exception: " + e.getClass().getSimpleName());
-    }
-
-    try {
-      String privateKey = "xy11111111111111111111111111111111111111111111111111111111111111";
-      localWitnesses.addPrivateKeys(privateKey);
-      fail("should throw IllegalArgumentException");
-    } catch (IllegalArgumentException e) {
-      Assert.assertTrue(e.getMessage().contains("private key must be hex string"));
-    } catch (Exception e) {
-      fail("should IllegalArgumentException，actual exception: " + e.getClass().getSimpleName());
-    }
+  private void assertTronError(LocalWitnesses localWitnesses, String privateKey,
+      String expectedMessage) {
+    TronError thrown = assertThrows(TronError.class,
+        () -> localWitnesses.addPrivateKeys(privateKey));
+    assertEquals(ErrCode.WITNESS_INIT, thrown.getErrCode());
+    assertTrue(thrown.getMessage().contains(expectedMessage));
   }
 
   @Test
