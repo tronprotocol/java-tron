@@ -85,7 +85,9 @@ public class LogMatch {
     for (long blockNum : blockNumList) {
       List<TransactionInfo> transactionInfoList =
               manager.getTransactionInfoByBlockNum(blockNum).getTransactionInfoList();
-
+      if (transactionInfoList.isEmpty()) {
+        continue;
+      }
       String blockHash = manager.getChainBaseManager().getBlockIdByNum(blockNum).toString();
       List<LogFilterElement> matchedLog = matchBlock(logFilterWrapper.getLogFilter(), blockNum,
           blockHash, transactionInfoList, false);
