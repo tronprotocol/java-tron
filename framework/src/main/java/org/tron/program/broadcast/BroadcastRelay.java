@@ -92,15 +92,15 @@ public class BroadcastRelay {
             dbManager.pushTransaction(trx);
             logger.info("dbManager process transaction success");
             // TransactionMessage message = new TransactionMessage(transaction);
-//            int peerCnt = tronNetService.fastBroadcastTransaction(message);
-//            while (peerCnt <= 0) {
-//              logger.warn("broadcast relay task has no available peers to broadcast, please wait");
-//              Thread.sleep(100);
-//              peerCnt = tronNetService.fastBroadcastTransaction(message);
-//            }
-//            if (trxCount % 1000 == 0) {
-//              logger.info("total broadcast tx num: {}", trxCount);
-//            }
+            //            int peerCnt = tronNetService.fastBroadcastTransaction(message);
+            //            while (peerCnt <= 0) {
+            //              logger.warn("broadcast relay task has no available peers to broadcast, please wait");
+            //              Thread.sleep(100);
+            //              peerCnt = tronNetService.fastBroadcastTransaction(message);
+            //            }
+            //            if (trxCount % 1000 == 0) {
+            //              logger.info("total broadcast tx num: {}", trxCount);
+            //            }
           } catch (Exception e) {
             logger.info("dbManager process transaction failed");
             e.printStackTrace();
