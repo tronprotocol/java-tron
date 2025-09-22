@@ -50,7 +50,7 @@ public class BroadcastRelay {
   public void broadcastTransactions() {
     long trxCount = 0;
     long skipCount = 0;
-    long startTime = System.currentTimeMillis();
+    long failedCount = 0;
     logger.info("Start to process relay transaction broadcast task");
     try (FileInputStream fis = new FileInputStream(output + File.separator + "relay-tx.csv")) {
       Transaction transaction;
@@ -92,6 +92,7 @@ public class BroadcastRelay {
           //            }
         } catch (Exception e) {
           logger.info("dbManager process transaction failed");
+          failedCount ++;
           e.printStackTrace();
         }
 
@@ -103,9 +104,7 @@ public class BroadcastRelay {
       throw new RuntimeException(e);
     }
 
-    long cost = System.currentTimeMillis() - startTime;
-    logger.info("relay trx size: {}, skip trx size:{}, cost: {}, tps: {}", trxCount, skipCount,
-        cost,
-        1.0 * trxCount / cost * 1000);
+    logger.info("relay trx size: {}, skip trx size:{}", trxCount, skipCount);
+    logger.info("relay trx failed size: {}", failedCount);
   }
 }
