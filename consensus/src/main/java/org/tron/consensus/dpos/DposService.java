@@ -152,7 +152,7 @@ public class DposService implements ConsensusInterface {
   public boolean applyBlock(BlockCapsule blockCapsule) {
     statisticManager.applyBlock(blockCapsule);
     maintenanceManager.applyBlock(blockCapsule);
-    updateSolidBlock();
+   // updateSolidBlock();
     return true;
   }
 
