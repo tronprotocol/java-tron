@@ -60,6 +60,11 @@ public class DbExpand implements Callable<Integer> {
       description = " expend rate")
   private int expendRate;
 
+  @CommandLine.Option(names = {"--only-compact"},
+      defaultValue = "false",
+      description = "scan db to compact database/target-db")
+  private boolean onlyCompact;
+
   @CommandLine.Option(names = {"-h", "--help"}, help = true, description = "display a help message")
   boolean help;
 
@@ -75,6 +80,14 @@ public class DbExpand implements Callable<Integer> {
       spec.commandLine().usage(System.out);
       return 0;
     }
+    if (onlyCompact) {
+      long start = System.currentTimeMillis();
+      scanForCompact();
+      long cost = System.currentTimeMillis() - start;
+      spec.commandLine().getOut().println(String.format("compact %s done,cost:%s seconds", targetDb,
+          cost / 1000));
+      return 0;
+    }
     long start = System.currentTimeMillis();
     this.run();
     long cost = System.currentTimeMillis() - start;
@@ -82,6 +95,51 @@ public class DbExpand implements Callable<Integer> {
         cost / 1000));
     return 0;
   }
+
+  private void scanForCompact() throws IOException {
+    DB db = DBUtils.newLevelDb(Paths.get(database.toString(), targetDb));
+    long Allstart = System.currentTimeMillis();
+    byte[] lastKey = null;
+    int count = 0;
+    boolean hasComplete = false;
+    boolean breakForTime =false;
+    while (!hasComplete) {
+      long start = System.currentTimeMillis();
+      DBIterator iterator = db.iterator(
+          new org.iq80.leveldb.ReadOptions().fillCache(false));
+      if (lastKey == null) {
+        iterator.seekToFirst();
+      } else {
+        iterator.seek(lastKey);
+        if (iterator.hasNext()) {
+          iterator.next();
+        }
+      }
+      while (iterator.hasNext()) {
+        Map.Entry<byte[], byte[]> entry = iterator.next();
+        lastKey = entry.getKey();
+        count++;
+        if (count % 1000000 == 0) {
+          logger.info("scan for compact {} key, cost {} ms", count,
+              System.currentTimeMillis() - Allstart);
+        }
+        if (count % 10000 == 0 && System.currentTimeMillis() - start >= 1000 * 3600) {
+          breakForTime = true;
+          iterator.close();
+          logger.info("scan for compact {} key, cost {} ms", count,
+              System.currentTimeMillis() - Allstart);
+          break;
+        }
+      }
+      if (!breakForTime) {
+        iterator.close();
+        hasComplete = true;
+      }
+    }
+    db.close();
+  }
+
+
 
   private void run() throws Exception {
     final Path sourcePath = Paths.get(database.toString(), targetDb);
@@ -262,7 +320,7 @@ public class DbExpand implements Callable<Integer> {
       List<byte[]> keys = new ArrayList<>(dbBatch);
       List<byte[]> values = new ArrayList<>(dbBatch);
       int insertCount = expendRate - 1;
-      int processedKeys=0;
+      long  processedKeys=0;
       try (DBIterator levelIterator = source.iterator(
           new org.iq80.leveldb.ReadOptions().fillCache(false))) {
         levelIterator.seekToFirst();
