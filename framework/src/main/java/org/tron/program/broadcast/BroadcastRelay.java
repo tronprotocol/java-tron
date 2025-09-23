@@ -5,7 +5,6 @@ import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERV
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
@@ -78,9 +77,10 @@ public class BroadcastRelay {
           logger.info("dbManager push transaction start id: {}", trx.getTransactionId());
           dbManager.pushTransaction(trx);
           logger.info("dbManager process transaction success");
+
           TransactionMessage message = new TransactionMessage(transaction);
           int peerCnt = tronNetService.fastBroadcastTransaction(message);
-          while (peerCnt <= 0) {
+          while (peerCnt <= 0 || dbManager.isTooManyPending()) { // 跟随wallet广播逻辑，如果pending太多也要等待
             logger.warn("broadcast relay task has no available peers to broadcast, please wait");
             Thread.sleep(100);
             peerCnt = tronNetService.fastBroadcastTransaction(message);
