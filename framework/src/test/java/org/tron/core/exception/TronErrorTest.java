@@ -24,6 +24,7 @@ import org.junit.runner.RunWith;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.tron.common.arch.Arch;
 import org.tron.common.log.LogService;
 import org.tron.common.parameter.RateLimiterInitialization;
 import org.tron.common.utils.ReflectUtils;
@@ -41,7 +42,7 @@ public class TronErrorTest {
   public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @After
-  public void  clearMocks() {
+  public void clearMocks() {
     Mockito.clearAllCaches();
     Args.clearParam();
   }
@@ -115,7 +116,7 @@ public class TronErrorTest {
 
   @Test
   public void shutdownBlockTimeInitTest() {
-    Map<String,String> params = new HashMap<>();
+    Map<String, String> params = new HashMap<>();
     params.put(Constant.NODE_SHUTDOWN_BLOCK_TIME, "0");
     params.put("storage.db.directory", "database");
     Config config = ConfigFactory.defaultOverrides().withFallback(
@@ -123,4 +124,30 @@ public class TronErrorTest {
     TronError thrown = assertThrows(TronError.class, () -> Args.setParam(config));
     assertEquals(TronError.ErrCode.AUTO_STOP_PARAMS, thrown.getErrCode());
   }
+
+  @Test
+  public void testThrowIfUnsupportedJavaVersion() {
+    runArchTest(true, false, true);
+    runArchTest(true, true, false);
+    runArchTest(false, false, false);
+  }
+
+  private void runArchTest(boolean isX86, boolean isJava8, boolean expectThrow) {
+    try (MockedStatic<Arch> mocked = mockStatic(Arch.class)) {
+      mocked.when(Arch::isX86).thenReturn(isX86);
+      mocked.when(Arch::isJava8).thenReturn(isJava8);
+      mocked.when(Arch::getOsArch).thenReturn("x86_64");
+      mocked.when(Arch::javaSpecificationVersion).thenReturn("17");
+      mocked.when(Arch::withAll).thenReturn("");
+      mocked.when(Arch::throwIfUnsupportedJavaVersion).thenCallRealMethod();
+
+      if (expectThrow) {
+        assertEquals(TronError.ErrCode.JDK_VERSION, assertThrows(
+            TronError.class, () -> Args.setParam(new String[]{}, Constant.TEST_CONF)).getErrCode());
+      } else {
+        Arch.throwIfUnsupportedJavaVersion();
+      }
+    }
+  }
+
 }

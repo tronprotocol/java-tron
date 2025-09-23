@@ -1,6 +1,7 @@
 package org.tron.core.config.args;
 
 import static java.lang.System.exit;
+import static org.fusesource.jansi.Ansi.ansi;
 import static org.tron.common.math.Maths.max;
 import static org.tron.common.math.Maths.min;
 import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
@@ -45,6 +46,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.fusesource.jansi.AnsiConsole;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.arch.Arch;
@@ -374,7 +376,17 @@ public class Args extends CommonParameter {
    * set parameters.
    */
   public static void setParam(final String[] args, final String confFileName) {
-    Arch.throwIfUnsupportedJavaVersion();
+    try {
+      Arch.throwIfUnsupportedJavaVersion();
+    } catch (UnsupportedOperationException e) {
+      AnsiConsole.systemInstall();
+      // To avoid confusion caused by silent execution when using -h or -v flags,
+      // errors are explicitly logged to the console in this context.
+      // Console output is not required for errors in other scenarios.
+      System.out.println(ansi().fgRed().a(e.getMessage()).reset());
+      AnsiConsole.systemUninstall();
+      throw new TronError(e, TronError.ErrCode.JDK_VERSION);
+    }
     clearParam(); // reset all parameters to avoid the influence in test
     JCommander.newBuilder().addObject(PARAMETER).build().parse(args);
     if (PARAMETER.version) {

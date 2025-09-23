@@ -73,8 +73,8 @@ public final class Arch {
     if (isX86() && !isJava8()) {
       logger.info(withAll());
       throw new UnsupportedOperationException(String.format(
-          "Java %s is required for %s architecture. Detected version %s",
-          "1.8 ", getOsArch(), javaSpecificationVersion()));
+          "Java %s is required for %s architecture. Detected version %s", "1.8",
+          getOsArch(), javaSpecificationVersion()));
     }
   }
 
