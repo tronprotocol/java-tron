@@ -85,6 +85,8 @@ public class LogMatch {
     for (long blockNum : blockNumList) {
       List<TransactionInfo> transactionInfoList =
               manager.getTransactionInfoByBlockNum(blockNum).getTransactionInfoList();
+      //if query condition (address and topics) is empty, we will traversal every block,
+      //include empty block
       if (transactionInfoList.isEmpty()) {
         continue;
       }
