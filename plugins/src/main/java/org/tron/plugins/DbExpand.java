@@ -86,6 +86,7 @@ public class DbExpand implements Callable<Integer> {
       long cost = System.currentTimeMillis() - start;
       spec.commandLine().getOut().println(String.format("compact %s done,cost:%s seconds", targetDb,
           cost / 1000));
+      logger.info("compact {} done,cost:{} seconds", targetDb, cost / 1000);
       return 0;
     }
     long start = System.currentTimeMillis();
@@ -100,9 +101,9 @@ public class DbExpand implements Callable<Integer> {
     DB db = DBUtils.newLevelDb(Paths.get(database.toString(), targetDb));
     long Allstart = System.currentTimeMillis();
     byte[] lastKey = null;
-    int count = 0;
+    long count = 0;
+
     boolean hasComplete = false;
-    boolean breakForTime =false;
     while (!hasComplete) {
       long start = System.currentTimeMillis();
       DBIterator iterator = db.iterator(
@@ -115,19 +116,21 @@ public class DbExpand implements Callable<Integer> {
           iterator.next();
         }
       }
+
+      boolean breakForTime =false;
       while (iterator.hasNext()) {
-        Map.Entry<byte[], byte[]> entry = iterator.next();
-        lastKey = entry.getKey();
+        iterator.next();
         count++;
         if (count % 1000000 == 0) {
-          logger.info("scan for compact {} key, cost {} ms", count,
-              System.currentTimeMillis() - Allstart);
+          logger.info("scan for compact {} key, cost {} s", count,
+              (System.currentTimeMillis() - Allstart) / 1000);
         }
-        if (count % 10000 == 0 && System.currentTimeMillis() - start >= 1000 * 3600) {
+        if (count % 1000000 == 0 && System.currentTimeMillis() - start >= 1000 * 3600) {
+          lastKey = iterator.peekPrev().getKey();
           breakForTime = true;
           iterator.close();
-          logger.info("scan for compact {} key, cost {} ms", count,
-              System.currentTimeMillis() - Allstart);
+          logger.info("scan for compact {} key, cost {} s", count,
+              (System.currentTimeMillis() - Allstart) / 1000);
           break;
         }
       }
@@ -135,6 +138,7 @@ public class DbExpand implements Callable<Integer> {
         iterator.close();
         hasComplete = true;
       }
+
     }
     db.close();
   }
