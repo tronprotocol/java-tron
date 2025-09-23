@@ -49,6 +49,9 @@ public class HistoryEventService {
         thread.interrupt();
         thread.join(1000);
       } catch (Exception e) {
+        if (e instanceof InterruptedException){
+          Thread.currentThread().interrupt();
+        }
         logger.warn("Wait close timeout, {}", e.getMessage());
       }
     }
