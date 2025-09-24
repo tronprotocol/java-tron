@@ -1,5 +1,5 @@
 -XX:+UseZGC
--Xlog:gc*:file=gc.log:time,uptime,level,tags:filecount=50,filesize=100M
+-Xlog:gc,gc+heap:file=gc.log:time,tags,level:filecount=10,filesize=100M
 -XX:ReservedCodeCacheSize=256m
 -XX:+UseCodeCacheFlushing
 -XX:MetaspaceSize=256m
