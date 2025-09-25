@@ -22,11 +22,13 @@ import static org.junit.Assert.fail;
 
 import com.google.common.collect.Lists;
 import java.io.IOException;
+import java.security.SecureRandom;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.StringUtil;
@@ -115,9 +117,12 @@ public class LocalWitnessTest {
     assertTronError(localWitnesses, "  ", expectedMessage);
     assertTronError(localWitnesses, "11111", expectedMessage);
     String expectedMessage2 = "private key must be hex string";
-    final String privateKey = "11111111111111111111111111111111111111111111111111111111111111  ";
+    SecureRandom secureRandom = new SecureRandom();
+    byte[] keyBytes = new byte[31];
+    secureRandom.nextBytes(keyBytes);
+    final String privateKey = ByteArray.toHexString(keyBytes) + "  ";
     assertTronError(localWitnesses, privateKey, expectedMessage2);
-    final String privateKey2 = "xy11111111111111111111111111111111111111111111111111111111111111";
+    final String privateKey2 = "xy" + ByteArray.toHexString(keyBytes);
     assertTronError(localWitnesses, privateKey2, expectedMessage2);
   }
 
