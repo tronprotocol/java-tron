@@ -56,15 +56,12 @@ public class BroadcastRelay {
         // check for a special case of zero signatures, it means the block end, wait a
         // while
         if (transaction.getSignatureCount() == 0) {
-          long time = BLOCK_PRODUCED_INTERVAL - System.currentTimeMillis() % BLOCK_PRODUCED_INTERVAL;
-          Thread.sleep(time + 50); // add a little more time to ensure block production given higher priority
-          logger.info("weak up from block end, wait: {} ms", time + 50);
+          logger.warn("trx count: {}, skipCount {}, failedCount {} ", trxCount, skipCount, failedCount);
+          Thread.sleep(BLOCK_PRODUCED_INTERVAL); // keep the TPS similar to mainnet
           continue; // skip this fake transaction
         }
 
         TransactionCapsule trx = new TransactionCapsule(transaction);
-        // Update transaction timestamp to current time to avoid expiration issues
-        trx.setTime(System.currentTimeMillis());
         // Skip VoteWitnessContract and WitnessUpdateContract transactions
         if (needSkip(trx)) {
           skipCount++;
@@ -74,13 +71,20 @@ public class BroadcastRelay {
         trxCount++;
 
         try {
+          // 跟随wallet广播逻辑，如果pending太多也要等待
+          while (dbManager.isTooManyPending()) {
+            logger.warn("too many pending transactions, please wait");
+            Thread.sleep(200);
+          }
           logger.info("dbManager push transaction start id: {}", trx.getTransactionId());
+          // Update transaction timestamp to current time to avoid PendingManager remove
+          trx.setTime(System.currentTimeMillis());
           dbManager.pushTransaction(trx);
           logger.info("dbManager process transaction success");
 
           TransactionMessage message = new TransactionMessage(transaction);
           int peerCnt = tronNetService.fastBroadcastTransaction(message);
-          while (peerCnt <= 0 || dbManager.isTooManyPending()) { // 跟随wallet广播逻辑，如果pending太多也要等待
+          while (peerCnt <= 0 ) { 
             logger.warn("broadcast relay task has no available peers to broadcast, please wait");
             Thread.sleep(100);
             peerCnt = tronNetService.fastBroadcastTransaction(message);
