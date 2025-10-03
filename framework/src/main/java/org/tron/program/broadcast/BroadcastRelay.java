@@ -5,6 +5,9 @@ import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERV
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
@@ -48,20 +51,26 @@ public class BroadcastRelay {
     long trxCount = 0;
     long skipCount = 0;
     long failedCount = 0;
+    long startTime = System.currentTimeMillis();
+    long batchStartTime = startTime;
+    long batchCount = 0;
+    final int QPS_LIMIT = 100;
+    final long BATCH_INTERVAL_MS = 1000; // 1 second
+    
+    // Create a thread pool to manage async tasks
+    // Thread pool size set to twice the QPS limit to handle concurrent tasks
+    ExecutorService executorService = Executors.newFixedThreadPool(QPS_LIMIT * 2);
+    
     logger.info("Start to process relay transaction broadcast task");
     try (FileInputStream fis = new FileInputStream(output + File.separator + "relay-tx.csv")) {
       Transaction transaction;
 
       while ((transaction = Transaction.parseDelimitedFrom(fis)) != null) {
-        // check for a special case of zero signatures, it means the block end, wait a
-        // while
-        if (transaction.getSignatureCount() == 0) {
-          logger.warn("trx count: {}, skipCount {}, failedCount {} ", trxCount, skipCount, failedCount);
-          Thread.sleep(BLOCK_PRODUCED_INTERVAL); // keep the TPS similar to mainnet
-          continue; // skip this fake transaction
-        }
 
         TransactionCapsule trx = new TransactionCapsule(transaction);
+        if (trx.getContractCount() == 0) {
+          continue;
+        }
         // Skip VoteWitnessContract and WitnessUpdateContract transactions
         if (needSkip(trx)) {
           skipCount++;
@@ -76,19 +85,45 @@ public class BroadcastRelay {
             logger.warn("too many pending transactions, please wait");
             Thread.sleep(200);
           }
-          logger.info("dbManager push transaction start id: {}", trx.getTransactionId());
+            
+          // Save transaction reference for lambda expression
+          final Transaction finalTransaction = transaction;
+          final TransactionCapsule finalTrx = trx;
           // Update transaction timestamp to current time to avoid PendingManager remove
-          trx.setTime(System.currentTimeMillis());
-          dbManager.pushTransaction(trx);
-          logger.info("dbManager process transaction success");
+          finalTrx.setTime(System.currentTimeMillis());
+          // Submit task to thread pool
+          executorService.submit(() -> {
+            try {
+              logger.info("dbManager push transaction start id: {}", finalTrx.getTransactionId());
+             
+              dbManager.pushTransaction(finalTrx);
+              logger.info("dbManager process transaction success id: {}", finalTrx.getTransactionId());
+            } catch (Exception e) {
+              logger.error("dbManager process transaction failed id: {}", finalTrx.getTransactionId(), e);
+            }
+          });
 
-          TransactionMessage message = new TransactionMessage(transaction);
+          TransactionMessage message = new TransactionMessage(finalTransaction);
           int peerCnt = tronNetService.fastBroadcastTransaction(message);
           while (peerCnt <= 0 ) { 
-            logger.warn("broadcast relay task has no available peers to broadcast, please wait");
-            Thread.sleep(100);
-            peerCnt = tronNetService.fastBroadcastTransaction(message);
+              logger.warn("broadcast relay task has no available peers to broadcast, please wait");
+              Thread.sleep(100);
+              peerCnt = tronNetService.fastBroadcastTransaction(message);
           }
+
+          // QPS control logic
+          batchCount++;
+          if (batchCount >= QPS_LIMIT) {
+            long elapsedTime = System.currentTimeMillis() - batchStartTime;
+            if (elapsedTime < BATCH_INTERVAL_MS) {
+              long waitTime = BATCH_INTERVAL_MS - elapsedTime;
+              logger.info("Reached QPS limit of {}. Waiting for {}ms", QPS_LIMIT, waitTime);
+              Thread.sleep(waitTime);
+            }
+            batchCount = 0;
+            batchStartTime = System.currentTimeMillis();
+          }
+          
           if (trxCount % 1000 == 0) {
             logger.info("total broadcast tx num: {}", trxCount);
           }
@@ -102,8 +137,21 @@ public class BroadcastRelay {
 
     } catch (IOException e) {
       e.printStackTrace();
+    } 
+    
+    // Wait for all async tasks to complete before exiting
+    try {
+      logger.info("Waiting for all async tasks to complete...");
+      executorService.shutdown();
+      // Wait for up to 5 minutes for all tasks to complete
+      if (!executorService.awaitTermination(5, TimeUnit.MINUTES)) {
+        logger.warn("Some tasks may not have completed within the timeout period");
+        executorService.shutdownNow();
+      }
     } catch (InterruptedException e) {
-      throw new RuntimeException(e);
+      logger.error("Thread interrupted while waiting for tasks to complete", e);
+      executorService.shutdownNow();
+      Thread.currentThread().interrupt();
     }
 
     logger.info("relay trx size: {}, skip trx size:{}", trxCount, skipCount);
