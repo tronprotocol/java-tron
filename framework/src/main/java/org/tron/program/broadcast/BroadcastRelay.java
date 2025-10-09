@@ -1,13 +1,12 @@
 package org.tron.program.broadcast;
 
-import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
@@ -50,7 +49,7 @@ public class BroadcastRelay {
   public void broadcastTransactions() {
     long trxCount = 0;
     long skipCount = 0;
-    long failedCount = 0;
+    AtomicLong failedCount = new AtomicLong();
     long startTime = System.currentTimeMillis();
     long batchStartTime = startTime;
     long batchCount = 0;
@@ -99,6 +98,7 @@ public class BroadcastRelay {
               dbManager.pushTransaction(finalTrx);
               logger.info("dbManager process transaction success id: {}", finalTrx.getTransactionId());
             } catch (Exception e) {
+              failedCount.getAndIncrement();
               logger.error("dbManager process transaction failed id: {}", finalTrx.getTransactionId(), e);
             }
           });
@@ -129,7 +129,6 @@ public class BroadcastRelay {
           }
         } catch (Exception e) {
           logger.info("dbManager process transaction failed");
-          failedCount++;
           e.printStackTrace();
         }
 
