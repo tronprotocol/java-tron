@@ -28,7 +28,7 @@ public class CallArgumentsTest extends BaseTest {
   public void init() {
     callArguments = new CallArguments("0x0000000000000000000000000000000000000000",
             "0x0000000000000000000000000000000000000001","0x10","0.01","0x100",
-        "","0");
+        "","0","");
   }
 
   @Test
