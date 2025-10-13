@@ -29,6 +29,8 @@ public class HistoryEventService {
   @Autowired
   private Manager manager;
 
+  private volatile boolean isClosed = false;
+
   private volatile Thread thread;
 
   public void init() {
@@ -44,6 +46,7 @@ public class HistoryEventService {
   }
 
   public void close() {
+    isClosed = true;
     if (thread != null) {
       try {
         thread.interrupt();
@@ -61,7 +64,7 @@ public class HistoryEventService {
       long tmp = instance.getStartSyncBlockNum();
       long endNum = manager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
       while (tmp < endNum) {
-        if (thread.isInterrupted()) {
+        if (thread.isInterrupted() || isClosed) {
           throw new InterruptedException();
         }
         if (instance.isUseNativeQueue()) {
