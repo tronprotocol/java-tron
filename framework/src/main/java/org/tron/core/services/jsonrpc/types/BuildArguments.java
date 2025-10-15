@@ -44,9 +44,6 @@ public class BuildArguments {
   private String data;
   @Getter
   @Setter
-  private String input;
-  @Getter
-  @Setter
   private String nonce = ""; //not used
 
   @Getter
@@ -78,6 +75,10 @@ public class BuildArguments {
   @Getter
   @Setter
   private boolean visible = false;
+
+  @Getter
+  @Setter
+  private String input;
 
   public BuildArguments(CallArguments args) {
     from = args.getFrom();

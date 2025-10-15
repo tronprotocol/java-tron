@@ -43,10 +43,10 @@ public class CallArguments {
   private String data;
   @Getter
   @Setter
-  private String input; //Add input parameter to align with Ethereum https://github.com/ethereum/go-ethereum/pull/28078
+  private String nonce; // not used
   @Getter
   @Setter
-  private String nonce; // not used
+  private String input; //Add input parameter to align with Ethereum https://github.com/ethereum/go-ethereum/pull/28078
 
   /**
    * just support TransferContract, CreateSmartContract and TriggerSmartContract
