@@ -23,6 +23,7 @@ import static org.junit.Assert.fail;
 import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.security.SecureRandom;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -50,6 +51,11 @@ public class LocalWitnessTest {
         .setPrivateKeys(
             Lists.newArrayList(
                 PRIVATE_KEY));
+  }
+
+  @AfterClass
+  public static void clear() {
+    Args.clearParam();
   }
 
   @Test

@@ -388,7 +388,6 @@ public class Args extends CommonParameter {
       AnsiConsole.systemUninstall();
       throw new TronError(e, TronError.ErrCode.JDK_VERSION);
     }
-    clearParam(); // reset all parameters to avoid the influence in test
     JCommander.newBuilder().addObject(PARAMETER).build().parse(args);
     if (PARAMETER.version) {
       printVersion();
