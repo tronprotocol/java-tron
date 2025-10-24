@@ -11,9 +11,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -63,25 +64,32 @@ public class BlockEventGetTest extends BlockGenerate {
   protected Manager dbManager;
   long currentHeader = -1;
   private TronNetDelegate tronNetDelegate;
-  private TronApplicationContext context;
+  private static TronApplicationContext context;
 
 
   static LocalDateTime localDateTime = LocalDateTime.now();
   private long time = ZonedDateTime.of(localDateTime,
       ZoneId.systemDefault()).toInstant().toEpochMilli();
 
-  protected void initDbPath() throws IOException {
-    dbPath = temporaryFolder.newFolder().toString();
+
+  public static String dbPath() {
+    try {
+      return temporaryFolder.newFolder().toString();
+    } catch (IOException e) {
+      Assert.fail("create temp folder failed");
+    }
+    return null;
+  }
+
+  @BeforeClass
+  public static void init() {
+    Args.setParam(new String[] {"--output-directory", dbPath()}, Constant.TEST_CONF);
+    context = new TronApplicationContext(DefaultConfig.class);
   }
 
   @Before
   public void before() throws IOException {
-    initDbPath();
-    logger.info("Full node running.");
-    Args.setParam(new String[] {"-d", dbPath}, Constant.TEST_CONF);
     Args.getInstance().setNodeListenPort(10000 + port.incrementAndGet());
-
-    context = new TronApplicationContext(DefaultConfig.class);
 
     dbManager = context.getBean(Manager.class);
     setManager(dbManager);
@@ -91,7 +99,7 @@ public class BlockEventGetTest extends BlockGenerate {
     tronNetDelegate = context.getBean(TronNetDelegate.class);
     tronNetDelegate.setExit(false);
     currentHeader = dbManager.getDynamicPropertiesStore()
-      .getLatestBlockHeaderNumberFromDB();
+        .getLatestBlockHeaderNumberFromDB();
 
     ByteString addressBS = ByteString.copyFrom(address);
     WitnessCapsule witnessCapsule = new WitnessCapsule(addressBS);
@@ -108,8 +116,10 @@ public class BlockEventGetTest extends BlockGenerate {
     dps.saveAllowTvmShangHai(1);
   }
 
-  @After
-  public void after() throws IOException {
+  @AfterClass
+  public static void after() throws IOException {
+    context.destroy();
+    Args.clearParam();
   }
 
   @Test
@@ -132,13 +142,13 @@ public class BlockEventGetTest extends BlockGenerate {
         + "57c973388f044038eff0e6474425b38037e75e66d6b3047647290605449c7764736f6c63430008140033";
     Protocol.Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         "TestTRC20", address, "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\""
-        + ":\"from\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"to\",\"type\":\"address\"}"
-        +   ",{\"indexed\":false,\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Transfer\","
-        +  "\"type\":\"event\"}]", code, 0, (long) 1e9, 100, null, 1);
+            + ":\"from\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"to\",\"type\""
+            + ":\"address\"},{\"indexed\":false,\"name\":\"value\",\"type\":\"uint256\"}],\"name\""
+            + ":\"Transfer\",\"type\":\"event\"}]", code, 0, (long) 1e9, 100, null, 1);
     trx = trx.toBuilder().addRet(
-      Protocol.Transaction.Result.newBuilder()
-          .setContractRetValue(Protocol.Transaction.Result.contractResult.SUCCESS_VALUE)
-          .build()).build();
+        Protocol.Transaction.Result.newBuilder()
+            .setContractRetValue(Protocol.Transaction.Result.contractResult.SUCCESS_VALUE)
+            .build()).build();
 
     Protocol.Block block = getSignedBlock(witnessCapsule.getAddress(), time, privateKey);
     BlockCapsule blockCapsule = new BlockCapsule(block.toBuilder().addTransactions(trx).build());

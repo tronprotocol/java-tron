@@ -30,6 +30,7 @@ import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.MARKET_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
+import static org.tron.core.config.Parameter.DatabaseConstants.WITNESS_COUNT_LIMIT_MAX;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseEnergyFee;
 import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.EARLIEST_STR;
 import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.FINALIZED_STR;
@@ -44,6 +45,7 @@ import com.google.common.collect.ContiguousSet;
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Range;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -59,6 +61,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -161,6 +164,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
+import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.config.args.Args;
@@ -177,7 +181,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.exception.JsonRpcInvalidParamsException;
+import org.tron.core.exception.MaintenanceUnavailableException;
 import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.SignatureFormatException;
@@ -188,6 +192,7 @@ import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.adv.TransactionMessage;
@@ -201,6 +206,8 @@ import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.StoreFactory;
+import org.tron.core.store.VotesStore;
+import org.tron.core.store.WitnessStore;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.vm.program.Program;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder;
@@ -762,6 +769,107 @@ public class Wallet {
     witnessCapsuleList
         .forEach(witnessCapsule -> builder.addWitnesses(witnessCapsule.getInstance()));
     return builder.build();
+  }
+
+  public WitnessList getPaginatedNowWitnessList(long offset, long limit) throws
+      MaintenanceUnavailableException {
+    if (limit <= 0 || offset < 0) {
+      return null;
+    }
+    if (limit > WITNESS_COUNT_LIMIT_MAX) {
+      limit = WITNESS_COUNT_LIMIT_MAX;
+    }
+    
+    /*
+      In the maintenance period, the VoteStores will be cleared.
+      To avoid the race condition of VoteStores deleted but Witness vote counts not updated,
+      return retry error.
+    */
+    if (chainBaseManager.getDynamicPropertiesStore().getStateFlag() == 1) {
+      String message =
+          "Service temporarily unavailable during maintenance period. Please try again later.";
+      throw new MaintenanceUnavailableException(message);
+    }
+    // It contains the final vote count at the end of the last epoch.
+    List<WitnessCapsule> witnessCapsuleList = chainBaseManager.getWitnessStore().getAllWitnesses();
+    if (offset >= witnessCapsuleList.size()) {
+      return null;
+    }
+
+    VotesStore votesStore = chainBaseManager.getVotesStore();
+    // Count the vote changes for each witness in the current epoch, it is maybe negative.
+    Map<ByteString, Long> countWitness = countVote(votesStore);
+
+    // Iterate through the witness list to apply vote changes and calculate the real-time vote count
+    witnessCapsuleList.forEach(witnessCapsule -> {
+      long voteCount = countWitness.getOrDefault(witnessCapsule.getAddress(), 0L);
+      witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
+    });
+
+    // Use the same sorting logic as in the Maintenance period
+    WitnessStore.sortWitnesses(witnessCapsuleList,
+        chainBaseManager.getDynamicPropertiesStore().allowWitnessSortOptimization());
+
+    List<WitnessCapsule> sortedWitnessList = witnessCapsuleList.stream()
+        .skip(offset)
+        .limit(limit)
+        .collect(Collectors.toList());
+
+    WitnessList.Builder builder = WitnessList.newBuilder();
+    sortedWitnessList.forEach(witnessCapsule ->
+        builder.addWitnesses(witnessCapsule.getInstance()));
+
+    return builder.build();
+  }
+
+  /**
+   * Counts vote changes for witnesses in the current epoch.
+   *
+   * Vote count changes are tracked as follows:
+   * - Negative values for votes removed from previous witness in the last epoch
+   * - Positive values for votes added to new witness in the current epoch
+   *
+   * Example:
+   * an Account X had 100 votes for witness W1 in the previous epoch.
+   * In the current epoch, X changes votes to:
+   * - W2: 60 votes
+   * - W3: 80 votes
+   *
+   * Resulting vote changes:
+   * - W1: -100 (votes removed)
+   * - W2: +60 (new votes)
+   * - W3: +80 (new votes)
+   */
+  private Map<ByteString, Long> countVote(VotesStore votesStore) {
+    // Initialize a result map to store vote changes for each witness
+    Map<ByteString, Long> countWitness = Maps.newHashMap();
+
+    // VotesStore is a key-value store, where the key is the address of the voter
+    Iterator<Entry<byte[], VotesCapsule>> dbIterator = votesStore.iterator();
+
+    while (dbIterator.hasNext()) {
+      Entry<byte[], VotesCapsule> next = dbIterator.next();
+      VotesCapsule votes = next.getValue();
+
+      /**
+       * VotesCapsule contains two lists:
+       * - Old votes: Last votes from the previous epoch, updated in maintenance period
+       * - New votes: Latest votes in current epoch, updated after each vote transaction
+       */
+      votes.getOldVotes().forEach(vote -> {
+        ByteString voteAddress = vote.getVoteAddress();
+        long voteCount = vote.getVoteCount();
+        countWitness.put(voteAddress,
+            countWitness.getOrDefault(voteAddress, 0L) - voteCount);
+      });
+      votes.getNewVotes().forEach(vote -> {
+        ByteString voteAddress = vote.getVoteAddress();
+        long voteCount = vote.getVoteCount();
+        countWitness.put(voteAddress,
+            countWitness.getOrDefault(voteAddress, 0L) + voteCount);
+      });
+    }
+    return countWitness;
   }
 
   public ProposalList getProposalList() {
@@ -1387,6 +1495,16 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmBlob())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowTvmSelfdestructRestriction")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmSelfdestructRestriction())
+        .build());                      
+    
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getProposalExpireTime")
+        .setValue(dbManager.getDynamicPropertiesStore().getProposalExpireTime())
+        .build());
+
     return builder.build();
   }
 
@@ -1806,12 +1924,8 @@ public class Wallet {
     return null;
   }
 
-  private boolean getFullNodeAllowShieldedTransaction() {
-    return Args.getInstance().isFullNodeAllowShieldedTransactionArgs();
-  }
-
-  private void checkFullNodeAllowShieldedTransaction() throws ZksnarkException {
-    if (!getFullNodeAllowShieldedTransaction()) {
+  private void checkAllowShieldedTransactionApi() throws ZksnarkException {
+    if (!Args.getInstance().isAllowShieldedTransactionApi()) {
       throw new ZksnarkException(SHIELDED_ID_NOT_ALLOWED);
     }
   }
@@ -1830,10 +1944,7 @@ public class Wallet {
   }
 
   private long getBlockNumber(OutputPoint outPoint)
-      throws BadItemException, ZksnarkException {
-    if (!getFullNodeAllowShieldedTransaction()) {
-      throw new ZksnarkException(SHIELDED_ID_NOT_ALLOWED);
-    }
+      throws BadItemException {
     ByteString txId = outPoint.getHash();
 
     long blockNum = chainBaseManager.getTransactionStore().getBlockNumber(txId.toByteArray());
@@ -1848,9 +1959,6 @@ public class Wallet {
   private IncrementalMerkleVoucherContainer createWitness(OutputPoint outPoint, Long blockNumber)
       throws ItemNotFoundException, BadItemException,
       InvalidProtocolBufferException, ZksnarkException {
-    if (!getFullNodeAllowShieldedTransaction()) {
-      throw new ZksnarkException(SHIELDED_ID_NOT_ALLOWED);
-    }
     ByteString txId = outPoint.getHash();
 
     //Get the tree in blockNum-1 position
@@ -1946,9 +2054,6 @@ public class Wallet {
   private void updateWitnesses(List<IncrementalMerkleVoucherContainer> witnessList, long large,
       int synBlockNum) throws ItemNotFoundException, BadItemException,
       InvalidProtocolBufferException, ZksnarkException {
-    if (!getFullNodeAllowShieldedTransaction()) {
-      throw new ZksnarkException(SHIELDED_ID_NOT_ALLOWED);
-    }
     long start = large;
     long end = large + synBlockNum - 1;
 
@@ -2022,10 +2127,7 @@ public class Wallet {
     }
   }
 
-  private void validateInput(OutputPointInfo request) throws BadItemException, ZksnarkException {
-    if (!getFullNodeAllowShieldedTransaction()) {
-      throw new ZksnarkException(SHIELDED_ID_NOT_ALLOWED);
-    }
+  private void validateInput(OutputPointInfo request) throws BadItemException {
     if (request.getBlockNum() < 0 || request.getBlockNum() > 1000) {
       throw new BadItemException("request.BlockNum must be specified with range in [0, 1000]");
     }
@@ -2051,7 +2153,7 @@ public class Wallet {
   public IncrementalMerkleVoucherInfo getMerkleTreeVoucherInfo(OutputPointInfo request)
       throws ItemNotFoundException, BadItemException,
       InvalidProtocolBufferException, ZksnarkException {
-    checkFullNodeAllowShieldedTransaction();
+    checkAllowShieldedTransactionApi();
 
     validateInput(request);
     IncrementalMerkleVoucherInfo.Builder result = IncrementalMerkleVoucherInfo.newBuilder();
@@ -2097,9 +2199,7 @@ public class Wallet {
   }
 
   public IncrementalMerkleTree getMerkleTreeOfBlock(long blockNum) throws ZksnarkException {
-    if (!getFullNodeAllowShieldedTransaction()) {
-      throw new ZksnarkException(SHIELDED_ID_NOT_ALLOWED);
-    }
+    checkAllowShieldedTransactionApi();
     if (blockNum < 0) {
       return null;
     }
@@ -2166,7 +2266,7 @@ public class Wallet {
 
   public TransactionCapsule createShieldedTransaction(PrivateParameters request)
       throws ContractValidateException, RuntimeException, ZksnarkException, BadItemException {
-    checkFullNodeAllowShieldedTransaction();
+    checkAllowShieldedTransactionApi();
 
     ZenTransactionBuilder builder = new ZenTransactionBuilder(this);
 
@@ -2268,7 +2368,7 @@ public class Wallet {
   public TransactionCapsule createShieldedTransactionWithoutSpendAuthSig(
       PrivateParametersWithoutAsk request)
       throws ContractValidateException, ZksnarkException, BadItemException {
-    checkFullNodeAllowShieldedTransaction();
+    checkAllowShieldedTransactionApi();
 
     ZenTransactionBuilder builder = new ZenTransactionBuilder(this);
 
@@ -2385,7 +2485,7 @@ public class Wallet {
 
 
   public ShieldedAddressInfo getNewShieldedAddress() throws BadItemException, ZksnarkException {
-    checkFullNodeAllowShieldedTransaction();
+    checkAllowShieldedTransactionApi();
 
     ShieldedAddressInfo.Builder addressInfo = ShieldedAddressInfo.newBuilder();
 
@@ -2418,7 +2518,7 @@ public class Wallet {
   }
 
   public BytesMessage getSpendingKey() throws ZksnarkException {
-    checkFullNodeAllowShieldedTransaction();
+    checkAllowShieldedTransactionApi();
 
     byte[] sk = SpendingKey.random().getValue();
     return BytesMessage.newBuilder().setValue(ByteString.copyFrom(sk)).build();
@@ -2426,7 +2526,7 @@ public class Wallet {
 
   public ExpandedSpendingKeyMessage getExpandedSpendingKey(ByteString spendingKey)
       throws BadItemException, ZksnarkException {
-    checkFullNodeAllowShieldedTransaction();
+    checkAllowShieldedTransactionApi();
 
     if (Objects.isNull(spendingKey)) {
       throw new BadItemException("spendingKey is null");
@@ -2452,7 +2552,7 @@ public class Wallet {
 
   public BytesMessage getAkFromAsk(ByteString ask) throws
       BadItemException, ZksnarkException {
-    checkFullNodeAllowShieldedTransaction();
+    checkAllowShieldedTransactionApi();
 
     if (Objects.isNull(ask)) {
       throw new BadItemException("ask is null");
@@ -2468,7 +2568,7 @@ public class Wallet {
 
   public BytesMessage getNkFromNsk(ByteString nsk) throws
       BadItemException, ZksnarkException {
-    checkFullNodeAllowShieldedTransaction();
+    checkAllowShieldedTransactionApi();
 
     if (Objects.isNull(nsk)) {
       throw new BadItemException("nsk is null");
@@ -2484,7 +2584,7 @@ public class Wallet {
 
   public IncomingViewingKeyMessage getIncomingViewingKey(byte[] ak, byte[] nk)
       throws ZksnarkException {
-    checkFullNodeAllowShieldedTransaction();
+    checkAllowShieldedTransactionApi();
 
     byte[] ivk = new byte[32]; // the incoming viewing key
     JLibrustzcash.librustzcashCrhIvk(new CrhIvkParams(ak, nk, ivk));
@@ -2495,7 +2595,7 @@ public class Wallet {
   }
 
   public DiversifierMessage getDiversifier() throws ZksnarkException {
-    checkFullNodeAllowShieldedTransaction();
+    checkAllowShieldedTransactionApi();
 
     byte[] d;
     while (true) {
@@ -2511,7 +2611,7 @@ public class Wallet {
   }
 
   public BytesMessage getRcm() throws ZksnarkException {
-    checkFullNodeAllowShieldedTransaction();
+    checkAllowShieldedTransactionApi();
 
     byte[] rcm = Note.generateR();
     return BytesMessage.newBuilder().setValue(ByteString.copyFrom(rcm)).build();
@@ -2519,7 +2619,7 @@ public class Wallet {
 
   public PaymentAddressMessage getPaymentAddress(IncomingViewingKey ivk,
       DiversifierT d) throws BadItemException, ZksnarkException {
-    checkFullNodeAllowShieldedTransaction();
+    checkAllowShieldedTransactionApi();
 
     if (!JLibrustzcash.librustzcashCheckDiversifier(d.getData())) {
       throw new BadItemException("d is not valid");
@@ -2543,7 +2643,7 @@ public class Wallet {
 
   public SpendResult isSpend(NoteParameters noteParameters) throws
       ZksnarkException, InvalidProtocolBufferException, BadItemException, ItemNotFoundException {
-    checkFullNodeAllowShieldedTransaction();
+    checkAllowShieldedTransactionApi();
 
     GrpcAPI.Note note = noteParameters.getNote();
     byte[] ak = noteParameters.getAk().toByteArray();
@@ -2599,7 +2699,7 @@ public class Wallet {
 
   public BytesMessage createSpendAuthSig(SpendAuthSigParameters spendAuthSigParameters)
       throws ZksnarkException {
-    checkFullNodeAllowShieldedTransaction();
+    checkAllowShieldedTransactionApi();
 
     byte[] result = new byte[64];
     SpendSigParams spendSigParams = new SpendSigParams(
@@ -2613,7 +2713,7 @@ public class Wallet {
   }
 
   public BytesMessage createShieldNullifier(NfParameters nfParameters) throws ZksnarkException {
-    checkFullNodeAllowShieldedTransaction();
+    checkAllowShieldedTransactionApi();
 
     byte[] ak = nfParameters.getAk().toByteArray();
     byte[] nk = nfParameters.getNk().toByteArray();
@@ -2649,7 +2749,7 @@ public class Wallet {
 
   public BytesMessage getShieldTransactionHash(Transaction transaction)
       throws ContractValidateException, ZksnarkException {
-    checkFullNodeAllowShieldedTransaction();
+    checkAllowShieldedTransactionApi();
 
     List<Contract> contract = transaction.getRawData().getContractList();
     if (contract == null || contract.isEmpty()) {
@@ -3354,7 +3454,7 @@ public class Wallet {
    */
   public GrpcAPI.DecryptNotes scanNoteByIvk(long startNum, long endNum,
       byte[] ivk) throws BadItemException, ZksnarkException {
-    checkFullNodeAllowShieldedTransaction();
+    checkAllowShieldedTransactionApi();
 
     return queryNoteByIvk(startNum, endNum, ivk);
   }
@@ -3365,7 +3465,7 @@ public class Wallet {
   public GrpcAPI.DecryptNotesMarked scanAndMarkNoteByIvk(long startNum, long endNum,
       byte[] ivk, byte[] ak, byte[] nk) throws BadItemException, ZksnarkException,
       InvalidProtocolBufferException, ItemNotFoundException {
-    checkFullNodeAllowShieldedTransaction();
+    checkAllowShieldedTransactionApi();
 
     GrpcAPI.DecryptNotes srcNotes = queryNoteByIvk(startNum, endNum, ivk);
     GrpcAPI.DecryptNotesMarked.Builder builder = GrpcAPI.DecryptNotesMarked.newBuilder();
@@ -3398,7 +3498,7 @@ public class Wallet {
    */
   public GrpcAPI.DecryptNotes scanNoteByOvk(long startNum, long endNum,
       byte[] ovk) throws BadItemException, ZksnarkException {
-    checkFullNodeAllowShieldedTransaction();
+    checkAllowShieldedTransactionApi();
 
     GrpcAPI.DecryptNotes.Builder builder = GrpcAPI.DecryptNotes.newBuilder();
     if (!(startNum >= 0 && endNum > startNum && endNum - startNum <= 1000)) {
@@ -3538,7 +3638,7 @@ public class Wallet {
   public ShieldedTRC20Parameters createShieldedContractParameters(
       PrivateShieldedTRC20Parameters request)
       throws ContractValidateException, ZksnarkException, ContractExeException {
-    checkFullNodeAllowShieldedTransaction();
+    checkAllowShieldedTransactionApi();
 
     ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
 
@@ -3675,7 +3775,7 @@ public class Wallet {
   public ShieldedTRC20Parameters createShieldedContractParametersWithoutAsk(
       PrivateShieldedTRC20ParametersWithoutAsk request)
       throws ZksnarkException, ContractValidateException, ContractExeException {
-    checkFullNodeAllowShieldedTransaction();
+    checkAllowShieldedTransactionApi();
 
     ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
     byte[] shieldedTRC20ContractAddress = request.getShieldedTRC20ContractAddress().toByteArray();
@@ -3971,7 +4071,7 @@ public class Wallet {
       long startNum, long endNum, byte[] shieldedTRC20ContractAddress,
       byte[] ivk, byte[] ak, byte[] nk, ProtocolStringList topicsList)
       throws BadItemException, ZksnarkException, ContractExeException {
-    checkFullNodeAllowShieldedTransaction();
+    checkAllowShieldedTransactionApi();
 
     return queryTRC20NoteByIvk(startNum, endNum,
         shieldedTRC20ContractAddress, ivk, ak, nk, topicsList);
@@ -4050,7 +4150,7 @@ public class Wallet {
   public DecryptNotesTRC20 scanShieldedTRC20NotesByOvk(long startNum, long endNum,
       byte[] ovk, byte[] shieldedTRC20ContractAddress, ProtocolStringList topicsList)
       throws ZksnarkException, BadItemException {
-    checkFullNodeAllowShieldedTransaction();
+    checkAllowShieldedTransactionApi();
 
     DecryptNotesTRC20.Builder builder = DecryptNotesTRC20.newBuilder();
     if (!(startNum >= 0 && endNum > startNum && endNum - startNum <= 1000)) {
@@ -4113,7 +4213,7 @@ public class Wallet {
 
   public GrpcAPI.NullifierResult isShieldedTRC20ContractNoteSpent(NfTRC20Parameters request) throws
       ZksnarkException, ContractExeException {
-    checkFullNodeAllowShieldedTransaction();
+    checkAllowShieldedTransactionApi();
 
     return GrpcAPI.NullifierResult.newBuilder()
         .setIsSpent(isShieldedTRC20NoteSpent(request.getNote(),
@@ -4236,7 +4336,7 @@ public class Wallet {
   public BytesMessage getTriggerInputForShieldedTRC20Contract(
       ShieldedTRC20TriggerContractParameters request)
       throws ZksnarkException, ContractValidateException {
-    checkFullNodeAllowShieldedTransaction();
+    checkAllowShieldedTransactionApi();
 
     ShieldedTRC20Parameters shieldedTRC20Parameters = request.getShieldedTRC20Parameters();
     List<BytesMessage> spendAuthoritySignature = request.getSpendAuthoritySignatureList();

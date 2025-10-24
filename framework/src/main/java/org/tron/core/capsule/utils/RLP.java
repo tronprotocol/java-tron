@@ -165,7 +165,7 @@ public class RLP {
       byte pow = (byte) (length - 1);
       for (int i = 1; i <= length; ++i) {
         // << (8 * pow) == bit shift to 0 (*1), 8 (*256) , 16 (*65..)
-        value += (data[index + i] & 0xFF) << (8 * pow);
+        value += (short) ((data[index + i] & 0xFF) << (8 * pow));
         pow--;
       }
     } else {

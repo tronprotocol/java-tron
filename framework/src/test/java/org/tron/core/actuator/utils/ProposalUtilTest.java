@@ -439,6 +439,8 @@ public class ProposalUtilTest extends BaseTest {
 
     testAllowTvmBlobProposal();
 
+    testAllowTvmSelfdestructRestrictionProposal();
+
     forkUtils.getManager().getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionEnum.ENERGY_LIMIT.getValue(), stats);
     forkUtils.reset();
@@ -654,6 +656,58 @@ public class ProposalUtilTest extends BaseTest {
     } catch (ContractValidateException e) {
       Assert.assertEquals(
           "[ALLOW_TVM_BLOB] has been valid, no need to propose again",
+          e.getMessage());
+    }
+
+  }
+
+  private void testAllowTvmSelfdestructRestrictionProposal() {
+    byte[] stats = new byte[27];
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .statsByVersion(ForkBlockVersionEnum.VERSION_4_8_1.getValue(), stats);
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_TVM_SELFDESTRUCT_RESTRICTION.getCode(), 1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "Bad chain parameter id [ALLOW_TVM_SELFDESTRUCT_RESTRICTION]",
+          e.getMessage());
+    }
+
+    long maintenanceTimeInterval = forkUtils.getManager().getDynamicPropertiesStore()
+        .getMaintenanceTimeInterval();
+
+    long hardForkTime =
+        ((ForkBlockVersionEnum.VERSION_4_8_1.getHardForkTime() - 1) / maintenanceTimeInterval + 1)
+            * maintenanceTimeInterval;
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .saveLatestBlockHeaderTimestamp(hardForkTime + 1);
+
+    stats = new byte[27];
+    Arrays.fill(stats, (byte) 1);
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .statsByVersion(ForkBlockVersionEnum.VERSION_4_8_1.getValue(), stats);
+
+    // Should fail because the proposal value is invalid
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_TVM_SELFDESTRUCT_RESTRICTION.getCode(), 2);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "This value[ALLOW_TVM_SELFDESTRUCT_RESTRICTION] is only allowed to be 1",
+          e.getMessage());
+    }
+
+    dynamicPropertiesStore.saveAllowTvmSelfdestructRestriction(1);
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_TVM_SELFDESTRUCT_RESTRICTION.getCode(), 1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "[ALLOW_TVM_SELFDESTRUCT_RESTRICTION] has been valid, no need to propose again",
           e.getMessage());
     }
 

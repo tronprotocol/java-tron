@@ -67,6 +67,7 @@ public class FileUtilTest {
     try (FileWriter writer = new FileWriter(tempFile.toFile())) {
       writer.write("Hello, World!");
     }
+    tempFile.toFile().deleteOnExit();
 
     char[] buffer = new char[1024];
     int len = readData(tempFile.toString(), buffer);

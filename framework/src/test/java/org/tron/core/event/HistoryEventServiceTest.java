@@ -43,6 +43,7 @@ public class HistoryEventServiceTest {
     RealtimeEventService realtimeEventService = new RealtimeEventService();
     BlockEventLoad blockEventLoad = new BlockEventLoad();
     ReflectUtils.setFieldValue(blockEventLoad, "instance", instance);
+    ReflectUtils.setFieldValue(blockEventLoad, "manager", manager);
 
     ReflectUtils.setFieldValue(historyEventService, "solidEventService", solidEventService);
     ReflectUtils.setFieldValue(historyEventService, "realtimeEventService", realtimeEventService);

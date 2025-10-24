@@ -12,6 +12,7 @@ import io.grpc.ManagedChannelBuilder;
 import java.io.IOException;
 import java.util.Objects;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.FixMethodOrder;
@@ -52,6 +53,7 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.TimeoutInterceptor;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -60,8 +62,6 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.core.services.interfaceOnPBFT.RpcApiServiceOnPBFT;
-import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -111,7 +111,12 @@ import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class RpcApiServicesTest {
+
+  private static Application appTest;
   private static TronApplicationContext context;
+  private static ManagedChannel channelFull = null;
+  private static ManagedChannel channelPBFT = null;
+  private static ManagedChannel channelSolidity = null;
   private static DatabaseBlockingStub databaseBlockingStubFull = null;
   private static DatabaseBlockingStub databaseBlockingStubSolidity = null;
   private static DatabaseBlockingStub databaseBlockingStubPBFT = null;
@@ -132,7 +137,9 @@ public class RpcApiServicesTest {
 
   @BeforeClass
   public static void init() throws IOException {
-    Args.setParam(new String[]{"-d", temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-d", temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
+    Assert.assertEquals(5, getInstance().getRpcMaxRstStream());
+    Assert.assertEquals(10, getInstance().getRpcSecondsPerWindow());
     String OWNER_ADDRESS = Wallet.getAddressPreFixString()
         + "548794500882809695a8a687866e76d4271a1abc";
     getInstance().setRpcEnable(true);
@@ -144,21 +151,24 @@ public class RpcApiServicesTest {
     getInstance().setMetricsPrometheusPort(PublicMethod.chooseRandomPort());
     getInstance().setMetricsPrometheusEnable(true);
     getInstance().setP2pDisable(true);
-    String fullNode = String.format("%s:%d", getInstance().getNodeLanIp(),
+    String fullNode = String.format("%s:%d", Constant.LOCAL_HOST,
         getInstance().getRpcPort());
-    String solidityNode = String.format("%s:%d", getInstance().getNodeLanIp(),
+    String solidityNode = String.format("%s:%d", Constant.LOCAL_HOST,
         getInstance().getRpcOnSolidityPort());
-    String pBFTNode = String.format("%s:%d", getInstance().getNodeLanIp(),
+    String pBFTNode = String.format("%s:%d", Constant.LOCAL_HOST,
         getInstance().getRpcOnPBFTPort());
 
-    ManagedChannel channelFull = ManagedChannelBuilder.forTarget(fullNode)
+    channelFull = ManagedChannelBuilder.forTarget(fullNode)
         .usePlaintext()
+        .intercept(new TimeoutInterceptor(5000))
         .build();
-    ManagedChannel channelPBFT = ManagedChannelBuilder.forTarget(pBFTNode)
+    channelPBFT = ManagedChannelBuilder.forTarget(pBFTNode)
         .usePlaintext()
+        .intercept(new TimeoutInterceptor(5000))
         .build();
-    ManagedChannel channelSolidity = ManagedChannelBuilder.forTarget(solidityNode)
+    channelSolidity = ManagedChannelBuilder.forTarget(solidityNode)
         .usePlaintext()
+        .intercept(new TimeoutInterceptor(5000))
         .build();
     context = new TronApplicationContext(DefaultConfig.class);
     databaseBlockingStubFull = DatabaseGrpc.newBlockingStub(channelFull);
@@ -176,12 +186,21 @@ public class RpcApiServicesTest {
     manager.getAccountStore().put(ownerCapsule.createDbKey(), ownerCapsule);
     manager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     manager.getDynamicPropertiesStore().saveAllowShieldedTRC20Transaction(1);
-    Application appTest = ApplicationFactory.create(context);
+    appTest = ApplicationFactory.create(context);
     appTest.startup();
   }
 
   @AfterClass
   public static void destroy() {
+    if (channelFull != null) {
+      channelFull.shutdownNow();
+    }
+    if (channelPBFT != null) {
+      channelPBFT.shutdownNow();
+    }
+    if (channelSolidity != null) {
+      channelSolidity.shutdownNow();
+    }
     context.close();
     Args.clearParam();
   }
@@ -231,6 +250,14 @@ public class RpcApiServicesTest {
     assertNotNull(blockingStubFull.listWitnesses(message));
     assertNotNull(blockingStubSolidity.listWitnesses(message));
     assertNotNull(blockingStubPBFT.listWitnesses(message));
+  }
+
+  @Test
+  public void testGetPaginatedNowWitnessList() {
+    PaginatedMessage paginatedMessage = PaginatedMessage.newBuilder()
+        .setOffset(0).setLimit(5).build();
+    assertNotNull(blockingStubFull.getPaginatedNowWitnessList(paginatedMessage));
+    assertNotNull(blockingStubSolidity.getPaginatedNowWitnessList(paginatedMessage));
   }
 
   @Test

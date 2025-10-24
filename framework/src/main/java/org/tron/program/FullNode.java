@@ -1,6 +1,5 @@
 package org.tron.program;
 
-import com.beust.jcommander.JCommander;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.tron.common.application.Application;
@@ -22,19 +21,20 @@ public class FullNode {
    */
   public static void main(String[] args) {
     ExitManager.initExceptionHandler();
-    logger.info("Full node running.");
     Args.setParam(args, Constant.TESTNET_CONF);
     CommonParameter parameter = Args.getInstance();
 
     LogService.load(parameter.getLogbackPath());
 
-    if (parameter.isHelp()) {
-      JCommander jCommander = JCommander.newBuilder().addObject(Args.PARAMETER).build();
-      jCommander.parse(args);
-      Args.printHelp(jCommander);
+    if (parameter.isSolidityNode()) {
+      SolidityNode.start();
       return;
     }
-
+    if (parameter.isKeystoreFactory()) {
+      KeystoreFactory.start();
+      return;
+    }
+    logger.info("Full node running.");
     if (Args.getInstance().isDebug()) {
       logger.info("in debug mode, it won't check energy time");
     } else {

@@ -4,14 +4,25 @@ import java.io.IOException;
 import java.util.UUID;
 import org.junit.Assert;
 import org.junit.Test;
+import org.rocksdb.RocksDBException;
+import org.tron.plugins.utils.db.DbTool;
 import picocli.CommandLine;
 
 public class DbCopyTest extends DbTest {
 
   @Test
-  public void testRun() {
+  public void testRunForLevelDB() throws RocksDBException, IOException {
+    init(DbTool.DbType.LevelDB);
     String[] args = new String[] { "db", "cp",  INPUT_DIRECTORY,
-        genarateTmpDir()};
+        generateTmpDir()};
+    Assert.assertEquals(0, cli.execute(args));
+  }
+
+  @Test
+  public void testRunForRocksDB() throws RocksDBException, IOException {
+    init(DbTool.DbType.RocksDB);
+    String[] args = new String[] { "db", "cp",  INPUT_DIRECTORY,
+        generateTmpDir()};
     Assert.assertEquals(0, cli.execute(args));
   }
 
@@ -32,7 +43,7 @@ public class DbCopyTest extends DbTest {
   @Test
   public void testEmpty() throws IOException {
     String[] args = new String[] {"db", "cp", temporaryFolder.newFolder().toString(),
-        genarateTmpDir()};
+        generateTmpDir()};
     Assert.assertEquals(0, cli.execute(args));
   }
 
@@ -46,7 +57,7 @@ public class DbCopyTest extends DbTest {
   @Test
   public void testSrcIsFile() throws IOException {
     String[] args = new String[] {"db", "cp", temporaryFolder.newFile().toString(),
-        genarateTmpDir()};
+        generateTmpDir()};
     Assert.assertEquals(403, cli.execute(args));
   }
 

@@ -868,9 +868,9 @@ public class Manager {
       TooBigTransactionException, TransactionExpirationException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
 
-    if (isShieldedTransaction(trx.getInstance()) && !Args.getInstance()
-        .isFullNodeAllowShieldedTransactionArgs()) {
-      return true;
+    if (isShieldedTransaction(trx.getInstance()) && !chainBaseManager.getDynamicPropertiesStore()
+        .supportShieldedTransaction()) {
+      return false;
     }
 
     pushTransactionQueue.add(trx);
@@ -1857,12 +1857,10 @@ public class Manager {
 
     chainBaseManager.getBalanceTraceStore().resetCurrentBlockTrace();
 
-    if (CommonParameter.getInstance().isJsonRpcFilterEnabled()) {
-      Bloom blockBloom = chainBaseManager.getSectionBloomStore()
-          .initBlockSection(transactionRetCapsule);
-      chainBaseManager.getSectionBloomStore().write(block.getNum());
-      block.setBloom(blockBloom);
-    }
+    Bloom blockBloom = chainBaseManager.getSectionBloomStore()
+        .initBlockSection(transactionRetCapsule);
+    chainBaseManager.getSectionBloomStore().write(block.getNum());
+    block.setBloom(blockBloom);
   }
 
   private void payReward(BlockCapsule block) {

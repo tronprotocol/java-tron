@@ -205,7 +205,15 @@ public class CommonParameter {
   //If you are running a solidity node for java tron, this flag is set to true
   @Getter
   @Setter
+  @Parameter(names = {"--solidity"}, description = "running a solidity node for java tron")
   public boolean solidityNode = false;
+
+  //If you are running KeystoreFactory, this flag is set to true
+  @Getter
+  @Setter
+  @Parameter(names = {"--keystore-factory"}, description = "running KeystoreFactory")
+  public boolean keystoreFactory = false;
+
   @Getter
   @Setter
   public int rpcPort;
@@ -241,6 +249,15 @@ public class CommonParameter {
   @Getter
   @Setter
   public int flowControlWindow;
+  // the positive limit of RST_STREAM frames per connection per period for grpc,
+  // 0 or Integer.MAX_VALUE for unlimited, by default there is no limit.
+  @Getter
+  @Setter
+  public int rpcMaxRstStream;
+  // the positive number of seconds per period for grpc
+  @Getter
+  @Setter
+  public int rpcSecondsPerWindow;
   @Getter
   @Setter
   public long maxConnectionIdleInMillis;
@@ -383,7 +400,7 @@ public class CommonParameter {
   // full node used this parameter to close shielded transaction
   @Getter
   @Setter
-  public boolean fullNodeAllowShieldedTransactionArgs;
+  public boolean allowShieldedTransactionApi;
   @Getter
   @Setter
   public long blockNumForEnergyLimit;
@@ -428,6 +445,15 @@ public class CommonParameter {
   public int rateLimiterGlobalIpQps;
   @Getter
   public int rateLimiterGlobalApiQps;
+  @Getter
+  @Setter
+  public double rateLimiterSyncBlockChain;
+  @Getter
+  @Setter
+  public double rateLimiterFetchInvData;
+  @Getter
+  @Setter
+  public double rateLimiterDisconnect;
   @Getter
   public DbBackupConfig dbBackupConfig;
   @Getter
@@ -723,6 +749,10 @@ public class CommonParameter {
   @Getter
   @Setter
   public long allowTvmBlob;
+
+  @Getter
+  @Setter
+  public long allowTvmSelfdestructRestriction;
 
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));

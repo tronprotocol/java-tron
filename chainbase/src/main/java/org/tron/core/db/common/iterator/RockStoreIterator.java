@@ -47,7 +47,7 @@ public final class RockStoreIterator implements DBIterator {
       try {
         close();
       } catch (Exception e1) {
-        logger.error(e.getMessage(), e);
+        logger.error(e1.getMessage(), e1);
       }
     }
     return hasNext;
@@ -77,6 +77,11 @@ public final class RockStoreIterator implements DBIterator {
         throw new UnsupportedOperationException();
       }
     };
+  }
+
+  @Override
+  public void remove() {
+    throw new UnsupportedOperationException();
   }
 
   @Override

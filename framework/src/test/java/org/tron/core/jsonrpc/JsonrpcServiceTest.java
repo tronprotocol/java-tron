@@ -1,6 +1,7 @@
 package org.tron.core.jsonrpc;
 
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getByJsonBlockId;
+import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.TAG_PENDING_SUPPORT_ERROR;
 
 import com.alibaba.fastjson.JSON;
 import com.google.gson.JsonArray;
@@ -33,9 +34,12 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.TransactionInfoCapsule;
+import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.args.Args;
-import org.tron.core.exception.JsonRpcInvalidParamsException;
+import org.tron.core.exception.jsonrpc.JsonRpcInternalException;
+import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
 import org.tron.core.services.NodeInfoService;
 import org.tron.core.services.interfaceJsonRpcOnPBFT.JsonRpcServiceOnPBFT;
 import org.tron.core.services.interfaceJsonRpcOnSolidity.JsonRpcServiceOnSolidity;
@@ -44,6 +48,7 @@ import org.tron.core.services.jsonrpc.TronJsonRpc.FilterRequest;
 import org.tron.core.services.jsonrpc.TronJsonRpcImpl;
 import org.tron.core.services.jsonrpc.filters.LogFilterWrapper;
 import org.tron.core.services.jsonrpc.types.BlockResult;
+import org.tron.core.services.jsonrpc.types.TransactionReceipt;
 import org.tron.core.services.jsonrpc.types.TransactionResult;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -127,6 +132,7 @@ public class JsonrpcServiceTest extends BaseTest {
                 (Wallet.getAddressPreFixString() + "ED738B3A0FE390EAA71B768B6D02CDBD18FB207B"))))
         .build();
 
+
     transactionCapsule1 = new TransactionCapsule(transferContract1, ContractType.TransferContract);
     transactionCapsule1.setBlockNum(blockCapsule1.getNum());
     TransactionCapsule transactionCapsule2 = new TransactionCapsule(transferContract2,
@@ -154,6 +160,42 @@ public class JsonrpcServiceTest extends BaseTest {
         .put(transactionCapsule2.getTransactionId().getBytes(), transactionCapsule2);
     dbManager.getTransactionStore()
         .put(transactionCapsule3.getTransactionId().getBytes(), transactionCapsule3);
+
+    dbManager.getTransactionStore()
+        .put(transactionCapsule3.getTransactionId().getBytes(), transactionCapsule3);
+
+    List<Protocol.TransactionInfo.Log> logs = new ArrayList<>();
+    logs.add(Protocol.TransactionInfo.Log.newBuilder()
+        .setAddress(ByteString.copyFrom("address1".getBytes()))
+        .setData(ByteString.copyFrom("data1".getBytes()))
+        .addTopics(ByteString.copyFrom("topic1".getBytes()))
+        .build());
+    logs.add(Protocol.TransactionInfo.Log.newBuilder()
+        .setAddress(ByteString.copyFrom("address2".getBytes()))
+        .setData(ByteString.copyFrom("data2".getBytes()))
+        .addTopics(ByteString.copyFrom("topic2".getBytes()))
+        .build());
+
+    TransactionRetCapsule transactionRetCapsule1 = new TransactionRetCapsule();
+    blockCapsule1.getTransactions().forEach(tx -> {
+      TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
+      transactionInfoCapsule.setId(tx.getTransactionId().getBytes());
+      transactionInfoCapsule.setBlockNumber(blockCapsule1.getNum());
+      transactionInfoCapsule.addAllLog(logs);
+      transactionRetCapsule1.addTransactionInfo(transactionInfoCapsule.getInstance());
+    });
+    dbManager.getTransactionRetStore()
+        .put(ByteArray.fromLong(blockCapsule1.getNum()), transactionRetCapsule1);
+
+    TransactionRetCapsule transactionRetCapsule2 = new TransactionRetCapsule();
+    blockCapsule2.getTransactions().forEach(tx -> {
+      TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
+      transactionInfoCapsule.setId(tx.getTransactionId().getBytes());
+      transactionInfoCapsule.setBlockNumber(blockCapsule2.getNum());
+      transactionRetCapsule2.addTransactionInfo(transactionInfoCapsule.getInstance());
+    });
+    dbManager.getTransactionRetStore()
+        .put(ByteArray.fromLong(blockCapsule2.getNum()), transactionRetCapsule2);
 
     tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet, dbManager);
   }
@@ -281,6 +323,8 @@ public class JsonrpcServiceTest extends BaseTest {
     }
     Assert.assertEquals(ByteArray.toJsonHex(0L), blockResult.getNumber());
     Assert.assertEquals(ByteArray.toJsonHex(blockCapsule0.getNum()), blockResult.getNumber());
+    Assert.assertEquals(blockResult.getTransactions().length,
+        blockCapsule0.getTransactions().size());
 
     // latest
     try {
@@ -434,7 +478,8 @@ public class JsonrpcServiceTest extends BaseTest {
       getByJsonBlockId("0xxabc", wallet);
       Assert.fail("Expected to be thrown");
     } catch (Exception e) {
-      Assert.assertEquals("For input string: \"xabc\"", e.getMessage());
+      // https://bugs.openjdk.org/browse/JDK-8176425, from JDK 12, the exception message is changed
+      Assert.assertTrue(e.getMessage().startsWith("For input string: \"xabc\""));
     }
   }
 
@@ -966,6 +1011,92 @@ public class JsonrpcServiceTest extends BaseTest {
       Assert.fail("Expected to be thrown");
     } catch (Exception e) {
       Assert.assertEquals("invalid block range params", e.getMessage());
+    }
+  }
+
+  @Test
+  public void testGetBlockReceipts() {
+
+    try {
+      List<TransactionReceipt> transactionReceiptList = tronJsonRpc.getBlockReceipts("0x2710");
+      Assert.assertFalse(transactionReceiptList.isEmpty());
+      for (TransactionReceipt transactionReceipt: transactionReceiptList) {
+        TransactionReceipt transactionReceipt1
+            = tronJsonRpc.getTransactionReceipt(transactionReceipt.getTransactionHash());
+
+        Assert.assertEquals(
+            JSON.toJSONString(transactionReceipt), JSON.toJSONString(transactionReceipt1));
+      }
+    } catch (JsonRpcInvalidParamsException | JsonRpcInternalException e) {
+      throw new RuntimeException(e);
+    }
+
+    try {
+      List<TransactionReceipt> transactionReceiptList = tronJsonRpc.getBlockReceipts("earliest");
+      Assert.assertNull(transactionReceiptList);
+    } catch (JsonRpcInvalidParamsException | JsonRpcInternalException e) {
+      throw new RuntimeException(e);
+    }
+
+    try {
+      List<TransactionReceipt> transactionReceiptList = tronJsonRpc.getBlockReceipts("latest");
+      Assert.assertFalse(transactionReceiptList.isEmpty());
+    } catch (JsonRpcInvalidParamsException | JsonRpcInternalException e) {
+      throw new RuntimeException(e);
+    }
+
+    try {
+      List<TransactionReceipt> transactionReceiptList = tronJsonRpc.getBlockReceipts("finalized");
+      Assert.assertFalse(transactionReceiptList.isEmpty());
+    } catch (JsonRpcInvalidParamsException | JsonRpcInternalException e) {
+      throw new RuntimeException(e);
+    }
+
+    try {
+      tronJsonRpc.getBlockReceipts("pending");
+      Assert.fail();
+    } catch (Exception e) {
+      Assert.assertEquals(TAG_PENDING_SUPPORT_ERROR, e.getMessage());
+    }
+
+    try {
+      tronJsonRpc.getBlockReceipts("test");
+      Assert.fail();
+    } catch (Exception e) {
+      Assert.assertEquals("invalid block number", e.getMessage());
+    }
+
+    try {
+      List<TransactionReceipt> transactionReceiptList = tronJsonRpc.getBlockReceipts("0x2");
+      Assert.assertNull(transactionReceiptList);
+    } catch (JsonRpcInvalidParamsException | JsonRpcInternalException e) {
+      throw new RuntimeException(e);
+    }
+
+    try {
+      String blockHash = blockCapsule1.getBlockId().toString();
+      List<TransactionReceipt> transactionReceiptList
+          = tronJsonRpc.getBlockReceipts(blockHash);
+      List<TransactionReceipt> transactionReceiptList2
+          = tronJsonRpc.getBlockReceipts("0x" + blockHash);
+
+      Assert.assertFalse(transactionReceiptList.isEmpty());
+      Assert.assertEquals(JSON.toJSONString(transactionReceiptList),
+          JSON.toJSONString(transactionReceiptList2));
+    } catch (JsonRpcInvalidParamsException | JsonRpcInternalException e) {
+      throw new RuntimeException(e);
+    }
+
+  }
+
+  @Test
+  public void testWeb3ClientVersion() {
+    try {
+      String[] versions = tronJsonRpc.web3ClientVersion().split("/");
+      String javaVersion = versions[versions.length - 1];
+      Assert.assertTrue("Java1.8".equals(javaVersion) || "Java17".equals(javaVersion));
+    } catch (Exception e) {
+      Assert.fail();
     }
   }
 }

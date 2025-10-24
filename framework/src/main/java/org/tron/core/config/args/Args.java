@@ -4,8 +4,11 @@ import static java.lang.System.exit;
 import static org.tron.common.math.Maths.max;
 import static org.tron.common.math.Maths.min;
 import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
+import static org.tron.core.Constant.DEFAULT_PROPOSAL_EXPIRE_TIME;
 import static org.tron.core.Constant.DYNAMIC_ENERGY_INCREASE_FACTOR_RANGE;
 import static org.tron.core.Constant.DYNAMIC_ENERGY_MAX_FACTOR_RANGE;
+import static org.tron.core.Constant.MAX_PROPOSAL_EXPIRE_TIME;
+import static org.tron.core.Constant.MIN_PROPOSAL_EXPIRE_TIME;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCE_TIMEOUT_PERCENT;
 import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
 
@@ -44,12 +47,12 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.arch.Arch;
 import org.tron.common.args.Account;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.args.Witness;
 import org.tron.common.config.DbBackupConfig;
 import org.tron.common.cron.CronExpression;
-import org.tron.common.crypto.SignInterface;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.TriggerConfig;
@@ -58,7 +61,6 @@ import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.parameter.RateLimiterInitialization;
 import org.tron.common.setting.RocksDbSettings;
-import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.core.Constant;
@@ -66,11 +68,8 @@ import org.tron.core.Wallet;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
-import org.tron.core.exception.CipherException;
 import org.tron.core.exception.TronError;
 import org.tron.core.store.AccountStore;
-import org.tron.keystore.Credentials;
-import org.tron.keystore.WalletUtils;
 import org.tron.p2p.P2pConfig;
 import org.tron.p2p.dns.update.DnsType;
 import org.tron.p2p.dns.update.PublishConfig;
@@ -169,6 +168,7 @@ public class Args extends CommonParameter {
     PARAMETER.tcpNettyWorkThreadNum = 0;
     PARAMETER.udpNettyWorkThreadNum = 0;
     PARAMETER.solidityNode = false;
+    PARAMETER.keystoreFactory = false;
     PARAMETER.trustNodeAddr = "";
     PARAMETER.walletExtensionApi = false;
     PARAMETER.estimateEnergy = false;
@@ -186,7 +186,7 @@ public class Args extends CommonParameter {
     PARAMETER.maxHttpConnectNumber = 50;
     PARAMETER.allowMultiSign = 0;
     PARAMETER.trxExpirationTimeInMilliseconds = 0;
-    PARAMETER.fullNodeAllowShieldedTransactionArgs = true;
+    PARAMETER.allowShieldedTransactionApi = true;
     PARAMETER.zenTokenId = "000000";
     PARAMETER.allowProtoFilterNum = 0;
     PARAMETER.allowAccountStateRoot = 0;
@@ -235,6 +235,9 @@ public class Args extends CommonParameter {
     PARAMETER.rateLimiterGlobalQps = 50000;
     PARAMETER.rateLimiterGlobalIpQps = 10000;
     PARAMETER.rateLimiterGlobalApiQps = 1000;
+    PARAMETER.rateLimiterSyncBlockChain = 3.0;
+    PARAMETER.rateLimiterFetchInvData = 3.0;
+    PARAMETER.rateLimiterDisconnect = 1.0;
     PARAMETER.p2pDisable = false;
     PARAMETER.dynamicConfigEnable = false;
     PARAMETER.dynamicConfigCheckInterval = 600;
@@ -247,6 +250,9 @@ public class Args extends CommonParameter {
     PARAMETER.consensusLogicOptimization = 0;
     PARAMETER.allowTvmCancun = 0;
     PARAMETER.allowTvmBlob = 0;
+    PARAMETER.allowTvmSelfdestructRestriction = 0;
+    PARAMETER.rpcMaxRstStream = 0;
+    PARAMETER.rpcSecondsPerWindow = 0;
   }
 
   /**
@@ -342,7 +348,7 @@ public class Args extends CommonParameter {
 
   private static Map<String, String[]> getOptionGroup() {
     String[] tronOption = new String[] {"version", "help", "shellConfFileName", "logbackPath",
-        "eventSubscribe"};
+        "eventSubscribe", "solidityNode", "keystore"};
     String[] dbOption = new String[] {"outputDirectory"};
     String[] witnessOption = new String[] {"witness", "privateKey"};
     String[] vmOption = new String[] {"debug"};
@@ -369,9 +375,18 @@ public class Args extends CommonParameter {
    * set parameters.
    */
   public static void setParam(final String[] args, final String confFileName) {
+    Arch.throwIfUnsupportedJavaVersion();
+    clearParam(); // reset all parameters to avoid the influence in test
     JCommander.newBuilder().addObject(PARAMETER).build().parse(args);
     if (PARAMETER.version) {
       printVersion();
+      exit(0);
+    }
+
+    if (PARAMETER.isHelp()) {
+      JCommander jCommander = JCommander.newBuilder().addObject(Args.PARAMETER).build();
+      jCommander.parse(args);
+      Args.printHelp(jCommander);
       exit(0);
     }
 
@@ -396,61 +411,7 @@ public class Args extends CommonParameter {
     PARAMETER.cryptoEngine = config.hasPath(Constant.CRYPTO_ENGINE) ? config
         .getString(Constant.CRYPTO_ENGINE) : Constant.ECKey_ENGINE;
 
-    if (StringUtils.isNoneBlank(PARAMETER.privateKey)) {
-      localWitnesses = (new LocalWitnesses(PARAMETER.privateKey));
-      if (StringUtils.isNoneBlank(PARAMETER.witnessAddress)) {
-        byte[] bytes = Commons.decodeFromBase58Check(PARAMETER.witnessAddress);
-        if (bytes != null) {
-          localWitnesses.setWitnessAccountAddress(bytes);
-          logger.debug("Got localWitnessAccountAddress from cmd");
-        } else {
-          PARAMETER.witnessAddress = "";
-          logger.warn(IGNORE_WRONG_WITNESS_ADDRESS_FORMAT);
-        }
-      }
-      localWitnesses.initWitnessAccountAddress(PARAMETER.isECKeyCryptoEngine());
-      logger.debug("Got privateKey from cmd");
-    } else if (config.hasPath(Constant.LOCAL_WITNESS)) {
-      localWitnesses = new LocalWitnesses();
-      List<String> localwitness = config.getStringList(Constant.LOCAL_WITNESS);
-      localWitnesses.setPrivateKeys(localwitness);
-      witnessAddressCheck(config);
-      localWitnesses.initWitnessAccountAddress(PARAMETER.isECKeyCryptoEngine());
-      logger.debug("Got privateKey from config.conf");
-    } else if (config.hasPath(Constant.LOCAL_WITNESS_KEYSTORE)) {
-      localWitnesses = new LocalWitnesses();
-      List<String> privateKeys = new ArrayList<String>();
-      if (PARAMETER.isWitness()) {
-        List<String> localwitness = config.getStringList(Constant.LOCAL_WITNESS_KEYSTORE);
-        if (localwitness.size() > 0) {
-          String fileName = System.getProperty("user.dir") + "/" + localwitness.get(0);
-          String password;
-          if (StringUtils.isEmpty(PARAMETER.password)) {
-            System.out.println("Please input your password.");
-            password = WalletUtils.inputPassword();
-          } else {
-            password = PARAMETER.password;
-            PARAMETER.password = null;
-          }
-
-          try {
-            Credentials credentials = WalletUtils
-                .loadCredentials(password, new File(fileName));
-            SignInterface sign = credentials.getSignInterface();
-            String prikey = ByteArray.toHexString(sign.getPrivateKey());
-            privateKeys.add(prikey);
-          } catch (IOException | CipherException e) {
-            logger.error("Witness node start failed!");
-            throw new TronError(e, TronError.ErrCode.WITNESS_KEYSTORE_LOAD);
-          }
-        }
-      }
-      localWitnesses.setPrivateKeys(privateKeys);
-      witnessAddressCheck(config);
-      localWitnesses.initWitnessAccountAddress(PARAMETER.isECKeyCryptoEngine());
-      logger.debug("Got privateKey from keystore");
-    }
-
+    localWitnesses = new WitnessInitializer(config).initLocalWitnesses();
     if (PARAMETER.isWitness()
         && CollectionUtils.isEmpty(localWitnesses.getPrivateKeys())) {
       throw new TronError("This is a witness node, but localWitnesses is null",
@@ -764,6 +725,12 @@ public class Args extends CommonParameter {
     PARAMETER.flowControlWindow = config.hasPath(Constant.NODE_RPC_FLOW_CONTROL_WINDOW)
         ? config.getInt(Constant.NODE_RPC_FLOW_CONTROL_WINDOW)
         : NettyServerBuilder.DEFAULT_FLOW_CONTROL_WINDOW;
+    if (config.hasPath(Constant.NODE_RPC_MAX_RST_STREAM)) {
+      PARAMETER.rpcMaxRstStream = config.getInt(Constant.NODE_RPC_MAX_RST_STREAM);
+    }
+    if (config.hasPath(Constant.NODE_RPC_SECONDS_PER_WINDOW)) {
+      PARAMETER.rpcSecondsPerWindow = config.getInt(Constant.NODE_RPC_SECONDS_PER_WINDOW);
+    }
 
     PARAMETER.maxConnectionIdleInMillis =
         config.hasPath(Constant.NODE_RPC_MAX_CONNECTION_IDLE_IN_MILLIS)
@@ -808,9 +775,7 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.BLOCK_MAINTENANCE_TIME_INTERVAL) ? config
             .getInt(Constant.BLOCK_MAINTENANCE_TIME_INTERVAL) : 21600000L;
 
-    PARAMETER.proposalExpireTime =
-        config.hasPath(Constant.BLOCK_PROPOSAL_EXPIRE_TIME) ? config
-            .getInt(Constant.BLOCK_PROPOSAL_EXPIRE_TIME) : 259200000L;
+    PARAMETER.proposalExpireTime = getProposalExpirationTime(config);
 
     PARAMETER.checkFrozenTime =
         config.hasPath(Constant.BLOCK_CHECK_FROZEN_TIME) ? config
@@ -984,9 +949,18 @@ public class Args extends CommonParameter {
     PARAMETER.eventFilter =
         config.hasPath(Constant.EVENT_SUBSCRIBE_FILTER) ? getEventFilter(config) : null;
 
-    PARAMETER.fullNodeAllowShieldedTransactionArgs =
-        !config.hasPath(Constant.NODE_FULLNODE_ALLOW_SHIELDED_TRANSACTION)
-            || config.getBoolean(Constant.NODE_FULLNODE_ALLOW_SHIELDED_TRANSACTION);
+    if (config.hasPath(Constant.ALLOW_SHIELDED_TRANSACTION_API)) {
+      PARAMETER.allowShieldedTransactionApi =
+          config.getBoolean(Constant.ALLOW_SHIELDED_TRANSACTION_API);
+    } else if (config.hasPath(Constant.NODE_FULLNODE_ALLOW_SHIELDED_TRANSACTION)) {
+      // for compatibility with previous configuration
+      PARAMETER.allowShieldedTransactionApi =
+          config.getBoolean(Constant.NODE_FULLNODE_ALLOW_SHIELDED_TRANSACTION);
+      logger.warn("Configuring [node.fullNodeAllowShieldedTransaction] will be deprecated. "
+          + "Please use [node.allowShieldedTransactionApi] instead.");
+    } else {
+      PARAMETER.allowShieldedTransactionApi = true;
+    }
 
     PARAMETER.zenTokenId = config.hasPath(Constant.NODE_ZEN_TOKENID)
         ? config.getString(Constant.NODE_ZEN_TOKENID) : "000000";
@@ -1023,10 +997,6 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.NODE_SHIELDED_TRANS_IN_PENDING_MAX_COUNTS) ? config
             .getInt(Constant.NODE_SHIELDED_TRANS_IN_PENDING_MAX_COUNTS) : 10;
 
-    if (PARAMETER.isWitness()) {
-      PARAMETER.fullNodeAllowShieldedTransactionArgs = true;
-    }
-
     PARAMETER.rateLimiterGlobalQps =
         config.hasPath(Constant.RATE_LIMITER_GLOBAL_QPS) ? config
             .getInt(Constant.RATE_LIMITER_GLOBAL_QPS) : 50000;
@@ -1040,6 +1010,18 @@ public class Args extends CommonParameter {
         .getInt(Constant.RATE_LIMITER_GLOBAL_API_QPS) : 1000;
 
     PARAMETER.rateLimiterInitialization = getRateLimiterFromConfig(config);
+
+    PARAMETER.rateLimiterSyncBlockChain =
+        config.hasPath(Constant.RATE_LIMITER_P2P_SYNC_BLOCK_CHAIN) ? config
+            .getDouble(Constant.RATE_LIMITER_P2P_SYNC_BLOCK_CHAIN) : 3.0;
+
+    PARAMETER.rateLimiterFetchInvData =
+        config.hasPath(Constant.RATE_LIMITER_P2P_FETCH_INV_DATA) ? config
+            .getDouble(Constant.RATE_LIMITER_P2P_FETCH_INV_DATA) : 3.0;
+
+    PARAMETER.rateLimiterDisconnect =
+        config.hasPath(Constant.RATE_LIMITER_P2P_DISCONNECT) ? config
+            .getDouble(Constant.RATE_LIMITER_P2P_DISCONNECT) : 1.0;
 
     PARAMETER.changedDelegation =
         config.hasPath(Constant.COMMITTEE_CHANGED_DELEGATION) ? config
@@ -1290,7 +1272,31 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.COMMITTEE_ALLOW_TVM_BLOB) ? config
             .getInt(Constant.COMMITTEE_ALLOW_TVM_BLOB) : 0;
 
+    PARAMETER.allowTvmSelfdestructRestriction =
+        config.hasPath(Constant.COMMITTEE_ALLOW_TVM_SELFDESTRUCT_RESTRICTION) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_TVM_SELFDESTRUCT_RESTRICTION) : 0;
+
     logConfig();
+  }
+
+  private static long getProposalExpirationTime(final Config config) {
+    if (config.hasPath(Constant.COMMITTEE_PROPOSAL_EXPIRE_TIME)) {
+      throw new IllegalArgumentException("It is not allowed to configure "
+          + "commit.proposalExpireTime in config.conf, please set the value in "
+          + "block.proposalExpireTime.");
+    }
+    if (config.hasPath(Constant.BLOCK_PROPOSAL_EXPIRE_TIME)) {
+      long proposalExpireTime = config.getLong(Constant.BLOCK_PROPOSAL_EXPIRE_TIME);
+      if (proposalExpireTime <= MIN_PROPOSAL_EXPIRE_TIME
+          || proposalExpireTime >= MAX_PROPOSAL_EXPIRE_TIME) {
+        throw new IllegalArgumentException("The value[block.proposalExpireTime] is only allowed to "
+            + "be greater than " + MIN_PROPOSAL_EXPIRE_TIME + " and less than "
+            + MAX_PROPOSAL_EXPIRE_TIME + "!");
+      }
+      return proposalExpireTime;
+    } else {
+      return DEFAULT_PROPOSAL_EXPIRE_TIME;
+    }
   }
 
   private static List<Witness> getWitnessesFromConfig(final com.typesafe.config.Config config) {
@@ -1615,7 +1621,7 @@ public class Args extends CommonParameter {
     try {
       fromBlockLong = FilterQuery.parseFromBlockNumber(fromBlock);
     } catch (Exception e) {
-      logger.error("{}", e);
+      logger.error("invalid filter: fromBlockNumber: {}", fromBlock, e);
       return null;
     }
     filter.setFromBlock(fromBlockLong);
@@ -1624,7 +1630,7 @@ public class Args extends CommonParameter {
     try {
       toBlockLong = FilterQuery.parseToBlockNumber(toBlock);
     } catch (Exception e) {
-      logger.error("{}", e);
+      logger.error("invalid filter: toBlockNumber: {}", toBlock, e);
       return null;
     }
     filter.setToBlock(toBlockLong);
@@ -1677,11 +1683,13 @@ public class Args extends CommonParameter {
         .getLong(prefix + "targetFileSizeBase") : 64;
     int targetFileSizeMultiplier = config.hasPath(prefix + "targetFileSizeMultiplier") ? config
         .getInt(prefix + "targetFileSizeMultiplier") : 1;
+    int maxOpenFiles = config.hasPath(prefix + "maxOpenFiles")
+        ? config.getInt(prefix + "maxOpenFiles") : 5000;
 
     PARAMETER.rocksDBCustomSettings = RocksDbSettings
         .initCustomSettings(levelNumber, compactThreads, blocksize, maxBytesForLevelBase,
             maxBytesForLevelMultiplier, level0FileNumCompactionTrigger,
-            targetFileSizeBase, targetFileSizeMultiplier);
+            targetFileSizeBase, targetFileSizeMultiplier, maxOpenFiles);
     RocksDbSettings.loggingSettings();
   }
 
@@ -1718,6 +1726,8 @@ public class Args extends CommonParameter {
   public static void logConfig() {
     CommonParameter parameter = CommonParameter.getInstance();
     logger.info("\n");
+    logger.info("************************ System info ************************");
+    logger.info("{}", Arch.withAll());
     logger.info("************************ Net config ************************");
     logger.info("P2P version: {}", parameter.getNodeP2pVersion());
     logger.info("LAN IP: {}", parameter.getNodeLanIp());
@@ -1760,23 +1770,6 @@ public class Args extends CommonParameter {
     logger.info("ShutDown blockCount : {}", parameter.getShutdownBlockCount());
     logger.info("***************************************************************");
     logger.info("\n");
-  }
-
-  public static void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {
-    PARAMETER.fullNodeAllowShieldedTransactionArgs = fullNodeAllowShieldedTransaction;
-  }
-
-  private static void witnessAddressCheck(Config config) {
-    if (config.hasPath(Constant.LOCAL_WITNESS_ACCOUNT_ADDRESS)) {
-      byte[] bytes = Commons
-          .decodeFromBase58Check(config.getString(Constant.LOCAL_WITNESS_ACCOUNT_ADDRESS));
-      if (bytes != null) {
-        localWitnesses.setWitnessAccountAddress(bytes);
-        logger.debug("Got localWitnessAccountAddress from config.conf");
-      } else {
-        logger.warn(IGNORE_WRONG_WITNESS_ADDRESS_FORMAT);
-      }
-    }
   }
 
   /**

@@ -235,5 +235,7 @@ public class SectionBloomStoreTest extends BaseTest {
     } catch (Exception e) {
       Assert.fail();
     }
+
+    sectionExecutor.shutdownNow();
   }
 }
