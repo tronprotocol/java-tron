@@ -53,6 +53,7 @@ public class BroadcastRelay {
     long startTime = System.currentTimeMillis();
     long batchStartTime = startTime;
     long batchCount = 0;
+    int blockNumber = 0;
     final int QPS_LIMIT = 100;
     final long BATCH_INTERVAL_MS = 1000; // 1 second
     
@@ -68,6 +69,11 @@ public class BroadcastRelay {
 
         TransactionCapsule trx = new TransactionCapsule(transaction);
         if (trx.getContractCount() == 0) {
+          blockNumber ++;
+          if (blockNumber < 30) { // 让一开始产块慢一点，等网络稳定
+            logger.info("stop 4 seconds to wait for network stable");
+            Thread.sleep(4000);
+          }
           continue;
         }
         // Skip VoteWitnessContract and WitnessUpdateContract transactions
@@ -136,8 +142,10 @@ public class BroadcastRelay {
 
     } catch (IOException e) {
       e.printStackTrace();
-    } 
-    
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+
     // Wait for all async tasks to complete before exiting
     try {
       logger.info("Waiting for all async tasks to complete...");
