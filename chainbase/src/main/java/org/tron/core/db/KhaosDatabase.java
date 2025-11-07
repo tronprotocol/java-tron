@@ -328,9 +328,9 @@ public class KhaosDatabase extends TronDatabase {
               numKblkMap.remove(k);
               v.forEach(b -> {
                 hashKblkMap.remove(b.id);
-                logger.info("Remove from khaosDatabase: {}.", b.id);
               });
             });
+            logger.info("Remove from khaosDatabase: {}.", minNumMap.size());
 
             return false;
           }

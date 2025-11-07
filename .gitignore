@@ -9,6 +9,7 @@ build
 
 # log
 logs
+./test_logs/
 consensus-logs
 
 # lombok
@@ -57,3 +58,4 @@ Wallet
 
 /framework/propPath
 .cache
+/test_logs/
