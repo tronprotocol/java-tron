@@ -14,8 +14,6 @@ import org.rocksdb.BlockBasedTableConfig;
 import org.rocksdb.BloomFilter;
 import org.rocksdb.ComparatorOptions;
 import org.rocksdb.Options;
-import org.rocksdb.RocksDB;
-import org.rocksdb.RocksDBException;
 import org.tron.common.arch.Arch;
 import org.tron.common.utils.MarketOrderPriceComparatorForLevelDB;
 import org.tron.common.utils.MarketOrderPriceComparatorForRocksDB;
@@ -88,7 +86,23 @@ public class DBUtils {
     return dbOptions;
   }
 
-  private static Options newDefaultRocksDbOptions(boolean forBulkLoad) {
+  /**
+   * Creates a new RocksDB Options.
+   *
+   * <p><b>CRITICAL:</b> Must be closed after use to prevent native memory leaks.
+   * Use try-with-resources.
+   *
+   * <pre>{@code
+   * try (Options options = newDefaultRocksDbOptions(false, name)) {
+   *     // do something
+   * }
+   * }</pre>
+   *
+   * @param forBulkLoad if true, optimizes for bulk loading
+   * @param name db name
+   * @return a new Options instance that must be closed
+   */
+  public static Options newDefaultRocksDbOptions(boolean forBulkLoad, String name) {
     Options options = new Options();
     options.setCreateIfMissing(true);
     options.setIncreaseParallelism(1);
@@ -111,35 +125,10 @@ public class DBUtils {
     if (forBulkLoad) {
       options.prepareForBulkLoad();
     }
+    if (MARKET_PAIR_PRICE_TO_ORDER.equalsIgnoreCase(name)) {
+      options.setComparator(new MarketOrderPriceComparatorForRocksDB(new ComparatorOptions()));
+    }
     return options;
-  }
-
-  public static RocksDB newRocksDb(Path db) throws RocksDBException {
-    try (Options options = newDefaultRocksDbOptions(false)) {
-      if (MARKET_PAIR_PRICE_TO_ORDER.equalsIgnoreCase(db.getFileName().toString())) {
-        options.setComparator(new MarketOrderPriceComparatorForRocksDB(new ComparatorOptions()));
-      }
-      return  RocksDB.open(options, db.toString());
-    }
-  }
-
-  public static RocksDB newRocksDbForBulkLoad(Path db) throws RocksDBException {
-    try (Options options = newDefaultRocksDbOptions(true)) {
-      if (MARKET_PAIR_PRICE_TO_ORDER.equalsIgnoreCase(db.getFileName().toString())) {
-        options.setComparator(new MarketOrderPriceComparatorForRocksDB(new ComparatorOptions()));
-      }
-      return  RocksDB.open(options, db.toString());
-    }
-  }
-
-
-  public static RocksDB newRocksDbReadOnly(Path db) throws RocksDBException {
-    try (Options options = newDefaultRocksDbOptions(false)) {
-      if (MARKET_PAIR_PRICE_TO_ORDER.equalsIgnoreCase(db.getFileName().toString())) {
-        options.setComparator(new MarketOrderPriceComparatorForRocksDB(new ComparatorOptions()));
-      }
-      return  RocksDB.openReadOnly(options, db.toString());
-    }
   }
 
   public static String simpleDecode(byte[] bytes) {

@@ -1,6 +1,7 @@
 package org.tron.core.config.args;
 
 import static java.lang.System.exit;
+import static org.fusesource.jansi.Ansi.ansi;
 import static org.tron.common.math.Maths.max;
 import static org.tron.common.math.Maths.min;
 import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
@@ -11,6 +12,7 @@ import static org.tron.core.Constant.MAX_PROPOSAL_EXPIRE_TIME;
 import static org.tron.core.Constant.MIN_PROPOSAL_EXPIRE_TIME;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCE_TIMEOUT_PERCENT;
 import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
+import static org.tron.core.exception.TronError.ErrCode.PARAMETER_INIT;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterDescription;
@@ -45,6 +47,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.fusesource.jansi.AnsiConsole;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.arch.Arch;
@@ -250,7 +253,6 @@ public class Args extends CommonParameter {
     PARAMETER.consensusLogicOptimization = 0;
     PARAMETER.allowTvmCancun = 0;
     PARAMETER.allowTvmBlob = 0;
-    PARAMETER.allowTvmSelfdestructRestriction = 0;
     PARAMETER.rpcMaxRstStream = 0;
     PARAMETER.rpcSecondsPerWindow = 0;
   }
@@ -348,7 +350,7 @@ public class Args extends CommonParameter {
 
   private static Map<String, String[]> getOptionGroup() {
     String[] tronOption = new String[] {"version", "help", "shellConfFileName", "logbackPath",
-        "eventSubscribe", "solidityNode", "keystore"};
+        "eventSubscribe", "solidityNode", "keystoreFactory"};
     String[] dbOption = new String[] {"outputDirectory"};
     String[] witnessOption = new String[] {"witness", "privateKey"};
     String[] vmOption = new String[] {"debug"};
@@ -375,8 +377,17 @@ public class Args extends CommonParameter {
    * set parameters.
    */
   public static void setParam(final String[] args, final String confFileName) {
-    Arch.throwIfUnsupportedJavaVersion();
-    clearParam(); // reset all parameters to avoid the influence in test
+    try {
+      Arch.throwIfUnsupportedJavaVersion();
+    } catch (UnsupportedOperationException e) {
+      AnsiConsole.systemInstall();
+      // To avoid confusion caused by silent execution when using -h or -v flags,
+      // errors are explicitly logged to the console in this context.
+      // Console output is not required for errors in other scenarios.
+      System.out.println(ansi().fgRed().a(e.getMessage()).reset());
+      AnsiConsole.systemUninstall();
+      throw new TronError(e, TronError.ErrCode.JDK_VERSION);
+    }
     JCommander.newBuilder().addObject(PARAMETER).build().parse(args);
     if (PARAMETER.version) {
       printVersion();
@@ -1272,26 +1283,21 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.COMMITTEE_ALLOW_TVM_BLOB) ? config
             .getInt(Constant.COMMITTEE_ALLOW_TVM_BLOB) : 0;
 
-    PARAMETER.allowTvmSelfdestructRestriction =
-        config.hasPath(Constant.COMMITTEE_ALLOW_TVM_SELFDESTRUCT_RESTRICTION) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_TVM_SELFDESTRUCT_RESTRICTION) : 0;
-
     logConfig();
   }
 
   private static long getProposalExpirationTime(final Config config) {
     if (config.hasPath(Constant.COMMITTEE_PROPOSAL_EXPIRE_TIME)) {
-      throw new IllegalArgumentException("It is not allowed to configure "
-          + "commit.proposalExpireTime in config.conf, please set the value in "
-          + "block.proposalExpireTime.");
+      throw new TronError("It is not allowed to configure committee.proposalExpireTime in "
+          + "config.conf, please set the value in block.proposalExpireTime.", PARAMETER_INIT);
     }
     if (config.hasPath(Constant.BLOCK_PROPOSAL_EXPIRE_TIME)) {
       long proposalExpireTime = config.getLong(Constant.BLOCK_PROPOSAL_EXPIRE_TIME);
       if (proposalExpireTime <= MIN_PROPOSAL_EXPIRE_TIME
           || proposalExpireTime >= MAX_PROPOSAL_EXPIRE_TIME) {
-        throw new IllegalArgumentException("The value[block.proposalExpireTime] is only allowed to "
+        throw new TronError("The value[block.proposalExpireTime] is only allowed to "
             + "be greater than " + MIN_PROPOSAL_EXPIRE_TIME + " and less than "
-            + MAX_PROPOSAL_EXPIRE_TIME + "!");
+            + MAX_PROPOSAL_EXPIRE_TIME + "!", PARAMETER_INIT);
       }
       return proposalExpireTime;
     } else {

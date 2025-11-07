@@ -163,6 +163,21 @@ public class RocksDbSettings {
     return cache;
   }
 
+  /**
+   * Creates a new RocksDB Options.
+   *
+   * <p><b>CRITICAL:</b> Must be closed after use to prevent native memory leaks.
+   * Use try-with-resources.
+   *
+   * <pre>{@code
+   * try (Options options = getOptionsByDbName(dbName)) {
+   *     // do something
+   * }
+   * }</pre>
+   *
+   * @param dbName  db name
+   * @return a new Options instance that must be closed
+   */
   public static Options getOptionsByDbName(String dbName) {
     RocksDbSettings settings = getSettings();
 

@@ -656,12 +656,13 @@ public class DbLite implements Callable<Integer> {
   private long getSecondBlock(String databaseDir) throws RocksDBException, IOException {
     long num = 0;
     DBInterface sourceBlockIndexDb = DbTool.getDB(databaseDir, BLOCK_INDEX_DB_NAME);
-    DBIterator iterator = sourceBlockIndexDb.iterator();
-    iterator.seek(ByteArray.fromLong(1));
-    if (iterator.hasNext()) {
-      num =  Longs.fromByteArray(iterator.getKey());
+    try (DBIterator iterator = sourceBlockIndexDb.iterator()) {
+      iterator.seek(ByteArray.fromLong(1));
+      if (iterator.hasNext()) {
+        num = Longs.fromByteArray(iterator.getKey());
+      }
+      return num;
     }
-    return num;
   }
 
   private DBInterface getCheckpointDb(String sourceDir) throws IOException, RocksDBException {

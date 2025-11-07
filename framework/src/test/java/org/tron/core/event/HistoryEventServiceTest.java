@@ -23,7 +23,7 @@ public class HistoryEventServiceTest {
 
   HistoryEventService historyEventService = new HistoryEventService();
 
-  @Test
+  @Test(timeout = 60_000)
   public void test() throws Exception {
     EventPluginLoader instance = mock(EventPluginLoader.class);
     Mockito.when(instance.isUseNativeQueue()).thenReturn(true);

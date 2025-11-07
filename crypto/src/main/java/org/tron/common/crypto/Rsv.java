@@ -19,7 +19,7 @@ public class Rsv {
     byte[] s = Arrays.copyOfRange(sign, 32, 64);
     byte v = sign[64];
     if (v < 27) {
-      v += (byte) 27; //revId -> v
+      v += 27; //revId -> v
     }
     return new Rsv(r, s, v);
   }

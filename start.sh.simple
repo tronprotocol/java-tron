@@ -31,12 +31,10 @@
 
 
 # adjust JVM start
-# Set the minimum and maximum heap size to 9G, adjust as needed
+# Set the minimum heap size to 9G, adjust as needed
 VM_XMS="9G"
 # Set the maximum heap size to 9G, adjust as needed
 VM_XMX="9G"
-# Set the maximum direct memory size to 1G, adjust as needed
-VM_MAX_DIRECT_MEMORY_SIZE="1G"
 # adjust JVM end
 
 FULL_NODE_JAR="FullNode.jar"
@@ -133,13 +131,14 @@ startService() {
   fi
 
   nohup "$JAVACMD" \
-    -Xms"$VM_XMS" -Xmx"$VM_XMX" -XX:ReservedCodeCacheSize=256m \
-    -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m \
-    -XX:MaxDirectMemorySize="$VM_MAX_DIRECT_MEMORY_SIZE" \
-    -Xloggc:gc.log -XX:+PrintGCDetails \
-    -XX:+UseG1GC \
-    -XX:MaxGCPauseMillis=40 \
-    -XX:InitiatingHeapOccupancyPercent=45 \
+    -Xms"$VM_XMS" -Xmx"$VM_XMX" \
+    -XX:+UseZGC \
+    -Xlog:gc,gc+heap:file=gc.log:time,tags,level:filecount=10,filesize=100M \
+    -XX:ReservedCodeCacheSize=256m \
+    -XX:+UseCodeCacheFlushing \
+    -XX:MetaspaceSize=256m \
+    -XX:MaxMetaspaceSize=512m \
+    -XX:MaxDirectMemorySize=1g \
     -XX:+HeapDumpOnOutOfMemoryError \
     -jar "$FULL_NODE_JAR" "${FULL_START_OPT[@]}" \
     >> start.log 2>&1 &

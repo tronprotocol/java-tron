@@ -147,7 +147,9 @@ public class RocksDbDataSourceImplTest {
     rows.clear();
     rows.put(key1.getBytes(), null);
     rows.put(key2.getBytes(), null);
-    dataSource.updateByBatch(rows, WriteOptionsWrapper.getInstance());
+    try (WriteOptionsWrapper options = WriteOptionsWrapper.getInstance()) {
+      dataSource.updateByBatch(rows, options);
+    }
     assertEquals(0, dataSource.allKeys().size());
 
     rows.clear();

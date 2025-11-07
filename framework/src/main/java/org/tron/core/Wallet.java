@@ -174,6 +174,7 @@ import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionContext;
 import org.tron.core.db2.core.Chainbase;
+import org.tron.core.db2.core.Chainbase.Cursor;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
@@ -784,8 +785,11 @@ public class Wallet {
       In the maintenance period, the VoteStores will be cleared.
       To avoid the race condition of VoteStores deleted but Witness vote counts not updated,
       return retry error.
+      Only apply to requests that rely on the latest block,
+      which means the normal fullnode requests with HEAD cursor.
     */
-    if (chainBaseManager.getDynamicPropertiesStore().getStateFlag() == 1) {
+    boolean isMaintenance = chainBaseManager.getDynamicPropertiesStore().getStateFlag() == 1;
+    if (isMaintenance && !Args.getInstance().isSolidityNode() && getCursor() == Cursor.HEAD) {
       String message =
           "Service temporarily unavailable during maintenance period. Please try again later.";
       throw new MaintenanceUnavailableException(message);
@@ -2771,37 +2775,7 @@ public class Wallet {
   }
 
   public TransactionInfoList getTransactionInfoByBlockNum(long blockNum) {
-    TransactionInfoList.Builder transactionInfoList = TransactionInfoList.newBuilder();
-
-    try {
-      TransactionRetCapsule result = dbManager.getTransactionRetStore()
-          .getTransactionInfoByBlockNum(ByteArray.fromLong(blockNum));
-
-      if (!Objects.isNull(result) && !Objects.isNull(result.getInstance())) {
-        result.getInstance().getTransactioninfoList().forEach(
-            transactionInfo -> transactionInfoList.addTransactionInfo(transactionInfo)
-        );
-      } else {
-        Block block = chainBaseManager.getBlockByNum(blockNum).getInstance();
-
-        if (block != null) {
-          List<Transaction> listTransaction = block.getTransactionsList();
-          for (Transaction transaction : listTransaction) {
-            TransactionInfoCapsule transactionInfoCapsule = dbManager.getTransactionHistoryStore()
-                .get(Sha256Hash.hash(CommonParameter.getInstance()
-                    .isECKeyCryptoEngine(), transaction.getRawData().toByteArray()));
-
-            if (transactionInfoCapsule != null) {
-              transactionInfoList.addTransactionInfo(transactionInfoCapsule.getInstance());
-            }
-          }
-        }
-      }
-    } catch (BadItemException | ItemNotFoundException e) {
-      logger.warn(e.getMessage());
-    }
-
-    return transactionInfoList.build();
+    return dbManager.getTransactionInfoByBlockNum(blockNum);
   }
 
   public NodeList listNodes() {

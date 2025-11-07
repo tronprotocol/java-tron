@@ -11,13 +11,16 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.io.IOException;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.FixMethodOrder;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.rules.Timeout;
 import org.junit.runners.MethodSorters;
 import org.tron.api.DatabaseGrpc;
 import org.tron.api.DatabaseGrpc.DatabaseBlockingStub;
@@ -125,6 +128,8 @@ public class RpcApiServicesTest {
   private static WalletSolidityBlockingStub blockingStubPBFT = null;
   @ClassRule
   public static TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @Rule
+  public Timeout timeout = new Timeout(30, TimeUnit.SECONDS);
   private static ByteString ownerAddress;
   private static ByteString sk;
   private static ByteString ask;

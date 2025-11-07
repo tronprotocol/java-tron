@@ -1,6 +1,7 @@
 package org.tron.core.services.http.solidity;
 
 import com.google.protobuf.ByteString;
+import java.io.IOException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +37,12 @@ public class GetTransactionInfoByIdSolidityServlet extends RateLimiterServlet {
         response.getWriter().println(JsonFormat.printToString(transInfo, visible));
       }
     } catch (Exception e) {
-      Util.processError(e, response);
+      logger.debug("Exception: {}", e.getMessage());
+      try {
+        response.getWriter().println(e.getMessage());
+      } catch (IOException ioe) {
+        logger.debug("IOException: {}", ioe.getMessage());
+      }
     }
   }
 
@@ -54,7 +60,12 @@ public class GetTransactionInfoByIdSolidityServlet extends RateLimiterServlet {
         response.getWriter().println(JsonFormat.printToString(transInfo, params.isVisible()));
       }
     } catch (Exception e) {
-      Util.processError(e, response);
+      logger.debug("Exception: {}", e.getMessage());
+      try {
+        response.getWriter().println(e.getMessage());
+      } catch (IOException ioe) {
+        logger.debug("IOException: {}", ioe.getMessage());
+      }
     }
   }
 

@@ -182,7 +182,7 @@ public class MortgageService {
       }
       long userVote = vote.getValue();
       double voteRate = (double) userVote / totalVote;
-      reward += (long) (voteRate * totalReward);
+      reward += voteRate * totalReward;
     }
     return reward;
   }

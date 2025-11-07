@@ -2,14 +2,19 @@ package org.tron.plugins.utils.db;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.rocksdb.ReadOptions;
 import org.rocksdb.RocksIterator;
 
 public class RockDBIterator implements DBIterator {
 
   private final RocksIterator iterator;
+  private final ReadOptions readOptions;
+  private final AtomicBoolean closed = new AtomicBoolean(false);
 
-  public RockDBIterator(RocksIterator iterator) {
+  public RockDBIterator(RocksIterator iterator, ReadOptions readOptions) {
     this.iterator = iterator;
+    this.readOptions = readOptions;
   }
 
   @Override
@@ -72,6 +77,9 @@ public class RockDBIterator implements DBIterator {
 
   @Override
   public void close() throws IOException {
-    iterator.close();
+    if (closed.compareAndSet(false, true)) {
+      readOptions.close();
+      iterator.close();
+    }
   }
 }

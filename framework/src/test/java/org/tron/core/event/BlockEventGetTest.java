@@ -19,6 +19,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
+import org.tron.api.GrpcAPI;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.EventPluginLoader;
@@ -233,6 +234,11 @@ public class BlockEventGetTest extends BlockGenerate {
 
     bc = new BlockCapsule(100, ByteString.empty(), 1, transactionList);
 
+    Manager manager = mock(Manager.class);
+    ReflectUtils.setFieldValue(blockEventGet, "manager", manager);
+    Mockito.when(manager.getTransactionInfoByBlockNum(1))
+            .thenReturn(GrpcAPI.TransactionInfoList.newBuilder().build());
+
     list = blockEventGet.getTransactionTriggers(bc, 1);
     Assert.assertEquals(1, list.size());
     Assert.assertEquals(100, list.get(0).getTransactionLogTrigger().getTimeStamp());
@@ -253,21 +259,14 @@ public class BlockEventGetTest extends BlockGenerate {
         .addContractResult(ByteString.copyFrom(ByteArray.fromHexString("112233")))
         .setReceipt(resourceBuild.build());
 
-    Manager manager = mock(Manager.class);
-    ReflectUtils.setFieldValue(blockEventGet, "manager", manager);
-
     ChainBaseManager chainBaseManager = mock(ChainBaseManager.class);
     Mockito.when(manager.getChainBaseManager()).thenReturn(chainBaseManager);
 
-    TransactionRetStore transactionRetStore = mock(TransactionRetStore.class);
-    Mockito.when(chainBaseManager.getTransactionRetStore()).thenReturn(transactionRetStore);
 
-    Protocol.TransactionRet transactionRet = Protocol.TransactionRet.newBuilder()
-        .addTransactioninfo(infoBuild.build()).build();
+    GrpcAPI.TransactionInfoList result = GrpcAPI.TransactionInfoList.newBuilder()
+        .addTransactionInfo(infoBuild.build()).build();
 
-    TransactionRetCapsule result = new TransactionRetCapsule(transactionRet.toByteArray());
-
-    Mockito.when(transactionRetStore.getTransactionInfoByBlockNum(ByteArray.fromLong(0)))
+    Mockito.when(manager.getTransactionInfoByBlockNum(0))
         .thenReturn(result);
 
     Protocol.Block block = Protocol.Block.newBuilder()
@@ -286,8 +285,8 @@ public class BlockEventGetTest extends BlockGenerate {
     Assert.assertEquals(2,
         list.get(0).getTransactionLogTrigger().getEnergyUsageTotal());
 
-    Mockito.when(transactionRetStore.getTransactionInfoByBlockNum(ByteArray.fromLong(0)))
-        .thenReturn(null);
+    Mockito.when(manager.getTransactionInfoByBlockNum(0))
+        .thenReturn(GrpcAPI.TransactionInfoList.newBuilder().build());
     list = blockEventGet.getTransactionTriggers(blockCapsule, 1);
     Assert.assertEquals(1, list.size());
     Assert.assertEquals(1,

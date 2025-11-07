@@ -8,8 +8,10 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.rules.Timeout;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.WalletGrpc;
 import org.tron.common.application.Application;
@@ -27,6 +29,9 @@ public class WalletApiTest {
 
   @ClassRule
   public static TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  @Rule
+  public Timeout timeout = new Timeout(30, TimeUnit.SECONDS);
 
   private static TronApplicationContext context;
   private static Application appT;

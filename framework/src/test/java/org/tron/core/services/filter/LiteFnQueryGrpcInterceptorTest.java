@@ -14,6 +14,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
+import org.junit.rules.Timeout;
 import org.tron.api.GrpcAPI;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
@@ -46,6 +47,9 @@ public class LiteFnQueryGrpcInterceptorTest {
 
   @ClassRule
   public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  @Rule
+  public Timeout timeout = new Timeout(30, TimeUnit.SECONDS);
 
   /**
    * init logic.

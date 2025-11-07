@@ -2957,7 +2957,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return Optional.ofNullable(getUnchecked(ALLOW_TVM_SELFDESTRUCT_RESTRICTION))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
-        .orElse(CommonParameter.getInstance().getAllowTvmSelfdestructRestriction());
+        .orElse(0L);
   }
 
   public void saveAllowTvmSelfdestructRestriction(long value) {

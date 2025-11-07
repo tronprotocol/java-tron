@@ -322,7 +322,5 @@ public class ParameterTest {
     assertEquals(1, parameter.getAllowEnergyAdjustment());
     parameter.setMaxCreateAccountTxSize(1000);
     assertEquals(1000, parameter.getMaxCreateAccountTxSize());
-    parameter.setAllowTvmSelfdestructRestriction(1);
-    assertEquals(1, parameter.getAllowTvmSelfdestructRestriction());
   }
 }

@@ -3,10 +3,13 @@ package org.tron.program;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 import org.tron.common.BaseTest;
 import org.tron.common.client.DatabaseGrpcClient;
 import org.tron.common.utils.PublicMethod;
@@ -27,6 +30,9 @@ public class SolidityNodeTest extends BaseTest {
   SolidityNodeHttpApiService solidityNodeHttpApiService;
   static int rpcPort = PublicMethod.chooseRandomPort();
   static int solidityHttpPort = PublicMethod.chooseRandomPort();
+
+  @Rule
+  public Timeout timeout = new Timeout(30, TimeUnit.SECONDS);
 
   static {
     Args.setParam(new String[] {"-d", dbPath(), "--solidity"}, Constant.TEST_CONF);

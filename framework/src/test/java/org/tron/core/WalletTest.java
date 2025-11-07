@@ -71,6 +71,7 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
+import org.tron.core.db2.core.Chainbase;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.MaintenanceUnavailableException;
@@ -867,6 +868,20 @@ public class WalletTest extends BaseTest {
       Assert.assertTrue("Should throw MaintenanceClearingException",
           e instanceof MaintenanceUnavailableException);
     }
+
+    try {
+      Args.getInstance().setSolidityNode(true);
+      wallet.getPaginatedNowWitnessList(0, 10);
+      Args.getInstance().setSolidityNode(false);
+
+      dbManager.setCursor(Chainbase.Cursor.SOLIDITY);
+      wallet.getPaginatedNowWitnessList(0, 10);
+      dbManager.setCursor(Chainbase.Cursor.HEAD);
+    } catch (Exception e) {
+      Assert.assertFalse("Should not throw MaintenanceClearingException",
+          e instanceof MaintenanceUnavailableException);
+    }
+
     dbManager.getChainBaseManager().getDynamicPropertiesStore().saveStateFlag(0);
   }
 

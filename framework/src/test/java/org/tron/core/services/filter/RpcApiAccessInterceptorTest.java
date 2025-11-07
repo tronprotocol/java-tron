@@ -19,8 +19,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.rules.Timeout;
 import org.tron.api.GrpcAPI.BlockExtention;
 import org.tron.api.GrpcAPI.BlockReq;
 import org.tron.api.GrpcAPI.BytesMessage;
@@ -52,6 +54,9 @@ public class RpcApiAccessInterceptorTest {
   private static WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubPBFT = null;
   @ClassRule
   public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  @Rule
+  public Timeout timeout = new Timeout(30, TimeUnit.SECONDS);
 
   /**
    * init logic.

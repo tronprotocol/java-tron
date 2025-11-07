@@ -181,7 +181,7 @@ public class DbTool {
   }
 
   public static RocksDBImpl openRocksDb(Path db, String name) throws RocksDBException {
-    RocksDBImpl rocksdb = new RocksDBImpl(DBUtils.newRocksDb(db), name);
+    RocksDBImpl rocksdb = new RocksDBImpl(db, name);
     tryInitEngineFile(db, ROCKSDB);
     return rocksdb;
   }

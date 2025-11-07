@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.UUID;
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 import org.rocksdb.RocksDBException;
@@ -77,11 +78,13 @@ public class DbTest {
         db.put(pairPriceKey1, "1".getBytes(StandardCharsets.UTF_8));
         db.put(pairPriceKey2, "2".getBytes(StandardCharsets.UTF_8));
         db.put(pairPriceKey3, "3".getBytes(StandardCharsets.UTF_8));
+        Assert.assertEquals(3, db.size());
       } else {
         for (int i = 0; i < 100; i++) {
           byte[] bytes = UUID.randomUUID().toString().getBytes();
           db.put(bytes, bytes);
         }
+        Assert.assertEquals(100, db.size());
       }
     }
   }

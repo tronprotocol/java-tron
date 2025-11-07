@@ -72,7 +72,7 @@ Make sure you operate on `Linux` or `MacOS` operating systems, other operating s
 ### ARM64
 64-bit version of `JDK 17` to be installed, other JDK versions are not supported yet.
 
-### build
+## Build
 Clone the repo and switch to the `master` branch
 
 ```bash
@@ -141,7 +141,7 @@ $ nohup java -Xms9G -Xmx9G -XX:ReservedCodeCacheSize=256m \
 ### ARM64 JDK 17
 ```bash
 $ nohup java -Xms9G -Xmx9G -XX:+UseZGC \
-             -Xlog:gc*:file=gc.log:time,uptime,level,tags:filecount=50,filesize=100M \
+             -Xlog:gc,gc+heap:file=gc.log:time,tags,level:filecount=10,filesize=100M \
              -XX:ReservedCodeCacheSize=256m \
              -XX:+UseCodeCacheFlushing \
              -XX:MetaspaceSize=256m \
@@ -181,7 +181,7 @@ $ nohup java -Xms9G -Xmx9G -XX:ReservedCodeCacheSize=256m \
 ### ARM64 JDK 17
 ```bash
 $ nohup java -Xms9G -Xmx9G -XX:+UseZGC \
-             -Xlog:gc*:file=gc.log:time,uptime,level,tags:filecount=50,filesize=100M \
+             -Xlog:gc,gc+heap:file=gc.log:time,tags,level:filecount=10,filesize=100M \
              -XX:ReservedCodeCacheSize=256m \
              -XX:+UseCodeCacheFlushing \
              -XX:MetaspaceSize=256m \

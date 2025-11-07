@@ -223,8 +223,8 @@ public class DbConvert implements Callable<Integer> {
      * @throws Exception RocksDBException
      */
     private void write(RocksDB rocks, org.rocksdb.WriteBatch batch) throws Exception {
-      try {
-        rocks.write(new org.rocksdb.WriteOptions(), batch);
+      try (org.rocksdb.WriteOptions writeOptions = new org.rocksdb.WriteOptions()) {
+        rocks.write(writeOptions, batch);
       } catch (RocksDBException e) {
         // retry
         if (maybeRetry(e)) {
@@ -259,7 +259,8 @@ public class DbConvert implements Callable<Integer> {
       JniDBFactory.pushMemoryPool(1024 * 1024);
       try (
           DB level = DBUtils.newLevelDb(srcDbPath);
-          RocksDB rocks = DBUtils.newRocksDbForBulkLoad(dstDbPath);
+          org.rocksdb.Options options = DBUtils.newDefaultRocksDbOptions(true, dbName);
+          RocksDB rocks = RocksDB.open(options, this.dstDbPath.toString());
           DBIterator levelIterator = level.iterator(
               new org.iq80.leveldb.ReadOptions().fillCache(false))) {
 
@@ -291,7 +292,8 @@ public class DbConvert implements Callable<Integer> {
       if (DBUtils.MARKET_PAIR_PRICE_TO_ORDER.equalsIgnoreCase(this.dbName)) {
         return;
       }
-      try (RocksDB rocks  = DBUtils.newRocksDb(this.dstDbPath)) {
+      try (org.rocksdb.Options options = DBUtils.newDefaultRocksDbOptions(false, dbName);
+          RocksDB rocks  = RocksDB.open(options, this.dstDbPath.toString())) {
         logger.info("compact database {} start", this.dbName);
         rocks.compactRange();
         logger.info("compact database {} end", this.dbName);
@@ -300,7 +302,8 @@ public class DbConvert implements Callable<Integer> {
 
     private boolean check() throws RocksDBException {
       try (
-          RocksDB rocks  = DBUtils.newRocksDbReadOnly(this.dstDbPath);
+          org.rocksdb.Options options = DBUtils.newDefaultRocksDbOptions(false, dbName);
+          RocksDB rocks  = RocksDB.openReadOnly(options, this.dstDbPath.toString());
           org.rocksdb.ReadOptions r = new org.rocksdb.ReadOptions().setFillCache(false);
           RocksIterator rocksIterator = rocks.newIterator(r)) {
 

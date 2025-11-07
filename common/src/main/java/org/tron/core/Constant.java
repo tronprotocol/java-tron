@@ -421,9 +421,6 @@ public class Constant {
 
   public static final String COMMITTEE_ALLOW_TVM_BLOB = "committee.allowTvmBlob";
 
-  public static final String COMMITTEE_ALLOW_TVM_SELFDESTRUCT_RESTRICTION =
-      "committee.allowTvmSelfdestructRestriction";
-
   public static final String COMMITTEE_PROPOSAL_EXPIRE_TIME = "committee.proposalExpireTime";
 
 }

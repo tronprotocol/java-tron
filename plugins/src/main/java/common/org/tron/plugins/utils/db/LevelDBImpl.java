@@ -40,8 +40,11 @@ public class LevelDBImpl implements DBInterface {
   }
 
   @Override
-  public long size() {
-    return Streams.stream(leveldb.iterator()).count();
+  public long size() throws IOException {
+    try (DBIterator iterator = this.iterator()) {
+      iterator.seekToFirst();
+      return Streams.stream(iterator).count();
+    }
   }
 
   @Override

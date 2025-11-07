@@ -27,7 +27,7 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
   protected DbSourceInter<byte[]> dbSource;
   @Getter
   private String dbName;
-  private WriteOptionsWrapper writeOptions = WriteOptionsWrapper.getInstance()
+  private final WriteOptionsWrapper writeOptions = WriteOptionsWrapper.getInstance()
           .sync(CommonParameter.getInstance().getStorage().isDbSync());
 
   @Autowired
@@ -77,6 +77,7 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
   public void close() {
     logger.info("******** Begin to close {}. ********", getName());
     try {
+      writeOptions.close();
       dbSource.closeDB();
     } catch (Exception e) {
       logger.warn("Failed to close {}.", getName(), e);
