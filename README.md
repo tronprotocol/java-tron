@@ -120,7 +120,7 @@ Full node has full historical data, it is the entry point into the TRON network,
 
 ### x86_64 JDK 1.8
 ```bash
-$ nohup java -Xms12G -Xmx12G -XX:ReservedCodeCacheSize=256m \
+$ nohup java -Xms9G -Xmx12G -XX:ReservedCodeCacheSize=256m \
              -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m \
              -XX:MaxDirectMemorySize=1G -XX:+PrintGCDetails \
              -XX:+PrintGCDateStamps  -Xloggc:gc.log \
@@ -160,7 +160,7 @@ then run the following command to start the node:
 
 ### x86_64 JDK 1.8
 ```bash
-$ nohup java -Xms12G -Xmx12G -XX:ReservedCodeCacheSize=256m \
+$ nohup java -Xms9G -Xmx12G -XX:ReservedCodeCacheSize=256m \
              -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m \
              -XX:MaxDirectMemorySize=1G -XX:+PrintGCDetails \
              -XX:+PrintGCDateStamps  -Xloggc:gc.log \
