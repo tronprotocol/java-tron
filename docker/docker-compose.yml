@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  java-tron:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        GIT_BRANCH: ${GIT_BRANCH:-master}
+        GIT_REPO: ${GIT_REPO:-https://github.com/jasonyic/java-tron.git}
+    image: java-tron:${TAG:-latest}
+    container_name: java-tron-node
+    restart: unless-stopped
+    ports:
+      - "8090:8090"   # HTTP API
+      - "50051:50051" # gRPC
+      - "18888:18888" # P2P
+    volumes:
+      # Persist blockchain data
+      - tron-data:/java-tron/output-directory
+      # Optional: mount custom config
+      # - ./config.conf:/java-tron/config/config.conf:ro
+    environment:
+      - JAVA_OPTS=${JAVA_OPTS:--Xmx6g -XX:+UseConcMarkSweepGC}
+    command: >
+      --witness
+      -c /java-tron/config/main_net_config.conf
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8090/wallet/getnowblock"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+
+volumes:
+  tron-data:
+    driver: local
+

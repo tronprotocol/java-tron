@@ -301,6 +301,7 @@ public class Constant {
   public static final String EVENT_SUBSCRIBE_CONTRACT_TOPIC = "event.subscribe.filter.contractTopic";
 
   public static final String NODE_DISCOVERY_EXTERNAL_IP = "node.discovery.external.ip";
+  public static final String NODE_DISCOVERY_ENABLE_IP_DETECT = "node.discovery.enableipdetect";
 
   public static final String NODE_BACKUP_PRIORITY = "node.backup.priority";
   public static final String NODE_BACKUP_PORT = "node.backup.port";

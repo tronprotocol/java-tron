@@ -187,14 +187,31 @@ public class TronNetService {
     config.setDisconnectionPolicyEnable(false);
     config.setNodeDetectEnable(parameter.isNodeDetectEnable());
     config.setDiscoverEnable(parameter.isNodeDiscoveryEnable());
-    if (StringUtils.isEmpty(config.getIp()) && hasIpv4Stack(NetUtil.getAllLocalAddress())) {
+    
+    // Apply IP configuration based on settings
+    if (StringUtils.isNotEmpty(parameter.getNodeExternalIp())) {
+      // If external IP is explicitly configured, use it as priority (override any auto-detected IP)
       config.setIp(parameter.getNodeExternalIp());
+      logger.info("Using configured external IP: {}", parameter.getNodeExternalIp());
+    } else if (!parameter.isNodeDiscoveryEnableIpDetect()) {
+      // If IP auto-detection is disabled and no external IP configured, clear any auto-detected IP
+      config.setIp(null);
+      logger.warn("IP auto-detection is disabled and no external IP configured");
+    } else if (StringUtils.isEmpty(config.getIp())) {
+      // IP detection is enabled but no IP was detected
+      logger.warn("IP auto-detection is enabled but no IP was detected in P2P config");
     }
-    if (StringUtils.isNotEmpty(config.getIpv6())) {
-      config.getActiveNodes().remove(new InetSocketAddress(config.getIpv6(), config.getPort()));
-    }
-    if (!parameter.nodeEnableIpv6) {
+    
+    // Handle IPv6
+    if (!parameter.nodeEnableIpv6 || !parameter.isNodeDiscoveryEnableIpDetect()) {
+      // Clear IPv6 if disabled or if IP detection is disabled
+      if (StringUtils.isNotEmpty(config.getIpv6())) {
+        config.getActiveNodes().remove(new InetSocketAddress(config.getIpv6(), config.getPort()));
+      }
       config.setIpv6(null);
+      if (!parameter.isNodeDiscoveryEnableIpDetect()) {
+        logger.info("IPv6 cleared due to IP detection being disabled");
+      }
     }
     logger.info("Local ipv4: {}", config.getIp());
     logger.info("Local ipv6: {}", config.getIpv6());

@@ -1,0 +1,40 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Build artifacts
+build/
+.gradle/
+*/build/
+*/.gradle/
+
+# But keep gradle wrapper needed for build
+!gradle/
+!gradlew
+!gradlew.bat
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+.eclipse/
+*.swp
+*.swo
+
+# Test files
+*/test/
+**/test/
+
+# Documentation
+*.md
+docs/
+
+# CI/CD
+.github/
+.travis.yml
+.gitlab-ci.yml
+
+# Output directory
+output-directory/
+

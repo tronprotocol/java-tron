@@ -144,6 +144,9 @@ public class CommonParameter {
   public boolean nodeDiscoveryEnable;
   @Getter
   @Setter
+  public boolean nodeDiscoveryEnableIpDetect = true;
+  @Getter
+  @Setter
   public boolean nodeDiscoveryPersist;
   @Getter
   @Setter

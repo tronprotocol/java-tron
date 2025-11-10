@@ -1,3 +1,22 @@
-./*
-!docker-entrypoint.sh
+# Only exclude heavy/unnecessary items for local builds
+# Keep all source code and build files
 
+# Exclude build outputs (will be rebuilt)
+build/
+*/build/
+output-directory/
+
+# Exclude git history (large)
+.git/
+
+# Exclude IDE files
+.idea/
+*.iml
+.vscode/
+.eclipse/
+
+# Exclude docs
+*.md
+docs/
+
+# Note: We KEEP gradlew, gradle/, and all source code!

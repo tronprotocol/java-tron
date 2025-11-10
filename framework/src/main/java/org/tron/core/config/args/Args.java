@@ -123,6 +123,7 @@ public class Args extends CommonParameter {
     localWitnesses = null;
     PARAMETER.needSyncCheck = false;
     PARAMETER.nodeDiscoveryEnable = false;
+    PARAMETER.nodeDiscoveryEnableIpDetect = true;
     PARAMETER.nodeDiscoveryPersist = false;
     PARAMETER.nodeEffectiveCheckEnable = false;
     PARAMETER.nodeConnectionTimeout = 2000;
@@ -609,6 +610,10 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.NODE_DISCOVERY_ENABLE)
             && config.getBoolean(Constant.NODE_DISCOVERY_ENABLE);
 
+    PARAMETER.nodeDiscoveryEnableIpDetect =
+        !config.hasPath(Constant.NODE_DISCOVERY_ENABLE_IP_DETECT)
+            || config.getBoolean(Constant.NODE_DISCOVERY_ENABLE_IP_DETECT);
+
     PARAMETER.nodeDiscoveryPersist =
         config.hasPath(Constant.NODE_DISCOVERY_PERSIST)
             && config.getBoolean(Constant.NODE_DISCOVERY_PERSIST);
@@ -687,7 +692,17 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.NODE_LISTEN_PORT)
             ? config.getInt(Constant.NODE_LISTEN_PORT) : 0;
 
-    PARAMETER.nodeLanIp = PARAMETER.p2pConfig.getLanIp();
+    // Only get LAN IP if IP detection is enabled
+    if (PARAMETER.nodeDiscoveryEnableIpDetect) {
+      PARAMETER.nodeLanIp = PARAMETER.p2pConfig.getLanIp();
+      logger.info("IP detection enabled, LAN IP: {}", PARAMETER.nodeLanIp);
+    } else {
+      // Clear any auto-detected IPs (IPv4 and IPv6) from P2pConfig when detection is disabled
+      logger.info("IP detection disabled, clearing all auto-detected IPs (IPv4 and IPv6)");
+      PARAMETER.p2pConfig.setIp(null);
+      PARAMETER.p2pConfig.setLanIp(null);
+      PARAMETER.p2pConfig.setIpv6(null);
+    }
     externalIp(config);
 
     PARAMETER.nodeP2pVersion =
@@ -1646,14 +1661,25 @@ public class Args extends CommonParameter {
     if (!config.hasPath(Constant.NODE_DISCOVERY_EXTERNAL_IP) || config
         .getString(Constant.NODE_DISCOVERY_EXTERNAL_IP).trim().isEmpty()) {
       if (PARAMETER.nodeExternalIp == null) {
-        logger.info("External IP wasn't set, using ipv4 from libp2p");
-        PARAMETER.nodeExternalIp = PARAMETER.p2pConfig.getIp();
-        if (StringUtils.isEmpty(PARAMETER.nodeExternalIp)) {
-          PARAMETER.nodeExternalIp = PARAMETER.nodeLanIp;
+        // Only auto-detect IP if enabled
+        if (PARAMETER.nodeDiscoveryEnableIpDetect) {
+          logger.info("External IP wasn't set, using ipv4 from libp2p");
+          PARAMETER.nodeExternalIp = PARAMETER.p2pConfig.getIp();
+          if (StringUtils.isEmpty(PARAMETER.nodeExternalIp)) {
+            PARAMETER.nodeExternalIp = PARAMETER.nodeLanIp;
+          }
+        } else {
+          logger.info("IP auto-detection is disabled, external IP not set");
         }
       }
     } else {
+      // External IP explicitly configured - use it for both external and LAN IP
       PARAMETER.nodeExternalIp = config.getString(Constant.NODE_DISCOVERY_EXTERNAL_IP).trim();
+      PARAMETER.nodeLanIp = PARAMETER.nodeExternalIp;
+      // Also update P2pConfig to use the external IP as LAN IP
+      PARAMETER.p2pConfig.setLanIp(PARAMETER.nodeExternalIp);
+      PARAMETER.p2pConfig.setIp(PARAMETER.nodeExternalIp);
+      logger.info("Using configured external IP: {} (also set as LAN IP in P2pConfig)", PARAMETER.nodeExternalIp);
     }
   }
 
