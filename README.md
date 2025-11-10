@@ -109,18 +109,10 @@ Get the mainnet configuration file: [config.conf](framework/src/main/resources/c
 
 ## Hardware Requirements
 
-Minimum:
-
-- CPU with 8 cores
-- 16GB RAM
-- 3TB free storage space to sync the Mainnet
-
-Recommended:
-
-- CPU with 16+ cores(32+ cores for a super representative)
-- 32GB+ RAM(64GB+ for a super representative)
-- High Performance SSD with at least 4TB free space
-- 100+ MB/s download Internet service
+| Tier | CPU | RAM | Storage | Network |
+|------|-----|-----|---------|---------|
+| Minimum | 8 cores | 16 GB | 200 GB (snapshot)<br>3 TB (full sync on Mainnet) | ≥ 5 MB/s download |
+| Recommended | 16+ cores<br>32+ cores (Super Representative) | 32 GB+<br>64 GB+ (Super Representative) | High-performance SSD<br>≥ 4 TB free | ≥ 100 MB/s download |
 
 ## Running a full node for mainnet
 
@@ -128,11 +120,11 @@ Full node has full historical data, it is the entry point into the TRON network,
 
 ### x86_64 JDK 1.8
 ```bash
-$ nohup java -Xms9G -Xmx9G -XX:ReservedCodeCacheSize=256m \
+$ nohup java -Xms12G -Xmx12G -XX:ReservedCodeCacheSize=256m \
              -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m \
              -XX:MaxDirectMemorySize=1G -XX:+PrintGCDetails \
              -XX:+PrintGCDateStamps  -Xloggc:gc.log \
-             -XX:+UseConcMarkSweepGC -XX:NewRatio=2 \
+             -XX:+UseConcMarkSweepGC -XX:NewRatio=3 \
              -XX:+CMSScavengeBeforeRemark -XX:+ParallelRefProcEnabled \
              -XX:+HeapDumpOnOutOfMemoryError \
              -XX:+UseCMSInitiatingOccupancyOnly  -XX:CMSInitiatingOccupancyFraction=70 \
@@ -168,11 +160,11 @@ then run the following command to start the node:
 
 ### x86_64 JDK 1.8
 ```bash
-$ nohup java -Xms9G -Xmx9G -XX:ReservedCodeCacheSize=256m \
+$ nohup java -Xms12G -Xmx12G -XX:ReservedCodeCacheSize=256m \
              -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m \
              -XX:MaxDirectMemorySize=1G -XX:+PrintGCDetails \
              -XX:+PrintGCDateStamps  -Xloggc:gc.log \
-             -XX:+UseConcMarkSweepGC -XX:NewRatio=2 \
+             -XX:+UseConcMarkSweepGC -XX:NewRatio=3 \
              -XX:+CMSScavengeBeforeRemark -XX:+ParallelRefProcEnabled \
              -XX:+HeapDumpOnOutOfMemoryError \
              -XX:+UseCMSInitiatingOccupancyOnly  -XX:CMSInitiatingOccupancyFraction=70 \
