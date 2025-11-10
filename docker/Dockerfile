@@ -2,7 +2,7 @@
 # Stage 1: Build stage with full JDK and build tools
 FROM eclipse-temurin:8-jdk-jammy AS builder
 
-ARG GIT_BRANCH=release
+ARG GIT_BRANCH=staking-release
 ARG GIT_REPO=https://github.com/jasonyic/java-tron.git
 
 ENV BUILD_DIR="/build"
