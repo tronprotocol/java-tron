@@ -112,7 +112,7 @@ Get the mainnet configuration file: [config.conf](framework/src/main/resources/c
 | Tier        | CPU                                           | RAM                                      | Storage                                                                 | Network               |
 |-------------|-----------------------------------------------|------------------------------------------|-------------------------------------------------------------------------|-----------------------|
 | Minimum     | 8 cores                                       | 16 GB                                    | 200 GB ([Lite FullNode](https://tronprotocol.github.io/documentation-en/using_javatron/litefullnode/#lite-fullnode))<br>3 TB (Full sync on Mainnet) | ≥ 5 MB/s download     |
-| Recommended | 16+ cores<br>32+ cores (Super Representative) | 32 GB+<br>64 GB+ (Super Representative) | High-performance SSD<br>≥ 4 TB free                                     | ≥ 100 MB/s download   |
+| Recommended | 16+ cores<br>32+ cores (Super Representative) | 32 GB+<br>64 GB+ (Super Representative) | High-performance SSD<br>≥ 4 TB free                                     | ≥ 50 MB/s download   |
 
 ## Running a full node for mainnet
 
