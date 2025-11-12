@@ -109,10 +109,12 @@ Get the mainnet configuration file: [config.conf](framework/src/main/resources/c
 
 ## Hardware Requirements
 
-| Tier        | CPU                                           | RAM                                      | Storage                                                                 | Network               |
-|-------------|-----------------------------------------------|------------------------------------------|-------------------------------------------------------------------------|-----------------------|
-| Minimum     | 8 cores                                       | 16 GB                                    | 200 GB ([Lite FullNode](https://tronprotocol.github.io/documentation-en/using_javatron/litefullnode/#lite-fullnode))<br>3 TB (Full sync on Mainnet) | ≥ 5 MB/s download     |
-| Recommended | 16+ cores<br>32+ cores (Super Representative) | 32 GB+<br>64 GB+ (Super Representative) | High-performance SSD<br>≥ 4 TB free                                     | ≥ 50 MB/s download   |
+| Deployment Tier | CPU Cores | Memory | Storage | Network Downstream |
+|-----------------|-----------|--------|---------|--------------------|
+| FullNode (Minimum) | 8 | 16 GB | 200 GB ([Lite](https://tronprotocol.github.io/documentation-en/using_javatron/litefullnode/#lite-fullnode)) | ≥ 5 MB/s |
+| FullNode (Stable)  | 8 | 32 GB | 200 GB ([Lite](https://tronprotocol.github.io/documentation-en/using_javatron/litefullnode/#lite-fullnode))<br>3.5 TB (Full Sync) | ≥ 5 MB/s |
+| FullNode (Recommended) | 16+ | 32 GB+ | High-performance SSD<br>≥ 4 TB available | ≥ 50 MB/s |
+| Super Representative | 32+ | 64 GB+ | High-performance SSD<br>≥ 4 TB available | ≥ 50 MB/s |
 
 ## Running a full node for mainnet
 
@@ -132,7 +134,7 @@ $ nohup java -Xms9G -Xmx12G -XX:ReservedCodeCacheSize=256m \
 ```
 ### ARM64 JDK 17
 ```bash
-$ nohup java -Xms9G -Xmx9G -XX:+UseZGC \
+$ nohup java -Xmx9G -XX:+UseZGC \
              -Xlog:gc,gc+heap:file=gc.log:time,tags,level:filecount=10,filesize=100M \
              -XX:ReservedCodeCacheSize=256m \
              -XX:+UseCodeCacheFlushing \
@@ -142,7 +144,9 @@ $ nohup java -Xms9G -Xmx9G -XX:+UseZGC \
              -XX:+HeapDumpOnOutOfMemoryError \
              -jar FullNode.jar -c main_net_config.conf >> start.log 2>&1 &
 ```
-
+> **Memory Tuning Note:**  
+> The `-Xmx9G` heap size is optimized for nodes deployed on machines equipped with 16 GB of RAM.  
+> When operating on servers with **≥ 32 GB** of RAM, increasing the maximum heap to `-Xmx12G` is recommended to improve GC behavior and overall throughput.
 
 ## Running a super representative node for mainnet
 
