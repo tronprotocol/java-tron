@@ -132,6 +132,9 @@ $ nohup java -Xms9G -Xmx12G -XX:ReservedCodeCacheSize=256m \
              -XX:+UseCMSInitiatingOccupancyOnly  -XX:CMSInitiatingOccupancyFraction=70 \
              -jar FullNode.jar -c main_net_config.conf >> start.log 2>&1 &
 ```
+The `-Xms9G -Xmx12G` heap configuration is optimized for FullNode deployments on servers equipped with 16 GB RAM and using LevelDB.  
+For servers with **≥ 32 GB** RAM, it is recommended to increase `-Xmx` to **40 % of total system RAM** for improved GC behavior and throughput.
+
 ### ARM64 JDK 17
 ```bash
 $ nohup java -Xmx9G -XX:+UseZGC \
@@ -145,8 +148,8 @@ $ nohup java -Xmx9G -XX:+UseZGC \
              -jar FullNode.jar -c main_net_config.conf >> start.log 2>&1 &
 ```
 > **Memory Tuning Note:**  
-> The `-Xmx9G` heap size is optimized for nodes deployed on machines equipped with 16 GB of RAM.  
-> When operating on servers with **≥ 32 GB** of RAM, increasing the maximum heap to `-Xmx12G` is recommended to improve GC behavior and overall throughput.
+The `-Xmx9G` heap size is optimized for fullnode deployed on servers with 16 GB RAM with ARM64 architecture.  
+On servers with **≥ 32 GB** RAM, increase `-Xmx` to **12 GB** or **40 % of system RAM** for improved GC behavior and throughput.
 
 ## Running a super representative node for mainnet
 
