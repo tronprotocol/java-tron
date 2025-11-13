@@ -67,7 +67,7 @@ Make sure you operate on `Linux` or `MacOS` operating systems, other operating s
 ## Architecture
 
 ### x86_64
-64-bit version of `Oracle JDK 1.8` to be installed, other JDK versions are not supported yet.
+64-bit version of `Oracle JDK 8` to be installed, other JDK versions are not supported yet.
 
 ### ARM64
 64-bit version of `JDK 17` to be installed, other JDK versions are not supported yet.
@@ -163,7 +163,7 @@ Fill in the private key of a super representative address into the `localwitness
 
 then run the following command to start the node:
 
-### x86_64 JDK 1.8
+### x86_64 JDK 8
 ```bash
 $ nohup java -Xms9G -Xmx12G -XX:ReservedCodeCacheSize=256m \
              -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m \
@@ -190,7 +190,7 @@ $ nohup java -Xms9G -Xmx9G -XX:+UseZGC \
 
 ## Quick Start Tool
 
-### x86_64 JDK 1.8
+### x86_64 JDK 8
 An easier way to build and run java-tron is to use `start.sh`. `start.sh` is a quick start script written in the Shell language. You can use it to build and run java-tron quickly and easily.
 
 Here are some common use cases of the scripting tool
