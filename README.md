@@ -109,18 +109,18 @@ Get the mainnet configuration file: [config.conf](framework/src/main/resources/c
 
 ## Hardware Requirements
 
-| Deployment Tier | CPU Cores | Memory | Storage | Network Downstream |
-|-----------------|-----------|--------|---------|--------------------|
-| FullNode (Minimum) | 8 | 16 GB | 200 GB ([Lite](https://tronprotocol.github.io/documentation-en/using_javatron/litefullnode/#lite-fullnode)) | ≥ 5 MB/s |
+| Deployment Tier | CPU Cores | Memory | High-performance SSD Storage    | Network Downstream |
+|-----------------|-----------|--------|----------------------------------|--------------------|
+| FullNode (Minimum) | 8 | 16 GB | 200 GB ([Lite](https://tronprotocol.github.io/documentation-en/using_javatron/litefullnode/#lite-fullnode))                  | ≥ 5 MB/s |
 | FullNode (Stable)  | 8 | 32 GB | 200 GB ([Lite](https://tronprotocol.github.io/documentation-en/using_javatron/litefullnode/#lite-fullnode))<br>3.5 TB (Full Sync) | ≥ 5 MB/s |
-| FullNode (Recommended) | 16+ | 32 GB+ | High-performance SSD<br>≥ 4 TB available | ≥ 50 MB/s |
-| Super Representative | 32+ | 64 GB+ | High-performance SSD<br>≥ 4 TB available | ≥ 50 MB/s |
+| FullNode (Recommended) | 16+ | 32 GB+ | 4 TB         | ≥ 50 MB/s |
+| Super Representative | 32+ | 64 GB+ | 4 TB              | ≥ 50 MB/s |
 
 ## Running a full node for mainnet
 
 Full node has full historical data, it is the entry point into the TRON network, it can be used by other processes as a gateway into the TRON network via HTTP and GRPC endpoints. You can interact with the TRON network through full node：transfer assets, deploy contracts, interact with contracts and so on. `-c` parameter specifies a configuration file to run a full node:
 
-### x86_64 JDK 1.8
+### x86_64 (JDK 8)
 ```bash
 $ nohup java -Xms9G -Xmx12G -XX:ReservedCodeCacheSize=256m \
              -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m \
@@ -132,10 +132,7 @@ $ nohup java -Xms9G -Xmx12G -XX:ReservedCodeCacheSize=256m \
              -XX:+UseCMSInitiatingOccupancyOnly  -XX:CMSInitiatingOccupancyFraction=70 \
              -jar FullNode.jar -c main_net_config.conf >> start.log 2>&1 &
 ```
-The `-Xms9G -Xmx12G` heap configuration is optimized for FullNode deployments on servers equipped with 16 GB RAM and using LevelDB.  
-For servers with **≥ 32 GB** RAM, it is recommended to increase `-Xmx` to **40 % of total system RAM** for improved GC behavior and throughput.
-
-### ARM64 JDK 17
+### ARM64 (JDK 17)
 ```bash
 $ nohup java -Xmx9G -XX:+UseZGC \
              -Xlog:gc,gc+heap:file=gc.log:time,tags,level:filecount=10,filesize=100M \
@@ -147,9 +144,10 @@ $ nohup java -Xmx9G -XX:+UseZGC \
              -XX:+HeapDumpOnOutOfMemoryError \
              -jar FullNode.jar -c main_net_config.conf >> start.log 2>&1 &
 ```
-> **Memory Tuning Note:**  
-The `-Xmx9G` heap size is optimized for fullnode deployed on servers with 16 GB RAM with ARM64 architecture.  
-On servers with **≥ 32 GB** RAM, increase `-Xmx` to **12 GB** or **40 % of system RAM** for improved GC behavior and throughput.
+
+> **Memory Tuning**
+> - For 16 GB RAM servers: JDK 8 use `-Xms9G -Xmx12G`; JDK 17 use `-Xmx9G`.
+> - For servers with ≥32 GB RAM, suggest setting the maximum heap size (`-Xmx`) to 40 % of total RAM.
 
 ## Running a super representative node for mainnet
 
