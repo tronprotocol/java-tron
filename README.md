@@ -163,7 +163,7 @@ Fill in the private key of a super representative address into the `localwitness
 
 then run the following command to start the node:
 
-### x86_64 JDK 8
+### x86_64 (JDK 8)
 ```bash
 $ nohup java -Xms9G -Xmx12G -XX:ReservedCodeCacheSize=256m \
              -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m \
@@ -175,7 +175,7 @@ $ nohup java -Xms9G -Xmx12G -XX:ReservedCodeCacheSize=256m \
              -XX:+UseCMSInitiatingOccupancyOnly  -XX:CMSInitiatingOccupancyFraction=70 \
              -jar FullNode.jar --witness -c main_net_config.conf >> start.log 2>&1 &
 ```
-### ARM64 JDK 17
+### ARM64 (JDK 17)
 ```bash
 $ nohup java -Xms9G -Xmx9G -XX:+UseZGC \
              -Xlog:gc,gc+heap:file=gc.log:time,tags,level:filecount=10,filesize=100M \
