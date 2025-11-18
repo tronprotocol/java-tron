@@ -190,7 +190,7 @@ $ nohup java -Xms9G -Xmx9G -XX:+UseZGC \
 
 ## Quick Start Tool
 
-### x86_64 JDK 8
+### x86_64 (JDK 8)
 An easier way to build and run java-tron is to use `start.sh`. `start.sh` is a quick start script written in the Shell language. You can use it to build and run java-tron quickly and easily.
 
 Here are some common use cases of the scripting tool
