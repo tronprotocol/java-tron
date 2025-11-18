@@ -201,7 +201,7 @@ Here are some common use cases of the scripting tool
 
 For more details, please refer to the tool [guide](./shell.md).
 
-### ARM64 JDK 17
+### ARM64 (JDK 17)
 You can refer to the [start.sh.simple](start.sh.simple).
 
 ```bash
