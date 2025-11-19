@@ -31,8 +31,6 @@
 
 
 # adjust JVM start
-# Set the minimum heap size to 9G, adjust as needed
-VM_XMS="9G"
 # Set the maximum heap size to 9G, adjust as needed
 VM_XMX="9G"
 # adjust JVM end
@@ -131,7 +129,7 @@ startService() {
   fi
 
   nohup "$JAVACMD" \
-    -Xms"$VM_XMS" -Xmx"$VM_XMX" \
+    -Xmx"$VM_XMX" \
     -XX:+UseZGC \
     -Xlog:gc,gc+heap:file=gc.log:time,tags,level:filecount=10,filesize=100M \
     -XX:ReservedCodeCacheSize=256m \

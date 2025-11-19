@@ -98,7 +98,7 @@ Make sure you operate on `Linux` or `MacOS` operating systems, other operating s
 ## Architecture
 
 ### X86_64
-Requires 64-bit version of `Oracle JDK 1.8` to be installed, other JDK versions are not supported yet.
+Requires 64-bit version of `Oracle JDK 8` to be installed, other JDK versions are not supported yet.
 
 ### ARM64
 Requires 64-bit version of `JDK 17` to be installed, other JDK versions are not supported yet.
