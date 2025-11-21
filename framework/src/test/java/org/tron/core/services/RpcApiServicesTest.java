@@ -11,6 +11,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.io.IOException;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -53,6 +54,7 @@ import org.tron.api.WalletSolidityGrpc.WalletSolidityBlockingStub;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
@@ -140,6 +142,9 @@ public class RpcApiServicesTest {
   private static ByteString ivk;
   private static ByteString d;
 
+  private static ExecutorService executorService;
+  private static final String executorName = "rpc-test-executor";
+
   @BeforeClass
   public static void init() throws IOException {
     Args.setParam(new String[] {"-d", temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
@@ -163,16 +168,22 @@ public class RpcApiServicesTest {
     String pBFTNode = String.format("%s:%d", Constant.LOCAL_HOST,
         getInstance().getRpcOnPBFTPort());
 
+    executorService = ExecutorServiceManager.newFixedThreadPool(
+        executorName, 3);
+
     channelFull = ManagedChannelBuilder.forTarget(fullNode)
         .usePlaintext()
+        .executor(executorService)
         .intercept(new TimeoutInterceptor(5000))
         .build();
     channelPBFT = ManagedChannelBuilder.forTarget(pBFTNode)
         .usePlaintext()
+        .executor(executorService)
         .intercept(new TimeoutInterceptor(5000))
         .build();
     channelSolidity = ManagedChannelBuilder.forTarget(solidityNode)
         .usePlaintext()
+        .executor(executorService)
         .intercept(new TimeoutInterceptor(5000))
         .build();
     context = new TronApplicationContext(DefaultConfig.class);
@@ -197,17 +208,33 @@ public class RpcApiServicesTest {
 
   @AfterClass
   public static void destroy() {
-    if (channelFull != null) {
-      channelFull.shutdownNow();
+    shutdownChannel(channelFull);
+    shutdownChannel(channelPBFT);
+    shutdownChannel(channelSolidity);
+
+    if (executorService != null) {
+      ExecutorServiceManager.shutdownAndAwaitTermination(
+          executorService, executorName);
+      executorService = null;
     }
-    if (channelPBFT != null) {
-      channelPBFT.shutdownNow();
-    }
-    if (channelSolidity != null) {
-      channelSolidity.shutdownNow();
-    }
+
     context.close();
     Args.clearParam();
+  }
+
+  private static void shutdownChannel(ManagedChannel channel) {
+    if (channel == null) {
+      return;
+    }
+    try {
+      channel.shutdown();
+      if (!channel.awaitTermination(5, TimeUnit.SECONDS)) {
+        channel.shutdownNow();
+      }
+    } catch (InterruptedException e) {
+      channel.shutdownNow();
+      Thread.currentThread().interrupt();
+    }
   }
 
   @Test
