@@ -16,6 +16,7 @@ import java.util.Set;
 import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -67,6 +68,13 @@ public class RelayServiceTest extends BaseTest {
   public static void init() {
     Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"},
             Constant.TEST_CONF);
+  }
+
+  @After
+  public void clearPeers() {
+    for (PeerConnection p : PeerManager.getPeers()) {
+      PeerManager.remove(p.getChannel());
+    }
   }
 
   @Test

@@ -8,49 +8,52 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.HashSet;
 import java.util.Set;
+import javax.annotation.Resource;
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
+import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
-import org.tron.common.application.TronApplicationContext;
+import org.springframework.context.ApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.utils.ReflectUtils;
-import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.net.P2pEventHandlerImpl;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
 import org.tron.core.net.service.effective.ResilienceService;
 import org.tron.p2p.connection.Channel;
 
-public class ResilienceServiceTest {
+public class ResilienceServiceTest extends BaseTest {
 
-  protected TronApplicationContext context;
+  @Resource
   private ResilienceService service;
-  private ChainBaseManager chainBaseManager;
 
-  @Rule
-  public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @Resource
+  private P2pEventHandlerImpl p2pEventHandler;
 
-  @Before
-  public void init() throws IOException {
-    Args.setParam(new String[] {"--output-directory",
-        temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-    chainBaseManager = context.getBean(ChainBaseManager.class);
-    service = context.getBean(ResilienceService.class);
+
+  @BeforeClass
+  public static void init() throws IOException {
+    Args.setParam(new String[] {"--output-directory", dbPath(), "--debug"}, Constant.TEST_CONF);
+  }
+
+  @After
+  public void clearPeers() {
+    for (PeerConnection p : PeerManager.getPeers()) {
+      PeerManager.remove(p.getChannel());
+    }
   }
 
   @Test
   public void testDisconnectRandom() {
     int maxConnection = 30;
     Assert.assertEquals(maxConnection, Args.getInstance().getMaxConnections());
-    clearPeers();
     Assert.assertEquals(0, PeerManager.getPeers().size());
 
+    ApplicationContext ctx = (ApplicationContext) ReflectUtils.getFieldObject(p2pEventHandler,
+        "ctx");
     for (int i = 0; i < maxConnection + 1; i++) {
       InetSocketAddress inetSocketAddress = new InetSocketAddress("201.0.0." + i, 10001);
       Channel c1 = spy(Channel.class);
@@ -59,7 +62,7 @@ public class ResilienceServiceTest {
       ReflectUtils.setFieldValue(c1, "ctx", spy(ChannelHandlerContext.class));
       Mockito.doNothing().when(c1).send((byte[]) any());
 
-      PeerManager.add(context, c1);
+      PeerManager.add(ctx, c1);
     }
     for (PeerConnection peer : PeerManager.getPeers()
         .subList(0, ResilienceService.minBroadcastPeerSize)) {
@@ -99,9 +102,10 @@ public class ResilienceServiceTest {
   public void testDisconnectLan() {
     int minConnection = 8;
     Assert.assertEquals(minConnection, Args.getInstance().getMinConnections());
-    clearPeers();
     Assert.assertEquals(0, PeerManager.getPeers().size());
 
+    ApplicationContext ctx = (ApplicationContext) ReflectUtils.getFieldObject(p2pEventHandler,
+        "ctx");
     for (int i = 0; i < 9; i++) {
       InetSocketAddress inetSocketAddress = new InetSocketAddress("201.0.0." + i, 10001);
       Channel c1 = spy(Channel.class);
@@ -111,7 +115,7 @@ public class ResilienceServiceTest {
       ReflectUtils.setFieldValue(c1, "ctx", spy(ChannelHandlerContext.class));
       Mockito.doNothing().when(c1).send((byte[]) any());
 
-      PeerManager.add(context, c1);
+      PeerManager.add(ctx, c1);
     }
     for (PeerConnection peer : PeerManager.getPeers()) {
       peer.setNeedSyncFromPeer(false);
@@ -154,10 +158,11 @@ public class ResilienceServiceTest {
   public void testDisconnectIsolated2() {
     int maxConnection = 30;
     Assert.assertEquals(maxConnection, Args.getInstance().getMaxConnections());
-    clearPeers();
     Assert.assertEquals(0, PeerManager.getPeers().size());
 
     int addSize = (int) (maxConnection * ResilienceService.retentionPercent) + 2; //26
+    ApplicationContext ctx = (ApplicationContext) ReflectUtils.getFieldObject(p2pEventHandler,
+        "ctx");
     for (int i = 0; i < addSize; i++) {
       InetSocketAddress inetSocketAddress = new InetSocketAddress("201.0.0." + i, 10001);
       Channel c1 = spy(Channel.class);
@@ -168,7 +173,7 @@ public class ResilienceServiceTest {
       ReflectUtils.setFieldValue(c1, "ctx", spy(ChannelHandlerContext.class));
       Mockito.doNothing().when(c1).send((byte[]) any());
 
-      PeerManager.add(context, c1);
+      PeerManager.add(ctx, c1);
     }
     PeerManager.getPeers().get(10).setNeedSyncFromUs(false);
     PeerManager.getPeers().get(10).setNeedSyncFromPeer(false);
@@ -189,17 +194,5 @@ public class ResilienceServiceTest {
         activeNodeSize + passiveSize);
     Assert.assertEquals((int) (maxConnection * ResilienceService.retentionPercent),
         PeerManager.getPeers().size());
-  }
-
-  private void clearPeers() {
-    for (PeerConnection p : PeerManager.getPeers()) {
-      PeerManager.remove(p.getChannel());
-    }
-  }
-
-  @After
-  public void destroy() {
-    Args.clearParam();
-    context.destroy();
   }
 }

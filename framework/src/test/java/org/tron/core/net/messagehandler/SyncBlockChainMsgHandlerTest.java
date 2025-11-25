@@ -24,6 +24,7 @@ import org.tron.core.exception.P2pException;
 import org.tron.core.net.message.sync.BlockInventoryMessage;
 import org.tron.core.net.message.sync.SyncBlockChainMessage;
 import org.tron.core.net.peer.PeerConnection;
+import org.tron.core.net.peer.PeerManager;
 import org.tron.p2p.connection.Channel;
 
 public class SyncBlockChainMsgHandlerTest {
@@ -109,6 +110,9 @@ public class SyncBlockChainMsgHandlerTest {
 
   @AfterClass
   public static void destroy() {
+    for (PeerConnection p : PeerManager.getPeers()) {
+      PeerManager.remove(p.getChannel());
+    }
     context.destroy();
     Args.clearParam();
   }

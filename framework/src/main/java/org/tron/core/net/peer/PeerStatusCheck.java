@@ -42,6 +42,9 @@ public class PeerStatusCheck {
 
     long now = System.currentTimeMillis();
 
+    if (tronNetDelegate == null) {
+      return;
+    }
     tronNetDelegate.getActivePeer().forEach(peer -> {
 
       boolean isDisconnected = false;

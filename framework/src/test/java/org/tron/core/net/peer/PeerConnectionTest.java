@@ -7,14 +7,18 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.tron.common.overlay.message.Message;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Pair;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.config.args.Args;
 import org.tron.core.net.message.adv.InventoryMessage;
 import org.tron.core.net.message.handshake.HelloMessage;
 import org.tron.core.net.message.keepalive.PingMessage;
@@ -25,6 +29,18 @@ import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol;
 
 public class PeerConnectionTest {
+
+  @BeforeClass
+  public static void initArgs() {
+    CommonParameter.getInstance().setRateLimiterSyncBlockChain(10);
+    CommonParameter.getInstance().setRateLimiterFetchInvData(10);
+    CommonParameter.getInstance().setRateLimiterDisconnect(10);
+  }
+
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+  }
 
   @Test
   public void testVariableDefaultValue() {

@@ -65,6 +65,9 @@ public class SyncServiceTest {
    */
   @After
   public void destroy() {
+    for (PeerConnection p : PeerManager.getPeers()) {
+      PeerManager.remove(p.getChannel());
+    }
     Args.clearParam();
     context.destroy();
   }

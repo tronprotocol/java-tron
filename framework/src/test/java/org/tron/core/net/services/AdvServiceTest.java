@@ -53,6 +53,9 @@ public class AdvServiceTest {
 
   @AfterClass
   public static void after() {
+    for (PeerConnection p : PeerManager.getPeers()) {
+      PeerManager.remove(p.getChannel());
+    }
     Args.clearParam();
     context.destroy();
   }
