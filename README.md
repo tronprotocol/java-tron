@@ -67,7 +67,7 @@ Make sure you operate on `Linux` or `MacOS` operating systems, other operating s
 ## Architecture
 
 ### x86_64
-64-bit version of `Oracle JDK 1.8` to be installed, other JDK versions are not supported yet.
+64-bit version of `Oracle JDK 8` to be installed, other JDK versions are not supported yet.
 
 ### ARM64
 64-bit version of `JDK 17` to be installed, other JDK versions are not supported yet.
@@ -98,7 +98,7 @@ Make sure you operate on `Linux` or `MacOS` operating systems, other operating s
 ## Architecture
 
 ### X86_64
-Requires 64-bit version of `Oracle JDK 1.8` to be installed, other JDK versions are not supported yet.
+Requires 64-bit version of `Oracle JDK 8` to be installed, other JDK versions are not supported yet.
 
 ### ARM64
 Requires 64-bit version of `JDK 17` to be installed, other JDK versions are not supported yet.
@@ -109,38 +109,32 @@ Get the mainnet configuration file: [config.conf](framework/src/main/resources/c
 
 ## Hardware Requirements
 
-Minimum:
-
-- CPU with 8 cores
-- 16GB RAM
-- 3TB free storage space to sync the Mainnet
-
-Recommended:
-
-- CPU with 16+ cores(32+ cores for a super representative)
-- 32GB+ RAM(64GB+ for a super representative)
-- High Performance SSD with at least 4TB free space
-- 100+ MB/s download Internet service
+| Deployment Tier | CPU Cores | Memory | High-performance SSD Storage    | Network Downstream |
+|-----------------|-----------|--------|----------------------------------|--------------------|
+| FullNode (Minimum) | 8 | 16 GB | 200 GB ([Lite](https://tronprotocol.github.io/documentation-en/using_javatron/litefullnode/#lite-fullnode))                  | ≥ 5 MB/s |
+| FullNode (Stable)  | 8 | 32 GB | 200 GB ([Lite](https://tronprotocol.github.io/documentation-en/using_javatron/litefullnode/#lite-fullnode))<br>3.5 TB (Full Sync) | ≥ 5 MB/s |
+| FullNode (Recommended) | 16+ | 32 GB+ | 4 TB         | ≥ 50 MB/s |
+| Super Representative | 32+ | 64 GB+ | 4 TB              | ≥ 50 MB/s |
 
 ## Running a full node for mainnet
 
 Full node has full historical data, it is the entry point into the TRON network, it can be used by other processes as a gateway into the TRON network via HTTP and GRPC endpoints. You can interact with the TRON network through full node：transfer assets, deploy contracts, interact with contracts and so on. `-c` parameter specifies a configuration file to run a full node:
 
-### x86_64 JDK 1.8
+### x86_64 (JDK 8)
 ```bash
-$ nohup java -Xms9G -Xmx9G -XX:ReservedCodeCacheSize=256m \
+$ nohup java -Xms9G -Xmx12G -XX:ReservedCodeCacheSize=256m \
              -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m \
              -XX:MaxDirectMemorySize=1G -XX:+PrintGCDetails \
              -XX:+PrintGCDateStamps  -Xloggc:gc.log \
-             -XX:+UseConcMarkSweepGC -XX:NewRatio=2 \
+             -XX:+UseConcMarkSweepGC -XX:NewRatio=3 \
              -XX:+CMSScavengeBeforeRemark -XX:+ParallelRefProcEnabled \
              -XX:+HeapDumpOnOutOfMemoryError \
              -XX:+UseCMSInitiatingOccupancyOnly  -XX:CMSInitiatingOccupancyFraction=70 \
              -jar FullNode.jar -c main_net_config.conf >> start.log 2>&1 &
 ```
-### ARM64 JDK 17
+### ARM64 (JDK 17)
 ```bash
-$ nohup java -Xms9G -Xmx9G -XX:+UseZGC \
+$ nohup java -Xmx9G -XX:+UseZGC \
              -Xlog:gc,gc+heap:file=gc.log:time,tags,level:filecount=10,filesize=100M \
              -XX:ReservedCodeCacheSize=256m \
              -XX:+UseCodeCacheFlushing \
@@ -151,6 +145,9 @@ $ nohup java -Xms9G -Xmx9G -XX:+UseZGC \
              -jar FullNode.jar -c main_net_config.conf >> start.log 2>&1 &
 ```
 
+> **Memory Tuning**
+> - For 16 GB RAM servers: JDK 8 use `-Xms9G -Xmx12G`; JDK 17 use `-Xmx9G`.
+> - For servers with ≥32 GB RAM, suggest setting the maximum heap size (`-Xmx`) to 40 % of total RAM.
 
 ## Running a super representative node for mainnet
 
@@ -166,19 +163,19 @@ Fill in the private key of a super representative address into the `localwitness
 
 then run the following command to start the node:
 
-### x86_64 JDK 1.8
+### x86_64 (JDK 8)
 ```bash
-$ nohup java -Xms9G -Xmx9G -XX:ReservedCodeCacheSize=256m \
+$ nohup java -Xms9G -Xmx12G -XX:ReservedCodeCacheSize=256m \
              -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m \
              -XX:MaxDirectMemorySize=1G -XX:+PrintGCDetails \
              -XX:+PrintGCDateStamps  -Xloggc:gc.log \
-             -XX:+UseConcMarkSweepGC -XX:NewRatio=2 \
+             -XX:+UseConcMarkSweepGC -XX:NewRatio=3 \
              -XX:+CMSScavengeBeforeRemark -XX:+ParallelRefProcEnabled \
              -XX:+HeapDumpOnOutOfMemoryError \
              -XX:+UseCMSInitiatingOccupancyOnly  -XX:CMSInitiatingOccupancyFraction=70 \
              -jar FullNode.jar --witness -c main_net_config.conf >> start.log 2>&1 &
 ```
-### ARM64 JDK 17
+### ARM64 (JDK 17)
 ```bash
 $ nohup java -Xms9G -Xmx9G -XX:+UseZGC \
              -Xlog:gc,gc+heap:file=gc.log:time,tags,level:filecount=10,filesize=100M \
@@ -193,7 +190,7 @@ $ nohup java -Xms9G -Xmx9G -XX:+UseZGC \
 
 ## Quick Start Tool
 
-### x86_64 JDK 1.8
+### x86_64 (JDK 8)
 An easier way to build and run java-tron is to use `start.sh`. `start.sh` is a quick start script written in the Shell language. You can use it to build and run java-tron quickly and easily.
 
 Here are some common use cases of the scripting tool
@@ -204,7 +201,7 @@ Here are some common use cases of the scripting tool
 
 For more details, please refer to the tool [guide](./shell.md).
 
-### ARM64 JDK 17
+### ARM64 (JDK 17)
 You can refer to the [start.sh.simple](start.sh.simple).
 
 ```bash
