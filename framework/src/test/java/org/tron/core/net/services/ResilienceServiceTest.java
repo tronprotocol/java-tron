@@ -41,9 +41,7 @@ public class ResilienceServiceTest extends BaseTest {
 
   @After
   public void clearPeers() {
-    for (PeerConnection p : PeerManager.getPeers()) {
-      PeerManager.remove(p.getChannel());
-    }
+    closePeer();
   }
 
   @Test

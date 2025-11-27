@@ -9,49 +9,61 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.jsonrpc.types.TransactionResult;
 import org.tron.protos.Protocol;
+import org.tron.protos.contract.SmartContractOuterClass;
 
 public class TransactionResultTest extends BaseTest {
 
   @Resource
   private Wallet wallet;
 
+  private static final String OWNER_ADDRESS = "41548794500882809695a8a687866e76d4271a1abc";
+  private static final String CONTRACT_ADDRESS = "A0B4750E2CD76E19DCA331BF5D089B71C3C2798548";
+
   static {
-    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-d", dbPath()}, Constant.TEST_CONF);
   }
 
   @Test
   public void testBuildTransactionResultWithBlock() {
-    Protocol.Transaction.raw.Builder raw = Protocol.Transaction.raw.newBuilder().addContract(
-        Protocol.Transaction.Contract.newBuilder().setType(
-            Protocol.Transaction.Contract.ContractType.TriggerSmartContract));
-    Protocol.Transaction transaction = Protocol.Transaction.newBuilder().setRawData(raw).build();
+    SmartContractOuterClass.TriggerSmartContract.Builder builder2 =
+        SmartContractOuterClass.TriggerSmartContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setContractAddress(ByteString.copyFrom(ByteArray.fromHexString(CONTRACT_ADDRESS)));
+    TransactionCapsule transactionCapsule = new TransactionCapsule(builder2.build(),
+        Protocol.Transaction.Contract.ContractType.TriggerSmartContract);
+    Protocol.Transaction transaction = transactionCapsule.getInstance();
     BlockCapsule blockCapsule = new BlockCapsule(Protocol.Block.newBuilder().setBlockHeader(
         Protocol.BlockHeader.newBuilder().setRawData(Protocol.BlockHeader.raw.newBuilder()
             .setParentHash(ByteString.copyFrom(ByteArray.fromHexString(
                 "0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b82")))
             .setNumber(9))).addTransactions(transaction).build());
 
-    TransactionResult transactionResult = new TransactionResult(blockCapsule,0, transaction,
-        100,1, wallet);
+    TransactionResult transactionResult = new TransactionResult(blockCapsule, 0, transaction,
+        100, 1, wallet);
     Assert.assertEquals(transactionResult.getBlockNumber(), "0x9");
-    Assert.assertEquals(transactionResult.getHash(),
-        "0xdebef90d0a8077620711b1b5af2b702665887ddcbf80868108026e1ab5e0bfb7");
+    Assert.assertEquals("0x5691531881bc44adbc722060d85fdf29265823db8e884b0d104fcfbba253cf11",
+        transactionResult.getHash());
     Assert.assertEquals(transactionResult.getGasPrice(), "0x1");
     Assert.assertEquals(transactionResult.getGas(), "0x64");
   }
 
   @Test
   public void testBuildTransactionResult() {
-    Protocol.Transaction.raw.Builder raw = Protocol.Transaction.raw.newBuilder().addContract(
-        Protocol.Transaction.Contract.newBuilder().setType(
-            Protocol.Transaction.Contract.ContractType.TriggerSmartContract));
-    Protocol.Transaction transaction = Protocol.Transaction.newBuilder().setRawData(raw).build();
-    TransactionResult transactionResult = new TransactionResult(transaction, wallet);
-    Assert.assertEquals(transactionResult.getHash(),
-        "0xdebef90d0a8077620711b1b5af2b702665887ddcbf80868108026e1ab5e0bfb7");
+    SmartContractOuterClass.TriggerSmartContract.Builder builder2 =
+        SmartContractOuterClass.TriggerSmartContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setContractAddress(ByteString.copyFrom(ByteArray.fromHexString(CONTRACT_ADDRESS)));
+    TransactionCapsule transactionCapsule = new TransactionCapsule(builder2.build(),
+        Protocol.Transaction.Contract.ContractType.TriggerSmartContract);
+
+    TransactionResult transactionResult =
+        new TransactionResult(transactionCapsule.getInstance(), wallet);
+    Assert.assertEquals("0x5691531881bc44adbc722060d85fdf29265823db8e884b0d104fcfbba253cf11",
+        transactionResult.getHash());
     Assert.assertEquals(transactionResult.getGasPrice(), "0x");
     Assert.assertEquals(transactionResult.getNonce(), "0x0000000000000000");
   }

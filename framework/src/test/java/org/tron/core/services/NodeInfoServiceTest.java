@@ -20,7 +20,6 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.P2pEventHandlerImpl;
 import org.tron.core.net.TronNetService;
-import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
 import org.tron.p2p.P2pConfig;
 import org.tron.p2p.connection.Channel;
@@ -48,9 +47,7 @@ public class NodeInfoServiceTest extends BaseTest {
 
   @After
   public void clearPeers() {
-    for (PeerConnection p : PeerManager.getPeers()) {
-      PeerManager.remove(p.getChannel());
-    }
+    closePeer();
   }
 
   @Test
