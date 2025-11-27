@@ -1,78 +1,127 @@
+// Apply the Java plugin to enable standard Java project features.
 plugins {
     id 'java'
 }
 
+// Project version and compatibility settings.
 version '1.0.0'
 
+// Target Java compatibility (consider upgrading to 11, 17, or 21).
 sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
-// Dependency versions
-// ---------------------------------------
-def leveldbVersion = "1.8"
-// --------------------------------------
+// Centralize all dependency versions for easy maintenance (DRY principle).
+ext.versions = [
+    // Core Libraries
+    jacksonDatabind   : '2.13.4.2',
+    javaUtil          : '1.8.0',
+    httpAsyncClient   : '4.1.1',
+    commonsCodec      : '1.11',
+    jCommander        : '1.78',
+    typesafeConfig    : '1.3.2',
+    // Database and Persistence
+    rocksdbjni        : '5.15.10',
+    // Monitoring and Metrics
+    prometheus        : '0.15.0',
+    // AOP
+    aspectj           : '1.8.13',
+    // Networking
+    libp2p            : '2.2.5',
+    // Conditional (LevelDB)
+    leveldbDefault    : '1.8', // Used for Linux/Mac
+    leveldbWindows    : '1.18.3' // Used for Windows
+]
 
-static def isWindows() {
+// Determine OS for LevelDB configuration
+def isWindows() {
     return org.gradle.internal.os.OperatingSystem.current().isWindows()
 }
 
-if (isWindows()) {
-    ext {
-        leveldbGroup = "org.ethereum"
-        leveldbName = "leveldbjni-all"
-        leveldbVersion = "1.18.3"
-    }
-} else {
-    ext {
-        leveldbGroup = "org.fusesource.leveldbjni"
-        leveldbName = "leveldbjni-all"
-        leveldbVersion = "1.8"
-    }
-}
-
+// -----------------------------------------------------------------------------
+// Dependencies
+// -----------------------------------------------------------------------------
 dependencies {
-    api group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.13.4.2' // https://github.com/FasterXML/jackson-databind/issues/3627
-    api "com.cedarsoftware:java-util:1.8.0"
-    api group: 'org.apache.httpcomponents', name: 'httpasyncclient', version: '4.1.1'
-    api group: 'commons-codec', name: 'commons-codec', version: '1.11'
-    api group: 'com.beust', name: 'jcommander', version: '1.78'
-    api group: 'com.typesafe', name: 'config', version: '1.3.2'
-    api group: leveldbGroup, name: leveldbName, version: leveldbVersion
-    api group: 'org.rocksdb', name: 'rocksdbjni', version: '5.15.10'
-    api group: 'io.prometheus', name: 'simpleclient', version: '0.15.0'
-    api group: 'io.prometheus', name: 'simpleclient_httpserver', version: '0.15.0'
-    api group: 'io.prometheus', name: 'simpleclient_hotspot', version: '0.15.0'
-    api 'org.aspectj:aspectjrt:1.8.13'
-    api 'org.aspectj:aspectjweaver:1.8.13'
-    api 'org.aspectj:aspectjtools:1.8.13'
-    api group: 'io.github.tronprotocol', name: 'libp2p', version: '2.2.5',{
+    // ---------------------------------------
+    // Core Dependencies
+    // ---------------------------------------
+    api "com.fasterxml.jackson.core:jackson-databind:${versions.jacksonDatabind}" // Fix for reported security issue
+    api "com.cedarsoftware:java-util:${versions.javaUtil}"
+    api "org.apache.httpcomponents:httpasyncclient:${versions.httpAsyncClient}"
+    api "commons-codec:commons-codec:${versions.commonsCodec}"
+    api "com.beust:jcommander:${versions.jCommander}"
+    api "com.typesafe:config:${versions.typesafeConfig}"
+
+    // ---------------------------------------
+    // Database & Persistence
+    // ---------------------------------------
+
+    // Conditional LevelDB dependency based on OS
+    if (isWindows()) {
+        api "org.ethereum:leveldbjni-all:${versions.leveldbWindows}"
+    } else {
+        api "org.fusesource.leveldbjni:leveldbjni-all:${versions.leveldbDefault}"
+    }
+
+    api "org.rocksdb:rocksdbjni:${versions.rocksdbjni}"
+
+    // ---------------------------------------
+    // Monitoring (Prometheus)
+    // ---------------------------------------
+    api "io.prometheus:simpleclient:${versions.prometheus}"
+    api "io.prometheus:simpleclient_httpserver:${versions.prometheus}"
+    api "io.prometheus:simpleclient_hotspot:${versions.prometheus}"
+
+    // ---------------------------------------
+    // AspectJ (AOP)
+    // ---------------------------------------
+    api "org.aspectj:aspectjrt:${versions.aspectj}"
+    api "org.aspectj:aspectjweaver:${versions.aspectj}"
+    api "org.aspectj:aspectjtools:${versions.aspectj}"
+
+    // ---------------------------------------
+    // Networking (libp2p) with Exclusions
+    // ---------------------------------------
+    api("io.github.tronprotocol:libp2p:${versions.libp2p}") {
+        // Exclude problematic or conflicting transitive dependencies.
+        // These are often due to version clashes with core libraries used elsewhere.
         exclude group: 'io.grpc', module: 'grpc-context'
         exclude group: 'io.grpc', module: 'grpc-core'
         exclude group: 'io.grpc', module: 'grpc-netty'
         exclude group: 'com.google.protobuf', module: 'protobuf-java'
         exclude group: 'com.google.protobuf', module: 'protobuf-java-util'
-        // https://github.com/dom4j/dom4j/pull/116
-        // https://github.com/gradle/gradle/issues/13656
-        // https://github.com/dom4j/dom4j/issues/99
         exclude group: 'jaxen', module: 'jaxen'
         exclude group: 'javax.xml.stream', module: 'stax-api'
         exclude group: 'net.java.dev.msv', module: 'xsdlib'
         exclude group: 'pull-parser', module: 'pull-parser'
         exclude group: 'xpp3', module: 'xpp3'
+        // Bouncy Castle exclusions for compatibility
         exclude group: 'org.bouncycastle', module: 'bcprov-jdk18on'
         exclude group: 'org.bouncycastle', module: 'bcutil-jdk18on'
     }
+
+    // Project Dependency (assuming ":protocol" is another module in this multi-project build)
     api project(":protocol")
 }
 
+// -----------------------------------------------------------------------------
+// JaCoCo Code Coverage Configuration
+// -----------------------------------------------------------------------------
 jacocoTestReport {
     reports {
         xml.enabled = true
         html.enabled = true
     }
+
+    // Set execution data from an external module (e.g., in a multi-module setup)
+    // IMPORTANT: Ensure the path '../framework/build/jacoco' is correct and accessible.
     getExecutionData().setFrom(fileTree('../framework/build/jacoco').include("**.exec"))
+
+    // Configure class directories to ensure JaCoCo finds all compiled classes correctly.
+    // This structure is often necessary for multi-module projects or complex source sets.
     afterEvaluate {
         classDirectories.from = classDirectories.files.collect {
-            fileTree(dir: it,)
+            // Note: Removed redundant 'dir: it,' syntax for cleaner Groovy.
+            fileTree(it)
         }
     }
 }
