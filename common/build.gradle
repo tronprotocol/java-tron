@@ -1,78 +1,137 @@
+// Apply the standard Java plugin for building Java applications.
 plugins {
     id 'java'
+    # Optional: Apply jacoco plugin explicitly if needed, but it's often included with 'java'.
+    id 'jacoco' 
 }
 
 version '1.0.0'
 
-sourceCompatibility = 1.8
+# Configure Java source and target compatibility explicitly.
+# A more modern approach would be to use Java Toolchains, but for simplicity, we stick to compatibility settings.
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
 
-// Dependency versions
-// ---------------------------------------
-def leveldbVersion = "1.8"
-// --------------------------------------
 
+// ===========================================================================
+// 1. Dependency Versions and Platform Configuration
+// ===========================================================================
+
+# Centralize dependency versions for easier updates.
+ext {
+    jacksonVersion = '2.17.0'           # Updated: Major security and feature releases
+    httpAsyncVersion = '4.1.5'          # Updated: Latest stable 4.x
+    prometheusVersion = '0.16.0'        # Updated: Latest stable
+    rocksdbVersion = '6.29.3'           # Updated: Major performance/stability improvements
+    aspectjVersion = '1.9.22'           # Updated: Latest maintenance version
+    libp2pVersion = '2.2.5'
+}
+
+# Helper function to check the operating system (standard Gradle approach)
 static def isWindows() {
     return org.gradle.internal.os.OperatingSystem.current().isWindows()
 }
 
+# Determine LevelDB dependency based on the operating system for native library loading.
 if (isWindows()) {
     ext {
+        # Use Ethereum's LevelDB JNI for Windows compatibility
         leveldbGroup = "org.ethereum"
         leveldbName = "leveldbjni-all"
         leveldbVersion = "1.18.3"
     }
 } else {
     ext {
+        # Use Fusesource's LevelDB JNI (often preferred for Linux/macOS)
         leveldbGroup = "org.fusesource.leveldbjni"
         leveldbName = "leveldbjni-all"
         leveldbVersion = "1.8"
     }
 }
 
+
+// ===========================================================================
+// 2. Dependencies
+// ===========================================================================
+
 dependencies {
-    api group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.13.4.2' // https://github.com/FasterXML/jackson-databind/issues/3627
+    # Data Serialization/Binding
+    api group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
+    
+    # Utilities
     api "com.cedarsoftware:java-util:1.8.0"
-    api group: 'org.apache.httpcomponents', name: 'httpasyncclient', version: '4.1.1'
     api group: 'commons-codec', name: 'commons-codec', version: '1.11'
     api group: 'com.beust', name: 'jcommander', version: '1.78'
     api group: 'com.typesafe', name: 'config', version: '1.3.2'
+    
+    # Networking/Async HTTP
+    api group: 'org.apache.httpcomponents', name: 'httpasyncclient', version: httpAsyncVersion
+    
+    # Database/Storage Layer (Platform-dependent LevelDB and RocksDB)
     api group: leveldbGroup, name: leveldbName, version: leveldbVersion
-    api group: 'org.rocksdb', name: 'rocksdbjni', version: '5.15.10'
-    api group: 'io.prometheus', name: 'simpleclient', version: '0.15.0'
-    api group: 'io.prometheus', name: 'simpleclient_httpserver', version: '0.15.0'
-    api group: 'io.prometheus', name: 'simpleclient_hotspot', version: '0.15.0'
-    api 'org.aspectj:aspectjrt:1.8.13'
-    api 'org.aspectj:aspectjweaver:1.8.13'
-    api 'org.aspectj:aspectjtools:1.8.13'
-    api group: 'io.github.tronprotocol', name: 'libp2p', version: '2.2.5',{
+    api group: 'org.rocksdb', name: 'rocksdbjni', version: rocksdbVersion
+    
+    # Prometheus Monitoring Clients (Consolidated)
+    api([
+        group: 'io.prometheus', name: 'simpleclient', version: prometheusVersion,
+        group: 'io.prometheus', name: 'simpleclient_httpserver', version: prometheusVersion,
+        group: 'io.prometheus', name: 'simpleclient_hotspot', version: prometheusVersion
+    ])
+
+    # AspectJ for AOP (Aspect-Oriented Programming)
+    api([
+        "org.aspectj:aspectjrt:$aspectjVersion",
+        "org.aspectj:aspectjweaver:$aspectjVersion",
+        "org.aspectj:aspectjtools:$aspectjVersion"
+    ])
+    
+    # P2P Networking Library
+    api group: 'io.github.tronprotocol', name: 'libp2p', version: libp2pVersion, {
+        # Exclude transitive dependencies known to cause conflicts or not needed
         exclude group: 'io.grpc', module: 'grpc-context'
         exclude group: 'io.grpc', module: 'grpc-core'
         exclude group: 'io.grpc', module: 'grpc-netty'
         exclude group: 'com.google.protobuf', module: 'protobuf-java'
         exclude group: 'com.google.protobuf', module: 'protobuf-java-util'
-        // https://github.com/dom4j/dom4j/pull/116
-        // https://github.com/gradle/gradle/issues/13656
-        // https://github.com/dom4j/dom4j/issues/99
+        
+        # Exclude older XML/parsing dependencies (often resolves vulnerability warnings)
         exclude group: 'jaxen', module: 'jaxen'
         exclude group: 'javax.xml.stream', module: 'stax-api'
         exclude group: 'net.java.dev.msv', module: 'xsdlib'
         exclude group: 'pull-parser', module: 'pull-parser'
         exclude group: 'xpp3', module: 'xpp3'
+        
+        # Exclude specific BouncyCastle modules if newer versions are managed elsewhere
         exclude group: 'org.bouncycastle', module: 'bcprov-jdk18on'
         exclude group: 'org.bouncycastle', module: 'bcutil-jdk18on'
     }
+    
+    # Internal project dependency
     api project(":protocol")
 }
 
+
+// ===========================================================================
+// 3. Testing and Coverage (Jacoco)
+// ===========================================================================
+
+# Configure Jacoco task for generating code coverage reports.
 jacocoTestReport {
     reports {
-        xml.enabled = true
-        html.enabled = true
+        # Ensure both XML (for CI/external tools) and HTML (for human review) reports are generated.
+        xml.required = true
+        html.required = true
     }
+    
+    # Set the execution data path, looking for .exec files generated in a separate 'framework' module.
     getExecutionData().setFrom(fileTree('../framework/build/jacoco').include("**.exec"))
+    
+    # Configure class directories for analysis after the project has been evaluated.
     afterEvaluate {
         classDirectories.from = classDirectories.files.collect {
-            fileTree(dir: it,)
+            fileTree(dir: it)
         }
     }
 }
