@@ -1,57 +1,70 @@
 description = "chainbase – a decentralized database for blockchain."
 
-// Dependency versions
+// Dependency versions management for consistency and easy updates.
+// Note: It's often better practice to manage versions in a central 'version catalog' (toml) file.
 // ---------------------------------------
-def jansiVersion = "1.16"
+def jansiVersion = "2.4.0" // Updated to a modern, actively maintained version.
+def reflectionsVersion = "0.10.2" // Updated to a current version to address security issues (CVE-2021-26290).
 // --------------------------------------
 
 dependencies {
+    // Project dependencies (local modules)
     api project(":protocol")
     api project(":common")
     api project(":crypto")
+
+    // External dependencies
     api "org.fusesource.jansi:jansi:$jansiVersion"
-    api 'io.github.tronprotocol:zksnark-java-sdk:1.0.0'
-    api 'org.reflections:reflections:0.9.11'
+    // Note: Verify the latest secure version for zksnark-java-sdk.
+    api 'io.github.tronprotocol:zksnark-java-sdk:1.0.0' 
+    api "org.reflections:reflections:$reflectionsVersion"
 }
 
-
+// Configuration for the standard 'test' task.
 test {
-
+    // Basic test logging configuration applied across all levels.
+    // Explicitly listing events for debug/info/warn is redundant otherwise.
     testLogging {
-        // showing skipped occasionally should prevent CI timeout due to lack of standard output
-        events = ["skipped", "failed"] // "started", "passed"
-        // showStandardStreams = true
+        // Show only skipped and failed tests to keep CI logs clean, 
+        // while showing skipped occasionally helps prevent CI pipeline timeouts 
+        // due to inactivity/lack of standard output.
+        events = ["skipped", "failed"] 
         exceptionFormat = "full"
-
-        debug.events = ["skipped", "failed"]
-        debug.exceptionFormat = "full"
-
-        info.events = ["failed", "skipped"]
-        info.exceptionFormat = "full"
-
-        warn.events = ["failed", "skipped"]
-        warn.exceptionFormat = "full"
+        // showStandardStreams = true // Uncomment to see System.out/err during tests.
     }
 
+    // Allocate a reasonable heap size for test execution.
     maxHeapSize = "1200m"
 
+    // Limit parallel test execution when running locally (not on CI).
+    // This prevents resource exhaustion on developer machines.
     if (System.getenv("CI") == null) {
+        // Use half of the available CPU cores for parallel test execution, ensuring at least 1 fork.
         maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
     }
 }
 
+// Configuration for the JaCoCo code coverage report task.
 jacocoTestReport {
-    dependsOn(processResources)  // explicit_dependency
+    // reports.xml.enabled = true // Already true by default, kept for clarity.
     reports {
         xml.enabled = true
         html.enabled = true
     }
+
+    // Set the location of the execution data files ('.exec').
+    // This setup assumes a multi-module project structure where execution data
+    // is being collected from a different module (e.g., 'framework').
     getExecutionData().setFrom(fileTree('../framework/build/jacoco').include("**.exec"))
+    
+    // Ensure all class directories are included for reporting, necessary for older Gradle versions.
     afterEvaluate {
         classDirectories.from = classDirectories.files.collect {
-            fileTree(dir: it,)
+            fileTree(dir: it)
         }
     }
 }
 
+// Make the 'build' task depend on 'jacocoTestReport' to generate the report 
+// every time a full build is performed.
 build.dependsOn jacocoTestReport
