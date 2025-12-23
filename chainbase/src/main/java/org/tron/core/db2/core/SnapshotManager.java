@@ -423,6 +423,7 @@ public class SnapshotManager implements RevokingDatabase {
 
   private void deleteCheckpoint() {
     if(checkTmpStore == null) {
+      // only occurs in mock test. TODO fix test
       return;
     }
     try {

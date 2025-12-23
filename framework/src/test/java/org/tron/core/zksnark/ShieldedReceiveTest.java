@@ -228,6 +228,11 @@ public class ShieldedReceiveTest extends BaseTest {
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(totalShieldedPoolValue);
   }
 
+  @Test
+  public void testIsMining() {
+    Assert.assertTrue(wallet.isMining());
+  }
+
   /*
    * test of change ShieldedTransactionFee proposal
    */

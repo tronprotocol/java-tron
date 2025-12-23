@@ -527,6 +527,9 @@ public class CommonParameter {
   @Getter
   @Setter
   public int jsonRpcMaxSubTopics = 1000;
+  @Getter
+  @Setter
+  public int jsonRpcMaxBlockFilterNum = 50000;
 
   @Getter
   @Setter
