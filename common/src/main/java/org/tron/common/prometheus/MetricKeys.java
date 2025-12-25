@@ -14,6 +14,8 @@ public class MetricKeys {
     public static final String TXS = "tron:txs";
     public static final String MINER = "tron:miner";
     public static final String BLOCK_FORK = "tron:block_fork";
+    public static final String BLOCK_EMPTY = "tron:block_empty";
+    public static final String SR_SET_CHANGE = "tron:sr_set_change";
     public static final String P2P_ERROR = "tron:p2p_error";
     public static final String P2P_DISCONNECT = "tron:p2p_disconnect";
     public static final String INTERNAL_SERVICE_FAIL = "tron:internal_service_fail";

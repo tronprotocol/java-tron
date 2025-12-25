@@ -31,6 +31,8 @@ public class MetricLabels {
     public static final String TXS_FAIL_SIG = "sig";
     public static final String TXS_FAIL_TAPOS = "tapos";
     public static final String TXS_FAIL_DUP = "dup";
+    public static final String SR_ADD = "add";
+    public static final String SR_REMOVE = "remove";
 
     private Counter() {
       throw new IllegalStateException("Counter");

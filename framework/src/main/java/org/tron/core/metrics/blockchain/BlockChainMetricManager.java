@@ -3,10 +3,13 @@ package org.tron.core.metrics.blockchain;
 import com.codahale.metrics.Counter;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import org.bouncycastle.util.encoders.Hex;
@@ -42,6 +45,7 @@ public class BlockChainMetricManager {
   private long failProcessBlockNum = 0;
   @Setter
   private String failProcessBlockReason = "";
+  private final Set<String> lastActiveWitnesses = ConcurrentHashMap.newKeySet();
 
   public BlockChainInfo getBlockChainInfo() {
     BlockChainInfo blockChainInfo = new BlockChainInfo();
@@ -168,6 +172,45 @@ public class BlockChainMetricManager {
       MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_TPS, block.getTransactions().size());
       Metrics.counterInc(MetricKeys.Counter.TXS, block.getTransactions().size(),
           MetricLabels.Counter.TXS_SUCCESS, MetricLabels.Counter.TXS_SUCCESS);
+    } else {
+      // Empty block
+      Metrics.counterInc(MetricKeys.Counter.BLOCK_EMPTY, 1,
+          StringUtil.encode58Check(address));
+    }
+
+    // SR set change detection
+    Set<String> currentWitnesses = chainBaseManager.getWitnessScheduleStore().getActiveWitnesses()
+        .stream()
+        .map(w -> Hex.toHexString(w.toByteArray()))
+        .collect(Collectors.toSet());
+    recordSrSetChange(currentWitnesses);
+  }
+
+  private void recordSrSetChange(Set<String> currentWitnesses) {
+    if (currentWitnesses.isEmpty()) {
+      return;
+    }
+    if (lastActiveWitnesses.isEmpty()) {
+      lastActiveWitnesses.addAll(currentWitnesses);
+      return;
+    }
+    Set<String> added = new HashSet<>(currentWitnesses);
+    added.removeAll(lastActiveWitnesses);
+
+    Set<String> removed = new HashSet<>(lastActiveWitnesses);
+    removed.removeAll(currentWitnesses);
+
+    for (String address : added) {
+      Metrics.counterInc(MetricKeys.Counter.SR_SET_CHANGE, 1,
+          MetricLabels.Counter.SR_ADD, StringUtil.encode58Check(Hex.decode(address)));
+    }
+    for (String address : removed) {
+      Metrics.counterInc(MetricKeys.Counter.SR_SET_CHANGE, 1,
+          MetricLabels.Counter.SR_REMOVE, StringUtil.encode58Check(Hex.decode(address)));
+    }
+    if (!added.isEmpty() || !removed.isEmpty()) {
+      lastActiveWitnesses.clear();
+      lastActiveWitnesses.addAll(currentWitnesses);
     }
   }
 
