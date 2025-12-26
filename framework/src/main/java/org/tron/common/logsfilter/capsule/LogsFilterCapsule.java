@@ -45,9 +45,6 @@ public class LogsFilterCapsule extends FilterTriggerCapsule {
 
   @Override
   public void processFilterTrigger() {
-    long t1 = System.currentTimeMillis();
     handleLogsFilter(this);
-    long t2 = System.currentTimeMillis();
-    logger.info("processFilterTrigger cost {}", t2 - t1);
   }
 }

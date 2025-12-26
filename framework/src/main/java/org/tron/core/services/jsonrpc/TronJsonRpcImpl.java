@@ -219,6 +219,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
    * append LogsFilterCapsule's LogFilterElement list to each filter if matched
    */
   public static void handleLogsFilter(LogsFilterCapsule logsFilterCapsule) {
+    long t1 = System.currentTimeMillis();
     Map<String, LogFilterAndResult> eventFilterMap;
 
     if (logsFilterCapsule.isSolidified()) {
@@ -268,6 +269,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       }
       logFilterAndResult.getResult().addAll(localResults);
     });
+    long t2 = System.currentTimeMillis();
+    logger.info("handleLogsFilter cost {}, filter size {}", t2 - t1, eventFilterMap.size());
   }
 
   @Override
