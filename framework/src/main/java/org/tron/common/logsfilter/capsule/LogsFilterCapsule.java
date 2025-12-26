@@ -48,6 +48,6 @@ public class LogsFilterCapsule extends FilterTriggerCapsule {
     long t1 = System.currentTimeMillis();
     handleLogsFilter(this);
     long t2 = System.currentTimeMillis();
-    logger.info("processFilterTrigger cost {}", t2 -t1);
+    logger.info("processFilterTrigger cost {}", t2 - t1);
   }
 }
