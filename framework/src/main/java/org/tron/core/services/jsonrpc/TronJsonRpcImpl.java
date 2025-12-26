@@ -220,42 +220,44 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
    */
   public static void handleLogsFilter(LogsFilterCapsule logsFilterCapsule) {
     long t1 = System.currentTimeMillis();
-    Map<String, LogFilterAndResult> eventFilterMap;
+    long filterSize;
+    Iterator<Entry<String, LogFilterAndResult>> it;
 
     if (logsFilterCapsule.isSolidified()) {
-      eventFilterMap = getEventFilter2ResultSolidity();
+      it = getEventFilter2ResultSolidity().entrySet().iterator();
+      filterSize = getEventFilter2ResultSolidity().size();
     } else {
-      eventFilterMap = getEventFilter2ResultFull();
+      it = getEventFilter2ResultFull().entrySet().iterator();
+      filterSize = getEventFilter2ResultFull().size();
     }
 
-    eventFilterMap.entrySet().parallelStream().forEach(entry -> {
-
-      LogFilterAndResult logFilterAndResult = entry.getValue();
-      if (logFilterAndResult.isExpire()) {
-        eventFilterMap.remove(entry.getKey());
-        return;
+    while (it.hasNext()) {
+      Entry<String, LogFilterAndResult> entry = it.next();
+      if (entry.getValue().isExpire()) {
+        it.remove();
+        continue;
       }
 
-      long blockNumber = logsFilterCapsule.getBlockNumber();
+      LogFilterAndResult logFilterAndResult = entry.getValue();
       long fromBlock = logFilterAndResult.getLogFilterWrapper().getFromBlock();
       long toBlock = logFilterAndResult.getLogFilterWrapper().getToBlock();
-      if (!(fromBlock <= blockNumber && blockNumber <= toBlock)) {
-        return;
+      if (!(fromBlock <= logsFilterCapsule.getBlockNumber()
+          && logsFilterCapsule.getBlockNumber() <= toBlock)) {
+        continue;
       }
 
       if (logsFilterCapsule.getBloom() != null
           && !logFilterAndResult.getLogFilterWrapper().getLogFilter()
           .matchBloom(logsFilterCapsule.getBloom())) {
-        return;
+        continue;
       }
 
       LogFilter logFilter = logFilterAndResult.getLogFilterWrapper().getLogFilter();
       List<LogFilterElement> elements =
-          LogMatch.matchBlock(logFilter, blockNumber,
+          LogMatch.matchBlock(logFilter, logsFilterCapsule.getBlockNumber(),
               logsFilterCapsule.getBlockHash(), logsFilterCapsule.getTxInfoList(),
               logsFilterCapsule.isRemoved());
 
-      List<LogFilterElement> localResults = new ArrayList<>(elements.size());
       for (LogFilterElement element : elements) {
         LogFilterElement cachedElement;
         try {
@@ -265,12 +267,11 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
           logger.error("Getting/loading LogFilterElement from cache fails", e); // never happen
           cachedElement = element;
         }
-        localResults.add(cachedElement);
+        logFilterAndResult.getResult().add(cachedElement);
       }
-      logFilterAndResult.getResult().addAll(localResults);
-    });
+    }
     long t2 = System.currentTimeMillis();
-    logger.info("handleLogsFilter cost {}, filter size {}", t2 - t1, eventFilterMap.size());
+    logger.info("handleLogsFilter cost {}, filter size {}", t2 - t1, filterSize);
   }
 
   @Override
