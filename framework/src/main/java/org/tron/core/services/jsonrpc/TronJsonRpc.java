@@ -291,9 +291,10 @@ public interface TronJsonRpc {
   @JsonRpcErrors({
       @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = JsonRpcExceedLimitException.class, code = -32005, data = "{}"),
   })
   String newFilter(FilterRequest fr) throws JsonRpcInvalidParamsException,
-      JsonRpcMethodNotFoundException;
+      JsonRpcMethodNotFoundException, JsonRpcExceedLimitException;
 
   @JsonRpcMethod("eth_newBlockFilter")
   @JsonRpcErrors({
