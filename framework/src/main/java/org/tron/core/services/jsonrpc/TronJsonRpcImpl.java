@@ -30,6 +30,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import lombok.Getter;
@@ -228,7 +229,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       eventFilterMap = getEventFilter2ResultFull();
     }
 
-    eventFilterMap.entrySet().parallelStream().forEach(entry -> {
+    ForkJoinPool pool = new ForkJoinPool(2); //parallelStream default num(CPU) -1
+    pool.submit(() -> eventFilterMap.entrySet().parallelStream().forEach(entry -> {
 
       LogFilterAndResult logFilterAndResult = entry.getValue();
       if (logFilterAndResult.isExpire()) {
@@ -243,17 +245,15 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
         return;
       }
 
-      if (logsFilterCapsule.getBloom() != null
-          && !logFilterAndResult.getLogFilterWrapper().getLogFilter()
-          .matchBloom(logsFilterCapsule.getBloom())) {
+      if (logsFilterCapsule.getBloom() != null && !logFilterAndResult.getLogFilterWrapper()
+          .getLogFilter().matchBloom(logsFilterCapsule.getBloom())) {
         return;
       }
 
       LogFilter logFilter = logFilterAndResult.getLogFilterWrapper().getLogFilter();
       List<LogFilterElement> elements =
-          LogMatch.matchBlock(logFilter, blockNumber,
-              logsFilterCapsule.getBlockHash(), logsFilterCapsule.getTxInfoList(),
-              logsFilterCapsule.isRemoved());
+          LogMatch.matchBlock(logFilter, blockNumber, logsFilterCapsule.getBlockHash(),
+              logsFilterCapsule.getTxInfoList(), logsFilterCapsule.isRemoved());
 
       List<LogFilterElement> localResults = new ArrayList<>(elements.size());
       for (LogFilterElement element : elements) {
@@ -268,9 +268,10 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
         localResults.add(cachedElement);
       }
       logFilterAndResult.getResult().addAll(localResults);
-    });
+    })).join();
     long t2 = System.currentTimeMillis();
-    logger.info("handleLogsFilter cost {}, filter size {}", t2 - t1, eventFilterMap.size());
+    logger.info("handleLogsFilter {} cost {}, filter size {}",
+        logsFilterCapsule.isSolidified() ? "Solidity" : "Full", t2 - t1, eventFilterMap.size());
   }
 
   @Override
