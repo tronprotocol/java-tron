@@ -119,6 +119,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   private static final String FILTER_NOT_FOUND = "filter not found";
   public static final int EXPIRE_SECONDS = 5 * 60;
   private static final int maxBlockFilterNum = Args.getInstance().getJsonRpcMaxBlockFilterNum();
+  private static final int maxLogFilterNum = Args.getInstance().getJsonRpcMaxLogFilterNum();
   private static final Cache<LogFilterElement, LogFilterElement> logElementCache =
       CacheBuilder.newBuilder()
           .maximumSize(300_000L) // 300s * tps(1000) * 1 log/tx ≈ 300_000
@@ -1413,9 +1414,9 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     } else {
       eventFilter2Result = eventFilter2ResultSolidity;
     }
-    if (eventFilter2Result.size() > maxBlockFilterNum) {
+    if (eventFilter2Result.size() > maxLogFilterNum) {
       throw new JsonRpcExceedLimitException(
-          "exceed max log filters: " + maxBlockFilterNum + ", try again later");
+          "exceed max log filters: " + maxLogFilterNum + ", try again later");
     }
     long currentMaxFullNum = wallet.getNowBlock().getBlockHeader().getRawData().getNumber();
     LogFilterAndResult logFilterAndResult = new LogFilterAndResult(fr, currentMaxFullNum, wallet);
