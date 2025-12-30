@@ -16,22 +16,26 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import org.tron.common.BaseTest;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.core.Constant;
+import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.EnergyCost;
 import org.tron.core.vm.JumpTable;
+import org.tron.core.vm.MessageCall;
 import org.tron.core.vm.Op;
 import org.tron.core.vm.Operation;
 import org.tron.core.vm.OperationActions;
 import org.tron.core.vm.OperationRegistry;
+import org.tron.core.vm.PrecompiledContracts;
 import org.tron.core.vm.VM;
 import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
@@ -46,6 +50,8 @@ public class OperationsTest extends BaseTest {
   private ProgramInvokeMockImpl invoke;
   private Program program;
   private final JumpTable jumpTable = OperationRegistry.getTable();
+  @Autowired
+  private Wallet wallet;
 
   @BeforeClass
   public static void init() {
@@ -753,6 +759,30 @@ public class OperationsTest extends BaseTest {
     assertEquals("0000000000000000000000000000000000000000000000000000000000001234",
         Hex.toHexString(logInfo.getData()));
     Assert.assertEquals(2158, program.getResult().getEnergyUsed());
+  }
+
+  @Test
+  public void testCallOperations() throws ContractValidateException {
+    invoke = new ProgramInvokeMockImpl();
+    Protocol.Transaction trx = Protocol.Transaction.getDefaultInstance();
+    InternalTransaction interTrx =
+        new InternalTransaction(trx, InternalTransaction.TrxType.TRX_UNKNOWN_TYPE);
+
+    byte prePrefixByte = DecodeUtil.addressPreFixByte;
+    DecodeUtil.addressPreFixByte = Constant.ADD_PRE_FIX_BYTE_MAINNET;
+    VMConfig.initAllowTvmSelfdestructRestriction(1);
+
+    program = new Program(new byte[0], new byte[0], invoke, interTrx);
+    MessageCall messageCall = new MessageCall(
+        Op.CALL, new DataWord(10000),
+        DataWord.ZERO(), DataWord.ZERO(),
+        DataWord.ZERO(), DataWord.ZERO(),
+        DataWord.ZERO(), DataWord.ZERO(),
+        DataWord.ZERO(), false);
+    program.callToPrecompiledAddress(messageCall, new PrecompiledContracts.ECRecover());
+
+    DecodeUtil.addressPreFixByte = prePrefixByte;
+    VMConfig.initAllowTvmSelfdestructRestriction(0);
   }
 
   @Test
