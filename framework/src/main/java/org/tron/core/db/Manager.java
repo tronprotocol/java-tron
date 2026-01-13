@@ -99,6 +99,7 @@ import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.TransactionUtil;
+import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ProposalController;
@@ -875,6 +876,11 @@ public class Manager {
         .supportShieldedTransaction()) {
       return false;
     }
+
+    if (isExchangeTransaction(trx.getInstance())) {
+      throw new ContractValidateException("ExchangeTransactionContract is rejected");
+    }
+
 
     pushTransactionQueue.add(trx);
     Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, 1,
@@ -1701,6 +1707,11 @@ public class Manager {
           accountSet.add(ownerAddress);
         }
       }
+
+      if (isExchangeTransaction(transaction)) {
+        continue;
+      }
+
       if (ownerAddressSet.contains(ownerAddress)) {
         trx.setVerified(false);
       }
@@ -1774,6 +1785,24 @@ public class Manager {
     }
   }
 
+  private boolean isExchangeTransaction(Transaction transaction) {
+    Contract contract = transaction.getRawData().getContract(0);
+    switch (contract.getType()) {
+      case ExchangeTransactionContract: {
+        return true;
+      }
+      default:
+        return false;
+    }
+  }
+
+  private void rejectExchangeTransaction(Transaction transaction) throws ContractValidateException {
+    if (isExchangeTransaction(transaction) && chainBaseManager.getForkController()
+            .pass(Parameter.ForkBlockVersionEnum.VERSION_4_8_0_1)) {
+      throw new ContractValidateException("ExchangeTransactionContract is rejected");
+    }
+  }
+
   public TransactionStore getTransactionStore() {
     return chainBaseManager.getTransactionStore();
   }
@@ -1828,6 +1857,7 @@ public class Manager {
       List<TransactionInfo> results = new ArrayList<>();
       long num = block.getNum();
       for (TransactionCapsule transactionCapsule : block.getTransactions()) {
+        rejectExchangeTransaction(transactionCapsule.getInstance());
         if (chainBaseManager.getDynamicPropertiesStore().allowConsensusLogicOptimization()
             && transactionCapsule.retCountIsGreatThanContractCount()) {
           throw new BadBlockException(String.format("The result count %d of this transaction %s is "
