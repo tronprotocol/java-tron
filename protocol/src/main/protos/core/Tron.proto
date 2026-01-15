@@ -648,6 +648,10 @@ message InternalTransaction {
   bytes note = 5;
   bool rejected = 6;
   string extra = 7;
+  // Input data of the internal transaction
+  bytes data = 8;
+  // Output/return data of the internal transaction
+  bytes output = 9;
 }
 
 message DelegatedResourceAccountIndex {

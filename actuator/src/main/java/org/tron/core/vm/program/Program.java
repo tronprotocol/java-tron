@@ -816,6 +816,11 @@ public class Program {
     // 4. CREATE THE CONTRACT OUT OF RETURN
     byte[] code = createResult.getHReturn();
 
+    // capture output (deployed code) on internal transaction for indexing
+    if (internalTx != null) {
+      internalTx.setOutput(code);
+    }
+
     if (code.length != 0 && VMConfig.allowTvmLondon() && code[0] == (byte) 0xEF) {
       createResult.setException(Program.Exception
           .invalidCodeException());
@@ -1083,6 +1088,11 @@ public class Program {
       memorySaveLimited(offset, buffer, size);
 
       returnDataBuffer = buffer;
+
+      // capture output on internal transaction for indexing
+      if (internalTx != null) {
+        internalTx.setOutput(buffer);
+      }
     }
 
     // 5. REFUND THE REMAIN ENERGY
