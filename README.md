@@ -73,7 +73,7 @@ The java-tron project comes with several runnable artifacts and helper scripts f
 ## Hardware Requirements
 
 | Deployment Tier | CPU Cores | Memory | High-performance SSD Storage    | Network Downstream |
-|--------------------------|-----------|--------|----------------------------------|--------------------|
+|--------------------------|-------|--------|---------------------------|-----------------|
 | FullNode (Minimum)        | 8 | 16 GB | 200 GB ([Lite](https://tronprotocol.github.io/documentation-en/using_javatron/litefullnode/#lite-fullnode))                  | ≥ 5 MB/s |
 | FullNode (Stable)         | 8 | 32 GB | 200 GB ([Lite](https://tronprotocol.github.io/documentation-en/using_javatron/litefullnode/#lite-fullnode)) 3.5 TB (Full Sync) | ≥ 5 MB/s |
 | FullNode (Recommended)      | 16+ | 32 GB+ | 4 TB         | ≥ 50 MB/s |
