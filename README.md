@@ -88,41 +88,47 @@ The java-tron project comes with several runnable artifacts and helper scripts f
 | Super Representative      | 32+ | 64 GB+ | 4 TB              | ≥ 50 MB/s |
 
 
-## Launching a full node 
-A full node acts as a gateway to the TRON network, exposing comprehensive interfaces via HTTP, gRPC, and JSON-RPC APIs. Through these endpoints, clients may execute asset transfers, deploy smart contracts, and invoke on-chain logic. It must join a TRON network to participate in the network's consensus and transaction processing. 
+## Launching a full node
+
+A full node acts as a gateway to the TRON network, exposing comprehensive interfaces via HTTP and RPC APIs. Through these endpoints, clients may execute asset transfers, deploy smart contracts, and invoke on-chain logic. It must join a TRON network to participate in the network's consensus and transaction processing.
 
 ### Network Types
 
 The TRON network is mainly divided into:
 
-- **Main Network (Mainnet)**: The primary public blockchain where real value (TRX, TRC-20 tokens, etc) is transacted, secured by a massive decentralized network.
-- **Nile Test Network（TestNet）**: A public test network for TRON, used for development, testing, and DApp deployment. Noted that Nile TestNet may contains some features that are not yet supported by MainNet.
-- **Shasta Testnet**: Another public test network for testing, but currently does not support node joining. It has exactly the same features as MainNet.
-- **Private Networks**: Customized TRON networks set up by private entities for testing, development, or specific use cases.
+- **Main Network (Mainnet)**  
+  The primary public blockchain where real value (TRX, TRC-20 tokens, etc.) is transacted, secured by a massive decentralized network.
 
-Network selection is performed by specifying the appropriate configuration file upon full-node startup.  
-- Mainnet configuration: [config.conf](framework/src/main/resources/config.conf)  
-- Nile testnet configuration: [config-nile.conf](https://github.com/tron-nile-testnet/nile-testnet/blob/master/framework/src/main/resources/config-nile.conf)
+- **[Nile Test Network (Testnet)](https://nileex.io/)**  
+  A forward-looking testnet where new features and governance proposals are launched first for developers to experience. Consequently, its codebase is typically ahead of the Mainnet.
+
+- **[Shasta Testnet](https://shasta.tronex.io/)**  
+  Closely mirrors the Mainnet’s features and governance proposals. Its network parameters and software versions are kept in sync with the Mainnet, providing developers with a highly realistic environment for final testing.
+
+- **Private Networks**  
+  Customized TRON networks set up by private entities for testing, development, or specific use cases.
+
+Network selection is performed by specifying the appropriate configuration file upon full-node startup. Mainnet configuration: [config.conf](framework/src/main/resources/config.conf); Nile testnet configuration: [config-nile.conf](https://github.com/tron-nile-testnet/nile-testnet/blob/master/framework/src/main/resources/config-nile.conf)
 
 ### 1. Join the TRON main network
-Launch a main network full node using the built-in default configuration:
+Launch a main-network full node with the built-in default configuration:
 ```bash
 nohup java -Xms9G -jar ./build/libs/FullNode.jar &
 ```
 * `nohup ... &`: Runs the command in the background and ignores the hangup signal.
-* `-Xms9G`: Sets the JVM initial heap size (Xms) to `9 GB`.
+* `-Xms9G`: Sets the JVM minimum heap size to `9 GB`.
 
-> For production main network deployments, review the [JVM Parameter Optimization for FullNode](https://tronprotocol.github.io/documentation-en/using_javatron/installing_javatron/#jvm-parameter-optimization-for-mainnet-fullnode-deployment) to select the complete Java command.
+> For production main network deployments, review the [JVM Parameter Optimization for FullNode](https://tronprotocol.github.io/documentation-en/using_javatron/installing_javatron/#jvm-parameter-optimization-for-mainnet-fullnode-deployment) to use the complete Java command.
 
-Checking the logs, you can monitor the block syncing progress:
+Using the below command, you can monitor the blocks syncing progress:
 ```bash
 tail -f ./logs/tron.log
 ```
 
-Use [TronScan](https://tronscan.org/#/), TRON’s official block explorer, to view main network transactions, blocks, accounts, TRC-10/TRC-20 transfers, contract events, witness voting, and governance metrics.
+Use [TronScan](https://tronscan.org/#/), TRON's official block explorer, to view main network transactions, blocks, accounts, witness voting, and governance metrics, etc.
 
 ### 2. Join Nile test network
-Utilize the `-c` flag to direct the node to the configuration file corresponding to the desired network. In view of the fact that the Nile TestNet may incorporate features not yet available on the MainNet, it is strongly advised to compile the source code in accordance with the [Building the Source Code](https://github.com/tron-nile-testnet/nile-testnet/blob/master/README.md#building-the-source-code) instructions provided for the Nile TestNet.
+Utilize the `-c` flag to direct the node to the configuration file corresponding to the desired network. Since Nile TestNet may incorporate features not yet available on the MainNet, it is strongly advised to compile the source code following the [Building the Source Code](https://github.com/tron-nile-testnet/nile-testnet/blob/master/README.md#building-the-source-code) instructions for the Nile TestNet.
 
 ```bash
 nohup java -jar ./build/libs/FullNode.jar -c config-nile.conf &
@@ -132,18 +138,18 @@ Nile resources: explorer, faucet, wallet, developer docs, and network statistics
 
 ### 3. Access Shasta test network
 Shasta does not accept public node peers. Programmatic access is available via TronGrid endpoints; see [TronGrid Service](https://developers.tron.network/docs/trongrid) for details.
+
 Shasta resources: explorer, faucet, wallet, developer docs, and network statistics at [shastaex.io](https://shastaex.io/).
 
-
 ### 4. Set up a private network
-For setting up a private network for testing or development, follow the [Private Network guide](https://tronprotocol.github.io/documentation-en/using_javatron/private_network/).
+For setting up a private network for testing or development, follow the [Private Network guidance](https://tronprotocol.github.io/documentation-en/using_javatron/private_network/).
 
 
 ## Running a super representative node
 
-To operate the node as a Super Representative (SR), append the `--witness` parameter to the standard launch command. An SR node inherits every capability of a FullNode and additionally participates in block production. Refer to the [Super Representative documentation](https://tronprotocol.github.io/documentation-en/mechanism-algorithm/sr/) for eligibility requirements; once your SR address has accumulated sufficient votes to place among the top 27, the node will be automatically scheduled to produce blocks.
+To operate the node as a Super Representative (SR), append the `--witness` parameter to the standard launch command. An SR node inherits every capability of a FullNode and additionally participates in block production. Refer to the [Super Representative documentation](https://tronprotocol.github.io/documentation-en/mechanism-algorithm/sr/) for eligibility requirements.
 
-Fill in the private key of your SR address into the `localwitness` list in the configuration file. Here is an example:
+Fill in the private key of your SR account into the `localwitness` list in the configuration file. Here is an example:
 
 ```
  localwitness = [
@@ -151,13 +157,13 @@ Fill in the private key of your SR address into the `localwitness` list in the c
  ]
 ```
 
-Subsequently, launch the node by executing the optimized Java startup command detailed in the [JVM Parameter Optimization for Mainnet FullNode Deployment](https://tronprotocol.github.io/documentation-en/using_javatron/installing_javatron/#jvm-parameter-optimization-for-mainnet-fullnode-deployment) guide. You could also test the process by connecting to a testnet or setting up a private network using the correct configuration file.
+Subsequently, launch the node by executing the optimized Java startup command detailed in the [JVM Parameter Optimization for Mainnet FullNode Deployment](https://tronprotocol.github.io/documentation-en/using_javatron/installing_javatron/#jvm-parameter-optimization-for-mainnet-fullnode-deployment) guidance. You could also test the process by connecting to a testnet or setting up a private network.
 
 ## Programmatically interfacing FullNode
 
 Upon the FullNode startup successfully, interaction with the TRON network is facilitated through a comprehensive suite of programmatic interfaces exposed by java-tron:
 - **HTTP API**: See the complete [HTTP API reference and endpoint list](https://tronprotocol.github.io/documentation-en/api/http/).
-- **gRPC**: High-performance APIs suitable for service-to-service integration. See the supported [gRPC reference](https://tronprotocol.github.io/documentation-en/api/grpc/).
+- **gRPC**: High-performance APIs suitable for service-to-service integration. See the supported [gRPC reference](https://tronprotocol.github.io/documentation-en/api/rpc/).
 - **JSON-RPC**: Provides Ethereum-compatible JSON-RPC methods for logs, transactions and contract calls. See the supported [JSON-RPC methods](https://tronprotocol.github.io/documentation-en/api/json-rpc/).
 
 Enable or disable each interface in the configuration file:
