@@ -36,17 +36,25 @@ TRON builds decentralized Internet infrastructure.
 
 # Building the Source Code
 Before building java-tron, make sure you have:
-- Hardware with at least 4 CPU cores, 16 GB RAM, 20 GB free disk space for a smooth compilation process.
+- Hardware with at least 4 CPU cores, 16 GB RAM, 10 GB free disk space for a smooth compilation process.
 - Operating system: `Linux` or `MacOS` (Windows is not supported).
 - Git and correct JDK（version `8` or `17`） installed based on your CPU architecture.
 
-For convenience, an automated script [`install_dependencies.sh`](install_dependencies.sh) is provided to install the required dependencies:
+There are two ways to install the required dependencies:
 
-```bash
-chmod +x install_dependencies.sh
-./install_dependencies.sh
-```
-> **Note**: For production-grade stability with JDK 8, Oracle JDK 8 is strongly recommended (the provided script installs OpenJDK 8). For step-by-step manual installation instructions, consult the [Prerequisites and Installation Guide](https://tronprotocol.github.io/documentation-en/using_javatron/installing_javatron/#prerequisites-before-compiling-java-tron).
+- **Option 1: Automated script (recommended for quick setup)**
+
+  Use the provided [`install_dependencies.sh`](install_dependencies.sh) script:
+
+  ```bash
+  chmod +x install_dependencies.sh
+  ./install_dependencies.sh
+  ```
+  > **Note**: For production-grade stability with JDK 8, Oracle JDK 8 is strongly recommended (the script installs OpenJDK 8).
+
+- **Option 2: Manual installation**
+
+  Follow the [Prerequisites and Installation Guide](https://tronprotocol.github.io/documentation-en/using_javatron/installing_javatron/#prerequisites-before-compiling-java-tron) for step-by-step instructions.
 
 Once all dependencies have been installed, download and compile java-tron by executing:
 ```bash
@@ -64,7 +72,7 @@ The java-tron project comes with several runnable artifacts and helper scripts f
 |     Artifact/Script     | Description |
 | :---------------------- | :---------- |
 | **`FullNode.jar`**      | Main TRON node executable (generated in `build/libs/` after a successful build following the above guidance). Runs as a full node by default. `java -jar FullNode.jar --help` for command line options|
-| **`Toolkit.jar`** | Node management utility(generated in `build/libs/`): partition, prune, copy, convert DBs; shadow-fork tool. [Usage](https://tronprotocol.github.io/documentation-en/using_javatron/toolkit/#toolkit-a-java-tron-node-maintenance-suite) |
+| **`Toolkit.jar`** | Node management utility (generated in `build/libs/`): partition, prune, copy, convert DBs; shadow-fork tool. [Usage](https://tronprotocol.github.io/documentation-en/using_javatron/toolkit/#toolkit-a-java-tron-node-maintenance-suite) |
 | **`start.sh`**          | Quick start script (x86_64, JDK 8) to download/build/run `FullNode.jar`. See the tool [guide](./shell.md). |
 | **`start.sh.simple`**   | Quick start script template (ARM64, JDK 17). See usage notes inside the script. |
 
@@ -75,7 +83,7 @@ The java-tron project comes with several runnable artifacts and helper scripts f
 | Deployment Tier | CPU Cores | Memory | High-performance SSD Storage    | Network Downstream |
 |--------------------------|-------|--------|---------------------------|-----------------|
 | FullNode (Minimum)        | 8 | 16 GB | 200 GB ([Lite](https://tronprotocol.github.io/documentation-en/using_javatron/litefullnode/#lite-fullnode))                  | ≥ 5 MB/s |
-| FullNode (Stable)         | 8 | 32 GB | 200 GB ([Lite](https://tronprotocol.github.io/documentation-en/using_javatron/litefullnode/#lite-fullnode)) 3.5 TB (Full) | ≥ 5 MB/s |
+| FullNode (Stable)         | 8 | 32 GB | 200 GB (Lite) 3.5 TB (Full) | ≥ 5 MB/s |
 | FullNode (Recommended)      | 16+ | 32 GB+ | 4 TB         | ≥ 50 MB/s |
 | Super Representative      | 32+ | 64 GB+ | 4 TB              | ≥ 50 MB/s |
 
