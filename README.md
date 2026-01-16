@@ -75,7 +75,7 @@ The java-tron project comes with several runnable artifacts and helper scripts f
 | Deployment Tier | CPU Cores | Memory | High-performance SSD Storage    | Network Downstream |
 |--------------------------|-------|--------|---------------------------|-----------------|
 | FullNode (Minimum)        | 8 | 16 GB | 200 GB ([Lite](https://tronprotocol.github.io/documentation-en/using_javatron/litefullnode/#lite-fullnode))                  | ≥ 5 MB/s |
-| FullNode (Stable)         | 8 | 32 GB | 200 GB ([Lite](https://tronprotocol.github.io/documentation-en/using_javatron/litefullnode/#lite-fullnode)) 3.5 TB (Full Sync) | ≥ 5 MB/s |
+| FullNode (Stable)         | 8 | 32 GB | 200 GB ([Lite](https://tronprotocol.github.io/documentation-en/using_javatron/litefullnode/#lite-fullnode)) 3.5 TB (Full) | ≥ 5 MB/s |
 | FullNode (Recommended)      | 16+ | 32 GB+ | 4 TB         | ≥ 50 MB/s |
 | Super Representative      | 32+ | 64 GB+ | 4 TB              | ≥ 50 MB/s |
 
@@ -88,8 +88,8 @@ A full node acts as a gateway to the TRON network, exposing comprehensive interf
 The TRON network is mainly divided into:
 
 - **Main Network (Mainnet)**: The primary public blockchain where real value (TRX, TRC-20 tokens, etc) is transacted, secured by a massive decentralized network.
-- **Nile Test Network（TestNet）**: A public test network for TRON, used for development, testing, and DApp deployment.
-- **Shasta Testnet**: Another public test network for testing, but currently does not support node joining.
+- **Nile Test Network（TestNet）**: A public test network for TRON, used for development, testing, and DApp deployment. Noted that Nile TestNet may contains some features that are not yet supported by MainNet.
+- **Shasta Testnet**: Another public test network for testing, but currently does not support node joining. It has exactly the same features as MainNet.
 - **Private Networks**: Customized TRON networks set up by private entities for testing, development, or specific use cases.
 
 Network selection is performed by specifying the appropriate configuration file upon full-node startup.  
@@ -114,7 +114,7 @@ tail -f ./logs/tron.log
 Use [TronScan](https://tronscan.org/#/), TRON’s official block explorer, to view main network transactions, blocks, accounts, TRC-10/TRC-20 transfers, contract events, witness voting, and governance metrics.
 
 ### 2. Join Nile test network
-Use the `-c` flag to point the node to a configuration for a specific network. For Nile, use [config-nile.conf](https://github.com/tron-nile-testnet/nile-testnet/blob/master/framework/src/main/resources/config-nile.conf):
+Utilize the `-c` flag to direct the node to the configuration file corresponding to the desired network. In view of the fact that the Nile TestNet may incorporate features not yet available on the MainNet, it is strongly advised to compile the source code in accordance with the [Building the Source Code](https://github.com/tron-nile-testnet/nile-testnet/blob/master/README.md#building-the-source-code) instructions provided for the Nile TestNet.
 
 ```bash
 nohup java -jar ./build/libs/FullNode.jar -c config-nile.conf &
