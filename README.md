@@ -140,7 +140,7 @@ Nile resources: explorer, faucet, wallet, developer docs, and network statistics
 ### 3. Access Shasta test network
 Shasta does not accept public node peers. Programmatic access is available via TronGrid endpoints; see [TronGrid Service](https://developers.tron.network/docs/trongrid) for details.
 
-Shasta resources: explorer, faucet, wallet, developer docs, and network statistics at [shastaex.io](https://shastaex.io/).
+Shasta resources: explorer, faucet, wallet, developer docs, and network statistics at [shastaex.io](https://shasta.tronex.io/).
 
 ### 4. Set up a private network
 Setting up a private network for testing or development, follow the [Private Network guidance](https://tronprotocol.github.io/documentation-en/using_javatron/private_network/).
@@ -187,9 +187,9 @@ node {
   }
 }
 ```
-When exposing any of these APIs on a public interface, ensure that you place the node behind proper authentication, rate limiting, and network access controls according to your security requirements.
+When exposing any of these APIs to a public interface, ensure the node is protected with appropriate authentication, rate limiting, and network access controls in line with your security requirements.
 
-Public, hosted HTTP endpoints (main and test networks) are provided by TronGrid. Please consult [TRON Network HTTP Endpoints](https://developers.tron.network/docs/connect-to-the-tron-network#tron-network-http-endpoints) for the current catalogue. For method coverage and request formats, refer to the HTTP API reference above.
+Public hosted HTTP endpoints for both mainnet and testnet are provided by TronGrid. Please refer to the [TRON Network HTTP Endpoints](https://developers.tron.network/docs/connect-to-the-tron-network#tron-network-http-endpoints) for the latest list. For supported methods and request formats, see the HTTP API reference above.
 
 # Community
 
