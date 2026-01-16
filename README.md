@@ -31,7 +31,7 @@
 
 TRON builds decentralized Internet infrastructure.
 
-- Tron Protocol: high-throughput（2000+ TPS）, scalable blockchain OS (DPoS consensus) powering the TRON ecosystem.
+- Tron Protocol: High-throughput（2000+ TPS), scalable blockchain OS (DPoS consensus) powering the TRON ecosystem.
 - Tron Virtual Machine (TVM): EVM-compatible smart-contract engine for fast smart-contract deployment.
 
 # Building the Source Code
