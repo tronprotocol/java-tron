@@ -46,7 +46,8 @@ public class BlockChainMetricManager {
   @Setter
   private String failProcessBlockReason = "";
   private final Set<String> lastActiveWitnesses = ConcurrentHashMap.newKeySet();
-  private long lastNextMaintenanceTime = 0;
+  // To control SR set change metric update logic, -1 means not initialized
+  private long lastNextMaintenanceTime = -1; 
 
   public BlockChainInfo getBlockChainInfo() {
     BlockChainInfo blockChainInfo = new BlockChainInfo();
@@ -181,7 +182,7 @@ public class BlockChainMetricManager {
 
     // SR set change detection
     long nextMaintenanceTime = dbManager.getDynamicPropertiesStore().getNextMaintenanceTime();
-    if (lastNextMaintenanceTime == 0) {
+    if (lastNextMaintenanceTime == -1) {
       lastNextMaintenanceTime = nextMaintenanceTime;
       lastActiveWitnesses.addAll(chainBaseManager.getWitnessScheduleStore().getActiveWitnesses()
           .stream().map(w -> Hex.toHexString(w.toByteArray())).collect(Collectors.toSet()));
@@ -196,13 +197,6 @@ public class BlockChainMetricManager {
   }
 
   private void recordSrSetChange(Set<String> currentWitnesses) {
-    if (currentWitnesses.isEmpty()) {
-      return;
-    }
-    if (lastActiveWitnesses.isEmpty()) {
-      lastActiveWitnesses.addAll(currentWitnesses);
-      return;
-    }
     Set<String> added = new HashSet<>(currentWitnesses);
     added.removeAll(lastActiveWitnesses);
 
