@@ -25,6 +25,7 @@ import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
 import org.tron.consensus.dpos.DposSlot;
 import org.tron.core.ChainBaseManager;
@@ -65,7 +66,7 @@ public class PrometheusApiServiceTest extends BaseTest {
     parameter.setMetricsPrometheusEnable(true);
   }
 
-  protected void check() throws Exception {
+  protected void check(byte[] address) throws Exception {
     Double memoryBytes = CollectorRegistry.defaultRegistry.getSampleValue(
         "system_total_physical_memory_bytes");
     Assert.assertNotNull(memoryBytes);
@@ -80,6 +81,17 @@ public class PrometheusApiServiceTest extends BaseTest {
         new String[] {"sync"}, new String[] {"false"});
     Assert.assertNotNull(pushBlock);
     Assert.assertEquals(pushBlock.intValue(), blocks + 1);
+
+    String minerBase58 = StringUtil.encode58Check(address);
+    Double emptyBlock = CollectorRegistry.defaultRegistry.getSampleValue(
+        "tron:block_empty_total", new String[] {"miner"}, new String[] {minerBase58});
+
+    Assert.assertNotNull(emptyBlock);
+    // The initial address is in the active witness list along with 2 randomly generated witnesses,
+    // so it produces blocks every 3 slots. Total empty blocks = 1 (first manual block) + blocks/3
+    // (from the loop) + 1 if blocks%3 != 0 (partial round)
+    Assert.assertEquals(emptyBlock.intValue(), 1 + blocks / 3 + (blocks % 3 != 0 ? 1 : 0));
+
     Double errorLogs = CollectorRegistry.defaultRegistry.getSampleValue(
         "tron:error_info_total", new String[] {"net"}, new String[] {MetricLabels.UNDEFINED});
     Assert.assertNull(errorLogs);
@@ -133,7 +145,7 @@ public class PrometheusApiServiceTest extends BaseTest {
     for (int i = 0; i < blocks; i++) {
       generateBlock(witnessAndAccount);
     }
-    check();
+    check(address);
   }
 
   private Map<ByteString, String> addTestWitnessAndAccount() {
