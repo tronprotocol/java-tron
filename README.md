@@ -29,10 +29,10 @@
 
 # What's TRON?
 
-TRON builds decentralized Internet infrastructure.
+TRON is building the foundational infrastructure for the decentralized internet ecosystem with a focus on high-performance, scalability, and security.
 
 - Tron Protocol: High-throughput（2000+ TPS), scalable blockchain OS (DPoS consensus) powering the TRON ecosystem.
-- Tron Virtual Machine (TVM): EVM-compatible smart-contract engine for fast smart-contract deployment.
+- Tron Virtual Machine (TVM): EVM-compatible smart-contract engine for fast smart-contract execution.
 
 # Building the Source Code
 Before building java-tron, make sure you have:
@@ -78,15 +78,16 @@ The java-tron project comes with several runnable artifacts and helper scripts f
 
 # Running java-tron
 
-## Hardware Requirements
+## Hardware Requirements for Mainnet
 
 | Deployment Tier | CPU Cores | Memory | High-performance SSD Storage    | Network Downstream |
 |--------------------------|-------|--------|---------------------------|-----------------|
-| FullNode (Minimum)        | 8 | 16 GB | 200 GB ([Lite](https://tronprotocol.github.io/documentation-en/using_javatron/litefullnode/#lite-fullnode))                  | ≥ 5 MB/s |
-| FullNode (Stable)         | 8 | 32 GB | 200 GB (Lite) 3.5 TB (Full) | ≥ 5 MB/s |
-| FullNode (Recommended)      | 16+ | 32 GB+ | 4 TB         | ≥ 50 MB/s |
-| Super Representative      | 32+ | 64 GB+ | 4 TB              | ≥ 50 MB/s |
+| FullNode (Minimum)        | 8 | 16 GB | 200 GB ([Lite](https://tronprotocol.github.io/documentation-en/using_javatron/litefullnode/#lite-fullnode))                  | ≥ 5 MBit/sec  |
+| FullNode (Stable)         | 8 | 32 GB | 200 GB (Lite) 3.5 TB (Full) | ≥ 5 MBit/sec  |
+| FullNode (Recommended)      | 16+ | 32 GB+ | 4 TB         | ≥ 50 MBit/sec  |
+| Super Representative      | 32+ | 64 GB+ | 4 TB              | ≥ 50 MBit/sec  |
 
+Note: For test networks, where transaction volume is significantly lower, you may operate with reduced hardware specifications.
 
 ## Launching a full node
 
@@ -118,7 +119,7 @@ nohup java -Xms9G -jar ./build/libs/FullNode.jar &
 * `nohup ... &`: Runs the command in the background and ignores the hangup signal.
 * `-Xms9G`: Sets the JVM minimum heap size to `9 GB`.
 
-> For production main network deployments, review the [JVM Parameter Optimization for FullNode](https://tronprotocol.github.io/documentation-en/using_javatron/installing_javatron/#jvm-parameter-optimization-for-mainnet-fullnode-deployment) to use the complete Java command.
+> For the main network production deployments, review the [JVM Parameter Optimization for FullNode](https://tronprotocol.github.io/documentation-en/using_javatron/installing_javatron/#jvm-parameter-optimization-for-mainnet-fullnode-deployment) to use the complete Java command.
 
 Using the below command, you can monitor the blocks syncing progress:
 ```bash
@@ -128,7 +129,7 @@ tail -f ./logs/tron.log
 Use [TronScan](https://tronscan.org/#/), TRON's official block explorer, to view main network transactions, blocks, accounts, witness voting, and governance metrics, etc.
 
 ### 2. Join Nile test network
-Utilize the `-c` flag to direct the node to the configuration file corresponding to the desired network. Since Nile TestNet may incorporate features not yet available on the MainNet, it is strongly advised to compile the source code following the [Building the Source Code](https://github.com/tron-nile-testnet/nile-testnet/blob/master/README.md#building-the-source-code) instructions for the Nile TestNet.
+Utilize the `-c` flag to direct the node to the configuration file corresponding to the desired network. Since Nile TestNet may incorporate features not yet available on the MainNet, it is **strongly advised** to compile the source code following the [Building the Source Code](https://github.com/tron-nile-testnet/nile-testnet/blob/master/README.md#building-the-source-code) instructions for the Nile TestNet.
 
 ```bash
 nohup java -jar ./build/libs/FullNode.jar -c config-nile.conf &
@@ -142,7 +143,7 @@ Shasta does not accept public node peers. Programmatic access is available via T
 Shasta resources: explorer, faucet, wallet, developer docs, and network statistics at [shastaex.io](https://shastaex.io/).
 
 ### 4. Set up a private network
-For setting up a private network for testing or development, follow the [Private Network guidance](https://tronprotocol.github.io/documentation-en/using_javatron/private_network/).
+Setting up a private network for testing or development, follow the [Private Network guidance](https://tronprotocol.github.io/documentation-en/using_javatron/private_network/).
 
 
 ## Running a super representative node

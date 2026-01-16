@@ -123,14 +123,6 @@ else
     exit 1
 fi
 
-# update Gradle dependency verification metadata 
-if [[ -f "./gradlew" ]]; then
-    # If an executable named gradlew exists in the current directory, enter this branch
-    # This line detects whether the project uses the Gradle build tool so that subsequent Gradle commands can be executed
-    echo ">>> Updating Gradle dependency verification metadata..."
-    ./gradlew --write-verification-metadata sha256 --refresh-dependencies
-fi
-
 echo "----------------------------------------"
 echo ">>> Installation logic completed."
 echo "Please verify installations manually if any errors occurred above."
