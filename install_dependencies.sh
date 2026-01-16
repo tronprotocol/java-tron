@@ -13,6 +13,12 @@ elif [[ "$OS" == "Linux" ]]; then
 fi
 echo "  Architecture: $ARCH"
 echo "----------------------------------------"
+echo ">>> Note: This script has been tested on:"
+echo "    - macOS x86_64 (JDK 8)"
+echo "    - macOS arm64 (JDK 17)"
+echo "    - Linux x86_64 (generic, including Ubuntu) (JDK 8)"
+echo "    - Linux arm64/aarch64 (generic, including Ubuntu) (JDK 17)"
+echo "----------------------------------------"
 
 install_macos() {
     if ! command -v brew &> /dev/null; then
