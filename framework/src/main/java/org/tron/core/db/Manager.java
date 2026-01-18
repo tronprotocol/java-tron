@@ -1128,12 +1128,16 @@ public class Manager {
     if (CollectionUtils.isNotEmpty(binaryTree.getKey())) {
       List<KhaosBlock> first = new ArrayList<>(binaryTree.getKey());
       Collections.reverse(first);
+      int failureCount = 0;
+      final int MAX_FORK_FAILURES = 3;
+      
       for (KhaosBlock item : first) {
         Exception exception = null;
-        // todo  process the exception carefully later
         try (ISession tmpSession = revokingStore.buildSession()) {
+          logger.info("Applying block {} during fork switch", item.getBlk().getNum());
           applyBlock(item.getBlk().setSwitch(true));
           tmpSession.commit();
+          logger.info("Successfully applied block {} during fork switch", item.getBlk().getNum());
         } catch (AccountResourceInsufficientException
             | ValidateSignatureException
             | ContractValidateException
@@ -1148,30 +1152,59 @@ public class Manager {
             | VMIllegalException
             | ZksnarkException
             | BadBlockException e) {
-          logger.warn(e.getMessage(), e);
+          logger.error("Fork switch failed at block {}: {}", 
+              item.getBlk().getNum(), e.getMessage(), e);
           exception = e;
+          failureCount++;
+          
+          // Record detailed failure information
+          Metrics.counterInc(MetricKeys.Counter.BLOCK_FORK, 1, MetricLabels.FAIL);
+          MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_FAIL_FORK_COUNT);
+          
           throw e;
         } finally {
           if (exception != null) {
-            Metrics.counterInc(MetricKeys.Counter.BLOCK_FORK, 1, MetricLabels.FAIL);
-            MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_FAIL_FORK_COUNT);
-            logger.warn("Switch back because exception thrown while switching forks.", exception);
-            first.forEach(khaosBlock -> khaosDb.removeBlk(khaosBlock.getBlk().getBlockId()));
+            logger.warn("Initiating rollback due to fork switch failure. Blocks processed: {}, Failures: {}", 
+                first.indexOf(item), failureCount);
+            
+            // Remove all blocks from failed fork
+            first.forEach(khaosBlock -> {
+              try {
+                khaosDb.removeBlk(khaosBlock.getBlk().getBlockId());
+                logger.debug("Removed block {} from khaosDb", khaosBlock.getBlk().getNum());
+              } catch (Exception e) {
+                logger.error("Failed to remove block {} during rollback", 
+                    khaosBlock.getBlk().getNum(), e);
+              }
+            });
+            
             khaosDb.setHead(binaryTree.getValue().peekFirst());
 
+            // Erase blocks to restore original state
             while (!getDynamicPropertiesStore()
                 .getLatestBlockHeaderHash()
                 .equals(binaryTree.getValue().peekLast().getParentHash())) {
-              eraseBlock();
+              try {
+                eraseBlock();
+              } catch (Exception e) {
+                logger.error("Critical error during block erasure in rollback", e);
+                // This is a critical failure - blockchain state may be inconsistent
+                throw new RuntimeException("Fork rollback failed - blockchain state inconsistent", e);
+              }
             }
 
+            // Restore original fork
             List<KhaosBlock> second = new ArrayList<>(binaryTree.getValue());
             Collections.reverse(second);
+            int restoreFailures = 0;
+            
             for (KhaosBlock khaosBlock : second) {
-              // todo  process the exception carefully later
               try (ISession tmpSession = revokingStore.buildSession()) {
+                logger.info("Restoring original block {} after failed fork switch", 
+                    khaosBlock.getBlk().getNum());
                 applyBlock(khaosBlock.getBlk().setSwitch(true));
                 tmpSession.commit();
+                logger.info("Successfully restored block {}", khaosBlock.getBlk().getNum());
               } catch (AccountResourceInsufficientException
                   | ValidateSignatureException
                   | ContractValidateException
@@ -1181,14 +1214,33 @@ public class Manager {
                   | TransactionExpirationException
                   | TooBigTransactionException
                   | ValidateScheduleException
-                  | ZksnarkException e) {
-                logger.warn(e.getMessage(), e);
+                  | ZksnarkException
+                  | BadBlockException
+                  | ReceiptCheckErrException
+                  | TooBigTransactionResultException
+                  | VMIllegalException e) {
+                logger.error("CRITICAL: Failed to restore original block {} during rollback: {}", 
+                    khaosBlock.getBlk().getNum(), e.getMessage(), e);
+                restoreFailures++;
+                
+                // If we can't restore the original fork, the blockchain is in an inconsistent state
+                if (restoreFailures > MAX_FORK_FAILURES) {
+                  logger.error("CRITICAL: Multiple failures during fork restoration. " +
+                      "Blockchain state may be inconsistent. Manual intervention required.");
+                  throw new RuntimeException(
+                      "Critical fork restoration failure - blockchain state inconsistent", e);
+                }
               }
+            }
+            
+            if (restoreFailures > 0) {
+              logger.warn("Fork restoration completed with {} failures", restoreFailures);
             }
           }
         }
       }
     }
+
 
   }
 
