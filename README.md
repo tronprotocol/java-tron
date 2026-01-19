@@ -37,7 +37,7 @@ TRON is building the foundational infrastructure for the decentralized internet 
 # Building the Source Code
 Before building java-tron, make sure you have:
 - Hardware with at least 4 CPU cores, 16 GB RAM, 10 GB free disk space for a smooth compilation process.
-- Operating system: `Linux` or `MacOS` (Windows is not supported).
+- Operating system: `Linux` or `macOS` (`Windows` is not supported).
 - Git and correct JDK（version `8` or `17`） installed based on your CPU architecture.
 
 There are two ways to install the required dependencies:
