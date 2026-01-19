@@ -85,10 +85,10 @@ The java-tron project comes with several runnable artifacts and helper scripts f
 |--------------------------|-------|--------|---------------------------|-----------------|
 | FullNode (Minimum)        | 8 | 16 GB | 200 GB ([Lite](https://tronprotocol.github.io/documentation-en/using_javatron/litefullnode/#lite-fullnode))                  | ≥ 5 MBit/sec  |
 | FullNode (Stable)         | 8 | 32 GB | 200 GB (Lite) 3.5 TB (Full) | ≥ 5 MBit/sec  |
-| FullNode (Recommended)      | 16+ | 32 GB+ | 4 TB         | ≥ 50 MBit/sec  |
+| FullNode (Recommend)      | 16+ | 32 GB+ | 4 TB         | ≥ 50 MBit/sec  |
 | Super Representative      | 32+ | 64 GB+ | 4 TB              | ≥ 50 MBit/sec  |
 
-Note: For test networks, where transaction volume is significantly lower, you may operate with reduced hardware specifications.
+> **Note**: For test networks, where transaction volume is significantly lower, you may operate with reduced hardware specifications.
 
 ## Launching a full node
 
@@ -115,12 +115,11 @@ Network selection is performed by specifying the appropriate configuration file 
 ### 1. Join the TRON main network
 Launch a main-network full node with the built-in default configuration:
 ```bash
-nohup java -Xms9G -jar ./build/libs/FullNode.jar &
+nohup java -jar ./build/libs/FullNode.jar &
 ```
 * `nohup ... &`: Runs the command in the background and ignores the hangup signal.
-* `-Xms9G`: Sets the JVM minimum heap size to `9 GB`.
 
-> For the main network production deployments, review the [JVM Parameter Optimization for FullNode](https://tronprotocol.github.io/documentation-en/using_javatron/installing_javatron/#jvm-parameter-optimization-for-mainnet-fullnode-deployment) to use the complete Java command.
+> For production deployments or long-running Mainnet nodes, please refer to the [JVM Parameter Optimization for FullNode](https://tronprotocol.github.io/documentation-en/using_javatron/installing_javatron/#jvm-parameter-optimization-for-mainnet-fullnode-deployment) guide for the recommended Java command configuration.
 
 Using the below command, you can monitor the blocks syncing progress:
 ```bash
@@ -144,8 +143,7 @@ Shasta does not accept public node peers. Programmatic access is available via T
 Shasta resources: explorer, faucet, wallet, developer docs, and network statistics at [shastaex.io](https://shasta.tronex.io/).
 
 ### 4. Set up a private network
-Setting up a private network for testing or development, follow the [Private Network guidance](https://tronprotocol.github.io/documentation-en/using_javatron/private_network/).
-
+To set up a private network for testing or development, follow the [Private Network guidance](https://tronprotocol.github.io/documentation-en/using_javatron/private_network/).
 
 ## Running a super representative node
 
@@ -166,7 +164,7 @@ Subsequently, launch the node by executing the optimized Java startup command de
 Upon the FullNode startup successfully, interaction with the TRON network is facilitated through a comprehensive suite of programmatic interfaces exposed by java-tron:
 - **HTTP API**: See the complete [HTTP API reference and endpoint list](https://tronprotocol.github.io/documentation-en/api/http/).
 - **gRPC**: High-performance APIs suitable for service-to-service integration. See the supported [gRPC reference](https://tronprotocol.github.io/documentation-en/api/rpc/).
-- **JSON-RPC**: Provides Ethereum-compatible JSON-RPC methods for logs, transactions and contract calls. See the supported [JSON-RPC methods](https://tronprotocol.github.io/documentation-en/api/json-rpc/).
+- **JSON-RPC**: Provides Ethereum-compatible JSON-RPC methods for logs, transactions and contract calls, etc. See the supported [JSON-RPC methods](https://tronprotocol.github.io/documentation-en/api/json-rpc/).
 
 Enable or disable each interface in the configuration file:
 
