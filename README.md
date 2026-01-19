@@ -50,7 +50,7 @@ There are two ways to install the required dependencies:
   chmod +x install_dependencies.sh
   ./install_dependencies.sh
   ```
-  > **Note**: For production-grade stability with JDK 8, Oracle JDK 8 is strongly recommended (the script installs OpenJDK 8).
+  > **Note**: For production-grade stability with JDK 8 on x86_64 architecture, Oracle JDK 8 is strongly recommended (the script installs OpenJDK 8).
 
 - **Option 2: Manual installation**
 
@@ -63,7 +63,8 @@ cd java-tron
 git checkout -t origin/master
 ./gradlew clean build -x test
 ```
-* The parameter `-x test` indicates skipping the execution of test cases. If you encounter any error please refer to the [Compiling java-tron Source Code](https://tronprotocol.github.io/documentation-en/using_javatron/installing_javatron/#compiling-java-tron-source-code) documentation for troubleshooting steps.
+* The parameter `-x test` indicates skipping the execution of test cases. 
+* If you encounter any error please refer to the [Compiling java-tron Source Code](https://tronprotocol.github.io/documentation-en/using_javatron/installing_javatron/#compiling-java-tron-source-code) documentation for troubleshooting steps. Or you could use the pre-built jar file from 
 
 # Executables
 
@@ -193,9 +194,9 @@ Public hosted HTTP endpoints for both mainnet and testnet are provided by TronGr
 
 # Community
 
-[Tron Developers & SRs](https://discord.gg/hqKvyAM) is Tron's official Discord channel. Feel free to join this channel if you have any questions.
+[TRON Developers & SRs](https://discord.gg/hqKvyAM) is TRON's official Discord channel. Feel free to join this channel if you have any questions.
 
-The [Core Devs Community](https://t.me/troncoredevscommunity) and [Tron Official Developer Group](https://t.me/TronOfficialDevelopersGroupEn) are Telegram channels specifically designed for java-tron community developers to engage in technical discussions.
+The [Core Devs Community](https://t.me/troncoredevscommunity) and [TRON Official Developer Group](https://t.me/TronOfficialDevelopersGroupEn) are Telegram channels specifically designed for java-tron community developers to engage in technical discussions.
 
 # Contribution
 
