@@ -31,8 +31,8 @@
 
 TRON is building the foundational infrastructure for the decentralized internet ecosystem with a focus on high-performance, scalability, and security.
 
-- Tron Protocol: High-throughput（2000+ TPS), scalable blockchain OS (DPoS consensus) powering the TRON ecosystem.
-- Tron Virtual Machine (TVM): EVM-compatible smart-contract engine for fast smart-contract execution.
+- TRON Protocol: High-throughput（2000+ TPS), scalable blockchain OS (DPoS consensus) powering the TRON ecosystem.
+- TRON Virtual Machine (TVM): EVM-compatible smart-contract engine for fast smart-contract execution.
 
 # Building the Source Code
 Before building java-tron, make sure you have:
