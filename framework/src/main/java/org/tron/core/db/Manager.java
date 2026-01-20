@@ -874,7 +874,7 @@ public class Manager {
 
     if (isShieldedTransaction(trx.getInstance()) && !chainBaseManager.getDynamicPropertiesStore()
         .supportShieldedTransaction()) {
-      throw new ContractValidateException("System shielded transaction is not supported.");
+      throw new ContractValidateException("ShieldedTransferContract is not supported.");
     }
 
     if (isExchangeTransaction(trx.getInstance())) {
