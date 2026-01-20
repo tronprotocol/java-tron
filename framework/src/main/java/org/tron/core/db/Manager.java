@@ -874,13 +874,12 @@ public class Manager {
 
     if (isShieldedTransaction(trx.getInstance()) && !chainBaseManager.getDynamicPropertiesStore()
         .supportShieldedTransaction()) {
-      return false;
+      throw new ContractValidateException("System shielded transaction is not supported.");
     }
 
     if (isExchangeTransaction(trx.getInstance())) {
       throw new ContractValidateException("ExchangeTransactionContract is rejected");
     }
-
 
     pushTransactionQueue.add(trx);
     Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, 1,

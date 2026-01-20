@@ -320,7 +320,7 @@ public class ManagerTest extends BlockGenerate {
       dbManager.pushTransaction(trans0);
       dbManager.pushTransaction(trans);
     } catch (Exception e) {
-      Assert.assertTrue(e instanceof TaposException);
+      Assert.assertTrue(e instanceof ContractValidateException);
     }
     dbManager.rePush(trans0);
     ReflectUtils.invokeMethod(dbManager,"filterOwnerAddress",
