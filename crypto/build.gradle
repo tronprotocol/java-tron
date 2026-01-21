@@ -1,28 +1,53 @@
 plugins {
-    id 'java'
+    id 'java-library' // Optimization: 'java-library' is better for multi-project builds
+    id 'jacoco'       // Explicitly apply jacoco plugin
 }
 
-version '1.0.0'
+version = '1.0.0'
+group = 'org.dash.wallet' // Namespace consistency
 
-sourceCompatibility = 1.8
+// Compatibility for Android-adjacent Java libraries
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
+    // 'api' allows transitive dependencies, making 'common' accessible to users of this module
     api project(":common")
+    
+    testImplementation 'junit:junit:4.13.2'
 }
 
+[Image of Gradle project dependency graph and multi-project structure]
+
+/**
+ * JaCoCo Test Report Configuration
+ * This block is configured to aggregate execution data from the ':framework' module.
+ * This is critical for end-to-end (E2E) coverage analysis.
+ */
 jacocoTestReport {
     reports {
-        xml.enabled = true
-        html.enabled = true
+        xml.required = true
+        html.required = true
     }
-    getExecutionData().setFrom(fileTree('../framework/build/jacoco').include("**.exec"))
+
+    // Aggregates coverage data (.exec files) from the adjacent framework module
+    executionData.setFrom(fileTree('../framework/build/jacoco').include("**.exec"))
+
     afterEvaluate {
-        classDirectories.from = classDirectories.files.collect {
-            fileTree(dir: it,)
-        }
+        // Filters and collects class files for accurate report generation
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                '**/R.class', 
+                '**/R$*.class', 
+                '**/BuildConfig.*', 
+                '**/Manifest*.*'
+            ])
+        }))
     }
 }
+
+[Image of Java Code Coverage (JaCoCo) report lifecycle and aggregation]
