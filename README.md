@@ -64,7 +64,7 @@ git checkout -t origin/master
 ./gradlew clean build -x test
 ```
 * The parameter `-x test` indicates skipping the execution of test cases. 
-* If you encounter any error please refer to the [Compiling java-tron Source Code](https://tronprotocol.github.io/documentation-en/using_javatron/installing_javatron/#compiling-java-tron-source-code) documentation for troubleshooting steps. Or you could use the pre-built jar file from 
+* If you encounter any error please refer to the [Compiling java-tron Source Code](https://tronprotocol.github.io/documentation-en/using_javatron/installing_javatron/#compiling-java-tron-source-code) documentation for troubleshooting steps.
 
 # Executables
 
