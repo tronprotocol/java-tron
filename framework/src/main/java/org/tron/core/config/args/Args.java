@@ -207,6 +207,7 @@ public class Args extends CommonParameter {
     PARAMETER.jsonRpcHttpPBFTNodeEnable = false;
     PARAMETER.jsonRpcMaxBlockRange = 5000;
     PARAMETER.jsonRpcMaxSubTopics = 1000;
+    PARAMETER.jsonRpcMaxBlockFilterNum = 50000;
     PARAMETER.nodeMetricsEnable = false;
     PARAMETER.metricsStorageEnable = false;
     PARAMETER.metricsPrometheusEnable = false;
@@ -489,6 +490,11 @@ public class Args extends CommonParameter {
     if (config.hasPath(Constant.NODE_JSONRPC_MAX_SUB_TOPICS)) {
       PARAMETER.jsonRpcMaxSubTopics =
           config.getInt(Constant.NODE_JSONRPC_MAX_SUB_TOPICS);
+    }
+
+    if (config.hasPath(Constant.NODE_JSONRPC_MAX_BLOCK_FILTER_NUM)) {
+      PARAMETER.jsonRpcMaxBlockFilterNum =
+          config.getInt(Constant.NODE_JSONRPC_MAX_BLOCK_FILTER_NUM);
     }
 
     if (config.hasPath(Constant.VM_MIN_TIME_RATIO)) {

@@ -356,7 +356,8 @@ public class ProposalUtil {
         break;
       }
       case ALLOW_MARKET_TRANSACTION: {
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_1)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_1)
+            || forkController.pass(ForkBlockVersionEnum.VERSION_4_8_1)) {
           throw new ContractValidateException(
               "Bad chain parameter id [ALLOW_MARKET_TRANSACTION]");
         }

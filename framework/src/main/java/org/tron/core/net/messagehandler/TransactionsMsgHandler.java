@@ -70,6 +70,10 @@ public class TransactionsMsgHandler implements TronMsgHandler {
   public void processMessage(PeerConnection peer, TronMessage msg) throws P2pException {
     TransactionsMessage transactionsMessage = (TransactionsMessage) msg;
     check(peer, transactionsMessage);
+    for (Transaction trx : transactionsMessage.getTransactions().getTransactionsList()) {
+      Item item = new Item(new TransactionMessage(trx).getMessageId(), InventoryType.TRX);
+      peer.getAdvInvRequest().remove(item);
+    }
     int smartContractQueueSize = 0;
     int trxHandlePoolQueueSize = 0;
     int dropSmartContractCount = 0;
@@ -101,7 +105,6 @@ public class TransactionsMsgHandler implements TronMsgHandler {
         throw new P2pException(TypeEnum.BAD_MESSAGE,
             "trx: " + msg.getMessageId() + " without request.");
       }
-      peer.getAdvInvRequest().remove(item);
       if (trx.getRawData().getContractCount() < 1) {
         throw new P2pException(TypeEnum.BAD_TRX,
             "tx " + item.getHash() + " contract size should be greater than 0");

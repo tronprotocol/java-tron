@@ -1,4 +1,5 @@
 import org.gradle.nativeplatform.platform.internal.Architectures
+import org.gradle.internal.os.OperatingSystem
 allprojects {
     version = "1.0.0"
     apply plugin: "java-library"
@@ -10,6 +11,7 @@ def arch = System.getProperty("os.arch").toLowerCase()
 def javaVersion = JavaVersion.current()
 def isArm64 = Architectures.AARCH64.isAlias(arch)
 def archSource = isArm64 ? "arm" : "x86"
+def isMac = OperatingSystem.current().isMacOsX()
 
 ext.archInfo = [
         name    : arch,
@@ -29,7 +31,11 @@ ext.archInfo = [
         ],
         requires: [
                 JavaVersion: isArm64 ? JavaVersion.VERSION_17 : JavaVersion.VERSION_1_8,
-                RocksdbVersion: isArm64 ? '9.7.4' : '5.15.10'
+                RocksdbVersion: isArm64 ? '9.7.4' : '5.15.10',
+                // https://github.com/grpc/grpc-java/issues/7690
+                // https://github.com/grpc/grpc-java/pull/12319, Add support for macOS aarch64 with universal binary
+                // https://github.com/grpc/grpc-java/pull/11371 , 1.64.x is not supported CentOS 7.
+                ProtocGenVersion: isArm64 && isMac ? '1.76.0' : '1.60.0'
         ],
         VMOptions: isArm64 ? "${rootDir}/gradle/jdk17/java-tron.vmoptions" : "${rootDir}/gradle/java-tron.vmoptions"
 ]

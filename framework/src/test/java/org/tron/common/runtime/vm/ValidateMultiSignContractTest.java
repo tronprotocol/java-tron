@@ -25,6 +25,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.PrecompiledContracts.ValidateMultiSign;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol;
@@ -122,6 +123,13 @@ public class ValidateMultiSignContractTest extends BaseTest {
     Assert.assertArrayEquals(
         validateMultiSign(StringUtil.encode58Check(key.getAddress()), permissionId, data, signs)
             .getValue(), DataWord.ONE().getData());
+
+    //after optimized
+    VMConfig.initAllowTvmSelfdestructRestriction(1);
+    Assert.assertArrayEquals(
+        validateMultiSign(StringUtil.encode58Check(key.getAddress()), permissionId, data, signs)
+            .getValue(), DataWord.ONE().getData());
+    VMConfig.initAllowTvmSelfdestructRestriction(0);
 
     //weight not enough
     signs = new ArrayList<>();

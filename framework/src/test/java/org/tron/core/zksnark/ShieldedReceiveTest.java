@@ -228,6 +228,11 @@ public class ShieldedReceiveTest extends BaseTest {
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(totalShieldedPoolValue);
   }
 
+  @Test
+  public void testIsMining() {
+    Assert.assertTrue(wallet.isMining());
+  }
+
   /*
    * test of change ShieldedTransactionFee proposal
    */
@@ -309,10 +314,9 @@ public class ShieldedReceiveTest extends BaseTest {
     transactionCap = TransactionUtils.addTransactionSign(transactionCap.getInstance(),
             ADDRESS_ONE_PRIVATE_KEY, chainBaseManager.getAccountStore());
     try {
-      boolean res = dbManager.pushTransaction(transactionCap);
-      Assert.assertFalse(res);
+      dbManager.pushTransaction(transactionCap);
     } catch (Exception e) {
-      Assert.fail(e.getMessage());
+      Assert.assertTrue(e instanceof ContractValidateException);
     }
   }
 

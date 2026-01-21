@@ -2,7 +2,6 @@ apply plugin: 'com.google.protobuf'
 
 def protobufVersion = '3.25.8'
 def grpcVersion = '1.75.0'
-def protocGenVersion = '1.60.0' // https://github.com/grpc/grpc-java/pull/11371 , 1.64.x is not supported CentOS 7.
 
 dependencies {
     api group: 'com.google.protobuf', name: 'protobuf-java', version: protobufVersion
@@ -47,7 +46,7 @@ protobuf {
 
     plugins {
         grpc {
-            artifact = "io.grpc:protoc-gen-grpc-java:${protocGenVersion}"
+            artifact = "io.grpc:protoc-gen-grpc-java:${rootProject.archInfo.requires.ProtocGenVersion}"
         }
     }
     generateProtoTasks {

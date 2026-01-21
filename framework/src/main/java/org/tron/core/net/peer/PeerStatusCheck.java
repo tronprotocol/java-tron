@@ -43,7 +43,7 @@ public class PeerStatusCheck {
     long now = System.currentTimeMillis();
 
     if (tronNetDelegate == null) {
-      //only occurs in mock test. TODO fix test
+      // only occurs in mock test. TODO fix test
       return;
     }
     tronNetDelegate.getActivePeer().forEach(peer -> {
