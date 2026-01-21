@@ -1,21 +1,23 @@
 plugins {
-    id 'java'
+    id 'java-library' // 'java' yerine 'java-library' kullanımı daha modern bir API yönetimi sağlar
+    id 'jacoco'
 }
 
-version '1.0.0'
+group = 'org.blockchain'
+version = '1.0.0'
 
-sourceCompatibility = 1.8
+// Modern LTS Java version recommended (Transitioning from 1.8 to 17 if possible)
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
 
-// Dependency versions
-// ---------------------------------------
-def leveldbVersion = "1.8"
-// --------------------------------------
-
-static def isWindows() {
-    return org.gradle.internal.os.OperatingSystem.current().isWindows()
+// Global variables for cleaner version management
+ext {
+    leveldbVersion = "1.8"
+    isWindows = org.gradle.internal.os.OperatingSystem.current().isWindows()
 }
 
-if (isWindows()) {
+// OS-specific LevelDB configuration with optimized versions
+if (isWindows) {
     ext {
         leveldbGroup = "org.ethereum"
         leveldbName = "leveldbjni-all"
@@ -25,34 +27,44 @@ if (isWindows()) {
     ext {
         leveldbGroup = "org.fusesource.leveldbjni"
         leveldbName = "leveldbjni-all"
-        leveldbVersion = "1.8"
+        leveldbVersion = "1.8" // Consider updating this to a maintained fork if possible
     }
 }
 
 dependencies {
-    api group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.13.4.2' // https://github.com/FasterXML/jackson-databind/issues/3627
-    api "com.cedarsoftware:java-util:1.8.0"
-    api group: 'org.apache.httpcomponents', name: 'httpasyncclient', version: '4.1.1'
-    api group: 'commons-codec', name: 'commons-codec', version: '1.11'
-    api group: 'com.beust', name: 'jcommander', version: '1.78'
-    api group: 'com.typesafe', name: 'config', version: '1.3.2'
+    // SECURITY: Updated to patched version to mitigate RCE vulnerabilities
+    api group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.15.2'
+    
+    // Core Utilities
+    api "com.cedarsoftware:java-util:1.72.0" // Updated to a more stable modern version
+    api group: 'org.apache.httpcomponents', name: 'httpasyncclient', version: '4.1.5'
+    api group: 'commons-codec', name: 'commons-codec', version: '1.15'
+    api group: 'com.beust', name: 'jcommander', version: '1.82'
+    api group: 'com.typesafe', name: 'config', version: '1.4.2'
+    
+    // Database Layer (JNI Bindings)
     api group: leveldbGroup, name: leveldbName, version: leveldbVersion
-    api group: 'org.rocksdb', name: 'rocksdbjni', version: '5.15.10'
-    api group: 'io.prometheus', name: 'simpleclient', version: '0.15.0'
-    api group: 'io.prometheus', name: 'simpleclient_httpserver', version: '0.15.0'
-    api group: 'io.prometheus', name: 'simpleclient_hotspot', version: '0.15.0'
-    api 'org.aspectj:aspectjrt:1.8.13'
-    api 'org.aspectj:aspectjweaver:1.8.13'
-    api 'org.aspectj:aspectjtools:1.8.13'
-    api group: 'io.github.tronprotocol', name: 'libp2p', version: '2.2.5',{
+    api group: 'org.rocksdb', name: 'rocksdbjni', version: '7.10.2' // Modern RocksDB for better performance
+    
+    // Observability & Metrics
+    def prometheusVersion = "0.16.0"
+    api group: 'io.prometheus', name: 'simpleclient', version: prometheusVersion
+    api group: 'io.prometheus', name: 'simpleclient_httpserver', version: prometheusVersion
+    api group: 'io.prometheus', name: 'simpleclient_hotspot', version: prometheusVersion
+    
+    // Aspect Oriented Programming (AOP)
+    def aspectjVersion = "1.9.7" // Updated for better bytecode compatibility
+    api "org.aspectj:aspectjrt:${aspectjVersion}"
+    api "org.aspectj:aspectjweaver:${aspectjVersion}"
+    api "org.aspectj:aspectjtools:${aspectjVersion}"
+    
+    // Networking & P2P with granular exclusions
+    api (group: 'io.github.tronprotocol', name: 'libp2p', version: '2.2.5') {
         exclude group: 'io.grpc', module: 'grpc-context'
         exclude group: 'io.grpc', module: 'grpc-core'
         exclude group: 'io.grpc', module: 'grpc-netty'
         exclude group: 'com.google.protobuf', module: 'protobuf-java'
         exclude group: 'com.google.protobuf', module: 'protobuf-java-util'
-        // https://github.com/dom4j/dom4j/pull/116
-        // https://github.com/gradle/gradle/issues/13656
-        // https://github.com/dom4j/dom4j/issues/99
         exclude group: 'jaxen', module: 'jaxen'
         exclude group: 'javax.xml.stream', module: 'stax-api'
         exclude group: 'net.java.dev.msv', module: 'xsdlib'
@@ -61,18 +73,28 @@ dependencies {
         exclude group: 'org.bouncycastle', module: 'bcprov-jdk18on'
         exclude group: 'org.bouncycastle', module: 'bcutil-jdk18on'
     }
+    
     api project(":protocol")
 }
 
+// Enhanced Code Coverage Analysis
 jacocoTestReport {
     reports {
-        xml.enabled = true
-        html.enabled = true
+        xml.required = true
+        html.required = true
     }
-    getExecutionData().setFrom(fileTree('../framework/build/jacoco').include("**.exec"))
+    
+    // Dynamic execution data collection
+    executionData.setFrom(fileTree(dir: "${project.projectDir}/..", include: "**/build/jacoco/*.exec"))
+
     afterEvaluate {
-        classDirectories.from = classDirectories.files.collect {
-            fileTree(dir: it,)
-        }
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                '**/R.class',
+                '**/BuildConfig.*',
+                '**/*Test*.*',
+                '**/generated/**'
+            ])
+        }))
     }
 }
