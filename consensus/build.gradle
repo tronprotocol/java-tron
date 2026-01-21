@@ -1,44 +1,56 @@
-description = "consensus – a distributed consensus arithmetic for blockchain."
+description = "Consensus – High-performance distributed consensus arithmetic for blockchain."
 
 dependencies {
+    // Using 'api' to leak necessary types to dependent modules, 
+    // but ensure 'chainbase' and 'protocol' are strictly versioned in root
     api project(":chainbase")
     api project(":protocol")
 }
 
 test {
+    // Performance: Adjusted heap size for complex consensus arithmetic simulations
+    maxHeapSize = "2048m"
+    
+    // Stability: Ensure clean test environment for each fork
+    forkEvery = 100 
 
     testLogging {
-        // showing skipped occasionally should prevent CI timeout due to lack of standard output
-        events = ["skipped", "failed"] // "started", "passed"
-        // showStandardStreams = true
+        // Strategic logging: Concise for CI, full for local debugging
+        events = ["failed", "skipped"]
         exceptionFormat = "full"
+        showStackTraces = true
+        showCauses = true
 
-        debug.events = ["skipped", "failed"]
-        debug.exceptionFormat = "full"
-
-        info.events = ["failed", "skipped"]
-        info.exceptionFormat = "full"
-
-        warn.events = ["failed", "skipped"]
-        warn.exceptionFormat = "full"
+        // Ensure we see which test is hanging in CI
+        if (System.getenv("CI") != null) {
+            events = ["started", "failed", "skipped"]
+        }
     }
 
-    maxHeapSize = "1200m"
-
-    if (System.getenv("CI") == null) {
-        maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+    // Optimization: Dynamic fork strategy for both Local and CI environments
+    maxParallelForks = (Runtime.runtime.availableProcessors().intdiv(2) ?: 1).with { 
+        it > 8 ? 8 : it // Cap at 8 to prevent I/O thrashing
     }
 }
 
+// Security & Quality: Robust Coverage Reporting
 jacocoTestReport {
     reports {
-        xml.enabled = true
-        html.enabled = true
+        xml.required = true
+        html.required = true
     }
-    getExecutionData().setFrom(fileTree('../framework/build/jacoco').include("**.exec"))
+    
+    // Automatically include execution data from all test tasks
+    executionData.setFrom(fileTree(dir: "${project.buildDir}", include: "jacoco/*.exec"))
+
     afterEvaluate {
-        classDirectories.from = classDirectories.files.collect {
-            fileTree(dir: it,)
-        }
+        // Exclude generated code and internal bridge classes from coverage for cleaner audits
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                '**/R.class',
+                '**/BuildConfig.*',
+                '**/*Test*.*'
+            ])
+        }))
     }
 }
