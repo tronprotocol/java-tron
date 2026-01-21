@@ -156,8 +156,8 @@ Fill in the private key of your SR account into the `localwitness` list in the c
     <your_private_key>
  ]
 ```
-
-Subsequently, launch the node by executing the optimized Java startup command detailed in the [JVM Parameter Optimization for Mainnet FullNode Deployment](https://tronprotocol.github.io/documentation-en/using_javatron/installing_javatron/#jvm-parameter-optimization-for-mainnet-fullnode-deployment) guidance. You could also test the process by connecting to a testnet or setting up a private network.
+Check [Starting a Block Production Node](https://tronprotocol.github.io/documentation-en/using_javatron/installing_javatron/#starting-a-block-production-node) for more details.
+You could also test the process by connecting to a testnet or setting up a private network.
 
 ## Programmatically interfacing FullNode
 
