@@ -17,6 +17,12 @@ elif [[ "$OS" == "Linux" ]]; then
 fi
 echo "  Architecture: $ARCH"
 echo ""
+echo ">>> Tested platforms:"
+echo "    - macOS x86_64 (JDK 8)"
+echo "    - macOS arm64 (JDK 17)"
+echo "    - Linux x86_64 (generic, including Ubuntu) (JDK 8)"
+echo "    - Linux arm64/aarch64 (generic, including Ubuntu) (JDK 17)"
+echo ""
 echo ">>> This script will install the following components if not already installed:"
 echo "  1. Homebrew to download and install JDK (macOS only)"
 echo "  2. Git for cloning the java-tron repository"
@@ -34,14 +40,7 @@ elif [[ "$OS" == "Linux" ]]; then
     fi
 fi
 echo ""
-echo ">>> Tested platforms:"
-echo "    - macOS x86_64 (JDK 8)"
-echo "    - macOS arm64 (JDK 17)"
-echo "    - Linux x86_64 (generic, including Ubuntu) (JDK 8)"
-echo "    - Linux arm64/aarch64 (generic, including Ubuntu) (JDK 17)"
-echo ""
-echo "⚠️  WARNING: By continuing, you agree to install the above components."
-echo "    This script may install new software and modify your system Java environment."
+echo "WARNING: By continuing, you agree to install the above components."
 echo ""
 
 # Function to ask for user confirmation
@@ -55,6 +54,7 @@ ask_confirmation() {
         esac
     done
 }
+ask_confirmation
 
 # Function to check Java version
 check_java_version() {
@@ -86,7 +86,7 @@ ask_jdk_confirmation() {
     local arch="$3"
     
     echo ""
-    echo "⚠️  JDK Version Mismatch Detected!"
+    echo "JDK Version Mismatch Detected!"
     echo "    Current version: $current_version"
     echo "    Required version for $arch: $required_version"
     echo "    This script will install $required_version alongside your existing installation."
@@ -123,7 +123,7 @@ if ! command -v git &> /dev/null; then
         esac
     done
 else
-    echo "    ✅ Git is already installed: $(git --version)"
+    echo "Git is already installed: $(git --version)"
     INSTALL_GIT=false
 fi
 
@@ -164,11 +164,11 @@ fi
 
 # Check if correct JDK version is already installed
 if [[ $java_status -eq $required_status ]]; then
-    echo "✅ Correct Java version ($required_jdk) is already installed!"
+    echo "Correct Java version ($required_jdk) is already installed!"
     echo "    You can skip the Java installation part."
     echo ""
     if [[ "$INSTALL_GIT" == "false" ]]; then
-        echo "✅ Both Git and Java JDK are ready for TRON development!"
+        echo "Both Git and Java JDK are ready for TRON development!"
         echo ""
         exit 0
     else
@@ -183,12 +183,90 @@ elif [[ $java_status -eq 0 ]] || [[ $java_status -eq 1 ]] || [[ $java_status -eq
 else
     # No Java installation found, ask for general confirmation
     echo ""
-    echo "⚠️  No Java installation detected!"
+    echo "No Java installation detected!"
     echo "    This script will install $required_jdk which is required for $ARCH architecture."
     echo ""
-    ask_confirmation
     SKIP_JAVA_INSTALL=false
 fi
+
+# Function to show permanent Java configuration instructions
+show_permanent_java_config() {
+    local jdk_version="$1"
+    local os_type="$2"
+    local java_home="$3"
+    local java_bin_path="$4"
+    
+    echo ""
+    echo "    To make JDK $jdk_version permanent:"
+    if [[ "$os_type" == "Darwin" ]]; then
+        echo "        # Add to ~/.zshrc or ~/.bash_profile:"
+        echo "        echo 'export JAVA_HOME=\"$java_home\"' >> ~/.zshrc"
+        echo "        echo 'export PATH=\"\$JAVA_HOME/bin:\$PATH\"' >> ~/.zshrc"
+        echo "        # Then run below command:"
+        echo "        source ~/.zshrc"
+        echo ""
+        echo "        # Or use jenv for Java version management:"
+        echo "        brew install jenv"
+        echo "        jenv add $java_home"
+    elif [[ "$os_type" == "Linux" ]]; then
+        echo "        # Method 1: Add to ~/.bashrc:"
+        echo "        echo 'export JAVA_HOME=\"$java_home\"' >> ~/.bashrc"
+        echo "        echo 'export PATH=\"\$JAVA_HOME/bin:\$PATH\"' >> ~/.bashrc"
+        echo "        source ~/.bashrc"
+        echo ""
+        echo "        # Method 2: Use update-alternatives (recommended):"
+        if [[ "$PKG_MANAGER" == "apt-get" ]]; then
+            echo "        sudo update-alternatives --install /usr/bin/java java $java_bin_path/java 1"
+            echo "        sudo update-alternatives --install /usr/bin/javac javac $java_bin_path/javac 1"
+            echo "        sudo update-alternatives --config java"
+        else
+            echo "        sudo alternatives --install /usr/bin/java java $java_bin_path/java 1"
+            echo "        sudo alternatives --install /usr/bin/javac javac $java_bin_path/javac 1"
+            echo "        sudo alternatives --config java"
+        fi
+    fi
+    echo ""
+}
+
+# Function to show Java environment application instructions
+show_java_env_instructions() {
+    local java_home="$1"
+    local java_bin_path="$2"
+    
+    echo ""
+    echo "    To apply Java environment to your current shell session:"
+    echo "        source ./tron_java_env.sh"
+    echo ""
+    echo "    Or run this command directly:"
+    echo "        export JAVA_HOME=\"$java_home\""
+    echo "        export PATH=\"$java_bin_path:\$PATH\""
+}
+
+# Function to get Java paths based on OS and architecture
+get_java_paths() {
+    local jdk_version="$1"
+    local os_type="$2"
+    local arch="$3"
+    local java_home=""
+    
+    if [[ "$os_type" == "Darwin" ]]; then
+        # macOS paths
+        if [[ "$jdk_version" == "8" ]]; then
+            java_home="/usr/local/opt/openjdk@8"
+        elif [[ "$jdk_version" == "17" ]]; then
+            if [[ "$arch" == "arm64" ]]; then
+                java_home="/opt/homebrew/opt/openjdk@17"
+            else
+                java_home="/usr/local/opt/openjdk@17"
+            fi
+        fi
+    elif [[ "$os_type" == "Linux" ]]; then
+        # Linux paths - provide generic path for manual configuration
+        java_home="/usr/lib/jvm/java-$jdk_version-openjdk"
+    fi
+    
+    echo "$java_home"
+}
 
 # Unified Java environment configuration function
 configure_java_environment() {
@@ -197,27 +275,63 @@ configure_java_environment() {
     local arch="$3"
     local java_home=""
     local java_bin_path=""
-
+    
     echo ""
-    echo -e "==> \033[1mConfiguring Java environment\033[0m for JDK $jdk_version..."
+    echo -e ">>> \033[1mConfiguring Java environment\033[0m for JDK $jdk_version..."
+    
+    # Ask user for confirmation before changing environment
+    echo ""
+    echo "This will modify your Java environment settings:"
+    echo "    • Set JAVA_HOME to the new JDK $jdk_version installation"
+    echo "    • Update PATH to include the new Java binaries"
+    echo "    • Create a script (tron_java_env.sh) for easy environment setup"
+    echo ""
+    
+    while true; do
+        read -p "Do you want to configure the Java environment for JDK $jdk_version? (y/N): " yn
+        case $yn in
+            [Yy]* ) 
+                echo ">>> Proceeding with Java environment configuration..."
+                break;;
+            [Nn]* | "" ) 
+                echo "Java environment configuration skipped."
+                echo "You may need to manually set JAVA_HOME and PATH for JDK $jdk_version"
+                echo ""
+                echo "Manual configuration commands:"
+                
+                # Get the expected Java path
+                local expected_java_home=$(get_java_paths "$jdk_version" "$os_type" "$arch")
+                local expected_java_bin_path="$expected_java_home/bin"
+                echo "    export JAVA_HOME=\"$expected_java_home\""
+                echo "    export PATH=\"\$JAVA_HOME/bin:\$PATH\""
+                
+                if [[ "$os_type" == "Linux" ]]; then
+                    echo ""
+                    echo "Note: Actual path may vary depending on your distribution."
+                    echo "Common paths include:"
+                    echo "    /usr/lib/jvm/java-$jdk_version-openjdk-amd64 (Ubuntu/Debian)"
+                    echo "    /usr/lib/jvm/java-1.$jdk_version.0-openjdk (RHEL/CentOS)"
+                fi
+                
+                # Show the same application instructions as automatic configuration
+                show_java_env_instructions "$expected_java_home" "$expected_java_bin_path"
+                
+                # Show permanent configuration instructions
+                show_permanent_java_config "$jdk_version" "$os_type" "$expected_java_home" "$expected_java_bin_path"
+                
+                echo ""
+                return 1;;
+            * ) echo "Please answer yes (y) or no (n).";;
+        esac
+    done
     
     # Determine Java paths based on OS and architecture
     if [[ "$os_type" == "Darwin" ]]; then
-        # macOS paths
-        if [[ "$jdk_version" == "8" ]]; then
-            java_home="/usr/local/opt/openjdk@8"
-            java_bin_path="/usr/local/opt/openjdk@8/bin"
-        elif [[ "$jdk_version" == "17" ]]; then
-            if [[ "$arch" == "arm64" ]]; then
-                java_home="/opt/homebrew/opt/openjdk@17"
-                java_bin_path="/opt/homebrew/opt/openjdk@17/bin"
-            else
-                java_home="/usr/local/opt/openjdk@17"
-                java_bin_path="/usr/local/opt/openjdk@17/bin"
-            fi
-        fi
+        # Use the helper function for macOS
+        java_home=$(get_java_paths "$jdk_version" "$os_type" "$arch")
+        java_bin_path="$java_home/bin"
     elif [[ "$os_type" == "Linux" ]]; then
-        # Linux paths
+        # Linux paths - try to find the actual installation
         if [[ "$jdk_version" == "8" ]]; then
             if [[ "$PKG_MANAGER" == "apt-get" ]]; then
                 if [[ "$arch" == "aarch64" ]] || [[ "$arch" == "arm64" ]]; then
@@ -258,9 +372,9 @@ configure_java_environment() {
     if [[ -d "$java_home" ]]; then
         export JAVA_HOME="$java_home"
         export PATH="$java_bin_path:$PATH"
-        echo "    ✅ JAVA_HOME set to: $JAVA_HOME"
-        echo "    ✅ PATH updated to include: $java_bin_path"
-        echo "    🔄 Environment temporarily configured for JDK $jdk_version"
+        echo "    JAVA_HOME set to: $JAVA_HOME"
+        echo "    PATH updated to include: $java_bin_path"
+        echo "    Environment temporarily configured for JDK $jdk_version"
         
         # Create a source script for the user's current shell
         local env_script="./tron_java_env.sh"
@@ -273,54 +387,23 @@ configure_java_environment() {
 export JAVA_HOME="$java_home"
 export PATH="$java_bin_path:\$PATH"
 
-echo "✅ Java environment configured:"
+echo "Java environment configured:"
 echo "   JAVA_HOME: \$JAVA_HOME"
 echo "   Java version: \$(java -version 2>&1 | head -n 1)"
 EOF
         chmod +x "$env_script"
         
         echo ""
-        echo "    🎯 To apply Java environment to your current shell session:"
-        echo "        source ./tron_java_env.sh"
-        echo ""
-        echo "    💡 Or run this command directly:"
-        echo "        export JAVA_HOME=\"$java_home\""
-        echo "        export PATH=\"$java_bin_path:\$PATH\""
+        show_java_env_instructions "$java_home" "$java_bin_path"
         
     else
-        echo "    ⚠️  Could not find Java installation at expected path: $java_home"
-        echo "    ⚠️  You may need to set JAVA_HOME manually"
+        echo "    Could not find Java installation at expected path: $java_home"
+        echo "    You may need to set JAVA_HOME manually"
         return 1
     fi
     
     # Provide OS-specific permanent configuration instructions
-    echo ""
-    echo "    ⚙️  To make JDK $jdk_version permanent:"
-    if [[ "$os_type" == "Darwin" ]]; then
-        echo "        # Add to ~/.zshrc or ~/.bash_profile:"
-        echo "        echo 'export JAVA_HOME=\"$java_home\"' >> ~/.zshrc"
-        echo "        echo 'export PATH=\"\$JAVA_HOME/bin:\$PATH\"' >> ~/.zshrc"
-        echo "        # Then run below command:"
-        echo "        source ~/.zshrc"
-        echo ""
-    elif [[ "$os_type" == "Linux" ]]; then
-        echo "        # Method 1: Add to ~/.bashrc:"
-        echo "        echo 'export JAVA_HOME=\"$java_home\"' >> ~/.bashrc"
-        echo "        echo 'export PATH=\"\$JAVA_HOME/bin:\$PATH\"' >> ~/.bashrc"
-        echo "        source ~/.bashrc"
-        echo ""
-        echo "        # Method 2: Use update-alternatives (recommended):"
-        if [[ "$PKG_MANAGER" == "apt-get" ]]; then
-            echo "        sudo update-alternatives --install /usr/bin/java java $java_bin_path/java 1"
-            echo "        sudo update-alternatives --install /usr/bin/javac javac $java_bin_path/javac 1"
-            echo "        sudo update-alternatives --config java"
-        else
-            echo "        sudo alternatives --install /usr/bin/java java $java_bin_path/java 1"
-            echo "        sudo alternatives --install /usr/bin/javac javac $java_bin_path/javac 1"
-            echo "        sudo alternatives --config java"
-        fi
-    fi
-    echo ""
+    show_permanent_java_config "$jdk_version" "$os_type" "$java_home" "$java_bin_path"
     
     return 0
 }
@@ -349,7 +432,7 @@ install_macos() {
     if [[ "$INSTALL_GIT" == "true" ]]; then
         echo ">>> Installing Git..."
         brew install git
-        echo "    ✅ Git installed successfully: $(git --version)"
+        echo "    Git installed successfully: $(git --version)"
     fi
 
     # Skip Java installation if flag is set
@@ -378,8 +461,11 @@ install_macos() {
             brew install openjdk@8
             
             # Use unified Java environment configuration
-            configure_java_environment "8" "Darwin" "$ARCH"
-            echo "🔄 Environment has been updated! Java 8(1.8.*) is now configured."
+            if configure_java_environment "8" "Darwin" "$ARCH"; then
+                echo "Environment has been updated! Java 8 is now configured."
+            else
+                echo "Java 8 installed but environment not configured. You may need to set JAVA_HOME manually."
+            fi
         fi
         
     elif [[ "$ARCH" == "arm64" ]]; then
@@ -402,8 +488,11 @@ install_macos() {
             brew install openjdk@17
 
             # Use unified Java environment configuration
-            configure_java_environment "17" "Darwin" "$ARCH"
-            echo "🔄 Environment has been updated! Java 17 is now configured."
+            if configure_java_environment "17" "Darwin" "$ARCH"; then
+                echo "Environment has been updated! Java 17 is now configured."
+            else
+                echo "Java 17 installed but environment not configured. You may need to set JAVA_HOME manually."
+            fi
         fi
 
     else
@@ -437,7 +526,7 @@ install_linux() {
     if [[ "$INSTALL_GIT" == "true" ]]; then
         echo ">>> Installing Git..."
         $INSTALL_CMD git
-        echo "    ✅ Git installed successfully: $(git --version)"
+        echo "    Git installed successfully: $(git --version)"
     fi
 
     # Skip Java installation if flag is set
@@ -479,8 +568,11 @@ install_linux() {
             fi || { echo "Error: Unable to install JDK 8 on $PKG_MANAGER"; exit 1; }
             
             # Use unified Java environment configuration
-            configure_java_environment "8" "Linux" "$ARCH"
-            echo "🔄 Environment has been updated! Java 8(1.8.*) is now configured."
+            if configure_java_environment "8" "Linux" "$ARCH"; then
+                echo "Environment has been updated! Java 8 is now configured."
+            else
+                echo "Java 8 installed but environment not configured. You may need to set JAVA_HOME manually."
+            fi
         fi
         
     elif [[ "$ARCH" == "aarch64" ]] || [[ "$ARCH" == "arm64" ]]; then
@@ -507,8 +599,11 @@ install_linux() {
             fi || { echo "Error: Unable to install JDK 17 on $PKG_MANAGER"; exit 1; }
             
             # Use unified Java environment configuration
-            configure_java_environment "17" "Linux" "$ARCH"
-            echo "🔄 Environment has been updated! Java 17 is now configured."
+            if configure_java_environment "17" "Linux" "$ARCH"; then
+                echo "Environment has been updated! Java 17 is now configured."
+            else
+                echo "Java 17 installed but environment not configured. You may need to set JAVA_HOME manually."
+            fi
         fi
         
     else
@@ -527,7 +622,7 @@ else
 fi
 
 echo "----------------------------------------"
-echo -e "✅ \033[1mInstallation completed successfully!\033[0m"
+echo -e "\033[1mInstallation completed successfully!\033[0m"
 echo ""
 echo ">>> Verification Commands:"
 echo "  git --version"
@@ -536,5 +631,5 @@ echo ""
 echo ">>> Troubleshooting:"
 echo -e "  • If 'java -version' shows incorrect version, check \033[1mConfiguring Java environment\033[0m instructions shown above."
 echo ""
-echo "🎉 Your development environment is ready for TRON!"
+echo "Your development environment is ready for TRON!"
 echo ""
