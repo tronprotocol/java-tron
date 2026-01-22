@@ -54,7 +54,6 @@ ask_confirmation() {
         esac
     done
 }
-ask_confirmation
 
 # Function to check Java version
 check_java_version() {
