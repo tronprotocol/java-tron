@@ -172,6 +172,9 @@ public class Constant {
   public static final String NODE_NET_MAX_TRX_PER_SECOND = "node.netMaxTrxPerSecond";
   public static final String NODE_RPC_MAX_CONNECTION_AGE_IN_MILLIS = "node.rpc.maxConnectionAgeInMillis";
   public static final String NODE_RPC_MAX_MESSAGE_SIZE = "node.rpc.maxMessageSize";
+  public static final String NODE_HTTP_JSON_MAX_RECURSION_DEPTH = "node.http.json.maxRecursionDepth";
+  public static final String NODE_HTTP_JSON_MAX_FIELDS_PER_OBJECT = "node.http.json.maxFieldsPerObject";
+  public static final String NODE_HTTP_JSON_MAX_ARRAY_ELEMENTS = "node.http.json.maxArrayElements";
 
   public static final String NODE_RPC_MAX_HEADER_LIST_SIZE = "node.rpc.maxHeaderListSize";
 

@@ -58,6 +58,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.StringUtil;
+import org.tron.core.config.args.Args;
 import org.tron.protos.contract.BalanceContract;
 
 /**
@@ -73,7 +74,9 @@ import org.tron.protos.contract.BalanceContract;
  */
 public class JsonFormat {
 
-  private static final int MAX_RECURSION_DEPTH = 100;
+  private static final int MAX_RECURSION_DEPTH = Args.getInstance().getMaxJsonRecursionDepth();
+  private static final int MAX_FIELDS_PER_OBJECT = Args.getInstance().getMaxJsonFieldsPerObject();
+  private static final int MAX_ARRAY_ELEMENTS = Args.getInstance().getMaxJsonArrayElements();
   private static final int BUFFER_SIZE = 4096;
   private static final Pattern DIGITS = Pattern.compile(
       "[0-9]",
@@ -92,6 +95,13 @@ public class JsonFormat {
       BalanceContract.TransactionBalanceTrace.Operation.class,
       BalanceContract.TransactionBalanceTrace.class
   );
+
+  static void checkLimit(int count, int limit, String elementType) throws ParseException {
+    if (count > limit) {
+      throw new ParseException(
+          "Number of " + elementType + " exceeds maximum allowed (" + limit + ").");
+    }
+  }
 
   /**
    * Outputs a textual representation of the Protocol Message supplied into the parameter output.
@@ -515,13 +525,19 @@ public class JsonFormat {
   protected static void mergeField(Tokenizer tokenizer,
       ExtensionRegistry extensionRegistry, Message.Builder builder,
       boolean selfType, int depth) throws ParseException {
-    // check depth
+    // Check nesting depth limit
     if (depth > MAX_RECURSION_DEPTH) {
       throw new ParseException(RECURSION_LIMIT_EXCEEDED);
     }
 
-    // using do-while to void StackOverflow caused by flat structures
+    int fieldsInCurrentObject = 0;
+
+    // Using do-while to void StackOverflow caused by flat structures
     do {
+      // Check fields per object limit
+      fieldsInCurrentObject++;
+      checkLimit(fieldsInCurrentObject, MAX_FIELDS_PER_OBJECT, "fields in a single object");
+
       FieldDescriptor field;
       Descriptor type = builder.getDescriptorForType();
       final ExtensionRegistry.ExtensionInfo extension;
@@ -581,7 +597,12 @@ public class JsonFormat {
         boolean array = tokenizer.tryConsume("[");
 
         if (array) {
+          // Check array size limit
+          int elementCount = 0;
           while (!tokenizer.tryConsume("]")) {
+            elementCount++;
+            checkLimit(elementCount, MAX_ARRAY_ELEMENTS, "elements in an array");
+
             handleValue(tokenizer, extensionRegistry, builder, field, extension, unknown, selfType,
                 depth);
             tokenizer.tryConsume(",");
@@ -611,7 +632,12 @@ public class JsonFormat {
       // Message structure
       tokenizer.consume("{");
       if (!"}".equals(tokenizer.currentToken())) {
+        // Check fields per object limit
+        int fieldCount = 0;
         do {
+          fieldCount++;
+          checkLimit(fieldCount, MAX_FIELDS_PER_OBJECT, "fields in a single object");
+
           tokenizer.consumeIdentifier();
           handleMissingField(tokenizer, extensionRegistry, builder, depth + 1);
         } while (tokenizer.tryConsume(","));
@@ -622,7 +648,12 @@ public class JsonFormat {
       // Collection
       tokenizer.consume("[");
       if (!"]".equals(tokenizer.currentToken())) {
+        // Check array size limit
+        int elementCount = 0;
         do {
+          elementCount++;
+          checkLimit(elementCount, MAX_ARRAY_ELEMENTS, "elements in an array");
+
           handleMissingField(tokenizer, extensionRegistry, builder, depth + 1);
         } while (tokenizer.tryConsume(","));
       }

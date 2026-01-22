@@ -254,7 +254,7 @@ public class JsonFormatTest {
   }
 
   @Test
-  public void testDeeplyNestedUnknownFieldsThrowsException() {
+  public void testDeeplyNestedObjectsRejected() {
     StringBuilder json = new StringBuilder("{\"unknown\":");
 
     for (int i = 0; i < 150; i++) {
@@ -294,24 +294,6 @@ public class JsonFormatTest {
       JsonFormat.merge(json.toString(), builder);
     } catch (JsonFormat.ParseException e) {
       Assert.fail("Should not have thrown ParseException for reasonable nesting");
-    }
-  }
-
-  @Test
-  public void testManyFlatFieldsDoesNotStackOverflow() throws Exception {
-    StringBuilder json = new StringBuilder("{");
-
-    for (int i = 0; i < 10000; i++) {
-      if (i > 0) json.append(",");
-      json.append("\"field").append(i).append("\":").append(i);
-    }
-    json.append("}");
-
-    try {
-      Message.Builder builder = createTestBuilder();
-      JsonFormat.merge(json.toString(), builder);
-    } catch (JsonFormat.ParseException e) {
-      Assert.fail("Should not have thrown ParseException for many flat fields");
     }
   }
 
@@ -377,6 +359,85 @@ public class JsonFormatTest {
       Assert.fail("Should have thrown ParseException");
     } catch (JsonFormat.ParseException e) {
       assertTrue(e.getMessage().contains("nesting depth exceeds"));
+    }
+  }
+
+  @Test
+  public void testManyFlatFieldsDoesNotStackOverflow() throws Exception {
+    StringBuilder json = new StringBuilder("{");
+
+    for (int i = 0; i < 100; i++) {
+      if (i > 0) {
+        json.append(",");
+      }
+      json.append("\"field").append(i).append("\":").append(i);
+    }
+    json.append("}");
+
+    try {
+      Message.Builder builder = createTestBuilder();
+      JsonFormat.merge(json.toString(), builder);
+    } catch (JsonFormat.ParseException e) {
+      Assert.fail("Should not have thrown ParseException for many flat fields");
+    }
+  }
+
+  @Test
+  public void testExcessiveFlatFieldsRejected() {
+    StringBuilder json = new StringBuilder("{");
+    for (int i = 0; i < 101; i++) {
+      if (i > 0) {
+        json.append(",");
+      }
+      json.append("\"f").append(i).append("\":1");
+    }
+    json.append("}");
+
+    try {
+      JsonFormat.merge(json.toString(), createTestBuilder());
+      Assert.fail("Should reject too many fields");
+    } catch (JsonFormat.ParseException e) {
+      assertTrue("Should mention field limit",
+          e.getMessage().contains("Number of fields in a single object exceeds maximum allowed"));
+    }
+  }
+
+  @Test
+  public void testLargeArrayRejected() {
+    StringBuilder json = new StringBuilder("{\"arr\":[");
+    for (int i = 0; i < 101; i++) {
+      if (i > 0) {
+        json.append(",");
+      }
+      json.append(i);
+    }
+    json.append("]}");
+
+    try {
+      JsonFormat.merge(json.toString(), createTestBuilder());
+      Assert.fail("Should reject large array");
+    } catch (JsonFormat.ParseException e) {
+      assertTrue("Should mention array limit",
+          e.getMessage().contains("Number of elements in an array exceeds maximum allowed"));
+    }
+  }
+
+  @Test
+  public void testReasonableArraySucceeds() {
+    StringBuilder json = new StringBuilder("{\"arr\":[");
+    for (int i = 0; i < 100; i++) {
+      if (i > 0) {
+        json.append(",");
+      }
+      json.append(i);
+    }
+    json.append("]}");
+
+    try {
+      Message.Builder builder = createTestBuilder();
+      JsonFormat.merge(json.toString(), builder);
+    } catch (JsonFormat.ParseException e) {
+      Assert.fail("Should not have thrown ParseException for reasonable array size");
     }
   }
 

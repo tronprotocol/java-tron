@@ -278,6 +278,15 @@ public class CommonParameter {
   public int maxHeaderListSize;
   @Getter
   @Setter
+  public int maxJsonRecursionDepth = 100;
+  @Getter
+  @Setter
+  public int maxJsonFieldsPerObject = 100;
+  @Getter
+  @Setter
+  public int maxJsonArrayElements = 100;
+  @Getter
+  @Setter
   public boolean isRpcReflectionServiceEnable;
   @Getter
   @Setter

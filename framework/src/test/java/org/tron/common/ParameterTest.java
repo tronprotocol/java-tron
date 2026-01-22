@@ -147,6 +147,14 @@ public class ParameterTest {
     assertEquals(200, parameter.getMaxMessageSize());
     parameter.setMaxHeaderListSize(100);
     assertEquals(100, parameter.getMaxHeaderListSize());
+
+    parameter.setMaxJsonRecursionDepth(120);
+    assertEquals(120, parameter.getMaxJsonRecursionDepth());
+    parameter.setMaxJsonFieldsPerObject(130);
+    assertEquals(130, parameter.getMaxJsonFieldsPerObject());
+    parameter.setMaxJsonArrayElements(150);
+    assertEquals(150, parameter.getMaxJsonArrayElements());
+
     parameter.setRpcReflectionServiceEnable(false);
     assertFalse(parameter.isRpcReflectionServiceEnable);
     parameter.setValidateSignThreadNum(5);

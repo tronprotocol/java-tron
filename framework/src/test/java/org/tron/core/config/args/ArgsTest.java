@@ -119,6 +119,9 @@ public class ArgsTest {
     Assert.assertEquals(Long.MAX_VALUE, parameter.getMaxConnectionAgeInMillis());
     Assert.assertEquals(GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE, parameter.getMaxMessageSize());
     Assert.assertEquals(GrpcUtil.DEFAULT_MAX_HEADER_LIST_SIZE, parameter.getMaxHeaderListSize());
+    Assert.assertEquals(100, parameter.getMaxJsonRecursionDepth());
+    Assert.assertEquals(100, parameter.getMaxJsonFieldsPerObject());
+    Assert.assertEquals(100, parameter.getMaxJsonArrayElements());
     Assert.assertEquals(1L, parameter.getAllowCreationOfContracts());
     Assert.assertEquals(0, parameter.getConsensusLogicOptimization());
 
@@ -178,6 +181,9 @@ public class ArgsTest {
     Assert.assertFalse(Args.getInstance().isJsonRpcHttpPBFTNodeEnable());
     Assert.assertEquals(5000, Args.getInstance().getJsonRpcMaxBlockRange());
     Assert.assertEquals(1000, Args.getInstance().getJsonRpcMaxSubTopics());
+    Assert.assertEquals(100, Args.getInstance().getMaxJsonRecursionDepth());
+    Assert.assertEquals(100, Args.getInstance().getMaxJsonFieldsPerObject());
+    Assert.assertEquals(100, Args.getInstance().getMaxJsonArrayElements());
     Args.clearParam();
     // test set all true value
     storage.put("node.rpc.enable", "true");
@@ -191,6 +197,9 @@ public class ArgsTest {
     storage.put("node.jsonrpc.httpPBFTEnable", "true");
     storage.put("node.jsonrpc.maxBlockRange", "10");
     storage.put("node.jsonrpc.maxSubTopics", "20");
+    storage.put("node.http.json.maxRecursionDepth", "50");
+    storage.put("node.http.json.maxFieldsPerObject", "60");
+    storage.put("node.http.json.maxArrayElements", "70");
     config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
     // test value
     Args.setParam(config);
@@ -205,6 +214,9 @@ public class ArgsTest {
     Assert.assertTrue(Args.getInstance().isJsonRpcHttpPBFTNodeEnable());
     Assert.assertEquals(10, Args.getInstance().getJsonRpcMaxBlockRange());
     Assert.assertEquals(20, Args.getInstance().getJsonRpcMaxSubTopics());
+    Assert.assertEquals(50, Args.getInstance().getMaxJsonRecursionDepth());
+    Assert.assertEquals(60, Args.getInstance().getMaxJsonFieldsPerObject());
+    Assert.assertEquals(70, Args.getInstance().getMaxJsonArrayElements());
     Args.clearParam();
     // test set all false value
     storage.put("node.rpc.enable", "false");
