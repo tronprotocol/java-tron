@@ -40,8 +40,6 @@ elif [[ "$OS" == "Linux" ]]; then
     fi
 fi
 echo ""
-echo "WARNING: By continuing, you agree to install the above components."
-echo ""
 
 # Function to ask for user confirmation
 ask_confirmation() {
@@ -185,6 +183,7 @@ else
     echo "No Java installation detected!"
     echo "    This script will install $required_jdk which is required for $ARCH architecture."
     echo ""
+    ask_confirmation
     SKIP_JAVA_INSTALL=false
 fi
 
