@@ -73,6 +73,7 @@ import org.tron.protos.contract.BalanceContract;
  */
 public class JsonFormat {
 
+  private static final int MAX_RECURSION_DEPTH = 100;
   private static final int BUFFER_SIZE = 4096;
   private static final Pattern DIGITS = Pattern.compile(
       "[0-9]",
@@ -81,6 +82,8 @@ public class JsonFormat {
       = "Writing to a StringBuilder threw an IOException (should never happen).";
   private static final String EXPECTED_STRING = "Expected string.";
   private static final String MISSING_END_QUOTE = "String missing ending quote.";
+  private static final String RECURSION_LIMIT_EXCEEDED =
+      "JSON nesting depth exceeds maximum allowed depth of " + MAX_RECURSION_DEPTH;
 
   public static final boolean ALWAYS_OUTPUT_DEFAULT_VALUE_FIELDS = true;
   public static final Set<Class<? extends Message>> MESSAGES = ImmutableSet.of(
@@ -255,7 +258,7 @@ public class JsonFormat {
 
     tokenizer.consume("{"); // Needs to happen when the object starts.
     while (!tokenizer.tryConsume("}")) { // Continue till the object is done
-      mergeField(tokenizer, extensionRegistry, builder, selfType);
+      mergeField(tokenizer, extensionRegistry, builder, selfType, 0); // init depth to 0
     }
     // Test to make sure the tokenizer has reached the end of the stream.
     if (!tokenizer.atEnd()) {
@@ -511,99 +514,120 @@ public class JsonFormat {
    */
   protected static void mergeField(Tokenizer tokenizer,
       ExtensionRegistry extensionRegistry, Message.Builder builder,
-      boolean selfType) throws ParseException {
-    FieldDescriptor field;
-    Descriptor type = builder.getDescriptorForType();
-    final ExtensionRegistry.ExtensionInfo extension;
-    boolean unknown = false;
+      boolean selfType, int depth) throws ParseException {
+    // check depth
+    if (depth > MAX_RECURSION_DEPTH) {
+      throw new ParseException(RECURSION_LIMIT_EXCEEDED);
+    }
 
-    String name = tokenizer.consumeIdentifier();
-    field = type.findFieldByName(name);
+    // using do-while to void StackOverflow caused by flat structures
+    do {
+      FieldDescriptor field;
+      Descriptor type = builder.getDescriptorForType();
+      final ExtensionRegistry.ExtensionInfo extension;
+      boolean unknown = false;
 
-    // Group names are expected to be capitalized as they appear in the
-    // .proto file, which actually matches their type names, not their field
-    // names.
-    if (field == null) {
-      // Explicitly specify US locale so that this code does not break when
-      // executing in Turkey.
-      String lowerName = name.toLowerCase(Locale.US);
-      field = type.findFieldByName(lowerName);
-      // If the case-insensitive match worked but the field is NOT a group,
-      if ((field != null) && (field.getType() != FieldDescriptor.Type.GROUP)) {
+      String name = tokenizer.consumeIdentifier();
+      field = type.findFieldByName(name);
+
+      // Group names are expected to be capitalized as they appear in the
+      // .proto file, which actually matches their type names, not their field
+      // names.
+      if (field == null) {
+        // Explicitly specify US locale so that this code does not break when
+        // executing in Turkey.
+        String lowerName = name.toLowerCase(Locale.US);
+        field = type.findFieldByName(lowerName);
+        // If the case-insensitive match worked but the field is NOT a group,
+        if ((field != null) && (field.getType() != FieldDescriptor.Type.GROUP)) {
+          field = null;
+        }
+      }
+
+      // Again, special-case group names as described above.
+      if ((field != null) && (field.getType() == FieldDescriptor.Type.GROUP)
+          && !field.getMessageType().getName().equals(name)) {
         field = null;
       }
-    }
-    // Again, special-case group names as described above.
-    if ((field != null) && (field.getType() == FieldDescriptor.Type.GROUP)
-        && !field.getMessageType().getName().equals(name)) {
-      field = null;
-    }
 
-    // Last try to lookup by field-index if 'name' is numeric,
-    // which indicates a possible unknown field
-    if (field == null && DIGITS.matcher(name).matches()) {
-      field = type.findFieldByNumber(Integer.parseInt(name));
-      unknown = true;
-    }
-
-    // Finally, look for extensions
-    extension = extensionRegistry.findExtensionByName(name);
-    if (extension != null) {
-      if (extension.descriptor.getContainingType() != type) {
-        throw tokenizer.parseExceptionPreviousToken("Extension \"" + name
-            + "\" does not extend message type \""
-            + type.getFullName() + "\".");
+      // Last try to lookup by field-index if 'name' is numeric,
+      // which indicates a possible unknown field
+      if (field == null && DIGITS.matcher(name).matches()) {
+        field = type.findFieldByNumber(Integer.parseInt(name));
+        unknown = true;
       }
-      field = extension.descriptor;
-    }
 
-    // Disabled throwing exception if field not found, since it could be a different version.
-    if (field == null) {
-      handleMissingField(tokenizer, extensionRegistry, builder);
-      //throw tokenizer.parseExceptionPreviousToken("Message type \"" + type.getFullName()
-      //                                            + "\" has no field named \"" + name
-      //                                            + "\".");
-    }
-
-    if (field != null) {
-      tokenizer.consume(":");
-      boolean array = tokenizer.tryConsume("[");
-
-      if (array) {
-        while (!tokenizer.tryConsume("]")) {
-          handleValue(tokenizer, extensionRegistry, builder, field, extension, unknown, selfType);
-          tokenizer.tryConsume(",");
+      // Finally, look for extensions
+      extension = extensionRegistry.findExtensionByName(name);
+      if (extension != null) {
+        if (extension.descriptor.getContainingType() != type) {
+          throw tokenizer.parseExceptionPreviousToken("Extension \"" + name
+              + "\" does not extend message type \""
+              + type.getFullName() + "\".");
         }
-      } else {
-        handleValue(tokenizer, extensionRegistry, builder, field, extension, unknown, selfType);
+        field = extension.descriptor;
       }
-    }
 
-    if (tokenizer.tryConsume(",")) {
+      // Disabled throwing exception if field not found, since it could be a different version.
+      if (field == null) {
+        handleMissingField(tokenizer, extensionRegistry, builder, depth);
+        // throw tokenizer.parseExceptionPreviousToken("Message type \"" + type.getFullName()
+        //                                            + "\" has no field named \"" + name
+        //                                            + "\".");
+      }
+
+      if (field != null) {
+        tokenizer.consume(":");
+        boolean array = tokenizer.tryConsume("[");
+
+        if (array) {
+          while (!tokenizer.tryConsume("]")) {
+            handleValue(tokenizer, extensionRegistry, builder, field, extension, unknown, selfType,
+                depth);
+            tokenizer.tryConsume(",");
+          }
+        } else {
+          handleValue(tokenizer, extensionRegistry, builder, field, extension, unknown, selfType,
+              depth);
+        }
+      }
+
       // Continue with the next field
-      mergeField(tokenizer, extensionRegistry, builder, selfType);
-    }
+    } while (tokenizer.tryConsume(","));
   }
 
   private static void handleMissingField(Tokenizer tokenizer,
       ExtensionRegistry extensionRegistry,
-      Message.Builder builder) throws ParseException {
+      Message.Builder builder,
+      int depth) throws ParseException {
+
+    if (depth > MAX_RECURSION_DEPTH) {
+      throw new ParseException(RECURSION_LIMIT_EXCEEDED);
+    }
+
     tokenizer.tryConsume(":");
+
     if ("{".equals(tokenizer.currentToken())) {
       // Message structure
       tokenizer.consume("{");
-      do {
-        tokenizer.consumeIdentifier();
-        handleMissingField(tokenizer, extensionRegistry, builder);
-      } while (tokenizer.tryConsume(","));
+      if (!"}".equals(tokenizer.currentToken())) {
+        do {
+          tokenizer.consumeIdentifier();
+          handleMissingField(tokenizer, extensionRegistry, builder, depth + 1);
+        } while (tokenizer.tryConsume(","));
+      }
       tokenizer.consume("}");
+
     } else if ("[".equals(tokenizer.currentToken())) {
       // Collection
       tokenizer.consume("[");
-      do {
-        handleMissingField(tokenizer, extensionRegistry, builder);
-      } while (tokenizer.tryConsume(","));
+      if (!"]".equals(tokenizer.currentToken())) {
+        do {
+          handleMissingField(tokenizer, extensionRegistry, builder, depth + 1);
+        } while (tokenizer.tryConsume(","));
+      }
       tokenizer.consume("]");
+
     } else { //if (!",".equals(tokenizer.currentToken)){
       // Primitive value
       if ("null".equals(tokenizer.currentToken())) {
@@ -623,12 +647,14 @@ public class JsonFormat {
       Message.Builder builder,
       FieldDescriptor field,
       ExtensionRegistry.ExtensionInfo extension,
-      boolean unknown, boolean selfType) throws ParseException {
+      boolean unknown,
+      boolean selfType,
+      int depth) throws ParseException {
 
     Object value = null;
     if (field.getJavaType() == FieldDescriptor.JavaType.MESSAGE) {
       value = handleObject(tokenizer, extensionRegistry, builder, field, extension, unknown,
-          selfType);
+          selfType, depth);
     } else {
       value = handlePrimitive(tokenizer, field, selfType);
     }
@@ -737,7 +763,9 @@ public class JsonFormat {
       Message.Builder builder,
       FieldDescriptor field,
       ExtensionRegistry.ExtensionInfo extension,
-      boolean unknown, boolean selfType) throws ParseException {
+      boolean unknown,
+      boolean selfType,
+      int depth) throws ParseException {
 
     Message.Builder subBuilder;
     if (extension == null) {
@@ -763,7 +791,7 @@ public class JsonFormat {
       if (tokenizer.atEnd()) {
         throw tokenizer.parseException("Expected \"" + endToken + "\".");
       }
-      mergeField(tokenizer, extensionRegistry, subBuilder, selfType);
+      mergeField(tokenizer, extensionRegistry, subBuilder, selfType, depth + 1);
       if (tokenizer.tryConsume(",")) {
         // there are more fields in the object, so continue
         continue;

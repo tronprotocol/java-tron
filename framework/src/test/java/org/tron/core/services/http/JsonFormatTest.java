@@ -6,18 +6,19 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import com.google.protobuf.ByteString;
+import com.google.protobuf.Message;
 import com.google.protobuf.UnknownFieldSet;
-
 import java.io.CharArrayReader;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.tron.protos.Protocol;
+import org.tron.protos.contract.BalanceContract.TransferContract;
 
 public class JsonFormatTest {
   @After
@@ -250,6 +251,180 @@ public class JsonFormatTest {
     });
     cause = thrown.getCause();
     assertTrue(cause instanceof NumberFormatException);
+  }
+
+  @Test
+  public void testDeeplyNestedUnknownFieldsThrowsException() {
+    StringBuilder json = new StringBuilder("{\"unknown\":");
+
+    for (int i = 0; i < 150; i++) {
+      json.append("{\"x\":");
+    }
+    json.append("1");
+    for (int i = 0; i < 150; i++) {
+      json.append("}");
+    }
+    json.append("}");
+
+    try {
+      Message.Builder builder = createTestBuilder();
+      JsonFormat.merge(json.toString(), builder);
+      Assert.fail("Should have thrown ParseException for deep nesting");
+    } catch (JsonFormat.ParseException e) {
+      assertTrue("Exception should mention depth limit",
+          e.getMessage().contains("nesting depth exceeds"));
+    }
+  }
+
+  @Test
+  public void testReasonableNestingSucceeds() throws Exception {
+    StringBuilder json = new StringBuilder("{\"unknown\":");
+
+    for (int i = 0; i < 50; i++) {
+      json.append("{\"x\":");
+    }
+    json.append("1");
+    for (int i = 0; i < 50; i++) {
+      json.append("}");
+    }
+    json.append("}");
+
+    try {
+      Message.Builder builder = createTestBuilder();
+      JsonFormat.merge(json.toString(), builder);
+    } catch (JsonFormat.ParseException e) {
+      Assert.fail("Should not have thrown ParseException for reasonable nesting");
+    }
+  }
+
+  @Test
+  public void testManyFlatFieldsDoesNotStackOverflow() throws Exception {
+    StringBuilder json = new StringBuilder("{");
+
+    for (int i = 0; i < 10000; i++) {
+      if (i > 0) json.append(",");
+      json.append("\"field").append(i).append("\":").append(i);
+    }
+    json.append("}");
+
+    try {
+      Message.Builder builder = createTestBuilder();
+      JsonFormat.merge(json.toString(), builder);
+    } catch (JsonFormat.ParseException e) {
+      Assert.fail("Should not have thrown ParseException for many flat fields");
+    }
+  }
+
+  @Test
+  public void testMixedNestingThrowsException() {
+    StringBuilder json = new StringBuilder("{\"array\":[");
+
+    for (int i = 0; i < 150; i++) {
+      json.append("{\"nested\":[");
+    }
+    json.append("1");
+    for (int i = 0; i < 150; i++) {
+      json.append("]}");
+    }
+    json.append("]}");
+
+    try {
+      Message.Builder builder = createTestBuilder();
+      JsonFormat.merge(json.toString(), builder);
+      Assert.fail("Should have thrown ParseException");
+    } catch (JsonFormat.ParseException e) {
+      assertTrue(e.getMessage().contains("nesting depth exceeds"));
+    }
+  }
+
+  @Test
+  public void testExactlyMaxDepthSucceeds() {
+    StringBuilder json = new StringBuilder("{\"x\":");
+
+    for (int i = 0; i < 100; i++) {
+      json.append("{\"x\":");
+    }
+    json.append("1");
+    for (int i = 0; i < 100; i++) {
+      json.append("}");
+    }
+    json.append("}");
+
+    try {
+      Message.Builder builder = createTestBuilder();
+      JsonFormat.merge(json.toString(), builder);
+    } catch (JsonFormat.ParseException e) {
+      Assert.fail("Should not have thrown ParseException for max depth");
+    }
+  }
+
+  @Test
+  public void testOneOverMaxDepthFails() {
+    StringBuilder json = new StringBuilder("{\"x\":");
+
+    for (int i = 0; i < 101; i++) {
+      json.append("{\"x\":");
+    }
+    json.append("1");
+    for (int i = 0; i < 101; i++) {
+      json.append("}");
+    }
+    json.append("}");
+
+    try {
+      Message.Builder builder = createTestBuilder();
+      JsonFormat.merge(json.toString(), builder);
+      Assert.fail("Should have thrown ParseException");
+    } catch (JsonFormat.ParseException e) {
+      assertTrue(e.getMessage().contains("nesting depth exceeds"));
+    }
+  }
+
+  @Test
+  public void testConcurrentParsing() throws Exception {
+    final int threadCount = 100;
+    final Thread[] threads = new Thread[threadCount];
+    final Exception[] exceptions = new Exception[threadCount];
+
+    for (int i = 0; i < threadCount; i++) {
+      final int threadIndex = i;
+      threads[i] = new Thread(() -> {
+        try {
+          // each thread parses a JSON with varying depth
+          int depth = 30 + (threadIndex % 50);
+          StringBuilder json = new StringBuilder("{\"x\":");
+          for (int j = 0; j < depth; j++) {
+            json.append("{\"x\":");
+          }
+          json.append("1");
+          for (int j = 0; j < depth; j++) {
+            json.append("}");
+          }
+          json.append("}");
+
+          Message.Builder builder = createTestBuilder();
+          JsonFormat.merge(json.toString(), builder);
+        } catch (Exception e) {
+          exceptions[threadIndex] = e;
+        }
+      });
+    }
+
+    for (Thread thread : threads) {
+      thread.start();
+    }
+
+    for (Thread thread : threads) {
+      thread.join();
+    }
+
+    for (int i = 0; i < threadCount; i++) {
+      Assert.assertNull("Thread " + i + " should not have exceptions", exceptions[i]);
+    }
+  }
+
+  private Message.Builder createTestBuilder() {
+    return TransferContract.newBuilder();
   }
 
 }
