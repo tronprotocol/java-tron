@@ -9,7 +9,7 @@ echo "========================================"
 echo "    TRON Java Dependencies Installer"
 echo "========================================"
 echo ""
-echo -e ">>> \033[1mEnvironment Detection\033[0m"
+echo ">>> Environment Detection"
 if [[ "$OS" == "Darwin" ]]; then
     echo "  OS: MacOS $OS"
 elif [[ "$OS" == "Linux" ]]; then
@@ -22,6 +22,7 @@ echo "    - macOS x86_64 (JDK 8)"
 echo "    - macOS arm64 (JDK 17)"
 echo "    - Linux x86_64 (generic, including Ubuntu) (JDK 8)"
 echo "    - Linux arm64/aarch64 (generic, including Ubuntu) (JDK 17)"
+echo "    Note: Other platforms may require manual installation if errors occur"
 echo ""
 echo ">>> This script will install the following components if not already installed:"
 echo "  1. Homebrew to download and install JDK (macOS only)"
@@ -101,7 +102,7 @@ ask_jdk_confirmation() {
 }
 
 # First, check and install Git (needed for cloning repository)
-echo -e ">>> \033[1mChecking Git installation...\033[0m"
+echo ">>> Checking Git installation..."
 if ! command -v git &> /dev/null; then
     echo "    Git is not installed."
     while true; do
@@ -125,7 +126,7 @@ else
 fi
 
 echo ""
-echo -e ">>> \033[1mChecking existing Java installation...\033[0m"
+echo ">>> Checking existing Java installation..."
 set +e  # Temporarily disable exit on error
 check_java_version
 java_status=$?
@@ -161,7 +162,6 @@ fi
 
 # Check if correct JDK version is already installed
 if [[ $java_status -eq $required_status ]]; then
-    echo "Correct Java version ($required_jdk) is already installed!"
     echo "    You can skip the Java installation part."
     echo ""
     if [[ "$INSTALL_GIT" == "false" ]]; then
@@ -275,14 +275,14 @@ configure_java_environment() {
     local java_bin_path=""
     
     echo ""
-    echo -e ">>> \033[1mConfiguring Java environment\033[0m for JDK $jdk_version..."
+    echo ">>> Configuring Java environment for JDK $jdk_version..."
     
     # Ask user for confirmation before changing environment
     echo ""
     echo "This will modify your Java environment settings:"
-    echo "    • Set JAVA_HOME to the new JDK $jdk_version installation"
-    echo "    • Update PATH to include the new Java binaries"
-    echo "    • Create a script (tron_java_env.sh) for easy environment setup"
+    echo "    - Set JAVA_HOME to the new JDK $jdk_version installation"
+    echo "    - Update PATH to include the new Java binaries"
+    echo "    - Create a script (tron_java_env.sh) for easy environment setup"
     echo ""
     
     while true; do
@@ -620,14 +620,14 @@ else
 fi
 
 echo "----------------------------------------"
-echo -e "\033[1mInstallation completed successfully!\033[0m"
+echo "Installation completed successfully!"
 echo ""
 echo ">>> Verification Commands:"
 echo "  git --version"
 echo "  java -version"
 echo ""
 echo ">>> Troubleshooting:"
-echo -e "  • If 'java -version' shows incorrect version, check \033[1mConfiguring Java environment\033[0m instructions shown above."
+echo "  - If 'java -version' shows incorrect version, check Configuring Java environment instructions shown above."
 echo ""
 echo "Your development environment is ready for TRON!"
 echo ""
