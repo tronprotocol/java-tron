@@ -75,7 +75,6 @@ check_java_version() {
             return 2
         fi
     else
-        echo "    No Java installation found."
         return 3
     fi
 }
