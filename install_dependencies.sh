@@ -11,7 +11,7 @@ echo "========================================"
 echo ""
 echo ">>> Environment Detection"
 if [[ "$OS" == "Darwin" ]]; then
-    echo "  OS: MacOS $OS"
+    echo "  OS: macOS $OS"
 elif [[ "$OS" == "Linux" ]]; then
     echo "  OS: $OS"
 fi
@@ -410,8 +410,24 @@ echo "----------------------------------------"
 
 install_macos() {
     if ! command -v brew &> /dev/null; then
-        echo ">>> Homebrew not found. Installing Homebrew..."
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        echo ">>> Homebrew not found."
+        echo "    Homebrew is required to install Java on macOS."
+        echo ""
+        while true; do
+            read -p "Do you want to install Homebrew? (y/N): " yn
+            case $yn in
+                [Yy]* ) 
+                    echo ">>> Installing Homebrew..."
+                    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+                    break;;
+                [Nn]* | "" ) 
+                    echo "Homebrew installation cancelled."
+                    echo "Cannot proceed with Java installation without Homebrew on macOS."
+                    echo "Please install Homebrew manually or use alternative Java installation methods."
+                    exit 1;;
+                * ) echo "Please answer yes (y) or no (n).";;
+            esac
+        done
         
         # Add Homebrew to PATH for the current session (Apple Silicon vs Intel)
         if [[ "$ARCH" == "arm64" ]]; then
