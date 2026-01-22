@@ -26,7 +26,7 @@ echo "    Note: Other platforms may require manual installation if errors occur"
 echo ""
 echo ">>> This script will install the following components if not already installed:"
 echo "  1. Homebrew to download and install JDK (macOS only)"
-echo "  2. Git for cloning the java-tron repository"
+echo "  2. Git for cloning github repository"
 if [[ "$OS" == "Darwin" ]]; then
     if [[ "$ARCH" == "x86_64" ]]; then
         echo "  3. OpenJDK 8 (required for x86_64 architecture)"
