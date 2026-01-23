@@ -256,6 +256,7 @@ public class Args extends CommonParameter {
     PARAMETER.allowTvmBlob = 0;
     PARAMETER.rpcMaxRstStream = 0;
     PARAMETER.rpcSecondsPerWindow = 0;
+    PARAMETER.maxJsonRecursionDepth = 100;
   }
 
   /**
@@ -783,6 +784,9 @@ public class Args extends CommonParameter {
     PARAMETER.maxHeaderListSize = config.hasPath(Constant.NODE_RPC_MAX_HEADER_LIST_SIZE)
         ? config.getInt(Constant.NODE_RPC_MAX_HEADER_LIST_SIZE)
         : GrpcUtil.DEFAULT_MAX_HEADER_LIST_SIZE;
+
+    PARAMETER.maxJsonRecursionDepth = config.hasPath(Constant.NODE_HTTP_JSON_MAX_RECURSION_DEPTH)
+        ? config.getInt(Constant.NODE_HTTP_JSON_MAX_RECURSION_DEPTH) : 100;
 
     PARAMETER.isRpcReflectionServiceEnable =
         config.hasPath(Constant.NODE_RPC_REFLECTION_SERVICE)

@@ -12,7 +12,6 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -347,15 +346,19 @@ public class Util {
   }
 
   public static boolean getVisiblePost(final String input) {
-    boolean visible = false;
-    if (StringUtil.isNotBlank(input)) {
-      JSONObject jsonObject = JSON.parseObject(input);
-      if (jsonObject.containsKey(VISIBLE)) {
-        visible = Boolean.parseBoolean(jsonObject.getString(VISIBLE));
-      }
+    if (StringUtil.isBlank(input)) {
+      return false;
     }
 
-    return visible;
+    try {
+      return JsonValidator.parseAndGetVisible(input);
+    } catch (IllegalArgumentException e) {
+      logger.warn("JSON constraint violation in POST body: {}", e.getMessage());
+      throw e;
+    } catch (Exception e) {
+      logger.debug("Failed to parse visible field from POST body: {}", e.getMessage());
+      return false;
+    }
   }
 
   public static String getContractType(final String input) {
@@ -635,11 +638,6 @@ public class Util {
   }
 
   public static boolean isValidJson(String json) {
-    try {
-      JSON.parse(json);
-      return true;
-    } catch (Exception e) {
-      return false;
-    }
+    return JsonValidator.isValidJson(json);
   }
 }
