@@ -67,7 +67,7 @@ public class CommonParameter {
   public boolean debug = false;
   @Getter
   @Setter
-  @Parameter(names = {"--min-time-ratio"}, description = "Maximum CPU tolerance when executing "
+  @Parameter(names = {"--min-time-ratio"}, description = "Minimum CPU tolerance when executing "
       + "timeout transactions while synchronizing blocks. (default: 0.0)")
   public double minTimeRatio = 0.0;
   @Getter

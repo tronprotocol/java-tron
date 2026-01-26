@@ -132,7 +132,7 @@ message ChainParameters {
 message Account {
   /* frozen balance */
   message Frozen {
-    int64 frozen_balance = 1; // the frozen trx balance
+    int64 frozen_balance = 1; // the frozen trx or asset balance
     int64 expire_time = 2; // the expire time
   }
   // account nick name

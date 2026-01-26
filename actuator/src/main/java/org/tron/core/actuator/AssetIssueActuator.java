@@ -28,6 +28,7 @@ import org.tron.common.utils.DecodeUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.config.Parameter.ForkBlockVersionEnum;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -262,6 +263,12 @@ public class AssetIssueActuator extends AbstractActuator {
         throw new ContractValidateException(
             "frozenDuration must be less than " + maxFrozenSupplyTime + " days "
                 + "and more than " + minFrozenSupplyTime + " days");
+      }
+      // make sure FrozenSupply.expireTime not overflow
+      if (chainBaseManager.getForkController().pass(ForkBlockVersionEnum.VERSION_4_8_1)
+          && assetIssueContract.getStartTime()
+          >= Long.MAX_VALUE - next.getFrozenDays() * FROZEN_PERIOD) {
+        throw new ContractValidateException("Start time is too big");
       }
       remainSupply -= next.getFrozenAmount();
     }
