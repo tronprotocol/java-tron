@@ -4,6 +4,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -19,6 +21,9 @@ import org.tron.core.services.event.bo.Event;
 public class RealtimeEventService {
 
   private EventPluginLoader instance = EventPluginLoader.getInstance();
+
+  @Getter
+  private static Object contractLock = new Object();
 
   @Autowired
   private Manager manager;
@@ -99,24 +104,30 @@ public class RealtimeEventService {
         logger.warn("SmartContractTrigger is null. {}", blockEvent.getBlockId().getString());
       } else {
         blockEvent.getSmartContractTrigger().getContractEventTriggers().forEach(v -> {
-          v.setTriggerName(Trigger.CONTRACTEVENT_TRIGGER_NAME);
-          v.setRemoved(isRemove);
-          EventPluginLoader.getInstance().postContractEventTrigger(v);
+          synchronized (contractLock) {
+            v.setTriggerName(Trigger.CONTRACTEVENT_TRIGGER_NAME);
+            v.setRemoved(isRemove);
+            EventPluginLoader.getInstance().postContractEventTrigger(v);
+          }
         });
       }
     }
 
     if (instance.isContractLogTriggerEnable() && blockEvent.getSmartContractTrigger() != null) {
       blockEvent.getSmartContractTrigger().getContractLogTriggers().forEach(v -> {
-        v.setTriggerName(Trigger.CONTRACTLOG_TRIGGER_NAME);
-        v.setRemoved(isRemove);
-        EventPluginLoader.getInstance().postContractLogTrigger(v);
-      });
-      if (instance.isContractLogTriggerRedundancy()) {
-        blockEvent.getSmartContractTrigger().getRedundancies().forEach(v -> {
+        synchronized (contractLock) {
           v.setTriggerName(Trigger.CONTRACTLOG_TRIGGER_NAME);
           v.setRemoved(isRemove);
           EventPluginLoader.getInstance().postContractLogTrigger(v);
+        }
+      });
+      if (instance.isContractLogTriggerRedundancy()) {
+        blockEvent.getSmartContractTrigger().getRedundancies().forEach(v -> {
+          synchronized (contractLock) {
+            v.setTriggerName(Trigger.CONTRACTLOG_TRIGGER_NAME);
+            v.setRemoved(isRemove);
+            EventPluginLoader.getInstance().postContractLogTrigger(v);
+          }
         });
       }
     }
