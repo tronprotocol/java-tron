@@ -214,6 +214,10 @@ public class MortgageService {
     }
     if (beginCycle < endCycle) {
       for (Pair<byte[], Long>  vote : srAddresses) {
+        if (beginCycle == 0) {
+       continue;
+    }
+        
         byte[] srAddress = vote.getKey();
         BigInteger beginVi = delegationStore.getWitnessVi(beginCycle - 1, srAddress);
         BigInteger endVi = delegationStore.getWitnessVi(endCycle - 1, srAddress);
