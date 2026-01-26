@@ -320,7 +320,7 @@ public class ManagerTest extends BlockGenerate {
       dbManager.pushTransaction(trans0);
       dbManager.pushTransaction(trans);
     } catch (Exception e) {
-      Assert.assertTrue(e instanceof TaposException);
+      Assert.assertTrue(e instanceof ContractValidateException);
     }
     dbManager.rePush(trans0);
     ReflectUtils.invokeMethod(dbManager,"filterOwnerAddress",
@@ -862,6 +862,35 @@ public class ManagerTest extends BlockGenerate {
     dbManager.getPendingTransactions().add(t3);
     txs = dbManager.getVerifyTxs(capsule);
     Assert.assertEquals(txs.size(), 2);
+
+    dbManager.getPendingTransactions().clear();
+    capsule = new BlockCapsule(0, ByteString.EMPTY, 0, list);
+    dbManager.getPendingTransactions().add(t1);
+    dbManager.getPendingTransactions().add(t2);
+    txs = dbManager.getVerifyTxs(capsule);
+    Assert.assertEquals(txs.size(), 0);
+
+    dbManager.getPendingTransactions().clear();
+    Transaction t1Bak = t1.getInstance().toBuilder()
+        .addSignature(ByteString.copyFrom("a".getBytes())).build();
+    dbManager.getPendingTransactions().add(new TransactionCapsule(t1Bak));
+    txs = dbManager.getVerifyTxs(capsule);
+    Assert.assertEquals(t1.getTransactionId(), new TransactionCapsule(t1Bak).getTransactionId());
+    Assert.assertEquals(txs.size(), 2);
+
+    dbManager.getPendingTransactions().clear();
+    list.clear();
+    list.add(t1Bak);
+    capsule = new BlockCapsule(0, ByteString.EMPTY, 0, list);
+
+    Transaction t2Bak = t1.getInstance().toBuilder()
+        .addSignature(ByteString.copyFrom("a".getBytes()))
+        .addSignature(ByteString.copyFrom("b".getBytes())).build();
+    Assert.assertEquals(new TransactionCapsule(t1Bak).getTransactionId(),
+        new TransactionCapsule(t2Bak).getTransactionId());
+    dbManager.getPendingTransactions().add(new TransactionCapsule(t2Bak));
+    txs = dbManager.getVerifyTxs(capsule);
+    Assert.assertEquals(txs.size(), 1);
   }
 
   @Test
