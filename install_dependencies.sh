@@ -12,10 +12,27 @@ echo ""
 echo ">>> Environment Detection"
 if [[ "$OS" == "Darwin" ]]; then
     echo "  OS: macOS $OS"
-elif [[ "$OS" == "Linux" ]]; then
+else
     echo "  OS: $OS"
 fi
 echo "  Architecture: $ARCH"
+
+# Validate OS and architecture support first
+if [[ "$OS" != "Darwin" && "$OS" != "Linux" ]]; then
+    echo "Error: Unsupported OS $OS"
+    exit 1
+elif [[ "$OS" == "Darwin" ]]; then
+    if [[ "$ARCH" != "x86_64" && "$ARCH" != "arm64" ]]; then
+        echo "Error: Unsupported architecture for macOS: $ARCH"
+        exit 1
+    fi
+else
+    if [[ "$ARCH" != "x86_64" && "$ARCH" != "aarch64" && "$ARCH" != "arm64" ]]; then
+        echo "Error: Unsupported architecture for Linux: $ARCH"
+        exit 1
+    fi
+fi
+
 echo ""
 echo ">>> Tested platforms:"
 echo "    - macOS x86_64 (JDK 8)"
@@ -25,31 +42,26 @@ echo "    - Linux arm64/aarch64 (generic, including Ubuntu) (JDK 17)"
 echo "    Note: Other platforms may require manual installation if errors occur"
 echo ""
 echo ">>> This script will install the following components if not already installed:"
-echo "  1. Homebrew to download and install JDK (macOS only)"
-echo "  2. Git for cloning Github repository"
-echo ""
+if [[ "$OS" == "Darwin" ]]; then
+    echo "  1. Homebrew to download and install JDK (macOS only)"
+    echo "  2. Git for cloning Github repository"
+else
+    echo "  1. Git for cloning Github repository"
+fi
 if [[ "$OS" == "Darwin" ]]; then
     if [[ "$ARCH" == "x86_64" ]]; then
         echo "  3. OpenJDK 8 (required for x86_64 architecture)"
-    elif [[ "$ARCH" == "arm64" ]]; then
+    else
         echo "  3. OpenJDK 17 (required for arm64 architecture)"
-    else
-        echo "Error: Unsupported architecture for macOS: $ARCH"
-        exit 1
-    fi
-elif [[ "$OS" == "Linux" ]]; then
-    if [[ "$ARCH" == "x86_64" ]]; then
-        echo "  3. OpenJDK 8 (required for x86_64 architecture)"
-    elif [[ "$ARCH" == "aarch64" ]] || [[ "$ARCH" == "arm64" ]]; then
-        echo "  3. OpenJDK 17 (required for arm64/aarch64 architecture)"
-    else
-        echo "Error: Unsupported architecture for Linux: $ARCH"
-        exit 1
     fi
 else
-    echo "Error: Unsupported Operating System: $OS"
-    exit 1
+    if [[ "$ARCH" == "x86_64" ]]; then
+        echo "  2. OpenJDK 8 (required for x86_64 architecture)"
+    else
+        echo "  2. OpenJDK 17 (required for arm64/aarch64 architecture)"
+    fi
 fi
+echo ""
 
 # Function to ask for user confirmation
 ask_confirmation() {
