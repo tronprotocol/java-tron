@@ -724,20 +724,51 @@ install_linux() {
                     echo "Java 8 installed but environment not configured. You may need to set JAVA_HOME manually."
                 fi
             elif [[ $install_result -eq 2 ]]; then
-                # Wrong version was installed, but we can still configure it
+                # JDK 8 package is installed but default version is different
+                # Need to switch to JDK 8 using update-alternatives
                 local actual_version=$(java -version 2>&1 | head -n 1 | cut -d'"' -f2)
-                echo ">>> JDK 8 is not available, but JDK was installed: $actual_version"
+                echo ">>> JDK 8 package is installed, but system default is: $actual_version"
+                echo ">>> Switching system default to JDK 8 using update-alternatives..."
                 
-                if [[ "$actual_version" =~ ^17\. ]]; then
-                    echo ">>> Configuring environment for the installed JDK 17..."
-                    if configure_java_environment "17" "Linux" "$ARCH"; then
-                        echo "Environment has been updated! Java 17 is now configured."
+                # Try to switch to JDK 8
+                if [[ "$PKG_MANAGER" == "apt-get" ]]; then
+                    local jdk8_path="/usr/lib/jvm/java-8-openjdk-amd64"
+                    if [[ -d "$jdk8_path" ]]; then
+                        echo "    Found JDK 8 at: $jdk8_path"
+                        # Set JDK 8 as default using update-alternatives
+                        sudo update-alternatives --set java "$jdk8_path/jre/bin/java" 2>/dev/null || \
+                        sudo update-alternatives --set java "$jdk8_path/bin/java" 2>/dev/null || \
+                        echo "    Note: Could not auto-switch. Please run: sudo update-alternatives --config java"
+                        
+                        sudo update-alternatives --set javac "$jdk8_path/bin/javac" 2>/dev/null || \
+                        echo "    Note: Could not auto-switch javac. Please run: sudo update-alternatives --config javac"
+                        
+                        # Verify the switch
+                        local new_version=$(java -version 2>&1 | head -n 1 | cut -d'"' -f2)
+                        if [[ "$new_version" =~ ^1\.8\. ]]; then
+                            echo "    ✓ Successfully switched to JDK 8: $new_version"
+                            # Now configure environment for JDK 8
+                            if configure_java_environment "8" "Linux" "$ARCH"; then
+                                echo "Environment has been updated! Java 8 is now configured."
+                            else
+                                echo "Java 8 is active but environment not configured. You may need to set JAVA_HOME manually."
+                            fi
+                        else
+                            echo "    ✗ Auto-switch failed. Current version: $new_version"
+                            echo "    Please manually switch to JDK 8:"
+                            echo "        sudo update-alternatives --config java"
+                            echo "        sudo update-alternatives --config javac"
+                            echo "    Then configure environment for JDK 8"
+                        fi
                     else
-                        echo "Java 17 installed but environment not configured. You may need to set JAVA_HOME manually."
+                        echo "    ✗ JDK 8 directory not found at expected location: $jdk8_path"
+                        echo "    Please manually locate and configure JDK 8"
                     fi
                 else
-                    echo ">>> Configuring environment for the installed Java version..."
-                    echo ">>> You may need to manually configure JAVA_HOME for version: $actual_version"
+                    # For yum/dnf systems
+                    echo "    Please manually switch to JDK 8:"
+                    echo "        sudo alternatives --config java"
+                    echo "        sudo alternatives --config javac"
                 fi
             else
                 echo "Error: Unable to install any JDK on $PKG_MANAGER"
@@ -784,20 +815,56 @@ install_linux() {
                     echo "Java 17 installed but environment not configured. You may need to set JAVA_HOME manually."
                 fi
             elif [[ $install_result -eq 2 ]]; then
-                # Wrong version was installed, but we can still configure it
+                # JDK 17 package is installed but default version is different
+                # Need to switch to JDK 17 using update-alternatives
                 local actual_version=$(java -version 2>&1 | head -n 1 | cut -d'"' -f2)
-                echo ">>> JDK 17 is not available, but JDK was installed: $actual_version"
+                echo ">>> JDK 17 package is installed, but system default is: $actual_version"
+                echo ">>> Switching system default to JDK 17 using update-alternatives..."
                 
-                if [[ "$actual_version" =~ ^1\.8\. ]]; then
-                    echo ">>> Configuring environment for the installed JDK 8..."
-                    if configure_java_environment "8" "Linux" "$ARCH"; then
-                        echo "Environment has been updated! Java 8 is now configured."
+                # Try to switch to JDK 17
+                if [[ "$PKG_MANAGER" == "apt-get" ]]; then
+                    local jdk17_path=""
+                    if [[ "$ARCH" == "aarch64" ]] || [[ "$ARCH" == "arm64" ]]; then
+                        jdk17_path="/usr/lib/jvm/java-17-openjdk-arm64"
                     else
-                        echo "Java 8 installed but environment not configured. You may need to set JAVA_HOME manually."
+                        jdk17_path="/usr/lib/jvm/java-17-openjdk-amd64"
+                    fi
+                    
+                    if [[ -d "$jdk17_path" ]]; then
+                        echo "    Found JDK 17 at: $jdk17_path"
+                        # Set JDK 17 as default using update-alternatives
+                        sudo update-alternatives --set java "$jdk17_path/bin/java" 2>/dev/null || \
+                        echo "    Note: Could not auto-switch. Please run: sudo update-alternatives --config java"
+                        
+                        sudo update-alternatives --set javac "$jdk17_path/bin/javac" 2>/dev/null || \
+                        echo "    Note: Could not auto-switch javac. Please run: sudo update-alternatives --config javac"
+                        
+                        # Verify the switch
+                        local new_version=$(java -version 2>&1 | head -n 1 | cut -d'"' -f2)
+                        if [[ "$new_version" =~ ^17\. ]]; then
+                            echo "    ✓ Successfully switched to JDK 17: $new_version"
+                            # Now configure environment for JDK 17
+                            if configure_java_environment "17" "Linux" "$ARCH"; then
+                                echo "Environment has been updated! Java 17 is now configured."
+                            else
+                                echo "Java 17 is active but environment not configured. You may need to set JAVA_HOME manually."
+                            fi
+                        else
+                            echo "    ✗ Auto-switch failed. Current version: $new_version"
+                            echo "    Please manually switch to JDK 17:"
+                            echo "        sudo update-alternatives --config java"
+                            echo "        sudo update-alternatives --config javac"
+                            echo "    Then configure environment for JDK 17"
+                        fi
+                    else
+                        echo "    ✗ JDK 17 directory not found at expected location: $jdk17_path"
+                        echo "    Please manually locate and configure JDK 17"
                     fi
                 else
-                    echo ">>> Configuring environment for the installed Java version..."
-                    echo ">>> You may need to manually configure JAVA_HOME for version: $actual_version"
+                    # For yum/dnf systems
+                    echo "    Please manually switch to JDK 17:"
+                    echo "        sudo alternatives --config java"
+                    echo "        sudo alternatives --config javac"
                 fi
             else
                 echo "Error: Unable to install any JDK on $PKG_MANAGER"
