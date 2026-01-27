@@ -1872,9 +1872,7 @@ public class AssetIssueActuatorTest extends BaseTest {
   }
 
   @Test
-  public void SameTokenNameStartTimeTooBig() {
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
-
+  public void issueStartTimeTooBig() {
     long maintenanceTimeInterval = dbManager.getDynamicPropertiesStore()
         .getMaintenanceTimeInterval();
     long hardForkTime =

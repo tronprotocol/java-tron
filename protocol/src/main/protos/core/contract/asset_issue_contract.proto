@@ -18,7 +18,7 @@ message AssetIssueContract {
   bytes abbr = 3;
   int64 total_supply = 4;
   repeated FrozenSupply frozen_supply = 5;
-  int32 trx_num = 6; // The fields trx_num and num are only used to calculate price and avoid usage of decimal, asset price = trx_num / num
+  int32 trx_num = 6; // The fields trx_num and num define the exchange rate: num tokens can be purchased with trx_num TRX. This avoids using decimals.
   int32 precision = 7;
   int32 num = 8;
   int64 start_time = 9;
