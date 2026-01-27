@@ -10,7 +10,7 @@ message AssetIssueContract {
   string id = 41;
 
   message FrozenSupply {
-    int64 frozen_amount = 1; //asset amount
+    int64 frozen_amount = 1; // asset amount
     int64 frozen_days = 2;
   }
   bytes owner_address = 1;

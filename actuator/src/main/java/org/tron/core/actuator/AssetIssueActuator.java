@@ -17,6 +17,7 @@ package org.tron.core.actuator;
 
 import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
 
+import com.google.common.math.LongMath;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
@@ -265,10 +266,14 @@ public class AssetIssueActuator extends AbstractActuator {
                 + "and more than " + minFrozenSupplyTime + " days");
       }
       // make sure FrozenSupply.expireTime not overflow
-      if (chainBaseManager.getForkController().pass(ForkBlockVersionEnum.VERSION_4_8_1)
-          && assetIssueContract.getStartTime()
-          >= Long.MAX_VALUE - next.getFrozenDays() * FROZEN_PERIOD) {
-        throw new ContractValidateException("Start time is too big");
+      if (chainBaseManager.getForkController().pass(ForkBlockVersionEnum.VERSION_4_8_1)) {
+        long frozenPeriod = next.getFrozenDays() * FROZEN_PERIOD;
+        try {
+          LongMath.checkedAdd(assetIssueContract.getStartTime(), frozenPeriod);
+        } catch (ArithmeticException e) {
+          throw new ContractValidateException(
+              "Start time and frozen days would cause expire time overflow");
+        }
       }
       remainSupply -= next.getFrozenAmount();
     }

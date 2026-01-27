@@ -1896,7 +1896,7 @@ public class AssetIssueActuatorTest extends BaseTest {
     // Start time is too big. If it's to large, the account.frozen_supply.expireTime will overflow
     FrozenSupply frozenSupply = FrozenSupply.newBuilder().setFrozenDays(20).setFrozenAmount(100)
         .build();
-    long startTime = Long.MAX_VALUE - frozenSupply.getFrozenDays() * FROZEN_PERIOD;
+    long startTime = Long.MAX_VALUE - frozenSupply.getFrozenDays() * FROZEN_PERIOD + 1;
     Any any = Any.pack(
         AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
@@ -1916,8 +1916,9 @@ public class AssetIssueActuatorTest extends BaseTest {
     owner.setBalance(10_000_000_000L);
     dbManager.getAccountStore().put(owner.createDbKey(), owner);
 
-    processAndCheckInvalid(actuator, ret, "Start time is too big",
-        "Start time is too big");
+    processAndCheckInvalid(actuator, ret,
+        "Start time and frozen days would cause expire time overflow",
+        "Start time and frozen days would cause expire time overflow");
   }
 
   @Test
