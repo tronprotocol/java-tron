@@ -115,9 +115,8 @@ Network selection is performed by specifying the appropriate configuration file 
 ### 1. Join the TRON main network
 Launch a main-network full node with the built-in default configuration:
 ```bash
-nohup java -jar ./build/libs/FullNode.jar &
+java -jar ./build/libs/FullNode.jar
 ```
-* `nohup ... &`: Runs the command in the background and ignores the hangup signal.
 
 > For production deployments or long-running Mainnet nodes, please refer to the [JVM Parameter Optimization for FullNode](https://tronprotocol.github.io/documentation-en/using_javatron/installing_javatron/#jvm-parameter-optimization-for-mainnet-fullnode-deployment) guide for the recommended Java command configuration.
 
@@ -132,7 +131,7 @@ Use [TronScan](https://tronscan.org/#/), TRON's official block explorer, to view
 Utilize the `-c` flag to direct the node to the configuration file corresponding to the desired network. Since Nile TestNet may incorporate features not yet available on the MainNet, it is **strongly advised** to compile the source code following the [Building the Source Code](https://github.com/tron-nile-testnet/nile-testnet/blob/master/README.md#building-the-source-code) instructions for the Nile TestNet.
 
 ```bash
-nohup java -jar ./build/libs/FullNode.jar -c config-nile.conf &
+java -jar ./build/libs/FullNode.jar -c config-nile.conf
 ```
 
 Nile resources: explorer, faucet, wallet, developer docs, and network statistics at [nileex.io](https://nileex.io/).
