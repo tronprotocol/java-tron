@@ -86,36 +86,32 @@ public class SolidEventService {
       }
     }
 
-    if (instance.isSolidityEventTriggerEnable()) {
-      if (blockEvent.getSmartContractTrigger() == null) {
-        logger.warn("SmartContractTrigger is null. {}", blockEvent.getBlockId());
-      } else {
-        blockEvent.getSmartContractTrigger().getContractEventTriggers().forEach(v -> {
-          synchronized (RealtimeEventService.getContractLock()) {
+    synchronized (RealtimeEventService.getContractLock()) {
+      if (instance.isSolidityEventTriggerEnable()) {
+        if (blockEvent.getSmartContractTrigger() == null) {
+          logger.warn("SmartContractTrigger is null. {}", blockEvent.getBlockId());
+        } else {
+          blockEvent.getSmartContractTrigger().getContractEventTriggers().forEach(v -> {
             v.setTriggerName(Trigger.SOLIDITYEVENT_TRIGGER_NAME);
             v.setRemoved(false);
             EventPluginLoader.getInstance().postSolidityEventTrigger(v);
-          }
-        });
+          });
+        }
       }
-    }
 
-    if (instance.isSolidityLogTriggerEnable() && blockEvent.getSmartContractTrigger() != null) {
-      blockEvent.getSmartContractTrigger().getContractLogTriggers().forEach(v -> {
-        synchronized (RealtimeEventService.getContractLock()) {
+      if (instance.isSolidityLogTriggerEnable() && blockEvent.getSmartContractTrigger() != null) {
+        blockEvent.getSmartContractTrigger().getContractLogTriggers().forEach(v -> {
           v.setTriggerName(Trigger.SOLIDITYLOG_TRIGGER_NAME);
           v.setRemoved(false);
           EventPluginLoader.getInstance().postSolidityLogTrigger(v);
-        }
-      });
-      if (instance.isSolidityLogTriggerRedundancy()) {
-        blockEvent.getSmartContractTrigger().getRedundancies().forEach(v -> {
-          synchronized (RealtimeEventService.getContractLock()) {
+        });
+        if (instance.isSolidityLogTriggerRedundancy()) {
+          blockEvent.getSmartContractTrigger().getRedundancies().forEach(v -> {
             v.setTriggerName(Trigger.SOLIDITYLOG_TRIGGER_NAME);
             v.setRemoved(false);
             EventPluginLoader.getInstance().postSolidityLogTrigger(v);
-          }
-        });
+          });
+        }
       }
     }
 

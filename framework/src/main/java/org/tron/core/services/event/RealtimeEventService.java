@@ -99,36 +99,32 @@ public class RealtimeEventService {
       }
     }
 
-    if (instance.isContractEventTriggerEnable()) {
-      if (blockEvent.getSmartContractTrigger() == null) {
-        logger.warn("SmartContractTrigger is null. {}", blockEvent.getBlockId().getString());
-      } else {
-        blockEvent.getSmartContractTrigger().getContractEventTriggers().forEach(v -> {
-          synchronized (contractLock) {
+    synchronized (contractLock) {
+      if (instance.isContractEventTriggerEnable()) {
+        if (blockEvent.getSmartContractTrigger() == null) {
+          logger.warn("SmartContractTrigger is null. {}", blockEvent.getBlockId().getString());
+        } else {
+          blockEvent.getSmartContractTrigger().getContractEventTriggers().forEach(v -> {
             v.setTriggerName(Trigger.CONTRACTEVENT_TRIGGER_NAME);
             v.setRemoved(isRemove);
             EventPluginLoader.getInstance().postContractEventTrigger(v);
-          }
-        });
+          });
+        }
       }
-    }
 
-    if (instance.isContractLogTriggerEnable() && blockEvent.getSmartContractTrigger() != null) {
-      blockEvent.getSmartContractTrigger().getContractLogTriggers().forEach(v -> {
-        synchronized (contractLock) {
+      if (instance.isContractLogTriggerEnable() && blockEvent.getSmartContractTrigger() != null) {
+        blockEvent.getSmartContractTrigger().getContractLogTriggers().forEach(v -> {
           v.setTriggerName(Trigger.CONTRACTLOG_TRIGGER_NAME);
           v.setRemoved(isRemove);
           EventPluginLoader.getInstance().postContractLogTrigger(v);
-        }
-      });
-      if (instance.isContractLogTriggerRedundancy()) {
-        blockEvent.getSmartContractTrigger().getRedundancies().forEach(v -> {
-          synchronized (contractLock) {
+        });
+        if (instance.isContractLogTriggerRedundancy()) {
+          blockEvent.getSmartContractTrigger().getRedundancies().forEach(v -> {
             v.setTriggerName(Trigger.CONTRACTLOG_TRIGGER_NAME);
             v.setRemoved(isRemove);
             EventPluginLoader.getInstance().postContractLogTrigger(v);
-          }
-        });
+          });
+        }
       }
     }
   }
