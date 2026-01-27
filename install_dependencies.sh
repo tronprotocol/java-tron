@@ -27,20 +27,29 @@ echo ""
 echo ">>> This script will install the following components if not already installed:"
 echo "  1. Homebrew to download and install JDK (macOS only)"
 echo "  2. Git for cloning Github repository"
+echo ""
 if [[ "$OS" == "Darwin" ]]; then
     if [[ "$ARCH" == "x86_64" ]]; then
         echo "  3. OpenJDK 8 (required for x86_64 architecture)"
     elif [[ "$ARCH" == "arm64" ]]; then
         echo "  3. OpenJDK 17 (required for arm64 architecture)"
+    else
+        echo "Error: Unsupported architecture for macOS: $ARCH"
+        exit 1
     fi
 elif [[ "$OS" == "Linux" ]]; then
     if [[ "$ARCH" == "x86_64" ]]; then
         echo "  3. OpenJDK 8 (required for x86_64 architecture)"
     elif [[ "$ARCH" == "aarch64" ]] || [[ "$ARCH" == "arm64" ]]; then
         echo "  3. OpenJDK 17 (required for arm64/aarch64 architecture)"
+    else
+        echo "Error: Unsupported architecture for Linux: $ARCH"
+        exit 1
     fi
+else
+    echo "Error: Unsupported Operating System: $OS"
+    exit 1
 fi
-echo ""
 
 # Function to ask for user confirmation
 ask_confirmation() {
@@ -140,9 +149,6 @@ if [[ "$OS" == "Darwin" ]]; then
     elif [[ "$ARCH" == "arm64" ]]; then
         required_jdk="JDK 17"
         required_status=1
-    else
-        echo "Error: Unsupported architecture for macOS: $ARCH"
-        exit 1
     fi
 elif [[ "$OS" == "Linux" ]]; then
     if [[ "$ARCH" == "x86_64" ]]; then
@@ -151,13 +157,7 @@ elif [[ "$OS" == "Linux" ]]; then
     elif [[ "$ARCH" == "aarch64" ]] || [[ "$ARCH" == "arm64" ]]; then
         required_jdk="JDK 17"
         required_status=1
-    else
-        echo "Error: Unsupported architecture for Linux: $ARCH"
-        exit 1
     fi
-else
-    echo "Error: Unsupported Operating System: $OS"
-    exit 1
 fi
 
 # Check if correct JDK version is already installed
