@@ -83,11 +83,11 @@ check_java_version() {
         
         # Check if it's JDK 8 (version starts with 1.8)
         if [[ "$java_version" =~ ^1\.8\. ]]; then
-            echo "    JDK 8 is already installed."
+            echo "    JDK 8 is installed."
             return 0
         # Check if it's JDK 17 (version starts with 17)
         elif [[ "$java_version" =~ ^17\. ]]; then
-            echo "    JDK 17 is already installed."
+            echo "    JDK 17 is installed."
             return 1
         else
             echo "    Different Java version detected: $java_version"
@@ -888,7 +888,7 @@ else
 fi
 
 echo "----------------------------------------"
-echo "Installation completed successfully!"
+echo "Installation completed!"
 echo ""
 echo ">>> Verification Commands:"
 echo "  git --version"
@@ -901,7 +901,6 @@ if command -v java &> /dev/null; then
     echo "  Java command found: $(which java)"
     if java -version &> /dev/null; then
         echo "  Java version: $(java -version 2>&1 | head -n 1)"
-        echo "  ✓ Java is working correctly!"
     else
         echo "  ✗ Java command exists but cannot run properly"
         echo "  Please run: source ./tron_java_env.sh"
