@@ -17,7 +17,6 @@ package org.tron.core.actuator;
 
 import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
 
-import com.google.common.math.LongMath;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
@@ -25,6 +24,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.math.StrictMathWrapper;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -269,7 +269,7 @@ public class AssetIssueActuator extends AbstractActuator {
       if (chainBaseManager.getForkController().pass(ForkBlockVersionEnum.VERSION_4_8_1)) {
         long frozenPeriod = next.getFrozenDays() * FROZEN_PERIOD;
         try {
-          LongMath.checkedAdd(assetIssueContract.getStartTime(), frozenPeriod);
+          StrictMathWrapper.addExact(assetIssueContract.getStartTime(), frozenPeriod);
         } catch (ArithmeticException e) {
           throw new ContractValidateException(
               "Start time and frozen days would cause expire time overflow");
