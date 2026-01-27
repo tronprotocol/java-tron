@@ -107,6 +107,10 @@ ask_jdk_confirmation() {
     echo ""
     echo "JDK Version Mismatch Detected!"
     echo "    Current version: $current_version"
+    echo "    Current installation path: $(which java 2>/dev/null || echo 'Not found')"
+    if command -v java &> /dev/null && [[ -n "$JAVA_HOME" ]]; then
+        echo "    Current JAVA_HOME: $JAVA_HOME"
+    fi
     echo "    Required version for $arch: $required_version"
     echo "    This script will install $required_version alongside your existing installation."
     echo "    Your current Java installation will not be removed."
