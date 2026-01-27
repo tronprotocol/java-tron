@@ -631,12 +631,54 @@ install_linux() {
     fi
 
     install_first_available() {
+        local target_version="$1"
+        shift
+        local installed_package=""
+        
         for pkg in "$@"; do
+            echo "    Attempting to install: $pkg"
             if $INSTALL_CMD "$pkg"; then
-                return 0
+                installed_package="$pkg"
+                echo "    Successfully installed: $pkg"
+                break
+            else
+                echo "    Failed to install: $pkg"
             fi
         done
-        return 1
+        
+        if [[ -n "$installed_package" ]]; then
+            # Verify what version was actually installed
+            echo "    Verifying installed Java version..."
+            if command -v java &> /dev/null; then
+                local actual_version=$(java -version 2>&1 | head -n 1 | cut -d'"' -f2)
+                echo "    Installed Java version: $actual_version"
+                
+                # Check if the installed version matches what we expected
+                if [[ "$target_version" == "8" ]]; then
+                    if [[ "$actual_version" =~ ^1\.8\. ]]; then
+                        echo "    ✓ JDK 8 installed successfully"
+                        return 0
+                    else
+                        echo "    ✗ Expected JDK 8 but got: $actual_version"
+                        echo "    This may happen if JDK 8 is not available in your distribution"
+                        return 2
+                    fi
+                elif [[ "$target_version" == "17" ]]; then
+                    if [[ "$actual_version" =~ ^17\. ]]; then
+                        echo "    ✓ JDK 17 installed successfully"
+                        return 0
+                    else
+                        echo "    ✗ Expected JDK 17 but got: $actual_version"
+                        return 2
+                    fi
+                fi
+            else
+                echo "    ✗ Java command not found after installation"
+                return 1
+            fi
+        else
+            return 1
+        fi
     }
 
     if [[ "$ARCH" == "x86_64" ]]; then
@@ -657,16 +699,45 @@ install_linux() {
                 echo ">>> Installing JDK 8..."
             fi
             if [[ "$PKG_MANAGER" == "apt-get" ]]; then
-                install_first_available openjdk-8-jdk
+                if install_first_available "8" openjdk-8-jdk; then
+                    install_result=0
+                else
+                    install_result=$?
+                fi
             else
-                install_first_available java-1.8.0-amazon-corretto-devel java-1.8.0-openjdk-devel
-            fi || { echo "Error: Unable to install JDK 8 on $PKG_MANAGER"; exit 1; }
+                if install_first_available "8" java-1.8.0-amazon-corretto-devel java-1.8.0-openjdk-devel; then
+                    install_result=0
+                else
+                    install_result=$?
+                fi
+            fi
             
-            # Use unified Java environment configuration
-            if configure_java_environment "8" "Linux" "$ARCH"; then
-                echo "Environment has been updated! Java 8 is now configured."
+            if [[ $install_result -eq 0 ]]; then
+                # Use unified Java environment configuration
+                if configure_java_environment "8" "Linux" "$ARCH"; then
+                    echo "Environment has been updated! Java 8 is now configured."
+                else
+                    echo "Java 8 installed but environment not configured. You may need to set JAVA_HOME manually."
+                fi
+            elif [[ $install_result -eq 2 ]]; then
+                # Wrong version was installed, but we can still configure it
+                local actual_version=$(java -version 2>&1 | head -n 1 | cut -d'"' -f2)
+                echo ">>> JDK 8 is not available, but JDK was installed: $actual_version"
+                
+                if [[ "$actual_version" =~ ^17\. ]]; then
+                    echo ">>> Configuring environment for the installed JDK 17..."
+                    if configure_java_environment "17" "Linux" "$ARCH"; then
+                        echo "Environment has been updated! Java 17 is now configured."
+                    else
+                        echo "Java 17 installed but environment not configured. You may need to set JAVA_HOME manually."
+                    fi
+                else
+                    echo ">>> Configuring environment for the installed Java version..."
+                    echo ">>> You may need to manually configure JAVA_HOME for version: $actual_version"
+                fi
             else
-                echo "Java 8 installed but environment not configured. You may need to set JAVA_HOME manually."
+                echo "Error: Unable to install any JDK on $PKG_MANAGER"
+                exit 1
             fi
         fi
         
@@ -688,16 +759,45 @@ install_linux() {
                 echo ">>> Installing JDK 17..."
             fi
             if [[ "$PKG_MANAGER" == "apt-get" ]]; then
-                install_first_available openjdk-17-jdk
+                if install_first_available "17" openjdk-17-jdk; then
+                    install_result=0
+                else
+                    install_result=$?
+                fi
             else
-                install_first_available java-17-amazon-corretto-devel java-17-openjdk-devel
-            fi || { echo "Error: Unable to install JDK 17 on $PKG_MANAGER"; exit 1; }
+                if install_first_available "17" java-17-amazon-corretto-devel java-17-openjdk-devel; then
+                    install_result=0
+                else
+                    install_result=$?
+                fi
+            fi
             
-            # Use unified Java environment configuration
-            if configure_java_environment "17" "Linux" "$ARCH"; then
-                echo "Environment has been updated! Java 17 is now configured."
+            if [[ $install_result -eq 0 ]]; then
+                # Use unified Java environment configuration
+                if configure_java_environment "17" "Linux" "$ARCH"; then
+                    echo "Environment has been updated! Java 17 is now configured."
+                else
+                    echo "Java 17 installed but environment not configured. You may need to set JAVA_HOME manually."
+                fi
+            elif [[ $install_result -eq 2 ]]; then
+                # Wrong version was installed, but we can still configure it
+                local actual_version=$(java -version 2>&1 | head -n 1 | cut -d'"' -f2)
+                echo ">>> JDK 17 is not available, but JDK was installed: $actual_version"
+                
+                if [[ "$actual_version" =~ ^1\.8\. ]]; then
+                    echo ">>> Configuring environment for the installed JDK 8..."
+                    if configure_java_environment "8" "Linux" "$ARCH"; then
+                        echo "Environment has been updated! Java 8 is now configured."
+                    else
+                        echo "Java 8 installed but environment not configured. You may need to set JAVA_HOME manually."
+                    fi
+                else
+                    echo ">>> Configuring environment for the installed Java version..."
+                    echo ">>> You may need to manually configure JAVA_HOME for version: $actual_version"
+                fi
             else
-                echo "Java 17 installed but environment not configured. You may need to set JAVA_HOME manually."
+                echo "Error: Unable to install any JDK on $PKG_MANAGER"
+                exit 1
             fi
         fi
         
