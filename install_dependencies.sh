@@ -787,6 +787,16 @@ install_linux() {
                     echo "    Please manually switch to JDK 8:"
                     echo "        sudo alternatives --config java"
                     echo "        sudo alternatives --config javac"
+                    echo ""
+                    echo "    After switching, you can configure the environment."
+                    
+                    # Still create tron_java_env.sh for manual use
+                    if configure_java_environment "8" "Linux" "$ARCH"; then
+                        echo "Environment configuration completed for JDK 8."
+                    else
+                        echo "tron_java_env.sh has been created for manual use."
+                        echo "After switching to JDK 8, run: source ./tron_java_env.sh"
+                    fi
                 fi
             else
                 echo "Error: Unable to install any JDK on $PKG_MANAGER"
@@ -883,6 +893,16 @@ install_linux() {
                     echo "    Please manually switch to JDK 17:"
                     echo "        sudo alternatives --config java"
                     echo "        sudo alternatives --config javac"
+                    echo ""
+                    echo "    After switching, you can configure the environment."
+                    
+                    # Still create tron_java_env.sh for manual use
+                    if configure_java_environment "17" "Linux" "$ARCH"; then
+                        echo "Environment configuration completed for JDK 17."
+                    else
+                        echo "tron_java_env.sh has been created for manual use."
+                        echo "After switching to JDK 17, run: source ./tron_java_env.sh"
+                    fi
                 fi
             else
                 echo "Error: Unable to install any JDK on $PKG_MANAGER"
@@ -919,7 +939,6 @@ if command -v java &> /dev/null; then
     echo "  Java command found: $(which java)"
     if java -version &> /dev/null; then
         echo "  Java version: $(java -version 2>&1 | head -n 1)"
-        echo "  ✓ Java is working correctly!"
     else
         echo "  ✗ Java command exists but cannot run properly"
         echo "  Please run: source ./tron_java_env.sh"
