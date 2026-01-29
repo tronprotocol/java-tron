@@ -42,10 +42,10 @@ public class BlockEventCacheTest {
     BlockCapsule.BlockId blockId = new BlockCapsule.BlockId(getBlockId(), 2);
     event.setBlockId(blockId);
     event.setParentId(b1);
-    event.setSolidId(b1);
+    event.setSolidId(blockId);
     BlockEventCache.add(event);
     Assert.assertEquals(event, BlockEventCache.getHead());
-    Assert.assertEquals(b1, BlockEventCache.getSolidId());
+    Assert.assertEquals(blockId, BlockEventCache.getSolidId());
     Assert.assertEquals(event, BlockEventCache.getBlockEvent(blockId));
 
     BlockEventCache.init(b1);
