@@ -7,8 +7,7 @@
 </h1>
 
 <h4 align="center">
-  Java implementation of the <a href="https://tron.network">Tron Protocol</a>
-</h4>
+  Java implementation of the <a href="https://tron.network">Tron Protocol</a>TRON4>
 
 <p align="center">
   <a href="https://gitter.im/tronprotocol/allcoredev">
@@ -202,3 +201,4 @@ Thank you for considering to help out with the source code! If you'd like to con
 # License
 
 java-tron is released under the [LGPLv3 license](https://github.com/tronprotocol/java-tron/blob/master/LICENSE).
+
