@@ -881,11 +881,6 @@ public class Manager {
       throw new ContractValidateException("ExchangeTransactionContract is rejected");
     }
 
-    if (isExchangeTransaction(trx.getInstance())) {
-      throw new ContractValidateException("ExchangeTransactionContract is rejected");
-    }
-
-
     pushTransactionQueue.add(trx);
     Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, 1,
         MetricLabels.Gauge.QUEUE_QUEUED);
