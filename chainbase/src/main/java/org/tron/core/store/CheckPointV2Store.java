@@ -70,9 +70,13 @@ public class CheckPointV2Store extends TronDatabase<byte[]> {
     logger.debug("******** Begin to close {}. ********", getName());
     try {
       writeOptions.close();
-      dbSource.closeDB();
     } catch (Exception e) {
-      logger.warn("Failed to close {}.", getName(), e);
+      logger.warn("Failed to close writeOptions in {}.", getName(), e);
+    }
+    try {
+      super.close();
+    } catch (Exception e) {
+      logger.warn("Failed to close parent resources in {}.", getName(), e);
     } finally {
       logger.debug("******** End to close {}. ********", getName());
     }
