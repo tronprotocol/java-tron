@@ -1261,11 +1261,11 @@ public class Args extends CommonParameter {
         .getInt(Constant.COMMITTEE_ALLOW_OLD_REWARD_OPT) : 0;
     if (allowOldRewardOpt == 1 && PARAMETER.allowNewRewardAlgorithm != 1
         && PARAMETER.allowNewReward != 1 && PARAMETER.allowTvmVote != 1) {
-      throw new IllegalArgumentException(
+      throw new TronError(
           "At least one of the following proposals is required to be opened first: "
           + "committee.allowNewRewardAlgorithm = 1"
           + " or committee.allowNewReward = 1"
-          + " or committee.allowTvmVote = 1.");
+          + " or committee.allowTvmVote = 1.",PARAMETER_INIT);
     }
     PARAMETER.allowOldRewardOpt = allowOldRewardOpt;
 
@@ -1540,8 +1540,9 @@ public class Args extends CommonParameter {
           config.getString(Constant.NODE_DNS_SERVER_TYPE))) {
         String serverType = config.getString(Constant.NODE_DNS_SERVER_TYPE);
         if (!"aws".equalsIgnoreCase(serverType) && !"aliyun".equalsIgnoreCase(serverType)) {
-          throw new IllegalArgumentException(
-              String.format("Check %s, must be aws or aliyun", Constant.NODE_DNS_SERVER_TYPE));
+          throw new TronError(
+              String.format("Check %s, must be aws or aliyun", Constant.NODE_DNS_SERVER_TYPE),
+              PARAMETER_INIT);
         }
         if ("aws".equalsIgnoreCase(serverType)) {
           publishConfig.setDnsType(DnsType.AwsRoute53);
@@ -1587,7 +1588,7 @@ public class Args extends CommonParameter {
   }
 
   private static void logEmptyError(String arg) {
-    throw new IllegalArgumentException(String.format("Check %s, must not be null or empty", arg));
+    throw new TronError(String.format("Check %s, must not be null or empty", arg),PARAMETER_INIT);
   }
 
   private static TriggerConfig createTriggerConfig(ConfigObject triggerObject) {
