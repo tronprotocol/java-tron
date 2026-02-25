@@ -123,12 +123,16 @@ public class BaseNet {
 
   @AfterClass
   public static void destroy() {
-    Collection<PeerConnection> peerConnections = ReflectUtils
-        .invokeMethod(tronNetDelegate, "getActivePeer");
-    for (PeerConnection peer : peerConnections) {
-      peer.getChannel().close();
+    if (tronNetDelegate != null) {
+      Collection<PeerConnection> peerConnections = ReflectUtils
+          .invokeMethod(tronNetDelegate, "getActivePeer");
+      for (PeerConnection peer : peerConnections) {
+        peer.getChannel().close();
+      }
     }
     Args.clearParam();
-    context.destroy();
+    if (context != null) {
+      context.destroy();
+    }
   }
 }

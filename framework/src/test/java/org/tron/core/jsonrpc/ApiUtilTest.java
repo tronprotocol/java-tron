@@ -1,6 +1,5 @@
 package org.tron.core.jsonrpc;
 
-import static org.tron.common.utils.Commons.decodeFromBase58Check;
 import static org.tron.keystore.Wallet.generateRandomBytes;
 
 import com.google.protobuf.ByteString;
@@ -30,9 +29,13 @@ public class ApiUtilTest {
 
   @Test
   public void testTriggerCallContract() {
-    byte[] address = decodeFromBase58Check("TEPRbQxXQEpHpeEx8tK5xHVs7NWudAAZgu");
-    //nile usdt
-    byte[] contractAddress = decodeFromBase58Check("TXYZopYRdj2D9XRtbG411XZZ3kM5VkAeBf");
+    // Use raw hex bytes to avoid dependency on CommonParameter initialization
+    // TEPRbQxXQEpHpeEx8tK5xHVs7NWudAAZgu
+    byte[] address = ByteArray.fromHexString(
+        "413074ff6d53db268d23bd6013ec5497c8b13400ff");
+    // TXYZopYRdj2D9XRtbG411XZZ3kM5VkAeBf (nile usdt)
+    byte[] contractAddress = ByteArray.fromHexString(
+        "41eca9bc828a3005b9a3b909f2cc5c2a54794de05f");
     long callValue = 100;
     //transfer to address TVjsyZ7fYF3qLF6BQgPmTEZy1xrNNyVAAA with 10*10^6
     byte[] data = ByteArray.fromHexString("a9059cbb000000000000000000000000d8dd39e2dea27a4000"
