@@ -44,7 +44,7 @@ public class BaseNet {
   public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
   private static String dbDirectory = "net-database";
   private static String indexDirectory = "net-index";
-  private static int port = 10000;
+  private static int port = PublicMethod.chooseRandomPort();
 
   protected static TronApplicationContext context;
 
