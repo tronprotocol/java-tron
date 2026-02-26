@@ -31,14 +31,14 @@
 
 TRON is building the foundational infrastructure for the decentralized internet ecosystem with a focus on high-performance, scalability, and security.
 
-- TRON Protocol: High-throughput（2000+ TPS), scalable blockchain OS (DPoS consensus) powering the TRON ecosystem.
+- TRON Protocol: High-throughput (2000+ TPS), scalable blockchain OS (DPoS consensus) powering the TRON ecosystem.
 - TRON Virtual Machine (TVM): EVM-compatible smart-contract engine for fast smart-contract execution.
 
 # Building the Source Code
 Before building java-tron, make sure you have:
 - Hardware with at least 4 CPU cores, 16 GB RAM, 10 GB free disk space for a smooth compilation process.
 - Operating system: `Linux` or `macOS` (`Windows` is not supported).
-- Git and correct JDK（version `8` or `17`） installed based on your CPU architecture.
+- Git and correct JDK (version `8` or `17`) installed based on your CPU architecture.
 
 There are two ways to install the required dependencies:
 
@@ -128,7 +128,7 @@ tail -f ./logs/tron.log
 Use [TronScan](https://tronscan.org/#/), TRON's official block explorer, to view main network transactions, blocks, accounts, witness voting, and governance metrics, etc.
 
 ### 2. Join Nile test network
-Utilize the `-c` flag to direct the node to the configuration file corresponding to the desired network. Since Nile TestNet may incorporate features not yet available on the MainNet, it is **strongly advised** to compile the source code following the [Building the Source Code](https://github.com/tron-nile-testnet/nile-testnet/blob/master/README.md#building-the-source-code) instructions for the Nile TestNet.
+Utilize the `-c` flag to direct the node to the configuration file corresponding to the desired network. Since Nile Testnet may incorporate features not yet available on the Mainnet, it is **strongly advised** to compile the source code following the [Building the Source Code](https://github.com/tron-nile-testnet/nile-testnet/blob/master/README.md#building-the-source-code) instructions for the Nile Testnet.
 
 ```bash
 java -jar ./build/libs/FullNode.jar -c config-nile.conf
@@ -139,7 +139,7 @@ Nile resources: explorer, faucet, wallet, developer docs, and network statistics
 ### 3. Access Shasta test network
 Shasta does not accept public node peers. Programmatic access is available via TronGrid endpoints; see [TronGrid Service](https://developers.tron.network/docs/trongrid) for details.
 
-Shasta resources: explorer, faucet, wallet, developer docs, and network statistics at [shastaex.io](https://shasta.tronex.io/).
+Shasta resources: explorer, faucet, wallet, developer docs, and network statistics at [shasta.tronex.io](https://shasta.tronex.io/).
 
 ### 4. Set up a private network
 To set up a private network for testing or development, follow the [Private Network guidance](https://tronprotocol.github.io/documentation-en/using_javatron/private_network/).
@@ -160,7 +160,7 @@ You could also test the process by connecting to a testnet or setting up a priva
 
 ## Programmatically interfacing FullNode
 
-Upon the FullNode startup successfully, interaction with the TRON network is facilitated through a comprehensive suite of programmatic interfaces exposed by java-tron:
+Once the FullNode starts successfully, interaction with the TRON network is facilitated through a comprehensive suite of programmatic interfaces exposed by java-tron:
 - **HTTP API**: See the complete [HTTP API reference and endpoint list](https://tronprotocol.github.io/documentation-en/api/http/).
 - **gRPC**: High-performance APIs suitable for service-to-service integration. See the supported [gRPC reference](https://tronprotocol.github.io/documentation-en/api/rpc/).
 - **JSON-RPC**: Provides Ethereum-compatible JSON-RPC methods for logs, transactions and contract calls, etc. See the supported [JSON-RPC methods](https://tronprotocol.github.io/documentation-en/api/json-rpc/).
@@ -201,14 +201,14 @@ Thank you for considering to help out with the source code! If you'd like to con
 
 # Resources
 
-- [Medium](https://medium.com/@coredevs) java-tron's official technical articles are published there.
+- [Medium](https://medium.com/@coredevs) - java-tron's official technical articles are published here.
 - [Documentation](https://tronprotocol.github.io/documentation-en/) and [TRON Developer Hub](https://developers.tron.network/) serve as java-tron’s primary documentation websites.
-- [TronScan](https://tronscan.org/#/) TRON main network blockchain browser.
-- [Nile Test network](http://nileex.io/) A stable test network of TRON contributed by TRON community.
-- [Shasta Test network](https://shasta.tronex.io/) A stable test network of TRON contributed by TRON community.
-- [Wallet-cli](https://github.com/tronprotocol/wallet-cli) TRON network wallet using command line.
-- [TIP](https://github.com/tronprotocol/tips) TRON Improvement Proposal (TIP) describes standards for the TRON network.
-- [TP](https://github.com/tronprotocol/tips/tree/master/tp) TRON Protocol (TP) describes standards already implemented in TRON network but not published as a TIP.
+- [TronScan](https://tronscan.org/#/) - TRON main network blockchain browser.
+- [Nile Test Network](https://nileex.io/) - A stable test network of TRON contributed by the TRON community.
+- [Shasta Test Network](https://shasta.tronex.io/) - A stable test network of TRON contributed by the TRON community.
+- [Wallet-cli](https://github.com/tronprotocol/wallet-cli) - TRON network wallet using command line.
+- [TIP](https://github.com/tronprotocol/tips) - TRON Improvement Proposal (TIP) describes standards for the TRON network.
+- [TP](https://github.com/tronprotocol/tips/tree/master/tp) - TRON Protocol (TP) describes standards already implemented in TRON network but not published as a TIP.
 
 # Integrity Check
 
