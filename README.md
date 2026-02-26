@@ -203,7 +203,7 @@ Thank you for considering to help out with the source code! If you'd like to con
 
 - [Medium](https://medium.com/@coredevs) - java-tron's official technical articles are published here.
 - [Documentation](https://tronprotocol.github.io/documentation-en/) and [TRON Developer Hub](https://developers.tron.network/) serve as java-tron’s primary documentation websites.
-- [TronScan](https://tronscan.org/#/) - TRON main network blockchain browser.
+- [TronScan](https://tronscan.org/) - TRON main network blockchain browser.
 - [Nile Test Network](https://nileex.io/) - Forward-looking testnet for developers to experience.
 - [Shasta Test Network](https://shasta.tronex.io/) - Stable testnet that closely mirrors Mainnet features, providing a realistic testing environment .
 - [Wallet-cli](https://github.com/tronprotocol/wallet-cli) - TRON network wallet using command line.
