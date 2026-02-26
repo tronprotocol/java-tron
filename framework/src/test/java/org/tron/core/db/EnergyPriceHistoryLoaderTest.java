@@ -14,13 +14,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.api.EnergyPriceHistoryLoader;
 import org.tron.core.store.ProposalStore;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Proposal.State;
-import org.tron.common.TestConstants;
 
 
 @Slf4j

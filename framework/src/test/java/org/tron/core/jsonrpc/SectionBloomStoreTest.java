@@ -9,6 +9,7 @@ import javax.annotation.Resource;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.utils.ByteArray;
@@ -21,7 +22,6 @@ import org.tron.core.services.jsonrpc.filters.LogFilterWrapper;
 import org.tron.core.store.SectionBloomStore;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.Protocol.TransactionInfo.Log;
-import org.tron.common.TestConstants;
 
 public class SectionBloomStoreTest extends BaseTest {
 

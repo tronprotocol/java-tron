@@ -13,6 +13,7 @@ import org.junit.rules.TemporaryFolder;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
+import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
@@ -29,7 +30,6 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.BalanceContract.TransferContract;
-import org.tron.common.TestConstants;
 
 @Slf4j
 public class TransactionExpireTest {

@@ -12,6 +12,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.tron.common.TestConstants;
 import org.tron.common.backup.BackupManager.BackupStatusEnum;
 import org.tron.common.backup.message.KeepAliveMessage;
 import org.tron.common.backup.socket.BackupServer;
@@ -19,7 +20,6 @@ import org.tron.common.backup.socket.UdpEvent;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.PublicMethod;
 import org.tron.core.config.args.Args;
-import org.tron.common.TestConstants;
 
 public class BackupManagerTest {
 
@@ -30,7 +30,8 @@ public class BackupManagerTest {
 
   @Before
   public void setUp() throws Exception {
-    Args.setParam(new String[] {"-d", temporaryFolder.newFolder().toString()}, TestConstants.TEST_CONF);
+    Args.setParam(new String[] {"-d", temporaryFolder.newFolder().toString()},
+        TestConstants.TEST_CONF);
     CommonParameter.getInstance().setBackupPort(PublicMethod.chooseRandomPort());
     manager = new BackupManager();
     backupServer = new BackupServer(manager);

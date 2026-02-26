@@ -12,6 +12,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
@@ -22,7 +23,6 @@ import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadItemException;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.BalanceContract.TransferContract;
-import org.tron.common.TestConstants;
 
 @Slf4j
 public class BlockCapsuleTest {

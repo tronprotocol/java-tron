@@ -24,6 +24,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.ByteArray;
@@ -52,7 +53,6 @@ import org.tron.core.services.jsonrpc.types.TransactionResult;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.BalanceContract.TransferContract;
-import org.tron.common.TestConstants;
 
 
 @Slf4j

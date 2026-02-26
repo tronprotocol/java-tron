@@ -49,6 +49,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.rocksdb.RocksDB;
+import org.tron.common.TestConstants;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
@@ -60,7 +61,6 @@ import org.tron.common.utils.StorageUtils;
 import org.tron.core.config.args.Args;
 import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.exception.TronError;
-import org.tron.common.TestConstants;
 
 @Slf4j
 public class LevelDbDataSourceImplTest {

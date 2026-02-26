@@ -12,6 +12,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.tron.common.TestConstants;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.TransactionStoreTest;
@@ -20,7 +21,6 @@ import org.tron.core.vm.trace.OpActions;
 import org.tron.core.vm.trace.OpActions.Action;
 import org.tron.core.vm.trace.ProgramTrace;
 import org.tron.core.vm.trace.ProgramTraceListener;
-import org.tron.common.TestConstants;
 
 @Slf4j(topic = "VM")
 public class ProgramTraceListenerTest {

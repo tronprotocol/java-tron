@@ -19,6 +19,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
@@ -34,7 +35,6 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.Transaction;
-import org.tron.common.TestConstants;
 
 @Slf4j
 public class BlockMsgHandlerTest extends BaseTest {

@@ -11,6 +11,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.client.DatabaseGrpcClient;
 import org.tron.common.utils.PublicMethod;
 import org.tron.core.config.args.Args;
@@ -19,7 +20,6 @@ import org.tron.core.services.RpcApiService;
 import org.tron.core.services.http.solidity.SolidityNodeHttpApiService;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DynamicProperties;
-import org.tron.common.TestConstants;
 
 @Slf4j
 public class SolidityNodeTest extends BaseTest {

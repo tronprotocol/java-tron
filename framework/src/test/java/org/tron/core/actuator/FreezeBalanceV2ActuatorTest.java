@@ -10,6 +10,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
@@ -25,7 +26,6 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.Common.ResourceCode;
-import org.tron.common.TestConstants;
 
 @Slf4j
 public class FreezeBalanceV2ActuatorTest extends BaseTest {

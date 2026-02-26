@@ -10,6 +10,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ForkController;
 import org.tron.core.capsule.BlockCapsule;
@@ -18,7 +19,6 @@ import org.tron.core.config.Parameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol;
-import org.tron.common.TestConstants;
 
 public class ForkControllerTest {
   private static ChainBaseManager chainBaseManager;

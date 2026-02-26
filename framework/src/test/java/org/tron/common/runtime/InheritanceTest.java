@@ -6,6 +6,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractExeException;
@@ -15,7 +16,6 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol.AccountType;
-import org.tron.common.TestConstants;
 
 @Slf4j
 public class InheritanceTest extends BaseTest {

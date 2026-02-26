@@ -17,6 +17,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.config.args.Args;
@@ -28,7 +29,6 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.service.adv.AdvService;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.BalanceContract;
-import org.tron.common.TestConstants;
 
 public class TransactionsMsgHandlerTest extends BaseTest {
   @BeforeClass

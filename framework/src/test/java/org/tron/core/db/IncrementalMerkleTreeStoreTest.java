@@ -5,10 +5,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.IncrementalMerkleTreeStore;
-import org.tron.common.TestConstants;
 
 public class IncrementalMerkleTreeStoreTest extends BaseTest {
 

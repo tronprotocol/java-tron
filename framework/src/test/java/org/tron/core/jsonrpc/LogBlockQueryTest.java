@@ -10,12 +10,12 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.jsonrpc.TronJsonRpc.FilterRequest;
 import org.tron.core.services.jsonrpc.filters.LogBlockQuery;
 import org.tron.core.services.jsonrpc.filters.LogFilterWrapper;
 import org.tron.core.store.SectionBloomStore;
-import org.tron.common.TestConstants;
 
 public class LogBlockQueryTest extends BaseTest {
 

@@ -8,6 +8,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.tron.common.TestConstants;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.consensus.ConsensusDelegate;
 import org.tron.consensus.dpos.DposService;
@@ -17,7 +18,6 @@ import org.tron.core.config.args.Args;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.p2p.utils.NetUtil;
 import org.tron.protos.Protocol;
-import org.tron.common.TestConstants;
 
 public class DposServiceTest {
   DposService service = new DposService();

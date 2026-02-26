@@ -7,11 +7,11 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.NullifierStore;
-import org.tron.common.TestConstants;
 
 public class NullifierStoreTest extends BaseTest {
 

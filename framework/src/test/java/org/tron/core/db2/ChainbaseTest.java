@@ -11,6 +11,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.rocksdb.RocksDB;
+import org.tron.common.TestConstants;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
@@ -20,7 +21,6 @@ import org.tron.core.db2.common.LevelDB;
 import org.tron.core.db2.core.Chainbase;
 import org.tron.core.db2.core.Snapshot;
 import org.tron.core.db2.core.SnapshotRoot;
-import org.tron.common.TestConstants;
 
 @Slf4j
 public class ChainbaseTest {

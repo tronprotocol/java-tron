@@ -18,6 +18,7 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.parameter.CommonParameter;
@@ -37,7 +38,6 @@ import org.tron.core.consensus.ConsensusService;
 import org.tron.core.db.Manager;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.protos.Protocol;
-import org.tron.common.TestConstants;
 
 @Slf4j(topic = "test")
 public abstract class ConditionallyStopTest  {

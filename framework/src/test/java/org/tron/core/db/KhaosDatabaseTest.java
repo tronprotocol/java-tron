@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Pair;
@@ -22,7 +23,6 @@ import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.BlockHeader.raw;
-import org.tron.common.TestConstants;
 
 @Slf4j
 public class KhaosDatabaseTest extends BaseTest {

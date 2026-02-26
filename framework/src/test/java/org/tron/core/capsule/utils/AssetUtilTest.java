@@ -10,6 +10,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -17,7 +18,6 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
-import org.tron.common.TestConstants;
 
 @Slf4j
 public class AssetUtilTest extends BaseTest {

@@ -5,8 +5,8 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.core.config.args.Args;
 import org.tron.common.TestConstants;
+import org.tron.core.config.args.Args;
 
 
 @Slf4j(topic = "actuator")

@@ -7,13 +7,13 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.service.effective.EffectiveCheckService;
 import org.tron.p2p.P2pConfig;
-import org.tron.common.TestConstants;
 
 public class EffectiveCheckServiceTest extends BaseTest {
 

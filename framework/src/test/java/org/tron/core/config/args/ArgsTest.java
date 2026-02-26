@@ -31,6 +31,7 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.tron.common.TestConstants;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
@@ -39,7 +40,6 @@ import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
 import org.tron.core.Constant;
 import org.tron.core.config.Configuration;
-import org.tron.common.TestConstants;
 
 @Slf4j
 public class ArgsTest {

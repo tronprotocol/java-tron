@@ -9,6 +9,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TvmTestUtils;
@@ -27,7 +28,6 @@ import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
-import org.tron.common.TestConstants;
 
 @Slf4j
 public class BatchSendTest extends BaseTest {

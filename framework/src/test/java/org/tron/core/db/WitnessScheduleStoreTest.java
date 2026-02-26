@@ -9,10 +9,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.WitnessScheduleStore;
-import org.tron.common.TestConstants;
 
 public class WitnessScheduleStoreTest extends BaseTest {
 

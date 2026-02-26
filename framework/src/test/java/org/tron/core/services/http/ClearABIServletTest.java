@@ -18,11 +18,11 @@ import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.protos.contract.SmartContractOuterClass;
-import org.tron.common.TestConstants;
 
 public class ClearABIServletTest extends BaseTest {
 

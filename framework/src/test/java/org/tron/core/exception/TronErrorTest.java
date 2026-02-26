@@ -31,6 +31,7 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.LoggerFactory;
+import org.tron.common.TestConstants;
 import org.tron.common.arch.Arch;
 import org.tron.common.log.LogService;
 import org.tron.common.parameter.RateLimiterInitialization;
@@ -41,7 +42,6 @@ import org.tron.core.config.args.Args;
 import org.tron.core.services.http.GetBlockServlet;
 import org.tron.core.services.http.RateLimiterServlet;
 import org.tron.core.zen.ZksnarkInitService;
-import org.tron.common.TestConstants;
 
 
 @RunWith(MockitoJUnitRunner.class)

@@ -10,9 +10,9 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.tron.common.TestConstants;
 import org.tron.common.parameter.RateLimiterInitialization;
 import org.tron.core.config.args.Args;
-import org.tron.common.TestConstants;
 
 public class ArgsTest {
 

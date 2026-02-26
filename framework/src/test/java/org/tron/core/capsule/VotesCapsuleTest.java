@@ -11,12 +11,12 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.TransactionStoreTest;
 import org.tron.protos.Protocol.Vote;
-import org.tron.common.TestConstants;
 
 
 @Slf4j

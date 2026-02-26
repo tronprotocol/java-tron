@@ -9,6 +9,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.ChainBaseManager;
@@ -20,7 +21,6 @@ import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.protos.Protocol.MarketOrderPair;
 import org.tron.protos.Protocol.MarketPrice;
-import org.tron.common.TestConstants;
 
 @Slf4j
 public class MarketPairPriceToOrderStoreTest extends BaseTest {

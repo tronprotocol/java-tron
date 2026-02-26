@@ -29,13 +29,13 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.exception.TronError;
 import org.tron.core.exception.TronError.ErrCode;
-import org.tron.common.TestConstants;
 
 public class LocalWitnessTest {
 

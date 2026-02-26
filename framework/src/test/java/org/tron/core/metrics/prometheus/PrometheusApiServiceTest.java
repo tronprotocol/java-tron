@@ -17,6 +17,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.MetricLabels;
@@ -34,7 +35,6 @@ import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ConsensusService;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.protos.Protocol;
-import org.tron.common.TestConstants;
 
 @Slf4j(topic = "metric")
 public class PrometheusApiServiceTest extends BaseTest {

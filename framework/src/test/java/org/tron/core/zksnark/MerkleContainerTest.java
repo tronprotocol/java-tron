@@ -6,6 +6,7 @@ import javax.annotation.Resource;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
@@ -29,7 +30,6 @@ import org.tron.protos.contract.ShieldContract.OutputPointInfo;
 import org.tron.protos.contract.ShieldContract.PedersenHash;
 import org.tron.protos.contract.ShieldContract.ReceiveDescription;
 import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
-import org.tron.common.TestConstants;
 
 public class MerkleContainerTest extends BaseTest {
 

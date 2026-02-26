@@ -16,6 +16,7 @@ import org.tron.api.GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk;
 import org.tron.api.GrpcAPI.ShieldedAddressInfo;
 import org.tron.api.GrpcAPI.ShieldedTRC20Parameters;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
@@ -23,7 +24,6 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.services.http.JsonFormat;
 import org.tron.core.services.http.JsonFormat.ParseException;
-import org.tron.common.TestConstants;
 
 
 public class ShieldWalletTest extends BaseTest {

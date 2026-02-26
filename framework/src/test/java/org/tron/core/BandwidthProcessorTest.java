@@ -11,6 +11,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
@@ -35,7 +36,6 @@ import org.tron.protos.Protocol.Transaction.raw;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
-import org.tron.common.TestConstants;
 
 @Slf4j
 public class BandwidthProcessorTest extends BaseTest {

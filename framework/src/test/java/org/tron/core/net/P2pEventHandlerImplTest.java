@@ -10,6 +10,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.config.args.Args;
@@ -20,13 +21,13 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.service.statistics.PeerStatistics;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Inventory.InventoryType;
-import org.tron.common.TestConstants;
 
 public class P2pEventHandlerImplTest extends BaseTest {
 
   @BeforeClass
   public static void init() throws Exception {
-    Args.setParam(new String[] {"--output-directory", dbPath(), "--debug"}, TestConstants.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath(), "--debug"},
+        TestConstants.TEST_CONF);
   }
 
   @Test

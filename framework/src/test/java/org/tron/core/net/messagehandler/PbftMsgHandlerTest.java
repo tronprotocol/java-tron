@@ -12,6 +12,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
@@ -35,7 +36,6 @@ import org.tron.p2p.P2pConfig;
 import org.tron.p2p.base.Parameter;
 import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol;
-import org.tron.common.TestConstants;
 
 
 public class PbftMsgHandlerTest {

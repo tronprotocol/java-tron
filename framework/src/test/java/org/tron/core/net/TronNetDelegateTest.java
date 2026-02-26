@@ -6,12 +6,12 @@ import java.lang.reflect.Field;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.tron.common.TestConstants;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
-import org.tron.common.TestConstants;
 
 public class TronNetDelegateTest {
 

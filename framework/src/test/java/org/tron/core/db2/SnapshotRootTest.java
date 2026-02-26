@@ -20,6 +20,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.springframework.util.CollectionUtils;
+import org.tron.common.TestConstants;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
@@ -34,7 +35,6 @@ import org.tron.core.db2.core.Snapshot;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.db2.core.SnapshotRoot;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.common.TestConstants;
 
 public class SnapshotRootTest {
 
@@ -56,7 +56,8 @@ public class SnapshotRootTest {
 
   @Before
   public void init() throws IOException {
-    Args.setParam(new String[]{"-d", temporaryFolder.newFolder().toString()}, TestConstants.TEST_CONF);
+    Args.setParam(new String[]{"-d", temporaryFolder.newFolder().toString()},
+        TestConstants.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     appT = ApplicationFactory.create(context);
   }

@@ -16,6 +16,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.function.ThrowingRunnable;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ForkController;
 import org.tron.core.Constant;
@@ -30,7 +31,6 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.ProposalUtil;
 import org.tron.core.utils.ProposalUtil.ProposalType;
 import org.tron.protos.Protocol;
-import org.tron.common.TestConstants;
 
 @Slf4j(topic = "actuator")
 public class ProposalUtilTest extends BaseTest {

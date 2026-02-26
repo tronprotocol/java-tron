@@ -5,12 +5,12 @@ import javax.annotation.Resource;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.core.capsule.MarketOrderCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.MarketOrderStore;
 import org.tron.protos.Protocol;
-import org.tron.common.TestConstants;
 
 public class MarketOrderStoreTest extends BaseTest {
 

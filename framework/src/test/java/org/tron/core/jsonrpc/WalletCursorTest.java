@@ -7,6 +7,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -17,7 +18,6 @@ import org.tron.core.services.jsonrpc.TronJsonRpcImpl;
 import org.tron.core.services.jsonrpc.TronJsonRpcImpl.RequestSource;
 import org.tron.core.services.jsonrpc.types.BuildArguments;
 import org.tron.protos.Protocol;
-import org.tron.common.TestConstants;
 
 @Slf4j
 public class WalletCursorTest extends BaseTest {

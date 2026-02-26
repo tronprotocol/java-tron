@@ -22,6 +22,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.Runtime;
@@ -57,7 +58,6 @@ import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.contract.Common;
-import org.tron.common.TestConstants;
 
 @Slf4j
 public class FreezeV2Test {

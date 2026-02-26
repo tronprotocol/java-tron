@@ -21,6 +21,7 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.ProposalCapsule;
@@ -29,7 +30,6 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.api.BandwidthPriceHistoryLoader;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Proposal.State;
-import org.tron.common.TestConstants;
 
 
 @Slf4j

@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 import org.tron.api.GrpcAPI;
+import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.EventPluginLoader;
@@ -46,7 +47,6 @@ import org.tron.core.services.event.bo.BlockEvent;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.TransactionRetStore;
 import org.tron.protos.Protocol;
-import org.tron.common.TestConstants;
 
 @Slf4j
 public class BlockEventGetTest extends BlockGenerate {

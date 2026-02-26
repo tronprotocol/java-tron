@@ -13,6 +13,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
+import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -20,7 +21,6 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.args.Args;
 import org.tron.p2p.connection.Channel;
-import org.tron.common.TestConstants;
 
 
 public class PeerStatusCheckTest {

@@ -16,6 +16,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.P2pEventHandlerImpl;
@@ -23,7 +24,6 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
 import org.tron.core.net.service.effective.ResilienceService;
 import org.tron.p2p.connection.Channel;
-import org.tron.common.TestConstants;
 
 public class ResilienceServiceTest extends BaseTest {
 
@@ -36,7 +36,8 @@ public class ResilienceServiceTest extends BaseTest {
 
   @BeforeClass
   public static void init() throws IOException {
-    Args.setParam(new String[] {"--output-directory", dbPath(), "--debug"}, TestConstants.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath(), "--debug"},
+        TestConstants.TEST_CONF);
   }
 
   @After

@@ -5,9 +5,9 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.core.capsule.ExchangeProcessor;
 import org.tron.core.config.args.Args;
-import org.tron.common.TestConstants;
 
 @Slf4j
 public class ExchangeProcessorTest extends BaseTest {

@@ -13,6 +13,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
+import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ReflectUtils;
@@ -30,7 +31,6 @@ import org.tron.core.net.service.adv.AdvService;
 import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Inventory.InventoryType;
-import org.tron.common.TestConstants;
 
 public class AdvServiceTest {
   private static TronApplicationContext context;

@@ -18,6 +18,7 @@ import org.junit.rules.Timeout;
 import org.tron.api.GrpcAPI;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
+import org.tron.common.TestConstants;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
@@ -27,7 +28,6 @@ import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.common.TestConstants;
 
 @Slf4j
 public class LiteFnQueryGrpcInterceptorTest {
@@ -57,7 +57,8 @@ public class LiteFnQueryGrpcInterceptorTest {
    */
   @BeforeClass
   public static void init() throws IOException {
-    Args.setParam(new String[] {"-d", temporaryFolder.newFolder().toString()}, TestConstants.TEST_CONF);
+    Args.setParam(new String[] {"-d", temporaryFolder.newFolder().toString()},
+        TestConstants.TEST_CONF);
     Args.getInstance().setRpcEnable(true);
     Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
     Args.getInstance().setRpcSolidityEnable(true);

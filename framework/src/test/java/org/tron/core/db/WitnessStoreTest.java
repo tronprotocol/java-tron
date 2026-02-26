@@ -9,10 +9,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.WitnessStore;
-import org.tron.common.TestConstants;
 
 @Slf4j
 public class WitnessStoreTest extends BaseTest {

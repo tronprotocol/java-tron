@@ -15,6 +15,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.config.DbBackupConfig;
 import org.tron.common.entity.PeerInfo;
 import org.tron.common.utils.CompactEncoder;
@@ -27,7 +28,6 @@ import org.tron.core.config.args.Args;
 import org.tron.core.services.http.HttpSelfFormatFieldName;
 import org.tron.core.store.StorageRowStore;
 import org.tron.keystore.WalletUtils;
-import org.tron.common.TestConstants;
 
 public class SupplementTest extends BaseTest {
 

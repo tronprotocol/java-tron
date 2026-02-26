@@ -15,13 +15,13 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ProposalService;
 import org.tron.core.utils.ProposalUtil.ProposalType;
 import org.tron.protos.Protocol.Proposal;
-import org.tron.common.TestConstants;
 
 @Slf4j
 public class ProposalServiceTest extends BaseTest {

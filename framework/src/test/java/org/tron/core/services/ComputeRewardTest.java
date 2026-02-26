@@ -18,6 +18,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.error.TronDBException;
 import org.tron.common.es.ExecutorServiceManager;
@@ -37,7 +38,6 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.RewardViStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.protos.Protocol;
-import org.tron.common.TestConstants;
 
 public class ComputeRewardTest {
 

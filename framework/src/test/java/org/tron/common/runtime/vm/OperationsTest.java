@@ -19,6 +19,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.utils.DecodeUtil;
@@ -43,7 +44,6 @@ import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.invoke.ProgramInvokeMockImpl;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
-import org.tron.common.TestConstants;
 
 @Slf4j
 public class OperationsTest extends BaseTest {

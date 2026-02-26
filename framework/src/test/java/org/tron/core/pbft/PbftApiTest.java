@@ -16,6 +16,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.PublicMethod;
@@ -28,7 +29,6 @@ import org.tron.core.db.CommonDataBase;
 import org.tron.core.db2.ISession;
 import org.tron.core.services.interfaceOnPBFT.http.PBFT.HttpApiOnPBFTService;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.common.TestConstants;
 
 @Slf4j
 public class PbftApiTest extends BaseTest {

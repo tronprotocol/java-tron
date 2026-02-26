@@ -8,12 +8,12 @@ import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.consensus.dpos.MaintenanceManager;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.protos.Protocol.AccountType;
-import org.tron.common.TestConstants;
 
 @Slf4j
 public class AccountVoteWitnessTest extends BaseTest {

@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
+import org.tron.common.TestConstants;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 import org.tron.p2p.discover.Node;
@@ -19,7 +20,6 @@ import org.tron.p2p.dns.update.DnsType;
 import org.tron.p2p.dns.update.PublishConfig;
 import org.tron.p2p.utils.NetUtil;
 import org.tron.protos.Discover.Endpoint;
-import org.tron.common.TestConstants;
 
 @Slf4j
 public class NodeTest {

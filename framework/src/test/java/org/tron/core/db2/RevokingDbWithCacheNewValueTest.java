@@ -13,6 +13,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.tron.common.TestConstants;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
@@ -25,7 +26,6 @@ import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.db2.SnapshotRootTest.ProtoCapsuleTest;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
-import org.tron.common.TestConstants;
 
 @Slf4j
 public class RevokingDbWithCacheNewValueTest {

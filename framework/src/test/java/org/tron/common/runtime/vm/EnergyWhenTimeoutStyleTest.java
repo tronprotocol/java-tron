@@ -6,6 +6,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.core.Wallet;
@@ -19,7 +20,6 @@ import org.tron.core.vm.program.Program.OutOfEnergyException;
 import org.tron.core.vm.program.Program.OutOfTimeException;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol.AccountType;
-import org.tron.common.TestConstants;
 
 @Slf4j
 public class EnergyWhenTimeoutStyleTest extends BaseTest {

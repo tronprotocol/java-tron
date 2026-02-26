@@ -8,6 +8,7 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ReflectUtils;
@@ -15,7 +16,6 @@ import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.net.TronNetService;
 import org.tron.p2p.P2pConfig;
-import org.tron.common.TestConstants;
 
 public class DynamicArgsTest {
   protected TronApplicationContext context;

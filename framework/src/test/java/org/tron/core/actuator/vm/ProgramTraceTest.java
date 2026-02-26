@@ -9,12 +9,12 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.tron.common.TestConstants;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.config.args.Args;
 import org.tron.core.vm.trace.Op;
 import org.tron.core.vm.trace.OpActions;
 import org.tron.core.vm.trace.ProgramTrace;
-import org.tron.common.TestConstants;
 
 public class ProgramTraceTest {
 

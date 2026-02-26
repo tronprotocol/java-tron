@@ -14,6 +14,7 @@ import org.junit.rules.TemporaryFolder;
 import org.junit.rules.Timeout;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.WalletGrpc;
+import org.tron.common.TestConstants;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
@@ -21,7 +22,6 @@ import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.TimeoutInterceptor;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.common.TestConstants;
 
 
 @Slf4j

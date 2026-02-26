@@ -7,6 +7,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
+import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.Runtime;
 import org.tron.consensus.dpos.DposSlot;
@@ -24,7 +25,6 @@ import org.tron.core.store.WitnessStore;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol;
-import org.tron.common.TestConstants;
 
 @Slf4j
 public class VMContractTestBase {

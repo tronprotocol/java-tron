@@ -49,6 +49,7 @@ import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.PricesResponseMessage;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
@@ -97,7 +98,6 @@ import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.Common;
 import org.tron.protos.contract.SmartContractOuterClass;
-import org.tron.common.TestConstants;
 
 
 @Slf4j
