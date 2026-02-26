@@ -14,6 +14,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
+import org.junit.rules.Timeout;
 import org.tron.api.GrpcAPI;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
@@ -21,12 +22,11 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.PublicMethod;
+import org.tron.common.utils.TimeoutInterceptor;
 import org.tron.core.ChainBaseManager;
+import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.services.RpcApiService;
-import org.tron.core.services.interfaceOnPBFT.RpcApiServiceOnPBFT;
-import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.common.TestConstants;
 
 @Slf4j
@@ -49,12 +49,15 @@ public class LiteFnQueryGrpcInterceptorTest {
   @ClassRule
   public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
+  @Rule
+  public Timeout timeout = new Timeout(30, TimeUnit.SECONDS);
+
   /**
    * init logic.
    */
   @BeforeClass
   public static void init() throws IOException {
-    Args.setParam(new String[]{"-d", temporaryFolder.newFolder().toString()}, TestConstants.TEST_CONF);
+    Args.setParam(new String[] {"-d", temporaryFolder.newFolder().toString()}, TestConstants.TEST_CONF);
     Args.getInstance().setRpcEnable(true);
     Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
     Args.getInstance().setRpcSolidityEnable(true);
@@ -62,23 +65,25 @@ public class LiteFnQueryGrpcInterceptorTest {
     Args.getInstance().setRpcPBFTEnable(true);
     Args.getInstance().setRpcOnPBFTPort(PublicMethod.chooseRandomPort());
     Args.getInstance().setP2pDisable(true);
-    String fullnode = String.format("%s:%d", Args.getInstance().getNodeLanIp(),
-            Args.getInstance().getRpcPort());
-    String solidityNode = String.format("%s:%d", Args.getInstance().getNodeLanIp(),
-            Args.getInstance().getRpcOnSolidityPort());
-    String pBFTNode = String.format("%s:%d", Args.getInstance().getNodeLanIp(),
+    String fullnode = String.format("%s:%d", Constant.LOCAL_HOST,
+        Args.getInstance().getRpcPort());
+    String solidityNode = String.format("%s:%d", Constant.LOCAL_HOST,
+        Args.getInstance().getRpcOnSolidityPort());
+    String pBFTNode = String.format("%s:%d", Constant.LOCAL_HOST,
         Args.getInstance().getRpcOnPBFTPort());
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
-            .usePlaintext()
-            .build();
+        .usePlaintext()
+        .intercept(new TimeoutInterceptor(5000))
+        .build();
     channelSolidity = ManagedChannelBuilder.forTarget(solidityNode)
         .usePlaintext()
+        .intercept(new TimeoutInterceptor(5000))
         .build();
     channelpBFT = ManagedChannelBuilder.forTarget(pBFTNode)
-            .usePlaintext()
-            .build();
+        .usePlaintext()
+        .intercept(new TimeoutInterceptor(5000))
+        .build();
     context = new TronApplicationContext(DefaultConfig.class);
-    context.registerShutdownHook();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
     blockingStubpBFT = WalletSolidityGrpc.newBlockingStub(channelpBFT);
@@ -93,13 +98,13 @@ public class LiteFnQueryGrpcInterceptorTest {
   @AfterClass
   public static void destroy() throws InterruptedException {
     if (channelFull != null) {
-      channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+      channelFull.shutdownNow();
     }
     if (channelSolidity != null) {
-      channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+      channelSolidity.shutdownNow();
     }
     if (channelpBFT != null) {
-      channelpBFT.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+      channelpBFT.shutdownNow();
     }
     context.close();
     Args.clearParam();

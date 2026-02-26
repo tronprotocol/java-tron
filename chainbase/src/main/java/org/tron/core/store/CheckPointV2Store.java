@@ -1,17 +1,22 @@
 package org.tron.core.store;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Map;
+import java.util.Spliterator;
+import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.tron.common.parameter.CommonParameter;
+import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.core.db.TronDatabase;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 
-import java.util.Spliterator;
-import java.util.function.Consumer;
-
 @Slf4j(topic = "DB")
 public class CheckPointV2Store extends TronDatabase<byte[]> {
+
+  private final WriteOptionsWrapper writeOptions = WriteOptionsWrapper.getInstance()
+      .sync(CommonParameter.getInstance().getStorage().isCheckpointSync());
 
   @Autowired
   public CheckPointV2Store(String dbPath) {
@@ -52,6 +57,11 @@ public class CheckPointV2Store extends TronDatabase<byte[]> {
   protected void init() {
   }
 
+  @Override
+  public void updateByBatch(Map<byte[], byte[]> rows) {
+    this.dbSource.updateByBatch(rows, writeOptions);
+  }
+
   /**
    * close the database.
    */
@@ -59,6 +69,7 @@ public class CheckPointV2Store extends TronDatabase<byte[]> {
   public void close() {
     logger.debug("******** Begin to close {}. ********", getName());
     try {
+      writeOptions.close();
       dbSource.closeDB();
     } catch (Exception e) {
       logger.warn("Failed to close {}.", getName(), e);

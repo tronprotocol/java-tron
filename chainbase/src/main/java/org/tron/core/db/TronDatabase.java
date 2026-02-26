@@ -8,8 +8,6 @@ import java.util.Map.Entry;
 import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.iq80.leveldb.WriteOptions;
-import org.rocksdb.DirectComparator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.WriteOptionsWrapper;
@@ -29,7 +27,7 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
   protected DbSourceInter<byte[]> dbSource;
   @Getter
   private String dbName;
-  private WriteOptionsWrapper writeOptions = WriteOptionsWrapper.getInstance()
+  private final WriteOptionsWrapper writeOptions = WriteOptionsWrapper.getInstance()
           .sync(CommonParameter.getInstance().getStorage().isDbSync());
 
   @Autowired
@@ -40,22 +38,13 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
 
     if ("LEVELDB".equals(CommonParameter.getInstance().getStorage()
         .getDbEngine().toUpperCase())) {
-      dbSource =
-          new LevelDbDataSourceImpl(StorageUtils.getOutputDirectoryByDbName(dbName),
-              dbName,
-              getOptionsByDbNameForLevelDB(dbName),
-              new WriteOptions().sync(CommonParameter.getInstance()
-                  .getStorage().isDbSync()));
+      dbSource = new LevelDbDataSourceImpl(StorageUtils.getOutputDirectoryByDbName(dbName), dbName);
     } else if ("ROCKSDB".equals(CommonParameter.getInstance()
         .getStorage().getDbEngine().toUpperCase())) {
       String parentName = Paths.get(StorageUtils.getOutputDirectoryByDbName(dbName),
           CommonParameter.getInstance().getStorage().getDbDirectory()).toString();
-      dbSource =
-          new RocksDbDataSourceImpl(parentName, dbName, CommonParameter.getInstance()
-              .getRocksDBCustomSettings(), getDirectComparator());
+      dbSource = new RocksDbDataSourceImpl(parentName, dbName);
     }
-
-    dbSource.initDB();
   }
 
   @PostConstruct
@@ -64,14 +53,6 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
   }
 
   protected TronDatabase() {
-  }
-
-  protected org.iq80.leveldb.Options getOptionsByDbNameForLevelDB(String dbName) {
-    return StorageUtils.getOptionsByDbName(dbName);
-  }
-
-  protected DirectComparator getDirectComparator() {
-    return null;
   }
 
   public DbSourceInter<byte[]> getDbSource() {
@@ -96,6 +77,7 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
   public void close() {
     logger.info("******** Begin to close {}. ********", getName());
     try {
+      writeOptions.close();
       dbSource.closeDB();
     } catch (Exception e) {
       logger.warn("Failed to close {}.", getName(), e);

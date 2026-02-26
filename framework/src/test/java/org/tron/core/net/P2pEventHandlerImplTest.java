@@ -6,11 +6,12 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.tron.common.BaseTest;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.message.adv.FetchInvDataMessage;
@@ -19,13 +20,17 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.service.statistics.PeerStatistics;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Inventory.InventoryType;
+import org.tron.common.TestConstants;
 
-public class P2pEventHandlerImplTest {
+public class P2pEventHandlerImplTest extends BaseTest {
+
+  @BeforeClass
+  public static void init() throws Exception {
+    Args.setParam(new String[] {"--output-directory", dbPath(), "--debug"}, TestConstants.TEST_CONF);
+  }
 
   @Test
   public void testProcessInventoryMessage() throws Exception {
-    String[] a = new String[0];
-    Args.setParam(a, Constant.NET_CONF);
     CommonParameter parameter = CommonParameter.getInstance();
     parameter.setMaxTps(10);
 
@@ -114,9 +119,6 @@ public class P2pEventHandlerImplTest {
 
   @Test
   public void testUpdateLastInteractiveTime() throws Exception {
-    String[] a = new String[0];
-    Args.setParam(a, Constant.NET_CONF);
-
     PeerConnection peer = new PeerConnection();
     P2pEventHandlerImpl p2pEventHandler = new P2pEventHandlerImpl();
 

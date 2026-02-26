@@ -19,6 +19,7 @@ import io.grpc.Server;
 import io.grpc.netty.NettyServerBuilder;
 import io.grpc.protobuf.services.ProtoReflectionService;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +35,7 @@ import org.tron.core.services.ratelimiter.RpcApiAccessInterceptor;
 public abstract class RpcService extends AbstractService {
 
   private Server apiServer;
+  private ExecutorService executorService;
   protected String executorName;
 
   @Autowired
@@ -58,7 +60,24 @@ public abstract class RpcService extends AbstractService {
   @Override
   public void innerStop() throws Exception {
     if (this.apiServer != null) {
-      this.apiServer.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+      this.apiServer.shutdown();
+      try {
+        if (!this.apiServer.awaitTermination(5, TimeUnit.SECONDS)) {
+          logger.warn("gRPC server did not shutdown gracefully, forcing shutdown");
+          this.apiServer.shutdownNow();
+        }
+      } catch (InterruptedException e) {
+        logger.warn("Interrupted while waiting for gRPC server shutdown", e);
+        this.apiServer.shutdownNow();
+        Thread.currentThread().interrupt();
+      }
+    }
+
+    // Close executor
+    if (this.executorService != null) {
+      ExecutorServiceManager.shutdownAndAwaitTermination(
+          this.executorService, this.executorName);
+      this.executorService = null;
     }
   }
 
@@ -76,9 +95,9 @@ public abstract class RpcService extends AbstractService {
     NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(this.port);
     CommonParameter parameter = Args.getInstance();
     if (parameter.getRpcThreadNum() > 0) {
-      serverBuilder = serverBuilder
-          .executor(ExecutorServiceManager.newFixedThreadPool(
-              this.executorName, parameter.getRpcThreadNum()));
+      this.executorService = ExecutorServiceManager.newFixedThreadPool(
+          this.executorName, parameter.getRpcThreadNum());
+      serverBuilder = serverBuilder.executor(this.executorService);
     }
     // Set configs from config.conf or default value
     serverBuilder
@@ -88,6 +107,10 @@ public abstract class RpcService extends AbstractService {
         .maxConnectionAge(parameter.getMaxConnectionAgeInMillis(), TimeUnit.MILLISECONDS)
         .maxInboundMessageSize(parameter.getMaxMessageSize())
         .maxHeaderListSize(parameter.getMaxHeaderListSize());
+    if (parameter.getRpcMaxRstStream() > 0 && parameter.getRpcSecondsPerWindow() > 0) {
+      serverBuilder.maxRstFramesPerWindow(
+          parameter.getRpcMaxRstStream(), parameter.getRpcSecondsPerWindow());
+    }
 
     if (parameter.isRpcReflectionServiceEnable()) {
       serverBuilder.addService(ProtoReflectionService.newInstance());

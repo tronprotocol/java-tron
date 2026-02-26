@@ -19,6 +19,7 @@ import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ReflectUtils;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -64,6 +65,9 @@ public class SyncServiceTest {
    */
   @After
   public void destroy() {
+    for (PeerConnection p : PeerManager.getPeers()) {
+      PeerManager.remove(p.getChannel());
+    }
     Args.clearParam();
     context.destroy();
   }
@@ -90,6 +94,13 @@ public class SyncServiceTest {
       service.startSync(peer);
 
       ReflectUtils.setFieldValue(peer, "tronState", TronState.INIT);
+
+      try {
+        peer.setBlockBothHave(new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, -1));
+        service.syncNext(peer);
+      } catch (Exception e) {
+        // no need to deal with
+      }
 
       service.startSync(peer);
     } catch (Exception e) {

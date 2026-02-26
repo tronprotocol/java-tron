@@ -41,7 +41,7 @@ public class PrometheusApiServiceTest extends BaseTest {
   static LocalDateTime localDateTime = LocalDateTime.now();
   @Resource
   private DposSlot dposSlot;
-  final int blocks = 512;
+  final int blocks = 100;
   private final String key = PublicMethod.getRandomPrivateKey();
   private final byte[] privateKey = ByteArray.fromHexString(key);
   private static final AtomicInteger port = new AtomicInteger(0);

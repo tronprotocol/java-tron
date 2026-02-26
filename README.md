@@ -1,49 +1,25 @@
 <h1 align="center">
   <br>
   <img width=20% src="https://github.com/tronprotocol/wiki/blob/master/images/java-tron.jpg?raw=true">
-  <br>
-  java-tron
-  <br>
 </h1>
-
 <h4 align="center">
-  Java implementation of the <a href="https://tron.network">Tron Protocol</a>
+  Java implementation of the <a href="https://tron.network">TRON Protocol</a>
 </h4>
 
 <p align="center">
-  <a href="https://gitter.im/tronprotocol/allcoredev">
-    <img src="https://camo.githubusercontent.com/da2edb525cde1455a622c58c0effc3a90b9a181c/68747470733a2f2f6261646765732e6769747465722e696d2f4a6f696e253230436861742e737667">
-  </a>
-
-  <a href="https://travis-ci.org/tronprotocol/java-tron">
-    <img src="https://travis-ci.org/tronprotocol/java-tron.svg?branch=develop">
-  </a>
-
-  <a href="https://codecov.io/gh/tronprotocol/java-tron">
-    <img src="https://codecov.io/gh/tronprotocol/java-tron/branch/develop/graph/badge.svg" />
-  </a>
-
-  <a href="https://github.com/tronprotocol/java-tron/issues">
-    <img src="https://img.shields.io/github/issues/tronprotocol/java-tron.svg">
-  </a>
-
-  <a href="https://github.com/tronprotocol/java-tron/pulls">
-    <img src="https://img.shields.io/github/issues-pr/tronprotocol/java-tron.svg">
-  </a>
-
-  <a href="https://github.com/tronprotocol/java-tron/graphs/contributors">
-    <img src="https://img.shields.io/github/contributors/tronprotocol/java-tron.svg">
-  </a>
-
-  <a href="LICENSE">
-    <img src="https://img.shields.io/github/license/tronprotocol/java-tron.svg">
-  </a>
+  <a href="https://gitter.im/tronprotocol/allcoredev"><img src="https://img.shields.io/gitter/room/tronprotocol/java-tron.svg"></a>
+  <a href="https://codecov.io/gh/tronprotocol/java-tron"><img src="https://codecov.io/gh/tronprotocol/java-tron/branch/develop/graph/badge.svg" /></a>
+  <a href="https://github.com/tronprotocol/java-tron/issues"><img src="https://img.shields.io/github/issues/tronprotocol/java-tron.svg"></a>
+  <a href="https://github.com/tronprotocol/java-tron/pulls"><img src="https://img.shields.io/github/issues-pr/tronprotocol/java-tron.svg"></a>
+  <a href="https://github.com/tronprotocol/java-tron/graphs/contributors"><img src="https://img.shields.io/github/contributors/tronprotocol/java-tron.svg"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/tronprotocol/java-tron.svg"></a>
 </p>
 
 ## Table of Contents
 
 - [What’s TRON?](#whats-tron)
 - [Building the Source Code](#building-the-source-code)
+- [Executables](#executables)
 - [Running java-tron](#running-java-tron)
 - [Community](#community)
 - [Contribution](#contribution)
@@ -53,129 +29,171 @@
 
 # What's TRON?
 
-TRON is a project dedicated to building the infrastructure for a truly decentralized Internet.
+TRON is building the foundational infrastructure for the decentralized internet ecosystem with a focus on high-performance, scalability, and security.
 
-- Tron Protocol, one of the largest blockchain-based operating systems in the world, offers scalable, high-availability and high-throughput support that underlies all the decentralized applications in the TRON ecosystem.
-
-- Tron Virtual Machine (TVM) allows anyone to develop decentralized applications (DAPPs) for themselves or their communities with smart contracts thereby making decentralized crowdfunding and token issuance easier than ever.
-
-TRON enables large-scale development and engagement. With over 2000 transactions per second (TPS), high concurrency, low latency, and massive data transmission. It is ideal for building decentralized entertainment applications. Free features and incentive systems allow developers to create premium app experiences for users.
+- TRON Protocol: High-throughput（2000+ TPS), scalable blockchain OS (DPoS consensus) powering the TRON ecosystem.
+- TRON Virtual Machine (TVM): EVM-compatible smart-contract engine for fast smart-contract execution.
 
 # Building the Source Code
+Before building java-tron, make sure you have:
+- Hardware with at least 4 CPU cores, 16 GB RAM, 10 GB free disk space for a smooth compilation process.
+- Operating system: `Linux` or `macOS` (`Windows` is not supported).
+- Git and correct JDK（version `8` or `17`） installed based on your CPU architecture.
 
-Building java-tron requires `git` package and 64-bit version of `Oracle JDK 1.8` to be installed, other JDK versions are not supported yet. Make sure you operate on `Linux` and `MacOS` operating systems.
+There are two ways to install the required dependencies:
 
-Clone the repo and switch to the `master` branch
+- **Option 1: Automated script (recommended for quick setup)**
 
+  Use the provided [`install_dependencies.sh`](install_dependencies.sh) script:
+
+  ```bash
+  chmod +x install_dependencies.sh
+  ./install_dependencies.sh
+  ```
+  > **Note**: For production-grade stability with JDK 8 on x86_64 architecture, Oracle JDK 8 is strongly recommended (the script installs OpenJDK 8).
+
+- **Option 2: Manual installation**
+
+  Follow the [Prerequisites and Installation Guide](https://tronprotocol.github.io/documentation-en/using_javatron/installing_javatron/#prerequisites-before-compiling-java-tron) for step-by-step instructions.
+
+Once all dependencies have been installed, download and compile java-tron by executing:
 ```bash
-$ git clone https://github.com/tronprotocol/java-tron.git
-$ cd java-tron
-$ git checkout -t origin/master
+git clone https://github.com/tronprotocol/java-tron.git
+cd java-tron
+git checkout -t origin/master
+./gradlew clean build -x test
 ```
+* The parameter `-x test` indicates skipping the execution of test cases. 
+* If you encounter any error please refer to the [Compiling java-tron Source Code](https://tronprotocol.github.io/documentation-en/using_javatron/installing_javatron/#compiling-java-tron-source-code) documentation for troubleshooting steps.
 
-then run the following command to build java-tron, the `FullNode.jar` file can be found in `java-tron/build/libs/` after build successfully.
+# Executables
 
-```bash
-$ ./gradlew clean build -x test
-```
+The java-tron project comes with several runnable artifacts and helper scripts found in the project root and build directories.
+
+|     Artifact/Script     | Description |
+| :---------------------- | :---------- |
+| **`FullNode.jar`**      | Main TRON node executable (generated in `build/libs/` after a successful build following the above guidance). Runs as a full node by default. `java -jar FullNode.jar --help` for command line options|
+| **`Toolkit.jar`** | Node management utility (generated in `build/libs/`): partition, prune, copy, convert DBs; shadow-fork tool. [Usage](https://tronprotocol.github.io/documentation-en/using_javatron/toolkit/#toolkit-a-java-tron-node-maintenance-suite) |
+| **`start.sh`**          | Quick start script (x86_64, JDK 8) to download/build/run `FullNode.jar`. See the tool [guide](./shell.md). |
+| **`start.sh.simple`**   | Quick start script template (ARM64, JDK 17). See usage notes inside the script. |
 
 # Running java-tron
 
-Running java-tron requires 64-bit version of `Oracle JDK 1.8` to be installed, other JDK versions are not supported yet. Make sure you operate on `Linux` and `MacOS` operating systems.
+## Hardware Requirements for Mainnet
 
-Get the mainnet configuration file: [main_net_config.conf](https://github.com/tronprotocol/tron-deployment/blob/master/main_net_config.conf), other network configuration files can be found [here](https://github.com/tronprotocol/tron-deployment).
+| Deployment Tier | CPU Cores | Memory | High-performance SSD Storage    | Network Downstream |
+|--------------------------|-------|--------|---------------------------|-----------------|
+| FullNode (Minimum)        | 8 | 16 GB | 200 GB ([Lite](https://tronprotocol.github.io/documentation-en/using_javatron/litefullnode/#lite-fullnode))                  | ≥ 5 MBit/sec  |
+| FullNode (Stable)         | 8 | 32 GB | 200 GB (Lite) 3.5 TB (Full) | ≥ 5 MBit/sec  |
+| FullNode (Recommend)      | 16+ | 32 GB+ | 4 TB         | ≥ 50 MBit/sec  |
+| Super Representative      | 32+ | 64 GB+ | 4 TB              | ≥ 50 MBit/sec  |
 
-## Hardware Requirements
+> **Note**: For test networks, where transaction volume is significantly lower, you may operate with reduced hardware specifications.
 
-Minimum:
+## Launching a full node
 
-- CPU with 8 cores
-- 16GB RAM
-- 3TB free storage space to sync the Mainnet
+A full node acts as a gateway to the TRON network, exposing comprehensive interfaces via HTTP and RPC APIs. Through these endpoints, clients may execute asset transfers, deploy smart contracts, and invoke on-chain logic. It must join a TRON network to participate in the network's consensus and transaction processing.
 
-Recommended:
+### Network Types
 
-- CPU with 16+ cores(32+ cores for a super representative)
-- 32GB+ RAM(64GB+ for a super representative)
-- High Performance SSD with at least 4TB free space
-- 100+ MB/s download Internet service
+The TRON network is mainly divided into:
 
-## Running a full node for mainnet
+- **Main Network (Mainnet)**  
+  The primary public blockchain where real value (TRX, TRC-20 tokens, etc.) is transacted, secured by a massive decentralized network.
 
-Full node has full historical data, it is the entry point into the TRON network, it can be used by other processes as a gateway into the TRON network via HTTP and GRPC endpoints. You can interact with the TRON network through full node：transfer assets, deploy contracts, interact with contracts and so on. `-c` parameter specifies a configuration file to run a full node:
+- **[Nile Test Network (Testnet)](https://nileex.io/)**  
+  A forward-looking testnet where new features and governance proposals are launched first for developers to experience. Consequently, its codebase is typically ahead of the Mainnet.
 
+- **[Shasta Testnet](https://shasta.tronex.io/)**  
+  Closely mirrors the Mainnet’s features and governance proposals. Its network parameters and software versions are kept in sync with the Mainnet, providing developers with a highly realistic environment for final testing.
+
+- **Private Networks**  
+  Customized TRON networks set up by private entities for testing, development, or specific use cases.
+
+Network selection is performed by specifying the appropriate configuration file upon full-node startup. Mainnet configuration: [config.conf](framework/src/main/resources/config.conf); Nile testnet configuration: [config-nile.conf](https://github.com/tron-nile-testnet/nile-testnet/blob/master/framework/src/main/resources/config-nile.conf)
+
+### 1. Join the TRON main network
+Launch a main-network full node with the built-in default configuration:
 ```bash
-$ nohup java -Xms9G -Xmx9G -XX:ReservedCodeCacheSize=256m \
-             -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m \
-             -XX:MaxDirectMemorySize=1G -XX:+PrintGCDetails \
-             -XX:+PrintGCDateStamps  -Xloggc:gc.log \
-             -XX:+UseConcMarkSweepGC -XX:NewRatio=2 \
-             -XX:+CMSScavengeBeforeRemark -XX:+ParallelRefProcEnabled \
-             -XX:+HeapDumpOnOutOfMemoryError \
-             -XX:+UseCMSInitiatingOccupancyOnly  -XX:CMSInitiatingOccupancyFraction=70 \
-             -jar FullNode.jar -c main_net_config.conf >> start.log 2>&1 &
+java -jar ./build/libs/FullNode.jar
 ```
 
-## Running a super representative node for mainnet
+> For production deployments or long-running Mainnet nodes, please refer to the [JVM Parameter Optimization for FullNode](https://tronprotocol.github.io/documentation-en/using_javatron/installing_javatron/#jvm-parameter-optimization-for-mainnet-fullnode-deployment) guide for the recommended Java command configuration.
 
-Adding the `--witness` parameter to the startup command, full node will run as a super representative node. The super representative node supports all the functions of the full node and also supports block production. Before running, make sure you have a super representative account and get votes from others. Once the number of obtained votes ranks in the top 27, your super representative node will participate in block production.
+Using the below command, you can monitor the blocks syncing progress:
+```bash
+tail -f ./logs/tron.log
+```
 
-Fill in the private key of a super representative address into the `localwitness` list in the `main_net_config.conf`. Here is an example:
+Use [TronScan](https://tronscan.org/#/), TRON's official block explorer, to view main network transactions, blocks, accounts, witness voting, and governance metrics, etc.
+
+### 2. Join Nile test network
+Utilize the `-c` flag to direct the node to the configuration file corresponding to the desired network. Since Nile TestNet may incorporate features not yet available on the MainNet, it is **strongly advised** to compile the source code following the [Building the Source Code](https://github.com/tron-nile-testnet/nile-testnet/blob/master/README.md#building-the-source-code) instructions for the Nile TestNet.
+
+```bash
+java -jar ./build/libs/FullNode.jar -c config-nile.conf
+```
+
+Nile resources: explorer, faucet, wallet, developer docs, and network statistics at [nileex.io](https://nileex.io/).
+
+### 3. Access Shasta test network
+Shasta does not accept public node peers. Programmatic access is available via TronGrid endpoints; see [TronGrid Service](https://developers.tron.network/docs/trongrid) for details.
+
+Shasta resources: explorer, faucet, wallet, developer docs, and network statistics at [shastaex.io](https://shasta.tronex.io/).
+
+### 4. Set up a private network
+To set up a private network for testing or development, follow the [Private Network guidance](https://tronprotocol.github.io/documentation-en/using_javatron/private_network/).
+
+## Running a super representative node
+
+To operate the node as a Super Representative (SR), append the `--witness` parameter to the standard launch command. An SR node inherits every capability of a FullNode and additionally participates in block production. Refer to the [Super Representative documentation](https://tronprotocol.github.io/documentation-en/mechanism-algorithm/sr/) for eligibility requirements.
+
+Fill in the private key of your SR account into the `localwitness` list in the configuration file. Here is an example:
 
 ```
  localwitness = [
     <your_private_key>
  ]
 ```
+Check [Starting a Block Production Node](https://tronprotocol.github.io/documentation-en/using_javatron/installing_javatron/#starting-a-block-production-node) for more details.
+You could also test the process by connecting to a testnet or setting up a private network.
 
-then run the following command to start the node:
+## Programmatically interfacing FullNode
 
-```bash
-$ nohup java -Xms9G -Xmx9G -XX:ReservedCodeCacheSize=256m \
-             -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m \
-             -XX:MaxDirectMemorySize=1G -XX:+PrintGCDetails \
-             -XX:+PrintGCDateStamps  -Xloggc:gc.log \
-             -XX:+UseConcMarkSweepGC -XX:NewRatio=2 \
-             -XX:+CMSScavengeBeforeRemark -XX:+ParallelRefProcEnabled \
-             -XX:+HeapDumpOnOutOfMemoryError \
-             -XX:+UseCMSInitiatingOccupancyOnly  -XX:CMSInitiatingOccupancyFraction=70 \
-             -jar FullNode.jar --witness -c main_net_config.conf >> start.log 2>&1 &
+Upon the FullNode startup successfully, interaction with the TRON network is facilitated through a comprehensive suite of programmatic interfaces exposed by java-tron:
+- **HTTP API**: See the complete [HTTP API reference and endpoint list](https://tronprotocol.github.io/documentation-en/api/http/).
+- **gRPC**: High-performance APIs suitable for service-to-service integration. See the supported [gRPC reference](https://tronprotocol.github.io/documentation-en/api/rpc/).
+- **JSON-RPC**: Provides Ethereum-compatible JSON-RPC methods for logs, transactions and contract calls, etc. See the supported [JSON-RPC methods](https://tronprotocol.github.io/documentation-en/api/json-rpc/).
+
+Enable or disable each interface in the configuration file:
+
 ```
+node {
+  http {
+    fullNodeEnable = true
+    fullNodePort   = 8090
+  }
 
-## Quick Start Tool
+  jsonrpc {
+    httpFullNodeEnable = true
+    httpFullNodePort   = 8545
+  }
 
-An easier way to build and run java-tron is to use `start.sh`. `start.sh` is a quick start script written in the Shell language. You can use it to build and run java-tron quickly and easily.
-
-Here are some common use cases of the scripting tool
-
-- Use `start.sh` to start a full node with the downloaded `FullNode.jar`
-- Use `start.sh` to download the latest `FullNode.jar` and start a full node.
-- Use `start.sh` to download the latest source code and compile a `FullNode.jar` and then start a full node.
-
-For more details, please refer to the tool [guide](./shell.md).
-
-## Run inside Docker container
-
-One of the quickest ways to get `java-tron` up and running on your machine is by using Docker:
-
-```shell
-$ docker run -d --name="java-tron" \
-             -v /your_path/output-directory:/java-tron/output-directory \
-             -v /your_path/logs:/java-tron/logs \
-             -p 8090:8090 -p 18888:18888 -p 50051:50051 \
-             tronprotocol/java-tron \
-             -c /java-tron/config/main_net_config.conf
+  rpc {
+    enable = true
+    port   = 9090
+  }
+}
 ```
+When exposing any of these APIs to a public interface, ensure the node is protected with appropriate authentication, rate limiting, and network access controls in line with your security requirements.
 
-This will mount the `output-directory` and `logs` directories on the host, the docker.sh tool can also be used to simplify the use of docker, see more [here](docker/docker.md).
+Public hosted HTTP endpoints for both mainnet and testnet are provided by TronGrid. Please refer to the [TRON Network HTTP Endpoints](https://developers.tron.network/docs/connect-to-the-tron-network#tron-network-http-endpoints) for the latest list. For supported methods and request formats, see the HTTP API reference above.
 
 # Community
 
-[Tron Developers & SRs](https://discord.gg/hqKvyAM) is Tron's official Discord channel. Feel free to join this channel if you have any questions.
+[TRON Developers & SRs](https://discord.gg/hqKvyAM) is TRON's official Discord channel. Feel free to join this channel if you have any questions.
 
-[Core Devs Community](https://t.me/troncoredevscommunity) is the Telegram channel for java-tron community developers. If you want to contribute to java-tron, please join this channel.
-
-[tronprotocol/allcoredev](https://gitter.im/tronprotocol/allcoredev) is the official Gitter channel for developers.
+The [Core Devs Community](https://t.me/troncoredevscommunity) and [TRON Official Developer Group](https://t.me/TronOfficialDevelopersGroupEn) are Telegram channels specifically designed for java-tron community developers to engage in technical discussions.
 
 # Contribution
 
@@ -184,9 +202,10 @@ Thank you for considering to help out with the source code! If you'd like to con
 # Resources
 
 - [Medium](https://medium.com/@coredevs) java-tron's official technical articles are published there.
-- [Documentation](https://tronprotocol.github.io/documentation-en/introduction/) java-tron's official technical documentation website.
-- [Test network](http://nileex.io/) A stable test network of TRON contributed by TRON community.
-- [Tronscan](https://tronscan.org/#/) TRON network blockchain browser.
+- [Documentation](https://tronprotocol.github.io/documentation-en/) and [TRON Developer Hub](https://developers.tron.network/) serve as java-tron’s primary documentation websites.
+- [TronScan](https://tronscan.org/#/) TRON main network blockchain browser.
+- [Nile Test network](http://nileex.io/) A stable test network of TRON contributed by TRON community.
+- [Shasta Test network](https://shasta.tronex.io/) A stable test network of TRON contributed by TRON community.
 - [Wallet-cli](https://github.com/tronprotocol/wallet-cli) TRON network wallet using command line.
 - [TIP](https://github.com/tronprotocol/tips) TRON Improvement Proposal (TIP) describes standards for the TRON network.
 - [TP](https://github.com/tronprotocol/tips/tree/master/tp) TRON Protocol (TP) describes standards already implemented in TRON network but not published as a TIP.

@@ -11,13 +11,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
+import org.tron.api.GrpcAPI;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.EventPluginLoader;
@@ -63,25 +65,32 @@ public class BlockEventGetTest extends BlockGenerate {
   protected Manager dbManager;
   long currentHeader = -1;
   private TronNetDelegate tronNetDelegate;
-  private TronApplicationContext context;
+  private static TronApplicationContext context;
 
 
   static LocalDateTime localDateTime = LocalDateTime.now();
   private long time = ZonedDateTime.of(localDateTime,
       ZoneId.systemDefault()).toInstant().toEpochMilli();
 
-  protected void initDbPath() throws IOException {
-    dbPath = temporaryFolder.newFolder().toString();
+
+  public static String dbPath() {
+    try {
+      return temporaryFolder.newFolder().toString();
+    } catch (IOException e) {
+      Assert.fail("create temp folder failed");
+    }
+    return null;
+  }
+
+  @BeforeClass
+  public static void init() {
+    Args.setParam(new String[] {"--output-directory", dbPath()}, TestConstants.TEST_CONF);
+    context = new TronApplicationContext(DefaultConfig.class);
   }
 
   @Before
   public void before() throws IOException {
-    initDbPath();
-    logger.info("Full node running.");
-    Args.setParam(new String[] {"-d", dbPath}, TestConstants.TEST_CONF);
     Args.getInstance().setNodeListenPort(10000 + port.incrementAndGet());
-
-    context = new TronApplicationContext(DefaultConfig.class);
 
     dbManager = context.getBean(Manager.class);
     setManager(dbManager);
@@ -91,7 +100,7 @@ public class BlockEventGetTest extends BlockGenerate {
     tronNetDelegate = context.getBean(TronNetDelegate.class);
     tronNetDelegate.setExit(false);
     currentHeader = dbManager.getDynamicPropertiesStore()
-      .getLatestBlockHeaderNumberFromDB();
+        .getLatestBlockHeaderNumberFromDB();
 
     ByteString addressBS = ByteString.copyFrom(address);
     WitnessCapsule witnessCapsule = new WitnessCapsule(addressBS);
@@ -108,8 +117,10 @@ public class BlockEventGetTest extends BlockGenerate {
     dps.saveAllowTvmShangHai(1);
   }
 
-  @After
-  public void after() throws IOException {
+  @AfterClass
+  public static void after() throws IOException {
+    context.destroy();
+    Args.clearParam();
   }
 
   @Test
@@ -132,13 +143,13 @@ public class BlockEventGetTest extends BlockGenerate {
         + "57c973388f044038eff0e6474425b38037e75e66d6b3047647290605449c7764736f6c63430008140033";
     Protocol.Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         "TestTRC20", address, "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\""
-        + ":\"from\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"to\",\"type\":\"address\"}"
-        +   ",{\"indexed\":false,\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Transfer\","
-        +  "\"type\":\"event\"}]", code, 0, (long) 1e9, 100, null, 1);
+            + ":\"from\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"to\",\"type\""
+            + ":\"address\"},{\"indexed\":false,\"name\":\"value\",\"type\":\"uint256\"}],\"name\""
+            + ":\"Transfer\",\"type\":\"event\"}]", code, 0, (long) 1e9, 100, null, 1);
     trx = trx.toBuilder().addRet(
-      Protocol.Transaction.Result.newBuilder()
-          .setContractRetValue(Protocol.Transaction.Result.contractResult.SUCCESS_VALUE)
-          .build()).build();
+        Protocol.Transaction.Result.newBuilder()
+            .setContractRetValue(Protocol.Transaction.Result.contractResult.SUCCESS_VALUE)
+            .build()).build();
 
     Protocol.Block block = getSignedBlock(witnessCapsule.getAddress(), time, privateKey);
     BlockCapsule blockCapsule = new BlockCapsule(block.toBuilder().addTransactions(trx).build());
@@ -223,6 +234,11 @@ public class BlockEventGetTest extends BlockGenerate {
 
     bc = new BlockCapsule(100, ByteString.empty(), 1, transactionList);
 
+    Manager manager = mock(Manager.class);
+    ReflectUtils.setFieldValue(blockEventGet, "manager", manager);
+    Mockito.when(manager.getTransactionInfoByBlockNum(1))
+            .thenReturn(GrpcAPI.TransactionInfoList.newBuilder().build());
+
     list = blockEventGet.getTransactionTriggers(bc, 1);
     Assert.assertEquals(1, list.size());
     Assert.assertEquals(100, list.get(0).getTransactionLogTrigger().getTimeStamp());
@@ -243,21 +259,14 @@ public class BlockEventGetTest extends BlockGenerate {
         .addContractResult(ByteString.copyFrom(ByteArray.fromHexString("112233")))
         .setReceipt(resourceBuild.build());
 
-    Manager manager = mock(Manager.class);
-    ReflectUtils.setFieldValue(blockEventGet, "manager", manager);
-
     ChainBaseManager chainBaseManager = mock(ChainBaseManager.class);
     Mockito.when(manager.getChainBaseManager()).thenReturn(chainBaseManager);
 
-    TransactionRetStore transactionRetStore = mock(TransactionRetStore.class);
-    Mockito.when(chainBaseManager.getTransactionRetStore()).thenReturn(transactionRetStore);
 
-    Protocol.TransactionRet transactionRet = Protocol.TransactionRet.newBuilder()
-        .addTransactioninfo(infoBuild.build()).build();
+    GrpcAPI.TransactionInfoList result = GrpcAPI.TransactionInfoList.newBuilder()
+        .addTransactionInfo(infoBuild.build()).build();
 
-    TransactionRetCapsule result = new TransactionRetCapsule(transactionRet.toByteArray());
-
-    Mockito.when(transactionRetStore.getTransactionInfoByBlockNum(ByteArray.fromLong(0)))
+    Mockito.when(manager.getTransactionInfoByBlockNum(0))
         .thenReturn(result);
 
     Protocol.Block block = Protocol.Block.newBuilder()
@@ -276,8 +285,8 @@ public class BlockEventGetTest extends BlockGenerate {
     Assert.assertEquals(2,
         list.get(0).getTransactionLogTrigger().getEnergyUsageTotal());
 
-    Mockito.when(transactionRetStore.getTransactionInfoByBlockNum(ByteArray.fromLong(0)))
-        .thenReturn(null);
+    Mockito.when(manager.getTransactionInfoByBlockNum(0))
+        .thenReturn(GrpcAPI.TransactionInfoList.newBuilder().build());
     list = blockEventGet.getTransactionTriggers(blockCapsule, 1);
     Assert.assertEquals(1, list.size());
     Assert.assertEquals(1,

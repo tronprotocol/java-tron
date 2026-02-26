@@ -55,7 +55,7 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule> {
     return ret;
   }
 
-  public void sortWitnesses(List<WitnessCapsule> witnesses, boolean isSortOpt) {
+  public static void sortWitnesses(List<WitnessCapsule> witnesses, boolean isSortOpt) {
     witnesses.sort(Comparator.comparingLong(WitnessCapsule::getVoteCount).reversed()
         .thenComparing(isSortOpt
             ? Comparator.comparing(WitnessCapsule::createReadableString).reversed()

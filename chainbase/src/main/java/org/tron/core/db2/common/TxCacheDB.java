@@ -31,7 +31,6 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.bouncycastle.util.encoders.Hex;
-import org.iq80.leveldb.WriteOptions;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.Metrics;
@@ -105,19 +104,13 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
     String dbEngine = CommonParameter.getInstance().getStorage().getDbEngine();
     if ("LEVELDB".equals(dbEngine.toUpperCase())) {
       this.persistentStore = new LevelDB(
-          new LevelDbDataSourceImpl(StorageUtils.getOutputDirectoryByDbName(name),
-              name, StorageUtils.getOptionsByDbName(name),
-              new WriteOptions().sync(CommonParameter.getInstance()
-                  .getStorage().isDbSync())));
+          new LevelDbDataSourceImpl(StorageUtils.getOutputDirectoryByDbName(name), name));
     } else if ("ROCKSDB".equals(dbEngine.toUpperCase())) {
       String parentPath = Paths
           .get(StorageUtils.getOutputDirectoryByDbName(name), CommonParameter
               .getInstance().getStorage().getDbDirectory()).toString();
 
-      this.persistentStore = new RocksDB(
-          new RocksDbDataSourceImpl(parentPath,
-              name, CommonParameter.getInstance()
-              .getRocksDBCustomSettings()));
+      this.persistentStore = new RocksDB(new RocksDbDataSourceImpl(parentPath, name));
     } else {
       throw new RuntimeException(String.format("db type: %s is not supported", dbEngine));
     }

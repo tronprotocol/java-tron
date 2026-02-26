@@ -1,6 +1,8 @@
 package org.tron.common.runtime.vm;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
 
 import java.util.List;
 import java.util.Random;
@@ -13,25 +15,33 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import org.tron.common.BaseTest;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.core.Constant;
+import org.tron.core.Wallet;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.EnergyCost;
 import org.tron.core.vm.JumpTable;
+import org.tron.core.vm.MessageCall;
 import org.tron.core.vm.Op;
 import org.tron.core.vm.Operation;
+import org.tron.core.vm.OperationActions;
 import org.tron.core.vm.OperationRegistry;
+import org.tron.core.vm.PrecompiledContracts;
 import org.tron.core.vm.VM;
 import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.invoke.ProgramInvokeMockImpl;
+import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
 import org.tron.common.TestConstants;
 
@@ -41,6 +51,8 @@ public class OperationsTest extends BaseTest {
   private ProgramInvokeMockImpl invoke;
   private Program program;
   private final JumpTable jumpTable = OperationRegistry.getTable();
+  @Autowired
+  private Wallet wallet;
 
   @BeforeClass
   public static void init() {
@@ -751,6 +763,30 @@ public class OperationsTest extends BaseTest {
   }
 
   @Test
+  public void testCallOperations() throws ContractValidateException {
+    invoke = new ProgramInvokeMockImpl();
+    Protocol.Transaction trx = Protocol.Transaction.getDefaultInstance();
+    InternalTransaction interTrx =
+        new InternalTransaction(trx, InternalTransaction.TrxType.TRX_UNKNOWN_TYPE);
+
+    byte prePrefixByte = DecodeUtil.addressPreFixByte;
+    DecodeUtil.addressPreFixByte = Constant.ADD_PRE_FIX_BYTE_MAINNET;
+    VMConfig.initAllowTvmSelfdestructRestriction(1);
+
+    program = new Program(new byte[0], new byte[0], invoke, interTrx);
+    MessageCall messageCall = new MessageCall(
+        Op.CALL, new DataWord(10000),
+        DataWord.ZERO(), DataWord.ZERO(),
+        DataWord.ZERO(), DataWord.ZERO(),
+        DataWord.ZERO(), DataWord.ZERO(),
+        DataWord.ZERO(), false);
+    program.callToPrecompiledAddress(messageCall, new PrecompiledContracts.ECRecover());
+
+    DecodeUtil.addressPreFixByte = prePrefixByte;
+    VMConfig.initAllowTvmSelfdestructRestriction(0);
+  }
+
+  @Test
   public void testOtherOperations() throws ContractValidateException {
     invoke = new ProgramInvokeMockImpl();
     Protocol.Transaction trx = Protocol.Transaction.getDefaultInstance();
@@ -887,6 +923,12 @@ public class OperationsTest extends BaseTest {
     Assert.assertEquals(25000, EnergyCost.getSuicideCost2(program));
     invoke.getDeposit().createAccount(receiver2, Protocol.AccountType.Normal);
     Assert.assertEquals(0, EnergyCost.getSuicideCost2(program));
+
+    byte[] receiver3 = generateRandomAddress();
+    program.stackPush(new DataWord(receiver3));
+    Assert.assertEquals(30000, EnergyCost.getSuicideCost3(program));
+    invoke.getDeposit().createAccount(receiver3, Protocol.AccountType.Normal);
+    Assert.assertEquals(5000, EnergyCost.getSuicideCost3(program));
   }
 
   @Test
@@ -910,6 +952,85 @@ public class OperationsTest extends BaseTest {
 
     DecodeUtil.addressPreFixByte = prePrefixByte;
     VMConfig.initAllowEnergyAdjustment(0);
+  }
+
+  @Test
+  public void testCanSuicide2() throws ContractValidateException {
+    VMConfig.initAllowTvmFreeze(1);
+    VMConfig.initAllowTvmFreezeV2(1);
+
+    byte[] contractAddr = Hex.decode("41471fd3ad3e9eeadeec4608b92d16ce6b500704cc");
+    invoke = new ProgramInvokeMockImpl(StoreFactory.getInstance(), new byte[0], contractAddr);
+
+    program = new Program(null, null, invoke,
+        new InternalTransaction(
+            Protocol.Transaction.getDefaultInstance(),
+            InternalTransaction.TrxType.TRX_UNKNOWN_TYPE));
+    program.getContractState().createAccount(
+        program.getContextAddress(), Protocol.AccountType.Contract);
+    Assert.assertTrue(program.canSuicide2());
+
+    long nowInMs =
+        program.getContractState().getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
+    long expireTime = nowInMs + FROZEN_PERIOD;
+    AccountCapsule owner = program.getContractState().getAccount(program.getContextAddress());
+    owner.setFrozenForEnergy(1000000, expireTime);
+    program.getContractState().updateAccount(program.getContextAddress(), owner);
+    Assert.assertFalse(program.canSuicide2());
+
+    VMConfig.initAllowTvmFreeze(0);
+    VMConfig.initAllowTvmFreezeV2(0);
+  }
+
+  @Test
+  public void testSuicideAction2() throws ContractValidateException {
+    byte[] contractAddr = Hex.decode("41471fd3ad3e9eeadeec4608b92d16ce6b500704cc");
+    invoke = new ProgramInvokeMockImpl(StoreFactory.getInstance(), new byte[0], contractAddr);
+    Assert.assertTrue(invoke.getDeposit().isNewContract(contractAddr));
+
+    program = new Program(null, null, invoke,
+        new InternalTransaction(
+            Protocol.Transaction.getDefaultInstance(),
+            InternalTransaction.TrxType.TRX_UNKNOWN_TYPE));
+
+    VMConfig.initAllowEnergyAdjustment(1);
+    VMConfig.initAllowTvmSelfdestructRestriction(1);
+    VMConfig.initAllowTvmFreeze(1);
+    VMConfig.initAllowTvmFreezeV2(1);
+    VMConfig.initAllowTvmCompatibleEvm(1);
+    VMConfig.initAllowTvmVote(1);
+    byte prePrefixByte = DecodeUtil.addressPreFixByte;
+    DecodeUtil.addressPreFixByte = Constant.ADD_PRE_FIX_BYTE_MAINNET;
+
+    program.stackPush(new DataWord(
+            dbManager.getAccountStore().getBlackhole().getAddress().toByteArray()));
+    OperationActions.suicideAction2(program);
+
+    Assert.assertEquals(1, program.getResult().getDeleteAccounts().size());
+
+
+    invoke = new ProgramInvokeMockImpl(StoreFactory.getInstance(), new byte[0], contractAddr);
+    program = new Program(null, null, invoke,
+        new InternalTransaction(
+            Protocol.Transaction.getDefaultInstance(),
+            InternalTransaction.TrxType.TRX_UNKNOWN_TYPE));
+    Program spyProgram = Mockito.spy(program);
+    Repository realContractState = program.getContractState();
+    Repository spyContractState = Mockito.spy(realContractState);
+    Mockito.when(spyContractState.isNewContract(any(byte[].class))).thenReturn(false);
+    Mockito.when(spyProgram.getContractState()).thenReturn(spyContractState);
+    spyProgram.suicide2(new DataWord(
+        dbManager.getAccountStore().getBlackhole().getAddress().toByteArray()));
+
+    Assert.assertEquals(0, spyProgram.getResult().getDeleteAccounts().size());
+
+    DecodeUtil.addressPreFixByte = prePrefixByte;
+    VMConfig.initAllowEnergyAdjustment(0);
+    VMConfig.initAllowTvmSelfdestructRestriction(0);
+    VMConfig.initAllowTvmFreeze(0);
+    VMConfig.initAllowTvmFreezeV2(0);
+    VMConfig.initAllowTvmCompatibleEvm(0);
+    VMConfig.initAllowTvmVote(0);
   }
 
   @Test

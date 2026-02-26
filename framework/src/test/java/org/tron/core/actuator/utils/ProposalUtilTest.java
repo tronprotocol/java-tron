@@ -1,5 +1,8 @@
 package org.tron.core.actuator.utils;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
+
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.function.ThrowingRunnable;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ForkController;
@@ -440,6 +444,10 @@ public class ProposalUtilTest extends BaseTest {
 
     testAllowTvmBlobProposal();
 
+    testAllowMarketTransaction();
+
+    testAllowTvmSelfdestructRestrictionProposal();
+
     forkUtils.getManager().getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionEnum.ENERGY_LIMIT.getValue(), stats);
     forkUtils.reset();
@@ -658,6 +666,102 @@ public class ProposalUtilTest extends BaseTest {
           e.getMessage());
     }
 
+  }
+
+  private void testAllowTvmSelfdestructRestrictionProposal() {
+    byte[] stats = new byte[27];
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .statsByVersion(ForkBlockVersionEnum.VERSION_4_8_1.getValue(), stats);
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_TVM_SELFDESTRUCT_RESTRICTION.getCode(), 1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "Bad chain parameter id [ALLOW_TVM_SELFDESTRUCT_RESTRICTION]",
+          e.getMessage());
+    }
+
+    long maintenanceTimeInterval = forkUtils.getManager().getDynamicPropertiesStore()
+        .getMaintenanceTimeInterval();
+
+    long hardForkTime =
+        ((ForkBlockVersionEnum.VERSION_4_8_1.getHardForkTime() - 1) / maintenanceTimeInterval + 1)
+            * maintenanceTimeInterval;
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .saveLatestBlockHeaderTimestamp(hardForkTime + 1);
+
+    stats = new byte[27];
+    Arrays.fill(stats, (byte) 1);
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .statsByVersion(ForkBlockVersionEnum.VERSION_4_8_1.getValue(), stats);
+
+    // Should fail because the proposal value is invalid
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_TVM_SELFDESTRUCT_RESTRICTION.getCode(), 2);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "This value[ALLOW_TVM_SELFDESTRUCT_RESTRICTION] is only allowed to be 1",
+          e.getMessage());
+    }
+
+    dynamicPropertiesStore.saveAllowTvmSelfdestructRestriction(1);
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_TVM_SELFDESTRUCT_RESTRICTION.getCode(), 1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "[ALLOW_TVM_SELFDESTRUCT_RESTRICTION] has been valid, no need to propose again",
+          e.getMessage());
+    }
+  }
+
+  private void testAllowMarketTransaction() {
+    ThrowingRunnable off = () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+        ProposalType.ALLOW_MARKET_TRANSACTION.getCode(), 0);
+    ThrowingRunnable open = () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+        ProposalType.ALLOW_MARKET_TRANSACTION.getCode(), 1);
+    String err = "Bad chain parameter id [ALLOW_MARKET_TRANSACTION]";
+
+    ContractValidateException thrown = assertThrows(ContractValidateException.class, open);
+    assertEquals(err, thrown.getMessage());
+
+    activateFork(ForkBlockVersionEnum.VERSION_4_1);
+
+    try {
+      open.run();
+    } catch (Throwable e) {
+      Assert.fail(e.getMessage());
+    }
+
+    thrown = assertThrows(ContractValidateException.class, off);
+    assertEquals("This value[ALLOW_MARKET_TRANSACTION] is only allowed to be 1",
+        thrown.getMessage());
+
+    activateFork(ForkBlockVersionEnum.VERSION_4_8_1);
+
+    thrown = assertThrows(ContractValidateException.class, open);
+    assertEquals(err, thrown.getMessage());
+
+    thrown = assertThrows(ContractValidateException.class, off);
+    assertEquals(err, thrown.getMessage());
+  }
+
+  private void activateFork(ForkBlockVersionEnum forkVersion) {
+    byte[] stats = new byte[27];
+    Arrays.fill(stats, (byte) 1);
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .statsByVersion(forkVersion.getValue(), stats);
+
+    long maintenanceTimeInterval = forkUtils.getManager().getDynamicPropertiesStore()
+        .getMaintenanceTimeInterval();
+    long hardForkTime = ((forkVersion.getHardForkTime() - 1) / maintenanceTimeInterval + 1)
+            * maintenanceTimeInterval;
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .saveLatestBlockHeaderTimestamp(hardForkTime + 1);
   }
 
   @Test

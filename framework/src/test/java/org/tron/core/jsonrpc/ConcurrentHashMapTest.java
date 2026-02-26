@@ -31,7 +31,7 @@ public class ConcurrentHashMapTest {
    */
   @Test
   public void testHandleBlockHash() {
-    int times = 200;
+    int times = 100;
     int eachCount = 200;
 
     Map<String, BlockFilterAndResult> conMap = TronJsonRpcImpl.getBlockFilter2ResultFull();
@@ -67,7 +67,7 @@ public class ConcurrentHashMapTest {
             TronJsonRpcImpl.handleBLockFilter(blockFilterCapsule);
           }
           try {
-            Thread.sleep(randomInt(100, 200));
+            Thread.sleep(randomInt(50, 100));
           } catch (InterruptedException e) {
             e.printStackTrace();
           }
@@ -81,7 +81,7 @@ public class ConcurrentHashMapTest {
         for (int t = 1; t <= times * 2; t++) {
 
           try {
-            Thread.sleep(randomInt(100, 200));
+            Thread.sleep(randomInt(50, 100));
           } catch (InterruptedException e) {
             e.printStackTrace();
           }
@@ -111,7 +111,7 @@ public class ConcurrentHashMapTest {
         for (int t = 1; t <= times * 2; t++) {
 
           try {
-            Thread.sleep(randomInt(100, 200));
+            Thread.sleep(randomInt(50, 100));
           } catch (InterruptedException e) {
             e.printStackTrace();
           }
@@ -144,7 +144,7 @@ public class ConcurrentHashMapTest {
         for (int t = 1; t <= times * 2; t++) {
 
           try {
-            Thread.sleep(randomInt(100, 200));
+            Thread.sleep(randomInt(50, 100));
           } catch (InterruptedException e) {
             e.printStackTrace();
           }

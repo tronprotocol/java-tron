@@ -62,12 +62,12 @@ public class WitnessStoreTest extends BaseTest {
     List<ByteString> witnessAddress = allWitnesses.stream().map(WitnessCapsule::getAddress)
         .collect(Collectors.toList());
     this.witnessStore.sortWitness(witnessAddress, false);
-    this.witnessStore.sortWitnesses(allWitnesses, false);
+    WitnessStore.sortWitnesses(allWitnesses, false);
     Assert.assertEquals(witnessAddress, allWitnesses.stream().map(WitnessCapsule::getAddress)
         .collect(Collectors.toList()));
     List<ByteString> pre = new ArrayList<>(witnessAddress);
     this.witnessStore.sortWitness(witnessAddress, true);
-    this.witnessStore.sortWitnesses(allWitnesses, true);
+    WitnessStore.sortWitnesses(allWitnesses, true);
     Assert.assertEquals(witnessAddress, allWitnesses.stream().map(WitnessCapsule::getAddress)
         .collect(Collectors.toList()));
     Assert.assertNotEquals(pre, witnessAddress);

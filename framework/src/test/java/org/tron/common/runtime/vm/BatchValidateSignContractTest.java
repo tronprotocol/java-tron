@@ -15,6 +15,7 @@ import org.tron.common.utils.client.utils.AbiUtil;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.vm.PrecompiledContracts;
 import org.tron.core.vm.PrecompiledContracts.BatchValidateSign;
+import org.tron.core.vm.config.VMConfig;
 
 
 @Slf4j
@@ -74,6 +75,13 @@ public class BatchValidateSignContractTest {
     ret = validateMultiSign(hash, signatures, addresses);
     Assert.assertEquals(ret.getValue().length, 32);
     Assert.assertArrayEquals(ret.getValue(), new byte[32]);
+
+    //after optimized
+    VMConfig.initAllowTvmSelfdestructRestriction(1);
+    ret = validateMultiSign(hash, signatures, addresses);
+    Assert.assertEquals(ret.getValue().length, 32);
+    Assert.assertArrayEquals(ret.getValue(), new byte[32]);
+    VMConfig.initAllowTvmSelfdestructRestriction(0);
     System.gc(); // force triggering full gc to avoid timeout for next test
   }
 

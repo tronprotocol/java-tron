@@ -4,6 +4,7 @@ public class VMConstant {
 
   public static final int CONTRACT_NAME_LENGTH = 32;
   public static final int MIN_TOKEN_ID = 1_000_000;
+  public static final int SIG_LENGTH = 65;
 
   // Numbers
   public static final int ONE_HUNDRED = 100;

@@ -8,15 +8,39 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ReflectUtils;
+import org.tron.core.config.args.Args;
 import org.tron.p2p.connection.Channel;
 
 public class PeerManagerTest {
   List<InetSocketAddress> relayNodes = new ArrayList<>();
+
+  @BeforeClass
+  public static void initArgs() {
+    CommonParameter.getInstance().setRateLimiterSyncBlockChain(10);
+    CommonParameter.getInstance().setRateLimiterFetchInvData(10);
+    CommonParameter.getInstance().setRateLimiterDisconnect(10);
+  }
+
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+  }
+
+  @After
+  public void clearPeers() {
+    for (PeerConnection p : PeerManager.getPeers()) {
+      PeerManager.remove(p.getChannel());
+    }
+  }
 
   @Test
   public void testAdd() throws Exception {
