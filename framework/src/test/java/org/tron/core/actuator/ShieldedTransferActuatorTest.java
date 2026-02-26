@@ -13,7 +13,6 @@ import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.client.utils.TransactionUtils;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -41,6 +40,7 @@ import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.ShieldContract.PedersenHash;
 import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
+import org.tron.common.TestConstants;
 
 @Slf4j
 public class ShieldedTransferActuatorTest extends BaseTest {
@@ -68,7 +68,7 @@ public class ShieldedTransferActuatorTest extends BaseTest {
   private Wallet wallet;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
     ADDRESS_ONE_PRIVATE_KEY = PublicMethod.getRandomPrivateKey();
     PUBLIC_ADDRESS_ONE = PublicMethod.getHexAddressByPrivateKey(ADDRESS_ONE_PRIVATE_KEY);
 

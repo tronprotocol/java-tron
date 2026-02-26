@@ -37,6 +37,7 @@ import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.BalanceContract.DelegateResourceContract;
+import org.tron.common.TestConstants;
 
 @Slf4j(topic = "capsule")
 public class TransactionUtilTest extends BaseTest {
@@ -48,7 +49,7 @@ public class TransactionUtilTest extends BaseTest {
    */
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
   }
 

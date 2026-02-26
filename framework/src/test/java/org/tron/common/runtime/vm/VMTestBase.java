@@ -10,7 +10,6 @@ import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.Runtime;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -19,6 +18,7 @@ import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.common.TestConstants;
 
 @Slf4j
 public class VMTestBase {
@@ -35,7 +35,7 @@ public class VMTestBase {
   @Before
   public void init() throws IOException {
     Args.setParam(new String[]{"--output-directory",
-        temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
+        temporaryFolder.newFolder().toString(), "--debug"}, TestConstants.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     manager = context.getBean(Manager.class);

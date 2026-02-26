@@ -5,10 +5,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.keystore.Wallet;
+import org.tron.common.TestConstants;
 
 public class TxCacheDBTest extends BaseTest {
 
@@ -20,7 +20,7 @@ public class TxCacheDBTest extends BaseTest {
     String dbDirectory = "db_TransactionCache_test";
     String indexDirectory = "index_TransactionCache_test";
     Args.setParam(new String[]{"--output-directory", dbPath(), "--storage-db-directory",
-        dbDirectory, "--storage-index-directory", indexDirectory}, Constant.TEST_CONF);
+        dbDirectory, "--storage-index-directory", indexDirectory}, TestConstants.TEST_CONF);
   }
 
   @Test

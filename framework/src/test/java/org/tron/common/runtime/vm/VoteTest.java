@@ -34,7 +34,6 @@ import org.tron.common.utils.WalletUtil;
 import org.tron.common.utils.client.utils.AbiUtil;
 import org.tron.common.utils.client.utils.DataWord;
 import org.tron.consensus.dpos.MaintenanceManager;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -50,6 +49,7 @@ import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol;
+import org.tron.common.TestConstants;
 
 @Slf4j
 public class VoteTest {
@@ -278,7 +278,7 @@ public class VoteTest {
   @Before
   public void init() throws Exception {
     Args.setParam(new String[]{"--output-directory",
-        temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
+        temporaryFolder.newFolder().toString(), "--debug"}, TestConstants.TEST_CONF);
     CommonParameter.getInstance().setCheckFrozenTime(0);
     context = new TronApplicationContext(DefaultConfig.class);
     manager = context.getBean(Manager.class);

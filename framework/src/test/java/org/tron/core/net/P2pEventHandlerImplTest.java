@@ -25,7 +25,7 @@ public class P2pEventHandlerImplTest {
   @Test
   public void testProcessInventoryMessage() throws Exception {
     String[] a = new String[0];
-    Args.setParam(a, Constant.TESTNET_CONF);
+    Args.setParam(a, Constant.NET_CONF);
     CommonParameter parameter = CommonParameter.getInstance();
     parameter.setMaxTps(10);
 
@@ -115,7 +115,7 @@ public class P2pEventHandlerImplTest {
   @Test
   public void testUpdateLastInteractiveTime() throws Exception {
     String[] a = new String[0];
-    Args.setParam(a, Constant.TESTNET_CONF);
+    Args.setParam(a, Constant.NET_CONF);
 
     PeerConnection peer = new PeerConnection();
     P2pEventHandlerImpl p2pEventHandler = new P2pEventHandlerImpl();

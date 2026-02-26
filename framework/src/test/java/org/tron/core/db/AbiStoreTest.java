@@ -10,7 +10,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.capsule.AbiCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.args.Args;
@@ -18,6 +17,7 @@ import org.tron.core.store.AbiStore;
 import org.tron.core.store.AccountIndexStore;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.contract.SmartContractOuterClass;
+import org.tron.common.TestConstants;
 
 public class AbiStoreTest extends BaseTest {
 
@@ -36,7 +36,7 @@ public class AbiStoreTest extends BaseTest {
         new String[]{
             "--output-directory", dbPath()
         },
-        Constant.TEST_CONF
+        TestConstants.TEST_CONF
     );
   }
 

@@ -21,7 +21,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.StringUtil;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.FreezeBalanceActuator;
 import org.tron.core.capsule.AccountCapsule;
@@ -45,6 +44,7 @@ import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Proposal.State;
 import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
 import org.tron.protos.contract.Common;
+import org.tron.common.TestConstants;
 
 @Slf4j
 public class PrecompiledContractsTest extends BaseTest {
@@ -106,7 +106,7 @@ public class PrecompiledContractsTest extends BaseTest {
   private static final long latestTimestamp = 1_000_000L;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"}, TestConstants.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     WITNESS_ADDRESS = Wallet.getAddressPreFixString() + WITNESS_ADDRESS_BASE;
 

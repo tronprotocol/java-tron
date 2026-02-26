@@ -25,7 +25,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -43,6 +42,7 @@ import org.tron.program.Version;
 import org.tron.protos.Discover.Endpoint;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.HelloMessage.Builder;
+import org.tron.common.TestConstants;
 
 public class HandShakeServiceTest {
 
@@ -56,7 +56,7 @@ public class HandShakeServiceTest {
   @BeforeClass
   public static void init() throws Exception {
     Args.setParam(new String[] {"--output-directory",
-        temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
+        temporaryFolder.newFolder().toString(), "--debug"}, TestConstants.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     p2pEventHandler = context.getBean(P2pEventHandlerImpl.class);
     ctx = (ApplicationContext) ReflectUtils.getFieldObject(p2pEventHandler, "ctx");

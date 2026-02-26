@@ -7,11 +7,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
+import org.tron.common.TestConstants;
 
 public class AssetIssueStoreTest extends BaseTest {
 
@@ -30,7 +30,7 @@ public class AssetIssueStoreTest extends BaseTest {
             new String[]{
                 "--output-directory", dbPath(),
             },
-            Constant.TEST_CONF
+            TestConstants.TEST_CONF
     );
   }
 

@@ -18,7 +18,6 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.SessionOptional;
-import org.tron.core.Constant;
 import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -26,6 +25,7 @@ import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.db2.SnapshotRootTest.ProtoCapsuleTest;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
+import org.tron.common.TestConstants;
 
 @Slf4j
 public class RevokingDbWithCacheNewValueTest {
@@ -41,7 +41,7 @@ public class RevokingDbWithCacheNewValueTest {
   public void init() {
     databasePath = "output_revokingStore_test_" + RandomStringUtils.randomAlphanumeric(10);
     Args.setParam(new String[]{"-d", databasePath},
-        Constant.TEST_CONF);
+        TestConstants.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     appT = ApplicationFactory.create(context);
   }

@@ -22,6 +22,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.services.http.JsonFormat;
 import org.tron.core.services.http.JsonFormat.ParseException;
+import org.tron.common.TestConstants;
 
 
 public class ShieldWalletTest extends BaseTest {
@@ -30,7 +31,7 @@ public class ShieldWalletTest extends BaseTest {
   private Wallet wallet;
 
   static {
-    Args.setParam(new String[] {"-d", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-d", dbPath()}, TestConstants.TEST_CONF);
   }
 
   @Test

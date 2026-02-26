@@ -5,18 +5,18 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.BaseTest;
-import org.tron.core.Constant;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.ZKProofStore;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.BalanceContract;
+import org.tron.common.TestConstants;
 
 public class ZKProofStoreTest extends BaseTest {
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath()},
-            Constant.TEST_CONF);
+            TestConstants.TEST_CONF);
   }
 
   @Autowired

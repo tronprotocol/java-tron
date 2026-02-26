@@ -7,11 +7,11 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.store.TransactionHistoryStore;
+import org.tron.common.TestConstants;
 
 public class TransactionHistoryTest extends BaseTest {
 
@@ -30,7 +30,7 @@ public class TransactionHistoryTest extends BaseTest {
             "--storage-db-directory", dbDirectory,
             "--storage-index-directory", indexDirectory
         },
-        Constant.TEST_CONF
+        TestConstants.TEST_CONF
     );
   }
 

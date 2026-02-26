@@ -12,7 +12,6 @@ import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.client.utils.HttpMethed;
-import org.tron.core.Constant;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.StoreFactory;
@@ -20,6 +19,7 @@ import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.SmartContractOuterClass;
+import org.tron.common.TestConstants;
 
 @Slf4j
 public class TriggerSmartContractServletTest extends BaseTest {
@@ -31,7 +31,7 @@ public class TriggerSmartContractServletTest extends BaseTest {
   @BeforeClass
   public static void init() throws Exception {
     Args.setParam(
-        new String[]{"--output-directory", dbPath(), "--debug"}, Constant.TEST_CONF);
+        new String[]{"--output-directory", dbPath(), "--debug"}, TestConstants.TEST_CONF);
     Args.getInstance().needSyncCheck = false;
     Args.getInstance().setFullNodeHttpEnable(true);
     Args.getInstance().setFullNodeHttpPort(PublicMethod.chooseRandomPort());

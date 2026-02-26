@@ -5,12 +5,12 @@ import javax.annotation.Resource;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.core.Constant;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.ExchangeV2Store;
 import org.tron.protos.Protocol;
+import org.tron.common.TestConstants;
 
 public class ExchangeV2StoreTest extends BaseTest {
 
@@ -22,7 +22,7 @@ public class ExchangeV2StoreTest extends BaseTest {
         new String[]{
             "--output-directory", dbPath()
         },
-        Constant.TEST_CONF
+        TestConstants.TEST_CONF
     );
   }
 

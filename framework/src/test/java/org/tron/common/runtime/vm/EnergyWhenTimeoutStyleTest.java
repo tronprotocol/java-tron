@@ -8,7 +8,6 @@ import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractExeException;
@@ -20,6 +19,7 @@ import org.tron.core.vm.program.Program.OutOfEnergyException;
 import org.tron.core.vm.program.Program.OutOfTimeException;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.common.TestConstants;
 
 @Slf4j
 public class EnergyWhenTimeoutStyleTest extends BaseTest {
@@ -30,7 +30,7 @@ public class EnergyWhenTimeoutStyleTest extends BaseTest {
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath()},
-        Constant.TEST_CONF);
+        TestConstants.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
   }
 

@@ -13,13 +13,13 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.FileUtil;
-import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db2.core.Snapshot;
 import org.tron.core.db2.core.SnapshotImpl;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.db2.core.SnapshotRoot;
+import org.tron.common.TestConstants;
 
 public class SnapshotImplTest {
   private RevokingDbWithCacheNewValueTest.TestRevokingTronStore tronDatabase;
@@ -29,7 +29,7 @@ public class SnapshotImplTest {
 
   @Before
   public void init() {
-    Args.setParam(new String[]{"-d", "output_revokingStore_test"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", "output_revokingStore_test"}, TestConstants.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     appT = ApplicationFactory.create(context);
 

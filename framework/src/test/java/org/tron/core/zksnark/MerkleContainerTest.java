@@ -10,7 +10,6 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -30,6 +29,7 @@ import org.tron.protos.contract.ShieldContract.OutputPointInfo;
 import org.tron.protos.contract.ShieldContract.PedersenHash;
 import org.tron.protos.contract.ShieldContract.ReceiveDescription;
 import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
+import org.tron.common.TestConstants;
 
 public class MerkleContainerTest extends BaseTest {
 
@@ -39,7 +39,7 @@ public class MerkleContainerTest extends BaseTest {
 
 
   static {
-    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath()}, TestConstants.TEST_CONF);
   }
 
   /*@Before

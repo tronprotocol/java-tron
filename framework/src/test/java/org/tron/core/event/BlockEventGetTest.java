@@ -29,7 +29,6 @@ import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
-import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
@@ -45,6 +44,7 @@ import org.tron.core.services.event.bo.BlockEvent;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.TransactionRetStore;
 import org.tron.protos.Protocol;
+import org.tron.common.TestConstants;
 
 @Slf4j
 public class BlockEventGetTest extends BlockGenerate {
@@ -78,7 +78,7 @@ public class BlockEventGetTest extends BlockGenerate {
   public void before() throws IOException {
     initDbPath();
     logger.info("Full node running.");
-    Args.setParam(new String[] {"-d", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-d", dbPath}, TestConstants.TEST_CONF);
     Args.getInstance().setNodeListenPort(10000 + port.incrementAndGet());
 
     context = new TronApplicationContext(DefaultConfig.class);

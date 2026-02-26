@@ -15,6 +15,7 @@ import org.tron.core.db.EnergyProcessor;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.Common;
+import org.tron.common.TestConstants;
 
 @Slf4j
 public class EnergyProcessorTest extends BaseTest {
@@ -24,7 +25,7 @@ public class EnergyProcessorTest extends BaseTest {
   private static final String USER_ADDRESS;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
     ASSET_NAME = "test_token";
     CONTRACT_PROVIDER_ADDRESS =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";

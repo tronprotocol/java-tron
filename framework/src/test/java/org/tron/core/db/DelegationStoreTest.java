@@ -7,10 +7,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.DelegationStore;
+import org.tron.common.TestConstants;
 
 
 public class DelegationStoreTest extends BaseTest {
@@ -27,7 +27,7 @@ public class DelegationStoreTest extends BaseTest {
             new String[]{
                 "--output-directory", dbPath(),
             },
-            Constant.TEST_CONF
+            TestConstants.TEST_CONF
     );
   }
 

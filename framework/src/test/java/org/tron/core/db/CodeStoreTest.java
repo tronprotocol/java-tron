@@ -10,10 +10,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.capsule.CodeCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.CodeStore;
+import org.tron.common.TestConstants;
 
 public class CodeStoreTest extends BaseTest {
 
@@ -46,7 +46,7 @@ public class CodeStoreTest extends BaseTest {
         new String[]{
             "--output-directory", dbPath()
         },
-        Constant.TEST_CONF
+        TestConstants.TEST_CONF
     );
   }
 

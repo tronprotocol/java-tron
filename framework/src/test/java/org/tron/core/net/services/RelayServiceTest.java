@@ -23,7 +23,6 @@ import org.springframework.context.ApplicationContext;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.core.ChainBaseManager;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
@@ -38,6 +37,7 @@ import org.tron.p2p.connection.Channel;
 import org.tron.p2p.discover.Node;
 import org.tron.p2p.utils.NetUtil;
 import org.tron.protos.Protocol;
+import org.tron.common.TestConstants;
 
 @Slf4j(topic = "net")
 public class RelayServiceTest extends BaseTest {
@@ -55,7 +55,7 @@ public class RelayServiceTest extends BaseTest {
   @BeforeClass
   public static void init() {
     Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"},
-            Constant.TEST_CONF);
+            TestConstants.TEST_CONF);
   }
 
   @Test

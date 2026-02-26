@@ -15,7 +15,6 @@ import org.tron.common.BaseTest;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
@@ -29,6 +28,7 @@ import org.tron.protos.Protocol;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.UpdateEnergyLimitContract;
+import org.tron.common.TestConstants;
 
 
 @Slf4j
@@ -47,7 +47,7 @@ public class UpdateEnergyLimitContractActuatorTest extends BaseTest {
   private static String OWNER_ADDRESS_NOTEXIST;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
   }
 
   /**

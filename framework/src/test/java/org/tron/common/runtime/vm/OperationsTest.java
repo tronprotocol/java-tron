@@ -33,6 +33,7 @@ import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.invoke.ProgramInvokeMockImpl;
 import org.tron.protos.Protocol;
+import org.tron.common.TestConstants;
 
 @Slf4j
 public class OperationsTest extends BaseTest {
@@ -43,7 +44,7 @@ public class OperationsTest extends BaseTest {
 
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"}, TestConstants.TEST_CONF);
     CommonParameter.getInstance().setDebug(true);
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);

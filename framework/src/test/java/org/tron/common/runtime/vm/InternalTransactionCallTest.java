@@ -14,7 +14,6 @@ import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TvmTestUtils;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -26,6 +25,7 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.common.TestConstants;
 
 @Slf4j
 public class InternalTransactionCallTest {
@@ -47,7 +47,7 @@ public class InternalTransactionCallTest {
     Args.clearParam();
     Args.setParam(new String[]{"--output-directory",
             temporaryFolder.newFolder().toString(), "--support-constant", "--debug"},
-        Constant.TEST_CONF);
+        TestConstants.TEST_CONF);
 
     context = new TronApplicationContext(DefaultConfig.class);
     AppT = ApplicationFactory.create(context);

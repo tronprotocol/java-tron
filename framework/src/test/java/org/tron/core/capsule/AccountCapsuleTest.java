@@ -9,7 +9,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
 import org.tron.protos.Protocol.AccountType;
@@ -17,6 +16,7 @@ import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Vote;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.common.TestConstants;
 
 public class AccountCapsuleTest extends BaseTest {
 
@@ -36,7 +36,7 @@ public class AccountCapsuleTest extends BaseTest {
   static AccountCapsule accountCapsule;
 
   static {
-    Args.setParam(new String[]{"-d",  dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d",  dbPath()}, TestConstants.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "a06a17a49648a8ad32055c06f60fa14ae46df91234";
   }
 

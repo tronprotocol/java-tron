@@ -7,15 +7,15 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.common.TestConstants;
 
 @Slf4j
 public class ExchangeCapsuleTest extends BaseTest {
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
   }
 
   /**

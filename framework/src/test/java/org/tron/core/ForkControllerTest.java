@@ -18,6 +18,7 @@ import org.tron.core.config.Parameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol;
+import org.tron.common.TestConstants;
 
 public class ForkControllerTest {
   private static ChainBaseManager chainBaseManager;
@@ -31,7 +32,7 @@ public class ForkControllerTest {
   @Before
   public void init() throws IOException {
     Args.setParam(new String[]{"-d",
-        temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
+        temporaryFolder.newFolder().toString()}, TestConstants.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     dynamicPropertiesStore = context.getBean(DynamicPropertiesStore.class);
     chainBaseManager = context.getBean(ChainBaseManager.class);

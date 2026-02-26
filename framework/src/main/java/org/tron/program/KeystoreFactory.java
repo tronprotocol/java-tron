@@ -23,7 +23,7 @@ public class KeystoreFactory {
   private static final String FilePath = "Wallet";
 
   public static void main(String[] args) {
-    Args.setParam(args, Constant.TESTNET_CONF);
+    Args.setParam(args, Constant.NET_CONF);
     KeystoreFactory cli = new KeystoreFactory();
 
     JCommander.newBuilder()

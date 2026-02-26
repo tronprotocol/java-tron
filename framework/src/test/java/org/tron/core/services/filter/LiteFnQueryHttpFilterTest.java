@@ -19,8 +19,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.PublicMethod;
-import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
+import org.tron.common.TestConstants;
 
 @Slf4j
 public class LiteFnQueryHttpFilterTest extends BaseTest {
@@ -30,7 +30,7 @@ public class LiteFnQueryHttpFilterTest extends BaseTest {
   private final CloseableHttpClient httpClient = HttpClients.createDefault();
 
   static {
-    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath()}, TestConstants.TEST_CONF);
     Args.getInstance().setFullNodeAllowShieldedTransactionArgs(false);
     Args.getInstance().setRpcEnable(false);
     Args.getInstance().setRpcSolidityEnable(false);

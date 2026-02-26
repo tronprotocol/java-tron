@@ -18,11 +18,11 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.FileUtil;
-import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.service.MortgageService;
 import org.tron.core.store.DelegationStore;
+import org.tron.common.TestConstants;
 
 @Slf4j
 public class GetRewardServletTest extends BaseTest {
@@ -43,7 +43,7 @@ public class GetRewardServletTest extends BaseTest {
     Args.setParam(
             new String[]{
                 "--output-directory", dbPath(),
-            }, Constant.TEST_CONF
+            }, TestConstants.TEST_CONF
     );
   }
 

@@ -32,13 +32,13 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.PublicMethod;
-import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.interfaceOnPBFT.RpcApiServiceOnPBFT;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.common.TestConstants;
 
 @Slf4j
 public class RpcApiAccessInterceptorTest {
@@ -55,7 +55,7 @@ public class RpcApiAccessInterceptorTest {
    */
   @BeforeClass
   public static void init() throws IOException {
-    Args.setParam(new String[] {"-d", temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-d", temporaryFolder.newFolder().toString()}, TestConstants.TEST_CONF);
     Args.getInstance().setRpcEnable(true);
     Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
     Args.getInstance().setRpcSolidityEnable(true);

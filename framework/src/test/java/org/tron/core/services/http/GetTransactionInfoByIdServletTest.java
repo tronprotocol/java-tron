@@ -17,7 +17,6 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -29,6 +28,7 @@ import org.tron.core.db.TransactionStoreTest;
 import org.tron.core.store.TransactionRetStore;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.BalanceContract;
+import org.tron.common.TestConstants;
 
 public class GetTransactionInfoByIdServletTest extends BaseTest {
 
@@ -50,7 +50,7 @@ public class GetTransactionInfoByIdServletTest extends BaseTest {
     Args.setParam(
             new String[]{
                 "--output-directory", dbPath(),
-            }, Constant.TEST_CONF
+            }, TestConstants.TEST_CONF
     );
   }
 

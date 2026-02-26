@@ -24,6 +24,7 @@ import org.tron.core.store.WitnessStore;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol;
+import org.tron.common.TestConstants;
 
 @Slf4j
 public class VMContractTestBase {
@@ -53,7 +54,7 @@ public class VMContractTestBase {
   @Before
   public void init() throws IOException {
     Args.setParam(new String[]{"--output-directory",
-        temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
+        temporaryFolder.newFolder().toString(), "--debug"}, TestConstants.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
 
     // TRdmP9bYvML7dGUX9Rbw2kZrE2TayPZmZX - 41abd4b9367799eaa3197fecb144eb71de1e049abc

@@ -20,7 +20,6 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.consensus.pbft.message.PbftMessage;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -32,6 +31,7 @@ import org.tron.core.net.peer.PeerManager;
 import org.tron.p2p.P2pConfig;
 import org.tron.p2p.base.Parameter;
 import org.tron.p2p.connection.Channel;
+import org.tron.common.TestConstants;
 
 public class MessageHandlerTest {
 
@@ -47,7 +47,7 @@ public class MessageHandlerTest {
   @BeforeClass
   public static void init() throws Exception {
     Args.setParam(new String[] {"--output-directory",
-        temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
+        temporaryFolder.newFolder().toString(), "--debug"}, TestConstants.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     p2pEventHandler = context.getBean(P2pEventHandlerImpl.class);
     ctx = (ApplicationContext) ReflectUtils.getFieldObject(p2pEventHandler, "ctx");

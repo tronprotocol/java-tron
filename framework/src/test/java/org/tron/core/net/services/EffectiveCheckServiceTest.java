@@ -11,12 +11,12 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ReflectUtils;
-import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.service.effective.EffectiveCheckService;
 import org.tron.p2p.P2pConfig;
+import org.tron.common.TestConstants;
 
 public class EffectiveCheckServiceTest {
 
@@ -29,7 +29,7 @@ public class EffectiveCheckServiceTest {
   @Before
   public void init() throws IOException {
     Args.setParam(new String[] {"--output-directory",
-        temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
+        temporaryFolder.newFolder().toString(), "--debug"}, TestConstants.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     service = context.getBean(EffectiveCheckService.class);
   }

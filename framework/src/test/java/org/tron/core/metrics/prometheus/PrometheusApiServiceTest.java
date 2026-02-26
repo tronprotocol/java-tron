@@ -27,7 +27,6 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.consensus.dpos.DposSlot;
 import org.tron.core.ChainBaseManager;
-import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -35,6 +34,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ConsensusService;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.protos.Protocol;
+import org.tron.common.TestConstants;
 
 @Slf4j(topic = "metric")
 public class PrometheusApiServiceTest extends BaseTest {
@@ -55,7 +55,7 @@ public class PrometheusApiServiceTest extends BaseTest {
   private ChainBaseManager chainManager;
 
   static {
-    Args.setParam(new String[] {"-d", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-d", dbPath()}, TestConstants.TEST_CONF);
     Args.getInstance().setNodeListenPort(10000 + port.incrementAndGet());
     initParameter(Args.getInstance());
     Metrics.init();

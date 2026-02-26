@@ -14,13 +14,13 @@ import org.rocksdb.RocksDB;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.common.DbSourceInter;
 import org.tron.core.db2.common.LevelDB;
 import org.tron.core.db2.core.Chainbase;
 import org.tron.core.db2.core.Snapshot;
 import org.tron.core.db2.core.SnapshotRoot;
+import org.tron.common.TestConstants;
 
 @Slf4j
 public class ChainbaseTest {
@@ -69,7 +69,7 @@ public class ChainbaseTest {
   public void initDb() throws IOException {
     RocksDB.loadLibrary();
     Args.setParam(new String[] {"--output-directory",
-        temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
+        temporaryFolder.newFolder().toString()}, TestConstants.TEST_CONF);
   }
 
   @Test

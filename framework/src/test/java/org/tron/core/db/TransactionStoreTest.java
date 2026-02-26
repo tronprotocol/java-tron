@@ -11,7 +11,6 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -26,6 +25,7 @@ import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
 import org.tron.protos.contract.WitnessContract.VoteWitnessContract.Vote;
 import org.tron.protos.contract.WitnessContract.WitnessCreateContract;
+import org.tron.common.TestConstants;
 
 public class TransactionStoreTest extends BaseTest {
 
@@ -50,7 +50,7 @@ public class TransactionStoreTest extends BaseTest {
    */
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
   }
 
   /**

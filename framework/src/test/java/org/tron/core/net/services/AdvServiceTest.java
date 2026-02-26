@@ -17,7 +17,6 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -31,6 +30,7 @@ import org.tron.core.net.service.adv.AdvService;
 import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Inventory.InventoryType;
+import org.tron.common.TestConstants;
 
 public class AdvServiceTest {
   private static TronApplicationContext context;
@@ -44,7 +44,7 @@ public class AdvServiceTest {
   @BeforeClass
   public static void init() throws IOException {
     Args.setParam(new String[]{"--output-directory",
-        temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
+        temporaryFolder.newFolder().toString(), "--debug"}, TestConstants.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     service = context.getBean(AdvService.class);
     p2pEventHandler = context.getBean(P2pEventHandlerImpl.class);

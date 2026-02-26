@@ -34,6 +34,7 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.common.TestConstants;
 
 @Slf4j
 public class BlockMsgHandlerTest extends BaseTest {
@@ -49,7 +50,7 @@ public class BlockMsgHandlerTest extends BaseTest {
   @BeforeClass
   public static void init() {
     Args.setParam(new String[] {"--output-directory", dbPath(), "--debug"},
-        Constant.TEST_CONF);
+        TestConstants.TEST_CONF);
   }
 
   @Before

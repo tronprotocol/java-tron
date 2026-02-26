@@ -24,6 +24,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.BalanceContract;
+import org.tron.common.TestConstants;
 
 @Slf4j
 public class CancelAllUnfreezeV2ActuatorTest extends BaseTest {
@@ -35,7 +36,7 @@ public class CancelAllUnfreezeV2ActuatorTest extends BaseTest {
   private static final long initBalance = 10_000_000_000L;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     RECEIVER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
     OWNER_ACCOUNT_INVALID =

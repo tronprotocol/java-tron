@@ -8,7 +8,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -21,6 +20,7 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
+import org.tron.common.TestConstants;
 
 public class ParticipateAssetIssueActuatorTest extends BaseTest {
 
@@ -41,7 +41,7 @@ public class ParticipateAssetIssueActuatorTest extends BaseTest {
   private static long AMOUNT = TOTAL_SUPPLY - (1000L) / TRX_NUM * NUM;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1234";
     TO_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     TO_ADDRESS_2 = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e048892";

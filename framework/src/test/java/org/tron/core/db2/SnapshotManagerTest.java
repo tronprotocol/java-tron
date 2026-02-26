@@ -21,7 +21,6 @@ import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -32,6 +31,7 @@ import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.TronError;
+import org.tron.common.TestConstants;
 
 @Slf4j
 public class SnapshotManagerTest {
@@ -45,7 +45,7 @@ public class SnapshotManagerTest {
   @Before
   public void init() {
     Args.setParam(new String[]{"-d", "output_SnapshotManager_test"},
-        Constant.TEST_CONF);
+        TestConstants.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     appT = ApplicationFactory.create(context);
     revokingDatabase = context.getBean(SnapshotManager.class);

@@ -14,7 +14,6 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Pair;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadNumberBlockException;
@@ -23,6 +22,7 @@ import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.BlockHeader.raw;
+import org.tron.common.TestConstants;
 
 @Slf4j
 public class KhaosDatabaseTest extends BaseTest {
@@ -31,7 +31,7 @@ public class KhaosDatabaseTest extends BaseTest {
   private KhaosDatabase khaosDatabase;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
   }
 
 

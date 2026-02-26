@@ -100,6 +100,7 @@ import org.tron.protos.contract.AccountContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.ShieldContract;
+import org.tron.common.TestConstants;
 
 
 @Slf4j
@@ -123,7 +124,7 @@ public class ManagerTest extends BlockGenerate {
   @Before
   public void init() throws IOException {
     Args.setParam(new String[]{"-d",
-        temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
+        temporaryFolder.newFolder().toString()}, TestConstants.TEST_CONF);
     Args.getInstance().setNodeListenPort(10000 + port.incrementAndGet());
     context = new TronApplicationContext(DefaultConfig.class);
 
@@ -723,7 +724,7 @@ public class ManagerTest extends BlockGenerate {
       BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
       ZksnarkException, EventBloomException {
-    Args.setParam(new String[]{}, Constant.TEST_CONF);
+    Args.setParam(new String[]{}, TestConstants.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     //  System.out.print("block store size:" + size + "\n");
     String key = PublicMethod.getRandomPrivateKey();
@@ -870,7 +871,7 @@ public class ManagerTest extends BlockGenerate {
       TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
       ZksnarkException, EventBloomException {
-    Args.setParam(new String[]{}, Constant.TEST_CONF);
+    Args.setParam(new String[]{}, TestConstants.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
     String key = PublicMethod.getRandomPrivateKey();
@@ -982,7 +983,7 @@ public class ManagerTest extends BlockGenerate {
       BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
       ZksnarkException, EventBloomException {
-    Args.setParam(new String[]{}, Constant.TEST_CONF);
+    Args.setParam(new String[]{}, TestConstants.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
     String key = PublicMethod.getRandomPrivateKey();;

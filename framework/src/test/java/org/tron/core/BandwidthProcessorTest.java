@@ -35,6 +35,7 @@ import org.tron.protos.Protocol.Transaction.raw;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
+import org.tron.common.TestConstants;
 
 @Slf4j
 public class BandwidthProcessorTest extends BaseTest {
@@ -56,7 +57,7 @@ public class BandwidthProcessorTest extends BaseTest {
 
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
     ASSET_NAME = "test_token";
     ASSET_NAME_V2 = "2";
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";

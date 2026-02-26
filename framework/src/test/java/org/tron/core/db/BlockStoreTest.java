@@ -7,11 +7,11 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.common.TestConstants;
 
 
 @Slf4j
@@ -22,7 +22,7 @@ public class BlockStoreTest extends BaseTest {
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath()},
-        Constant.TEST_CONF);
+        TestConstants.TEST_CONF);
   }
 
   private BlockCapsule getBlockCapsule(long number) {

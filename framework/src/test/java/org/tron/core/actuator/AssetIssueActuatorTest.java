@@ -15,7 +15,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -29,6 +28,7 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AccountContract.AccountCreateContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract.FrozenSupply;
+import org.tron.common.TestConstants;
 
 @Slf4j
 public class AssetIssueActuatorTest extends BaseTest {
@@ -47,7 +47,7 @@ public class AssetIssueActuatorTest extends BaseTest {
   private static long endTime = 0;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
     OWNER_ADDRESS_SECOND = Wallet
         .getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";

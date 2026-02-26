@@ -12,7 +12,6 @@ import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.ChainBaseManager;
-import org.tron.core.Constant;
 import org.tron.core.capsule.MarketOrderIdListCapsule;
 import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.config.args.Args;
@@ -21,12 +20,13 @@ import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.protos.Protocol.MarketOrderPair;
 import org.tron.protos.Protocol.MarketPrice;
+import org.tron.common.TestConstants;
 
 @Slf4j
 public class MarketPairPriceToOrderStoreTest extends BaseTest {
 
   static {
-    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath()}, TestConstants.TEST_CONF);
   }
 
   @After

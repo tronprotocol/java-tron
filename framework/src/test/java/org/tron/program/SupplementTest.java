@@ -20,7 +20,6 @@ import org.tron.common.entity.PeerInfo;
 import org.tron.common.utils.CompactEncoder;
 import org.tron.common.utils.JsonUtil;
 import org.tron.common.utils.Value;
-import org.tron.core.Constant;
 import org.tron.core.capsule.StorageRowCapsule;
 import org.tron.core.capsule.utils.RLP;
 import org.tron.core.config.TronLogShutdownHook;
@@ -28,6 +27,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.services.http.HttpSelfFormatFieldName;
 import org.tron.core.store.StorageRowStore;
 import org.tron.keystore.WalletUtils;
+import org.tron.common.TestConstants;
 
 public class SupplementTest extends BaseTest {
 
@@ -42,7 +42,7 @@ public class SupplementTest extends BaseTest {
   @BeforeClass
   public static void init() throws IOException {
     dbPath = dbPath();
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, TestConstants.TEST_CONF);
   }
 
   @Test

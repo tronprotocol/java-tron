@@ -7,7 +7,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
@@ -15,6 +14,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.store.TransactionRetStore;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.common.TestConstants;
 
 public class TransactionRetStoreTest extends BaseTest {
 
@@ -34,7 +34,7 @@ public class TransactionRetStoreTest extends BaseTest {
   static {
     Args.setParam(new String[]{"--output-directory", dbPath(),
         "--storage-db-directory", dbDirectory,
-        "--storage-index-directory", indexDirectory}, Constant.TEST_CONF);
+        "--storage-index-directory", indexDirectory}, TestConstants.TEST_CONF);
   }
 
   @BeforeClass

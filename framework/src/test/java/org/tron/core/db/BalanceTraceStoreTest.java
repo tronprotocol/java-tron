@@ -13,7 +13,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BlockBalanceTraceCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -21,6 +20,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.store.BalanceTraceStore;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.BalanceContract;
+import org.tron.common.TestConstants;
 
 
 public class BalanceTraceStoreTest extends BaseTest {
@@ -49,7 +49,7 @@ public class BalanceTraceStoreTest extends BaseTest {
         new String[]{
             "--output-directory", dbPath()
         },
-        Constant.TEST_CONF
+        TestConstants.TEST_CONF
     );
   }
 

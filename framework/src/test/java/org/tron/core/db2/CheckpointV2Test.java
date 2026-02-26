@@ -19,13 +19,13 @@ import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db2.RevokingDbWithCacheNewValueTest.TestRevokingTronStore;
 import org.tron.core.db2.core.Chainbase;
 import org.tron.core.db2.core.SnapshotManager;
+import org.tron.common.TestConstants;
 
 @Slf4j
 public class CheckpointV2Test {
@@ -38,7 +38,7 @@ public class CheckpointV2Test {
   @Before
   public void init() {
     Args.setParam(new String[]{"-d", "output_SnapshotManager_test"},
-        Constant.TEST_CONF);
+        TestConstants.TEST_CONF);
     Args.getInstance().getStorage().setCheckpointVersion(2);
     Args.getInstance().getStorage().setCheckpointSync(true);
     context = new TronApplicationContext(DefaultConfig.class);

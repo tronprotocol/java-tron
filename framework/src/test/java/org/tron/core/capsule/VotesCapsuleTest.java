@@ -12,11 +12,11 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.tron.common.utils.StringUtil;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.TransactionStoreTest;
 import org.tron.protos.Protocol.Vote;
+import org.tron.common.TestConstants;
 
 
 @Slf4j
@@ -35,7 +35,7 @@ public class VotesCapsuleTest {
   @BeforeClass
   public static void init() throws IOException {
     Args.setParam(new String[]{"--output-directory",
-        temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
+        temporaryFolder.newFolder().toString(), "--debug"}, TestConstants.TEST_CONF);
 
   }
 

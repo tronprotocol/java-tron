@@ -10,7 +10,6 @@ import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.ChainBaseManager;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -35,6 +34,7 @@ import org.tron.protos.Protocol.MarketPrice;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.MarketContract.MarketCancelOrderContract;
 import org.tron.protos.contract.MarketContract.MarketSellAssetContract;
+import org.tron.common.TestConstants;
 
 @Slf4j
 
@@ -51,7 +51,7 @@ public class MarketCancelOrderActuatorTest extends BaseTest {
   private static final String TRX = "_";
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
     OWNER_ADDRESS_FIRST =
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ADDRESS_SECOND =

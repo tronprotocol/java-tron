@@ -18,13 +18,13 @@ import org.mockito.Mockito;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.core.ChainBaseManager;
-import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
 import org.tron.core.net.service.effective.ResilienceService;
 import org.tron.p2p.connection.Channel;
+import org.tron.common.TestConstants;
 
 public class ResilienceServiceTest {
 
@@ -38,7 +38,7 @@ public class ResilienceServiceTest {
   @Before
   public void init() throws IOException {
     Args.setParam(new String[] {"--output-directory",
-        temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
+        temporaryFolder.newFolder().toString(), "--debug"}, TestConstants.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     chainBaseManager = context.getBean(ChainBaseManager.class);
     service = context.getBean(ResilienceService.class);

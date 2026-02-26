@@ -26,6 +26,7 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.ProposalUtil;
 import org.tron.core.utils.ProposalUtil.ProposalType;
 import org.tron.protos.Protocol;
+import org.tron.common.TestConstants;
 
 @Slf4j(topic = "actuator")
 public class ProposalUtilTest extends BaseTest {
@@ -44,7 +45,7 @@ public class ProposalUtilTest extends BaseTest {
    */
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
   }
   
   @Test

@@ -31,6 +31,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.services.http.GetBlockServlet;
 import org.tron.core.services.http.RateLimiterServlet;
 import org.tron.core.zen.ZksnarkInitService;
+import org.tron.common.TestConstants;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TronErrorTest {
@@ -81,14 +82,14 @@ public class TronErrorTest {
   @Test
   public void witnessInitTest() {
     TronError thrown = assertThrows(TronError.class, () -> {
-      Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
+      Args.setParam(new String[]{"--witness"}, TestConstants.TEST_CONF);
     });
     assertEquals(TronError.ErrCode.WITNESS_INIT, thrown.getErrCode());
   }
 
   @Test
   public void rateLimiterServletInitTest() {
-    Args.setParam(new String[]{}, Constant.TEST_CONF);
+    Args.setParam(new String[]{}, TestConstants.TEST_CONF);
     RateLimiterInitialization rateLimiter = new RateLimiterInitialization();
     Args.getInstance().setRateLimiterInitialization(rateLimiter);
     Map<String, String> item = new HashMap<>();

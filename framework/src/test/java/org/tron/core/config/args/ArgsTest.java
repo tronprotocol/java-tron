@@ -39,6 +39,7 @@ import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
 import org.tron.core.Constant;
 import org.tron.core.config.Configuration;
+import org.tron.common.TestConstants;
 
 @Slf4j
 public class ArgsTest {
@@ -57,7 +58,7 @@ public class ArgsTest {
 
   @Test
   public void get() {
-    Args.setParam(new String[] {"-c", Constant.TEST_CONF}, Constant.TESTNET_CONF);
+    Args.setParam(new String[] {"-c", TestConstants.TEST_CONF}, Constant.NET_CONF);
 
     CommonParameter parameter = Args.getInstance();
 
@@ -132,13 +133,13 @@ public class ArgsTest {
   @Test
   public void testIpFromLibP2p()
       throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-    Args.setParam(new String[] {}, Constant.TEST_CONF);
+    Args.setParam(new String[] {}, TestConstants.TEST_CONF);
     CommonParameter parameter = Args.getInstance();
 
     String configuredExternalIp = parameter.getNodeExternalIp();
     Assert.assertEquals("46.168.1.1", configuredExternalIp);
 
-    Config config = Configuration.getByFileName(null, Constant.TEST_CONF);
+    Config config = Configuration.getByFileName(null, TestConstants.TEST_CONF);
     Config config3 = config.withoutPath(Constant.NODE_DISCOVERY_EXTERNAL_IP);
 
     CommonParameter.getInstance().setNodeExternalIp(null);
@@ -153,7 +154,7 @@ public class ArgsTest {
   @Test
   public void testOldRewardOpt() {
     thrown.expect(IllegalArgumentException.class);
-    Args.setParam(new String[] {"-c", "args-test.conf"}, Constant.TESTNET_CONF);
+    Args.setParam(new String[] {"-c", "args-test.conf"}, Constant.NET_CONF);
   }
 
   @Test

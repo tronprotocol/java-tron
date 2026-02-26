@@ -29,13 +29,14 @@ import org.tron.core.config.args.Args;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.BlockHeader.raw;
+import org.tron.common.TestConstants;
 
 @Slf4j
 public class BlockUtilTest {
 
   @Before
   public void initConfiguration() {
-    Args.setParam(new String[]{}, Constant.TEST_CONF);
+    Args.setParam(new String[]{}, TestConstants.TEST_CONF);
   }
 
   @After

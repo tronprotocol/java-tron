@@ -15,6 +15,7 @@ import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.net.TronNetService;
 import org.tron.p2p.P2pConfig;
+import org.tron.common.TestConstants;
 
 public class DynamicArgsTest {
   protected TronApplicationContext context;
@@ -25,7 +26,7 @@ public class DynamicArgsTest {
   @Before
   public void init() throws IOException {
     Args.setParam(new String[]{"--output-directory", temporaryFolder.newFolder().toString()},
-        Constant.TEST_CONF);
+        TestConstants.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     dynamicArgs = context.getBean(DynamicArgs.class);
 
@@ -48,7 +49,7 @@ public class DynamicArgsTest {
 
     TronNetService tronNetService = context.getBean(TronNetService.class);
     ReflectUtils.setFieldValue(tronNetService, "p2pConfig", new P2pConfig());
-    File config = new File(Constant.TESTNET_CONF);
+    File config = new File(Constant.NET_CONF);
     if (!config.exists()) {
       try {
         config.createNewFile();

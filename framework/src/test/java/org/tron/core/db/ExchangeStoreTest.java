@@ -7,12 +7,12 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.core.Constant;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.ExchangeStore;
 import org.tron.protos.Protocol;
+import org.tron.common.TestConstants;
 
 public class ExchangeStoreTest extends BaseTest {
 
@@ -26,7 +26,7 @@ public class ExchangeStoreTest extends BaseTest {
         new String[] {
             "--output-directory", dbPath()
         },
-        Constant.TEST_CONF
+        TestConstants.TEST_CONF
     );
   }
 

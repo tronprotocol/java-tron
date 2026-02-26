@@ -7,11 +7,11 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
+import org.tron.common.TestConstants;
 
 public class MarketPairToPriceStoreTest extends BaseTest {
 
@@ -26,7 +26,7 @@ public class MarketPairToPriceStoreTest extends BaseTest {
         new String[]{
             "--output-directory", dbPath()
         },
-        Constant.TEST_CONF
+        TestConstants.TEST_CONF
     );
   }
 

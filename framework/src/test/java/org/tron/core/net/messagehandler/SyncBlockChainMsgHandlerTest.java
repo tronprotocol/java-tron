@@ -13,7 +13,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.DefaultConfig;
@@ -23,6 +22,7 @@ import org.tron.core.net.message.sync.BlockInventoryMessage;
 import org.tron.core.net.message.sync.SyncBlockChainMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.p2p.connection.Channel;
+import org.tron.common.TestConstants;
 
 public class SyncBlockChainMsgHandlerTest {
 
@@ -35,7 +35,7 @@ public class SyncBlockChainMsgHandlerTest {
   @Before
   public void init() throws Exception {
     Args.setParam(new String[]{"--output-directory",
-        temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
+        temporaryFolder.newFolder().toString(), "--debug"}, TestConstants.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     handler = context.getBean(SyncBlockChainMsgHandler.class);
     peer = context.getBean(PeerConnection.class);

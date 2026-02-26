@@ -8,20 +8,20 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.adv.InventoryMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol.Inventory.InventoryType;
+import org.tron.common.TestConstants;
 
 public class InventoryMsgHandlerTest {
 
   @Test
   public void testProcessMessage() throws Exception {
     InventoryMsgHandler handler = new InventoryMsgHandler();
-    Args.setParam(new String[] {}, Constant.TEST_CONF);
+    Args.setParam(new String[] {}, TestConstants.TEST_CONF);
     Args.logConfig();
 
     InventoryMessage msg = new InventoryMessage(new ArrayList<>(), InventoryType.TRX);

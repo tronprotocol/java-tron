@@ -3,10 +3,7 @@ package org.tron.core;
 public class Constant {
 
   //config for testnet, mainnet, beta
-  public static final String TESTNET_CONF = "config.conf";
-
-  //config for junit test
-  public static final String TEST_CONF = "config-test.conf";
+  public static final String NET_CONF = "config.conf";
 
   // locate in storageDbDirectory, store the db infos,
   // now only has the split block number

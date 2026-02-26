@@ -12,7 +12,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.StringUtil;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
 import org.tron.protos.Protocol.AccountType;
@@ -21,6 +20,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.Transaction.raw;
+import org.tron.common.TestConstants;
 
 @Slf4j
 public class TransactionCapsuleTest extends BaseTest {
@@ -29,7 +29,7 @@ public class TransactionCapsuleTest extends BaseTest {
 
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath()}, TestConstants.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "03702350064AD5C1A8AA6B4D74B051199CFF8EA7";
   }
 

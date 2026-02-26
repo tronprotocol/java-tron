@@ -32,7 +32,6 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.consensus.dpos.DposSlot;
 import org.tron.core.ChainBaseManager;
-import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -43,6 +42,7 @@ import org.tron.core.db.BlockGenerate;
 import org.tron.core.db.Manager;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.protos.Protocol;
+import org.tron.common.TestConstants;
 
 @Slf4j
 public abstract class ConditionallyStopTest extends BlockGenerate {
@@ -82,7 +82,7 @@ public abstract class ConditionallyStopTest extends BlockGenerate {
 
     initDbPath();
     logger.info("Full node running.");
-    Args.setParam(new String[] {"-d", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-d", dbPath}, TestConstants.TEST_CONF);
     Args.getInstance().setNodeListenPort(10000 + port.incrementAndGet());
 
     initParameter(Args.getInstance());

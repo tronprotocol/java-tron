@@ -19,7 +19,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -30,6 +29,7 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.BalanceContract.TransferContract;
+import org.tron.common.TestConstants;
 
 @Slf4j
 public class TransactionExpireTest {
@@ -44,7 +44,7 @@ public class TransactionExpireTest {
   @Before
   public void init() throws IOException {
     Args.setParam(new String[] {"--output-directory",
-        temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
+        temporaryFolder.newFolder().toString()}, TestConstants.TEST_CONF);
     CommonParameter.PARAMETER.setMinEffectiveConnection(0);
     CommonParameter.getInstance().setP2pDisable(true);
 

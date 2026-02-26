@@ -14,8 +14,8 @@ import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.tron.common.BaseTest;
-import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
+import org.tron.common.TestConstants;
 
 public class GetMemoFeePricesServletTest extends BaseTest {
 
@@ -24,7 +24,7 @@ public class GetMemoFeePricesServletTest extends BaseTest {
 
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{"-d",dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d",dbPath()}, TestConstants.TEST_CONF);
   }
 
   @Test

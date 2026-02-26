@@ -47,10 +47,10 @@ import org.junit.rules.TemporaryFolder;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PublicMethod;
-import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.exception.TronError;
+import org.tron.common.TestConstants;
 
 @Slf4j
 public class LevelDbDataSourceImplTest {
@@ -84,7 +84,7 @@ public class LevelDbDataSourceImplTest {
   @Before
   public void initDb() throws IOException {
     Args.setParam(new String[]{"--output-directory",
-        temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
+        temporaryFolder.newFolder().toString()}, TestConstants.TEST_CONF);
     dataSourceTest = new LevelDbDataSourceImpl(
         Args.getInstance().getOutputDirectory() + File.separator, "test_levelDb");
   }

@@ -9,15 +9,15 @@ import org.mockito.Mockito;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
+import org.tron.common.TestConstants;
 
 public class TronNetDelegateTest {
 
   @Test
   public void test() throws Exception {
-    Args.setParam(new String[] {}, Constant.TEST_CONF);
+    Args.setParam(new String[] {}, TestConstants.TEST_CONF);
     CommonParameter parameter = Args.getInstance();
     Args.logConfig();
     parameter.setUnsolidifiedBlockCheck(true);

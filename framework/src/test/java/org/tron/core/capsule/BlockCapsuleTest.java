@@ -22,6 +22,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadItemException;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.BalanceContract.TransferContract;
+import org.tron.common.TestConstants;
 
 @Slf4j
 public class BlockCapsuleTest {
@@ -41,7 +42,7 @@ public class BlockCapsuleTest {
   @BeforeClass
   public static void init() throws IOException {
     Args.setParam(new String[]{"-d", temporaryFolder.newFolder().toString()},
-        Constant.TEST_CONF);
+        TestConstants.TEST_CONF);
   }
 
   @AfterClass

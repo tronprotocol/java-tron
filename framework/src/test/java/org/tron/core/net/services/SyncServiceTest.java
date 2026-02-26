@@ -19,7 +19,6 @@ import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ReflectUtils;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -31,6 +30,7 @@ import org.tron.core.net.peer.TronState;
 import org.tron.core.net.service.sync.SyncService;
 import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol;
+import org.tron.common.TestConstants;
 
 public class SyncServiceTest {
   protected TronApplicationContext context;
@@ -52,7 +52,7 @@ public class SyncServiceTest {
   @Before
   public void init() throws Exception {
     Args.setParam(new String[]{"--output-directory",
-            temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
+            temporaryFolder.newFolder().toString(), "--debug"}, TestConstants.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     service = context.getBean(SyncService.class);
     p2pEventHandler = context.getBean(P2pEventHandlerImpl.class);

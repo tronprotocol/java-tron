@@ -52,7 +52,6 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -108,6 +107,7 @@ import org.tron.protos.contract.StorageContract.UpdateBrokerageContract;
 import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
 import org.tron.protos.contract.WitnessContract.WitnessCreateContract;
 import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
+import org.tron.common.TestConstants;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class RpcApiServicesTest {
@@ -132,7 +132,7 @@ public class RpcApiServicesTest {
 
   @BeforeClass
   public static void init() throws IOException {
-    Args.setParam(new String[]{"-d", temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", temporaryFolder.newFolder().toString()}, TestConstants.TEST_CONF);
     String OWNER_ADDRESS = Wallet.getAddressPreFixString()
         + "548794500882809695a8a687866e76d4271a1abc";
     getInstance().setRpcEnable(true);

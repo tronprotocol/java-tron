@@ -16,7 +16,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
 import org.tron.common.utils.client.utils.AbiUtil;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.args.Args;
@@ -28,6 +27,7 @@ import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.common.TestConstants;
 
 @Slf4j
 public class BatchSendTest extends BaseTest {
@@ -39,7 +39,7 @@ public class BatchSendTest extends BaseTest {
   private static final AccountCapsule ownerCapsule;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"}, TestConstants.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     TRANSFER_TO = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
 

@@ -7,10 +7,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.DelegatedResourceStore;
+import org.tron.common.TestConstants;
 
 public class DelegatedResourceStoreTest extends BaseTest {
   private static final long BALANCE = 1_000_000;
@@ -27,7 +27,7 @@ public class DelegatedResourceStoreTest extends BaseTest {
             new String[]{
                 "--output-directory", dbPath(),
             },
-            Constant.TEST_CONF
+            TestConstants.TEST_CONF
     );
   }
 
