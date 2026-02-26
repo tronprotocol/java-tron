@@ -9,12 +9,10 @@ import javax.servlet.http.HttpServletResponseWrapper;
 
 public class CharResponseWrapper extends HttpServletResponseWrapper {
 
-  private ServletOutputStream outputStream;
+  private ServletOutputStreamCopy outputStream;
   private PrintWriter writer;
-  private ServletOutputStreamCopy streamCopy;
 
-
-  public CharResponseWrapper(HttpServletResponse response) throws IOException {
+  public CharResponseWrapper(HttpServletResponse response) {
     super(response);
   }
 
@@ -25,11 +23,10 @@ public class CharResponseWrapper extends HttpServletResponseWrapper {
     }
 
     if (outputStream == null) {
-      outputStream = getResponse().getOutputStream();
-      streamCopy = new ServletOutputStreamCopy(outputStream);
+      outputStream = new ServletOutputStreamCopy(super.getOutputStream());
     }
 
-    return streamCopy;
+    return outputStream;
   }
 
   @Override
@@ -39,10 +36,10 @@ public class CharResponseWrapper extends HttpServletResponseWrapper {
     }
 
     if (writer == null) {
-      streamCopy = new ServletOutputStreamCopy(getResponse().getOutputStream());
+      outputStream = new ServletOutputStreamCopy(super.getOutputStream());
       // set auto flash so that copy can be valid
-      writer = new PrintWriter(new OutputStreamWriter(streamCopy,
-          getResponse().getCharacterEncoding()), true);
+      writer = new PrintWriter(new OutputStreamWriter(outputStream, super.getCharacterEncoding()),
+          true);
     }
 
     return writer;
@@ -52,13 +49,16 @@ public class CharResponseWrapper extends HttpServletResponseWrapper {
   public void flushBuffer() throws IOException {  // flush both stream
     if (writer != null) {
       writer.flush();
-    } else if (outputStream != null) {
-      streamCopy.flush();
     }
+    if (outputStream != null) {
+      outputStream.flush();
+    }
+    super.flushBuffer();
   }
 
-  public int getByteSize() {
-    return streamCopy == null ? 0 : streamCopy.getStreamByteSize();
+  public long getByteSize() throws IOException {
+    flushBuffer();
+    return outputStream == null ? 0 : outputStream.getStreamByteSize();
   }
 
 }

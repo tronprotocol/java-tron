@@ -1,6 +1,5 @@
 package org.tron.core.services.filter;
 
-import com.google.common.base.Strings;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -18,9 +17,9 @@ import org.tron.core.metrics.MetricsUtil;
 @Slf4j(topic = "httpInterceptor")
 public class HttpInterceptor implements Filter {
 
-  private final int HTTP_SUCCESS = 200;
-  private final int HTTP_BAD_REQUEST = 400;
-  private final int HTTP_NOT_ACCEPTABLE = 406;
+  private static final int HTTP_SUCCESS = 200;
+  private static final int HTTP_BAD_REQUEST = 400;
+  private static final int HTTP_NOT_ACCEPTABLE = 406;
 
   @Override
   public void init(FilterConfig filterConfig) {
@@ -36,20 +35,19 @@ public class HttpInterceptor implements Filter {
       }
       String contextPath = ((HttpServletRequest) request).getContextPath();
       endpoint = contextPath + ((HttpServletRequest) request).getServletPath();
-      CharResponseWrapper responseWrapper = new CharResponseWrapper(
-              (HttpServletResponse) response);
+      CharResponseWrapper responseWrapper = new CharResponseWrapper((HttpServletResponse) response);
       chain.doFilter(request, responseWrapper);
-      HttpServletResponse resp = (HttpServletResponse) response;
-      int size = responseWrapper.getByteSize();
+      long size = responseWrapper.getByteSize();
+      int status = responseWrapper.getStatus();
       MetricsUtil.meterMark(MetricsKey.NET_API_OUT_TRAFFIC, size);
       MetricsUtil.meterMark(MetricsKey.NET_API_QPS);
-      if (resp.getStatus() >= HTTP_BAD_REQUEST && resp.getStatus() <= HTTP_NOT_ACCEPTABLE) {
+      if (status >= HTTP_BAD_REQUEST && status <= HTTP_NOT_ACCEPTABLE) {
         MetricsUtil.meterMark(MetricsKey.NET_API_FAIL_QPS);
         Metrics.histogramObserve(MetricKeys.Histogram.HTTP_BYTES,
                 size, MetricLabels.UNDEFINED, String.valueOf(responseWrapper.getStatus()));
         return;
       }
-      if (resp.getStatus() == HTTP_SUCCESS) {
+      if (status == HTTP_SUCCESS) {
         MetricsUtil.meterMark(MetricsKey.NET_API_DETAIL_QPS + endpoint);
       } else {
         MetricsUtil.meterMark(MetricsKey.NET_API_FAIL_QPS);
@@ -57,7 +55,7 @@ public class HttpInterceptor implements Filter {
       }
       MetricsUtil.meterMark(MetricsKey.NET_API_DETAIL_OUT_TRAFFIC + endpoint, size);
       Metrics.histogramObserve(MetricKeys.Histogram.HTTP_BYTES,
-              size, endpoint, String.valueOf(responseWrapper.getStatus()));
+          size, endpoint, String.valueOf(status));
     } catch (Exception e) {
       String key = MetricsKey.NET_API_DETAIL_QPS + endpoint;
       if (MetricsUtil.getMeters(MetricsKey.NET_API_DETAIL_QPS).containsKey(key)) {
