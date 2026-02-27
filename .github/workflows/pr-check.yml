@@ -136,18 +136,28 @@ jobs:
             plugins/build/reports/checkstyle/
 
   test:
-    name: Unit Tests
-    runs-on: ubuntu-latest
+    name: Unit Tests (JDK ${{ matrix.java }} / ${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
     needs: build
     timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - java: '8'
+            runner: ubuntu-latest
+            arch: x86_64
+          - java: '17'
+            runner: ubuntu-24.04-arm
+            arch: aarch64
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up JDK 8
+      - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v4
         with:
-          java-version: '8'
+          java-version: ${{ matrix.java }}
           distribution: 'temurin'
 
       - name: Cache Gradle packages
@@ -156,8 +166,8 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
-          restore-keys: ${{ runner.os }}-gradle-
+          key: ${{ runner.os }}-${{ matrix.arch }}-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
+          restore-keys: ${{ runner.os }}-${{ matrix.arch }}-gradle-
 
       - name: Run tests
         run: ./gradlew test
@@ -166,6 +176,6 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: test-reports
+          name: test-reports-${{ matrix.arch }}
           path: |
             **/build/reports/tests/
