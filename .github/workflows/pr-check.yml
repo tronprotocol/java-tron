@@ -110,7 +110,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ matrix.arch }}-gradle-
 
       - name: Build
-        run: ./gradlew clean build
+        run: ./gradlew clean build --no-daemon
 
   docker-build-centos8:
     name: Build centos8 (JDK 8 / x86_64)
