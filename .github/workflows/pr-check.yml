@@ -182,6 +182,10 @@ jobs:
     container:
       image: eclipse-temurin:8-jdk
 
+    defaults:
+      run:
+        shell: bash
+
     env:
       GRADLE_USER_HOME: /github/home/.gradle
 
@@ -222,6 +226,10 @@ jobs:
 
     permissions:
       contents: read
+
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - name: Download JaCoCo artifacts (centos8)
