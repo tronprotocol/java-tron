@@ -128,7 +128,7 @@ tail -f ./logs/tron.log
 Use [TronScan](https://tronscan.org/#/), TRON's official block explorer, to view main network transactions, blocks, accounts, witness voting, and governance metrics, etc.
 
 ### 2. Join Nile test network
-Utilize the `-c` flag to direct the node to the configuration file corresponding to the desired network. Since Nile TestNet may incorporate features not yet available on the MainNet, it is **strongly advised** to compile the source code following the [Building the Source Code](https://github.com/tron-nile-testnet/nile-testnet/blob/master/README.md#building-the-source-code) instructions for the Nile TestNet.
+Utilize the `-c` flag to direct the node to the configuration file corresponding to the desired network. Since Nile Testnet may incorporate features not yet available on the Mainnet, it is **strongly advised** to compile the source code following the [Building the Source Code](https://github.com/tron-nile-testnet/nile-testnet/blob/master/README.md#building-the-source-code) instructions for the Nile Testnet.
 
 ```bash
 java -jar ./build/libs/FullNode.jar -c config-nile.conf
@@ -160,7 +160,7 @@ You could also test the process by connecting to a testnet or setting up a priva
 
 ## Programmatically interfacing FullNode
 
-Upon the FullNode startup successfully, interaction with the TRON network is facilitated through a comprehensive suite of programmatic interfaces exposed by java-tron:
+Once the FullNode starts successfully, interaction with the TRON network is facilitated through a comprehensive suite of programmatic interfaces exposed by java-tron:
 - **HTTP API**: See the complete [HTTP API reference and endpoint list](https://tronprotocol.github.io/documentation-en/api/http/).
 - **gRPC**: High-performance APIs suitable for service-to-service integration. See the supported [gRPC reference](https://tronprotocol.github.io/documentation-en/api/rpc/).
 - **JSON-RPC**: Provides Ethereum-compatible JSON-RPC methods for logs, transactions and contract calls, etc. See the supported [JSON-RPC methods](https://tronprotocol.github.io/documentation-en/api/json-rpc/).
