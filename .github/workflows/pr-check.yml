@@ -242,6 +242,7 @@ jobs:
         with:
           files: |
             artifacts/jacoco-centos8/**/jacocoTestReport.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
 
       - name: Wait for Codecov processing
