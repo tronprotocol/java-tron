@@ -173,7 +173,6 @@ jobs:
             **/build/test-results/**
           if-no-files-found: error
 
-
   docker-build-debian11:
     name: Build debian11 (JDK 8 / x86_64)
     needs: pr-lint
