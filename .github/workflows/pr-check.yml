@@ -113,16 +113,19 @@ jobs:
         run: ./gradlew clean build
 
   docker-build:
-    name: Build ${{ matrix.image }}(JDK 8 / x86_64)
+    name: Build ${{ matrix.os-name }}(JDK 8 / x86_64)
     needs: pr-lint
     runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
       matrix:
-        image:
-          - centos:7
-          - debian:11
+        include:
+          - os-name: centos8
+            image: quay.io/centos/centos:stream8
+
+          - os-name: debian11
+            image: eclipse-temurin:8-jdk
 
     container:
       image: ${{ matrix.image }}
@@ -141,7 +144,7 @@ jobs:
             yum groupinstall -y "Development Tools"
           else
             apt update
-            apt install -y openjdk-8-jdk git wget unzip build-essential
+            apt-get install -y git wget unzip build-essential
           fi
 
       - name: Check Java version
