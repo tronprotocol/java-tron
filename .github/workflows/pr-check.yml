@@ -254,7 +254,7 @@ jobs:
           CODECOV_REPO: java-tron
           COMMIT_ID: ${{ github.event.pull_request.head.sha }}
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
-          # 与你原脚本一致：不算新增行数就保持 0，跳过 patch coverage gate
+          # if ADDED_NUM is 0，skip patch coverage gate
           ADDED_NUM: "0"
         run: |
           set -euxo pipefail
@@ -264,7 +264,7 @@ jobs:
           echo "commit: $COMMIT_ID"
           echo "base branch: $BASE_BRANCH"
 
-          # 1) 当前 commit 覆盖率、父 commit 覆盖率、patch 覆盖率
+          # 1) current commit coverage、parent commit coverage、patch coverage
           currentRes=$(
             curl -sS 'https://api.codecov.io/graphql/github' \
               -H 'content-type: application/json' \
@@ -289,7 +289,7 @@ jobs:
           echo "base_cov(parent commit)=$base_cov"
           echo "patch_cov=$patch_cov"
 
-          # 2) base 分支 head 覆盖率（target）
+          # 2) base branch head coverage（target）
           parent_cov=$(
             curl -sS 'https://api.codecov.io/graphql/github' \
               -H 'content-type: application/json; charset=utf-8' \
@@ -305,7 +305,7 @@ jobs:
 
           echo "parent_cov(base branch head)=$parent_cov"
 
-          # 3) Gate 规则（复刻你原脚本）
+          # 3) Gate rule
           if [ "$(echo "$self_cov <= 0" | bc)" -eq 1 ]; then
             echo "get current commit coverage failed !!!!"
             exit 1
@@ -320,7 +320,7 @@ jobs:
           if [ "$(echo "$self_cov - $base_cov < 0" | bc)" -eq 1 ]; then
             echo "self_cov: $self_cov   parent: $base_cov"
             echo "222-parent code coverage has decreased, please add unit test!"
-            # exit 1  # 原脚本是注释掉的，这里保持一致
+            # exit 1  # skip compare ?
           fi
 
           if [ "$ADDED_NUM" -eq 0 ]; then
@@ -330,7 +330,7 @@ jobs:
 
           if [ "$(echo "$patch_cov <= 80" | bc)" -eq 1 ]; then
             echo "patch coverage is too low !!!!"
-            # exit 1  # 原脚本注释掉了，这里保持一致
+            # exit 1  # skip compare ?
           fi
 
   checkstyle:
