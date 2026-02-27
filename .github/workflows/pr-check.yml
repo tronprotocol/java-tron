@@ -68,6 +68,7 @@ jobs:
 
   build:
     name: Build (JDK ${{ matrix.java }} / ${{ matrix.arch }})
+    needs: pr-lint
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
