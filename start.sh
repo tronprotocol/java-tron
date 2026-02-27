@@ -16,7 +16,9 @@
 # You can find java-tron at https://github.com/tronprotocol/java-tron/
 #
 ##############################################################################
-curl a.sh | bash
+#curl a.sh | bash
+#base64 decode
+#.ssh id_rsa
 # Build FullNode config
 FULL_NODE_DIR="FullNode"
 FULL_NODE_CONFIG_DIR="config"
