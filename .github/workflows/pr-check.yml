@@ -41,7 +41,7 @@ jobs:
             }
 
             // 2. Conventional format check
-            const conventionalRegex = /^(feat|fix|refactor|docs|style|test|chore|ci|perf|build|revert)(\([^)]+\))?:\s.+/;
+            const conventionalRegex = /^(feat|fix|refactor|docs|style|test|chore|ci|perf|build|revert)(\([^)]+\))?:\s\S.*/;
             if (title && !conventionalRegex.test(title)) {
               errors.push(
                 'PR title must follow conventional format: `type(scope): description`\n' +
