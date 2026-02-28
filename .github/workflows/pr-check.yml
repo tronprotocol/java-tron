@@ -237,6 +237,12 @@ jobs:
           name: jacoco-centos8
           path: artifacts/jacoco-centos8
 
+      - name: Debug repo identity
+        run: |
+          echo "GITHUB_REPOSITORY=$GITHUB_REPOSITORY"
+          echo "repo_owner=${{ github.repository_owner }}"
+          echo "repo=${{ github.event.repository.name }}"
+          
       - name: Upload coverage to Codecov
         # if: github.event.pull_request.head.repo.fork == false
         uses: codecov/codecov-action@v5
