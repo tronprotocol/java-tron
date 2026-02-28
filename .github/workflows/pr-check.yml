@@ -238,7 +238,7 @@ jobs:
           path: artifacts/jacoco-centos8
 
       - name: Upload coverage to Codecov
-        if: github.event.pull_request.head.repo.fork == false
+        # if: github.event.pull_request.head.repo.fork == false
         uses: codecov/codecov-action@v5
         with:
           files: |
