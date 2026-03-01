@@ -9,7 +9,6 @@ import org.tron.common.exit.ExitManager;
 import org.tron.common.log.LogService;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.Metrics;
-import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 
@@ -21,7 +20,7 @@ public class FullNode {
    */
   public static void main(String[] args) {
     ExitManager.initExceptionHandler();
-    Args.setParam(args, Constant.NET_CONF);
+    Args.setParam(args, "config.conf");
     CommonParameter parameter = Args.getInstance();
 
     LogService.load(parameter.getLogbackPath());

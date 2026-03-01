@@ -1,7 +1,5 @@
 package org.tron.core.config.args;
 
-import static org.apache.commons.lang3.StringUtils.isNoneBlank;
-
 import com.typesafe.config.Config;
 import java.io.File;
 import java.net.InetAddress;
@@ -25,6 +23,7 @@ import org.tron.core.net.TronNetService;
 public class DynamicArgs {
   private final CommonParameter parameter = Args.getInstance();
 
+  private File configFile;
   private long lastModified = 0;
 
   private ScheduledExecutorService reloadExecutor;
@@ -36,11 +35,12 @@ public class DynamicArgs {
       reloadExecutor = ExecutorServiceManager.newSingleThreadScheduledExecutor(esName);
       logger.info("Start the dynamic loading configuration service");
       long checkInterval = parameter.getDynamicConfigCheckInterval();
-      File config = getConfigFile();
-      if (config == null) {
+      configFile = new File(parameter.getConfigFilePath());
+      if (!configFile.exists()) {
+        logger.warn("Configuration path is required! No such file {}", configFile);
         return;
       }
-      lastModified = config.lastModified();
+      lastModified = configFile.lastModified();
       reloadExecutor.scheduleWithFixedDelay(() -> {
         try {
           run();
@@ -52,36 +52,16 @@ public class DynamicArgs {
   }
 
   public void run() {
-    File config = getConfigFile();
-    if (config != null) {
-      long lastModifiedTime = config.lastModified();
-      if (lastModifiedTime > lastModified) {
-        reload();
-        lastModified = lastModifiedTime;
-      }
+    long lastModifiedTime = configFile.lastModified();
+    if (lastModifiedTime > lastModified) {
+      reload();
+      lastModified = lastModifiedTime;
     }
-  }
-
-  private File getConfigFile() {
-    String confFilePath;
-    if (isNoneBlank(parameter.getShellConfFileName())) {
-      confFilePath = parameter.getShellConfFileName();
-    } else  {
-      confFilePath = Constant.NET_CONF;
-    }
-
-    File confFile = new File(confFilePath);
-    if (!confFile.exists()) {
-      logger.warn("Configuration path is required! No such file {}", confFile);
-      return null;
-    }
-    return confFile;
   }
 
   public void reload() {
     logger.debug("Reloading ... ");
-    Config config = Configuration.getByFileName(parameter.getShellConfFileName(),
-        Constant.NET_CONF);
+    Config config = Configuration.getByFileName(parameter.getConfigFilePath(), null);
 
     updateActiveNodes(config);
 

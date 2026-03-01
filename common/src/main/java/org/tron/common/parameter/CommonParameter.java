@@ -32,6 +32,9 @@ public class CommonParameter {
   @Parameter(names = {"-c", "--config"}, description = "Config file (default:config.conf)")
   public String shellConfFileName = "";
   @Getter
+  @Setter
+  public String configFilePath = "";
+  @Getter
   @Parameter(names = {"-d", "--output-directory"},
       description = "Data directory for the databases (default:output-directory)")
   public String outputDirectory = "output-directory";

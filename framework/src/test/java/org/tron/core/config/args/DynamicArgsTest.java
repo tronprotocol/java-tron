@@ -12,7 +12,6 @@ import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ReflectUtils;
-import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.net.TronNetService;
 import org.tron.p2p.P2pConfig;
@@ -41,15 +40,21 @@ public class DynamicArgsTest {
   @Test
   public void start() {
     CommonParameter parameter = Args.getInstance();
+    // configFilePath should be resolved from confFileName at startup
+    Assert.assertEquals(TestConstants.TEST_CONF, parameter.getConfigFilePath());
     Assert.assertTrue(parameter.isDynamicConfigEnable());
     Assert.assertEquals(600, parameter.getDynamicConfigCheckInterval());
 
     dynamicArgs.init();
+    // configFile should be initialized from configFilePath during init()
+    File configFile = (File) ReflectUtils.getFieldObject(dynamicArgs, "configFile");
+    Assert.assertNotNull(configFile);
+    Assert.assertEquals(TestConstants.TEST_CONF, configFile.getName());
     Assert.assertEquals(0, (long) ReflectUtils.getFieldObject(dynamicArgs, "lastModified"));
 
     TronNetService tronNetService = context.getBean(TronNetService.class);
     ReflectUtils.setFieldValue(tronNetService, "p2pConfig", new P2pConfig());
-    File config = new File(Constant.NET_CONF);
+    File config = new File(parameter.getConfigFilePath());
     if (!config.exists()) {
       try {
         config.createNewFile();

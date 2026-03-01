@@ -101,6 +101,7 @@ public class Args extends CommonParameter {
 
   public static void clearParam() {
     PARAMETER.shellConfFileName = "";
+    PARAMETER.configFilePath = "";
     PARAMETER.outputDirectory = "output-directory";
     PARAMETER.help = false;
     PARAMETER.witness = false;
@@ -402,6 +403,9 @@ public class Args extends CommonParameter {
       exit(0);
     }
 
+    PARAMETER.setConfigFilePath(
+        StringUtils.isNoneBlank(PARAMETER.shellConfFileName)
+            ? PARAMETER.shellConfFileName : confFileName);
     Config config = Configuration.getByFileName(PARAMETER.shellConfFileName, confFileName);
     setParam(config);
   }
@@ -411,10 +415,17 @@ public class Args extends CommonParameter {
    */
   public static void setParam(final Config config) {
 
-    if (config.hasPath(Constant.NET_TYPE)
-        && Constant.TESTNET.equalsIgnoreCase(config.getString(Constant.NET_TYPE))) {
-      Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_TESTNET);
-      Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_TESTNET);
+    if (config.hasPath(Constant.NET_ADDRESS_PREFIX)) {
+      String prefix = config.getString(Constant.NET_ADDRESS_PREFIX)
+          .replace("'", "").replace("\"", "").trim();
+      byte prefixByte;
+      if (prefix.startsWith("0x") || prefix.startsWith("0X")) {
+        prefixByte = (byte) Integer.parseInt(prefix.substring(2), 16);
+      } else {
+        prefixByte = (byte) Integer.parseInt(prefix, 16);
+      }
+      Wallet.setAddressPreFixByte(prefixByte);
+      Wallet.setAddressPreFixString(String.format("%02x", prefixByte));
     } else {
       Wallet.setAddressPreFixByte(ADD_PRE_FIX_BYTE_MAINNET);
       Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_MAINNET);

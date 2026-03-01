@@ -2,8 +2,6 @@ package org.tron.core;
 
 public class Constant {
 
-  //config for testnet, mainnet, beta
-  public static final String NET_CONF = "config.conf";
 
   // locate in storageDbDirectory, store the db infos,
   // now only has the split block number
@@ -13,8 +11,6 @@ public class Constant {
 
   public static final byte ADD_PRE_FIX_BYTE_MAINNET = (byte) 0x41;   //41 + address
   public static final String ADD_PRE_FIX_STRING_MAINNET = "41";
-  public static final byte ADD_PRE_FIX_BYTE_TESTNET = (byte) 0xa0;   //a0 + address
-  public static final String ADD_PRE_FIX_STRING_TESTNET = "a0";
   public static final int STANDARD_ADDRESS_SIZE = 20;
   public static final int TRON_ADDRESS_SIZE = 21;
 
@@ -67,7 +63,7 @@ public class Constant {
 
 
   // Configuration items
-  public static final String NET_TYPE = "net.type";
+  public static final String NET_ADDRESS_PREFIX = "net.addressPrefix";
   public static final String TESTNET = "testnet";
   public static final String LOCAL_WITNESS = "localwitness";
   public static final String LOCAL_WITNESS_ACCOUNT_ADDRESS = "localWitnessAccountAddress";
