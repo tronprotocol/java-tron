@@ -213,9 +213,6 @@ public class MortgageService {
       beginCycle = oldEndCycle;
     }
     if (beginCycle < endCycle) {
-        if (beginCycle <= 0) {
-            return 0L;
-        }
     
         for (Pair<byte[], Long> vote : srAddresses) {
         
