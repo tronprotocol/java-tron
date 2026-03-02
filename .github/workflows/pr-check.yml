@@ -2,7 +2,7 @@ name: PR Check
 
 on:
   pull_request:
-    branches: [ 'develop', 'release_**' ]
+    branches: [ 'develop_ci', 'release_**' ]
     types: [ opened, edited, synchronize, reopened ]
 
 concurrency:
