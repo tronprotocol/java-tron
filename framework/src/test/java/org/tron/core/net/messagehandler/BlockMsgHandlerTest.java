@@ -19,6 +19,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
@@ -49,7 +50,7 @@ public class BlockMsgHandlerTest extends BaseTest {
   @BeforeClass
   public static void init() {
     Args.setParam(new String[] {"--output-directory", dbPath(), "--debug"},
-        Constant.TEST_CONF);
+        TestConstants.TEST_CONF);
   }
 
   @Before

@@ -26,7 +26,8 @@ public class HttpApiAccessFilter implements Filter {
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) {
     try {
       if (request instanceof HttpServletRequest) {
-        String endpoint = ((HttpServletRequest) request).getRequestURI();
+        String contextPath = ((HttpServletRequest) request).getContextPath();
+        String endpoint = contextPath + ((HttpServletRequest) request).getServletPath();
         HttpServletResponse resp = (HttpServletResponse) response;
 
         if (isDisabled(endpoint)) {

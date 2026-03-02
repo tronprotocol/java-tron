@@ -5,6 +5,7 @@ import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.slf4j.Slf4j;
+import org.rocksdb.ReadOptions;
 import org.rocksdb.RocksIterator;
 
 
@@ -15,14 +16,17 @@ public final class RockStoreIterator implements DBIterator {
   private boolean first = true;
 
   private final AtomicBoolean close = new AtomicBoolean(false);
+  private final ReadOptions readOptions;
 
-  public RockStoreIterator(RocksIterator dbIterator) {
+  public RockStoreIterator(RocksIterator dbIterator, ReadOptions readOptions) {
+    this.readOptions = readOptions;
     this.dbIterator = dbIterator;
   }
 
   @Override
   public void close() throws IOException {
     if (close.compareAndSet(false, true)) {
+      readOptions.close();
       dbIterator.close();
     }
   }
@@ -47,7 +51,7 @@ public final class RockStoreIterator implements DBIterator {
       try {
         close();
       } catch (Exception e1) {
-        logger.error(e.getMessage(), e);
+        logger.error(e1.getMessage(), e1);
       }
     }
     return hasNext;
@@ -77,6 +81,11 @@ public final class RockStoreIterator implements DBIterator {
         throw new UnsupportedOperationException();
       }
     };
+  }
+
+  @Override
+  public void remove() {
+    throw new UnsupportedOperationException();
   }
 
   @Override

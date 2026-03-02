@@ -11,10 +11,13 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTxID;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.triggerCallContract;
 
 import com.alibaba.fastjson.JSON;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessageV3;
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -24,11 +27,10 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.regex.Matcher;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +40,7 @@ import org.tron.api.GrpcAPI.EstimateEnergyMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionExtention;
+import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.common.crypto.Hash;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.logsfilter.ContractEventParser;
@@ -50,6 +53,7 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.db2.core.Chainbase;
 import org.tron.core.exception.BadItemException;
@@ -57,12 +61,13 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.exception.JsonRpcInternalException;
-import org.tron.core.exception.JsonRpcInvalidParamsException;
-import org.tron.core.exception.JsonRpcInvalidRequestException;
-import org.tron.core.exception.JsonRpcMethodNotFoundException;
-import org.tron.core.exception.JsonRpcTooManyResultException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.exception.jsonrpc.JsonRpcExceedLimitException;
+import org.tron.core.exception.jsonrpc.JsonRpcInternalException;
+import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
+import org.tron.core.exception.jsonrpc.JsonRpcInvalidRequestException;
+import org.tron.core.exception.jsonrpc.JsonRpcMethodNotFoundException;
+import org.tron.core.exception.jsonrpc.JsonRpcTooManyResultException;
 import org.tron.core.services.NodeInfoService;
 import org.tron.core.services.http.JsonFormat;
 import org.tron.core.services.http.Util;
@@ -76,12 +81,14 @@ import org.tron.core.services.jsonrpc.types.BlockResult;
 import org.tron.core.services.jsonrpc.types.BuildArguments;
 import org.tron.core.services.jsonrpc.types.CallArguments;
 import org.tron.core.services.jsonrpc.types.TransactionReceipt;
+import org.tron.core.services.jsonrpc.types.TransactionReceipt.TransactionContext;
 import org.tron.core.services.jsonrpc.types.TransactionResult;
 import org.tron.core.store.StorageRowStore;
 import org.tron.core.vm.program.Storage;
 import org.tron.program.Version;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.ResourceReceipt;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -93,6 +100,7 @@ import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContractDataWrapper;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
+
 
 @Slf4j(topic = "API")
 @Component
@@ -106,6 +114,17 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
 
   private static final String FILTER_NOT_FOUND = "filter not found";
   public static final int EXPIRE_SECONDS = 5 * 60;
+  private static final int maxBlockFilterNum = Args.getInstance().getJsonRpcMaxBlockFilterNum();
+  private static final Cache<LogFilterElement, LogFilterElement> logElementCache =
+      CacheBuilder.newBuilder()
+          .maximumSize(300_000L) // 300s * tps(1000) * 1 log/tx ≈ 300_000
+          .expireAfterWrite(EXPIRE_SECONDS, TimeUnit.SECONDS)
+          .recordStats().build(); //LRU cache
+  private static final Cache<String, String> blockHashCache =
+      CacheBuilder.newBuilder()
+          .maximumSize(60_000L) // 300s * 200 block/s when syncing
+          .expireAfterWrite(EXPIRE_SECONDS, TimeUnit.SECONDS)
+          .recordStats().build(); //LRU cache
   /**
    * for log filter in Full Json-RPC
    */
@@ -177,16 +196,31 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       it = getBlockFilter2ResultFull().entrySet().iterator();
     }
 
+    if (!it.hasNext()) {
+      return;
+    }
+    final String originalBlockHash = ByteArray.toJsonHex(blockFilterCapsule.getBlockHash());
+    String cachedBlockHash;
+    try {
+      // compare with hashcode() first, then with equals(). If not exist, put it.
+      cachedBlockHash = blockHashCache.get(originalBlockHash, () -> originalBlockHash);
+    } catch (ExecutionException e) {
+      logger.error("Getting/loading blockHash from cache failed", e); // never happen
+      cachedBlockHash = originalBlockHash;
+    }
     while (it.hasNext()) {
       Entry<String, BlockFilterAndResult> entry = it.next();
       if (entry.getValue().isExpire()) {
         it.remove();
         continue;
       }
-      entry.getValue().getResult().add(ByteArray.toJsonHex(blockFilterCapsule.getBlockHash()));
+      entry.getValue().getResult().add(cachedBlockHash);
     }
   }
 
+  /**
+   * append LogsFilterCapsule's LogFilterElement list to each filter if matched
+   */
   public static void handleLogsFilter(LogsFilterCapsule logsFilterCapsule) {
     Iterator<Entry<String, LogFilterAndResult>> it;
 
@@ -222,23 +256,28 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
           LogMatch.matchBlock(logFilter, logsFilterCapsule.getBlockNumber(),
               logsFilterCapsule.getBlockHash(), logsFilterCapsule.getTxInfoList(),
               logsFilterCapsule.isRemoved());
-      if (CollectionUtils.isNotEmpty(elements)) {
-        logFilterAndResult.getResult().addAll(elements);
+
+      for (LogFilterElement element : elements) {
+        LogFilterElement cachedElement;
+        try {
+          // compare with hashcode() first, then with equals(). If not exist, put it.
+          cachedElement = logElementCache.get(element, () -> element);
+        } catch (ExecutionException e) {
+          logger.error("Getting/loading LogFilterElement from cache fails", e); // never happen
+          cachedElement = element;
+        }
+        logFilterAndResult.getResult().add(cachedElement);
       }
     }
   }
 
   @Override
   public String web3ClientVersion() {
-    Pattern shortVersion = Pattern.compile("(\\d\\.\\d).*");
-    Matcher matcher = shortVersion.matcher(System.getProperty("java.version"));
-    matcher.matches();
-
     return String.join("/", Arrays.asList(
         "TRON",
         "v" + Version.getVersion(),
         System.getProperty("os.name"),
-        "Java" + matcher.group(1)));
+        "Java" + System.getProperty("java.specification.version")));
   }
 
   @Override
@@ -473,7 +512,6 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       }
       result = ByteArray.toJsonHex(listBytes);
     } else {
-      logger.error("trigger contract failed.");
       String errMsg = retBuilder.getMessage().toStringUtf8();
       byte[] resData = trxExtBuilder.getConstantResult(0).toByteArray();
       if (resData.length > 4 && Hex.toHexString(resData).startsWith(ERROR_SELECTOR)) {
@@ -483,7 +521,12 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
         errMsg += ": " + msg;
       }
 
-      throw new JsonRpcInternalException(errMsg);
+      if (resData.length > 0) {
+        throw new JsonRpcInternalException(errMsg, ByteArray.toJsonHex(resData));
+      } else {
+        throw new JsonRpcInternalException(errMsg);
+      }
+
     }
 
     return result;
@@ -644,7 +687,12 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
         errMsg += ": " + msg;
       }
 
-      throw new JsonRpcInternalException(errMsg);
+      if (data.length > 0) {
+        throw new JsonRpcInternalException(errMsg, ByteArray.toJsonHex(data));
+      } else {
+        throw new JsonRpcInternalException(errMsg);
+      }
+
     } else {
 
       if (supportEstimateEnergy) {
@@ -763,6 +811,13 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     return getTransactionByBlockAndIndex(block, index);
   }
 
+  /**
+   * Get a transaction receipt by transaction hash
+   *
+   * @param txId the transaction hash in hex format (with or without 0x prefix)
+   * @return TransactionReceipt object for the specified transaction, or null if not found
+   * @throws JsonRpcInvalidParamsException if the transaction hash format is invalid
+   */
   @Override
   public TransactionReceipt getTransactionReceipt(String txId)
       throws JsonRpcInvalidParamsException {
@@ -777,7 +832,126 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       return null;
     }
 
-    return new TransactionReceipt(block, transactionInfo, wallet);
+    BlockCapsule blockCapsule = new BlockCapsule(block);
+    long blockNum = blockCapsule.getNum();
+    TransactionInfoList transactionInfoList = wallet.getTransactionInfoByBlockNum(blockNum);
+    long energyFee = wallet.getEnergyFee(blockCapsule.getTimeStamp());
+
+    // Find transaction context
+    TransactionReceipt.TransactionContext context
+        = findTransactionContext(transactionInfoList,
+          transactionInfo.getId());
+
+    if (context == null) {
+      return null; // Transaction not found in block
+    }
+
+    return new TransactionReceipt(blockCapsule, transactionInfo, context, energyFee);
+  }
+
+  /**
+   * Finds transaction context for a specific transaction ID within the block
+   * Calculates cumulative gas and log count up to the target transaction
+   * @param infoList the transactionInfo list for the block
+   * @param txId the transaction ID
+   * @return TransactionContext containing index and cumulative values, or null if not found
+   */
+  private TransactionContext findTransactionContext(TransactionInfoList infoList,
+      ByteString txId) {
+
+    long cumulativeGas = 0;
+    long cumulativeLogCount = 0;
+
+    for (int index = 0; index < infoList.getTransactionInfoCount(); index++) {
+      TransactionInfo info = infoList.getTransactionInfo(index);
+      ResourceReceipt resourceReceipt = info.getReceipt();
+
+      if (info.getId().equals(txId)) {
+        return new TransactionContext(index, cumulativeGas, cumulativeLogCount);
+      } else {
+        cumulativeGas += resourceReceipt.getEnergyUsageTotal();
+        cumulativeLogCount += info.getLogCount();
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Get all transaction receipts for a specific block
+   * @param blockNumOrHashOrTag blockNumber or blockHash or tag,
+   * tag includes: latest, earliest, pending, finalized
+   * @return List of TransactionReceipt objects for all transactions in the block,
+   * null if block not found
+   * @throws JsonRpcInvalidParamsException if the parameter format is invalid
+   * @throws JsonRpcInternalException if there's an internal error
+   */
+  @Override
+  public List<TransactionReceipt> getBlockReceipts(String blockNumOrHashOrTag)
+      throws JsonRpcInvalidParamsException, JsonRpcInternalException {
+
+    Block block = null;
+
+    if (Pattern.matches(HASH_REGEX, blockNumOrHashOrTag)) {
+      block = getBlockByJsonHash(blockNumOrHashOrTag);
+    } else {
+      block = wallet.getByJsonBlockId(blockNumOrHashOrTag);
+    }
+
+    // block receipts not available: block is genesis, not produced yet, or pruned in light node
+    if (block == null || block.getBlockHeader().getRawData().getNumber() == 0) {
+      return null;
+    }
+
+    BlockCapsule blockCapsule = new BlockCapsule(block);
+    long blockNum = blockCapsule.getNum();
+    TransactionInfoList transactionInfoList = wallet.getTransactionInfoByBlockNum(blockNum);
+
+    // energy price at the block timestamp
+    long energyFee = wallet.getEnergyFee(blockCapsule.getTimeStamp());
+
+    // Validate transaction list size consistency
+    int transactionSizeInBlock = blockCapsule.getTransactions().size();
+    if (transactionSizeInBlock != transactionInfoList.getTransactionInfoCount()) {
+      throw new JsonRpcInternalException(
+          String.format("TransactionList size mismatch: "
+                  + "block has %d transactions, but transactionInfoList has %d",
+              transactionSizeInBlock, transactionInfoList.getTransactionInfoCount()));
+    }
+
+    return getTransactionReceiptsFromBlock(blockCapsule, transactionInfoList, energyFee);
+  }
+
+  /**
+   * Get all TransactionReceipts from a block
+   * This method processes all transactions in the block
+   * and creates receipts with cumulative gas calculations
+   * @param blockCapsule the block containing transactions
+   * @param transactionInfoList the transaction info list for the block
+   * @param energyFee the energy price at the block timestamp
+   * @return List of TransactionReceipt objects for all transactions in the block
+   */
+  private List<TransactionReceipt> getTransactionReceiptsFromBlock(BlockCapsule blockCapsule,
+      TransactionInfoList transactionInfoList, long energyFee) {
+
+    List<TransactionReceipt> receipts = new ArrayList<>();
+    long cumulativeGas = 0;
+    long cumulativeLogCount = 0;
+
+    for (int index = 0; index < transactionInfoList.getTransactionInfoCount(); index++) {
+      TransactionInfo info = transactionInfoList.getTransactionInfo(index);
+      ResourceReceipt resourceReceipt = info.getReceipt();
+
+      TransactionReceipt.TransactionContext context = new TransactionContext(
+          index, cumulativeGas, cumulativeLogCount);
+
+      // Use the constructor with pre-calculated context
+      TransactionReceipt receipt = new TransactionReceipt(blockCapsule, info, context, energyFee);
+      receipts.add(receipt);
+
+      cumulativeGas += resourceReceipt.getEnergyUsageTotal();
+      cumulativeLogCount += info.getLogCount();
+    }
+    return receipts;
   }
 
   @Override
@@ -1256,7 +1430,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   }
 
   @Override
-  public String newBlockFilter() throws JsonRpcMethodNotFoundException {
+  public String newBlockFilter() throws JsonRpcMethodNotFoundException,
+      JsonRpcExceedLimitException {
     disableInPBFT("eth_newBlockFilter");
 
     Map<String, BlockFilterAndResult> blockFilter2Result;
@@ -1264,6 +1439,10 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       blockFilter2Result = blockFilter2ResultFull;
     } else {
       blockFilter2Result = blockFilter2ResultSolidity;
+    }
+    if (blockFilter2Result.size() >= maxBlockFilterNum) {
+      throw new JsonRpcExceedLimitException(
+          "exceed max block filters: " + maxBlockFilterNum + ", try again later");
     }
 
     BlockFilterAndResult filterAndResult = new BlockFilterAndResult();
@@ -1394,6 +1573,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
 
   @Override
   public void close() throws IOException {
+    logElementCache.invalidateAll();
+    blockHashCache.invalidateAll();
     ExecutorServiceManager.shutdownAndAwaitTermination(sectionExecutor, esName);
   }
 

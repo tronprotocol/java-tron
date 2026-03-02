@@ -4,7 +4,7 @@ import com.google.common.collect.Maps;
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
-import java.io.File;
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -13,13 +13,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.tron.common.TestConstants;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -34,11 +35,13 @@ public class CheckpointV2Test {
   private TronApplicationContext context;
   private Application appT;
   private TestRevokingTronStore tronDatabase;
+  @Rule
+  public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Before
-  public void init() {
-    Args.setParam(new String[]{"-d", "output_SnapshotManager_test"},
-        Constant.TEST_CONF);
+  public void init() throws IOException {
+    Args.setParam(new String[]{"-d", temporaryFolder.newFolder().toString()},
+        TestConstants.TEST_CONF);
     Args.getInstance().getStorage().setCheckpointVersion(2);
     Args.getInstance().getStorage().setCheckpointSync(true);
     context = new TronApplicationContext(DefaultConfig.class);
@@ -53,9 +56,6 @@ public class CheckpointV2Test {
   public void removeDb() {
     Args.clearParam();
     context.destroy();
-    tronDatabase.close();
-    FileUtil.deleteDir(new File("output_SnapshotManager_test"));
-    revokingDatabase.getCheckTmpStore().close();
     tronDatabase.close();
   }
 

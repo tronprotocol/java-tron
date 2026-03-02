@@ -7,6 +7,7 @@ import com.googlecode.jsonrpc4j.JsonRpcErrors;
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -18,17 +19,21 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.exception.JsonRpcInternalException;
-import org.tron.core.exception.JsonRpcInvalidParamsException;
-import org.tron.core.exception.JsonRpcInvalidRequestException;
-import org.tron.core.exception.JsonRpcMethodNotFoundException;
-import org.tron.core.exception.JsonRpcTooManyResultException;
+import org.tron.core.exception.jsonrpc.JsonRpcExceedLimitException;
+import org.tron.core.exception.jsonrpc.JsonRpcInternalException;
+import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
+import org.tron.core.exception.jsonrpc.JsonRpcInvalidRequestException;
+import org.tron.core.exception.jsonrpc.JsonRpcMethodNotFoundException;
+import org.tron.core.exception.jsonrpc.JsonRpcTooManyResultException;
 import org.tron.core.services.jsonrpc.types.BlockResult;
 import org.tron.core.services.jsonrpc.types.BuildArguments;
 import org.tron.core.services.jsonrpc.types.CallArguments;
 import org.tron.core.services.jsonrpc.types.TransactionReceipt;
 import org.tron.core.services.jsonrpc.types.TransactionResult;
 
+/**
+ * Error code refers to https://www.quicknode.com/docs/ethereum/error-references
+ */
 @Component
 public interface TronJsonRpc {
 
@@ -145,6 +150,14 @@ public interface TronJsonRpc {
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
   })
   TransactionReceipt getTransactionReceipt(String txid) throws JsonRpcInvalidParamsException;
+
+  @JsonRpcMethod("eth_getBlockReceipts")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = JsonRpcInternalException.class, code = -32000, data = "{}")
+  })
+  List<TransactionReceipt> getBlockReceipts(String blockNumOrHashOrTag)
+      throws JsonRpcInvalidParamsException, JsonRpcInternalException;
 
   @JsonRpcMethod("eth_call")
   @JsonRpcErrors({
@@ -284,9 +297,10 @@ public interface TronJsonRpc {
 
   @JsonRpcMethod("eth_newBlockFilter")
   @JsonRpcErrors({
+      @JsonRpcError(exception = JsonRpcExceedLimitException.class, code = -32005, data = "{}"),
       @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
   })
-  String newBlockFilter() throws JsonRpcMethodNotFoundException;
+  String newBlockFilter() throws JsonRpcExceedLimitException, JsonRpcMethodNotFoundException;
 
   @JsonRpcMethod("eth_uninstallFilter")
   @JsonRpcErrors({
@@ -464,5 +478,35 @@ public interface TronJsonRpc {
       }
       this.removed = removed;
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || this.getClass() != o.getClass()) {
+        return false;
+      }
+      LogFilterElement item = (LogFilterElement) o;
+      if (!Objects.equals(blockHash, item.blockHash)) {
+        return false;
+      }
+      if (!Objects.equals(transactionHash, item.transactionHash)) {
+        return false;
+      }
+      if (!Objects.equals(transactionIndex, item.transactionIndex)) {
+        return false;
+      }
+      if (!Objects.equals(logIndex, item.logIndex)) {
+        return false;
+      }
+      return removed == item.removed;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(blockHash, transactionHash, transactionIndex, logIndex, removed);
+    }
+
   }
 }

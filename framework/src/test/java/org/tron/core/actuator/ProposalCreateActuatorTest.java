@@ -15,9 +15,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ForkController;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ProposalCapsule;
@@ -44,7 +44,7 @@ public class ProposalCreateActuatorTest extends BaseTest {
   private static final String OWNER_ADDRESS_NOACCOUNT;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
     OWNER_ADDRESS_FIRST =
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ADDRESS_SECOND =

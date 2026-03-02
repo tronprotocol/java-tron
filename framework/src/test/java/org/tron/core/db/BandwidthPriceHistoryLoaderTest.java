@@ -21,9 +21,9 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.core.ChainBaseManager;
-import org.tron.core.Constant;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -51,7 +51,7 @@ public class BandwidthPriceHistoryLoaderTest {
   @Before
   public void init() throws IOException {
     Args.setParam(new String[] {"--output-directory",
-        temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
+        temporaryFolder.newFolder().toString()}, TestConstants.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     chainBaseManager = context.getBean(ChainBaseManager.class);
   }

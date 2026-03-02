@@ -4,6 +4,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.tron.common.utils.client.utils.AbiUtil.generateOccupationConstantPrivateKey;
@@ -64,6 +65,11 @@ public class SM2KeyTest {
     assertTrue(key.isPubKeyCanonical());
     assertTrue(key.hasPrivKey());
     assertArrayEquals(pubKey, key.getPubKey());
+
+    key =  SM2.fromPrivate((byte[]) null);
+    assertNull(key);
+    key = SM2.fromPrivate(new byte[0]);
+    assertNull(key);
   }
 
   @Test(expected = IllegalArgumentException.class)

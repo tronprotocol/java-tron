@@ -8,12 +8,12 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.WalletUtil;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.args.Args;
@@ -34,7 +34,7 @@ public class RepositoryTest extends BaseTest {
   private Repository rootRepository;
   
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"}, TestConstants.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
   }
 

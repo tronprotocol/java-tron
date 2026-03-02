@@ -8,11 +8,11 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.tron.common.TestConstants;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
@@ -37,14 +37,14 @@ public class MetricsApiServiceTest {
   public void init() throws IOException {
     String dbPath = temporaryFolder.newFolder().toString();
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug"},
-        Constant.TEST_CONF);
+        TestConstants.TEST_CONF);
     Args.setParam(
         new String[]{
             "--output-directory", dbPath,
             "--storage-db-directory", dbDirectory,
             "--storage-index-directory", indexDirectory
         },
-        Constant.TEST_CONF
+        TestConstants.TEST_CONF
     );
     CommonParameter parameter = Args.getInstance();
     parameter.setNodeListenPort(port);

@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -48,6 +49,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.bloom.Bloom;
@@ -97,6 +99,7 @@ import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.TransactionUtil;
+import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ProposalController;
@@ -163,6 +166,7 @@ import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.utils.TransactionRegister;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Transaction;
@@ -868,9 +872,13 @@ public class Manager {
       TooBigTransactionException, TransactionExpirationException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
 
-    if (isShieldedTransaction(trx.getInstance()) && !Args.getInstance()
-        .isFullNodeAllowShieldedTransactionArgs()) {
-      return true;
+    if (isShieldedTransaction(trx.getInstance()) && !chainBaseManager.getDynamicPropertiesStore()
+        .supportShieldedTransaction()) {
+      throw new ContractValidateException("ShieldedTransferContract is not supported.");
+    }
+
+    if (isExchangeTransaction(trx.getInstance())) {
+      throw new ContractValidateException("ExchangeTransactionContract is rejected");
     }
 
     pushTransactionQueue.add(trx);
@@ -1192,6 +1200,28 @@ public class Manager {
 
   }
 
+  private boolean isSameSig(TransactionCapsule tx1, TransactionCapsule tx2) {
+    if (tx1 == null || tx2 == null) {
+      return false;
+    }
+
+    if (tx1.getInstance().getSignatureCount() != tx2.getInstance().getSignatureCount()) {
+      return false;
+    }
+
+    boolean flag = true;
+    for (int i = 0; i < tx1.getInstance().getSignatureCount(); i++) {
+      ByteString sig1 = tx1.getInstance().getSignature(i);
+      ByteString sig2 = tx2.getInstance().getSignature(i);
+      if (!sig1.equals(sig2)) {
+        flag = false;
+        break;
+      }
+    }
+
+    return flag;
+  }
+
   public List<TransactionCapsule> getVerifyTxs(BlockCapsule block) {
 
     if (pendingTransactions.size() == 0) {
@@ -1199,7 +1229,7 @@ public class Manager {
     }
 
     List<TransactionCapsule> txs = new ArrayList<>();
-    Set<String> txIds = new HashSet<>();
+    Map<String, TransactionCapsule> txMap = new HashMap<>();
     Set<String> multiAddresses = new HashSet<>();
 
     pendingTransactions.forEach(capsule -> {
@@ -1208,14 +1238,14 @@ public class Manager {
         String address = Hex.toHexString(capsule.getOwnerAddress());
         multiAddresses.add(address);
       } else {
-        txIds.add(txId);
+        txMap.put(txId, capsule);
       }
     });
 
     block.getTransactions().forEach(capsule -> {
       String address = Hex.toHexString(capsule.getOwnerAddress());
       String txId = Hex.toHexString(capsule.getTransactionId().getBytes());
-      if (multiAddresses.contains(address) || !txIds.contains(txId)) {
+      if (multiAddresses.contains(address) || !isSameSig(capsule, txMap.get(txId))) {
         txs.add(capsule);
       } else {
         capsule.setVerified(true);
@@ -1676,6 +1706,11 @@ public class Manager {
           accountSet.add(ownerAddress);
         }
       }
+
+      if (isExchangeTransaction(transaction)) {
+        continue;
+      }
+
       if (ownerAddressSet.contains(ownerAddress)) {
         trx.setVerified(false);
       }
@@ -1749,6 +1784,24 @@ public class Manager {
     }
   }
 
+  private boolean isExchangeTransaction(Transaction transaction) {
+    Contract contract = transaction.getRawData().getContract(0);
+    switch (contract.getType()) {
+      case ExchangeTransactionContract: {
+        return true;
+      }
+      default:
+        return false;
+    }
+  }
+
+  private void rejectExchangeTransaction(Transaction transaction) throws ContractValidateException {
+    if (isExchangeTransaction(transaction) && chainBaseManager.getForkController()
+            .pass(Parameter.ForkBlockVersionEnum.VERSION_4_8_0_1)) {
+      throw new ContractValidateException("ExchangeTransactionContract is rejected");
+    }
+  }
+
   public TransactionStore getTransactionStore() {
     return chainBaseManager.getTransactionStore();
   }
@@ -1803,6 +1856,7 @@ public class Manager {
       List<TransactionInfo> results = new ArrayList<>();
       long num = block.getNum();
       for (TransactionCapsule transactionCapsule : block.getTransactions()) {
+        rejectExchangeTransaction(transactionCapsule.getInstance());
         if (chainBaseManager.getDynamicPropertiesStore().allowConsensusLogicOptimization()
             && transactionCapsule.retCountIsGreatThanContractCount()) {
           throw new BadBlockException(String.format("The result count %d of this transaction %s is "
@@ -1857,12 +1911,10 @@ public class Manager {
 
     chainBaseManager.getBalanceTraceStore().resetCurrentBlockTrace();
 
-    if (CommonParameter.getInstance().isJsonRpcFilterEnabled()) {
-      Bloom blockBloom = chainBaseManager.getSectionBloomStore()
-          .initBlockSection(transactionRetCapsule);
-      chainBaseManager.getSectionBloomStore().write(block.getNum());
-      block.setBloom(blockBloom);
-    }
+    Bloom blockBloom = chainBaseManager.getSectionBloomStore()
+        .initBlockSection(transactionRetCapsule);
+    chainBaseManager.getSectionBloomStore().write(block.getNum());
+    block.setBloom(blockBloom);
   }
 
   private void payReward(BlockCapsule block) {
@@ -2159,25 +2211,7 @@ public class Manager {
     // need to set eth compatible data from transactionInfoList
     if (EventPluginLoader.getInstance().isTransactionLogTriggerEthCompatible()
           && newBlock.getNum() != 0) {
-      TransactionInfoList transactionInfoList = TransactionInfoList.newBuilder().build();
-      TransactionInfoList.Builder transactionInfoListBuilder = TransactionInfoList.newBuilder();
-
-      try {
-        TransactionRetCapsule result = chainBaseManager.getTransactionRetStore()
-            .getTransactionInfoByBlockNum(ByteArray.fromLong(newBlock.getNum()));
-
-        if (!Objects.isNull(result) && !Objects.isNull(result.getInstance())) {
-          result.getInstance().getTransactioninfoList().forEach(
-              transactionInfoListBuilder::addTransactionInfo
-          );
-
-          transactionInfoList = transactionInfoListBuilder.build();
-        }
-      } catch (BadItemException e) {
-        logger.error("PostBlockTrigger getTransactionInfoList blockNum = {}, error is {}.",
-            newBlock.getNum(), e.getMessage());
-      }
-
+      TransactionInfoList transactionInfoList = getTransactionInfoByBlockNum(newBlock.getNum());
       if (transactionCapsuleList.size() == transactionInfoList.getTransactionInfoCount()) {
         long cumulativeEnergyUsed = 0;
         long cumulativeLogCount = 0;
@@ -2235,21 +2269,8 @@ public class Manager {
       boolean removed) {
     if (!blockCapsule.getTransactions().isEmpty()) {
       long blockNumber = blockCapsule.getNum();
-      List<TransactionInfo> transactionInfoList = new ArrayList<>();
-
-      try {
-        TransactionRetCapsule result = chainBaseManager.getTransactionRetStore()
-            .getTransactionInfoByBlockNum(ByteArray.fromLong(blockNumber));
-
-        if (!Objects.isNull(result) && !Objects.isNull(result.getInstance())) {
-          transactionInfoList.addAll(result.getInstance().getTransactioninfoList());
-        }
-      } catch (BadItemException e) {
-        logger.error("ProcessLogsFilter getTransactionInfoList blockNum = {}, error is {}.",
-            blockNumber, e.getMessage());
-        return;
-      }
-
+      List<TransactionInfo> transactionInfoList
+              = getTransactionInfoByBlockNum(blockNumber).getTransactionInfoList();
       LogsFilterCapsule logsFilterCapsule = new LogsFilterCapsule(blockNumber,
           blockCapsule.getBlockId().toString(), blockCapsule.getBloom(), transactionInfoList,
           solidified, removed);
@@ -2488,6 +2509,40 @@ public class Manager {
 
   private boolean isBlockWaitingLock() {
     return blockWaitLock.get() > NO_BLOCK_WAITING_LOCK;
+  }
+
+  public TransactionInfoList getTransactionInfoByBlockNum(long blockNum) {
+    TransactionInfoList.Builder transactionInfoList = TransactionInfoList.newBuilder();
+
+    try {
+      TransactionRetCapsule result = getTransactionRetStore()
+              .getTransactionInfoByBlockNum(ByteArray.fromLong(blockNum));
+
+      if (!Objects.isNull(result) && !Objects.isNull(result.getInstance())) {
+        result.getInstance().getTransactioninfoList().forEach(
+            transactionInfo -> transactionInfoList.addTransactionInfo(transactionInfo)
+        );
+      } else {
+        Protocol.Block block = chainBaseManager.getBlockByNum(blockNum).getInstance();
+
+        if (block != null) {
+          List<Transaction> listTransaction = block.getTransactionsList();
+          for (Transaction transaction : listTransaction) {
+            TransactionInfoCapsule transactionInfoCapsule = getTransactionHistoryStore()
+                    .get(Sha256Hash.hash(CommonParameter.getInstance()
+                            .isECKeyCryptoEngine(), transaction.getRawData().toByteArray()));
+
+            if (transactionInfoCapsule != null) {
+              transactionInfoList.addTransactionInfo(transactionInfoCapsule.getInstance());
+            }
+          }
+        }
+      }
+    } catch (BadItemException | ItemNotFoundException e) {
+      logger.warn(e.getMessage());
+    }
+
+    return transactionInfoList.build();
   }
 
   public void close() {

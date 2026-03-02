@@ -8,9 +8,10 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.rules.Timeout;
+import org.tron.common.TestConstants;
 import org.tron.common.backup.socket.BackupServer;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.core.Constant;
+import org.tron.common.utils.PublicMethod;
 import org.tron.core.config.args.Args;
 
 
@@ -25,8 +26,9 @@ public class BackupServerTest {
 
   @Before
   public void setUp() throws Exception {
-    Args.setParam(new String[]{"-d", temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
-    CommonParameter.getInstance().setBackupPort(80);
+    Args.setParam(new String[]{"-d", temporaryFolder.newFolder().toString()},
+        TestConstants.TEST_CONF);
+    CommonParameter.getInstance().setBackupPort(PublicMethod.chooseRandomPort());
     List<String> members = new ArrayList<>();
     members.add("127.0.0.2");
     CommonParameter.getInstance().setBackupMembers(members);

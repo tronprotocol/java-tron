@@ -16,6 +16,7 @@ import static org.tron.common.utils.ByteUtil.parseBytes;
 import static org.tron.common.utils.ByteUtil.parseWord;
 import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+import static org.tron.core.vm.VMConstant.SIG_LENGTH;
 
 import com.google.protobuf.ByteString;
 
@@ -41,6 +42,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.tron.common.crypto.Blake2bfMessageDigest;
 import org.tron.common.crypto.Hash;
+import org.tron.common.crypto.Rsv;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.crypto.SignatureInterface;
 import org.tron.common.crypto.zksnark.BN128;
@@ -201,7 +203,7 @@ public class PrecompiledContracts {
   public static PrecompiledContract getOptimizedContractForConstant(PrecompiledContract contract) {
     try {
       Constructor<?> constructor = contract.getClass().getDeclaredConstructor();
-      return  (PrecompiledContracts.PrecompiledContract) constructor.newInstance();
+      return (PrecompiledContracts.PrecompiledContract) constructor.newInstance();
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -352,22 +354,13 @@ public class PrecompiledContracts {
   }
 
   private static byte[] recoverAddrBySign(byte[] sign, byte[] hash) {
-    byte v;
-    byte[] r;
-    byte[] s;
     byte[] out = null;
     if (ArrayUtils.isEmpty(sign) || sign.length < 65) {
       return new byte[0];
     }
     try {
-      r = Arrays.copyOfRange(sign, 0, 32);
-      s = Arrays.copyOfRange(sign, 32, 64);
-      v = sign[64];
-      if (v < 27) {
-        v += 27;
-      }
-
-      SignatureInterface signature = SignUtils.fromComponents(r, s, v,
+      Rsv rsv = Rsv.fromSignature(sign);
+      SignatureInterface signature = SignUtils.fromComponents(rsv.getR(), rsv.getS(), rsv.getV(),
           CommonParameter.getInstance().isECKeyCryptoEngine());
       if (signature.validateComponents()) {
         out = SignUtils.signatureToAddress(hash, signature,
@@ -399,6 +392,20 @@ public class PrecompiledContracts {
       int bytesLen = words[offset + bytesOffset + 1].intValueSafe();
       bytesArray[i] = extractBytes(data, (bytesOffset + offset + 2) * WORD_SIZE,
           bytesLen);
+    }
+    return bytesArray;
+  }
+
+  private static byte[][] extractSigArray(DataWord[] words, int offset, byte[] data) {
+    if (offset > words.length - 1) {
+      return new byte[0][];
+    }
+    int len = words[offset].intValueSafe();
+    byte[][] bytesArray = new byte[len][];
+    for (int i = 0; i < len; i++) {
+      int bytesOffset = words[offset + i + 1].intValueSafe() / WORD_SIZE;
+      bytesArray[i] = extractBytes(data, (bytesOffset + offset + 2) * WORD_SIZE,
+          SIG_LENGTH);
     }
     return bytesArray;
   }
@@ -944,8 +951,15 @@ public class PrecompiledContracts {
       byte[] hash = Sha256Hash.hash(CommonParameter
           .getInstance().isECKeyCryptoEngine(), combine);
 
-      byte[][] signatures = extractBytesArray(
-          words, words[3].intValueSafe() / WORD_SIZE, rawData);
+      if (VMConfig.allowTvmSelfdestructRestriction()) {
+        int sigArraySize = words[words[3].intValueSafe() / WORD_SIZE].intValueSafe();
+        if (sigArraySize > MAX_SIZE) {
+          return Pair.of(true, DATA_FALSE);
+        }
+      }
+      byte[][] signatures = VMConfig.allowTvmSelfdestructRestriction() ?
+          extractSigArray(words, words[3].intValueSafe() / WORD_SIZE, rawData) :
+          extractBytesArray(words, words[3].intValueSafe() / WORD_SIZE, rawData);
 
       if (signatures.length == 0 || signatures.length > MAX_SIZE) {
         return Pair.of(true, DATA_FALSE);
@@ -1029,8 +1043,18 @@ public class PrecompiledContracts {
         throws InterruptedException, ExecutionException {
       DataWord[] words = DataWord.parseArray(data);
       byte[] hash = words[0].getData();
-      byte[][] signatures = extractBytesArray(
-          words, words[1].intValueSafe() / WORD_SIZE, data);
+
+      if (VMConfig.allowTvmSelfdestructRestriction()) {
+        int sigArraySize = words[words[1].intValueSafe() / WORD_SIZE].intValueSafe();
+        int addrArraySize = words[words[2].intValueSafe() / WORD_SIZE].intValueSafe();
+        if (sigArraySize > MAX_SIZE || addrArraySize > MAX_SIZE) {
+          return Pair.of(true, DATA_FALSE);
+        }
+      }
+
+      byte[][] signatures = VMConfig.allowTvmSelfdestructRestriction() ?
+          extractSigArray(words, words[1].intValueSafe() / WORD_SIZE, data) :
+          extractBytesArray(words, words[1].intValueSafe() / WORD_SIZE, data);
       byte[][] addresses = extractBytes32Array(
           words, words[2].intValueSafe() / WORD_SIZE);
       int cnt = signatures.length;

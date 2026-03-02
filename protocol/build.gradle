@@ -1,7 +1,7 @@
 apply plugin: 'com.google.protobuf'
 
-def protobufVersion = '3.25.5'
-def grpcVersion = '1.60.0'
+def protobufVersion = '3.25.8'
+def grpcVersion = '1.75.0'
 
 dependencies {
     api group: 'com.google.protobuf', name: 'protobuf-java', version: protobufVersion
@@ -13,6 +13,7 @@ dependencies {
     api group: 'io.grpc', name: 'grpc-netty', version: grpcVersion
     api group: 'io.grpc', name: 'grpc-protobuf', version: grpcVersion
     api group: 'io.grpc', name: 'grpc-stub', version: grpcVersion
+    api group: 'io.grpc', name: 'grpc-core', version: grpcVersion
     api group: 'io.grpc', name: 'grpc-services', version: grpcVersion
 
     // end google grpc
@@ -45,7 +46,7 @@ protobuf {
 
     plugins {
         grpc {
-            artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}"
+            artifact = "io.grpc:protoc-gen-grpc-java:${rootProject.archInfo.requires.ProtocGenVersion}"
         }
     }
     generateProtoTasks {

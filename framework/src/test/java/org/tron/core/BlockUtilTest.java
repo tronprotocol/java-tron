@@ -21,6 +21,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
@@ -35,7 +36,7 @@ public class BlockUtilTest {
 
   @Before
   public void initConfiguration() {
-    Args.setParam(new String[]{}, Constant.TEST_CONF);
+    Args.setParam(new String[]{}, TestConstants.TEST_CONF);
   }
 
   @After

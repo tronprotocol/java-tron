@@ -12,7 +12,7 @@ public class GlobalRateLimiterTest {
   @Test
   public void testAcquire() throws Exception {
     String[] a = new String[0];
-    Args.setParam(a, Constant.TESTNET_CONF);
+    Args.setParam(a, Constant.NET_CONF);
     RuntimeData runtimeData = new RuntimeData(null);
     Field field =  runtimeData.getClass().getDeclaredField("address");
     field.setAccessible(true);

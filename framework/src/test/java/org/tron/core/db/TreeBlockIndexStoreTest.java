@@ -4,8 +4,8 @@ import javax.annotation.Resource;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ItemNotFoundException;
@@ -21,7 +21,7 @@ public class TreeBlockIndexStoreTest extends BaseTest {
         new String[]{
             "--output-directory", dbPath()
         },
-        Constant.TEST_CONF
+        TestConstants.TEST_CONF
     );
   }
 

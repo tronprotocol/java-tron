@@ -4,17 +4,15 @@ import static org.mockito.Mockito.mock;
 
 import com.google.protobuf.ByteString;
 import java.io.File;
-import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.Collections;
 import org.bouncycastle.util.encoders.Hex;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
@@ -24,7 +22,6 @@ import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.consensus.base.Param;
 import org.tron.consensus.pbft.message.PbftMessage;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -50,7 +47,7 @@ public class PbftMsgHandlerTest {
   @BeforeClass
   public static void init() {
     Args.setParam(new String[] {"--output-directory", dbPath, "--debug"},
-        Constant.TEST_CONF);
+        TestConstants.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
 
     TronNetService tronNetService = context.getBean(TronNetService.class);
@@ -65,14 +62,10 @@ public class PbftMsgHandlerTest {
     FileUtil.deleteDir(new File(dbPath));
   }
 
-  @Before
+  @After
   public void clearPeers() {
-    try {
-      Field field = PeerManager.class.getDeclaredField("peers");
-      field.setAccessible(true);
-      field.set(PeerManager.class, Collections.synchronizedList(new ArrayList<>()));
-    } catch (NoSuchFieldException | IllegalAccessException e) {
-      //ignore
+    for (PeerConnection p : PeerManager.getPeers()) {
+      PeerManager.remove(p.getChannel());
     }
   }
 

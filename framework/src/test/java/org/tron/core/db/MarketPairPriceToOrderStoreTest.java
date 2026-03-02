@@ -9,10 +9,10 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.ChainBaseManager;
-import org.tron.core.Constant;
 import org.tron.core.capsule.MarketOrderIdListCapsule;
 import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.config.args.Args;
@@ -26,7 +26,7 @@ import org.tron.protos.Protocol.MarketPrice;
 public class MarketPairPriceToOrderStoreTest extends BaseTest {
 
   static {
-    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath()}, TestConstants.TEST_CONF);
   }
 
   @After

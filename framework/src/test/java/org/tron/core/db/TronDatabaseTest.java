@@ -11,7 +11,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.rocksdb.RocksDB;
-import org.tron.core.Constant;
+import org.tron.common.TestConstants;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
@@ -27,7 +27,8 @@ public class TronDatabaseTest extends TronDatabase<String> {
 
   @BeforeClass
   public static void initArgs() throws IOException {
-    Args.setParam(new String[]{"-d", temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", temporaryFolder.newFolder().toString()},
+        TestConstants.TEST_CONF);
   }
 
   @AfterClass

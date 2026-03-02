@@ -3,24 +3,21 @@ package org.tron.core.net.messagehandler;
 import static org.mockito.Mockito.mock;
 
 import com.google.protobuf.ByteString;
-import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.Collections;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
+import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.consensus.pbft.message.PbftMessage;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -47,7 +44,7 @@ public class MessageHandlerTest {
   @BeforeClass
   public static void init() throws Exception {
     Args.setParam(new String[] {"--output-directory",
-        temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
+        temporaryFolder.newFolder().toString(), "--debug"}, TestConstants.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     p2pEventHandler = context.getBean(P2pEventHandlerImpl.class);
     ctx = (ApplicationContext) ReflectUtils.getFieldObject(p2pEventHandler, "ctx");
@@ -63,14 +60,10 @@ public class MessageHandlerTest {
     context.destroy();
   }
 
-  @Before
+  @After
   public void clearPeers() {
-    try {
-      Field field = PeerManager.class.getDeclaredField("peers");
-      field.setAccessible(true);
-      field.set(PeerManager.class, Collections.synchronizedList(new ArrayList<>()));
-    } catch (NoSuchFieldException | IllegalAccessException e) {
-      //ignore
+    for (PeerConnection p : PeerManager.getPeers()) {
+      PeerManager.remove(p.getChannel());
     }
   }
 

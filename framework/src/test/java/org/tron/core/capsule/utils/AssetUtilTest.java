@@ -10,8 +10,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.config.args.Args;
@@ -24,7 +24,7 @@ public class AssetUtilTest extends BaseTest {
 
 
   static {
-    Args.setParam(new String[] {"-d", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-d", dbPath()}, TestConstants.TEST_CONF);
   }
 
   public static byte[] randomBytes(int length) {

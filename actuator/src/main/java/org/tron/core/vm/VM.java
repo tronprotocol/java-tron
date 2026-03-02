@@ -108,7 +108,10 @@ public class VM {
     } catch (JVMStackOverFlowException | OutOfTimeException e) {
       throw e;
     } catch (RuntimeException e) {
-      if (StringUtils.isEmpty(e.getMessage())) {
+      // https://openjdk.org/jeps/358
+      // https://bugs.openjdk.org/browse/JDK-8220715
+      // since jdk 14, the NullPointerExceptions message is not empty
+      if (e instanceof NullPointerException || StringUtils.isEmpty(e.getMessage())) {
         logger.warn("Unknown Exception occurred, tx id: {}",
             Hex.toHexString(program.getRootTransactionId()), e);
         program.setRuntimeFailure(new RuntimeException("Unknown Exception"));

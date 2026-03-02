@@ -1,6 +1,7 @@
 package org.tron.core.actuator;
 
 import static org.junit.Assert.fail;
+import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -14,13 +15,15 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
+import org.tron.common.utils.ForkController;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.Parameter.ForkBlockVersionConsts;
+import org.tron.core.config.Parameter.ForkBlockVersionEnum;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -47,7 +50,7 @@ public class AssetIssueActuatorTest extends BaseTest {
   private static long endTime = 0;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
     OWNER_ADDRESS_SECOND = Wallet
         .getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
@@ -1868,6 +1871,53 @@ public class AssetIssueActuatorTest extends BaseTest {
 
   }
 
+  @Test
+  public void issueStartTimeTooBig() {
+    long maintenanceTimeInterval = dbManager.getDynamicPropertiesStore()
+        .getMaintenanceTimeInterval();
+    long hardForkTime =
+        ((ForkBlockVersionEnum.VERSION_4_0_1.getHardForkTime() - 1) / maintenanceTimeInterval + 1)
+            * maintenanceTimeInterval;
+    dbManager.getDynamicPropertiesStore()
+        .saveLatestBlockHeaderTimestamp(hardForkTime + 1);
+
+    // add more check after 4.8.1
+    byte[] stats = new byte[27];
+    Arrays.fill(stats, (byte) 1);
+    dbManager.getDynamicPropertiesStore()
+        .statsByVersion(ForkBlockVersionEnum.VERSION_4_8_1.getValue(), stats);
+    boolean flag = ForkController.instance().pass(ForkBlockVersionEnum.VERSION_4_8_1);
+    Assert.assertTrue(flag);
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    // Start time is too big. If it's to large, the account.frozen_supply.expireTime will overflow
+    FrozenSupply frozenSupply = FrozenSupply.newBuilder().setFrozenDays(20).setFrozenAmount(100)
+        .build();
+    long startTime = Long.MAX_VALUE - frozenSupply.getFrozenDays() * FROZEN_PERIOD + 1;
+    Any any = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(startTime)
+            .setEndTime(startTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL))
+            .setPrecision(3)
+            .addFrozenSupply(frozenSupply)
+            .build());
+    AssetIssueActuator actuator = new AssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(any);
+
+    AccountCapsule owner = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    owner.setBalance(10_000_000_000L);
+    dbManager.getAccountStore().put(owner.createDbKey(), owner);
+
+    processAndCheckInvalid(actuator, ret,
+        "Start time and frozen days would cause expire time overflow",
+        "Start time and frozen days would cause expire time overflow");
+  }
 
   @Test
   public void commonErrorCheck() {

@@ -12,6 +12,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
 import org.tron.common.parameter.CommonParameter;
@@ -20,11 +21,11 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.client.utils.AbiUtil;
-import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.PrecompiledContracts.ValidateMultiSign;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol;
@@ -37,7 +38,7 @@ public class ValidateMultiSignContractTest extends BaseTest {
   private static final byte[] longData;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"}, TestConstants.TEST_CONF);
     longData = new byte[1000000];
     Arrays.fill(longData, (byte) 2);
   }
@@ -122,6 +123,13 @@ public class ValidateMultiSignContractTest extends BaseTest {
     Assert.assertArrayEquals(
         validateMultiSign(StringUtil.encode58Check(key.getAddress()), permissionId, data, signs)
             .getValue(), DataWord.ONE().getData());
+
+    //after optimized
+    VMConfig.initAllowTvmSelfdestructRestriction(1);
+    Assert.assertArrayEquals(
+        validateMultiSign(StringUtil.encode58Check(key.getAddress()), permissionId, data, signs)
+            .getValue(), DataWord.ONE().getData());
+    VMConfig.initAllowTvmSelfdestructRestriction(0);
 
     //weight not enough
     signs = new ArrayList<>();

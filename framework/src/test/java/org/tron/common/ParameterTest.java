@@ -129,6 +129,12 @@ public class ParameterTest {
     assertEquals(10, parameter.getMaxConcurrentCallsPerConnection());
     parameter.setFlowControlWindow(20);
     assertEquals(20, parameter.getFlowControlWindow());
+    assertEquals(0, parameter.getRpcMaxRstStream());
+    parameter.setRpcMaxRstStream(10);
+    assertEquals(10, parameter.getRpcMaxRstStream());
+    assertEquals(0, parameter.getRpcSecondsPerWindow());
+    parameter.setRpcSecondsPerWindow(5);
+    assertEquals(5, parameter.getRpcSecondsPerWindow());
     parameter.setMaxConnectionIdleInMillis(1000);
     assertEquals(1000, parameter.getMaxConnectionIdleInMillis());
     parameter.setBlockProducedTimeOut(500);

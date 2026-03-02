@@ -67,7 +67,7 @@ public class DynamicArgs {
     if (isNoneBlank(parameter.getShellConfFileName())) {
       confFilePath = parameter.getShellConfFileName();
     } else  {
-      confFilePath = Constant.TESTNET_CONF;
+      confFilePath = Constant.NET_CONF;
     }
 
     File confFile = new File(confFilePath);
@@ -81,7 +81,7 @@ public class DynamicArgs {
   public void reload() {
     logger.debug("Reloading ... ");
     Config config = Configuration.getByFileName(parameter.getShellConfFileName(),
-        Constant.TESTNET_CONF);
+        Constant.NET_CONF);
 
     updateActiveNodes(config);
 

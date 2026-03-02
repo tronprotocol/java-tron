@@ -8,8 +8,8 @@ import org.junit.Test;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.args.Args;
@@ -28,7 +28,7 @@ public class UtilTest extends BaseTest {
 
   static {
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "c076305e35aea1fe45a772fcaaab8a36e87bdb55";
-    Args.setParam(new String[] {"-d", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-d", dbPath()}, TestConstants.TEST_CONF);
   }
 
   @Before

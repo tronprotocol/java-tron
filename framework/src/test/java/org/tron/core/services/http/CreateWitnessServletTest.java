@@ -17,10 +17,10 @@ import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
-import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
@@ -35,7 +35,7 @@ public class CreateWitnessServletTest extends BaseTest {
     Args.setParam(
             new String[]{
                 "--output-directory", dbPath(),
-            }, Constant.TEST_CONF
+            }, TestConstants.TEST_CONF
     );
   }
 

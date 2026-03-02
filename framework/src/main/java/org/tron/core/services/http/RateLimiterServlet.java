@@ -99,8 +99,9 @@ public abstract class RateLimiterServlet extends HttpServlet {
     if (rateLimiter != null) {
       acquireResource = rateLimiter.acquire(runtimeData);
     }
-    String url = Strings.isNullOrEmpty(req.getRequestURI())
-        ? MetricLabels.UNDEFINED : req.getRequestURI();
+    String contextPath = req.getContextPath();
+    String url = Strings.isNullOrEmpty(req.getServletPath())
+        ? MetricLabels.UNDEFINED : contextPath + req.getServletPath();
     try {
       resp.setContentType("application/json; charset=utf-8");
 

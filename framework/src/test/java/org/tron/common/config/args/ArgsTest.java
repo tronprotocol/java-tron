@@ -10,8 +10,8 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.tron.common.TestConstants;
 import org.tron.common.parameter.RateLimiterInitialization;
-import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 
 public class ArgsTest {
@@ -23,7 +23,7 @@ public class ArgsTest {
   public void init() throws IOException {
     Args.setParam(new String[] {"--output-directory",
         temporaryFolder.newFolder().toString(), "--p2p-disable", "true",
-        "--debug"}, Constant.TEST_CONF);
+        "--debug"}, TestConstants.TEST_CONF);
   }
 
   @After

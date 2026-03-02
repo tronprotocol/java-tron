@@ -41,6 +41,7 @@ import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignatureInterface;
 import org.tron.common.crypto.jce.ECKeyFactory;
 import org.tron.common.crypto.jce.TronCastleProvider;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 
 /**
@@ -247,7 +248,7 @@ public class SM2 implements Serializable, SignInterface {
    * @return -
    */
   public static SM2 fromPrivate(byte[] privKeyBytes) {
-    if (Objects.isNull(privKeyBytes)) {
+    if (ByteArray.isEmpty(privKeyBytes)) {
       return null;
     }
     return fromPrivate(new BigInteger(1, privKeyBytes));

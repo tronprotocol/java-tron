@@ -13,6 +13,8 @@ public class BlockEventCacheTest {
 
   @Test
   public void test() throws Exception {
+    BlockCapsule.BlockId solidID = new BlockCapsule.BlockId(getBlockId(), 100);
+
     BlockEvent be1 = new BlockEvent();
     BlockCapsule.BlockId b1 = new BlockCapsule.BlockId(getBlockId(), 1);
     be1.setBlockId(b1);
@@ -36,32 +38,46 @@ public class BlockEventCacheTest {
 
     BlockEventCache.init(b1);
 
+    BlockEvent event = new BlockEvent();
+    BlockCapsule.BlockId blockId = new BlockCapsule.BlockId(getBlockId(), 2);
+    event.setBlockId(blockId);
+    event.setParentId(b1);
+    event.setSolidId(blockId);
+    BlockEventCache.add(event);
+    Assert.assertEquals(event, BlockEventCache.getHead());
+    Assert.assertEquals(blockId, BlockEventCache.getSolidId());
+    Assert.assertEquals(event, BlockEventCache.getBlockEvent(blockId));
+
+    BlockEventCache.init(b1);
+
     BlockEvent be2 = new BlockEvent();
     BlockCapsule.BlockId b2 = new BlockCapsule.BlockId(getBlockId(), 2);
     be2.setBlockId(b2);
     be2.setParentId(b1);
-    be2.setSolidId(b1);
+    be2.setSolidId(solidID);
     BlockEventCache.add(be2);
     Assert.assertEquals(be2, BlockEventCache.getHead());
+    Assert.assertEquals(b2, BlockEventCache.getSolidId());
     Assert.assertEquals(be2, BlockEventCache.getBlockEvent(b2));
 
     BlockEvent be22 = new BlockEvent();
     BlockCapsule.BlockId b22 = new BlockCapsule.BlockId(getBlockId(), 2);
     be22.setBlockId(b22);
     be22.setParentId(b1);
-    be22.setSolidId(b22);
+    be22.setSolidId(solidID);
     BlockEventCache.add(be22);
     Assert.assertEquals(be2, BlockEventCache.getHead());
     Assert.assertEquals(be22, BlockEventCache.getBlockEvent(b22));
-    Assert.assertEquals(b22, BlockEventCache.getSolidId());
+    Assert.assertEquals(b2, BlockEventCache.getSolidId());
 
     BlockEvent be3 = new BlockEvent();
     BlockCapsule.BlockId b3 = new BlockCapsule.BlockId(getBlockId(), 3);
     be3.setBlockId(b3);
     be3.setParentId(b22);
-    be3.setSolidId(b22);
+    be3.setSolidId(solidID);
     BlockEventCache.add(be3);
     Assert.assertEquals(be3, BlockEventCache.getHead());
+    Assert.assertEquals(b3, BlockEventCache.getSolidId());
 
     List<BlockEvent> list =  BlockEventCache.getSolidBlockEvents(b2);
     Assert.assertEquals(1, list.size());

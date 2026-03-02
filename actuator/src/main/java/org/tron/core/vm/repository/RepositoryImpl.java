@@ -9,6 +9,7 @@ import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import com.google.common.collect.HashBasedTable;
 import com.google.protobuf.ByteString;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Optional;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -135,6 +136,7 @@ public class RepositoryImpl implements Repository {
   private final HashMap<Key, Value<byte[]>> delegationCache = new HashMap<>();
   private final HashMap<Key, Value<DelegatedResourceAccountIndex>> delegatedResourceAccountIndexCache = new HashMap<>();
   private final HashBasedTable<Key, Key, Value<byte[]>> transientStorage = HashBasedTable.create();
+  private final HashSet<Key> newContractCache = new HashSet<>();
 
   public static void removeLruCache(byte[] address) {
   }
@@ -479,6 +481,7 @@ public class RepositoryImpl implements Repository {
   public void createContract(byte[] address, ContractCapsule contractCapsule) {
     contractCache.put(Key.create(address),
         Value.create(contractCapsule, Type.CREATE));
+    putNewContract(address);
   }
 
   @Override
@@ -531,6 +534,29 @@ public class RepositoryImpl implements Repository {
   public void updateContractState(byte[] address, ContractStateCapsule contractStateCapsule) {
     contractStateCache.put(Key.create(address),
         Value.create(contractStateCapsule, Type.DIRTY));
+  }
+
+  @Override
+  public void putNewContract(byte[] address) {
+    newContractCache.add(Key.create(address));
+  }
+
+  @Override
+  public boolean isNewContract(byte[] address) {
+    Key key = Key.create(address);
+    if (newContractCache.contains(key)) {
+      return true;
+    }
+
+    if (parent != null) {
+      boolean isNew = parent.isNewContract(address);
+      if (isNew) {
+        newContractCache.add(key);
+      }
+      return isNew;
+    } else {
+      return false;
+    }
   }
 
   @Override
@@ -740,6 +766,7 @@ public class RepositoryImpl implements Repository {
     commitDelegationCache(repository);
     commitDelegatedResourceAccountIndexCache(repository);
     commitTransientStorage(repository);
+    commitNewContractCache(repository);
   }
 
   @Override
@@ -1057,6 +1084,12 @@ public class RepositoryImpl implements Repository {
               cell.getRowKey(), cell.getColumnKey(), cell.getValue());
         }
       });
+    }
+  }
+
+  public void commitNewContractCache(Repository deposit) {
+    if (deposit != null) {
+      newContractCache.forEach(key -> deposit.putNewContract(key.getData()));
     }
   }
 

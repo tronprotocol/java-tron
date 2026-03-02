@@ -14,12 +14,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.rules.Timeout;
 import org.tron.api.GrpcAPI.BlockExtention;
 import org.tron.api.GrpcAPI.BlockReq;
 import org.tron.api.GrpcAPI.BytesMessage;
@@ -28,34 +31,41 @@ import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.TransactionIdList;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
+import org.tron.common.TestConstants;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.PublicMethod;
+import org.tron.common.utils.TimeoutInterceptor;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
-import org.tron.core.services.interfaceOnPBFT.RpcApiServiceOnPBFT;
-import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.protos.Protocol.Transaction;
 
 @Slf4j
 public class RpcApiAccessInterceptorTest {
 
   private static TronApplicationContext context;
+  private static ManagedChannel channelFull = null;
+  private static ManagedChannel channelPBFT = null;
+  private static ManagedChannel channelSolidity = null;
   private static WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private static WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
   private static WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubPBFT = null;
   @ClassRule
   public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
+  @Rule
+  public Timeout timeout = new Timeout(30, TimeUnit.SECONDS);
+
   /**
    * init logic.
    */
   @BeforeClass
   public static void init() throws IOException {
-    Args.setParam(new String[] {"-d", temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-d", temporaryFolder.newFolder().toString()},
+        TestConstants.TEST_CONF);
     Args.getInstance().setRpcEnable(true);
     Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
     Args.getInstance().setRpcSolidityEnable(true);
@@ -63,21 +73,24 @@ public class RpcApiAccessInterceptorTest {
     Args.getInstance().setRpcPBFTEnable(true);
     Args.getInstance().setRpcOnPBFTPort(PublicMethod.chooseRandomPort());
     Args.getInstance().setP2pDisable(true);
-    String fullNode = String.format("%s:%d", Args.getInstance().getNodeLanIp(),
+    String fullNode = String.format("%s:%d", Constant.LOCAL_HOST,
         Args.getInstance().getRpcPort());
-    String solidityNode = String.format("%s:%d", Args.getInstance().getNodeLanIp(),
+    String solidityNode = String.format("%s:%d", Constant.LOCAL_HOST,
         Args.getInstance().getRpcOnSolidityPort());
-    String pBFTNode = String.format("%s:%d", Args.getInstance().getNodeLanIp(),
+    String pBFTNode = String.format("%s:%d", Constant.LOCAL_HOST,
         Args.getInstance().getRpcOnPBFTPort());
 
-    ManagedChannel channelFull = ManagedChannelBuilder.forTarget(fullNode)
+    channelFull = ManagedChannelBuilder.forTarget(fullNode)
         .usePlaintext()
+        .intercept(new TimeoutInterceptor(5000))
         .build();
-    ManagedChannel channelPBFT = ManagedChannelBuilder.forTarget(pBFTNode)
+    channelPBFT = ManagedChannelBuilder.forTarget(pBFTNode)
         .usePlaintext()
+        .intercept(new TimeoutInterceptor(5000))
         .build();
-    ManagedChannel channelSolidity = ManagedChannelBuilder.forTarget(solidityNode)
+    channelSolidity = ManagedChannelBuilder.forTarget(solidityNode)
         .usePlaintext()
+        .intercept(new TimeoutInterceptor(5000))
         .build();
 
     context = new TronApplicationContext(DefaultConfig.class);
@@ -95,6 +108,15 @@ public class RpcApiAccessInterceptorTest {
    */
   @AfterClass
   public static void destroy() {
+    if (channelFull != null) {
+      channelFull.shutdownNow();
+    }
+    if (channelPBFT != null) {
+      channelPBFT.shutdownNow();
+    }
+    if (channelSolidity != null) {
+      channelSolidity.shutdownNow();
+    }
     context.close();
     Args.clearParam();
   }

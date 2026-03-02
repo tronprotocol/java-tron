@@ -2231,7 +2231,7 @@ public class HttpMethed {
     }
     Integer nextBlockNum = 0;
     Integer times = 0;
-    while (nextBlockNum <= currentBlockNum + 1 && times++ <= 10) {
+    while (nextBlockNum < currentBlockNum + 1 && times++ <= 6) {
       response = HttpMethed.getNowBlock(httpNode);
       responseContent = HttpMethed.parseResponseContent(response);
       if (responseContent.containsKey("block_header")) {

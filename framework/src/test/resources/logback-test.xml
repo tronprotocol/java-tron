@@ -34,7 +34,7 @@
     <appender-ref ref="FILE"/>
   </root>
 
-  <logger level="INFO" name="Test"/>
-  <logger level="INFO" name="Manager"/>
+  <logger level="DEBUG" name="Test"/>
+  <logger level="DEBUG" name="Manager"/>
 
 </configuration>

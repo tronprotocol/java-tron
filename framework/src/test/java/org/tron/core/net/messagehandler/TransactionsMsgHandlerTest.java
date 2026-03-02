@@ -17,9 +17,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.adv.TransactionMessage;
@@ -34,7 +34,7 @@ public class TransactionsMsgHandlerTest extends BaseTest {
   @BeforeClass
   public static void init() {
     Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"},
-        Constant.TEST_CONF);
+        TestConstants.TEST_CONF);
 
   }
 

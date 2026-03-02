@@ -13,13 +13,13 @@ import org.junit.rules.TemporaryFolder;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
+import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -44,7 +44,7 @@ public class TransactionExpireTest {
   @Before
   public void init() throws IOException {
     Args.setParam(new String[] {"--output-directory",
-        temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
+        temporaryFolder.newFolder().toString()}, TestConstants.TEST_CONF);
     CommonParameter.PARAMETER.setMinEffectiveConnection(0);
     CommonParameter.getInstance().setP2pDisable(true);
 
@@ -57,7 +57,7 @@ public class TransactionExpireTest {
     String randomPrivateKey = PublicMethod.getRandomPrivateKey();
     LocalWitnesses localWitnesses = new LocalWitnesses();
     localWitnesses.setPrivateKeys(Arrays.asList(randomPrivateKey));
-    localWitnesses.initWitnessAccountAddress(true);
+    localWitnesses.initWitnessAccountAddress(null, true);
     Args.setLocalWitnesses(localWitnesses);
   }
 
@@ -85,7 +85,7 @@ public class TransactionExpireTest {
     TransferContract transferContract = TransferContract.newBuilder()
         .setAmount(1L)
         .setOwnerAddress(ByteString.copyFrom(Args.getLocalWitnesses()
-            .getWitnessAccountAddress(CommonParameter.getInstance().isECKeyCryptoEngine())))
+        .getWitnessAccountAddress()))
         .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(
             (Wallet.getAddressPreFixString() + "A389132D6639FBDA4FBC8B659264E6B7C90DB086"))))
         .build();
@@ -116,8 +116,7 @@ public class TransactionExpireTest {
         .saveLatestBlockHeaderTimestamp(blockCapsule.getTimeStamp());
     dbManager.updateRecentBlock(blockCapsule);
     initLocalWitness();
-    byte[] address = Args.getLocalWitnesses()
-        .getWitnessAccountAddress(CommonParameter.getInstance().isECKeyCryptoEngine());
+    byte[] address = Args.getLocalWitnesses().getWitnessAccountAddress();
     ByteString addressByte = ByteString.copyFrom(address);
     AccountCapsule accountCapsule =
         new AccountCapsule(Protocol.Account.newBuilder().setAddress(addressByte).build());
@@ -157,8 +156,7 @@ public class TransactionExpireTest {
     dbManager.updateRecentBlock(blockCapsule);
     initLocalWitness();
 
-    byte[] address = Args.getLocalWitnesses()
-        .getWitnessAccountAddress(CommonParameter.getInstance().isECKeyCryptoEngine());
+    byte[] address = Args.getLocalWitnesses().getWitnessAccountAddress();
     TransferContract transferContract = TransferContract.newBuilder()
         .setAmount(1L)
         .setOwnerAddress(ByteString.copyFrom(address))

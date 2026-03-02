@@ -25,6 +25,8 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
+import org.tron.core.net.peer.PeerConnection;
+import org.tron.core.net.peer.PeerManager;
 import org.tron.core.store.AccountStore;
 import org.tron.protos.Protocol;
 
@@ -66,6 +68,12 @@ public abstract class BaseTest {
   public static void destroy() {
     appT1.shutdown();
     Args.clearParam();
+  }
+
+  public void closePeer() {
+    for (PeerConnection p : PeerManager.getPeers()) {
+      PeerManager.remove(p.getChannel());
+    }
   }
 
   public Protocol.Block getSignedBlock(ByteString witness, long time, byte[] privateKey) {

@@ -16,6 +16,9 @@ Here are some guidelines to get started quickly and easily:
   - [Commit Messages](#Commit-Messages)
   - [Branch Naming Conventions](#Branch-Naming-Conventions)
   - [Pull Request Guidelines](#Pull-Request-Guidelines)
+    - [PR Title Format](#PR-Title-Format)
+    - [Type and Scope Reference](#Type-and-Scope-Reference)
+    - [PR Description](#PR-Description)
   - [Special Situations And How To Deal With Them](#Special-Situations-And-How-To-Deal-With-Them)
 - [Conduct](#Conduct)
 
@@ -172,8 +175,12 @@ The message header is a single line that contains succinct description of the ch
 * refactor (refactoring production code)
 * test     (adding or refactoring tests. no production code change)
 * chore    (updating grunt tasks etc. no production code change)
+* ci       (CI/CD configuration)
+* perf     (performance improvement)
+* build    (build system changes)
+* revert   (reverting a previous commit)
 
-The `scope` can be anything specifying place of the commit change. For example:`protobuf`,`api`,`test`,`docs`,`build`,`db`,`net`.You can use * if there isn't a more fitting scope.
+The `scope` can be anything specifying place of the commit change. For example: `framework`, `api`, `tvm`, `db`, `net`. For a full list of scopes, see [Type and Scope Reference](#type-and-scope-reference). You can use `*` if there isn't a more fitting scope.
 
 The subject contains a succinct description of the change:
 1. Limit the subject line, which briefly describes the purpose of the commit, to 50 characters.
@@ -204,13 +211,96 @@ If the purpose of this submission is to modify one issue, you need to refer to t
 4. Use `feature/` as the prefix of the `feature` branch, briefly describe the feature in the name, and connect words with underline (e.g., feature/new_resource_model, etc.).
 ### Pull Request Guidelines
 
+#### PR Title Format
+
+PR titles must follow the conventional commit format and will be checked by CI:
+
+```
+type(scope): description
+```
+
+| Rule | Requirement |
+|------|-------------|
+| Format | `type: description` or `type(scope): description` |
+| Length | 10 ~ 72 characters |
+| Type must be one of | `feat` `fix` `refactor` `docs` `style` `test` `chore` `ci` `perf` `build` `revert` |
+
+#### Type and Scope Reference
+
+**Type Reference**
+
+| Type | Purpose | Example |
+|------|---------|---------|
+| `feat` | New feature | `feat(tvm): add blob opcodes` |
+| `fix` | Bug fix | `fix(db): improve resource management` |
+| `docs` | Documentation only | `docs: fix formatting issues in README` |
+| `style` | Code style (no logic change) | `style: fix import order and line length` |
+| `refactor` | Code refactoring (no behavior change) | `refactor(config): simplify parameters` |
+| `test` | Adding or updating tests | `test(vm): add unit tests for opcodes` |
+| `chore` | Build tooling, dependencies, etc. | `chore(version): bump to v4.7.8` |
+| `ci` | CI/CD configuration | `ci: add PR check workflow` |
+| `perf` | Performance improvement | `perf(trie): optimize query performance` |
+| `build` | Build system changes | `build: add aarch64 support for RocksDB` |
+| `revert` | Reverting a previous commit | `revert: restore ApiUtilTest.java` |
+
+**Module Scopes**
+
+| Scope | Description |
+|-------|-------------|
+| `framework` | Core framework, services, APIs, RPC interfaces |
+| `chainbase` | Blockchain storage, state management, database layer |
+| `actuator` | Transaction execution engine, smart contract operations |
+| `consensus` | Consensus mechanism (DPoS, PBFT) |
+| `common` | Common utilities, configuration, shared infrastructure |
+| `crypto` | Cryptographic functions, key management, signatures |
+| `plugins` | Node tools (Toolkit, ArchiveManifest, database plugins) |
+| `protocol` | Protocol definitions, protobuf messages, gRPC contracts |
+
+**Functional Domain Scopes**
+
+| Scope | Description | Example |
+|-------|-------------|---------|
+| `net` | P2P networking, message handling, peer sync | `feat(net): optimize sync logic` |
+| `db` | Database operations, queries, persistence | `fix(db): handle null pointer in query` |
+| `vm` / `tvm` | Virtual machine, bytecode execution, EIP impl | `feat(tvm): implement eip-7823` |
+| `api` | HTTP/gRPC API endpoints | `fix(api): handle null response` |
+| `jsonrpc` | JSON-RPC interface (Ethereum-compatible) | `fix(jsonrpc): support blockHash param` |
+| `rpc` | gRPC services and methods | `fix(rpc): handle timeout correctly` |
+| `http` | HTTP server and endpoints | `feat(http): add new endpoint` |
+| `event` | Event logging and event service | `feat(event): optimize concurrent writes` |
+| `config` | Configuration management, feature flags | `refactor(config): simplify parameters` |
+| `block` | Block processing, validation, structure | `fix(block): validate block header` |
+| `proposal` | On-chain governance proposals | `feat(proposal): add Osaka proposal` |
+| `trie` | Merkle tree, state trie operations | `perf(trie): optimize tree query` |
+| `log` | Application logging | `refactor(log): reduce noise` |
+| `metrics` | Performance monitoring, Prometheus | `feat(metrics): add Prometheus support` |
+| `test` | Test infrastructure and utilities | `test(proposal): add unit test cases` |
+| `docker` | Docker containerization and deployment | `feat(docker): add ARM64 support` |
+| `version` | Version and release management | `chore(version): bump to v4.7.8` |
+
+**Feature Scopes**
+
+| Scope | Description |
+|-------|-------------|
+| `freezeV2` | Resource delegation / freeze-unfreeze V2 mechanism |
+| `DynamicEnergy` | Dynamic energy pricing mechanism |
+| `stable-coin` | Stable coin features and operations |
+| `reward` | Block producer rewards distribution |
+| `lite` | Lite fullnode functionality |
+| `toolkit` | Node maintenance tools (Toolkit.jar) |
+
+#### PR Description
+
+- PR description must not be empty, minimum **20 characters**.
+- Should explain **what** the PR does and **why**.
+
+#### General Rules
+
 1. Create one PR for one issue.
 2. Avoid massive PRs.
-3. Write an overview of the purpose of the PR in its title.
-4. Write a description of the PR for future reviewers.
-5. Elaborate on the feedback you need (if any).
-6. Do not capitalize the first letter.
-7. Do not put a period (.) in the end.
+3. Elaborate on the feedback you need (if any).
+4. Do not capitalize the first letter of the description.
+5. Do not put a period (.) at the end of the title.
 
 
 

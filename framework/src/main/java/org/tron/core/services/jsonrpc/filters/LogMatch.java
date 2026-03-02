@@ -10,7 +10,7 @@ import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.exception.JsonRpcTooManyResultException;
+import org.tron.core.exception.jsonrpc.JsonRpcTooManyResultException;
 import org.tron.core.services.jsonrpc.TronJsonRpc.LogFilterElement;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.Protocol.TransactionInfo.Log;
@@ -83,17 +83,13 @@ public class LogMatch {
     List<LogFilterElement> logFilterElementList = new ArrayList<>();
 
     for (long blockNum : blockNumList) {
-      TransactionRetCapsule transactionRetCapsule =
-          manager.getTransactionRetStore()
-              .getTransactionInfoByBlockNum(ByteArray.fromLong(blockNum));
-      if (transactionRetCapsule == null) {
-        //if query condition (address and topics) is empty, we will traversal every block,
-        //include empty block
+      List<TransactionInfo> transactionInfoList =
+              manager.getTransactionInfoByBlockNum(blockNum).getTransactionInfoList();
+      //if query condition (address and topics) is empty, we will traversal every block,
+      //include empty block
+      if (transactionInfoList.isEmpty()) {
         continue;
       }
-      TransactionRet transactionRet = transactionRetCapsule.getInstance();
-      List<TransactionInfo> transactionInfoList = transactionRet.getTransactioninfoList();
-
       String blockHash = manager.getChainBaseManager().getBlockIdByNum(blockNum).toString();
       List<LogFilterElement> matchedLog = matchBlock(logFilterWrapper.getLogFilter(), blockNum,
           blockHash, transactionInfoList, false);

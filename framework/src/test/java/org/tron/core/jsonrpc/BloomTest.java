@@ -131,7 +131,7 @@ public class BloomTest {
 
   @Test
   public void benchmarkCreateByTransaction() {
-    int times = 10000;
+    int times = 1000;
 
     // small
     TransactionRetCapsule smallCapsule = new TransactionRetCapsule();

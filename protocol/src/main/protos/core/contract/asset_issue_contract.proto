@@ -10,7 +10,7 @@ message AssetIssueContract {
   string id = 41;
 
   message FrozenSupply {
-    int64 frozen_amount = 1;
+    int64 frozen_amount = 1; // asset amount
     int64 frozen_days = 2;
   }
   bytes owner_address = 1;
@@ -18,7 +18,7 @@ message AssetIssueContract {
   bytes abbr = 3;
   int64 total_supply = 4;
   repeated FrozenSupply frozen_supply = 5;
-  int32 trx_num = 6;
+  int32 trx_num = 6; // The fields trx_num and num define the exchange rate: num tokens can be purchased with trx_num TRX. This avoids using decimals.
   int32 precision = 7;
   int32 num = 8;
   int64 start_time = 9;

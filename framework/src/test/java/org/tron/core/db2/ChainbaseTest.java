@@ -11,10 +11,10 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.rocksdb.RocksDB;
+import org.tron.common.TestConstants;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.common.DbSourceInter;
 import org.tron.core.db2.common.LevelDB;
@@ -69,16 +69,14 @@ public class ChainbaseTest {
   public void initDb() throws IOException {
     RocksDB.loadLibrary();
     Args.setParam(new String[] {"--output-directory",
-        temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
+        temporaryFolder.newFolder().toString()}, TestConstants.TEST_CONF);
   }
 
   @Test
   public void testPrefixQueryForLeveldb() {
     LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
         Args.getInstance().getOutputDirectory(), "testPrefixQueryForLeveldb");
-    dataSource.initDB();
-    this.chainbase = new Chainbase(new SnapshotRoot(
-        new LevelDB(dataSource)));
+    this.chainbase = new Chainbase(new SnapshotRoot(new LevelDB(dataSource)));
     testDb(chainbase);
     testRoot(dataSource);
     chainbase.reset();
@@ -89,7 +87,6 @@ public class ChainbaseTest {
   public void testPrefixQueryForRocksdb() {
     RocksDbDataSourceImpl dataSource = new RocksDbDataSourceImpl(
         Args.getInstance().getOutputDirectory(), "testPrefixQueryForRocksdb");
-    dataSource.initDB();
     this.chainbase = new Chainbase(new SnapshotRoot(
         new org.tron.core.db2.common.RocksDB(dataSource)));
     testDb(chainbase);

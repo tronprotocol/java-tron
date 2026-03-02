@@ -4,7 +4,6 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -28,12 +27,12 @@ public class Configuration {
     if (config == null) {
       File configFile = new File(System.getProperty("user.dir") + '/' + configurationPath);
       if (configFile.exists()) {
-        try {
-          config = ConfigFactory
-              .parseReader(new InputStreamReader(new FileInputStream(configurationPath)));
+        try (FileInputStream fis = new FileInputStream(configurationPath);
+            InputStreamReader isr = new InputStreamReader(fis)) {
+          config = ConfigFactory.parseReader(isr);
           logger.info("use user defined config file in current dir");
-        } catch (FileNotFoundException e) {
-          logger.error("load user defined config file exception: " + e.getMessage());
+        } catch (Exception e) {
+          logger.error("load user defined config file exception: {}", e.getMessage());
         }
       } else {
         config = ConfigFactory.load(configurationPath);
