@@ -263,7 +263,7 @@ jobs:
     steps:
       - name: Download JaCoCo artifacts (centos8)
         uses: actions/download-artifact@v4
-        with:  
+        with:
           name: jacoco-centos8
           path: artifacts/jacoco-centos8
 
@@ -324,8 +324,8 @@ jobs:
           # CODECOV_OWNER: tronprotocol
           CODECOV_OWNER: ${{ github.repository_owner }}
           CODECOV_REPO: java-tron
-          COMMIT_ID: ${{ github.sha }}
-          #COMMIT_ID: ${{ github.event.pull_request.head.sha }}
+          #COMMIT_ID: ${{ github.sha }}
+          COMMIT_ID: ${{ github.event.pull_request.head.sha }}
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
           # if ADDED_NUM is 0，skip patch coverage gate
           ADDED_NUM: "0"
