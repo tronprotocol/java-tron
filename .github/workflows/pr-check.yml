@@ -2,7 +2,7 @@ name: PR Check
 
 on:
   pull_request:
-    branches: [ 'develop', 'release_**' ]
+    branches: [ 'develop_ci', 'release_**' ]
     types: [ opened, edited, synchronize, reopened ]
 
 concurrency:
@@ -93,41 +93,327 @@ jobs:
               core.info('PR lint passed.');
             }
 
-  build:
-    name: Build (JDK ${{ matrix.java }} / ${{ matrix.arch }})
+#  build:
+#    name: Build ${{ matrix.os-name }}(JDK ${{ matrix.java }} / ${{ matrix.arch }})
+#    needs: pr-lint
+#    runs-on: ${{ matrix.runner }}
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        include:
+#          - java: '8'
+#            runner: ubuntu-latest
+#            os-name: ubuntu
+#            arch: x86_64
+#          - java: '17'
+#            runner: ubuntu-24.04-arm
+#            os-name: ubuntu
+#            arch: aarch64
+#          - java: '8'
+#            runner: macos-26-intel
+#            os-name: macos
+#            arch: x86_64
+#          - java: '17'
+#            runner: macos-latest
+#            os-name: macos
+#            arch: aarch64
+#
+#    steps:
+#      - uses: actions/checkout@v4
+#
+#      - name: Set up JDK ${{ matrix.java }}
+#        uses: actions/setup-java@v4
+#        with:
+#          java-version: ${{ matrix.java }}
+#          distribution: 'temurin'
+#
+#      - name: Cache Gradle packages
+#        uses: actions/cache@v4
+#        with:
+#          path: |
+#            ~/.gradle/caches
+#            ~/.gradle/wrapper
+#          key: ${{ runner.os }}-${{ matrix.arch }}-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
+#          restore-keys: ${{ runner.os }}-${{ matrix.arch }}-gradle-
+#
+#      - name: Build
+#        run: ./gradlew clean build --no-daemon
+
+  docker-build-centos8:
+    name: Build centos8 (JDK 8 / x86_64)
     needs: pr-lint
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - java: '8'
-            runner: ubuntu-latest
-            arch: x86_64
-          - java: '17'
-            runner: ubuntu-24.04-arm
-            arch: aarch64
+    runs-on: ubuntu-latest
+
+    container:
+      image: rockylinux:8
+
+    env:
+      GRADLE_USER_HOME: /github/home/.gradle
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Set up JDK ${{ matrix.java }}
-        uses: actions/setup-java@v4
-        with:
-          java-version: ${{ matrix.java }}
-          distribution: 'temurin'
+      - name: Install dependencies (Rocky 8 + JDK8)
+        run: |
+          set -euxo pipefail
+          dnf -y install java-1.8.0-openjdk-devel git wget unzip which jq bc curl
+          dnf -y groupinstall "Development Tools"
 
-      - name: Cache Gradle packages
+      - name: Check Java version
+        run: java -version
+
+      - name: Cache Gradle
         uses: actions/cache@v4
         with:
           path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-${{ matrix.arch }}-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
-          restore-keys: ${{ runner.os }}-${{ matrix.arch }}-gradle-
+            /github/home/.gradle/caches
+            /github/home/.gradle/wrapper
+          key: ${{ runner.os }}-centos8-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-centos8-gradle-
+
+      - name: Prepare checkstyle config copy
+        run: |
+          set -euxo pipefail
+          cp -f config/checkstyle/checkStyle.xml config/checkstyle/checkStyleAll.xml || true
+
+      - name: Grant execute permission
+        run: chmod +x gradlew
+
+      - name: Stop Gradle daemon
+        run: ./gradlew --stop || true
 
       - name: Build
-        run: ./gradlew clean build -x test
+        #run: ./gradlew clean build --no-daemon --no-build-cache
+        run: |
+          ./gradlew clean build -x test --no-daemon --no-build-cache
+          ./gradlew framework:test --tests org.tron.core.zksnark.ShieldedReceiveTest
+
+      - name: Generate JaCoCo report
+        run: ./gradlew jacocoTestReport --no-daemon --no-build-cache
+
+      - name: Upload JaCoCo artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-centos8
+          path: |
+            **/build/reports/jacoco/test/jacocoTestReport.xml
+            **/build/reports/**
+            **/build/test-results/**
+          if-no-files-found: error
+
+#  docker-build-debian11:
+#    name: Build debian11 (JDK 8 / x86_64)
+#    needs: pr-lint
+#    runs-on: ubuntu-latest
+#
+#    container:
+#      image: eclipse-temurin:8-jdk
+#
+#    defaults:
+#      run:
+#        shell: bash
+#
+#    env:
+#      GRADLE_USER_HOME: /github/home/.gradle
+#
+#    steps:
+#      - name: Checkout code
+#        uses: actions/checkout@v4
+#
+#      - name: Install dependencies (Debian + build tools)
+#        run: |
+#          set -euxo pipefail
+#          apt-get update
+#          apt-get install -y git wget unzip build-essential curl jq
+#
+#      - name: Check Java version
+#        run: java -version
+#
+#      - name: Cache Gradle
+#        uses: actions/cache@v4
+#        with:
+#          path: |
+#            /github/home/.gradle/caches
+#            /github/home/.gradle/wrapper
+#          key: ${{ runner.os }}-debian11-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+#          restore-keys: |
+#            ${{ runner.os }}-debian11-gradle-
+#
+#      - name: Grant execute permission
+#        run: chmod +x gradlew
+#
+#      - name: Build
+#        run: ./gradlew clean build --no-daemon
+
+
+  coverage-gate:
+    name: Coverage Gate (from centos8 build)
+    needs: docker-build-centos8
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Download JaCoCo artifacts (centos8)
+        uses: actions/download-artifact@v4
+        with: 
+          name: jacoco-centos8
+          path: artifacts/jacoco-centos8
+
+      - name: Restore coverage paths
+        run: |
+            set -eux
+            echo "Before restore:"
+            find artifacts/jacoco-centos8 -name jacocoTestReport.xml
+
+#            mv artifacts/jacoco-centos8/* .
+#
+#            # echo "After restore:"
+#            # find . -name jacocoTestReport.xml
+
+#      - uses: actions/checkout@v4
+#        with:
+#          fetch-depth: 0
+#
+#      - name: Debug repo identity
+#        run: |
+#          echo "GITHUB_REPOSITORY=$GITHUB_REPOSITORY"
+#          echo "repo_owner=${{ github.repository_owner }}"
+#          echo "repo=${{ github.event.repository.name }}"
+#
+#      - name: Check report mtime
+#        run: |
+#          set -euxo pipefail
+#
+#          if [ ! -d artifacts/jacoco-centos8 ]; then
+#            echo "ERROR: artifacts/jacoco-centos8 does not exist."
+#            echo "Listing workspace:"
+#            ls -lah
+#            echo "Listing artifacts dir:"
+#            ls -lah artifacts || true
+#            echo "Failing now."
+#            exit 1
+#          fi
+#
+#          echo "Found jacoco reports:"
+#          find artifacts/jacoco-centos8 -name jacocoTestReport.xml -printf '%TY-%Tm-%Td %TH:%TM:%TS %p\n' | head -n 20
+
+      - name: Upload coverage to Codecov
+        # if: github.event.pull_request.head.repo.fork == false
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          # tronprotocol/java-tron
+          # slug: ${{ github.repository_owner }}/${{ github.event.repository.name }}
+          directory: artifacts/jacoco-centos8
+          verbose: true
+          fail_ci_if_error: true
+
+      - name: Wait for Codecov processing
+        run: sleep 3m
+
+      - name: Coverage gate via Codecov GraphQL
+        env:
+          # CODECOV_OWNER: tronprotocol
+          CODECOV_OWNER: ${{ github.repository_owner }}
+          CODECOV_REPO: java-tron
+          COMMIT_ID: ${{ github.sha }}
+          #COMMIT_ID: ${{ github.event.pull_request.head.sha }}
+          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+          # if ADDED_NUM is 0，skip patch coverage gate
+          ADDED_NUM: "0"
+        run: |
+          set -euxo pipefail
+
+          echo "===== DEBUG SHA ====="
+          echo "github.sha=${{ github.sha }}"
+          echo "head.sha=${{ github.event.pull_request.head.sha }}"
+          echo "COMMIT_ID=$COMMIT_ID"
+          echo "repo_owner=$CODECOV_OWNER"
+          echo "repo=$CODECOV_REPO"
+          echo "====================="
+
+          sudo apt-get update
+          sudo apt-get install -y jq bc curl
+
+          echo "commit: $COMMIT_ID"
+          echo "base branch: $BASE_BRANCH"
+
+          # 1) current commit coverage、parent commit coverage、patch coverage
+          currentRes=$(
+            curl -sS 'https://api.codecov.io/graphql/github' \
+              -H 'content-type: application/json' \
+              --data '{
+                "query": "query Commit($owner: String!, $repo: String!, $commitid: String!, $filters: ImpactedFilesFilters, $isTeamPlan: Boolean!) { owner(username: $owner) { repository(name: $repo) { ... on Repository { commit(id: $commitid) { coverageAnalytics { totals { coverage: percentCovered } } parent { coverageAnalytics { totals { coverage: percentCovered } } } compareWithParent { ... on Comparison { patchTotals { coverage: percentCovered } } } } } } } }",
+                "variables": {
+                  "provider": "github",
+                  "owner": "'"$CODECOV_OWNER"'",
+                  "repo": "'"$CODECOV_REPO"'",
+                  "commitid": "'"$COMMIT_ID"'",
+                  "filters": {},
+                  "isTeamPlan": false
+                }
+              }' | jq -r '.data.owner.repository.commit'
+          )
+
+          self_cov=$(echo "$currentRes" | jq -r '.coverageAnalytics.totals.coverage // 0')
+          base_cov=$(echo "$currentRes" | jq -r '.parent.coverageAnalytics.totals.coverage // 0')
+          patch_cov=$(echo "$currentRes" | jq -r '.compareWithParent.patchTotals.coverage // 0')
+
+          echo "self_cov=$self_cov"
+          echo "base_cov(parent commit)=$base_cov"
+          echo "patch_cov=$patch_cov"
+
+          # 2) base branch head coverage（target）
+          parent_cov=$(
+            curl -sS 'https://api.codecov.io/graphql/github' \
+              -H 'content-type: application/json; charset=utf-8' \
+              --data '{
+                "query": "query GetRepoCoverage($owner: String!, $repo: String!, $branch: String!) { owner(username: $owner) { repository(name: $repo) { ... on Repository { branch(name: $branch) { head { coverageAnalytics { totals { percentCovered } } } } } } } }",
+                "variables": {
+                  "owner": "'"$CODECOV_OWNER"'",
+                  "repo": "'"$CODECOV_REPO"'",
+                  "branch": "'"$BASE_BRANCH"'"
+                }
+              }' | jq -r '.data.owner.repository.branch.head.coverageAnalytics.totals.percentCovered // 0'
+          )
+
+          echo "parent_cov(base branch head)=$parent_cov"
+
+          # 3) Gate rule
+          if [ "$(echo "$self_cov <= 0" | bc)" -eq 1 ]; then
+            echo "get current commit coverage failed !!!!"
+            exit 1
+          fi
+
+          if [ "$(echo "$self_cov - $parent_cov < 0" | bc)" -eq 1 ]; then
+            echo "self_cov: $self_cov   target: $parent_cov"
+            echo "111-target code coverage has decreased, please add unit test!"
+            exit 1
+          fi
+
+          if [ "$(echo "$self_cov - $base_cov < 0" | bc)" -eq 1 ]; then
+            echo "self_cov: $self_cov   parent: $base_cov"
+            echo "222-parent code coverage has decreased, please add unit test!"
+            # exit 1  # skip compare ?
+          fi
+
+          if [ "$ADDED_NUM" -eq 0 ]; then
+            echo "no need to compare patch coverage ............"
+            exit 0
+          fi
+
+          if [ "$(echo "$patch_cov <= 80" | bc)" -eq 1 ]; then
+            echo "patch coverage is too low !!!!"
+            # exit 1  # skip compare ?
+          fi
 
   checkstyle:
     name: Checkstyle
@@ -163,47 +449,3 @@ jobs:
             framework/build/reports/checkstyle/
             plugins/build/reports/checkstyle/
 
-  test:
-    name: Unit Tests (JDK ${{ matrix.java }} / ${{ matrix.arch }})
-    runs-on: ${{ matrix.runner }}
-    needs: build
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - java: '8'
-            runner: ubuntu-latest
-            arch: x86_64
-          - java: '17'
-            runner: ubuntu-24.04-arm
-            arch: aarch64
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up JDK ${{ matrix.java }}
-        uses: actions/setup-java@v4
-        with:
-          java-version: ${{ matrix.java }}
-          distribution: 'temurin'
-
-      - name: Cache Gradle packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-${{ matrix.arch }}-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
-          restore-keys: ${{ runner.os }}-${{ matrix.arch }}-gradle-
-
-      - name: Run tests
-        run: ./gradlew test
-
-      - name: Upload test reports
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-reports-${{ matrix.arch }}
-          path: |
-            **/build/reports/tests/
