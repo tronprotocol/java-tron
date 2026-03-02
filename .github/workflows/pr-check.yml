@@ -158,10 +158,10 @@ jobs:
         run: ./gradlew --stop || true
 
       - name: Build
-        run: ./gradlew clean build --no-daemon
+        run: ./gradlew clean build
 
       - name: Generate JaCoCo report
-        run: ./gradlew jacocoTestReport --no-daemon
+        run: ./gradlew jacocoTestReport
 
       - name: Upload JaCoCo artifacts
         uses: actions/upload-artifact@v4
@@ -237,12 +237,21 @@ jobs:
           name: jacoco-centos8
           path: artifacts/jacoco-centos8
 
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Debug repo identity
         run: |
           echo "GITHUB_REPOSITORY=$GITHUB_REPOSITORY"
           echo "repo_owner=${{ github.repository_owner }}"
           echo "repo=${{ github.event.repository.name }}"
-          
+
+      - name: Check report mtime
+        run: |
+          set -euxo pipefail
+          find artifacts/jacoco-centos8 -name jacocoTestReport.xml -printf '%TY-%Tm-%Td %TH:%TM:%TS %p\n' | head -n 20
+
       - name: Upload coverage to Codecov
         # if: github.event.pull_request.head.repo.fork == false
         uses: codecov/codecov-action@v5
@@ -251,6 +260,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           # tronprotocol/java-tron
           slug: ${{ github.repository_owner }}/${{ github.event.repository.name }}
+          verbose: true
           fail_ci_if_error: true
 
       - name: Wait for Codecov processing
