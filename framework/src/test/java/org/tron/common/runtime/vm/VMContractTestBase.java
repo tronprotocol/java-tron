@@ -46,7 +46,7 @@ public class VMContractTestBase {
   MortgageService mortgageService;
 
   static {
-    // 27Ssb1WE8FArwJVRRb8Dwy3ssVGuLY8L3S1 (test.config)
+    // TDmHUBuko2qhcKBCGGafu928hMRj1tX2RW (test.config)
     WITNESS_SR1_ADDRESS = "a0" + "299F3DB80A24B20A254B89CE639D59132F157F13";
   }
 

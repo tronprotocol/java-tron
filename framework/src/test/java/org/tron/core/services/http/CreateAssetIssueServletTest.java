@@ -40,7 +40,7 @@ public class CreateAssetIssueServletTest extends BaseTest {
   public void init() {
     AccountCapsule accountCapsule = new AccountCapsule(
             ByteString.copyFrom(ByteArray
-                    .fromHexString("A099357684BC659F5166046B56C95A0E99F1265CD1")),
+                    .fromHexString("4199357684BC659F5166046B56C95A0E99F1265CD1")),
             ByteString.copyFromUtf8("owner"),
             Protocol.AccountType.forNumber(1));
     accountCapsule.setBalance(10000000000L);
@@ -52,7 +52,7 @@ public class CreateAssetIssueServletTest extends BaseTest {
   @Test
   public void testCreate() {
     String jsonParam = "{"
-            + "    \"owner_address\": \"A099357684BC659F5166046B56C95A0E99F1265CD1\","
+            + "    \"owner_address\": \"4199357684BC659F5166046B56C95A0E99F1265CD1\","
             + "    \"name\": \"0x6173736574497373756531353330383934333132313538\","
             + "    \"abbr\": \"0x6162627231353330383934333132313538\","
             + "    \"total_supply\": 4321,"

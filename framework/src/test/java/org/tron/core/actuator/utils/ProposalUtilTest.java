@@ -304,7 +304,7 @@ public class ProposalUtilTest extends BaseTest {
     forkUtils.getManager().getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionEnum.VERSION_4_0_1.getValue(), stats);
     ByteString address = ByteString
-        .copyFrom(ByteArray.fromHexString("a0ec6525979a351a54fa09fea64beb4cce33ffbb7a"));
+        .copyFrom(ByteArray.fromHexString("41ec6525979a351a54fa09fea64beb4cce33ffbb7a"));
     List<ByteString> w = new ArrayList<>();
     w.add(address);
     forkUtils.getManager().getWitnessScheduleStore().saveActiveWitnesses(w);

@@ -82,7 +82,7 @@ public class FreezeTest {
       + "020019092919050505061017d565b604051808273ffffffffffffffffffffffffffffffffffffffff1673fff"
       + "fffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b600080606060405"
       + "1806020016101469061026e565b6020820181038252601f19601f82011660405250905083815160208301600"
-      + "0f59150813b61017357600080fd5b8192505050919050565b60008060a060f81b30846040518060200161019"
+      + "0f59150813b61017357600080fd5b8192505050919050565b600080604160f81b30846040518060200161019"
       + "79061026e565b6020820181038252601f19601f820116604052508051906020012060405160200180857efff"
       + "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff19167efffffffffffffffffffffff"
       + "fffffffffffffffffffffffffffffffffffffff191681526001018473fffffffffffffffffffffffffffffff"
@@ -114,11 +114,11 @@ public class FreezeTest {
 
   private static final long value = 100_000_000_000_000_000L;
   private static final long fee = 1_000_000_000;
-  private static final String userAStr = "27k66nycZATHzBasFT9782nTsYWqVtxdtAc";
+  private static final String userAStr = "TWyoFfJBiKGkVQd28HTqxsc8kbMtQUmqgi";
   private static final byte[] userA = Commons.decode58Check(userAStr);
-  private static final String userBStr = "27jzp7nVEkH4Hf3H1PHPp4VDY7DxTy5eydL";
+  private static final String userBStr = "TWtWaUAsJ933xs2n4RkXzaMoKJUrQmctBH";
   private static final byte[] userB = Commons.decode58Check(userBStr);
-  private static final String userCStr = "27juXSbMvL6pb8VgmKRgW6ByCfw5RqZjUuo";
+  private static final String userCStr = "TWoDuH3YsxoMSKSXza3E2H7Tt1bpK5QZgm";
   private static final byte[] userC = Commons.decode58Check(userCStr);
 
   @Rule

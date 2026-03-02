@@ -151,11 +151,11 @@ public class FreezeV2Test {
 
   private static final long value = 100_000_000_000_000_000L;
   private static final long fee = 1_000_000_000;
-  private static final String userAStr = "27k66nycZATHzBasFT9782nTsYWqVtxdtAc";
+  private static final String userAStr = "TWyoFfJBiKGkVQd28HTqxsc8kbMtQUmqgi";
   private static final byte[] userA = Commons.decode58Check(userAStr);
-  private static final String userBStr = "27jzp7nVEkH4Hf3H1PHPp4VDY7DxTy5eydL";
+  private static final String userBStr = "TWtWaUAsJ933xs2n4RkXzaMoKJUrQmctBH";
   private static final byte[] userB = Commons.decode58Check(userBStr);
-  private static final String userCStr = "27juXSbMvL6pb8VgmKRgW6ByCfw5RqZjUuo";
+  private static final String userCStr = "TWoDuH3YsxoMSKSXza3E2H7Tt1bpK5QZgm";
   private static final byte[] userC = Commons.decode58Check(userCStr);
 
   @Rule

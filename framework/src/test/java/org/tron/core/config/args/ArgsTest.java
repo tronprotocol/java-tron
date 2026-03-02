@@ -70,7 +70,7 @@ public class ArgsTest {
     Args.setLocalWitnesses(localWitnesses);
     address = ByteArray.toHexString(Args.getLocalWitnesses()
         .getWitnessAccountAddress());
-    Assert.assertEquals("a0", DecodeUtil.addressPreFixString);
+    Assert.assertEquals("41", DecodeUtil.addressPreFixString);
     // configFilePath should be set to shellConfFileName when -c is specified
     Assert.assertEquals(TestConstants.TEST_CONF, parameter.getConfigFilePath());
     Assert.assertEquals(0, parameter.getBackupPriority());

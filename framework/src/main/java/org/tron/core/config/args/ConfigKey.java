@@ -9,9 +9,6 @@ final class ConfigKey {
   private ConfigKey() {
   }
 
-  // net
-  public static final String NET_ADDRESS_PREFIX = "net.addressPrefix";
-
   // local witness
   public static final String LOCAL_WITNESS = "localwitness";
   public static final String LOCAL_WITNESS_ACCOUNT_ADDRESS = "localWitnessAccountAddress";

@@ -37,7 +37,7 @@ public class GetBrokerageServletTest extends BaseTest {
   @Test
   public void getBrokerageValueByJsonTest() {
     int expect = 20;
-    String jsonParam = "{\"address\": \"27VZHn9PFZwNh7o2EporxmLkpe157iWZVkh\"}";
+    String jsonParam = "{\"address\": \"TGSzEq4t7oMTRcn1VxDghRu5r5bWAE5D1W\"}";
     MockHttpServletRequest request = createRequest("application/json");
     request.setContent(jsonParam.getBytes());
     MockHttpServletResponse response = new MockHttpServletResponse();
@@ -56,7 +56,7 @@ public class GetBrokerageServletTest extends BaseTest {
   @Test
   public void getBrokerageByJsonUTF8Test() {
     int expect = 20;
-    String jsonParam = "{\"address\": \"27VZHn9PFZwNh7o2EporxmLkpe157iWZVkh\"}";
+    String jsonParam = "{\"address\": \"TGSzEq4t7oMTRcn1VxDghRu5r5bWAE5D1W\"}";
     MockHttpServletRequest request = createRequest("application/json; charset=utf-8");
     request.setContent(jsonParam.getBytes());
     MockHttpServletResponse response = new MockHttpServletResponse();
@@ -75,7 +75,7 @@ public class GetBrokerageServletTest extends BaseTest {
   public void getBrokerageValueTest() {
     int expect = 20;
     MockHttpServletRequest request = createRequest("application/x-www-form-urlencoded");
-    request.addParameter("address", "27VZHn9PFZwNh7o2EporxmLkpe157iWZVkh");
+    request.addParameter("address", "TGSzEq4t7oMTRcn1VxDghRu5r5bWAE5D1W");
     MockHttpServletResponse response = new MockHttpServletResponse();
     getBrokerageServlet.doPost(request, response);
     try {

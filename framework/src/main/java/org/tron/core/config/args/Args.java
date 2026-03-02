@@ -415,21 +415,8 @@ public class Args extends CommonParameter {
    */
   public static void setParam(final Config config) {
 
-    if (config.hasPath(ConfigKey.NET_ADDRESS_PREFIX)) {
-      String prefix = config.getString(ConfigKey.NET_ADDRESS_PREFIX)
-          .replace("'", "").replace("\"", "").trim();
-      byte prefixByte;
-      if (prefix.startsWith("0x") || prefix.startsWith("0X")) {
-        prefixByte = (byte) Integer.parseInt(prefix.substring(2), 16);
-      } else {
-        prefixByte = (byte) Integer.parseInt(prefix, 16);
-      }
-      Wallet.setAddressPreFixByte(prefixByte);
-      Wallet.setAddressPreFixString(String.format("%02x", prefixByte));
-    } else {
-      Wallet.setAddressPreFixByte(ADD_PRE_FIX_BYTE_MAINNET);
-      Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_MAINNET);
-    }
+    Wallet.setAddressPreFixByte(ADD_PRE_FIX_BYTE_MAINNET);
+    Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_MAINNET);
 
     PARAMETER.cryptoEngine = config.hasPath(ConfigKey.CRYPTO_ENGINE) ? config
         .getString(ConfigKey.CRYPTO_ENGINE) : Constant.ECKey_ENGINE;

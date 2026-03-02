@@ -874,10 +874,10 @@ public class PrecompiledContractsTest extends BaseTest {
     Repository tempRepository = RepositoryImpl.createRoot(StoreFactory.getInstance());
     resourceV2Pcc.setRepository(tempRepository);
 
-    String targetStr = "27k66nycZATHzBasFT9782nTsYWqVtxdtAc";
+    String targetStr = "TWyoFfJBiKGkVQd28HTqxsc8kbMtQUmqgi";
     byte[] targetAddr = Commons.decode58Check(targetStr);
     byte[] target = new DataWord(targetAddr).getData();
-    String fromStr = "27jzp7nVEkH4Hf3H1PHPp4VDY7DxTy5eydL";
+    String fromStr = "TWtWaUAsJ933xs2n4RkXzaMoKJUrQmctBH";
     byte[] fromAddr = Commons.decode58Check(fromStr);
     byte[] from = new DataWord(fromAddr).getData();
     byte[] type = ByteUtil.longTo32Bytes(0);

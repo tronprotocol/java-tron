@@ -38,7 +38,7 @@ public class ClearABIServletTest extends BaseTest {
   private ClearABIServlet clearABIServlet;
 
   private static final String SMART_CONTRACT_NAME = "smart_contract_test";
-  private static String CONTRACT_ADDRESS = "A0B4750E2CD76E19DCA331BF5D089B71C3C2798548";
+  private static String CONTRACT_ADDRESS = "41B4750E2CD76E19DCA331BF5D089B71C3C2798548";
   private static String OWNER_ADDRESS;
   private static final long SOURCE_ENERGY_LIMIT = 10L;
 
@@ -47,7 +47,7 @@ public class ClearABIServletTest extends BaseTest {
   private SmartContractOuterClass.SmartContract.Builder createContract(
           String contractAddress, String contractName) {
     OWNER_ADDRESS =
-            "A099357684BC659F5166046B56C95A0E99F1265CBD";
+            "4199357684BC659F5166046B56C95A0E99F1265CBD";
     SmartContractOuterClass.SmartContract.Builder builder =
             SmartContractOuterClass.SmartContract.newBuilder();
     builder.setName(contractName);
@@ -68,8 +68,8 @@ public class ClearABIServletTest extends BaseTest {
             new ContractCapsule(contract.build()));
 
     String jsonParam = "{"
-            + "    \"owner_address\": \"A099357684BC659F5166046B56C95A0E99F1265CBD\","
-            + "    \"contract_address\": \"A0B4750E2CD76E19DCA331BF5D089B71C3C2798548\""
+            + "    \"owner_address\": \"4199357684BC659F5166046B56C95A0E99F1265CBD\","
+            + "    \"contract_address\": \"41B4750E2CD76E19DCA331BF5D089B71C3C2798548\""
             + "}";
     MockHttpServletRequest request = createRequest(HttpPost.METHOD_NAME);
     request.setContentType("application/json");

@@ -55,7 +55,7 @@ public class ExtCodeHashTest extends VMTestBase {
 
     // Trigger contract method: getCodeHashByAddr(address)
     String methodByAddr = "getCodeHashByAddr(address)";
-    String nonexistentAccount = "27k66nycZATHzBasFT9782nTsYWqVtxdtAc";
+    String nonexistentAccount = "TWyoFfJBiKGkVQd28HTqxsc8kbMtQUmqgi";
     String hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(nonexistentAccount));
     TVMTestResult result = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
@@ -68,7 +68,7 @@ public class ExtCodeHashTest extends VMTestBase {
         "0000000000000000000000000000000000000000000000000000000000000000");
 
     // trigger deployed contract
-    String existentAccount = "27WtBq2KoSy5v8VnVZBZHHJcDuWNiSgjbE3";
+    String existentAccount = "THmtHi1Rzq4gSKYGEKv1DPkV7au6xU1AUB";
     hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(existentAccount));
     result = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),

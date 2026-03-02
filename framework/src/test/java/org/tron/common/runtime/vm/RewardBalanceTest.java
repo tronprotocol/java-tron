@@ -154,7 +154,7 @@ public class RewardBalanceTest extends VMTestBase {
 
     // Trigger contract method: rewardBalanceTest(address)
     String methodByAddr = "rewardBalanceTest(address)";
-    String nonexistentAccount = "27k66nycZATHzBasFT9782nTsYWqVtxdtAc";
+    String nonexistentAccount = "TWyoFfJBiKGkVQd28HTqxsc8kbMtQUmqgi";
     String hexInput = AbiUtil.parseMethod(methodByAddr,
         Collections.singletonList(nonexistentAccount));
     BlockCapsule blockCap = new BlockCapsule(Protocol.Block.newBuilder().build());
@@ -195,7 +195,7 @@ public class RewardBalanceTest extends VMTestBase {
     repository.commit();
 
     // trigger deployed contract
-    String witnessAccount = "27Ssb1WE8FArwJVRRb8Dwy3ssVGuLY8L3S1";
+    String witnessAccount = "TDmHUBuko2qhcKBCGGafu928hMRj1tX2RW";
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(witnessAccount));
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         factoryAddress, Hex.decode(hexInput), 0, feeLimit);
