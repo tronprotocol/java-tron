@@ -15,55 +15,82 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check PR title format
+      - name: Validate PR title and description
         uses: actions/github-script@v7
         with:
           script: |
             const title = context.payload.pull_request.title;
-
+            const body = context.payload.pull_request.body;
             const errors = [];
+            const warnings = [];
 
-            // Title should not be empty or too short
+            const allowedTypes = ['feat','fix','refactor','docs','style','test','chore','ci','perf','build','revert'];
+            const knownScopes = [
+              'framework','chainbase','actuator','consensus','common','crypto','plugins','protocol',
+              'net','db','vm','tvm','api','jsonrpc','rpc','http','event','config',
+              'block','proposal','trie','log','metrics','test','docker','version',
+              'freezeV2','DynamicEnergy','stable-coin','reward','lite','toolkit'
+            ];
+
+            // 1. Title length check
             if (!title || title.trim().length < 10) {
               errors.push('PR title is too short (minimum 10 characters).');
             }
-
-            // Title should not exceed 72 characters
-            if (title.length > 72) {
+            if (title && title.length > 72) {
               errors.push(`PR title is too long (${title.length}/72 characters).`);
             }
 
-            // Title should follow conventional format: type: description
-            // Allowed types: feat, fix, refactor, docs, style, test, chore, ci, perf, build, revert
-            const conventionalRegex = /^(feat|fix|refactor|docs|style|test|chore|ci|perf|build|revert)(\(.+\))?:\s.+/;
-            if (!conventionalRegex.test(title)) {
+            // 2. Conventional format check
+            const conventionalRegex = /^(feat|fix|refactor|docs|style|test|chore|ci|perf|build|revert)(\([^)]+\))?:\s\S.*/;
+            if (title && !conventionalRegex.test(title)) {
               errors.push(
-                'PR title must follow conventional format: `type: description`\n' +
-                'Allowed types: feat, fix, refactor, docs, style, test, chore, ci, perf, build, revert\n' +
-                'Example: `feat: add new transaction validation`'
+                'PR title must follow conventional format: `type(scope): description`\n' +
+                '  Allowed types: ' + allowedTypes.map(t => `\`${t}\``).join(', ') + '\n' +
+                '  Example: `feat(tvm): add blob opcodes`'
               );
             }
 
+            // 3. No trailing period
+            if (title && title.endsWith('.')) {
+              errors.push('PR title should not end with a period (.).');
+            }
+
+            // 4. Description part should not start with a capital letter
+            if (title) {
+              const descMatch = title.match(/^\w+(?:\([^)]+\))?:\s*(.+)/);
+              if (descMatch) {
+                const desc = descMatch[1];
+                if (/^[A-Z]/.test(desc)) {
+                  errors.push('Description should not start with a capital letter.');
+                }
+              }
+            }
+
+            // 5. Scope validation (warning only)
+            if (title) {
+              const scopeMatch = title.match(/^\w+\(([^)]+)\):/);
+              if (scopeMatch && !knownScopes.includes(scopeMatch[1])) {
+                warnings.push(`Unknown scope \`${scopeMatch[1]}\`. See CONTRIBUTING.md for known scopes.`);
+              }
+            }
+
+            // 6. PR description check
+            if (!body || body.trim().length < 20) {
+              errors.push('PR description is too short or empty (minimum 20 characters). Please describe what this PR does and why.');
+            }
+
+            // Output warnings
+            for (const w of warnings) {
+              core.warning(w);
+            }
+
+            // Output result
             if (errors.length > 0) {
-              const message = '### PR Title Check Failed\n\n' + errors.map(e => `- ${e}`).join('\n');
+              const docLink = 'See [CONTRIBUTING.md](https://github.com/' + context.repo.owner + '/' + context.repo.repo + '/blob/develop/CONTRIBUTING.md#pull-request-guidelines) for details.';
+              const message = '### PR Lint Failed\n\n' + errors.map(e => `- ${e}`).join('\n') + '\n\n' + docLink;
               core.setFailed(message);
             } else {
-              core.info('PR title format is valid.');
-            }
-
-      - name: Check PR description
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const body = context.payload.pull_request.body;
-
-            if (!body || body.trim().length < 20) {
-              core.setFailed(
-                '### PR Description Check Failed\n\n' +
-                'PR description is too short or empty. Please describe what this PR does and why.'
-              );
-            } else {
-              core.info('PR description is valid.');
+              core.info('PR lint passed.');
             }
 
   build:
