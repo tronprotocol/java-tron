@@ -158,10 +158,10 @@ jobs:
         run: ./gradlew --stop || true
 
       - name: Build
-        run: ./gradlew clean build
+        run: ./gradlew clean build --no-daemon --no-build-cache
 
       - name: Generate JaCoCo report
-        run: ./gradlew jacocoTestReport
+        run: ./gradlew jacocoTestReport --no-daemon --no-build-cache
 
       - name: Upload JaCoCo artifacts
         uses: actions/upload-artifact@v4
