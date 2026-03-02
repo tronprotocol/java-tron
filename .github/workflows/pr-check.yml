@@ -247,11 +247,10 @@ jobs:
         # if: github.event.pull_request.head.repo.fork == false
         uses: codecov/codecov-action@v5
         with:
-          files: |
-            artifacts/jacoco-centos8/**/jacocoTestReport.xml
+          directory: artifacts/jacoco-centos8
           token: ${{ secrets.CODECOV_TOKEN }}
           # tronprotocol/java-tron
-          slug: 317787106/java-tron
+          slug: ${{ github.repository_owner }}/java-tron
           fail_ci_if_error: true
 
       - name: Wait for Codecov processing
@@ -260,8 +259,9 @@ jobs:
       - name: Coverage gate via Codecov GraphQL
         env:
           # CODECOV_OWNER: tronprotocol
-          CODECOV_OWNER: 317787106
+          CODECOV_OWNER: ${{ github.repository_owner }}
           CODECOV_REPO: java-tron
+          #COMMIT_ID: ${{ github.sha }}
           COMMIT_ID: ${{ github.event.pull_request.head.sha }}
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
           # if ADDED_NUM is 0，skip patch coverage gate
