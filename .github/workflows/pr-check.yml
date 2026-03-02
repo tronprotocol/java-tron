@@ -237,41 +237,51 @@ jobs:
           name: jacoco-centos8
           path: artifacts/jacoco-centos8
 
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Debug repo identity
+      - name: Restore coverage paths
         run: |
-          echo "GITHUB_REPOSITORY=$GITHUB_REPOSITORY"
-          echo "repo_owner=${{ github.repository_owner }}"
-          echo "repo=${{ github.event.repository.name }}"
+            set -eux
+            echo "Before restore:"
+            find artifacts/jacoco-centos8 -name jacocoTestReport.xml | head
 
-      - name: Check report mtime
-        run: |
-          set -euxo pipefail
+            rsync -a artifacts/jacoco-centos8/ ./
 
-          if [ ! -d artifacts/jacoco-centos8 ]; then
-            echo "ERROR: artifacts/jacoco-centos8 does not exist."
-            echo "Listing workspace:"
-            ls -lah
-            echo "Listing artifacts dir:"
-            ls -lah artifacts || true
-            echo "Failing now."
-            exit 1
-          fi
+            echo "After restore:"
+            find . -name jacocoTestReport.xml | head
 
-          echo "Found jacoco reports:"
-          find artifacts/jacoco-centos8 -name jacocoTestReport.xml -printf '%TY-%Tm-%Td %TH:%TM:%TS %p\n' | head -n 20
+#      - uses: actions/checkout@v4
+#        with:
+#          fetch-depth: 0
+#
+#      - name: Debug repo identity
+#        run: |
+#          echo "GITHUB_REPOSITORY=$GITHUB_REPOSITORY"
+#          echo "repo_owner=${{ github.repository_owner }}"
+#          echo "repo=${{ github.event.repository.name }}"
+#
+#      - name: Check report mtime
+#        run: |
+#          set -euxo pipefail
+#
+#          if [ ! -d artifacts/jacoco-centos8 ]; then
+#            echo "ERROR: artifacts/jacoco-centos8 does not exist."
+#            echo "Listing workspace:"
+#            ls -lah
+#            echo "Listing artifacts dir:"
+#            ls -lah artifacts || true
+#            echo "Failing now."
+#            exit 1
+#          fi
+#
+#          echo "Found jacoco reports:"
+#          find artifacts/jacoco-centos8 -name jacocoTestReport.xml -printf '%TY-%Tm-%Td %TH:%TM:%TS %p\n' | head -n 20
 
       - name: Upload coverage to Codecov
         # if: github.event.pull_request.head.repo.fork == false
         uses: codecov/codecov-action@v5
         with:
-          directory: artifacts/jacoco-centos8
           token: ${{ secrets.CODECOV_TOKEN }}
           # tronprotocol/java-tron
-          slug: ${{ github.repository_owner }}/${{ github.event.repository.name }}
+          # slug: ${{ github.repository_owner }}/${{ github.event.repository.name }}
           verbose: true
           fail_ci_if_error: true
 
