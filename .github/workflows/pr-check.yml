@@ -250,7 +250,7 @@ jobs:
           directory: artifacts/jacoco-centos8
           token: ${{ secrets.CODECOV_TOKEN }}
           # tronprotocol/java-tron
-          slug: ${{ github.repository_owner }}/java-tron
+          slug: ${{ github.repository_owner }}/${{ github.event.repository.name }}
           fail_ci_if_error: true
 
       - name: Wait for Codecov processing
@@ -261,13 +261,22 @@ jobs:
           # CODECOV_OWNER: tronprotocol
           CODECOV_OWNER: ${{ github.repository_owner }}
           CODECOV_REPO: java-tron
-          #COMMIT_ID: ${{ github.sha }}
-          COMMIT_ID: ${{ github.event.pull_request.head.sha }}
+          COMMIT_ID: ${{ github.sha }}
+          #COMMIT_ID: ${{ github.event.pull_request.head.sha }}
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
           # if ADDED_NUM is 0，skip patch coverage gate
           ADDED_NUM: "0"
         run: |
           set -euxo pipefail
+
+          echo "===== DEBUG SHA ====="
+          echo "github.sha=${{ github.sha }}"
+          echo "head.sha=${{ github.event.pull_request.head.sha }}"
+          echo "COMMIT_ID=$COMMIT_ID"
+          echo "repo_owner=$CODECOV_OWNER"
+          echo "repo=$CODECOV_REPO"
+          echo "====================="
+
           sudo apt-get update
           sudo apt-get install -y jq bc curl
 
