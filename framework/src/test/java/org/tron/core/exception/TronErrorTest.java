@@ -37,7 +37,6 @@ import org.tron.common.log.LogService;
 import org.tron.common.parameter.RateLimiterInitialization;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.zksnark.JLibrustzcash;
-import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.http.GetBlockServlet;
 import org.tron.core.services.http.RateLimiterServlet;
@@ -138,7 +137,7 @@ public class TronErrorTest {
   @Test
   public void shutdownBlockTimeInitTest() {
     Map<String, String> params = new HashMap<>();
-    params.put(Constant.NODE_SHUTDOWN_BLOCK_TIME, "0");
+    params.put("node.shutdown.BlockTime", "0");
     params.put("storage.db.directory", "database");
     Config config = ConfigFactory.defaultOverrides().withFallback(
         ConfigFactory.parseMap(params));

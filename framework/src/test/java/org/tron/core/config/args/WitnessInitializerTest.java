@@ -34,7 +34,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.client.utils.Base58;
-import org.tron.core.Constant;
 import org.tron.core.exception.TronError;
 import org.tron.core.exception.TronError.ErrCode;
 import org.tron.keystore.Credentials;
@@ -194,22 +193,22 @@ public class WitnessInitializerTest {
       throws NoSuchFieldException, IllegalAccessException {
     Args.PARAMETER.setWitness(true);
     Config mockConfig = mock(Config.class);
-    when(mockConfig.hasPath(Constant.LOCAL_WITNESS_KEYSTORE)).thenReturn(false);
+    when(mockConfig.hasPath(ConfigKey.LOCAL_WITNESS_KEYSTORE)).thenReturn(false);
     witnessInitializer = new WitnessInitializer(mockConfig);
     witnessInitializer.initLocalWitnesses();
     verify(mockConfig, never()).getStringList(anyString());
 
-    when(mockConfig.hasPath(Constant.LOCAL_WITNESS_KEYSTORE)).thenReturn(true);
-    when(mockConfig.getStringList(Constant.LOCAL_WITNESS_KEYSTORE)).thenReturn(new ArrayList<>());
+    when(mockConfig.hasPath(ConfigKey.LOCAL_WITNESS_KEYSTORE)).thenReturn(true);
+    when(mockConfig.getStringList(ConfigKey.LOCAL_WITNESS_KEYSTORE)).thenReturn(new ArrayList<>());
     witnessInitializer = new WitnessInitializer(mockConfig);
     witnessInitializer.initLocalWitnesses();
-    verify(mockConfig, times(1)).getStringList(Constant.LOCAL_WITNESS_KEYSTORE);
+    verify(mockConfig, times(1)).getStringList(ConfigKey.LOCAL_WITNESS_KEYSTORE);
 
     List<String> keystores = new ArrayList<>();
     keystores.add("keystore1.json");
     keystores.add("keystore2.json");
-    when(mockConfig.hasPath(Constant.LOCAL_WITNESS_KEYSTORE)).thenReturn(true);
-    when(mockConfig.getStringList(Constant.LOCAL_WITNESS_KEYSTORE)).thenReturn(keystores);
+    when(mockConfig.hasPath(ConfigKey.LOCAL_WITNESS_KEYSTORE)).thenReturn(true);
+    when(mockConfig.getStringList(ConfigKey.LOCAL_WITNESS_KEYSTORE)).thenReturn(keystores);
 
     Field password = CommonParameter.class.getDeclaredField("password");
     password.setAccessible(true);

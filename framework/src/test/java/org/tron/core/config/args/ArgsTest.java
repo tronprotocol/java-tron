@@ -38,7 +38,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
-import org.tron.core.Constant;
 import org.tron.core.config.Configuration;
 
 @Slf4j
@@ -147,7 +146,7 @@ public class ArgsTest {
     Assert.assertEquals("46.168.1.1", configuredExternalIp);
 
     Config config = Configuration.getByFileName(null, TestConstants.TEST_CONF);
-    Config config3 = config.withoutPath(Constant.NODE_DISCOVERY_EXTERNAL_IP);
+    Config config3 = config.withoutPath(ConfigKey.NODE_DISCOVERY_EXTERNAL_IP);
 
     CommonParameter.getInstance().setNodeExternalIp(null);
 

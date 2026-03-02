@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.core.Constant;
 import org.tron.core.config.Configuration;
 import org.tron.core.net.TronNetService;
 
@@ -70,7 +69,7 @@ public class DynamicArgs {
 
   private void updateActiveNodes(Config config) {
     List<InetSocketAddress> newActiveNodes =
-        Args.getInetSocketAddress(config, Constant.NODE_ACTIVE, true);
+        Args.getInetSocketAddress(config, ConfigKey.NODE_ACTIVE, true);
     parameter.setActiveNodes(newActiveNodes);
     List<InetSocketAddress> activeNodes = TronNetService.getP2pConfig().getActiveNodes();
     activeNodes.clear();
@@ -80,7 +79,7 @@ public class DynamicArgs {
   }
 
   private void updateTrustNodes(Config config) {
-    List<InetAddress> newPassiveNodes = Args.getInetAddress(config, Constant.NODE_PASSIVE);
+    List<InetAddress> newPassiveNodes = Args.getInetAddress(config, ConfigKey.NODE_PASSIVE);
     parameter.setPassiveNodes(newPassiveNodes);
     List<InetAddress> trustNodes = TronNetService.getP2pConfig().getTrustNodes();
     trustNodes.clear();
