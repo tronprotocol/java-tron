@@ -879,8 +879,9 @@ public class Args extends CommonParameter {
       PARAMETER.inactiveThreshold = 1;
     }
 
-    PARAMETER.maxTransactionPendingSize = config.hasPath(ConfigKey.NODE_MAX_TRANSACTION_PENDING_SIZE)
-        ? config.getInt(ConfigKey.NODE_MAX_TRANSACTION_PENDING_SIZE) : 2000;
+    PARAMETER.maxTransactionPendingSize =
+        config.hasPath(ConfigKey.NODE_MAX_TRANSACTION_PENDING_SIZE)
+            ? config.getInt(ConfigKey.NODE_MAX_TRANSACTION_PENDING_SIZE) : 2000;
 
     PARAMETER.pendingTransactionTimeout = config.hasPath(ConfigKey.NODE_PENDING_TRANSACTION_TIMEOUT)
         ? config.getLong(ConfigKey.NODE_PENDING_TRANSACTION_TIMEOUT) : 60_000;
@@ -1113,8 +1114,9 @@ public class Args extends CommonParameter {
     PARAMETER.metricsReportInterval = config.hasPath(ConfigKey.METRICS_REPORT_INTERVAL) ? config
         .getInt(ConfigKey.METRICS_REPORT_INTERVAL) : 10;
 
-    PARAMETER.metricsPrometheusEnable = config.hasPath(ConfigKey.METRICS_PROMETHEUS_ENABLE) && config
-        .getBoolean(ConfigKey.METRICS_PROMETHEUS_ENABLE);
+    PARAMETER.metricsPrometheusEnable =
+        config.hasPath(ConfigKey.METRICS_PROMETHEUS_ENABLE)
+            && config.getBoolean(ConfigKey.METRICS_PROMETHEUS_ENABLE);
     PARAMETER.metricsPrometheusPort = config.hasPath(ConfigKey.METRICS_PROMETHEUS_PORT) ? config
         .getInt(ConfigKey.METRICS_PROMETHEUS_PORT) : 9527;
     PARAMETER.setOpenHistoryQueryWhenLiteFN(
